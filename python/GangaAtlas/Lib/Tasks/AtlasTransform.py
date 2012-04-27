@@ -21,7 +21,7 @@ class AtlasTransform(ITransform):
 
    def createUnits(self):
       """Create new units if required given the inputdata"""
-      logger.warning("Entered Transform %d createUnits function..." % self.getID())
+      #logger.warning("Entered Transform %d createUnits function..." % self.getID())
 
       # loop over input data and see if we need to create any more units
       for inds in self.inputdata:

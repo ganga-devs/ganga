@@ -61,7 +61,10 @@ class AtlasUnit(IUnit):
                fail = True
       finally:
          dq2_lock.release()
-
+         
+      if fail:
+         return not fail
+      
       # add dataset to the task container
       task = trf._getParent()
       task_container = task.getContainerName()
@@ -94,13 +97,79 @@ class AtlasUnit(IUnit):
             except DQContainerAlreadyHasDataset:
                pass
             except Exception, x:
-               logger.error('Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, trf_container, x.__class__, x))
+               logger.error('Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, task_container, x.__class__, x))
                fail = True
             except DQException, x:
-               logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, trf_container, x.__class__, x))
+               logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, task_container, x.__class__, x))
                fail = True
       finally:
           dq2_lock.release()
+
+      return not fail
+
+   def unregisterDataset(self):
+      """Register in the transform container"""
+      trf = self._getParent()
+      trf_container = trf.getContainerName()
+      fail = False
+      try:
+         containerinfo = {}
+         dq2_lock.acquire()
+         try:
+            containerinfo = dq2.listDatasets(trf_container)
+         except:
+            containerinfo = {}
+            
+         if containerinfo != {}:
+            job = GPI.jobs(self.active_job_ids[0])
+            ds_list = dq2.listDatasetsInContainer(job.outputdata.datasetname)
+            for ds in ds_list:
+               
+               try:
+                  dq2.deleteDatasetsFromContainer(trf_container, [ ds ] )
+               except DQContainerDoesNotHaveDataset:
+                  pass
+               except Exception, x:
+                  logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                  fail = True
+               except DQException, x:
+                  logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
+                  fail = True
+      finally:
+         dq2_lock.release()
+
+      if fail:
+         return not fail
+      
+      # add dataset to the task container
+      task = trf._getParent()
+      task_container = task.getContainerName()
+
+      try:
+         containerinfo = {}
+         dq2_lock.acquire()
+         try:
+            containerinfo = dq2.listDatasets(task_container)
+         except:
+            containerinfo = {}
+            
+         if containerinfo != {}:
+            job = GPI.jobs(self.active_job_ids[0])
+            ds_list = dq2.listDatasetsInContainer(job.outputdata.datasetname)
+            for ds in ds_list:
+               
+               try:
+                  dq2.deleteDatasetsFromContainer(task_container, [ ds ] )
+               except DQContainerDoesNotHaveDataset:
+                  pass
+               except Exception, x:
+                  logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
+                  fail = True
+               except DQException, x:
+                  logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
+                  fail = True
+      finally:
+         dq2_lock.release()
 
       return not fail
 
@@ -135,9 +204,40 @@ class AtlasUnit(IUnit):
 
       return j
 
+   def checkMajorResubmit(self, job):
+      """check if this job needs to be fully rebrokered or not"""
+
+      # check for failed build jobs (killed)
+      if job.status == "killed":
+         return True
+
+      for j in job.subjobs:
+         if j.status == "killed":
+            return True
+
+      return False
+
    def majorResubmit(self, job):
       """perform a major resubmit/rebroker"""
-      if not s in self._getParent().backend.requirements.excluded_sites:
-         self._getParent().backend.requirements.excluded_sites.append(s)
+      for sj in job.subjobs:
+         if not sj.backend.site in self._getParent().backend.requirements.excluded_sites:
+            self._getParent().backend.requirements.excluded_sites.append(sj.backend.site)
 
-      super(IUnit,self).majorResubmit(job)
+      super(AtlasUnit,self).majorResubmit(job)
+
+   def reset(self):
+      """Reset the unit completely"""
+      if self.status == "completed":
+         self.unregisterDataset() 
+
+      super(AtlasUnit,self).reset()
+
+   def updateStatus(self, status):
+      """Update status hook"""
+
+      # register the dataset
+      if status == "completed":
+         if not self.registerDataset():
+            return
+
+      super(AtlasUnit,self).updateStatus(status)
