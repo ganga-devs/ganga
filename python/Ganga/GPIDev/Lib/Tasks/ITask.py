@@ -66,7 +66,7 @@ class ITask(GangaObject):
     def update(self):
         """Called by the monitoring thread. Base class just calls update on each Transform"""
         
-        logger.warning("Entering update for Task '%s' (%i)... " % (self.name, time.time()))
+        #logger.warning("Entering update for Task '%s' (%i)... " % (self.name, time.time()))
         for trf in self.transforms:
             trf.update()
 

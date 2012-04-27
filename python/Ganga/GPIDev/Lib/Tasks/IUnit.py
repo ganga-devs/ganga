@@ -106,6 +106,7 @@ class IUnit(GangaObject):
             logger.error("Couldn't submit the job. Deactivating unit.")
             self.prev_job_ids.append(j.id)
             self.active = False
+            trf._setDirty()  # ensure everything's saved
             return 1
 
          self.active_job_ids.append(j.id)
@@ -124,11 +125,11 @@ class IUnit(GangaObject):
          if job.status == "completed":
             if self.checkCompleted(job):
                self.updateStatus("completed")               
-         elif job.status == "failed":
+         elif job.status == "failed" or job.status == "killed":
                
             # check for too many resubs
             if self.minor_resub_count + self.major_resub_count > trf.run_limit-1:
-               logger.error("Too many minor resubmits (%i). Deactivating unit." % (self.minor_resub_count + self.major_resub_count))
+               logger.error("Too many resubmits (%i). Deactivating unit." % (self.minor_resub_count + self.major_resub_count))
                self.active = False
                return 0
 
@@ -159,12 +160,12 @@ class IUnit(GangaObject):
                   logger.error("Couldn't resubmit the job. Deactivating unit.")
                   self.active = False
 
-                  # break the loop now because we've probably changed the active jobs list
+               # break the loop now because we've probably changed the active jobs list           
                return 1
             else:
                self.minor_resub_count += 1
                try:
-                  self.minorResubmit(job)                     
+                  self.minorResubmit(job)
                except:
                   logger.error("Couldn't resubmit the job. Deactivating unit.")
                   self.active = False
@@ -178,6 +179,9 @@ class IUnit(GangaObject):
       if len(self.active_job_ids) > 0:
          self.prev_job_ids += self.active_job_ids
       self.active_job_ids = []
+
+      self.active = True
+      self.updateStatus("running")
       
    # Info routines
    def n_active(self):

@@ -121,6 +121,9 @@ class ITransform(GangaObject):
       for u in self.units:
          if u.getID() == uid:
             u.reset()
+            
+      self.updateStatus("running")
+      
       
    def getID(self):
        """Return the index of this trf in the parent task"""
@@ -143,7 +146,7 @@ class ITransform(GangaObject):
 
    def update(self):
       """Called by the parent task to check for status updates, submit jobs, etc."""
-      logger.warning("Entered Transform %d update function..." % self.getID())
+      #logger.warning("Entered Transform %d update function..." % self.getID())
 
       if self.status == "pause":
          return 0
@@ -172,7 +175,8 @@ class ITransform(GangaObject):
       
    def createUnits(self):
       """Create new units if required given the inputdata"""
-      logger.warning("Entered Transform %d createUnits function..." % self.getID())
+      #logger.warning("Entered Transform %d createUnits function..." % self.getID())
+      pass
          
    def addInputData(self, inDS):
       """Add the given input dataset to the list"""
