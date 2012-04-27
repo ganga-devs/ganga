@@ -7,6 +7,8 @@ from GangaTest.Framework.tests import GangaGPITestCase
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps
 from GangaTest.Framework.utils import read_file,failureException
 import Ganga.Utility.logging
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.files import expandfilename
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -44,9 +46,17 @@ class TestGaudi(GangaGPITestCase):
         # provide basic test of where output goes - a more complete test is
         # run on the PythonOptionsParser methods.
         job.prepare()
-        ok = job.application._impl.prep_outputbox.count('GaussHistos.root') > 0 and \
-             job.application._impl.prep_outputbox.count('GaussMonitor.root') > 0
-        assert ok, 'outputsandbox error'
+##         ok = job.application._impl.prep_outputbox.count('GaussHistos.root') > 0 and \
+##              job.application._impl.prep_outputbox.count('GaussMonitor.root') > 0
+        share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
+                                  'shared',
+                                  getConfig('Configuration')['user'],
+                                  job.application.is_prepared.name)
+##         ok = os.path.exists(os.path.join(job.application._impl.is_prepared.name,'GaussHistos.root')) and \
+##              os.path.exists(os.path.join(job.application._impl.is_prepared.name,'GaussMonitor.root'))
+        assert os.path.exists(os.path.join(share_path,'output','options_parser.pkl')), 'outputsandbox error'
+        assert os.path.exists(os.path.join(share_path,'inputsandbox','options.pkl')), 'pickled options file error'
+        assert os.path.exists(os.path.join(share_path,'debug','gaudi-env.py.gz')), 'zipped env file error'
         #assert job.application._impl.prep_outputdata.files.count('Gauss.sim') > 0,'outputdata error'
         #assert [f.name for f in job.application._impl.prep_inputbox].count('options.pkl') is not None, 'no options pickle file'
         #assert [f.name for f in job.application._impl.prep_inputbox].count('gaudi-env.py.gz') is not None, 'no evn file'

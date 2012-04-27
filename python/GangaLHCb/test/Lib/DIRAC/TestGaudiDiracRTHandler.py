@@ -39,12 +39,16 @@ class TestGaudiDiracRTHandler(GangaGPITestCase):
     def test_GaudiDiracRTHandler_prepare(self):
         #app = self.app
         #app.extra = self.extra
-        sjc = StandardJobConfig(inputbox=self.input_files)
-        stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,StandardJobConfig())
+        sjc = StandardJobConfig(inputbox=self.input_files, outputbox=['dummy1.out','dummy2.out','dummy3.out'])
+        jobmasterconfig = StandardJobConfig()
+        jobmasterconfig.outputdata=[]
+        stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,jobmasterconfig)
         # should have subjob.in(buffer), data.opts and gaudiscript.py
         print "sandbox =",stdjobconfig.getSandboxFiles()
-        assert len(stdjobconfig.getSandboxFiles()) == 4, 'inputsandbox error'
+        print "sandbox =",[file.name for file in stdjobconfig.getSandboxFiles()]       
+        assert len(stdjobconfig.getSandboxFiles()) == 3, 'inputsandbox error'
         l = len(stdjobconfig.getOutputSandboxFiles())
+        print "outputsandbox =",stdjobconfig.getOutputSandboxFiles()
         assert  l == 3, 'outputsandbox error'
 
     # not sure what's testable here

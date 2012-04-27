@@ -24,16 +24,21 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
 
     def test_GaudiRunTimeHandler_master_prepare(self):
         stdjobconfig = self.rth.master_prepare(self.app,self.appmasterconfig)
-        # should have master.buffer, master.in and options.pkl
-        assert len(stdjobconfig.getSandboxFiles()) == 3
+        # should have master.buffer, master.in and options.pkl and dummy.in
+        print "sandbox =",stdjobconfig.getSandboxFiles()
+        print "sandbox =",[file.name for file in stdjobconfig.getSandboxFiles()]       
+        assert len(stdjobconfig.getSandboxFiles()) == 4
         
 
     def test_GaudiRunTimeHandler_prepare(self):
-        sjc = StandardJobConfig(inputbox=self.input_files)
-        stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,StandardJobConfig())
+        sjc = StandardJobConfig(inputbox=self.input_files, outputbox=['dummy1.out','dummy2.out','dummy3.out'])
+        jobmasterconfig = StandardJobConfig()
+        jobmasterconfig.outputdata=[]
+        stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,jobmasterconfig)
         # should have subjob.in(buffer), data.opts and gaudiscript.py
         print "sandbox =",stdjobconfig.getSandboxFiles()
         print "sandbox =",[file.name for file in stdjobconfig.getSandboxFiles()]       
-        assert len(stdjobconfig.getSandboxFiles()) == 5, 'inputsandbox error'
+        assert len(stdjobconfig.getSandboxFiles()) == 4, 'inputsandbox error'
         l = len(stdjobconfig.getOutputSandboxFiles())
+        print "outputsandbox =",stdjobconfig.getOutputSandboxFiles()
         assert  l == 3, 'outputsandbox error'

@@ -91,14 +91,16 @@ class GaudiDiracRTHandler(GaudiRunTimeHandler):
                                   'output',
                                   'options_parser.pkl')
 
-        if not os.path.exists(share_path):
-            raise GangaException('could not find the parser')
-        f=open(share_path,'r+b')
-        parser = pickle.load(f)
-        f.close()
+        outdata=[]
+        if os.path.exists(share_path):
+#        if not os.path.exists(share_path):
+           # raise GangaException('could not find the parser')
+           f=open(share_path,'r+b')
+           parser = pickle.load(f)
+           f.close()
 
-        outbox, outdata = parser.get_output(job)
-        outputsandbox += outbox[:]          
+           outbox, outdata = parser.get_output(job)
+           outputsandbox += outbox[:]          
 
         if job.outputdata: outdata += job.outputdata.files
                                  

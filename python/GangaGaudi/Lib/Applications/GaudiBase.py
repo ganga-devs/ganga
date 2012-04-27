@@ -154,8 +154,9 @@ class GaudiBase(IPrepareApp):
                     logger.error("Can not create cmt user directory: "+cmtpath)
                     return
 
-        if self.env is None: self._getshell()
-        shellEnv_cmd('getpack %s %s'%(self.appname, self.version),
+        if not hasattr(self,'env'): self._getshell()
+#        shellEnv_cmd('getpack %s %s'%(self.appname, self.version),
+        shellEnv_cmd('getpack %s' % options,
                      self.env,
                      self.user_release_area)
            
@@ -166,7 +167,7 @@ class GaudiBase(IPrepareApp):
         #command = '###CMT### broadcast -global -select=%s cmt make ' \
         #          % self.user_release_area + argument
         config = Ganga.Utility.Config.getConfig('GAUDI')
-        if self.env is None: self._getshell()
+        if not hasattr(self,'env'): self._getshell()
         shellEnv_cmd('cmt broadcast %s %s' % (config['make_cmd'],argument),
                      self.env,
                      self.user_release_area)
@@ -175,7 +176,7 @@ class GaudiBase(IPrepareApp):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
-        if self.env is None: self._getshell()
+        if not hasattr(self,'env'): self._getshell()
         shellEnv_cmd('cmt %s' % command,
                      self.env,
                      self.user_release_area)
@@ -200,7 +201,7 @@ class GaudiBase(IPrepareApp):
         self._getshell()
         #send_to_share=[]
 
-        if (not self.user_release_area): return self.prep_inputbox
+        if (not self.user_release_area): return #GaudiPython and Bender dont need the following.
         if (not self.appname): raise ApplicationConfigurationError(None,"appname is None")
         if (not self.version): raise ApplicationConfigurationError(None,"version is None")
         if (not self.platform): raise ApplicationConfigurationError(None,"platform is None")

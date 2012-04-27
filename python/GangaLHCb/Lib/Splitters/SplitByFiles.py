@@ -10,6 +10,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 import os
 import copy
+import pickle
 
 class SplitByFiles(GaudiInputDataSplitter):
     """Splits a job into sub-jobs by partitioning the input data

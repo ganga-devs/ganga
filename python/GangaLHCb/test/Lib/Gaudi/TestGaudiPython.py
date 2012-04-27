@@ -2,13 +2,17 @@ import os
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
 from GangaLHCb.Lib.Applications.GaudiPython import GaudiPython
-
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.files import expandfilename
 class TestGaudiPython(GangaGPITestCase):
 
     def setUp(self):
         self.job = Job(application=GaudiPython())
         gp = self.job.application
         gp._impl._auto__init__()
+        f=open('dummy.script','w')
+        f.write('')
+        f.close()
         gp.script = [File('dummy.script')]
         self.job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']               
         self.gp = gp._impl
@@ -25,6 +29,13 @@ class TestGaudiPython(GangaGPITestCase):
         g=self.job.application
         g.prepare()
         assert g.is_prepared is not None, 'is_prepared not correctly set'
+        g.is_prepared.ls()
+        share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
+                                  'shared',
+                                  getConfig('Configuration')['user'],
+                                  g.is_prepared.name,
+                                  'inputsandbox')
+        assert os.path.exists(os.path.join(share_path,'dummy.script'))
 
     def test_GaudiPython_unprepare(self):
         g=self.job.application
@@ -33,17 +44,17 @@ class TestGaudiPython(GangaGPITestCase):
         g.unprepare()
         assert g.is_prepared is None, 'is_prepared not correctly unset'
 
-    def test_GaudiPython_master_configure(self):
-        gp = self.gp
-        #gp.master_configure() # must call this in set up for configure to work
-        #assert gp.extra.inputdata == self.job.inputdata._impl, 'inputdata err'
-        found_script = False
-        for f in self.master_config.inputbox:
-            print 'f.name =', f.name
-            if f.name.rfind('dummy.script') >= 0:
-                found_script = True
-                break
-        assert found_script, 'script not in sandbox'
+##     def test_GaudiPython_master_configure(self):
+##         gp = self.gp
+##         #gp.master_configure() # must call this in set up for configure to work
+##         #assert gp.extra.inputdata == self.job.inputdata._impl, 'inputdata err'
+##         found_script = False
+##         for f in self.master_config.inputbox:
+##             print 'f.name =', f.name
+##             if f.name.rfind('dummy.script') >= 0:
+##                 found_script = True
+##                 break
+##         assert found_script, 'script not in sandbox'
         
 
     def test_GaudiPtython_configure(self):

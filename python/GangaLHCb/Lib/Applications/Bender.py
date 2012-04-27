@@ -1,7 +1,7 @@
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#                                                                       
-'''Application handler for GaudiPython applications in LHCb.'''
-import os, tempfile
+'''Application handler for Bender applications in LHCb.'''
+import os, tempfile,pprint, shutil
 from os.path import split,join
 from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
@@ -13,8 +13,9 @@ from Ganga.GPIDev.Lib.File import ShareDir
 #from GaudiJobConfig import *
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
-from Ganga.Utility.files import expandfilename
+from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 logger = Ganga.Utility.logging.getLogger()
@@ -145,7 +146,7 @@ class Bender(GaudiBase):
 ##             raise ApplicationConfigurationError(None,msg)
        
     def prepare(self,force=False):
-        super(GaudiPython,self).prepare(force)
+        super(Bender,self).prepare(force)
         self._check_inputs()
 
         share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
@@ -154,7 +155,7 @@ class Bender(GaudiBase):
                                   self.is_prepared.name,
                                   'inputsandbox')
         if not os.path.isdir(share_path): os.makedirs(share_path) 
-        shutil.copy(expandfilename(self.module),share_path)
+        shutil.copy(expandfilename(self.module.name),share_path)
 
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)

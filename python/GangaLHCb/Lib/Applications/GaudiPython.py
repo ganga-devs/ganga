@@ -1,6 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for GaudiPython applications in LHCb.'''
-import os
+import os, pprint
 from os.path import split,join
 import inspect
 from Ganga.GPIDev.Schema import *
@@ -14,8 +14,9 @@ from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 logger = Ganga.Utility.logging.getLogger()
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
 from Ganga.Core import ApplicationConfigurationError
-from Ganga.Utility.files import expandfilename
+from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import shutil, tempfile
@@ -174,7 +175,7 @@ class GaudiPython(GaudiBase):
                                   'inputsandbox')
         if not os.path.isdir(share_path): os.makedirs(share_path) 
         for f in self.script:
-            shutil.copy(expandfilename(f),share_path)
+            shutil.copy(expandfilename(f.name),share_path)
 
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
