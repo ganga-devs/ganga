@@ -192,9 +192,10 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 if (time.time()-checktime > days*86000): 
                     try:
                         dq2_lock.acquire()
-                        dq2.checkDatasetConsistency(location, dataset)
-                    except:
-                        logger.warning("Dataset consistency check failed - continuing but may encounter other problems."
+                        try:
+                            dq2.checkDatasetConsistency(location, dataset)
+                        except:
+                            logger.warning("Dataset consistency check failed - continuing but may encounter other problems.")                        
                     finally:
                         dq2_lock.release()
                         
