@@ -102,7 +102,7 @@ class LCGStorageElementFile(OutputSandboxFile):
     def put(self):
         """
         Executes the internally created command for file upload to LCG SE, this method will
-        be called on the client for files that are not been uploaded from the WN
+        be called on the client
         """     
         import glob
         import os
