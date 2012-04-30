@@ -52,7 +52,7 @@ class MassStorageFile(OutputSandboxFile):
 
     def get(self, dir):
         """
-        Retrieves locally all files matching this OutputSandboxFile object pattern
+        Retrieves locally all files matching this MassStorageFile object pattern
         """
         import os
 
@@ -70,7 +70,7 @@ class MassStorageFile(OutputSandboxFile):
     def put(self):
         """
         Creates and executes commands for file upload to mass storage (Castor), this method will
-        be called on the client for files that are not been uploaded from the WN
+        be called on the client
         """     
         import glob
         import os
