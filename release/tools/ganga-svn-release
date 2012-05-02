@@ -191,7 +191,7 @@ def wait_all_tests_to_finish(outputdir):
 
     latestDir = os.path.dirname(outputdir)
 
-    filesToSearch = ['Ganga.test.ALL__localxml.xml', 'GangaAtlas.test.ALL__localxml.xml', 'GangaLHCb.test.ALL__localxml.xml', 'GangaNG.test.ALL__localxml.xml', 'GangaPanda.test.ALL__localxml.xml', 'GangaRobot.test.ALL__localxml.xml']
+    filesToSearch = ['Ganga.test.ALL__localxml.xml', 'GangaAtlas.test.ALL__localxml.xml', 'GangaLHCb.test.ALL__localxml.xml', 'GangaPanda.test.ALL__localxml.xml', 'GangaRobot.test.ALL__localxml.xml']
 
     currentDir = os.getcwd()    
 
