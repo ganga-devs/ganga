@@ -145,6 +145,7 @@ def get_user_dlls(appname,version,user_release_area,platform,env):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import subprocess
+import time
 def shellEnv_cmd(cmd, environ=None, cwdir=None):
     pipe = subprocess.Popen(cmd,
                             shell=True,
@@ -152,36 +153,38 @@ def shellEnv_cmd(cmd, environ=None, cwdir=None):
                             cwd=cwdir,
                             stdout=subprocess.PIPE,
                             stderr=subprocess.PIPE)
-    result  = pipe.communicate()
-    retcode = pipe.poll()
-    return retcode, result[0], result[1]
+    stdout, stderr  = pipe.communicate()
+    while pipe.poll() is None:
+      time.sleep(0.5)
+    return pipe.returncode, stdout, stderr
 
 def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
-  import tempfile, pickle
-  fname = tempfile.mkstemp()[1]
-  os.system('rm -f %s' % fname)
+    import tempfile, pickle
+    f = tempfile.NamedTemporaryFile(mode='w+b')
+    fname = f.name
+    f.close()
+    
+    if not cmd.endswith(';'): cmd += ';'
+    envdump  = 'import os, pickle;'
+    envdump += 'f=open(\'%s\',\'w+b\');' % fname
+    envdump += 'pickle.dump(os.environ,f);'
+    envdump += 'f.close();'
+    envdumpcommand = 'python -c \"%s\"' % envdump
+    cmd += envdumpcommand
 
-  if not cmd.endswith(';'): cmd += ';'
-  envdump  = 'import os, pickle;'
-  envdump += 'f=open(\'%s\',\'w+b\');' % fname
-  envdump += 'pickle.dump(os.environ,f);'
-  envdump += 'f.close();'
-  envdumpcommand = 'python -c \"%s\"' % envdump
-  cmd += envdumpcommand
-  
-  pipe = subprocess.Popen(cmd,
-                          shell=True,
-                          env=environ,
-                          cwd=cwdir,
-                          stdout=subprocess.PIPE,
-                          stderr=subprocess.PIPE)
-  result  = pipe.communicate()
-  retcode = pipe.poll()
+    pipe = subprocess.Popen(cmd,
+                            shell=True,
+                            env=environ,
+                            cwd=cwdir,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    stdout, stderr  = pipe.communicate()
+    while pipe.poll() is None:
+        time.sleep(0.5)
+    
+    f = open(fname,'r+b')
+    environ=environ.update(pickle.load(f))
+    f.close()
+    os.system('rm -f %s' % fname)
 
-  f = open(fname,'r+b')
-  environ=environ.update(pickle.load(f))
-  f.close()
-  os.system('rm -f %s' % fname)
-  
-  
-  return retcode, result[0], result[1]
+    return pipe.returncode, stdout, stderr
