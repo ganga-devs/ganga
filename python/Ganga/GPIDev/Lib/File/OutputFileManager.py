@@ -122,9 +122,9 @@ def getWNCodeForOutputPostprocessing(job, indent):
             if outputFile.compressed:   
                 if outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF']:
                     patternsToZip.append(outputFile.name)  
-                #also files that will go to the client for postprocessing have to be firstly compressed
-                #elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
-                elif outputfileClassName != 'OutputSandboxFile':
+                elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
+                    patternsToZip.append(outputFile.name)  
+                elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF']:
                     patternsToZip.append(outputFile.name)  
     
             if outputfileClassName == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
