@@ -73,6 +73,7 @@ class IPrepareApp(IApplication):
             self.is_prepared = None
         elif self.is_prepared is not None:
             self.is_prepared = None
+        self.hash = None
 
 
     def copyPreparables(self):

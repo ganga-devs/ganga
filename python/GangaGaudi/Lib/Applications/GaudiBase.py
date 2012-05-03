@@ -191,6 +191,7 @@ class GaudiBase(IPrepareApp):
            
         self.decrementShareCounter(self.is_prepared.name)
         self.is_prepared = None
+        self.hash = None
         #self.unprepare()
 
     def prepare(self, force=False):

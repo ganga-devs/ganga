@@ -102,6 +102,7 @@ class AppName(Gaudi):
         self.prep_outputbox=[]
         self.prep_inputdata=LHCbDataset()
         self.prep_outputdata=OutputData()
+        self.hash = None
             
     def _auto__init__(self):
         self.appname='AppName'
