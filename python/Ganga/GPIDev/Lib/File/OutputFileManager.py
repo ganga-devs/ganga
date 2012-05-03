@@ -245,7 +245,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
   
 ###INDENT###postprocesslocations.close()
-###INDENT###printInfo(os.listdir(os.getcwd()))
+###INDENT###printInfo(str(os.listdir(os.getcwd())))
 
 """
     insertScript = insertScript.replace('###LCGCOMMANDS###', str(lcgCommands))
