@@ -625,6 +625,7 @@ def start(cmd_args=None):
                 report_name=report
                 column = "DEFAULT_COL"          
             columns=reports.get(report_name,{})
+            print arg
             columns[column] = xml.dom.minidom.parse(arg)        
             reports[report_name]=columns
     # Globals, cross-category between packages

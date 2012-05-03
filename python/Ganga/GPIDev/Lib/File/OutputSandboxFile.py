@@ -6,8 +6,6 @@
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-import glob 
-import fnmatch    
 
 class OutputSandboxFile(GangaObject):
     """OutputSandboxFile represents base class for output files, such as MassStorageFile, LCGStorageElementFile, etc 
@@ -37,7 +35,7 @@ class OutputSandboxFile(GangaObject):
 
     def location(self):
         """
-        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
+        Return list with the locations of the post processed files (if they was configured to upload the output somewhere)
         """
         raise NotImplementedError
 
@@ -51,6 +49,7 @@ class OutputSandboxFile(GangaObject):
         """
         Postprocesses (compress/upload) output file to the desired destination, can be overriden in LCGStorageElementFile, MassStorageFile, etc
         """
+        import glob     
         import os
 
         #compression for files on the client (files that were not ready on the WN like stdout and stderr on Batch backend)
@@ -86,33 +85,42 @@ outputfilesConfig = {}
 
 for key in getConfig('Output').options.keys():
     try:
-        outputFilePatterns = []
+        outputFileExtensions = []
 
         for configEntry in getConfig('Output')[key]['fileExtensions']:
-            outputFilePatterns.append(configEntry)
+            #get only the extension
+            if configEntry.startswith('*.'):
+                outputFileExtensions.append(configEntry[2:])
+            else:
+                outputFileExtensions.append(configEntry)
                 
-        outputfilesConfig[key] = outputFilePatterns
+        outputfilesConfig[key] = outputFileExtensions
 
     except ConfigError:
         #todo:ivan throw some error here
         pass    
 
-def findOutputFileTypeByFileName(filename):      
+def findOutputFileTypeByFileName(filename):
+
+    dotIndex = filename.find('.')       
+    #get only the extension     
+    if dotIndex > -1 and filename.startswith('*'):
+        filename = filename[dotIndex+1:]        
 
     matchCount = 0
 
     resultKey = None    
 
     for key in outputfilesConfig.keys():
-        for filePattern in outputfilesConfig[key]:
-            if fnmatch.fnmatch(filename, filePattern):
-                matchCount += 1
-                resultKey = key
+
+        if filename in outputfilesConfig[key]:
+            matchCount += 1
+            resultKey = key
 
     if matchCount == 1:
         return resultKey
     elif matchCount > 1:        
-        raise ConfigError('pattern for filename %s defined more than once in [Output] config section' % filename)
+        raise ConfigError('filename %s defined more than once in [Output] config section' % filename)
  
     return None
 

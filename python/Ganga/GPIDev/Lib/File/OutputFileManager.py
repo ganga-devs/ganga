@@ -133,7 +133,6 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
 
     insertScript = """\n
-###INDENT###import glob
 ###INDENT###for patternToZip in ###PATTERNSTOZIP###:
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
 ###INDENT###        os.system("gzip %s" % currentFile)
@@ -173,6 +172,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
 ###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
 
+###INDENT###    import glob 
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
 ###INDENT###        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
 ###INDENT###        cmd = cmd.replace('filename', currentFile)
