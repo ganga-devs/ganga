@@ -144,7 +144,7 @@ class Gaudi(GaudiBase):
             raise
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
-        self.post_prepare()
+        self.post_prepare() ## create hash
 
     def _check_inputs(self):
         """Checks the validity of some of user's entries for Gaudi schema"""

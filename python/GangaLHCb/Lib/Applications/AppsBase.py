@@ -97,12 +97,12 @@ class AppName(Gaudi):
 ##         # pick up the outputbox
 ##         return (None, StandardJobConfig(outputbox = self.prep_outputbox))
     
-    def unprepare(self):
-        super(type(self), self).unprepare()
-        self.prep_outputbox=[]
-        self.prep_inputdata=LHCbDataset()
-        self.prep_outputdata=OutputData()
-        self.hash = None
+##     def unprepare(self):
+##         super(type(self), self).unprepare()
+##         self.prep_outputbox=[]
+##         self.prep_inputdata=LHCbDataset()
+##         self.prep_outputdata=OutputData()
+##        self.hash = None
             
     def _auto__init__(self):
         self.appname='AppName'
