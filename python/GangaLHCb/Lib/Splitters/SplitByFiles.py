@@ -39,6 +39,9 @@ class SplitByFiles(GaudiInputDataSplitter):
 
     def _create_subjob(self, job, dataset):
         j=copy.deepcopy(job)
+        j.splitter = None
+        j.merger = None
+        j.inputsandbox = [] ## master added automatically
         j.inputdata = LHCbDataset( files             = dataset,
                                    persistency       = self.persistency,
                                    depth             = self.depth )

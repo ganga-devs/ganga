@@ -25,6 +25,9 @@ class GaussSplitter(ISplitter):
 
     def _create_subjob(self, job, inputdata):
         j=copy.deepcopy(job)
+        j.splitter = None
+        j.merger = None
+        j.inputsandbox = [] ## master added automatically
         j.inputdata = inputdata
 
         return j

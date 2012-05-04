@@ -33,6 +33,9 @@ class GaudiInputDataSplitter(ISplitter):
     # for modified behaviour
     def _create_subjob(self, job, dataset):
         j=copy.deepcopy(job)
+        j.splitter = None
+        j.merger = None
+        j.inputsandbox = [] ## master added automatically
         j.inputdata = GaudiDataset(files=dataset)
 ##         if not j.inputdata: j.inputdata = GaudiDataset(files=dataset)
 ## ##         else:               j.inputdata.files = dataset
