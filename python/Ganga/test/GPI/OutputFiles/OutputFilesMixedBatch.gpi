@@ -23,6 +23,10 @@ assert(j.outputfiles[1].location() != [])
 j.outputfiles[0].get(j.outputdir)
 j.outputfiles[1].get(j.outputdir)
 
-for filename in ['fillrandom.root', j.outputfiles[1].location()[0][-10:], 'fillrandom2.root', 'stderr.gz']:
-    assert(filename in os.listdir(j.outputdir)) 
+outdircontents = os.listdir(j.outputdir)
+
+assert('fillrandom.root' in outdircontents)
+assert(j.outputfiles[1].location()[0][-10:] in outdircontents) 
+assert('fillrandom2.root' in outdircontents) 
+assert('stderr.gz' in outdircontents)  
     
