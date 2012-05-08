@@ -1,0 +1,35 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+config.Output.LCGStorageElementFile = {'fileExtensions': ['fillrandom1.root'], 'uploadOptions': {'dest_SRM': 'srm-public.cern.ch', 'LFC_HOST': 'lfc-dteam.cern.ch'}, 'backendPostprocess': {'LSF': 'client', 'LCG': 'WN', 'Localhost': 'WN', 'CREAM': 'WN'}}
+
+config.Output.MassStorageFile =  {'fileExtensions': ['fillrandom.root', 'stdout'], 'uploadOptions': {'path': '/castor/cern.ch/user/i/idzhunov/ganga', 'cp_cmd': 'rfcp', 'ls_cmd': 'nsls', 'mkdir_cmd': 'nsmkdir'}, 'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'Localhost': 'WN', 'CREAM': 'client'}}
+
+
+j = Job(application=Root(),backend=LSF())
+
+j.application.script = File('fillrandom2.py')
+
+j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root', 'stdout', 'stderr']
+
+j.outputfiles[3].compressed = True
+j.outputfiles[4].compressed = True
+
+assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
+assert(j.outputfiles[1].__class__.__name__ == 'LCGStorageElementFile')
+assert(j.outputfiles[2].__class__.__name__ == 'OutputSandboxFile')
+
+j.submit()
+
+assert(sleep_until_completed(j,1200))
+
+assert(j.outputfiles[0].location() != [])
+assert(j.outputfiles[1].location() != [])
+assert(j.outputfiles[3].location() != [])
+
+j.outputfiles[0].get(j.outputdir)
+j.outputfiles[1].get(j.outputdir)
+j.outputfiles[3].get(j.outputdir)
+
+for filename in ['fillrandom.root', j.outputfiles[1].location()[0][-10:], 'fillrandom2.root', 'stdout.gz', 'stderr.gz']:
+    assert(filename in os.listdir(j.outputdir)) 
+    
