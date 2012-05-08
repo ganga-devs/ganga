@@ -1,0 +1,14 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+config.Output.LCGStorageElementFile = {'fileExtensions': ['*.root'], 'uploadOptions': {'dest_SRM': 'srm-public.cern.ch', 'LFC_HOST': 'lfc-dteam.cern.ch'}, 'backendPostprocess': {'LSF': 'client', 'LCG': 'WN', 'Localhost': 'WN', 'CREAM': 'WN'}}
+
+
+j = Job(Application=Root(),backend=Local())
+
+j.application.script = File('fillrandom2.py')
+
+j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
+
+j.submit()
+
+assert(sleep_until_completed(j,180))
