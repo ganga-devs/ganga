@@ -1,5 +1,7 @@
 from GangaTest.Framework.utils import sleep_until_completed
 
+print 'something'
+
 j = Job(application=Root(),backend=Local())
 
 j.application.script = File('fillrandom2.py')
