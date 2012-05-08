@@ -15,7 +15,8 @@ j.submit()
 assert(sleep_until_completed(j,1800))
 
 if (j.outputfiles[0].location() == []):
-    print 'job script didn't provide output files'
+    #job script didn't provide output files
+    pass        
 else:
     j.outputfiles[0].get(j.outputdir)
     j.outputfiles[1].get(j.outputdir)
