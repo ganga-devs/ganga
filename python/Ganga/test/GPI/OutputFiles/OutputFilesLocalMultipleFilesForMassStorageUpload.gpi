@@ -22,6 +22,6 @@ j.outputfiles[0].get(j.outputdir)
 j.outputfiles[1].get(j.outputdir)
 j.outputfiles[2].get(j.outputdir)
 
-for filename in [fillrandom.root, fillrandom1.root, fillrandom2.root]:
+for filename in ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']:
     assert(filename in os.listdir(j.outputdir)) 
     
