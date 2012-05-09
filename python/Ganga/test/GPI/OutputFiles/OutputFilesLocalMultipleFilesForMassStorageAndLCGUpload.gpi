@@ -1,6 +1,6 @@
 from GangaTest.Framework.utils import sleep_until_completed
 
-j = Job(application=Root(),backend=LSF())
+j = Job(application=Root(),backend=Local())
 
 j.application.script = File('fillrandom.py')
 
@@ -11,7 +11,7 @@ assert(j.outputfiles[1].__class__.__name__ == 'LCGStorageElementFile')
 
 j.submit()
 
-assert(sleep_until_completed(j,1200))
+assert(sleep_until_completed(j,180))
 
 assert(j.outputfiles[0].location() != [])
 assert(j.outputfiles[1].location() != [])
