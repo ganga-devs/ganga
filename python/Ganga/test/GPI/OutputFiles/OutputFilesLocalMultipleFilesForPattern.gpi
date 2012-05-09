@@ -4,24 +4,18 @@ j = Job(application=Root(),backend=Local())
 
 j.application.script = File('fillrandom2.py')
 
-j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
+j.outputfiles = ['*.root']
 
 assert(j.outputfiles[0].__class__.__name__ == 'LCGStorageElementFile')
-assert(j.outputfiles[1].__class__.__name__ == 'LCGStorageElementFile')
-assert(j.outputfiles[2].__class__.__name__ == 'LCGStorageElementFile')
 
 j.submit()
 
 assert(sleep_until_completed(j,180))
 
 assert(j.outputfiles[0].location() != [])
-assert(j.outputfiles[1].location() != [])
-assert(j.outputfiles[2].location() != [])
 
 j.outputfiles[0].get(j.outputdir)
-j.outputfiles[1].get(j.outputdir)
-j.outputfiles[2].get(j.outputdir)
 
-for filename in [j.outputfiles[1].location()[0][-10:], j.outputfiles[1].location()[1][-10:], j.outputfiles[1].location()[0][-10:]]:
+for filename in [j.outputfiles[0].location()[0][-10:], j.outputfiles[0].location()[1][-10:], j.outputfiles[0].location()[2][-10:]]:
     assert(filename in os.listdir(j.outputdir)) 
     
