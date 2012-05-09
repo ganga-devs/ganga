@@ -14,7 +14,7 @@ assert(j.outputfiles[1].__class__.__name__ == 'LCGStorageElementFile')
 
 j.submit()
 
-assert(sleep_until_completed(j,180))
+assert(sleep_until_completed(j,1800))
 
 assert(j.outputfiles[0].location() != [])
 assert(j.outputfiles[1].location() != [])
