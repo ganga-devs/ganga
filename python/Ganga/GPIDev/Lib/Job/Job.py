@@ -347,6 +347,8 @@ class Job(GangaObject):
 
     def postprocessoutput(self, outputfiles, outputdir):        
         
+        import glob
+
         if len(outputfiles) == 0:
             return
 
@@ -396,6 +398,12 @@ class Job(GangaObject):
             backendClass = self.backend.__class__.__name__
             outputfileClass = outputfile.__class__.__name__
 
+            #on Batch backends these files can be compressed only on the client
+            if backendClass == 'LSF':  
+                if outputfile.compressed and (outputfile.name == 'stdout' or outputfile.name == 'stderr'):
+                    for currentFile in glob.glob(os.path.join(outputfile.joboutputdir, outputfile.name)):
+                        os.system("gzip %s" % currentFile)
+
             if self.backend_output_postprocess.has_key(backendClass):
                 if self.backend_output_postprocess[backendClass].has_key(outputfileClass):
                     if self.backend_output_postprocess[backendClass][outputfileClass] == 'client':
@@ -418,9 +426,12 @@ class Job(GangaObject):
                                     for location in massStorageUploads[massStoragePattern]:
                                         outputfile.setLocation(location)     
             #on Batch backends these files can be postprocessed (compressed) only on the client
+            """ 
             if outputfileClass == 'OutputSandboxFile' and backendClass == 'LSF':  
                 if outputfile.name == 'stdout' or outputfile.name == 'stderr':
                     outputfile.put() 
+            """
+                
 
 
         #leave it for the moment for debugging
