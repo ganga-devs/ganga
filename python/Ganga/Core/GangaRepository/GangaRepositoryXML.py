@@ -36,10 +36,10 @@ def safe_save(fn,obj,to_file,ignore_subs=''):
     if hasattr(obj, 'application') and hasattr(obj.application, 'hash') and obj.application.hash is not None:
         if not obj.application.calc_hash(verify=True):  
             try:
-                logger.warning('Protected attributes of %s application, associated with %s #%s have changed!' \
+                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' \
                     % (obj.application._name, obj._name, obj._registry_id))
             except:
-                logger.warning('Protected attributes of %s application associated with %s have changed!!!!' \
+                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' \
                     % (obj.application._name, obj._name))
                 
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
@@ -49,10 +49,10 @@ def safe_save(fn,obj,to_file,ignore_subs=''):
             hasattr(obj.analysis.application, 'hash') and obj.analysis.application.hash is not None:
                 if not obj.analysis.application.calc_hash(verify=True):  
                     try:
-                        logger.warning('Protected attributes of %s application, associated with %s #%s have changed!' \
+                        logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' \
                         % (obj.analysis.application._name, obj._name, obj._registry_id))
                     except:
-                        logger.warning('Protected attributes of %s application associated with %s have changed!!!!' \
+                        logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' \
                             % (obj.analysis.application._name, obj._name))
                     logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
                     logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
