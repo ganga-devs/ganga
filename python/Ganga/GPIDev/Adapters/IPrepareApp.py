@@ -144,10 +144,16 @@ class IPrepareApp(IApplication):
         post-preparation.
         """
         from Ganga.GPIDev.Base.Proxy import runProxyMethod
-        import StringIO, md5
+        import StringIO
+        try:
+            import hashlib 
+            digest = hashlib.new('md5')
+        except:
+            import md5
+            digest = md5.new()
+        
         sio = StringIO.StringIO()
         runProxyMethod(self,'printPrepTree',sio)
-        digest = md5.new()
         digest.update(str(sio.getvalue()))
         tmp=sio.getvalue()
         if verify == False:
