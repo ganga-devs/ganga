@@ -6,6 +6,7 @@ from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
+from Ganga.GPIDev.Base.Proxy import stripProxy
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 import os
@@ -75,8 +76,8 @@ class SplitByFiles(GaudiInputDataSplitter):
         self.persistency       = indata.persistency
         self.XMLCatalogueSlice = indata.XMLCatalogueSlice
         self.metadata          = indata.metadata
-        
-        if job.backend.__module__.find('Dirac') > 0:
+
+        if stripProxy(job.backend).__module__.find('Dirac') > 0:
             if self.filesPerJob > 100: self.filesPerJob = 100 # see above warning
             return DiracSplitter(indata,
                                  self.filesPerJob,
