@@ -579,7 +579,7 @@ class HTTPServerThread(GangaThread):
 
         print 'Web gui monitoring server started successfully'
         print
-        print 'You can monitor your jobs at the following location: ' + getMonitoringLink(port)
+        print 'You can monitor your jobs on the following link: ' + getMonitoringLink(port)
 
         #server.serve_forever()
         
