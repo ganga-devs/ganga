@@ -424,14 +424,7 @@ class Job(GangaObject):
                             for massStoragePattern in massStorageUploads.keys():
                                 if massStoragePattern == outputfile.name:
                                     for location in massStorageUploads[massStoragePattern]:
-                                        outputfile.setLocation(location)     
-            #on Batch backends these files can be postprocessed (compressed) only on the client
-            """ 
-            if outputfileClass == 'OutputSandboxFile' and backendClass == 'LSF':  
-                if outputfile.name == 'stdout' or outputfile.name == 'stderr':
-                    outputfile.put() 
-            """
-                
+                                        outputfile.setLocation(location)      
 
 
         #leave it for the moment for debugging
