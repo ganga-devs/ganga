@@ -519,15 +519,19 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         if app.user_area.name: 
             #we will now use the user_area that's stored in the users shared directory
             if app.is_prepared is not True:
-                app.user_area.name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.user_area.name))
-            inputbox.append(File(app.user_area.name))
+                tmp_user_name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.user_area.name))
+                inputbox.append(File(tmp_user_name))
+            else:
+                inputbox.append(File(app.user_area.name))
 
         #if app.group_area.name: inputbox += [ File(app.group_area.name) ]
         if app.group_area.name and str(app.group_area.name).find('http')<0:
             #we will now use the group_area that's stored in the users shared directory
             if app.is_prepared is not True:
-                app.group_area.name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.group_area.name))
-            inputbox.append(File(app.group_area.name))
+                tmp_group_name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.group_area.name))
+                inputbox.append(File(tmp_group_name))
+            else:
+                inputbox.append(File(app.group_area.name))
     
         if app.user_setupfile.name: inputbox.append(File(app.user_setupfile.name))
 
