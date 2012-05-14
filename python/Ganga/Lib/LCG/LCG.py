@@ -951,9 +951,6 @@ class LCG(IBackend):
 
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
-        #fix for savannah 76289, update the excludedCEs in jdl file
-        self.updateExcudedCEsInJdl(jdlpath)
-
         if config['MatchBeforeSubmit']:
             matches = grids[mt].list_match(jdlpath, ce=self.CE)
             if not matches:
@@ -1003,7 +1000,6 @@ class LCG(IBackend):
 #-----------------------------------------------------
 import os,os.path,shutil,tempfile
 import sys,popen2,time,traceback
-import re
 
 #bugfix #36178: subprocess.py crashes if python 2.5 is used
 #try to import subprocess from local python installation before an
@@ -1245,7 +1241,7 @@ try:
 
     printInfo('Unpack inputsandbox passed.')
 
-    printInfo('Loading Python modules ...')     
+    printInfo('Loading Python modules ...')
 
     sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 
@@ -1298,8 +1294,6 @@ try:
         import subprocess
         printInfo('Load application executable with subprocess module')
         status = execSyscmdSubprocess('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
-        printInfo('source %s; %s %s' % (env_setup_script, appexec, appargs))
-        printInfo(wdir)
     except ImportError,err:
         # otherwise, use separate threads to control process IO pipes 
         printInfo('Load application executable with separate threads')
@@ -1318,9 +1312,7 @@ try:
 
     if not status:
         raise Exception('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)                 
-
-    ###OUTPUTUPLOADSPOSTPROCESSING###
+    printInfo('Application execution passed with exit code %d.' % exitcode)
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -1403,9 +1395,6 @@ sys.exit(0)
         script = script.replace('###APPLICATION_NAME###',job.application._name)
         script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
-
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
@@ -1494,7 +1483,7 @@ sys.exit(0)
             transfer_timeout = 60
 
         script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
-
+       
         ## update the job wrapper with the inputsandbox list
         script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
 
@@ -1507,11 +1496,7 @@ sys.exit(0)
         ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
-
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
-        for outputSandboxPattern in getOutputSandboxPatterns(job):
-            output_sandbox.append(outputSandboxPattern)
-
+        
         if config['JobLogHandler'] == 'WMS':
             output_sandbox += ['stdout.gz','stderr.gz']
 
@@ -1528,9 +1513,6 @@ sys.exit(0)
             'InputSandbox' : input_sandbox,
             'OutputSandbox' : output_sandbox
         }
-
-        if config['GLITE_WMS_WMPROXY_ENDPOINT'] != '':
-            jdl['Environment']['GLITE_WMS_WMPROXY_ENDPOINT'] = config['GLITE_WMS_WMPROXY_ENDPOINT']     
 
         if self.middleware.upper() == 'GLITE':
 
@@ -1906,122 +1888,6 @@ sys.exit(0)
             os.remove(jdl_file2)
             
         return matches
-
-    def updateExcudedCEsInJdl(self, jdlpath):
-
-        import re
-        configexcludedCEs = getConfig('LCG')['ExcludedCEs']
-
-        jdlFileRead = open(jdlpath, 'r')
-        jdlText = jdlFileRead.read()
-        hasRequirements = jdlText.find("Requirements =") > -1
-        jdlFileRead.close()
-
-        if hasRequirements == False:
-    
-            if configexcludedCEs != '':
-
-                linesToAppend = []
-
-                jdlFileAppend = open(jdlpath, 'a')
-                linesToAppend.append("Requirements = \n")
-                excludedCEs = re.split('\s+', configexcludedCEs)        
-                index = 1
-
-                for excludedCE in excludedCEs:
-                    #if not the last one
-                    if index != len(excludedCEs):               
-                        linesToAppend.append('   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
-                    else:
-                        linesToAppend.append('   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
-
-                    index += 1 
-        
-                jdlFileAppend.writelines(linesToAppend)
-                jdlFileAppend.close()   
-        else:
-    
-            jdlFileRead = open(jdlpath, 'r')
-            originalLines = jdlFileRead.readlines()
-            jdlFileRead.close()
-
-            index = 0
-            thereAreExcudedCEs = False
-            for line in originalLines:
-  
-                #find the index of the first line with excludedCE  
-                if line.find('!RegExp') > -1 and line.find('other.GlueCEUniqueID') > -1:
-                    thereAreExcudedCEs = True
-                    break
-        
-                index += 1      
-
-            if (thereAreExcudedCEs == False):   
-                index = 2
-                for line in originalLines:
-  
-                    if line == "Requirements = \n":
-                        break
-        
-                index += 1      
-
-            newLines = []
-            removedLines = []
-
-            for line in originalLines:
-   
-                if line.find('!RegExp') > -1 and line.find('other.GlueCEUniqueID') > -1:
-                    removedLines.append(line)
-                    continue
-        
-                newLines.append(line)
-
-            endOfRequirements = False   
-
-            for line in removedLines:
-                if line.endswith(';\n'):
-                    endOfRequirements = True
-                    break               
-
-            if configexcludedCEs != '':
-                excludedCEs = re.split('\s+', configexcludedCEs)        
-                innerIndex = 1  
-                for excludedCE in excludedCEs:
-                    if innerIndex != len(excludedCEs):          
-                        newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
-                    else:
-                        if endOfRequirements and thereAreExcudedCEs:    
-                            newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
-                        else:
-                            newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
-
-                    innerIndex += 1 
-
-            i = 0       
-            for line in newLines:
-                if line == 'Requirements = \n':
-                    break
-                i += 1
-
-            if newLines[-1] == 'Requirements = \n':
-                newLines.remove('Requirements = \n')
-            elif (not newLines[i+1].startswith('   ')):
-                newLines.remove('Requirements = \n')
-            else:
-                i += 1
-                while i < len(newLines):
-                    if newLines[i].startswith('   '):
-                        i += 1
-                    else:
-                        break
-
-            if newLines[i-1].endswith(' &&\n'):
-                newLines[i-1] = newLines[i-1][:-4] + ';\n'
-                        
-            jdlFileWrite = open(jdlpath, 'w')
-            jdlFileWrite.writelines(newLines)
-            jdlFileWrite.close()
-        
         
 class LCGJobConfig(StandardJobConfig):
     '''Extends the standard Job Configuration with additional attributes'''
@@ -2183,8 +2049,6 @@ config.addOption('Config','','sets the generic LCG-UI configuration script for t
 
 config.addOption('AllowedCEs','','sets allowed computing elements by a regular expression')
 config.addOption('ExcludedCEs','','sets excluded computing elements by a regular expression')
-
-config.addOption('GLITE_WMS_WMPROXY_ENDPOINT','','sets the WMProxy service to be contacted')
 
 config.addOption('MyProxyServer','myproxy.cern.ch','sets the myproxy server')
 config.addOption('RetryCount',3,'sets maximum number of job retry')

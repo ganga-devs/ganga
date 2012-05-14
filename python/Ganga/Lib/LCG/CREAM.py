@@ -668,13 +668,7 @@ try:
 
     if not status:
         raise Exception('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)      
-
-    ###OUTPUTUPLOADSPOSTPROCESSING###
-
-    for f in os.listdir(os.getcwd()):
-        command = "cp %s %s" % (os.path.join(os.getcwd(),f), os.path.join(orig_wdir,f))
-        os.system(command)            
+    printInfo('Application execution passed with exit code %d.' % exitcode)
 
     createPackedOutputSandbox(outputsandbox,None,orig_wdir)
 
@@ -724,9 +718,6 @@ sys.exit(0)
         script = script.replace('###APPLICATION_NAME###',job.application._name)
         script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
-
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
@@ -831,10 +822,6 @@ sys.exit(0)
         ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
-
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
-        for outputSandboxPattern in getOutputSandboxPatterns(job):
-            output_sandbox.append(outputSandboxPattern)
 
         if config['JobLogHandler'] in ['WMS']:
             output_sandbox += ['stdout.gz','stderr.gz']

@@ -15,7 +15,7 @@ addDiracTestSubmitter()
 class TestDiracSplitter(GangaGPITestCase):
 
     def testSplit(self):
-        j=Job(backend=Dirac())
+        j=Job()
         j.inputdata = LHCbDataset()
         j.inputdata.files+=[
             'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
@@ -34,7 +34,7 @@ class TestDiracSplitter(GangaGPITestCase):
         assert len(result) >= 3, 'Unexpected number of subjobs'
 
     def testIgnoreMissing(self):
-        j=Job(backend=Dirac())
+        j=Job()
         j.inputdata = LHCbDataset()
         j.inputdata.files+=[
             'LFN:/not/a/file.dst',
