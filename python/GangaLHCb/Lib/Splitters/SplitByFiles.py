@@ -6,7 +6,7 @@ from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 import os
@@ -39,7 +39,8 @@ class SplitByFiles(GaudiInputDataSplitter):
         return value
 
     def _create_subjob(self, job, dataset):
-        j=job.copy()
+        j=addProxy(job).copy() ## Proxy copy increments the shareref counter
+        j=stripProxy(j)
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
