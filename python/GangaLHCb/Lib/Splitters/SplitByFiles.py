@@ -39,7 +39,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         return value
 
     def _create_subjob(self, job, dataset):
-        j=copy.deepcopy(job)
+        j=job.copy()
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
