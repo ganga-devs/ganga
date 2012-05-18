@@ -2,6 +2,7 @@ from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 import pickle
 import os
 import copy
@@ -24,7 +25,8 @@ class GaussSplitter(ISplitter):
             })
 
     def _create_subjob(self, job, inputdata):
-        j=job.copy()
+        j=addProxy(job).copy() ## Proxy copy increments the shareref counter
+        j=stripProxy(j)
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
