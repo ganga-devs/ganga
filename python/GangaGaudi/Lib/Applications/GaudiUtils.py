@@ -7,6 +7,7 @@ from Ganga.Utility.files import fullpath
 from Ganga.Utility.util import unique
 import Ganga.Utility.logging
 import Ganga.Utility.Config
+from Ganga.Core import GangaException
 
 logger = Ganga.Utility.logging.getLogger()
 configGaudi = Ganga.Utility.Config.getConfig('GAUDI')
@@ -147,44 +148,113 @@ import os
 import subprocess
 import time
 def shellEnv_cmd(cmd, environ=None, cwdir=None):
-    pipe = subprocess.Popen(cmd,
-                            shell=True,
-                            env=environ,
-                            cwd=cwdir,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    stdout, stderr  = pipe.communicate()
-    while pipe.poll() is None:
-      time.sleep(0.5)
-    return pipe.returncode, stdout, stderr
+  pipe = subprocess.Popen(cmd,
+                          shell=True,
+                          env=environ,
+                          cwd=cwdir,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+  stdout, stderr  = pipe.communicate()
+  while pipe.poll() is None:
+    time.sleep(0.5)
+  return pipe.returncode, stdout, stderr
 
 def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
-    import tempfile, pickle
-    f = tempfile.NamedTemporaryFile(mode='w+b')
-    fname = f.name
-    f.close()
+  import tempfile, pickle
+  f = tempfile.NamedTemporaryFile(mode='w+b')
+  fname = f.name
+  f.close()
+  
+  if not cmd.endswith(';'): cmd += ';'
+  envdump  = 'import os, pickle;'
+  envdump += 'f=open(\'%s\',\'w+b\');' % fname
+  envdump += 'pickle.dump(os.environ,f);'
+  envdump += 'f.close();'
+  envdumpcommand = 'python -c \"%s\"' % envdump
+  cmd += envdumpcommand
+  
+  pipe = subprocess.Popen(cmd,
+                          shell=True,
+                          env=environ,
+                          cwd=cwdir,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+  stdout, stderr  = pipe.communicate()
+  while pipe.poll() is None:
+    time.sleep(0.5)
     
-    if not cmd.endswith(';'): cmd += ';'
-    envdump  = 'import os, pickle;'
-    envdump += 'f=open(\'%s\',\'w+b\');' % fname
-    envdump += 'pickle.dump(os.environ,f);'
-    envdump += 'f.close();'
-    envdumpcommand = 'python -c \"%s\"' % envdump
-    cmd += envdumpcommand
+  f = open(fname,'r+b')
+  environ=environ.update(pickle.load(f))
+  f.close()
+  os.system('rm -f %s' % fname)
+  
+  return pipe.returncode, stdout, stderr
 
-    pipe = subprocess.Popen(cmd,
-                            shell=True,
-                            env=environ,
-                            cwd=cwdir,
-                            stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE)
-    stdout, stderr  = pipe.communicate()
-    while pipe.poll() is None:
-        time.sleep(0.5)
-    
-    f = open(fname,'r+b')
-    environ=environ.update(pickle.load(f))
-    f.close()
-    os.system('rm -f %s' % fname)
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+def fillPackedSandbox(sandbox_files,destination):
+  """Put all sandbox_files into tarball called name and write it into to the destination.
+  Arguments:
+  'sandbox_files': a list of File or FileBuffer objects.
+  'destination': a string representing the destination filename
+  Return: a list containing a path to the tarball
+  """
+  if not sandbox_files:
+    return []
 
-    return pipe.returncode, stdout, stderr
+  ## Generalised version from Ganga/Core/Sandbox/Sandbox.py
+  
+  import tarfile
+  import stat
+  
+  #tf = tarfile.open(destination,"w:gz")
+
+  ## "a" = append with no compression
+  ## creates file if doesn't exist
+  ## cant append to a compressed tar archive so must compress later
+  dir, filename = os.path.split(destination)
+  if not os.path.isdir(dir):
+    os.makedirs(dir)
+  tf = tarfile.open(destination,"a")
+  tf.dereference=True  #  --not needed in Windows
+  
+  for f in sandbox_files:
+    try:
+      contents=f.getContents()   # is it FileBuffer?
+      
+    except AttributeError:         # File
+      try:
+        fileobj = file(f.name)
+      except:
+        raise GangaException("File %s does not exist."%f.name) 
+      tinfo = tf.gettarinfo(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
+      
+    else:                          # FileBuffer
+      from StringIO import StringIO
+      fileobj = StringIO(contents)
+      
+      tinfo = tarfile.TarInfo()
+      tinfo.name = os.path.join(f.subdir,os.path.basename(f.name))
+      import time
+      tinfo.mtime = time.time()
+      tinfo.size = fileobj.len
+      
+    if f.isExecutable():
+      tinfo.mode=tinfo.mode|stat.S_IXUSR
+    tf.addfile(tinfo,fileobj)
+      
+  tf.close()
+      
+  return [destination]
+
+
+def gzipFile(filename, outputfilename=None, removeOriginal=False):
+  import gzip
+  if not outputfilename:
+    outputfilename = filename + '.gz'
+  f_in = open(filename, 'rb')
+  f_out = gzip.open(outputfilename, 'wb')
+  f_out.writelines(f_in)
+  f_out.close()
+  f_in.close()
+  if removeOriginal:
+    os.system('rm -f %s'%filename)
