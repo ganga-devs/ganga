@@ -13,6 +13,7 @@ from Ganga.GPIDev.Lib.File import ShareDir
 #from GaudiJobConfig import *
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
+from GangaGaudi.Lib.Applications.GaudiUtils import *
 from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
@@ -66,6 +67,8 @@ class Bender(GaudiBase):
                                    typelist=['str'],doc=docstr)
     docstr = 'The number of events '
     _schema.datadict['events'] = SimpleItem(preparable=1,defvalue=-1,typelist=['int'],doc=docstr)
+    _schema.version.major += 2
+    _schema.version.minor += 0
 ##     _schema.datadict['is_prepared'] = SimpleItem(defvalue=None,
 ##                                                  strict_sequence=0,
 ##                                                  visitable=1,
@@ -149,14 +152,20 @@ class Bender(GaudiBase):
         super(Bender,self).prepare(force)
         self._check_inputs()
 
-        share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-                                  'shared',
-                                  getConfig('Configuration')['user'],
-                                  self.is_prepared.name,
-                                  'inputsandbox')
-        if not os.path.isdir(share_path): os.makedirs(share_path) 
-        shutil.copy(expandfilename(self.module.name),share_path)
+        share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
+                                 'shared',
+                                 getConfig('Configuration')['user'],
+                                 self.is_prepared.name)
+##         if not os.path.isdir(share_path): os.makedirs(share_path) 
+##         shutil.copy(expandfilename(self.module.name),share_path)
+        fillPackedSandbox([expandfilename(self.module.name)],
+                          os.path.join(share_dir,
+                                       'inputsandbox',
+                                       '_input_sandbox_%s.tar' % self.is_prepared.name))
 
+        gzipFile(os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tar' % self.is_prepared.name),
+                 os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tgz' % self.is_prepared.name),
+                 True)
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
         self.post_prepare()
