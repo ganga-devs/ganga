@@ -119,6 +119,15 @@ class Dirac(IBackend):
                   ZipLogs=True
         return ZipLogs
 
+    def master_prepare(self,masterjobconfig):
+        """ Prepare the master job (shared sandbox files). This method is/should be called by master_submit() exactly once.
+        The input sandbox is created according to self._packed_input_sandbox flag (a class attribute)
+        """
+        
+        if masterjobconfig:
+            return [f.name for f in masterjobconfig.getSandboxFiles()]
+        return []
+    
     def _submit(self):
         '''Submit the job via the Dirac server.'''
         self.id = None
@@ -161,8 +170,12 @@ class Dirac(IBackend):
 
         sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
         script_file = self._getDiracScript()
-        dirac_script.input_sandbox = [sboxname[0],master_input_sandbox[0],
-                                      script_file]
+##         dirac_script.input_sandbox = [sboxname[0],master_input_sandbox[0],
+##                                       script_file]
+        dirac_script.input_sandbox   = master_input_sandbox
+        dirac_script.input_sandbox  += sboxname
+        dirac_script.input_sandbox  += [script_file]
+        
         for lfn in self.inputSandboxLFNs:
             from GangaLHCb.Lib.LHCbDataset.PhysicalFile import PhysicalFile
             if type(lfn) is PhysicalFile:
