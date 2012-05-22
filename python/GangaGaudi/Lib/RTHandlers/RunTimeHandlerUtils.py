@@ -14,8 +14,9 @@ def sharedir_handler(app, dir_name, output):
     for root, dirs, files in os.walk(share_dir):
         subdir = root.replace(share_dir,'')[1:] ## [1:] removes the preceeding /
         if ( type(output) is type([]) ) or ( type(output) is type(GangaList()) ):
-            for f in files:
-                output += [File(name=os.path.join(root,f),subdir=subdir)]
+            output += [File(name=os.path.join(root,f),subdir=subdir) for f in files]
+##             for f in files:
+##                 output += [File(name=os.path.join(root,f),subdir=subdir)]
         elif type(output) is type(''):
             for d in dirs:
                 if not os.path.isdir(d): os.makedirs(d) 
