@@ -63,7 +63,7 @@ class GaudiBase(IPrepareApp):
 
     _name = 'GaudiBase'
     _exportmethods = ['getenv','getpack', 'make', 'cmt']
-    _schema = Schema(Version(2, 1), schema)
+    _schema = Schema(Version(0, 1), schema)
 
     def _get_default_version(self,gaudi_app):
         raise NotImplementedError
@@ -215,42 +215,48 @@ class GaudiBase(IPrepareApp):
         dlls, pys, subpys = get_user_dlls(self.appname, self.version,
                                           self.user_release_area,self.platform,
                                           self.env)
+        InstallArea=[]
         #self.appconfig.inputsandbox += [File(f,subdir='lib') for f in dlls]
         for f in dlls:
-            if not os.path.isdir(os.path.join(share_dir,'inputsandbox','lib')): os.makedirs(os.path.join(share_dir,'inputsandbox','lib')) 
-            share_path = os.path.join(share_dir,'inputsandbox','lib',f.split('/')[-1])
-            shutil.copy(expandfilename(f),share_path)
-            #self.prep_inputbox.append(File(share_path,subdir='lib'))
+##             if not os.path.isdir(os.path.join(share_dir,'inputsandbox','lib')): os.makedirs(os.path.join(share_dir,'inputsandbox','lib')) 
+##             share_path = os.path.join(share_dir,'inputsandbox','lib',f.split('/')[-1])
+##             shutil.copy(expandfilename(f),share_path)
+            InstallArea.append(File(name=expandfilename(f),subdir='lib'))
         for f in pys:
             tmp = f.split('InstallArea')[-1]
             subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-            if not os.path.isdir(os.path.join(share_dir,'inputsandbox',subdir)): os.makedirs(os.path.join(share_dir,'inputsandbox',subdir))
-            share_path = os.path.join(share_dir,'inputsandbox',subdir,f.split('/')[-1])
-            shutil.copy(expandfilename(f),share_path)
+##             if not os.path.isdir(os.path.join(share_dir,'inputsandbox',subdir)): os.makedirs(os.path.join(share_dir,'inputsandbox',subdir))
+##             share_path = os.path.join(share_dir,'inputsandbox',subdir,f.split('/')[-1])
+##             shutil.copy(expandfilename(f),share_path)
             #File(f).create(share_path)
             #share_file = File(name=share_path,subdir=subdir)
             #share_file.subdir = subdir
             #self.prep_inputbox.append(share_file)
             #self.prep_inputbox.append(File(name=share_path,subdir=subdir))
+            InstallArea.append(File(name=expandfilename(f),subdir=subdir))
         for dir, files in subpys.iteritems():
             for f in files:
                 tmp = f.split('InstallArea')[-1]
                 subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-                if not os.path.isdir(os.path.join(share_dir,'inputsandbox',subdir)): os.makedirs(os.path.join(share_dir,'inputsandbox',subdir))
-                share_path = os.path.join(share_dir,'inputsandbox',subdir,f.split('/')[-1])
-                shutil.copy(expandfilename(f),share_path)
+##                 if not os.path.isdir(os.path.join(share_dir,'inputsandbox',subdir)): os.makedirs(os.path.join(share_dir,'inputsandbox',subdir))
+##                 share_path = os.path.join(share_dir,'inputsandbox',subdir,f.split('/')[-1])
+##                 shutil.copy(expandfilename(f),share_path)
                 #File(f).create(share_path)
                 #share_file = File(name=share_path,subdir=subdir)
                 #share_file.subdir = subdir
                 #self.prep_inputbox.append(share_file)
                 #self.prep_inputbox.append(File(name=share_path,subdir=subdir))
-
+                InstallArea.append(File(name=expandfilename(f),subdir=subdir))
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         # also call post_prepare for hashing
         # commented out here as inherrited from this class with extended perpare
         
 ##         self.checkPreparedHasParent(self)
 ##         self.post_prepare()
+        fillPackedSandbox(InstallArea,
+                          os.path.join( share_dir,
+                                        'inputsandbox',
+                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
