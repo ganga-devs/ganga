@@ -1,8 +1,8 @@
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Lib.Job import Job
 from SplitterUtils import DatasetSplitter
 from Ganga.GPIDev.Schema import *
-import copy
+#import copy
 
 class GaudiInputDataSplitter(ISplitter):
     """Splits a job into sub-jobs by partitioning the input data
@@ -33,8 +33,8 @@ class GaudiInputDataSplitter(ISplitter):
     # returns a subjob based on the master and the reduced dataset can be overridden
     # for modified behaviour
     def _create_subjob(self, job, dataset):
-        j=addProxy(job).copy()
-        j=stripProxy(j)
+        j=Job()
+        j.copyFrom(job)
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
