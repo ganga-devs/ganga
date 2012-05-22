@@ -89,6 +89,8 @@ class Gaudi(GaudiBase):
     _schema.datadict['extraopts'] = SimpleItem(preparable=1,defvalue=None,
                                      typelist=['str','type(None)'],doc=docstr)
 
+    _schema.version.major += 0
+    _schema.version.minor += 1
 ##     docstr = 'Data/sandbox items defined in prepare'
 ##     schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
 ##     _schema.datadict['prep_outputbox']  = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
@@ -142,6 +144,10 @@ class Gaudi(GaudiBase):
         except:
             self.unprepare()
             raise
+
+        gzipFile(os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tar' % self.is_prepared.name),
+                 os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tgz' % self.is_prepared.name),
+                 True)
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
         self.post_prepare() ## create hash
