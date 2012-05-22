@@ -748,8 +748,12 @@ class Job(GangaObject):
             logger.warning("Non-preparable application %s cannot be unprepared" % self.application._name)
             return
 
-        logger.debug("Running unprepare() within Job.py")
-        self.application.unprepare()
+        if not self._readonly():
+            logger.debug("Running unprepare() within Job.py")
+            self.application.unprepare()
+        else:
+            logger.error("Cannot unprepare a job in the %s state" % self.status)
+            
 
 
     def submit(self,keep_going=None,keep_on_fail=None,prepare=False):
