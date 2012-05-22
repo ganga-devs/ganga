@@ -13,6 +13,7 @@ from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 logger = Ganga.Utility.logging.getLogger()
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
+from GangaGaudi.Lib.Applications.GaudiUtils import *
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
@@ -83,12 +84,13 @@ class GaudiPython(GaudiBase):
                                           doc=docstr)
     docstr = "List of arguments for the script"
     _schema.datadict['args'] =  SimpleItem(preparable=1,defvalue=[],typelist=['str'],
-                                          sequence=1,doc=docstr)
+                                           sequence=1,doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
     _schema.datadict['project'] = SimpleItem(preparable=1,defvalue=None,
-                                            typelist=['str','type(None)'],
-                                            doc=docstr)
-
+                                             typelist=['str','type(None)'],
+                                             doc=docstr)
+    _schema.version.major += 2
+    _schema.version.minor += 0
 
     def _get_default_version(self, gaudi_app):
         return guess_version(gaudi_app)
@@ -168,15 +170,21 @@ class GaudiPython(GaudiBase):
         super(GaudiPython,self).prepare(force)
         self._check_inputs()
 
-        share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
+        share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                   'shared',
                                   getConfig('Configuration')['user'],
-                                  self.is_prepared.name,
-                                  'inputsandbox')
-        if not os.path.isdir(share_path): os.makedirs(share_path) 
-        for f in self.script:
-            shutil.copy(expandfilename(f.name),share_path)
+                                  self.is_prepared.name)
+##         if not os.path.isdir(share_path): os.makedirs(share_path) 
+##         for f in self.script:
+##             shutil.copy(expandfilename(f.name),share_path)
 
+        fillPackedSandbox(self.script,
+                          os.path.join(share_dir,
+                                       'inputsandbox',
+                                       '_input_sandbox_%s.tar' % self.is_prepared.name))
+        gzipFile(os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tar' % self.is_prepared.name),
+                 os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tgz' % self.is_prepared.name),
+                 True)
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
         self.post_prepare()
