@@ -18,6 +18,7 @@ def getEnvironment( config = {} ):
    return
 
 def loadPlugins( config = {} ):
+   import Lib.Backends
    pass
    #import Lib.Applications
    #import Lib.RTHandlers
