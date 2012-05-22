@@ -9,9 +9,10 @@ cls = f.read()
 f.close()
 for app in available_apps():
     if app in dir(): continue
-    exec(cls.replace('AppName','%s'%app))
+    exec(cls.replace('AppName',app))
     exec('%sTask = taskify(%s,"%sTask")' %(app,app,app))
     exec('task_map["%s"] = %sTask' %(app,app))
+##    exec('task_map["%s"] = %s' %(app,app))
 
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
