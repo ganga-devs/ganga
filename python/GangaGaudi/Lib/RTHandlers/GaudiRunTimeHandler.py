@@ -51,7 +51,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
 ##                 inputsandbox += [File(name=os.path.join(root,f),subdir=subdir)]
 
         # Handle debug prep_dir e.g. copy the option pickling env to debug
-        sharedir_handler(app, 'debug', job.getDebugWorkspace().getPath())
+        #sharedir_handler(app, 'debug', job.getDebugWorkspace().getPath())
      
         ## Here add any sandbox files/data coming from the appmasterconfig
         ## from master_configure. Catch the case where None is passed (as in tests)
