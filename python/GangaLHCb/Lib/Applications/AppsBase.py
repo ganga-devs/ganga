@@ -1,8 +1,8 @@
 ## Note that the special string AppName will be replaced upon initialisation
 ## in all cases with the relavent app name (DaVinci, Gauss etc...)
-import os, tempfile, pprint
+import os, tempfile, pprint, sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
-from GangaGaudi.Lib.Applications.GaudiUtils import shellEnvUpdate_cmd
+from GangaGaudi.Lib.Applications.GaudiUtils import shellEnvUpdate_cmd, fillPackedSandbox
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers#,get_parser
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -21,19 +21,53 @@ logger = Ganga.Utility.logging.getLogger()
 
 ## The Doc string for the Application classes
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-def GaudiDocString(appname):
-    "Provide the documentation string for each of the Gaudi based applications"
+## def GaudiDocString(appname):
+##     "Provide the documentation string for each of the Gaudi based applications"
     
-    doc="""The Gaudi Application handler
+##     doc="""The Gaudi Application handler
 
-    The Gaudi application handler is for running LHCb GAUDI framework
+##     The Gaudi application handler is for running LHCb GAUDI framework
+##     jobs. For its configuration it needs to know the version of the application
+##     and what options file to use. More detailed configuration options are
+##     described in the schema below.
+
+##     An example of submitting a Gaudi job to Dirac could be:
+
+##     app = Gaudi(version='v99r0')
+
+##     # Give absolute path to options file. If several files are given, they are
+##     # just appended to each other.
+##     app.optsfile = ['/afs/...../myopts.opts']
+
+##     # Append two extra lines to the python options file
+##     app.extraopts=\"\"\"
+##     ApplicationMgr.HistogramPersistency ="ROOT"
+##     ApplicationMgr.EvtMax = 100
+##     \"\"\"
+
+##     # Define dataset
+##     ds = LHCbDataset(['LFN:foo','LFN:bar'])
+
+##     # Construct and submit job object
+##     j=Job(application=app,backend=Dirac())
+##     j.submit()
+
+##     """
+##     return doc.replace( "Gaudi", appname )
+
+## Application class template
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+class AppName(Gaudi):
+    """The AppName Application handler
+
+    The AppName application handler is for running LHCb GAUDI framework
     jobs. For its configuration it needs to know the version of the application
     and what options file to use. More detailed configuration options are
     described in the schema below.
 
-    An example of submitting a Gaudi job to Dirac could be:
+    An example of submitting a AppName job to Dirac could be:
 
-    app = Gaudi(version='v99r0')
+    app = AppName(version='v99r0')
 
     # Give absolute path to options file. If several files are given, they are
     # just appended to each other.
@@ -51,16 +85,10 @@ def GaudiDocString(appname):
     # Construct and submit job object
     j=Job(application=app,backend=Dirac())
     j.submit()
-
-    """
-    return doc.replace( "Gaudi", appname )
-
-## Application class template
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-class AppName(Gaudi):
+"""
     _name = 'AppName'
     _category = 'applications'
-    __doc__ = GaudiDocString('AppName')
+    #__doc__ = GaudiDocString('AppName')
     _schema = Gaudi._schema.inherit_copy()
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
     _schema.datadict['package'] = SimpleItem(defvalue=None,
@@ -85,6 +113,9 @@ class AppName(Gaudi):
 ##     _schema.datadict['prep_outputbox']  = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
 ##     _schema.datadict['prep_inputdata']  = ComponentItem(category='datasets', preparable=1,defvalue=LHCbDataset(),typelist=['GangaLHCb.Lib.LHCbDataset.LHCbDataset'],hidden=1,doc=docstr)
 ##     _schema.datadict['prep_outputdata'] = ComponentItem(category='datasets', preparable=1,defvalue=OutputData(),typelist=['GangaLHCb.Lib.LHCbDataset.OutputData'],hidden=1,doc=docstr)
+
+    _schema.version.major += 2
+    _schema.version.minor += 0
     
     _exportmethods = Gaudi._exportmethods[:]
     _exportmethods += ['readInputData']
@@ -106,7 +137,7 @@ class AppName(Gaudi):
             
     def _auto__init__(self):
         self.appname='AppName'
-        super(type(self), self)._auto__init__()
+        super(AppName, self)._auto__init__()
         
         if (not self.package): self.package = available_packs(self.appname)
         if self.appname is 'Vetra': self.lhcb_release_area = os.path.expandvars("$Vetra_release_area")
@@ -298,10 +329,15 @@ class AppName(Gaudi):
                                  self.is_prepared.name)
         ## Need to remember to create the buffer as the perpare methods returns
         ## are merely copied to the inputsandbox so must alread exist.
-        share_path = os.path.join(share_dir,'inputsandbox')
-        if not os.path.isdir(share_path): os.makedirs(share_path) 
-        FileBuffer(os.path.join(share_path,'options.pkl'),
-                   parser.opts_pkl_str).create()
+##         share_path = os.path.join(share_dir,'inputsandbox')
+##         if not os.path.isdir(share_path): os.makedirs(share_path) 
+
+        fillPackedSandbox([FileBuffer('options.pkl',parser.opts_pkl_str)],
+                          os.path.join(share_dir,
+                                       'inputsandbox',
+                                       '_input_sandbox_%s.tar' % self.is_prepared.name))
+##         FileBuffer(os.path.join(share_path,'options.pkl'),
+##                    parser.opts_pkl_str).create()
             #self.prep_inputbox.append(File(os.path.join(share_dir,'options.pkl')))
             
             
