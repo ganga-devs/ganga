@@ -1068,7 +1068,10 @@ class Job(GangaObject):
             #decrement the reference counter.
             if hasattr(self.application,'is_prepared') and self.application.__getattribute__('is_prepared'):
                 if self.application.is_prepared is not True:
-                    self.application.decrementShareCounter(self.application.is_prepared.name, remove=1)
+                    self.application.decrementShareCounter(self.application.is_prepared.name)
+                    for sj in self.subjobs:
+                        self.application.decrementShareCounter(self.application.is_prepared.name)
+                        
                 
 
     def fail(self,force=False):
