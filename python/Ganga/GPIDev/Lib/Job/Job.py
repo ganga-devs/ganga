@@ -881,6 +881,9 @@ class Job(GangaObject):
                     for j in self.subjobs:
                         j._init_workspace()
 
+                        for outputfile in j.outputfiles:
+                            outputfile.joboutputdir = j.outputdir
+
                     rjobs = self.subjobs
                     logger.info('submitting %d subjobs', len(rjobs))
                     self._commit()
