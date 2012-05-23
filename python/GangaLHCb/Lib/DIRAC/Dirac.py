@@ -11,6 +11,7 @@ from DiracUtils import *
 from DiracServer import DiracServer
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.util import unique
 
 logger = Ganga.Utility.logging.getLogger()
@@ -119,15 +120,26 @@ class Dirac(IBackend):
                   ZipLogs=True
         return ZipLogs
 
-    def master_prepare(self,masterjobconfig):
-        """ Prepare the master job (shared sandbox files). This method is/should be called by master_submit() exactly once.
-        The input sandbox is created according to self._packed_input_sandbox flag (a class attribute)
-        """
-        
-        if masterjobconfig:
-            return [f.name for f in masterjobconfig.getSandboxFiles()]
-        return []
+    def master_prepare(self, masterjobconfig):
+        def filt(sharedsandbox):
+            if sharedsandbox:
+                def shareboxfilter(item):
+                    return item.name.find(self.getJobObject().application.is_prepared.name) is not -1
+                return shareboxfilter
+
+            def nonshareboxfilter(item):
+                return item.name.find(self.getJobObject().application.is_prepared.name) is -1
+            return nonshareboxfilter
+
     
+        if masterjobconfig:
+
+            inputsandbox  = [f.name for f in filter(filt(True) , masterjobconfig.getSandboxFiles())]
+            sjc = StandardJobConfig(inputbox=filter(filt(False), masterjobconfig.getSandboxFiles()))
+            inputsandbox += super(type(self),self).master_prepare(sjc)
+            return inputsandbox
+        return []
+
     def _submit(self):
         '''Submit the job via the Dirac server.'''
         self.id = None
