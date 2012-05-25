@@ -158,7 +158,7 @@ class Bender(GaudiBase):
                                  self.is_prepared.name)
 ##         if not os.path.isdir(share_path): os.makedirs(share_path) 
 ##         shutil.copy(expandfilename(self.module.name),share_path)
-        fillPackedSandbox([expandfilename(self.module.name)],
+        fillPackedSandbox([self.module],
                           os.path.join(share_dir,
                                        'inputsandbox',
                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
