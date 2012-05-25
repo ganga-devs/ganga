@@ -16,10 +16,10 @@ def master_prepare(self, masterjobconfig):
 
     
     if masterjobconfig:
-
         inputsandbox  = [f.name for f in filter(filt(True) , masterjobconfig.getSandboxFiles())]
         sjc = StandardJobConfig(inputbox=filter(filt(False), masterjobconfig.getSandboxFiles()))
-        inputsandbox += super(type(self),self).master_prepare(sjc)
+        if sjc.getSandboxFiles():
+            inputsandbox += super(type(self),self).master_prepare(sjc)
         return inputsandbox
     return []
    
