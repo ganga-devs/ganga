@@ -32,9 +32,9 @@ class PrepRegistry(Registry):
     def getProxy(self):
         pass
     
-    def shutdown(self):
-        self.shareref = self.metadata[self.metadata.ids()[-1]]
-        self.shareref.closedown()
+#    def shutdown(self):
+#        self.shareref = self.metadata[self.metadata.ids()[-1]]
+#        self.shareref.closedown()
 
 
 
