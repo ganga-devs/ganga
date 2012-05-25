@@ -149,7 +149,7 @@ class Node(object):
         if not isinstance(self, srcobj.__class__) and not isinstance(srcobj, self.__class__):
             raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
         for name,item in self._schema.allItems():
-            if name is 'application':
+            if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
                 if srcobj.application.is_prepared is not None and srcobj.application.is_prepared is not True:
                     srcobj.application.incrementShareCounter(srcobj.application.is_prepared.name)
             if not self._schema.hasAttribute(name):
