@@ -311,7 +311,7 @@ def createTagInfo( stream_ref, infiles ):
 
                 del_list = []
                 for tagds2 in poss_tagds.keys():
-                    if tagds2.find("/") != -1 or (tagds.find("_tid") == -1 and tagds2.find("_tid") != -1) or tagds2.find("_sub") != -1:
+                    if tagds2.find("/") != -1 or (tagds.find("_tid") == -1 and tagds2.find("_tid") != -1) or tagds2.find("_sub") != -1 or tagds2.find("TAG.x") != -1:
                         del_list.append(tagds2)
 
                 for tagds2 in del_list:
