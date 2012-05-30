@@ -85,7 +85,7 @@ class CRABBackend(IBackend):
             # Forcing all the jobs to be submitted, so the monitoring loops keeps issuing calls.
             for subjob in job.subjobs:
                 if subjob.status in ('submitting'):
-                    subjob.updateStatus('failed')
+                    subjob.updateStatus('submitted')
 
 #            try:
 #                server.status(job)
@@ -305,7 +305,7 @@ class CRABBackend(IBackend):
         if (status=='R' and not (job.status in ['killed'])):
             if (job.status in ['submitting','new']):
                 job.updateStatus('submitted')
-            if not (job.status in ['running'] ):
+            elif not (job.status in ['running'] ):
                 job.updateStatus('running')
         elif (status == 'C' or status == 'CS') and not (job.status in ['submitted','submitting','new']):
             logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
