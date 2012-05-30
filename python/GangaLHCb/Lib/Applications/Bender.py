@@ -18,6 +18,7 @@ from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
+import CMTscript
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 logger = Ganga.Utility.logging.getLogger()
 
@@ -101,7 +102,7 @@ class Bender(GaudiBase):
             script += 'export CMTCONFIG=%s\n' % self.platform
         useflag = ''
         if self.masterpackage:
-            (mpack, malg, mver) = parse_master_package(self.masterpackage)
+            (mpack, malg, mver) = CMTscript.parse_master_package(self.masterpackage)
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
         script += '%s \n' % cmd
@@ -124,6 +125,8 @@ class Bender(GaudiBase):
             msg = 'Command "%s" failed to properly setup environment.' % cmd
             logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
+
+        self.env = self.shell.env
 
 ##         super(type(self), self)._getshell()
             
