@@ -13,15 +13,16 @@ from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '1.0.0',
+    'DQ2Clients' : { 'version' : '2.3.0',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
                      'LD_LIBRARY_PATH' : ['external/mysql32/','external/mysqldb32/','external/nordugrid/lib/'],
                      'DQ2_ENDUSER_SETUP' : 'True',
-                     'noarch':True 
+                     'noarch':True ,
+                     'RUCIO_APPID' : 'ganga',
                      },
-    'panda-client' : { 'version' : '0.3.92', 
+    'panda-client' : { 'version' : '0.4.0', 
                        'PYTHONPATH':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',

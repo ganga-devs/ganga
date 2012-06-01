@@ -316,6 +316,8 @@ def dq2outputdatasetname(datasetname, jobid, isGroupDS, groupname):
     usertag = config['usertag']
 
     # Get DN or nickname
+    from Ganga.GPIDev.Credentials import GridProxy
+    gridProxy = GridProxy()
     username = gridProxy.identity(safe=True)
     if config['ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET']:
         nickname = getNickname(allowMissingNickname=True) 
@@ -1885,6 +1887,16 @@ class DQ2OutputDownloader(MTRunner):
 
 
 logger = getLogger()
+
+# New for DQ2 client 2.3.0
+from Ganga.GPIDev.Credentials import GridProxy
+gridProxy = GridProxy()
+username = gridProxy.identity(safe=True)
+nickname = getNickname(allowMissingNickname=False)
+if nickname:
+    username = nickname
+os.environ['RUCIO_ACCOUNT'] = username
+logger.debug("Using RUCIO_ACCOUNT = %s " %(os.environ['RUCIO_ACCOUNT'])) 
 
 from dq2.clientapi.DQ2 import DQ2
 dq2=DQ2()
