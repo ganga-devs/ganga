@@ -78,7 +78,7 @@ def bootstrap():
         registry.location = getLocalRoot()
         registry.startup()
         logger.debug("started " + registry.info(full=False))
-        if registry.name == "prep":
+        if registry.name == "jobs":
             registry.print_other_sessions()
         started_registries.append(registry.name)
         retval.append((registry.name, registry.getProxy(), registry.doc))

@@ -133,6 +133,7 @@ class Dirac(IBackend):
 
     
         if masterjobconfig:
+
             inputsandbox  = [f.name for f in filter(filt(True) , masterjobconfig.getSandboxFiles())]
             sjc = StandardJobConfig(inputbox=filter(filt(False), masterjobconfig.getSandboxFiles()))
             if sjc.getSandboxFiles():
@@ -184,10 +185,7 @@ class Dirac(IBackend):
         script_file = self._getDiracScript()
 ##         dirac_script.input_sandbox = [sboxname[0],master_input_sandbox[0],
 ##                                       script_file]
-        
-        ## just fixed this before the wedding was changing the master_input_sandbx
-        ##dirac_script.input_sandbox   = master_input_sandbox
-        dirac_script.input_sandbox   = master_input_sandbox[:]
+        dirac_script.input_sandbox   = master_input_sandbox
         dirac_script.input_sandbox  += sboxname
         dirac_script.input_sandbox  += [script_file]
         
