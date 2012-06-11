@@ -5,6 +5,7 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+import time
 
 class IUnit(GangaObject):
    _schema = Schema(Version(1,0), {
@@ -107,11 +108,25 @@ class IUnit(GangaObject):
             self.prev_job_ids.append(j.id)
             self.active = False
             trf._setDirty()  # ensure everything's saved
+
+            # add a delay in to make sure the trf repo is updated
+            for i in range(0, 100):
+               if not trf._dirty:
+                  break
+               time.sleep(0.1)
+               
             return 1
 
          self.active_job_ids.append(j.id)
          self.updateStatus("running")
-         trf._setDirty()  # ensure everything's saved            
+         trf._setDirty()  # ensure everything's saved
+
+         # add a delay in to make sure the trf repo is updated
+         for i in range(0, 100):
+            if not trf._dirty:
+               break
+            time.sleep(0.1)
+            
          return 1
 
       # update any active jobs
