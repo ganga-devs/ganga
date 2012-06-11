@@ -83,12 +83,18 @@ class MultiTransform(Transform):
        }.items()))
    _category = 'transforms'
    _name = 'MultiTransform'
-   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits', 'getUnitsFromPartitions', 'isLocalTRF', 'isUnitComplete', 'getLocalDQ2FileList', 'getAllUnitJobs', 'listUnitDatasets', 'listAllDatasets', 'getUnitContainerName', 'checkContainerContents', 'unitOverview']
+   _exportmethods = Transform._exportmethods + ['getID', 'addUnit', 'activateUnit', 'deactivateUnit', 'getUnitJob', 'forceUnitCompletion', 'resetUnit', 'getContainerName', 'getNumUnits', 'getUnitsFromPartitions', 'isLocalTRF', 'isUnitComplete', 'getLocalDQ2FileList', 'getAllUnitJobs', 'listUnitDatasets', 'listAllDatasets', 'getUnitContainerName', 'checkContainerContents', 'unitOverview', 'getUnitInputList','getUnitOutputList' ]
    
    def initialize(self):
        super(MultiTransform, self).initialize()
        self.backend = None
 
+   def getUnitInputList(self):
+       return copy.deepcopy(self.unit_inputdata_list)
+
+   def getUnitOutputList(self):
+       return copy.deepcopy(self.unit_outputdata_list)
+   
    def getNumUnits(self):
        return len(self.unit_partition_list)
    
