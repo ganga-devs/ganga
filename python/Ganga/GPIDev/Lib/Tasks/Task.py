@@ -21,7 +21,8 @@ class Task(GangaObject):
     _exportmethods = [
                 'setBackend', 'setParameter', 'insertTransform', 'appendTransform', 'removeTransform', # Settings
                 'check', 'run', 'pause', 'remove', # Operations
-                'overview', 'info', 'n_all', 'n_status', 'help', 'getJobs' # Info
+                'overview', 'info', 'n_all', 'n_status', 'help', 'getJobs', # Info
+                'float_all', 'run_all' # Helper
                 ]
     
     default_registry = "tasks"
@@ -267,3 +268,14 @@ class Task(GangaObject):
 
     def help(self):
         print "This is a Task without special properties"
+
+    ## Helper methods
+    def float_all(self):
+        self.float = self.n_all()
+
+    def run_all(self):
+        self.float_all()
+        self.run()
+        
+
+        
