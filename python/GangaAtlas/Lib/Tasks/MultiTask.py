@@ -56,7 +56,7 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromTagInfo", "initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets', 'restartTask']
+   _exportmethods = Task._exportmethods + ["initializeFromTagInfo", "initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets', 'restartTask', 'clearExcludedSites']
    
    def initialize(self):
       super(MultiTask, self).initialize()
@@ -304,4 +304,9 @@ class MultiTask(Task):
                         trf.unit_outputdata_list += [[]]
                         trf.unit_partition_list += [[]]
                         trf.unit_state_list += [{'active':True, 'configured':False, 'submitted':False, 'download':False, 'merged':False, 'reason':'', 'exceptions' : 0, 'force' : False} ]
+
+    def clearExcludedSites(self):
+        for trf in self.transforms:     
+            if hasattr(trf.backend, 'requirements') and hasattr(trf.backend.requirements, 'excluded_sites'):
+                trf.backend.requirements.excluded_sites = []    
          
