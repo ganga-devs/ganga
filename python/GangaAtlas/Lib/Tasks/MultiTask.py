@@ -308,5 +308,11 @@ class MultiTask(Task):
    def clearExcludedSites(self):
       for trf in self.transforms:     
          if hasattr(trf.backend, 'requirements') and hasattr(trf.backend.requirements, 'excluded_sites'):
-            trf.backend.requirements.excluded_sites = []    
+            trf.backend.requirements.excluded_sites = []  
+
+   def activateAllUnits(self):
+      for trf in self.transforms:
+         if isinstance(trf,MultiTransform):
+            for uind in xrange(0,trf.getNumUnits()):                                    
+               trf.activateUnit(uind)   
          
