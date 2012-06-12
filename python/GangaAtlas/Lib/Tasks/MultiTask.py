@@ -56,7 +56,7 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromTagInfo", "initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets', 'restartTask', 'clearExcludedSites']
+   _exportmethods = Task._exportmethods + ["initializeFromTagInfo", "initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets', 'restartTask', 'clearExcludedSites', 'activateAllUnits']
    
    def initialize(self):
       super(MultiTask, self).initialize()
