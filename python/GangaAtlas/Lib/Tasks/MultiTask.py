@@ -56,7 +56,7 @@ class MultiTask(Task):
        }.items()))
    _category = 'tasks'
    _name = 'MultiTask'
-   _exportmethods = Task._exportmethods + ["initializeFromTagInfo", "initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets', 'restartTask', 'clearExcludedSites', 'activateAllUnits']
+   _exportmethods = Task._exportmethods + ["initializeFromTagInfo", "initializeFromDatasets", "unitOverview", 'getTransform', 'getContainerName', 'listAllDatasets', 'restartTask', 'clearExcludedSites', 'activateAllUnits', 'setAllRunlimits']
    
    def initialize(self):
       super(MultiTask, self).initialize()
@@ -315,4 +315,12 @@ class MultiTask(Task):
          if isinstance(trf,MultiTransform):
             for uind in xrange(0,trf.getNumUnits()):                                    
                trf.activateUnit(uind)   
+
+   def setAllRunlimits(self, runLimit):
+      for trf in self.transforms:
+         if hasattr(trf, 'setRunlimit'):
+            trf.setRunlimit(runLimit)           
+
+
+
          
