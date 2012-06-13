@@ -17,7 +17,7 @@ class MetadataDict(GangaObject):
     _exportmethods = ['__getitem__','__str__']
 
 
-    def __init__(self,name=''):
+    def __init__(self):
         super(MetadataDict,self).__init__()
 
     def __str__(self):
