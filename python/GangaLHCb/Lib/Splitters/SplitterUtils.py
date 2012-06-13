@@ -28,7 +28,7 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     for l in split_files: big_list.extend(l)
     diff = set(inputs.getFileNames()).difference(big_list)
     if len(diff) > 0:            
-        for f in diff: pass#logger.warning('Ignored file: %s' % f)
+        for f in diff: logger.warning('Ignored file: %s' % f)
         if not ignoremissing:
             raise SplittingError('Some files not found!')
 
