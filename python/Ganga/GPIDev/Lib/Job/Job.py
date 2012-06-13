@@ -7,6 +7,7 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.Lib.Mergers.Merger import runAutoMerge
+from MetadataDict import *
 
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.IMerger import MergerError
@@ -161,6 +162,7 @@ class Job(GangaObject):
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
                                     'merger':ComponentItem('mergers',defvalue=None,load_default=0,optional=1,doc='optional output merger'),
                                     'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
+                                    'metadata':ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
                                     'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0)
                                     })
 

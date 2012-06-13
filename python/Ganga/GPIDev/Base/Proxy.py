@@ -394,13 +394,21 @@ def GPIProxyClassFactory(name, pluginclass):
             raise AttributeError("Internal implementation object '_impl' cannot be reassigned")
 
         if not self._impl._schema.hasAttribute(x):
+            if self._impl._name=='Job' and x in self._impl.metadata.data.keys():
+                raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)       
             raise GangaAttributeError("'%s' has no attribute '%s'" % (self._impl._name,x))
 
         object.__setattr__(self,x,v)
     helptext(_setattr,"""Set a property of %(classname)s with consistency and safety checks.
 Setting a [protected] or a unexisting property raises AttributeError.""")
 
-    
+    def _getattr(self,name):
+        if self._impl._name=='Job':
+            try:
+                return self.metadata[name]
+            except:
+                return object.__getattribute__(self,name)
+        return object.__getattribute__(self,name)
 
     # but at the class level _impl is a ganga plugin class
     d = { '_impl' : pluginclass,
@@ -411,7 +419,8 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
           '__ne__': _ne,
           'copy' : _copy,
           '__doc__' : publicdoc,
-          '__setattr__': _setattr
+          '__setattr__': _setattr,
+          '__getattr__': _getattr
          }
 
     ## TODO: this makes GangaList inherit from the list
