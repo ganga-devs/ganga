@@ -36,11 +36,15 @@ file.close()
 j=Job(t)
 j.submit()
 
-
+sharedname = j.application.is_prepared.name
+gangadir = config['Configuration'].gangadir
+user = config['Configuration'].user
+filename = gangadir+'/shared/'+user+'/'+sharedname+'/inputsandbox/'
 # Un-zip and un-tar input sandbox and search for the test string if the same number as expected exits
 # job passes
-os.system('cd '+j.inputdir+';tar -xzvf _input_sandbox_'+str(j.id)+'_master.tgz|grep test |tee pyfiles.log')
-file = open(os.path.join(j.inputdir,'pyfiles.log'),'r')
+os.system('cd '+filename+';tar -xzvf _input_sandbox_'+sharedname+'.tgz|grep test |tee pyfiles.log')
+
+file = open(os.path.join(filename,'pyfiles.log'),'r')
 
 lines = [line for line in file.readlines()]
 status = [line.find('test')>=0 for line in lines]

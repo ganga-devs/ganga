@@ -35,6 +35,7 @@ class TestGaudiPython(GangaGPITestCase):
                                   getConfig('Configuration')['user'],
                                   g.is_prepared.name,
                                   'inputsandbox')
+        os.system('cd '+share_path+';tar -xzvf _input_sandbox_'+g.is_prepared.name+'.tgz')
         assert os.path.exists(os.path.join(share_path,'dummy.script'))
 
     def test_GaudiPython_unprepare(self):
