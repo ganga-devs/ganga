@@ -390,11 +390,17 @@ def GPIProxyClassFactory(name, pluginclass):
     
     def _setattr(self,x,v):
         'something'
+        ## need to know about the types that require metadata attribute checking
+        ## this allows derived types to get same behaviour for free.
+        from Ganga.GPIDev.Lib.Job.Job import Job
+        from Ganga.GPIDev.Lib.Tasks.Task import Task
+        from Ganga.GPIDev.Lib.Tasks.Transform import Transform        
+        metadata_objects=[Job]
         if x == '_impl':
             raise AttributeError("Internal implementation object '_impl' cannot be reassigned")
 
         if not self._impl._schema.hasAttribute(x):
-            if self._impl._name=='Job' and x in self._impl.metadata.data.keys():
+            if True in (isType(self,t) for t in metadata_objects) and x in self._impl.metadata.data.keys():
                 raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)       
             raise GangaAttributeError("'%s' has no attribute '%s'" % (self._impl._name,x))
 
@@ -403,7 +409,13 @@ def GPIProxyClassFactory(name, pluginclass):
 Setting a [protected] or a unexisting property raises AttributeError.""")
 
     def _getattr(self,name):
-        if self._impl._name=='Job':
+        ## need to know about the types that require metadata attribute checking
+        ## this allows derived types to get same behaviour for free.
+        from Ganga.GPIDev.Lib.Job.Job import Job
+        from Ganga.GPIDev.Lib.Tasks.Task import Task
+        from Ganga.GPIDev.Lib.Tasks.Transform import Transform        
+        metadata_objects=[Job]
+        if True in (isType(self,t) for t in metadata_objects):
             try:
                 return self.metadata[name]
             except:
