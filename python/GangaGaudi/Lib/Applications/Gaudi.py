@@ -90,7 +90,7 @@ class Gaudi(GaudiBase):
                                      typelist=['str','type(None)'],doc=docstr)
 
     _schema.version.major += 0
-    _schema.version.minor += 1
+    _schema.version.minor += 0
 ##     docstr = 'Data/sandbox items defined in prepare'
 ##     schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
 ##     _schema.datadict['prep_outputbox']  = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
