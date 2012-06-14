@@ -22,7 +22,7 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'panda-client' : { 'version' : '0.4.0', 
+    'panda-client' : { 'version' : '0.4.2', 
                        'PYTHONPATH':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
