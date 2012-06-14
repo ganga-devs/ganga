@@ -55,6 +55,7 @@ class TestGaudi(GangaGPITestCase):
 ##         ok = os.path.exists(os.path.join(job.application._impl.is_prepared.name,'GaussHistos.root')) and \
 ##              os.path.exists(os.path.join(job.application._impl.is_prepared.name,'GaussMonitor.root'))
         assert os.path.exists(os.path.join(share_path,'output','options_parser.pkl')), 'outputsandbox error'
+        os.system('cd '+share_path+'/inputsandbox/'+';tar -xzvf _input_sandbox_'+job.application.is_prepared.name+'.tgz')        
         assert os.path.exists(os.path.join(share_path,'inputsandbox','options.pkl')), 'pickled options file error'
         assert os.path.exists(os.path.join(share_path,'debug','gaudi-env.py.gz')), 'zipped env file error'
         #assert job.application._impl.prep_outputdata.files.count('Gauss.sim') > 0,'outputdata error'
