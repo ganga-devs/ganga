@@ -36,6 +36,7 @@ class MetadataDict(GangaObject):
             raise GangaAttributeError('Metadata doesn\'t support nesting data structures at the moment, values of type \'list\', \'tuple\' or \'dict\' are forbidden')
             
         self.data[key]=value
+        self._setDirty()
         
     def update(self, dict):
 
