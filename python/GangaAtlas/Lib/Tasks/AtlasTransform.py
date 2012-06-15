@@ -7,6 +7,12 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from GangaAtlas.Lib.Tasks.AtlasUnit import AtlasUnit
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
+from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
+from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
+from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
+from dq2.common.DQException import DQException
 
 class AtlasTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
@@ -17,7 +23,7 @@ class AtlasTransform(ITransform):
 
    _category = 'transforms'
    _name = 'AtlasTransform'
-   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName' ]
+   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer' ]
 
    def createUnits(self):
       """Create new units if required given the inputdata"""
@@ -56,3 +62,20 @@ class AtlasTransform(ITransform):
          name = self.name
          
       return (self._getParent().getContainerName()[:-1] + ".%s.%i/" % (name, self.getID())).replace(" ", "_")
+
+   def initializeFromContainer(self, dset, template = None):
+      """Initialise the trf with given container, creating a unit for each DS"""
+      if dset[-1] != "/":
+         logger.error("Please supply a container!")
+         return
+      
+      try:
+         tid_datasets = dq2.listDatasetsInContainer(dset)
+      except DQUnknownDatasetException:
+         logger.error("dataset container %s not found" % dset)
+         return
+         
+      logger.info("Found %i datasets matching %s..." % (len(tid_datasets), dset))
+         
+      for ds in tid_datasets:
+         self.addUnit('.'.join( ds.split(".")[1:-1] ), ds, template)
