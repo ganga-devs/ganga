@@ -153,7 +153,7 @@ class Job(GangaObject):
                                     'name':SimpleItem('',doc='optional label which may be any combination of ASCII characters',typelist=['str']),
                                     'inputdir':SimpleItem(getter="getStringInputDir",defvalue=None,transient=1,protected=1,comparable=0,load_default=0,optional=1,copyable=0,typelist=['str'],doc='location of input directory (file workspace)'),
                                     
-                                    'outputdir':SimpleItem(getter="getStringOutputDir",defvalue=None,transient=1,protected=1,comparable=0,load_default=0,optional=1,copyable=0,typelist=['str'],doc='location of output directory (file workspace)'),                                    
+                                    'outputdir':SimpleItem(getter="getStringOutputDir",defvalue=None,transient=1,protected=1,comparable=0,load_default=0,optional=1,copyable=0,typelist=['str'],doc='location of output directory (file workspace)'),
 
                                     'inputdata':ComponentItem('datasets',defvalue=None,typelist=['Ganga.GPIDev.Lib.Dataset.Dataset'],load_default=0,optional=1,doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                     'outputdata':ComponentItem('datasets',defvalue=None,load_default=0,optional=1,doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
@@ -512,7 +512,11 @@ class Job(GangaObject):
         # register the job (it will also commit it)
         # job gets its id now
         registry._add(self)
-        self._init_workspace()
+        
+        cfg = Ganga.Utility.Config.getConfig('Configuration')
+        if cfg['autoGenerateJobWorkspace']:
+            self._init_workspace()       
+            
         self._setDirty()
 
         
@@ -557,10 +561,20 @@ class Job(GangaObject):
         return self.getFQID('.')
 
     def getStringInputDir(self):
-        return self.getInputWorkspace(create=self.status != 'removed').getPath()
+        #return self.getInputWorkspace(create=self.status != 'removed').getPath()
+        cfg = Ganga.Utility.Config.getConfig('Configuration')
+        if cfg['autoGenerateJobWorkspace']:
+            return self.getInputWorkspace(create=self.status != 'removed').getPath()
+        else:
+            return self.getInputWorkspace(create=False).getPath()
 
     def getStringOutputDir(self):
-        return self.getOutputWorkspace(create=self.status != 'removed').getPath()    
+        #return self.getOutputWorkspace(create=self.status != 'removed').getPath()
+        cfg = Ganga.Utility.Config.getConfig('Configuration')
+        if cfg['autoGenerateJobWorkspace']:
+            return self.getOutputWorkspace(create=self.status != 'removed').getPath()
+        else:
+            return self.getOutputWorkspace(create=False).getPath()
     
     def getFQID(self,sep=None):
         """Return a fully qualified job id (within registry): a list of ids [masterjob_id,subjob_id,...]
@@ -837,7 +851,7 @@ class Job(GangaObject):
                 self.status = 'new'
                 raise JobError(msg)
 
-            self.getDebugWorkspace().remove(preserve_top=True)
+            self.getDebugWorkspace(create=False).remove(preserve_top=True)
 
             if hasattr(self.application,'is_prepared'):
                 if (self.application.is_prepared is None) or (prepare == True):

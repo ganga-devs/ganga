@@ -381,6 +381,8 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         config.addOption('resubmitOnlyFailedSubjobs', True , 'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
         config.addOption('deleteUnusedShareDir', 'always' , 'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
 
+        config.addOption('autoGenerateJobWorkspace',True,'Autogenerate workspace dirs for new jobs')
+        
         # detect default user (equal to unix user name)
         import getpass
         try:
