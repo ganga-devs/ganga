@@ -649,7 +649,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     
                 jspec.addFile(finp)
                 
-            if len(job.inputdata.tagdataset) != 0:
+            if len(job.inputdata.tagdataset) != 0 and not job.inputdata.use_cvmfs_tag:
                 # add the TAG files
                 tag_contents = job.inputdata.get_tag_contents(size=True)
                 tag_files = map(lambda x: x[1][0],tag_contents)
@@ -673,7 +673,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.addFile(finp)
 
             
-            if job.inputdata.tag_info:
+            if job.inputdata.tag_info and not job.inputdata.use_cvmfs_tag:
                 # add the TAG files
                 tag_files = job.inputdata.tag_info.keys()
                 tag_guids = []
@@ -787,9 +787,18 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             if self.inputdatatype == 'DQ2' and job.inputdata.tag_info:
                 
                 # tell Panda what files are TAG and what aren't                
-                input_files += job.inputdata.tag_info.keys()
+
+                # if using cvmfs, add full path
+                if job.inputdata.use_cvmfs_tag:
+                    tmpTagList = []
+                    for tag in job.inputdata.tag_info.keys():
+                        tmpTagList.append("/cvmfs/atlas-condb.cern.ch/repo/tag/%s/%s" % (job.inputdata.tag_info[tag]['dataset'], tag))
+                    param += '--tagFileList %s ' % ','.join(tmpTagList)                    
+                else:
+                    input_files += job.inputdata.tag_info.keys()
+                    param += '--tagFileList %s ' % ','.join(job.inputdata.tag_info.keys())
+
                 param += '-i "%s" ' % input_files
-                param += '--tagFileList %s ' % ','.join(job.inputdata.tag_info.keys())
                 param += '--guidBoundary "%s" ' % job.inputdata.guids
                 
                 # set the coll name
@@ -812,8 +821,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             elif self.inputdatatype == 'DQ2' and len(job.inputdata.tagdataset) != 0:
                 # tell Panda what files are TAG and what aren't
                 tag_contents = job.inputdata.get_tag_contents(size=True)
-                tag_files = map(lambda x: x[1][0],tag_contents)
-                input_files += tag_files
+
+                if job.inputdata.use_cvmfs_tag:
+                    tag_files = map(lambda x: os.path.join("/cvmfs/atlas-condb.cern.ch/repo/tag", x[2], x[1][0]),tag_contents)
+                else:
+                    tag_files = map(lambda x: x[1][0],tag_contents)
+                    input_files += tag_files
+                    
                 param += '-i "%s" ' % input_files
                 param += '--tagFileList %s ' % ','.join(tag_files)
                 param += '--guidBoundary "%s" ' % job.inputdata.guids
