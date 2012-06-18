@@ -9,13 +9,11 @@ logger = Ganga.Utility.logging.getLogger()
 
 def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     inputs.files = inputs.files[:maxFiles]
-    files = []
-    for f in inputs.files:
-        if isLFN(f): files.append(f.name)
-        if maxFiles > 0 and len(files) >= maxFiles: break
-    cmd = 'result = DiracCommands.splitInputData(%s,%d)' \
-          % (files,filesPerJob)
-    result = Dirac.execAPI(cmd)
+    
+    result = Dirac.execAPI('result = DiracCommands.splitInputData(%s,%d)'\
+                           % (inputs.getLFNs(),filesPerJob)
+                           )
+
     if not result_ok(result):
         logger.error('Error splitting files: %s' % str(result))
         raise SplittingError('Error splitting files.')
