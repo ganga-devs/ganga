@@ -18,12 +18,12 @@ class TestDiracSplitter(GangaGPITestCase):
         j=Job(backend=Dirac())
         j.inputdata = LHCbDataset()
         j.inputdata.files+=[
-            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
-            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',
-            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000915_1.dimuon.dst',
-            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000920_1.dimuon.dst',
-            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
-            'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
+            'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012533/0000/00012533_00000120_1.dimuon.dst',
+            'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000600_1.dimuon.dst',
+            'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000682_1.dimuon.dst',
+            'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000355_1.dimuon.dst',
+            'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000620_1.dimuon.dst',
+            'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012533/0000/00012533_00000074_1.dimuon.dst'
             ]
         j.inputdata.metadata=None
 
