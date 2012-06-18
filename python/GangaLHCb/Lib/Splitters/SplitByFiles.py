@@ -41,7 +41,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
     def _create_subjob(self, job, dataset):
         j=Job()
-        j.copyFrom(job)
+        j.copyFrom(stripProxy(job))
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
@@ -57,7 +57,7 @@ class SplitByFiles(GaudiInputDataSplitter):
     # returns splitter generator 
     def _splitter(self, job, inputdata):
 
-        indata = copy.deepcopy(job.inputdata)
+        indata = stripProxy(copy.deepcopy(job.inputdata))
         if not job.inputdata:
             share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                       'shared',
