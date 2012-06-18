@@ -414,6 +414,7 @@ class DQ2Dataset(Dataset):
         'tag_files'          : SimpleItem(defvalue = [], doc = 'Input TAG/ELSSI files to run over. tag_info structure will get filled on submission'),
         'tag_coll_ref'       : SimpleItem(defvalue = '', doc = 'Provide the collection ref if not in primary JOs (useful for TRF usage): AOD, ESD, RAW'),
         'tagdataset'         : SimpleItem(defvalue = [], typelist=['str'], sequence=1, strict_sequence=0, doc = 'Tag Dataset Name'),
+        'use_cvmfs_tag'      : SimpleItem(defvalue = False, doc = 'Use CVMFS to access TAG files'),
         'use_aodesd_backnav' : SimpleItem(defvalue = False, doc = 'Use AOD to ESD Backnavigation'),
         'names'              : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical File Names to use for processing'),
         'names_pattern'      : SimpleItem(defvalue = [], typelist=['str'], sequence = 1, doc = 'Logical file name pattern to use for processing'),
@@ -688,8 +689,8 @@ class DQ2Dataset(Dataset):
             contents_new = []
             contents_size = {}
             for guid, info in contents.iteritems():
-                contents_new.append( (guid, info['lfn']) )
-                allcontentsSize.append((guid, (info['lfn'],info['filesize'] )))
+                contents_new.append( (guid, info['lfn'], tagdataset) )
+                allcontentsSize.append((guid, (info['lfn'],info['filesize'] ), tagdataset))
                 
             allcontents = allcontents + contents_new
 

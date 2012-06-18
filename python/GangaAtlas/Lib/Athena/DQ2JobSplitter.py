@@ -719,19 +719,20 @@ class DQ2JobSplitter(ISplitter):
                     logger.warning("Parent dataset %s being used with TAG dataset(s) %s. Brokering now..." % (dataset, tag_dataset_map[dataset] ))
 
                     for tagDS in tag_dataset_map[dataset]:
-                        
-                        tag_locations = dq2.listDatasetReplicas(tagDS).values()[0][1]
-                        new_sites = []
-                        dq2alternatenames = []
-                        for site in sites.split(':'):
-                            if site in tag_locations:
-                                new_sites.append(site)
-                                dq2alternatenames.append(TiersOfATLAS.getSiteProperty(site,'alternateName'))
-                        for sitename in TiersOfATLAS.getAllSources():
-                            if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
-                                if TiersOfATLAS.getSiteProperty(sitename,'alternateName') in dq2alternatenames and not sitename in new_sites:
-                                    new_sites.append(sitename)
-                        sites = ':'.join(new_sites)
+
+                        if not job.inputdata.use_cvmfs_tag:
+                            tag_locations = dq2.listDatasetReplicas(tagDS).values()[0][1]
+                            new_sites = []
+                            dq2alternatenames = []
+                            for site in sites.split(':'):
+                                if site in tag_locations:
+                                    new_sites.append(site)
+                                    dq2alternatenames.append(TiersOfATLAS.getSiteProperty(site,'alternateName'))
+                            for sitename in TiersOfATLAS.getAllSources():
+                                if TiersOfATLAS.getSiteProperty(sitename,'alternateName'):
+                                    if TiersOfATLAS.getSiteProperty(sitename,'alternateName') in dq2alternatenames and not sitename in new_sites:
+                                        new_sites.append(sitename)
+                            sites = ':'.join(new_sites)
 
                         if job.inputdata.tagdataset:
                             tag_contents = job.inputdata.get_tag_contents(size=True, spec_dataset = tagDS)
