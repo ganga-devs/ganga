@@ -92,14 +92,12 @@ def bootstrap():
                     registry._add(j)
     import atexit
     atexit.register(shutdown)
-    logger.debug(started_registries)
     return retval
 
 def shutdown():
     logger.debug('registry shutdown')
     #shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     #method to perform actions on the box and/or job registries.
-    logger.debug(started_registries)
     if 'prep' in started_registries: 
         registry = getRegistry('prep')
         registry.shutdown()
