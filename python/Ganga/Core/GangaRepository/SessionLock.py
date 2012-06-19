@@ -98,7 +98,7 @@ class SessionLockRefresher(GangaThread):
                                 if not f.endswith(".session"):
                                     asf = f.split(".session")[0] + ".session"
                                     if not asf in session_files:
-                                        #logger.warning("Removing dead file %s" % (f))
+                                        logger.warning("Removing dead file %s" % (f))
                                         os.unlink(os.path.join(self.sdir,f))
                     except OSError, x:
                         # nothing really important, another process deleted the session before we did.
@@ -111,6 +111,7 @@ class SessionLockRefresher(GangaThread):
         finally:
             # On shutdown remove session file
             try:
+                logger.debug("Removing file %s" % (self.fn))
                 os.unlink(self.fn)
             except OSError, x:
                 logger.debug("Session file was deleted already or removal failed: %s" % (x))
@@ -221,6 +222,7 @@ class SessionLockManager(object):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         self.locked = Set()
         try:
+            logger.debug("Session file '%s' deleted " % (self.fn))
             os.unlink(self.fn)
         except OSError, x:
             logger.debug("Session file '%s' was deleted already or removal failed: %s" % (self.fn,x))
