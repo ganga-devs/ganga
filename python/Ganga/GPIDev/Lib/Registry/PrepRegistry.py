@@ -32,13 +32,9 @@ class PrepRegistry(Registry):
     def getProxy(self):
         pass
     
-    def shutdown(self):
-        self.shareref = self.metadata[self.metadata.ids()[-1]]
+    def __shutdown__(self):
+        """Flush and disconnect the repository. Called from Repository_runtime.py """
         self.shareref.closedown()
-
-
-
-
 
 class ShareRef(GangaObject):
     """The shareref table (shared directory reference counter table) provides a mechanism
