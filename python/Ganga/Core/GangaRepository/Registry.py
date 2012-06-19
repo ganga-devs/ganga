@@ -479,6 +479,10 @@ class Registry(object):
                 obj._registry_locked = False # locks are not guaranteed to survive repository shutdown
             self.repository.shutdown()
         finally:
+            try:
+                self.__shutdown__()
+            except:
+                pass
             self._lock.release()
 
     def info(self,full=False):
