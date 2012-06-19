@@ -185,14 +185,10 @@ class GaudiBase(IPrepareApp):
         self._unregister()
 
     def _unregister(self):
-        ## This is a wrapper around unprepare
-        if self.is_prepared is None:
-             raise Exception('%s application has already been unprepared.'%(self._name))
-           
-        self.decrementShareCounter(self.is_prepared.name)
-        self.is_prepared = None
+        if self.is_prepared is not None:          
+            self.decrementShareCounter(self.is_prepared.name)
+            self.is_prepared = None
         self.hash = None
-        #self.unprepare()
 
     def prepare(self, force=False):
         self._register(force)
