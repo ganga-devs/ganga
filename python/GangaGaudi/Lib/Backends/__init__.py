@@ -7,11 +7,15 @@ def master_prepare(self, masterjobconfig):
     def filt(sharedsandbox):
         if sharedsandbox:
             def shareboxfilter(item):
-                return item.name.find(self.getJobObject().application.is_prepared.name) is not -1
+                ## ideally want to revert to below so that anything that app puts in the sharedir is used in situ.
+                ## cant do that at mo a people still have all files in there which need to be tarred to get correct dir
+                ## structure. Therefore only point directly to the _input_sandbox file if it exists.
+                ##return item.name.find(self.getJobObject().application.is_prepared.name) is not -1
+                return item.name.find('_input_sandbox_'+self.getJobObject().application.is_prepared.name) is not -1
             return shareboxfilter
 
         def nonshareboxfilter(item):
-            return item.name.find(self.getJobObject().application.is_prepared.name) is -1
+            return item.name.find('_input_sandbox_'+self.getJobObject().application.is_prepared.name) is -1
         return nonshareboxfilter
 
     
