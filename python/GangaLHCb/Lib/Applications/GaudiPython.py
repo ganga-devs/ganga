@@ -96,6 +96,11 @@ class GaudiPython(GaudiBase):
     def _get_default_version(self, gaudi_app):
         return guess_version(gaudi_app)
 
+    def _attribute_filter__set__(self,n,v):
+        if n == 'project':
+            self.appname=v
+        return v
+
     def _auto__init__(self):
         #if (not self.project): self.project = 'DaVinci'
         if (not self.appname) and (not self.project):
