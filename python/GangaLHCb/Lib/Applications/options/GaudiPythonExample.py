@@ -1,5 +1,5 @@
 from ROOT import TCanvas
-from GaudiConf.Configuration import *
+from LHCbAlgs.Configuration import *
 
 lhcbApp = LHCbApp(DDDBtag = 'default',
                   CondDBtag = 'default',
@@ -10,7 +10,7 @@ from AnalysisPython import Dir, Functors
 from GaudiPython.Bindings import gbl, AppMgr, Helper
 
 appMgr = AppMgr(outputlevel=4)
-appMgr.config( files = ['$GAUDIPOOLDBROOT/options/GaudiPoolDbRoot.opts'])
+#appMgr.config( files = ['$GAUDIPOOLDBROOT/options/GaudiPoolDbRoot.opts'])
 appMgr.ExtSvc += ['DataOnDemandSvc']
 appMgr.initialize()
 
