@@ -29,13 +29,11 @@ class MetadataDict(GangaObject):
     def __setitem__(self, key, value):
         from Ganga.GPIDev.Lib.Job.Job import Job
         if key in Job._schema.datadict.keys():
-            raise GangaAttributeError('\'%s\' is a reserved key name and cannot be used in the metadata' % key)
+            raise GangaAttributeError('\'%s\' is a reserved key name and cannot be used in the metadata'% key)
         if type(key) is not type(''):
             raise GangaAttributeError('Metadata key must be of type \'str\' not %s'%type(key))
-        if type(value) is not type(''):
-            raise GangaAttributeError('Metadata only supports string values at the moment')
-##         if type(value) is list or type(value) is tuple or type(value) is dict:
-##             raise GangaAttributeError('Metadata doesn\'t support nesting data structures at the moment, values of type \'list\', \'tuple\' or \'dict\' are forbidden')
+        if type(value) is list or type(value) is tuple or type(value) is dict:
+            raise GangaAttributeError('Metadata doesn\'t support nesting data structures at the moment, values of type \'list\', \'tuple\' or \'dict\' are forbidden')
             
         self.data[key]=value
         self._setDirty()
