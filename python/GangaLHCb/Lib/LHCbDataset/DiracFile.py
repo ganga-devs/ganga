@@ -121,5 +121,5 @@ def string_file_shortcut(v,item):
 
     return None 
         
-allComponentFilters['outputfiles'] = string_file_shortcut
+#allComponentFilters['outputfiles'] = string_file_shortcut
 
