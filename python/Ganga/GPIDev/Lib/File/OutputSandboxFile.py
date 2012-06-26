@@ -72,20 +72,6 @@ class OutputSandboxFile(GangaObject):
 
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
-from MassStorageFile import MassStorageFile
-from LCGStorageElementFile import LCGStorageElementFile
-
-"""
-try:
-    from GangaLHCb.Lib.LHCbDataset.DiracFile import DiracFile
-    lhcbFlavour = True  
-except:
-    lhcbFlavour = False 
-    pass      
-
-print lhcbFlavour  
-"""
-
 from Ganga.Utility.Config import getConfig, ConfigError
 
 outputfilesConfig = {}
@@ -129,12 +115,17 @@ def string_file_shortcut(v,item):
         key = findOutputFileTypeByFileName(v)
         if key is not None:
             if key == 'MassStorageFile':
+                from MassStorageFile import MassStorageFile
                 return MassStorageFile._proxyClass(v)._impl         
             elif key == 'LCGStorageElementFile':
+                from LCGStorageElementFile import LCGStorageElementFile
                 return LCGStorageElementFile._proxyClass(v)._impl                                
             elif key == 'DiracFile':
-                from GangaLHCb.Lib.LHCbDataset.DiracFile import DiracFile
-                return  DiracFile._proxyClass(v)._impl                                
+                try:
+                    from GangaLHCb.Lib.LHCbDataset.DiracFile import DiracFile
+                    return  DiracFile._proxyClass(v)._impl                                
+                except:
+                    pass
 
         return OutputSandboxFile._proxyClass(v)._impl
 
