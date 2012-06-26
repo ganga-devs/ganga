@@ -75,6 +75,13 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from MassStorageFile import MassStorageFile
 from LCGStorageElementFile import LCGStorageElementFile
 
+try:
+    from GangaLHCb.Lib.LHCbDataset.DiracFile import DiracFile
+    lhcbFlavour = True  
+except:
+    lhcbFlavour = False 
+    pass        
+
 from Ganga.Utility.Config import getConfig, ConfigError
 
 outputfilesConfig = {}
@@ -121,6 +128,8 @@ def string_file_shortcut(v,item):
                 return MassStorageFile._proxyClass(v)._impl         
             elif key == 'LCGStorageElementFile':
                 return LCGStorageElementFile._proxyClass(v)._impl                                
+            elif key == 'DiracFile' and lhcbFlavour:
+                return  DiracFile._proxyClass(v)._impl                                
 
         return OutputSandboxFile._proxyClass(v)._impl
 
