@@ -80,7 +80,9 @@ try:
     lhcbFlavour = True  
 except:
     lhcbFlavour = False 
-    pass        
+    pass      
+
+print lhcbFlavour  
 
 from Ganga.Utility.Config import getConfig, ConfigError
 
