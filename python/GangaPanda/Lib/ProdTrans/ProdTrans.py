@@ -37,7 +37,9 @@ class ProdTrans(IApplication):
                                      doc='Type of the input file'),
             'is_prepared': SharedItem(defvalue=None, strict_sequence=0, visitable=1, 
                 copyable=1, typelist=['type(None)', 'bool', 'str'], protected=0,
-                doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
+                doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+            'core_count': SimpleItem(defvalue=0,
+                                     docs='Number of cores to run.'),
             })
     _category = 'applications'
     _name = 'ProdTrans'

@@ -98,6 +98,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.currentPriority = app.priority
         jspec.jobDefinitionID = masterjob.id
         jspec.jobName = commands.getoutput('uuidgen')
+        jspec.coreCount = app.core_count
         jspec.AtlasRelease = 'Atlas-%s' % app.atlas_release
         jspec.homepackage = app.home_package
         jspec.transformation = app.transformation
