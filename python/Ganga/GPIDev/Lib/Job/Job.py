@@ -354,13 +354,6 @@ class Job(GangaObject):
         if len(outputfiles) == 0:
             return
 
-        def findOutputFile(className, pattern):
-            for outputfile in outputfiles:
-                if outputfile.__class__.__name__ == className and outputfile.name == pattern:
-                    return outputfile
-
-            return None 
-
         postprocessLocationsPath = os.path.join(outputdir, '__postprocesslocations__')
         if not os.path.exists(postprocessLocationsPath):
             return
