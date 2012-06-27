@@ -1380,7 +1380,7 @@ class Athena(IPrepareApp):
         # check grid/local class match up
         if job.backend._name in ['LCG', 'CREAM' ,'Panda', 'NG']: 
             # check splitter
-            if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter']:
+            if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AnaTaskSplitterJob', 'ATLASTier3Splitter', 'GenericSplitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
             
             # Check that only DQ2Datasets/AMIDatasets are used on the grid        
