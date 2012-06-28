@@ -131,6 +131,88 @@ class MassStorageFile(OutputSandboxFile):
 
 
 
+    def getWNInjectedScript(outputFiles, indent, patternsToZip, postProcessLocationsFP):
+        
+        massStorageCommands = []
+
+        from Ganga.Utility.Config import getConfig      
+        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
+
+        for outputFile in outputFiles:
+            massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
+
+                
+        script = """\n
+
+###INDENT####system command executor with subprocess
+###INDENT###def execSyscmdSubprocessAndReturnOutputMAS(cmd):
+
+###INDENT###    exitcode = -999
+###INDENT###    mystdout = ''
+###INDENT###    mystderr = ''
+
+###INDENT###    try:
+###INDENT###        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+###INDENT###        (mystdout, mystderr) = child.communicate()
+###INDENT###        exitcode = child.returncode
+###INDENT###    finally:
+###INDENT###        pass
+
+###INDENT###    return (exitcode, mystdout, mystderr)
+        
+###INDENT###for massStorageLine in ###MASSSTORAGECOMMANDS###:
+###INDENT###    massStorageList = massStorageLine.split(' ')
+
+###INDENT###    filenameWildChar = massStorageList[1]
+###INDENT###    cm_mkdir = massStorageList[2]
+###INDENT###    cm_cp = massStorageList[3]
+###INDENT###    cm_ls = massStorageList[4]
+###INDENT###    path = massStorageList[5]
+
+###INDENT###    pathToDirName = os.path.dirname(path)
+###INDENT###    dirName = os.path.basename(path)
+
+###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+###INDENT###    if exitcode != 0:
+###INDENT###        printError('Error while executing nsls %s command, be aware that Castor commands can be executed only ###INDENT###from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
+###INDENT###        continue
+
+###INDENT###    directoryExists = False 
+###INDENT###    for directory in mystdout.split('\\n'):
+###INDENT###        if directory.strip() == dirName:
+###INDENT###            directoryExists = True
+###INDENT###            break
+
+###INDENT###    if not directoryExists:
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+###INDENT###        if exitcode != 0:
+###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+###INDENT###            continue
+   
+###INDENT###    filenameWildCharZipped = filenameWildChar
+###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
+###INDENT###        filenameWildCharZipped = '%s.gz' % filenameWildChar
+
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
+###INDENT###        currentFileBaseName = os.path.basename(currentFile)
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
+###INDENT###        if exitcode != 0:
+###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
+###INDENT###        else:
+###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFileBaseName)))
+###INDENT###            #remove file from output dir
+###INDENT###            os.system('rm %s' % currentFile)
+"""
+
+        script = script.replace('###MASSSTORAGECOMMANDS###', str(massStorageCommands))
+        script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
+        script = script.replace('###INDENT###', indent)
+        script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
+
+        return script   
+        
+    getWNInjectedScript = staticmethod(getWNInjectedScript)
+
 # add MassStorageFile objects to the configuration scope (i.e. it will be possible to write instatiate MassStorageFile() objects via config file)
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['MassStorageFile'] = MassStorageFile
