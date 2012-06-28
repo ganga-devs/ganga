@@ -1,6 +1,3 @@
-from LCGStorageElementFile import LCGStorageElementFile
-from MassStorageFile import MassStorageFile
-
 """
 Checks if the output files of a given job(we are interested in the backend) 
 should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
@@ -146,13 +143,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
 """
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
 
-    #ivan, make it more general (without check for the file type name)  
     for outputFileName in outputFilesProcessedOnWN.keys():          
 
         if len(outputFilesProcessedOnWN[outputFileName]) > 0:
 
-            module = __import__ (outputFileName)        
-            insertScript += getattr(module, getWNInjectedScript)(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
+            insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript)(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
 
             """ 
             if outputFileName == 'LCGStorageElementFile':
