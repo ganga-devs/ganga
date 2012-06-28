@@ -151,7 +151,8 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
         if len(outputFilesProcessedOnWN[outputFileName]) > 0:
 
-            insertScript +=  exec '%s.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, \'postprocesslocations\')' % outputFileName
+            module = __import__ (outputFileName)        
+            insertScript += getattr(module, getWNInjectedScript)(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
 
             """ 
             if outputFileName == 'LCGStorageElementFile':
