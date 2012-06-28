@@ -134,7 +134,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 outputFilesProcessedOnWN[outputfileClassName] = []
 
             if outputFilePostProcessingOnWN(job, outputfileClassName):
-                outputFilesProcessedOnWN.append(outputFile)
+                outputFilesProcessedOnWN[outputfileClassName].append(outputFile)
 
             """
             if outputfileClassName == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
