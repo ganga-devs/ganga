@@ -1,3 +1,4 @@
+
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -133,6 +134,83 @@ class LCGStorageElementFile(OutputSandboxFile):
                 logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))       
                                         
     
+    def getWNInjectedScript(outputFiles, indent, patternsToZip, postProcessLocationsFP):
+        
+        lcgCommands = []
+
+        for outputFile in outputFiles:
+            lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
+                
+        script = """\n
+
+###INDENT####system command executor with subprocess
+###INDENT###def execSyscmdSubprocessAndReturnOutputLCG(cmd):
+
+###INDENT###    exitcode = -999
+###INDENT###    mystdout = ''
+###INDENT###    mystderr = ''
+
+###INDENT###    try:
+###INDENT###        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+###INDENT###        (mystdout, mystderr) = child.communicate()
+###INDENT###        exitcode = child.returncode
+###INDENT###    finally:
+###INDENT###        pass
+
+###INDENT###    return (exitcode, mystdout, mystderr)
+        
+###INDENT###def uploadToSE(lcgseItem):
+        
+###INDENT###    import re
+
+###INDENT###    lcgseItems = lcgseItem.split(' ')
+
+###INDENT###    filenameWildChar = lcgseItems[1]
+###INDENT###    lfc_host = lcgseItems[2]
+
+###INDENT###    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+
+###INDENT###    os.environ['LFC_HOST'] = lfc_host
+        
+###INDENT###    guidResults = []
+
+###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
+###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
+
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
+###INDENT###        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
+###INDENT###        cmd = cmd.replace('filename', currentFile)
+###INDENT###        cmd = cmd + ' file:%s' % currentFile
+###INDENT###        printInfo(cmd)  
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputLCG(cmd)
+###INDENT###        if exitcode == 0:
+###INDENT###            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
+###INDENT###            match = re.search('(guid:\S+)',mystdout)
+###INDENT###            if match:
+###INDENT###                guidResults.append(mystdout)
+
+###INDENT###            #remove file from output dir
+###INDENT###            os.system('rm %s' % currentFile)
+###INDENT###        else:
+###INDENT###            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
+
+###INDENT###    return guidResults    
+
+###INDENT###for lcgseItem in ###LCGCOMMANDS###:
+###INDENT###    guids = uploadToSE(lcgseItem)
+###INDENT###    for guid in guids:
+###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s->%s\\n' % (lcgseItem, guid)) 
+"""
+
+        script = script.replace('###LCGCOMMANDS###', str(lcgCommands))
+        script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
+        script = script.replace('###INDENT###', indent)
+        script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
+
+        return script   
+        
+    getWNInjectedScript = staticmethod(getWNInjectedScript)
+
     def get(self, dir):
         """
         Retrieves locally all files matching this LCGStorageElementFile object pattern
