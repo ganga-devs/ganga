@@ -111,8 +111,6 @@ def getWNCodeForOutputPostprocessing(job, indent):
     #dict containing the list of outputfiles that need to be processed on the WN for every file type    
     outputFilesProcessedOnWN = {}
 
-    #lcgCommands = []
-    #massStorageCommands = []
     patternsToZip = []  
 
     if len(job.outputfiles) > 0:
@@ -135,17 +133,6 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
             if outputFilePostProcessingOnWN(job, outputfileClassName):
                 outputFilesProcessedOnWN[outputfileClassName].append(outputFile)
-
-            """
-            if outputfileClassName == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
-                lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
-            elif outputfileClassName == 'MassStorageFile' and outputFilePostProcessingOnWN(job, outputfileClassName):  
-                from Ganga.Utility.Config import getConfig      
-                massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
-                massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
-
-            """
-
 
     insertScript = """\n
 ###INDENT###import glob
