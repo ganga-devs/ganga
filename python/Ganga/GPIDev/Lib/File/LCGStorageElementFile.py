@@ -134,7 +134,7 @@ class LCGStorageElementFile(OutputSandboxFile):
                 logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))       
                                         
     
-    def getWNInjectedScript(outputFiles, indent, patternsToZip, postProcessLocationsFP):
+    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         
         lcgCommands = []
 
@@ -208,8 +208,6 @@ class LCGStorageElementFile(OutputSandboxFile):
         script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
 
         return script   
-        
-    getWNInjectedScript = staticmethod(getWNInjectedScript)
 
     def get(self, dir):
         """
