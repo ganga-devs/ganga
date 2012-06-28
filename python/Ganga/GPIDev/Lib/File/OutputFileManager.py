@@ -156,7 +156,6 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')  
 """
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
-    insertScript = insertScript.replace('###INDENT###', indent)
 
     #ivan, make it more general (without check for the file type name)  
     for outputFileName in outputFilesProcessedOnWN.keys():          
@@ -176,6 +175,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###postprocesslocations.close()
 ###INDENT###printInfo(str(os.listdir(os.getcwd())))
 """
+    insertScript = insertScript.replace('###INDENT###', indent)
 
     return insertScript
     
