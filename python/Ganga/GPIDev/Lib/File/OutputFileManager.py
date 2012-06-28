@@ -161,14 +161,16 @@ def getWNCodeForOutputPostprocessing(job, indent):
     #ivan, make it more general (without check for the file type name)  
     for outputFileName in outputFilesProcessedOnWN.keys():          
 
-        if outputFileName == 'LCGStorageElementFile':
-            from LCGStorageElementFile import LCGStorageElementFile
-            insertScript += LCGStorageElementFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
-        elif outputFileName == 'MassStorageFile':
-            from MassStorageFile import MassStorageFile 
-            insertScript += MassStorageFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')        
-        else:
-            pass
+        if len(outputFilesProcessedOnWN[outputFileName]) > 0:
+
+            if outputFileName == 'LCGStorageElementFile':
+                from LCGStorageElementFile import LCGStorageElementFile
+                insertScript += LCGStorageElementFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
+            elif outputFileName == 'MassStorageFile':
+                from MassStorageFile import MassStorageFile 
+                insertScript += MassStorageFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')        
+            else:
+                pass
 
     return insertScript
     
