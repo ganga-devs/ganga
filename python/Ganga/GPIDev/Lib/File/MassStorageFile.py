@@ -131,7 +131,7 @@ class MassStorageFile(OutputSandboxFile):
 
 
 
-    def getWNInjectedScript(outputFiles, indent, patternsToZip, postProcessLocationsFP):
+    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         
         massStorageCommands = []
 
@@ -210,8 +210,6 @@ class MassStorageFile(OutputSandboxFile):
         script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
 
         return script   
-        
-    getWNInjectedScript = staticmethod(getWNInjectedScript)
 
 # add MassStorageFile objects to the configuration scope (i.e. it will be possible to write instatiate MassStorageFile() objects via config file)
 import Ganga.Utility.Config
