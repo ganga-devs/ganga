@@ -1,3 +1,6 @@
+from LCGStorageElementFile import LCGStorageElementFile
+from MassStorageFile import MassStorageFile
+
 """
 Checks if the output files of a given job(we are interested in the backend) 
 should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
@@ -49,7 +52,7 @@ def getOutputSandboxPatterns(job):
     return outputPatterns
 
 """
-This should be used from Local and Batch backend, where there is code on the WN for 
+This should be used from Local and Batch backend, wherefrom MassStorageFile import MassStorageFile there is code on the WN for 
 sending the output(optionally compressed before that) to the outputsandbox
 """
 def getWNCodeForOutputSandbox(job, files):
@@ -119,7 +122,6 @@ def getWNCodeForOutputPostprocessing(job, indent):
             outputfileClassName = outputFile.__class__.__name__
             backendClassName = job.backend.__class__.__name__
 
-
             if outputFile.compressed:   
                 if outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF']:
                     patternsToZip.append(outputFile.name)  
@@ -149,14 +151,16 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
         if len(outputFilesProcessedOnWN[outputFileName]) > 0:
 
+            insertScript +=  exec '%s.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, \'postprocesslocations\')' % outputFileName
+
+            """ 
             if outputFileName == 'LCGStorageElementFile':
-                from LCGStorageElementFile import LCGStorageElementFile
                 insertScript += LCGStorageElementFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
-            elif outputFileName == 'MassStorageFile':
-                from MassStorageFile import MassStorageFile 
+            elif outputFileName == 'MassStorageFile': 
                 insertScript += MassStorageFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')        
             else:
                 pass
+            """ 
 
     insertScript += """\n
 ###INDENT###postprocesslocations.close()
