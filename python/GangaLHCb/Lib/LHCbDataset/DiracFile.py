@@ -70,6 +70,14 @@ class DiracFile(OutputSandboxFile):
         
         #todo Alex
 
+    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+        """
+        Returns script that have to be injected in the jobscript for postprocessing on the WN
+        """
+        #todo Alex
+
+        return ""
+
 # add DiracFile objects to the configuration scope (i.e. it will be possible to write instatiate DiracFile() objects via config file)
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['DiracFile'] = DiracFile
