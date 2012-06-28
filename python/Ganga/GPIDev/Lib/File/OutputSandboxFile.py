@@ -53,6 +53,13 @@ class OutputSandboxFile(GangaObject):
         """
         raise NotImplementedError
 
+    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+        """
+        Returns script that have to be injected in the jobscript for postprocessing on the WN
+        """
+        return ""
+
+
     def execSyscmdSubprocess(self, cmd):
 
         import subprocess
