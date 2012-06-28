@@ -53,6 +53,13 @@ class OutputSandboxFile(GangaObject):
         """
         raise NotImplementedError
 
+    def getWorkedNodeInjectedScript(self, backendClassName, indent):
+        """
+        Gets the code for this output file that needs to be injected in the job script on the WN 
+        """
+        raise NotImplementedError
+        
+
     def execSyscmdSubprocess(self, cmd):
 
         import subprocess
