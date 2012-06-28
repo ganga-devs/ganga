@@ -149,15 +149,6 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
             insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
 
-            """ 
-            if outputFileName == 'LCGStorageElementFile':
-                insertScript += LCGStorageElementFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
-            elif outputFileName == 'MassStorageFile': 
-                insertScript += MassStorageFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')        
-            else:
-                pass
-            """ 
-
     insertScript += """\n
 ###INDENT###postprocesslocations.close()
 ###INDENT###printInfo(str(os.listdir(os.getcwd())))
