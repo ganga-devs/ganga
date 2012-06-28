@@ -172,6 +172,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
             else:
                 pass
 
+    insertScript += """\n
+###INDENT###postprocesslocations.close()
+###INDENT###printInfo(str(os.listdir(os.getcwd())))
+"""
+
     return insertScript
     
         
