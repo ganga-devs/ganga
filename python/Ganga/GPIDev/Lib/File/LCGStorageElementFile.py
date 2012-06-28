@@ -135,7 +135,9 @@ class LCGStorageElementFile(OutputSandboxFile):
                                         
     
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-        
+        """
+        Returns script that have to be injected in the jobscript for postprocessing on the WN
+        """        
         lcgCommands = []
 
         for outputFile in outputFiles:
