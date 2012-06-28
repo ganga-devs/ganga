@@ -132,7 +132,9 @@ class MassStorageFile(OutputSandboxFile):
 
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-        
+        """
+        Returns script that have to be injected in the jobscript for postprocessing on the WN
+        """        
         massStorageCommands = []
 
         from Ganga.Utility.Config import getConfig      
