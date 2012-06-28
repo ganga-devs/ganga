@@ -108,8 +108,11 @@ for fn in final_list_to_copy:
 
 def getWNCodeForOutputPostprocessing(job, indent):
 
-    lcgCommands = []
-    massStorageCommands = []
+    #dict containing the list of outputfiles that need to be processed on the WN for every file type    
+    outputFilesProcessedOnWN = {}
+
+    #lcgCommands = []
+    #massStorageCommands = []
     patternsToZip = []  
 
     if len(job.outputfiles) > 0:
@@ -127,131 +130,43 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF']:
                     patternsToZip.append(outputFile.name)  
     
-            if outputfileClassName == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, 'LCGStorageElementFile'):
+            if outputfileClassName not in outputFilesProcessedOnWN.keys():
+                outputFilesProcessedOnWN[outputfileClassName] = []
+
+            if outputFilePostProcessingOnWN(job, outputfileClassName):
+                outputFilesProcessedOnWN.append(outputFile)
+
+            """
+            if outputfileClassName == 'LCGStorageElementFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
                 lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
-            elif outputfileClassName == 'MassStorageFile' and outputFilePostProcessingOnWN(job, 'MassStorageFile'):  
+            elif outputfileClassName == 'MassStorageFile' and outputFilePostProcessingOnWN(job, outputfileClassName):  
                 from Ganga.Utility.Config import getConfig      
                 massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
                 massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.name , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
+
+            """
+
 
     insertScript = """\n
 ###INDENT###import glob
 ###INDENT###for patternToZip in ###PATTERNSTOZIP###:
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
 ###INDENT###        os.system("gzip %s" % currentFile)
-###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')         
 
-###INDENT####system command executor with subprocess
-###INDENT###def execSyscmdSubprocessAndReturnOutput(cmd):
-
-###INDENT###    exitcode = -999
-###INDENT###    mystdout = ''
-###INDENT###    mystderr = ''
-
-###INDENT###    try:
-###INDENT###        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-###INDENT###        (mystdout, mystderr) = child.communicate()
-###INDENT###        exitcode = child.returncode
-###INDENT###    finally:
-###INDENT###        pass
-
-###INDENT###    return (exitcode, mystdout, mystderr)
-        
-###INDENT###def uploadToSE(lcgseItem):
-        
-###INDENT###    import re
-
-###INDENT###    lcgseItems = lcgseItem.split(' ')
-
-###INDENT###    filenameWildChar = lcgseItems[1]
-###INDENT###    lfc_host = lcgseItems[2]
-
-###INDENT###    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-
-###INDENT###    os.environ['LFC_HOST'] = lfc_host
-        
-###INDENT###    guidResults = []
-
-###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
-###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
-
-###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
-###INDENT###        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-###INDENT###        cmd = cmd.replace('filename', currentFile)
-###INDENT###        cmd = cmd + ' file:%s' % currentFile
-###INDENT###        printInfo(cmd)  
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput(cmd)
-###INDENT###        if exitcode == 0:
-###INDENT###            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-###INDENT###            match = re.search('(guid:\S+)',mystdout)
-###INDENT###            if match:
-###INDENT###                guidResults.append(mystdout)
-
-###INDENT###            #remove file from output dir
-###INDENT###            os.system('rm %s' % currentFile)
-###INDENT###        else:
-###INDENT###            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
-
-###INDENT###    return guidResults    
-
-###INDENT###for lcgseItem in ###LCGCOMMANDS###:
-###INDENT###    guids = uploadToSE(lcgseItem)
-###INDENT###    for guid in guids:
-###INDENT###        postprocesslocations.write('%s->%s\\n' % (lcgseItem, guid))           
-
-###INDENT###for massStorageLine in ###MASSSTORAGECOMMANDS###:
-###INDENT###    massStorageList = massStorageLine.split(' ')
-
-###INDENT###    filenameWildChar = massStorageList[1]
-###INDENT###    cm_mkdir = massStorageList[2]
-###INDENT###    cm_cp = massStorageList[3]
-###INDENT###    cm_ls = massStorageList[4]
-###INDENT###    path = massStorageList[5]
-
-###INDENT###    pathToDirName = os.path.dirname(path)
-###INDENT###    dirName = os.path.basename(path)
-
-###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('nsls %s' % pathToDirName)
-###INDENT###    if exitcode != 0:
-###INDENT###        printError('Error while executing nsls %s command, be aware that Castor commands can be executed only ###INDENT###from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
-###INDENT###        continue
-
-###INDENT###    directoryExists = False 
-###INDENT###    for directory in mystdout.split('\\n'):
-###INDENT###        if directory.strip() == dirName:
-###INDENT###            directoryExists = True
-###INDENT###            break
-
-###INDENT###    if not directoryExists:
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s' % (cm_mkdir, path))
-###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
-###INDENT###            continue
-   
-###INDENT###    filenameWildCharZipped = filenameWildChar
-###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
-###INDENT###        filenameWildCharZipped = '%s.gz' % filenameWildChar
-
-###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
-###INDENT###        currentFileBaseName = os.path.basename(currentFile)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutput('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
-###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
-###INDENT###        else:
-###INDENT###            postprocesslocations.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFileBaseName)))
-###INDENT###            #remove file from output dir
-###INDENT###            os.system('rm %s' % currentFile)
-
-
-  
-###INDENT###postprocesslocations.close()
-###INDENT###printInfo(str(os.listdir(os.getcwd())))
-
+###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')  
 """
-    insertScript = insertScript.replace('###LCGCOMMANDS###', str(lcgCommands))
-    insertScript = insertScript.replace('###MASSSTORAGECOMMANDS###', str(massStorageCommands))
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
     insertScript = insertScript.replace('###INDENT###', indent)
+
+    #ivan, make it more general (without check for the file type name)  
+    for outputFileName in outputFilesProcessedOnWN.keys():          
+
+        if outputFileName == 'LCGStorageElementFile':
+            insertScript += LCGStorageElementFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
+        elif outputFileName == 'MassStorageFile':
+            insertScript += MassStorageFile.getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')        
+        else:
+            pass
 
     return insertScript
     
