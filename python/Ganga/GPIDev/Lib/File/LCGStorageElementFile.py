@@ -70,12 +70,42 @@ class LCGStorageElementFile(OutputSandboxFile):
         fname = 'user.%s.%s' % (user, uuid)
         return fname
     
-    def setLocation(self, location):
+    def setLocation(self):
         """
-        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
+        Sets the location of output files that were uploaded to lcg storage element from the WN
         """
-        if location not in self.locations:
-            self.locations.append(location)
+
+        postprocessLocationsPath = os.path.join(self.joboutputdir, '__postprocesslocations__')
+        if not os.path.exists(postprocessLocationsPath):
+            return
+
+        lcgSEUploads = []
+
+        postprocesslocations = open(postprocessLocationsPath, 'r')
+        
+        for line in postprocesslocations.readlines():
+                
+            if line.strip() == '':      
+                continue
+
+            lineParts = line.split(' ') 
+            outputType = lineParts[0] 
+            outputPattern = lineParts[1]
+            outputPath = lineParts[2]           
+
+            if line.startswith('lcgse'):
+                lcgSEUploads.append(line.strip())
+
+        postprocesslocations.close()
+
+        if len(lcgSEUploads) > 0:
+            searchPattern = 'lcgse %s' % outputfile.name
+
+            for lcgSEUpload in lcgSEUploads:
+                if lcgSEUpload.startswith(searchPattern):
+                    guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
+                    if guid not in self.locations:
+                        self.locations.append(guid)
         
     def location(self):
         """
