@@ -4,6 +4,7 @@
 # $Id: MassStorageFile.py,v 0.1 2011-11-09 15:40:00 idzhunov Exp $
 ################################################################################
 
+import os
 from Ganga.GPIDev.Schema import *
 
 from OutputSandboxFile import OutputSandboxFile
@@ -86,7 +87,6 @@ class MassStorageFile(OutputSandboxFile):
         """
         Retrieves locally all files matching this MassStorageFile object pattern
         """
-        import os
 
         if not os.path.isdir(dir):
             print "%s is not a valid directory.... " % dir
@@ -105,7 +105,6 @@ class MassStorageFile(OutputSandboxFile):
         be called on the client
         """     
         import glob
-        import os
         import re
 
         from Ganga.Utility.Config import getConfig
