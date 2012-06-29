@@ -12,15 +12,22 @@ import fnmatch
 class DiracFile(OutputSandboxFile):
     """todo DiracFile represents a class marking a file ...todo
     """
-    _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file'),
-                                    'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                    'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
-                                    'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
-                                        })
+    _schema = OutputSandboxFile._schema.inherit_copy()
+#    _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file'),
+#                                    'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
+#                                    'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+#                                    'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
+#                                        })
+
+    _schema.datadict['lfn']=SimpleItem(defvalue="",typelist=['str'],doc='The logical file name')
+    _schema.datadict['diracSE']=SimpleItem(defvalue=[],typelist=['str'],doc='The dirac SE sites')
+    _schema.datadict['guid']=SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='The files GUID')
+    _schema.version.major += 0
+    _schema.version.minor += 1
 
     _category = 'outputfiles'
     _name = "DiracFile"
-    _exportmethods = [ "location" , "get", "setLocation" ]
+    _exportmethods = [  "get", "setLocation" ]
         
     def __init__(self,name='', **kwds):
         """ name is the name of the output file that has to be written ...
@@ -35,7 +42,7 @@ class DiracFile(OutputSandboxFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "DiracFile(name='%s')"% self.name
+        return "DiracFile(name='%s', lfn='%s')" % (self.name, self.lfn)
     
 
     def setLocation(self, location):
@@ -45,21 +52,22 @@ class DiracFile(OutputSandboxFile):
         if location not in self.locations:
             self.locations.append(location)
         
-    def location(self):
-        """
-        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
-        """
-        return self.locations
-
-    def get(self, dir):
+    def get(self, dir='.'):
         """
         Retrieves locally all files matching this DiracFile object pattern
         """
         import os
-
-        if not os.path.isdir(dir):
+        from LogicalFile import get_result
+        dir=os.path.abspath(expandfilename(dir))
+        if not os.path.isdir(dir)
             print "%s is not a valid directory.... " % dir
             return
+        if self.lfn == "":
+            raise GangaException('Can\'t download a file without an LFN.')
+        cmd = 'result = DiracCommands.getFile("%s","%s")' % (self.lfn,dir)
+        result = get_result(cmd,'Problem during download','Download error.')
+        #from PhysicalFile import PhysicalFile
+        #return GPIProxyObjectFactory(PhysicalFile(name=result['Value']))
 
         #todo Alex      
 
@@ -67,6 +75,20 @@ class DiracFile(OutputSandboxFile):
         """
         this method will be called on the client
         """     
+##    def upload(self,lfn,diracSE,guid=None):
+        'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
+        from LogicalFile import get_result
+        if self.name == "":
+            raise GangaException('Can\'t upload a file without a local file name.')
+        if self.guid is None:
+            cmd = 'result = DiracCommands.addFile("%s","%s","%s",None)' % \
+                  (self.lfn,self.name,self.diracSE)
+        else:
+            cmd = 'result = DiracCommands.addFile("%s","%s","%s","%s")' % \
+                  (self.lfn,self.name,self.diracSE,self.guid)
+        result = get_result(cmd,'Problem w/ upload','Error uploading file.')
+  #      from LogicalFile import LogicalFile
+  #      return GPIProxyObjectFactory(LogicalFile(name=lfn))
         
         #todo Alex
 
@@ -76,7 +98,64 @@ class DiracFile(OutputSandboxFile):
         """
         #todo Alex
 
-        return ""
+        cmd = """
+###INDENT###import os, copy
+###INDENT###def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
+###INDENT###    import subprocess, time, tempfile, pickle
+###INDENT###    f = tempfile.NamedTemporaryFile(mode='w+b')
+###INDENT###    fname = f.name
+###INDENT###    f.close()
+
+###INDENT###    if not cmd.endswith(';'): cmd += ';'
+###INDENT###    envdump  = 'import os, pickle;'
+###INDENT###    envdump += 'f=open(\'%s\',\'w+b\');' % fname
+###INDENT###    envdump += 'pickle.dump(os.environ,f);'
+###INDENT###    envdump += 'f.close();'
+###INDENT###    envdumpcommand = 'python -c \"%s\"' % envdump
+###INDENT###    cmd += envdumpcommand
+
+###INDENT###    pipe = subprocess.Popen(cmd,
+###INDENT###                            shell=True,
+###INDENT###                            env=environ,
+###INDENT###                            cwd=cwdir,
+###INDENT###                            stdout=subprocess.PIPE,
+###INDENT###                            stderr=subprocess.PIPE)
+###INDENT###    stdout, stderr  = pipe.communicate()
+###INDENT###    while pipe.poll() is None:
+###INDENT###        time.sleep(0.5)
+
+###INDENT###    f = open(fname,'r+b')
+###INDENT###    environ=environ.update(pickle.load(f))
+###INDENT###    f.close()
+###INDENT###    os.system('rm -f %s' % fname)
+
+###INDENT###    return pipe.returncode, stdout, stderr
+
+
+###INDENT###shellEnvUpdate_cmd('SetupProject LHCbDirac' ,os.environ)
+"""
+
+        for f in outputFiles:
+            if f.name == "":
+                logger.warning('Skipping dirac SE file %s as it\'s name attribute is not defined'% str(f))
+                continue
+            cmd += """
+###INDENT###if os.path.exists(###NAME###):
+###INDENT###    if not shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME### ###SE### ###GUID###')[0]:
+###INDENT###        ###LOCATIONSFILE###.write(###LFN###)
+"""
+            # Set LFN here but when job comes back test which worked
+            # by which in file, and remove appropriate failed ones
+            f.lfn=base + f.name
+            cmd.replace('###LFN###',  f.lfn    )
+            cmd.replace('###NAME###', f.name   )
+            cmd.replace('###SE###',   f.diracSE)
+            cmd.replace('###GUID###', f.guid   )
+
+        cmd.replace('###INDENT###',indent)
+        cmd.replace('###LOCATIONSFILE###',postProcessLocationsFP)
+
+        return cmd
 
 # add DiracFile objects to the configuration scope (i.e. it will be possible to write instatiate DiracFile() objects via config file)
 import Ganga.Utility.Config
