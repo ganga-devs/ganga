@@ -89,7 +89,10 @@ from Ganga.Utility.Config import getConfig, ConfigError
 
 outputfilesConfig = {}
 
-for key in getConfig('Output').options.keys():
+keys = getConfig('Output').options.keys()
+keys.remove('PostProcessLocationsFileName')
+
+for key in keys:
     try:
         outputFilePatterns = []
 
