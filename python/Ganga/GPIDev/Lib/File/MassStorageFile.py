@@ -55,7 +55,6 @@ class MassStorageFile(OutputSandboxFile):
                 continue
 
             lineParts = line.split(' ') 
-            outputType = lineParts[0] 
             outputPattern = lineParts[1]
             outputPath = lineParts[2]           
 
