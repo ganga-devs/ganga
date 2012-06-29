@@ -1,3 +1,5 @@
+from Ganga.Utility.Config import getConfig      
+
 """
 Checks if the output files of a given job(we are interested in the backend) 
 should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
@@ -32,7 +34,7 @@ Intented for grid backends where we have to set the outputsandbox patterns for t
 """
 def getOutputSandboxPatterns(job):
 
-    outputPatterns = ['__postprocesslocations__']       
+    outputPatterns = [getConfig('Output')['PostProcessLocationsFileName']]       
 
     if len(job.outputfiles) > 0:
         for outputFile in job.outputfiles:   
@@ -139,9 +141,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
 ###INDENT###        os.system("gzip %s" % currentFile)
 
-###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '__postprocesslocations__'), 'w')  
+###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'w')  
 """
+
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
+    insertScript = insertScript.replace('###POSTPROCESSLOCATIONSFILENAME###', getConfig('Output')['PostProcessLocationsFileName'])
 
     for outputFileName in outputFilesProcessedOnWN.keys():          
 
