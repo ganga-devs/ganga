@@ -37,12 +37,44 @@ class MassStorageFile(OutputSandboxFile):
         return "MassStorageFile(name='%s')"% self.name
     
 
-    def setLocation(self, location):
+    def setLocation(self):
         """
-        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
+        Sets the location of output files that were uploaded to mass storage from the WN
         """
-        if location not in self.locations:
-            self.locations.append(location)
+
+        postprocessLocationsPath = os.path.join(self.joboutputdir, '__postprocesslocations__')
+        if not os.path.exists(postprocessLocationsPath):
+            return
+
+        massStorageUploads = {}
+
+        postprocesslocations = open(postprocessLocationsPath, 'r')
+        
+        for line in postprocesslocations.readlines():
+                
+            if line.strip() == '':      
+                continue
+
+            lineParts = line.split(' ') 
+            outputType = lineParts[0] 
+            outputPattern = lineParts[1]
+            outputPath = lineParts[2]           
+
+            if line.startswith('massstorage'):
+
+                if outputPattern not in massStorageUploads.keys():
+                    massStorageUploads[outputPattern] = []
+                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
+                else:
+                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
+
+        postprocesslocations.close()
+        
+        for massStoragePattern in massStorageUploads.keys():
+            if massStoragePattern == outputfile.name:
+                for location in massStorageUploads[massStoragePattern]:
+                    if location not in self.locations:
+                        self.locations.append(location)
         
     def location(self):
         """
