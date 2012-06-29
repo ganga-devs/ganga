@@ -69,17 +69,30 @@ class DiracFile(OutputSandboxFile):
         #from PhysicalFile import PhysicalFile
         #return GPIProxyObjectFactory(PhysicalFile(name=result['Value']))
 
+        ## OTHER WAY... doesn't pollute the environment!
+        import copy
+        from GangaGaudi.Lib.Application.GaudiUtils import shellEnvUpdate_cmd
+        env = copy.deepcopy(os.environ)
+        shellEnvUpdate_cmd('SetupProject LHCbDirac',           env, dir)
+        shellEnvUpdate_cmd('dirac-dms-get-file %s' % self.lfn, env, dir)        
         #todo Alex      
 
     def put(self):
         """
         this method will be called on the client
-        """     
+        """
+        ## looks like will only need this for the interactive uploading of jobs.
+        
 ##    def upload(self,lfn,diracSE,guid=None):
         'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
         from LogicalFile import get_result
         if self.name == "":
             raise GangaException('Can\'t upload a file without a local file name.')
+        if self.lfn == "":
+            raise GangaException('Can\'t upload a file without a logical file name (LFN).')
+        if not self.diracSE:
+            raise GangaException('Please specify a dirac SE')
+            
         if self.guid is None:
             cmd = 'result = DiracCommands.addFile("%s","%s","%s",None)' % \
                   (self.lfn,self.name,self.diracSE)
@@ -97,7 +110,10 @@ class DiracFile(OutputSandboxFile):
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
         #todo Alex
+        ## Might not even need to inject this code when running on the Dirac backend as use API to
+        ## ensure that the output is sent to SE
 
+        ## looks like only need this for non dirac backend, see above
         cmd = """
 ###INDENT###import os, copy
 ###INDENT###def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
@@ -146,7 +162,10 @@ class DiracFile(OutputSandboxFile):
 """
             # Set LFN here but when job comes back test which worked
             # by which in file, and remove appropriate failed ones
-            f.lfn=base + f.name
+            if f.lfn == "":
+                f.lfn=base + f.name
+            if f.diracSE =="":
+                f.diracSE=default
             cmd.replace('###LFN###',  f.lfn    )
             cmd.replace('###NAME###', f.name   )
             cmd.replace('###SE###',   f.diracSE)
