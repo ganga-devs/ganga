@@ -354,43 +354,6 @@ class Job(GangaObject):
         if len(outputfiles) == 0:
             return
 
-        """
-        postprocessLocationsPath = os.path.join(outputdir, '__postprocesslocations__')
-        if not os.path.exists(postprocessLocationsPath):
-            return
-
-        lcgSEUploads = []
-        massStorageUploads = {}
-
-        postprocesslocations = open(postprocessLocationsPath, 'r')
-        
-        for line in postprocesslocations.readlines():
-                
-            if line.strip() == '':      
-                continue
-
-            lineParts = line.split(' ') 
-            outputType = lineParts[0] 
-            outputPattern = lineParts[1]
-            outputPath = lineParts[2]           
-
-            if line.startswith('massstorage'):
-
-                if outputPattern not in massStorageUploads.keys():
-                    massStorageUploads[outputPattern] = []
-                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
-                else:
-                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
-
-            elif line.startswith('lcgse'):
-                lcgSEUploads.append(line.strip())
-            else:
-                pass
-                #to be implemented for other output file types
-
-        postprocesslocations.close()
-        """
-
         for outputfile in outputfiles:
             backendClass = self.backend.__class__.__name__
             outputfileClass = outputfile.__class__.__name__
@@ -408,23 +371,6 @@ class Job(GangaObject):
                     elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
                         outputfile.setLocation()
-                        """
-                        if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
-
-                            searchPattern = 'lcgse %s' % outputfile.name
-
-                            for lcgSEUpload in lcgSEUploads:
-                                if lcgSEUpload.startswith(searchPattern):
-                                    guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                                    outputfile.setLocation(guid)
-
-                        elif outputfileClass == 'MassStorageFile':
-                                
-                            for massStoragePattern in massStorageUploads.keys():
-                                if massStoragePattern == outputfile.name:
-                                    for location in massStorageUploads[massStoragePattern]:
-                                        outputfile.setLocation(location)      
-                        """
 
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
