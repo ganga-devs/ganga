@@ -72,7 +72,7 @@ class MassStorageFile(OutputSandboxFile):
         postprocesslocations.close()
         
         for massStoragePattern in massStorageUploads.keys():
-            if massStoragePattern == outputfile.name:
+            if massStoragePattern == self.name:
                 for location in massStorageUploads[massStoragePattern]:
                     if location not in self.locations:
                         self.locations.append(location)
