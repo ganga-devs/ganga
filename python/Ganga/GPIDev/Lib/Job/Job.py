@@ -225,7 +225,10 @@ class Job(GangaObject):
 
     backend_output_postprocess = {}
                 
-    for key in getConfig('Output').options.keys():
+    keys = getConfig('Output').options.keys()
+    keys.remove('PostProcessLocationsFileName')         
+
+    for key in keys:
         try:
             for configEntry in getConfig('Output')[key]['backendPostprocess']:
                 if configEntry not in backend_output_postprocess.keys():
