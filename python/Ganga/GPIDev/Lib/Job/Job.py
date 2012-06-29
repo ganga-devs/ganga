@@ -354,6 +354,7 @@ class Job(GangaObject):
         if len(outputfiles) == 0:
             return
 
+        """
         postprocessLocationsPath = os.path.join(outputdir, '__postprocesslocations__')
         if not os.path.exists(postprocessLocationsPath):
             return
@@ -388,6 +389,7 @@ class Job(GangaObject):
                 #to be implemented for other output file types
 
         postprocesslocations.close()
+        """
 
         for outputfile in outputfiles:
             backendClass = self.backend.__class__.__name__
@@ -405,6 +407,8 @@ class Job(GangaObject):
                         outputfile.put()    
                     elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
+                        outputfile.setLocation()
+                        """
                         if outputfileClass == 'LCGStorageElementFile' and len(lcgSEUploads) > 0:
 
                             searchPattern = 'lcgse %s' % outputfile.name
@@ -420,7 +424,7 @@ class Job(GangaObject):
                                 if massStoragePattern == outputfile.name:
                                     for location in massStorageUploads[massStoragePattern]:
                                         outputfile.setLocation(location)      
-
+                        """
 
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
