@@ -80,8 +80,6 @@ class LCGStorageElementFile(OutputSandboxFile):
         if not os.path.exists(postprocessLocationsPath):
             return
 
-        lcgSEUploads = []
-
         postprocesslocations = open(postprocessLocationsPath, 'r')
         
         for line in postprocesslocations.readlines():
@@ -89,24 +87,17 @@ class LCGStorageElementFile(OutputSandboxFile):
             if line.strip() == '':      
                 continue
 
-            lineParts = line.split(' ') 
-            outputType = lineParts[0] 
-            outputPattern = lineParts[1]
-            outputPath = lineParts[2]           
-
             if line.startswith('lcgse'):
-                lcgSEUploads.append(line.strip())
 
-        postprocesslocations.close()
+                lcgSEUpload = line.strip()
+                searchPattern = 'lcgse %s' % self.name
 
-        if len(lcgSEUploads) > 0:
-            searchPattern = 'lcgse %s' % self.name
-
-            for lcgSEUpload in lcgSEUploads:
                 if lcgSEUpload.startswith(searchPattern):
                     guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
                     if guid not in self.locations:
                         self.locations.append(guid)
+
+        postprocesslocations.close()
         
     def location(self):
         """
