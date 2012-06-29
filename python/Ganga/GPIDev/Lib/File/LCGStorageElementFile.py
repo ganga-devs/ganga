@@ -146,7 +146,9 @@ class LCGStorageElementFile(OutputSandboxFile):
                 
                 match = re.search('(guid:\S+)',mystdout)
                 if match:
-                    self.setLocation(mystdout.strip())
+                    location = mystdout.strip()
+                    if location not in self.locations:
+                        self.locations.append(location) 
 
                 #remove file from output
                 os.system('rm %s' % os.path.join(self.joboutputdir, currentFile))
