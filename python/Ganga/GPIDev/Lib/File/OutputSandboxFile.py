@@ -35,6 +35,12 @@ class OutputSandboxFile(GangaObject):
 
         return "OutputSandboxFile(name='%s')"% self.name
 
+    def setLocation(self):
+        """
+        Sets the location of output files that were uploaded from the WN
+        """
+        pass
+
     def location(self):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
