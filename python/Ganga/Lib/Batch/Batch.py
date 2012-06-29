@@ -536,8 +536,9 @@ sys.exit(result)
         import inspect
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
+        from Ganga.Utility.Config import getConfig
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing
-        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__', '__postprocesslocations__']))
+        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__', getConfig('Output')['PostProcessLocationsFileName']]))
 
         text = text.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, ''))
 
@@ -563,8 +564,6 @@ sys.exit(result)
         text = text.replace('###INPUT_DIR###',repr(job.getStringInputDir()))
 
         text = text.replace('###MONITORING_SERVICE###',job.getMonitoringService().getWrapperScriptConstructorText())
-
-        from Ganga.Utility.Config import getConfig
         
         text = text.replace('###GANGADIR###',repr(getConfig('System')['GANGA_PYTHONPATH']))
 
