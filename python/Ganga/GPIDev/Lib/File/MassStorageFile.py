@@ -148,7 +148,9 @@ class MassStorageFile(OutputSandboxFile):
                     logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFile, massStoragePath))
                 else:
                     logger.info('%s successfully uploaded to mass storage' % currentFile)              
-                    self.setLocation(os.path.join(massStoragePath, os.path.basename(currentFile)))
+                    location = os.path.join(massStoragePath, os.path.basename(currentFile))
+                    if location not in self.locations:
+                        self.locations.append(location)         
                     #remove file from output
                     os.system('rm %s' % os.path.join(self.joboutputdir, currentFile))
 
