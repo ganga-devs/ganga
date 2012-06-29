@@ -340,7 +340,8 @@ sys.exit()
       script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
 
       from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing
-      script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', '__postprocesslocations__']))
+      from Ganga.Utility.Config import getConfig
+      script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', getConfig('Output')['PostProcessLocationsFileName']]))
 
       script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, ''))
 
@@ -357,8 +358,6 @@ sys.exit()
       script = script.replace('###MONITORING_SERVICE###',job.getMonitoringService().getWrapperScriptConstructorText())
 
       self.workdir = workdir
-      
-      from Ganga.Utility.Config import getConfig
 
       script = script.replace('###GANGADIR###',repr(getConfig('System')['GANGA_PYTHONPATH']))
 
