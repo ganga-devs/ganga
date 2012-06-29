@@ -100,7 +100,7 @@ class LCGStorageElementFile(OutputSandboxFile):
         postprocesslocations.close()
 
         if len(lcgSEUploads) > 0:
-            searchPattern = 'lcgse %s' % outputfile.name
+            searchPattern = 'lcgse %s' % self.name
 
             for lcgSEUpload in lcgSEUploads:
                 if lcgSEUpload.startswith(searchPattern):
