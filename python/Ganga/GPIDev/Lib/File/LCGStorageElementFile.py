@@ -14,6 +14,7 @@ logger = Ganga.Utility.logging.getLogger()
 from OutputSandboxFile import OutputSandboxFile
 
 import re
+import os
 
 class LCGStorageElementFile(OutputSandboxFile):
     """LCGStorageElementFile represents a class marking an output file to be written into LCG SE
@@ -136,7 +137,6 @@ class LCGStorageElementFile(OutputSandboxFile):
         be called on the client
         """     
         import glob
-        import os
 
         os.environ['LFC_HOST'] = self.lfc_host
 
@@ -245,7 +245,6 @@ class LCGStorageElementFile(OutputSandboxFile):
         """
         Retrieves locally all files matching this LCGStorageElementFile object pattern
         """
-        import os
         import subprocess
         
         # system command executor with subprocess
