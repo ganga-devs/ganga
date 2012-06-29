@@ -76,7 +76,7 @@ class LCGStorageElementFile(OutputSandboxFile):
         Sets the location of output files that were uploaded to lcg storage element from the WN
         """
 
-        postprocessLocationsPath = os.path.join(self.joboutputdir, '__postprocesslocations__')
+        postprocessLocationsPath = os.path.join(self.joboutputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
 
