@@ -42,12 +42,10 @@ class MassStorageFile(OutputSandboxFile):
         """
         Sets the location of output files that were uploaded to mass storage from the WN
         """
-
+        
         postprocessLocationsPath = os.path.join(self.joboutputdir, '__postprocesslocations__')
         if not os.path.exists(postprocessLocationsPath):
             return
-
-        massStorageUploads = {}
 
         postprocesslocations = open(postprocessLocationsPath, 'r')
         
@@ -63,19 +61,13 @@ class MassStorageFile(OutputSandboxFile):
 
             if line.startswith('massstorage'):
 
-                if outputPattern not in massStorageUploads.keys():
-                    massStorageUploads[outputPattern] = []
-                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
-                else:
-                    massStorageUploads[outputPattern].append(outputPath.strip('\n'))                    
-
+                if outputPattern == self.name:
+                    massStorageLocation = outputPath.strip('\n')        
+                    if massStorageLocation not in self.locations:
+                        self.locations.append(massStorageLocation)
+     
         postprocesslocations.close()
-        
-        for massStoragePattern in massStorageUploads.keys():
-            if massStoragePattern == self.name:
-                for location in massStorageUploads[massStoragePattern]:
-                    if location not in self.locations:
-                        self.locations.append(location)
+            
         
     def location(self):
         """
