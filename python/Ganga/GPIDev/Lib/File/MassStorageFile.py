@@ -7,6 +7,8 @@
 import os
 from Ganga.GPIDev.Schema import *
 
+from Ganga.Utility.Config import getConfig
+
 from OutputSandboxFile import OutputSandboxFile
 
 class MassStorageFile(OutputSandboxFile):
@@ -43,7 +45,7 @@ class MassStorageFile(OutputSandboxFile):
         Sets the location of output files that were uploaded to mass storage from the WN
         """
         
-        postprocessLocationsPath = os.path.join(self.joboutputdir, '__postprocesslocations__')
+        postprocessLocationsPath = os.path.join(self.joboutputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
 
@@ -83,7 +85,7 @@ class MassStorageFile(OutputSandboxFile):
             print "%s is not a valid directory.... " % dir
             return
 
-        from Ganga.Utility.Config import getConfig 
+         
         cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
 
         for location in self.locations:
@@ -98,7 +100,6 @@ class MassStorageFile(OutputSandboxFile):
         import glob
         import re
 
-        from Ganga.Utility.Config import getConfig
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
         #if Castor mass storage (we understand from the nsls command)
@@ -158,8 +159,7 @@ class MassStorageFile(OutputSandboxFile):
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """        
         massStorageCommands = []
-
-        from Ganga.Utility.Config import getConfig      
+      
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
 
         for outputFile in outputFiles:
