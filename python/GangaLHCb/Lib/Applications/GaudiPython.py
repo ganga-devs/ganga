@@ -57,7 +57,8 @@ class GaudiPython(GaudiBase):
 """
     _name = 'GaudiPython'
     _category = 'applications'
-    _exportmethods = ['prepare','unprepare']
+    _exportmethods = GaudiBase._exportmethods[:]
+    _exportmethods += ['prepare','unprepare']
 
     _schema = GaudiBase._schema.inherit_copy()
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
