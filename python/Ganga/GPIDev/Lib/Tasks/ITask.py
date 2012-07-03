@@ -1,5 +1,6 @@
 from common import *
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
+from Ganga.GPIDev.Lib.Job.MetadataDict import *
 import time
 
 ########################################################################
@@ -12,6 +13,7 @@ class ITask(GangaObject):
         'name'        : SimpleItem(defvalue='NewTask', copyable=1, doc='Name of the Task', typelist=["str"]),
         'status'      : SimpleItem(defvalue='new', protected=1, doc='Status - new, running, pause or completed', typelist=["str"]),
         'float'       : SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=["int"]),
+        'metadata'    : ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
         'creation_date': SimpleItem(defvalue="19700101",copyable=0,protected=1,doc='Creation date of the task', typelist=["str"]),
         })
     

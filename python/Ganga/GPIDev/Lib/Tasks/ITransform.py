@@ -4,6 +4,7 @@ from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from Ganga.GPIDev.Lib.Job.MetadataDict import *
 from IUnit import IUnit
 
 class ITransform(GangaObject):
@@ -22,6 +23,7 @@ class ITransform(GangaObject):
         'units'          : ComponentItem('units',defvalue=[],sequence=1,copyable=1,doc='list of units'),
         'inputdata'      : ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False,doc='Input datasets to run over'),
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset template'),
+        'metadata'       : ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
         'rebroker_on_job_fail'     : SimpleItem(defvalue=False, doc='Rebroker if too many minor resubs'),
     })
 
