@@ -136,7 +136,7 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 outputFilesProcessedOnWN[outputfileClassName].append(outputFile)
 
     insertScript = """\n
-###INDENT###import glob
+###INDENT###import os, glob
 ###INDENT###for patternToZip in ###PATTERNSTOZIP###:
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
 ###INDENT###        os.system("gzip %s" % currentFile)
