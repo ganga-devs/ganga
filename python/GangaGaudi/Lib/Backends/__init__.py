@@ -31,4 +31,5 @@ setattr(Localhost,'master_prepare',master_prepare)
 setattr(Interactive,'master_prepare',master_prepare)
 setattr(PBS,'master_prepare',master_prepare)
 setattr(SGE,'master_prepare',master_prepare)
+setattr(LSF,'master_prepare',master_prepare)
 ##localhost.master_prepare=master_prepare
