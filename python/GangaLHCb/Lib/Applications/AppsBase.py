@@ -301,16 +301,28 @@ class AppName(Gaudi):
             try:
                 debug_dir = self.getJobObject().getDebugWorkspace().getPath()
                 msg2+='You can also view this from within ganga '\
-                       'by doing job.peek(\'../debug/gaudirun.stdout\').'
+                       'by doing job.peek(\'../debug/gaudirun.<whatever>\').'
             except:
                 debug_dir = tempfile.mkdtemp()
                     
-            f = open(debug_dir + '/gaudirun.stdout','w')
-            f.write(e.message)
-            f.close()
-            msg = 'Unable to parse job options! Please check options ' \
-                  'files and extraopts. The output from gaudyrun.py can be ' \
-                  'found in %s.' % f.name
+            messages = e.message.split('###SPLIT###')
+            if len(messages) is 2:
+                stdout = open(debug_dir + '/gaudirun.stdout','w')
+                stderr = open(debug_dir + '/gaudirun.stderr','w')
+                stdout.write(messages[0])
+                stderr.write(messages[1])
+                stdout.close()
+                stderr.close()
+                msg = 'Unable to parse job options! Please check options ' \
+                      'files and extraopts. The output and error streams from gaudyrun.py can be ' \
+                      'found in %s and %s respectively . ' % (stdout.name, stderr.name)
+            else:
+                f = open(debug_dir + '/gaudirun.out','w')
+                f.write(e.message)
+                f.close()
+                msg = 'Unable to parse job options! Please check options ' \
+                      'files and extraopts. The output from gaudyrun.py can be ' \
+                      'found in %s . ' % f.name
             msg+=msg2
             # logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
