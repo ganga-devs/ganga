@@ -85,7 +85,7 @@ class PythonOptionsParser:
                 logger.error('Cannot eval() the options file. Exception: %s',e)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
-                raise ApplicationConfigurationError(None,stdout)
+                raise ApplicationConfigurationError(None,stdout+'###SPLIT###'+m)
             try:
                 opts_pkl_string = tmp_pkl.read()        
             except IOError, e:
@@ -94,7 +94,7 @@ class PythonOptionsParser:
         
         if not rc ==0:
             logger.debug('Failed to run: %s', gaudirun) 
-            raise ApplicationConfigurationError(None,stdout)
+            raise ApplicationConfigurationError(None,stdout+'###SPLIT###'+m)
                                 
         tmp_pkl.close()
         py_opts.close()
