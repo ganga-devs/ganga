@@ -65,7 +65,8 @@ class DiracFile(OutputSandboxFile):
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
-            logger.warning('Couldn\t locate locations file so couldn\'t set the lfn')
+            #logger.warning('Couldn\'t locate locations file so couldn\'t set the lfn info') ##seems to be called twice (only on Dirac backend... must check) so misleading when second one works??
+            return
 
         postprocesslocations = open(postprocessLocationsPath, 'r')
         
@@ -169,7 +170,7 @@ class DiracFile(OutputSandboxFile):
 
         ## looks like only need this for non dirac backend, see above
         cmd = """
-###INDENT###import os, copy, glob
+###INDENT###import os, sys, copy, glob
 ###INDENT###def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
 ###INDENT###    import subprocess, time, tempfile, pickle
 ###INDENT###    f = tempfile.NamedTemporaryFile(mode='w+b')
@@ -202,7 +203,12 @@ class DiracFile(OutputSandboxFile):
 ###INDENT###    return pipe.returncode, stdout, stderr
 ###INDENT###
 ###INDENT###env = copy.deepcopy(os.environ)
-###INDENT###shellEnvUpdate_cmd('. SetupProject.sh LHCbDirac' , env)
+###INDENT###if shellEnvUpdate_cmd('which dirac-dms-add-file' , env)[1].find('no dirac-dms-add-file in')>=0 or shellEnvUpdate_cmd('which dirac-dms-lfn-metadata' , env)[1].find('no dirac-dms-lfn-metadata in')>=0:
+###INDENT###    if shellEnvUpdate_cmd('which SetupProject.sh' , env)[1].find('no SetupProject.sh in')<0:
+###INDENT###        shellEnvUpdate_cmd('. SetupProject.sh LHCbDirac' , env)
+###INDENT###    else:
+###INDENT###        print \'ERROR: Could not find the SetupProject.sh script so dirac commands could not be set up\'
+###INDENT###        sys.exit(1)
 """
 
         for f in outputFiles:
