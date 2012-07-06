@@ -147,69 +147,48 @@ def get_user_dlls(appname,version,user_release_area,platform,env):
 import os
 import subprocess
 import time
-import signal
-
-def shellEnv_cmd(cmd, env=None, cwd=None, timeout=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
-  '''Tool for running a shell command within a specific environment. timeout is in seconds. If stdout or
-  stderr are file objects then None is returned for the stdout and stderr part of the return tuple'''
-  startTime=time.time()
-
-  pipe = subprocess.Popen( cmd,
-                           shell=True,
-                           env=env,
-                           cwd=cwd,
-                           stdout=stdout,
-                           stderr=stderr,
-                           preexec_fn=os.setsid)
-  
+def shellEnv_cmd(cmd, environ=None, cwdir=None):
+  pipe = subprocess.Popen(cmd,
+                          shell=True,
+                          env=environ,
+                          cwd=cwdir,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+  stdout, stderr  = pipe.communicate()
   while pipe.poll() is None:
-    if timeout and ( time.time() - startTime ) >= timeout:
-      os.killpg(pipe.pid, signal.SIGTERM) # Send the signal to all the process groups
-      pipe.wait()
-      preambleFindString = 'INT TERM EXIT;' #catch calls coming from the update function below
-      preambleEndLocation = cmd.find(preambleFindString)
-      if preambleEndLocation <0:
-        msg = 'Timeout issuing command: "%s"' % cmd
-      else:
-        msg = 'Timeout issuing command: "%s"' % cmd[preambleEndLocation+len(preambleFindString):]
-      return 1, msg, msg
-
     time.sleep(0.5)
-
-  stdout, stderr  = pipe.communicate()# blocking command so poll until know complete, that way can escape after timeout
   return pipe.returncode, stdout, stderr
 
-def shellEnvUpdate_cmd(cmd, env=os.environ, cwd=None, timeout=None, stdout=subprocess.PIPE, stderr=subprocess.PIPE):
+def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
   import tempfile, pickle
-  f = tempfile.NamedTemporaryFile(mode='wb')
+  f = tempfile.NamedTemporaryFile(mode='w+b')
   fname = f.name
   f.close()
-
+  
+  if not cmd.endswith(';'): cmd += ';'
   envdump  = 'import os, pickle;'
-  envdump += 'f=open(\'%s\',\'wb\');' % fname
+  envdump += 'f=open(\'%s\',\'w+b\');' % fname
   envdump += 'pickle.dump(os.environ,f);'
-  envdump += 'f.close()'
-  envdumpcommand = """trap \"/usr/bin/env python -c \\\"%s\\\" \" INT TERM EXIT;""" % envdump
-  cmd = envdumpcommand + cmd
-
-  rc, stdout, stderr = shellEnv_cmd( cmd,
-                                     env=env,
-                                     cwd=cwd,
-                                     timeout=timeout,
-                                     stdout=stdout,
-                                     stderr=stderr )
-
-  # if the file doesn't exist then didn't get to the env update stuff as error somewhere
-  if not os.path.exists(fname):
-    logger.warning('Couln\'t find the environment update file so environment not updated.')
-    return rc, stdout, stderr
-
-  f = open(fname,'rb')
-  env=env.update(pickle.load(f))
+  envdump += 'f.close();'
+  envdumpcommand = 'python -c \"%s\"' % envdump
+  cmd += envdumpcommand
+  
+  pipe = subprocess.Popen(cmd,
+                          shell=True,
+                          env=environ,
+                          cwd=cwdir,
+                          stdout=subprocess.PIPE,
+                          stderr=subprocess.PIPE)
+  stdout, stderr  = pipe.communicate()
+  while pipe.poll() is None:
+    time.sleep(0.5)
+    
+  f = open(fname,'r+b')
+  environ=environ.update(pickle.load(f))
   f.close()
   os.system('rm -f %s' % fname)
   
-  return rc, stdout, stderr
+  return pipe.returncode, stdout, stderr
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def fillPackedSandbox(sandbox_files,destination):
