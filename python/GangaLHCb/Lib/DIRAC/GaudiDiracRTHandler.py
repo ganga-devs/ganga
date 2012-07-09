@@ -7,6 +7,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from DiracUtils import *
 from DiracScript import *
 from GangaLHCb.Lib.RTHandlers.RTHUtils import *
+from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
@@ -20,7 +21,7 @@ from Ganga.Utility.util import unique
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 def gaudi_dirac_wrapper(cmdline,platform):
-    return """#!/usr/bin/env python
+    script = """#!/usr/bin/env python
 '''Script to run Gaudi application'''
 
 from os import curdir, system, environ, pathsep, sep, getcwd
@@ -37,9 +38,16 @@ if __name__ == '__main__':
     prependEnv('LD_LIBRARY_PATH', getcwd() + '/lib')
     prependEnv('PYTHONPATH', getcwd() + '/InstallArea/python')
     prependEnv('PYTHONPATH', getcwd() + '/InstallArea/%s/python')
-        
-    sys.exit(system(%s)/256)
-  """ % (platform,cmdline)
+
+    rc = system(%s)/256
+
+    ###XMLSUMMARYPARSING###
+
+    sys.exit(rc)
+""" % (platform,cmdline)
+    
+    script = script.replace('###XMLSUMMARYPARSING###',getXMLSummaryScript())
+    return script
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -107,6 +115,11 @@ class GaudiDiracRTHandler(GaudiRunTimeHandler):
         ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
         ## the subjob inputsandbox depending if the jobmasterconfig object is present
         ## or not... Therefore combine the job.inputsandbox with appmasterconfig.
+
+
+        # add summary.xml
+        outputsandbox += ['summary.xml','__parsedxmlsummary__']
+
         r = StandardJobConfig(inputbox   = unique(inputsandbox ),
                               outputbox  = unique(outputsandbox) )
 

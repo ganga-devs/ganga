@@ -56,6 +56,9 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
 
         if job.outputdata: outdata += job.outputdata.files
 
+        # add summary.xml
+        outputsandbox += ['summary.xml','__parsedxmlsummary__']
+
         r = StandardJobConfig(inputbox   = unique(inputsandbox ),
                               outputbox  = unique(outputsandbox) )
 

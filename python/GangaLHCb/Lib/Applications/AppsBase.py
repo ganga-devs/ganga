@@ -4,7 +4,7 @@ import os, tempfile, pprint, sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnvUpdate_cmd, fillPackedSandbox
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
-from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers#,get_parser
+from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, app_postprocess#lumi, events, xmldatafiles, xmldatanumbers, xmlskippedfiles#,get_parser
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset,OutputData
@@ -141,7 +141,11 @@ class AppName(Gaudi):
         
         if (not self.package): self.package = available_packs(self.appname)
         if self.appname is 'Vetra': self.lhcb_release_area = os.path.expandvars("$Vetra_release_area")
-        
+
+    def postprocess(self):
+        j = self.getJobObject()
+        return app_postprocess(j)
+                
     def readInputData(self,optsfiles,extraopts=False):
         '''Returns a LHCbDataSet object from a list of options files. The
         optional argument extraopts will decide if the extraopts string inside
@@ -292,8 +296,22 @@ class AppName(Gaudi):
 
     def _get_parser(self):
         optsfiles = [fileitem.name for fileitem in self.optsfile]
+        # add on XML summary
+
+        extraopts = ''
+        if self.extraopts:
+            extraopts += self.extraopts
+            if  self.extraopts.find('LHCbApp().XMLSummary') is -1:
+                extraopts += "\nfrom Gaudi.Configuration import *"
+                extraopts += "\nfrom Configurables import LHCbApp"
+                extraopts += "\nLHCbApp().XMLSummary='summary.xml'"
+        else:
+            extraopts     += "\nfrom Gaudi.Configuration import *"
+            extraopts     += "\nfrom Configurables import LHCbApp"
+            extraopts     += "\nLHCbApp().XMLSummary='summary.xml'"
+            
         try:
-            parser = PythonOptionsParser(optsfiles,self.extraopts,self.env)
+            parser = PythonOptionsParser(optsfiles,extraopts,self.env)
         except ApplicationConfigurationError, e:
             # fix this when preparing not attached to job
             

@@ -9,6 +9,7 @@ import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from GangaLHCb.Lib.DIRAC.Dirac import Dirac
 from GangaLHCb.Lib.DIRAC.DiracUtils import *
+import GangaLHCb.Lib.Applications.AppsBaseUtils
 
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -55,6 +56,74 @@ class filenameFilter:
 
     def __call__(self, file):
         return file.name == self.filename
+
+
+def getXMLSummaryScript():
+  '''Returns the necessary script to parse and make sense of the XMLSummary data'''
+  import inspect
+  script  = "# Parsed XMLSummary data extraction methods\n"
+  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.lumi)
+  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.events)
+  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.xmldatafiles)
+  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.xmldatanumbers)
+  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.xmlskippedfiles)
+
+  script += """
+# XMLSummary parsing
+import os, sys
+if 'XMLSUMMARYBASEROOT' not in os.environ:
+    sys.stderr.write(\"\'XMLSUMMARYBASEROOT\' env var not defined so summary.xml not parsed\")
+else:
+    schemapath  = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'xml/XMLSummary.xsd')
+    summarypath = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'python/XMLSummaryBase')
+    sys.path.append(summarypath)
+    import summary
+
+    outputxml = os.path.join(os.getcwd(), 'summary.xml')
+    if not os.path.exists(outputxml):
+        sys.stderr.write(\"XMLSummary not passed as \'summary.xml\' not present in working dir\")
+    else:
+        try:
+            XMLSummarydata = summary.Summary(schemapath,construct_default=False)
+            XMLSummarydata.parse(outputxml)
+        except:
+            sys.stderr.write(\"Failure when parsing XMLSummary file \'summary.xml\'\")
+
+        # write to file
+        with open('__parsedxmlsummary__','w') as parsedXML:
+          try:
+              l=lumi(XMLSummarydata)
+              parsedXML.write('lumi->%s +- %s, from %s files\\n' % (l[0],l[2],l[1]) )
+          except:
+              parsedXML.write('lumi->NotAvailable\\n')
+              sys.stderr.write('XMLSummary error: Failed to compute integrated luminosity\\n')
+
+          try:
+              parsedXML.write('events->%s\\n' % events(XMLSummarydata))
+          except:
+              parsedXML.write('events->NotAvailable\\n')
+              sys.stderr.write('XMLSummary error: Failed to computer No. events input and output\\n')
+
+          try:
+              parsedXML.write('xmldatafiles->%s\\n' % xmldatafiles(XMLSummarydata))
+          except:
+              parsedXML.write('xmldatafiles->NotAvailable\\n')
+              sys.stderr.write('XMLSummary error: Failed to compute xml datafiles run over\\n')
+          
+          try:
+              parsedXML.write('xmldatanumbers->%s\\n' % xmldatanumbers(XMLSummarydata))
+          except:
+              parsedXML.write('xmldatanumbers->NotAvailable\\n')
+              sys.stderr.write('XMLSummary error: Failed to compute No. of datafiles run over\\n')
+
+          try:
+              parsedXML.write('xmlskippedfiles->%s\\n' % xmlskippedfiles(XMLSummarydata))
+          except:
+              parsedXML.write('xmlskippedfiles->NotAvailable\\n')
+              sys.stderr.write('XMLSummary error: Failed to compute No. of datafiles skipped\\n')
+"""
+
+  return script
 
 def create_runscript(app,outputdata,job):
 
@@ -141,6 +210,8 @@ os.environ['PYTHONPATH'] = '%s/InstallArea/%s/python:%s' % \\
 # run command
 os.system(cmdline)
 
+###XMLSUMMARYPARSING###
+
 # make output directory + cp files to it
 if data_output:
     os.system('%s -p %s' % (mkdir,job_output_dir))
@@ -157,7 +228,9 @@ for f in data_output:
         sys.stdout.flush()
     # sneaky rm
     os.system('rm -f ' + f)
-"""    
+"""
+
+  script = script.replace('###XMLSUMMARYPARSING###',getXMLSummaryScript())
   return script
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
