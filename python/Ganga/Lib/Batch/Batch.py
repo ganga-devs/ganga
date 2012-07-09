@@ -538,7 +538,8 @@ sys.exit(result)
         import Ganga.Utility as Utility
         from Ganga.Utility.Config import getConfig
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing
-        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__', getConfig('Output')['PostProcessLocationsFileName']]))
+        jobidRepr = repr(self.getJobObject().getFQID('.'))
+        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__', getConfig('Output')['PostProcessLocationsFileName']], jobidRepr))
 
         text = text.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, ''))
 
@@ -554,7 +555,7 @@ sys.exit(result)
         text = text.replace('###SHAREDOUTPUTPATH###',repr(sharedoutputpath))    
         
         text = text.replace('###OUTPUTPATTERNS###',repr(outputpatterns))
-        text = text.replace('###JOBID###',repr(self.getJobObject().getFQID('.')))
+        text = text.replace('###JOBID###',jobidRepr)
         text = text.replace('###ENVIRONMENT###',repr(environment))
         text = text.replace('###PREEXECUTE###',self.config['preexecute'])
         text = text.replace('###POSTEXECUTE###',self.config['postexecute'])
