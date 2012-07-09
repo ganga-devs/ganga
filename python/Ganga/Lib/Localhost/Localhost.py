@@ -341,7 +341,8 @@ sys.exit()
 
       from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing
       from Ganga.Utility.Config import getConfig
-      script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', getConfig('Output')['PostProcessLocationsFileName']]))
+      jobidRepr = repr(job.getFQID('.'))
+      script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__', getConfig('Output')['PostProcessLocationsFileName']], jobidRepr))
 
       script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, ''))
 
@@ -350,7 +351,7 @@ sys.exit()
       script = script.replace('###SHAREDOUTPUTPATH###',repr(sharedoutputpath))
       script = script.replace('###APPSCRIPTPATH###',repr(appscriptpath))
       script = script.replace('###OUTPUTPATTERNS###',repr(outputpatterns))
-      script = script.replace('###JOBID###',repr(job.getFQID('.')))
+      script = script.replace('###JOBID###',jobidRepr)
       script = script.replace('###ENVIRONMENT###',repr(environment))
       script = script.replace('###WORKDIR###',repr(workdir))
       script = script.replace('###INPUT_DIR###',repr(job.getStringInputDir()))
