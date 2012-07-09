@@ -54,7 +54,7 @@ def getOutputSandboxPatterns(job):
 This should be used from Local and Batch backend, wherefrom MassStorageFile import MassStorageFile there is code on the WN for 
 sending the output(optionally compressed before that) to the outputsandbox
 """
-def getWNCodeForOutputSandbox(job, files):
+def getWNCodeForOutputSandbox(job, files, jobid):
         
     patternsToSandbox = []
     patternsToZip = []  
@@ -105,6 +105,7 @@ for fn in final_list_to_copy:
     insertScript = insertScript.replace('###FILES###', str(files))
     insertScript = insertScript.replace('###PATTERNSTOSANDBOX###', str(patternsToSandbox))
     insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
+    insertScript = insertScript.replace('###JOBID###', jobid)
 
     return insertScript 
 
