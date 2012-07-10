@@ -224,9 +224,9 @@ class DiracFile(OutputSandboxFile):
 ###INDENT###            try:                
 ###INDENT###                import datetime
 ###INDENT###                guid = eval(shellEnvUpdate_cmd('dirac-dms-lfn-metadata ###LFN###', env)[1])['Successful']['###LFN###']['GUID']
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###.gz->###LFN###:%s:%s' % (se, guid))
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###.gz->###LFN###:%s:%s\n' % (se, guid))
 ###INDENT###            except:
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###.gz->###LFN###:%s:NotAvailable' % se)                
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###.gz->###LFN###:%s:NotAvailable\n' % se)                
 ###INDENT###            break
 """
             else:
@@ -235,9 +235,9 @@ class DiracFile(OutputSandboxFile):
 ###INDENT###            try:                
 ###INDENT###                import datetime
 ###INDENT###                guid = eval(shellEnvUpdate_cmd('dirac-dms-lfn-metadata ###LFN###', env)[1])['Successful']['###LFN###']['GUID']
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###->###LFN###:%s:%s' % (se, guid))
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###->###LFN###:%s:%s\n' % (se, guid))
 ###INDENT###            except:
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###->###LFN###:%s:NotAvailable' % se)                
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###->###LFN###:%s:NotAvailable\n' % se)                
 ###INDENT###            break
 """
             # Set LFN here but when job comes back test which worked
