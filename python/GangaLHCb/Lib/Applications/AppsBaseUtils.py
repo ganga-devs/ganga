@@ -70,8 +70,13 @@ def guess_version(appname):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def lumi(xmlsummary):
   '''given an XMLSummary object, will return the integrated luminosity'''
-#  print xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2]
-  return (xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value())
+  #  print xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2]
+
+  lumiDict = dict( zip( xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
+                        xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()
+                        )
+                   )
+  return '"%s +- %s"' % (lumiDict['Flag'], lumiDict['Flag2'])
 
 def events(xmlsummary):
   '''given an XMLSummary object, will return the number of events input/output'''
@@ -113,21 +118,27 @@ def xmldatanumbers(xmlsummary):
 def xmlskippedfiles(xmlsummary):
   '''get all skipped files from xml'''
   filedict=xmldatafiles(xmlsummary)
-#  from Ganga.GPI import LHCbDataset
   skippedfiles=set()
   for stat in ['none','fail']:
     if stat in filedict:
       skippedfiles.update(filedict[stat])
   return skippedfiles
 
+def activeSummaryItems():
+  activeItems = {'lumi'           :lumi,
+                 'events'         :events,
+                 'xmldatafiles'   :xmldatafiles,
+                 'xmldatanumbers' :xmldatanumbers,
+                 'xmlskippedfiles':xmlskippedfiles
+                 }
+  return activeItems
+  
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def app_postprocess(job):
   parsedXML = os.path.join(job.outputdir,'__parsedxmlsummary__')
+  metadataItems={} # use to avoid replacing 'lumi' etc as return value and not the method pointer
   if os.path.exists(parsedXML):
-    with open(parsedXML,'r') as f:
-      for l in f.readlines():
-        key, value = l[:-1].split('->')#-1 removes the \n newline char
-        job.metadata[key] = value
+    execfile(parsedXML,{},metadataItems)
 
   # Combining subjobs XMLSummaries.
   if job.subjobs:
@@ -159,33 +170,15 @@ def app_postprocess(job):
       logger.error('Problem while merging the subjobs XML summaries')
       raise
 
-    try:
-      l=lumi(XMLSummarydata)
-      job.metadata['lumi']="%s +- %s, from %s files" % (l[0],l[2],l[1])
-    except:
-      logger.warning('Problem calculating the merged luminosity.')
-      job.metadata['lumi']="NotAvailable"
+    for name, method in activeSummaryItems().iteritems():
+      try:
+        metadataItems[name] = method(XMLSummarydata)
+      except:
+        metadataItems[name] = None
+        logger.warning('Problem running "%s" method on merged xml output.' % name)
 
-    try:
-      job.metadata['events' ]=str(events(XMLSummarydata))
-    except:
-      logger.warning('Problem calculating the merged number of events IN/OUT.')
-      job.metadata['events']="NotAvailable"
-                
-    try:
-      job.metadata['xmldatafiles'] = str(xmldatafiles(XMLSummarydata))
-    except:
-      logger.warning('Failed to compute merged set of datafiles run over from xml.')
-      job.metadata['xmldatafiles']="NotAvailable"
-          
-    try:
-      job.metadata['xmldatanumbers'] = str(xmldatanumbers(XMLSummarydata))
-    except:
-      logger.warning('Failed to compute No. of datafiles run over from merger xml.')
-      job.metadata['xmldatanumbers'] = "NotAvailable"
-
-    try:
-      job.metadata['xmlskippedfiles']= str(xmlskippedfiles(XMLSummarydata))
-    except:
-      logger.warning('Failed to compute No. of datafiles skipped from merged xml.')
-      job.metadata['xmlskippedfiles']="NotAvailable"
+  for key, value in metadataItems.iteritems():
+    if value is None: # Has to be explicit else empty list counts
+      job.metadata[key] = 'Not Available.'
+    else:
+      job.metadata[key] = value

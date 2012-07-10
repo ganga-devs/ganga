@@ -32,8 +32,10 @@ class MetadataDict(GangaObject):
             raise GangaAttributeError('\'%s\' is a reserved key name and cannot be used in the metadata' % key)
         if type(key) is not type(''):
             raise GangaAttributeError('Metadata key must be of type \'str\' not %s'%type(key))
-        if type(value) is not type(''):
-            raise GangaAttributeError('Metadata only supports string values at the moment')
+        if isinstance(value, GangaObject):
+            raise GangaAttributeError('Metadata doesn\'t support nesting of GangaObjects at the moment')
+##         if type(value) is not type(''):
+##             raise GangaAttributeError('Metadata only supports string values at the moment')
 ##         if type(value) is list or type(value) is tuple or type(value) is dict:
 ##             raise GangaAttributeError('Metadata doesn\'t support nesting data structures at the moment, values of type \'list\', \'tuple\' or \'dict\' are forbidden')
             

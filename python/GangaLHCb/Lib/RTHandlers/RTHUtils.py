@@ -61,12 +61,12 @@ class filenameFilter:
 def getXMLSummaryScript():
   '''Returns the necessary script to parse and make sense of the XMLSummary data'''
   import inspect
+  from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
   script  = "# Parsed XMLSummary data extraction methods\n"
-  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.lumi)
-  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.events)
-  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.xmldatafiles)
-  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.xmldatanumbers)
-  script += inspect.getsource(GangaLHCb.Lib.Applications.AppsBaseUtils.xmlskippedfiles)
+  
+  for summaryItem in activeSummaryItems().values():
+    script += inspect.getsource(summaryItem)
+  script += inspect.getsource(activeSummaryItems)
 
   script += """
 # XMLSummary parsing
@@ -91,38 +91,13 @@ else:
 
         # write to file
         with open('__parsedxmlsummary__','w') as parsedXML:
-          try:
-              l=lumi(XMLSummarydata)
-              parsedXML.write('lumi->%s +- %s, from %s files\\n' % (l[0],l[2],l[1]) )
-          except:
-              parsedXML.write('lumi->NotAvailable\\n')
-              sys.stderr.write('XMLSummary error: Failed to compute integrated luminosity\\n')
-
-          try:
-              parsedXML.write('events->%s\\n' % events(XMLSummarydata))
-          except:
-              parsedXML.write('events->NotAvailable\\n')
-              sys.stderr.write('XMLSummary error: Failed to computer No. events input and output\\n')
-
-          try:
-              parsedXML.write('xmldatafiles->%s\\n' % xmldatafiles(XMLSummarydata))
-          except:
-              parsedXML.write('xmldatafiles->NotAvailable\\n')
-              sys.stderr.write('XMLSummary error: Failed to compute xml datafiles run over\\n')
-          
-          try:
-              parsedXML.write('xmldatanumbers->%s\\n' % xmldatanumbers(XMLSummarydata))
-          except:
-              parsedXML.write('xmldatanumbers->NotAvailable\\n')
-              sys.stderr.write('XMLSummary error: Failed to compute No. of datafiles run over\\n')
-
-          try:
-              parsedXML.write('xmlskippedfiles->%s\\n' % xmlskippedfiles(XMLSummarydata))
-          except:
-              parsedXML.write('xmlskippedfiles->NotAvailable\\n')
-              sys.stderr.write('XMLSummary error: Failed to compute No. of datafiles skipped\\n')
+            for name, method in activeSummaryItems().iteritems():
+                try:
+                    parsedXML.write( '%s = %s\\n' % ( name, str(method(XMLSummarydata)) ) )
+                except:
+                    parsedXML.write( '%s = None\\n' % name )
+                    sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n' % name)
 """
-
   return script
 
 def create_runscript(app,outputdata,job):
