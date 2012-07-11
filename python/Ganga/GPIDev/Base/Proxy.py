@@ -147,7 +147,7 @@ class ProxyDataDescriptor(object):
         item = obj._impl._schema[self._name]
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
-        if obj._impl._readonly():
+        if obj._impl._readonly() and not (self._name == 'comment' and obj._impl._name == 'Job'):
             raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
 
         #mechanism for locking of preparable attributes
