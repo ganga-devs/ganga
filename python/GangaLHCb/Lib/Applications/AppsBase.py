@@ -4,7 +4,7 @@ import os, tempfile, pprint, sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnvUpdate_cmd, fillPackedSandbox
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
-from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, app_postprocess#lumi, events, xmldatafiles, xmldatanumbers, xmlskippedfiles#,get_parser
+from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems#app_postprocess#lumi, events, xmldatafiles, xmldatanumbers, xmlskippedfiles#,get_parser
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset,OutputData
@@ -144,7 +144,53 @@ class AppName(Gaudi):
 
     def postprocess(self):
         j = self.getJobObject()
-        return app_postprocess(j)
+        parsedXML = os.path.join(j.outputdir,'__parsedxmlsummary__')
+        metadataItems={} # use to avoid replacing 'lumi' etc as return value and not the method pointer
+        if os.path.exists(parsedXML):
+            execfile(parsedXML,{},metadataItems)
+
+        # Combining subjobs XMLSummaries.
+        if j.subjobs:
+            env = j.application.getenv()
+            if 'XMLSUMMARYBASEROOT' not in env:
+                logger.error('"XMLSUMMARYBASEROOT" env var not defined so summary.xml files not merged for subjobs of job %s' % j.fqid)
+                return
+
+            summaries = []
+            for sj in j.subjobs:
+                outputxml = os.path.join(sj.outputdir,'summary.xml')
+                if not os.path.exists(outputxml):
+                    logger.warning("XMLSummary for job %s will not be merged as 'summary.xml' not present in job %s outputdir" % (sj.fqid,sj.fqid))
+                    continue
+                summaries.append(outputxml)
+
+            if not summaries:
+                logger.error('None of the subjobs of job %s produced the output XML summary file "summary.xml". Merging will therefore not happen' % j.fqid)
+                return
+            
+            schemapath  = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'xml/XMLSummary.xsd')
+            summarypath = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'python/XMLSummaryBase')
+            sys.path.append(summarypath)
+            import summary
+
+            try:
+                XMLSummarydata = summary.Merge(summaries,schemapath)
+            except:
+                logger.error('Problem while merging the subjobs XML summaries')
+                raise
+
+            for name, method in activeSummaryItems().iteritems():
+                try:
+                    metadataItems[name] = method(XMLSummarydata)
+                except:
+                    metadataItems[name] = None
+                    logger.warning('Problem running "%s" method on merged xml output.' % name)
+
+        for key, value in metadataItems.iteritems():
+            if value is None: # Has to be explicit else empty list counts
+                j.metadata[key] = 'Not Available.'
+            else:
+                j.metadata[key] = value
                 
     def readInputData(self,optsfiles,extraopts=False):
         '''Returns a LHCbDataSet object from a list of options files. The
