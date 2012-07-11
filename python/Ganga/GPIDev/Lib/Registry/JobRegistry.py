@@ -7,15 +7,15 @@
 # display default values for job list
 from RegistrySlice import config
 config.addOption('jobs_columns',
-                 ("fqid","status","name","subjobs","application","backend","backend.actualCE"),
+                 ("fqid","status","name","subjobs","application","backend","backend.actualCE", "comment"),
                  'list of job attributes to be printed in separate columns')
 
 config.addOption('jobs_columns_width',
-                 {'fqid': 8, 'status':10, 'name':10, 'subjobs':8, 'application':15, 'backend':15, 'backend.actualCE':45},
+                 {'fqid': 8, 'status':10, 'name':10, 'subjobs':8, 'application':15, 'backend':15, 'backend.actualCE':45, 'comment':30},
                  'width of each column')
 
 config.addOption('jobs_columns_functions',
-                 {'subjobs' : "lambda j: len(j.subjobs)", 'application': "lambda j: j.application._name", 'backend': "lambda j:j.backend._name"},
+                 {'subjobs' : "lambda j: len(j.subjobs)", 'application': "lambda j: j.application._name", 'backend': "lambda j:j.backend._name", 'comment' : "lambda j: j.comment.comment"},
                  'optional converter functions')
 
 config.addOption('jobs_columns_show_empty',
