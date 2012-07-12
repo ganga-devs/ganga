@@ -1412,12 +1412,12 @@ class Job(GangaObject):
             super(Job,self).__setattr__(attr, uniqueValues) 
         
         elif attr == 'comment':
-
             if hasattr(self,'commentLocked'): 
                 if self.commentLocked == 1:
                     print 'writing to comment is locked, use j.comment.unlock() to unlock'
                 else:
                     super(Job,self).__setattr__(attr, value)
+                    self._setDirty()
             else:
                 super(Job,self).__setattr__(attr, value)
         else:   
