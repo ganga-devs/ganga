@@ -42,11 +42,11 @@ def getOutputSandboxPatterns(job):
             outputFileClassName = outputFile.__class__.__name__
 
             if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'OutputSandboxFile': 
-                if outputFile.name not in outputPatterns:
+                if outputFile.namePattern not in outputPatterns:
                     if outputFile.compressed:
-                        outputPatterns.append('%s.gz' % outputFile.name)
+                        outputPatterns.append('%s.gz' % outputFile.namePattern)
                     else:       
-                        outputPatterns.append(outputFile.name)
+                        outputPatterns.append(outputFile.namePattern)
                 
     return outputPatterns
 
@@ -65,10 +65,10 @@ def getWNCodeForOutputSandbox(job, files, jobid):
             outputFileClassName = outputFile.__class__.__name__
         
             if outputFileClassName == 'OutputSandboxFile' or (outputFileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
-                patternsToSandbox.append(outputFile.name)
+                patternsToSandbox.append(outputFile.namePattern)
 
                 if outputFile.compressed:
-                    patternsToZip.append(outputFile.name)               
+                    patternsToZip.append(outputFile.namePattern)               
                 
 
     insertScript = """\n
@@ -124,11 +124,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
             if outputFile.compressed:   
                 if outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF']:
-                    patternsToZip.append(outputFile.name)  
+                    patternsToZip.append(outputFile.namePattern)  
                 elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
-                    patternsToZip.append(outputFile.name)  
+                    patternsToZip.append(outputFile.namePattern)  
                 elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF']:
-                    patternsToZip.append(outputFile.name)  
+                    patternsToZip.append(outputFile.namePattern)  
     
             if outputfileClassName not in outputFilesProcessedOnWN.keys():
                 outputFilesProcessedOnWN[outputfileClassName] = []
