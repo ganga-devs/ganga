@@ -23,6 +23,7 @@ class LCGStorageElementFile(OutputSandboxFile):
 
     _schema = Schema(Version(1,1), {
         'namePattern'        : SimpleItem(defvalue="",doc='pattern of the file name'),
+        'localDir': SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),    
         'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
         'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
@@ -35,12 +36,12 @@ class LCGStorageElementFile(OutputSandboxFile):
         'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "LCGStorageElementFile"
-    _exportmethods = [ "location" , "setLocation" , "get" , "getUploadCmd"]
+    _exportmethods = [ "location" , "setLocation" , "get" , "put" , "getUploadCmd"]
 
-    def __init__(self,namePattern='', **kwds):
+    def __init__(self,namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into LCG SE
         """
-        super(LCGStorageElementFile, self).__init__(namePattern, **kwds)
+        super(LCGStorageElementFile, self).__init__(namePattern, localDir, **kwds)
 
         self.locations = []
 
@@ -129,6 +130,18 @@ class LCGStorageElementFile(OutputSandboxFile):
         """     
         import glob
 
+        sourceDir = ''
+
+        #if used as a stand alone object
+        if self._parent == None:
+            if self.localDir == '':
+                logger.warning('localDir attribute is empty, don\'t know from which dir to take the file' )
+                return
+            else:
+                sourceDir = self.localDir
+        else:
+            sourceDir = self.joboutputdir
+
         os.environ['LFC_HOST'] = self.lfc_host
 
         fileName = self.namePattern
@@ -136,7 +149,7 @@ class LCGStorageElementFile(OutputSandboxFile):
         if self.compressed:
             fileName = '%s.gz' % self.namePattern          
 
-        for currentFile in glob.glob(os.path.join(self.joboutputdir, fileName)):
+        for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
             cmd = self.getUploadCmd()
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
@@ -150,8 +163,9 @@ class LCGStorageElementFile(OutputSandboxFile):
                     if location not in self.locations:
                         self.locations.append(location) 
 
-                #remove file from output
-                os.system('rm %s' % os.path.join(self.joboutputdir, currentFile))
+                #remove file from output dir if this object is attached to a job
+                self._parent != None:
+                    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
             else:
                 logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))       
@@ -234,7 +248,7 @@ class LCGStorageElementFile(OutputSandboxFile):
 
         return script   
 
-    def get(self, dir):
+    def get(self):
         """
         Retrieves locally all files matching this LCGStorageElementFile object pattern
         """
@@ -256,8 +270,8 @@ class LCGStorageElementFile(OutputSandboxFile):
 
             return (exitcode, mystdout, mystderr)
 
-        if not os.path.isdir(dir):
-            print "%s is not a valid directory.... " % dir
+        if not os.path.isdir(self.localDir):
+            print "%s is not a valid directory.... " % self.localDir
             return
 
         #set lfc host
@@ -266,7 +280,7 @@ class LCGStorageElementFile(OutputSandboxFile):
         vo = getConfig('LCG')['VirtualOrganisation']  
 
         for location in self.locations:
-            destFileName = os.path.join(dir, location[-10:])
+            destFileName = os.path.join(self.localDir, location[-10:])
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
 
