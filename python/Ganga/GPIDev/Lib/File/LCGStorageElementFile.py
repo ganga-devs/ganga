@@ -164,7 +164,7 @@ class LCGStorageElementFile(OutputSandboxFile):
                         self.locations.append(location) 
 
                 #remove file from output dir if this object is attached to a job
-                self._parent != None:
+                if self._parent != None:
                     os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
             else:
