@@ -22,7 +22,7 @@ class LCGStorageElementFile(OutputSandboxFile):
     lcgSEConfig = getConfig('Output')['LCGStorageElementFile']['uploadOptions']
 
     _schema = Schema(Version(1,1), {
-        'name'        : SimpleItem(defvalue="",doc='name of the file'),
+        'namePattern'        : SimpleItem(defvalue="",doc='pattern of the file name'),
         'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
         'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
@@ -37,10 +37,10 @@ class LCGStorageElementFile(OutputSandboxFile):
     _name = "LCGStorageElementFile"
     _exportmethods = [ "location" , "setLocation" , "get" , "getUploadCmd"]
 
-    def __init__(self,name='', **kwds):
-        """ name is the name of the output file that has to be written into LCG SE
+    def __init__(self,namePattern='', **kwds):
+        """ namePattern is the pattern of the output file that has to be written into LCG SE
         """
-        super(LCGStorageElementFile, self).__init__(name, **kwds)
+        super(LCGStorageElementFile, self).__init__(namePattern, **kwds)
 
         self.locations = []
 
@@ -56,7 +56,7 @@ class LCGStorageElementFile(OutputSandboxFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "LCGStorageElementFile(name='%s')"% self.name
+        return "LCGStorageElementFile(namePattern='%s')"% self.namePattern
 
     
     def __get_unique_fname__(self):
@@ -90,7 +90,7 @@ class LCGStorageElementFile(OutputSandboxFile):
             if line.startswith('lcgse'):
 
                 lcgSEUpload = line.strip()
-                searchPattern = 'lcgse %s' % self.name
+                searchPattern = 'lcgse %s' % self.namePattern
 
                 if lcgSEUpload.startswith(searchPattern):
                     guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
@@ -131,10 +131,10 @@ class LCGStorageElementFile(OutputSandboxFile):
 
         os.environ['LFC_HOST'] = self.lfc_host
 
-        fileName = self.name
+        fileName = self.namePattern
 
         if self.compressed:
-            fileName = '%s.gz' % self.name          
+            fileName = '%s.gz' % self.namePattern          
 
         for currentFile in glob.glob(os.path.join(self.joboutputdir, fileName)):
             cmd = self.getUploadCmd()
@@ -164,7 +164,7 @@ class LCGStorageElementFile(OutputSandboxFile):
         lcgCommands = []
 
         for outputFile in outputFiles:
-            lcgCommands.append('lcgse %s %s %s' % (outputFile.name , outputFile.lfc_host,  outputFile.getUploadCmd()))
+            lcgCommands.append('lcgse %s %s %s' % (outputFile.namePattern , outputFile.lfc_host,  outputFile.getUploadCmd()))
                 
         script = """\n
 
