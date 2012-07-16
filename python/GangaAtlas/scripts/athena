@@ -493,16 +493,11 @@ if opt.outputdata or opt.backend == 'panda':
 if opt.numsubjobs > 0:
     if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
         j.splitter = DQ2JobSplitter()
-	j.splitter.numsubjobs = opt.numsubjobs
     elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
         j.splitter = DQ2JobSplitter()
-	j.splitter.numsubjobs = opt.numsubjobs	
-        if not opt.input_dataset and not opt.tag_input_dataset:
-	    j.splitter=GenericSplitter()
-            j.splitter.values=range(0,opt.numsubjobs)
     else:
         j.splitter = AthenaSplitterJob()
-        j.splitter.numsubjobs = opt.numsubjobs
+    j.splitter.numsubjobs = opt.numsubjobs
 
     if opt.input_pfnlistfile:
         j.splitter = ATLASTier3Splitter()
