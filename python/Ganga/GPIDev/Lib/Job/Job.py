@@ -1400,7 +1400,7 @@ class Job(GangaObject):
             uniqueValues = []
         
             for val in value:
-                key = '%s%s' % (val.__class__.__name__, val.name)               
+                key = '%s%s' % (val.__class__.__name__, val.namePattern)               
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
                     uniqueValues.append(val)    
