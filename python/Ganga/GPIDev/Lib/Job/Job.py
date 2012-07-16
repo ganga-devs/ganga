@@ -366,8 +366,8 @@ class Job(GangaObject):
 
             #on Batch backends these files can be compressed only on the client
             if backendClass == 'LSF':  
-                if outputfile.compressed and (outputfile.name == 'stdout' or outputfile.name == 'stderr'):
-                    for currentFile in glob.glob(os.path.join(outputfile.joboutputdir, outputfile.name)):
+                if outputfile.compressed and (outputfile.namePattern == 'stdout' or outputfile.namePattern == 'stderr'):
+                    for currentFile in glob.glob(os.path.join(outputfile.joboutputdir, outputfile.namePattern)):
                         os.system("gzip %s" % currentFile)
 
             if self.backend_output_postprocess.has_key(backendClass):
