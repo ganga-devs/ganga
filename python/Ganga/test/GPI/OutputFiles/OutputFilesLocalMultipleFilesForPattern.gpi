@@ -14,7 +14,9 @@ assert(sleep_until_completed(j,180))
 
 assert(j.outputfiles[0].location() != [])
 
-j.outputfiles[0].get(j.outputdir)
+j.outputfiles[0].localDir = j.outputdir
+
+j.outputfiles[0].get()
 
 for filename in [j.outputfiles[0].location()[0][-10:], j.outputfiles[0].location()[1][-10:], j.outputfiles[0].location()[2][-10:]]:
     assert(filename in os.listdir(j.outputdir)) 

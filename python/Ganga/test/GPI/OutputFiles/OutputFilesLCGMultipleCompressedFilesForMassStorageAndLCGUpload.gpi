@@ -19,8 +19,11 @@ assert(sleep_until_completed(j,1800))
 assert(j.outputfiles[0].location() != [])
 assert(j.outputfiles[1].location() != [])
 
-j.outputfiles[0].get(j.outputdir)
-j.outputfiles[1].get(j.outputdir)
+j.outputfiles[0].localDir = j.outputdir
+j.outputfiles[1].localDir = j.outputdir
+
+j.outputfiles[0].get()
+j.outputfiles[1].get()
 
 for filename in ['fillrandom.root.gz', 'fillrandom1.root.gz', j.outputfiles[1].location()[0][-10:], j.outputfiles[1].location()[1][-10:]]:
     assert(filename in os.listdir(j.outputdir)) 
