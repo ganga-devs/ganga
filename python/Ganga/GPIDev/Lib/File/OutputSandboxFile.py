@@ -70,6 +70,8 @@ class OutputSandboxFile(GangaObject):
         """
         return ""
 
+    def _readonly(self):
+        return False
 
     def execSyscmdSubprocess(self, cmd):
 
