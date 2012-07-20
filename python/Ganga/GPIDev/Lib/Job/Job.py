@@ -826,32 +826,35 @@ class Job(GangaObject):
             if 1:
                 if self.splitter:
                     subjobs = self.splitter.validatedSplit(self)
-                    #print "*"*80
-                    #import sys
-                    #subjobs[0].printTree(sys.stdout)
+                    if subjobs:
+                        #print "*"*80
+                        #import sys
+                        #subjobs[0].printTree(sys.stdout)
 
-                    # EBKE changes
-                    i = 0
-                    # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
-                    #self.subjobs = subjobs
-                    #for j in self.subjobs:
-                    for j in subjobs:
-                        j.info.uuid = Ganga.Utility.guid.uuid()
-                        j.status='new'
-                        j.time.timenow('new')
-                        j.id = i
-                        i += 1
-                        self.subjobs.append(j)
+                        # EBKE changes
+                        i = 0
+                        # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
+                        #self.subjobs = subjobs
+                        #for j in self.subjobs:
+                        for j in subjobs:
+                            j.info.uuid = Ganga.Utility.guid.uuid()
+                            j.status='new'
+                            j.time.timenow('new')
+                            j.id = i
+                            i += 1
+                            self.subjobs.append(j)
 
-                    for j in self.subjobs:
-                        j._init_workspace()
+                        for j in self.subjobs:
+                            j._init_workspace()
 
-                        for outputfile in j.outputfiles:
-                            outputfile.joboutputdir = j.outputdir
+                            for outputfile in j.outputfiles:
+                                outputfile.joboutputdir = j.outputdir
 
-                    rjobs = self.subjobs
-                    logger.info('submitting %d subjobs', len(rjobs))
-                    self._commit()
+                        rjobs = self.subjobs
+                        logger.info('submitting %d subjobs', len(rjobs))
+                        self._commit()
+                    else:
+                        rjobs = [self]
                 else:
                     rjobs = [self]
 

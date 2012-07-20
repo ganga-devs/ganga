@@ -21,7 +21,10 @@ def mangle_job_name(job):
     if jobName:
         result += '%s__' % jobName
     if appName:
-        result += '{Ganga_%s_(%s)' % (appName, jobIndex)
+        if not job.master and job.splitter:# and not j.subjobs: #not necessary?
+            result += '{Ganga_%s_(%s.%s)' % (appName, jobIndex,'%n')
+        else:
+            result += '{Ganga_%s_(%s)' % (appName, jobIndex)
         addBracket = True
     if appVersion:
         result += '_%s' % appVersion

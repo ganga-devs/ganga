@@ -70,8 +70,9 @@ class ISplitter(GangaObject):
         #except Exception,x:
         #    raise SplittingError(x)
     
-        if not len(subjobs):
-            raise SplittingError('splitter did not create any subjobs')
+        #if not len(subjobs):
+            #raise SplittingError('splitter did not create any subjobs')
+            
 
         cnt = 0
         for s in subjobs:

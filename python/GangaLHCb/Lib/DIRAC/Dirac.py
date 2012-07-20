@@ -140,7 +140,7 @@ class Dirac(IBackend):
             return inputsandbox
         return []
 
-    def _submit(self):
+    def _submit(self,dirac_script):
         '''Submit the job via the Dirac server.'''
         self.id = None
         self.actualCE = None
@@ -154,7 +154,28 @@ class Dirac(IBackend):
             logger.error(err_msg)
             raise BackendError('Dirac',err_msg)
         
-        self.id = result['Value']        
+        idlist = result['Value']
+        if type(idlist) is list:
+            from Ganga.GPIDev.Lib.Job.Job import Job
+            job=self.getJobObject()
+            for i in range(len(idlist)):
+                j=Job()
+                j.copyFrom(job)
+                j.splitter = None
+                j.merger = None
+                j.backend.id = idlist[i]
+                j.id = i
+                if dirac_script.inputdata and \
+                       hasattr(dirac_script.inputdata,'split_data') and \
+                       ( len(dirac_script.inputdata.split_data) is len(idlist) ):
+                    j.inputdata = LHCbDataset(files=[LogicalFile(f) for f in dirac_script.inputdata.split_data[i]])
+                j.status = 'submitted'
+                j.time.timenow('submitted')
+                job.subjobs.append(j)
+            job._commit()
+            return True
+
+        self.id = idlist
         return type(self.id) == int
    
     def submit(self, subjobconfig, master_input_sandbox):
@@ -199,7 +220,7 @@ class Dirac(IBackend):
                 raise BackendError('Dirac',msg)            
             dirac_script.input_sandbox.append('LFN:'+lfn.name)
         dirac_script.write(script_file)
-        return self._submit()
+        return self._submit(dirac_script)
  
     def resubmit(self):
         """Resubmit a DIRAC job"""

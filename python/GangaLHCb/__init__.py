@@ -49,6 +49,8 @@ dscrpt = 'Space tokens allowed for replication, etc.'
 configLHCb.addOption('DiracSpaceTokens',tokens,dscrpt)
 dscrpt = 'Switch whether or not a check that the required app version/platform is valid for the backend'
 configLHCb.addOption('ignore_version_check',False,dscrpt)
+dscrpt = 'The Maximum allowed number of bulk submitted jobs before Ganga intervenes'
+configLHCb.addOption('MaxDiracBulkJobs',100,dscrpt)
  
 # Set default values for the Dirac section.
 dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'

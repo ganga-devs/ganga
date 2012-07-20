@@ -22,6 +22,10 @@ class SplitByFiles(GaudiInputDataSplitter):
     """
     _name = 'SplitByFiles'
     _schema = GaudiInputDataSplitter._schema.inherit_copy()
+    _schema.datadict['bulksubmit']    = SimpleItem(defvalue=False,
+                                                   doc='determines if subjobs are split '\
+                                                   'server side in a "bulk" submission or '\
+                                                   'split locally and submitted individually')
     _schema.datadict['ignoremissing'] = SimpleItem(defvalue=False,
                                                    doc='Skip LFNs if they are not found ' \
                                                    'in the LFC. This option is only used if' \
@@ -90,5 +94,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
 
     def split(self, job):
+        if self.bulksubmit:
+            return []
         if self.maxFiles == -1: self.maxFiles = None
         return super(SplitByFiles,self).split(job)
