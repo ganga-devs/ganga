@@ -52,7 +52,6 @@ class SplitByFiles(GaudiInputDataSplitter):
         j.inputdata = LHCbDataset( files             = dataset,
                                    persistency       = self.persistency,
                                    depth             = self.depth )
-        j.inputdata.metadata          = self.metadata
         j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
 
         return j

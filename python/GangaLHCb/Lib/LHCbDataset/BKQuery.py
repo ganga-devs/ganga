@@ -87,7 +87,7 @@ RecoToDST-07/90000000/DST" ,
     _schema = Schema(Version(1,2), schema)
     _category = 'query'
     _name = "BKQuery"
-    _exportmethods = ['getDataset']
+    _exportmethods = ['getDataset','getDatasetMetadata']
 
     def __init__(self, path=''):
         super(BKQuery, self).__init__()
@@ -98,6 +98,42 @@ RecoToDST-07/90000000/DST" ,
             super(BKQuery,self).__construct__(args)
         else:
             self.path = args[0]
+
+    def getDatasetMetadata(self):
+        '''Gets the dataset from the bookkeeping for current path, etc.'''
+        if not self.path: return None
+        if not self.type in ['Path','RunsByDate','Run','Production']:
+            raise GangaException('Type="%s" is not valid.' % self.type)
+        if not self.type is 'RunsByDate':
+            if self.startDate:
+                msg = 'startDate not supported for type="%s".' % self.type
+                raise GangaException(msg)
+            if self.endDate:
+                msg = 'endDate not supported for type="%s".' % self.type
+                raise GangaException(msg)
+            if self.selection:
+                msg = 'selection not supported for type="%s".' % self.type
+                raise GangaException(msg)            
+        cmd = 'result = DiracCommands.getDataset("%s","%s","%s","%s","%s",\
+        "%s")' % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
+                  self.selection)
+        if type(self.dqflag) == type([]):
+            cmd = 'result = DiracCommands.getDataset("%s",%s,"%s","%s","%s",\
+            "%s")' % (self.path,self.dqflag,self.type,self.startDate,
+                     self.endDate,self.selection)
+        result = get_result(cmd,'BK query error.','BK query error.')
+        files = []
+        metadata = {}
+        value = result['Value']
+        if value.has_key('LFNs'): files = value['LFNs']
+        if not type(files) is list: # i.e. a dict of LFN:Metadata
+            #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            metadata = files.copy()
+        
+        if metadata:
+            return {'OK':True,'Value':metadata}
+       
+        return {'OK':False,'Value':metadata}
 
     def getDataset(self):
         '''Gets the dataset from the bookkeeping for current path, etc.'''
@@ -125,17 +161,12 @@ RecoToDST-07/90000000/DST" ,
         files = []
         value = result['Value']
         if value.has_key('LFNs'): files = value['LFNs']
-        metadata = {}
         if not type(files) is list: # i.e. a dict of LFN:Metadata
             #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
-            metadata = files.copy()
             files = files.keys()
         
         ds = LHCbDataset()
         for f in files: ds.files.append(LogicalFile(f))
-        
-        if metadata:
-            ds.metadata = {'OK':False,'Value':metadata}
         
         return GPIProxyObjectFactory(ds)
 
@@ -177,7 +208,7 @@ class BKQueryDict(GangaObject):
     _schema = Schema(Version(1,0), schema)
     _category = ''
     _name = "BKQueryDict"
-    _exportmethods = ['getDataset']
+    _exportmethods = ['getDataset','getDatasetMetadata']
 
     def __init__(self):
         super(BKQueryDict, self).__init__()
@@ -188,7 +219,7 @@ class BKQueryDict(GangaObject):
         else:
             self.dict = args[0]
             
-    def getDataset(self):
+    def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict: return None
         cmd = 'result = DiracCommands.bkQueryDict(%s)' % self.dict
@@ -200,14 +231,26 @@ class BKQueryDict(GangaObject):
         if not type(files) is list:
             if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
                 metadata = files['LFNs'].copy()
+        
+        if metadata:
+            return {'OK':True,'Value':metadata}
+        return {'OK':False,'Value':metadata}
+
+    def getDataset(self):
+        '''Gets the dataset from the bookkeeping for current dict.'''
+        if not self.dict: return None
+        cmd = 'result = DiracCommands.bkQueryDict(%s)' % self.dict
+        result = get_result(cmd,'BK query error.','BK query error.')
+        files = []
+        value = result['Value']
+        if value.has_key('LFNs'): files = value['LFNs']
+        if not type(files) is list:
+            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
         
         ds = LHCbDataset()
         for f in files: ds.files.append(LogicalFile(f))
-        
-        if metadata:
-            ds.metadata = {'OK':True,'Value':metadata}
-        
+         
         return GPIProxyObjectFactory(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

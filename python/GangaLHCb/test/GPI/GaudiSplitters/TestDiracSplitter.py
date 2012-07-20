@@ -25,7 +25,6 @@ class TestDiracSplitter(GangaGPITestCase):
             'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000620_1.dimuon.dst',
             'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012533/0000/00012533_00000074_1.dimuon.dst'
             ]
-        j.inputdata.metadata=None
 
         #len_files = len(inputdata.files)
         ds = DiracSplitter()
@@ -45,7 +44,6 @@ class TestDiracSplitter(GangaGPITestCase):
             'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
             'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
             ]
-        j.inputdata.metadata=None
 
         ds = DiracSplitter()
         ds.ignoremissing = True
