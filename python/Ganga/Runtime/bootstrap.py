@@ -148,6 +148,9 @@ under certain conditions; type license() for details.
                           help='run Ganga test(s) using internal test-runner. It requires GangaTest package to be installed.'
                                'Usage example: *ganga --test Ganga/test/MyTestcase* .'
                                'Refer to [TestingFramework] section in Ganga config for more information on how to configure the test runner.')
+
+        parser.add_option("--daemon",dest='daemon',action="store_true", default=False,
+                          help='run Ganga as service.')
         
         parser.set_defaults(force_interactive=False, config_file=None, force_loglevel=None,rexec=1, monitoring=1, prompt=1, generate_config=None)
         parser.disable_interspersed_args()
@@ -175,6 +178,7 @@ under certain conditions; type license() for details.
         if len(self.args) > 0:
             if not self.options.force_interactive:
                     self.interactive = False
+
 # Can't check here if the file is readable, because the path isn't known
 #           file_opens(self.args[0],'reading script')
 
@@ -382,6 +386,10 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         config.addOption('deleteUnusedShareDir', 'always' , 'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
 
         config.addOption('autoGenerateJobWorkspace',True,'Autogenerate workspace dirs for new jobs')
+
+        # add server options
+        config.addOption('ServerPort',434343,'Port for the Ganga server to listen on')
+        config.addOption('ServerTimeout',60,'Timeout in minutes for auto-server shutdown')
         
         # detect default user (equal to unix user name)
         import getpass
@@ -493,6 +501,47 @@ If ANSI text colours are enabled, then individual colours may be specified like 
            ## FIXME: CONFIG CHECK           
            ## ?? config['RUNTIME_PATH'] = ''
            config.setSessionValue('RUNTIME_PATH','GangaTest')
+
+        # ensure we're not interactive if daemonised
+        if self.options.daemon and self.interactive:
+           print "WARNING: Cannot run as a service in interactive mode. Ignoring."
+           self.options.daemon = False
+
+        # fork ourselves so we a daemon
+        if self.options.daemon:
+           print "Daemonising Ganga..."
+           pid = os.fork()
+           if pid < 0:
+              sys.exit(1)
+
+           if pid > 0:
+              sys.exit(0)
+
+           os.umask(0)
+           os.setsid()
+           pid = os.fork()
+
+           if pid > 0:
+              sys.exit(0)
+
+           # change the stdout/err
+           sys.stdout.flush()
+           sys.stderr.flush()
+
+           # create a server dir
+           if not os.path.exists(os.path.join(config['gangadir'], "server")):
+              os.makedirs(os.path.join(config['gangadir'], "server"))
+
+           import datetime
+           tstamp = datetime.datetime.now().strftime("%Y-%m-%d")
+           si = file("/dev/null", 'r')
+           so = file(os.path.join(config['gangadir'], "server", "server-%s.stdout" % (os.uname()[1])), 'a')
+           se = file(os.path.join(config['gangadir'], "server", "server-%s.stderr" % (os.uname()[1])), 'a', 0)
+           
+           os.dup2(si.fileno(), sys.stdin.fileno())
+           os.dup2(so.fileno(), sys.stdout.fileno())
+           os.dup2(se.fileno(), sys.stderr.fileno())
+           
 
     # initialize environment: find all user-defined runtime modules and set their environments
     # if option rexec=1 then initEnvironment restarts the current ganga process (needed for LD_LIBRARY_PATH on linux)
