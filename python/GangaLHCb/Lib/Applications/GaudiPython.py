@@ -85,7 +85,7 @@ class GaudiPython(GaudiBase):
     _schema.datadict['script'] = FileItem(preparable=1,sequence=1,strict_sequence=0,defvalue=[],
                                           doc=docstr)
     docstr = "List of arguments for the script"
-    _schema.datadict['args'] =  SimpleItem(preparable=1,defvalue=[],typelist=['str'],
+    _schema.datadict['args'] =  SimpleItem(defvalue=[],typelist=['str'],
                                            sequence=1,doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
     _schema.datadict['project'] = SimpleItem(preparable=1,defvalue=None,

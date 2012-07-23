@@ -75,7 +75,7 @@ class Gaudi(GaudiBase):
     _schema = GaudiBase._schema.inherit_copy()
 
     docstr = 'The gaudirun.py cli args that will be passed at run-time'
-    _schema.datadict['args'] =  SimpleItem(preparable=1,sequence=1,strict_sequence=0,defvalue=[],
+    _schema.datadict['args'] =  SimpleItem(sequence=1,strict_sequence=0,defvalue=[],
                                  typelist=['str','type(None)'],doc=docstr)
     docstr = 'The name of the optionsfile. Import statements in the file ' \
              'will be expanded at submission time and a full copy made'

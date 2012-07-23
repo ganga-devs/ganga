@@ -68,7 +68,7 @@ class Bender(GaudiBase):
     _schema.datadict['project'] = SimpleItem(preparable=1,defvalue='Bender',hidden=1,protected=1,
                                    typelist=['str'],doc=docstr)
     docstr = 'The number of events '
-    _schema.datadict['events'] = SimpleItem(preparable=1,defvalue=-1,typelist=['int'],doc=docstr)
+    _schema.datadict['events'] = SimpleItem(defvalue=-1,typelist=['int'],doc=docstr)
     _schema.version.major += 2
     _schema.version.minor += 0
 ##     _schema.datadict['is_prepared'] = SimpleItem(defvalue=None,

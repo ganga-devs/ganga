@@ -80,7 +80,6 @@ class SplitByFiles(GaudiInputDataSplitter):
         self.depth             = indata.depth
         self.persistency       = indata.persistency
         self.XMLCatalogueSlice = indata.XMLCatalogueSlice
-        self.metadata          = indata.metadata
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
             if self.filesPerJob > 100: self.filesPerJob = 100 # see above warning
