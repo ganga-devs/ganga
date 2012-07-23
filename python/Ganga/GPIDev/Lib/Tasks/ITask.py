@@ -70,11 +70,11 @@ class ITask(GangaObject):
         
         #logger.warning("Entering update for Task '%s' (%i)... " % (self.name, time.time()))
         for trf in self.transforms:
-            trf.update()
+            if trf.update():
+                break
 
         # update status and check
         self.updateStatus()
-        
             
 ## Public methods:
 #
