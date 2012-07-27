@@ -102,7 +102,7 @@ class RegistrySlice(object):
         The returned slice object has the job registry interface but it is not connected to
         persistent storage. 
         """
-        import sys
+        import sys, fnmatch, re
 
         def select_by_list(id):
             return id in ids
@@ -152,9 +152,15 @@ class RegistrySlice(object):
                                 selected = False
                                 break
                         else:
-                            if getattr(obj,a) != attrvalue:
-                                selected = False
-                                break
+                            if type(attrvalue) is str:
+                                regex = fnmatch.translate(attrvalue)
+                                reobj = re.compile(regex)
+                                if not reobj.match(getattr(obj,a)):
+                                    selected = False
+                            else:
+                                if getattr(obj,a) != attrvalue:
+                                    selected = False
+                                    break
                 if selected:
                     callback(id,obj)
 
