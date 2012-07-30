@@ -1,3 +1,4 @@
+import re
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import getConfig
@@ -44,7 +45,14 @@ class LCGRequirements(GangaObject):
       
       merged = LCGRequirements()
       for name in [ 'software', 'nodenumber', 'memory', 'cputime', 'walltime', 'ipconnectivity', 'allowedCEs', 'excludedCEs', 'other' ]:
-         attr = getattr(other,name)
+
+         attr = ''
+
+         try:
+             attr = getattr(other,name)
+         except KeyError,e:
+             pass
+
          if not attr: attr = getattr(self,name)
          setattr(merged,name,attr)
          
@@ -68,17 +76,38 @@ class LCGRequirements(GangaObject):
       allowed_ces  = []
       excluded_ces = []
 
-      if self.allowedCEs:
-          allowed_ces  += re.split('\s+', self.allowedCEs)
-
-      if self.excludedCEs:
-          excluded_ces += re.split('\s+', self.excludedCEs)
-
+      ## from Ganga configuration
       if config['AllowedCEs']:
-         allowed_ces += re.split('\s+',config['AllowedCEs'])
+          ce_req = config['AllowedCEs'].strip()
+          allowed_ces += re.split('\s+', ce_req)
          
       if config['ExcludedCEs']:
-         excluded_ces += re.split('\s+',config['ExcludedCEs'])
+          ce_req = config['ExcludedCEs'].strip()
+          excluded_ces += re.split('\s+', ce_req)
+
+      ## from LCGRequirements object
+      re_append = re.compile('^(\++)\s*(.*)')  ## if string starts with '+', it means the requirement to be appeneded
+      try:
+          ce_req = self.allowedCEs.strip()
+          if ce_req:
+              m = re_append.match( ce_req )
+              if m:
+                  allowed_ces += re.split('\s+', m.group(2))
+              else:
+                  allowed_ces  = re.split('\s+', ce_req)
+      except KeyError,e:
+          pass
+
+      try:
+          ce_req = self.excludedCEs.strip()
+          if ce_req:
+              m = re_append.match( ce_req )
+              if m:
+                  excluded_ces += re.split('\s+', m.group(2))
+              else:
+                  excluded_ces  = re.split('\s+', ce_req)
+      except KeyError,e:
+          pass
 
       ## composing the requirements given the list of allowed_ces and excluded_ces
       if allowed_ces:
