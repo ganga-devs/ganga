@@ -31,7 +31,6 @@ from Ganga.Core.GangaRepository import *
 
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.File import File
-from Ganga.GPIDev.Lib.Job.Comment import Comment
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 import os, shutil, sys
@@ -145,8 +144,7 @@ class Job(GangaObject):
     _schema = Schema(Version(1,6),{ 'inputsandbox' : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
                                     'outputsandbox' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
                                     'info':ComponentItem('jobinfos',defvalue=None,doc='JobInfo '),
-                                    'comment':ComponentItem('comments', protected=0,defvalue=None, doc='comment of the job'),
-                                    'commentLocked':SimpleItem(defvalue=1,protected=1,doc="wether writing to comment field is forbidden"),
+                                    'comment':SimpleItem('', protected=0, doc='comment of the job'),
                                     'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
@@ -1413,16 +1411,11 @@ class Job(GangaObject):
 
             #reduce duplicate values here
             super(Job,self).__setattr__(attr, uniqueValues) 
-        
         elif attr == 'comment':
-            if hasattr(self,'commentLocked'): 
-                if self.commentLocked == 1:
-                    logger.debug('writing to comment is locked, use j.comment.unlock() to unlock')
-                else:
-                    super(Job,self).__setattr__(attr, value)
-                    self._setDirty()
-            else:
-                super(Job,self).__setattr__(attr, value)
+            super(Job,self).__setattr__(attr, value)
+            #if a comment is added mark the job as dirty       
+            if value != '':
+                self._setDirty()
         else:   
             super(Job,self).__setattr__(attr, value)
     
