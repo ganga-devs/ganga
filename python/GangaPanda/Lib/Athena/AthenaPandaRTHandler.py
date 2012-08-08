@@ -514,7 +514,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
                 if app.useRootCore:
                     jspec.jobParameters += " --useRootCore "
-                    jspec.jobParameters += ' -r %s ' % '.'
+                    jspec.jobParameters += ' -r %s ' % self.rundirectory  #'.'
 
                 fout = FileSpec()
                 fout.lfn  = self.libraries[bjsite]
