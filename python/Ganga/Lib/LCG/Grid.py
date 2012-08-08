@@ -1006,7 +1006,7 @@ class Grid(object):
     def expandjdl(items):
         '''Expand jdl items'''
 
-        text = ""   
+        text = "[\n"   
         for key, value in items.iteritems():
 
             if key == 'Requirements':
@@ -1040,6 +1040,7 @@ class Grid(object):
             else:
                 text += '%s = "%s";\n' % (key,value)
 
+        text += "\n]\n"   
         return text
 
     expandjdl=staticmethod(expandjdl)
