@@ -255,7 +255,8 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
 
     # collect files
     chunkLength = 100
-    chunksworkDirFiles = [workDirFiles[x:x+chunkLength] for x in xrange(1, len(workDirFiles), chunkLength)]
+    chunks = lambda l, n: [l[x: x+n] for x in xrange(0, len(l), n)]
+    chunksworkDirFiles = chunks(workDirFiles, chunkLength)
     logger.info('Adding files to source tarball %s' % archiveFullName )
     for tmpChunkFiles in chunksworkDirFiles:
         #if os.path.islink(tmpChunkFiles):
