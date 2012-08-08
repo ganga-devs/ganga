@@ -254,15 +254,21 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     archiveFullName = "%s/%s" % (archiveDir,archiveName)
 
     # collect files
-    for tmpFile in workDirFiles:
-        if os.path.islink(tmpFile):
-            status,out = commands.getstatusoutput("tar --exclude '.[a-zA-Z]*' -rh '%s' -f '%s'" % (tmpFile,archiveFullName))
-        else:
-            status,out = commands.getstatusoutput("tar --exclude '.[a-zA-Z]*' -rf '%s' '%s'" % (archiveFullName,tmpFile))
+    chunkLength = 100
+    chunksworkDirFiles = [workDirFiles[x:x+chunkLength] for x in xrange(1, len(workDirFiles), chunkLength)]
+    logger.info('Adding files to source tarball %s' % archiveFullName )
+    for tmpChunkFiles in chunksworkDirFiles:
+        #if os.path.islink(tmpChunkFiles):
+        #    status,out = commands.getstatusoutput("tar --exclude '.[a-zA-Z]*' -rh '%s' -f '%s'" % (tmpFile,archiveFullName))
+        #else:
+        cmd = "tar --exclude '.[a-zA-Z]*' -rhf '%s' " % archiveFullName
+        for tmpFile in tmpChunkFiles:
+            cmd = cmd + " '%s' " % tmpFile
+        status,out = commands.getstatusoutput(cmd)
         if verbose:
-            logger.info( tmpFile)
+            logger.info(cmd)
         if status != 0 or out != '':
-            logger.info( out)
+            logger.info(out)
 
     # go to tmpdir
     os.chdir(archiveDir)
