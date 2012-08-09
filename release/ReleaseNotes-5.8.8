@@ -1,0 +1,34 @@
+**************************************************************************************************************
+5.8.8 (2012/8/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Fix for bug #96528: The task table now respects, for example:
+config.Display.tasks_columns_width['Name'] = 100 
+
+Fix for bug #96526: Excessive shareref cleanup messages have been configured to only appear when 
+running in 'debug' mode.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+add allowedCE and excludedCE in LCGRequirements: bugfix for https://savannah.cern.ch/bugs/?96207
+add '[' and ']' around the jdl file to be compatible with EMI 2.0 JDL specification: https://savannah.cern.ch/bugs/?96591
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Call tar in create_tarball() in bulks of 100 files. This significantly speeds up 
+  job submission of atlas_exetype='EXE' or RootCore type of job.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Change build job rundirectory for RootCore jobs from . to actual rundir
+
+**************************************************************************************************************
