@@ -336,27 +336,27 @@ class ShareRef(GangaObject):
                         cleanup_list.append(shareddir)
                     ask_delete = 'Ask'
                     default = 'yes'
-                    logger.warning('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
 
                 if ask_delete == 'no':
                     ask_delete = 'Ask'
                     default = 'no'
-                    logger.warning('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
 
                 if ask_delete == 'all':
                     shutil.rmtree(full_shareddir_path)
                     if shareddir not in cleanup_list:
                         cleanup_list.append(shareddir)
-                    logger.warning('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
 
                 if ask_delete == 'none':
                     default = 'none'
-                    logger.warning('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
 
             #if the sharedir in the table doesn't exist on the filesytem, and the reference counter is > 0, 
             #we need to unprepare any associated jobs
             if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
-                logger.info('%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' %shareddir)
+                logger.debug('%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' %shareddir)
                 self.lookup(sharedir=shareddir, unprepare=True)
                 cleanup_list.append(shareddir)
                 
