@@ -15,7 +15,7 @@ class TestSavannah(GangaGPITestCase):
 
     def testSavannah18126(self):
         rfile_name = 'Savannah18126.root'
-        extra_opts = 'from Configurables import DaVinci\nDaVinci().DataType="ROOT"\nDaVinci().HistogramFile = "%s"' % rfile_name
+        extra_opts = 'from Configurables import DaVinci\nDaVinci().DataType="2011"\nDaVinci().HistogramFile = "%s"' % rfile_name
         j = Job(name='NtupleTest', application=DaVinci(extraopts=extra_opts),
                 backend=Local())
         j.submit()
@@ -27,7 +27,7 @@ class TestSavannah(GangaGPITestCase):
         return Savannah18127(j)
 
     def testSavannah33823(self):
-        j = Job(application=Executable(), backend=Dirac(CPUTime=60))
+        j = Job(application=Executable(), backend=Dirac())
         j.submit()
         return Savannah33823(j)
 
@@ -41,6 +41,7 @@ class TestSavannah(GangaGPITestCase):
         write_file(fileName,scriptString)
         
         r =  Root()
+        r.version = '5.32.00'
         r.script = fileName
         j = Job(application=r, backend=Dirac(CPUTime=600))
         j.submit()
@@ -96,6 +97,8 @@ class Savannah33992(ICheckTest):
         self.j.backend.getOutputSandbox()
         f = os.path.join(self.j.outputdir,'std.out')
         assert os.path.exists(f)
+        for line in f:
+           print line
         assert file_contains(f, 'Status after exitCode.C execution is 45'), 'Incorrect exit code'
 
 
