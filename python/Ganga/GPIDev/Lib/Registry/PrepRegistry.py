@@ -149,7 +149,7 @@ class ShareRef(GangaObject):
             try:
                 item.keys()[0].is_prepared.name 
                 if item.keys()[0].is_prepared.name == sharedir:
-                    logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
+                    logger.debug('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
                         item.keys()[0]._impl._registry_id, item.values()[0])
                     run_unp = item.keys()[0]
                     master_index += 1
@@ -157,7 +157,7 @@ class ShareRef(GangaObject):
                 try:
                     item.keys()[0].application.is_prepared.name 
                     if item.keys()[0].application.is_prepared.name == sharedir:
-                        logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
+                        logger.debug('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
                             item.keys()[0]._impl._registry_id, item.values()[0])
                         run_unp = item.keys()[0].application
                         master_index += 1
@@ -165,7 +165,7 @@ class ShareRef(GangaObject):
                     try:
                         item.keys()[0].analysis.application.is_prepared.name 
                         if item.keys()[0].analysis.application.is_prepared.name == sharedir:
-                            logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
+                            logger.debug('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
                                 item.keys()[0]._impl._registry_id, item.values()[0])
                             run_unp = item.keys()[0].analysis.application
                             master_index += 1
@@ -174,14 +174,14 @@ class ShareRef(GangaObject):
 
 
             if run_unp is not None and unprepare is True:
-                logger.info('Unpreparing %s repository object #%s associated with ShareDir %s', \
+                logger.debug('Unpreparing %s repository object #%s associated with ShareDir %s', \
                     item.values()[0],  item.keys()[0]._impl._registry_id, sharedir)
 #                item.keys()[0]._impl.unprepare()
                 run_unp.unprepare()
                 run_unp = None
 
         if unprepare is not True:
-            logger.info('%s item(s) found referencing ShareDir %s', master_index, sharedir)            
+            logger.debug('%s item(s) found referencing ShareDir %s', master_index, sharedir)            
 
 
     def rebuild(self, unprepare=True, rmdir=False):
