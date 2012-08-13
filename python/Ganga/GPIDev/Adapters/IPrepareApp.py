@@ -188,12 +188,11 @@ class IPrepareApp(IApplication):
         if prepared_object._getRegistry() is None:
             self.incrementShareCounter(prepared_object.is_prepared.name)
             self.decrementShareCounter(prepared_object.is_prepared.name)
-            logger.warn('Application is not currently associated with a persisted Ganga object')
-            logger.warn('(e.g. box, job, task). Both the prepared application and the contents of')
-            logger.warn('its shared directory will be lost when Ganga exits.')
-            logger.warn('Shared directory location: %s' %(self.is_prepared.name))
-            logger.warn('Shared directory contents:')
-            self.listShareDirContents(prepared_object.is_prepared.name)
+            logger.info('Application is not currently associated with a persisted Ganga object')
+            logger.debug('(e.g. box, job, task). Both the prepared application and the contents of')
+            logger.debug('its shared directory will be lost when Ganga exits.')
+            logger.debug('Shared directory location: %s' %(self.is_prepared.name))
+            #logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
         else:
             self.incrementShareCounter(prepared_object.is_prepared.name)
 
