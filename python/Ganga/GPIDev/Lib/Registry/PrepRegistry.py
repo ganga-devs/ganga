@@ -208,30 +208,30 @@ class ShareRef(GangaObject):
 
         def helper(object, unp=True):
             shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(object))
-            logger.debug( 'Adding %s to the shareref table.' % shareddir)
+            logger.debug('Adding %s to the shareref table.' % shareddir)
             if self.name.has_key(os.path.basename(object)):
                 self.name[os.path.basename(object)] +=1
             else:
                 self.name[os.path.basename(object)] = 1
             if not os.path.isdir(shareddir) and os.path.basename(object) not in lookup_input:
-                logger.warn('Shared directory %s not found on disk.' % shareddir)
+                logger.info('Shared directory %s not found on disk.' % shareddir)
                 if unp == True: 
                     lookup_input.append(os.path.basename(object))
 
 
         def to_relative(object):
-            logger.warn('Absolute ShareDir().name attribute found in Job #%s', object.id)
-            logger.warn('Converting to relative path and moving associated directory if it exists.')
+            logger.info('Absolute ShareDir().name attribute found in Job #%s', object.id)
+            logger.info('Converting to relative path and moving associated directory if it exists.')
             try:
                 shutil.move(object.is_prepared.name,\
                     os.path.join(ShareDir._root_shared_path,os.path.basename(object.is_prepared.name)))
             except:
-                logger.error('Unable to move directory %s to %s', object.is_prepared.name,\
+                logger.warn('Unable to move directory %s to %s', object.is_prepared.name,\
                     os.path.join(ShareDir._root_shared_path,os.path.basename(object.is_prepared.name)))
             try:
                 object._impl.is_prepared.name = os.path.basename(object.is_prepared.name)
             except:
-                logger.error("Unable to convert object's is_prepared.name attribute to a relative path")
+                logger.warn("Unable to convert object's is_prepared.name attribute to a relative path")
         
 
         objectlist = []
@@ -267,17 +267,17 @@ class ShareRef(GangaObject):
                         pass
         #here we iterate over the lookup_input list and unprepare as necessary.
         for item in lookup_input:
-            logger.warn('Unpreparing objects referencing ShareDir %s' % item)
+            logger.info('Unpreparing objects referencing ShareDir %s' % item)
             self.lookup(sharedir=item, unprepare=True)
 
         #check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0 
         #so the user is made aware of them at shutdown
         for dir in os.listdir(ShareDir._root_shared_path):
             if not self.name.has_key(dir) and rmdir is False:
-                logger.warn("%s isn't referenced by a GangaObject in the Job or Box repository." % dir)
+                logger.info("%s isn't referenced by a GangaObject in the Job or Box repository." % dir)
                 self.name[dir] = 0
             elif not self.name.has_key(dir) and rmdir is True:
-                logger.warn("%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % dir)
+                logger.info("%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % dir)
                 shutil.rmtree(os.path.join(ShareDir._root_shared_path,dir))
 
         self._setDirty()
