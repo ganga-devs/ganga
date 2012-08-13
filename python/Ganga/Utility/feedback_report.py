@@ -588,6 +588,8 @@ def report(job=None):
                         if not (isJob or isTask):
                                 print "report() function argument should be reference to a job or task object"
                                 return
+                else:
+                        isJob = isTask = False
 
                 resultArchive, uploadFileServer, tempDir = report_inner(job, isJob, isTask)
 
