@@ -305,7 +305,7 @@ def report(job=None):
                 #except IOError does not catch the exception ???                
                 except:
                         writeErrorLog(str(sys.exc_value))
-        isinstance(job,Job)
+
                 #import gangalog in a file      
                 userLogFileLocation = config["Logging"]._logfile
                 userLogFileLocation = os.path.expanduser(userLogFileLocation)
