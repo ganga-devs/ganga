@@ -206,13 +206,15 @@ class ShareRef(GangaObject):
         lookup_input=[]
 
 
-        def helper(object, unp=True):
+        def helper(object, unp=True, numsubjobs=0):
             shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(object))
             logger.debug('Adding %s to the shareref table.' % shareddir)
             if self.name.has_key(os.path.basename(object)):
                 self.name[os.path.basename(object)] +=1
             else:
                 self.name[os.path.basename(object)] = 1
+            if numsubjobs > 0:
+                self.name[os.path.basename(object)] += numsubjobs
             if not os.path.isdir(shareddir) and os.path.basename(object) not in lookup_input:
                 logger.info('Shared directory %s not found on disk.' % shareddir)
                 if unp == True: 
@@ -248,21 +250,24 @@ class ShareRef(GangaObject):
                 if shortname is not None and shortname is not True:
                     if os.path.basename(shortname) != shortname:
                         to_relative(item.keys()[0].is_prepared)
-                    helper(shortname, unp=unprepare)
+                    numsubjobs = len(item.keys()[0].subjobs.ids())
+                    helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
             except AttributeError:
                 try:
                     shortname = item.keys()[0].application.is_prepared.name 
                     if shortname is not None and shortname is not True:
                         if os.path.basename(shortname) != shortname:
                             to_relative(item.keys()[0].is_prepared)
-                        helper(shortname, unp=unprepare)
+                        numsubjobs = len(item.keys()[0].subjobs.ids())
+                        helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
                 except AttributeError:
                     try:
                         shortname = item.keys()[0].analysis.application.is_prepared.name 
                         if shortname is not None and shortname is not True:
                             if os.path.basename(shortname) != shortname:
                                 to_relative(item.keys()[0].is_prepared)
-                            helper(shortname, unp=unprepare)
+                            numsubjobs = len(item.keys()[0].subjobs.ids())
+                            helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
                     except AttributeError:
                         pass
         #here we iterate over the lookup_input list and unprepare as necessary.
