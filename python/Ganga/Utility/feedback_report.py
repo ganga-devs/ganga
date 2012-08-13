@@ -480,7 +480,7 @@ def report(job=None):
                         #copy shared area of the task 
                         try:
                                 if len(task.transforms) > 0:
-                                        if hasattr(task.transforms[0], 'application') and hasattr(task.transforms[0].application, 'is_prepared')
+                                        if hasattr(task.transforms[0], 'application') and hasattr(task.transforms[0].application, 'is_prepared'):
                                                 if task.transforms[0].application.is_prepared is not None and task.transforms[0].application.is_prepared is not True:
                                                         import os
                                                         from Ganga.Utility.Config import getConfig
