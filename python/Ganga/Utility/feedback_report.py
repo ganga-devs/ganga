@@ -110,15 +110,18 @@ def report(job=None):
                 upload_file (path)
         
 
-        def report_inner(job=None):
+        def report_inner(job=None, isJob, isTask):
         
                 userInfoDirName = "userreport"
                 tempDirName = "reportsRepository"
                 #job relevant info
-                inputDirName = "inputdir"
-                outputDirName = "outputdir"
                 jobSummaryFileName = "jobsummary.txt"
                 jobFullPrintFileName = "jobfullprint.txt"
+                repositoryPath = "repository/$usr/LocalXML/6.0/jobs/$thousandsNumxxx"
+                #task relevant info
+                taskSummaryFileName = "tasksummary.txt"
+                taskFullPrintFileName = "taskfullprint.txt"
+                tasksRepositoryPath = "repository/$usr/LocalXML/6.0/tasks/$thousandsNumxxx"
                 #non job relevant info - user's info
                 environFileName = "environ.txt"
                 userConfigFileName = "userconfig.txt"
@@ -126,9 +129,8 @@ def report(job=None):
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
                 jobsListFileName = "jobslist.txt"
-                repositoryPath = "repository/$usr/LocalXML/6.0/jobs/$thousandsNumxxx"
-                uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
-                #uploadFileServer= "http://127.0.0.1:8000/errorreports"
+                #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
+                uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
@@ -303,7 +305,7 @@ def report(job=None):
                 #except IOError does not catch the exception ???                
                 except:
                         writeErrorLog(str(sys.exc_value))
-        
+        isinstance(job,Job)
                 #import gangalog in a file      
                 userLogFileLocation = config["Logging"]._logfile
                 userLogFileLocation = os.path.expanduser(userLogFileLocation)
@@ -342,7 +344,7 @@ def report(job=None):
                 folderToArchive = fullLogDirName
 
                 #import job relevant info
-                if job is not None:
+                if (job is not None and isJob):
 
                         global JOB_REPORT, APPLICATION_NAME, BACKEND_NAME
 
@@ -448,6 +450,83 @@ def report(job=None):
                         except:
                                 writeErrorLog(str(sys.exc_value))
 
+
+                #import task relevant info
+                if (job is not None and isTask):
+                #job is actually a task object
+                        task = job
+                        #create task folder                      
+                        taskFolder = 'task_%s' % str(task.id)
+                        fullLogDirName = os.path.join(fullLogDirName, taskFolder)
+                        os.mkdir(fullLogDirName)                        
+
+                        #import task summary in a file   
+                        fullTaskSummaryFileName = os.path.join(fullLogDirName, taskSummaryFileName)
+                        writeStringToFile(fullTaskSummaryFileName, str(task))
+
+                        #import task full print in a file
+                        fullTaskPrintFileName = os.path.join(fullLogDirName, taskFullPrintFileName)
+                        
+                        try:
+                                inputFile = open(fullTaskPrintFileName, 'w')
+                                try:
+                                        full_print(task, inputFile)
+                                finally:
+                                        inputFile.close()
+                        #except IOError, OSError:
+                        except:
+                                writeErrorLog(str(sys.exc_value))
+
+                        #copy shared area of the task 
+                        try:
+                                if len(task.transforms) > 0:
+                                        if hasattr(task.transforms[0], 'application') and hasattr(task.transforms[0].application, 'is_prepared')
+                                                if task.transforms[0].application.is_prepared is not None and task.transforms[0].application.is_prepared is not True:
+                                                        import os
+                                                        from Ganga.Utility.Config import getConfig
+                                                        from Ganga.Utility.files import expandfilename
+                                                        shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+                                                        shareddir = os.path.join(shared_path,task.transforms[0].application.is_prepared.name)
+                                                        if os.path.isdir(shareddir):
+
+                                                                sharedAreaDir = os.path.join(fullLogDirName, 'sharedarea')
+                                                                shutil.copytree(shareddir, sharedAreaDir)
+                        #except IOError, OSError
+                        except:
+                                writeErrorLog(str(sys.exc_value))
+
+
+                        #copy repository task file
+                        try:
+                                indexFileName = str(task.id) + '.index'
+
+                                tasksRepositoryPath = tasksRepositoryPath.replace('$usr', os.getenv("USER"))
+                                tasksRepositoryPath = tasksRepositoryPath.replace('$thousandsNum', str(task.id/1000))
+
+                                repositoryFullPath = os.path.join(config.Configuration.gangadir, tasksRepositoryPath)
+                                indexFileSourcePath = os.path.join(repositoryFullPath, indexFileName)
+                                repositoryFullPath = os.path.join(repositoryFullPath, str(task.id))
+
+                                repositoryTargetPath = os.path.join(fullLogDirName, 'repository', str(task.id))
+                                
+                                os.mkdir(os.path.join(fullLogDirName, 'repository'))
+
+                                shutil.copytree(repositoryFullPath, repositoryTargetPath)
+                                #data files are copied but can not be opened -> add .txt to their file names
+                                renameDataFiles(repositoryTargetPath)
+
+                                #copy .index file
+                                indexFileTargetPath = os.path.join(fullLogDirName, 'repository', indexFileName)
+                                shutil.copyfile(indexFileSourcePath, indexFileTargetPath)
+                                
+                        #except OSError, IOError:
+                        except:
+                                writeErrorLog(str(sys.exc_value))
+
+
+                print folderToArchive
+
+                """
                 resultArchive = '%s.tar.gz' % folderToArchive
 
                 try:
@@ -466,6 +545,7 @@ def report(job=None):
                 #remove temp dir
                 if(os.path.exists(folderToArchive)):
                         shutil.rmtree(folderToArchive)
+                """
 
                 #print the error if there is something
                 if os.path.exists(errorLogPath):
@@ -500,13 +580,16 @@ def report(job=None):
         #call the report function
         try:
 
-                #make typecheck of the param passed
+                #make typecheck of the param passed             
                 if job is not None:
-                        if not isinstance(job,Job):
-                                print "report() function argument should be reference to a job object"
+                        isJob = isinstance(job,Job)
+                        isTask = (job._impl._category == 'tasks')
+
+                        if not (isJob or isTask):
+                                print "report() function argument should be reference to a job or task object"
                                 return
 
-                resultArchive, uploadFileServer, tempDir = report_inner(job)
+                resultArchive, uploadFileServer, tempDir = report_inner(job, isJob, isTask)
 
                 report_bytes = os.path.getsize(resultArchive)
                 
