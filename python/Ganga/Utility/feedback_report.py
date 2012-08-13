@@ -110,7 +110,7 @@ def report(job=None):
                 upload_file (path)
         
 
-        def report_inner(job=None, isJob, isTask):
+        def report_inner(job=None, isJob=False, isTask=False):
         
                 userInfoDirName = "userreport"
                 tempDirName = "reportsRepository"
