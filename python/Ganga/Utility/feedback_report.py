@@ -122,13 +122,14 @@ def report(job=None):
                 taskSummaryFileName = "tasksummary.txt"
                 taskFullPrintFileName = "taskfullprint.txt"
                 tasksRepositoryPath = "repository/$usr/LocalXML/6.0/tasks/$thousandsNumxxx"
-                #non job relevant info - user's info
+                #user's info
                 environFileName = "environ.txt"
                 userConfigFileName = "userconfig.txt"
                 defaultConfigFileName = "gangarc.txt"
                 ipythonHistoryFileName = "ipythonhistory.txt"
                 gangaLogFileName = "gangalog.txt"
                 jobsListFileName = "jobslist.txt"
+                tasksListFileName = "taskslist.txt"
                 #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
                 uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
@@ -339,6 +340,28 @@ def report(job=None):
                 #except IOError does not catch the exception ???                
                 except:
                         writeErrorLog(str(sys.exc_value))
+
+
+                #import the result of tasks command in the report
+                tasksListFullFileName = os.path.join(fullLogDirName, tasksListFileName)
+                
+                try:
+                        outputFile = open(tasksListFullFileName, 'w')
+                        try:
+                        
+                                sys.stdout = outputFile
+                                
+                                from Ganga.GPI import tasks
+                                print tasks      
+                                        
+                        finally:
+                                sys.stdout = sys.__stdout__
+                                outputFile.close()
+                                        
+                #except IOError does not catch the exception ???                
+                except:
+                        writeErrorLog(str(sys.exc_value))
+
         
                 #save it here because we will change fullLogDirName, but we want this to be the archive and to be deleted 
                 folderToArchive = fullLogDirName
@@ -579,17 +602,17 @@ def report(job=None):
 
         #call the report function
         try:
+                isJob = isTask = False
 
                 #make typecheck of the param passed             
                 if job is not None:
                         isJob = isinstance(job,Job)
-                        isTask = (job._impl._category == 'tasks')
+                        if (hasattr(job, '_impl') and hasattr(job._impl, '_category') and (job._impl._category == 'tasks')):
+                                isTask = True
 
                         if not (isJob or isTask):
                                 print "report() function argument should be reference to a job or task object"
                                 return
-                else:
-                        isJob = isTask = False
 
                 resultArchive, uploadFileServer, tempDir = report_inner(job, isJob, isTask)
 
