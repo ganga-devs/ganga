@@ -103,12 +103,12 @@ class BoxRegistry(Registry):
         if obj._category == 'jobs':
             if hasattr(obj.application, 'is_prepared'):
                 if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
-                    logger.info('Adding a prepared job to the box and increasing the shareref counter')
+                    logger.debug('Adding a prepared job to the box and increasing the shareref counter')
                     obj.application.incrementShareCounter(obj.application.is_prepared.name)
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
-                    logger.info('Adding a prepared application to the box and increasing the shareref counter')
+                    logger.debug('Adding a prepared application to the box and increasing the shareref counter')
                     obj.incrementShareCounter(obj.is_prepared.name)
 
         obj = obj.clone()
@@ -133,12 +133,12 @@ class BoxRegistry(Registry):
         if obj._category == 'jobs':
             if hasattr(obj.application, 'is_prepared'):
                 if obj.application.is_prepared is not None and obj.application.is_prepared is not True:
-                    logger.info('Removing a prepared job from the box and decreasing the shareref counter')
+                    logger.debug('Removing a prepared job from the box and decreasing the shareref counter')
                     obj.application.decrementShareCounter(obj.application.is_prepared.name)
         if obj._category == 'applications':
             if hasattr(obj, 'is_prepared'):
                 if obj.is_prepared is not None and obj.is_prepared is not True:
-                    logger.info('Removing a prepared application from the box and decreasing the shareref counter')
+                    logger.debug('Removing a prepared application from the box and decreasing the shareref counter')
                     obj.decrementShareCounter(obj.is_prepared.name)
 
 
