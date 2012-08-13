@@ -130,8 +130,8 @@ def report(job=None):
                 gangaLogFileName = "gangalog.txt"
                 jobsListFileName = "jobslist.txt"
                 tasksListFileName = "taskslist.txt"
-                #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
-                uploadFileServer= "http://127.0.0.1:8000/errorreports"
+                uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
+                #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
                 def printDictionary(dictionary):
                         for k,v in dictionary.iteritems():
