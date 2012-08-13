@@ -546,10 +546,6 @@ def report(job=None):
                         except:
                                 writeErrorLog(str(sys.exc_value))
 
-
-                print folderToArchive
-
-                """
                 resultArchive = '%s.tar.gz' % folderToArchive
 
                 try:
@@ -568,7 +564,6 @@ def report(job=None):
                 #remove temp dir
                 if(os.path.exists(folderToArchive)):
                         shutil.rmtree(folderToArchive)
-                """
 
                 #print the error if there is something
                 if os.path.exists(errorLogPath):
