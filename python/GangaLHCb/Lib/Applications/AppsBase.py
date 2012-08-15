@@ -184,7 +184,7 @@ class AppName(Gaudi):
                     metadataItems[name] = method(XMLSummarydata)
                 except:
                     metadataItems[name] = None
-                    logger.warning('Problem running "%s" method on merged xml output.' % name)
+                    logger.debug('Problem running "%s" method on merged xml output.' % name)
 
         for key, value in metadataItems.iteritems():
             if value is None: # Has to be explicit else empty list counts
