@@ -277,9 +277,15 @@ class GangaRepositoryLocal(GangaRepository):
                 cnt[x.__class__.__name__] = cnt.get(x.__class__.__name__,[]) + [str(id)]
                 examples[x.__class__.__name__] = str(x)
                 self.known_bad_ids.append(id)
-            for exc,ids in cnt.items():
-                logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
             global printed_explanation
+            for exc,ids in cnt.items():
+                if examples[exc].find('comments') > 0:
+                    printed_explanation = True
+                    from Ganga.Utility.repairJobRepository import repairJobRepository
+                    for jobid in ids:
+                        repairJobRepository(int(jobid))         
+                else:
+                    logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
             if not printed_explanation:
                 logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
                 printed_explanation = True
