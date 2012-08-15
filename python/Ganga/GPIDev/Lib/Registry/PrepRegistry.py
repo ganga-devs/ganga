@@ -149,7 +149,7 @@ class ShareRef(GangaObject):
             try:
                 item.keys()[0].is_prepared.name 
                 if item.keys()[0].is_prepared.name == sharedir:
-                    logger.debug('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
+                    logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
                         item.keys()[0]._impl._registry_id, item.values()[0])
                     run_unp = item.keys()[0]
                     master_index += 1
@@ -157,7 +157,7 @@ class ShareRef(GangaObject):
                 try:
                     item.keys()[0].application.is_prepared.name 
                     if item.keys()[0].application.is_prepared.name == sharedir:
-                        logger.debug('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
+                        logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
                             item.keys()[0]._impl._registry_id, item.values()[0])
                         run_unp = item.keys()[0].application
                         master_index += 1
@@ -165,7 +165,7 @@ class ShareRef(GangaObject):
                     try:
                         item.keys()[0].analysis.application.is_prepared.name 
                         if item.keys()[0].analysis.application.is_prepared.name == sharedir:
-                            logger.debug('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
+                            logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,\
                                 item.keys()[0]._impl._registry_id, item.values()[0])
                             run_unp = item.keys()[0].analysis.application
                             master_index += 1
@@ -174,14 +174,14 @@ class ShareRef(GangaObject):
 
 
             if run_unp is not None and unprepare is True:
-                logger.debug('Unpreparing %s repository object #%s associated with ShareDir %s', \
+                logger.info('Unpreparing %s repository object #%s associated with ShareDir %s', \
                     item.values()[0],  item.keys()[0]._impl._registry_id, sharedir)
 #                item.keys()[0]._impl.unprepare()
                 run_unp.unprepare()
                 run_unp = None
 
         if unprepare is not True:
-            logger.debug('%s item(s) found referencing ShareDir %s', master_index, sharedir)            
+            logger.info('%s item(s) found referencing ShareDir %s', master_index, sharedir)            
 
 
     def rebuild(self, unprepare=True, rmdir=False):
@@ -208,7 +208,7 @@ class ShareRef(GangaObject):
 
         def helper(object, unp=True, numsubjobs=0):
             shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(object))
-            logger.debug('Adding %s to the shareref table.' % shareddir)
+            logger.info('Adding %s to the shareref table.' % shareddir)
             if self.name.has_key(os.path.basename(object)):
                 self.name[os.path.basename(object)] +=1
             else:
@@ -245,31 +245,30 @@ class ShareRef(GangaObject):
             objectlist.append({thing:'task'})
 
         for item in objectlist:
+            shortname = None
             try:
                 shortname = item.keys()[0].is_prepared.name 
-                if shortname is not None and shortname is not True:
-                    if os.path.basename(shortname) != shortname:
-                        to_relative(item.keys()[0].is_prepared)
-                    numsubjobs = len(item.keys()[0].subjobs.ids())
-                    helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
             except AttributeError:
                 try:
                     shortname = item.keys()[0].application.is_prepared.name 
-                    if shortname is not None and shortname is not True:
-                        if os.path.basename(shortname) != shortname:
-                            to_relative(item.keys()[0].is_prepared)
-                        numsubjobs = len(item.keys()[0].subjobs.ids())
-                        helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
                 except AttributeError:
                     try:
                         shortname = item.keys()[0].analysis.application.is_prepared.name 
-                        if shortname is not None and shortname is not True:
-                            if os.path.basename(shortname) != shortname:
-                                to_relative(item.keys()[0].is_prepared)
-                            numsubjobs = len(item.keys()[0].subjobs.ids())
-                            helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
                     except AttributeError:
                         pass
+            try:
+                if shortname is not None and shortname is not True:
+                    if os.path.basename(shortname) != shortname:
+                        to_relative(item.keys()[0].is_prepared)
+                    try:
+                        numsubjobs = len(item.keys()[0].subjobs.ids())
+                    except:
+                        numsubjobs = 0
+                    helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
+            except:
+                pass
+
+
         #here we iterate over the lookup_input list and unprepare as necessary.
         for item in lookup_input:
             logger.info('Unpreparing objects referencing ShareDir %s' % item)
