@@ -163,7 +163,7 @@ class ProxyDataDescriptor(object):
         from Ganga.GPIDev.Lib.File import ShareDir
         if self._name == 'is_prepared' and isType(val, ShareDir) and hasattr(obj._impl,'_getRegistry'):
             if obj._impl._getRegistry() is not None:
-                logger.info('Overwriting is_prepared attribute with a ShareDir object')
+                logger.debug('Overwriting is_prepared attribute with a ShareDir object')
                 obj.unprepare() #it's safe to unprepare 'not-prepared' applications.
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
@@ -173,13 +173,13 @@ class ProxyDataDescriptor(object):
         if self._name == 'application' and hasattr(obj.application,'is_prepared'):
             #a=Job(); a.prepare(); a.application=Executable()
             if obj.application.is_prepared is not None and obj.application.is_prepared is not True and val.is_prepared is None:
-                logger.info('Overwriting a prepared application with one that is unprepared')
+                logger.debug('Overwriting a prepared application with one that is unprepared')
                 obj.application.unprepare()
             #a=Job(); b=Executable(); b.prepare(); a.application=b
             elif obj.application.is_prepared is not True and hasattr(val,'is_prepared') and val.is_prepared is not None and val.is_prepared is not True:
                 from Ganga.Core.GangaRepository import getRegistry
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                logger.info('Overwriting application with a prepared one')
+                logger.debug('Overwriting application with a prepared one')
                 obj.application.unprepare()
                 shareref.increase(val.is_prepared.name)
 
@@ -337,13 +337,6 @@ def GPIProxyClassFactory(name, pluginclass):
             if prepconfig['unprepare_on_copy'] is True:
                 if hasattr(self,'is_prepared') or hasattr(self,'application'):
                     unprepare = True
-#        if hasattr(self,'is_prepared'):
-#            if self.is_prepared is not None and self.is_prepared is not True:
-#                from Ganga.Core.GangaRepository import getRegistry
-#                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-#                shareref.increase(self.is_prepared.name)
-
-#        if unprepare is not True:
 
         if hasattr(self,'application'):
             if hasattr(self.application,'is_prepared'):
@@ -363,14 +356,6 @@ def GPIProxyClassFactory(name, pluginclass):
                     shareref.increase(self.application.is_prepared.name)
                     self.unprepare()
     
-#The following has the effect of increaseing shareref when we copy a prepared, but isolated application
-#that's a bug.
-#        if hasattr(self,'is_prepared') and self.is_prepared is not None and self.is_prepared \
-#                           is not True and os.path.isdir(self.is_prepared.name):
-#            from Ganga.Core.GangaRepository import getRegistry
-#            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-#            shareref.increase(self.is_prepared.name)
-#            logger.debug('Found ShareDir directory: %s' % self.is_prepared.name)
         if hasattr(self,'is_prepared') and self.is_prepared is not None and self.is_prepared \
                            is not True and not os.path.isdir(os.path.join(shared_path,self.is_prepared.name)):
             logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
@@ -380,6 +365,10 @@ def GPIProxyClassFactory(name, pluginclass):
             
         if unprepare is True:
             c = self._impl.clone()
+            if hasattr(c,'is_prepared') and c._getRegistry() is None:
+                from Ganga.Core.GangaRepository import getRegistry
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                shareref.increase(self.is_prepared.name)
             c._auto__init__(unprepare=True)
         else:
             c = self._impl.clone()
