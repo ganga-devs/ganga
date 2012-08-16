@@ -1,28 +1,35 @@
 def repairJobRepository(jobId):
         """ Repairs job repository for the comment attribute (migration from Comment object to string) """
 
-
         def repairFilePath(filePath):
-                import xml.dom.minidom
-                from xml import xpath
+                fileRead = open(filePath, 'r')
 
-                dom = xml.dom.minidom.parse(filePath)
+                index = -1
+                found = False
 
-                commentNodes = xpath.Evaluate('/root/class/attribute[@name=\'comment\']', dom.documentElement)
+                lines = fileRead.readlines()
+                fileRead.close()
 
-                if commentNodes > 0:
-                        commentNode = commentNodes[0]
-                        if commentNode.toxml().find('class') > -1:
-        
-                                innerNode = xpath.Evaluate('/root/class/attribute[@name=\'comment\']/class/attribute/value', dom.documentElement)[0]
+                for line in lines:
+                        index += 1
+                        if line.find('<class name="Comment"') > -1:
+                                found = True
+                                break
 
-                                oldNode = xpath.Evaluate('/root/class/attribute[@name=\'comment\']/class', dom.documentElement)[0]
+                if found:
+                        newLines = []
+                        for i in range(index):
+                                newLines.append(lines[i])
 
-                                commentNode.replaceChild(innerNode, oldNode)
-        
-                                fileWrite = open(filePath, 'w')
-                                fileWrite.write(dom.toxml().replace('<?xml version="1.0" ?>\n', ''))
-                                fileWrite.close()
+                        newLines.append(lines[index+1].replace('<attribute name="comment"> ', ''))
+
+                        for i in range(index+4, len(lines)):
+                                newLines.append(lines[i])
+
+                        fileWrite = open(filePath, 'w')
+                        fileWrite.write(''.join(newLines))
+                        fileWrite.close()
+
 
         from Ganga.Utility.Config import getConfig
 
