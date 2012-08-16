@@ -1,27 +1,21 @@
 from Ganga.Core.exceptions import *
-import time
 #from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaTest.Framework.utils import sleep_until_completed
-
 config['Preparable']['unprepare_on_copy']=False
 a=Job()
 a.prepare()
-#time.sleep(1)
 assert a.application.is_prepared is not None, 'Prepare Test 1: Failed to prepare vanilla job'
 
 
 b=a.copy()
-#time.sleep(1)
 assert a.application.is_prepared.name == b.application.is_prepared.name, 'Prepare Test 2: failed to copy a prepared job fully'
 
 s=shareref._impl.name
-#time.sleep(1)
 assert s[a.application.is_prepared.name] == 2, 'Prepare Test 3 failed; shareref wasnt incremented after job copy'
 
 
 box.add(a,'testjob')
 s=shareref._impl.name
-#time.sleep(1)
 assert s[a.application.is_prepared.name] == 3, 'Prepare Test 4 failed; shareref wasnt incremented after copying job to the box '
 
 
@@ -33,8 +27,6 @@ s=shareref._impl.name
 assert s[box(box.ids()[-1]).is_prepared.name] == 1, 'Prepare Test 6 failed; a prepared app in the box didnt increment the sharedref'
 
 
-#this sleep is needed
-#time.sleep(3)
 a.unprepare()
 assert a.application.is_prepared is None, 'Prepare Test 7 failed; unpreparing a job'
 s=shareref._impl.name
@@ -100,7 +92,6 @@ a=Job()
 a.prepare()
 b=a.copy(unprepare=True)
 s=shareref._impl.name
-#time.sleep(1)
 assert s[a.application.is_prepared.name] == 1, 'Prepare Test 14 failed; when we prepare a job, then copy with unprepare=True, the shareref should equal 1'
 
 
@@ -109,12 +100,12 @@ a.application.is_prepared=True
 a.submit()
 assert a.application.is_prepared == True, 'Prepare Test 15 failed; if we set is_prepared=True, the job should not be prepared during submission'
 
+
 a=Job()
 a.prepare()
 tmp = a.application.is_prepared.name
 a.application.is_prepared=None
 s=shareref._impl.name
-#time.sleep(1)
 assert s[tmp] == 0, 'Prepare Test 16 failed; set is_prepared=None on a prepared job, that should effectively unprepare the application'
 
 j=Job()
@@ -131,22 +122,18 @@ s=shareref._impl.name
 a=Job()
 a.prepare()
 shareddirname=a.application.is_prepared.name
-#time.sleep(1)
 assert a.application.is_prepared is not None, 'Prepare Test 18: Failed to prepare vanilla job'
 
 
 b=a.copy()
-#time.sleep(1)
 assert b.application.is_prepared == None, 'Prepare Test 19: copying a prepared job (with unprepare_on_copy=True) didnt unprepare the job during copy'
 
-#time.sleep(1)
 s=shareref._impl.name
 assert s[a.application.is_prepared.name] == 1, 'Prepare Test 20 failed; shareref should be 1, because the copy of the job was unprepared by unprepare_on_copy=True'
 
 
 box.add(a,'testjob')
 s=shareref._impl.name
-#time.sleep(1)
 assert s[a.application.is_prepared.name] == 2, 'Prepare Test 21 failed; shareref wasnt incremented after copying job to the box '
 
 
@@ -158,8 +145,6 @@ s=shareref._impl.name
 assert s[box(box.ids()[-1]).is_prepared.name] == 1, 'Prepare Test 22 failed; a prepred app in the box didnt increment the sharedref'
 
 
-#this sleep is needed
-#time.sleep(3)
 a.unprepare()
 assert a.application.is_prepared is None, 'Prepare Test 23 failed; unpreparing a job'
 s=shareref._impl.name
@@ -183,6 +168,7 @@ except:
 appName = box(box.ids()[-1]).is_prepared.name
 box(box.ids()[-1]).unprepare()
 assert box(box.ids()[-1]).is_prepared is None, 'Prepare Test 27 failed; unpreparing an executable app in the box'
+
 
 
 a=Job()
@@ -226,7 +212,6 @@ a=Job()
 a.prepare()
 b=a.copy(unprepare=True)
 s=shareref._impl.name
-#time.sleep(1)
 assert s[a.application.is_prepared.name] == 1, 'Prepare Test 32 failed; when we prepare a job, then copy with unprepare=True, the shareref should equal 1'
 
 
@@ -240,7 +225,6 @@ a.prepare()
 tmp = a.application.is_prepared.name
 a.application.is_prepared=None
 s=shareref._impl.name
-#time.sleep(1)
 assert s[tmp] == 0, 'Prepare Test 34 failed; set is_prepared=None on a prepared job, that should effectively unprepare the application'
 
 j=Job()
@@ -256,7 +240,6 @@ j=Job()
 j.prepare()
 tmpj = j.application.is_prepared.name
 s=shareref._impl.name
-#time.sleep(1)
 assert s[tmpj] == 1, 'Prepare Test 36a failed.' 
 a=Executable()
 j.application=a
@@ -266,7 +249,6 @@ assert s[tmpj] == 0, 'Prepare Test 36b failed.'
 j=Job()
 j.prepare()
 tmpj = j.application.is_prepared.name
-#time.sleep(1)
 a=Executable()
 a.prepare()
 tmpa = a.is_prepared.name
