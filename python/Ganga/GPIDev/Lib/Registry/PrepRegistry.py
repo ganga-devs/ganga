@@ -36,6 +36,24 @@ class PrepRegistry(Registry):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         self.shareref = self.metadata[self.metadata.ids()[-1]]
         self.shareref.closedown()
+        self._lock.acquire()
+        try:
+            try:
+                if not self.metadata is None:
+                    self.metadata.shutdown()
+            except Exception, x:
+                logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
+            try:
+                self._flush()
+            except Exception, x:
+                logger.error("Exception on flushing '%s' registry: %s", self.name, x)
+            self._started = False
+            for obj in self._objects.values():
+                obj._registry_locked = False # locks are not guaranteed to survive repository shutdown
+            self.repository.shutdown()
+        finally:
+            self._lock.release()
+
 
 class ShareRef(GangaObject):
     """The shareref table (shared directory reference counter table) provides a mechanism
