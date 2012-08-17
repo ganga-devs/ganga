@@ -167,7 +167,7 @@ class Dirac(IBackend):
                 j.id = i
                 if dirac_script.inputdata and \
                        hasattr(dirac_script.inputdata,'split_data') and \
-                       ( len(dirac_script.inputdata.split_data) is len(idlist) ):
+                       ( len(dirac_script.inputdata.split_data) == len(idlist) ):
                     j.inputdata = LHCbDataset(files=[LogicalFile(f) for f in dirac_script.inputdata.split_data[i]])
                 j.status = 'submitted'
                 j.time.timenow('submitted')
