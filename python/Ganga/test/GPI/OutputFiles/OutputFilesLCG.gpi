@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaTest.Framework.utils import sleep_until_state
 
 j = Job(application=Root(),backend=LCG())
 
@@ -12,7 +12,7 @@ assert(j.outputfiles[2].__class__.__name__ == 'OutputSandboxFile')
 
 j.submit()
 
-assert(sleep_until_completed(j,1800))
+sleep_until_state(j, timeout=1800, state='completed')
 
 if (j.outputfiles[0].location() == []):
     #job script didn't provide output files

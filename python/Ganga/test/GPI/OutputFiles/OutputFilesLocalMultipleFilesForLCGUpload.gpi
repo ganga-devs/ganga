@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_completed
+from GangaTest.Framework.utils import sleep_until_state
 
 j = Job(application=Root(),backend=Local())
 
@@ -12,7 +12,7 @@ assert(j.outputfiles[2].__class__.__name__ == 'LCGStorageElementFile')
 
 j.submit()
 
-assert(sleep_until_completed(j,180))
+sleep_until_state(j, timeout=180, state='completed')
 
 assert(j.outputfiles[0].location() != [])
 assert(j.outputfiles[1].location() != [])
