@@ -25,12 +25,24 @@ class AtlasTransform(ITransform):
    _name = 'AtlasTransform'
    _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer' ]
 
+   def __init__(self):
+      super(AtlasTransform,self).__init__()
+
+      # force a delay of 1 minute to ensure DQ2 datasets have been registered properly
+      self.chain_delay = 5
+      
    def createUnits(self):
       """Create new units if required given the inputdata"""
-      #logger.warning("Entered Transform %d createUnits function..." % self.getID())
-
+      
+      # call parent for chaining
+      super(AtlasTransform,self).createUnits()
+      
       # loop over input data and see if we need to create any more units
       for inds in self.inputdata:
+
+         if inds._name != "DQ2Dataset":
+            continue
+         
          ok = False
          for unit in self.units:
             if unit.inputdata.dataset == inds.dataset:
@@ -63,6 +75,17 @@ class AtlasTransform(ITransform):
          
       return (self._getParent().getContainerName()[:-1] + ".%s.%i/" % (name, self.getID())).replace(" ", "_")
 
+   def createChainUnit( self, parent ):
+      """Create an output unit given this output data"""
+      
+      if len(parent.active_job_ids) == 0 or GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == "":
+         return None
+      
+      unit = AtlasUnit()
+      unit.inputdata = DQ2Dataset()
+      unit.inputdata.dataset = GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname
+      return unit
+   
    def initializeFromContainer(self, dset, template = None):
       """Initialise the trf with given container, creating a unit for each DS"""
       if dset[-1] != "/":

@@ -190,7 +190,7 @@ class AtlasUnit(IUnit):
       dsn = [trf.getContainerName()[:-1], self.name, "j%i.t%i.trf%i.u%i" %
              (j.id, task.id, trf.getID(), self.getID())]
             
-      j.outputdata.datasetname = '.'.join(dsn)
+      j.outputdata.datasetname = '.'.join(dsn).replace(":", "_").replace(" ", "").replace(",","_")
                            
       j.inputsandbox = self._getParent().inputsandbox
       j.outputsandbox = self._getParent().outputsandbox
@@ -241,3 +241,53 @@ class AtlasUnit(IUnit):
             return
 
       super(AtlasUnit,self).updateStatus(status)
+
+   def checkForSubmission(self):
+      """Additional checks for unit submission"""
+
+      # call the base class
+      if not super(AtlasUnit,self).checkForSubmission():
+         return False
+      
+      # Add a check for chain units to have frozen their input DS
+      if len(self.req_units) > 0 and self.inputdata._name == "DQ2Dataset":
+         for uds in self.inputdata.dataset:
+            try:
+               dq2_lock.acquire()
+
+               try:
+                  # list datasets in container
+                  ds_list = dq2.listDatasetsInContainer(uds)
+
+                  cont_ok = True
+                  for ds in ds_list:
+                     # find locations and check if frozen
+                     loc_dict = dq2.listDatasetReplicas(ds)
+                     locations = []
+                     for loc in loc_dict[ loc_dict.keys()[0] ]:
+                        locations += loc_dict[ loc_dict.keys()[0] ][loc]
+
+                     ds_ok = False
+                     for loc in locations:
+                        if loc == "":
+                           continue
+                        datasetsiteinfo = dq2.listFileReplicas(loc, ds)
+                        if datasetsiteinfo[0]['found'] != None:
+                           ds_ok = True
+                           break
+
+                     if not ds_ok:
+                        cont_ok = False
+                        break
+               except:
+                  logger.warning("Unable to check if datasets are frozen")
+                  cont_ok = False
+            finally:
+               dq2_lock.release()
+
+
+         # at least one dataset wasn't frozen
+         if not cont_ok:
+            return False
+
+      return True
