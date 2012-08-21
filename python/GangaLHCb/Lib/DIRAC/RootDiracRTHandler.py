@@ -8,13 +8,14 @@ from DiracScript import *
 from DiracUtils import *
 import Ganga.Utility.logging
 from Ganga.Core import ApplicationConfigurationError
-
+from Ganga.Utility.files import expandfilename
 logger = Ganga.Utility.logging.getLogger()
 
 rootVersions = None
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 class RootDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run ROOT jobs on the Dirac backend"""
 
@@ -23,9 +24,14 @@ class RootDiracRTHandler(IRuntimeHandler):
         if not app.script.name:
             msg = 'Root.script.name must be set.'
             raise ApplicationConfigurationError(None,msg)
-        if not os.path.exists(app.script.name):
-            msg = 'Script must exist!'
-            raise ApplicationConfigurationError(None,msg)
+        sharedir_scriptpath = os.path.join(shared_path,app.is_prepared.name,os.path.basename(app.script.name))
+        scriptname = sharedir_scriptpath
+        if not os.path.exists(sharedir_scriptpath):
+            scriptname = app.script.name
+            if not os.path.exists(app.script.name):
+                msg = 'Script must exist!'
+                raise ApplicationConfigurationError(None,msg)
+            
         # check root version
         global rootVersions
         if not rootVersions:
@@ -49,21 +55,23 @@ class RootDiracRTHandler(IRuntimeHandler):
                       % (app.version, str(versions))
                 raise ApplicationConfigurationError(None,msg)
         inputsandbox = app._getParent().inputsandbox[:]
-        c = StandardJobConfig('',inputsandbox,[],[],None)
+        c = StandardJobConfig(scriptname,inputsandbox,[],[],None)
         return c
 
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         j = app.getJobObject()
-        input_dir = j.getInputWorkspace().getPath()
-        script_name = '%s/%s' % (input_dir,os.path.basename(app.script.name))
-        c = StandardJobConfig(script_name,[],[],j.outputsandbox,{})
-
-        # copy script to input dir
-        os.system('cp %s %s/.' % (app.script.name,input_dir))
-
+        c = StandardJobConfig(jobmasterconfig.exe,[],[],j.outputsandbox,{})
+        if jobmasterconfig.exe.find(app.is_prepared.name) <0:
+            # copy script to input dir if not in sharedir
+            input_dir = j.getInputWorkspace().getPath()
+            script_name = '%s/%s' % (input_dir,os.path.basename(jobmasterconfig.exe))
+            os.system('cp %s %s/.' % (jobmasterconfig.exe,input_dir))
+            c.exe=script_name
+            c.processValues()
+            
         dirac_script = DiracScript()
         dirac_script.job_type = 'LHCbJob()'
-        dirac_script.exe = DiracRoot(app,script_name)
+        dirac_script.exe = DiracRoot(app,c.exe)
         dirac_script.platform = getConfig('ROOT')['arch']
         dirac_script.output_sandbox = j.outputsandbox[:]
 
