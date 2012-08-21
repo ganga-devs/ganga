@@ -428,7 +428,7 @@ class Job(GangaObject):
     def postprocess_hook(self):
         self.application.postprocess()
         self.getMonitoringService().complete()
-        self.postprocessoutput(self.outputfiles, self.getOutputWorkspace().getPath())
+        self.postprocessoutput(self.outputfiles, self.getOutputWorkspace(create=False).getPath())
 
     def postprocess_hook_failed(self):
         self.application.postprocess_failed()
@@ -843,7 +843,9 @@ class Job(GangaObject):
                             self.subjobs.append(j)
 
                         for j in self.subjobs:
-                            j._init_workspace()
+                            cfg = Ganga.Utility.Config.getConfig('Configuration')
+                            if cfg['autoGenerateJobWorkspace']:
+                                j._init_workspace()
 
                             for outputfile in j.outputfiles:
                                 outputfile.joboutputdir = j.outputdir
