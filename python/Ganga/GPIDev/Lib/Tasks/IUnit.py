@@ -1,5 +1,4 @@
 from common import *
-from sets import Set
 from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -17,7 +16,9 @@ class IUnit(GangaObject):
         'active_job_ids' : SimpleItem(defvalue=[], typelist=['int'], sequence=1, hidden=1,doc='Active job ids associated with this unit'),
         'prev_job_ids' : SimpleItem(defvalue=[], typelist=['int'], sequence=1,  hidden=1,doc='Previous job ids associated with this unit'),
         'minor_resub_count' : SimpleItem(defvalue=0, hidden=1,doc='Number of minor resubmits'),
-        'major_resub_count' : SimpleItem(defvalue=0, hidden=1,doc='Number of major resubmits'),     
+        'major_resub_count' : SimpleItem(defvalue=0, hidden=1,doc='Number of major resubmits'),
+        'req_units' : SimpleItem(defvalue=[], typelist=['str'], sequence=1, hidden=1,doc='List of units that must complete for this to start (format TRF_ID:UNIT_ID)'),
+        'start_time' : SimpleItem(defvalue=0, hidden=1,doc='Start time for this unit. Allows a delay to be put in'),
     })
 
    _category = 'units'
@@ -64,6 +65,12 @@ class IUnit(GangaObject):
 
    def checkForSubmission(self):
       """Check if this unit should submit a job"""
+
+      # check the delay
+      if time.time() < self.start_time:
+         return False
+
+      # check if we already have a job
       if len(self.active_job_ids) == 0:
          return True
       else:
@@ -94,8 +101,22 @@ class IUnit(GangaObject):
       task = self._getParent()._getParent()
       trf = self._getParent()
       maxsub = task.n_tosub()
-      
-      if self.checkForSubmission() and maxsub > 0:
+
+      # check parent unit(s)
+      req_ok = True
+      for req in self.req_units:
+         req_trf_id = int( req.split(":")[0] )
+         req_unit_id = int( req.split(":")[1] )
+
+         if task.transforms[req_trf_id].units[req_unit_id].status != "completed":
+            req_ok = False
+            break
+
+      # set the start time if not already set
+      if len(self.req_units) > 0 and req_ok and self.start_time == 0:
+         self.start_time = time.time() + trf.chain_delay * 60 - 1
+         
+      if req_ok and self.checkForSubmission() and maxsub > 0:
 
          # create job and submit
          j = self.createNewJob()

@@ -12,6 +12,7 @@ from Transform import Transform
 
 from ITask import ITask
 from ITransform import ITransform
+from TaskChainInput import TaskChainInput
 
 # Start Logger
 #import Ganga.Utility.logging

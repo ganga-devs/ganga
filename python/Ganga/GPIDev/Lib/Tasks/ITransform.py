@@ -1,11 +1,11 @@
 from common import *
-from sets import Set
 from TaskApplication import ExecutableTask, taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job.MetadataDict import *
 from IUnit import IUnit
+import time
 
 class ITransform(GangaObject):
    _schema = Schema(Version(1,0), {
@@ -25,6 +25,8 @@ class ITransform(GangaObject):
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset template'),
         'metadata'       : ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
         'rebroker_on_job_fail'     : SimpleItem(defvalue=False, doc='Rebroker if too many minor resubs'),
+        'required_trfs'  : SimpleItem(defvalue=[],typelist=['int'],sequence=1,doc="IDs of transforms that must complete before this unit will start. NOTE DOESN'T COPY OUTPUT DATA TO INPUT DATA. Use TaskChainInput Dataset for that."),
+        'chain_delay'    : SimpleItem(defvalue=0, doc='Minutes delay between a required/chained unit completing and starting this one', protected=1, typelist=["int"]),
     })
 
    _category = 'transforms'
@@ -150,9 +152,20 @@ class ITransform(GangaObject):
       """Called by the parent task to check for status updates, submit jobs, etc."""
       #logger.warning("Entered Transform %d update function..." % self.getID())
 
-      if self.status == "pause":
+      if self.status == "pause" or self.status == "new":
          return 0
-      
+
+      # check for complete required units
+      task = self._getParent()
+      for trf_id in self.required_trfs:
+         if task.transforms[trf_id].status != "completed":
+            return 0
+
+      # set the start time if not already set
+      if len(self.required_trfs) > 0 and self.units[0].start_time == 0:
+         for unit in self.units:
+            unit.start_time = time.time() + self.chain_delay * 60 - 1
+                        
       # ask the unit splitter if we should create any more units given the current data
       self.createUnits( )
 
@@ -174,12 +187,38 @@ class ITransform(GangaObject):
             if state != self.status:
                self.updateStatus(state)               
             break
-      
+
    def createUnits(self):
       """Create new units if required given the inputdata"""
-      #logger.warning("Entered Transform %d createUnits function..." % self.getID())
-      pass
-         
+
+      # check for chaining
+      for ds in self.inputdata:
+         if ds._name == "TaskChainInput" and ds.input_trf_id != -1:
+
+            # loop over units in parent trf and create units as required
+            for in_unit in self._getParent().transforms[ds.input_trf_id].units:
+
+               # is there a unit already linked?
+               done = False
+               for out_unit in self.units:
+                  if '%d:%d' % (ds.input_trf_id, in_unit.getID() ) in out_unit.req_units:
+                     done = True
+
+               if not done:
+                  new_unit = self.createChainUnit( in_unit )
+                  if new_unit:
+                     self.addChainUnitToTRF( new_unit, ds, in_unit.getID() )
+
+   def createChainUnit( self, outdata ):
+      """Create a chained unit given the parent outputdata"""
+      return IUnit()
+      
+   def addChainUnitToTRF( self, unit, inDS, unit_id = -1 ):
+      """Add a chained unit to this TRF. Override for more control"""
+      unit.req_units.append('%d:%d' % (inDS.input_trf_id, unit_id ) )
+      unit.name = "Parent: TRF %d, Unit %d" % (inDS.input_trf_id, unit_id )
+      self.addUnitToTRF(unit)
+   
    def addInputData(self, inDS):
       """Add the given input dataset to the list"""
       self.inputdata.append(inDS)
