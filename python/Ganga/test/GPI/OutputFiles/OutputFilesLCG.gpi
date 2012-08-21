@@ -18,7 +18,7 @@ assert(j.outputfiles[2].__class__.__name__ == 'OutputSandboxFile')
 
 j.submit()
 
-sleep_until_state(j, timeout=1800, state='completed')
+sleep_until_state(j, timeout=3600, state='completed')
 
 if (j.outputfiles[0].location() == []):
     #job script didn't provide output files
