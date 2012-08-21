@@ -1,5 +1,10 @@
 from GangaTest.Framework.utils import sleep_until_state
 
+dictConfig = config.Output.MassStorageFile
+dictConfig['uploadOptions']['path'] = dictConfig['uploadOptions']['path'].replace('$user', 'gangage')
+
+config.Output.MassStorageFile = dictConfig
+
 j = Job(application=Root(),backend=Local())
 
 j.application.script = File('fillrandom2.py')
