@@ -2,7 +2,7 @@ from GangaTest.Framework.utils import sleep_until_state
 import os
 
 dictConfig = config.Output.MassStorageFile
-dictConfig['uploadOptions']['path'] = dictConfig['uploadOptions']['path'].replace('$user', os.environ['USER'])
+dictConfig['uploadOptions']['path'] = dictConfig['uploadOptions']['path'].replace('$user', '%s/%s' % (os.environ['USER'][0], os.environ['USER']))
 
 config.Output.MassStorageFile = dictConfig
 
