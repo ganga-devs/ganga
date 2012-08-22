@@ -20,7 +20,7 @@ class ITask(GangaObject):
     _category = 'tasks'
     _name = 'ITask'
     _exportmethods = [ 'run', 'appendTransform', 'overview', 'getJobs', 'remove', 'clone', 'pause', 'check', 'setBackend', 'setParameter',
-                       'insertTransform', 'removeTransform']
+                       'insertTransform', 'removeTransform', 'table']
 
     _tasktype = "ITask"
     
@@ -247,6 +247,10 @@ class ITask(GangaObject):
 
     def n_status(self,status):
         return sum([t.n_status(status) for t in self.transforms])
+
+    def table(self):
+        from Ganga.GPI import tasks
+        print tasks[self.id:self.id+1].table()
 
     def overview(self, status = ''):
         """ Show an overview of the Task """
