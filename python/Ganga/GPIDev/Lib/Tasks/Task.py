@@ -21,7 +21,7 @@ class Task(GangaObject):
     _exportmethods = [
                 'setBackend', 'setParameter', 'insertTransform', 'appendTransform', 'removeTransform', # Settings
                 'check', 'run', 'pause', 'remove', # Operations
-                'overview', 'info', 'n_all', 'n_status', 'help', 'getJobs', # Info
+                'overview', 'info', 'n_all', 'n_status', 'help', 'getJobs', 'table', # Info
                 'float_all', 'run_all' # Helper
                 ]
     
@@ -251,6 +251,10 @@ class Task(GangaObject):
 
     def n_status(self,status):
         return sum([t.n_status(status) for t in self.transforms])
+
+    def table(self):
+        from Ganga.GPI import tasks
+        print tasks[self.id:self.id+1].table()
 
     def overview(self):
         """ Get an ascii art overview over task status. Can be overridden """
