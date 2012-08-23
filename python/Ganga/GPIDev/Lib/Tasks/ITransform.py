@@ -25,6 +25,7 @@ class ITransform(GangaObject):
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset template'),
         'metadata'       : ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
         'rebroker_on_job_fail'     : SimpleItem(defvalue=False, doc='Rebroker if too many minor resubs'),
+        'abort_loop_on_submit'     : SimpleItem(defvalue=True, doc='Break out of the Task Loop after submissions'),
         'required_trfs'  : SimpleItem(defvalue=[],typelist=['int'],sequence=1,doc="IDs of transforms that must complete before this unit will start. NOTE DOESN'T COPY OUTPUT DATA TO INPUT DATA. Use TaskChainInput Dataset for that."),
         'chain_delay'    : SimpleItem(defvalue=0, doc='Minutes delay between a required/chained unit completing and starting this one', protected=1, typelist=["int"]),
     })
@@ -174,7 +175,7 @@ class ITransform(GangaObject):
       unit_status_list = []
       for unit in self.units:
          
-         if unit.update():
+         if unit.update() and self.abort_loop_on_submit:
             logger.warning("Unit %d of transform %d has aborted the loop" % (unit.getID(), self.getID()))
             return 1
 

@@ -8,16 +8,16 @@ str_hold =  markup("hold",overview_colours["hold"])
 str_bad  =  markup("bad" ,overview_colours["bad"])
 
 # display default values for task list
-from Ganga.GPIDev.Lib.Registry.RegistrySlice import config
-config.addOption('tasks_columns',
+import Ganga.GPIDev.Lib.Registry.RegistrySlice
+Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns',
                  ("id","Type","Name","State","Jobs",str_done),
                  'list of job attributes to be printed in separate columns')
 
-config.addOption('tasks_columns_width',
+Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_width',
                  {"id":5,"Type":13,"Name":22,"State":9,"Jobs":33,str_done:5},
                  'width of each column')
 
-config.addOption('tasks_columns_functions',
+Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_functions',
                  {  'Name'  : "lambda t : t.name", 
                     'Type'  : "lambda task : task._name", 
                     'State ': "lambda task : task.status", 
@@ -26,14 +26,16 @@ config.addOption('tasks_columns_functions',
                 },
                  'optional converter functions')
 
-config.addOption('tasks_columns_show_empty',
+Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_show_empty',
                  ['id','Jobs',str_done],
                  'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
 
-config.addOption('tasks_show_help',True,'change this to False if you do not want to see the help screen if you first type "tasks" in a session')
+Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_show_help',True,'change this to False if you do not want to see the help screen if you first type "tasks" in a session')
 
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 
+# add monitoring loop option
+config.addOption('TaskLoopFrequency', 60, "Frequency of Task Monitoing loop in seconds")
 
 class TaskRegistry(Registry):
     def getProxy(self):
@@ -138,7 +140,7 @@ class TaskRegistry(Registry):
                         break
                     
             # Sleep interruptible for 10 seconds
-            for i in range(0,600):
+            for i in range(0,config['TaskLoopFrequency'] * 10):
                 if self._main_thread.should_stop():
                     break
                 time.sleep(0.1)
@@ -295,9 +297,9 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
 
     def __str__(self, short=True):
         """Prints an overview over the currently running tasks"""
-        if config["tasks_show_help"]:
+        if Ganga.GPIDev.Lib.Registry.RegistrySlice.config["tasks_show_help"]:
             self.help(short = True)
-            config.setUserValue("tasks_show_help",False)
+            Ganga.GPIDev.Lib.Registry.RegistrySlice.config.setUserValue("tasks_show_help",False)
             print "To show this help message again, type 'tasks.help()'."
             print
             print " The following is the output of "+markup("tasks.table()",fgcol("blue"))
@@ -305,8 +307,8 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
 
         lenfstring = 0
         flist = []
-        for thing in config["tasks_columns"]:
-            width = config["tasks_columns_width"][thing]
+        for thing in Ganga.GPIDev.Lib.Registry.RegistrySlice.config["tasks_columns"]:
+            width = Ganga.GPIDev.Lib.Registry.RegistrySlice.config["tasks_columns_width"][thing]
             lenfstring += width
             flist.append("%"+str(width)+"s ")
         fstring = "|".join(flist)
@@ -320,11 +322,11 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
             if hasattr(p, "_tasktype") and p._tasktype == "ITask":    
                 stat = "%4i: %4i/ %4i/  %4i/    --/ %4i/ %4i/ %4i" % (
                     p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("submitted"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
-                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:config['tasks_columns_width']['Name']], p.status, stat, p.float), status_colours[p.status])
+                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], p.status, stat, p.float), status_colours[p.status])
             else:
                 stat = "%4i: %4i/ %4i/    --/  %4i/ %4i/ %4i/ %4i" % (
                     p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("attempted"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
-                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:config['tasks_columns_width']['Name']], p.status, stat, p.float), status_colours[p.status])
+                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], p.status, stat, p.float), status_colours[p.status])
                 
             if short:
                 continue
@@ -334,11 +336,11 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
                 if hasattr(p, "_tasktype") and p._tasktype == "ITask":
                     stat = "%4i: %4i/ %4i/ %4i/     --/ %4i/ %4i/ %4s" % (
                         t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("submitted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
-                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:config['tasks_columns_width']['Name']], t.status, stat, ""), status_colours[t.status])
+                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, stat, ""), status_colours[t.status])
                 else:
                     stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (
                         t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("attempted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
-                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:config['tasks_columns_width']['Name']], t.status, stat, ""), status_colours[t.status])
+                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, stat, ""), status_colours[t.status])
                     
             ds += "-"*lenfstring + "\n"
 
