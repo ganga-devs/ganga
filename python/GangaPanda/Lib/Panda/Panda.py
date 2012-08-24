@@ -507,7 +507,7 @@ class Panda(IBackend):
 
     _category = 'backends'
     _name = 'Panda'
-    _exportmethods = ['list_sites','get_stats','list_ddm_sites', 'resplit']
+    _exportmethods = ['list_sites','get_stats','list_ddm_sites', 'resplit', 'rebroker']
   
     def __init__(self):
         super(Panda,self).__init__()
@@ -820,6 +820,43 @@ class Panda(IBackend):
 
         # submit the job
         mj.submit()
+
+    def rebroker(self, cloud=''):
+        '''Rebroker failed subjobs'''
+        from pandatools import Client
+        jobs = self._getParent()
+
+        if self._getParent()._getParent(): # if has a parent then this is a subjob
+            raise BackendError('Panda','Rebroker on subjobs is not supported. \nUse j.backend.rebroker() (i.e. rebroker the master job) and your activated subjobs \nwill be automatically selected and rebrokered.')
+
+        jobIDs = {}
+        for job in jobs.subjobs: 
+            jobIDs[job.backend.id] = job
+
+        rc,jspecs = Client.getFullJobStatus(jobIDs.keys(),False)
+        if rc:
+            logger.error('Return code %d retrieving job status information.',rc)
+            raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
+        
+        for job in jspecs:
+            if job.jobStatus in ['frozen']:
+                logger.info('All subJobs in Job already finished/failed' )
+                continue
+
+            if not jobs.backend.libds:
+                libds = ''
+            else:
+                libds = jobs.backend.libds
+            logger.info('Sending rebrokerage request ...')
+            status,output = Client.runReBrokerage(job.PandaID, libds, cloud, False)
+            if status != 0:
+                logger.error(output)
+                logger.error("Failed to reassign Panda job with ID=%s" % job.PandaID)
+                return
+            # done
+            logger.info('Done for %s' % job.PandaID)
+                                                                                    
+        return
 
     def check_auto_resubmit(self):
         """ Only auto resubmit if the master job has failed """
