@@ -9,7 +9,7 @@ import time
 class IUnit(GangaObject):
    _schema = Schema(Version(1,0), {
         'status'         : SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
-        'name'           : SimpleItem(defvalue='Simple Transform', doc='Name of the unit (cosmetic)', typelist=["str"]),
+        'name'           : SimpleItem(defvalue='Simple Unit', doc='Name of the unit (cosmetic)', typelist=["str"]),
         'inputdata'      : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Input dataset'),
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset'),
         'active'         : SimpleItem(defvalue=False, hidden=1,doc='Is this unit active'),
