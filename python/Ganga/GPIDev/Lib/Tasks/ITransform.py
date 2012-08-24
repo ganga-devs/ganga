@@ -176,7 +176,7 @@ class ITransform(GangaObject):
       for unit in self.units:
          
          if unit.update() and self.abort_loop_on_submit:
-            logger.warning("Unit %d of transform %d has aborted the loop" % (unit.getID(), self.getID()))
+            logger.info("Unit %d of transform %d, Task %d has aborted the loop" % (unit.getID(), self.getID(), task.id))
             return 1
 
          unit_status_list.append( unit.status )

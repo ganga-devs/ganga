@@ -35,7 +35,7 @@ Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_show_help',True,
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 
 # add monitoring loop option
-config.addOption('TaskLoopFrequency', 60, "Frequency of Task Monitoing loop in seconds")
+config.addOption('TaskLoopFrequency', 60, "Frequency of Task Monitoring loop in seconds")
 
 class TaskRegistry(Registry):
     def getProxy(self):

@@ -232,7 +232,7 @@ class ITask(GangaObject):
             if new_status == "running/pause":
                 logger.info("Some Transforms of Task %i '%s' have been paused. Check tasks.table() for details!" % (self.id, self.name))
             elif new_status == "completed":
-                logger.warning("Task %i '%s' has completed!" % (self.id, self.name))
+                logger.info("Task %i '%s' has completed!" % (self.id, self.name))
             elif self.status == "completed":
                 logger.warning("Task %i '%s' has been reopened!" % (self.id, self.name))
         self.status = new_status
