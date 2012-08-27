@@ -619,6 +619,11 @@ stage_inputs () {
 			  rm -f retcode.tmp
 			done
 		    fi
+		    if ( [ $retcode -ne 0 ] || [ ! -e PoolFileCatalog.xml ] )
+		    then
+			echo "PoolFileCatalog.xml creation failed. Continuing..."
+			retcode=0
+		    fi		
 		else
 		    echo "PoolFileCatalog provided. Skipping..."
 		    retcode=0
