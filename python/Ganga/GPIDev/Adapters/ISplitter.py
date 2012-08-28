@@ -65,10 +65,10 @@ class ISplitter(GangaObject):
         called directly by the framework and should not be modified in the derived
         classes. """
     
-        #try:
-        subjobs = self.split(job)
-        #except Exception,x:
-        #    raise SplittingError(x)
+        try:
+            subjobs = self.split(job)
+        except Exception,x:
+            raise SplittingError(x)
     
         #if not len(subjobs):
             #raise SplittingError('splitter did not create any subjobs')
