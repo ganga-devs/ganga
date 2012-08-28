@@ -290,7 +290,11 @@ class JobTree(GangaObject):
             cont = self.ls(path)
             for i in cont['jobs']:
                 try:
-                    j = registry[int(i)]
+                    try:
+                        id = int(i)
+                        j = registry[id]
+                    except ValueError:
+                        j = registry[int(i.split('.')[0])].subjobs[int(i.split('.')[1])]
                 except RegistryKeyError:
                     do_clean = True
                 else:
@@ -335,7 +339,11 @@ class JobTree(GangaObject):
                     self.cleanlinks(os.path.join(path,i))
                 else:
                     try:
-                        j = registry[int(fc[i])]
+                        try:
+                            id = int(fc[i])
+                            j = registry[id]
+                        except ValueError:
+                            j = registry[int(fc[i].split('.')[0])].subjobs[int(fc[i].split('.')[1])]
                     except RegistryKeyError:
                         self._getWriteAccess()
                         try:
