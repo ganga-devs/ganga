@@ -22,7 +22,7 @@ class SplitByFiles(GaudiInputDataSplitter):
     """
     _name = 'SplitByFiles'
     _schema = GaudiInputDataSplitter._schema.inherit_copy()
-    _schema.datadict['bulksubmit']    = SimpleItem(defvalue=False,
+    _schema.datadict['bulksubmit']    = SimpleItem(defvalue=True,
                                                    doc='determines if subjobs are split '\
                                                    'server side in a "bulk" submission or '\
                                                    'split locally and submitted individually')
