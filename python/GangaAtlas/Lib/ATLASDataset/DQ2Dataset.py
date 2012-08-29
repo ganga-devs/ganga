@@ -1946,6 +1946,8 @@ config.addOption('OUTPUTDATASET_NAMELENGTH', 131, 'Maximum characters of a DQ2Ou
 config.addOption('OUTPUTFILE_NAMELENGTH', 150, 'Maximum characters of a filename in DQ2OutputDataset.')
 config.addOption('NumberOfDQ2DownloadThreads', 5, 'Number of simultaneous DQ2 downloads when calling "retrieve"')
 
+config.addOption('setupScript', '/afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/setup.sh', 'Script to setup DQ2Clients software')
+
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']
    

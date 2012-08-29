@@ -1,4 +1,4 @@
-###############################################################################
+##############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: ATLASDataset.py,v 1.8 2009-04-24 08:54:23 dvanders Exp $
@@ -152,33 +152,39 @@ class Download:
             gridshell.env['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             gridshell.env['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
             gridshell.env['DQ2_LOCAL_ID']=''
-            import GangaAtlas.PACKAGE
-            try:
-                pythonpath=GangaAtlas.PACKAGE.setup.getPackagePath2('DQ2Clients','PYTHONPATH',force=False)
-            except:
-                pythonpath = ''
-            gridshell.env['PYTHONPATH'] = gridshell.env['PYTHONPATH']+':'+pythonpath
+
+            ## Don't set up from the included DQ2 package as this will fail, either because
+            # of python version (2.5+ required) or LFC python bindings missing
+            
+            #import GangaAtlas.PACKAGE
+            #try:
+            #    pythonpath=GangaAtlas.PACKAGE.setup.getPackagePath2('DQ2Clients','PYTHONPATH',force=False)
+            #except:
+            #    pythonpath = ''
+            #gridshell.env['PYTHONPATH'] = gridshell.env['PYTHONPATH']+':'+pythonpath
+
             ## exclude the Ganga-owned external package for LFC python binding
             pythonpaths = []
             for path in gridshell.env['PYTHONPATH'].split(':'):
                 if not re.match('.*\/external\/lfc\/.*', path):
                     pythonpaths.append(path)
             gridshell.env['PYTHONPATH'] = ':'.join(pythonpaths)
-
+            
             ## exclude any rubbish from Athena
             ld_lib_paths = []
             for path in gridshell.env['LD_LIBRARY_PATH'].split(':'):
                 if not re.match('.*\/external\/lfc\/.*', path) and not re.match('.*\/sw\/lcg\/external\/.*', path):
                     ld_lib_paths.append(path)
             gridshell.env['LD_LIBRARY_PATH'] = ':'.join(ld_lib_paths)
-
+            
             paths = []
             for path in gridshell.env['PATH'].split(':'):
                 if not re.match('.*\/external\/lfc\/.*', path) and not re.match('.*\/sw\/lcg\/external\/.*', path):
                     paths.append(path)
             gridshell.env['PATH'] = ':'.join(paths)
+            
+            rc, out, m = gridshell.cmd1("source " + configDQ2['setupScript'] + " && " + self.cmd,allowed_exit=[0,255])
 
-            rc, out, m = gridshell.cmd1(self.cmd,allowed_exit=[0,255])
             if (rc==0):
                 logger.debug("dq2-get finished: %s", self.cmd)
                 logger.debug("dq2-get output: %s %s %s"%(rc,out,m) )
