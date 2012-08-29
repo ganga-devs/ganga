@@ -59,7 +59,7 @@ class DiracParametricInputData:
         for dataset in DiracSplitter(self.data, self.filesPerJob, self.maxFiles, self.ignoremissing):
             self.split_data.append([f.name for f in dataset])
         if len(self.split_data) > config['MaxDiracBulkJobs']:
-            raise BackendError('Dirac','Number of bulk submission jobs \'%s\' exceeds the maximum allowed \'%s\'' % (len(self.split_data),config['MaxDiracBulkJobs'] ))
+            raise BackendError('Dirac','Number of bulk submission jobs \'%s\' exceeds the maximum allowed \'%s\' if more are needed please modify your config. Note there is a hard limit in Dirac of currently 1000.' % (len(self.split_data),config['MaxDiracBulkJobs'] ))
         contents = ''
         if len(self.split_data) > 0:
             #bulk submission
