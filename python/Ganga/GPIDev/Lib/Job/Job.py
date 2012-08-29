@@ -270,6 +270,7 @@ class Job(GangaObject):
                                            State('submitted','j.resubmit()')),
                     'failed' : Transitions(State('removed','j.remove()'),
                                            State('submitting','j.resubmit()'),
+                                           State('completed',hook='postprocess_hook'),
                                            State('submitted','j.resubmit()')),
                     'completed' : Transitions(State('removed','j.remove()'),
                                               State('failed','j.fail()'),
@@ -1079,7 +1080,7 @@ class Job(GangaObject):
             raise JobError('force_status("%s") not allowed. Job may be forced to %s states only.'%(status,Job.allowed_force_states.keys()))
 
         if not self.status in Job.allowed_force_states[status]:
-            raise JobError('Only a job in one of %s may be forced into "failed" (job %s)'%(str(Job.allowed_force_states[status]),self.getFQID('.')))
+            raise JobError('Only a job in one of %s may be forced into "%s" (job %s)'%(str(Job.allowed_force_states[status]),status,self.getFQID('.')))
         
         if not force:
             if self.status in ['submitted','running']:
