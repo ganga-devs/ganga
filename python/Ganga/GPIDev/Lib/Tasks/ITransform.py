@@ -6,6 +6,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job.MetadataDict import *
 from IUnit import IUnit
 import time
+import os
 
 class ITransform(GangaObject):
    _schema = Schema(Version(1,0), {
@@ -16,7 +17,11 @@ class ITransform(GangaObject):
         'outputsandbox'  : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
         'backend'        : ComponentItem('backends', defvalue=None, optional=1,load_default=False, doc='Backend of the Transform.'),
         'splitter'       : ComponentItem('splitters', defvalue=None, optional=1,load_default=False, doc='Splitter used on each unit of the Transform.'),
-        'merger'         : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Local merger to be done over all units when complete.'),
+        'merger'         : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Merger to be done over all units when complete.'),
+        'unit_merger'    : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Merger to be copied and run on each unit separately.'),
+        'copy_output' : ComponentItem('datasets', defvalue=None, load_default=0,optional=1, doc='The dataset to copy all units output to, e.g. Grid dataset -> Local Dataset'),
+        'unit_copy_output' : ComponentItem('datasets', defvalue=None, load_default=0,optional=1, doc='The dataset to copy each individual unit output to, e.g. Grid dataset -> Local Dataset'),
+        'unit_merger'    : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Merger to be run copied and run on each unit separately.'),
         'run_limit'      : SimpleItem(defvalue=8, doc='Number of times a partition is tried to be processed.', protected=1, typelist=["int"]),
         'minor_run_limit'      : SimpleItem(defvalue=4, doc='Number of times a unit can be resubmitted', protected=1, typelist=["int"]),
         'major_run_limit'      : SimpleItem(defvalue=4, doc='Number of times a junit can be rebrokered', protected=1, typelist=["int"]),
@@ -110,11 +115,13 @@ class ITransform(GangaObject):
       if self.status != "new":
          return
       
-      self.updateStatus("running")
-      
       # first, validate the transform
       if not self.validate():
          raise ApplicationConfigurationError(None, "Validate failed for Transform %s" % self.name)
+
+            
+      self.updateStatus("running")
+
       
    def startup(self):
       """This function is used to set the status after restarting Ganga"""
@@ -244,6 +251,17 @@ class ITransform(GangaObject):
    def validate(self):
       """Override this to validate that the transform is OK"""
 
+      # make sure a path has been selected for any local downloads
+      if self.unit_copy_output != None and self.unit_copy_output._name == "TaskLocalCopy":
+         if self.unit_copy_output.local_location == '':
+            logger.error("No path selected for Local Output Copy")
+            return False
+
+      if self.copy_output != None and self.copy_output._name == "TaskLocalCopy":
+         if self.copy_output.local_location == '':
+            logger.error("No path selected for Local Output Copy")
+            return False
+   
       # this is a generic trf so assume the application and splitter will do all the work
       return True
 
@@ -284,3 +302,15 @@ class ITransform(GangaObject):
       """Update the transform status"""
       self.status = status
 
+   def createUnitCopyOutputDS(self, unit_id):
+      """Create a the Copy Output dataset to use with this unit. Overload to handle more than the basics"""
+      
+      if self.unit_copy_output._name != "TaskLocalCopy":
+         logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % self.unit_copy_output._name)
+         return
+
+      # create copies of the Copy Output DS and add Unit name to path
+      self.units[unit_id].copy_output = self.unit_copy_output.clone()
+      self.units[unit_id].copy_output.local_location = os.path.join( self.unit_copy_output.local_location, self.units[unit_id].name.replace(":", "_").replace(" ", "").replace(",","_") )
+                        
+      
