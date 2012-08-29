@@ -6,6 +6,7 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
+from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from GangaAtlas.Lib.Tasks.AtlasUnit import AtlasUnit
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
@@ -16,9 +17,10 @@ from dq2.common.DQException import DQException
 
 class AtlasTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
-        'files_per_job'     : SimpleItem(defvalue=5, doc='files per job (cf DQ2JobSplitter.numfiles)', modelist=["int"]),
-        'MB_per_job'     : SimpleItem(defvalue=0, doc='Split by total input filesize (cf DQ2JobSplitter.filesize)', modelist=["int"]),
-        'subjobs_per_unit'     : SimpleItem(defvalue=0, doc='split into this many subjobs per unit master job (cf DQ2JobSplitter.numsubjobs)', modelist=["int"]),
+      'local_location'     : SimpleItem(defvalue='', doc='Local location to copy output to', typelist=["str"]),
+      'files_per_job'     : SimpleItem(defvalue=5, doc='files per job (cf DQ2JobSplitter.numfiles)', modelist=["int"]),
+      'MB_per_job'     : SimpleItem(defvalue=0, doc='Split by total input filesize (cf DQ2JobSplitter.filesize)', modelist=["int"]),
+      'subjobs_per_unit'     : SimpleItem(defvalue=0, doc='split into this many subjobs per unit master job (cf DQ2JobSplitter.numsubjobs)', modelist=["int"]),
     }.items()))
 
    _category = 'transforms'
@@ -30,6 +32,17 @@ class AtlasTransform(ITransform):
 
       # force a delay of 1 minute to ensure DQ2 datasets have been registered properly
       self.chain_delay = 5
+
+   def check(self):
+      """Additional checks to base class"""
+
+      # base class first
+      super(AtlasTransform,self).check()
+      
+      # if a local copy has been specified, create the DSs required
+      if self.local_location != '':
+         self.unit_copy_output = TaskLocalCopy()
+         self.unit_copy_output.local_location = self.local_location
       
    def createUnits(self):
       """Create new units if required given the inputdata"""

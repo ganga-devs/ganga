@@ -8,10 +8,13 @@ from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 
+from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
+
+import os
 
 class AtlasUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
@@ -291,3 +294,52 @@ class AtlasUnit(IUnit):
             return False
 
       return True
+
+   def copyOutput(self):
+      """Copy the output data to local storage"""
+
+      job = GPI.jobs(self.active_job_ids[0])
+      
+      if self.copy_output._name != "TaskLocalCopy" or job.outputdata._impl._name != "DQ2OutputDataset":
+         logger.error("Cannot transfer from DS type '%s' to '%s'. Please contact plugin developer." % (job.outputdata._name, self.copy_output._name))
+         return False
+
+      # get list of output files
+      dq2_file_list = {}
+      for sj in job.subjobs:
+         for outf in sj.outputdata.output:
+            dq2_file_list[outf.split(",")[1]] = sj.outputdata.datasetname
+
+      # check which ones still need downloading
+      to_download = {}
+      for f in dq2_file_list.keys():
+         
+         # check for REs
+         if self.copy_output.isValid(f) and not self.copy_output.isDownloaded(f):
+            to_download[ f ] = dq2_file_list[f]
+
+
+      # is everything downloaded?
+      if len(to_download.keys()) == 0:
+         return True
+
+      # nope, so pick the first and grab it
+      fname = to_download.keys()[0]
+      dsname = to_download[fname]
+      exe = 'dq2-get -L ROAMING -a -d -H %s -f %s %s' % (self.copy_output.local_location, fname, dsname)
+
+      logger.info("Downloading '%s' to %s..." % (fname, self.copy_output.local_location))
+
+      thread = Download.download_dq2(exe)
+      thread.start()
+      thread.join()
+
+      # check for valid download - SHOULD REALLY BE A HASH CHECK
+      full_path = os.path.join(self.copy_output.local_location, fname)
+      if not os.path.exists(full_path) or os.path.getsize( full_path ) < 4:
+         logger.error("Error downloading '%s'" % full_path)
+      else:
+         self.copy_output.files.append(fname)
+         logger.info("File '%s' downloaded successfully" % full_path)
+         
+      return False
