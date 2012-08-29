@@ -9,6 +9,9 @@ import traceback
 import threading
 from Ganga.Utility.logging import getLogger
 
+from Ganga.GPI import jobs
+from Ganga.GPI import tasks
+
 class WatchdogThread ( threading.Thread ):
 
     def __init__(self):
