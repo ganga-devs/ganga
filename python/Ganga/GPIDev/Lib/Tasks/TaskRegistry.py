@@ -327,7 +327,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
             else:
                 stat = "%4i: %4i/ %4i/    --/  %4i/ %4i/ %4i/ %4i" % (
                     p.n_all(), p.n_status("completed"),p.n_status("running"),p.n_status("attempted"),p.n_status("failed"),p.n_status("hold"),p.n_status("bad"))
-                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], p.status, p.comment, stat, p.float), status_colours[p.status])
+                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], p.status, stat, p.float), status_colours[p.status])
                 
             if short:
                 continue
@@ -341,7 +341,7 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
                 else:
                     stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (
                         t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("attempted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
-                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, t.comment, stat, ""), status_colours[t.status])
+                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, stat, ""), status_colours[t.status])
                     
             ds += "-"*lenfstring + "\n"
 
