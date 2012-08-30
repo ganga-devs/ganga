@@ -10,7 +10,7 @@ str_bad  =  markup("bad" ,overview_colours["bad"])
 # display default values for task list
 import Ganga.GPIDev.Lib.Registry.RegistrySlice
 Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns',
-                 ("id","Type","Name","State","Jobs",str_done),
+                 ("id","Type","Name","State","Comment","Jobs",str_done),
                  'list of job attributes to be printed in separate columns')
 
 Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_width',
