@@ -14,13 +14,14 @@ Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns',
                  'list of job attributes to be printed in separate columns')
 
 Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_width',
-                 {"id":5,"Type":13,"Name":22,"State":9,"Jobs":33,str_done:5},
+                 {"id":5,"Type":13,"Name":22,"State":9,"Comment":30,"Jobs":33,str_done:5},
                  'width of each column')
 
 Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_functions',
                  {  'Name'  : "lambda t : t.name", 
                     'Type'  : "lambda task : task._name", 
-                    'State ': "lambda task : task.status", 
+                    'State ': "lambda task : task.status",
+                    'Comment ': "lambda task : task.comment",    
                     'Jobs'  : "lambda task : task.n_all()",
                     str_done: "lambda task : task.n_status('completed')",
                 },
