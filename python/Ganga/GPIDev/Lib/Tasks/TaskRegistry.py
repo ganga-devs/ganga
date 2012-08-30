@@ -337,7 +337,12 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
                 if hasattr(p, "_tasktype") and p._tasktype == "ITask":
                     stat = "%4i: %4i/ %4i/ %4i/     --/ %4i/ %4i/ %4s" % (
                         t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("submitted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
-                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, t.comment, stat, ""), status_colours[t.status])
+
+                    try:
+                        comment = t.comment     
+                    except AttributeError:
+                        comment = ""
+                    ds += markup(fstring % ("%i.%i"%(p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, comment, stat, ""), status_colours[t.status])
                 else:
                     stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (
                         t.n_all(), t.n_status("completed"),t.n_status("running"),t.n_status("attempted"),t.n_status("failed"),t.n_status("hold"),t.n_status("bad"))
