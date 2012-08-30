@@ -92,7 +92,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
 
     def split(self, job):
-        if self.bulksubmit:
+        if self.bulksubmit and stripProxy(job.backend).__module__.find('Dirac') > 0:
             return []
         if self.maxFiles == -1: self.maxFiles = None
         return super(SplitByFiles,self).split(job)
