@@ -1,5 +1,5 @@
 **************************************************************************************************************
-5.8.12 (2012/8/30)
+5.8.12 (2012/8/31)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -29,14 +29,15 @@ Added the -T option to the Gaudi args for TCMalloc
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-Ganga v508r12 (from GangaLHCb-24-19)
+Ganga v508r12 (from GangaLHCb-24-20)
 *************
 
 1) Changed default ROOT version to 5.34.00
 2) Increased the default Ganga (soft) limit for bulk submission jobs to 500
 3) Added the default -T arg to DaVinci style jobs to utilise the performance enhancements that
 tcmalloc brings.
-4) TURNED ON THE BULK SUBMISSION AS DEFAULT for SplitByFiles!
+4) Fixed Savannah bug #97146
+5) TURNED ON THE BULK SUBMISSION AS DEFAULT for SplitByFiles!
 
 If you wish to use the SplitByFiles splitter in the old mode you now have to manually use:
 In[0]: j.splitter.bulksubmit = False
