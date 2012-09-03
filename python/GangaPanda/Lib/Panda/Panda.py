@@ -837,25 +837,29 @@ class Panda(IBackend):
         if rc:
             logger.error('Return code %d retrieving job status information.',rc)
             raise BackendError('Panda','Return code %d retrieving job status information.' % rc)
-        
-        for job in jspecs:
-            if job.jobStatus in ['frozen']:
-                logger.info('All subJobs in Job already finished/failed' )
-                continue
 
-            if not jobs.backend.libds:
-                libds = ''
-            else:
-                libds = jobs.backend.libds
-            logger.info('Sending rebrokerage request ...')
-            status,output = Client.runReBrokerage(job.PandaID, libds, cloud, False)
-            if status != 0:
-                logger.error(output)
-                logger.error("Failed to reassign Panda job with ID=%s" % job.PandaID)
-                return
-            # done
-            logger.info('Done for %s' % job.PandaID)
-                                                                                    
+        brokeredjobs = []
+        for job in jspecs:
+            if not job.jobDefinitionID in brokeredjobs:
+                if job.jobStatus in ['frozen']:
+                    logger.info('All subJobs in Job already finished/failed' )
+                    continue
+
+                if not jobs.backend.libds:
+                    libds = ''
+                else:
+                    libds = jobs.backend.libds
+                logger.info('Sending rebrokerage request ...')
+
+                status,output = Client.runReBrokerage(job.jobDefinitionID, libds, cloud, False)
+                brokeredjobs.append(job.jobDefinitionID)
+                if status != 0:
+                    logger.error(output)
+                    logger.error("Failed to rebroker job with Panda jobDefinitionID=%s" % job.jobDefinitionID)
+                    continue
+                # done
+
+                logger.info('Rebrokerage done for job with Panda jobDefinitionID=%s' % job.jobDefinitionID)
         return
 
     def check_auto_resubmit(self):
