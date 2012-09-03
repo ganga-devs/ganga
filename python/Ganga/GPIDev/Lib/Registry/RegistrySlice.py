@@ -127,7 +127,7 @@ class RegistrySlice(object):
             select = select_by_range
 
         for id, obj in self.objects.iteritems():
-            if select(int(id)):
+            if select(id):
                 selected=True
                 for a in attrs:
                     try:
