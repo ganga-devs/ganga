@@ -224,11 +224,37 @@ class Dirac(IBackend):
  
     def resubmit(self):
         """Resubmit a DIRAC job"""
+        j=self.getJobObject()
+        if j.master and j.master.splitter and hasattr(j.master.splitter,'bulksubmit') and j.master.splitter.bulksubmit ==True:
+            os.system('cp %s %s' % ( os.path.join(j.master.getInputWorkspace().getPath(),'dirac-script.py'),
+                                     os.path.join(j.getInputWorkspace().getPath(),'dirac-script.py')
+                                     )
+                      )
+        
+#            result = dirac_ganga_server.execute('result = DiracCommands.dirac.reschedule(%i)'%self.id)
+#            err_msg = 'Error submitting job to Dirac: %s' % str(result)
+#            if not result_ok(result) or not result.has_key('Value'):
+#                logger.error(err_msg)
+#                raise BackendError('Dirac',err_msg)
+#            return True
         script = self._getDiracScript()
         cur_script = open(script)
         tmp_script = open(script + '.tmp','w')
         skip = False
         for line in cur_script.readlines():
+            if j.master and \
+               j.master.splitter and \
+               hasattr(j.master.splitter,'bulksubmit') and \
+               j.master.splitter.bulksubmit ==True:
+                if line.find('j.setParametricInputData') >=0:
+                    tmp = line.replace('j.setParametricInputData(','')
+                    tmp = tmp.replace(')\n','')
+                    datasets = eval(tmp)
+                    if len(datasets) is not len(j.master.subjobs):
+                        raise BackendError('Dirac','Not the right number of subjobs')
+                    line = 'j.setInputData(%s)\n' % str(datasets[j.id])
+                if line.find('j.setName') >=0:
+                    line = line.replace('%n',str(j.id))
             if line.find('<-- user settings') >= 0:
                 skip = True
                 # write new settings
