@@ -163,22 +163,18 @@ from RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 class JobRegistrySliceProxy(RegistrySliceProxy):
     """This object is an access list of jobs defined in Ganga. 
     
-    'jobs' represents all existing jobs, so a subset of jobs may 
-    be created by slicing: 
-    jobs[-10:]      (to get the last ten jobs)
+    The 'jobs' represents all existing jobs.
 
-    or selecting:
-    jobs.select(status='new')      (to select all new jobs)
-    jobs.select(10,20)      (to select those with IDs between 10 and 20)
+    A subset of jobs may be created by slicing (e.g. jobs[-10:] last ten jobs)
+    or select (e.g. jobs.select(status='new') or jobs.select(10,20) jobs with
+    ids between 10 and 20). A new access list is created as a result of
+    slice/select. The new access list may be further restricted.
 
-    A new access list is created as a result of a slice/select operation. 
-    The new access list may be further restricted.
-
-    This object allows one to perform collective operations such as
-    killing or submiting all jobs in the current range. Setting the optional
-    parameter keep_going=True (the default) results in the operation continuing 
-    to process all jobs, irrespective of any errors encountered. If keep_going=False 
-    then the operation will stop with an Exception at the first error encountered.
+    This object allows to perform collective operations listed below such as
+    kill or submit on all jobs in the current range. The keep_going=True
+    (default) means that the operation will continue despite possible errors
+    until all jobs are processed. The keep_going=False means that the
+    operation will bail out with an Exception on a first encountered error.
     
     
     """
