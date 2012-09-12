@@ -23,6 +23,7 @@ class AtlasUnit(IUnit):
    _category = 'units'
    _name = 'AtlasUnit'
    _exportmethods = IUnit._exportmethods + [ ]
+   _outputfilelist = {}
    
    def registerDataset(self):
       """Register in the transform container"""
@@ -305,18 +306,19 @@ class AtlasUnit(IUnit):
          return False
 
       # get list of output files
-      dq2_file_list = {}
-      for sj in job.subjobs:
-         for outf in sj.outputdata.output:
-            dq2_file_list[outf.split(",")[1]] = sj.outputdata.datasetname
+      if len(self._outputfilelist) == 0:
+         dq2_list = dq2.listFilesInDataset(job.outputdata.datasetname)
+
+         for guid in dq2_list[0].keys():
+            self._outputfilelist[ dq2_list[0][guid]['lfn'] ] = job.outputdata.datasetname
 
       # check which ones still need downloading
       to_download = {}
-      for f in dq2_file_list.keys():
+      for f in self._outputfilelist.keys():
          
          # check for REs
          if self.copy_output.isValid(f) and not self.copy_output.isDownloaded(f):
-            to_download[ f ] = dq2_file_list[f]
+            to_download[ f ] = self._outputfilelist[f]
 
 
       # is everything downloaded?

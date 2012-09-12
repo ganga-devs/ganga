@@ -18,6 +18,8 @@ from dq2.common.DQException import DQException
 class AtlasTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
       'local_location'     : SimpleItem(defvalue='', doc='Local location to copy output to', typelist=["str"]),
+      'include_file_mask'       : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc = 'List of Regular expressions of which files to include in copy'),
+      'exclude_file_mask'       : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc = 'List of Regular expressions of which files to exclude from copy'),
       'files_per_job'     : SimpleItem(defvalue=5, doc='files per job (cf DQ2JobSplitter.numfiles)', modelist=["int"]),
       'MB_per_job'     : SimpleItem(defvalue=0, doc='Split by total input filesize (cf DQ2JobSplitter.filesize)', modelist=["int"]),
       'subjobs_per_unit'     : SimpleItem(defvalue=0, doc='split into this many subjobs per unit master job (cf DQ2JobSplitter.numsubjobs)', modelist=["int"]),
@@ -43,6 +45,8 @@ class AtlasTransform(ITransform):
       if self.local_location != '':
          self.unit_copy_output = TaskLocalCopy()
          self.unit_copy_output.local_location = self.local_location
+         self.unit_copy_output.include_file_mask = self.include_file_mask
+         self.unit_copy_output.exclude_file_mask = self.exclude_file_mask
       
    def createUnits(self):
       """Create new units if required given the inputdata"""
