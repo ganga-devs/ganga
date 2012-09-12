@@ -250,7 +250,7 @@ class Dirac(IBackend):
                     tmp = line.replace('j.setParametricInputData(','')
                     tmp = tmp.replace(')\n','')
                     datasets = eval(tmp)
-                    if len(datasets) is not len(j.master.subjobs):
+                    if len(datasets) != len(j.master.subjobs):
                         raise BackendError('Dirac','Not the right number of subjobs')
                     line = 'j.setInputData(%s)\n' % str(datasets[j.id])
                 if line.find('j.setName') >=0:
