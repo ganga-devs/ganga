@@ -508,8 +508,6 @@ class Dirac(IBackend):
             j.backend.statusInfo = result[i][0]
             j.backend.status = result[i][1]
             j.backend.actualCE = result[i][2]
-            cmd = 'result = DiracCommands.normCPUTime(%d)' % j.backend.id
-            j.backend.normCPUTime = dirac_monitoring_server.execute(cmd)
             if j.status != ganga_job_status[i]:
                 logger.warning('User changed Ganga job status from %s -> %s' % (str(ganga_job_status[i]),j.status))
                 continue
@@ -519,6 +517,8 @@ class Dirac(IBackend):
             if result[i][3] == 'completed':
                 Dirac._getStateTime(j,'completing')
                 j.updateStatus('completing')
+                cmd = 'result = DiracCommands.normCPUTime(%d)' % j.backend.id
+                j.backend.normCPUTime = dirac_monitoring_server.execute(cmd)
                 ok = j.backend._getOutputSandbox(dirac_monitoring_server)
                 if ok and j.outputdata:
                     j.backend._getOutputDataLFNs(dirac_monitoring_server,True)
