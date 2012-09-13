@@ -25,6 +25,10 @@ from GangaAtlas.Lib.ATLASDataset import whichCloud
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
+from Ganga.Utility.Config import getConfig
+
+configDQ2 = getConfig('DQ2')
+
 
 PandaClient = None
 def getPandaClient():
@@ -276,6 +280,15 @@ class MultiTransform(Transform):
                  "j%i.t%i.trf%i.u%i" % (j.id, task.id,
                                     task.transforms.index(self),
                                     uind)]
+
+          # check for DS name too long
+          if len(".".join(dsn)) > configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2:
+              dsn = [self.getContainerName()[:-1],
+                     self.unit_outputdata_list[uind][: - (len(".".join(dsn)) - configDQ2['OUTPUTDATASET_NAMELENGTH'] + 2)],
+                     "j%i.t%i.trf%i.u%i" % (j.id, task.id,
+                                            task.transforms.index(self),
+                                            uind)]
+
 
           # sort out the output data
           if not self.outputdata:
