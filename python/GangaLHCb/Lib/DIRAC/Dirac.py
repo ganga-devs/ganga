@@ -140,14 +140,13 @@ class Dirac(IBackend):
             return inputsandbox
         return []
 
-    def _submit(self,dirac_script):
+    def _submit(self,dirac_script,server):
         '''Submit the job via the Dirac server.'''
         self.id = None
         self.actualCE = None
         self.status = None
-        global dirac_ganga_server
         dirac_cmd = "execfile('%s')" % self._getDiracScript()
-        result = dirac_ganga_server.execute(dirac_cmd)        
+        result = server.execute(dirac_cmd)        
             
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
         if not result_ok(result) or not result.has_key('Value'):
@@ -165,7 +164,7 @@ class Dirac(IBackend):
                 j.merger = None
                 j.backend.id = idlist[i]
                 j.id = i
-                if dirac_script.inputdata and \
+                if dirac_script is not None and dirac_script.inputdata and \
                        hasattr(dirac_script.inputdata,'split_data') and \
                        ( len(dirac_script.inputdata.split_data) == len(idlist) ):
                     j.inputdata = LHCbDataset(files=[LogicalFile(f) for f in dirac_script.inputdata.split_data[i]])
@@ -220,9 +219,46 @@ class Dirac(IBackend):
                 raise BackendError('Dirac',msg)            
             dirac_script.input_sandbox.append('LFN:'+lfn.name)
         dirac_script.write(script_file)
-        return self._submit(dirac_script)
- 
+        global dirac_ganga_server
+        return self._submit(dirac_script,dirac_ganga_server)
+
+    def master_auto_resubmit(self,rjobs):
+        from Ganga.Core import IncompleteJobSubmissionError, GangaException
+        from Ganga.Utility.logging import log_user_exception
+        incomplete = 0
+        def handleError(x):
+            if incomplete:
+                raise x
+            else:
+                return 0            
+        try:
+            for sj in rjobs:
+                fqid = sj.getFQID('.')
+                logger.info("resubmitting job %s to %s backend",fqid,sj.backend._name)
+                try:
+                    b = sj.backend
+                    sj.updateStatus('submitting')
+                    global dirac_monitoring_server
+                    result = b._resubmit(dirac_monitoring_server)
+                    if result:
+                        sj.updateStatus('submitted')
+                        #sj._commit() # PENDING: TEMPORARY DISABLED
+                        incomplete = 1
+                    else:
+                        return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
+                except Exception,x:
+                    log_user_exception(logger,debug=isinstance(x,GangaException))
+                    return handleError(IncompleteJobSubmissionError(fqid,str(x)))
+        finally:
+            master = self.getJobObject().master
+            if master:
+                master.updateMasterJobStatus()
+        return 1
+
     def resubmit(self):
+        global dirac_ganga_server
+        return self._resubmit(dirac_ganga_server)
+    def _resubmit(self,server):
         """Resubmit a DIRAC job"""
         j=self.getJobObject()
         if j.master and j.master.splitter and hasattr(j.master.splitter,'bulksubmit') and j.master.splitter.bulksubmit ==True:
@@ -270,7 +306,7 @@ class Dirac(IBackend):
         cur_script.close()
         tmp_script.close()
         os.system('mv -f %s %s' % (script+'.tmp',script))
-        return self._submit(None)
+        return self._submit(None,server)
 
     def reset(self, doSubjobs =False):
         """Resets the state of a job back to 'submitted' so that the
