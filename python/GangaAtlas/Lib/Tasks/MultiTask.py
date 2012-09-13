@@ -168,6 +168,10 @@ class MultiTask(Task):
             return
          logger.info("Found %i datasets matching %s..." % (len(tid_datasets), dset))
 
+         if len(tid_datasets) == 0:
+            logger.error("No tid datasets found from dataset list. Maybe the container '%s' is empty?" % dset)
+            return
+         
          prev_num = unit_num
          for tf in primary_tfs:
             unit_num = prev_num
@@ -255,14 +259,14 @@ class MultiTask(Task):
 
             # ensure the number unit input data, output data and partition lists are setup properly
             if len(trf.unit_partition_list) == 0:
-               raise ApplicationConfigurationError(None, "Transform %d (%s) is primary but hasn't been initialised with input data")
+               raise ApplicationConfigurationError(None, "Transform %d (%s) is primary but hasn't been initialised with input data" % (trf.getID(), trf.name))
 
          else:
 
             if not trf.isLocalTRF():
 
                if trf.single_unit:
-                  raise ApplicationConfigurationError(None, "Transform %d (%s) set as a single unit but has a grid backend")
+                  raise ApplicationConfigurationError(None, "Transform %d (%s) set as a single unit but has a grid backend" % (trf.getID(), trf.name))
                
                # this will just take the DQ2 output of the previous TRFs and process each unit itself
                trf.unit_inputdata_list = []
