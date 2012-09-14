@@ -156,7 +156,7 @@ cmt_setup () {
     # New athena v16 AtlasSetup #################
     elif [ $ATHENA_MAJOR_RELEASE -gt 15 ]; then
 	# ##### CVMFS setup ###########################################
-	if [[ $ATLAS_RELEASE_DIR == "/cvmfs/*" ]]; then
+	if [[ $ATLAS_RELEASE_DIR == /cvmfs/* ]]; then
 	    export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
 	    source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
 	    if [[ $ATLAS_RELEASE_DIR == /cvmfs/* ]]; then
