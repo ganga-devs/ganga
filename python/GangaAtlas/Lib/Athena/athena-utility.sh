@@ -155,7 +155,23 @@ cmt_setup () {
         source $ATLAS_RELEASE_DIR/setup.sh
     # New athena v16 AtlasSetup #################
     elif [ $ATHENA_MAJOR_RELEASE -gt 15 ]; then
-	if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
+	# ##### CVMFS setup ###########################################
+	if [[ $ATLAS_RELEASE_DIR == "/cvmfs/*" ]]; then
+	    export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+	    source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
+	    if [[ $ATLAS_RELEASE_DIR == /cvmfs/* ]]; then
+		export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
+		source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
+		if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_PRODUCTION,$ATLAS_ARCH
+		elif [ ! -z $ATLAS_PROJECT ]; then
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_RELEASE,$ATLAS_ARCH
+		else
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_RELEASE,$ATLAS_ARCH
+		fi
+	    fi
+
+	elif [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
 	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup
 	elif [ ! -z $ATLAS_PROJECT ]; then
 	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup
