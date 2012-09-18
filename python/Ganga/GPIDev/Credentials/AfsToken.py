@@ -111,7 +111,7 @@ class AfsCommand( ICommandSet ):
    """
 
    _schema = ICommandSet._schema.inherit_copy()
-   _schema['init']._meta['defvalue'] = "kinit -R"
+   _schema['init']._meta['defvalue'] = "kinit"
    _schema['info']._meta['defvalue'] = "tokens"
    _schema['destroy']._meta['defvalue'] = "unlog"
    _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pipe", "valid" : "-l", \
