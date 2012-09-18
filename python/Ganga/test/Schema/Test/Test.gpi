@@ -1,0 +1,59 @@
+import sys
+from Ganga.Utility.Plugin import allPlugins
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig, setConfigOption
+from Ganga.Core.GangaRepository import getRegistry
+
+this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
+this_repo=getConfig('Configuration')['gangadir']
+#this_version = config['System']['GANGA_VERSION']
+#^^this doesn't work because it'll always return GANGA-SVN
+
+logger = getLogger()
+logger.error('#################### RUNNING CHECK ####################')
+logger.error('#################### ' + this_version + ' ####################')
+logger.error('#################### ' + this_repo + ' ####################')
+#logger.error('#################### ' + this_repo + '/' + this_version + ' ####################')
+new_repo = this_repo + '/' + this_version
+setConfigOption(section='Configuration', item='gangadir', value=new_repo)
+this_repo=getConfig('Configuration')['gangadir']
+logger.error('#################### ' + this_repo + ' ####################')
+
+print jobs
+for thing in jobs:
+    try:
+        b=thing.__str__()
+    except Exception, e:
+        logger.error('Exception for ' + str(thing.id) + ": " + thing.name)
+        logger.warn(e)
+
+#how many 
+
+#restart job repository
+#reg = getRegistry("jobs")
+#reg.shutdown()
+#try:
+#    reg.startup()
+#except Exception, e:
+#    logger.warn(e)
+#
+##see if there are any broken jobs
+#if len(jobs.incomplete_ids()) > 0:
+#    for inj in jobs.incomplete_ids():
+#        try:
+#            jobs(inj).reload()
+#        except Exception, e:
+#            logger.warn(e)
+        
+
+
+
+
+
+#only want to create one set of test jobs per release
+#if the jobs being created exists, assume we're retesting a release and remove/recreate the jobs for that release
+
+#also use an EXCLUDE_VERSION value so that we can permanently disable known, bad versions from being tested
+#in the future?
+#NO - THAT'S NOT A PROBLEM because the test failures should go away when we release a fixed version.
+# just maintain a matrix of what version works with what.

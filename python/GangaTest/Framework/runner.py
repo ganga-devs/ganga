@@ -52,8 +52,6 @@ myConfig.addOption('EnableTestRunner', True, 'enable/disable test-runner')
 myConfig.addOption('EnableHTMLReporter', False, 'enable/disable html reporter')
 #enable/disable xml differencer
 myConfig.addOption('EnableXMLDifferencer','False', 'enable/disable xml differencer')
-#ganga configuration(s)
-myConfig.addOption('Config', 'default.ini', 'ganga configuration(s)')
 #search for local tests lookup
 myConfig.addOption('SearchLocalTests', True, 'search for local tests lookup')
 #search for tests packaged in release (PACKAGE/test dir) lookup
@@ -63,6 +61,14 @@ myConfig.addOption('CoverageReport', '', 'The file used to save the testing cove
 
 myConfig.addOption('timeout', 600, 'timeout when the test is forcibly stopped ')
 myConfig.addOption('AutoCleanup',True,'cleanup the job registry before running the testcase')
+
+myConfig.addOption('SchemaTesting', '', 'Pass Ganga version number to enable/disable Schema testing mode.')
+
+if myConfig['SchemaTesting'] == '':
+    myConfig.addOption('Config', 'default.ini', 'ganga configuration(s)')
+else:
+    myConfig.addOption('Config', 'Schema.ini', 'ganga configuration(s)')
+    
 
 if not myConfig['ReleaseTesting']:
     myConfig.addOption('OutputDir', os.path.expanduser('~/gangadir_testing'), '')
@@ -120,6 +126,8 @@ def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
     pytf_loader_args.append( '--loader-args=%s' % int(config['SearchReleaseTests'])) 
     #Pass the report(report path + runid) path
     pytf_loader_args.append( '--loader-args=%s' % os.path.join(config['ReportsOutputDir'],config['RunID']))
+    #pass the schmema version (if any) to test
+    pytf_loader_args.append( '--loader-args=%s' % config['SchemaTesting'])
     
     #print("PYTF path %s config: %s" % (pytf_loader_path, pytf_loader_args))
     import runTests

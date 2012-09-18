@@ -1,0 +1,62 @@
+import sys
+from Ganga.Utility.Plugin import allPlugins
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig, setConfigOption
+from Ganga.Core.GangaRepository import getRegistry
+
+logger = getLogger()
+
+this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
+this_repo=getConfig('Configuration')['gangadir']
+##this_version = config['System']['GANGA_VERSION']
+##^^this doesn't work because it'll always return GANGA-SVN
+
+logger.error('#################### RUNNING JOB GENERATOR ####################')
+logger.error('#################### ' + this_version + ' ####################')
+logger.error('#################### ' + this_repo + ' ####################')
+
+baks = allPlugins.allCategories()['backends']
+apps = allPlugins.allCategories()['applications']
+
+
+totnumjobs = 0
+for bak in baks:
+    #logger.error(bak)
+    appname = 'Executable'
+    new_name = str(this_version + "_" + bak + "_" +  appname)
+
+    if len(jobs.select(name=new_name)) == 0:
+        j=Job(backend=bak)
+        j.name = new_name
+        totnumjobs += 1
+        logger.info("Creating Job(backend='"+bak+"', application='"+appname+"')")
+    else:
+        logger.info("Already Existed: Job(backend='"+bak+"', application='"+appname+"')")
+
+logger.error(apps)
+for app in apps:
+    if not app == 'Gaudi':
+        bakname = 'Local'
+        new_name = str(this_version + "_" + bakname + "_" +  app)
+        if len(jobs.select(name=new_name)) == 0:
+            j=Job(application=app)
+            j.name = new_name
+            totnumjobs += 1
+            logger.info("Creating Job(backend='"+bakname+"', application='"+app+"')")
+        else:
+            logger.info("Already Existed: Job(backend='"+bakname+"', application='"+app+"')")
+
+logger.error('total number of jobs')
+logger.error(totnumjobs)
+
+if totnumjobs > 0:
+    assert totnumjobs == 50, 'We failed to create the correct number of test jobs. %i created' % (totnumjobs)
+else:
+    logger.warning("We didn't create any test jobs; perhaps they all existed already?")
+    logger.warning("There are %i jobs in the repository" % (len(jobs)))
+    
+
+
+
+
+

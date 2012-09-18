@@ -76,6 +76,7 @@ class GangaTestLoader:
         self.enableLocalTests = int(loadArg(args,4,default=True))
         self.enableReleaseTests = int(loadArg(args,5,default=True))
         self.report_outputpath = loadArg(args,6,default='./')
+        self.schema_test = loadArg(args,7,default='')
         self.current_report_name = None
         
         #set the verbosity based on GangaTest.Framework logging config           
@@ -534,12 +535,15 @@ def %(method_name)s(self):
                 return coverage_path
             return 'None'
         runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
+        from Ganga.Utility.Config import getConfig
+        self.schema_test = os.path.join(getConfig('Configuration')['gangadir'],self.schema_test)
         testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\
-                 "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
+                 "%s/bin/ganga -o[Configuration]gangadir=%s -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
                  "%s --test-type=gpi --coverage-report=%s %s"%(
             os.path.join(self.testsTopDir,test_dir),
             fullpath(output_path),
             self.releaseTopDir,            
+            self.schema_test,
             config, runPyFile,
             opt_path(coverage_path),
             test_path)        
@@ -572,7 +576,7 @@ def %(method_name)s(self):
             descr = os.path.join(test_dir[test_dir.index(self.testsTopDir)+len(self.testsTopDir)+1:],test_filename)+" [GPI]"
         except ValueError:
             descr = os.path.join(test_dir,test_filename)+" [GPI]"
-                   
+
         return self.__generateTestCaseFromCmd(
             [testCmd], 
             test_filename,
@@ -846,7 +850,6 @@ def %(method_name)s(self):
                         descr = os.path.join(test_dir[test_dir.index(self.testsTopDir)+len(self.testsTopDir)+1:],test_filename,'ALL')+" [GPIP]"
                     except ValueError:
                         descr = os.path.join(test_dir,test_filename,'ALL')+" [GPIP]"
-
                     testCmd = "cd %s ;env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s "\
                               "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s %s %s --test-type=gpip --output_base=%s --coverage-report=%s --timeout=%s %s setUp tearDown"%(
                               os.path.join(self.testsTopDir,test_dir),
