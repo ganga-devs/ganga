@@ -3,7 +3,7 @@
 #kuba
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-30-109
+ganga/python/Ganga                                                     Ganga-Base-30-110
 
 #hclee
 ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-13
@@ -37,7 +37,7 @@ ganga/python/GangaSAGA                                                 GangaSAGA
 ganga/python/GangaService                                              GangaService-1-2
 
 #kuba
-ganga/python/GangaTest                                                 GangaTest-30-12
+ganga/python/GangaTest                                                 GangaTest-30-13
 
 #kuba/hclee
 ganga/python/GangaTutorial                                             GangaTutorial-20-5
