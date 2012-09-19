@@ -50,7 +50,7 @@ logger.error('total number of jobs')
 logger.error(totnumjobs)
 
 if totnumjobs > 0:
-    assert totnumjobs == 50, 'We failed to create the correct number of test jobs. %i created' % (totnumjobs)
+    assert totnumjobs == len(jobs), 'We failed to create the correct number of test jobs. %i created' % (totnumjobs)
 else:
     logger.warning("We didn't create any test jobs; perhaps they all existed already?")
     logger.warning("There are %i jobs in the repository" % (len(jobs)))
