@@ -539,7 +539,7 @@ def %(method_name)s(self):
             return 'None'
         runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
         from Ganga.Utility.Config import getConfig
-    if self.schema_test is not '':
+        if self.schema_test is not '':
             testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\
                     "%s/bin/ganga -o[Configuration]gangadir=%s -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
                     "%s --test-type=gpi --coverage-report=%s %s"%(
@@ -550,7 +550,7 @@ def %(method_name)s(self):
                 config, runPyFile,
                 opt_path(coverage_path),
                 test_path)        
-    else:
+        else:
             testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\
                     "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
                     "%s --test-type=gpi --coverage-report=%s %s"%(
