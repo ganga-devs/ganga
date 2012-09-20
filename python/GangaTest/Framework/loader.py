@@ -86,6 +86,7 @@ class GangaTestLoader:
             self.verbose = True
         else:
             self.verbose = False
+        print self.releaseTesting
 
     def loadTests(self,patterns):
         """
@@ -540,13 +541,14 @@ def %(method_name)s(self):
         runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
         from Ganga.Utility.Config import getConfig
         if self.schema_test is not '':
+            newgangadir = os.path.join(getConfig('Configuration')['gangadir'],self.schema_test)
             testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\
                     "%s/bin/ganga -o[Configuration]gangadir=%s -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
                     "%s --test-type=gpi --coverage-report=%s %s"%(
                 os.path.join(self.testsTopDir,test_dir),
                 fullpath(output_path),
                 self.releaseTopDir,            
-                self.schema_test,
+                newgangadir,
                 config, runPyFile,
                 opt_path(coverage_path),
                 test_path)        
