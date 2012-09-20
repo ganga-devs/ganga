@@ -539,17 +539,28 @@ def %(method_name)s(self):
             return 'None'
         runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
         from Ganga.Utility.Config import getConfig
-        self.schema_test = os.path.join(getConfig('Configuration')['gangadir'],self.schema_test)
-        testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\
-                 "%s/bin/ganga -o[Configuration]gangadir=%s -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
-                 "%s --test-type=gpi --coverage-report=%s %s"%(
-            os.path.join(self.testsTopDir,test_dir),
-            fullpath(output_path),
-            self.releaseTopDir,            
-            self.schema_test,
-            config, runPyFile,
-            opt_path(coverage_path),
-            test_path)        
+    if self.schema_test is not '':
+            testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\
+                    "%s/bin/ganga -o[Configuration]gangadir=%s -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
+                    "%s --test-type=gpi --coverage-report=%s %s"%(
+                os.path.join(self.testsTopDir,test_dir),
+                fullpath(output_path),
+                self.releaseTopDir,            
+                self.schema_test,
+                config, runPyFile,
+                opt_path(coverage_path),
+                test_path)        
+    else:
+            testCmd ="cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s PYTHONUNBUFFERED=1 "\
+                    "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s "\
+                    "%s --test-type=gpi --coverage-report=%s %s"%(
+                os.path.join(self.testsTopDir,test_dir),
+                fullpath(output_path),
+                self.releaseTopDir,            
+                config, runPyFile,
+                opt_path(coverage_path),
+                test_path)        
+
 
         # setup Ganga-Session
         if os.path.isfile(test_setup):
