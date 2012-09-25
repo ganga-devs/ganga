@@ -172,6 +172,8 @@ class GangaTestLoader:
             
             self.configAlias = os.path.splitext(config)[0]
             report_name = "%s__%s"%(pattern.replace("*","ALL"),self.configAlias)
+            if self.schema_test is not '':
+                report_name = "%s__%s__%s"%(pattern.replace("*","ALL"),self.schema_test,self.configAlias)
             print "Using configuration: %s" % config_path 
             print "Report ID: %s" % report_name
 
