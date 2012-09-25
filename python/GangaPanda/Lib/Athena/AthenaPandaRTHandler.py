@@ -781,6 +781,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             # set DBRelease parameter
             param += '--dbrFile %s ' % file.lfn
 
+        input_files = []
         if job.inputdata:
             # check for ELSSI files
             input_files = job.inputdata.names
