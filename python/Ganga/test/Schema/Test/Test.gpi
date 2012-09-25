@@ -25,9 +25,8 @@ f = open(counter_file_name, 'r')
 read_data = f.read()
 f.close()
 
-print this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/*.index"
-print "number of index files " + str(num_job_index_files)
-print "number of jobs " + str(len(jobs))
+logger.info("number of index files " + str(num_job_index_files))
+logger.info("number of jobs " + str(len(jobs)))
 
 assert num_job_index_files == len(jobs), "The number of index files " + str(num_job_index_files) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/ didn't match the number of jobs available in the GPI (" +str(len(jobs))+")"
 assert len(jobs) == int(read_data), "The number of jobs in the repository (" + str(len(jobs)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
