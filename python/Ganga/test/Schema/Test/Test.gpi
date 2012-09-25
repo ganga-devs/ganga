@@ -1,23 +1,25 @@
-import sys
+import sys, glob
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, setConfigOption
 from Ganga.Core.GangaRepository import getRegistry
 
+logger = getLogger()
+
+##We have to determine the Ganga version this way because the PRE always thinks config['System']['GANGA_VERSION'] is GANGA-SVN
 this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
 this_repo=getConfig('Configuration')['gangadir']
-#this_version = config['System']['GANGA_VERSION']
-#^^this doesn't work because it'll always return GANGA-SVN
+this_user=getConfig('Configuration')['user']
 
-logger = getLogger()
-logger.error('#################### RUNNING CHECK ####################')
-logger.error('#################### ' + this_version + ' ####################')
-logger.error('#################### ' + this_repo + ' ####################')
-#logger.error('#################### ' + this_repo + '/' + this_version + ' ####################')
-new_repo = this_repo + '/' + this_version
-setConfigOption(section='Configuration', item='gangadir', value=new_repo)
-this_repo=getConfig('Configuration')['gangadir']
-logger.error('#################### ' + this_repo + ' ####################')
+logger.error('#################### RUNNING SCHEMA TESTER')
+logger.error('#################### Executing Ganga version: ' + this_version)
+logger.error('#################### Using repo at: ' + this_repo)
+
+
+#count the number of directories in this_repo
+num_job_index_files = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/*.index"))
+
+assert num_job_index_files == len(jobs), "The number of index files " + str(num_job_index_files) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/ didn't match the number of jobs available in the GPI (" +str(len(jobs))+")"
 
 print jobs
 for thing in jobs:
@@ -27,7 +29,7 @@ for thing in jobs:
         logger.error('Exception for ' + str(thing.id) + ": " + thing.name)
         logger.warn(e)
 
-#how many 
+
 
 #restart job repository
 #reg = getRegistry("jobs")
