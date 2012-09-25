@@ -16,10 +16,21 @@ logger.error('#################### Executing Ganga version: ' + this_version)
 logger.error('#################### Using repo at: ' + this_repo)
 
 
-#count the number of directories in this_repo
+#count the number of directories in this_repo from the cnt file
 num_job_index_files = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/*.index"))
+counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/cnt"
+
+f = open(counter_file_name, 'r') 
+#read_data should hold a single integer value representing the total number of jobs in the repo.
+read_data = f.read()
+f.close()
+
+print this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/*.index"
+print "number of index files " + str(num_job_index_files)
+print "number of jobs " + str(len(jobs))
 
 assert num_job_index_files == len(jobs), "The number of index files " + str(num_job_index_files) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/ didn't match the number of jobs available in the GPI (" +str(len(jobs))+")"
+assert len(jobs) == int(read_data), "The number of jobs in the repository (" + str(len(jobs)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
 
 print jobs
 for thing in jobs:
