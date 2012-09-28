@@ -11,12 +11,12 @@ from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from OutputSandboxFile import OutputSandboxFile
+from IOutputFile import IOutputFile
 
 import re
 import os
 
-class LCGStorageElementFile(OutputSandboxFile):
+class LCGStorageElementFile(IOutputFile):
     """LCGStorageElementFile represents a class marking an output file to be written into LCG SE
     """
     lcgSEConfig = getConfig('Output')['LCGStorageElementFile']['uploadOptions']
@@ -41,7 +41,9 @@ class LCGStorageElementFile(OutputSandboxFile):
     def __init__(self,namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into LCG SE
         """
-        super(LCGStorageElementFile, self).__init__(namePattern, localDir, **kwds)
+        super(LCGStorageElementFile, self).__init__()
+        self.namePattern = namePattern
+        self.localDir = localDir
 
         self.locations = []
 
@@ -51,8 +53,11 @@ class LCGStorageElementFile(OutputSandboxFile):
         super(LCGStorageElementFile,self).__setattr__(attr, value)
 
     def __construct__(self,args):
-        super(LCGStorageElementFile,self).__construct__(args)
-
+        if len(args) == 1 and type(args[0]) == type(''):
+            self.namePattern = args[0]
+        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
+            self.namePattern = args[0]
+            self.localDir = args[1]     
             
     def __repr__(self):
         """Get the representation of the file."""
