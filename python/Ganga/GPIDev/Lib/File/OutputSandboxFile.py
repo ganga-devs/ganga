@@ -6,11 +6,10 @@
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-logger = Ganga.Utility.logging.getLogger()
-import glob 
-import fnmatch    
 
-class OutputSandboxFile(GangaObject):
+from IOutputFile import IOutputFile   
+
+class OutputSandboxFile(IOutputFile):
     """OutputSandboxFile represents base class for output files, such as MassStorageFile, LCGStorageElementFile, etc 
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name'),
@@ -33,124 +32,8 @@ class OutputSandboxFile(GangaObject):
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
             self.localDir = args[1]     
-        else:
-            super(OutputSandboxFile,self).__construct__(args)
         
     def __repr__(self):
         """Get the representation of the file."""
 
         return "OutputSandboxFile(namePattern='%s')"% self.namePattern
-
-    def setLocation(self):
-        """
-        Sets the location of output files that were uploaded from the WN
-        """
-        pass
-
-    def location(self):
-        """
-        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
-        """
-        raise NotImplementedError
-
-    def get(self):
-        """
-        Retrieves locally all files matching this OutputSandboxFile object pattern
-        """
-        raise NotImplementedError
-
-    def put(self):
-        """
-        Postprocesses (upload) output file to the desired destination, can be overriden in LCGStorageElementFile, MassStorageFile, etc
-        """
-        raise NotImplementedError
-
-    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-        """
-        Returns script that have to be injected in the jobscript for postprocessing on the WN
-        """
-        return ""
-
-    def _readonly(self):
-        return False
-
-    def execSyscmdSubprocess(self, cmd):
-
-        import subprocess
-
-        exitcode = -999
-        mystdout = ''
-        mystderr = ''
-
-        try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            (mystdout, mystderr) = child.communicate()
-            exitcode = child.returncode
-        finally:
-            pass
-
-        return (exitcode, mystdout, mystderr)
-
-
-from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.Utility.Config import getConfig, ConfigError
-
-outputfilesConfig = {}
-
-keys = getConfig('Output').options.keys()
-keys.remove('PostProcessLocationsFileName')
-
-for key in keys:
-    try:
-        outputFilePatterns = []
-
-        for configEntry in getConfig('Output')[key]['fileExtensions']:
-            outputFilePatterns.append(configEntry)
-                
-        outputfilesConfig[key] = outputFilePatterns
-
-    except ConfigError:
-        #todo:ivan throw some error here
-        pass    
-
-def findOutputFileTypeByFileName(filename):      
-
-    matchKeys = []
-
-    for key in outputfilesConfig.keys():
-        for filePattern in outputfilesConfig[key]:
-            if fnmatch.fnmatch(filename, filePattern):
-                matchKeys.append(key)
-
-    if len(matchKeys) == 1:     
-        return matchKeys[-1]
-    elif len(matchKeys) > 1:
-        logger.warning("file name pattern %s matched %s, assigning to %s" % (filename, str(matchKeys), matchKeys[-1]))
-        return matchKeys[-1]
-    else:
-        return None     
-
-def string_file_shortcut(v,item):
-    if type(v) is type(''):
-        # use proxy class to enable all user conversions on the value itself
-        # but return the implementation object (not proxy)
-        key = findOutputFileTypeByFileName(v)
-        if key is not None:
-            if key == 'MassStorageFile':
-                from MassStorageFile import MassStorageFile
-                return MassStorageFile._proxyClass(v)._impl         
-            elif key == 'LCGStorageElementFile':
-                from LCGStorageElementFile import LCGStorageElementFile
-                return LCGStorageElementFile._proxyClass(v)._impl                                
-            elif key == 'DiracFile':
-                try:
-                    from GangaLHCb.Lib.LHCbDataset.DiracFile import DiracFile
-                    return  DiracFile._proxyClass(v)._impl                                
-                except:
-                    pass
-
-        return OutputSandboxFile._proxyClass(v)._impl
-
-    return None 
-        
-allComponentFilters['outputfiles'] = string_file_shortcut
