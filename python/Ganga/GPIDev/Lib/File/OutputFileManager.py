@@ -51,7 +51,7 @@ def getOutputSandboxPatterns(job):
     return outputPatterns
 
 """
-This should be used from Local and Batch backend, wherefrom MassStorageFile import MassStorageFile there is code on the WN for 
+This should be used from Local and Batch backend, where there is code on the WN for 
 sending the output(optionally compressed before that) to the outputsandbox
 """
 def getWNCodeForOutputSandbox(job, files, jobid):
