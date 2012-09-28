@@ -114,22 +114,20 @@ for key in keys:
 
 def findOutputFileTypeByFileName(filename):      
 
-    matchCount = 0
-
-    resultKey = None    
+    matchKeys = []
 
     for key in outputfilesConfig.keys():
         for filePattern in outputfilesConfig[key]:
             if fnmatch.fnmatch(filename, filePattern):
-                matchCount += 1
-                resultKey = key
+                matchKeys.append(key)
 
-    if matchCount == 1:
-        return resultKey
-    elif matchCount > 1:        
-        raise ConfigError('pattern for filename %s defined more than once in [Output] config section' % filename)
- 
-    return None
+    if len(matchKeys) == 1:     
+        return matchKeys[-1]
+    elif len(matchKeys) > 1:
+        logger.warning("file name pattern %s matched %s, assigning to %s" % (filename, str(matchKeys), matchKeys[-1]))
+        return matchKeys[-1]
+    else:
+        return None     
 
 def string_file_shortcut(v,item):
     if type(v) is type(''):
