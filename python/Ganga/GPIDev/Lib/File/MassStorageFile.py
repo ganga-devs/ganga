@@ -9,9 +9,9 @@ from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
 
-from OutputSandboxFile import OutputSandboxFile
+from IOutputFile import IOutputFile
 
-class MassStorageFile(OutputSandboxFile):
+class MassStorageFile(IOutputFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name'),
@@ -28,12 +28,17 @@ class MassStorageFile(OutputSandboxFile):
     def __init__(self,namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into mass storage
         """
-        super(MassStorageFile, self).__init__(namePattern, localDir, **kwds)
+        super(MassStorageFile, self).__init__()
+        self.namePattern = namePattern
+        self.localDir = localDir
         self.locations = []
 
     def __construct__(self,args):
-        super(MassStorageFile,self).__construct__(args)
-
+        if len(args) == 1 and type(args[0]) == type(''):
+            self.namePattern = args[0]
+        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
+            self.namePattern = args[0]
+            self.localDir = args[1]     
             
     def __repr__(self):
         """Get the representation of the file."""
