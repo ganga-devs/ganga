@@ -6,6 +6,7 @@
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
+logger = Ganga.Utility.logging.getLogger()
 import glob 
 import fnmatch    
 
