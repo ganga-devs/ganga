@@ -223,7 +223,10 @@ def printTestCase(out,testcase,config=None):
             # if the test type is "gpip", the link of standard output will be indicated to the same standard output file.
             stdout = name.split()[0].replace("/",".").split(":")[0] + ".ALL__"+config
         else:
-            stdout = name.split()[0].replace("/",".").replace(":",".")+"__"+config
+            if config != 'Schema':
+                stdout = name.split()[0].replace("/",".").replace(":",".")+"__"+config
+            else:
+                stdout = name.split()[0].replace("/",".").replace(":",".")+"_"+testcase.getAttribute('ganga_schema_version')+"_"+config
          
         info = info.strip()
         if info: #wrap in <pre>
@@ -233,7 +236,10 @@ def printTestCase(out,testcase,config=None):
             info = '%s &nbsp; <a class="small" href="../output/%s">Statistics</a>' %(info,stdout+".stats")
         #link to code:
         
-        name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (name,code_repository_prefix+testcase_src+ext+code_repository_suffix)
+        if config != 'Schema':
+            name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (name,code_repository_prefix+testcase_src+ext+code_repository_suffix)
+        else:
+            name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'),code_repository_prefix+testcase_src+ext+code_repository_suffix)
         #XXX - uncomment this if you want to get a link to individual coverage reports for each testcase
         #name = '%s <a class="small" href="coverage/%s/index.htm">[Coverage Report]</a>' % (name,stdout )
         #if bug, link to savannah page
@@ -360,6 +366,52 @@ def generateSlowestTestsReport(out, group_testcases):
     appendDetailedFooter(file)
     file.close()    
     
+def generateSchemaTestsReport(schema_reports):
+    global html_dir
+    #generate HTML table
+    import os.path
+    out=open(os.path.join(html_dir,"index.html"),'a')
+
+    print >>out,getCSSStyles()
+    print >>out,'<h3>Schema Compatibility Tests <a href="schema_tests.html">here</a></h3>'
+
+    import time 
+    now=time.strftime("%d/%m/%Y",time.gmtime(time.time()))   
+
+    file = open(os.path.join(html_dir,"schema_tests.html"),'w')        
+    appendDetailedHeader(file,title='Historical schema compatibility tests performed on %s &nbsp;<a href="index.html">[BACK]</a>'%now)
+
+    testcases = []
+
+    all_testcases = []
+    if len(schema_reports) > 0:
+        #print schema_reports
+        for report_line in schema_reports:
+            for column in schema_reports[report_line]:
+                #columns[column]=None
+                testcases = schema_reports[report_line][column].getElementsByTagName("testcase")
+                for testcase in testcases:
+                    if testcase.nodeType == testcase.ELEMENT_NODE:
+                        testcase.setAttribute('ganga_schema_version', report_line.split("_")[1])
+                        package = None
+                        all_testcases.append(testcase)
+
+                    for (name, value) in testcase.attributes.items():
+                        if name=='name':
+                            testcase_name=value.split()[0].split("/")
+                            package=testcase_name[0]
+                            if len(testcase_name)>2:
+                                category=testcase_name[2]
+                            break
+    all_testcases.sort(key=lambda s: map(int, s.getAttribute('ganga_schema_version').split('-')[0].split('.')))
+    all_testcases.reverse()
+    for testcase in all_testcases:
+         #print testcase.getAttribute('ganga_schema_version').split('-')[0].split('.')
+         printTestCase(file,testcase, 'Schema')
+
+    appendDetailedFooter(file)
+    file.close()    
+
 def generate2ndLevelReports(reports,categories=[]):
     
     global html_dir
@@ -558,7 +610,7 @@ def getText(nodelist):
 
 def start(cmd_args=None):    
     
-    global code_repository_prefix, code_repository_suffix, stdouts_dir, html_dir
+    global code_repository_prefix, code_repository_suffix, stdouts_dir, html_dir, schema_reports
     
     if cmd_args is None:
         cmd_args = sys.argv[1:]    
@@ -610,6 +662,7 @@ def start(cmd_args=None):
  
     #convert PYTF testing reports files    
     reports={}
+    schema_reports={}
     files = []
     for arg in args:
         files+=glob.glob(arg)
@@ -626,7 +679,11 @@ def start(cmd_args=None):
                 column = "DEFAULT_COL"          
             columns=reports.get(report_name,{})
             columns[column] = xml.dom.minidom.parse(arg)        
-            reports[report_name]=columns
+            if not column == 'Schema':
+                reports[report_name]=columns
+            else:   
+                schema_reports[report_name]=columns
+
     # Globals, cross-category between packages
     categories=['Bugs','GPI']
     #generate statistics page for the 1st level (with 'Bugs' selected as cross category between all top level packages)
@@ -636,6 +693,7 @@ def start(cmd_args=None):
     
     #convert FIGLEAF coverage reports files        
     generateCoverageReports(packages)
+    generateSchemaTestsReport(schema_reports)
 
 def main(config):
     '''
