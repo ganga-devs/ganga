@@ -5,7 +5,7 @@
 ################################################################################
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File.OutputSandboxFile import OutputSandboxFile
+from Ganga.GPIDev.Lib.File.IOutputFile import IOutputFile
 import copy, os
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd, shellEnvUpdate_cmd
 import Ganga.Utility.Config
@@ -17,15 +17,13 @@ from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-class DiracFile(OutputSandboxFile):
+class DiracFile(IOutputFile):
     """todo DiracFile represents a class marking a file ...todo
     """
-    _schema = OutputSandboxFile._schema.inherit_copy()
-#    _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file'),
-#                                    'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-#                                    'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
-#                                    'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
-#                                        })
+    _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file'),
+                                    'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
+                                        })
 
     _schema.datadict['lfn']=SimpleItem(defvalue="",typelist=['str'],doc='The logical file name')
     _schema.datadict['diracSE']=SimpleItem(defvalue=[],typelist=['list'],doc='The dirac SE sites')
@@ -41,11 +39,13 @@ class DiracFile(OutputSandboxFile):
     def __init__(self,name='', **kwds):
         """ name is the name of the output file that has to be written ...
         """
-        super(DiracFile, self).__init__(name, **kwds)
+        super(DiracFile, self).__init__()
+        self.name = name
         self.locations = []
 
     def __construct__(self,args):
-        super(DiracFile,self).__construct__(args)
+        if len(args) == 1 and type(args[0]) == type(''):
+            self.name = args[0]
 
     def _attribute_filter__set__(self,name, value):
         if name == 'lfn':
