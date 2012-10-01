@@ -39,6 +39,10 @@ class Grid(object):
 
         self.config = getConfig('LCG')
 
+        self.wms_list = []
+
+        self.new_config = ""
+        
 #       check that UI has been set up
 #       start up a shell object specific to the middleware
         self.shell = getShell(self.middleware)
@@ -107,12 +111,39 @@ class Grid(object):
             logger.warning('No Virtual Organisation specified in the configuration. The plugin has been disabeled.')
             return None
 
+        # check for WMS list - has it changed?
+        if self.config['GLITE_ALLOWED_WMS_LIST'] == []:
+            self.wms_list = self.config['GLITE_ALLOWED_WMS_LIST'][:]
+            self.new_config = ""
+        elif self.wms_list != self.config['GLITE_ALLOWED_WMS_LIST']:
+            logger.info("Updating allowed WMS list...")
+                       
+            # find path to wms conf file and a temporary file to copy to
+            wms_conf_path = os.path.join( self.shell.env['GLITE_WMS_LOCATION'], 'etc', self.config['VirtualOrganisation'], 'glite_wmsui.conf' )
+            temp_wms_conf = tempfile.mktemp('.conf')
+
+            # read in original
+            orig_text = file(wms_conf_path, "r").read()
+            
+            # find the last bracket and add in the new text
+            pos = orig_text.rfind("]")
+            wms_text = "\nWMProxyEndpoints  =  {" + ",".join( [ "\"%s\"" % wms for wms in self.config['GLITE_ALLOWED_WMS_LIST'] ] ) + "};\n]\n"
+            new_text = orig_text[:pos] + wms_text
+
+            # write the new config file
+            file(temp_wms_conf, "w").write(new_text)
+
+            self.wms_list = self.config['GLITE_ALLOWED_WMS_LIST'][:]
+            self.new_config = temp_wms_conf
+
         # general WMS options
         # NB. please be aware the config for gLite WMS is NOT compatible with the config for EDG RB
         #     although both shares the same command option: '--config'
         if self.config['Config']:
             submit_option += ' --config %s' % self.config['Config']
-
+        elif self.new_config:
+            submit_option += ' --config %s' % self.new_config
+            
         submit_option = ' %s ' % submit_option
 
         logger.debug(msg)
