@@ -5,12 +5,12 @@ usage()
 cat << EOF
 usage: $0 [options] 
 
-The default behaviour (i.e. without the -f/-g/-t flags) of this script is:
-1) Create a new Ganga repository for the indicated Ganga release version.
-2) Run the given version of Ganga, using all repositories found in the user's gangadir.
+The default behaviour is to run the Ganga/test/Schema/Test/Test.gpi file against 
+the given version of Ganga, using all repositories found in the user's gangadir.
 
 
 OPTIONS:
+   -i      Dont' run test(s), just load the repository with a given Ganga version.
    -l      Don't run tests, just list available repositories.
    -r      Absolute location of repository (default: ~/schema_test_gangadir).
    -v      Version of Ganga to execute from /afs/cern.ch/sw/ganga/install (format: 5.8.9-pre).
@@ -22,9 +22,12 @@ EOF
 echo ""
 echo ""
 
-while getopts "lv:t:r:" OPTION
+while getopts "ilv:t:r:" OPTION
 do
     case $OPTION in
+        i)
+            INTERACTIVE=TRUE
+            ;;
         l)
             LIST=TRUE
             ;;
@@ -70,6 +73,11 @@ then
     exit 1
 fi
 
+if [[ -n "$INTERACTIVE" && -z "$TEST_REPO" ]]
+then
+    echo "If using the -i flag, you must supply a repository version with the -t option"
+    exit 1
+fi
 
 
 if [[ -n "$TEST_REPO" ]] 
@@ -78,7 +86,7 @@ then
     REPO_LOC=${GANGADIR}"/"${TEST_REPO}
     if [ ! -d ${REPO_LOC} ]
     then
-        echo ${REPO_LOC} "repository not found. Re-run $0 and generate repository"
+        echo ${REPO_LOC} "repository not found. Run schema_gen.sh to generate repository"
         exit 1
     fi
 fi
@@ -97,9 +105,16 @@ fi
 if [[  -n "$REPO_LOC" ]]
 ##Run the test across one repo
 then
-    echo "Running ${GANGA_EXE} test series against existing repo ${REPO_LOC}"
-    cmd="${GANGA_EXE} --test  -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${TEST_REPO} -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False Ganga/test/Schema/Test/"
-    $cmd
+    if [[ -n "$INTERACTIVE" ]]
+    then
+        echo "Opening existing repo ${REPO_LOC} with Ganga version ${GANGA_EXE}."
+        cmd="${GANGA_EXE} -o[Configuration]gangadir=${REPO_LOC} -o[Configuration]user=testframework"
+        $cmd
+    else
+        echo "Running ${GANGA_EXE} test series against existing repo ${REPO_LOC}"
+        cmd="${GANGA_EXE} --test  -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${TEST_REPO} -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False Ganga/test/Schema/Test/"
+        $cmd
+    fi
 else
 ##Run the test across all repos
     for prev_version in `find ${GANGADIR}/* -maxdepth 0 \( ! -name "repository" \)`
