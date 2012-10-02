@@ -234,8 +234,6 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###            if match:
 ###INDENT###                guidResults.append(mystdout)
 
-###INDENT###            #remove file from output dir
-###INDENT###            #os.system('rm %s' % currentFile)
 ###INDENT###        else:
 ###INDENT###            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
 
@@ -245,6 +243,18 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###    guids = uploadToSE(lcgseItem)
 ###INDENT###    for guid in guids:
 ###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s->%s\\n' % (lcgseItem, guid)) 
+
+###INDENT####lets clear after us    
+###INDENT###for lcgseItem in ###LCGCOMMANDS###:
+###INDENT###    lcgseItems = lcgseItem.split(' ')
+
+###INDENT###    filenameWildChar = lcgseItems[1]
+
+###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
+###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
+
+###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
+###INDENT###        os.system('rm %s' % currentFile)
 """
 
         script = script.replace('###LCGCOMMANDS###', str(lcgCommands))
