@@ -494,7 +494,7 @@ class Job(GangaObject):
             name = name % "_master"
         else:
             name = name % ""
-            
+        files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]    
         return Sandbox.createPackedInputSandbox(files,self.getInputWorkspace(),name)
 
     def createInputSandbox(self, files, master=False):
@@ -503,6 +503,7 @@ class Job(GangaObject):
         """
 
         import Ganga.Core.Sandbox as Sandbox
+        files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]    
         return Sandbox.createInputSandbox(files,self.getInputWorkspace())
 
     def getStringFQID(self):
