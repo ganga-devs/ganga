@@ -1400,6 +1400,7 @@ class Job(GangaObject):
         
     def __setattr__(self, attr, value):
         if attr == 'outputfiles':
+            #reduce duplicate values here, leave only duplicates for LCG, where we can have replicas    
             uniqueValuesDict = []
             uniqueValues = []
         
@@ -1407,12 +1408,13 @@ class Job(GangaObject):
                 key = '%s%s' % (val.__class__.__name__, val.namePattern)               
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
-                    uniqueValues.append(val)    
+                    uniqueValues.append(val) 
+                elif val.__class__.__name__ == 'LCGStorageElementFile':   
+                    uniqueValues.append(val) 
         
             for value in uniqueValues:
                 value.joboutputdir = self.outputdir
 
-            #reduce duplicate values here
             super(Job,self).__setattr__(attr, uniqueValues) 
         elif attr == 'comment':
             super(Job,self).__setattr__(attr, value)
