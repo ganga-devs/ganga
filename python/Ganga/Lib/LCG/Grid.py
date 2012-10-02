@@ -114,6 +114,14 @@ class Grid(object):
         # check for WMS list - has it changed?
         if self.config['GLITE_ALLOWED_WMS_LIST'] == []:
             self.wms_list = self.config['GLITE_ALLOWED_WMS_LIST'][:]
+            
+            # remove old conf
+            if self.new_config != "" and os.path.exists(self.new_config):
+                try:
+                    os.remove(self.new_config)
+                except:
+                    logger.warning("Unable to remove old config file '%s'" % self.new_config)
+                    
             self.new_config = ""
         elif self.wms_list != self.config['GLITE_ALLOWED_WMS_LIST']:
             logger.info("Updating allowed WMS list...")
@@ -134,6 +142,14 @@ class Grid(object):
             file(temp_wms_conf, "w").write(new_text)
 
             self.wms_list = self.config['GLITE_ALLOWED_WMS_LIST'][:]
+
+            # remove old conf
+            if self.new_config != "" and os.path.exists(self.new_config):
+                try:
+                    os.remove(self.new_config)
+                except:
+                    logger.warning("Unable to remove old config file '%s'" % self.new_config)
+                    
             self.new_config = temp_wms_conf
 
         # general WMS options
