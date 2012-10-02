@@ -5,6 +5,8 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from DiracScript import *
+from Ganga.Utility.files import expandfilename
+from Ganga.Utility.Config import getConfig
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -24,22 +26,33 @@ if __name__ == '__main__':
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 class ExeDiracRTHandler(IRuntimeHandler):
     """The runtime handler to run plain executables on the Dirac backend"""
 
     def master_prepare(self,app,appconfig):        
         inputsandbox = app._getParent().inputsandbox[:]
         if type(app.exe) == File:
-            os.system('chmod +x %s' % app.exe.name)
-            inputsandbox.append(app.exe)
+            exefile = os.path.join(shared_path,app.is_prepared.name,os.path.basename(app.exe.name))
+            if not os.path.exists(exefile):
+                exefile = app.exe.name
+                if not os.path.exists(exefile):
+                    msg = 'Executable must exist!'
+                    raise ApplicationConfigurationError(None,msg)
+                    
+            os.system('chmod +x %s' % exefile)
+            inputsandbox.append(File(os.path.join(shared_path,app.is_prepared.name,os.path.basename(exefile))))
         c = StandardJobConfig('',inputsandbox,[],[],None)
         return c
 
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         j = app.getJobObject()
         script = self._create_exe_script(app)
-        c = StandardJobConfig(script,[File(script)],app.args,
-                              j.outputsandbox,app.env)
+        c = StandardJobConfig(exe       = File(name = script),
+                              inputbox  = [],#master inputsandbox added automatically
+                              args      = app.args,
+                              outputbox = j.outputsandbox,
+                              env       = app.env)
 
         dirac_script = DiracScript()
         dirac_script.job_type = 'LHCbJob()'

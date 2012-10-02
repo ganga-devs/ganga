@@ -124,11 +124,11 @@ class Dirac(IBackend):
         def filt(sharedsandbox):
             if sharedsandbox:
                 def shareboxfilter(item):
-                    return item.name.find('_input_sandbox_'+self.getJobObject().application.is_prepared.name) is not -1
+                    return item.name.find('_input_sandbox_'+self.getJobObject().application.is_prepared.name) != -1
                 return shareboxfilter
 
             def nonshareboxfilter(item):
-                return item.name.find('_input_sandbox_'+self.getJobObject().application.is_prepared.name) is -1
+                return item.name.find('_input_sandbox_'+self.getJobObject().application.is_prepared.name) == -1
             return nonshareboxfilter
 
     
@@ -326,7 +326,7 @@ class Dirac(IBackend):
             elif j.subjobs and doSubjobs:
                 logger.info('resetting the backends of \'completing\' and \'failed\' subjobs.')
                 for sj in j.subjobs:
-                    if sj.status is 'completing' or sj.status is 'failed': sj.backend.reset()
+                    if sj.status == 'completing' or sj.status == 'failed': sj.backend.reset()
             if j.master: j.master.updateMasterJobStatus()
     
     def kill(self):
