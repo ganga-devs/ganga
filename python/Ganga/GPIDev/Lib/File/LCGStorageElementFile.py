@@ -92,7 +92,7 @@ class LCGStorageElementFile(IOutputFile):
                 
             if line.strip() == '':      
                 continue
-            #lcgse fillrandom1.root lfc-dteam.cern.ch lcg-cr --vo dteam  -d srm-public.cern.ch->guid:73fb6eae-192a-4dd0-9d47-3158b1810f31
+
             #match the full line with lfc and command           
             if line.startswith('lcgse'):
 
