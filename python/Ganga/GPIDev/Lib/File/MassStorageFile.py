@@ -18,6 +18,7 @@ class MassStorageFile(IOutputFile):
                                     'localDir': SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),        
                                     'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
                                     'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'failureReason' : SimpleItem(defvalue="",doc='reason for the upload failure'),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
                                         })
 
