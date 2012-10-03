@@ -12,7 +12,7 @@ The default behaviour (i.e. without the -f/-g/-t flags) of this script is:
 
 OPTIONS:
    -f      Force the recreation of the test repository. This will overwrite the existing repo, if it exists.
-   -d      Destination of repository (default: ~/schema_test_gangadir).
+   -d      Destination of repository (default: ~/gangadir_schema_test).
    -v      Version of Ganga to execute from /afs/cern.ch/sw/ganga/install (e.g. 5.8.9-pre).
    -r      Location of (temporary) Gangadir in which to create repository. If this exists, an attempt will always be made to delete it.
    -h      Show this message.
@@ -60,8 +60,8 @@ fi
 
 if [[ -z "$DESTINATION" ]]
 then
-    echo 'DESTINATION directory not set. Using default of ~/schema_test_gangadir'
-    DESTINATION=~/schema_test_gangadir
+    echo 'DESTINATION directory not set. Using default of ~/gangadir_schema_test'
+    DESTINATION=~/gangadir_schema_test
 fi
 
 
