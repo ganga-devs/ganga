@@ -108,7 +108,7 @@ then
     if [[ -n "$INTERACTIVE" ]]
     then
         echo "Opening existing repo ${REPO_LOC} with Ganga version ${GANGA_EXE}."
-        cmd="${GANGA_EXE} -o[Configuration]gangadir=${REPO_LOC} -o[Configuration]user=testframework"
+        cmd="${GANGA_EXE} -o[Configuration]gangadir=${REPO_LOC} -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb -o[Configuration]user=testframework"
         $cmd
     else
         echo "Running ${GANGA_EXE} test series against existing repo ${REPO_LOC}"
