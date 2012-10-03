@@ -380,7 +380,7 @@ class Job(GangaObject):
                         outputfile.setLocation()
 
 
-            if (outputfile.hasattr('failureReason') and outputfile.failureReason != ''): 
+            if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''): 
                 postprocessFailure = True
 
         if postprocessFailure:
