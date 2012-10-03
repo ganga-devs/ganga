@@ -105,7 +105,6 @@ class LCGStorageElementFile(IOutputFile):
                     if guid.startswith('ERROR'):
                         self.failureReason = guid[6:]
                         if self._parent != None:
-                            self._parent.force_status('failed')
                             logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
                         
                     elif guid not in self.locations:
