@@ -384,7 +384,8 @@ class Job(GangaObject):
                 postprocessFailure = True
 
         if postprocessFailure:
-            self.force_status('failed') 
+            self.status = 'failed'
+            self._commit()
 
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
