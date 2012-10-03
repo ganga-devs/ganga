@@ -12,7 +12,7 @@ the given version of Ganga, using all repositories found in the user's gangadir.
 OPTIONS:
    -i      Dont' run test(s), just load the repository with a given Ganga version.
    -l      Don't run tests, just list available repositories.
-   -r      Absolute location of repository (default: ~/schema_test_gangadir).
+   -r      Absolute location of repository (default: ~/gangadir_schema_test).
    -v      Version of Ganga to execute from /afs/cern.ch/sw/ganga/install (format: 5.8.9-pre).
    -t      Repository version to test (default is to test all available repositories (format: 5.8.9-pre).
    -h      Show this message.
@@ -49,8 +49,8 @@ done
 
 if [[ ! -d $GANGADIR ]] 
 then
-    echo 'Gangadir option not set. Using default of ~/schema_test_gangadir'
-    GANGADIR=~/schema_test_gangadir
+    echo 'Gangadir option not set. Using default of ~/gangadir_schema_test'
+    GANGADIR=~/gangadir_schema_test
 fi
 
 
