@@ -2185,7 +2185,6 @@ config.addOption('AllowedCEs','','sets allowed computing elements by a regular e
 config.addOption('ExcludedCEs','','sets excluded computing elements by a regular expression')
 
 config.addOption('GLITE_WMS_WMPROXY_ENDPOINT','','sets the WMProxy service to be contacted')
-config.addOption('GLITE_ALLOWED_WMS_LIST',[],'')
 
 config.addOption('MyProxyServer','myproxy.cern.ch','sets the myproxy server')
 config.addOption('RetryCount',3,'sets maximum number of job retry')
