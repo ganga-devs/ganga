@@ -22,8 +22,8 @@ class LCGStorageElementFile(IOutputFile):
     lcgSEConfig = getConfig('Output')['LCGStorageElementFile']['uploadOptions']
 
     _schema = Schema(Version(1,1), {
-        'namePattern'        : SimpleItem(defvalue="",doc='pattern of the file name'),
-        'localDir': SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),    
+        'namePattern' : SimpleItem(defvalue="",doc='pattern of the file name'),
+        'localDir'    : SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),    
         'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
         'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
@@ -32,8 +32,9 @@ class LCGStorageElementFile(IOutputFile):
         'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
-        'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
-        'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
+        'locations'   : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+        'failureReason' : SimpleItem(defvalue="",doc='reason for the upload failure'),
+        'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "LCGStorageElementFile"
     _exportmethods = [ "location" , "setLocation" , "get" , "put" , "getUploadCmd"]
@@ -101,7 +102,13 @@ class LCGStorageElementFile(IOutputFile):
 
                 if lcgSEUpload.startswith(searchPattern):
                     guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                    if guid not in self.locations:
+                    if guid.startswith('ERROR'):
+                        self.failureReason = guid[6:]
+                        if self._parent != None:
+                            self._parent.force_status('failed')
+                            logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because %s" % (str(self._parent.fqid), self.failureReason))
+                        
+                    elif guid not in self.locations:
                         self.locations.append(guid)
 
         postprocesslocations.close()
