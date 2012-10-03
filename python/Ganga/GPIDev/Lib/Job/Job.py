@@ -359,6 +359,8 @@ class Job(GangaObject):
         if len(outputfiles) == 0:
             return
 
+        postprocessFailure = False
+
         for outputfile in outputfiles:
             backendClass = self.backend.__class__.__name__
             outputfileClass = outputfile.__class__.__name__
@@ -376,6 +378,13 @@ class Job(GangaObject):
                     elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
                         outputfile.setLocation()
+
+
+            if (outputfile.hasattr('failureReason') and outputfile.failureReason != ''): 
+                postprocessFailure = True
+
+        if postprocessFailure:
+            self.force_status('failed') 
 
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
