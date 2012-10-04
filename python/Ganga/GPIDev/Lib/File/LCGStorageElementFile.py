@@ -162,7 +162,7 @@ class LCGStorageElementFile(IOutputFile):
             fileName = '%s.gz' % self.namePattern          
 
         for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-            cmd = 'asd' + self.getUploadCmd()
+            cmd = self.getUploadCmd()
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
 
