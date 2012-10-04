@@ -741,10 +741,11 @@ class PrepareNextRelease:
         
         
         for new_release in next_releases:
-            print 'Generating new tags dir based on PACKAGES-%(version)s' % CONFIG      
-            acmd('mkdir %s/data/%s' % (CONFIG['tagsdir_top'],new_release) )
-            toolcmd('ganga-tags-prepare %s/data/%s %s/PACKAGES-%s' % (CONFIG['tagsdir_top'],new_release, CONFIG['configdir'],CONFIG['version']))
-            acmd('fs sa %s/data/%s webserver:afs rliw system:anyuser none '% (CONFIG['tagsdir_top'],new_release) )
+            print 'Generating new tags dir based on PACKAGES-%(version)s' % CONFIG
+            if not os.path.exists('%s/data/%s' % (CONFIG['tagsdir_top'],new_release)):
+                acmd('mkdir %s/data/%s' % (CONFIG['tagsdir_top'],new_release) )
+                toolcmd('ganga-tags-prepare %s/data/%s %s/PACKAGES-%s' % (CONFIG['tagsdir_top'],new_release, CONFIG['configdir'],CONFIG['version']))
+                acmd('fs sa %s/data/%s webserver:afs rliw system:anyuser none '% (CONFIG['tagsdir_top'],new_release) )
 
         print "Saved releases: %s" % next_releases
         fh = open('%(tagsdir_top)s/open_releases' % CONFIG, 'w')
