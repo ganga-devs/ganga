@@ -146,8 +146,7 @@ class MassStorageFile(IOutputFile):
 
             (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
             if exitcode != 0:
-                logger.warning('Error while executing nsls %s command, be aware that Castor commands can be executed only from lxplus, also check if the folder name is correct and existing' % pathToDirName, mystderr)
-                logger.warning('skipping %s for uploading to Castor' % self.namePattern)
+                self.handleUploadFailure(mystderr)
                 return
 
             directoryExists = False 
@@ -159,8 +158,7 @@ class MassStorageFile(IOutputFile):
             if not directoryExists:
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
                 if exitcode != 0:
-                    logger.warning('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (mkdir_cmd, massStoragePath))
-                    logger.warning('skipping %s for uploading to Castor' % self.namePattern)
+                    self.handleUploadFailure(mystderr)
                     return
             
             fileName = self.namePattern
@@ -170,7 +168,7 @@ class MassStorageFile(IOutputFile):
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
                 if exitcode != 0:
-                    logger.warning('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cp_cmd, currentFile, massStoragePath))
+                    self.handleUploadFailure(mystderr)
                 else:
                     logger.info('%s successfully uploaded to mass storage' % currentFile)              
                     location = os.path.join(massStoragePath, os.path.basename(currentFile))
@@ -181,6 +179,13 @@ class MassStorageFile(IOutputFile):
                     if self._parent != None:
                         os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
+    def handleUploadFailure(self, error):
+            
+        self.failureReason = error
+        if self._parent != None:
+            logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
+        else:
+            logger.error("The file can't be uploaded because of %s" % (self.failureReason))
 
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
