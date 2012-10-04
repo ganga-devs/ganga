@@ -162,7 +162,7 @@ class LCGStorageElementFile(IOutputFile):
             fileName = '%s.gz' % self.namePattern          
 
         for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-            cmd = self.getUploadCmd()
+            cmd = 'asd' + self.getUploadCmd()
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
 
@@ -180,7 +180,11 @@ class LCGStorageElementFile(IOutputFile):
                     os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
             else:
-                logger.warning('cmd %s failed with error : %s' % (cmd, mystderr))       
+                self.failureReason = mystderr
+                if self._parent != None:
+                    logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
+                else:
+                    logger.error("The file can't be uploaded because of %s" % (self.failureReason))
                                         
     
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
