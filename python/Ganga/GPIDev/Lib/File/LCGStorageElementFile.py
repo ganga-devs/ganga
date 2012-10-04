@@ -233,7 +233,7 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###        cmd = cmd.replace('filename', currentFile)
 ###INDENT###        cmd = cmd + ' file:%s' % currentFile
 ###INDENT###        printInfo(cmd)  
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputLCG('asd' + cmd)
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputLCG(cmd)
 ###INDENT###        if exitcode == 0:
 ###INDENT###            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
 ###INDENT###            match = re.search('(guid:\S+)',mystdout)
