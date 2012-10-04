@@ -70,9 +70,15 @@ class MassStorageFile(IOutputFile):
             if line.startswith('massstorage'):
 
                 if outputPattern == self.namePattern:
-                    massStorageLocation = outputPath.strip('\n')        
-                    if massStorageLocation not in self.locations:
-                        self.locations.append(massStorageLocation)
+
+                    if outputPath == 'ERROR':
+                        self.failureReason = line[line.find('ERROR')+5:]
+                        if self._parent != None:
+                            logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
+                    else:       
+                        massStorageLocation = outputPath.strip('\n')        
+                        if massStorageLocation not in self.locations:
+                            self.locations.append(massStorageLocation)
      
         postprocesslocations.close()
             
@@ -222,6 +228,7 @@ class MassStorageFile(IOutputFile):
 ###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
 ###INDENT###    if exitcode != 0:
 ###INDENT###        printError('Error while executing nsls %s command, be aware that Castor commands can be executed only ###INDENT###from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
+###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###        continue
 
 ###INDENT###    directoryExists = False 
@@ -234,6 +241,7 @@ class MassStorageFile(IOutputFile):
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
    
 ###INDENT###    filenameWildCharZipped = filenameWildChar
@@ -245,6 +253,7 @@ class MassStorageFile(IOutputFile):
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
+###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###        else:
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFileBaseName)))
 ###INDENT###            #remove file from output dir
