@@ -210,21 +210,6 @@ class RTHandler(IRuntimeHandler):
         return c
         
 
-class DiracRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
-        from Ganga.GPIDev.Lib.File import File
-        rth=RTHandler()
-        prep=rth.prepare(app,appconfig)
-        ## Modify result in order to run on Dirac
-
-        result={}
-        result['vers']=''
-        result['opts']=''
-        result['app']=prep['jobscript']
-        result['inputbox']=prep['inputbox']
-        result['dlls']=''
-        return result
-
 class LCGRTHandler(IRuntimeHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
