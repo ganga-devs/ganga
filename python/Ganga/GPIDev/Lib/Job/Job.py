@@ -338,6 +338,9 @@ class Job(GangaObject):
 
         logger.info('job %s status changed to "%s"',fqid,self.status)
 
+        if self.status == 'completed':
+            self.checkOutputFiles()
+
     def transition_update(self,new_status):
         """Propagate status transitions""" 
         try:
@@ -359,8 +362,6 @@ class Job(GangaObject):
         if len(outputfiles) == 0:
             return
 
-        postprocessFailure = False
-
         for outputfile in outputfiles:
             backendClass = self.backend.__class__.__name__
             outputfileClass = outputfile.__class__.__name__
@@ -379,18 +380,20 @@ class Job(GangaObject):
 
                         outputfile.setLocation()
 
+        #leave it for the moment for debugging
+        #os.system('rm %s' % postprocessLocationsPath)   
 
+    def checkOutputFiles(self):
+
+        postprocessFailure = False
+
+        for outputfile in self.outputfiles:
             if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''): 
                 postprocessFailure = True
 
         if postprocessFailure:
-            self.status = 'failed'
-            self._commit()
-
-        #leave it for the moment for debugging
-        #os.system('rm %s' % postprocessLocationsPath)   
-
-
+            self.force_status('failed')
+        
     def updateMasterJobStatus(self):
         """
         Update master job status based on the status of subjobs.
