@@ -427,7 +427,7 @@ class JobRegistry_Monitor( GangaThread ):
         self.__sleepCounter = config[ 'base_poll_rate' ]
         
     
-    def runMonitoring( self, steps=1, timeout=60, jobs=None ):
+    def runMonitoring( self, jobs=None, steps=1, timeout=60):
         """
         Enable/Run the monitoring loop and wait for the monitoring steps completion.
         Parameters:
@@ -441,7 +441,7 @@ class JobRegistry_Monitor( GangaThread ):
           This method is meant to be used in Ganga scripts to request monitoring on demand. 
         """
     
-        if not type(steps) is int or steps<0:
+        if not type(steps) is int or steps < 1:
             log.warning("The number of monitor steps should be a positive integer")
             return False
          
