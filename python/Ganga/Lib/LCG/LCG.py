@@ -744,7 +744,7 @@ class LCG(IBackend):
         logger.debug('cancelling the master job.')
 
         ## avoid killing master jobs in the final state
-        final_states = ['Aborted','Cancelled','Cleared','Done (Success)','Done (Failed)','Done (Exit Code !=0)']
+        final_states = ['Aborted','Cancelled','Cleared','Done (Success)','Done (Failed)','Done (Exit Code !=0)', 'Done(Success)','Done(Failed)','Done(Exit Code !=0)']
         myids = []
         if isStringLike(self.id):
             if job.backend.status not in final_states:
@@ -1595,10 +1595,10 @@ sys.exit(0)
         if status == 'Running':
             job.updateStatus('running')
      
-        elif status == 'Done (Success)':
+        elif status == 'Done (Success)' or status == 'Done(Success)':
             job.updateStatus('completed')
       
-        elif status in ['Aborted','Cancelled','Done (Exit Code !=0)']:
+        elif status in ['Aborted','Cancelled','Done (Exit Code !=0)', 'Done(Exit Code !=0)']:
             job.updateStatus('failed') 
      
         elif status == 'Cleared':
@@ -1608,7 +1608,7 @@ sys.exit(0)
             logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.getFQID('.'))
             job.updateStatus('failed')
      
-        elif status in ['Submitted','Waiting','Scheduled','Ready','Done (Failed)']:
+        elif status in ['Submitted','Waiting','Scheduled','Ready','Done (Failed)', 'Done(Failed)']:
             pass
      
         else:
@@ -1701,11 +1701,11 @@ sys.exit(0)
                     job.backend.status = info['status']
                     job.backend.reason = info['reason']
                     job.backend.exitcode_lcg = info['exit']
-                    if info['status'] == 'Done (Success)':
+                    if info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)':
                         create_download_task = True
                     else:
                         LCG.updateGangaJobStatus(job, info['status'])
-                elif ( info['status'] == 'Done (Success)' ) and ( job.status not in LCG._final_ganga_states ):
+                elif ( info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and ( job.status not in LCG._final_ganga_states ):
                     create_download_task = True
 
                 if create_download_task:
@@ -1847,11 +1847,11 @@ sys.exit(0)
                         subjob.backend.status = info['status']
                         subjob.backend.reason = info['reason']
                         subjob.backend.exitcode_lcg = info['exit']
-                        if info['status'] == 'Done (Success)':
+                        if info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)':
                             create_download_task = True
                         else:
                             LCG.updateGangaJobStatus(subjob, info['status'])
-                    elif ( info['status'] == 'Done (Success)' ) and ( subjob.status not in LCG._final_ganga_states ):
+                    elif ( info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and ( subjob.status not in LCG._final_ganga_states ):
                         create_download_task = True
 
                     if create_download_task:
@@ -2185,7 +2185,6 @@ config.addOption('AllowedCEs','','sets allowed computing elements by a regular e
 config.addOption('ExcludedCEs','','sets excluded computing elements by a regular expression')
 
 config.addOption('GLITE_WMS_WMPROXY_ENDPOINT','','sets the WMProxy service to be contacted')
-config.addOption('GLITE_ALLOWED_WMS_LIST',[],'')
 
 config.addOption('MyProxyServer','myproxy.cern.ch','sets the myproxy server')
 config.addOption('RetryCount',3,'sets maximum number of job retry')
