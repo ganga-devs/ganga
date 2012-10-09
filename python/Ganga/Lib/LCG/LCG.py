@@ -124,7 +124,7 @@ class LCG(IBackend):
 
     _category = 'backends'
     _name =  'LCG'
-    _exportmethods = ['check_proxy', 'loginfo', 'inspect', 'match']
+    _exportmethods = ['check_proxy', 'loginfo', 'inspect', 'match', 'get_wms_list', 'get_ce_list', 'get_se_list']
 
     _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
                   { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
@@ -744,7 +744,7 @@ class LCG(IBackend):
         logger.debug('cancelling the master job.')
 
         ## avoid killing master jobs in the final state
-        final_states = ['Aborted','Cancelled','Cleared','Done (Success)','Done (Failed)','Done (Exit Code !=0)', 'Done(Success)','Done(Failed)','Done(Exit Code !=0)']
+        final_states = ['Aborted','Cancelled','Cleared','Done (Success)','Done (Failed)','Done (Exit Code !=0)']
         myids = []
         if isStringLike(self.id):
             if job.backend.status not in final_states:
@@ -1595,10 +1595,10 @@ sys.exit(0)
         if status == 'Running':
             job.updateStatus('running')
      
-        elif status == 'Done (Success)' or status == 'Done(Success)':
+        elif status == 'Done (Success)':
             job.updateStatus('completed')
       
-        elif status in ['Aborted','Cancelled','Done (Exit Code !=0)', 'Done(Exit Code !=0)']:
+        elif status in ['Aborted','Cancelled','Done (Exit Code !=0)']:
             job.updateStatus('failed') 
      
         elif status == 'Cleared':
@@ -1608,7 +1608,7 @@ sys.exit(0)
             logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.getFQID('.'))
             job.updateStatus('failed')
      
-        elif status in ['Submitted','Waiting','Scheduled','Ready','Done (Failed)', 'Done(Failed)']:
+        elif status in ['Submitted','Waiting','Scheduled','Ready','Done (Failed)']:
             pass
      
         else:
@@ -1701,11 +1701,11 @@ sys.exit(0)
                     job.backend.status = info['status']
                     job.backend.reason = info['reason']
                     job.backend.exitcode_lcg = info['exit']
-                    if info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)':
+                    if info['status'] == 'Done (Success)':
                         create_download_task = True
                     else:
                         LCG.updateGangaJobStatus(job, info['status'])
-                elif ( info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and ( job.status not in LCG._final_ganga_states ):
+                elif ( info['status'] == 'Done (Success)' ) and ( job.status not in LCG._final_ganga_states ):
                     create_download_task = True
 
                 if create_download_task:
@@ -1847,11 +1847,11 @@ sys.exit(0)
                         subjob.backend.status = info['status']
                         subjob.backend.reason = info['reason']
                         subjob.backend.exitcode_lcg = info['exit']
-                        if info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)':
+                        if info['status'] == 'Done (Success)':
                             create_download_task = True
                         else:
                             LCG.updateGangaJobStatus(subjob, info['status'])
-                    elif ( info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and ( subjob.status not in LCG._final_ganga_states ):
+                    elif ( info['status'] == 'Done (Success)' ) and ( subjob.status not in LCG._final_ganga_states ):
                         create_download_task = True
 
                     if create_download_task:
@@ -1907,6 +1907,86 @@ sys.exit(0)
             
         return matches
 
+    def get_wms_list(self):
+        """Grab a list of WMSs"""
+        mt = self.middleware.upper()
+        out = grids[mt].wrap_lcg_infosites("WMS")
+
+        if out == "":
+            logger.warning("get_wms_list returned no results!")
+            return []
+        
+        # parse the output
+        # assume:  WMSNAME
+        wms_list = []
+        for wms in out.split("\n"):
+            if len(wms) > 0:
+                wms_list.append(wms)
+
+        return wms_list
+
+    def get_ce_list(self):
+        """Grab a list of CEs"""
+        mt = self.middleware.upper()
+        out = grids[mt].wrap_lcg_infosites("CE")
+
+        if out == "":
+            logger.warning("get_ce_list returned no results!")
+            return {}
+        
+        # parse the output
+        # assume: CPU    Free Total Jobs      Running Waiting ComputingElement
+        #         360       4        289          289       0 abaddon.hec.lancs.ac.uk:8443/cream-lsf-hex
+        
+        ce_list = {}
+        for ce in out.split("\n"):
+            if len(ce) > 0 and ce.find("Running") == -1:
+                toks = ce.split()
+                if len(toks) != 6:
+                    continue
+                ce_list[toks[5]] = {'CPU':int(toks[0]), 'Free':int(toks[1]), 'Total Jobs':int(toks[2]), 'Running':int(toks[3]), 'Waiting':int(toks[4]) }
+                
+        return ce_list
+
+    def get_se_list(self):
+        """Grab a list of SEs"""
+        mt = self.middleware.upper()
+        out = grids[mt].wrap_lcg_infosites("SE")
+
+        if out == "":
+            logger.warning("get_se_list returned no results!")
+            return {}
+        
+        # parse the output
+        # assume: Avail Space(kB)  Used Space(kB)  Type  SE
+        #         2713301090      2082969419  gftp  AGLT2_TEST_classicSE
+        
+        se_list = {}
+        for se in out.split("\n"):
+            if len(se) > 0 and se.find("Used Space") == -1:
+                toks = se.split()
+
+                if len(toks) != 4:
+                    continue
+
+                if not toks[3] in se_list.keys():
+                    se_list[toks[3]] = []
+
+                if toks[0] == "n.a":
+                    avail = -1
+                else:
+                    avail = int(toks[0])
+
+                if toks[1] == "n.a":
+                    used = -1
+                else:
+                    used = int(toks[1])
+                    
+                se_list[toks[3]].append({'Avail':avail, 'Used':used, 'Type':toks[2] })
+                
+        return se_list
+        
+        
     def updateExcudedCEsInJdl(self, jdlpath):
 
         import re
@@ -2185,6 +2265,7 @@ config.addOption('AllowedCEs','','sets allowed computing elements by a regular e
 config.addOption('ExcludedCEs','','sets excluded computing elements by a regular expression')
 
 config.addOption('GLITE_WMS_WMPROXY_ENDPOINT','','sets the WMProxy service to be contacted')
+config.addOption('GLITE_ALLOWED_WMS_LIST',[],'')
 
 config.addOption('MyProxyServer','myproxy.cern.ch','sets the myproxy server')
 config.addOption('RetryCount',3,'sets maximum number of job retry')

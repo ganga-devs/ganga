@@ -1090,4 +1090,26 @@ class Grid(object):
         text += "\n]\n"   
         return text
 
+    def wrap_lcg_infosites(self, opts=""):
+        '''Wrap the lcg-infosites command'''
+
+        cmd = 'lcg-infosites --vo %s %s' % (self.config['VirtualOrganisation'], opts)
+
+        if not self.active:
+            logger.warning('LCG plugin not active.')
+            return
+
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
+            return
+
+        logger.debug('lcg-infosites command: %s' % cmd)
+            
+        rc, output, m = self.shell.cmd1('%s' % (cmd), allowed_exit=[0,255])
+
+        if rc != 0:
+            return ""
+        else:
+            return output
+            
     expandjdl=staticmethod(expandjdl)
