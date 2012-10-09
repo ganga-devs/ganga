@@ -23,7 +23,7 @@
         <svnroot>http://svn.cern.ch/guest/ganga</svnroot>
 
         <!-- Prefix to add to all modules when checking out (matching a subdir in the svnROOT) -->
-        <svnprefix></svnprefix>
+        <svnprefix>ganga/python</svnprefix>
 
         <!-- Name of the release branch being built -->
         <release>stable</release> 
