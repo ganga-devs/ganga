@@ -20,7 +20,7 @@
         <build-module>GangaBuild</build-module>
 
         <!-- SVN ROOT where the list of modules being part of the release is picked up -->
-        <svnroot>http://svn.cern.ch/guest/dashboard</svnroot>
+        <svnroot>http://svn.cern.ch/guest/ganga</svnroot>
 
         <!-- Prefix to add to all modules when checking out (matching a subdir in the svnROOT) -->
         <svnprefix></svnprefix>

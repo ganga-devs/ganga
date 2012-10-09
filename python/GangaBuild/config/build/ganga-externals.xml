@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<dashboardBuild xmlns="http://dashboard.cern.ch/build/1">
+<gangaBuild xmlns="http://ganga.cern.ch/build/1">
 
     <externals>
     
@@ -15,4 +15,4 @@
         </component>
         
     </externals>     
-</dashboardBuild>
+</gangaBuild>
