@@ -29,4 +29,9 @@
         <release>automatic</release> 
 
     </config>
+
+    <modules>
+            <module name="Ganga" tag="Ganga-Base-30-115"/>
+    </modules>
+            
 </gangaBuild>
