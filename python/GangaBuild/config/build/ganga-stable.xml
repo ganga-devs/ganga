@@ -26,7 +26,7 @@
         <svnprefix></svnprefix>
 
         <!-- Name of the release branch being built -->
-        <release>automatic</release> 
+        <release>stable</release> 
 
     </config>
 
