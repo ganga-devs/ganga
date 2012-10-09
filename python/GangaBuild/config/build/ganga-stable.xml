@@ -31,7 +31,7 @@
     </config>
 
     <modules>
-            <module name="Ganga" tag="Ganga-Base-30-115"/>
+            <module name="GangaTest" tag="Ganga-Base-30-115"/>
     </modules>
             
 </gangaBuild>

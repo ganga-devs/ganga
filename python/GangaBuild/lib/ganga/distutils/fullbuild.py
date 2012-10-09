@@ -207,6 +207,7 @@ class fullbuild(Command):
         procSt, output2 = commands.getstatusoutput("svn up tags/* --set-depth immediates")
         done = {}
         for line in output.split('\n') + output2.split('\n'):
+            print line
             if not re.match('(At)|(Updated to) revision ', line):
                 if len(line.split('/')) != 3:
                     print "Skipping it... it is a global directory"
