@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glob
 import sys
-sys.path.append('/home/mkenyon/ganga/python/GangaBuild/lib')
+sys.path.append('/home/mkenyon/ganga/BuildBranch/ganga/python/GangaBuild/lib')
 
 from ganga.distutils.config import setup
 
