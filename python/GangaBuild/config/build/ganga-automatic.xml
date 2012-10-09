@@ -1,0 +1,32 @@
+<?xml version="1.0"?>
+<gangaBuild xmlns="http://ganga.cern.ch/build/1">
+
+    <!-- Build Configuration Parameters -->
+    <config>
+
+        <!-- Name included as sender in the emails sent for errors -->
+        <build-name>ganga</build-name>
+
+        <!-- Email included as sender in the emails sent for errors -->
+        <build-email>GangaBuild@cern.ch</build-email>
+
+        <!-- Destination for the emails sent for errors -->
+        <build-contact>mkenyon@cern.ch</build-contact>
+
+        <!-- SVN ROOT where the build module is picked up -->
+        <build-svnroot>http://svn.cern.ch/guest/ganga/trunk/ganga/python</build-svnroot>
+
+        <!-- Name of the build module picked from the SVN repository above -->
+        <build-module>GangaBuild</build-module>
+
+        <!-- SVN ROOT where the list of modules being part of the release is picked up -->
+        <svnroot>http://svn.cern.ch/guest/trunk/ganga/python</svnroot>
+
+        <!-- Prefix to add to all modules when checking out (matching a subdir in the svnROOT) -->
+        <svnprefix></svnprefix>
+
+        <!-- Name of the release branch being built -->
+        <release>automatic</release> 
+
+    </config>
+</dashboardBuild>
