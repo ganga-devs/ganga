@@ -1,6 +1,7 @@
 #!/usr/bin/env python
 import glob
 import sys
+import os
 sys.path.append('/home/mkenyon/ganga/BuildBranch/ganga/python/GangaBuild/lib')
 
 from ganga.distutils.config import setup
@@ -8,9 +9,11 @@ from ganga.distutils.config import setup
 """
 Default distutils 'setup' method overwritten.
 """
+
 setup(
     packages=[
-        'ganga', 'ganga.distutils'
+        'ganga',
+        'ganga.distutils', 'ganga.distutils.xmlutils'
     ],
     
     package_dir={'': 'lib'},

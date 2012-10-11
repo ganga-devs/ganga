@@ -1,7 +1,7 @@
 #!/bin/bash
 date
 
-cd /home/mkenyon/ganga/python/GangaBuild
+cd /home/mkenyon/ganga/BuildBranch/ganga/python/GangaBuild
 
 PIDFILE=/tmp/build.pid
 BUILDFILE=/tmp/build.out
@@ -61,12 +61,12 @@ fi
 echo "NOW WE BUILD (output in $BUILDFILE $TYPE"
 if [ "$TYPE" != "" ];
 then
-  python setup.py fullbuild  --skip-apt --build-file config/build/ganga-$TYPE.xml -a /var/www/html/apt/ -d /var/www/html/build/$TYPE/ > $BUILDFILE 2>&1
+  python setup.py fullbuild  --skip-apt --build-file config/build/ganga-$TYPE.xml -a /home/mkenyon/apt/ -d /home/mkenyon/build/$TYPE/ > $BUILDFILE 2>&1
 
 else
-  python setup.py fullbuild  --skip-apt --build-file config/build/ganga-unstable.xml -a /var/www/html/apt/ -d /var/www/html/build/unstable/ > $BUILDFILE 2>&1
+#  python setup.py fullbuild  --skip-apt --build-file config/build/ganga-unstable.xml -a /var/www/html/apt/ -d /var/www/html/build/unstable/ > $BUILDFILE 2>&1
 
-  python setup.py fullbuild  --skip-apt --build-file config/build/ganga-stable.xml -a /var/www/html/apt/ -d /var/www/html/build/stable > $BUILDFILE 2>&1
+  python setup.py fullbuild  --skip-apt --build-file config/build/ganga-stable.xml -a /home/mkenyon/apt/ -d /home/mkenyon/build/stable > $BUILDFILE 2>&1
 fi
 
 echo "BUILD IS DONE "
