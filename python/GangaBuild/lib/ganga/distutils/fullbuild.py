@@ -69,6 +69,7 @@ class fullbuild(Command):
          + '(docs, bins, srcs, ...)'),
         ('apt=', 'a', 'location of the APT repository'),
         ('contact=', 'c', 'email to send reports on build failures (optional)'),
+        ('build-version=', None, 'Ganga version to build'),
         ('build-name=', None, 'name of the builder, included in the mails sent (optional)'),
         ('build-email=', None, 'email of the builder, sender in the mails (optional)'),
         ('build-svnroot=', None, 'svnroot of repository where the build module is located'),
@@ -98,6 +99,7 @@ class fullbuild(Command):
         self.apt = None
 
         self.contact = None
+        self.build_version = None
         self.build_name = None
         self.build_email = None
         self.build_svnroot = None
@@ -106,6 +108,7 @@ class fullbuild(Command):
         self.svnroot = None
         self.svnprefix = None
         self.release = None
+        self.tagroot = "http://svn.cern.ch/guest/ganga/"
 
         self.skip_apt = 0
         self.skip_yum = 0
@@ -120,6 +123,13 @@ class fullbuild(Command):
         """
         Finalizes the options for this distutils commands.
         """
+        if self.build_version is None:
+            print >> sys.stderr, \
+                "Please specify a Ganga version to build, using the format Ganga-5-8-0 etc"
+            self._feedback("main", 
+                           "Missing Ganga version option.\n\n")
+            return
+
         if self.build_file is None or self.build_external_file is None:
             print >> sys.stderr, \
                 "Please specify both a Ganga build and an external build config file"
@@ -199,31 +209,35 @@ class fullbuild(Command):
 
     def _buildAllModules(self):
         #First, let's take the list of all the modules
+        #ie. just checkout the first level of directories from the tags directory.
         if not os.path.exists('tags'):
-            procSt, output = commands.getstatusoutput("svn co --depth immediates  %s/tags" % self.svnroot)
+            print "Tags directory not found, so checking %sbranches/%s out of SVN" % (self.tagroot, self.build_version)
+            procSt, output = commands.getstatusoutput("svn co  %s/branches/%s" % (self.tagroot, self.build_version))
+            #procSt, output = commands.getstatusoutput("svn co --depth immediates  %s/tags" % self.svnroot)
 
-        procSt, output = commands.getstatusoutput("svn up tags")
-        #Now, let's see if any of them has been modified
-        procSt, output2 = commands.getstatusoutput("svn up tags/* --set-depth immediates")
+            print "procSt: " + str(procSt)
+            print "output: " + str(output)
+        #now update the directory
+        print "Updating local cache of %s" % self.build_version
+#        procSt, output = commands.getstatusoutput("svn up %s" % self.build_version)
+#        print "procSt: " + str(procSt)
+#        print "output: " + str(output)
         done = {}
-        for line in output.split('\n') + output2.split('\n'):
-            print line
-            if not re.match('(At)|(Updated to) revision ', line):
-                if len(line.split('/')) != 3:
-                    print "Skipping it... it is a global directory"
-                    continue
-                m = re.split('\s+', line)
-                moduleName = m[1]
+        procSt, output = commands.getstatusoutput("svn list %s/python" % self.build_version)
+        print "procSt: " + str(procSt)
+        print "svn list: " + str(output)
+        for line in output.split('\n'):
+            line = line[:-1]
+            if not re.match('obsolete', line):
+                print "line in output.split: " + str(line)
+                moduleName = line
+                print "moduleName:" +  str(moduleName)
                 if done.has_key(moduleName):
                      continue
                 done[moduleName] = 1
-                procSt, dirName = commands.getstatusoutput("svn up %s --set-depth infinity" % moduleName)
-                realDirName = re.split('\s+', dirName.split('\n')[0])[1]
-                if not re.match(moduleName, realDirName):
-                    print "The module", moduleName, " does not seem correct... got " , dirName
-                else:
-                    self._buildModule("%s/%s" % (self.workspace, realDirName))
-                commands.getstatusoutput("svn up %s --set-depth empty" % moduleName)
+                print "Attempting to build %s/%s/python/%s" % (self.workspace, self.build_version, moduleName)
+                self._buildModule("%s/%s/python/%s" % (self.workspace, self.build_version, moduleName))
+                return
         print "All modules have been built "
 
     def run(self):
@@ -319,7 +333,7 @@ class fullbuild(Command):
         os.chdir(directory)
         # Run the python distutils targets
         try:
-            os.symlink('%s/arda.dashboard' % self.workspace, '../arda.dashboard')
+            os.symlink('%s/GangaBuild' % self.workspace, '../GangaBuild')
         except:
             pass
 
