@@ -211,8 +211,8 @@ class fullbuild(Command):
         #First, let's take the list of all the modules
         #ie. just checkout the first level of directories from the tags directory.
         if not os.path.exists('tags'):
-            print "Tags directory not found, so checking %sbranches/%s out of SVN" % (self.tagroot, self.build_version)
-            procSt, output = commands.getstatusoutput("svn co  %s/branches/%s" % (self.tagroot, self.build_version))
+            print "Tags directory not found, so checking %stags/%s out of SVN" % (self.tagroot, self.build_version)
+            procSt, output = commands.getstatusoutput("svn co  %s/tags/%s" % (self.tagroot, self.build_version))
             #procSt, output = commands.getstatusoutput("svn co --depth immediates  %s/tags" % self.svnroot)
 
             print "procSt: " + str(procSt)
@@ -237,7 +237,6 @@ class fullbuild(Command):
                 done[moduleName] = 1
                 print "Attempting to build %s/%s/python/%s" % (self.workspace, self.build_version, moduleName)
                 self._buildModule("%s/%s/python/%s" % (self.workspace, self.build_version, moduleName))
-                return
         print "All modules have been built "
 
     def run(self):
@@ -355,8 +354,6 @@ class fullbuild(Command):
             if procSt != 0:
                 errors += c + ' '
                 print "    The %s failed" % (c)
-
-        # TODO: Also run the tests
 
         # Check for errors during build and email results when bad
         if errors != ''  and self.contact is not None:

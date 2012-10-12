@@ -30,8 +30,10 @@
 
     </config>
 
-    <modules>
-            <module name="Ganga" tag="Ganga-5-8-0"/>
+<!--    <modules>
+            <module name="Ganga"/>
+            <module name="GangaAtlas"/>
     </modules> 
+-->
             
 </gangaBuild>
