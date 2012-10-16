@@ -34,19 +34,26 @@ Intented for grid backends where we have to set the outputsandbox patterns for t
 """
 def getOutputSandboxPatterns(job):
 
-    outputPatterns = [getConfig('Output')['PostProcessLocationsFileName']]       
+    outputPatterns = []
 
-    if len(job.outputfiles) > 0:
-        for outputFile in job.outputfiles:   
+    #if this option is True, don't use the new outputfiles mechanism
+    provideLegacyCode = getConfig('Output')['ProvideLegacyCode']
 
-            outputFileClassName = outputFile.__class__.__name__
+    if provideLegacyCode == False:      
 
-            if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'OutputSandboxFile': 
-                if outputFile.namePattern not in outputPatterns:
-                    if outputFile.compressed:
-                        outputPatterns.append('%s.gz' % outputFile.namePattern)
-                    else:       
-                        outputPatterns.append(outputFile.namePattern)
+        outputPatterns.append(getConfig('Output')['PostProcessLocationsFileName'])
+
+        if len(job.outputfiles) > 0:
+            for outputFile in job.outputfiles:   
+
+                outputFileClassName = outputFile.__class__.__name__
+
+                if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'OutputSandboxFile': 
+                    if outputFile.namePattern not in outputPatterns:
+                        if outputFile.compressed:
+                            outputPatterns.append('%s.gz' % outputFile.namePattern)
+                        else:       
+                            outputPatterns.append(outputFile.namePattern)
                 
     return outputPatterns
 
@@ -59,17 +66,22 @@ def getWNCodeForOutputSandbox(job, files, jobid):
     patternsToSandbox = []
     patternsToZip = []  
 
-    if len(job.outputfiles) > 0:
-        for outputFile in job.outputfiles: 
-            
-            outputFileClassName = outputFile.__class__.__name__
-        
-            if outputFileClassName == 'OutputSandboxFile' or (outputFileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
-                patternsToSandbox.append(outputFile.namePattern)
+    #if this option is True, don't use the new outputfiles mechanism
+    provideLegacyCode = getConfig('Output')['ProvideLegacyCode']
 
-                if outputFile.compressed:
-                    patternsToZip.append(outputFile.namePattern)               
-                
+    if provideLegacyCode == False:      
+        files.append(getConfig('Output')['PostProcessLocationsFileName'])
+
+        if len(job.outputfiles) > 0:
+            for outputFile in job.outputfiles: 
+            
+                outputFileClassName = outputFile.__class__.__name__
+        
+                if outputFileClassName == 'OutputSandboxFile' or (outputFileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
+                    patternsToSandbox.append(outputFile.namePattern)
+
+                    if outputFile.compressed:
+                        patternsToZip.append(outputFile.namePattern)               
 
     insertScript = """\n
 from Ganga.Utility.files import recursive_copy
@@ -110,6 +122,10 @@ for fn in final_list_to_copy:
     return insertScript 
 
 def getWNCodeForOutputPostprocessing(job, indent):
+
+    #if this option is True, don't use the new outputfiles mechanism
+    if getConfig('Output')['ProvideLegacyCode']:
+        return ""
 
     #dict containing the list of outputfiles that need to be processed on the WN for every file type    
     outputFilesProcessedOnWN = {}
