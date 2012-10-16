@@ -19,6 +19,8 @@ outputfilesConfig = {}
 
 keys = getConfig('Output').options.keys()
 keys.remove('PostProcessLocationsFileName')
+keys.remove('ProvideLegacyCode')         
+keys.remove('LegacyOutputMapping')              
 
 for key in keys:
     try:
