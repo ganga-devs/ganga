@@ -539,7 +539,7 @@ sys.exit(result)
         from Ganga.Utility.Config import getConfig
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing
         jobidRepr = repr(self.getJobObject().getFQID('.'))
-        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__', getConfig('Output')['PostProcessLocationsFileName']], jobidRepr))
+        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr))
 
         text = text.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, ''))
 
