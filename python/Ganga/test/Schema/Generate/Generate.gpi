@@ -14,45 +14,30 @@ logger.error('#################### RUNNING JOB GENERATOR')
 logger.error('#################### Executing Ganga version: ' + this_version)
 logger.error('#################### Creating repo at: ' + this_repo)
 
-baks = allPlugins.allCategories()['backends']
-apps = allPlugins.allCategories()['applications']
 
-totnumjobs = 0
+
+totnumobs = 0
 #Create an Executable job for each of the available backends
-for bak in baks:
-    appname = 'Executable'
-    new_name = str(this_version + "_" + bak + "_" +  appname)
+for thing in allPlugins.all_dict:
+    for subthing in allPlugins.all_dict[thing]:
+        new_name = str(this_version + "_" + thing + "_" + subthing)
 
-    if len(jobs.select(name=new_name)) == 0:
-        j=Job(backend=bak)
-        j.name = new_name
-        totnumjobs += 1
-        logger.error("Creating Job(backend='"+bak+"', application='"+appname+"')")
-    else:
-        logger.error("Already Existed: Job(backend='"+bak+"', application='"+appname+"')")
-
-#Create one job (targetting the local backend) for each of the available Applications except Gaudi
-#The checks below will prevent creation of the Executable:Local job, as it was done already above
-for app in apps:
-    if not app == 'Gaudi':
-        bakname = 'Local'
-        new_name = str(this_version + "_" + bakname + "_" +  app)
-        if len(jobs.select(name=new_name)) == 0:
-            j=Job(application=app)
-            j.name = new_name
-            totnumjobs += 1
-            logger.error("Creating Job(backend='"+bakname+"', application='"+app+"')")
+        if len(box.select(name=new_name)) == 0:
+            a=subthing
+            box.add(a, new_name)
+            totnumobs += 1
+            logger.error("Creating " + str(new_name))
         else:
-            logger.error("Already Existed: Job(backend='"+bakname+"', application='"+app+"')")
+            logger.error("Already in box: " + str(new_name))
 
-logger.error('total number of jobs')
-logger.error(totnumjobs)
+logger.error('total number of objects')
+logger.error(totnumobs)
 
-if totnumjobs > 0:
-    assert totnumjobs == len(jobs), 'We failed to create the correct number of test jobs. %i created' % (totnumjobs)
+if totnumobs > 0:
+    assert totnumobs == len(box), 'We failed to create the correct number of test objects. %i created' % (totnumobs)
 else:
-    logger.warning("We didn't create any test jobs; perhaps they all existed already?")
-    logger.warning("There are %i jobs in the repository" % (len(jobs)))
+    logger.warning("We didn't create any test objects; perhaps they all existed already?")
+    logger.warning("There are %i objects in the box repository" % (len(box)))
     
 
 
