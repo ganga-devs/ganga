@@ -10,7 +10,8 @@ project GANGA
 #use LHCBDIRAC LHCBDIRAC_v7r8p12
 #use LHCBDIRAC LHCBDIRAC_v7r8p15
 #use LHCBDIRAC LHCBDIRAC_v7r8p35
-use LHCBDIRAC LHCBDIRAC_v7r8p38
+#use LHCBDIRAC LHCBDIRAC_v7r8p38
+use LHCBDIRAC LHCBDIRAC_v7r10p2
 
 build_strategy	with_installarea
 setup_strategy	root
