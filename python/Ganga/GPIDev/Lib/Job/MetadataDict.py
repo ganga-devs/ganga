@@ -48,3 +48,20 @@ class MetadataDict(GangaObject):
         for key, value in dict.iteritems():
             self.__setitem__(key, value)
 #        self.data.update(dict)
+
+
+    def printSummaryTree(self,level = 0, verbosity_level = 0, whitespace_marker = '', out = None, selection = ''):
+        """If this method is overridden, the following should be noted:
+
+        level: the hierachy level we are currently at in the object tree.
+        verbosity_level: How verbose the print should be. Currently this is always 0.
+        whitespace_marker: If printing on multiple lines, this allows the default indentation to be replicated.
+                           The first line should never use this, as the substitution is 'name = %s' % printSummaryTree()
+        out: An output stream to print to. The last line of output should be printed without a newline.'
+        selection: See VPrinter for an explaintion of this.
+        """
+        print >> out, '{'
+        for key, value in self.data.iteritems():
+            print >> out, whitespace_marker, '   ', key, '=', value
+        print >> out, whitespace_marker, '   }'
+        
