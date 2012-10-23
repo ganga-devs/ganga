@@ -10,28 +10,54 @@ logger = getLogger()
 this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
 this_repo=getConfig('Configuration')['gangadir']
 
-logger.error('#################### RUNNING JOB GENERATOR')
-logger.error('#################### Executing Ganga version: ' + this_version)
-logger.error('#################### Creating repo at: ' + this_repo)
+logger.info('#################### RUNNING JOB GENERATOR')
+logger.info('#################### Executing Ganga version: ' + this_version)
+logger.info('#################### Creating repo at: ' + this_repo)
 
 
+#        cls = allPlugins.find(category, classname)
+#        obj  = super(cls, cls).__new__(cls)
+#        obj._proxyObject = None
+#        obj._data = Non
 
 totnumobs = 0
+box.clean(confirm=True)
+
+excludelist = ['LHCbTaskDummySplitter', 
+                'LHCbTask', 
+                'ITask',
+                'TestGangaObject', 
+                'EmptyDataset', 
+                'TestListViewDataset', 
+                'JobTree',
+                'TestDataset']
 #Create an Executable job for each of the available backends
-for thing in allPlugins.all_dict:
-    for subthing in allPlugins.all_dict[thing]:
-        new_name = str(this_version + "_" + thing + "_" + subthing)
+for category in allPlugins.all_dict:
+    for clsname in allPlugins.all_dict[category]:
+        if clsname not in excludelist:
+            logger.info('##########################################')
+            cls = allPlugins.find(category, clsname)
+            logger.info("Class: " +str(cls))
+#            obj = super(cls, cls).__new__(cls)
+#            logger.info(obj)
 
-        if len(box.select(name=new_name)) == 0:
-            a=subthing
-            box.add(a, new_name)
-            totnumobs += 1
-            logger.error("Creating " + str(new_name))
-        else:
-            logger.error("Already in box: " + str(new_name))
+            new_name = str(this_version + "_" + category + "_" + clsname)
+            logger.info("Ganga Box name: " + str(new_name))
 
-logger.error('total number of objects')
-logger.error(totnumobs)
+            if len(box.select(name=new_name)) == 0:
+                try:
+                    totnumobs += 1
+                    logger.info(str(new_name) + " not found in box...adding object #" + str(totnumobs) + "...")
+                    box.add(cls.__call__(), new_name)
+                except:
+                    logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
+                    raise
+            else:
+                logger.warn("Already in box: " + str(new_name))
+
+logger.info('##########################################')
+logger.info('Total number of objects added to Box: ' + str(totnumobs))
+logger.info('##########################################')
 
 if totnumobs > 0:
     assert totnumobs == len(box), 'We failed to create the correct number of test objects. %i created' % (totnumobs)

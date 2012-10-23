@@ -17,55 +17,32 @@ logger.error('#################### Using repo at: ' + this_repo)
 
 
 #count the number of directories in this_repo from the cnt file
-num_job_index_files = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/*.index"))
-counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/cnt"
+num_box_index_files = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/*.index"))
+counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/cnt"
 
 f = open(counter_file_name, 'r') 
-#read_data should hold a single integer value representing the total number of jobs in the repo.
+#read_data should hold a single integer value representing the total number of objects in the box repo.
 read_data = f.read()
 f.close()
 
-logger.info("number of index files " + str(num_job_index_files))
-logger.info("number of jobs " + str(len(jobs)))
+logger.info('##########################################')
+logger.info("Number of index files " + str(num_box_index_files))
+logger.info("Number of objects in box: " + str(len(box)))
+logger.info('##########################################')
 
-assert num_job_index_files == len(jobs), "The number of index files " + str(num_job_index_files) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/jobs/0xxx/ didn't match the number of jobs available in the GPI (" +str(len(jobs))+")"
-assert len(jobs) == int(read_data), "The number of jobs in the repository (" + str(len(jobs)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
+assert num_box_index_files == len(box), "The number of index files " + str(num_box_index_files) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
+assert len(box) == int(read_data), "The number of objects in the box repository (" + str(len(box)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
 
-print jobs
-for thing in jobs:
+print box
+index = 0
+for thing in box:
+    logger.info('##########################################')
     try:
-        b=thing.__str__()
+        b=box[index].__str__()
+        logger.info('Box object #' + str(index) + ' read successfully.')
     except Exception, e:
-        logger.error('Exception for ' + str(thing.id) + ": " + thing.name)
-        logger.warn(e)
+        logger.error('Exception for object #' + str(index) + ' in box.')
+        logger.error(box[index])
+        logger.error(e)
+    index += 1
 
-
-
-#restart job repository
-#reg = getRegistry("jobs")
-#reg.shutdown()
-#try:
-#    reg.startup()
-#except Exception, e:
-#    logger.warn(e)
-#
-##see if there are any broken jobs
-#if len(jobs.incomplete_ids()) > 0:
-#    for inj in jobs.incomplete_ids():
-#        try:
-#            jobs(inj).reload()
-#        except Exception, e:
-#            logger.warn(e)
-        
-
-
-
-
-
-#only want to create one set of test jobs per release
-#if the jobs being created exists, assume we're retesting a release and remove/recreate the jobs for that release
-
-#also use an EXCLUDE_VERSION value so that we can permanently disable known, bad versions from being tested
-#in the future?
-#NO - THAT'S NOT A PROBLEM because the test failures should go away when we release a fixed version.
-# just maintain a matrix of what version works with what.
