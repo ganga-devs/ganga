@@ -44,7 +44,10 @@ for category in allPlugins.all_dict:
             new_name = str(this_version + "_" + category + "_" + clsname)
             logger.info("Ganga Box name: " + str(new_name))
 
-            if len(box.select(name=new_name)) == 0:
+#the following if statement (using box.select) will not work on Ganga versions < 5.8.17 (see bug #98232)
+#therefore, use the following to generate schemas prior to that
+            if new_name not in box.__str__():
+#            if len(box.select(name=new_name)) == 0:
                 try:
                     totnumobs += 1
                     logger.info(str(new_name) + " not found in box...adding object #" + str(totnumobs) + "...")
