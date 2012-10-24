@@ -438,7 +438,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         outputconfig.addOption('PostProcessLocationsFileName', '__postprocesslocations__', 'name of the file that will contain the locations of the uploaded from the WN files')
 
-        outputconfig.addOption('ProvideLegacyCode', True, 'if True whatever is set to outputfiles will be set to outputsandox and outputdata and the new mechanism of outputfiles will not be used')
+        outputconfig.addOption('ProvideLegacyCode', True, 'if True, the old output mechanism with outputsandox and outputdata will be used, if False, the new outputfiles mechanism will be used')
 
         outputconfig.addOption('LCGStorageElementFile',{'fileExtensions':['*.root'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN'}, 'uploadOptions':{'LFC_HOST':'lfc-dteam.cern.ch', 
 'dest_SRM':'srm-public.cern.ch'}},'fileExtensions:list of output files that will be written to LCG SE, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual LCG upload')
