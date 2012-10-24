@@ -61,6 +61,7 @@ class GangaTestLoader:
         self.userConfig = ":".join([os.path.expanduser(syscfg['GANGA_CONFIG_FILE']),
                                     syscfg['GANGA_CONFIG_PATH']])
         
+        self.userID = syscfg['Configuration']['user']
         #default path to search tests in
         self.testsTopDir = os.getcwd()
         
@@ -173,7 +174,7 @@ class GangaTestLoader:
             self.configAlias = os.path.splitext(config)[0]
             report_name = "%s__%s"%(pattern.replace("*","ALL"),self.configAlias)
             if self.schema_test is not '':
-                report_name = "%s_%s__%s"%(pattern.replace("*","ALL"),self.schema_test,self.configAlias)
+                report_name = "%s_%s_%s__%s"%(pattern.replace("*","ALL"),self.schema_test,self.userID,self.configAlias)
             print "Using configuration: %s" % config_path 
             print "Report ID: %s" % report_name
 
