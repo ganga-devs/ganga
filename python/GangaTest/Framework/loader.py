@@ -520,7 +520,7 @@ def %(method_name)s(self):
             #when doing release testing we generate the coverage analysis reports
             #and generatate a well defined output dir structure
             if self.schema_test is not '':
-                output_path=os.path.join(self.outputPrefix,test_relpath.replace("/",".")+"_"+self.schema_test+"_"+ self.configAlias)
+                output_path=os.path.join(self.outputPrefix,test_relpath.replace("/",".")+"_"+self.schema_test+"_"+self.userID+"_"+ self.configAlias)
             else:
                 output_path=os.path.join(self.outputPrefix,test_relpath.replace("/",".")+"__"+ self.configAlias)
             coverage_path = "%s.figleaf" % output_path
