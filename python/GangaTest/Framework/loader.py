@@ -61,7 +61,7 @@ class GangaTestLoader:
         self.userConfig = ":".join([os.path.expanduser(syscfg['GANGA_CONFIG_FILE']),
                                     syscfg['GANGA_CONFIG_PATH']])
         
-        self.userID = syscfg['Configuration']['user']
+        self.userID = getConfig('Configuration')['user']
         #default path to search tests in
         self.testsTopDir = os.getcwd()
         
