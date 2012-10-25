@@ -7,12 +7,16 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
+from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
+
+from Ganga.Utility.Config import getConfig
+configDQ2 = getConfig('DQ2')
 
 import os
 
@@ -190,9 +194,22 @@ class AtlasUnit(IUnit):
          j.outputdata = trf.outputdata.clone()
       else:
          j.outputdata = GPI.DQ2OutputDataset()
-               
-      dsn = [trf.getContainerName()[:-1], self.name, "j%i.t%i.trf%i.u%i" %
-             (j.id, task.id, trf.getID(), self.getID())]
+
+      # check for ds name specified and length
+      if j.outputdata._impl._name == "DQ2OutputDataset" and j.outputdata.datasetname != "":
+         dsn = ["user", getNickname(), j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
+                (j.id, task.id, trf.getID(), self.getID())]
+
+         if len(".".join(dsn)) > configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2:
+            dsn = ["user", getNickname(), j.outputdata.datasetname[: - (len(".".join(dsn)) - configDQ2['OUTPUTDATASET_NAMELENGTH'] + 2)], "j%i.t%i.trf%i.u%i" %
+                   (j.id, task.id, trf.getID(), self.getID())]
+      else:
+         dsn = [trf.getContainerName()[:-1], self.name, "j%i.t%i.trf%i.u%i" %
+                (j.id, task.id, trf.getID(), self.getID())]
+
+         if len(".".join(dsn)) > configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2:
+            dsn = [trf.getContainerName()[:-1], self.name[: - (len(".".join(dsn)) - configDQ2['OUTPUTDATASET_NAMELENGTH'] + 2)], "j%i.t%i.trf%i.u%i" %
+                   (j.id, task.id, trf.getID(), self.getID())]
             
       j.outputdata.datasetname = '.'.join(dsn).replace(":", "_").replace(" ", "").replace(",","_")
                            
