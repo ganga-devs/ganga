@@ -22,6 +22,7 @@ class DiracFile(IOutputFile):
     """
     _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
                                      'localDir'      : SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),    
+                                     'joboutputdir'  : SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
                                      'locations'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
                                      'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere'),
                                      'lfn'           : SimpleItem(defvalue="",typelist=['str'],doc='The logical file name'),
@@ -41,26 +42,30 @@ class DiracFile(IOutputFile):
     _name = "DiracFile"
     _exportmethods = [  "get", "getMetadata", 'remove', 'upload' ]
         
-    def __init__(self,namePattern='', **kwds):
+    def __init__(self,namePattern='',  localDir='', **kwds):
         """ name is the name of the output file that has to be written ...
         """
         super(DiracFile, self).__init__()
         self.namePattern = namePattern
+        self.localDir = localDir
         self.locations = []
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
-            self.name = args[0]
+            self.namePattern = args[0]
+        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
+            self.namePattern = args[0]
+            self.localDir = args[1]     
 
     def _attribute_filter__set__(self,name, value):
         if name == 'lfn':
-            self.name = os.path.split(value)[1]
+            self.namePattern = os.path.split(value)[1]
         return value
 
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "DiracFile(name='%s', lfn='%s')" % (self.namePattern, self.lfn)
+        return "DiracFile(namePattern='%s', lfn='%s')" % (self.namePattern, self.lfn)
     
 
     def setLocation(self):
@@ -140,10 +145,22 @@ class DiracFile(IOutputFile):
         'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
         if self.namePattern == "":
             raise GangaException('Can\'t upload a file without a local file name.')
-        if self.localDir == '':
-            raise GangaException('localDir attribute is empty, don\'t know from which dir to take the file' )
         if self.lfn == "":
             self.lfn = os.path.join(configDirac['DiracLFNBase'], os.path.split(self.namePattern)[1])
+
+
+        sourceDir = ''
+
+        #if used as a stand alone object
+        if self._parent == None:
+            if self.localDir == '':
+                raise GangaException('localDir attribute is empty, don\'t know from which dir to take the file' )
+            else:
+                sourceDir = self.localDir
+        else:
+            sourceDir = self.joboutputdir
+
+
 
 
             #raise GangaException('Can\'t upload a file without a logical file name (LFN).')
@@ -154,9 +171,9 @@ class DiracFile(IOutputFile):
         self._getEnv()
         for se in storage_elements:
             if self.guid:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(self.localDir,self.namePattern), se, guid), self._env)
+                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, guid), self._env)
             else:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, os.path.join(self.localDir,self.namePattern), se), self._env)
+                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se), self._env)
 
             if not rc:
                 self.diracSE = [se]
@@ -166,7 +183,8 @@ class DiracFile(IOutputFile):
                 except:
                     self.guid = None
                 return stdout
-        return "Error in uploading file %s. : %s"% (self.name,stdout)
+        self.failureReason = "Error in uploading file %s. : %s"% (self.namePattern,stdout)
+        return self.failureReason
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
@@ -220,13 +238,13 @@ class DiracFile(IOutputFile):
 """
 
         for f in outputFiles:
-            if f.name == "":
+            if f.namePattern == "":
                 logger.warning('Skipping dirac SE file %s as it\'s name attribute is not defined'% str(f))
                 continue
             cmd += """
 ###INDENT###if os.path.exists('###NAME###'):
 ###INDENT###    for se in ###SE###:"""
-            if f.name in patternsToZip:
+            if f.namePattern in patternsToZip:
                 cmd +="""
 ###INDENT###        if not shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME###.gz %s ###GUID###' % se, env)[0]:
 ###INDENT###            try:                
@@ -251,9 +269,9 @@ class DiracFile(IOutputFile):
             # Set LFN here but when job comes back test which worked
             # by which in file, and remove appropriate failed ones
             if f.lfn == "":
-                f.lfn=os.path.join(configDirac['DiracLFNBase'], os.path.split(f.name)[1])
+                f.lfn=os.path.join(configDirac['DiracLFNBase'], os.path.split(f.namePattern)[1])
             cmd = cmd.replace('###LFN###',  f.lfn         )
-            cmd = cmd.replace('###NAME###', f.name        )
+            cmd = cmd.replace('###NAME###', f.namePattern )
             if f.diracSE:
                 cmd = cmd.replace('###SE###',   str(f.diracSE))                
             else:
