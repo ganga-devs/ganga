@@ -75,6 +75,7 @@ fi
 
 
 GANGA_EXE=/afs/cern.ch/sw/ganga/install/${VERSION}/bin/ganga
+GANGA_GEN=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Generate/Generate.gpi
 
 
 if [ ! -e ${GANGA_EXE} ]
@@ -103,7 +104,7 @@ then
         rm -rf ${NEW_REPO_LOC}
     fi
     echo "Generating repository:" ${GANGADIR}
-    cmd="${GANGA_EXE}  --test -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES  Ganga/test/Schema/Generate/Generate.gpi"
+    cmd="${GANGA_EXE}  -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES $GANGA_GEN"
     echo $cmd
     $cmd
     echo "Moving repository: " ${GANGADIR} "->" ${NEW_REPO_LOC}

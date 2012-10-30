@@ -111,6 +111,9 @@ case `whoami` in
         export LOAD_PACKAGES='GangaTest:GangaLHCb' ;;
 esac
 
+GANGA_TEST=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Test/Test.gpi
+
+
 if [[  -n "$REPO_LOC" ]]
 ##Run the test across one repo
 then
@@ -122,7 +125,7 @@ then
         $cmd
     else
         echo "Running ${GANGA_EXE} test series against existing repo ${REPO_LOC}"
-        cmd="${GANGA_EXE} --test  -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${TEST_REPO} -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False Ganga/test/Schema/Test/"
+        cmd="${GANGA_EXE} --test  -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${TEST_REPO} -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False $GANGA_TEST"
         $cmd
     fi
 else
@@ -131,7 +134,7 @@ else
     do
         prev_version=`basename $prev_version`
         echo "Running version ${GANGA_EXE} test series against existing repo ${prev_version}"
-        cmd="${GANGA_EXE} --test -o[Configuration]gangadir=${GANGADIR} -o[TestingFramework]SchemaTesting=${prev_version}   -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False Ganga/test/Schema/Test/"
+        cmd="${GANGA_EXE} --test -o[Configuration]gangadir=${GANGADIR} -o[TestingFramework]SchemaTesting=${prev_version}   -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False $GANGA_TEST"
         $cmd
     done
 fi
