@@ -84,6 +84,16 @@ then
 fi
 
 
+#find out who's running this script
+case `whoami` in 
+    gangage )
+        export LOAD_PACKAGES='GangaTest' ;;
+    gangaat )
+        export LOAD_PACKAGES='GangaTest:GangaAtlas' ;;
+    gangalb )
+        export LOAD_PACKAGES='GangaTest:GangaLHCb' ;;
+esac
+
 ##Run the repo generation 
 if [ ! -d ${NEW_REPO_LOC} ] || [ $FORCE == 1 ]
 then
@@ -93,7 +103,7 @@ then
         rm -rf ${NEW_REPO_LOC}
     fi
     echo "Generating repository:" ${GANGADIR}
-    cmd="${GANGA_EXE}  --very-quiet -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb  /afs/cern.ch/sw/ganga/install/5.8.15-pre/python/Ganga/test/Schema/Generate/Generate.gpi"
+    cmd="${GANGA_EXE}  --test -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES  Ganga/test/Schema/Generate/Generate.gpi"
     echo $cmd
     $cmd
     echo "Moving repository: " ${GANGADIR} "->" ${NEW_REPO_LOC}
