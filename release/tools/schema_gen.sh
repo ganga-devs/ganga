@@ -80,6 +80,7 @@ fi
 
 GANGA_EXE=/afs/cern.ch/sw/ganga/install/${VERSION}/bin/ganga
 if [[ -z "$GEN_VER" ]]
+then
     GANGA_GEN=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Generate/Generate.gpi
 else
     GANGA_GEN=/afs/cern.ch/sw/ganga/install/${GEN_VER}/python/Ganga/test/Schema/Generate/Generate.gpi
