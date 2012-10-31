@@ -81,11 +81,15 @@ class DiracFile(IOutputFile):
         
         for line in postprocesslocations.readlines():
             if line.startswith('DiracFile'):
-                names = line.split(':')[1].split('->')
-                if names[0] == self.namePattern:
-                    self.lfn = names[1]
-                    self.diracSE = line.split(':')[2]
-                    self.guid = line.split(':')[3]
+                if line.find('->') >=0:
+                    names = line.split(':')[1].split('->')
+                    if names[0] == self.namePattern:
+                        self.lfn = names[1]
+                        self.diracSE= line.split(':')[2]
+                        self.guid = line.split(':')[3]
+                elif line.find('###FAILED###') >=0:###problem uploading to se
+                    self.failureReason = line.split(':')[2]
+                
         postprocesslocations.close()
 
     def _getEnv(self):
@@ -169,20 +173,23 @@ class DiracFile(IOutputFile):
             storage_elements=configLHCb['DiracSpaceTokens']
 
         self._getEnv()
+        stderr=''
+        stdout=''
         for se in storage_elements:
             if self.guid:
                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, guid), self._env)
             else:
                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se), self._env)
 
-            if not rc:
-                self.diracSE = [se]
-                try:
-                    import datetime
-                    self.guid = eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])['Successful'][self.lfn]['GUID']
-                except:
-                    self.guid = None
-                return stdout
+            if rc: continue
+
+            self.diracSE = [se]
+            try:
+                import datetime
+                self.guid = eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])['Successful'][self.lfn]['GUID']
+            except:
+                self.guid = None
+            return stdout
         self.failureReason = "Error in uploading file %s. : %s"% (self.namePattern,stdout)
         return self.failureReason
 
@@ -246,7 +253,8 @@ class DiracFile(IOutputFile):
 ###INDENT###    for se in ###SE###:"""
             if f.namePattern in patternsToZip:
                 cmd +="""
-###INDENT###        if not shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME###.gz %s ###GUID###' % se, env)[0]:
+###INDENT###        rc, stdout, stderr = shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME###.gz %s ###GUID###' % se, env)
+###INDENT###        if not rc:
 ###INDENT###            try:                
 ###INDENT###                import datetime
 ###INDENT###                guid = eval(shellEnvUpdate_cmd('dirac-dms-lfn-metadata ###LFN###', env)[1])['Successful']['###LFN###']['GUID']
@@ -254,10 +262,13 @@ class DiracFile(IOutputFile):
 ###INDENT###            except:
 ###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###.gz->###LFN###:%s:NotAvailable\n' % se)                
 ###INDENT###            break
+###INDENT###        elif se == ###SE###[-1]:
+###INDENT###            ###LOCATIONSFILE###.write('DiracFile:###FAILED###:%s:NotAvailable\n'% stdout)
 """
             else:
                 cmd += """
-###INDENT###        if not shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME### %s ###GUID###' % se, env)[0]:
+###INDENT###        rc, stdout, stderr = shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME### %s ###GUID###' % se, env)
+###INDENT###        if not rc:
 ###INDENT###            try:                
 ###INDENT###                import datetime
 ###INDENT###                guid = eval(shellEnvUpdate_cmd('dirac-dms-lfn-metadata ###LFN###', env)[1])['Successful']['###LFN###']['GUID']
@@ -265,6 +276,8 @@ class DiracFile(IOutputFile):
 ###INDENT###            except:
 ###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###->###LFN###:%s:NotAvailable\n' % se)                
 ###INDENT###            break
+###INDENT###        elif se == ###SE###[-1]:
+###INDENT###            ###LOCATIONSFILE###.write('DiracFile:###FAILED###:%s:NotAvailable\n'% stdout)
 """
             # Set LFN here but when job comes back test which worked
             # by which in file, and remove appropriate failed ones
