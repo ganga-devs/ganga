@@ -226,9 +226,6 @@ def printTestCase(out,testcase,config=None):
             if config != 'Schema':
                 stdout = name.split()[0].replace("/",".").replace(":",".")+"__"+config
             else:
-                print "################################################"
-                print str(testcase.getAttribute('ganga_schema_userid'))
-                print "################################################"
                 stdout = name.split()[0].replace("/",".").replace(":",".")+"_"+testcase.getAttribute('ganga_schema_version')+"_"+testcase.getAttribute('ganga_schema_userid')+"_"+config
          
         info = info.strip()
