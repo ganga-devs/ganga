@@ -26,7 +26,7 @@ class IUnit(GangaObject):
    _category = 'units'
    _name = 'IUnit'
    _exportmethods = [  ]
-   _hidden = 1
+   _hidden = 0
    
 ## Special methods:
    def __init__(self):
