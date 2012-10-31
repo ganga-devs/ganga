@@ -24,6 +24,7 @@ class ITask(GangaObject):
                        'insertTransform', 'removeTransform', 'table']
 
     _tasktype = "ITask"
+    _hidden = 1
     
     default_registry = "tasks"
     
