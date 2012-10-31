@@ -242,7 +242,7 @@ def printTestCase(out,testcase,config=None):
         if config != 'Schema':
             name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (name,code_repository_prefix+testcase_src+ext+code_repository_suffix)
         else:
-            name = '<strong>Schema: &nbsp;&nbsp;%s<br>User: &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'), testcase.getAttribute('ganga_schema_userid'),code_repository_prefix+testcase_src+ext+code_repository_suffix)
+            name = '<strong>%s: %s</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'), testcase.getAttribute('ganga_schema_userid'),code_repository_prefix+testcase_src+ext+code_repository_suffix)
         #XXX - uncomment this if you want to get a link to individual coverage reports for each testcase
         #name = '%s <a class="small" href="coverage/%s/index.htm">[Coverage Report]</a>' % (name,stdout )
         #if bug, link to savannah page
