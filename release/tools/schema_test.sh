@@ -111,7 +111,7 @@ case `whoami` in
         export LOAD_PACKAGES='GangaTest:GangaLHCb' ;;
 esac
 
-GANGA_TEST=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Test/Test.gpi
+GANGA_TEST='Ganga/test/Schema/Test'
 
 
 if [[  -n "$REPO_LOC" ]]
