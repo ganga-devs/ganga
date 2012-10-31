@@ -15,6 +15,7 @@ OPTIONS:
    -d      Destination of repository (default: ~/gangadir_schema_test).
    -v      Version of Ganga to execute from /afs/cern.ch/sw/ganga/install (e.g. 5.8.9-pre).
    -r      Location of (temporary) Gangadir in which to create repository. If this exists, an attempt will always be made to delete it.
+   -g      Version of Ganga from which the Generate.gpi file is taken. This is necessary to generate repositories for Ganga versions that pre-date the inclusion of Generate.gpi
    -h      Show this message.
 EOF
 }
@@ -23,11 +24,14 @@ echo ""
 echo ""
 
 FORCE=0
-while getopts "d:fv:r" OPTION
+while getopts "d:fv:rg:" OPTION
 do
     case $OPTION in
         f)
             FORCE=1
+            ;;
+        g)
+            GEN_VER=$OPTARG
             ;;
         v)
             VERSION=$OPTARG
@@ -75,8 +79,11 @@ fi
 
 
 GANGA_EXE=/afs/cern.ch/sw/ganga/install/${VERSION}/bin/ganga
-GANGA_GEN=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Generate/Generate.gpi
-
+if [[ -z "$GEN_VER" ]]
+    GANGA_GEN=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Generate/Generate.gpi
+else
+    GANGA_GEN=/afs/cern.ch/sw/ganga/install/${GEN_VER}/python/Ganga/test/Schema/Generate/Generate.gpi
+fi
 
 if [ ! -e ${GANGA_EXE} ]
 then

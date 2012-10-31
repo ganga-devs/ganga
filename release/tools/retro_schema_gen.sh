@@ -9,5 +9,5 @@
 
 for minorversion in `seq 0 17`   
 do
-/afs/cern.ch/sw/ganga/install/5.8.18-pre/release/tools/schema_gen.sh -v 5.8.$minorversion
+/afs/cern.ch/sw/ganga/install/5.8.18-pre/release/tools/schema_gen.sh -g 5.8.18-pre -v 5.8.$minorversion
 done
