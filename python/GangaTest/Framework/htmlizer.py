@@ -226,7 +226,10 @@ def printTestCase(out,testcase,config=None):
             if config != 'Schema':
                 stdout = name.split()[0].replace("/",".").replace(":",".")+"__"+config
             else:
-                stdout = name.split()[0].replace("/",".").replace(":",".")+"_"+testcase.getAttribute('ganga_schema_version')+"_"+config
+                print "################################################"
+                print str(testcase.getAttribute('ganga_schema_userid'))
+                print "################################################"
+                stdout = name.split()[0].replace("/",".").replace(":",".")+"_"+testcase.getAttribute('ganga_schema_version')+"_"+testcase.getAttribute('ganga_schema_userid')+"_"+config
          
         info = info.strip()
         if info: #wrap in <pre>
@@ -239,7 +242,7 @@ def printTestCase(out,testcase,config=None):
         if config != 'Schema':
             name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (name,code_repository_prefix+testcase_src+ext+code_repository_suffix)
         else:
-            name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'),code_repository_prefix+testcase_src+ext+code_repository_suffix)
+            name = '<strong>%s<br>[%s account]</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'), testcase.getAttribute('ganga_schema_userid'),code_repository_prefix+testcase_src+ext+code_repository_suffix)
         #XXX - uncomment this if you want to get a link to individual coverage reports for each testcase
         #name = '%s <a class="small" href="coverage/%s/index.htm">[Coverage Report]</a>' % (name,stdout )
         #if bug, link to savannah page
@@ -393,6 +396,7 @@ def generateSchemaTestsReport(schema_reports):
                 for testcase in testcases:
                     if testcase.nodeType == testcase.ELEMENT_NODE:
                         testcase.setAttribute('ganga_schema_version', report_line.split("_")[1])
+                        testcase.setAttribute('ganga_schema_userid', report_line.split("_")[2])
                         package = None
                         all_testcases.append(testcase)
 
