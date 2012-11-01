@@ -58,7 +58,7 @@ for category in allPlugins.all_dict:
                     box.add(cls.__call__(), new_name)
                 except:
                     logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
-                    raise
+                    #raise
             else:
                 logger.warn("Already in box: " + str(new_name))
 
