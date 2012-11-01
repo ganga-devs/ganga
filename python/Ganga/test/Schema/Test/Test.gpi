@@ -1,4 +1,4 @@
-import sys, glob
+import sys, glob, os
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, setConfigOption
@@ -17,7 +17,12 @@ logger.error('#################### Using repo at: ' + this_repo)
 
 
 #count the number of directories in this_repo from the cnt file
-num_box_index_files = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/*.index"))
+num_box_obj_dirs = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/*.index"))
+
+dir = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/"
+
+num_box_obj_dirs = len([name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))])
+
 counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/cnt"
 
 f = open(counter_file_name, 'r') 
@@ -26,11 +31,11 @@ read_data = f.read()
 f.close()
 
 logger.info('##########################################')
-logger.info("Number of index files " + str(num_box_index_files))
+logger.info("Number of index files " + str(num_box_obj_dirs))
 logger.info("Number of objects in box: " + str(len(box)))
 logger.info('##########################################')
 
-assert num_box_index_files == len(box), "The number of index files " + str(num_box_index_files) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
+assert num_box_obj_dirs== len(box), "The number of index files " + str(num_box_obj_dirs) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
 assert len(box) == int(read_data), "The number of objects in the box repository (" + str(len(box)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
 assert len(box) != 0, "Then number of objects in the box repository was zero"
 
