@@ -98,9 +98,9 @@ case `whoami` in
     gangage )
         export LOAD_PACKAGES='GangaTest' ;;
     gangaat )
-        export LOAD_PACKAGES='GangaTest:GangaAtlas' ;;
+        export LOAD_PACKAGES='GangaAtlas' ;;
     gangalb )
-        export LOAD_PACKAGES='GangaTest:GangaLHCb' ;;
+        export LOAD_PACKAGES='GangaLHCb' ;;
 esac
 
 ##Run the repo generation 
