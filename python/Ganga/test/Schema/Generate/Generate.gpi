@@ -34,6 +34,7 @@ excludelist = ['LHCbTaskDummySplitter',
                 'EmptyDataset', 
                 'TestListViewDataset', 
                 'JobTree',
+                '_RootMergeToolAANT',
                 'TestDataset']
 #Create an Executable job for each of the available backends
 for category in allPlugins.all_dict:
