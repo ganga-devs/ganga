@@ -197,11 +197,11 @@ class AtlasUnit(IUnit):
 
       # check for ds name specified and length
       if j.outputdata._impl._name == "DQ2OutputDataset" and j.outputdata.datasetname != "":
-         dsn = ["user", getNickname(), j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
+         dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
                 (j.id, task.id, trf.getID(), self.getID())]
 
          if len(".".join(dsn)) > configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2:
-            dsn = ["user", getNickname(), j.outputdata.datasetname[: - (len(".".join(dsn)) - configDQ2['OUTPUTDATASET_NAMELENGTH'] + 2)], "j%i.t%i.trf%i.u%i" %
+            dsn = [j.outputdata.datasetname[: - (len(".".join(dsn)) - configDQ2['OUTPUTDATASET_NAMELENGTH'] + 2)], "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
       else:
          dsn = [trf.getContainerName()[:-1], self.name, "j%i.t%i.trf%i.u%i" %
@@ -215,14 +215,19 @@ class AtlasUnit(IUnit):
                            
       j.inputsandbox = self._getParent().inputsandbox
       j.outputsandbox = self._getParent().outputsandbox
-      j.splitter = DQ2JobSplitter()
-      if trf.MB_per_job > 0:
-         j.splitter.filesize = trf.MB_per_job
-      elif trf.subjobs_per_unit > 0:
-         j.splitter.numsubjobs = trf.subjobs_per_unit
-      else:
-         j.splitter.numfiles = trf.files_per_job
 
+      # check for splitter
+      if not trf.splitter:
+         j.splitter = DQ2JobSplitter()
+         if trf.MB_per_job > 0:
+            j.splitter.filesize = trf.MB_per_job
+         elif trf.subjobs_per_unit > 0:
+            j.splitter.numsubjobs = trf.subjobs_per_unit
+         else:
+            j.splitter.numfiles = trf.files_per_job
+      else:
+         j.splitter = trf.splitter.clone()
+         
       return j
 
    def checkMajorResubmit(self, job):
