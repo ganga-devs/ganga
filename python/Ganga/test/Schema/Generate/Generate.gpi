@@ -51,7 +51,7 @@ for category in allPlugins.all_dict:
 
 #the following if statement (using box.select) will not work on Ganga versions < 5.8.17 (see bug #98232)
 #therefore, use the following to generate schemas prior to that
-            if new_name not in box.__str__():
+            if new_name + " |" not in box.__str__():
 #            if len(box.select(name=new_name)) == 0:
                 try:
                     totnumobs += 1
