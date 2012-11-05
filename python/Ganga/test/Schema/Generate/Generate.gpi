@@ -1,4 +1,4 @@
-import sys
+import sys, traceback
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, setConfigOption
@@ -57,8 +57,10 @@ for category in allPlugins.all_dict:
                     totnumobs += 1
                     logger.info(str(new_name) + " not found in box...adding object #" + str(totnumobs) + "...")
                     box.add(cls.__call__(), new_name)
-                except:
+                except Exception, e:
                     logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
+                    #logger.error(str(e))
+                    logger.error(traceback.print_exc())
                     #raise
             else:
                 logger.warn("Already in box: " + str(new_name))
