@@ -54,4 +54,4 @@ for thing in box:
         exc_counter += 1
     index += 1
 
-assert exc_counter == 0, "We had " str(exc_counter) " problem(s) when reading the box objects."
+assert exc_counter == 0, "We had " + str(exc_counter) + " problem(s) when reading the box objects."
