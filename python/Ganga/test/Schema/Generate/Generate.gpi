@@ -54,9 +54,9 @@ for category in allPlugins.all_dict:
             if new_name + " |" not in box.__str__():
 #            if len(box.select(name=new_name)) == 0:
                 try:
-                    totnumobs += 1
                     logger.info(str(new_name) + " not found in box...adding object #" + str(totnumobs) + "...")
                     box.add(cls.__call__(), new_name)
+                    totnumobs += 1
                 except Exception, e:
                     logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
                     #logger.error(str(e))
