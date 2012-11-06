@@ -69,6 +69,8 @@ class Bender(GaudiBase):
                                    typelist=['str'],doc=docstr)
     docstr = 'The number of events '
     _schema.datadict['events'] = SimpleItem(defvalue=-1,typelist=['int'],doc=docstr)
+    docstr = 'Parameres for module '
+    _schema.datadict['params'] = SimpleItem(defvalue={},typelist=['dict','str','int','bool','float'],doc=docstr)
     _schema.version.major += 2
     _schema.version.minor += 0
 ##     _schema.datadict['is_prepared'] = SimpleItem(defvalue=None,
@@ -192,8 +194,12 @@ class Bender(GaudiBase):
         script += "import %s as USERMODULE\n" % modulename
         script += "EventSelectorInput = EventSelector().Input\n"
         script += "FileCatalogCatalogs = FileCatalog().Catalogs\n"
-        script += \
-               "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs)\n"
+        if self.params:
+          script += \
+                 "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs,params=%s)\n"%self.params
+        else:
+          script += \
+                 "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs)\n"
         script += "USERMODULE.run(%d)\n" % self.events
         #self.extra.input_buffers['gaudipython-wrapper.py'] = script
         #outsb = self.getJobObject().outputsandbox

@@ -1,4 +1,4 @@
-###############################################################################
+################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: DQ2JobSplitter.py,v 1.41 2009-07-27 13:03:24 mslater Exp $
@@ -131,6 +131,63 @@ class DQ2JobSplitter(ISplitter):
     def split(self,job):
 
         logger.debug('DQ2JobSplitter called')
+
+        if not job.inputdata:
+            if (job.application.options.find("%SKIPEVENTS") != 0) or (job.application.options.find("%RNDM") != 0):
+
+                # no inputdata but splitting options in command line
+                logger.info ("Splitting on command line options rather than input data...")
+            
+                # check splitting options
+                if self.numsubjobs <= 0:
+                    raise ApplicationConfigurationError(None,'DQ2JobSplitter must have numsubjobs specified if not using inputdata')
+
+                subjobs = []
+                skipevent = 0
+                rndm_seed = 0
+
+                # update random seed
+                match_rndm = re.search('%RNDM(:*)(\d*)( |$|\'|\"|;)',job.application.options)
+                if match_rndm:
+                    rndm_seed = int(match_rndm.group(2))
+
+                # check for skip events
+                match_skip = re.search('%SKIPEVENTS(:*)(\d*)( |$|\'|\"|;)',job.application.options)
+                
+                for i in range(0, self.numsubjobs):
+
+                    j = Job()
+                    j.name = job.name
+                    j.application   = job.application
+                    
+                    # update the command line given split options
+                    if match_rndm:
+                        j.application.options = re.sub(match_rndm.group(0),'%s%s' % (rndm_seed, match_rndm.group(3)),j.application.options)
+
+                    if match_skip:
+                        if match_skip.group(2) == '':
+                            j.application.options = re.sub(match_skip.group(0),'%s%s' % (skipevent,match_skip.group(3)),j.application.options)
+                        else:
+                            j.application.options = re.sub(match_skip.group(0),'%s%s' % (skipevent + int(match.group(2)), match_skip.group(3)),j.application.options)
+                                                                                                                                                        
+                    j.application.run_event   = []
+                    j.outputdata    = job.outputdata
+                    j.backend       = job.backend
+                    j.inputsandbox  = job.inputsandbox
+                    j.outputsandbox = job.outputsandbox
+
+                    subjobs.append(j)
+
+                    # update event counters
+                    if job.splitter.numevtsperjob > 0:
+                        skipevent += job.splitter.numevtsperjob
+                        
+                    rndm_seed += 1
+                    
+                return subjobs
+    
+            else:
+                raise ApplicationConfigurationError(None,'DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')            
 
         if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset' and job.inputdata._name <> 'EventPicking':
             raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')

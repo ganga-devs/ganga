@@ -228,6 +228,7 @@ class Job(GangaObject):
                 
     keys = getConfig('Output').options.keys()
     keys.remove('PostProcessLocationsFileName')         
+    keys.remove('ProvideLegacyCode')                
 
     for key in keys:
         try:
@@ -357,6 +358,10 @@ class Job(GangaObject):
 
     def postprocessoutput(self, outputfiles, outputdir):        
         
+        #if this option is True, don't use the new outputfiles mechanism
+        if getConfig('Output')['ProvideLegacyCode']:
+            return
+
         import glob
 
         if len(outputfiles) == 0:

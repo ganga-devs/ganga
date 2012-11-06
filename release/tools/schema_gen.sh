@@ -15,6 +15,7 @@ OPTIONS:
    -d      Destination of repository (default: ~/gangadir_schema_test).
    -v      Version of Ganga to execute from /afs/cern.ch/sw/ganga/install (e.g. 5.8.9-pre).
    -r      Location of (temporary) Gangadir in which to create repository. If this exists, an attempt will always be made to delete it.
+   -g      Version of Ganga from which the Generate.gpi file is taken. This is necessary to generate repositories for Ganga versions that pre-date the inclusion of Generate.gpi
    -h      Show this message.
 EOF
 }
@@ -23,11 +24,14 @@ echo ""
 echo ""
 
 FORCE=0
-while getopts "d:fv:r" OPTION
+while getopts "d:fv:rg:" OPTION
 do
     case $OPTION in
         f)
             FORCE=1
+            ;;
+        g)
+            GEN_VER=$OPTARG
             ;;
         v)
             VERSION=$OPTARG
@@ -75,7 +79,12 @@ fi
 
 
 GANGA_EXE=/afs/cern.ch/sw/ganga/install/${VERSION}/bin/ganga
-
+if [[ -z "$GEN_VER" ]]
+then
+    GANGA_GEN=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Generate/Generate.gpi
+else
+    GANGA_GEN=/afs/cern.ch/sw/ganga/install/${GEN_VER}/python/Ganga/test/Schema/Generate/Generate.gpi
+fi
 
 if [ ! -e ${GANGA_EXE} ]
 then
@@ -83,6 +92,16 @@ then
     exit 1
 fi
 
+
+#find out who's running this script
+case `whoami` in 
+    gangage )
+        export LOAD_PACKAGES='GangaTest' ;;
+    gangaat )
+        export LOAD_PACKAGES='GangaAtlas' ;;
+    gangalb )
+        export LOAD_PACKAGES='GangaLHCb' ;;
+esac
 
 ##Run the repo generation 
 if [ ! -d ${NEW_REPO_LOC} ] || [ $FORCE == 1 ]
@@ -93,7 +112,7 @@ then
         rm -rf ${NEW_REPO_LOC}
     fi
     echo "Generating repository:" ${GANGADIR}
-    cmd="${GANGA_EXE}  --very-quiet -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb  /afs/cern.ch/sw/ganga/install/5.8.15-pre/python/Ganga/test/Schema/Generate/Generate.gpi"
+    cmd="${GANGA_EXE}  -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES $GANGA_GEN"
     echo $cmd
     $cmd
     echo "Moving repository: " ${GANGADIR} "->" ${NEW_REPO_LOC}

@@ -8,6 +8,7 @@ class LHCbTaskDummySplitter(ISplitter):
     _category= 'splitters'
     _name = 'LHCbTaskDummySplitter'
     _exportmethods=[]
+    _hidden = 1
     
     
     def __init__(self, splitter):

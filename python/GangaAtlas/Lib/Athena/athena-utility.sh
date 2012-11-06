@@ -669,32 +669,56 @@ stage_outputs () {
             LD_LIBRARY_PATH_BACKUP=$LD_LIBRARY_PATH
             PATH_BACKUP=$PATH
             PYTHONPATH_BACKUP=$PYTHONPATH
-            export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORIG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
-            export PATH=$MY_PATH_ORIG:$PATH_BACKUP
-            export PYTHONPATH=$MY_PYTHONPATH_ORIG:$PYTHONPATH_BACKUP
 
+	    export LD_LIBRARY_PATH=$PWD:$MY_LD_LIBRARY_PATH_ORIG:$LD_LIBRARY_PATH_BACKUP:/opt/globus/lib
+	    export PATH=$MY_PATH_ORIG:$PATH_BACKUP
+	    export PYTHONPATH=$MY_PYTHONPATH_ORIG:$PYTHONPATH_BACKUP   
+	    
+	    
             # Remove lib64/python from PYTHONPATH
 	    dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
 	    export PYTHONPATH=$dum
-
+	    
 	    if [ ! -z $python32bin ]; then
-                $python32bin ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
-            else
-                if [ -e /usr/bin32/python ]
-                then
-                    /usr/bin32/python ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
-                else
-                    ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
-                fi
-            fi
-            retcode=`cat retcode.tmp`
-            rm -f retcode.tmp
+		$python32bin ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
+	    else
+		if [ -e /usr/bin32/python ]
+		    then
+		    /usr/bin32/python ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
+		else
+		    ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
+		fi
+	    fi
+	    retcode=`cat retcode.tmp`
+	    rm -f retcode.tmp
+
+	    if [ $retcode -eq 139 ];
+		then
+		echo "!!!WARNING!!!   Caught segfault when running ganga-stage-in-out-dq2. Adapting return code..."
+		if [ -e dq2_retcode.tmp ]; 
+		    then
+		    retcode=`cat dq2_retcode.tmp`
+		fi
+	    fi
+	    rm -f dq2_retcode.tmp
+
             # Fail over
-            if [ $retcode -ne 0 ]; then
-                $pybin ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
-                retcode=`cat retcode.tmp`
-                rm -f retcode.tmp
-            fi
+	    if [ $retcode -ne 0 ]; then
+		$pybin ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
+		retcode=`cat retcode.tmp`
+		rm -f retcode.tmp
+	    fi
+
+	    if [ $retcode -eq 139 ];
+		then
+		echo "!!!WARNING!!!   Caught segfault when running ganga-stage-in-out-dq2. Adapting return code..."
+		if [ -e dq2_retcode.tmp ]; 
+		    then
+		    retcode=`cat dq2_retcode.tmp`
+		fi
+	    fi
+	    rm -f dq2_retcode.tmp
+
 	    if [ $retcode -ne 0 ]; then
 		export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_ORIG
 		export PATH=$PATH_ORIG
@@ -714,10 +738,21 @@ stage_outputs () {
 			export DQ2_HOME=$PWD/opt/dq2
 		    fi
 		fi
-                ./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
+		./ganga-stage-in-out-dq2.py --output=output_files.new; echo $? > retcode.tmp
 		retcode=`cat retcode.tmp`
 		rm -f retcode.tmp
+
+		if [ $retcode -eq 139 ];
+		    then
+		    echo "!!!WARNING!!!   Caught segfault when running ganga-stage-in-out-dq2. Adapting return code..."
+		    if [ -e dq2_retcode.tmp ]; 
+			then
+			retcode=`cat dq2_retcode.tmp`
+		    fi
+		fi
+		rm -f dq2_retcode.tmp
 	    fi
+	    
             export LD_LIBRARY_PATH=$LD_LIBRARY_PATH_BACKUP
             export PATH=$PATH_BACKUP
             export PYTHONPATH=$PYTHONPATH_BACKUP
@@ -725,29 +760,67 @@ stage_outputs () {
         elif [ -n "$OUTPUT_LOCATION" -a -e output_files ]; then
 
             if [ n$GANGA_ATHENA_WRAPPER_MODE = n'local' ]; then
-                TEST_CMD=`which rfmkdir 2>/dev/null`
-                if [ ! -z $TEST_CMD ]; then
-                    MKDIR_CMD=$TEST_CMD
-                else
-                    MKDIR_CMD="mkdir" 
-                fi
 
-                TEST_CMD2=`which rfcp 2>/dev/null`
-                if [ ! -z $TEST_CMD2 ]; then
-                    CP_CMD=$TEST_CMD2
-                else
-                    CP_CMD="cp" 
-                fi
-             
+	        # check for EOS use
+		echo $OUTPUT_LOCATION
+		case $OUTPUT_LOCATION in
+		    root*) 
+			echo "EOS output detected"
+			OUTPUT_LOCATION=`echo ${OUTPUT_LOCATION} | sed 's/root://' | sed 's|//[a-z0-9]*/||'`
+			echo "Changed output location to ${OUTPUT_LOCATION}"
+			if [ -e $EOS_COMMAND_PATH ]
+			    then
+			    echo "Using EOS Command Path '${EOS_COMMAND_PATH}'"
+			    MKDIR_CMD="${EOS_COMMAND_PATH} mkdir"
+			    CP_CMD="${EOS_COMMAND_PATH} cp" 
+			else    
+			    TEST_CMD=`which eos 2>/dev/null`
+			    if [ ! -z $TEST_CMD ]
+				then
+				MKDIR_CMD="eos mkdir"
+				CP_CMD="eos cp"
+			    else
+				echo "Couldn't find EOS in PATH or set by environmnet. Defaulting to AFS install"
+				MKDIR_CMD="/afs/cern.ch/project/eos/installation/pro/bin/eos.select mkdir"
+				CP_CMD="/afs/cern.ch/project/eos/installation/pro/bin/eos.select cp"
+			    fi
+			fi
+			;;
+		    *)
+			echo "Attempting rf* commands..."
+			TEST_CMD=`which rfmkdir 2>/dev/null`
+			if [ ! -z $TEST_CMD ]
+			    then
+			    MKDIR_CMD=$TEST_CMD
+			else
+			    MKDIR_CMD="mkdir" 
+			fi
+			TEST_CMD2=`which rfcp 2>/dev/null`
+			if [ ! -z $TEST_CMD2 ]
+			    then
+			    CP_CMD=$TEST_CMD2
+			else
+			    CP_CMD="cp" 
+			fi
+			;;
+		esac
+
                 $MKDIR_CMD -p $OUTPUT_LOCATION
                 cat output_files | while read filespec; do
                     for file in $filespec; do
-			$CP_CMD $file $OUTPUT_LOCATION/$file; echo $? > retcode.tmp
+			if [ $SINGLE_OUTPUT_DIR ]
+			    then
+			    outfile="${file%.*}.${SINGLE_OUTPUT_DIR}.${file##*.}"
+			    echo "Changed output file from ${file} to ${outfile}"
+			else
+			    outfile=$file
+			fi
+			$CP_CMD $file $OUTPUT_LOCATION/$outfile; echo $? > retcode.tmp
 			retcode=`cat retcode.tmp`
 			rm -f retcode.tmp
 			if [ $retcode -ne 0 ]; then
 			    sleep 60
-			    $CP_CMD $file $OUTPUT_LOCATION/$file; echo $? > retcode.tmp
+			    $CP_CMD $file $OUTPUT_LOCATION/$outfile; echo $? > retcode.tmp
 			    retcode=`cat retcode.tmp`
 			    rm -f retcode.tmp
 			    if [ $retcode -ne 0 ]; then

@@ -1,4 +1,0 @@
-    <group>
-        <arg choice="plain"><option>-f <replaceable>FORMAT</replaceable></option></arg>
-        <arg choice="plain"><option>--format=<replaceable>FORMAT</replaceable></option></arg>
-    </group>

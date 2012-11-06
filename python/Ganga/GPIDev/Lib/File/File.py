@@ -135,6 +135,7 @@ class ShareDir(GangaObject):
     _exportmethods = ['add','ls']
     _name = "ShareDir"
     _root_shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
+    _data=None
 #    def _readonly(self):
 #        return True
 

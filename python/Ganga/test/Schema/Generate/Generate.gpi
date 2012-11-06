@@ -1,4 +1,4 @@
-import sys
+import sys, traceback
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, setConfigOption
@@ -10,49 +10,70 @@ logger = getLogger()
 this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
 this_repo=getConfig('Configuration')['gangadir']
 
-logger.error('#################### RUNNING JOB GENERATOR')
-logger.error('#################### Executing Ganga version: ' + this_version)
-logger.error('#################### Creating repo at: ' + this_repo)
+logger.info('#################### RUNNING JOB GENERATOR')
+logger.info('#################### Executing Ganga version: ' + this_version)
+logger.info('#################### Creating repo at: ' + this_repo)
 
-baks = allPlugins.allCategories()['backends']
-apps = allPlugins.allCategories()['applications']
 
-totnumjobs = 0
+#        cls = allPlugins.find(category, classname)
+#        obj  = super(cls, cls).__new__(cls)
+#        obj._proxyObject = None
+#        obj._data = Non
+
+totnumobs = 0
+box.clean(confirm=True)
+
+excludelist = ['LHCbTaskDummySplitter', 
+                'LHCbTask', 
+                'ITask',
+                'ITransform',
+                'LHCbUnit',
+                'IUnit',
+                'IOutputFile',
+                'TestGangaObject', 
+                'EmptyDataset', 
+                'TestListViewDataset', 
+                'JobTree',
+                '_RootMergeToolAANT',
+                'TestDataset']
 #Create an Executable job for each of the available backends
-for bak in baks:
-    appname = 'Executable'
-    new_name = str(this_version + "_" + bak + "_" +  appname)
+for category in allPlugins.all_dict:
+    for clsname in allPlugins.all_dict[category]:
+        if clsname not in excludelist:
+            logger.info('##########################################')
+            cls = allPlugins.find(category, clsname)
+            logger.info("Class: " +str(cls))
+#            obj = super(cls, cls).__new__(cls)
+#            logger.info(obj)
 
-    if len(jobs.select(name=new_name)) == 0:
-        j=Job(backend=bak)
-        j.name = new_name
-        totnumjobs += 1
-        logger.error("Creating Job(backend='"+bak+"', application='"+appname+"')")
-    else:
-        logger.error("Already Existed: Job(backend='"+bak+"', application='"+appname+"')")
+            new_name = str(this_version + "_" + category + "_" + clsname)
+            logger.info("Ganga Box name: " + str(new_name))
 
-#Create one job (targetting the local backend) for each of the available Applications except Gaudi
-#The checks below will prevent creation of the Executable:Local job, as it was done already above
-for app in apps:
-    if not app == 'Gaudi':
-        bakname = 'Local'
-        new_name = str(this_version + "_" + bakname + "_" +  app)
-        if len(jobs.select(name=new_name)) == 0:
-            j=Job(application=app)
-            j.name = new_name
-            totnumjobs += 1
-            logger.error("Creating Job(backend='"+bakname+"', application='"+app+"')")
-        else:
-            logger.error("Already Existed: Job(backend='"+bakname+"', application='"+app+"')")
+#the following if statement (using box.select) will not work on Ganga versions < 5.8.17 (see bug #98232)
+#therefore, use the following to generate schemas prior to that
+            if new_name + " |" not in box.__str__():
+#            if len(box.select(name=new_name)) == 0:
+                try:
+                    logger.info(str(new_name) + " not found in box...adding object #" + str(totnumobs) + "...")
+                    box.add(cls.__call__(), new_name)
+                    totnumobs += 1
+                except Exception, e:
+                    logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
+                    #logger.error(str(e))
+                    logger.error(traceback.print_exc())
+                    #raise
+            else:
+                logger.warn("Already in box: " + str(new_name))
 
-logger.error('total number of jobs')
-logger.error(totnumjobs)
+logger.info('##########################################')
+logger.info('Total number of objects added to Box: ' + str(totnumobs))
+logger.info('##########################################')
 
-if totnumjobs > 0:
-    assert totnumjobs == len(jobs), 'We failed to create the correct number of test jobs. %i created' % (totnumjobs)
+if totnumobs > 0:
+    assert totnumobs == len(box), 'We failed to create the correct number of test objects. %i created' % (totnumobs)
 else:
-    logger.warning("We didn't create any test jobs; perhaps they all existed already?")
-    logger.warning("There are %i jobs in the repository" % (len(jobs)))
+    logger.warning("We didn't create any test objects; perhaps they all existed already?")
+    logger.warning("There are %i objects in the box repository" % (len(box)))
     
 
 
