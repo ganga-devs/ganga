@@ -27,7 +27,7 @@ class AtlasTransform(ITransform):
 
    _category = 'transforms'
    _name = 'AtlasTransform'
-   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer' ]
+   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets' ]
 
    def __init__(self):
       super(AtlasTransform,self).__init__()
@@ -119,3 +119,23 @@ class AtlasTransform(ITransform):
          
       for ds in tid_datasets:
          self.addUnit('.'.join( ds.split(".")[1:-1] ), ds, template)
+
+
+   def initializeFromDatasets(self, dset_list, template = None):
+      """Initialise the trf with the given dataset list, creating a unit for each DS"""
+
+      for ds in dset_list:
+         
+         if ds[-1] == "/":
+            try:
+               tid_datasets = dq2.listDatasetsInContainer(ds)
+            except DQUnknownDatasetException:
+               logger.error("dataset container %s not found" % ds)
+         
+            logger.info("Found %i datasets matching %s..." % (len(tid_datasets), ds))
+         
+            for ds2 in tid_datasets:
+               self.addUnit('.'.join( ds.split(".")[1:-1] ), ds2, template)
+         else:
+            self.addUnit('.'.join( ds.split(".")[1:-1] ), ds, template)
+            

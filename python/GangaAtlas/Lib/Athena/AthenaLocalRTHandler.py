@@ -173,10 +173,13 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
         if output_location and job.outputdata and job.outputdata._name!='DQ2OutputDataset':
 
-            if job._getRoot().subjobs and config['IndividualSubjobDirsForLocalOutput']:
-                output_location = os.path.join(output_location, "%d/%d" % (job._getRoot().id, job.id))
-            else:
-                output_location = os.path.join(output_location, jid)
+            if job._getRoot().subjobs:
+                if config['SingleDirForLocalOutput']:
+                    output_location = os.path.join(output_location, "%d" % (job._getRoot().id))
+                elif config['IndividualSubjobDirsForLocalOutput']:
+                    output_location = os.path.join(output_location, "%d/%d" % (job._getRoot().id, job.id))
+                else:
+                    output_location = os.path.join(output_location, jid)
                 
             if job.outputdata:
                 # Remove trailing number if job is copied
@@ -184,11 +187,13 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 if re.findall(pat,output_location):
                     output_location = re.sub(pat, '', output_location)
 
-                    if job._getRoot().subjobs and config['IndividualSubjobDirsForLocalOutput']:
+                    if config['SingleDirForLocalOutput']:
+                        output_location = os.path.join(output_location, "%d" % (job._getRoot().id))
+                    elif config['IndividualSubjobDirsForLocalOutput']:
                         output_location = os.path.join(output_location, "%d/%d" % (job._getRoot().id, job.id))
                     else:
                         output_location = os.path.join(output_location, jid)
-
+                    
                 job.outputdata.location = output_location
 
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset':
@@ -295,7 +300,23 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
         if job.outputdata and job.outputdata._name=='DQ2OutputDataset' and output_location == [ ]:
             raise ApplicationConfigurationError(None,'j.outputdata.outputdata is empty - Please specify output filename(s).')
-        
+
+        # set EOS env setting
+        environment['EOS_COMMAND_PATH'] = config['PathToEOSBinary']
+
+        # flag for single output dir
+        if config['SingleDirForLocalOutput'] and job._getParent():
+            environment['SINGLE_OUTPUT_DIR'] = jid
+
+            # change the filename
+            newoutput = []
+            for outf in job.outputdata.outputdata:
+                newfile, newfileExt = os.path.splitext(outf)
+                jid = "%d.%d" % (job._getParent().id, job.id)
+                newoutput.append("%s.%s%s" % (newfile, jid, newfileExt) )               
+
+            job.outputdata.outputdata = newoutput[:]
+            
         environment['OUTPUT_LOCATION'] = output_location
         if job.outputdata and job.outputdata._name == 'DQ2OutputDataset':
             environment['OUTPUT_DATASETNAME'] = output_datasetname

@@ -8,6 +8,7 @@
 # ATLAS/ARDA
 
 import os, re, fnmatch
+import commands
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
@@ -38,14 +39,35 @@ def flatten(l, ltypes=(list, tuple)):
 
 def filecheck(filename):
     """Check if filename exists and return filesize"""
-    try:
-        open(filename)
-        fsize = os.stat(filename).st_size
-    except IOError:
-        logger.debug("File %s not found", filename)
-        return -1
-    if (fsize>0):
+
+    if filename.find("root://") != -1:
+        # special check for EOS files
+        cmd =  "%s %s// file info %s" % (config['PathToEOSBinary'], "/".join(filename.split("/")[:3]), '/'.join(filename.split("/")[3:]))
+        rc, out = commands.getstatusoutput(cmd)
+
+        if rc != 0:
+            logger.debug("Problem checking EOS file '%s'. Ouptut: %s" % (filename, out))
+            return -1
+
+        # Assume first line is:
+        # File: '/eos/atlas/user/m/mslater/tests/1.0/AnalysisSkeleton.aan.root'  Size: 1461388
+        toks = out.split("\n")[0].split(":")
+        if len(toks) <> 3:
+            logger.warning("Unexpected EOS output '%s'" % (out.split("\n")[0]))
+            return 1
+
+        fsize = int(toks[2])
         return fsize
+    else:
+        try:
+            open(filename)
+            fsize = os.stat(filename).st_size
+        except IOError:
+            logger.debug("File %s not found", filename)
+            return -1
+        
+        if (fsize>0):
+            return fsize
 
 def expand(name):
     '''
@@ -435,6 +457,7 @@ class ATLASOutputDataset(Dataset):
             job.backend._name == 'PBS' or \
             job.backend._name == 'SGE'):
             for file in outputfiles:
+
                 pfn = outputlocation+"/"+file
                 fsize = filecheck(pfn)
                 if (fsize>0):
@@ -595,6 +618,7 @@ class ATLASOutputDataset(Dataset):
 #        logger.debug('Download.rootfile %s', Download.rootfile)
 
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
+config.addOption('PathToEOSBinary', '/afs/cern.ch/project/eos/installation/pro/bin/eos.select', 'Path to the EOS binary for output copying/checking')
 
 #$Log: not supported by cvs2svn $
 #Revision 1.7  2009/04/24 08:36:21  dvanders
