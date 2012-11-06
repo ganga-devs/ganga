@@ -41,6 +41,7 @@ assert len(box) != 0, "Then number of objects in the box repository was zero"
 
 print box
 index = 0
+exc_counter = 0
 for thing in box:
     logger.info('##########################################')
     try:
@@ -50,5 +51,7 @@ for thing in box:
         logger.error('Exception for object #' + str(index) + ' in box.')
         logger.error(box[index])
         logger.error(e)
+        exc_counter += 1
     index += 1
 
+assert exc_counter == 0, "We had " str(exc_counter) " problem(s) when reading the box objects."
