@@ -1419,6 +1419,15 @@ class Job(GangaObject):
         
     def __setattr__(self, attr, value):
         if attr == 'outputfiles':
+
+            if value != []:     
+                if self.outputdata is not None:
+                    logger.error('job.outputdata is set, you can\'t set.outputfiles')
+                    return
+                elif self.outputsandbox != []:
+                    logger.error('job.outputsandbox is set, you can\'t set.outputfiles')
+                    return      
+                        
             #reduce duplicate values here, leave only duplicates for LCG, where we can have replicas    
             uniqueValuesDict = []
             uniqueValues = []
@@ -1435,7 +1444,27 @@ class Job(GangaObject):
                 value.joboutputdir = self.outputdir
 
             super(Job,self).__setattr__(attr, uniqueValues) 
+
+        elif attr == 'outputsandbox':
+
+            if value != []:     
+                if self.outputfiles != []:
+                    logger.error('job.outputfiles is set, you can\'t set.outputsandbox')
+                    return
+
+            super(Job,self).__setattr__(attr, value)
+
+        elif attr == 'outputdata':
+
+            if value != None:   
+                if self.outputfiles != []:
+                    logger.error('job.outputfiles is set, you can\'t set.outputdata')
+                    return
+
+            super(Job,self).__setattr__(attr, value)
+                
         elif attr == 'comment':
+
             super(Job,self).__setattr__(attr, value)
             #if a comment is added mark the job as dirty       
             if value != '':
