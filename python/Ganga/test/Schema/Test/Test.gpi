@@ -17,7 +17,7 @@ logger.error('#################### Using repo at: ' + this_repo)
 
 
 #count the number of directories in this_repo from the cnt file
-num_box_obj_dirs = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/*.index"))
+#num_box_obj_dirs = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/*.index"))
 
 dir = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/"
 
@@ -31,7 +31,7 @@ read_data = f.read()
 f.close()
 
 logger.info('##########################################')
-logger.info("Number of index files " + str(num_box_obj_dirs))
+logger.info("Number of object dirs in repo directory" + str(num_box_obj_dirs))
 logger.info("Number of objects in box: " + str(len(box)))
 logger.info('##########################################')
 
