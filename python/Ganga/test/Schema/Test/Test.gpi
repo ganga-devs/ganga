@@ -31,9 +31,9 @@ read_data = f.read()
 f.close()
 
 logger.info('##########################################')
-logger.info("Number of object dirs in repo directory" + str(num_box_obj_dirs))
+logger.info("Number of object dirs in repo directory: " + str(num_box_obj_dirs))
 logger.info("Number of objects in box: " + str(len(box)))
-logger.info("Incomplete box IDs: " +str(box.incomplete_ids()))
+logger.info("Incomplete box ID(s): " +str(box.incomplete_ids()))
 logger.info('##########################################')
 
 assert num_box_obj_dirs== len(box), "The number of object directories in the box repository " + str(num_box_obj_dirs) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
