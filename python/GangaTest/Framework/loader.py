@@ -61,7 +61,6 @@ class GangaTestLoader:
         self.userConfig = ":".join([os.path.expanduser(syscfg['GANGA_CONFIG_FILE']),
                                     syscfg['GANGA_CONFIG_PATH']])
         
-        self.testID = getConfig('Configuration')['user']
         #default path to search tests in
         self.testsTopDir = os.getcwd()
         
@@ -174,7 +173,7 @@ class GangaTestLoader:
             self.configAlias = os.path.splitext(config)[0]
             report_name = "%s__%s"%(pattern.replace("*","ALL"),self.configAlias)
             if self.schema_test is not '':
-                report_name = "%s_%s_%s__%s"%(pattern.replace("*","ALL"),self.schema_test,self.testID,self.configAlias)
+                report_name = "%s_%s__%s"%(pattern.replace("*","ALL"),self.schema_test,self.configAlias)
             print "Using configuration: %s" % config_path 
             print "Report ID: %s" % report_name
 
@@ -520,7 +519,7 @@ def %(method_name)s(self):
             #when doing release testing we generate the coverage analysis reports
             #and generatate a well defined output dir structure
             if self.schema_test is not '':
-                output_path=os.path.join(self.outputPrefix,test_relpath.replace("/",".")+"_"+self.schema_test+"_"+self.testID+"_"+ self.configAlias)
+                output_path=os.path.join(self.outputPrefix,test_relpath.replace("/",".")+"_"+self.schema_test+"_"+ self.configAlias)
             else:
                 output_path=os.path.join(self.outputPrefix,test_relpath.replace("/",".")+"__"+ self.configAlias)
             coverage_path = "%s.figleaf" % output_path

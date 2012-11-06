@@ -38,7 +38,6 @@ class ITransform(GangaObject):
    _category = 'transforms'
    _name = 'ITransform'
    _exportmethods = [ 'addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit', 'setMajorRunLimit', 'getID', 'overview' ]
-   _hidden = 0
 
    def getJobs(self):
       """Return a list of the currently active job ids"""

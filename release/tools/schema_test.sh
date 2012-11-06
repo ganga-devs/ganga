@@ -101,18 +101,6 @@ then
     exit 1
 fi
 
-#find out who's running this script
-case `whoami` in 
-    gangage )
-        export LOAD_PACKAGES='GangaTest' ;;
-    gangaat )
-        export LOAD_PACKAGES='GangaAtlas' ;;
-    gangalb )
-        export LOAD_PACKAGES='GangaLHCb' ;;
-esac
-
-GANGA_TEST='Ganga/test/Schema/Test'
-
 
 if [[  -n "$REPO_LOC" ]]
 ##Run the test across one repo
@@ -120,12 +108,12 @@ then
     if [[ -n "$INTERACTIVE" ]]
     then
         echo "Opening existing repo ${REPO_LOC} with Ganga version ${GANGA_EXE}."
-        cmd="${GANGA_EXE} -o[Configuration]gangadir=${REPO_LOC} -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[Configuration]user=testframework"
+        cmd="${GANGA_EXE} -o[Configuration]gangadir=${REPO_LOC} -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb -o[Configuration]user=testframework"
         echo $cmd
         $cmd
     else
         echo "Running ${GANGA_EXE} test series against existing repo ${REPO_LOC}"
-        cmd="${GANGA_EXE} --test  -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${TEST_REPO} -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False $GANGA_TEST"
+        cmd="${GANGA_EXE} --test  -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${TEST_REPO} -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False Ganga/test/Schema/Test/"
         $cmd
     fi
 else
@@ -134,7 +122,7 @@ else
     do
         prev_version=`basename $prev_version`
         echo "Running version ${GANGA_EXE} test series against existing repo ${prev_version}"
-        cmd="${GANGA_EXE} --test -o[Configuration]gangadir=${GANGADIR} -o[TestingFramework]SchemaTesting=${prev_version}   -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False $GANGA_TEST"
+        cmd="${GANGA_EXE} --test -o[Configuration]gangadir=${GANGADIR} -o[TestingFramework]SchemaTesting=${prev_version}   -o[Configuration]RUNTIME_PATH=GangaTest:GangaAtlas:GangaLHCb -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False Ganga/test/Schema/Test/"
         $cmd
     done
 fi

@@ -907,7 +907,6 @@ def _getFNsPFC(stringValue,fromFile=True):
     guids = []
     # instantiate parser
     try:
-
         if fromFile:
             root  = xml.dom.minidom.parse(stringValue)
         else:
@@ -2593,15 +2592,11 @@ pool_extractFileIdentifier.py %(filename)s
             outputInfo.append( line.strip() )
         f.close()
 
-        
         register_datasets_details(out_datasetname, outputInfo)
 
         register_datasets_in_container(datasetname, out_datasetname)
 
         check_duplicates_in_dataset(out_datasetname, output_files)
 
-
-    # before we exit, store the return code in case we seg fault...
-    open("dq2_retcode.tmp", "w").write( "%d" % returnvalue)
     sys.exit(returnvalue)
 

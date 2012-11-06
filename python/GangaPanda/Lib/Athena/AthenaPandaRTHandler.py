@@ -276,11 +276,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
         elif self.inputdatatype == 'None':
             runPandaBrokerage(job)
-
-            if job.splitter and job.splitter._name == 'DQ2JobSplitter':
-                for j in job.subjobs:
-                    j.backend.site = job.backend.site
-                    
+            
         if len(job.subjobs) == 0 and job.backend.site == 'AUTO':
             raise ApplicationConfigurationError(None,'Error: backend.site=AUTO after brokerage. Report to DA Help Forum')
         

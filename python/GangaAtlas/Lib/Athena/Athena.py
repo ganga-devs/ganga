@@ -760,19 +760,16 @@ class Athena(IPrepareApp):
         and fill output variable"""
         from Ganga.GPIDev.Lib.Job import Job
         job = self.getJobObject()
-        
         if not job.backend._name in [ 'NG', 'Panda' ]:
             if job.outputdata:
                 try:
                     job.outputdata.fill()
                 except Exception, Value:
                     logger.warning('An ERROR occured during job.outputdata.fill() call: %s, %s', Exception, Value)
-                    pass                                   
-
+                    pass
+                                   
                 if not job.outputdata.output:
-                    logger.error('Could not stat output data. Marking job as failed.')
                     job.updateStatus('failed')
-                
         # collect athena job statistics
         if self.collect_stats and job.backend._name in [ 'LCG', 'CREAM', 'NG', 'Panda', 'Local', 'SGE', 'LSF', 'PBS' ]:
             self.collectStats()
@@ -1887,7 +1884,6 @@ logger = getLogger()
 config.addOption('LCGOutputLocation', 'srm://srm-atlas.cern.ch/castor/cern.ch/grid/atlas/scratch/%s/ganga' % os.environ['USER'], 'FIXME')
 config.addOption('LocalOutputLocation', '/castor/cern.ch/atlas/scratch/%s/ganga' % os.environ['USER'], 'FIXME')
 config.addOption('IndividualSubjobDirsForLocalOutput', False, 'When copying local output, should dir structure be jid.sid (False) or jid/sid (True)' )
-config.addOption('SingleDirForLocalOutput', False, 'When copying local output, only a single diris used for output and output filenames are changed with jid.sid' )
 config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/software', 'FIXME')
 config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
 config.addOption('ExcludedSites', '' , 'FIXME')

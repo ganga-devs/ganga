@@ -24,7 +24,6 @@ class ITask(GangaObject):
                        'insertTransform', 'removeTransform', 'table']
 
     _tasktype = "ITask"
-    _hidden = 0
     
     default_registry = "tasks"
     
@@ -98,12 +97,6 @@ class ITask(GangaObject):
 
     def remove(self,remove_jobs="do_nothing"):
         """Delete the task"""
-
-        # make sure the task isn't running
-        if self.status.find("running") != -1:
-            logger.error("Task is still running. Please pause before removing!")
-            return
-                                        
         if not remove_jobs in [True,False]:
             print "You want to remove the task %i named '%s'." % (self.id,self.name)
             print "Since this operation cannot be easily undone, please call this command again:"
@@ -111,23 +104,13 @@ class ITask(GangaObject):
             print " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id)
             return
         if remove_jobs:
-            
-            for trf in self.transforms:
-                for unit in trf.units:
-                    for jid in unit.active_job_ids:
-                        j = GPI.jobs(jid)
-                        try:
-                            j.remove()
-                        except:
-                            pass
-
-                    for jid in unit.prev_job_ids:
-                        j = GPI.jobs(jid)
-                        try:
-                            j.remove()
-                        except:
-                            pass
-
+            for j in GPI.jobs:
+                try:
+                    stid = j.application.tasks_id.split(":")
+                    if int(stid[-2]) == self.id:
+                        j.remove()
+                except Exception, x:
+                    pass
         self._getRegistry()._remove(self)
         logger.info("Task #%s deleted" % self.id)
 

@@ -130,65 +130,37 @@ class RegistrySlice(object):
             if select(int(id)):
                 selected=True
                 for a in attrs:
-                    if self.name == 'box':
-                        attrvalue = attrs[a]
-                        if a == 'name':
-                            if not obj._getRegistry()._getName(obj) == attrvalue:
-                                selected = False
-                                break
-                        elif a == 'application':
-                            if hasattr(obj, 'application'):
-                                if not obj.application._name == attrvalue:
-                                    selected = False
-                                    break
-                            else:
-                                    selected = False
-                                    break
-                        elif a == 'type':
-                            if not obj._name == attrvalue:
-                                selected = False
-                                break
-                        else:
-                            from Ganga.GPIDev.Base import GangaAttributeError
-                            raise GangaAttributeError('undefined select attribute: %s'%str(a))
+                    try:
+                        item = obj._schema.getItem(a)
+                    except KeyError:
+                        from Ganga.GPIDev.Base import GangaAttributeError
+                        raise GangaAttributeError('undefined select attribute: %s'%str(a))
                     else:
+                        attrvalue = attrs[a]
+                        
+                        if item.isA('ComponentItem'):
+                            from Ganga.GPIDev.Base.Filters import allComponentFilters
+                            
+                            cfilter = allComponentFilters[item['category']]
+                            filtered_value = cfilter(attrs[a],item)
+                            if not filtered_value is None:
+                                attrvalue = filtered_value._name
+                            else:
+                                attrvalue = attrvalue._name
 
-                        if a == 'ids':
-                            if int(id) not in attrs['ids']:
+                            if not getattr(obj,a)._name == attrvalue:
                                 selected = False
                                 break
                         else:
-                            try:
-                                item = obj._schema.getItem(a)
-                            except KeyError:
-                                from Ganga.GPIDev.Base import GangaAttributeError
-                                raise GangaAttributeError('undefined select attribute: %s'%str(a))
+                            if type(attrvalue) is str:
+                                regex = fnmatch.translate(attrvalue)
+                                reobj = re.compile(regex)
+                                if not reobj.match(getattr(obj,a)):
+                                    selected = False
                             else:
-                                attrvalue = attrs[a]
-                            
-                                if item.isA('ComponentItem'):
-                                    from Ganga.GPIDev.Base.Filters import allComponentFilters
-                                
-                                    cfilter = allComponentFilters[item['category']]
-                                    filtered_value = cfilter(attrs[a],item)
-                                    if not filtered_value is None:
-                                        attrvalue = filtered_value._name
-                                    else:
-                                        attrvalue = attrvalue._name
-    
-                                    if not getattr(obj,a)._name == attrvalue:
-                                        selected = False
-                                        break
-                                else:
-                                    if type(attrvalue) is str:
-                                        regex = fnmatch.translate(attrvalue)
-                                        reobj = re.compile(regex)
-                                        if not reobj.match(getattr(obj,a)):
-                                            selected = False
-                                    else:
-                                        if getattr(obj,a) != attrvalue:
-                                            selected = False
-                                            break
+                                if getattr(obj,a) != attrvalue:
+                                    selected = False
+                                    break
                 if selected:
                     callback(id,obj)
 

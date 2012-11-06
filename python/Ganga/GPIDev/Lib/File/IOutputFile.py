@@ -13,7 +13,6 @@ class IOutputFile(GangaObject):
     _schema = Schema(Version(1,1), {})
     _category = 'outputfiles'
     _name = 'IOutputFile'
-    _hidden = 1
         
     def setLocation(self):
         """
