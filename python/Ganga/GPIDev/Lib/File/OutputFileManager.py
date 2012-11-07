@@ -116,16 +116,13 @@ for fn in final_list_to_copy:
 
 def getWNCodeForOutputPostprocessing(job, indent):
 
-    #if this option is True, don't use the new outputfiles mechanism
-    if getConfig('Output')['ProvideLegacyCode']:
-        return ""
-
     #dict containing the list of outputfiles that need to be processed on the WN for every file type    
     outputFilesProcessedOnWN = {}
-
     patternsToZip = []  
 
-    if len(job.outputfiles) > 0:
+    if len(job.outputfiles) == 0:
+        return ""
+    else:
         for outputFile in job.outputfiles:  
 
             outputfileClassName = outputFile.__class__.__name__
