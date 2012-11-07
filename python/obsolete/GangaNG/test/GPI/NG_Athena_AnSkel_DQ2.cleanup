@@ -1,5 +1,0 @@
-import os
-tmpdir = '/tmp/ganga_athena_ng_anskel_dq2_testing_data-$USER'
-print 'removing NG_Athena_DQ2 testing data',tmpdir
-os.system('rm -rf %s'%tmpdir)
-

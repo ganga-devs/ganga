@@ -1,7 +1,0 @@
-
-import os
-tmpdir = '/tmp/ganga_athenang_testing_data-$USER'
-print 'copying AthenaNG testing data to ',tmpdir
-os.system('rm -rf %s'%tmpdir)
-os.system('cp -r /afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS %s'%tmpdir)
-

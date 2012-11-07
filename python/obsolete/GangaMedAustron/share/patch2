@@ -1,8 +1,0 @@
-123c123
-<      $(CXX) -Wl,-soname,$(@F) -shared -o $$libdir/$(@F) $(INTYLIBS) *.o
----
->      $(CXX) -m32 -Wl,-soname,$(@F) -shared -o $$libdir/$(@F) $(INTYLIBS) *.o
-128c128
-<      $(CXX) -Wl,-soname,$(@F) -shared -o $$libdir/$(@F) $(INTYLIBS) \
----
->      $(CXX) -m32 -Wl,-soname,$(@F) -shared -o $$libdir/$(@F) $(INTYLIBS) \

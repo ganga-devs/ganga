@@ -1,2 +1,0 @@
-ldap://atlasgiis.nbi.dk:2135/o=grid/mds-vo-name=Atlas
-ldap://arcgiis.titan.uio.no:2135/o=grid/mds-vo-name=Atlas

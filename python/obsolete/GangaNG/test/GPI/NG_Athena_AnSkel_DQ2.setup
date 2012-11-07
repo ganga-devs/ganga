@@ -1,7 +1,0 @@
-import os
-tmpdir = '/tmp/ganga_athena_ng_anskel_dq2_testing_data-$USER'
-print 'copying Athena_NG_AnSkel_DQ2 testing data to ',tmpdir
-os.system('rm -rf %s'%tmpdir)
-#os.system('cp -r /afs/cern.ch/sw/ganga/install/TEST/athenalocal_testing_data %s'%tmpdir)
-os.system('cp -r /afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS %s'%tmpdir)
-

@@ -1,6 +1,0 @@
-23a24,28
-> # Force 32 bist
-> 
-> CPPFLAGS += -m32
-> CXXFLAGS += -m32
-> 
