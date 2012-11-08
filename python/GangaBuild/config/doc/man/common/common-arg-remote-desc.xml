@@ -1,0 +1,35 @@
+    <varlistentry>
+        <term>
+            <group choice="plain">
+                <arg choice="plain"><option>-s <replaceable>SERVICE</replaceable></option></arg>
+                <arg choice="plain"><option>--service=<replaceable>SERVICE</replaceable></option></arg>
+            </group>
+        </term>
+        <listitem>
+            <para>
+            Specifies the service name to use.
+		    If <option><replaceable>SERVICE</replaceable></option> starts
+		    with <userinput>http://</userinput>, <userinput>https://</userinput> or <userinput>httpg://</userinput>,
+		    then it is taken as a direct service endpoint URL.
+		    Otherwise <option><replaceable>SERVICE</replaceable></option> is taken as
+		    a hostname as in 'http://SERVICE:PORT/dashboard/request.py/'.
+		    </para>
+        </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+        <term>
+            <group choice="plain">
+                <arg choice="plain"><option>-p <replaceable>PORT</replaceable></option></arg>
+                <arg choice="plain"><option>--port=<replaceable>PORT</replaceable></option></arg>
+            </group>
+        </term>
+        <listitem>
+            <para>
+            Specifies the port name to use.
+            Must be used together with <option><replaceable>SERVICE</replaceable></option>
+            so that a URL of the kind 'http://SERVICE:PORT/dashboard/request.py/' can be
+            formed.
+		    </para>
+        </listitem>
+    </varlistentry>

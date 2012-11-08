@@ -1,0 +1,107 @@
+**************************************************************************************************************
+5.0.7 (2008/9/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+added option: [TestingFramework]EnableXMLDifferencer
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Core/JobRepository
+--------------------------------------------------------------------------------------------------------------
+bug fix #40268
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+fix for the type-checking warning when setting up CE attribute
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Root
+--------------------------------------------------------------------------------------------------------------
+Updates the default architecture to slc4_ia31_gcc34 and the default version to 5.18.00
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Fix SE type detection problems for space tokens at DPM sites
+* Change default DQ2 stage-out to use _USERDISK token
+* Change default DQ2Dataset default values of
+  DQ2_BACKUP_OUTPUT_LOCATIONS
+* Disable functionality of DQ2Dataset.match_ce_all and 
+  DQ2Dataset.min_num_files and print out warning.
+  These are obsolete and DQ2JobSplitter should be used instead.
+* Add option config['DQ2']['USE_STAGEOUT_SUBSCRIPTION'] to allow DQ2 
+  subscription to final output SE destinations instead of 
+  "remote lcg-cr" Will be enabled in future version if DQ2 site 
+  services are ready for this
+  =============================================
+  A few changes to enforce the computing model:
+  =============================================
+  * DQ2OutputDataset: j.outputdata.location is verified to be in the 
+    same cloud as j.backend.requirements.cloud during job submission 
+    to LCG
+  * Add AtlasLCGRequirements.cloud option.
+    Use: T0, IT, ES, FR, UK, DE, NL, TW, CA, (US, NG) or
+         CERN, ITALYSITES, SPAINSITES, FRANCESITES, UKSITES, FZKSITES,
+         NLSITES, TAIWANSITES, CANADASITES, (USASITES, NDGF)
+
+  *********************************************************
+  Job submission to LCG requires now one of the following options:
+  - j.backend.requirements.cloud='ID'
+  - j.backend.requirements.sites=['SITENAME']
+  ********************************************************
+
+* Sites specified with j.backend.requirements.sites need to be in the 
+  same cloud for the LCG backend
+* Restrict the number of subjobs of AthenaSplitterJob to value of
+  config['Athena']['MaxJobsAthenaSplitterJobLCG'] (100) if glite WMS 
+  is used.
+* Add glite UI setup for local backend if nessessary 
+* Add resource information print out in Local and LCG backend logs
+* Fix PIC access problems
+
+AthenaMC:
+* Gave a type and a default value to app.number_events_job 
+
+scripts:
+* athena: Add --cloud option
+* athenamc: update with proper types for j.application.firstevent and 
+  j.application.number_events_job
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Fixes for several small bugs. Importantly, data sets taken from opts files are now supported once again.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- Moved PandaTools to external dependencies
+- Added cloud option
+  - fix cloud in case user specified a 'site'
+- Add brokering with PandaTools runBrokerage to find best site in cloud
+- EXPERIMENTAL: Added resubmission of failed jobs to Panda:
+    job(x).resubmit() will resubmit the _failed_ subjobs to Panda.
+    reports from users are very welcome
+- Change outDS to start with user08...
+- verify outDS starts with user08.DN.ganga.
+- other cleanups and fixes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+New features:                
+- Remote testing of Ganga through the use of the GangaRobot
+- Ability to create test reports showing differences between releases.
+
+**************************************************************************************************************

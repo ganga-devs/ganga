@@ -1,0 +1,38 @@
+import os
+pwd = os.path.abspath('.')
+name = 'test.txt'
+full_name = pwd + '/' + name
+#
+# pfn's
+#
+pfn = PhysicalFile(name)
+assert pfn.name == full_name
+pfn = PhysicalFile('pfn:'+name)
+assert pfn.name == full_name
+pfn = PhysicalFile('PFN:'+name)
+assert pfn.name == full_name
+try:
+    pfn = PhysicalFile('lfn:'+name)
+    raise 'Should have got exception trying to create PhysicalFile from lfn.'
+except:
+    pass
+#
+# lfn's
+#
+lfn = LogicalFile(name)
+assert lfn.name == name
+lfn = LogicalFile('lfn:'+name)
+assert lfn.name == name
+lfn = LogicalFile('LFN:'+name)
+assert lfn.name == name
+try:
+    lfn = LogicalFile('pfn:'+name)
+    raise 'Should have got exception trying to create LogicalFile from pfn.'
+except:
+    pass
+#
+# methods
+#
+lfn = LogicalFile('/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000326_1.dimuon.dst')
+assert lfn.getReplicas()
+assert lfn.getMetadata()

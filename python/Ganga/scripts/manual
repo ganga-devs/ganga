@@ -1,0 +1,298 @@
+# File: manual
+# Author: K. Harrison
+# Created: 070416
+# Last modified: 070508
+
+"""GPI script for producing GPI reference manual"""
+
+__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__    = "8 May 2007"
+__version__ = "1.0"
+
+from Ganga.Runtime import gangadoc
+from Ganga.Utility.files import fullpath
+from Ganga.Utility.logging import getLogger
+import os
+import pydoc
+import sys
+import time
+
+logger = getLogger()
+
+class Manual:
+   """Class for creating GPI reference manual
+
+      Manual can be created either as a collection of html files
+      or as a single text file"""
+
+   def __init__( self ):
+      self.categoryList = [ \
+         "Applications", "Backends", "Datasets", "Splitters", "Mergers", \
+         "Exceptions", "Miscellaneous Classes", "Functions", "Objects" ] 
+
+      #for Ganga tutorial remove Datasets category, otherwise it crashes
+      if config["Configuration"]["RUNTIME_PATH"] == 'Ganga:':
+         self.categoryList.remove("Datasets")
+
+      self.creationTime = time.strftime( "%c" )
+      self.version = config[ "System" ][ "GANGA_VERSION" ]
+      self.helpDict = {}
+      self.title = "Reference Manual for Ganga Public Interface (GPI)"
+      self.formatList = [ "html", "text" ]
+
+      for category in gangadoc._GPIhelp_sections.keys():
+         categoryDict = {}
+         for infoList in gangadoc._GPIhelp_sections[ category ]:
+            name, object, docstring = infoList
+            if not docstring:
+               docstring = pydoc.splitdoc( pydoc.getdoc( object ) )[ 0 ]
+            if "Classes" == category:
+               catName = categoryname( object ).capitalize()
+               if not catName in self.categoryList:
+                  catName = "Miscellaneous Classes"
+            else:
+               catName = category
+            if not self.helpDict.has_key( catName ):
+               self.helpDict[ catName ] = {}
+            self.helpDict[ catName ][ name ] = ( object, docstring )
+
+   def htmlCategoryIndex( self, category ):
+      """Create index for items in specified category
+
+         Argument other than self:
+            category - GPI category for which items are to be indexed
+
+         Return value:
+            String in html format with index information"""
+
+      lineList = [ "<table>" ]
+      categoryDict = self.helpDict[ category ]
+      itemList = categoryDict.keys()
+      itemList.sort()
+      for name in itemList:
+         object, docstring = categoryDict[ name ]
+         if "Objects" == category:
+            linkName = object.__class__.__name__
+         else:
+            linkName = pydoc.resolve( object )[ 1 ]
+         item = "<td width=\"200\"><a href=\"%s.html\">%s</a></td>" % \
+            ( linkName, name )
+         definition = "<td>%s</td>" % ( docstring )
+         lineList.append( " ".join( [ "<tr>", item, definition, "<tr>" ] ) )
+      lineList.append( "</table>" )
+      
+      content = "\n".join( lineList )
+
+      catString = pydoc.html.section( \
+         category, '#000000', '#ffc8d8', content, 10 )
+
+      return catString
+
+   def htmlIndex( self ):
+      """Create index for GPI classes, objects and functions
+
+         No arguments other than self
+
+         Return value:
+            String in html format with index information"""
+
+      title = "<br />".join( [ self.title, self.version, self.creationTime ] )
+      heading = pydoc.html.heading(
+         '<big><big><strong>' + title + '</strong></big></big>',
+         '#ffffff', '#7799ee')
+      lineList = [ heading ]
+      for category in self.categoryList:
+         lineList.append( self.htmlCategoryIndex( category ) )
+      indexString = "\n".join( lineList )
+      return indexString
+
+   def htmlWrite( self, outfile = "" ):
+      """Write GPI reference manual as collection of html files
+
+         Arguments other than self:
+            outfile - path to index file
+
+         A separate file is created for each class, object and function,
+         and for the index.  All files are placed in the directory
+         specified for the index file using the 'outfile' argument
+
+         Return value:
+            False if 'outfile' not specified, or True otherwise"""
+
+      if not outfile:
+         logger.error( "Index file for html manual not specified" )
+         logger.error( "No output produced" )
+         return False
+      outpath = fullpath( outfile )
+      workDir = os.getcwd()
+      outdir = os.path.dirname( outpath )
+      if not os.path.isdir( outdir ):
+         os.makedirs( outdir )
+      os.chdir( outdir )
+      indexFile = os.path.basename( outpath )
+      page = pydoc.html.page( self.title, self.htmlIndex() )
+      file = open( indexFile, "w" )
+      file.write( page )
+      file.close()
+      for category in self.categoryList:
+         categoryDict = self.helpDict[ category ]
+         itemList = categoryDict.keys()
+         for name in itemList:
+            object, docstring = categoryDict[ name ]
+            if "Objects" == category:
+               pydoc.writedoc( object.__class__ )
+            else:
+               pydoc.writedoc( object )
+
+      os.chdir( workDir )
+      return True
+
+   def textBody( self ):
+      """Create body of text-format GPI reference manual
+
+         No arguments other than self
+
+         Return value:
+            Text String giving information on GPI items"""
+
+      lineList = []
+      for category in self.categoryList:
+         lineList.extend( self.textHelp( category ) )
+      bodyString = "\n".join( lineList )
+      return bodyString
+
+   def textHeader( self ):
+      """Create header for text-format GPI reference manual
+
+         No arguments other than self
+
+         Return value:
+            Text string with header information"""
+
+      underline = len( self.title ) * "="
+      lineList = [ \
+         self.title, underline, "", "Created: %s" % self.creationTime, "", "" ]
+      headerString = "\n".join( lineList )
+      return headerString
+
+   def textHelp( self, category = None ):
+      """Provide text information for specified GPI category
+
+         Argument other than self:
+            category - GPI category for which information is to be provided
+
+         Return value:
+            Text string with category information"""
+
+      lineList = []
+      if self.helpDict.has_key( category ):
+         subtitle = "GPI %s" % category
+         lineList.extend\
+            ( [
+            "",
+            subtitle,
+            len( subtitle ) * "=",
+            ""
+            ] )
+         categoryDict = self.helpDict[ category ]
+
+         itemList = categoryDict.keys()
+         itemList.sort()
+         for name in itemList:
+            object, docstring = categoryDict[ name ]
+            if "Objects" == category:
+               lineList.extend\
+                  ( [
+                  "",
+                  "%s : %s" % ( name, docstring ),
+                  "Instance of class: %s" % ( object.__class__.__name__ ),
+                  pydoc.plain( pydoc.text.document( object.__class__ ) ),
+                  ] )
+            else:
+               lineList.extend\
+                  ( [
+                  "",
+                  pydoc.plain( pydoc.text.document( object ) ),
+                  ] )
+
+      return lineList
+
+   def textWrite( self, outfile = "" ):
+      """Write GPI reference manual as single text file
+
+         Arguments other than self:
+            outfile - path to output file
+
+         If 'outfile' is set as a null string, the text of the manual
+         is written to standard output
+
+         Return value:
+            True"""
+
+      if outfile:
+         outpath = fullpath( outfile )
+         outdir = os.path.dirname( outpath )
+         if not os.path.isdir( outdir ):
+            os.makedirs( outdir )
+         manual = open( outpath, "w" )
+      else:
+         manual = sys.stdout
+      manual.write( self.textHeader() )
+      manual.write( self.textBody() )
+      if outfile:
+         manual.close()
+      return True
+
+   def write( self, format = "", outfile = "" ):
+      """Write GPI reference manual
+
+         Arguments other than self:
+            format - format (html or text) in which manual is to be written
+            outfile - path to output file (text) or index file (html)
+
+         Return value:
+            True if manual written successfully, False otherwise"""
+
+      formatOK = True
+      if "text" == format:
+         formatOK = self.textWrite( outfile = outfile )
+      elif "html" == format:
+         formatOK = self.htmlWrite( outfile = outfile )
+      else:
+         formatOK = False
+      return formatOK
+
+def getOptParser():
+   """Create parser for dealing with options for creating GPI reference manual
+
+      No arguments
+
+      Return value:
+         OptionParser object"""
+
+   from optparse import OptionParser
+   usage = "ganga manual [options]"\
+      + "\n       => create GPI reference manual"
+
+   parser = OptionParser( usage = usage )
+   parser.add_option( "-f", "--format", action = "store", type = "string", \
+   dest = "format", default = "html", \
+      help = "write manual in specified format (html or text) " \
+      + "[Default: html]" )
+   parser.add_option( "-o", "--outfile", action = "store", \
+      dest = "outfile", default = "./GangaReferenceManual.html", \
+      help = "path to output file (text) or index file (html) " \
+      + "[Default: ./GangaReferenceManual.html]" )
+   return parser
+
+man = Manual()
+optParser = getOptParser()
+try:
+   optList, argList = optParser.parse_args()
+   if hasattr( optList, "outfile" ):
+      optList.outfile = optList.outfile.strip( '"' ).strip( "'" )
+      formatOK = man.write( format = optList.format, outfile = optList.outfile )
+      if not formatOK:
+         optParser.print_help()
+except:
+   pass

@@ -1,0 +1,158 @@
+**************************************************************************************************************
+5.0.4 (2008/8/5)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+added pycrypto and paramico to the list of external dependencies (for Remote backend)
++ pycrypto sys.path fix for both 32 and 64 platforms
+
+bugfix #38547: Newly generated .gangarc produces error:
+configuration template files are now kept in the top-level templates directory - this should fix a
+bug introduced in 5.0.0 (ganga -g was not working)
+
+bugfix: #39655: Problem with slice operations on templates
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/GPIDev/Lib/JobTree
+--------------------------------------------------------------------------------------------------------------
+Updates related to job slices.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+- bugfix of https://savannah.cern.ch/bugs/?37825
+- bugfix of https://savannah.cern.ch/bugs/?38368
+- fix wrong indentations
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Mergers
+--------------------------------------------------------------------------------------------------------------
+Adds CustomMerger and updates the SmartMerger to introspect the jobs to find files to merge if none
+are specified.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Updated the Remote backend that include:
+
+* Bug reporting from the remote site
+* Failure after three attempts at logging in
+* Sanity checks before job submission
+* Copying of remote backend info to the Local Host
+
+Also made the backend public. Do
+
+help(Remote)
+
+for more information.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Root
+--------------------------------------------------------------------------------------------------------------
+Improved support for later root versions, both on Local with python versions and LCG, with download
+locations.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena
+* Upgrade to DQ2Clients 0.1.17 and DQ2 API
+* Add full support for DQ2 container datasets in DQ2Dataset
+* Change in DQ2OutputDataset.retrieve(): use dq2-get
+* Add AthenaRemoteRTHandler class for the Remote backend
+* Fix bug #39286: Athena().atlas_environment omits type_list
+* Fix bug #39286: Athena().atlas_environment omits type_list
+* Fix bug #35256: Problems using AthenaOutputMerger with 
+  ATLASOutputDataset and PBS backend
+* Fix bug #39549: Raise exception in prepare()
+  if athena_compile==True and NG==True
+* Fix but #39568: Panda/DQ2Dataset: if dataset is emtpy/does
+  get_contents returns [] 
+* Print out warning to use jobs(id).subjobs instead of subjobs
+* Athena.py: add debug print-outs during compilation in
+  install.sh
+* ganga-stage-in-out-dq2.py:
+  - Add fix for DPM setup for NIKHEF and SARA
+  - remove special SE setup for RAL
+  - add MPPMU defaultSE=lcg-lrz-se.lrz-muenchen.de
+  - add DQ2_BACKUP_OUTPUT_LOCATIONS reading
+  - add DQ2_OUTPUT_SPACE_TOKENS reading
+  - add timeouts of 300,1200,2400s for lcg-cr stage-out
+  - change stage-out order for DQ2OutputDataset:
+  (1) j.outputdata.location, (2) [ siteID ]
+  (2) DQ2_BACKUP_OUTPUT_LOCATIONS 
+* Add config options config['DQ2']:
+  DQ2_OUTPUT_SPACE_TOKENS: Allowed space tokens names of 
+                           DQ2OutputDataset output
+  DQ2_BACKUP_OUTPUT_LOCATIONS: Default backup locations of 
+                               DQ2OutputDataset output	 
+
+AthenaMC:
+* AthenaMC.py: added type checks to members. 
+* AthenaMCDatasets: bug fix for treatment of DQ2 datasets available 
+  only for Panda. 
+* AthenaMCLCGRTGandler.py and wrapper.sh: 
+  extension of the glite WMS workaround to input data
+
+Tasks:
+* Many updates and bugfixes
+
+Tnt:
+* Small import changes due to DQ2 API change
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+DSTMerger added:
+================
+    The merger uses DaVinci to combine DST files that have
+    been returned *locally* in a job's outputsandbox. As such
+    it is mainly useful for microDST files.
+    
+    The usage is as with other merger objects. See the help for 
+    TextMerger or RootMerger for more details.
+    
+    Example:
+    
+    dm = DSTMerger()
+    dm.files = ['dv.dst']
+    
+    This object can be attached to a job object or 
+    used to merge a list of jobs with its merge 
+    method.
+    
+    It is possible to overide the default opts file
+    for performing the merge. A new opts file can 
+    be provided via the 'merge_opts' field. This should
+    be done with care, as some opts are assumed when
+    writing the files for output.
+
+Bugfix in configuration of Gaudi jobs:
+======================================
+Fixed a bug that caused new classes declared in a package not to be recognised by gaudirun when
+executing job.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Removed some nasty warning messages.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- Added detection of curl and error message if not in PATH
+- Add autogenerated DQ2OutputDataset name to subjobs
+- latest Panda Client and ConfigExtractor fixes
+
+**************************************************************************************************************

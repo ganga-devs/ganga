@@ -1,0 +1,39 @@
+**************************************************************************************************************
+5.5.19 (2010/12/16)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+bug #76325: Syntax Error in job script for submission to SGE backend
+ - fixed Batch backend job wrapper (mismatching python version for tarfile module
+
+bug #74531: jobtree.add should accept slices and list of jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+Added support for ATLAS/Athena dashboard monitoring for LCG, Batch, CREAM and Local backends.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+------
+* friendly warning if LATEST dbrelease not resolved
+* Enforce usage of 
+  config.Athena.DefaultNumFilesPandaDirectDQ2JobSplitter for 
+  Panda jobs also if numsubjobs or numfiles is set
+Tasks:
+------
+* Fix bug #75826: Append site to dataset to fix dq2-get problem
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Update EventPicking test
+
+**************************************************************************************************************
