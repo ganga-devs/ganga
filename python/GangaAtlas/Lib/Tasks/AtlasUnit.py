@@ -22,13 +22,17 @@ import os
 
 class AtlasUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
+      'output_file_list'     : SimpleItem(hidden=1, transient=1, defvalue={}, doc='list of output files copied')     
     }.items()))
 
    _category = 'units'
    _name = 'AtlasUnit'
    _exportmethods = IUnit._exportmethods + [ ]
-   _outputfilelist = {}
-   
+
+   def __init__(self):
+      super(AtlasUnit, self).__init__()
+      self.output_file_list = {}
+      
    def registerDataset(self):
       """Register in the transform container"""
       trf = self._getParent()
@@ -328,19 +332,19 @@ class AtlasUnit(IUnit):
          return False
 
       # get list of output files
-      if len(self._outputfilelist) == 0:
+      if len(self.output_file_list) == 0:
          dq2_list = dq2.listFilesInDataset(job.outputdata.datasetname)
-
+                 
          for guid in dq2_list[0].keys():
-            self._outputfilelist[ dq2_list[0][guid]['lfn'] ] = job.outputdata.datasetname
-
+            self.output_file_list[ dq2_list[0][guid]['lfn'] ] = job.outputdata.datasetname
+         
       # check which ones still need downloading
       to_download = {}
-      for f in self._outputfilelist.keys():
+      for f in self.output_file_list.keys():
          
          # check for REs
-         if self.copy_output.isValid(f) and not self.copy_output.isDownloaded(f):
-            to_download[ f ] = self._outputfilelist[f]
+         if self.copy_output.isValid(f) and not self.copy_output.isDownloaded(f):            
+            to_download[ f ] = self.output_file_list[f]
 
 
       # is everything downloaded?
@@ -351,7 +355,6 @@ class AtlasUnit(IUnit):
       fname = to_download.keys()[0]
       dsname = to_download[fname]
       exe = 'dq2-get -L ROAMING -a -d -H %s -f %s %s' % (self.copy_output.local_location, fname, dsname)
-
       logger.info("Downloading '%s' to %s..." % (fname, self.copy_output.local_location))
 
       thread = Download.download_dq2(exe)
