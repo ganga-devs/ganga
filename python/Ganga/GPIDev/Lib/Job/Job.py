@@ -6,11 +6,13 @@
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-from Ganga.Lib.Mergers.Merger import runAutoMerge
+from MetadataDict import *
 from MetadataDict import *
 
+from Ganga.Lib.Checkers.Checker import Checker
+from Ganga.Lib.Notifier.Notifier import Notifier
 import Ganga.Utility.logging
-from Ganga.GPIDev.Adapters.IMerger import MergerError
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiProcessor
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.util import isStringLike
@@ -161,7 +163,7 @@ class Job(GangaObject):
                                     'splitter':ComponentItem('splitters',defvalue=None,load_default=0,optional=1,doc='optional splitter'),
                                     'subjobs':ComponentItem('jobs',defvalue=[],sequence=1,protected=1,load_default=0,copyable=0,optional=1,proxy_get="_subjobs_proxy",doc='list of subjobs (if splitting)',summary_print = '_subjobs_summary_print'),
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
-                                    'merger':ComponentItem('mergers',defvalue=None,load_default=0,optional=1,doc='optional output merger'),
+                                    'postprocessors':ComponentItem('postprocessor',defvalue=MultiProcessor(),load_default=0,optional=1,doc='optional output merger'),
                                     'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
                                     'metadata':ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
                                     'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0)
@@ -169,7 +171,7 @@ class Job(GangaObject):
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['prepare','unprepare','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status','merge' ]
+    _exportmethods = ['prepare','unprepare','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status' ]
 
     default_registry = 'jobs'
 
@@ -312,7 +314,6 @@ class Job(GangaObject):
         self._getWriteAccess()
 
         saved_status = self.status
-
         try:
             if state.hook:
                 try:
@@ -329,7 +330,11 @@ class Job(GangaObject):
                 logger.debug("timenow('%s') called.", self.status)
             else:
                 logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
-
+            if newstatus == 'completed' or newstatus == 'failed' or newstatus == 'killed':
+                if self.postprocessors:
+                    passed = self.postprocessors.execute(self,newstatus)
+                    if passed is not True:
+                        newstatus = 'failed'
             self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
         except Exception,x:
@@ -344,12 +349,7 @@ class Job(GangaObject):
 
     def transition_update(self,new_status):
         """Propagate status transitions""" 
-        try:
-            runAutoMerge(self, new_status)
-        except MergerError:
-            #stop recursion
-            new_status = 'failed'
-            self.updateStatus(new_status, transition_update = False)
+
         
         #Propagate transition updates to applications
         if self.application:
@@ -425,7 +425,6 @@ class Job(GangaObject):
 
         if not new_stat:
             logger.critical('undefined state for job %d, stats=%s',j.id,str(stats))
-
         j.updateStatus(new_stat)
 
     def getMonitoringService(self):
@@ -1371,39 +1370,6 @@ class Job(GangaObject):
 ##         index.reverse()
 ##         return tuple(index)
         
-    def merge(self, subjobs = None, sum_outputdir = None,  **options):
-        '''Merge the output of subjobs.
-
-        By default merge all subjobs into the master outputdir.
-        The output location and the list of subjobs may be overriden.
-        The options (keyword arguments) are passed onto the specific merger implementation.
-        Refer to the specific merger documentation for more information about available options.
-        '''
-
-        self._getWriteAccess()
-
-        #for backward compatibility if the arguments are not passed correctly -> switch them
-        if (subjobs is not None and isStringLike(subjobs)) or (sum_outputdir is not None and not isStringLike(sum_outputdir)):
-             #switch the arguments      
-             temp = subjobs
-             subjobs = sum_outputdir
-             sum_outputdir = temp       
-             logger.warning('Deprecated use of job.merge(sum_outputdir, subjobs), swap your arguments, will break in the future, it should be job.merge(subjobs, sum_outputdir)')      
-
-        if sum_outputdir is None:
-            sum_outputdir = self.outputdir
-
-        if subjobs is None:
-            subjobs = self.subjobs
-
-        try:
-            if self.merger:
-                self.merger.merge(subjobs, sum_outputdir, **options)
-            else:
-                logger.warning('Cannot merge job %d: merger is not defined'%self.id)
-        except Exception,x:
-            log_user_exception()
-            raise
             
     def _subjobs_proxy(self):
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
