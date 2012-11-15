@@ -157,10 +157,13 @@ class IUnit(GangaObject):
       for jid in self.active_job_ids:
 
          # we have an active job so see if this job is OK and resubmit if not
-         job = GPI.jobs(jid)         
-         task = self._getParent()._getParent()
-         trf = self._getParent()
-                           
+         try:
+            job = GPI.jobs(jid)
+         except:
+            logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
+                           (jid, task.id, trf.getID(), self.getID() ))
+            continue
+         
          if job.status == "completed":
             
             # check if actually completed
@@ -252,8 +255,19 @@ class IUnit(GangaObject):
       
       tot_active = 0
       active_states = ['submitted','running']
+                  
       for jid in self.active_job_ids:
-         j = stripProxy( GPI.jobs(jid) )
+
+         try:
+            job = GPI.jobs(jid)
+         except:
+            task = self._getParent()._getParent()
+            trf = self._getParent()
+            logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
+                           (jid, task.id, trf.getID(), self.getID() ))
+            continue
+                                                
+         j = stripProxy( job )
 
          # try to preserve lazy loading
          if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
@@ -272,7 +286,17 @@ class IUnit(GangaObject):
    def n_status(self, status):
       tot_active = 0
       for jid in self.active_job_ids:
-         j = stripProxy( GPI.jobs(jid) )
+         
+         try:
+            job = GPI.jobs(jid)
+         except:
+            task = self._getParent()._getParent()
+            trf = self._getParent()
+            logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
+                           (jid, task.id, trf.getID(), self.getID() ))
+            continue
+                                                
+         j = stripProxy( job )
 
          # try to preserve lazy loading
          if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
@@ -290,7 +314,17 @@ class IUnit(GangaObject):
    def n_all(self):
       total = 0
       for jid in self.active_job_ids:
-         j = stripProxy( GPI.jobs(jid) )
+
+         try:
+            job = GPI.jobs(jid)
+         except:
+            task = self._getParent()._getParent()
+            trf = self._getParent()
+            logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
+                           (jid, task.id, trf.getID(), self.getID() ))
+            continue
+                                                                        
+         j = stripProxy( job )
 
          # try to preserve lazy loading
          if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
