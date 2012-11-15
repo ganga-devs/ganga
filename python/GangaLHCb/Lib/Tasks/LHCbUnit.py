@@ -12,7 +12,6 @@ class LHCbUnit(IUnit):
    _category = 'units'
    _name = 'LHCbUnit'
    _exportmethods = IUnit._exportmethods + [ ]
-   _hidden = 1
    
    def createNewJob(self):
       """Create any jobs required for this unit"""      

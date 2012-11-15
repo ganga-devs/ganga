@@ -115,15 +115,15 @@ class ITask(GangaObject):
             for trf in self.transforms:
                 for unit in trf.units:
                     for jid in unit.active_job_ids:
+                        j = GPI.jobs(jid)
                         try:
-                            j = GPI.jobs(jid)
                             j.remove()
                         except:
                             pass
 
                     for jid in unit.prev_job_ids:
+                        j = GPI.jobs(jid)
                         try:
-                            j = GPI.jobs(jid)
                             j.remove()
                         except:
                             pass
