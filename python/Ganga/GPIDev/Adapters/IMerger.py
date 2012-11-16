@@ -15,6 +15,7 @@ import string
 
 class IMerger(IPostProcessor):
     """
+    Contains the interface for all mergers, all mergers should inherit from this object.
     """
 
     # set outputdir for auto merge policy flag
