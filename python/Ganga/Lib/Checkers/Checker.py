@@ -17,13 +17,7 @@ import string
 
 
 logger = getLogger()
-#set the checkers config up
-config = makeConfig('Checkers','parameters for checkers')
-config.addOption('associate',"{'log':'TextChecker','root':'RootChecker',"
-                 "'text':'TextChecker','txt':'TextChecker'}",'Dictionary of file associations')
-gangadir = getConfig('Configuration')['gangadir']
-config.addOption('check_output_dir', gangadir+'/check_results',"location of the checkr's outputdir")
-config.addOption('std_check','TextChecker','Standard (default) checkr')
+
 
 
 

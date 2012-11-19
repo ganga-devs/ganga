@@ -50,7 +50,7 @@ class LHCbMetaDataChecker(MetaDataChecker):
         Checks metadata of job is within a certain range.
         """
         self.convert_metadata = self.convertLHCbMetadata(job)
-        super(LHCbMetaDataChecker,self).check(job)
+        return super(LHCbMetaDataChecker,self).check(job)
 
 
 
