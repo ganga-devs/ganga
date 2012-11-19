@@ -1,0 +1,31 @@
+# this is the test of global and local names binding of Ganga
+# calling: ganga execfile_test.py should pass
+
+def error(s):
+    import sys
+    print 'ERROR:',s
+    sys.exit(-1)
+    
+try:
+    Job # test that we did from Ganga.GPI import *
+except NameError:
+    error('automatic "from Ganga.GPI import *" does not work')
+
+x = 10
+import Ganga.GPI
+try:
+    Ganga.GPI.x
+    error('Ganga.GPI implicitly modifiable')
+except AttributeError:
+    pass
+
+if __name__ != "__main__":
+    error('__name__ != "__main__"')
+
+# make sure we are running in __main__
+
+main = __import__('__main__')
+assert(dir(main) == dir())
+
+print 'Test Passed OK'
+

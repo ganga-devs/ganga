@@ -1,0 +1,58 @@
+**************************************************************************************************************
+5.8.12 (2012/8/31)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix for #941184: Add exception handling for Splitters
+* Added Automatic downloading framework for Tasks
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix #86924, continue if PoolFileCatalog.xml creation failed
+* Implementation #96665: MultiTask: provide task.checkContainerContents()
+* Stopped TapPrepare picking up panda.* datasets
+* Update to panda-client 0.4.8
+* Fixed the download of datasets within Ganga
+* Added automatic downloading to AtlasTasks
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGaudi
+--------------------------------------------------------------------------------------------------------------
+Added the -T option to the Gaudi args for TCMalloc
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v508r12 (from GangaLHCb-24-20)
+*************
+
+1) Changed default ROOT version to 5.34.00
+2) Increased the default Ganga (soft) limit for bulk submission jobs to 500
+3) Added the default -T arg to DaVinci style jobs to utilise the performance enhancements that
+tcmalloc brings.
+4) Fixed Savannah bug #97146
+5) TURNED ON THE BULK SUBMISSION AS DEFAULT for SplitByFiles!
+
+If you wish to use the SplitByFiles splitter in the old mode you now have to manually use:
+In[0]: j.splitter.bulksubmit = False
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Add Panda job rebroker function: jobs(42).backend.rebroker() (experimental !)
+* Update to panda-client 0.4.8
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaService
+--------------------------------------------------------------------------------------------------------------
+* Added tasks and jobs from GPI to server script
+
+**************************************************************************************************************

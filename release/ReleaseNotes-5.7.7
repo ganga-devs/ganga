@@ -1,0 +1,46 @@
+**************************************************************************************************************
+5.7.7 (2012/1/31)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix to correctly ship Shared Directory contents with all backends
+* Fix for bug #90890
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* update panda-client to 0.3.80
+* tag_info for subjobs now only store refs to their own data
+* ATLASTier3Dataset: force numjobs = 0 if both numjobs and numfiles set
+* Fix interference btw. --useRootCore and --athena_release
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v507r7 (from GangaLHCb-23-31)
+************
+
+bug fix to stop monitoring loop interfering with large job submission in the LHCbAnalysisTasks.
+
+included feature request from Roel to allow inputdata to be specified instead of a BKQuery object.
+(Savannah ticket #89780). 
+** Note that this negates the updata feature of the Tasks framework and means that one can roughly
+then just think of the transofrms/partitions as regular jobs with the benefit of the task.overview()
+"pretty overview printing" facility.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* update panda-client to 0.3.80
+* add missing import sys
+* don't require atlas_release if using panda backend reqs rootver
+* always set --givenPFN for Tier3 datasets
+* fix for ATLASTier3Dataset & Panda
+* Added the 'forcestaged' option
+
+**************************************************************************************************************
