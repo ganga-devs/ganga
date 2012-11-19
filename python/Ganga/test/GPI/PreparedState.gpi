@@ -1,0 +1,289 @@
+from Ganga.Core.exceptions import *
+#from GangaTest.Framework.tests import GangaGPITestCase
+#from GangaTest.Framework.utils import sleep_until_completed
+config['Preparable']['unprepare_on_copy']=False
+a=Job()
+a.prepare()
+assert a.application.is_prepared is not None, 'Prepare Test 1: Failed to prepare vanilla job'
+
+
+b=a.copy()
+assert a.application.is_prepared.name == b.application.is_prepared.name, 'Prepare Test 2: failed to copy a prepared job fully'
+
+s=shareref._impl.name
+assert s[a.application.is_prepared.name] == 2, 'Prepare Test 3 failed; shareref wasnt incremented after job copy'
+
+
+box.add(a,'testjob')
+s=shareref._impl.name
+assert s[a.application.is_prepared.name] == 3, 'Prepare Test 4 failed; shareref wasnt incremented after copying job to the box '
+
+
+c=Executable()
+box.add(c,'testapp')
+#this is how we index the last thing added to the box, and then prepare it
+box(box.ids()[-1]).prepare()
+s=shareref._impl.name
+assert s[box(box.ids()[-1]).is_prepared.name] == 1, 'Prepare Test 6 failed; a prepared app in the box didnt increment the sharedref'
+
+
+a.unprepare()
+assert a.application.is_prepared is None, 'Prepare Test 7 failed; unpreparing a job'
+s=shareref._impl.name
+assert s[b.application.is_prepared.name] == 2, 'Prepare Test 8 failed; shareref wasnt decremented after unpreparing job'
+
+a.application=box(box.ids()[-1])
+assert a.application.is_prepared.name == box(box.ids()[-1]).is_prepared.name, 'Prepare Test 9 failed; copying prepared app from box to new job'
+
+
+s=shareref._impl.name
+assert s[box(box.ids()[-1]).is_prepared.name] == 2, 'Prepare Test 10 failed; a prepared app in the box didnt increment the sharedref when we copied the app to a new job'
+
+
+try:
+    box(box.ids()[-1]).copy()
+    assert False, 'we should have thrown an error here because we shouldnt be able to copy an app out of the box'
+except:
+    pass
+
+
+appName = box(box.ids()[-1]).is_prepared.name
+box(box.ids()[-1]).unprepare()
+assert box(box.ids()[-1]).is_prepared is None, 'Prepare Test 11 failed; unpreparing an executable app in the box'
+
+
+a=Job()
+a.prepare()
+box.add(a,'testjob')
+appName = box(box.ids()[-1]).application.is_prepared.name
+s=shareref._impl.name
+assert s[appName] == 2, 'Prepare Test 11a failed; adding a prepared job to the box didnt increment the sharedref counter'
+box(box.ids()[-1]).unprepare()
+s=shareref._impl.name
+assert s[appName] == 1, 'Prepare Test 11b failed; a prepared job in the box didnt decrement the sharedref when unprepared'
+
+
+
+#quick test to make sure bug #82818 didn't come back
+a=Job()
+a.prepare()
+a=Job()
+#and another
+a=Job()
+a.application.exe=File('junk')
+a=Job()
+
+
+
+j=Job()
+j.prepare()
+app=j.application.copy()
+s=shareref._impl.name
+assert s[j.application.is_prepared.name] == 1, 'Prepare Test 12 failed; when we copy the app from a prepared job, we dont want the shareref to increase'
+
+app=Executable()
+app.prepare()
+j=Job()
+j.application=app
+s=shareref._impl.name
+assert s[j.application.is_prepared.name] == 1, 'Prepare Test 13 failed; when we prepare an isolated app, then copy it to a job, the shareref should equal 1'
+
+a=Job()
+a.prepare()
+b=a.copy(unprepare=True)
+s=shareref._impl.name
+assert s[a.application.is_prepared.name] == 1, 'Prepare Test 14 failed; when we prepare a job, then copy with unprepare=True, the shareref should equal 1'
+
+
+a=Job()
+a.application.is_prepared=True
+a.submit()
+assert a.application.is_prepared == True, 'Prepare Test 15 failed; if we set is_prepared=True, the job should not be prepared during submission'
+
+
+a=Job()
+a.prepare()
+tmp = a.application.is_prepared.name
+a.application.is_prepared=None
+s=shareref._impl.name
+assert s[tmp] == 0, 'Prepare Test 16 failed; set is_prepared=None on a prepared job, that should effectively unprepare the application'
+
+j=Job()
+j.name='LocalEcho'
+j.application=Executable()
+j.application.exe=File('/bin/echo')
+j.application.args='Hello Local World'
+j.backend=Local()
+
+assert(j.submit() == True), 'Prepare Test 17 failed. submitting a local executable job with a File() type as the exe argument (rather than the default exe string'
+
+config['Preparable']['unprepare_on_copy']=True
+s=shareref._impl.name
+a=Job()
+a.prepare()
+shareddirname=a.application.is_prepared.name
+assert a.application.is_prepared is not None, 'Prepare Test 18: Failed to prepare vanilla job'
+
+
+b=a.copy()
+assert b.application.is_prepared == None, 'Prepare Test 19: copying a prepared job (with unprepare_on_copy=True) didnt unprepare the job during copy'
+
+s=shareref._impl.name
+assert s[a.application.is_prepared.name] == 1, 'Prepare Test 20 failed; shareref should be 1, because the copy of the job was unprepared by unprepare_on_copy=True'
+
+
+box.add(a,'testjob')
+s=shareref._impl.name
+assert s[a.application.is_prepared.name] == 2, 'Prepare Test 21 failed; shareref wasnt incremented after copying job to the box '
+
+
+c=Executable()
+box.add(c,'testapp')
+#this is how we index the last thing added to the box, and then prepare it
+box(box.ids()[-1]).prepare()
+s=shareref._impl.name
+assert s[box(box.ids()[-1]).is_prepared.name] == 1, 'Prepare Test 22 failed; a prepred app in the box didnt increment the sharedref'
+
+
+a.unprepare()
+assert a.application.is_prepared is None, 'Prepare Test 23 failed; unpreparing a job'
+s=shareref._impl.name
+assert s[shareddirname] == 1, 'Prepare Test 24 failed; shareref wasnt decremented after unpreparing job'
+
+a.application=box(box.ids()[-1])
+assert a.application.is_prepared.name == box(box.ids()[-1]).is_prepared.name, 'Prepare Test 25 failed; copying prepared app from box to new job'
+
+
+s=shareref._impl.name
+assert s[box(box.ids()[-1]).is_prepared.name] == 2, 'Prepare Test 26 failed; a prepared app in the box didnt increment the sharedref when we copied the app to a new job'
+
+
+try:
+    box(box.ids()[-1]).copy()
+    assert False, 'we should have thrown an error here because we shouldnt be able to copy an app out of the box'
+except:
+    pass
+
+
+appName = box(box.ids()[-1]).is_prepared.name
+box(box.ids()[-1]).unprepare()
+assert box(box.ids()[-1]).is_prepared is None, 'Prepare Test 27 failed; unpreparing an executable app in the box'
+
+
+
+a=Job()
+a.prepare()
+box.add(a,'testjob')
+appName = box(box.ids()[-1]).application.is_prepared.name
+s=shareref._impl.name
+assert s[appName] == 2, 'Prepare Test 28 failed; adding a prepared job to the box didnt increment the sharedref counter'
+box(box.ids()[-1]).unprepare()
+s=shareref._impl.name
+assert s[appName] == 1, 'Prepare Test 29 failed; a prepared job in the box didnt decrement the sharedref when unprepared'
+
+
+
+#quick test to make sure bug #82818 didn't come back
+a=Job()
+a.prepare()
+a=Job()
+#and another
+a=Job()
+a.application.exe=File('junk')
+a=Job()
+
+
+config['Preparable']['unprepare_on_copy']=False
+
+j=Job()
+j.prepare()
+app=j.application.copy()
+s=shareref._impl.name
+assert s[j.application.is_prepared.name] == 1, 'Prepare Test 30 failed; when we copy the app from a prepared job, we dont want the shareref to increase'
+
+app=Executable()
+app.prepare()
+j=Job()
+j.application=app
+s=shareref._impl.name
+assert s[j.application.is_prepared.name] == 1, 'Prepare Test 31 failed; when we prepare an isolated app, then copy it to a job, the shareref should equal 1'
+
+a=Job()
+a.prepare()
+b=a.copy(unprepare=True)
+s=shareref._impl.name
+assert s[a.application.is_prepared.name] == 1, 'Prepare Test 32 failed; when we prepare a job, then copy with unprepare=True, the shareref should equal 1'
+
+
+a=Job()
+a.application.is_prepared=True
+a.submit()
+assert a.application.is_prepared == True, 'Prepare Test 33 failed; if we set is_prepared=True, the job should not be prepared during submission'
+
+a=Job()
+a.prepare()
+tmp = a.application.is_prepared.name
+a.application.is_prepared=None
+s=shareref._impl.name
+assert s[tmp] == 0, 'Prepare Test 34 failed; set is_prepared=None on a prepared job, that should effectively unprepare the application'
+
+j=Job()
+j.name='LocalEcho'
+j.application=Executable()
+j.application.exe=File('/bin/echo')
+j.application.args='Hello Local World'
+j.backend=Local()
+
+assert(j.submit() == True), 'Prepare Test 35 failed. submitting a local executable job with a File() type as the exe argument (rather than the default exe string'
+
+j=Job()
+j.prepare()
+tmpj = j.application.is_prepared.name
+s=shareref._impl.name
+assert s[tmpj] == 1, 'Prepare Test 36a failed.' 
+a=Executable()
+j.application=a
+s=shareref._impl.name
+assert s[tmpj] == 0, 'Prepare Test 36b failed.' 
+
+j=Job()
+j.prepare()
+tmpj = j.application.is_prepared.name
+a=Executable()
+a.prepare()
+tmpa = a.is_prepared.name
+j.application=a
+s=shareref._impl.name
+assert s[tmpj] == 0, 'Prepare Test 37a failed.' 
+assert s[tmpa] == 1, 'Prepare Test 37b failed.' 
+
+j=Job()
+j.prepare()
+tmpj = j.application.is_prepared.name
+shareref.lookup(sharedir=tmpj, unprepare=True)
+s=shareref._impl.name
+assert s[tmpj] == 0, 'Test 38a failed; shareref.lookup() didnt behave as expected'
+
+j=Job()
+j.prepare()
+tmpj = j.application.is_prepared.name
+box.add(j,'testjob')
+shareref.lookup(sharedir=tmpj, unprepare=True)
+s=shareref._impl.name
+assert s[tmpj] == 0, 'Test 38b failed; shareref.lookup() didnt behave as expected'
+
+a=Executable()
+box.add(a,'testapp')
+#this is how we index the last thing added to the box, and then prepare it
+box(box.ids()[-1]).prepare()
+tmpname = box(box.ids()[-1]).is_prepared.name
+shareref.lookup(box(box.ids()[-1]).is_prepared.name, unprepare=True)
+s=shareref._impl.name
+assert s[tmpname] == 0, 'Test 38c failed; shareref.lookup() didnt behave as expected'
+
+
+
+
+print "############################"
+print "REACHED END OF PREPARE TESTS"
+print "############################"

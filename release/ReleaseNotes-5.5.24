@@ -1,0 +1,44 @@
+**************************************************************************************************************
+5.5.24 (2011/3/1)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fix exetype=EXE to execute generic script on CREAM
+* Added enableJEM and configJEM options for Job Execution Monitor on Panda backend:
+  See --enabledJEM, --configJEM, j.backend.requirements.enableJEM, j.backend.requirements.configJEM
+* Write container name to destinationDBlock for "task" monitoring purposes
+* j.application.useAthenaPackages can now be used with PYARA to use your packages on Panda.
+* Environment fix for CREAM CE jobs	
+* update to panda-client 0.3.32: Files outside run directory can now be excluded.
+
+AthenaMC:
+---------
+* AthenaMCPandaRTHandler: filling minbias and cavern datasets blocks in Panda jobs	
+
+scripts:
+--------
+* Add --inPfnListFile for ATLASTier3Dataset and ATLASTier3Splitter processing
+* Add --useAthenaPackages
+* Allow --athena_dbrelease='' to unset the dbrelease (instead of LATEST)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Contains fix for Gaudi apps w/ new InstallArea structure.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added enableJEM and configJEM options for Job Execution Monitor on Panda backend:
+  See --enabledJEM, --configJEM, j.backend.requirements.enableJEM, j.backend.requirements.configJEM
+* Write container name to destinationDBlock for "task" monitoring purposes
+* j.application.useAthenaPackages can now be used with PYARA to use your packages on Panda.
+* update to panda-client 0.3.32: Files outside run directory can now be excluded.
+
+**************************************************************************************************************

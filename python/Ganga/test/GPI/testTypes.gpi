@@ -1,0 +1,91 @@
+#-*-python-*-
+
+j = Job()
+
+# component items (no typelist)
+try:
+    j.inputsandbox = ['a',File('x'),0]
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError:
+    pass
+
+try:
+    j.inputsandbox=[Executable()]
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError:
+    pass
+
+try:
+    j.inputsandbox = [['a'],'b']
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError:
+    pass
+
+# simple items (using typelist)
+
+# this should accept numerical arguments now -> so remove this test
+#try:
+#    j.application.args=['a',0]
+#    assert False, 'should raise GangaAttributeError'
+#except GangaAttributeError: #TypeMismatchError to be more precise
+#    pass
+
+j.application.args='abc' # should work fine (non-strict sequence)
+assert j.application.args == ['abc']
+
+j.application.args=File('x') # should work fine (non-strict sequence)
+assert j.application.args == [File('x')]
+
+j.application.exe = 'abc'
+j.application.exe = File('xyz')
+
+try:
+    j.application.exe = ['abc']
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError: #TypeMismatchError to be more precise
+    pass
+    
+try:
+    j.application.exe = 1
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError: #TypeMismatchError to be more precise
+    pass
+
+#should now accept numerical arguments -> so remove this check
+#try:
+#    j.application.args = 1
+#    assert False, 'should raise GangaAttributeError'
+#except GangaAttributeError: #TypeMismatchError to be more precise
+#    pass
+
+j.application.args = [ File('x'), '2' ]
+
+try:
+    j.application.args = [['a'],'b']
+    #currently the type system is not so sophisticated to catch these
+    #assert False, 'should raise GangaAttributeError'
+except GangaAttributeError: #TypeMismatchError to be more precise
+    pass
+
+
+# handling of dictionaries
+try:
+    j.application.env = 1
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError:
+    pass
+
+try:
+    j.application.env = { 1:2 }
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError:
+    pass
+    
+j.application.env = { '1':'2' }
+
+try:
+    j.application.args=[Executable()]
+    assert False, 'should raise GangaAttributeError'
+except GangaAttributeError:
+    pass
+

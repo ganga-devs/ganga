@@ -1,0 +1,151 @@
+**************************************************************************************************************
+5.5.16 (2010/10/11)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+bugfixes:
+ - bug #71343: Executable application doesn't support numerical arguments
+ - bug #70758: subjobness not taken into account in warning "has reached unexpected the Cleared 
+state and Ganga cannot retrieve ..."
+ - bug #69216: .ganga.log surprising behaviour
+ - bug #68896: ganga - glite-wms-job-list-match fails - reports full output is in file ... - but 
+file does not exist
+ - bug #70712: SGE() should have information about job's worker node
+ - fixed a problem in timestamps for subjobs: "submitted" time is now correct even in cases where 
+the subjob submission takes a long time.
+
+New functionality in GPI:
+ - bug #73398: Ability to build slice from list of jobs)
+    - Added jobSlice function that makes a slice from a job list
+
+Error reporting tool:
+    - added list of all jobs with their statuses, subjobs, etc. in the report tarball
+    - print the most important information collected in the tarball such as python path , ganga 
+version, python version, os version, application and backend
+    - if the tar archive is bigger than 100mb - show warning message to the user that the report is 
+too big and do not upload it on the server
+
+
+Ganga Web GUI :
+    - on jobs and subjobs table chart tabs are added - for job -> pie charts for status, backend and 
+application, for subjobs -> pie charts for status and actualCE and line chart for succeeded subjobs 
+in time
+    - if number of subjobs is zero made the job not clickable
+    - added chart on the jobs menu showing graphicaly succeded/faield jobs
+    - show monitoring links in ganga web gui - added links list to job.info object in ganga, after 
+that on sumbit of some monitoring plugin some monitoring link could be added in this list and after 
+that we display the link in the ganga webgui
+
+Extended spyware :
+    - get track of how many plain jobs, master jobs and subjobs are submitted per 
+(user,host,application,backend,day) - saving this info in DB on the gangamon server
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+* MSGMS: Add configuration option for job submission queue.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Enabled TAG compression support for FILE_STAGER jobs
+* Added full TAG support for Panda
+* Added EXE support for LCG backend
+* Added inputFilePeeker support for local jobs
+* Added an optional subjob directory structure for data 
+  retrieval (Bug 70557)
+* refresh the PandaSpecs every 10 minutes (to update 
+  online/offline queues while a ganga session is running).
+* Convert OUTPUTFILE_NAMELENGTH to str in AthenaLocalRTHandler.py
+* Adding support for FILE_STAGER/DQ2_COPY + TAG and 16.x.y support
+* Fix bug #73774: Upgrade EventPicking code to new interface
+
+AthenaMC:
+---------
+* bug fixes: corrected handling of user area for both Panda and LCG 
+  backends, as well as implementing the correct handling of input 
+  data for Panda sites with direct access (previous attempt was a 
+  failure). 
+* Nickname propagation to output datasets automatically created by 
+  ganga now fixed. 
+* Also implemented use of new asetup script for release 16 and beyond. 
+* Validated by ganga jobs: 956 (evgen on LCG with 16.0.0.2), 
+  957 (Reco_trf at ANALY_SLAC with user specific reconstruction code)
+* Adding a flag to force the pilot to download the input file in the 
+  working area for sites with direct access (SLAC,LYON). This is needed 
+  as the pilot won't update the transform parameters with the local 
+  path to the input file
+* relax re.sub for AthenaMC resubmit's
+
+AMAAthena:
+----------
+* remove AMAAthena module
+* remove Monitoring service in Atlas.ini
+* move DQ2.DQ2_LOCAL_SITE_ID configuration/initialization into DQ2Dataset.py
+
+Tasks:
+------
+* added getDatasetName to Transform
+* try _really_ to get the output dataset site
+* Made GangaAtlas help printout disappear on --quiet
+* Fixed Tasks test checking if done
+* Added 'retryFailed' to retry all failed partitions
+* Added containerName function that returns the name of the dataset 
+  container
+
+scripts:
+--------
+* Added option --individualOutDS, desc: Create seperate output 
+  datasets/containers for each output type (e.g. AANT, HIST).
+* Added option --useChirpServer for the Panda backend
+  Use e.g. '--useChirpServer voatlas92.cern.ch' and the logs and ntuples 
+  smaller than 50MB are staged out to the chirp sever
+  More details are explained at:
+  https://twiki.cern.ch/twiki/bin/view/Atlas/DAGangaFAQ#How_can_I_write_my_small_output
+  https://twiki.cern.ch/twiki/bin/view/Atlas/ChirpForUserOutput
+
+tests:
+------
+* Clean-up a few tests and add TestAthenaPanda
+
+externals:
+----------
+* Update panda client to 0.3.2
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+Reference to external JEM library 3.1.5
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Full Changelog from 5.5.15:
+  - Fix for backend.libds submission: restrict to the libds location in list_ddm_sites
+  - Add config.Panda.chirpserver and Panda.setChirpVariables. See GangaAtlas release notes and:
+      https://twiki.cern.ch/twiki/bin/view/Atlas/DAGangaFAQ#How_can_I_write_my_small_output
+      https://twiki.cern.ch/twiki/bin/view/Atlas/ChirpForUserOutput
+  - Gracefully raise exception when attempting to reuse output container
+  - All jobs are now jobsets: set jobsetID=-1 when no buildjob or old style single site submit
+  - Changed "inputsandbox" to "self.inputsandbox" in AthenaPandaRTHandler, since it is also used in 
+subjobs
+  - fix for setUpper error in resubmit
+  - bump panda client to 0.3.2
+  - Refresh the Panda Site specifications from the panda server every 10 minutes (to update 
+online/offline queues while a ganga session is running).
+  - relax re.sub for AthenaMC resubmit's
+  - decrompress TAG coll
+  - fix for individualOutDS
+  - add test case for individualOutDS
+  - force athena_compile=True in the subjobs
+  - update GangaPanda tests
+
+**************************************************************************************************************

@@ -1,0 +1,413 @@
+#!/usr/bin/env python
+#-*- python -*-
+
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: ganga-install,v 1.21 2009-02-05 07:28:24 gangage Exp $
+################################################################################
+
+# written by: Kuba Moscicki, 2004 CERN, based on lcg.installation.manager and diane.installation.manager
+
+import os,sys
+
+# default configuration
+CONFIG = {}
+CONFIG['script_revision'] = "$Revision: 1.21 $"
+CONFIG['website_url'] = 'http://cern.ch/ganga'
+CONFIG['download_url'] = CONFIG['website_url']+'/download'
+CONFIG['prefix'] = os.path.join(os.path.expandvars('$HOME'),'Ganga')
+CONFIG['platform'] = ''
+CONFIG['pre4.3'] = False
+
+# list of plugin Runtime Packages which are active in the installer
+# external package dependencies will be processed
+CONFIG['plugin_packages'] = [] 
+
+def usage():
+    msg = """
+ usage:
+   ganga-install.py [options] VERSION
+
+   LAST gets the last production version
+   
+   options:
+    --prefix=DIR         : (default: ~/Ganga)
+    --extern=EXT_LIST    : specify automatic download of external packages for ganga plugins in EXT_LIST
+                           EXT_LIST example: GangaAtlas
+    --silent             : print less messages
+    --verbose            : print more messages
+    --force              : override existing installation
+    --fetch-again        : fetch all files again and override existing installation (implies --force)
+    --platf=PLATFORM     : select the platform (default %(platform)s)
+    --prerelease         : download the prerelease version
+    --make-tarballs      : instead of downloading make the tarballs in the tarball area
+    --all-deps		 : resolve all package dependencies unconditionally 
+    --help               : help message
+
+See http://cern.ch/ganga for the list of available releases
+""" % CONFIG
+    print msg
+
+
+# cookbook -- 15.3
+def importName(modulename,name):
+    module = __import__(modulename,globals(),locals(),[name])
+    return vars(module)[name]
+
+def main():
+
+    print "Ganga Installer, %(script_revision)s"%CONFIG
+    
+    import getopt
+
+    try:
+        opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["prefix=","extern=","silent","force","make-tarballs","fetch-again","help","brute","verbose","prerelease","platf=","all-deps"])
+    except getopt.error, x:
+        print "command line syntax error"
+        usage()
+        sys.exit(2)
+
+    silent = 1
+    force = 0
+    brute = 0 # access to the repository even in maintenance mode, dangerous thus undocumented -> for internal use only
+    prerelease = 0 # use the prerelease version (meant to be used during the testing period just before releasing the official version)
+    alldeps = False
+    mode = 'download'
+        
+    for o,a in opts:
+        if o == "--prefix":  
+            CONFIG['prefix'] = os.path.realpath(os.path.expandvars(os.path.expanduser(a.strip())))
+            
+        if o == "--platf":
+            CONFIG['platform'] = a
+            
+        if o == "--extern":
+            pkgs = a.split(',')
+            CONFIG['plugin_packages'] += pkgs
+
+        if o == "--silent":
+            silent = 1
+
+        if o == "--verbose":
+            silent = 0
+
+        if o == "--force":
+            force = 1
+
+        if o == "--fetch-again":
+            force = 2
+
+        if o == "--brute":
+            brute = 1
+
+        if o == "--make-tarballs":
+            mode = 'create'
+            silent = 0
+
+        if o == "--all-deps":
+    	    alldeps = True
+    	    
+        if o == "--help":
+            usage()
+            sys.exit(0)
+
+    CONFIG['tarball_dir'] = '%(prefix)s/tarball'%CONFIG    # all ganga tarballs are stored in this directory
+    CONFIG['external_dir'] = '%(prefix)s/external'%CONFIG  # all external packages are unpacked here
+    CONFIG['install_dir'] = '%(prefix)s/install'%CONFIG    # ganga is unpacked here
+
+    # create a temporary directory
+    import getpass
+    user = getpass.getuser()
+    tmpdir = '/tmp/ganga-%s'%user
+    makedirs(tmpdir)
+
+    # check if there is a newer ganga-install script, download the latest to tmpdir, import it as a module and check the CONFIG['script_revision']
+    fetch('ganga-install',tmpdir,override=2,silent=1)
+    if 1:
+        latest_installer_path = os.path.join(tmpdir,'ganga-install')
+        latest_installer_file = file(latest_installer_path)
+        try:
+            try:
+                import imp
+                latest_installer_module = imp.load_module('latest_installer_module',latest_installer_file,latest_installer_path,('','r',imp.PY_SOURCE))
+                def get_revision(s):
+                    return s[1:-1].split(':')[-1].strip()
+
+                latest_revision = get_revision(latest_installer_module.CONFIG['script_revision'])
+                current_revision = get_revision(CONFIG['script_revision'])
+            except Exception,x:
+                print 'WARNING: cannot check the latest version of the installer script: ',x
+
+            if current_revision != latest_revision:
+                print 'WARNING: your ganga-install script (%s) does not match the one on the ganga website (%s)'%(current_revision, latest_revision)
+                print
+                print 'Get the newest ganga-install from %s or from %s'%(CONFIG['download_url'],latest_installer_path)
+                print
+                sys.exit(1)
+        finally:
+            latest_installer_file.close()
+
+    if len(args) < 1:
+        usage()
+        print "ERROR: VERSION not specified"
+        sys.exit(2)
+
+    VERSION = args[0]
+    CONFIG['VERSION'] = VERSION 
+
+    if fetch('MAINTENANCE',tmpdir,override=2,silent=2): # be very silent, always fetch this file
+        print file(tmpdir+'/MAINTENANCE').read()
+        if not brute:
+            sys.exit(4)
+        print
+        print 'using brute force, at your own risk!'
+        print 
+
+    if fetch('NEWS',tmpdir,override=2,silent=2): # be very silent, always fetch this file
+        print file(tmpdir+'/NEWS').read()
+                        
+    makedirs(CONFIG['prefix'])
+    makedirs(CONFIG['tarball_dir'])
+    makedirs(CONFIG['external_dir'])
+    makedirs(CONFIG['install_dir'])        
+
+    # resolve last production version
+    if CONFIG['VERSION'].lower() == 'last':
+        print 'Getting last production release'
+        if not fetch('LAST_VERSION',tmpdir,override=2,silent=1):
+            incomplete_release_error()
+        CONFIG['VERSION'] = file(os.path.join(tmpdir,'LAST_VERSION')).read().strip()
+
+    if CONFIG['VERSION'].split('.')[:2] < ['4','3']:
+        CONFIG['pre4.3'] = True
+
+    if CONFIG['pre4.3']:
+        if not CONFIG['platform']:
+            CONFIG['platform'] = 'slc4_ia32_gcc34'
+        ganga_top = '%(prefix)s/install/%(platform)s/%(VERSION)s'%CONFIG
+        ganga_tarball = 'Ganga-%(VERSION)s-%(platform)s.tar.gz' % CONFIG
+        ganga_tarball_path = '%(platform)s/%(VERSION)s'%CONFIG
+    else:
+        ganga_top = '%(prefix)s/install/%(VERSION)s'%CONFIG
+        ganga_tarball = 'Ganga-%(VERSION)s.tar.gz' % CONFIG
+        ganga_tarball_path = '%(VERSION)s'%CONFIG
+    
+    # fetch a tarball to the tarball directory and then unpack in the target directory
+    # tarballs must be correctly created with the relative paths stored inside
+    def fetch_and_untar(tarball, targetDir, override=force,silent=silent, **kwds):
+        if not fetch(tarball,CONFIG['tarball_dir'],override=force,silent=silent):
+            incomplete_release_error()
+        untar(os.path.join(CONFIG['tarball_dir'],tarball),targetDir,silent=silent) 
+
+    # create a tarball in a tarball directory
+    # the tarball contains a tarPath stored relatively from targetDir
+    def make_tarball(tarball, targetDir, tarPath=None, override=force,silent=silent,**kwds):
+        assert(tarPath)
+        tar(os.path.join(CONFIG['tarball_dir'],tarball), targetDir, tarPath,silent=silent, opts="--exclude='*.py[co]' --exclude='obsolete*' --exclude='reports*' --exclude='doc*' ")
+
+    def action(command):
+        command(ganga_tarball,CONFIG['install_dir'],tarPath=ganga_tarball_path)
+
+        # import setup.py module from bin directory to get the dependency list
+        sys.path.insert(0,ganga_top+'/python')
+
+        if CONFIG['plugin_packages']:
+            print "Resolving additional external dependencies for: ",' '.join(CONFIG['plugin_packages'])
+
+        #override the platform if overriden with --platf option (required for versions >=4.3.2)
+        import Ganga.PACKAGE
+        if CONFIG['platform']:
+            Ganga.PACKAGE._defaultPlatform = CONFIG['platform']
+        # we need a tarPath relative to the externalHome
+        Ganga.PACKAGE._defaultExternalHome = ''
+
+        for pkg in ['Ganga']+CONFIG['plugin_packages']:
+            print 'resolving dependencies for',pkg
+            try:
+                setup = importName(pkg+'.PACKAGE','setup')
+            except Exception,x:
+                print 'WARNING: Cannot find dependency information in file '+pkg+'/PACKAGE.py'
+                print x
+                continue
+            #the following 3 lines is not needed anymore since 4.3.2 (still required for old versions)
+            setup.externalHome = ''  # we need a tarPath relative to the externalHome
+            if CONFIG['platform']:
+                setup.platform = CONFIG['platform']
+                
+            for name in setup.packages:
+                if silent:
+                    print '[%s] Checking %-25s '%(mode,name),
+                else:
+                    print '='*10
+                    print '[%s] Checking %s %s '%(mode,name,setup.packages[name]),
+                try:    
+            	    tarPath, tarball = setup.getPackagePath(name,force=alldeps)
+            	except: #older versions of Ganga does not support extra paramter *force* in  *getPackagePath*
+            	    tarPath, tarball = setup.getPackagePath(name)
+                if tarball:
+            	    print ': REQUIRED'
+                    command(tarball,CONFIG['external_dir'],tarPath=tarPath)
+                else:
+            	    print ': NOT REQUIRED'    
+                
+    if mode == 'download':            
+        print "Downloading release %(VERSION)s-%(platform)s into %(prefix)s" % CONFIG
+    
+        if os.path.exists(ganga_top) and not force:
+            error('This release already exists. Use --force to override it.')
+            
+        action(fetch_and_untar)
+        if not silent:
+            print '='*10
+
+        if CONFIG['pre4.3']:
+            replace_prefix("%s/python/Ganga/PACKAGE.py" % ganga_top, [('/afs/cern.ch/sw/ganga/external',CONFIG['external_dir'])],silent)
+
+        print
+        print 'Ganga sucessfully installed in',CONFIG['prefix']
+        print
+        print 'type %s/bin/ganga to start ' % ganga_top
+        print
+    
+    if mode == 'create':
+        action(make_tarball)
+
+
+def replace_prefix(fn,prefix_list,silent):
+    text = file(fn,'r').read()
+    for p in prefix_list:
+        text = text.replace(p[0],p[1])
+        print 'replacing prefix %s by %s in file %s'%(p[0],p[1],fn)
+            
+    file(fn,'w').write(text)
+
+def makedirs(d):
+    try:
+        os.makedirs(d)
+        print 'created:',d
+    except OSError,x:
+        import errno
+        if x.errno != errno.EEXIST:
+            raise
+        
+def error(what=None):
+    if what:
+        print '\033[1;31mERROR: %s\033[m' % what
+    sys.exit(2)
+
+def incomplete_release_error():
+    error('A component of Ganga release was not found on %s \nPlease report to the Ganga team'%CONFIG['download_url'])
+
+def undefined_release_error(rel,avail=""):
+    if avail:
+        avail = 'Available releases\n---\n'+avail+'---'
+    error('Requested release (%s) was not found in the Ganga repository\n%s\nConsult %s' %(rel,avail,CONFIG['website_url']))
+
+import urllib, string, stat
+from urllib2 import Request, urlopen, URLError, HTTPError
+
+# download files over http
+# override == 0   : never override any files
+# override == 1   : override if files differ in length
+# override > 1    : always override
+
+def fetch(tarFileName, targetDir=None, downloadURL = "", override=0, silent=0):
+
+    if not targetDir:
+        targetDir = CONFIG['prefix']
+
+    if downloadURL == "":
+        downloadURL = CONFIG['download_url']
+
+    tarFileURL = downloadURL + '/' + tarFileName
+    tarFiles = []
+
+    fileName = targetDir + '/'+tarFileName
+
+    if not silent:
+        print "fetching file: " + fileName,
+
+    req = Request(tarFileURL)
+    try: 
+        response = urlopen(req)
+    except HTTPError, error:
+        if not silent:
+            print "Couldn't download " + str(tarFileURL) 
+            print "Error: " + str(error.code)
+        return 0
+    except URLError, error:
+        if not silent:
+            print "Couldn't download " + str(tarFileURL)
+            print "Reason: " + str(error.reason)
+        return 0
+    else:
+        if ( os.path.exists(fileName) ) :
+        
+            filesize = response.headers.getheader('content-length')
+
+            if not silent:
+                print 'size:',filesize,
+
+            if override > 1:
+                if not silent:
+                    print "overriding...",
+                os.unlink(fileName)
+            else:
+                if override:
+                    if filesize != os.stat(fileName)[stat.ST_SIZE]:
+                        if not silent:
+                            print "file has different size, overriding...",
+                        os.unlink(fileName)
+                    else:
+                        if not silent:
+                            print "local file of the same size already exists, skipped"
+                            return 1
+                else:
+                    if not silent:
+                        print "file already fetched "
+                    tarFiles.append(tarFileName)
+                    return 1
+
+        (fileNameRet, info) = urllib.urlretrieve (tarFileURL, fileName)
+        return 1
+        
+def tar(tarFileName, targetDir, tarPath, silent,skip=1,force=0,opts=""):
+    import os.path
+
+    if os.path.exists(tarFileName):
+        msg = 'tarball already exists: %s'%tarFileName
+
+        if not force and not skip:
+            error(msg)
+
+        print 'WARNING:',msg
+        
+        if skip:
+            print 'skipping...'
+            return
+    
+    cmd = 'cd %s; tar %s -czhf %s %s'%(targetDir,opts,tarFileName,tarPath)
+    if not silent:
+        print 'tarring ',tarFileName
+        print cmd
+    if os.system(cmd) != 0:
+	#remove incomplete archive
+	try:
+	    os.unlink(tarFileName)
+	except OSError,e:
+	    pass
+	error('Error creating tarball file %s in directory %s for %s' % (tarFileName,targetDir,tarPath))
+
+def untar(tarFileName, targetDir,silent):
+    cmd = 'cd %s; tar xfz %s'%(targetDir,tarFileName)
+    if not silent:
+        print 'untarring ',tarFileName
+        print cmd
+    if os.system(cmd) != 0:
+        error('Error untarring file: %s in directory %s' % (tarFileName,targetDir))
+    else:
+        os.unlink(tarFileName)
+
+if __name__ == '__main__':
+    main()
