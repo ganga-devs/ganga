@@ -1,0 +1,96 @@
+# File: remove
+# Author: K. Harrison
+# Created: 050721
+# Last modified: 050805
+
+"""GPI script for removing job(s) from Ganga repository"""
+
+__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__    = "5 August 2005"""
+__version__ = "1.0"
+
+from Ganga.Core import FileWorkspace
+
+import os
+import sys
+
+def jobRemove( j = None, topDir = "" ):
+   if not topDir:
+      topDir = \
+         os.path.expandvars( os.path.expanduser( FileWorkspace.gettop() ) )
+   if j:
+      jobDir = os.path.join( topDir, str( j.id ) )
+      j.remove()
+      if os.path.isdir( jobDir ):
+         os.rmdir( jobDir )
+
+# Create list from command-line arguments saved to environment
+argList = sys.argv[ 1 : ]
+
+if not argList:
+  # Print usage information if no arguments given at command line
+   print ""
+   print "Usage 1: ganga_remove id1 [ id2 id3 ... ]"
+   print " => Remove jobs with given ids from Ganga repository"
+   print ""
+   print "Usage 2: ganga_remove name1 [ name2 name3 ... ]"
+   print " => Remove jobs with given names from Ganga repository"
+   print ""
+   print "Usage 3: ganga_remove +"
+   print " => Remove all jobs from Ganga repository"
+   print ""
+else:
+  # Treat case where all jobs are to be deleted
+   if "+" == argList[ 0 ]:
+      print ""
+      ndel = 0
+      jobList = []
+      for j in jobs:
+         jobList.append( j )
+      for j in jobList:
+         if j.name:
+            nameString = "".join( [ "('", str( j.name ), "') " ] )
+         else:
+            nameString = ""
+         jobRemove( j )
+         print "Job %s %sdeleted" % ( str( j.id ), nameString )
+         ndel = ndel + 1
+      if 1 == ndel:
+         jobString = "job"
+      else:
+         jobString = "jobs"
+      if ndel:
+         print ""
+      print "%s %s deleted" % ( str( ndel ), jobString )
+  # Treat case where jobs are deleted by id or name
+   else:
+     # Create list of ids and names for all jobs in repository
+      idList = []
+      nameList = []
+      for j in jobs:
+         idList.append( j.id )
+         nameList.append( j.name )
+     # Loop over arguments
+      for item in argList:
+        # Treat case where argment is a job id
+         try:
+            id = eval( item )
+            if id in idList:
+               j = jobs[ id ]
+               if j.name:
+                  nameString = "".join( [ "('", str( j.name ), "') " ] )
+               else:
+                  nameString = ""
+               jobRemove( j )
+               print "Job %s %sdeleted" %  ( str( id ), nameString )
+            else:
+               print "Job %s not known" %  str( id )
+        # Treat case where argment is a job name
+         except NameError:
+            if item in nameList:
+               jobList = jobs[ item ]
+               for j in jobList:
+                  jobRemove( j )
+                  print "Job %s ('%s') deleted" %  ( str( j.id ), item )
+            else:
+               print "Job '%s' not known" %  str( item )

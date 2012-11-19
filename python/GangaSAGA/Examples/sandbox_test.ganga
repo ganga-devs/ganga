@@ -1,0 +1,10 @@
+j1 = Job()
+j1.backend = SAGA()
+j1.application.exe = "/bin/cat"
+j1.application.args = ['/proc/cpuinfo']
+
+
+
+
+j1.submit()
+

@@ -1,0 +1,72 @@
+**************************************************************************************************************
+5.1.4 (2009/1/21)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* bug fix: https://savannah.cern.ch/bugs/index.php?45897
+* fix job perusal functionality for gLite jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* IntroduceDQ2JobSplitter.filesize: splitting into subjobs of a maximum
+  filesize sum (in MB)
+  config['Athena']['MaxFileSizeNGDQ2JobSplitter']=5000
+  config['Athena']['MaxFileSizePandaDQ2JobSplitter']=5000
+  NG and Panda backend splitting has been restricted to a maximum of 5 GB
+* Improve athena package setup on worker node
+* Improve tarball packing 
+* Fix typo in TNTJobSplitter environment variable setting
+* Patches for MuonCalibStream dataaccess for FILE_STAGER and DQ2_COPY mode
+* Patches for NG statistics collection
+* DQ2JobSplitter: Revert logic: sites takes priority over cloud
+
+AthenaMC:
+--------
+* Fix bug #45593: typo in AthenaMCDatasets.py causing bad file matching
+* Small fixes
+
+AMAAthena:
+----------
+* AMAAthenaLCGRTHandler.py: include the monitoring service
+* StagerJobSplitter.py: internal code factorization
+* ama_athena-utility.sh: fix sample file name of the FileStager
+
+Tasks:
+------
+* handling of tasks is now more similar to jobs:
+   tasks(3) instead of tasks.get(3)
+   and tasks(3).remove() instead of tasks.remove(3)
+* MCTask can now be initialized from generator, evgen or simul dataset
+  The input dataset file numbers  are displayed in overview()
+* AnaTask is now working correctly, uses DQ2JobSplitter internally
+* All transforms are now read-only when submitted (similar to jobs)
+* several updates and bugfixes
+
+scripts:
+--------
+* athena: --splitfilesize, see above
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Added a new check that SetupProject Dirac worked correctly. If it did not, an error message is
+displayed when ganga starts. Also updated Dirac.getOutputData to handle LFNs again (as it was broken
+in previous releases). Added support for systems where /bin/sh is not bash.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+* Upgraded to ARC 0.6.5 standalone client
+* Fixed a bug in assigning job id to backend object when some subjobs fail to submit
+* Added a file called giises.txt to list the atlas giis instances (usage: ngsub -G giises.txt)
+* Upgraded to lfc binary 1.7.0 to be compatible with ARC 0.6.5
+
+**************************************************************************************************************

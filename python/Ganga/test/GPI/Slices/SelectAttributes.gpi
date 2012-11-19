@@ -1,0 +1,34 @@
+j1 = Job()
+j1.application = Executable(exe='a')
+j1.backend = Local()
+
+j2 = Job()
+j2.application = Executable(exe='b')
+j2.backend = Interactive()
+
+j3 = Job()
+j3.application = Executable(exe='c')
+j3.backend = Local()
+
+try:
+    jobs.select(some_applications = Executable())
+    assert(not "should raise GangaAttributeError")
+except GangaAttributeError:
+    pass
+
+# all these are equivalent: only a class of the object is compared
+s = jobs.select(application = Executable())
+assert(len(s) == len(jobs))
+
+s = jobs.select(application = Executable)
+assert(len(s) == len(jobs))
+
+s = jobs.select(application = 'Executable')
+assert(len(s) == len(jobs))
+
+
+s = jobs.select(backend = Local)
+assert(j1 in s)
+assert(j3 in s)
+assert(j2 not in s)
+

@@ -1,0 +1,137 @@
+**************************************************************************************************************
+5.7.0 (2011/11/3)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+**Major Change:
+Introduction of the Prepared State for applications
+
+See https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaPreparedApplications for detailed usage 
+instructions.
+
+The purpose of the prepared state is to allow users to freeze an application in a known state, such 
+that the exact same analysis job can be executed in the future (optionally over different input 
+data). During the prepare phase, files that are integral to the applications execution (such as 
+custom binaries or experiment-specific software areas) are copied to the users Shared Directory 
+which is by default <gangadir>/shared/<user>.
+
+Note: applications are automatically prepared upon submit if not done so already.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* fix the bug in resolving CREAM CE endpoints in job-resource match-making
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* adding new prepare() GangaCore functionality
+* Add RootCore support for Panda jobs:
+  - with build job Athena.useRootCore=True or athena --useRootCore 
+  - without build job Athena.useRootCoreNoBuild=True or athena --useRootCoreNoBuild
+* Added the option of specfying a splitter to the transform
+* Fix bug #88111, make major athena release setup more flexible
+* Stopped DQ2Dataset getting overwritten and added full trf/task name 
+  to unit DS name
+* Add --transferredDS option and j.outputdata.transferredDS
+* Update test case
+* Upgrade to panda-client 0.3.64
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+incorperated the prepared state
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Minor Changes:
+Changed NIKHEF-USER -> SARA-USER SE token
+
+Major Changes:
+1) Prepared State
+Incorperated the prepared state for applications. Prepared applications can be run on different
+inputdatasets without having to repackage up the users release area.
+
+try 
+j=Job(application=DaVinci(),backend=Dirac())
+j.prepare()
+
+Note: applications are automatically prepared upon submit if not done so already.
+
+2) Tasks Framework
+Incorperated the tasks framework for database query driven analysis of data. Can type
+help(LHCbAnalysisTask) for more information but basic usage is as with jobs but modified slightly,
+see below.
+
+tr = LHCbAnalysisTransform()
+tr.application = DaVinci()
+tr.backend = Dirac()
+tr.query = BKQuery('/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real
+Data/Reco11/Stripping15/90000000/DIMUON.DST')
+
+t = LHCbAnalysisTask()
+t.appendTransform(tr)
+t.run()
+
+Then at a later date, update all transform attached to a task from the database using
+t.update()
+
+3) BKQuery object Migration tool
+For those who have BKQuery objects stored in their box, there is a compatability problem between the
+old BKQuery object and the new tasks framework. Any new BKQuery objects stored in 5.7.0 will be
+readable but those created and stored in pre 5.7.0 will not. These older BKQuery objects can be read
+if you switch back to a pre 5.7.0 release, or you can run the migration tool to convert them into
+new objects as follows.
+
+fixBKQueryInBox()
+
+then restart your session. In case of any problems, this migration tool attempts to back up your
+BKQuery objects first and they can be restored from this backup as follows.
+
+restoreOLDBox()
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Add RootCore support for Panda jobs:
+  - with build job Athena.useRootCore=True or athena --useRootCore 
+  - without build job Athena.useRootCoreNoBuild=True or athena --useRootCoreNoBuild
+* Add --transferredDS option and j.outputdata.transferredDS
+* Added a %INDS flag to EXE/PYARA jobs that will be replaced on 
+  submission with the input dataset name
+* Make several improvements on ProdTrans:
+  - Added the input_type options to the ProdTrans app to control 
+    the input_type (for instance, 'Evgen').
+  - Added the output_type in the symmetric way (for instance, 'Hits').
+  - Improved the way DBRelease is handled (to not add DBRelease, 
+    set it to None).
+  - revert change to outDS name. set with usertag config instead
+  - add BackendError
+  - Renamed output dataset from user* to prod_test*
+    Added possibility to configure processingType
+* Update tests
+* Upgrade to panda-client 0.3.64
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+* Added functionality to bypass an application's prepare() step.
+
+Merged the Ganga-ConfState branch onto the trunk, incorperating the prepared functionality
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+* Added compatibility with application's prepare() method.
+
+**************************************************************************************************************
