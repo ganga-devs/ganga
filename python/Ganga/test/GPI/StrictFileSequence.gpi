@@ -1,0 +1,27 @@
+t1 = TestAdvancedFileProperties()
+t2 = t1.copy()
+t3 = t1.copy()
+t4 = t1.copy()
+
+t1.file_or_files = 'abc'
+t2.file_or_files = ['abc']
+t3.file_or_files = File('abc')
+t4.file_or_files = [File('abc')]
+
+print 't1',t1
+print 't2',t2
+print 't3',t3
+print 't4',t4
+
+assert(t1 == t2)
+assert(t2 == t3)
+assert(t3 == t4)
+
+# check that other assignments do not fail
+t5 = TestAdvancedFileProperties()
+t6 = t5.copy()
+t5.file_or_files = ['abc','abc']
+t6.file_or_files = [File('abc'),'abc']
+print 't5',t5
+print 't6',t6
+assert(t5 == t6)

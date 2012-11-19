@@ -1,0 +1,29 @@
+**************************************************************************************************************
+5.8.9 (2012/8/16)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- hotfix release for the broken jobs repository for jobs that were created with Ganga 5.8.7 and then
+tried to be used in Ganga 5.8.8
+
+- with the new Ganga version 5.8.9 the user has to start Ganga and then restart it to get the
+repository (for the broken jobs) rebuilt and the jobs reloaded properly. If the user starts Ganga
+(but doesn't restart it) and tries to access a broken job he will get a message like this
+
+RegistryKeyError: The object #269 in registry 'jobs' could not be accessed - Please restart Ganga in
+order to reload the object!
+
+After restarting, all broken jobs should load and should be accessible
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v508r9 (from GangaLHCb-24-15)
+************
+
+Minor tweak to reduce the verbosity of the XMLSummary functions output upon job completion.
+
+**************************************************************************************************************

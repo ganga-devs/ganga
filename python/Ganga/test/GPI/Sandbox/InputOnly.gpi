@@ -1,0 +1,13 @@
+j = Job()
+j.application.exe='cat'
+j.application.args=[File('input.dat')]
+j.submit()
+
+from GangaTest.Framework.utils import sleep_until_state
+
+sleep_until_state(j,60,'completed')
+
+stdout = file(j.outputdir+'/stdout').read()
+inputdat = file('input.dat').read()
+
+assert(stdout.find(inputdat) != -1)

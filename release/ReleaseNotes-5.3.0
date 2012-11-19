@@ -1,0 +1,140 @@
+**************************************************************************************************************
+5.3.0 (2009/7/3)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+fixed a problem of the unregistered handler workaround (KeyError on logging shutdown) reported by J.Ebke
+
+print first 4KB of error message from shell command (rather than only 255 bytes)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Core/Sandbox
+--------------------------------------------------------------------------------------------------------------
+resort to using os.system('tar xfzv') for python < 2.5 -> tarfile module in v 2.4 is broken for some
+files
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+bugfix: https://savannah.cern.ch/bugs/?50589
+bugfix: https://savannah.cern.ch/bugs/?51298
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Stopped multiple data copying for DQ2_COPY mode (bug 51512)
+* Added improved support for RecEx* analyses (bug 51884):
+  - Added 'recex_type' variable to Athena class to specify RDO,
+    ESD or AOD input
+  - PoolxxxInput prepended to Athena command line
+* ganga-stage-in-out-dq2.py: 
+  - Fix file access mode and add QMUL
+  - Add T2ATLASSCRATCHDISK in stage-out algorithm
+* Add protections for bad environment around dq2-get calls
+
+AthenaMC:
+---------
+* Replaced references to USERDISK by SCRATCHDISK
+* removed default for evgen transform_script, replaced by documented 
+  exception thrown if not set by the user
+* Fix AthenaMCSplitterJob to use the use_partition_numbers flag
+* Panda RT Handler: adding .tgz extension to output logfiles from the runAthena job
+
+TNT:
+----
+* Major GangaTnt update to allow splitting on TAG files again
+
+Tasks:
+------
+* added backend/cloud detection and initializeFromDatasets to AnaTasks
+* Add getJobs() to Task and Transform and getPartitionJobs() to 
+  Transform, returning the job slice corresponding to that task/transform
+
+tests:
+------
+* Updating evgen test with new space token for output destination 
+* Committed Atlas GPIP test containing all GangaATLAS tests for parallel
+  testing
+* Increase timeout to 10800s and remove single tests
+
+
+
+Externals
+----------
+* Update to panda-client 0.1.71
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+This release utilizes an entirely new interface between Ganga and DIRAC.  We now employ a subprocess
+which runs in the DIRAC environment to process all DIRAC API commands.  The commands are passed to
+this process via a socket.  Thus, users can now execute DIRAC API commands themselves via calls like:
+
+[1]: diracAPI('result = Dirac().status(71)')
+
+The value of the local variable 'result' is passed back to Ganga (None is returned if result is not
+defined).  Another new feature is the ability to pass DIRAC API commands to a job via calls like:
+
+[2]: j.backend.diracOpts = '''
+# this code is added to the DIRAC job creation, j is the LHCbJob object
+j.setName('OverrideGangaName')
+'''
+
+In this way, the user can access all of DIRAC's functionality and also override Ganga settings if
+they want.  
+
+These features are intended for "power users", but "casual users" will also benefit from the
+improved performance (in speed) of the new interface.  We are now also in a better position to work
+w/ the DIRAC team to provide more functionality to the user (this is, of course, an ongoing process
+behind the scenes...please continue to submit requests).  
+
+In testing so far, this set up appears to be quite stable.  Please report any problems to the Ganga
+team.  If the DIRAC process appears to be hung, you can reset it by simply doing:
+
+[3]: killDiracServer()
+
+The server will be automatically restarted the next time it is needed.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Several crucial bugfixes and additions:
+
+- added functionality to use user-specified database release, same syntax as other backends (via
+athena application):
+  j.application.atlas_dbrelease='ddo.000001.Atlas.Ideal.DBRelease.v060501:DBRelease-6.5.1.tar.gz'
+
+- added gsidcap input functionality:
+    j.inputdata.accessprotocol='GSIDCAP'
+  NB: note that this is still mainly meant for system testing. 
+
+- changed kill() method to do ng bulk killing
+  Overloaded master_kill in NG.py
+
+- made the wrapper-athena-ng excutable (had to change the name in CVS to get this done properly)
+
+- Fixed proper DN extraction for dataset names and output files
+  - Removed unnecesseary calls to grid shell setup
+  - Got rid of an old, annoying warning
+  - Done via getidentity() func in NG.py, replacing calls to global GridProxy implementation
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- Update to panda-client 0.1.71
+- Trust the information system (jobs won't submit if athena release not installed).
+- Check for NULL return string of Panda job Id and suggest to shorten dataset name
+- Always update 'submitted' states (because jobs can go from running to activated)
+- small bug fix
+
+**************************************************************************************************************

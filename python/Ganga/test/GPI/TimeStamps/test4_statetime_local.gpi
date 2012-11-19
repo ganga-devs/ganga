@@ -1,0 +1,162 @@
+from GangaTest.Framework.utils import sleep_until_state
+config['Configuration']['resubmitOnlyFailedSubjobs']=False
+
+import datetime
+
+j = Job()
+
+j.submit()
+
+assert sleep_until_state(j, 180, 'completed')
+
+assert j.time.submitted() == j.time.timestamps['submitted']
+assert type(j.time.submitted()) == datetime.datetime
+
+print "Job 1/6 done."
+
+j_comp = Job()
+j_comp.application.exe='sleep'
+j_comp.application.args=[30]
+
+j_comp.submit()
+
+assert sleep_until_state(j_comp, 180, 'running')
+j_comp.kill()
+assert sleep_until_state(j_comp, 180, 'killed')
+j_comp.resubmit()
+
+assert sleep_until_state(j_comp, 180, 'completed')
+
+assert type(j_comp.time.new()) == datetime.datetime
+assert type(j_comp.time.submitting()) == datetime.datetime
+assert type(j_comp.time.timestamps['resubmitted']) == datetime.datetime
+assert type(j_comp.time.backend_running()) == datetime.datetime
+assert type(j_comp.time.backend_final()) == datetime.datetime
+assert type(j_comp.time.final()) == datetime.datetime
+
+
+print "Job 2/6 done"
+        
+j_fail = Job()
+
+
+j_fail.application.exe='sleep'
+
+j_fail.application.args='60'
+
+j_fail.submit()
+
+assert sleep_until_state(j_fail, 180, 'running')
+
+j_fail.force_status('failed')
+
+assert sleep_until_state(j_fail, 180, 'failed')
+
+assert type(j_fail.time.new()) == datetime.datetime
+assert type(j_fail.time.submitting()) == datetime.datetime
+assert type(j_fail.time.submitted()) == datetime.datetime
+assert type(j_fail.time.backend_running()) == datetime.datetime
+assert type(j_fail.time.final()) == datetime.datetime
+
+print "Job 3/6 done"
+
+#subjobs
+
+j = Job()
+j.application.exe='sleep'
+j.splitter='ArgSplitter'
+j.splitter.args=[[30],[30],[30]]
+
+j.submit()
+
+assert sleep_until_state(j, 180, 'completed')
+
+assert j.time.submitted() == j.time.timestamps['submitted']
+assert type(j.time.submitted()) == datetime.datetime
+
+print "Job 4/6 done."
+
+j_comp = Job()
+
+j_comp.application.exe='sleep'
+j_comp.splitter='ArgSplitter'
+j_comp.splitter.args=[[30],[30],[30]]
+
+j_comp.submit()
+
+assert sleep_until_state(j_comp, 180, 'running')
+j_comp.kill()
+assert sleep_until_state(j_comp, 180, 'killed')
+j_comp.resubmit()
+
+assert sleep_until_state(j_comp, 120, 'completed')
+
+assert type(j_comp.time.new()) == datetime.datetime
+assert type(j_comp.time.submitting()) == datetime.datetime, "Job %d" %j_comp.id
+assert type(j_comp.time.timestamps['resubmitted']) == datetime.datetime
+assert type(j_comp.time.backend_running()) == datetime.datetime
+assert type(j_comp.time.backend_final()) == datetime.datetime
+assert type(j_comp.time.final()) == datetime.datetime
+
+
+print "Job 5/6 done"
+
+j_fail = Job()
+
+j_fail.splitter='ArgSplitter'
+j_fail.splitter.args=[[],[],[]]
+
+j_fail.application.exe='sleep'
+
+j_fail.application.args='60'
+
+j_fail.submit()
+
+j_fail.force_status('failed')
+
+assert sleep_until_state(j_fail, 180, 'failed')
+
+assert type(j_fail.time.new()) == datetime.datetime
+assert type(j_fail.time.submitting()) == datetime.datetime
+assert type(j_fail.time.submitted()) == datetime.datetime
+if 'backend_running' in j_fail.time.timestamps.keys():
+        assert type(j_fail.time.backend_running()) == datetime.datetime
+else: print "'backend_running' not in timestamps."
+assert type(j_fail.time.final()) == datetime.datetime
+
+print "Job 6/6 done"
+
+###########     
+#j_fail = Job()
+
+#j_fail.splitter='ArgSplitter'
+#j_fail.splitter.args=[[],[],[]]
+
+#j_fail.application.exe='sleep'
+
+#j_fail.application.args='60'
+
+#j_fail.submit()
+
+##assert sleep_until_state(j_fail.subjobs(0), 180, 'running')
+
+#j_fail.force_status('failed')
+
+#assert sleep_until_state(j_fail, 180, 'failed')
+
+#assert type(j_fail.time.new()) == datetime.datetime
+#assert type(j_fail.time.submitting()) == datetime.datetime
+#assert type(j_fail.time.submitted()) == datetime.datetime
+#if 'backend_running' in j_fail.time.timestamps.keys():
+#       assert type(j_fail.time.backend_running()) == datetime.datetime
+#else: print "'backend_running' not in timestamps."
+#assert type(j_fail.time.final()) == datetime.datetime
+
+#print "Job 6/6 done"
+###########
+
+#end
+
+print "Test4_statetime_local passed."
+
+
