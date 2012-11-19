@@ -1,0 +1,128 @@
+**************************************************************************************************************
+5.1.7 (2009/2/24)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* store bookkeeping information of the pre-staged inputsandbox in job repository replacing the
+__iocache__ file in job's outputdir
+ * add and expose method "list_cached_files()" in GridSandboxCache object
+ * include sites advertising 0 MaxCPUTime and MaxWallClockTime
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Mergers
+--------------------------------------------------------------------------------------------------------------
+Adds support for merging gzipped textfiles
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Added support for ssh keys in the Remote backend
+
+https://savannah.cern.ch/bugs/?45357
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* DQ2JobSplitter: improved warning message if no subjobs have been 
+  created
+* AthenaLCGRTHandler/AthenaLocalRTHandler: add proper DATASETLOCATION
+  for FILE_STAGER mode
+* Fix #44330: Add safe proxy identity handling to remove special
+  characters from the DN
+* Added --client-id=ganga to dq2-get calls
+* Add network traffic information and additional numfiles in Athena.stats 
+  field
+
+AthenaMC:
+--------
+* Replaced many Exceptions with ApplicationConfigurationErrors
+* protection added to cover cases where extractFileNumber() returns 
+  an empty string
+* Migration to use of dq2-get for input data and strict job to data 
+  policy. 
+* Added migration classes in AthenaMCDatasets.py to allow display 
+  of old jobs. 
+* Bug fix for collection of adler32 checksum numbers of output files 
+  and  improved debug output from stage-out script.
+* Avoid crashes if empty datasets are in containers
+* indentation fix in AthenaMCLCGRTHandler.py and added adler32.py
+* promoted use of new script adler32.py in stage-out script
+* Added --client-id=ganga to dq2-get calls
+
+Tasks:
+------
+* Fixed typeinfo of schema
+* In DQ2OuputDataset, actual_output is named "output"
+* Fixed bug not setting site for split AnaTask jobs
+* Forgot to add random_seeds to MCTransforms
+* Fixed bug not setting site for split AnaTask jobs
+* Changed from thread to threading to enable Ganga messages from 
+  thread
+* Fixed crash if task is paused due to too many failing jobs
+* Added setFailed() to Transform GPI
+
+AMAAthena:
+----------
+* fix the issue that reading sample files from a local directory in 
+  StagerDataset was broken in previous releases
+* add 'driver_flags' attribute in AMAAthena for setting AMA driver 
+  flags
+* fix the ama_athena wrappers to generate proper extra job option 
+  files for loading AMAAthena Driver
+
+DQ2Clients:
+-----------
+* Update to external DQ2Clients 0.1.26
+
+tests:
+------
+* Add Athena_DQ2_LCG test: Full Analysis chain test using DQ2_LOCAL
+* Add Athena_DQ2_LCG_FileStager test: Full Analysis chain test using 
+  FILE_STAGER
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Utility function to launch the new LHCb bookkeeping from inside Ganga. The function returns an
+LHCbDataset object. After browsing and selecting the desired datafiles, click on the "Save as ..."
+button. The Browser will quit and save the selected files as an LHCbDataset object
+
+Usage:
+# retrieve an LHCbDataset object with the selected files and store
+# them in the variable l
+l=browseBK()
+
+# retrieve an LHCbDataset object with the selected files and store
+# them in the jobs inputdata field, ready for submission
+j.inputdata=browseBK()
+
+--
+
+Ganga job names are now propated to the Dirac names, mangled with the ganga job id, application and
+version.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Many minor updates/fixes, some new functionality added. Highlights:
+
+* Added NGStatTools.py, and also j.backend.printstats. Can be run on completed jobs, to get
+statistics from gmlog
+* Added NGInputData, rudimentary input dataset for files on NG storage. To be extended.
+* Added testing functionality to move files on worker node from file system to local dir
+* Fixed bugs in backend handling of job submission parsing
+* Banned atlas reprod queues from default xrsl written by ganga
+* Added j.backend.requirements.timeout (defualt 5 secs) for job submission, roots out slow sites
+that were slowing down job submission immensely
+* Removed reference to outputdata.use_dataset
+
+**************************************************************************************************************

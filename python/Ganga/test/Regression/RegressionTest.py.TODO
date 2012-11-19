@@ -1,0 +1,152 @@
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: RegressionTest.py.TODO,v 1.1 2008-07-17 16:41:17 moscicki Exp $
+################################################################################
+
+import sys
+import time
+import re
+from Ganga.Utility.Plugin import allPlugins
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+
+#---------------------------------------------------------------------------
+def getAllCombinations(category):
+    res  = []
+    clns = allPlugins.allClasses(category)
+    for cln in clns:
+        cl  = clns[cln]
+        obj = cl()
+        res.append(obj) # all defaults
+        for n, i in obj._schema.componentItems():
+            for v in getAllCombinations(i['category']):
+                obj = cl()
+                if not i['protected']:
+                    if i['sequence']:
+                        setattr(obj, n, [v])
+                    else:
+                        setattr(obj, n, v)
+                    res.append(obj) # secific plugins
+    return res
+            
+
+#---------------------------------------------------------------------------
+def commit(release):
+    print "Saving all possible jobs"
+    from Ganga.GPI import jobs
+    repository = jobs._impl.repository
+    allJobs = getAllCombinations('jobs')
+    gmt = time.asctime(time.gmtime())
+    name = 'Release ' + str(release) + ', GM Time ' + gmt
+    for j in allJobs:
+        j.name = name
+        print "Test job:"
+        print GPIProxyObjectFactory(j)
+    print "Saving all test jobs..."
+    repository.registerJobs(allJobs)
+        
+
+#---------------------------------------------------------------------------
+def check(release = None):
+    print "Testing jobs from the repository"
+    from Ganga.GPI import jobs
+    repository = jobs._impl.repository
+    rjj = repository.checkoutJobs({})
+    if release:
+        rjjc = []
+        for j in rjj:
+            if re.match('Release '+ str(release), j.name):
+                rjjc.append(j)
+    else:
+        rjjc = rjj[:]
+    rjji = []
+    for j in rjjc:
+        if j.status == 'incomplete':
+            rjji.append(j)
+            print "Incomplete Job Found"
+            print GPIProxyObjectFactory(j)
+    if len(rjji) == 0:
+        print "Test is OK. Checked %d jobs" % len(rjjc)
+        return 1
+    else:
+        print "Checked %d jobs. Found %d errors." % (len(rjjc),len(rjji))
+        for j in rjji:
+            try:
+                print j.id,
+                print j.name
+            except Exception,x:
+                print x
+        print "Test failed."
+        return 0
+    
+
+##############################################################################
+
+import sys
+
+def usage():
+    print """Repository regression test.
+Usage: ganga regressionTest.py command RELEASE
+
+command may be:
+ 
+ commit      : run the test in the COMMIT mode, storing the jobs in the default job repository
+               the test jobs will get the RELEASE label
+ verify      : verify that jobs committed previously may be read with current Ganga version
+               compare with test jobs created with a specified RELEASE, or with all releases
+               if RELEASE is not specifief
+
+    """
+    
+
+    
+if __name__ == '__main__':
+
+    print "*"*80
+    
+    import sys
+    
+    try:
+        cmd = sys.argv[1]
+    except IndexError:
+        usage()
+        sys.exit(1)
+
+    try:
+        release = sys.argv[2]
+    except IndexError:
+        release = None
+        
+    if not cmd in ['commit','verify']:
+        print "ERROR: Unknown command",cmd
+        usage()
+        sys.exit(1)
+
+    if cmd == 'commit' and not release:
+        print "RELEASE must be specified for the commit command"
+        sys.exit(1)
+
+    print 'Running regression tests in %s mode, release = %s' % (cmd,release)
+
+    if cmd == 'commit':
+        commit(release)
+        sys.exit(0)
+        
+    if cmd == 'verify':
+        if not check(release):
+            sys.exit(2)
+    
+
+##     print 'Entering interactive mode. Use --help to see the command line options'
+##     ntest  = int(raw_input('Enter (1) if you want to commit new test jobs\nEnter (2) if you want to check old test jobs --->'))
+##     if ntest not in [1,2]:
+##         print "Unrecognised choise. Exiting..."
+##         sys.exit()
+##     if ntest == 1:
+##         release = raw_input('Enter release version --->')
+##         commit(release)
+##     else:
+##         release = raw_input('Enter release version. Press return to check jobs from all releases --->')
+##         if not check(release):
+##             sys.exit(1)
+

@@ -1,0 +1,8 @@
+Hi all,
+
+Ganga VER-pre test reports are ready and you can find them here
+
+http://ganga.web.cern.ch/ganga/release/VER-pre/reports/latest/html/
+
+Cheers,
+Ganga Developers

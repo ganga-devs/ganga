@@ -1,0 +1,10 @@
+a = TestApplication()
+assert(len(a.file_sequence) == 0)
+
+a.file_sequence.append('z')
+assert(a.file_sequence[0] == File('z'))
+
+a.file_sequence += [File('v')]
+assert len(a.file_sequence) == 2
+assert(a.file_sequence[0] == File('z'))
+assert(a.file_sequence[1] == File('v'))
