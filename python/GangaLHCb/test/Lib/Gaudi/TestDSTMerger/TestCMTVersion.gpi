@@ -1,0 +1,53 @@
+#test for the CMT version parser
+from GangaLHCb.Lib.Mergers.CMTVersion import CMTVersion
+
+vstring = 'v4r15p1'
+v = CMTVersion(vstring)
+assert v.version == (4,15,1)
+            
+vstring = 'v44r150p1777'
+v = CMTVersion(vstring)
+assert v.version == (44,150,1777)
+    
+vstring = 'v4r15'
+v = CMTVersion(vstring)
+assert v.version == (4,15,None)
+    
+vstring = 'v4'
+v = CMTVersion(vstring)
+assert v.version == (4,None,None)
+    
+v1 = CMTVersion('v4r15')
+assert v1 != None, '__ne__ should handle other types'
+assert v1 != 'foo', '__ne__ should handle other types'
+assert not v1 == None, '__eq__ should handle other types'
+assert not v1 == 'foo', '__eq__ should handle other types'
+    
+v2 = CMTVersion('v4r16')
+assert v1 != v2, 'Versions not the same'
+assert v1 == v1, 'Versions the same'
+assert v1 < v2, 'Compare versions'
+assert v2 > v1, 'Compare versions'
+    
+v3 = CMTVersion('v4r16p0')
+assert v3 > v2, 'Compare versions'
+v4 = CMTVersion('v4r14p2')
+assert v3 > v4
+assert v4 < v3
+assert v1 > v4
+    
+v5 = CMTVersion('v5')
+assert v5 > v2
+assert v5 > v4
+v6 = CMTVersion(None)
+assert v6.version == (None,None,None)
+assert v1 > v6
+    
+v7 = CMTVersion('v4rcheesep0')
+assert v7.version == (4,None,0)
+    
+v8 = CMTVersion('4r10p1')
+assert v8.version == (4,10,1)
+    
+v9 = CMTVersion('r10p1')
+assert v9.version == (None,10,1)

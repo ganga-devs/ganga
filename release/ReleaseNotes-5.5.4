@@ -1,0 +1,78 @@
+**************************************************************************************************************
+5.5.4 (2010/4/27)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Move to a newer ipythyon version: 0.8.4
+
+Message with long explanation about new repository at statrup now printed only when there is not new 
+repository in gangadir (LocalXML/6.0).
+
+Fixed bug #53822: job.info.uuid : make it "comparable=False"
+Fixed bug #55568: ganga -o option does not accept =
+Fixed bug #65444: config['MonitoringServices']['Athena/LCG']=None breaks job submission
+Fixed bug #65797: Add ability to add GangaList to the box
+
+added feedback reporting utility (still for internal testing only).
+
+ipython setup: sys.path->PYTHONPATH
+
+added heartbeat to fix an AFS problem: 'touch' is not propagated correctly anymore across multiple 
+AFS clients at CERN
+
+fixed several test cases
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fixed ESD splitting for TagPrepare
+* Allowed DQ2 TAG datasets to be run over without TagPrepare using 
+  'TAG_LOCAL' as the inputdata type
+* Fixed DQ2_COPY access with TAG
+* Switched FILE_STAGER -> DQ2_COPY for TAG
+* Fixed some bugs associated with the inputFilePeeker + TAG
+* Fix but #59640, respect user_area_path
+* Improved cloud=ALL site selection
+* Athena().atlas_dbrelease supports "LATEST" for most recent release
+
+Dataset/Splitter::
+-------
+* Added ATLASTier3Dataset
+* Added ATLASTier3Splitter for ATLASTier3Dataset's
+
+externals:
+----------
+update panda-client to 0.2.29
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Some minor bug fixes and feature requests plus the introduction of the BKQuery object.  This new
+object allows users to perform bookkeeping queries from inside Ganga w/o using the GUI.  Do
+help(BKQuery) for usage and see the Ganga/LHCb FAQ for more details.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- disable individualOutDS
+- fix duplicated log.tgz
+- add maxCpuCount for Executable
+- update panda-client to 0.2.29
+- handle 'cancelled' state from panda server, which maps to 'killed' state in ganga. if you build job 
+fails, related subjobs will be cancelled.
+- added beta support for Panda Tier 3 sites (using ATLASTier3Dataset and ATLASTier3Splitter)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+small fixes in the testing framework
+
+**************************************************************************************************************

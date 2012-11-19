@@ -1,0 +1,31 @@
+**************************************************************************************************************
+5.0.8 (2008/9/12)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+temporarily disabled running Root tests on LCG and LSF (due to timeouts), a
+proper solution is needed for the future (either splitting the submit and
+verify phases, or to make a test backend that woudl exercise the rt-handlers
+or to move it to a generic robot).
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Fix bug #41432: fix problem with srmv1 sites
+* Added config['DQ2']['usertag'] to set the userXX prefix for DQ2OutputDataset
+
+AthenaMC:
+* Added AthenaMCDatasets config member to upload userXX project tag from Atlas.ini. 
+  This tag is used in building output dataset names
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+get output DQ2 name prefix from configDQ2 usertag
+
+**************************************************************************************************************

@@ -1,0 +1,726 @@
+\documentclass{howto}
+
+\RequirePackage{xspace}
+
+\usepackage{alltt}
+
+\def\ganga {\textsc{Ganga}\xspace}
+\def\python {\textsc{Python}\xspace}
+\def\ipython {\textsc{IPython}\xspace}
+\def\root {\textsc{ROOT}\xspace}
+\def\lhcb {LHC{\em b\/}\xspace}
+\def\gaudi {\textsc{Gaudi}\xspace}
+\def\gaudipython {\textsc{GaudiPython}\xspace}
+\def\davinci {\textsc{DaVinci}\xspace}
+\def\dirac {\textsc{Dirac}\xspace}
+\def\gauss {\textsc{Gauss}\xspace}
+\def\grid {\textsc{Grid}\xspace}
+\def\majorv {v5}
+\def\minorv {04p1}
+\def\totalv {\majorv\minorv}
+
+\def\davinciv {v20r0\xspace}
+\def\tutorialv {v7r4\xspace}
+
+%\title{\lhcb specific manual for Ganga \totalv}
+\title{LHCb specific manual for Ganga \totalv}
+
+% At minimum, give your name and an email address.  You can include a
+% snail-mail address if you like.
+\author{Ulrik Egede and Mike Williams}
+\authoraddress{U.Egede@imperial.ac.uk}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+\noindent
+This manual describes the \lhcb specific plugins for \ganga. It covers the
+area of how to create a \ganga job with a \gaudi application, how to submit
+jobs to the \dirac production system and how to select data for analysis in
+\lhcb.
+
+\begin{seealso}
+  The Working with \ganga guide is where you will find an overall introduction
+  to \ganga. It should be read before this document.
+  \seeurl{http://ganga.web.cern.ch/ganga/user/}{}
+\end{seealso}
+
+\begin{seealso}
+  An \lhcb specific reference manual is available at 
+  \seeurl{http://ganga.web.cern.ch/ganga/release/5.4.1/reports/html/Manuals/GangaLHCbManual.html}{}
+  with the exact release you are using substituted into the URL. The text you
+  get in the reference manual is identical to the help text you get on the
+  command line in \ganga but might be more convenient for reading.
+\end{seealso}
+
+\subsection{Installing \ganga}
+\label{sec:install}
+If you are working on the \texttt{lxplus} machines at CERN there is no need to
+install anything. However, to take advantage of more disk space available at
+other machines it will often be an advantage to install \ganga at your home
+institute.
+
+\begin{seealso}
+The installation of \ganga is done as for any other \lhcb software
+with the instructions to be found at
+\seeurl{https://twiki.cern.ch/twiki/bin/view/LHCb/SoftwareInstallation}{}
+\end{seealso}
+
+As an example to install \ganga version \totalv you would do 
+\begin{verbatim}
+python install_project.py -p Ganga -v v504r1 -b
+\end{verbatim}
+While Ganga in itself does not have any binary code, you need to add
+the \texttt{-b} option to get the binary versions of the dependencies. Note in
+particular that \dirac is now installed automatically.
+
+
+\dirac installs a local copy of the files that validate Grid
+certificates. However, if these files becomes out of date, odd
+behaviour can occur. If you have a local LCG installation that is
+maintained you can make the two environment variables
+\texttt{X509_CERT_DIR} and \texttt{X509_VOMS_DIR} point to the correct
+files. If you have afs available you can also make them point to
+\begin{verbatim}
+X509_CERT_DIR=/afs/cern.ch/project/gd/LCG-share/current/external/etc/grid-security/certificates
+X509_VOMS_DIR=/afs/cern.ch/project/gd/LCG-share/current/external/etc/grid-security/vomsdir
+\end{verbatim}
+
+If you want to make modifications to the configuration of \ganga for
+all local users, you should implement a site configuration file. As an
+example, this might modify options for the local batch system. As the
+site wide options might be different for different \ganga releases,
+there is a directory structure to support this.
+\begin{itemize}
+\item Create a directory in some group readable area and modify group
+  login scripts to make the environment variable
+  \texttt{GANGA_SITE_CONFIG_AREA} point to the directory.
+\item Create a subdirectory with a name corresponding to the release,
+  e.g. \texttt{v504r1}.
+\item Any file with extension \texttt{.ini} in this directory will be
+  used for site wide configuration.
+\end{itemize}
+
+There is no need to create a new directory and file for every new
+release. If there are no changes, \ganga will simply pick the file
+from the directory corresponding to the most recent release
+beforehand. Take a look at
+\texttt{/afs/cern.ch/sw/ganga/install/config/LHCb} to see how it
+works. Also, as an example, the site configuration file for
+\texttt{Imperial} is shown below. It adds a welcome message, sets
+\texttt{SGE} to be the default batch system and modifies a few options
+related to the batch system.
+\begin{verbatim}
+[Configuration]
+IgnoreRuntimeWarnings = True
+StartupGPI=print 'Hello from Ganga at Imperial. Please contact Nobody, Nobody@no.spam if you have any problems'
+Batch=SGE
+
+[SGE]
+submit_str = cd %s; qsub -cwd -V %s %s %s %s
+preexecute = os.chdir(os.environ["TMPDIR"])
+        os.environ["PATH"]+=":."
+        os.environ["HOME"]=os.environ["TMPDIR"]
+\end{verbatim}
+
+To start \ganga simply in a new shell do \texttt{SetupProject Ganga}
+and then you can start Ganga as many times as you like by just typing
+\texttt{ganga}.
+
+\section{Applications}
+\label{sec:gaudi}
+In \ganga you can specify any \gaudi application directly as the application
+for your job. Specific versions of the handler are available for all the
+different \gaudi applications like \gauss and \davinci. Since they all work
+in the same way we will only describe \davinci here.
+
+The example below illustrates the creation of a job where the version of
+\davinci is changed and the options file specified.
+\begin{alltt}
+In [1]: dv = DaVinci()
+In [2]: dv
+Out[2]: DaVinci (
+ extraopts = None ,
+ configured = 0 ,
+ package = 'Phys' ,
+ masterpackage = None ,
+ platform = 'slc4_ia32_gcc34' ,
+ version = 'v19r13' ,
+ setupProjectOptions = '',
+ user_release_area = '/afs/cern.ch/user/u/uegede/cmtuser' ,
+ optsfile = []
+ )
+In [3]: dv.version='\davinciv'
+In [4]: dv.optsfile=['~/myopts.py']
+In [5]: j = Job(application=dv)
+\end{alltt}
+This can of course all be done in a single line.
+\begin{alltt}
+j = Job(application=DaVinci(version='\davinciv', optsfile=['~/myopts.py']))
+\end{alltt}
+Note how the \texttt{optfile} field is a list. If more than one element is
+supplied they are all used one after the other to define the configuration.
+
+\subsection{The parameters of the \gaudi (\gauss, \davinci, etc.) handlers}
+\label{sec:GaudiParameters}
+The \gaudi applications each have a set of parameters that are explained here
+for reference. The examples in section~\ref{sec:Example} are good for
+understanding how they can be used.
+\begin{description}
+\item[version] This is the version of \davinci (or whatever other \gaudi
+  application) that will be used.
+\item[optsfile] You can either provide a single options file or a list of
+  files.. If more than one element is supplied they are all used one after the
+  other to define the configuration. Give the absolute path and do not change
+  the value of the \texttt{subdir} field. Both old \texttt{.opts} and new
+  \texttt{.py} options can be used and mixed. Include statements in the files
+  will be expanded at submission time and a full copy made.
+\item[extraopts] In this field you can add extra options that will be appended
+  to the end of your options file before running. This is very convenient for
+  changing a single parameter before running a job. \textbf{Only the new
+    Python format is accepted in this field.}
+\begin{verbatim}
+j.application.extraopts="""
+ApplicationMgr().EvtMax = 1000
+HistogramPersistencySvc().OutputFile = "DVHistos_1.root"
+"""
+\end{verbatim}
+  Notice the use of triple quotes in \python to specify a multiline option.
+\item[user_release_area] The \texttt{CMT} user path to be used. By default the
+  value of the first element in the \texttt{User_release_area} environment
+  variable. After assigning this you can do
+\begin{alltt}
+j.application.getpack('Phys/DaVinci \davinciv') 
+\end{alltt}
+  to check out into the new location. If you work on several simultaneous
+  projects it is advisable that you keep them in separate \texttt{CMT} areas.
+\item[masterpackage] The package where your top level requirements file is
+  read from. Can be written either as a path \texttt{Tutorial/Analysis/v6r0}
+  or in a \texttt{CMT} style notation \texttt{Analysis v6r0 Tutorial}.
+\item[setupProjectOptions] Extra options to be passed onto the SetupProject command used for configuring the environment.
+\item[platform] The architecture (like 32bit versus 64 bit) that will be used
+  to run your job. If you change this you have to make sure your own DLLs are
+  complied for the correct architecture as well. The best way to make sure
+  this is the case is to do
+\begin{verbatim}
+j.application.make()
+\end{verbatim}
+  which will build the code for the specified platform.
+\end{description}
+
+\subsection{Job submission and running}
+\label{sec:GaudiConfigAndRun}
+When a \ganga job with a \gaudi application is submitted several things will
+happen.
+\begin{itemize}
+\item \texttt{CMT} is used to identify the packages in your local \texttt{CMT}
+  area that the job depends on. The requirements file in your
+  \texttt{masterpackage} will be the one that determines this.
+\item All the include statements in the option files are recursively expanded
+  and the fully expanded options file is cached with the job.
+\item A copy of all shared libraries used in your private \texttt{CMT} project
+  area(s) is made. This also includes the \texttt{rootmap} and \texttt{confDb}
+  \python files.
+\end{itemize}
+The purpose of the above operations is to make your job independent of your
+\texttt{CMT} area. This means that after you have submitted a job (and before
+it has finished) you can edit your options files, rebuild the code etc.\
+without putting your running job at risk. This is something that is not
+possible if running from the command line. If you are curious about the cached
+files that are created (or suspect a bug in the implementation) you can find
+them in the directory \texttt{j.inputdir} where \texttt{j} is your job. Simply 
+unpack the two tar files and see what is there.
+
+
+\subsection{Helper functions}
+\label{sec:gaudiHelpers}
+The \gaudi application handlers provide functions to make it easier to check
+out and build code when you are working with multiple different versions and
+release areas.  Look at the example below where the CMT area is in my
+\texttt{public/cmtTutorial} directory and the package
+\texttt{Tutorial/Analysis \tutorialv} is checked out and built.
+\begin{alltt}
+In [11]:dv = DaVinci(version='\davinciv', 
+                     user_release_area='~/tmp/public/cmtTutorial',
+                     masterpackage='Tutorial/Analysis/\tutorialv')
+ 
+In [12]:dv.getpack('Tutorial/Analysis \tutorialv')
+:
+getpack v4r0
+cvs -d :kserver:isscvs.cern.ch:/local/reps/lhcb co -d gaudi-req-190403 
+    Tutorial/Analysis/cmt/requirements
+U gaudi-req-190403/requirements
+--------------------------------------------------------------------------------
+cvs -d :kserver:isscvs.cern.ch:/local/reps/lhcb co -P -d \tutorialv 
+    -r \tutorialv Tutorial/Analysis
+:
+
+< edit your code >
+
+In [13]:dv.make()
+:
+#--------------------------------------------------------------
+# Now trying [make] in /afs/cern.ch/user/u/uegede/tmp/public/cmtTutorial/
+                       Tutorial/Analysis/\tutorialv/cmt (191/192)
+#---------------------------------------------------------------
+:
+:
+#--------------------------------------------------------------
+# Now trying [make] in /afs/cern.ch/user/u/uegede/tmp/public/cmtTutorial/
+                       Tutorial/Analysis/\tutorialv/cmt (191/192)
+#---------------------------------------------------------------
+:
+------> Analysis : library ok
+------> Analysis ok
+------> (constituents.make) Analysis done
+ all ok.
+\end{alltt}
+The full signature of the helper functions are:
+\begin{description}
+\item[getpack(options)] Execute a getpack command \texttt{getpack
+    $<$options$>$} with \texttt{CMT} configured to use the specified CMT user
+  area. To see the arguments you can include in the \texttt{getpack} command
+  give it the argument \texttt{-h} as in \texttt{dv.getpack('-h')}.
+\item[make(argument)] Build the code in the release area the application
+  object points to. The actual command executed is \texttt{cmt broadcast make
+    $<$argument$>$} after the proper configuration has taken place. An example
+  is \texttt{j.application.make()} to do a broadcast make or
+  \texttt{j.application.make('clean')} to clean up. The code will be build
+  using the architecture specified in the \texttt{platform} field for the
+  application.
+\item[cmt(command)] Execute a general cmt command in the cmt user area pointed
+  to by the application. Will execute the command \texttt{cmt $<$command$>$}
+  after the proper configuration. Do not include the word \texttt{cmt}
+  yourself. An example is \texttt{j.application.cmt('show uses')}.
+\end{description}
+
+The CMT commands are related to the CMT area that the application points to.
+If you perform a \texttt{getpack}, a \texttt{make} or whatever using these
+commands it will affect all jobs where the application points to this area.
+
+\begin{notice}
+  If a job has already been submitted shared libraries and options are cached
+  and they will not be affected by whatever CMT commands you might use. This
+  is the case even if the job is still pending in a batch queue.
+\end{notice}
+
+\subsection{\gaudipython}
+For the more experience users of \gaudi, there is also the possibility to use
+\gaudipython. In this mode of working you are in control of loading shared
+libraries, importing modules and executing the event loop yourself. The
+\gaudipython application handler allows you to work like this. 
+Type \texttt{help(GaudiPython)} for information on this application.
+
+\begin{notice}
+If you have shared libraries to include, it is your own responsibility to
+enter them into the input sandbox.
+\end{notice}
+
+\subsection{\root jobs}
+\label{sec:ROOT}
+There is a \root application handler in \ganga that makes it possible to
+create jobs for running within \root. As a user you will specify the
+\textsc{CINT} or \textsc{pyRoot} script to run and then the rest is taken care
+of. The \root application works with all backends but the versions that can
+run on the \dirac backend is limited to the \root versions already
+installed. If you try to use a version not pre-installed, you will get an
+error message. See the comprehensive documentation in the reference manual for
+further details.
+
+\section{\dirac}
+\label{sec:dirac}
+The \dirac backend is the way that \lhcb jobs are executed on the \grid. They
+will go through the \dirac workload management system that takes care of all
+\lhcb jobs on the \grid.
+\begin{notice}
+  As a pre-requisite you need to have a \grid certificate, have your
+  \texttt{.globus} directory correctly configured and be a member of the \lhcb
+  virtual organisation (VO).
+\end{notice}
+For input data you will have to specify it as logical filenames~(LFNs) rather
+than the physical filenames~(PFNs) that are used if you run on specific local
+files. The bookkeeping database returns LFNs by default so this should be
+easy.
+\begin{seealso}
+  In addition to the monitoring within \ganga, you can monitor the progress on
+  the \dirac monitoring web page
+  \seeurl{https://lhcbweb.pic.es/DIRAC/info/general/diracOverview}{}. To use
+  this page you will need to import a valid grid proxy into your web browser. To
+  get the corresponding id look at \texttt{j.backend.id} for your \ganga job.
+  The major and minor status of the \dirac job is available in ganga in the
+  \texttt{status} and \texttt{statusInfo} fields of \texttt{j.backend}.
+\end{seealso}
+
+You can specify the requested CPU time for a job in seconds on the \grid by
+setting the \texttt{CPUTime} attribute of the \dirac backend. If you set a low
+number your job should start running quicker.
+
+\begin{notice}
+A job marked as stalled in the \dirac system can occasionally be manually
+restarted by the \dirac operator (who will usually notify you by email).
+If this is the case the job will revert to one of the
+(`Checking',`Matched',`Received',`Staging',`Waiting') states in the
+\dirac online monitoring. To make \ganga aware that the job has been
+restarted you can use the \texttt{reset} method on the \texttt{Dirac} backend.
+\ganga will then monitor the job again as if it had never been in a `failed' state.
+\end{notice}
+
+\section{Input and Output}
+\label{sec:InOut}
+
+\subsection{Data Files}
+Data files are handled by the \texttt{PhysicalFile} and \texttt{LogicalFile} classes.  
+Using these classes, it's possible to download/upload files to the LFC, replicate 
+files to different grid SE's, etc.  Type \texttt{help(PhysicalFile)} and 
+\texttt{help(LogicalFile)} for more info. 
+
+\subsection{Input sandbox}
+\label{sec:Inputsandbox}
+The files specified as a list in the \texttt{inputsandbox} attribute of a job
+describes the files that will be copied to the local execution environment.
+Options files and shared libraries are taken care of by \ganga so you should
+not specify them.
+
+\subsection{Input data}
+\label{sec:datasets}
+The data that your \gaudi job will read should be specified as an
+\texttt{LHCbDataset} in the \texttt{inputdata} attribute of your job.
+
+The following will create a dataset object with logical filenames from the
+stripped DC06 dataset:
+\begin{verbatim}
+In [22]: dataLFN = LHCbDataset(files=[
+'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001758/DST/0000/00001758_00000001_5.dst',
+'LFN:/lhcb/production/DC06/phys-v2-lumi2/00001758/DST/0000/00001758_00000002_5.dst',
+])
+\end{verbatim}
+There is no need to enter the same lines into your options file as \ganga will
+take care of this at submission time.
+
+If you create a \davinci job in \ganga without specifying an input dataset in
+the \texttt{j.inputdata} attribute, the input data will be extracted from the
+options file as it will happen if you run a \davinci job outside \ganga. The
+specification of inputdata in the options file is left for backwards
+compatibility but will eventually disappear. This is to ensure a clear
+separation between the configuration of the application and the data it will
+process.
+
+\begin{notice}
+  The dataset defined in the \texttt{inputdata} field will take precedence
+  over what is in the options file. So if you have a specification in both
+  places, a warning will be issued and anything in the options file will be
+  ignored.
+\end{notice}
+
+You can use logical filenames for submission to the \texttt{Local} and
+\texttt{Batch} backends as well. The translation to the physical file names is
+taken care of but it is your own responsibility to give LFNs which are
+actually present at the site where you run (ie \ganga will not copy the files
+from other sites for you).
+
+\subsection{Output sandbox}
+\label{sec:OutputSandbox}
+When a job has finished it will copy the output placed in the output sandbox 
+(see below for details on which files end up in the sandbox)
+back to the local file
+workspace (by default \texttt{$\tilde{}$/gangadir/workspace}). The
+\texttt{outputdir} attribute will give you the exact location. As an example:
+\begin{verbatim}
+In [4]:j.outputdir
+Out[4]: /afs/cern.ch/user/u/uegede/gangadir/workspace/uegede/LocalAMGA/51/output
+\end{verbatim}
+
+To look into the output sandbox it is very convenient to use the \texttt{peek}
+method on a job \texttt{j}.
+\begin{verbatim}
+# Look at what is in the output sandbox
+j.peek()
+
+# Look in the input sandbox
+j.peek( "../input" )
+
+# View ROOT histograms, running root.exe in a new terminal window
+j.peek( "histograms.root", "root.exe &&" )
+\end{verbatim}
+
+See the reference for the full documentation on what is possible with the
+\texttt{peek} method and how it can be configured.
+
+
+\subsection{OutputData}
+\label{sec:OutputData}
+Rather than returning large files to your local file system you might want to
+store them on a mass storage system. 
+The location of files in the mass storage depends on the backend used:
+\begin{description}
+\item[Local, LSF] Files are stored in the location
+  \texttt{\$CASTOR_HOME/gangadir/$<$j.id$>$/outputdata/}. The behaviour can be
+  tailored to a non-CERN location by modifying the \texttt{LHCb} section of
+  the configuration.
+\item[Dirac] The files are registered in the LCG file catalogue~(LFC) and can
+  be used as input to \grid jobs in exactly the same way as for other input
+  data. The name of the file is stored in a structure similar to the home
+  directories on afs at CERN:
+\begin{verbatim}
+      LFN:/lhcb/user/<initial>/<username>/<diracid>/<fname> 
+\end{verbatim}
+  The \dirac id is obtained as \texttt{j.backend.id}. The LFN given above can
+  be used in a new \grid job for further analysis. If you would like to
+  retrieve a local copy of the file pointed to by the LFN do something like.
+\begin{verbatim}
+      j.backend.getOutputData(names=['myDST.dst'])
+\end{verbatim}
+  See the online help or the reference for the full documentation of the
+  \texttt{getOutputData} method.
+\end{description}
+
+\subsection{Controlling Output File Location}
+\label{sec:CtrlOutLoc}
+
+For Executable, \root and \gaudipython jobs you need to specify everything 
+apart from standard output and standard error (which are automatically added
+to the output sandbox). This is done using the \texttt{outputsandbox} and
+\texttt{outputdata} fields on a job \texttt{j}.
+
+\begin{verbatim}
+
+# Add 'example1.file' and 'example2.file' to the output sandbox.
+j.outputsandbox = ['example1.file','example2.file']
+
+# Add 'example3.file' and 'example4.file' to the output data.
+j.outputdata = ['example1.file','example2.file']
+
+\end{verbatim}
+
+For these applications, any file not specified in either of these fields 
+will be lost.
+
+\begin{notice}
+  If the size of an output sandbox file with the \dirac backend exceeds 10~Mb 
+  it will automatically be treated as output data instead and copied to a \grid
+  Storage Element.
+\end{notice}
+
+For \gaudi jobs (e.g. \davinci, \gauss, etc.), all files created by 
+\texttt{NTupleSvc}, \texttt{EvtTupleSvc}, \texttt{HistogramPersistencySvc}, 
+\texttt{MicroDSTStream},
+\texttt{GaussTape}, \texttt{DigiWriter} and \texttt{DstWriter} are 
+automatically collected and added to either the output data or sandbox.
+The default behavior is to place all files created by 
+\texttt{NTupleSvc}, \texttt{EvtTupleSvc}, \texttt{HistogramPersistencySvc} and
+\texttt{MicroDSTStream} into the output sandbox and all files created by 
+\texttt{GaussTape}, \texttt{DigiWriter} and \texttt{DstWriter} into the 
+output data. Users can tailor this to fit their needs by modifying the
+\texttt{LHCb} section of the configuration. Specifically, this means 
+editing the \texttt{outputsandbox_types} field under the \texttt{[LHCb]}
+section of your \texttt{.gangarc} file.
+
+\begin{verbatim}
+
+# This is the default setting
+#outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'MicroDSTStream', 'EvtTupleSvc']
+
+# Changing it to this would move MicroDST's to output data (note the removal of the leading # character)
+outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'EvtTupleSvc']
+
+# And this would add Gauss files to the sandbox
+outputsandbox_types = ['NTupleSvc', 'HistogramPersistencySvc', 'MicroDSTStream', 'EvtTupleSvc', 'GaussTape']
+
+\end{verbatim}
+
+Further control is provided by the fact that the default sorting (whether or 
+not the user has modified it) can be overriden in any individual job by 
+simply editing the \texttt{outputsandbox} and \texttt{outputdata} fields of
+a job. For example, if a user is running a \gauss job and under
+the standard default configuration (which places all \texttt{GaussTape} files
+into the output data), they can force the output file \texttt{Gauss.sim} to
+instead go to the sandbox for a Job \texttt{j} by simply editing the 
+\texttt{outputsandbox} field of that job.
+
+\begin{verbatim}
+
+j.outputsandbox = ['Gauss.sim']
+
+\end{verbatim}
+
+This will override the default behavior and move \texttt{Gauss.sim} to the
+output sandbox; thus, the user has complete control over the destination of
+each output file.
+
+\begin{notice}
+  The 10~Mb output sandbox limit imposed by the \dirac backend also applies
+  to \gaudi jobs. Any file over this limit, regardless of how the user placed
+  it into the sandbox in a \ganga job, will be copied to a \grid
+  Storage Element.
+\end{notice}
+
+
+\section{Job splitting}
+\label{sec:splitting}
+If you want to analyse a large dataset you can create a single
+\emph{masterjob} and then specify how much data should be analysed in each of
+a set of \emph{subjobs}. For \davinci jobs there are two splitters of interest:
+\begin{itemize}
+\item The \texttt{SplitByFiles} splitter takes two arguments. The first one,
+  \texttt{filesPerJob}, specifies the number of input data files that each sub
+  job will process. The following example will create a \davinci master job
+  with the default 10 data files per subjob.
+\begin{verbatim}
+In [31]:j = Job(application=dv, splitter=SplitByFiles())
+\end{verbatim}
+  The second argument, \texttt{maxFiles}, decide the maximum number of files
+  that will be used for the complete job. A value of -1 means all.
+\item The \texttt{DiracSplitter} works as \texttt{SplitByFiles} but ensures
+  that a given job will only have data that is located at the same \grid
+  site. This is the recommended splitter to use for \davinci jobs when using
+  the \dirac backend.
+\end{itemize}
+
+\section{Example of a \davinci analysis job}
+\label{sec:Example}
+The example here put together the pieces from above in a non-trivial way. It
+will analyse a signal dataset with an algorithm from the Tutorial package of
+\davinci. The first analysis will be on the local machine going through just
+100 events, and afterwards on the \grid analysing many events with splitting
+into many subjobs.
+
+First we define a \davinci application. We place the code in a non-default
+location to avoid interfering with other development work. We use a supplied
+options file but just add a single line which limits the number of events
+analysed.
+\begin{alltt}
+v = '\davinciv'
+topdir='~/public/cmtTutorial'
+master='Tutorial/Analysis/\tutorialv'
+tutdir=topdir+'/DaVinci_'+v+'/'+master+'/solutions/DaVinci3'
+dv = DaVinci(version=v,
+             user_release_area=topdir, 
+             masterpackage=master,
+             platform='slc4_ia32_gcc34')
+dv.optsfile=[tutdir+'/DVTutorial_3.py']
+dv.extraopts='ApplicationMgr().EvtMax = 1000'
+t = JobTemplate(name='TutorialAnalysis',
+                application=dv, 
+                backend=Local())
+\end{alltt}
+Notice that we set the platform to 32-bit as we plan to run with the \dirac
+backend afterwards where this is the only supported architecture.
+
+We check out code from CVS and compile the package. Cheat by copying some
+code from the solutions directory before we compile.
+\begin{alltt}
+dv.getpack('Tutorial/Analysis \tutorialv')
+!cp $tutdir/*.\{cpp,h\} $tutdir/../../src
+dv.make()
+\end{alltt}
+We now go on to define the dataset for the local analysis. This is simply
+chosen from the bookkeeping database while ensuring the data is available at
+CERN:
+\begin{verbatim}
+dataCERN = LHCbDataset(files=[
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000001_2.dst',
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000003_2.dst'])
+\end{verbatim}
+With this we create our local test job with the template, only adding our
+dataset.
+\begin{verbatim}
+j = Job(t, inputdata=dataCERN)
+\end{verbatim}
+While developing the code we might then go around in loops for the following
+lines of submission, checking, editing and rebuilding.
+\begin{verbatim}
+j.submit()
+
+< wait for job to finish >
+
+< look at output >
+j.peek()
+total 57K
+-rw-r--r--     0 Aug 12 13:10 __syslog__
+-rw-r--r--   35K Aug 12 13:10 stdout
+-rw-r--r--   340 Aug 12 13:10 stderr
+-rw-r--r--    86 Aug 12 13:10 __jobstatus__
+-rw-r--r--   20K Aug 12 13:10 DVHistos_3.root
+
+< look at stdout file >
+j.peek('stdout')
+
+< edit the code >
+
+j.application.make()
+
+< create new job >
+
+j = Job(t, inputdata=dataCERN)
+\end{verbatim}
+When happy we can then create our analysis job for the \grid. We assign a
+dataset with logical filenames without the restriction that they are located
+at CERN, change the number of events to analyse and tell the job to split into
+subjobs with 3 datasets per job.
+\begin{verbatim}
+data = LHCbDataset(files=[
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000001_2.dst',
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000003_2.dst',
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000005_2.dst',
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000006_2.dst',
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000008_2.dst',
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000009_2.dst',
+'LFN:/lhcb/production/DC06/v1r0/00002042/DST/0000/00002042_00000010_2.dst'
+])
+j = Job(t,inputdata=data, backend=Dirac())
+j.application.extraopts='ApplicationMgr().EvtMax = 10000000'
+j.splitter=DiracSplitter(filesPerJob = 3)
+j.submit()
+\end{verbatim}
+As the dataset we used here has 7 datafiles this will cause the job to split
+into 3 subjobs on submission. We recommend to use 10 datasets per job as the
+default but break it up further here to illustrate the functionality. When the
+master job \texttt{j} is completed all its subjobs are completed.
+\begin{verbatim}
+for js in j.subjobs:
+   js.peek('DVHistos_3.root','ls -sh')
+
+1.0K /afs/.../LocalAMGA/51/0/output/DVHistos_3.root
+1.0K /afs/.../LocalAMGA/51/1/output/DVHistos_3.root
+1.0K /afs/.../LocalAMGA/51/2/output/DVHistos_3.root
+\end{verbatim}
+
+In the end lets store the job definition for our job on the \grid as a template
+for easy use in a later \ganga session:
+\begin{verbatim}
+t = JobTemplate(j)
+t.name='MyFirstGridAnalysis'
+templates
+\end{verbatim}
+where the last command simply print all your templates.
+
+\section{Getting help and reporting bugs}
+There is a specific FAQ for \ganga use in \lhcb located at the location
+below. It is used for highlighting specific issues that do not fit well into
+this manual and which might also be of a short term nature.
+\begin{seealso}
+\seeurl{https://twiki.cern.ch/twiki/bin/view/LHCb/GangaLHCbFAQ}{}
+\end{seealso}
+
+The \texttt{lhcb-distributed-analysis@cern.ch} mailing list should be used for
+all questions in \lhcb related to \ganga, \dirac and data access issues.
+Questions might be help with debugging, advice on optimal use and reporting of
+suspected bugs. Please subscribe to this list so you can stay informed and
+help other users as well.
+
+As with all other software reporting of bugs is an essential task any user can
+help with. To report a bug to \ganga go to the page in Savannah.
+\begin{seealso}
+\seeurl{https://savannah.cern.ch/bugs/?group_id=195}{}
+\end{seealso}
+Check if the bug is already reported, and if not submit a new one. Please
+include maximal information about how to reproduce the bug and if you include
+output from the command line turn debug information on first (just start
+\ganga with the \texttt{--debug} option).
+
+config.Logging['GangaLHCb.Lib.Gaudi']='DEBUG'
+
+Please report errors in the documentation as well!
+\end{document}
