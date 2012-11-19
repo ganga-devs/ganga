@@ -163,7 +163,8 @@ class Job(GangaObject):
                                     'splitter':ComponentItem('splitters',defvalue=None,load_default=0,optional=1,doc='optional splitter'),
                                     'subjobs':ComponentItem('jobs',defvalue=[],sequence=1,protected=1,load_default=0,copyable=0,optional=1,proxy_get="_subjobs_proxy",doc='list of subjobs (if splitting)',summary_print = '_subjobs_summary_print'),
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
-                                    'postprocessors':ComponentItem('postprocessor',defvalue=MultiProcessor(),load_default=0,optional=1,doc='optional output merger'),
+                                    'postprocessors':ComponentItem('postprocessor',defvalue=MultiProcessor(),load_default=0,optional=1,doc='list of postprocessors to run after job has finished'),
+                                    'merger':ComponentItem('mergers',defvalue=None,load_default=0,optional=1,doc='optional output merger'),
                                     'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
                                     'metadata':ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
                                     'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0)
