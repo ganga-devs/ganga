@@ -1,0 +1,13 @@
+from Ganga.Utility.Shell import Shell
+import os
+
+P = os.environ['PATH']
+s = Shell()
+assert s.env['PATH'] == P
+
+os.environ['PATH'] = ''
+
+assert s.env['PATH'] == P
+
+# restore PATH
+os.environ['PATH'] = P
