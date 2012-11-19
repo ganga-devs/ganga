@@ -1,0 +1,10 @@
+#JobTime: runtime method not working for Panda, Batch backends
+from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
+import time
+a=Job()
+a.backend=LSF()
+a.submit()
+if sleep_until_state(a,300,'completed'):
+   assert(a.time.runtime())
+else:
+   print "We timed-out waiting for an LSF() backend job to start running"

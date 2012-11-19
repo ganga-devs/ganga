@@ -1,0 +1,46 @@
+# testPBS.py - Johannes Elmsheuser
+# 
+# create a few jobs, submit them to pbs, and check if they go to the queue
+# they were configured for - based on lsf-queue-test.py
+
+# PBS specific tests. Only run if PBS is default batch system.
+
+if config.Configuration.Batch == 'PBS':
+
+    import sys,popen2,time
+    # This jobs goes to the default queue. At atlas.fzk.de this is the 'default' queue
+    jdef = Job(application=Executable(exe='/bin/sleep',args=['60']))
+    jdef.backend=PBS()
+    jdef.submit()
+    assert(jdef.backend.queue=='')
+
+    # An test queue job
+    jtest = Job(application=Executable(exe='/bin/sleep',args=['60']))
+    jtest.backend=PBS(queue='test')
+    jtest.submit()
+    assert(jtest.backend.queue=='test')
+
+    # An short queue job
+    jshort = Job(application=Executable(exe='/bin/sleep',args=['60']))
+    jshort.backend=PBS(queue='short')
+    jshort.submit()
+    assert(jshort.backend.queue=='short')
+
+    time.sleep(2)
+    # next check that qstat sees the same queues
+    d={} # use a dict for easier access of the id
+    child=popen2.Popen3('qstat')    
+    child.tochild.close()
+    out=child.fromchild
+    result=-1
+    while result==-1:
+      lines=out.readlines()
+      for line in lines:
+        items=line.split()
+        d[items[0]]=items[5]
+      result=child.poll()
+
+    assert(d[jdef.backend.id+'.pbs'] == 'default')
+    assert(jtest.backend.queue == d[jtest.backend.id+'.pbs'])
+    assert(jshort.backend.queue == d[jshort.backend.id+'.pbs'])
+

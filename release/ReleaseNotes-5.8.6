@@ -1,0 +1,52 @@
+**************************************************************************************************************
+5.8.6 (2012/7/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- refactoring of the generic output files handling
+ - added persistent place for comments for jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+- small changes in output files handling that needed changes in LCG.py and CREAM.py
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v508r6 (GangaLHCb-24-11)
+******************************
+
+1) Minor bug fixes
+
+2) Addition of automatic XML summary parsing and merging upon job completion. Some of the more
+common usages of the XML summary (implemented from GangaUtils) have been included automatically. In
+addition the summary.xml file is also returned with the job so the user can parse it as they wish
+post running. XML summary data populates the new metadata attribute of a job which also dynamically
+extends the syntax of the job object as in the example below.
+
+In[1]: j=Job(...)
+In[2]: j.submit()
+
+...
+
+In[3]: j.metadata
+Out[3]: { 'xmldatafiles': "{'full':
+set(['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000355_1.dimuon.dst'])}", 
+          'xmldatanumbers': "{'full': 1}", 
+          'lumi': '1.60795849653 +- 0.0562785473787, 
+          'events': "{'output': 0, 'input': 364573L}", 
+          'xmlskippedfiles': 'set([])' 
+         }
+
+The job syntax is dynamically updated with the metadata item such that with the above metadata one
+can call
+
+In[4]: j.lumi
+Out[4]: 1.60795849653 +- 0.0562785473787
+
+**************************************************************************************************************

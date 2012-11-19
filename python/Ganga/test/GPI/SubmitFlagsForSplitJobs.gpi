@@ -1,0 +1,45 @@
+# the effects of keep_on_fail and keep_going flags for subjobs
+
+# submission of second subjob fails
+j = Job()
+j.backend=TestSubmitter()
+j.splitter=TestSplitter()
+j.splitter.backs=[TestSubmitter(),TestSubmitter(fail='submit'),TestSubmitter(),TestSubmitter()]
+
+
+print '-'*80
+print 'j.submit(keep_on_fail=False,keep_going=False)'
+print
+j.submit(keep_on_fail=False,keep_going=False)
+print j
+assert(j.subjobs[0].status != 'new')
+assert(j.subjobs[1].status == 'new')
+assert(j.subjobs[2].status == 'new')
+assert(j.subjobs[3].status == 'new')
+
+
+print '-'*80
+print
+print 'keep_on_fail=True,keep_going=False'
+j = j.copy()
+j.submit(keep_on_fail=True,keep_going=False)
+print j
+
+
+print '-'*80
+print 'keep_on_fail=False,keep_going=True'
+print 
+j = j.copy()
+j.submit(keep_on_fail=False,keep_going=True)
+print j
+
+
+print '-'*80
+print 'keep_on_fail=True,keep_going=True'
+print 
+j = j.copy()
+j.submit(keep_on_fail=True,keep_going=True)
+print j
+
+print 
+print '-'*80

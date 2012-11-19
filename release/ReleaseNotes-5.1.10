@@ -1,0 +1,62 @@
+**************************************************************************************************************
+5.1.10 (2009/4/15)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+fixed wrong bugfix (#47065) which prevented from using LocalXML repository at all (5.0 directory in CWD)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Condor
+--------------------------------------------------------------------------------------------------------------
+* Corrected bug that resulted in arguments not being passed to application.
+
+* Modified script to be run on worker node, so that warning is printed if unable to locate file pointed to by BASH_ENV.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* fixing the race condition issue between the main Ganga monitoring loop and the downloading threads
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Replace USERDISK with SCRATCHDISK token 
+* Fix bug #48964, fix for athena v15 setup
+
+AthenaMC:
+---------
+* AthenaMCLCGRTHandler.py: bugfix for min bias and cavern files counting
+* Adding new user function, outputdata.recover(). This function runs 
+  fill() over all subjobs, then the master job itself and allow to 
+  register output files of failed subjobs or subjobs stuck in the 
+  completing state. It also allows to freeze the output datasets if 
+  the master job is declared as failed
+
+AMAAthena:
+----------
+* set default monitoring service to the analysis Dashboard
+* fix bugs in adopting GangaThread module
+
+Tasks:
+------
+* fixed initializeFromGenerator
+* transform sandbox can now be set
+* task logger error messages now appear on screen
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Adds a fix for the LFN problem with the bookkeeping
+Fixes a problem in Dirac.getOutputData() so that the download was incorrectly reported to have failed.
+
+Updated to support the new LHCb environment.
+
+**************************************************************************************************************

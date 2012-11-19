@@ -1,0 +1,16 @@
+    <varlistentry>
+        <term>
+            <group choice="plain">
+                <arg choice="plain"><option>-f <replaceable>FORMAT</replaceable></option></arg>
+                <arg choice="plain"><option>--format=<replaceable>FORMAT</replaceable></option></arg>
+            </group>
+        </term>
+        <listitem>
+            <para>
+            Data format to be retrieved. This is the MIME/TYPE that the server should
+            generate as output (i.e. text/xml, application/xhtml+xml, text/csv, ...).
+
+            Different requests will support different formats.
+		    </para>
+        </listitem>
+    </varlistentry>

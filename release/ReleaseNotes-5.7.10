@@ -1,0 +1,80 @@
+**************************************************************************************************************
+5.7.10 (2012/3/19)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix for bug #88166. Users can specify whether j.resubmit() resubmits all subjobs or only failed 
+subjobs.
+
+  Note this introduces a new (optional) boolean configuration parameter, set either in the 
+  [Configuration] section of .gangarc:
+ 
+  resubmitOnlyFailedSubjobs = True/False
+
+  or from the Ganga shell: 
+
+  config['Configuration']['resubmitOnlyFailedSubjobs']=True 
+
+  This functionality only affects resubmission of subjobs. Furthermore, the behaviour of 
+auto_resubmit 
+  remains unchanged (that is, only FAILED subjobs are resubmitted by the automatic mechanism). 
+
+* Fix for bug #92233; the Gangadir was hardcoded within Merger.py, thus was not compatible with 
+relocated 
+gangadirs.
+
+* Implemented feature request #90360. This introduces the ability to manually add files to an 
+existing ShareDir.
+  For example:
+  a=Job()
+  a.prepare()
+  a.application.is_prepared.add(['~/somefile.sh', '~/anotherfile.sh'])
+
+the contents of the ShareDir can also be listed:
+
+  a.application.is_prepared.ls()
+
+* Fix for bug #92340. GangaList elements can no longer be modified after an application has been 
+prepared.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Enable ATLASTier3Dataset+ATLASTier3Splitter for all backends, 
+* fix ATLASTier3Datatset.pfnListFile read in and job splitting
+* Fix bug #92587: 
+  - Add checksums to DQ2Dataset, propagate this info together with 
+    filesize through DQ2JobSplitter to AthenaPandaRTHandler.py
+  - Add DQ2Dataset.sizes
+
+* Added a restartTask function for giving a Task a kick if it has stalled
+* Added TAG support to Tasks
+* Added an option to rebroker on failed partitions
+* update to panda-client 0.3.92
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 5.7.10 (v507r10)
+**********************
+
+1) Closed the loophole in the prepared state mechanism provided by mutable lists, see Savannah bug
+#92340
+2) Small fix to handle properly killing the DIRAC server process on disconnect.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fix bug #92587:
+  - add md5sum and filesize fields for lib datasets
+  - Add checksums to DQ2Dataset, propagate this info together with 
+    filesize through DQ2JobSplitter to AthenaPandaRTHandler.py
+  - Add DQ2Dataset.sizes
+* update to panda-client 0.3.92
+
+**************************************************************************************************************
