@@ -1,0 +1,14 @@
+# a bug which we observed: deleted jobs are commited
+
+# create a job, modify it then delete it
+j = Job()
+j.name = 'a'
+
+jobs.remove()
+#j.remove()
+
+# force repository commit by modifying another job many times
+j2 = Job()
+for i in range(100):
+    j2.name = 'b'
+

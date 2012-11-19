@@ -1,0 +1,74 @@
+**************************************************************************************************************
+5.5.22 (2011/1/31)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fixed bug #76973; Calling JobTemplate(Job) resulted in an object that had its status incorrectly
+set to 'new', and so could be submitted. The status is now correctly set to 'template', which
+prohibits submission.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* add new function for fixing bug: https://savannah.cern.ch/bugs/index.php?77180
+* move DQ2SandboxCache.py to GangaAtlas package
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Added bulk monitoring (all jobs from one machine are monitored in one go) to speed up the monitoring
+loop, startup and shutdown.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* cache the latest dbrelease in a local tmp file
+* Placed LCG release checking before brokering 	
+* change to use the relocated DQ2SandboxCache 	
+* move DQ2SandboxCache from LCG backend to GangaAtlas
+
+scripts:
+--------
+* Add --trf submission option for Panda backend to enable
+  transformation submission
+
+external
+--------
+* Update panda client to 0.3.27
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Update client to 0.3.27 to fix problem with MWT2
+* Preliminary rebrokerage support.
+* Add Athena.exetype='TRF' workflow to Panda backend to enable
+  basic tranformation submission support (still in beta testing status)
+  
+  Example submission script:
+  ganga athena --athena_exe TRF --nocompile --nobuild --panda \
+    --inDS data10_7TeV.00152166.physics_L1Calo.recon.ESD.r1647_tid193756_00 \
+    --site ANALY_BNL_ATLAS_1 --athena_release 16.0.2.3 --inputnumfiles 2 \ 
+    --splitfiles 2 \
+    --outputdata
+ESD.pool.root.1:AOD.pool.root.1:NTUP_TRIG.root.1:DESDM_EGAMMA.pool.root.1:DESD_PHOJET.pool.root.1:DE
+SD_SGLEL.pool.root.1:DESDM_CALJET.pool.root.1:DESDM_TRACK.pool.root.1:DESD_MET.pool.root.1
+\
+    --trf "Reco_trf.py inputESDFile=%IN RunNumber=152166 autoConfiguration=everything
+preInclude=RecJobTransforms/Reprocessing2010_preInclude.py DBRelease=DBRelease-13.7.1.tar.gz
+AMITag=p306 outputESDFile=%OUT.ESD.pool.root.1 outputAODFile=%OUT.AOD.pool.root.1
+outputNTUP_TRIGFile=%OUT.NTUP_TRIG.root.1 outputDESDM_EGAMMAFile=%OUT.DESDM_EGAMMA.pool.root.1
+outputDESD_PHOJETFile=%OUT.DESD_PHOJET.pool.root.1 outputDESD_SGLELFile=%OUT.DESD_SGLEL.pool.root.1
+outputDESDM_CALJETFile=%OUT.DESDM_CALJET.pool.root.1
+outputDESDM_TRACKFile=%OUT.DESDM_TRACK.pool.root.1 outputDESD_METFile=%OUT.DESD_MET.pool.root.1
+--ignoreerrors=True" \
+   Reco_trf.py
+
+**************************************************************************************************************

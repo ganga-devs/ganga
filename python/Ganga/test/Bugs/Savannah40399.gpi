@@ -1,0 +1,4 @@
+s=GenericSplitter() 
+s.attribute = 'backend.CE' 
+s.values = ["quanta.grid.sinica.edu.tw:2119/jobmanager-lcgpbs-atlas","lcg00125.grid.sinica.edu.tw:2119/jobmanager-lcgpbs-atlas"] 
+

@@ -1,0 +1,252 @@
+#
+# command line submission interface for AthenaMC
+#
+
+import optparse
+import sys
+import os
+import string
+
+usage = """
+-----------------
+Event generation: 
+-----------------
+ganga --config-path=GangaAtlas/Atlas.ini athenamc  --evgen --release=12.0.4 --prodname=tutorial --process=single_e_Et40 --runnum=000002 --jobopt=DC3.007004.singlepart_e_Et40.py --transpath=AtlasProduction_12_0_4_1_noarch.tar.gz --maxevt=30 --targetSE=CERNCAF
+
+-----------
+Simulation:
+-----------
+ganga --config-path=GangaAtlas/Atlas.ini  athenamc  --simul --release=12.0.4 --prodname=tutorial --process=single_e_Et40 --runnum=000002 --transpath=AtlasProduction_12_0_4_1_noarch.tar.gz --maxevt=1 --inDS=users.fredericbrochu.ganga.datafiles.tutorial.000002.single_e_Et40.evgen.EVNT --split=3 --geom=ATLAS-DC3-05
+---------------
+Reconstruction:
+---------------
+ganga --config-path=GangaAtlas/Atlas.ini athenamc   --recon --release=12.0.4 --prodname=tutorial --process=single_e_Et40 --runnum=000002 --transpath=AtlasProduction_12_0_4_1_noarch.tar.gz --maxevt=1 --inDS=users.fredericbrochu.ganga.datafiles.tutorial.000002.single_e_Et40.simul.RDO --split=3 --njobs_infile=3 --geom=ATLAS-DC3-05
+
+Note: --targetSE is recommended for evgen as there is no input data to tell GANGA where to submit the job...
+"""
+
+p = optparse.OptionParser(usage=usage)
+
+p.add_option('--verbose', '-v', action='store_true')
+
+# Input dataset
+
+p.add_option('--inDS', '-i', action='store', type='string', dest='input_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname to process')
+p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['DQ2', 'private', 'local', 'unknown'],  default='unknown', help='Type of the input dataset: DQ2, private,local, unknown , [default: %default]' )
+
+p.add_option('--inputfiles', action='store', type='string', dest='inputfiles', help='specified list of input files, each member separated by a comma, e.g. --inputfiles="rome.004100.recov10.T1_McAtNLO_top._00001.AOD.pool.root,rome.004100.recov10.T1_McAtNLO_top._00002.AOD.pool.root"' )
+
+p.add_option('--ninfiles_job', action='store', type='int', dest='ninfiles_job', help='number of input files per job. default is 1, can be more for merging jobs.' )
+
+p.add_option('--inputrange', action='store', type='string', dest='inputrange', help='string of input partition ranges. Each range is defined as first-last and ranges are comma separated. Single numbers are accepted. Example: --inputrange=3-4,1,5-10 ' )
+
+
+# Output dataset
+
+p.add_option('--outDS', action='store', type='string', dest='output_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname for the job output, will be of the type: user.username.ganga.DATSETNAME')
+
+p.add_option('--outputdirectory', action='store', type='string', dest='outputdirectory', help='path of output directory tree for storage. Used for both LFC and physical file locations.')
+
+p.add_option('--firstpartnr', action='store', type='int', dest='output_first', help='offset for output file partition numbers. First job will generate the partition number output_firstfile, second will generate output_firstfile+1, and so on...')
+
+
+# Job splitting
+p.add_option('--split', '-s', action='store', type='int', dest='numsubjobs', help='Number of subjobs, if a job should be splitted. The splitting is done via the list of inputfile')
+p.add_option('--njobs_infile', action='store', type='int', dest='njobsinfile', help='number of jobs sharing the same input file (for splitting)')
+
+# Backends
+p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='Submit job(s) to LCG Grid')
+p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
+p.add_option('--pbs', action='store_const', const='pbs', dest='backend', help='Submit job(s) to the local PBS batch system')
+p.add_option('--local', action='store_const', const='local', dest='backend', help='Execute job on the local desktop computer')
+p.add_option('--queue', action='store', type='string', dest='queue', help='Specify queue for LSF or PBS submission')
+p.add_option('--ce' , action='store', type='string', dest='ce', help='Specific computing element and queue for LCG submission')
+p.add_option('--glite', action='store_true', help='Use gLite resource broker')
+p.add_option('--edg', action='store_true', help='Use EDG resource broker')
+
+
+# Job query
+p.add_option('--query', '-q', action='store', type='int', dest='jobid', help='Query job status, e.q. ganga athena -q jobid, Output: job id, CE, job status, job output' )
+
+# AthenaMC flag
+# Application options
+p.add_option('--maxevt' , action='store', type='int', dest='maxevt', help='Maximal number of events to process')
+p.add_option('--firstevt' , action='store', type='int', dest='firstevt', help='evgen: sets first event number to be generated (in first job. The first event number in second job will be firstevent+number_events_job and so on...). simul, recon: decides how many events to be skipped in input files (= skip +1). This is propagated to all subjobs.')
+p.add_option('--release', action='store', type='string', dest='release', help='ATLAS Release number to be used (production jobs only)' )
+p.add_option('--prodname', action='store', type='string', dest='prodname', help='production/project/group name for output directory (superseded by --outDS, production jobs only)' )
+p.add_option('--process', action='store', type='string', dest='process', help='physics process name for output directory tree (superseded by --outDS, production jobs only)' )
+p.add_option('--random', action='store', type='string', dest='ranseed', help='random number used as seed (production jobs only)' )
+p.add_option('--runnum', action='store', type='string', dest='runnumber', help='dataset run number for event generation (production jobs only)' )
+p.add_option('--jobopt', action='store', type='string', dest='jobopt', help='job option file name for event generation (production jobs only)' )
+p.add_option('--evgen', action='store_const', const='evgen', dest='step', help='specify event generation mode (production jobs only)')
+p.add_option('--simul', action='store_const', const='simul', dest='step', help='specify full simulation + digitization mode (production jobs only)')
+p.add_option('--recon', action='store_const', const='recon', dest='step', help='specify reconstruction mode (production jobs only)')
+p.add_option('--transpath', action='store', type='string', dest='transpack', help='full path of transformation archive to be used (production jobs only)' )
+p.add_option('--transform', action='store', type='string', dest='transform', help='name of production transformation file to be used (shell or python script) (production jobs only)' )
+p.add_option('--geom', action='store', type='string', dest='geomtag', help='geometry tag to be used (production jobs only)' )
+p.add_option('--extraArgs', action='store', type='string', dest='extraArgs', help='extra arguments fro python transform. Must specify the target variable in full, e.g:extraArgs="inputGeneratorFile=\"AtlasProduction/X.y.z.a/InstallArea/share/myweighted_event_archive.tar.gz\"" ' )
+p.add_option('--trigger', action='store', type='string', dest='trigger', help='trigger configuration key (for recon 12.0.5 and beyond)' )
+p.add_option('--version', action='store', type='string', dest='version', help='Optionnal version number, added at the end of the output dataset if specified (e.g: v12000301)' )
+p.add_option('--trfverbose', action='store', type='string', dest='verbosity', help='Verbosity of transformation for log files (default:ERROR)' )
+p.add_option('--targetSE', action='store', type='string', dest='targetSE', help='target Storage Element or DQ2 site (needed for evgen)' )
+
+
+
+# Inputsandbox
+p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox file1.txt:file2.txt')
+
+# Outputsandbox
+p.add_option('--outputsandbox', action='store', type='string', dest='outputsandbox', help='List of files to be retrieved from the grid worker node with the output sandbox, separated by ":", e.g. --outputsandbox file1.txt:file2.txt')
+
+
+
+opt, args = p.parse_args()
+
+
+# Job query
+if opt.jobid:
+    print '-----------'
+    print 'Job Status:'
+    print '-----------'
+    if jobs[opt.jobid].subjobs:
+        for subjob in jobs[opt.jobid].subjobs:
+                print jobs[opt.jobid].id, subjob.id, subjob.backend.actualCE, subjob.status,
+                if subjob.status=='completed':
+                    try:
+                        print subjob.outputdata.datasetname
+                    except AttributeError:
+                        print subjob.outputdata.output
+    else:
+        print jobs[opt.jobid].id, jobs[opt.jobid].backend.actualCE, jobs[opt.jobid].status, 
+        if jobs[opt.jobid].status=='completed':
+            try:
+                print jobs[opt.jobid].outputdata.datasetname
+            except AttributeError:
+                print jobs[opt.jobid].outputdata.output
+        
+    print '\n-----------'
+    sys.exit(0)        
+
+# Parse additional arguments
+
+if args:
+    option_files=[]
+    if args:
+        for option_file in args:
+            if not os.access(option_file,os.R_OK):
+                print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
+                sys.exit(4)
+            else:
+                option_files.append(option_file)
+else:
+    if not opt.step:
+        print >>sys.stderr, 'ERROR: No athena job option file given'
+        sys.exit(4)
+
+
+# Start job configuration
+
+j = Job()
+
+print >>sys.stderr, "Using production service"
+
+j.application = AthenaMC()
+if opt.ranseed:
+    j.application.random_seed=opt.ranseed
+if opt.jobopt:
+    j.application.evgen_job_option=opt.jobopt
+if opt.prodname:
+    j.application.production_name=opt.prodname
+if opt.process:
+    j.application.process_name=opt.process
+if opt.runnumber:
+    j.application.run_number=opt.runnumber
+j.application.firstevent=1
+if opt.firstevt:
+    j.application.firstevent=opt.firstevt
+if opt.maxevt:
+    j.application.number_events_job=str(opt.maxevt)
+if opt.release:
+    j.application.atlas_release=opt.release
+if opt.transpack:
+    j.application.transform_archive=opt.transpack
+if opt.transform:
+    j.application.transform_script=opt.transform
+if opt.targetSE:
+    j.application.se_name=opt.targetSE
+if opt.step:
+    j.application.mode=opt.step
+if opt.extraArgs:
+    j.application.extraArgs=opt.extraArgs
+if opt.geomtag:
+    j.application.geometryTag=opt.geomtag
+if opt.trigger:
+    j.application.trigger=opt.trigger
+if opt.version:
+    j.application.version=opt.version
+if opt.verbosity:
+    j.application.verbosity=opt.verbosity
+
+# Input data
+j.inputdata=AthenaMCInputDatasets()
+if opt.input_dataset:
+    j.inputdata.DQ2dataset=opt.input_dataset
+if opt.inputtype:
+    j.inputdata.datasetType=opt.inputtype
+    if (opt.inputtype=="private" or opt.inputtype=="local") and opt.input_dataset:
+            j.inputdata.LFCpath=opt.input_dataset
+
+if opt.inputfiles:
+    j.inputdata.inputfiles=string.split(opt.inputfiles,",")
+
+if opt.ninfiles_job:
+    j.inputdata.n_infiles_job=opt.ninfiles_job
+
+if opt.inputrange:
+    j.inputdata.inputpartitions=opt.inputrange
+
+# Output data
+j.outputdata=AthenaMCOutputDatasets()
+        
+if opt.output_dataset:
+    j.outputdata.output_dataset=opt.output_dataset
+if opt.outputdirectory:
+    j.outputdata.outdirectory=opt.outputdirectory
+if opt.output_first:
+    j.outputdata.output_firstfile=opt.output_first
+
+# backend
+j.backend=LCG()
+if opt.ce:
+    j.backend.CE=opt.ce
+if opt.glite:
+    j.backend.middleware = 'GLITE' 
+elif opt.edg:
+    j.backend.middleware = 'EDG'
+
+j.application.prepare()
+
+# splitter
+if opt.numsubjobs > 1:
+    j.splitter = AthenaMCSplitterJob()
+    j.splitter.numsubjobs = opt.numsubjobs
+    
+    if opt.njobsinfile:
+       j.splitter.nsubjobs_inputfile=opt.njobsinfile
+
+# Inputsandbox
+if opt.inputsandbox:
+    j.inputsandbox = opt.inputsandbox.split(':')        
+
+# Outputsandbox
+if opt.outputsandbox:
+    j.outputsandbox = opt.outputsandbox.split(':')        
+
+print j
+
+try:
+    j.submit()
+except GangaException, e:
+    print >>sys.stderr, 'ERROR: %s - %s' % (type(e),str(e))
+
+

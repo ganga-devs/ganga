@@ -1,0 +1,34 @@
+# Ganga tutorial application developed by Kuba Moscicki, CERN, 2006
+# These GPI commands assume that GANGA_CONFIG_PATH contains GangaTutorial/Tutorial.ini
+
+# Exercise 1: find all primes factors of 4643871513989286 among the first million primes
+
+# Submit a simple job with 1 million primes
+
+j = Job()
+j.application.exe=File(TUTDIR+'/Lib/primes/prime_factor.py')
+j.application.args = ['4643871513989286','http://cern.ch/diane/download/primes/primes1.zip']
+j.outputsandbox=['*.dat']
+j.submit()
+
+# when the job is completed look into standard output
+j.peek()
+j.peek('factors-4643871513989286.dat')
+print j.outputdir
+cat $j.outputdir/*.dat
+
+# use a helper function to check if we found all primes
+check_prime_job(j)
+
+# now do the same but split over 5 different subjobs taking 1 million primes each
+j = j.copy()
+split_prime_job(j,5)
+
+
+# Exercise2: find all primes of: 118020903911855744138963610
+# hint split the job in 15 subjobs
+
+
+
+
+

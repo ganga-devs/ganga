@@ -1,0 +1,100 @@
+**************************************************************************************************************
+5.7.2 (2011/12/1)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+GangaAtlas/test/GPI/ 	Minor corrections to patch AthenaMCPanda_evgen test
+GangaAtlas/Lib/TagPrepare/ 	Minor fix for using RAW files with TAG
+GangaAtlas/Lib/Tasks/ 	Added whether a unit is complete to the unitOverview 	 
+                        Improved error messages when deactivating unit 	 
+                        Added helper function 'listAllDatasets' 	 
+                        Added a number of helper functions for MT Transform use 	 
+                        Fixed a bug with forceUnitCompletion 	 
+                        Fixed bug with auto-merge in Tasks 	 
+                        Added protection for calling resetUnit on Unit without a job
+                        Fixed some minor typos from previous commits and improved unitOverview
+formatting
+                        Fixed a python incompatibility and another issue with the unit->job mapping
+
+LCG backend: Profile log messages are too verbose to have at INFO level
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 5.7.2 Changes...
+
+GangaLHCb-23-26:
+1) Fixed the registry corruption error.
+
+Note 5.7.X includes several new features, please see release notes for 5.7.0 below.
+
+***************************
+Ganga 5.7.1 Release Notes:
+***************************
+GangaLHCb-23-25/GangaLHCb-23-24/GangaLHCb-23-23/GangaLHCb-23-22:
+Addressing minor testing issues
+
+GangaLHCb-23-21:
+No major new functionality, merely a bug fix release. (For information about new features, see
+release notes for 5.7.0 appended below)
+
+updates...
+1) Fixes for the major bug introduced migrating to the prepared state where InstallArea was 
+flattened.
+2) Relaxation of the inputdata in optsfile restriction introduced in 5.7.0
+3) Hopefully Fix of leakage from master job inputsandbox into subjob inputsandbox.
+4) misc other minor fixes.
+
+***************************
+Ganga 5.7.0 Release Notes:
+***************************
+Minor Changes:
+Changed NIKHEF-USER -> SARA-USER SE token
+
+Major Changes:
+1) Prepared State
+Incorperated the prepared state for applications. Prepared applications can be run on different
+inputdatasets without having to repackage up the users release area.
+
+try 
+j=Job(application=DaVinci(),backend=Dirac())
+j.prepare()
+
+Note: applications are automatically prepared upon submit if not done so already.
+
+2) Tasks Framework
+Incorperated the tasks framework for database query driven analysis of data. Can type
+help(LHCbAnalysisTask) for more information but basic usage is as with jobs but modified slightly,
+see below.
+
+tr = LHCbAnalysisTransform()
+tr.application = DaVinci()
+tr.backend = Dirac()
+tr.query = BKQuery('/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real
+Data/Reco11/Stripping15/90000000/DIMUON.DST')
+
+t = LHCbAnalysisTask()
+t.appendTransform(tr)
+t.run()
+
+Then at a later date, update all transform attached to a task from the database using
+t.update()
+
+3) BKQuery object Migration tool
+For those who have BKQuery objects stored in their box, there is a compatability problem between the
+old BKQuery object and the new tasks framework. Any new BKQuery objects stored in 5.7.0 will be
+readable but those created and stored in pre 5.7.0 will not. These older BKQuery objects can be read
+if you switch back to a pre 5.7.0 release, or you can run the migration tool to convert them into
+new objects as follows.
+
+fixBKQueryInBox()
+
+then restart your session. In case of any problems, this migration tool attempts to back up your
+BKQuery objects first and they can be restored from this backup as follows.
+
+restoreOLDBox()
+
+**************************************************************************************************************

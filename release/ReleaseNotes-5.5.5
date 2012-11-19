@@ -1,0 +1,111 @@
+**************************************************************************************************************
+5.5.5 (2010/5/12)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+fixed bug #64512: RooMerger() ignored the parameter "outputdir"
+fixed bug #66804: subjob resubmitting error: cannot compare datetime.datetime to list
+
+* report(j) function now available (beta testing), user may easily upload his environment and job 
+details to simplify user support for the ganga team
+
+* Jobs that failed to load can now be deleted using jobs(id).remove()
+ The IDs of such incomplete jobs can be seen by jobs.incomplete_ids()
+* The repository now tries loading the backup file 'data~'
+ if loading from the primary file 'data' fails.
+* added box.select() and tasks.select()
+* fixed and improved jobtree object
+* fixed bug #64041 - resubmission works if submission from script fails
+
+Upgrade to stomputil 2.2: more robust connection management including fix for bug #62543: Exception 
+in 
+thread GANGA_Update_Thread_shutdown.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fix for bug #59640 - Athena.user_area_path should be respected now 
+* Fix DQ2OutputDataset.datasetname field is now filled for master job 
+* Added atlas Credentials/ProxyHelper. Main use now is to get the vo 
+  nickname attribute 
+* Add add nickname support for DQ2OutputDataset in Athena/LCG/Local
+  switch on usage with config.DQ2.USE_NICKNAME_DQ2OUTPUTDATASET=True
+  and config.DQ2.ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET=True
+* Fix several typos in DQ2OutputDataset.clean_duplicates_in_dataset()
+  automatically use this function in the postprocessing hook of the 
+  master job with config.DQ2.CHECK_OUTPUT_DUPLICATES=True
+* Add duplicate output file checking in Athena/LCG/Local
+* Adding ATLASTier3Dataset and ATLASTier3Splitter capability to LCG 
+  and Local backend 
+* Allow job submission with DQ2JobSplitter for Tier3 jobs with 
+  DBRelease request  
+* Fix choice of site if atlas_dbrelease and single site is configured 
+  and add DBRELEASE_OVERRIDE to job environment if atlas_dbrelease is set
+  (#66251)
+
+Tags:
+-----
+* Fixed a bug for DQ2_COPY+ARA if the output filename isn't specfiied in the JOs
+* Reordered the GLITE setup to before CMT to avoid SLC5/15.6.8+ Athena issues
+* Added the GUID info for TAG splitting
+* Enabled TAG use for the Panda backend
+* Don't parse runConfig for exetype==ARES
+
+AthenaMC:
+---------
+* propagated userarea changes to AthenaMCLCGRTHandler.py Savannah bug#64110, part2
+
+Tasks:
+------
+* Tasks now creates a dataset for each Transform and a container of 
+  these for each Task. There only the files from one successful job 
+  per partion are added, so that there should be no duplicates
+
+externals:
+----------
+* update to panda-client 0.2.33 (fix #66250)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+- Updated GangaJEM to use the new JEM library 0.3.
+This is an in-place modification to make JEM 0.3 work without switching to the new API and protocol,
+using adapters to convert the data in real time to the 0.2 format. Work has begun to create a new
+GangaJEM version fully exploiting the new possibilities; this plugin will be called GangaJEM-2-0
+then (when it's done...)
+- Included last minute fixes (JEM 0.3.0.2)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* The default behavior is now to download the sandbox for failed DIRAC jobs. This can be turned off
+in the .gangarc file using the config.LHCb.failed_sandbox_download option.
+
+* A few minor bug fixes.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- updated to panda-client 0.2.33
+- added support for individual output datasets (one dataset per output type). Use 
+backend.individualOutDS=True
+- support TAG analysis using job.inputdata.tag_info
+- provide a more descriptive backend.reason for failed jobs
+- Changes for application.atlas_exetype PYARA, ARES, and ROOT. Now input.txt is available on the WN -- 
+options files are no longer edited on the WN. The LCG ARA example from the following link now works on 
+the Panda backend too: 
+https://twiki.cern.ch/twiki/bin/view/Atlas/FullGangaAtlasTutorial#8_5_1_ARA_on_the_LCG_Backend
+- use DQ2Dataset.dq2outputdatasetname to validate the outDS name, with nickname, etc... (for Athena 
+and Executable apps)
+- added beta support for DaTRI integration. Set job.outputdata.location to your LOCALGROUPDISK or a 
+SCRATCHDISK to use.
+
+**************************************************************************************************************

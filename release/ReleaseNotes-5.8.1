@@ -1,0 +1,39 @@
+**************************************************************************************************************
+5.8.1 (2012/5/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix for bug http://savannah.cern.ch/bugs/?94254
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix for bug http://savannah.cern.ch/bugs/?94254
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+GangaLHCb-24-01 (Ganga v508r1)
+******************************
+
+1) MAJOR refactoring of internal Ganga code. This should not be visible to users at all. Any
+differences spotted (other than those noted below) between this ganga release and 5.7.12 should be
+reported.
+
+2) Deprication of the DiracSplitter. Now SplitByFiles (which is a more descriptive name anyway) does
+both jobs and is clever enough to know if you are submitting to DIRAC
+
+3) Inclusion of the Alignment gaudi application. This was put in last minute and assumed to behave
+as with the other gaudi apps. Any problems please report.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* reuse outDS for all gangarobot and HC processingTypes
+
+**************************************************************************************************************
