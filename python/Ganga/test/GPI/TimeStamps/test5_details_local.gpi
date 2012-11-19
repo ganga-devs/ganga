@@ -1,0 +1,36 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+import datetime
+
+#single
+
+j = Job()
+
+j.submit()
+
+assert sleep_until_completed(j,180)
+
+assert type(j.time.details()) == dict
+
+#subjobs
+
+j = Job()
+
+j.splitter='ArgSplitter'
+
+j.splitter.args=[[],[],[]]
+
+j.submit()
+
+assert sleep_until_completed(j,180)
+
+assert type(j.time.details()) != dict
+
+for i in range(0,len(j.subjobs)):
+        assert type(j.time.details(i)) == dict
+
+#end
+
+print "test5_details_local passed."
+
+

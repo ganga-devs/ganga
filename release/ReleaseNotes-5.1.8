@@ -1,0 +1,125 @@
+**************************************************************************************************************
+5.1.8 (2009/3/6)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Fixes made while attempting to understand failures with XML repository.
+
+Base: set parent correctly for GangaList items (in __setstate__) - THIS FIX HAS A POTENTIAL OF
+BREAKING EVERYTHING ELSE
+
+RepositoryXML:
+ - metadata selection not implemented warning
+ - adjust the name of masterJob argument to match AMGA implementation
+ - fixed evaluation of File objects (by value), the implementation uses Utility.Config.config_scope
+This bug prevented a cleanup of repository in between the test cases which triggered other bugs (*)
+ - to ease debugging repository problems, make a dump into a tarfile if there are unhandled
+exception when scanning the repository, the name of the tarfile is printed by the logger
+
+Job: when removing jobs which are in the "incomplete" or "unknown" status, do not trigger callbacks
+on application and backend -> they may be missing! Bug triggered by (*)
+
+Updated several outdated testcases.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/GPIDev/Lib/GangaList
+--------------------------------------------------------------------------------------------------------------
+Adds additional checks for nested lists containing GangaObjects
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* bug fix for https://savannah.cern.ch/bugs/?46915: also remove the temporary directory created by DQ2SandboxCache for jobs 
+not successfully submitted
+* bug fix for https://savannah.cern.ch/bugs/?45820: set Ganga job status to "failed" if the corresponding gLite job has been 
+removed from the WMS
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Added support for storage of stdout/stderr log files in the 
+  DQ2OutputDataset (Bug #42075). To enable it, set the config option:
+  config['LCG']['JobLogHandler'] = 'DQ2'
+* Added DQ2 file tracer support
+* Sort DQ2Dataset file names
+* Fix stage out problems at Tier1s
+* Fix #47262: athena wrapper does stop if compilation fails
+* Fix #47427 in DQ2OutputDataset: detect extra output files if athena 
+  hits the output file size limit of 1.9 GB
+* Fix #47506: more clear warning message for the restriction of 
+  5000 MB input/job 
+* Fix #47520: TypeError is now fixed when no file size information 
+  available in DDM
+* Fix #47643: Fix Problems with job submission for sites with downtimes
+  and inputdata only available at these sites in a cloud
+* Remove strict requirement for setting dq2clients_version
+
+AthenaMC:
+---------
+Fixed: - Savannah bug #46592: restablishing automatic splitting of input 
+datasets with missing files
+       - Savannah bug # 47417
+ 
+Dataset handling:
+      
+Input datasets: now performs a loose match from input dataset name and 
+collect all matching datasets in order to catch all registered input 
+datasets from a container, including files registered in opened (unfrozen) 
+tid subdatasets. Strict input dataset matching is performed on DBRelease 
+datasets only. 
+
+Automatic input/output dataset naming: removed substrings "datafiles" and 
+"logfiles" from paths and dataset names. Implemented length check for DQ2 
+(132 chars max).
+
+Output datasets: reintroduced output containers and job's subdatasets, 
+since AthenaMCInputDatasets.prep_data() can handle them now. 
+Jobs' subdatasets are frozen and associated to their container upon 
+master job's completion. 
+Also fixed potential abuse of dataset naming convention.
+
+wrapper.sh: removed "-t -l" transform flags when running on "template" 
+mode
+
+- stage-in.sh : added -D flag in dq2-get command to get direct download of 
+input dataset in the working directory.
+
+
+AMAAthena:
+----------
+  - introduce new attribute "log_level" to setup athena runtime  
+logging level. Default level is "INFO".
+
+scripts:
+--------
+athena: add athena_dbrelease option 
+
+tests:
+------
+* Increase the time-outs and fix configuration variables
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+* Added GangaNG testing suite (borgeg)
+* Added NG resume method (katarzp)
+* Fixed minor bugs (bsamset)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Fixed https://savannah.cern.ch/bugs/index.php?47473
+  Panda.dbRelease option is now deprecated in Panda backend. Use Athena.atlas_dbrelease instead.
+
+Fixed: https://savannah.cern.ch/bugs/?46836
+
+**************************************************************************************************************

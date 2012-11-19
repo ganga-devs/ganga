@@ -1,0 +1,8 @@
+Hi,
+
+All tests for Ganga VER-pre are finished now.
+
+You should generate now the test reports - step 6 of release tool.
+
+Cheers,
+Ganga Release Tool

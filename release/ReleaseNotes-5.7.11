@@ -1,0 +1,52 @@
+**************************************************************************************************************
+5.7.11 (2012/3/23)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Implement shareref.rebuild() method which can be called from the GPI to repopulate the shareref 
+  table in the event it becomes 
+  inconsistent with the Job/Box repository contents.
+
+* Implement a mechanism to control whether Ganga automatically deletes orphaned ShareDirs (i.e.
+  those which are not associated with a persisted Ganga object). This introduces a new .gangarc 
+  configuration parameter:
+
+  [Configuration]
+  deleteUnusedShareDir=ask
+
+  which can also be set from the GPI on a per-session basis:
+
+  config['Configuration']['deleteUnusedShareDir']='ask'
+
+  Possible values this parameter can take are ask/always/never, which have the following effect:
+  always: Upon Ganga exit, remove all orphaned ShareDirs (default setting)
+  ask: Upon Ganga exit, ask the user if they wish to delete orphaned ShareDirs
+  never: Upon Ganga exit, keep any orphaned ShareDirs.
+
+
+* Fix removing two lines of redundant code which were causing inconsistencies in some users' 
+  shareref tables.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix 64bit setup problem for Local/Batch/LCG/CREAM jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v507r11
+*************
+
+Contains bugfixes in the Core over the last release which caused shareref repository to break.
+
+Changes for LHCb include
+1) Fix to the prepared state of GaudiPython and Bender applications.
+2) Allow disabling of version/platform checks for the Dirac backend via config option
+LHCb.ignore_version_check (False by default). See Savannah #92697  - not recommended for standard user
+
+**************************************************************************************************************

@@ -1,0 +1,39 @@
+from GangaTest.Framework.utils import sleep_until_state
+
+# LSF specific tests. Only run if LSF is default batch system.
+
+if config.Configuration.Batch == 'LSF':
+
+    j = Job(backend=LSF(extraopts = '-o out'))
+    j.application = Executable(exe='sleep',args='100')
+    try:
+        j.submit()
+    except:
+        pass
+    assert not sleep_until_state(j,10,'submitted',['new']), "Can submit job with forbidden option"
+
+    j = Job(backend=LSF(extraopts = '-e err'))
+    j.application = Executable(exe='sleep',args='100')
+    try:
+        j.submit()
+    except:
+        pass
+    assert not sleep_until_state(j,10,'submitted',['new']), "Can submit job with forbidden option"
+
+    j = Job(backend=LSF(queue = '1nd', extraopts = '-q 1nh'))
+    j.application = Executable(exe='sleep',args='100')
+    try:
+        j.submit()
+    except:
+        pass
+    assert not sleep_until_state(j,10,'submitted',['new']), "Can not submit job with forbidden option"
+
+    j = Job(backend=LSF(extraopts = '-q 1nd'))
+    j.application = Executable(exe='sleep',args='100')
+    try:
+        j.submit()
+    except:
+        pass
+    assert sleep_until_state(j,10,'submitted',['new']), "Can not submit job with acceptable option"
+    assert j.backend.extraopts=='-q 1nd', "Uncorrect extraopts"
+

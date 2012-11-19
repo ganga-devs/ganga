@@ -1,0 +1,25 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+def assert_cannot_kill(j):
+    try:
+        j.kill()
+        assert False,"should raise JobError"
+    except JobError:
+        pass
+
+j = Job()
+# can't kill new job
+assert_cannot_kill(j)
+j.backend = "TestSubmitter"
+j.backend.time = 5
+j.application.exe = '/bin/echo'
+j.submit()
+# can kill submitted job
+j.kill()
+assert(j.status == 'killed')
+sleep_until_completed(j,60)
+
+# can't kill completed job
+assert_cannot_kill(j)
+
+
