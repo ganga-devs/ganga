@@ -1,0 +1,17 @@
+import os
+
+testfile=".GangaPersistencyTest.py"
+
+# Create and export application object
+app = Executable( exe = "testExe", args = [ "arg1", "arg2" ] )
+export( app, testfile )
+
+# Load application from file
+objectList = load( testfile )
+
+# Perform checks
+assert( len( objectList ) == 1 )
+assert( app.exe == objectList[ 0 ].exe )
+assert( app.args == objectList[ 0 ].args )
+
+os.remove( testfile )

@@ -1,0 +1,54 @@
+**************************************************************************************************************
+5.0.2 (2008/7/14)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* ganga-stage-in-out-dq2.py: Fix for disappearing backup-stage-out SEs
+* athena-lch.sh: Fix problems with some DPM sites in athena v14 and
+  change python32 call behaviour
+* BOOT.py/Athena.py: improvements of cmtconfig magic function
+* DQ2Dataset.py: Fix wrong return value of get_contents
+* DQ2JobSplitter: correctly add input/outputsandbox to the subjob
+* DQ2JobSplitter: introduce config['Athena']['MaxJobsDQ2JobSplitter']
+  and set the default to 100
+* DQ2JobSplitter.py: Add numsubjobs option - now jobs can also be
+  splitted by number of subjobs
+* Athena.py: Introduce Athena.atlas_exetype, choices: ATHENA, PYARA, ROOT
+  Execute the following executable on worker node:
+  ATHENA: athena.py jobsOptions input.py
+  PYARA: python jobOptions
+  ROOT: root -q -b jobOptions
+* ganga-stage-in-out-dq2.py: produce now in parallel to input.py also a
+  flat file input.txt containing the list of inputfiles. input.txt can be
+  read in by PYARA or ROOT application workflow
+* Athena.py: Fix bug #38795
+* AthenaLocalRTHandler.py: Fix bug #38202
+* athena-local.sh: Change setup procedure for ATLAS_PRODUCTION, bug #38802
+
+AthenaMC:
+* Bug fix for setup-release.sh: declare environment variable CMTPATH to
+  allow derived environment variable LD_LIBRARY_PATH to be set correctly
+  by cmt scripts
+
+scripts:
+* Protect some variables from setting default values
+* Enable multiple inputdataset support: use --inDS dataset1,dataset2
+* Change --split and --splitfiles to use DQ2JobSplitter if LCG backend is used
+* Add --athena_exe ATHENA or PYARA or ROOT (see above)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Support added for ARA on Panda (added config option ".ara")
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+Fix to bug 38716. The submitter in the robot will now continue even if the submission of a job fails.
+
+**************************************************************************************************************
