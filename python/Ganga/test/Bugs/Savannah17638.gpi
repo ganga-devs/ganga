@@ -1,0 +1,22 @@
+from GangaTest.Framework.utils import sleep_until_completed,failureException
+import tempfile, os.path, time 
+
+## create subdirectory and write some text in it ##
+tfname = tempfile.mktemp()
+tfile  = open(tfname,'w')
+tfile.write("Hello")
+tfile.close()
+
+j = Job(backend=LCG())
+j.inputsandbox = [File(tfname,subdir='subdir')]
+j.application.exe  = '/bin/cat'
+j.application.args = ['subdir/%s' % os.path.basename(tfname)]
+j.submit()
+
+if not sleep_until_completed(j,6000):
+    raise failureException("Job failed to complete successfully whithin timeout period [100min]")
+
+#FIXME: LCG outputs are gzipped
+import gzip
+output = gzip.open('%s/stdout.gz' % j.outputdir, 'r').readline()
+assert(output.strip() == 'Hello')

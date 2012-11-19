@@ -1,0 +1,55 @@
+#The packages are processed in top-down order
+
+#kuba
+ganga/bin                                                              Ganga-bin-20-0
+ganga/doc                                                              Ganga-doc-20-0
+ganga/python/Ganga                                                     Ganga-Base-30-23
+
+#hclee
+ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-21-15
+
+#dtuckett
+ganga/python/Ganga/Lib/MonitoringServices                              Ganga-MonitoringServices-30-0
+
+#mark
+ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-1
+
+#johannes/dan/mark
+ganga/python/GangaAtlas                                                GangaAtlas-22-62
+
+#rod
+ganga/python/GangaCronus                                               GangaCronus-20-0
+
+#alvin
+ganga/python/GangaGUI                                                  GangaGUI-20-6
+
+#andrew
+ganga/python/GangaGUI/LHCB_BKDB_browser                                GangaGUI-LHCB_BKDB_browser-20-0
+
+#muenchen
+ganga/python/GangaJEM                                                  GangaJEM-1-26
+
+#hgkim
+ganga/python/GangaKISTI                                                GangaKISTI-1-1
+
+#will/ulrik
+ganga/python/GangaLHCb                                                 GangaLHCb-22-34
+
+#pajchel/bsamset
+ganga/python/GangaNG                                                   GangaNG-20-31
+
+#dan/johannes
+ganga/python/GangaPanda                                                GangaPanda-22-29
+
+#hclee
+ganga/python/GangaPlotter                                              GangaPlotter-21-2
+
+#ulrik
+ganga/python/GangaRobot                                                GangaRobot-20-4
+
+#kuba
+ganga/python/GangaTest                                                 GangaTest-30-2
+
+#kuba/hclee
+ganga/python/GangaTutorial                                             GangaTutorial-20-5
+
