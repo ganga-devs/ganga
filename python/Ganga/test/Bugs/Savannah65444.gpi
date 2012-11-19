@@ -1,0 +1,13 @@
+# set up Executable/Local job
+j = Job()
+j.backend = Local()
+j.application = Executable()
+
+# set monitoring for Executable/Local to None
+config['MonitoringServices']['Executable/Local'] = None
+
+# if the bug is not fixed then submit fails with a JobError
+j.submit()
+
+# if we get this far the bug is fixed
+print "bug 65444 fixed" 

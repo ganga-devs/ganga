@@ -1,0 +1,49 @@
+**************************************************************************************************************
+5.6.10 (2011/9/15)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Ganga-Base-30-54 -  Improved docstrings for the Box registry.
+
+Ganga-Base-30-55 -  Added release note printing facility of first version use.
+                    off by default, enable through config file
+                    [Configuration]
+                    ReleaseNotes = True
+Ganga-Base-30-56 -  Added hook for change in master job status
+
+Ganga-Base-30-57 -  Small fix to ReleaseNote printing
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* fix the bug in resolving CREAM CE endpoints in job-resource match-making
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Upgrade to panda-client 0.3.58
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+GangaLHCb-23-15 -   Added release note printing facility of first version use.
+                    off by default, enable through config file
+                    [Configuration]
+                    ReleaseNotes = True
+
+GangaLHCb-23-16 -   minor fix to make some of the tests more relevant
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Upgrade to panda-client 0.3.58
+* add --accessmode=copy to TRF workflows
+* Add missing import for Python exceptions module to ProdTrans
+
+**************************************************************************************************************

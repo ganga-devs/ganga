@@ -1,0 +1,15 @@
+    <group>
+        <arg choice="plain"><option>--version</option></arg>
+    </group>
+    <group>
+        <arg choice="plain"><option>-h</option></arg>
+        <arg choice="plain"><option>--help</option></arg>
+    </group>
+    <group>
+        <arg choice="plain"><option>-q</option></arg>
+        <arg choice="plain"><option>--quiet</option></arg>
+    </group>
+    <group>
+        <arg choice="plain"><option>-v</option></arg>
+        <arg choice="plain"><option>--verbose</option></arg>
+    </group>

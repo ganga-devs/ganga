@@ -1,0 +1,61 @@
+import sys, glob, os
+from Ganga.Utility.Plugin import allPlugins
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig, setConfigOption
+from Ganga.Core.GangaRepository import getRegistry
+
+logger = getLogger()
+
+##We have to determine the Ganga version this way because the PRE always thinks config['System']['GANGA_VERSION'] is GANGA-SVN
+this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
+this_repo=getConfig('Configuration')['gangadir']
+this_user=getConfig('Configuration')['user']
+
+logger.error('#################### RUNNING SCHEMA TESTER')
+logger.error('#################### Executing Ganga version: ' + this_version)
+logger.error('#################### Using repo at: ' + this_repo)
+
+
+#count the number of directories in this_repo from the cnt file
+#num_box_obj_dirs = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/*.index"))
+
+dir = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/"
+
+num_box_obj_dirs = len([name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))])
+
+counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/cnt"
+
+f = open(counter_file_name, 'r') 
+#read_data should hold a single integer value representing the total number of objects in the box repo.
+read_data = f.read()
+f.close()
+
+logger.info('##########################################')
+logger.info("Number of object dirs in repo directory: " + str(num_box_obj_dirs))
+logger.info("Number of objects in box: " + str(len(box)))
+logger.info("Incomplete box ID(s): " +str(box.incomplete_ids()))
+logger.info('##########################################')
+
+box
+
+
+assert num_box_obj_dirs== len(box), "The number of object directories in the box repository " + str(num_box_obj_dirs) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
+assert len(box) == int(read_data), "The number of objects in the box repository (" + str(len(box)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
+assert len(box) != 0, "Then number of objects in the box repository was zero"
+
+print box
+index = 0
+exc_counter = 0
+for thing in box:
+    logger.info('##########################################')
+    try:
+        b=box[index].__str__()
+        logger.info('Box object #' + str(index) + ' read successfully.')
+    except Exception, e:
+        logger.error('Exception for object #' + str(index) + ' in box.')
+        logger.error(box[index])
+        logger.error(e)
+        exc_counter += 1
+    index += 1
+
+assert exc_counter == 0, "We had " + str(exc_counter) + " problem(s) when reading the box objects."
