@@ -1,0 +1,56 @@
+**************************************************************************************************************
+5.6.0 (2011/4/19)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Minor change to print lists of Ganga objects with few items in a more meaningful way.
+
+Updates to Core Tasks functionality.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Move GangaTasks core code from GangaAtlas to the Ganga area
+
+Athena:
+-------
+* Added option as 'event_pick_amitag' for selecting tag collections names in EventPicking. 
+* Fix for Savannah bug 79406.
+
+AthenaMC:
+---------
+* Removing obsolete check block preventing use of base releases (Savannah 81151)
+* reviving support for Local backend (Savannah 81152): restoration of outputdata.outdirectory to
+  specify a dedicated disk area to write output files, ability to recover output files in ganga
+  output sandbox by setting application.se_name='ganga', 
+* corrected job scripts to prevent use and setup of dq2 tools, which may or may not be available
+  locally and is not expected to be used in Local job, 
+* prevented postprocessing to do anything and mark the job as failed as output_data is not filled
+  by Local jobs (no DQ2 output dataset)
+
+Tasks:
+------
+Slight change to site selection logic
+
+scripts:
+--------
+* Add --mergeOutput option
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+First LHCb tasks implimentation.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- Add options in backend.requirements for Panda automatic output merging. This is experimental 
+support: report issues to Ganga Savannah.
+- Support 5th pilottiming field.
+
+**************************************************************************************************************

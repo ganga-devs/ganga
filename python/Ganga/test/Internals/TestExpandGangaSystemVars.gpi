@@ -1,0 +1,14 @@
+import Ganga.Utility.util
+import Ganga.Utility.Config
+
+#this is stolen from bootstrap.py
+try:
+    hostname = Ganga.Utility.util.hostname()
+except Exception,x:
+    hostname = 'localhost'
+
+option = '@{GANGA_HOSTNAME}'
+option_string = '%s/foo'
+
+expanded = Ganga.Utility.Config.expandgangasystemvars(None,option_string % option)
+assert expanded == option_string % hostname, "Expanded option was '%s'" % expanded

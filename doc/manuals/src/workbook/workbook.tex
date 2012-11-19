@@ -1,0 +1,40 @@
+\documentclass{howto}
+
+\RequirePackage{xspace}
+
+\def\ganga {\textsc{Ganga}\xspace}
+\def\python {\textsc{Python}\xspace}
+\def\ipython {\textsc{IPython}\xspace}
+\def\lhcb {LHC{\em b\/}\xspace}
+\def\davinci {\textsc{DaVinci}\xspace}
+\def\majorv {4}
+\def\minorv {2}
+\def\totalv {\majorv.\minorv}
+\def\release{\ganga-\totalv}
+
+\title{\ganga Workbook}
+
+\author{\ganga Development Team}
+\authoraddress{
+\email{project-ganga-developer@cern.ch}
+\\~\\
+Editor: Karl Harrison
+}
+\date{\today}
+\begin{document}
+\maketitle
+%\tableofcontents
+\begin{abstract}
+\noindent
+This workbook is intended to provide a wealth of information about \ganga.  At
+present it's very much in the development stage, and the initial aim is to
+define the structure.
+\end{abstract}
+
+\include{src/workbook/introduction/introduction.tex}
+\include{src/workbook/installation/installation.tex}
+\include{src/workbook/usage/usage.tex}
+\include{src/workbook/extension/extension.tex}
+\include{src/workbook/development/development.tex}
+
+\end{document}
