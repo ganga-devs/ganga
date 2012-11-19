@@ -1,0 +1,17 @@
+#!/usr/bin/env python
+
+from GangaTest.Framework.tests import MultipassTest
+
+
+class InternalParentAssignment(MultipassTest):
+    def __init__(self): MultipassTest.__init__(self,2)
+
+    def pass1(self):
+        j = Job()
+        j.inputsandbox = ['a','b','c']
+        assert(j._impl.inputsandbox[0]._parent)
+        return j.id
+
+    def pass2(self):
+        j = jobs(self.data[1])
+        assert(j._impl.inputsandbox[0]._parent)

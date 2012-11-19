@@ -1,0 +1,52 @@
+**************************************************************************************************************
+5.7.3 (2011/12/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Enabled prepare() method for Root application.
+* Implemented feature request #89441.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix DQ2Dataset.list_locations_num_files() call to use proper DQ2 clients setup
+* Minor MultiTask fix
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v507r3
+************
+
+Containing many bugfixes over the previous version, such fixes include:
+1) Fix to allow inputdata defined in optsfiles to be split in splitter.
+2) Fix to the restoreOLDBox migration function
+3) Fix to resignment of application after copy from prepare. e.g. now dont get a stacktrace when doing:
+
+j=Job(application=DaVinci())
+j.prepare()
+
+j=Job(j)
+j.application=DaVinci()
+
+Instead the intended warning message is displayed only.
+
+4) installed ganga magic conversion for LHCbAnalysisTransform.outputdata
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Client.putFile "cannot overwrite sources" is now a warning, not error
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+* Added timestamps to test output files.
+
+**************************************************************************************************************

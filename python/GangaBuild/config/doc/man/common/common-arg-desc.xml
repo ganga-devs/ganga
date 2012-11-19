@@ -1,0 +1,46 @@
+    <varlistentry>
+        <term>
+            <group choice="plain">
+                <arg choice="plain"><option>--version</option></arg>
+            </group>
+        </term>
+        <listitem>
+            <para>Print the program's version number and exit.</para>
+        </listitem>
+	</varlistentry>
+    
+    <varlistentry>
+        <term>
+            <group choice="plain">
+                <arg choice="plain"><option>-h</option></arg>
+                <arg choice="plain"><option>--help</option></arg>
+            </group>
+        </term>
+        <listitem>
+            <para>Print a short help message on parameters and usage, and exit.</para>
+        </listitem>
+	</varlistentry>
+
+    <varlistentry>
+        <term>
+            <group choice="plain">
+                <arg choice="plain"><option>-q</option></arg>
+                <arg choice="plain"><option>--quiet</option></arg>
+            </group>
+        </term>
+        <listitem>
+            <para>Quiet operation.</para>
+        </listitem>
+    </varlistentry>
+    
+    <varlistentry>
+        <term>
+            <group choice="plain">
+                <arg choice="plain"><option>-v</option></arg>
+                <arg choice="plain"><option>--verbose</option></arg>
+            </group>
+        </term>
+	    <listitem>
+            <para>Increases the verbosity level.</para>
+        </listitem>
+	</varlistentry>

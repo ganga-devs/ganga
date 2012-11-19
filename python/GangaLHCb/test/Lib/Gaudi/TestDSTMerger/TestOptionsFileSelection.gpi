@@ -1,0 +1,8 @@
+from GangaLHCb.Lib.Mergers.DSTMerger import _DSTMergeTool as dstTool
+
+d = dstTool()
+assert 'v0r0' in d.selectOptionsFile('v19r1')
+assert 'v0r0' in d.selectOptionsFile('v23r0p1')
+assert 'v23r1' in d.selectOptionsFile('v23r1')
+assert 'v23r1' in d.selectOptionsFile('v23r1p1')
+

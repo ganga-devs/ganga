@@ -1,0 +1,36 @@
+**************************************************************************************************************
+5.7.12 (2012/4/17)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Improvements to shareref.rebuild(unprepare=True, rmdir=False)
+  * Setting unprepare=False prevents objects whose ShareDir is
+    missing from being unprepared.
+  * Setting rmdir=True results in orphaned ShareDirs (those 
+    without referencing objects) being deleted.
+
+* Addition of shareref.lookup(sharedir, unprepare=False)
+  * Reports all objects referencing a given ShareDir().
+  * Optionally can unprepare the discovered objects.
+
+* Fix for bug #93085; the report() function had broken.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix 64bit setup problem for Local/Batch/LCG/CREAM job
+* Update of AthenaMCDatasets DQ2 site mapping methods following migration of clouds LFCs to CERN
+* Reverting to check on submit() for AthenaMC tests
+* Beta upload of revamped Tasks system
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Changed the libDS name to timestamp info to reduce size
+* Fix bug #93732
+
+**************************************************************************************************************

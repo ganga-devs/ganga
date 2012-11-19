@@ -1,0 +1,227 @@
+#!/usr/bin/env python
+
+
+HAPPYDOCDIR='/afs/cern.ch/sw/ganga/external/HappyDoc/3_0_a1/slc3_gcc323'
+
+class ReleaseHTML:
+    '''
+    Class for preparing HTML documentation for release of Ganga
+    '''
+
+    def __init__(self,gangadir,version):
+        self.str = ''
+	self.date = ''
+	self.version = version
+	self.gangadir = gangadir
+	self.htmldir = gangadir + "/reports/html"
+	
+	import os
+	try:
+            os.makedirs(self.htmldir)
+	except OSError,x:
+            import errno
+            if x.errno == errno.EEXIST:
+                print "INFO:  Overwriting directory %s"%self.htmldir
+            else:
+                print "ERROR: Can't makedir %s: %s"%(self.htmldir,str(x))
+		
+    def beginDocument(self):
+        '''Create the header and title of document
+	'''
+	
+	self.str = '''
+<!doctype html public "-//w3c//dtd html 4.0 transitional//en">
+<html>
+<head>
+   <meta http-equiv="Content-Type" content="text/html; charset=iso-8859-1">
+   <title>  GANGA ###VERSION### Release Page</title>
+   <link rel="stylesheet" type="text/css" href="/ganga/css/gangastyle.css"/>
+</head>
+<body bgcolor="#FFFFFF" link="#1076A6" vlink="#1076A6" alink="#FF0000">
+<!--#include virtual="/ganga/release/HEADER" -->
+<h1>GANGA ###VERSION###   ###DATE### </h1>
+
+'''
+    def endDocument(self):
+        '''Add closure tags to document.
+	'''
+	import os,sys,time
+	from inspect import getabsfile
+	
+	timestr = time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time()))
+	originstr = os.path.abspath(sys.argv[0])
+	self.str += '<h4>This document was automatically generated on %s <!--<br> by <font size="-2"><i> %s </i></font>--></h4>'%(timestr,originstr)
+        self.str += '''
+</body>
+</html>
+'''
+	
+    def content(self):
+        '''Return the content of document
+	'''
+        return self.str.replace('###VERSION###',self.version).replace('###DATE###',self.date)
+
+    def _getLastReleaseNotes(self):
+        '''Get the Last version Release Notes (really the first in the file)
+	'''
+	import os
+
+	RelNotes = file("%s/release/ReleaseNotes-%s" % (self.gangadir,self.version)).read()
+	RelNotesFirst = RelNotes.split('******************************************************************************************')[1]
+
+	file("%s/LastReleaseNotes"%self.htmldir,'w').write(RelNotesFirst)
+    	    
+	return RelNotesFirst
+
+
+    def addReleaseNotes(self):
+        '''Append Release Notes information to  document
+	'''
+
+        print "INFO:  Adding Release Notes"
+
+        def _getSummary(ReleaseNotes):
+
+	    from string import find
+	    from string import rstrip
+
+            start_Summary  = find(ReleaseNotes,'Summary')
+            end_Summary  = find(ReleaseNotes,'==========',start_Summary)
+            return rstrip(ReleaseNotes[start_Summary:end_Summary],'\n')
+
+        LastReleaseNotes = self._getLastReleaseNotes()
+
+        import re
+        m = re.compile(r'^(?P<version>.+)\s\((?P<date>.+)\)',re.M).search(LastReleaseNotes)
+        try:
+            self.version = m.group('version')
+            self.date = m.group('date')
+        except:
+            print 'ERROR during parsing Summary'    
+
+	
+	#summary =  _getSummary(LastReleaseNotes)   
+        self.str += '\n <h2> Release Notes </h2> \n'
+        #self.str += '\n <pre>' + summary + '</pre> \n '
+	self.str += ' <a  href= "../../release/ReleaseNotes-%s"> Release Notes </a>' % self.version
+	#self.str += ' (<a  href= "../../release/ReleaseNotes"> all versions </a>) '
+
+    def addDocumentation(self,happydoc=False):
+        '''Create API reference with help of HappyDoc and append documentation references to document
+	'''
+
+        print "INFO:  Adding Documentation"
+
+        if happydoc:
+            import os
+            os.environ["PATH"] = os.environ["PATH"] + ':' + HAPPYDOCDIR
+
+            print 'INFO:  Processing HappyDoc ... please wait... '
+
+            os.system('happydoc -d %s/GangaDocAPI -i CVS -i GangaGUI %s/python &> %s/happydoc.out'%(self.htmldir,self.gangadir,self.htmldir))
+
+            import string
+
+            if file('%s/happydoc.out'%self.htmldir).read().find('Done')<0:
+                print 'ERROR: see %s/happydoc.out'%self.htmldir
+                print 'INFO:  skipping API documentation'
+
+        import os
+	#os.system("touch %s/empty.html"%self.htmldir)
+	#use Karl's script to generate LHCb and ATLAS Reference Manuals
+	print 'INFO:  Generating LHCb & ATLAS manuals ... please wait... '
+	os.system('mkdir %s/Manuals'  % self.htmldir)
+	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=Ganga manual -o %s/Manuals/GangaManual.html' % (self.gangadir,self.htmldir))
+	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=GangaLHCb manual -o %s/Manuals/GangaLHCbManual.html' % (self.gangadir,self.htmldir))
+	os.system('%s/bin/ganga  --config= -o[Configuration]RUNTIME_PATH=GangaAtlas:GangaNG:GangaPanda manual -o %s/Manuals/GangaATLASManual.html' % (self.gangadir,self.htmldir))
+
+        self.str += '\n <h2> Documentation </h2> \n'
+	#self.str += ' <a  href= "empty.html"> Manuals </a> <br>'
+	self.str += ' <a  href= "Manuals/GangaManual.html"> Ganga Manual </a> <br>'
+	self.str += ' <a  href= "Manuals/GangaLHCbManual.html"> Ganga LHCb Manual </a> <br>'
+	self.str += ' <a  href= "Manuals/GangaATLASManual.html"> Ganga ATLAS Manual </a> <br>'
+	if happydoc:
+	    self.str += ' <a  href= "GangaDocAPI/python/index.html"> API references </a> <br>'
+	
+
+    def addTestingReport(self):
+        '''Embed Testing Report to document
+	'''
+
+        print "INFO:  Adding Testing Report"
+
+        try:
+            import re
+            report = file("%s/reports/latest/html/index.html"%self.gangadir).read()
+            ms = re.compile(r'href\s*=\s*"(.+)"').finditer(report)
+            for m in ms:
+		ref = m.group(1)
+		report = report.replace(ref,"../latest/html/"+ref)
+        except IOError:
+            print "WARNING: cannot find testing reports, creating a hyperlink instead..."
+            report = '<a href="../latest/html/index.html"> Testing reports </a> (not available when this page was generated)'
+	
+        self.str += '\n <h2> Testing report </h2> \n'
+
+	self.str += report
+	
+
+    def addCVSTags(self):
+        '''Create CVS Tag with references and add it's reference to doccument
+        '''
+	
+        print "INFO:  Adding CVS Tags"
+
+        import re
+        configfilename  = "%s/release/config/PACKAGES-###VERSION###"%self.gangadir
+        lines = file(configfilename.replace('###VERSION###',self.version)).readlines()
+
+        newlines = ['<table>\n']
+
+        for line in lines:
+            match = re.compile(r'^(.*ganga\S*)(\s+)(.+)\S*',re.M).search(line)
+            if match:
+                if match.group(1).find("#")==0:
+            	    newlines.append('<tr><td> <i style="color:red">%s</i></td><td><i style="color:DodgerBlue ">%s</i></td></tr>'%(match.group(1),match.group(3)))
+                else:
+        	    refstr = "http://isscvs.cern.ch/cgi-bin/cvsweb.cgi/%s?cvsroot=ganga;only_with_tag=%s"%(match.group(1),match.group(3))
+            	    newlines.append("<tr><td>%s</td><td>%s</td></tr>"%(match.group(1),'<a href = %s> %s </a>'%(refstr,match.group(3))))
+            else:
+            	newlines.append('<tr><td><i style="color:DodgerBlue ">%s</i></td><td></td></tr>'%line)
+
+        newlines.append("</table>")
+
+        file("%s/cvstags.html"%self.htmldir,'w').writelines(newlines)
+
+        self.str += '\n <h2> CVS Tags </h2> \n'
+	self.str += ' <a  href= "cvstags.html"> Tags html </a> <br>'
+	    
+def main():	
+
+   import sys
+   try:
+	version = sys.argv[1]
+	gangadir = sys.argv[2]
+   except IndexError:
+       print "usage: %s version gangadir"%sys.argv[0]
+       sys.exit()
+
+   Relhtml = ReleaseHTML(gangadir,version)
+   Relhtml.beginDocument()
+
+   Relhtml.addReleaseNotes()
+   Relhtml.addCVSTags()      
+   Relhtml.addDocumentation()
+   Relhtml.addTestingReport()   
+
+   Relhtml.endDocument()
+   
+   htmlfile = file('%s/Release.html'%Relhtml.htmldir,'w')
+   htmlfile.write(Relhtml.content())
+   htmlfile.close()
+
+   print 'Report created: ',htmlfile.name
+
+if __name__ == "__main__":
+
+    main()

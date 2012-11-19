@@ -1,0 +1,2 @@
+j = Job()
+j.inputsandbox = ['x']
