@@ -1,0 +1,42 @@
+**************************************************************************************************************
+5.8.16 (2012/10/12)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fix for bug #97899. runMonitoring() method keyword order changed 
+  to allow call to runMonitoring(jobs)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* 	Added get_*_list functions to LCG backend to query lcg-infosites for list of VO resources
+* 	Added states given by EMI UI glite-wms-job-status command (they are one space different!)
+* 	Remove the tempoarary WMS config files if they are changed
+*       Added GLITE_ALLOWED_WMS_LIST as a config option to give a list of WMS's to try on submission
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+*  	Added the ability to use DQ2JobSplitter without input data if %SKIPEVENTS or %RNDM is specified
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v508r16 (from GangaLHCb-24-25)
+*************
+
+1) Added `params` attribute to the Bender class after request from Vladimir & Vanya
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* 	Added the ability to use DQ2JobSplitter without input data if %SKIPEVENTS or %RNDM is specified
+* 	Fix job submission bug if no input data is used
+
+**************************************************************************************************************

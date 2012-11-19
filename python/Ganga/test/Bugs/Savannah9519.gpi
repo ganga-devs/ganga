@@ -1,0 +1,48 @@
+# create a few jobs, submit them to lsf, and check if they go to the queue
+# they were configured for
+
+# LSF specific tests. Only run if LSF is default batch system.
+if config.Configuration.Batch == 'LSF':
+
+    import sys,popen2,time
+    # This jobs goes to the default queue. At cern this is the '8nm' queue
+    jdef = Job(application=Executable(exe='/usr/bin/find',args=['/usr/share -atime 1 -print']))
+    jdef.backend=LSF()
+    jdef.submit()
+    assert(jdef.backend.queue=='')
+
+    # An 8min jobs
+    j8nm = Job(application=Executable(exe='/usr/bin/find',args=['/usr/share -atime 1 -print']))
+    j8nm.backend=LSF(queue='8nm')
+    j8nm.submit()
+    assert(j8nm.backend.queue=='8nm')
+
+    # 8 hours
+    j8nh = Job(application=Executable(exe='/usr/bin/find',args=['/usr/share -atime 1 -print']))
+    j8nh.backend=LSF(queue='8nh')
+    j8nh.submit()
+    assert(j8nh.backend.queue=='8nh')
+    # 1d
+    j1nd = Job(application=Executable(exe='/usr/bin/find',args=['/usr/share -atime 1 -print']))
+    j1nd.backend=LSF(queue='1nd')
+    j1nd.submit()
+    assert(j1nd.backend.queue=='1nd')
+
+    time.sleep(10)
+    # next check that bjobs sees the same queues
+    d={} # use a dict for easier access of the id
+    child=popen2.Popen3('bjobs -a')    
+    child.tochild.close()
+    out=child.fromchild
+    result=-1
+    while result==-1:
+      lines=out.readlines()
+      for line in lines:
+        items=line.split()
+        d[items[0]]=items[3]
+      result=child.poll()
+
+    assert(d[jdef.backend.id] == '8nm')
+    assert(j8nm.backend.queue == d[j8nm.backend.id])
+    assert(j8nh.backend.queue == d[j8nh.backend.id])
+    assert(j1nd.backend.queue == d[j1nd.backend.id])

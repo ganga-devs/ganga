@@ -1,0 +1,224 @@
+This is a splitting proposal for Ganga 4.1.0 
+--
+
+Splitting in the GPI. 
+
+1. Submission and creation of subjobs
+-------------------------------------
+
+Example  of an  LHCb job. 
+
+Note: the GPI  shortcuts may be implemented so  that LHCbDataset would
+appear as a simple list of  files and the splitter as a simpler object
+(such  as a  number  of files  or  so). Here  we  ignore any  possible
+shortcuts to better explain the structure of the interface.
+
+j = Job(application=DaVinci(...))
+j.inputdata = LHCbDataset(['file1','file2'])
+j.splitter = LHCbDataSplitter(file_bunch_size=1,event_bunch_size=500)
+
+# at this point subjobs do not exist yet, so the following asserts hold
+
+assert(j.subjobs == [])
+assert(j.parent is None)
+
+# the submission step creates the subjobs according to the split policy
+# if the splitter is not compatible with the dataset and application then
+# the submission fails (a rollback to the point before submission)
+j.submit()
+
+# now the subjobs have been created
+
+assert(j.subjobs != [])
+
+for s in j.subjobs:
+    assert(s.parent is j)
+
+
+2. Interaction with the subjobs
+-------------------------------
+
+Subjobs may not be removed or submitted individually.
+
+assert(not j.subjobs[i].remove())
+assert(not j.subjobs[i].submit())
+
+The copy operation creates another job (not subjob):
+
+j2 = j.subjobs[i].copy()
+assert(j2.parent is None)
+
+Subjobs may be killed individually (if supported by the backend implementation):
+
+assert(j.subjobs[i].kill())
+
+
+3. Access to subjobs, indices etc.
+----------------------------------
+
+Job id is always an integer  (for subjobs as well). The id is relative
+to the container in which the job lives:
+ - a job repository for top-level jobs,
+ - a parent job for subjobs.
+
+The following holds:
+
+#The ids of the subjobs are [0,...,N] where N is defined by the splitter.
+#The ids are ordered (ascending).
+#The subjobs are accessible from the parent job.
+
+for i in range(len(j.subjobs)):
+ assert(j.subjobs[i].id == i)
+
+for s in j.subjobs:
+ assert(j[s.id] is s)
+
+# Jobs and subjobs are accessible from the jobs registry.
+# Tuples may be used to index the subjobs.
+
+assert(jobs[j.id] is j)
+
+for i in range(len(j.subjobs)):
+ assert(jobs[j.id,i] is j.subjobs[i])
+
+# Index-tuple for any job may be created automatically by a convenience function:
+
+ def fully_qualified_id(j):
+  index = []
+  while j:
+   index.append(j.id)
+   j = j.parent
+  index.reverse()
+  return index
+
+# For convenience the tuples may be also represented as dot separated strings,
+# for instance (i,k) is equivalent to "i.k"
+
+
+4. The correlation of properties
+--------------------------------
+
+The master job status (j.status)  is correlated with the subjob status
+in the following way:
+
+ - if there are submitted subjobs then the master job is submitted, else
+ - if there are running subjobs then the master job is running, else
+ - if there are failed subjobs then the master job is failed, else
+ - all subjobs are completed and the master is completed.
+
+The subjobs get the master job name unless splitter modifies it.
+
+The application and the backend type  are the same for all subjobs and
+the master job.
+
+
+5. The splitter objects and their interactions
+----------------------------------------------
+
+The  splitter is  a pluggable  object (in  the same  way as  other GPI
+objects).
+
+The splitter creates a list of  subjob objects using the master job as
+a  template  and some  predefined  splitting  strategy (controlled  by
+splitter properties).
+
+In the general case the splitter may mutate the application object. In
+the  case  of pure  dataset-based  splitting  this  is not  necessary,
+because inputdata is a property of a job.  It is up to the application
+to  define which  properties may  be mutated  by splitter  (a "mutable
+convention").   Splitter  must  ensure  that "mutable  convention"  is
+respected.
+
+The backend object may also  be mutated during splitting.  Some of the
+use case examples:
+ - if data chunks  are not of the same size,  the time requirement for
+   the subjobs may be changed;
+ - user may  want to have  explicit control on the  subjob destination
+   (defined as a part of the splitting strategy).
+
+So, the splitter  may depend on the type  of inputdata, application or
+backend. The  submission may  fail if the  splitter is  not compatible
+with one of these components. 
+
+The job.submit() pseudocode:
+
+    assert(job.subjobs == [])
+    assert(job.master == None)
+
+    if job.splitter:
+        job.subjobs = job.splitter.split()
+
+    repository._add_subjobs_and_commit()
+    
+    mod,mc,sc = appmgr.configure(job)
+
+    if mod: job._commit()
+
+    if jobmgr.submit(job,mc,sc):
+        return 1
+
+    # on errors
+    return 0
+
+
+6. Application, Backend and RuntimeHandler interface
+----------------------------------------------------
+
+Base  classes  for applications,  backends  and  runtime handlers  are
+mandatory (this is a change wrt Ganga 4.0.x).
+
+In general there are two  flavours of the configuration and submission
+methods which have different aspects:
+
+ - the shared/master job aspect,
+ - the specific/subjob aspect.
+
+In  job submission the  shared/master aspect  is considered  only once
+while the specific/sub aspect is  considered the number of times which
+is implied  by the splitting. So it  is either equal to  the number of
+subjobs or equal to one if no splitting.
+
+The  interfaces   have  been  desigend   in  a  'backwards-compatible'
+way. This means that the applications and backends may be used without
+changes  with the  new  base  classes. 
+
+By default splitting is enabled for all "old" applications but it will
+be innefficient (the application  will be configured for each subjob).
+The bulk  submission is emulated  with individual job submission  in a
+loop.
+
+The prototype of base classes and their intrerface will follow soon.
+
+
+
+7. File Workspaces
+------------------
+
+The structure of the workspace is as follows:
+
+JOBDIR
+  -- input        : masterjob config (shared)
+  -- output       : masterjob output (merged)
+
+                  ** if splitting enabled **
+  -- SUBJOB_i     : subjob dir
+      -- input    : subjob config (specific to i)
+      -- output   : subjob output
+
+With  splitting enabled,  the  files generated  while configuring  the
+specific aspect of subjobs are stored in the subjob directories.
+
+With splitting disabled,  the master directory is used  to store files
+generated while  configuring both master  and specific aspects  of the
+job.
+
+This  means that filenames  should be  unique if  you take  the master
+directory and any of the subjob directories.
+
+8. Interaction with the repository
+----------------------------------
+
+It should be possible to modify  the status of individual subjobs in a
+fast way.   There should be add()  method to enable adding  a range of
+subjobs  in one  go.  It should  be  also possible  to add  additional
+subjobs at a later time.
