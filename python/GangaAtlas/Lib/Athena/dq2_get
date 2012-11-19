@@ -1,0 +1,1740 @@
+#!/bin/bash
+
+"exec" "python" "-Wignore" "$0" "$@"
+
+
+def _usage():
+    print \
+"""
+NAME
+	dq2_get - provide access to DQ2 datasets 
+
+SYNOPSIS
+
+	dq2_get [ -h | --help]
+                [ -v | --verbose ]
+                [ -n | --nfiles ]
+                [ -r | --remote ]
+                [ -a | --all ]
+                [ -g | --gsiftp ]
+                [ -c | --choose ]
+                [ -p | --parallel n ]                
+                [ -t | --timeout n ]                
+                [ -d | --destination destination ]
+                [ -s | --source sourceSite ]
+                [ --srmstreams n ]
+                [ --nskipfiles n ]
+                datasetname
+                [lfn1 [lfn2 [...]]]
+DESCRIPTION
+
+	For datasets already present on a local storage element (SE) data is
+        copied to the local directory or to another directory in the SE.
+
+OPTIONS
+
+        -h | --help		Print this message
+
+	-v | --verbose		Verbosity
+
+	-n | --nfiles           Copy N files
+
+	-r | --remote           Copy files over the grid if files are not found in the local SE
+
+	-a | --all              Scan all remote sites to find replicas
+
+	-g | --gsiftp           Use GSIFTP for 3rd-party transfers
+
+	-c | --choose           Choose appropriate site automatically when copy files over the grid
+
+	-p | --parallel         Number of copy threads (default:3)
+
+	-t | --timeout          Timeout limit in second for each file transfer (default:1800)
+
+	-d | --destination      Directory in the storage element where files will be put.
+                                Files will be copied to local directory, if omitted.
+
+	-s | --source           Specify source site from which files get copied
+        
+        --srmstreams            Number of SRM streams (default:1)
+
+        --nskipfiles            Skip first n files
+
+"""
+
+import re
+import os
+import sys
+import time
+import socket
+import signal
+import urllib
+import urllib2
+import Queue
+import commands
+import random
+import threading
+import xml.dom.minidom
+
+# import lfc api
+try:
+    import lfc
+except:
+    pass
+
+# import dq2
+USEDQ2MOD = False
+try:
+    if os.environ.has_key('DQ2_HOME'):
+        import dq2.clientapi.cli.cliutil
+        dq2api = dq2.clientapi.cli.cliutil.getDQ2(None)
+        USEDQ2MOD = True
+except:
+    pass
+
+# error codes
+EC_Configuration = 20
+EC_VUID          = 30
+EC_QueryFiles    = 40
+EC_Location      = 50
+EC_Copy          = 60
+EC_Main          = 70
+EC_PFNfromLFC    = 80
+EC_ToA           = 90
+EC_XML           = 100
+EC_MD5SUM        = 110
+
+
+# configuration
+try:
+    # DQ2 server
+    baseURLDQ2 = os.environ['DQ2_URL_SERVER']
+except:
+    print "ERROR : DQ2_URL_SERVER is not defined"
+    sys.exit(EC_Configuration)
+try:
+    # local site ID
+    DQ2LOCALSITEID = os.environ['DQ2_LOCAL_ID']
+except:
+    print "ERROR : DQ2_LOCAL_ID is not defined"
+    sys.exit(EC_Configuration)
+try:
+    # local access protocol
+    configLOCALPROTOCOL = os.environ['DQ2_LOCAL_PROTOCOL']
+except:
+    configLOCALPROTOCOL = 'castor'
+try:
+    # local SRM host
+    configSRMHOST = os.environ['DQ2_SRM_HOST']
+except:
+    configSRMHOST = ''
+try:
+    # local GSIFTP host
+    configGSIFTPHOST = os.environ['DQ2_GSIFTP_HOST']
+except:
+    configGSIFTPHOST = ''    
+try:
+    # use SRM for all data transfer
+    configUSESRM = False
+    if re.match('True',os.environ['DQ2_USE_SRM'],re.I) != None:
+        configUSESRM = True
+except:
+    pass
+try:
+    # root directory of storage
+    configSTORAGEROOT = os.environ['DQ2_STORAGE_ROOT']
+except:
+    if configLOCALPROTOCOL == 'castor':
+        configSTORAGEROOT = '/castor'
+    elif configLOCALPROTOCOL == 'dcap':
+        configSTORAGEROOT = '/pnfs'
+    else:
+        configSTORAGEROOT = ''
+try:
+    # prefix for local access
+    configLOCALPREFIX = os.environ['DQ2_LOCAL_PREFIX']
+except:
+    configLOCALPREFIX = ''
+try:
+    # remote copy command
+    configCOPYCOMMAND = os.environ['DQ2_COPY_COMMAND']
+except:
+    configCOPYCOMMAND = ''
+try:
+    # HTTP proxy
+    DQ2HTTPPROXY = os.environ['DQ2_HTTP_PROXY']
+except:
+    DQ2HTTPPROXY = ''
+
+
+# global flags
+globalVerbose = False
+globalNocopy  = False
+globalChoose  = False
+
+
+
+# ToA
+class ToA:
+    try:
+        # get default timeout
+        defTimeOut = socket.getdefaulttimeout()
+        # set timeout
+        socket.setdefaulttimeout(60)
+    except:
+        pass
+    # get ToA
+    try:
+        ToAURL = 'http://atlas.web.cern.ch/Atlas/GROUPS/DATABASE/project/ddm/releases/TiersOfATLASCache.py'
+        if DQ2HTTPPROXY != '':
+            # set proxy
+            proxy_handler = urllib2.ProxyHandler({'http': DQ2HTTPPROXY})
+            opener = urllib2.build_opener(proxy_handler)
+            res = opener.open(ToAURL)
+        else:
+            req = urllib2.Request(ToAURL)
+            res = urllib2.urlopen(req)
+    except:
+        type, value, traceBack = sys.exc_info()
+        print type,value
+        print "ERROR : could not load ToA from %s" % ToAURL.split('/')[2]
+        sys.exit(EC_ToA)
+    # get responce
+    toa = res.read()
+    try:
+        # reset timeout
+        socket.setdefaulttimeout(defTimeOut)
+    except:
+        pass
+    # import ToA
+    try:
+        exec toa
+    except:
+        print toa
+        print "ERROR : corrupted ToA"        
+        sys.exit(EC_ToA)
+
+    # constructor
+    def __init__(self):
+        pass
+    
+
+# helper for ToA
+class ToAHelper:
+    # constructor
+    def __init__(self,toa):
+        self.toa = toa
+        
+    # get aggregated name
+    def getAggName(self,site):
+        # aggregated T1
+        if site in self.toa.topology['TIER1S']:
+            return site
+        # look for cloud
+        for id,idSites in self.toa.topology.iteritems():
+            # ignore high level names
+            if id in ('ALL','TIER1S'):
+                continue
+            if site in idSites:
+		# CERN
+		if id == 'CERN':
+		    return id
+                # EGEE T2 or normal T2  
+                if id.endswith('TIER2S') or id.endswith('TIER3S') or id in self.toa.topology['ALL']:
+                    return site
+                return id
+        # return
+        return site
+        
+    # get LRC
+    def getLRC(self,site):
+        # return
+        if self.toa.LRCHTTP.has_key(site):
+            return self.toa.LRCHTTP[site][0]
+        # not found
+        return None
+
+    # get LFC
+    def getLFC(self,site):
+        # look for cloud
+        for id,idSites in self.toa.topology.iteritems():
+            if id in ('ALL','TIER1S'):
+                continue
+            if site in idSites or (site==id and site=='CERN'):
+                # T2/T3
+                if id.endswith('TIER2S') or id.endswith('TIER3S'):
+                    for tmp_id,tmp_sites in self.toa.topology.iteritems():
+                        if id in tmp_sites:
+                            id = tmp_id
+			    break
+                # look for LFC
+                for lfc,lfcSites in self.toa.catalogsTopology.iteritems():
+                    # LFC only 
+                    if not lfc.startswith('lfc://'):
+                        continue
+                    if id in lfcSites:
+                        # return host
+                        return re.sub('[/:]',' ',lfc).split()[1]
+        # not found
+        return None
+
+    # get MySQL IF
+    def getMySQL(self,site):
+        # look for cloud
+        for id,idSites in self.toa.topology.iteritems():
+            if id in ('ALL','TIER1S'):
+                continue
+            if site in idSites:
+                # look for MySQL
+                for lrc,lrcSites in self.toa.catalogsTopology.iteritems():
+                    # MySQL only
+                    if not lrc.startswith('mysql://'):
+                        continue
+                    if id in lrcSites:
+                        # return connection string
+                        match = re.search('^mysql://([^:]+):([^@]+)@([^/:]+):(\d+)/(.+)$',lrc)
+                        if match != None:
+                            str = "mysql -h %s -u %s -p%s -P %s %s" % (match.group(3),match.group(1),
+                                                                       match.group(2),match.group(4),
+                                                                       match.group(5))
+                            return str
+        # not found
+        return None
+
+    # get SEs
+    def getSE(self,site):
+        # look for real site IDs
+        realIDs = []
+        if self.toa.topology.has_key(site):
+            # aggregation
+            realIDs = list(self.toa.topology[site])
+        else:
+            # unique
+            realIDs = [site]
+        # scan sites
+        srms = []
+        for id,items in self.toa.sites.iteritems():
+            if realIDs == []:
+                break
+            if id in realIDs:
+                # extract hostname
+                if items.has_key('srm'):
+                    srm = re.sub('/',' ',items['srm']).split()[1]
+                    if not srm in srms:
+                        srms.append(srm)
+                # remove ID from list
+                realIDs.remove(id)
+        # return
+        return srms
+
+# instantiate singleton
+toaHelper = ToAHelper(ToA)
+del ToAHelper
+
+
+# change User-Agent
+class AppURLopener(urllib.FancyURLopener):
+    def __init__(self, *args):
+        self.version = "dqcurl"
+        urllib.FancyURLopener.__init__(self, *args)
+urllib._urlopener = AppURLopener()
+
+
+# curl class
+class _Curl:
+    # constructor
+    def __init__(self):
+        pass
+
+    # GET method
+    def get(self,url,data={}):
+        # make url
+        if data != {}:
+            url += "?%s" % urllib.urlencode(data)
+	if globalVerbose:
+	    print url
+        # execute
+        try:
+            fd = urllib.urlopen(url)
+            o = fd.read()
+            s = 0
+        except:
+            type,value,traceBack = sys.exc_info()
+            o = "%s %s" % (type,value)
+            s = 255
+        # decode    
+	if s ==0 and o != '\x00':
+            try:
+                tmpout = urllib.unquote_plus(o)
+                o = eval(tmpout)
+            except:
+                pass
+	ret = (s,o)
+	if globalVerbose:
+	    print ret
+        return ret
+
+    # POST method
+    def post(self,url,data={}):
+	if globalVerbose:
+	    print url
+        # execute
+        try:
+            if globalVerbose:
+                print urllib.urlencode(data)
+            fd = urllib.urlopen(url,urllib.urlencode(data))
+            o = fd.read()
+            s = 0
+        except:
+            type,value,traceBack = sys.exc_info()
+            o = "%s %s" % (type,value)
+            s = 255
+        # decode    
+	if s ==0 and o != '\x00':
+            try:
+                tmpout = urllib.unquote_plus(o)
+                o = eval(tmpout)
+            except:
+                pass
+	ret = (s,o)
+	if globalVerbose:
+	    print ret
+        return ret
+
+
+# get VUID of a dataset
+def _getVUID(name):
+    if USEDQ2MOD:
+        # use dq2 mod
+        try:
+            # get repository client
+            repo = dq2api.repositoryClient
+            out = repo.queryDatasetByName(name)
+            status = 0
+        except:
+            type, value, traceBack = sys.exc_info()
+            print "ERROR : getVUID %s %s" % (type, value)
+            sys.exit(EC_VUID)
+    else:        
+        # instantiate curl
+        curl = _Curl()
+        errStr = ''
+        # get VUID
+        url = baseURLDQ2 + 'ws_repository/rpc'
+        data = {'operation':'queryDatasetByName','dsn':name,
+                'API':'0_3_0','tuid':commands.getoutput('uuidgen')}    
+        status,out = curl.get(url,data)
+    try:
+        if status != 0:
+            errStr = "ERROR : could not retrieve VUID for %s from DQ2 server" % name
+            sys.exit(EC_VUID)
+        if out == '\x00' or (not out.has_key(name)):
+            errStr = "ERROR : %s was not found in the DQ2 catalog" % name
+            sys.exit(EC_VUID)            
+    except:
+        print status,out
+        if errStr != '':
+            print errStr
+        else:
+            print "ERROR : invalid DQ2 response"
+        sys.exit(EC_VUID)
+    return out[name]['vuids']
+
+
+# query files in dataset
+def _queryFilesInDataset(vuids):
+    if USEDQ2MOD:
+        # use dq2 mod
+        try:
+            # get content client
+            cont = dq2api.contentClient
+            out = cont.queryFilesInDataset(vuids)
+            status = 0
+        except:
+            type, value, traceBack = sys.exc_info()
+            print "ERROR : queryFilesInDataset %s %s" % (type, value)
+            sys.exit(EC_QueryFiles)
+    else:        
+        # instantiate curl
+        curl = _Curl()
+        errStr = ''
+        # get files
+        url = baseURLDQ2 + 'ws_content/rpc'
+        data = {'operation': 'queryFilesInDataset','vuids':vuids,
+                'API':'0_3_0','tuid':commands.getoutput('uuidgen')}
+        status,out =  curl.post(url,data)
+    try:
+        if status != 0:
+            errStr = "ERROR : could not get files for VUID=%s" % vuids
+            sys.exit(EC_QueryFiles)
+        # parse
+        if out == '\x00' or len(out) < 2 or out==():
+            errStr = "ERROR : no constituent files"
+            sys.exit(EC_QueryFiles)
+        ret = {}
+        for guid,vals in out[0].iteritems():
+            ret[vals['lfn']] = guid
+    except:
+        print status,out
+        if errStr != '':
+            print errStr
+        else:
+            print "ERROR : invalid DQ2 response"
+        sys.exit(EC_QueryFiles)
+    return ret            
+
+
+# get PFN from LRC
+def _getPFNsLRC(siteID,lfns,resolveSURL=False,siteDQ2IDmap={}):
+    pfnMap    = {}
+    fsizeMap  = {}
+    md5sumMap = {}
+    # instantiate curl
+    curl = _Curl()
+    # get PoolFileCatalog
+    iLFN = 0
+    strLFNs = ''
+    # if no local site service
+    if toaHelper.getLRC(siteID) == None:
+        return pfnMap,fsizeMap
+    url = toaHelper.getLRC(siteID) + 'lrc/PoolFileCatalog'
+    firstError = True
+    # check if GUID lookup is supported
+    useGUID = True
+    status,out = curl.get(url,{'guids':'test'})
+    if status ==0 and out == 'Must GET or POST a list of LFNs!':
+        useGUID = False
+    for lfn,guid in lfns.iteritems():
+        iLFN += 1
+        # make argument
+        if useGUID:
+            strLFNs += '%s ' % guid
+        else:
+            strLFNs += '%s ' % lfn
+        if iLFN % 40 == 0 or iLFN == len(lfns):
+            # get PoolFileCatalog
+            strLFNs = strLFNs.rstrip()
+            if useGUID:            
+                data = {'guids':strLFNs}
+            else:
+                data = {'lfns':strLFNs}                
+            # avoid too long argument
+            strLFNs = ''
+	    # execute
+            status,out = curl.get(url,data)
+            if out.startswith('Error'):
+                # LNF not found
+                continue
+            if status != 0 or (not out.startswith('<?xml')):
+                if firstError:
+                    print status,out
+                    print "ERROR : %s LRC returned invalid response" % siteID
+                    firstError = False
+                continue
+            # parse
+            try:
+                root  = xml.dom.minidom.parseString(out)
+                files = root.getElementsByTagName('File')
+                for file in files:
+                    # get PFN and LFN nodes
+                    physical = file.getElementsByTagName('physical')[0]
+                    pfnNode  = physical.getElementsByTagName('pfn')[0]
+                    logical  = file.getElementsByTagName('logical')[0]
+                    lfnNode  = logical.getElementsByTagName('lfn')[0]
+                    # convert UTF8 to Raw
+                    pfn = str(pfnNode.getAttribute('name'))
+                    lfn = str(lfnNode.getAttribute('name'))
+                    # for catalogs with data on more than one site
+                    # choose preferentially files on given siteID
+                    if len(physical.getElementsByTagName('pfn')) > 1:
+                        for pfnNode in physical.getElementsByTagName('pfn')[1:]:
+                            pfname = str(pfnNode.getAttribute('name'))
+                            for hostname in toaHelper.getSE(siteID):
+                                if pfname.find(hostname) != -1:
+                                    pfn = pfname
+                    # remove /srm/xyz?SFN=
+                    pfn = re.sub('/srm/[^\?]+\?SFN=','',pfn)
+                    # patch for BNL
+                    if resolveSURL:
+                        pfn = re.sub('srm://dcsrm.usatlas.bnl.gov(:8443)*/',
+                                     'gsiftp://dcgftp.usatlas.bnl.gov:2811/',pfn)
+                    
+                    # append
+                    pfnMap[lfn] = pfn
+                    # get metadata
+                    fsizeMap[lfn] = 0
+                    for meta in file.getElementsByTagName('metadata'):
+                        # get fsize
+                        name = str(meta.getAttribute('att_name'))
+                        if name == 'fsize':
+                            try:
+                                fsizeMap[lfn] = int(meta.getAttribute('att_value'))
+                            except:
+                                # size is incorrect
+                                print "WARNING : size of %s is incorrect in LRC" % lfn
+                                fsizeMap[lfn] = -1
+                        elif name == 'md5sum':
+                            md5sumMap[lfn] = str(meta.getAttribute('att_value'))
+            except:
+                print status,out
+                type, value, traceBack = sys.exc_info()
+                print "ERROR : could not parse XML - %s %s" % (type, value)
+                sys.exit(EC_XML)
+    # convert compact URL to full URL
+    pfnMap = _convertCompactURL(siteID,siteDQ2IDmap,pfnMap)
+    # return        
+    return pfnMap,fsizeMap,md5sumMap
+
+
+# get PFN from LFC
+def _getPFNsLFC(siteID,guidMap,remoteFlag=True,resolveSURL=False,siteDQ2IDmap={}):
+    pfnMap    = {}
+    fsizeMap  = {}
+    md5sumMap = {}
+    # SURL/TURL host map
+    stUrlMap = {}
+    # check grid-proxy
+    status,output = commands.getstatusoutput('grid-proxy-info -e')
+    if status != 0:
+        print "ERROR : No valid grid-proxy. Do 'grid-proxy-init'"
+        sys.exit(1)
+    # get LFC
+    lfcHost = toaHelper.getLFC(siteID)
+    # URL is not given
+    if siteID == '' or lfcHost == None:
+        return pfnMap
+    # set LFC HOST
+    os.environ['LFC_HOST'] = lfcHost
+    # lfc_list structure
+    stat  = lfc.lfc_filestatg()
+    # support of bulk-operation
+    enableBulkOps = hasattr(lfc,'lfc_getreplicas')
+    frList = []
+    if not enableBulkOps:
+        # start LFC session
+        try:
+            lfc.lfc_startsess('','')
+        except NameError:
+            pass
+    # set nGUID for bulk-ops
+    nGUID = 100
+    iGUID = 0
+    mapLFN = {}
+    listGUID = []
+    storages = toaHelper.getSE(siteID)
+    if globalVerbose:
+        print "get SURLs from %s" % lfcHost
+    # loop over all GUIDs
+    for lfn,guid in guidMap.iteritems():
+        if globalVerbose:
+            sys.stdout.write('.')
+            sys.stdout.flush()
+        iGUID += 1
+        mapLFN[guid] = lfn
+        listGUID.append(guid)
+        if (not enableBulkOps) or iGUID % nGUID == 0 or iGUID == len(guidMap):
+            # get replica
+            if enableBulkOps:
+                ret,resList = lfc.lfc_getreplicas(listGUID,'')
+            else:
+                listp = lfc.lfc_list()
+                # use first replica
+                fr = lfc.lfc_listreplica('',guid,lfc.CNS_LIST_BEGIN,listp)
+                if not remoteFlag:
+                    while fr:
+                        findHost = False
+                        for tmpSE in storages:
+                            if tmpSE.find(fr.host) != -1:
+                                findHost = True
+                                break
+                        if findHost:
+                            break
+                        # get replica
+                        fr = lfc.lfc_listreplica('',guid,lfc.CNS_LIST_CONTINUE,listp)
+                        # terminate condition
+                        if fr == None:
+                            break
+                lfc.lfc_listreplica('',guid,lfc.CNS_LIST_END,listp)
+                # set return code to keep consistency with bulk ops
+                if fr:
+                    ret = 0
+                    resList = [fr]
+                else:
+                    ret = 1
+                    resList = [None]
+            if ret == 0:
+                indexGUID = -1
+                for fr in resList:
+                    indexGUID += 1
+                    if fr != None and ((not hasattr(fr,'errcode')) or \
+                                       (hasattr(fr,'errcode') and fr.errcode == 0)):
+                        # skip empty or corrupted SFN 
+                        if fr.sfn == '' or re.search('[^\w\./\-\+\?:&=]',fr.sfn) != None:
+                            if globalVerbose:
+                                if hasattr(fr,'guid'):
+                                    print "\nWARNING : wrong SFN '%s' for %s" % (fr.sfn,mapLFN[fr.guid])
+                                else:
+                                    print "\nWARNING : wrong SFN '%s' for %s" % (fr.sfn,lfn)
+                            continue
+                        # check host
+                        if enableBulkOps:
+                            # get host
+                            match = re.search('^[^:]+://([^:/]+):*\d*/',fr.sfn)
+                            host = match.group(1)
+                            findHost = False
+                            for tmpSE in storages:
+                                if tmpSE.find(host) != -1:
+                                    findHost = True
+                                    break
+                            if not findHost:
+                                continue
+                        # LFN
+                        if hasattr(fr,'guid'):
+                            lfn = mapLFN[fr.guid]
+                        # use first one
+                        if pfnMap.has_key(lfn):
+                            continue
+                        # replace sfn:// with gsiftp://
+                        pfn = re.sub('^sfn://','gsiftp://',fr.sfn)
+                        # resolve SURL
+                        if resolveSURL and pfn.startswith('srm://'):
+                            # SURL host
+                            match = re.search('^(.+)/[^/]+$',pfn)
+                            sURLHost = match.group(1)
+                            if not stUrlMap.has_key(sURLHost):
+                                # get TURL host
+				com = 'lcg-gt %s gsiftp' % pfn
+				if globalVerbose:
+				    print "\n"+com
+                                status,out = commands.getstatusoutput(com)
+				if globalVerbose:
+				    print out
+                                if status != 0:
+				    if not globalVerbose:
+					print out
+                                    print "ERROR : cannot get TURL for %s" % pfn
+                                    continue
+                                match = re.search('^(.+)/[^/]+$',out.split('\n')[0])
+                                tURLHost = match.group(1)
+                                stUrlMap[sURLHost] = tURLHost
+                            # replace
+                            pfn = re.sub(sURLHost,stUrlMap[sURLHost],pfn)
+                        # assign
+                        pfnMap[lfn] = pfn
+                        # get metadata
+                        if enableBulkOps:
+                            fsizeMap[lfn] = int(fr.filesize)
+                            md5sumMap[lfn] = fr.csumvalue                            
+                        else:
+                            res = lfc.lfc_statg("",guid,stat)
+                            fsizeMap[lfn] = int(stat.filesize)
+                            md5sumMap[lfn] = stat.csumvalue                                              
+            # reset                        
+            listGUID = []
+            mapLFN = {}
+    # end session
+    if not enableBulkOps:
+        try:
+            lfc.lfc_endsess()
+        except NameError:
+            pass
+    if globalVerbose:
+        print
+    # convert compact URL to full URL
+    pfnMap = _convertCompactURL(siteID,siteDQ2IDmap,pfnMap)
+    # return                
+    return pfnMap,fsizeMap,md5sumMap
+
+
+# get PFN from MySQL
+def _getPFNsMySQL(siteID,lfns,siteDQ2IDmap={}):
+    lfnMap    = {}
+    pfnMap    = {}
+    fsizeMap  = {}
+    md5sumMap = {}
+    iLFN = 0
+    strGUIDs = ''
+    # if no local site service
+    if toaHelper.getMySQL(siteID) == None:
+        return pfnMap,fsizeMap
+    connStr = toaHelper.getMySQL(siteID)
+    for lfn,guid in lfns.iteritems():
+        iLFN += 1
+        lfnMap[guid] = lfn
+        # make argument
+        strGUIDs += " t_pfn.guid='%s' OR" % guid
+        if iLFN % 40 == 0 or iLFN == len(lfns):
+            # make statements
+            strGUIDs = strGUIDs[:-3]
+            # open tmp file
+            oFileName = commands.getoutput('uuidgen')
+            oFile = open(oFileName,'w')
+	    for tmpItem in strGUIDs.split('OR'):
+                oFile.write('SELECT t_pfn.guid,t_pfn.pfname,t_meta.fsize,t_meta.md5sum FROM t_pfn,t_meta WHERE %s %s;\n' \
+                            % (tmpItem,'AND t_pfn.guid=t_meta.guid'))
+            #oFile.write('SELECT t_pfn.guid,t_pfn.pfname,t_meta.fsize,t_meta.md5sum FROM t_pfn,t_meta WHERE %s %s;\n' \
+            #            % (strGUIDs,'AND t_pfn.guid=t_meta.guid'))
+            oFile.close()
+            # avoid too long argument
+            strGUIDs = ''
+	    # execute
+            if globalVerbose:
+                print connStr
+                print commands.getoutput('cat %s' % oFileName)
+            status,out = commands.getstatusoutput('%s < %s' % (connStr,oFileName))
+            os.remove(oFileName)
+            if globalVerbose:
+                print status
+                print out
+            if status != 0:
+                continue
+            # parse
+            for line in out.split('\n'):
+                # header
+                if re.search('^guid\s+pfname',line) != None:
+                    continue
+                # get values
+                items = line.split()
+                if len(items) != 4:
+                    continue
+                ret_guid   = items[0]
+                ret_pfn    = items[1]
+                ret_fsize  = items[2]
+                ret_md5sum = items[3]
+                # append
+                if lfnMap.has_key(ret_guid):
+                    lfn = lfnMap[ret_guid]
+                    pfnMap[lfn]   = ret_pfn
+                    fsizeMap[lfn] = int(ret_fsize)
+                    md5sumMap[lfn] = ret_md5sum
+    # convert compact URL to full URL
+    pfnMap = _convertCompactURL(siteID,siteDQ2IDmap,pfnMap)
+    # return
+    return pfnMap,fsizeMap,md5sumMap
+
+
+# convert compact URL
+def _convertCompactURL(siteID,siteDQ2IDmap,pfnMap):
+    # convert compact URL to full URL
+    if siteDQ2IDmap.has_key(siteID):
+        endpointMap = {}
+        endpointList = []
+        # add CERN for old files until their endpoints are corrected
+        if siteID == 'CERN':
+            strDir = '/castor/cern.ch/grid/atlas'
+            endpointMap[strDir] = 'srm://srm-atlas.cern.ch:8443/srm/managerv2?SFN='+strDir
+            endpointList.append(strDir)
+        # get endpoint to URL prefix map
+        for dq2ID in siteDQ2IDmap[siteID]:
+            try:
+                # URL prefix
+                prefix = re.sub('token:[^:]+:','',toaHelper.toa.sites[dq2ID]['srm'])
+                if not prefix.startswith('srm://'):
+                    continue
+                # endpoint
+                if re.search('\?SFN=',prefix) != None:
+                    # srm v2
+                    endpoint = prefix.split('?SFN=')[-1]
+                else:
+                    # srm v1
+                    endpoint = re.sub('^srm://[^/]+','',prefix)
+                # append
+                endpointMap[endpoint] = prefix
+                if endpointList == []:
+                    endpointList.append(endpoint)
+                else:
+                    # sort endpoints by the length
+                    index = 0
+                    for tmpEP in endpointList:
+                        if len(tmpEP) < len(endpoint):
+                            endpointList.insert(index,endpoint)
+                            break
+                        index += 1
+            except:
+                pass
+        # convert URL        
+        for lfn,pfn in pfnMap.iteritems():
+            if pfn.startswith('srm://'):
+                for endpoint in endpointList:
+                    # endpoint matching
+                    if re.search(endpoint,pfn) != None:
+                        # host matching
+                        e_host = re.sub('[/:]',' ',endpointMap[endpoint]).split()[1]
+                        p_host = re.sub('[/:]',' ',pfn).split()[1]
+                        if e_host == p_host:
+                            # replace
+                            pfnMap[lfn] = endpointMap[endpoint]+pfn.split(endpoint)[-1]
+                            break
+    # return                
+    return pfnMap
+
+
+# select appropriate location
+def _getLocation(vuid,localFlag=False,chooseFlag=False,allFlag=False,predefSource=''):
+    if USEDQ2MOD:
+        # use dq2 mod
+        try:
+            # get location client
+            loc = dq2api.locationClient
+            out = loc.queryDatasetLocations([vuid])
+            status = 0
+        except:
+            type, value, traceBack = sys.exc_info()
+            print "ERROR : getLocation %s %s" % (type, value)
+            sys.exit(EC_Location)
+    else:
+        # instantiate curl
+        curl = _Curl()
+        errStr = ''
+        # get location
+        url = baseURLDQ2 + 'ws_location/rpc'
+        data = {'operation': 'queryDatasetLocations','vuids':[vuid],
+                'API':'0_3_0','tuid':commands.getoutput('uuidgen')}
+        status,out = curl.post(url,data)
+    try:
+        if status != 0:
+            errStr = "ERROR : could not query location for %s" % vuid
+            sys.exit(EC_Location)
+        # look for site
+        sites = []
+        compSites = []
+        siteIDmap = {}
+        if out != '\x00' and out != {}:
+            tmpMap = out[vuid]
+            for tmpSite in (tmpMap[0] + tmpMap[1]):
+                # complete replica
+                compFlag = False
+                if tmpSite in tmpMap[1]:
+                    compFlag = True
+                # get aggregated name
+                aggTmpSite = toaHelper.getAggName(tmpSite)
+                if not siteIDmap.has_key(aggTmpSite):
+                    siteIDmap[aggTmpSite] = []
+                # append
+                siteIDmap[aggTmpSite].append(tmpSite)
+                tmpSite = aggTmpSite
+                if (not tmpSite in sites) and (toaHelper.getLRC(tmpSite)   != None or
+                                               toaHelper.getLFC(tmpSite)   != None or
+                                               toaHelper.getMySQL(tmpSite) != None):
+                    sites.append(tmpSite)
+                    if compFlag:
+                        compSites.append(tmpSite)
+    except:
+        print status,out
+        if errStr != '':
+            print errStr
+        else:
+            print "ERROR : invalid DQ2 response"
+        sys.exit(EC_Location)
+    # check localID
+    if localFlag:
+        return (DQ2LOCALSITEID in sites)
+    # remove local ID
+    if sites == [DQ2LOCALSITEID]:
+        pass
+    elif DQ2LOCALSITEID in sites:
+        sites.remove(DQ2LOCALSITEID)
+    # no site
+    if len(sites)==0:
+        print "ERROR : No replica location for the dataset. Dataset registration may be incomplete."
+        print "        Submit a bug report to https://savannah.cern.ch/projects/dq2-ddm-ops/"
+        sys.exit(EC_Location)
+    # predefined source
+    if predefSource != '':
+        if not predefSource in sites:
+            print "ERROR : %s doesn't hold the dataset" % predefSource
+            sys.exit(EC_Location)
+        return [predefSource],siteIDmap
+    # only one site
+    if len(sites) == 1:
+        return sites,siteIDmap
+    # many sites
+    sites.sort()
+    print "Some files are missing in the local storage"
+    print "They are in the following sites;"
+    print "%2d : %-8s" % (0, "scan all sites")
+    fieldLen = 0
+    for site in sites:
+        # get max length
+        if len(site) > fieldLen:
+            fieldLen = len(site)
+    fieldLen += 1
+    format = "%2d : %-" + str(fieldLen) +"s - %s"        
+    for i in range(len(sites)):
+        status = "Incomplete Replica"
+        if sites[i] in compSites:
+            status = "Complete Replica"            
+        print format % (i+1,sites[i],status)
+    # automatic
+    if allFlag:
+        index = 0
+        print "0 is chosen automatically"
+    elif chooseFlag:
+        index = random.randint(1,len(sites))
+        print "%s is chosen automatically" % sites[int(index)-1]
+    else:
+        # select site        
+        while True:
+            index = raw_input('Which site to retrieve them from ? [0-%d] : ' % len(sites))
+            try:
+                index = int(index)
+                if index>=0 and index<=len(sites):
+                    break
+            except:
+                pass
+    if index == 0:
+        random.shuffle(sites)
+        return sites,siteIDmap
+    return [sites[int(index)-1]],siteIDmap
+
+
+# worker thread for copy
+class _copyWorker (threading.Thread):
+    # const
+    _TimeOutToken = 'TimeOut'
+    # constructor
+    def __init__(self,threadPool,resultBuffer,timeout):
+        threading.Thread.__init__(self)
+        # thread pool
+        self.threadPool = threadPool
+        # result buffer
+        self.resultBuffer = resultBuffer
+        # new thread
+        self.newThread = True
+        # timeout
+        self.timeout = timeout
+    # set parameter
+    def setParam(self,lfn,comList,lsCommand,destination,md5sum,md5sum_check):
+        # LFN
+        self.lfn = lfn
+        # command list
+        self.comList = comList
+        # ls command
+        self.lsCommand = lsCommand
+        # destination
+        self.destination = destination
+        # md5sum
+        self.md5sum = md5sum
+        # md5sum check
+        self.md5sum_check = md5sum_check
+    # run
+    def run(self):
+        # result
+        res = (self.lfn,False)
+        # number of retry
+        nTry = 5
+        for iTry in range(nTry):
+            # set command
+            random.shuffle(self.comList)
+            self.com = self.comList[0]
+            # copy
+            thr = threading.Thread(target=self.copy)
+            thr.start()
+            thr.join(self.timeout)
+            # timeout
+            timeoutFlag = False
+            if self.result == _copyWorker._TimeOutToken:
+                status,output = (255,'Timeout')
+                timeoutFlag = True
+                # get process list
+                out = commands.getoutput("ps axjfww | grep %s" % os.getpgrp())
+                pid = -1
+                findParent = False
+                for line in out.split('\n'):
+                    # look for original command process
+                    if re.search(self.com,line) != None:
+                        items = line.split()
+                        # get PGID
+                        pgid = items[2]
+                        # proper PGID
+                        if pgid != str(os.getpgrp()):
+                            continue
+			# set PPID and PID
+			ppid = items[0]	
+			pid  = items[1]	
+			# set flag
+                        findParent = True
+                        continue
+		    # look for real execution process	
+                    if findParent:
+			# get PPID
+                        items = line.split()                        
+			myPPID = items[0]
+                        # check if this process belongs to the original process 
+			if myPPID != pid:
+                            # kill
+                            break
+                        else:
+                            # set PPID and PID
+                            ppid = items[0]	
+                            pid  = items[1]
+                # kill
+                if pid > 0:
+                    commands.getoutput("kill -9 %s" % pid)
+                    if globalVerbose:                    
+                        print "kill %s" % pid
+            else:
+                status,output = self.result
+            # succeeded
+            if status == 0:
+                res = (self.lfn,True)
+                break
+            # failed
+            if globalVerbose or iTry+1 == nTry:
+                print output
+                print "could not finish '%s' with %s" % (self.com,status)
+                # for timeout
+                if timeoutFlag:
+                    print "INFO : Timeout may happen when files are on tape. It may take"
+                    print "       several hours to stage them on the remote SE. Please try"
+                    print "       later. Another possibility is that you are trying to"
+                    print "       get large files and the current timeout parameter (%s)" \
+                          % self.timeout
+                    print "       is shorter. In this case, please increase it via -t option"
+            if iTry+1 == nTry:
+                break
+            if globalVerbose:
+                print "retry %s" % iTry
+            # sleep
+            time.sleep(30)
+        # set flag
+        self.newThread = False
+        # put result
+        self.resultBuffer.put(res)
+        # release self
+        self.threadPool.put(self)
+    # copy file
+    def copy(self):
+        # set default result
+        self.result = _copyWorker._TimeOutToken
+        # delete file just in case
+        basename = self.lfn
+        if self.lsCommand in ['rfdir','nsls']:
+            commands.getstatusoutput('rfrm %s/%s' % (self.destination,basename))
+        else:
+            commands.getstatusoutput('rm -f %s/%s' % (self.destination,basename))            
+        # execute
+        if globalVerbose:
+            print self.com
+        try:
+            self.result = commands.getstatusoutput(self.com)
+        except:
+            type, value, traceBack = sys.exc_info()
+            self.result = (-1,value)
+            return
+        # md5sum check
+        if self.result[0] == 0 and self.md5sum_check:
+            # skip md5sum check when LRC doesn't contain valid one
+            if self.md5sum in ['NULL','None','']:
+                if globalVerbose:
+                    print "skip md5sum check for md5:'%s'" % self.md5sum
+                return
+            # calculate md5sum
+            md_status,md_out = commands.getstatusoutput('md5sum %s/%s' % (self.destination,basename))
+	    if globalVerbose:
+                print "md5sum check"
+                print md_status
+                print self.md5sum
+                print md_out
+            # failed
+            if md_status != 0:
+                self.result = (md_status,self.result[1]+'\n'+md_out)
+                return
+            # check
+            md5sum = md_out.split()[0]
+            if md5sum != self.md5sum:
+                # set error code for wrong md5sum
+                self.result = (EC_MD5SUM,self.result[1]+'\n'+'Wrong md5sum Local:'+md5sum+' Remote:'+self.md5sum) 
+                return
+
+
+# parallel copy
+def _parallelCopy(nPara,copyList,timeout,lsCommand,destination,md5sumList,md5sum_check):
+    # instantiate thread pool
+    threadPool = Queue.Queue(nPara)
+    # instantiate result buffer
+    resultBuffer = Queue.Queue()
+    # instantiate workers
+    for i in range(nPara):
+        thr = _copyWorker(threadPool,resultBuffer,timeout)
+        # put 
+        threadPool.put(thr)
+    # loop over all files
+    for lfn in copyList.keys():
+        # get thread
+        thr = threadPool.get()
+        # check if it is new thread
+        if not thr.newThread:
+            # instantiate new workers
+            thr = _copyWorker(threadPool,resultBuffer,timeout)
+        # command
+        com = copyList[lfn]
+        # md5sum
+        md5sum = md5sumList[lfn]
+        # set parameter
+        thr.setParam(lfn,com,lsCommand,destination,md5sum,md5sum_check)
+        # start
+        thr.start()
+    # wait until all thread finish
+    for i in range(nPara):
+        # get thread
+        thr = threadPool.get()
+        # check if it is alive
+        if thr.isAlive():
+            # wait
+            thr.join()
+    # get result
+    res = {}
+    for i in copyList:
+        item = resultBuffer.get()
+        res[item[0]] = item[1]
+    # return
+    return res
+    
+
+# copy files and return a map to new PFNs
+def _copyFiles(pfnMap,fsizeMap,remote_pfnMap,remote_fsizeMap,remote_md5sumMap,protocol,
+               destination,srm_host,gsiftp_host,use_srm,parallel,se_root,timeout,
+               local_prefix,copy_command,md5sum_check,srm_streams):
+    retResult={}
+    # define command for copy
+    if protocol=='dcap':
+        prefix       = 'dcap'
+        lsCommand    = 'ls'
+        copyCommand  = 'dccp'
+        mkdirCommand = 'mkdir -p'
+    elif protocol=='rfio':
+        prefix       = ''
+        lsCommand    = 'rfdir'
+        copyCommand  = 'rfcp'
+        mkdirCommand = 'rfmkdir -p -m 775'
+    elif protocol=='castor':
+        prefix       = 'castor'
+        lsCommand    = 'nsls'
+        copyCommand  = 'rfcp'
+        mkdirCommand = 'nsmkdir -p -m 775'        
+    elif protocol=='unix':
+        prefix       = ''
+        lsCommand    = 'ls'
+        copyCommand  = 'cp'
+        mkdirCommand = 'mkdir -p -m 775'        
+    elif protocol=='dpm':
+        prefix       = ''
+        lsCommand    = 'dpns-ls'
+        copyCommand  = 'globus-url-copy'
+        mkdirCommand = 'dpns-mkdir %s; dpns-chmod 775 %s'        
+    elif protocol=='xrd':
+        prefix       = ''
+        lsCommand    = 'ls'
+        copyCommand  = 'xrdcp'
+        mkdirCommand = 'mkdir -p -m 775'
+    else:
+        print "ERROR : protocol %s is not supported" % protocol
+        sys.exit(EC_Copy)
+    # overwrite ls and mkdir if dest is not in SE
+    if (not destination.startswith(se_root)) or se_root=='':
+        prefix       = ''
+        lsCommand    = 'ls'
+        mkdirCommand = 'mkdir -p -m 775'
+    # check destination
+    status,output = commands.getstatusoutput('%s %s' % (lsCommand,destination))
+    if status != 0 and protocol != 'xrd':
+        # make dir
+        if protocol != 'dpm':
+            status,output = commands.getstatusoutput('%s %s' % (mkdirCommand,destination))
+        else:
+            status,output = commands.getstatusoutput(mkdirCommand % (destination,destination))
+        if status != 0:
+            print output
+            print "ERROR : could not make %s" % destination
+            sys.exit(EC_Copy)        
+    # copy
+    dpmList = []
+    for lfn,pfn in pfnMap.iteritems():
+        # remove protocol::/host
+        newpfn = re.sub('^[^:]+://[^/]+','',pfn)
+        # remove protocol:
+        newpfn = re.sub('^[^:]+:/','/',newpfn)
+        # remove /srm/xyz?SFN=
+        newpfn = re.sub('/srm/[^\?]+\?SFN=','',newpfn)
+        # remove redundant /
+        newpfn = re.sub('^//','/',newpfn)
+        # basename
+        basename = lfn
+        # execute
+        if not globalNocopy:
+            skipCopy = False
+            # check if the files is already there
+	    if lsCommand == 'rfdir':
+		status,output = commands.getstatusoutput('%s %s/%s' % (lsCommand,destination,basename))
+            else:
+		status,output = commands.getstatusoutput('%s -l %s/%s' % (lsCommand,destination,basename))
+            if status == 0:
+                # size check
+                fsize = int(output.split()[4])
+                if fsize == fsizeMap[lfn]:
+                    skipCopy = True
+                    if globalVerbose:
+                        print '%s already exists in %s : skipped' % (basename,destination)
+                # skip symlink
+                if output.split()[0].find('l')==0:
+                    skipCopy = True
+                    if globalVerbose:
+                        print 'Link to %s already exists in %s : skipped' % (basename,destination)
+            # copy
+            if not skipCopy:
+                # use srmcp/g-u-c for DPM
+                if protocol == 'dpm':
+                    dpmList.append(lfn)
+                    continue
+                # others
+                com = '%s %s%s %s/%s' % (copyCommand,local_prefix,newpfn,destination,basename)
+                if globalVerbose:
+                    print com
+                status,output = commands.getstatusoutput(com)
+                if status != 0:
+                    print output
+                    print "ERROR : could not finish '%s' with %s" % (com,status)
+                    sys.exit(EC_Copy)
+        # append
+        retResult[lfn] = True
+    # move LFNs to remoteList for DPM
+    for lfn in dpmList:
+        remote_pfnMap[lfn] = pfnMap[lfn]
+        remote_fsizeMap[lfn] = fsizeMap[lfn]
+        del pfnMap[lfn]
+        del fsizeMap[lfn]
+    # remote copy
+    if not globalNocopy:
+        copyList   = {}
+        copiedFile = {}
+        md5sumList = {}        
+        # get file list in destination
+        fListOut = commands.getoutput('%s %s' % (lsCommand,destination))        
+        for lfn,pfns in remote_pfnMap.iteritems():
+            # basename
+            basename = lfn
+            # check if the files is already there
+            if fListOut.find(basename) != -1:
+                status,output = commands.getstatusoutput('%s -l %s/%s' % (lsCommand,destination,basename))
+                if status == 0:
+                    # size check
+                    fsize = int(output.split()[4])
+                    if fsize == remote_fsizeMap[lfn]:
+                        copiedFile[lfn] = True
+                    # skip symlink
+                    if output.split()[0].find('l')==0:
+                        copiedFile[lfn] = True                        
+                    # md5sum check
+                    if copiedFile.has_key(lfn) and md5sum_check and (not remote_md5sumMap[lfn] in ['NULL','None','']):
+                        # get md5sum
+                        md_status,md_out = commands.getstatusoutput('md5sum %s/%s' % (destination,basename))
+                        # failed
+                        if md_status != 0:
+                            print md_out
+                            print "ERROR : could not get md5sum for %s/%s" % (destination,basename)
+                            sys.exit(EC_MD5SUM)
+                        # check
+                        md5sum = md_out.split()[0]
+                        if md5sum != remote_md5sumMap[lfn]:
+                            # overwrite corrupted file
+                            del copiedFile[lfn]
+                    if copiedFile.has_key(lfn):
+                        if globalVerbose:
+                            print 'correct %s already exists in %s : skipped' % (basename,destination)
+			continue
+            # loop over all PFNs        
+            for pfn in pfns:
+                # patches for SRM
+                # 1) put port number
+                newpfn = re.sub('(?P<srm>^srm://[^:/]+)/','\g<srm>:8443/',pfn)
+                # two party transfer
+                if (not destination.startswith(se_root)) or se_root=='' or (srm_host=='' and gsiftp_host==''):
+                    # SRM or GSIFTP not supported 
+                    if newpfn.startswith('srm:/') or (newpfn.startswith('gsiftp:/') and use_srm):
+                        if re.search('/srm/managerv2\?SFN=/dpm/',newpfn) != None:
+                            # srmcp doesn't work for DPM srmv2 on 4/13/2008
+                            remoteCopyCommand = "lcg-cp -v --vo atlas"
+                        else:
+                            remoteCopyCommand = 'srmcp -retry_num=1 -streams_num=%s' % srm_streams
+                            if os.environ.has_key('X509_CERT_DIR'):
+                                remoteCopyCommand += ' -x509_user_trusted_certificates=%s' % os.environ['X509_CERT_DIR']
+                        # patches for SRM, put :2811/
+                        newpfn = re.sub('(?P<gsiftp>^gsiftp://[^:/]+)/','\g<gsiftp>:2811//',newpfn)
+                    elif newpfn.startswith('gsiftp:/'):
+                        remoteCopyCommand = 'globus-url-copy'
+                    else:
+                        print "WARNING : copy protocol is not supported for %s" % newpfn
+                        continue
+                    # destination filename
+                    if destination.startswith('/'):
+                        dest_filename = 'file:///%s/%s' % (destination,basename)
+                    else:
+                        dest_filename = 'file:///%s/%s/%s' % (os.getcwd(),destination,basename)
+                # third party transfer
+                else:
+                    # SRM or GSIFTP not supported 
+                    if newpfn.startswith('srm:/') or (newpfn.startswith('gsiftp:/') and use_srm):
+                        if re.search('/dpm/',newpfn) != None or re.search('/xrootd/',newpfn) != None:
+                            remoteCopyCommand = 'srmcp -pushmode=false -retry_num=1 -streams_num=%s' % srm_streams
+                        else:
+                            remoteCopyCommand = 'srmcp -pushmode=true -retry_num=1 -streams_num=%s' % srm_streams
+                        if os.environ.has_key('X509_CERT_DIR'):
+                            remoteCopyCommand += ' -x509_user_trusted_certificates=%s' % os.environ['X509_CERT_DIR']
+                        # patches for SRM, put :2811/
+                        newpfn = re.sub('(?P<gsiftp>^gsiftp://[^:/]+)/','\g<gsiftp>:2811//',newpfn)
+                        # destination filename
+                        if srm_host != '':
+                            dest_filename = '%s%s/%s' % (srm_host,destination,basename)
+                        elif gsiftp_host != '':
+                            dest_filename = '%s%s/%s' % (gsiftp_host,destination,basename)
+                        else:
+                            print "ERROR : DQ2_SRM_HOST or DQ2_GSIFTP_HOST should be defined"
+                            sys.exit(EC_Copy)
+                    # GSIFTP
+                    elif newpfn.startswith('gsiftp:/'):
+                        remoteCopyCommand = 'globus-url-copy -nodcau'
+                        # destination filename
+                        if gsiftp_host != '':
+                            dest_filename = '%s%s/%s' % (gsiftp_host,destination,basename)
+                        else:
+                            print "ERROR : DQ2_GSIFTP_HOST is not defined"
+                            sys.exit(EC_Copy)
+                    else:
+                        print "WARNING : copy protocol is not supported for %s" % newpfn
+                        continue
+                # user defined copy command
+                if copy_command != '':
+                    remoteCopyCommand = copy_command
+		# patch for CNAF
+                newpfn = re.sub('srm://storm-fe.cr.cnaf.infn.it:8443/',
+                                'srm://storm-fe.cr.cnaf.infn.it:8444/',newpfn)
+                # options for copy commands
+                if newpfn.startswith('srm://'):
+                    # lcg-cp
+                    if re.search('lcg-cp ',remoteCopyCommand) != None:
+                        # compact URL
+                        if re.search('\?SFN=',newpfn) == None:
+                            # patch for BNL
+                            newpfn = re.sub('srm://dcsrm.usatlas.bnl.gov:8443/',
+                                            'gsiftp://dcgftp.usatlas.bnl.gov:2811/',newpfn)
+                        else:
+                            # not use BDII
+                            if re.search('--nobdii',remoteCopyCommand) == None:
+                                remoteCopyCommand += ' --nobdii'
+			    # src
+                            if re.search('/srm/managerv2\?',newpfn) != None or \
+                                   re.search('/srm/v2/server\?',newpfn) != None:
+                                # srmv2
+                                remoteCopyCommand += ' -T srmv2'
+                            else:
+                                # srmv1
+                                remoteCopyCommand += ' -T srmv1'
+			    # dst
+                            if re.search('/srm/managerv2\?',dest_filename) != None or \
+                                   re.search('/srm/v2/server\?',dest_filename) != None:
+                                # srmv2
+                                remoteCopyCommand += ' -U srmv2'
+                            else:
+                                # srmv1
+                                remoteCopyCommand += ' -U srmv1'
+                    # srmcp                
+                    elif re.search('srmcp ',remoteCopyCommand) != None:
+                        if re.search('/srm/managerv2\?',newpfn) != None or \
+                               re.search('/srm/v2/server\?',newpfn) != None:
+                            # srmv2
+                            remoteCopyCommand += ' -srm_protocol_version=2'
+                        else:
+                            # remove /srm/xyz?SFN=
+                            newpfn = re.sub('/srm/[^\?]+\?SFN=','',newpfn)
+                # copy from remote
+                com = '%s %s %s' % (remoteCopyCommand,newpfn,dest_filename)
+                # append
+                if not copyList.has_key(lfn):
+                    copyList[lfn] = []
+                copyList[lfn].append(com)
+                md5sumList[lfn] = remote_md5sumMap[lfn]
+        # copy
+        copyResult = _parallelCopy(parallel,copyList,timeout,lsCommand,
+                                   destination,md5sumList,md5sum_check)
+	# join copyResult and copiedFile 
+	for lfn in copiedFile:
+            copyResult[lfn] = copiedFile[lfn]
+        # succeeded files
+        for lfn in copyResult:
+            # failed
+            if not copyResult[lfn]:
+                continue
+            retResult[lfn] = True
+    # return
+    return retResult
+
+
+
+####################################################################
+# main
+def main():
+    import sys
+    import getopt
+
+    # option class
+    class _options:
+        def __init__(self):
+            pass
+    options = _options()
+    del _options
+    # set default values
+    options.verbose     = False
+    options.nfiles      = -1
+    options.remote      = False
+    options.all         = False
+    options.choose      = False
+    options.source      = ''
+    options.destination = '.'
+    options.parallel    = 3    
+    options.timeout     = 1800    
+    options.gsiftp      = False
+    options.md5sum      = False
+    options.srmstreams  = 1
+    options.nskipfiles  = 0
+    # get command-line parameters
+    try:
+        opts, args = getopt.getopt(sys.argv[1:],"hvn:rcd:p:t:s:agm",
+                                   ["help","verbose","nfiles=","remote","choose",
+                                    "destination=","parallel=","timeout=",
+                                    "source=","all","gsiftp","md5sum",
+                                    "srmstreams=","nskipfiles="])
+    except:
+        _usage()
+        print "ERROR : Invalid options"
+        sys.exit(EC_Main)    
+    # set options
+    for o, a in opts:
+        if o in ("-h","--help"):
+            _usage()
+            sys.exit()
+        if o in ("-v","--verbose"):
+            options.verbose = True
+        if o in ("-n","--nfiles"):
+            options.nfiles = int(a)
+        if o in ("-r","--remote"):
+            options.remote = True
+        if o in ("-c","--choose"):
+            options.choose = True
+        if o in ("-s","--source"):
+            options.source = a
+        if o in ("-d","--destination"):
+            options.destination = a
+        if o in ("-p","--parallel"):
+            options.parallel = int(a)
+        if o in ("-t","--timeout"):
+            options.timeout = int(a)
+        if o in ("-a","--all"):
+            options.all = True
+        if o in ("-g","--gsiftp"):
+            options.gsiftp = True
+        if o in ("-m","--md5sum"):
+            options.md5sum = True
+        if o in ("--srmstreams",):
+            options.srmstreams = int(a)
+        if o in ("--nskipfiles",):
+            options.nskipfiles = int(a)
+    # global flags
+    global globalVerbose
+    globalVerbose = options.verbose
+    # use gsiftp
+    if options.gsiftp:
+        global configSRMHOST
+        configSRMHOST = ''
+    # remove /
+    while options.destination.endswith('/'):
+        options.destination = options.destination[:-1]
+    # datasetname
+    if len(args) == 0:
+        print "no datasetname"
+        sys.exit(EC_Main)    
+    datasetname = args[0]
+    # LFNs
+    args.pop(0)
+    lfns = args
+    # get VUID
+    vuids = _getVUID(datasetname)
+    # get file list
+    tmpFileMap = _queryFilesInDataset(vuids)
+    # check if LFNs are in the dataset
+    fileMap = {}
+    if len(lfns) != 0:
+        for lfn in lfns:
+            pat = lfn.replace('*','.*')
+            pat = pat.replace('?','.')
+            if pat == lfn:
+                # normal matching
+                if not lfn in tmpFileMap.keys():
+                    print "ERROR : %s is not in %s" % (lfn,datasetname)
+                    sys.exit(EC_Main)
+                fileMap[lfn] = tmpFileMap[lfn]
+            else:
+                # wild card matching
+                for tmpLFN in tmpFileMap.keys():
+                    if re.search(pat,tmpLFN) != None:
+                        fileMap[tmpLFN] = tmpFileMap[tmpLFN]
+    else:
+        # use all files in the dataset
+        fileMap = tmpFileMap
+    # skip N files
+    if options.nskipfiles > 0:
+        tmpLFNList = fileMap.keys()
+        tmpLFNList.sort()
+        tmpLFNList = tmpLFNList[options.nskipfiles:]
+        tmpFileMap = {}
+        for tmpLFN in tmpLFNList:
+            tmpFileMap[tmpLFN] = fileMap[tmpLFN]
+        fileMap = tmpFileMap    
+    # copy N files
+    if options.nfiles > 0:
+        tmpLFNList = fileMap.keys()
+        tmpLFNList.sort()
+        tmpLFNList = tmpLFNList[:options.nfiles]
+        tmpFileMap = {}
+        for tmpLFN in tmpLFNList:
+            tmpFileMap[tmpLFN] = fileMap[tmpLFN]
+        fileMap = tmpFileMap    
+    # get PFN    
+    pfnMap    = {}
+    fsizeMap  = {}        
+    md5sumMap = {}
+    if _getLocation(vuids[0],True):
+        # check LRC
+        if toaHelper.getLFC(DQ2LOCALSITEID) != None:
+            # get PFN from LFC
+            pfnMap,fsizeMap,md5sumMap = _getPFNsLFC(DQ2LOCALSITEID,fileMap,False)
+        elif toaHelper.getLRC(DQ2LOCALSITEID) != None:
+            # get PFN from LRC
+            pfnMap,fsizeMap,md5sumMap = _getPFNsLRC(DQ2LOCALSITEID,fileMap)
+        elif toaHelper.getMySQL(DQ2LOCALSITEID) != None:
+            # get PFN from MySQL
+            pfnMap,fsizeMap,md5sumMap = _getPFNsMySQL(DQ2LOCALSITEID,fileMap)
+    # check if LFNs are in the PFN map
+    missFiles = {}
+    for lfn in fileMap.keys():
+        if not lfn in pfnMap.keys():
+            missFiles[lfn] = fileMap[lfn]
+    if globalVerbose:
+        print "%s files are missing in the local SE" % len(missFiles)
+    # error message
+    if len(missFiles) and not options.remote:
+        print "The following files are not found at %s. " % DQ2LOCALSITEID
+        print "Use '-r' if you want to copy them over the grid"
+        for lfn in missFiles:
+            print "  %s" % lfn
+    # preparation for remote copy
+    missPfnMap    = {}
+    missFsizeMap  = {}
+    missMd5sumMap = {}
+    if options.remote:
+        if len(missFiles):
+            # check grid-proxy
+            status,output = commands.getstatusoutput('grid-proxy-info -e')
+            if status != 0:
+                print "ERROR : No valid grid-proxy. Do 'grid-proxy-init'"
+                sys.exit(EC_Main)
+            # get remote site which holds the dataset
+            if options.source != '':
+                remoteSites,siteIDmap = _getLocation(vuids[0],predefSource=options.source)
+            else:
+                remoteSites,siteIDmap = _getLocation(vuids[0],chooseFlag=options.choose,allFlag=options.all)
+            # loop over all sites    
+            scannedLFC   = []
+            scannedURL   = []
+            scannedMySQL = []
+            for remoteSite in remoteSites:
+                # break        
+                if len(missFiles) == 0:
+                    break
+                if remoteSite != DQ2LOCALSITEID:
+                    # check remote LRC/LFC
+                    tmpMissPfnMap    = {}
+                    tmpMissFsizeMap  = {}
+                    tmpMissMd5sumMap = {}                                           
+                    if toaHelper.getLFC(remoteSite) != None:
+                        # LFC
+                        if not toaHelper.getLFC(remoteSite) in scannedLFC:
+                            # get PFN from remote LFC
+                            tmpMissPfnMap,tmpMissFsizeMap,tmpMissMd5sumMap = _getPFNsLFC(remoteSite,missFiles,
+                                                                                         resolveSURL=options.gsiftp,
+                                                                                         siteDQ2IDmap=siteIDmap)
+                            scannedLFC.append(toaHelper.getLFC(remoteSite))
+                    elif toaHelper.getLRC(remoteSite) != None:                            
+                        # LRC
+                        if not toaHelper.getLRC(remoteSite) in scannedURL:
+                            # get PFN from remote LRC
+                            tmpMissPfnMap,tmpMissFsizeMap,tmpMissMd5sumMap = _getPFNsLRC(remoteSite,missFiles,
+                                                                                         resolveSURL=options.gsiftp,
+                                                                                         siteDQ2IDmap=siteIDmap)
+                            scannedURL.append(toaHelper.getLRC(remoteSite))
+                    elif toaHelper.getMySQL(remoteSite) != None:                            
+                        # MySQL
+                        if not toaHelper.getMySQL(remoteSite) in scannedMySQL:
+                            # get PFN from remote MySQL
+                            tmpMissPfnMap,tmpMissFsizeMap,tmpMissMd5sumMap = _getPFNsMySQL(remoteSite,missFiles,
+                                                                                           siteDQ2IDmap=siteIDmap)
+                            scannedMySQL.append(toaHelper.getMySQL(remoteSite))
+                    # append
+                    for lfn in tmpMissPfnMap.keys():
+                        if not missPfnMap.has_key(lfn):
+                            missPfnMap[lfn]    = []
+                            missFsizeMap[lfn]  = tmpMissFsizeMap[lfn]
+                            missMd5sumMap[lfn] = tmpMissMd5sumMap[lfn]                            
+                        missPfnMap[lfn].append(tmpMissPfnMap[lfn])
+	    # check if LFNs are in the PFN map
+            flag_first = True
+	    for missFile in missFiles:
+                if missFile not in missPfnMap.keys():
+                    if flag_first:
+                        flag_first = False
+                        print "WARNING : Replica is incomplete"
+                    print "%s is not found" % missFile
+
+                    
+    # copy files
+    copyResult = _copyFiles(pfnMap,fsizeMap,missPfnMap,missFsizeMap,missMd5sumMap,
+                            configLOCALPROTOCOL,options.destination,configSRMHOST,configGSIFTPHOST,
+                            configUSESRM,options.parallel,configSTORAGEROOT,options.timeout,
+                            configLOCALPREFIX,configCOPYCOMMAND,options.md5sum,options.srmstreams)
+    # result
+    failedFiles = []
+    for lfn in pfnMap.keys()+missPfnMap.keys():
+        if not lfn in copyResult.keys():
+            failedFiles.append(lfn)
+    print "Done"        
+    print "Total:%s - Failed:%s" % (len(pfnMap)+len(missPfnMap),len(failedFiles))
+    if len(failedFiles) != 0:
+        failedFiles.sort()
+        for lfn in failedFiles:
+            print "   %s" % lfn
+    # return
+    if len(failedFiles) != 0:
+        sys.exit(EC_Main)
+    return
+
+
+# kill whole process
+def catch_sig(sig, frame):
+    commands.getoutput('kill -9 -- -%s' % os.getpgrp())
+
+                
+if __name__ == "__main__":
+    # fork for Ctl-c
+    fork_child_pid = os.fork()
+    if fork_child_pid == -1:
+        print "ERROR : Failed to fork"
+        sys.exit(EC_Main)
+    if fork_child_pid == 0:
+        main()
+    else:
+        # set handler
+        signal.signal(signal.SIGINT, catch_sig)
+        signal.signal(signal.SIGHUP, catch_sig)
+        signal.signal(signal.SIGTERM,catch_sig)
+	os.wait()
+        

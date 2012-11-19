@@ -1,0 +1,126 @@
+**************************************************************************************************************
+5.1.3 (2008/12/19)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* introduce two configuration parameters:
+  - config.LCG.OutputDownloaderThread: sets the thread number for downloading output sandbox from
+the gLiteWMS, default value: 10
+  - config.LCG.GliteBulkJobSize: sets the max. number of node jobs in a gLite bulk job, default
+value: 50
+
+* fix bug #45187: avoid same output downloading task to be created and executed several times.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+use a network alias for the monalisa host
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+------
+* ganga-stage-in-out-dq2.py
+  - Use search/replace in TURL list for file protocol 
+    sites IFIC, LIP-LISBON
+  - Patch for RALPP, IFAE and PIC localsiteid
+  - rfio/DPM fail-over improved
+  - print warning if lcg-gt times-out
+  - Add extra hosts to defaultSE for GRIF-LAL, GRIF-SACLAY
+  - Uses search/replace in TURL list for rfio/DPM protocol site
+    GLASGOW
+  - Patch for NIKHEF due to unexpected ToA entry for the Topology
+  - Additional fixes to correctly create TURL list at NIKHEF and SARA
+  - Better protection against wrong LFC output 
+* DQ2JobSplitter.py
+  - Enable DQ2JobSplitter also for NG backend, allowed sites are
+    NDGF-T1_MCDISK, NDGF-T1_DATADISK
+  - Introduce use_blacklist switch and correctly apply GangaRobot 
+    blacklist
+* Athena.py:
+  - Introduce Athena.collect_stats switch (default False)
+  - add master job statistics collection
+  - Add Athena.user_area_path: configure path where to put user_area 
+    file which is created during call of prepare()
+    Changed default to $TMPDIR or /tmp/$USER
+    If Athena.user_area_path='workspace' old default of ganga workspace 
+    is used
+  - better protection against MemoryErrors in logfiles parsing
+  - Improved logfile parsing for NG backend
+* DQ2Dataset.py and other files:
+  DQ2Dataset.type='FILE_STAGER' 
+  New workflow to stage in input files on the worker node for LCG
+  backend. Copies files to the worker node from local SE in a  
+  background thread while Athena is running.
+  Requires recent athena v14
+* run-athena-lcg.sh/athena-utility.sh
+  patch for gsidcap access at NIKHEF/SARA
+
+AthenaMC:
+--------
+* Changes in input dataset handling
+* Improved job splitting 
+* Changes in output root file naming to allow more flexible setting of
+  output files
+
+AMAAthena:
+---------
+* enhance ama athena job wrappers with ama specific utility routines
+  (in ama_athena_utility.sh)
+* set default max_event to -1 indicating nolimit
+* add support for FILE_STAGER mode of DQ2Dataset, remove DQ2_COPY mode support
+* add compatible timing report to adopt the state collection
+  feature in Ganga/Athena module
+
+Tasks:
+-----
+* Major rewrite of the code
+* Task with AthenaMC is working again
+* Detailed description with: tasks.help()
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Fixes problems with starting ganga after SetupProject
+* Oversized sandbox and outputdata handling lfn de-mangling fixed (requires Dirac v4r3p1)
+* Now use new gaudirun.py -o option if user is using new enough gaudirun.py 
+* Code cleanup
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Root directory was missing in previous tag, adding it again. No other change from 20-12.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Allow specification of a DB release requirement with backend.dbRelease='dataset:file'
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPlotter
+--------------------------------------------------------------------------------------------------------------
+- introduce histogram chart, see example:
+https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaPlotter#Histograms
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+Updated examples to Ganga 5.1. Updated Dirac examples (GangaCron, DiracExtractor) to  Dirac 3
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+Added more verbose stdout in case of test failures (and consistent with xml output)
+
+**************************************************************************************************************

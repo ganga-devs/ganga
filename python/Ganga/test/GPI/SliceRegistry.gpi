@@ -1,0 +1,37 @@
+j1,j2,j3,j4 = Job(),Job(),Job(),Job()
+
+r = jobs
+
+# it is not possible to implement slicing on job identifiers: expression [:-1] is changed to [:len()-1] BEFORE
+# calling __getslice__. therefore the slicing functionality should be exposed indirectly, for example by ids() method.
+
+# slices should work on indices starting from 1 (not 0) as explained below
+# FIXME: should use relative indices because the job ids may not start with 1 but with a higher number from previous runs...
+
+# this test depends on the jobs dictionary being sorted!
+
+def contains_in_order(s,l):
+    for j,id in zip(l,s.ids()):
+        if j.id != id:
+            print 'Problem with job id=',j.id
+            print s
+            print l
+            return False
+    return True
+
+assert(len(r[0:0]) == 0)
+assert(len(r[1:1]) == 0)
+assert(r[-1] == j4)
+assert(contains_in_order(r[0:1],[j1]))
+assert(contains_in_order(r[1:2],[j2]))
+assert(contains_in_order(r[:],[j1,j2,j3,j4]))
+assert(contains_in_order(r[:-1],[j1,j2,j3]))
+assert(contains_in_order(r[1:],[j2,j3,j4]))
+
+print r.ids(), [j1.id,j2.id,j3.id,j4.id]
+
+assert(r.ids() == [j1.id,j2.id,j3.id,j4.id])
+assert(r.ids(j1.id,j1.id) == [j1.id])
+assert(r.ids(0,j1.id-1) == [])
+assert(r.ids(0,j1.id) == [j1.id])
+assert(r.ids(j1.id,j1.id) == [j1.id])

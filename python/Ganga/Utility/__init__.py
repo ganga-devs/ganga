@@ -1,0 +1,2 @@
+import tempfile_compatibility as tempfile
+import ospath_fix

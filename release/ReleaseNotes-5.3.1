@@ -1,0 +1,64 @@
+**************************************************************************************************************
+5.3.1 (2009/7/15)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Move logfile parsing to the worker node if Athena.collect_stats=True
+  is used for LCG backend - pickle file is transfered from worker node
+  to job repository - introduce getstats.py on the worker node
+* Fix for TNTJobSplitter in AthenaLCGRTHandler.py
+* Fix symlink problem in DQ2 stage-out mode of logfiles
+
+AthenaMC:
+---------
+* AthenaMC.py: fixing propagation of 'none' from outputdata.outrootfiles
+  to final fileprefixes, allowing users to effectively disable output
+  types in all modes
+* Revisiting dataset registration implementation to allow job.resubmit()
+  to work without troubles. Also put stage-in back after athena setup,
+  in order to avoid downloading DBrelease tarball if there is already
+  a local setup available. Paving the way for support for perf/phys/trigger
+  group production managers
+* stage-out: fixed a bug in guid extraction by forcing the scan to match
+  to ID= instead of ID.
+* AthenaMCDatasets.py: forcing exact matching of input dataset first in 
+  order to cut down DQ2 query time, and therefore job submission time. 
+* Bug fix: new containers for output datasets can now be created at 
+  master job completion time instead of just trashing the master job 
+  completion
+
+Tasks:
+------
+* Initial commit of ArgTransform - a taskification of ArgSplitter
+
+scripts:
+-------
+* Add --prepare_old option as athena command line option
+
+tests
+-----
+* Remove obsolte tests and increase timeout to 4h
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGUI
+--------------------------------------------------------------------------------------------------------------
+Fix for Bug #48578 (available from GangaGUI-20-4) should have been in for 5.3.0 but for some reason
+did not make it in. GangaGUI-20-5 includes this fix.
+
+Removed sorting for Job builder list view to allow developers to dictate the sequence of attribute
+display by using the _GUIPrefs and _GUIAdvancedPrefs lists. Note that if there are any attributes
+are not specified explicitly (in _GUIPrefs and _GUIAdvancedPrefs), the order will be that which the
+schema dictionary returns its keys. Of course, those already specified will be displayed as expected.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few bugfixes.
+
+**************************************************************************************************************

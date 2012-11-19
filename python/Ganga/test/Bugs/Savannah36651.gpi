@@ -1,0 +1,12 @@
+from GangaTest.Framework.utils import sleep_until_state,file_contains,failureException
+
+j = Job(application=Executable(exe='sleep',args=['20']))
+
+j.submit()
+
+if not sleep_until_state(j,120,'running',['new','killed','completed','unknown','removed','failed']):
+    if j.status in ['submitted']:
+        raise failureException("Job did not start running within timeout period [2min]")
+    else:
+        raise failureException("Some error in the test script. Job is in status %s which does not make sense."% j.status)
+
