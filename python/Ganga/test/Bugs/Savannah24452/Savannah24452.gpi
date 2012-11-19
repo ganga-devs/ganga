@@ -1,0 +1,9 @@
+from GangaTest.Framework.utils import sleep_until_completed
+
+j = Job()
+j.application.exe=File('nonexe.script')
+j.backend = Local()
+j.submit()
+
+if not sleep_until_completed(j,timeout=30):
+   assert not "Executable not run"

@@ -1,0 +1,77 @@
+**************************************************************************************************************
+5.4.2 (2009/12/2)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Cleanup and small refactoring of IMonitoringService interface
+New Ganga/Utility/Caching.py module (specific usage: DQ2 data mgmt interface)
+
+Global namespace fix for ipython 0.8.4 used in LHCb configuration.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitorMS
+--------------------------------------------------------------------------------------------------------------
+incorporates David Tuckett's changeset 2799:
+Update to maintain unchanged behaviour following removal of overloading of complete callback in
+IMonitoringService.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* New libdcap.so with improved read-ahead buffer tuning
+  DQ2_LOCAL accesses on dCache should be significantly faster now
+* Move FileStager configuration job option out of input.py and 
+  prepend it in front of all user job options, providing workaround 
+  for inputFilePeeker
+* New extended dq2info.tar.gz tarball
+
+Major rewrite of data handling of Athena/DQ2/LCG/Local
+* Clean-up and new workflows in ganga-stange-in-out-dq2.py
+  - New host detection algorithm based on DQ2_LOCAL_SITE_ID
+  - Move all SE protocol detection to ToA.py file
+  - Improve TURL generation algorithm and use bulk methods
+    and more retries
+  - Register output files already on worker node in DQ2
+* Changes in DQ2OutputDataset
+  - change DQ2OutputDataset in Athena/DQ2/LCG/Local workflow
+    to register files already on worker node in DQ2
+  - Output datasets are now based on sites and dataset names
+    get space token name attached.
+  - If a master job is split among several sites there are output
+    dataset set per site created. These output datasets are attached
+    to a container at the end of the master job
+  - output datasets are frozen at the end of the master job
+  - No empty dataset is created in AthenaLCGRTHandler or
+    AthenaLocalRTHandler
+  - config.DQ2.DQ2_LOCAL_SITE_ID should be set for a Local
+    or Batch backend job
+
+AMAAthena:
+----------
+* use extOutFile to specify AMA specific summary tarball
+* small fix for catching the exitcode correctly from athena process
+* introduce new objects for running AMAAthena analysis with GangaTask
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+Changes for JEM 0.2.5.3:
+- Removed the creation of a default JEM config file if no such file exists; instead, GangaJEM uses
+sensible default values by itself.
+- Fixed several minor bugs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Upgraded to DIRAC v4r21p1 which has allowed us to fix the bug dealing w/ string arguments to ROOT
+macros.  A few other minor bug fixes as well.
+
+**************************************************************************************************************
