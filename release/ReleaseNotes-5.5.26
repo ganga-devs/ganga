@@ -1,0 +1,28 @@
+**************************************************************************************************************
+5.5.26 (2011/3/18)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fully updated Panda TAG support in Ganga to handle TAG DQ2 dataset input and ELSSI TAG file input 
+using the ELSSI DB lookup service. The latter no longer requires sending of TAG files with jobs or the 
+use of TagPrepare to split the input.
+
+* Fixed some minor bugs in the MultiTask workflow
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Updates for LHCbDirac v6 series.  N.B. old BK paths no longer work in the new LHCbDirac BK.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fully updated Panda TAG support in Ganga to handle TAG DQ2 dataset input and ELSSI TAG file input 
+using the ELSSI DB lookup service. The latter no longer requires sending of TAG files with jobs or the 
+use of TagPrepare to split the input.
+
+**************************************************************************************************************

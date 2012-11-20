@@ -1,0 +1,774 @@
+\documentclass{elsart}
+\usepackage{ifpdf}
+\usepackage{graphicx,amssymb,lineno}
+\ifpdf
+\usepackage[%
+  pdftitle={Instructions for use of the document class
+    elsart},%
+  pdfauthor={Simon Pepping},%
+  pdfsubject={The preprint document class elsart},%
+  pdfkeywords={instructions for use, elsart, document class},%
+  pdfstartview=FitH,%
+  bookmarks=true,%
+  bookmarksopen=true,%
+  breaklinks=true,%
+  colorlinks=true,%
+  linkcolor=blue,anchorcolor=blue,%
+  citecolor=blue,filecolor=blue,%
+  menucolor=blue,pagecolor=blue,%
+  urlcolor=blue]{hyperref}
+\else
+\usepackage[%
+  breaklinks=true,%
+  colorlinks=true,%
+  linkcolor=blue,anchorcolor=blue,%
+  citecolor=blue,filecolor=blue,%
+  menucolor=blue,pagecolor=blue,%
+  urlcolor=blue]{hyperref}
+\fi
+
+\renewcommand\floatpagefraction{.2}
+\makeatletter
+\def\elsartstyle{%
+    \def\normalsize{\@setfontsize\normalsize\@xiipt{14.5}}
+    \def\small{\@setfontsize\small\@xipt{13.6}}
+    \let\footnotesize=\small
+    \def\large{\@setfontsize\large\@xivpt{18}}
+    \def\Large{\@setfontsize\Large\@xviipt{22}}
+    \skip\@mpfootins = 18\p@ \@plus 2\p@
+    \normalsize
+}
+\@ifundefined{square}{}{\let\Box\square}
+\makeatother
+
+\def\file#1{\texttt{#1}}
+
+\pagestyle{plain}
+\begin{document}
+
+\begin{frontmatter}
+\title{Instructions for use\\of the document class \file{elsart}}
+
+\author{Simon Pepping}
+\address{Elsevier, P.O. Box 103, 1000 AC Amsterdam,
+Netherlands}
+
+\ead{s.pepping@elsevier.com}
+\ead[url]{authors.elsevier.com/locate/latex}
+
+\begin{abstract}
+This article discusses several features of preparing articles
+with the \file{elsart} document style, using numbered style bibliographic
+references.
+\end{abstract}
+
+\begin{keyword}
+\file{elsart}, document class, instructions for use
+\PACS 01.30.$-$y
+\end{keyword}
+\end{frontmatter}
+
+\section{Introduction}
+\label{intro}
+
+This article discusses how to prepare articles with the \file{elsart}
+document class.  For more general information about \LaTeX{}, see the
+\LaTeX{} manual written by Lamport \cite{Lamp86}.
+
+Elsevier has prepared the following \LaTeX{} support files for
+authors:
+\begin{itemize}
+\item The document class \file{elsart.cls}, which provides a preprint
+  layout.
+\item The document classes \file{elsart1p.cls}, \file{elsart3p.cls},
+  \file{elsart5p.cls}, which each provide a layout in one of
+  Elsevier's standard journal styles, called 1+, 3+ and 5+.
+\item The instructions for use of \file{elsart},
+  \file{instructions-harv} for use with a Harvard-style bibliography,
+  and \file{instructions-num} for use with a numbered style
+  bibliography.
+\item Template files for a quick start of your \LaTeX{} article with
+  \file{elsart},
+  \newline
+  \file{template-harv.tex} for use with a Harvard-style
+  bibliography, and
+  \newline
+  \file{template-num.tex} for use with a numbered
+  style bibliography.
+\item Styles for BibTeX, \file{elsart-harv.bst} for a Harvard-style
+  bibliography, and \file{elsart-num.bst} for a numbered style
+  bibliography.
+\end{itemize}
+The files are freely available from Elsevier's Author Gateway
+\url{http://authors.elsevier.com/locate/latex}. 
+
+On Elsevier's Author Gateway you will also find support files for CRC
+journal articles. Support for monographs or contributed book chapters
+may be obtained via the publisher of the book.
+
+Elsevier's \LaTeX{} support files can also be obtained from one of the
+servers of the Comprehensive TeX Archive Network (CTAN) in the
+directory\newline
+\href{ftp://ctan.tug.org/tex-archive/macros/latex/contrib/supported/elsevier}%
+{\texttt{/tex-archive/macros/latex/contrib/supported/elsevier}}. CTAN is a
+mirrored network of FTP servers, with the following web front ends:
+\href{http://www.tex.ac.uk}{\texttt{www.tex.ac.uk}},
+\href{http://www.dante.de/software/ctan}{\texttt{www.dante.de/software/ctan}}
+(in German) and \href{http://www.ctan.org}{\texttt{www.ctan.org}}. The
+network is widely mirrored, see
+\url{http://www.tug.org/tex-archive/CTAN.sites}. It holds up-to-date
+copies of all the public-domain versions of \TeX, \LaTeX, Metafont and
+ancillary programs.
+
+Note that CTAN is not related to Elsevier, and that Elsevier's author
+support cannot accept complaints or answer questions about the
+availability of any CTAN server.
+
+The non-Elsevier macro packages recommended later in this document and
+many other useful macro packages can also be obtained from CTAN.
+
+In the following sections we show how you may use the \file{elsart}
+document class.
+
+\section{Options}
+
+The \file{elsart} document class enables the following options:
+
+\begin{description}
+  
+\item[doublespacing, reviewcopy] This is a single option with two
+  names to obtain double line spacing, as is sometimes required for
+  copies submitted for review.
+  
+\item[seceqn, secthm] The option \texttt{seceqn} numbers the equation
+  environments per section. The option \texttt{secthm} does the same
+  for the \texttt{thm} environment. In elsart all predefined theorem
+  environments except Algorithm, Note, Summary and Case use the same
+  counter as the \texttt{thm} environment.
+
+\item[draft, final] As in many other document classes, these are
+  options to produce draft and final layout. In the draft layout you
+  will see warnings for overfull boxes. You also need draft layout to
+  test your formulas on a narrower display width, see option
+  \texttt{narrowdisplay}.
+  
+\item[narrowdisplay] Many Elsevier journals print their text in two
+  columns. Because the preprint layout uses a larger line width
+  than such columns, the formulas are too wide for the line width in
+  print. In draft mode (see the \texttt{draft} option) you can use the
+  \texttt{narrowdisplay} option to force a narrower width for
+  displayed formulas. The width is roughly equal to the column width
+  of the printed journals, compensated for the larger font size of the
+  preprint layout. The \texttt{narrowdisplay} option is ineffective
+  with packages which redefine the equation environments, such as
+  \texttt{amsmath}.
+  
+  The \texttt{narrowdisplay} option is especially useful for journals
+  for which the articles are printed from the author's \LaTeX{} file.
+  This is the case for a number of mathematics journals. When you
+  break your formulas such that they fit in the narrow column width,
+  the typesetter will be able to retain most of your breaks. Article
+  for other journals are printed after transformation to an XML file.
+  For such journals the formula layout in the \LaTeX{} file is always
+  lost in the transformation.
+  
+  The narrow display width is obtained by giving the formulas a larger
+  indent. Too wide formulas in the one-line display environments
+  \texttt{equation} and \texttt{displaymath} will show an overfull
+  rule:
+  
+  \def\testformula{%
+    \sum_{i=0}^{\infty}A^n\int \mathrm{d}x\, \frac{F_n(x)}{A_n + B_n} =
+    B^n C^n \int\mathrm{d}x\,\int \mathrm{d}y\,
+    \frac{G_n(x,y)}{\mathcal{A}_n{x} + \mathcal{B}_n{y}}
+    }
+  \overfullrule 5pt
+  \mathindent\linewidth\relax
+  \advance\mathindent-259pt
+  \begin{equation}
+    \label{eq:1}
+    \testformula.
+  \end{equation}
+
+  This is not the case for the multiline display environment
+  \texttt{eqnarray}. But in both cases too wide formulas will extend
+  into the right margin, giving you visual feedback:
+
+  \begin{eqnarray}
+    \label{eq:2}
+    \testformula,\nonumber\\
+    \testformula.
+  \end{eqnarray}
+
+  When you switch off draft mode, the formulas will have their normal
+  indentation, and too wide formulas will no longer be signalled.
+
+\end{description}
+
+\section{Print layout}
+\label{printlayout}
+
+Elsevier also makes available a few document classes that roughly
+reproduce the layout of the printed journals. The majority of Elsevier
+journals use one of a small set of standard layouts. We have document
+classes for three of those layouts:
+
+\begin{description}
+\item[elsart1p] text width 32 picas (134 mm), text height 47 lines,
+  one column.
+\item[elsart3p] text width 39 picas (164 mm), text height 51 lines,
+  one or two columns.
+\item[elsart5p] text width 43.5 picas (183 mm), text height 57 lines,
+  two columns.
+\end{description}
+
+These classes can be used in the same way as elsart. If you prepared
+an article for elsart, you can run it with one of these print layout
+classes without changes to the markup. In fact, they use elsart and
+you must have elsart on your system as well.
+
+Note that the layout is only roughly the same as that of the printed
+journal. One major source of differences is the font. The printer uses
+a different font with different character widths, which will cause
+deviations in layout. There are various other sources of small
+differences. You cannot use the layout of one of these classes to make
+claims on the final layout of your article.
+
+\section{Frontmatter}
+\label{frontmatter}
+
+The \texttt{elsart} document class has a separate 
+\texttt{frontmatter} environment for the title, authors, addresses,
+abstract and keywords.
+\begin{itemize}
+\item \verb|\title|: As in standard \LaTeX, e.g. 
+\verb|\title{Model}|.
+\item \verb|\author|: Different from standard \LaTeX, the \verb|\author|
+command contains only one author and no address.
+Multiple authors go into multiple \verb|\author| commands,
+separated from each other by commas.
+The address goes into a separate 
+\verb|\address| command.
+Example: \verb|\author{D.E. Knuth}|.
+\item \verb|\address|: Here goes the address, e.g. 
+\verb|\address{CERN, Geneva}|.
+\item \verb|\thanks| and \verb|\thanksref|: 
+These provide footnotes to the title, authors and addresses. 
+The \verb|\thanksref| command takes a label: \verb|\thanksref{label}|
+to relate it to the \verb|\thanks| command with 
+the same label: \verb|\thanks[label]|. There can be several
+references to a single \verb|\thanks| command. Example:\\
+\verb|\title{Model\thanksref{titlefn}}| and\\
+\verb|\thanks[titlefn]{Supported by grants.}|
+\item \verb|\corauth| and \verb|\corauthref|: 
+These provide footnotes to mark the corresponding author and the
+correspondence address. They are used in the same manner as
+\verb|\thanks| and \verb|\thanksref|. Example:\\
+\verb|\author{A. Name\corauthref{cor}}| and\\
+\verb|\corauth[cor]{Corresponding author. Address: ... .}|
+\item \verb|\ead|:
+This command should be used for the email address or the URL of the
+author. It refers to the `current author', i.e., the author last
+mentioned before the command.
+When it holds a URL, this should be indicated by setting the
+optional argument to `url'. Example:
+\verb|\ead{s.pepping@elsevier.com}|,
+\verb|\ead[url]{authors.elsevier.com/locate/latex}|.
+\end{itemize}
+
+It is not necessary to give a \verb|\maketitle| command. The title,
+authors and addresses are printed as soon as \TeX{} sees them.
+
+The authors and addresses can be combined in one of two ways:
+\begin{itemize}
+\item The simplest way lists the authors of one address or one group
+  of addresses, followed by the address or addresses, and so on for
+  all addresses or groups of addresses.
+\item The other way first lists all authors, and then all addresses.
+The authors and addresses are related to each other by labels:
+\verb|\author[label1]{Name1}| corresponds to
+\verb|\address[label1]{Address1}|. Example:
+\begin{verbatim}
+\author[South]{T.R. Marsh},
+\author[Oxford]{S.R. Duck}
+\address[South]{University of Southampton, UK}
+\address[Oxford]{University of Oxford, UK}
+\end{verbatim}
+\end{itemize}
+
+See the extensive examples in figs.
+\ref{ex:explinput}, \ref{ex:exploutput}, 
+\ref{ex:implinput}, \ref{ex:imploutput}.
+
+If you put the frontmatter in an included file, that file should
+contain the whole frontmatter, including its \texttt{begin} and
+\texttt{end} commands. Otherwise, the labels of the frontmatter will
+remain undefined.
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%ex:explinput%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[p]
+
+\caption{Article opening with explicit links (input)} \label{ex:explinput}
+\vspace{1pc}
+
+\begin{verbatim}
+\documentclass{elsart}
+\usepackage{graphicx,amssymb}
+\journal{New Astronomy}
+\begin{document}
+\begin{frontmatter}
+
+\title{Stroboscopic Doppler tomography of FO Aqr}
+\author[South]{T.R. Marsh\corauthref{cor}},
+\corauth[cor]{Corresponding author.}
+\ead{trm@astro.soton.ac.uk}
+
+\author[Oxford]{S.R. Duck\thanksref{now}}
+\thanks[now]{Present address: Systems Engineering and Assessment Ltd.,
+Beckington Castle, PO Box 800, Bath BA3 6TB, UK.}
+\ead{srd@sea.co.uk}
+
+\address[South]{University of Southampton, Department of Physics,
+Highfield, Southampton SO17 1BJ, UK} 
+\address[Oxford]{University of Oxford, Department of Physics, Nuclear
+Physics Laboratory, Keble Road, Oxford, OX1 3RH, UK}
+ 
+\begin{abstract} 
+FO Aqr is a close binary star in
+which a magnetic white dwarf accretes from a cool companion. Light
+curves and spectra show variations on the orbital frequency, the
+white dwarf's spin frequency and combinations of the two.
+\end{abstract}
+\begin{keyword}
+Accretion, accretion disks \sep Line: profiles \sep
+Binaries: close \sep Novae, cataclysmic variables 
+\PACS 97.10.Gz \sep 97.30.Qt \sep 97.80.Gm 
+\end{keyword}
+\end{frontmatter}
+
+\section{Introduction}
+FO Aqr is a member of the DQ~Her class of stars which
+are close binary stars in which a magnetic white dwarf accretes from
+a late-type main-sequence secondary star. These stars have most
+recently been reviewed in Ref. \cite{Patterson94}. 
+\end{verbatim}
+
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%ex:exploutput%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[p]
+\caption{Article opening with explicit links (output)\label{ex:exploutput}} 
+\vspace{1pc}
+
+\begin{minipage}{\textwidth}
+\elsartstyle
+\parskip 12pt
+%
+\renewcommand{\thempfootnote}{\fnsymbol{mpfootnote}}
+%
+\leftskip=2pc
+%
+\begin{center}
+{\LARGE Stroboscopic Doppler tomography of FO Aqr}\\[30pt]
+%
+\large
+T.R. Marsh$^{\mathrm{a},*}$,
+S.R. Duck$^{\mathrm{b},1}$\\[12pt]
+%
+\small\itshape
+$^a$University of Southampton, Department of Physics,\\
+Highfield, Southampton SO17 1BJ, UK\\
+$^b$University of Oxford, Department of Physics, Nuclear Physics\\
+Laboratory, Keble Road, Oxford, OX1 3RH, UK
+ 
+\end{center}
+
+\bigskip
+\leftskip=0pt
+
+\hrule\vskip 8pt
+\begin{small}
+{\bfseries Abstract}
+\parindent 1em
+
+FO Aqr is a close binary star in
+which a magnetic white dwarf accretes from a cool companion. Light
+curves and spectra show variations on the orbital frequency, the
+white dwarf's spin frequency and combinations of the two.
+
+\noindent\textit{Key words:}
+Accretion, accretion disks, Line: profiles,
+Binaries: close, Novae, cataclysmic variables\\
+\textit{PACS:} 97.10.Gz, 97.30.Qt, 97.80.Gm 
+\end{small}
+%
+\vskip 10pt\hrule 
+
+\leftskip=0pt
+
+\vspace{24pt}
+
+\textbf{Introduction}
+
+FO Aqr is a member of the DQ~Her class of stars which
+are close binary stars in which a magnetic white dwarf accretes from
+a late-type main-sequence secondary star. These stars have most
+recently been reviewed in Ref. [1]. 
+
+\begin{footnotesize}
+\leavevmode
+\rlap{$^*$}\hspace{1pc}Corresponding author.\\
+\rlap{$^1$}\hspace{1pc}Present address: Systems Engineering and
+Assessment Ltd., Beckington Castle, PO Box 800, Bath BA3 6TB, UK.\\
+\rlap{}\hspace{1pc}\textit{Email addresses:} trm@astro.soton.ac.uk
+(T.R. Marsh), srd@sea.co.uk (S.R. Duck).
+\end{footnotesize}
+
+\leavevmode\hbox to \hsize{\small\slshape Preprint submitted to New Astronomy
+\hfil 21 August 1997}
+
+\end{minipage}
+
+\bigskip
+
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%ex:implinput%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[p]
+\caption{Article opening with implicit links (input)\label{ex:implinput}}
+\vspace{1pc}
+
+\begin{verbatim}
+\documentclass{elsart}
+
+\begin{document}
+\begin{frontmatter}
+\title{Integrability in
+       random matrix models\thanksref{talk}}
+\thanks[talk]{Expanded version of a talk
+  presented at the Singapore Meeting on
+  Particle Physics (Singapore, August 1990).}
+
+\author{L. Alvarez-Gaum\'{e}\corauthref{cor}}
+\address{Theory Division, CERN,
+  CH-1211 Geneva 23, Switzerland}
+\corauth[cor]{Corresponding author.}
+\ead{lag@cern.ch}
+
+\author{C. Gomez\corauthref{cor}\thanksref{SNSF}}
+\address{D\'{e}partment de Physique Th\'{e}orique, 
+  Universit\'{e} de Gen\`{e}ve,
+  CH-1211 Geneva 4, Switzerland}
+\ead{cg@ug.ch}
+
+\author{J. Lacki}
+\address{School of Natural Sciences,
+  Institute for Advanced Study,
+  Princeton, NJ 08540, USA}
+\ead[url]{www.ias.edu/~jl}
+\thanks[SNSF]{Supported by the
+  Swiss National Science Foundation}
+
+\begin{abstract}
+We prove the equivalence between the recent matrix
+model formulation of 2D gravity and lattice
+integrable models.  For even potentials this
+system is the Volterra hierarchy.
+\end{abstract}
+\end{frontmatter}
+
+\section{Introduction}
+Some aspects of the recently discovered
+non-perturbative solutions to non-critical strings
+\cite{Patterson94} can be better understood and
+clarified directly in terms of the integrability
+properties of the random matrix model.
+...
+\end{verbatim}
+
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%ex:imploutput%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\begin{figure}[p]
+\caption{Article opening with implicit links (output)\label{ex:imploutput}}
+\vspace{1pc}
+
+\begin{minipage}{\textwidth}
+\elsartstyle
+%
+\renewcommand{\thempfootnote}{\fnstar{mpfootnote}}
+%
+\leftskip=2pc
+%
+\begin{center}
+{\LARGE Integrability in random matrix models$^\star$}\\[30pt]
+\footnotetext[1]{\upshape Expanded version of a talk presented at the
+Singapore Meeting on Particle Physics (Singapore, August 1990).}
+%
+\large
+L. Alvarez-Gaum\'{e}$^*$         \\[6pt]
+{\small\itshape Theory Division, CERN,
+  CH-1211 Geneva 23, Switzerland}\\[18pt]
+C. Gomez$^{*,1}$                   \\[6pt]
+{\small\itshape D\'{e}partment de Physique Th\'{e}orique, 
+  Universit\'{e} de Gen\`{e}ve,
+  CH-1211 Geneva 4, Switzerland} \\[15pt]
+J. Lacki                         \\[6pt]
+{\small\itshape School of Natural Sciences, Institute for Advanced Study,
+  Princeton, NJ 08540, USA}
+% BW:
+\end{center}
+%
+\renewcommand{\thempfootnote}{\astsymbol{mpfootnote}}
+\footnotetext[1]{Corresponding author.}
+\setbox0=\hbox{\footnotesize 1}
+\edef\thempfootnote{\hskip\wd0}
+\footnotetext[0]{\textit{Email adresses:} lag@cern.ch
+  (L. Alvarez-Gaum\'{e}), cg@ug.ch (C. Gomez).}
+\footnotetext[1]{\textit{URL:} www.ias.edu/\~{ }jl (J. Lacki).}
+\renewcommand{\thempfootnote}{\arabic{mpfootnote}}
+\footnotetext[1]{Supported by the Swiss National Science Foundation}
+
+\bigskip
+\leftskip=0pt
+
+\hrule\vskip 8pt
+\begin{small}
+{\bfseries Abstract}
+\parindent 1em
+
+We prove the equivalence between the recent matrix model
+formulation of 2D gravity and lattice integrable models. For even
+potentials this system is the Volterra hierarchy.\par
+\end{small}
+\vskip 10pt\hrule 
+
+\medskip
+
+\section*{1. Introduction}
+
+Some aspects of the recently discovered non-perturbative
+solutions to non-critical strings [1] can be better
+understood and clarified directly in terms of the
+integrability properties of the random matrix model.
+
+...
+\end{minipage}
+
+\bigskip
+
+\end{figure}
+
+%%%%%%%%%%%%%%%%%%%%%%%%%%%% end of figures %%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
+\section{Abstract}
+
+The abstract should be self-contained. Therefore, do not refer to the
+list of references. Instead, quote the reference in full, as follows:
+Wettig \& Brown (1996, NewA, 1, 17).
+
+\section{Keywords}
+\label{keywd}
+\enlargethispage*{2.5pc}
+
+In electronic publications a proper classification is more important
+than ever. Elsevier's physics journals use several keyword
+schemes:\ 
+
+\begin{description}
+\item[Keywords:] Uncontrolled keywords.
+\item[PACS:] The PACS scheme, developed and maintained by the AIP,
+covers the whole field of Physics.
+See \url{http://www.aip.org/pacs/pacs.html}
+or \url{http://www.elsevier.com/locate/pacs}.
+\item[MSC:] The MSC scheme, developed and maintained by the AMS,
+covers the whole field of Mathematics.
+See \url{http://www.ams.org/msc}
+or \url{http://www.elsevier.com/locate/msc}.
+\end{description}
+
+Keywords are entered below the abstract in the following way:
+\pagebreak[4]
+\begin{verbatim}
+\begin{keyword}
+Keyword \sep Keyword
+\PACS PACS code \sep PACS code
+\MSC MSC code \sep MSC code
+\end{keyword}
+\end{verbatim}
+
+\section{Cross-references}
+\label{xrefs}
+
+In electronic publications articles may be internally hyperlinked.
+Hyperlinks are generated from proper cross-references in the article.
+
+For example, the words Fig. 1 will never be more than simple text,
+whereas the proper cross-reference \verb|\ref{mapfigure}| may be
+turned into a hyperlink to the figure itself.
+
+In the same way, the words Ref. [1] will fail to
+turn into a hyperlink; the proper cross-reference is 
+\verb|\cite{Gea97}|.
+
+Cross-referencing is possible in \LaTeX{} for sections, subsections,
+formulae, figures, tables, and literature references.
+
+\section{PostScript figures}
+\label{psfigs}
+
+\LaTeX{} and PostScript have had a long and successful relationship.
+There are three packages for including PostScript figures:
+\begin{itemize}
+\item \texttt{graphics}.
+This simple package provides the command\\
+\verb|\includegraphics*[<llx,lly>][<urx,ury>]{file}|.
+The \texttt{*} is optional; it enables the PostScript feature of clipping.
+In its simplest form,\\
+\verb|\includegraphics{file}|,
+it includes the figure in the PostScript file \texttt{file}
+without resizing.
+\item \texttt{graphicx}.
+This package provides the command\\
+\verb|\includegraphics*[key--value list]{file}|.
+The \texttt{*} is optional; it enables the PostScript feature of clipping.
+Often used keys are:
+\def\labelitemii{--}
+\begin{itemize}
+\item \texttt{scale=.40} to scale the size of the figure with 40\%,
+\item \texttt{width=25pc}, \texttt{height=15pc} to set the width or
+height of the figure,
+\item \texttt{angle=90} to rotate the figure over $90^\circ$.
+\end{itemize}
+\item \texttt{epsfig}.
+This package is really the \texttt{graphicx} package,
+but it allows one to include PostScript figures using 
+the familiar commands from 
+the earlier packages \texttt{epsfig} and \texttt{psfig}.
+\end{itemize}
+For detailed information, see the documentation of the \texttt{graphics}
+packages, in particular the file \texttt{grfguide.tex}.
+\begin{figure}
+\leftmargin=2pc
+\begin{verbatim}
+\begin{figure}
+\begin{center}
+\includegraphics*[width=5cm]{name.eps}
+\end{center}
+\caption{An example of a figure.}
+\label{fig:exmp}
+\end{figure}
+\end{verbatim} 
+\caption{An example of a figure.}
+\label{fig:exmp}
+\end{figure}
+
+\section{Mathematical symbols}
+\label{symbols}
+
+Many physics authors require more mathematical symbols than the
+few that are provided in standard \LaTeX. A useful package for
+additional symbols is the \texttt{amssymb} package, developed by the American
+Mathematical Society.  This package includes such oft used symbols as
+\verb|\lesssim| for $\lesssim$, \verb|\gtrsim| for $\gtrsim$ or
+\verb|\hbar| for $\hbar$.  Note that your \TeX{} system should have
+the \texttt{msam} and \texttt{msbm} fonts installed.
+If you need only a few symbols, such as \verb|\Box| for $\Box$,
+you might try the package \texttt{latexsym}.
+
+In the \texttt{elsart} document class vectors are preferably coded as 
+\verb|\vec{a}| instead of \verb|\bf{a}| or \verb|\pol{a}|.
+
+\section{Line numbering}
+\label{linenumbering}
+
+\begin{linenumbers}
+Reviewing an electronic version of an article has many
+advantages. However, reviewers have a harder task indicating remarks
+and desired changes to the article. Their task is made easier if the
+lines of the article are numbered. \LaTeX's \texttt{lineno} package
+performs this task. It is compatible with \texttt{elsart}.
+\end{linenumbers}
+
+\section{The Bibliography}
+\label{thebib}
+
+In \LaTeX{} literature references are listed in the
+\verb|thebibliography| environment. Each reference is a
+\verb|\bibitem|; each \verb|\bibitem| is identified by a label, by
+which it can be cited in the text: \verb|\bibitem{ESG96}| is cited as
+\verb|\cite{ESG96}|.
+
+Version 2.16 of \texttt{elsart} introduces the \texttt{subbibitems}
+environment. The references in a \texttt{subbibitems} environment
+have the same major reference number, and are counted by letters
+a, b, etc. The \texttt{subbibitems} environment has
+a label of its own: \verb|\begin{subbibitems}{label}|. 
+It can therefore be referred to as \verb|\cite{label}|, which produces
+a citation like [7a--c]. A short citation like [7] can be produced by
+adding \texttt{:s} to the label: \verb|\cite{label:s}|. Example: See
+Refs. \cite{Lee}, or in short form, see Refs. \cite{Lee:s}.
+
+Version 2.16 of \texttt{elsart} also introduces the possibility to
+insert notes into the bibliography, by using the \verb|\note| command.
+In a \texttt{subbibitems} environment it must be the last item.
+Example: See Refs. \cite{note,x}.
+
+These options do not work well with the \texttt{natbib} package.
+
+\section{Template article}
+\label{templart}
+
+There is a template article \file{templat-num.tex}, which you can use as a
+skeleton for your own article. It is available from Elsevier's Author
+Gateway, \url{http://authors.elsevier.com/locate/latex}.
+
+\begin{thebibliography}{9}
+
+\bibitem{Lamp86}
+Leslie Lamport: \LaTeX, {\em A document preparation system},
+2nd edition, Addison-Wesley (Reading, Massachusetts, 1994).
+
+\bibitem{WB96}
+Wettig, T., \& Brown, G.E.,
+The evolution of relativistic binary pulsars,
+1996, NewA, 1, 17-34.
+
+\bibitem{ESG96}
+Elson, R.A.W., Santiago, B.X., \& Gilmore, G.F.,
+Halo stars, starbursts, and distant globular clusters:
+A survey of unresolved objects in the Hubble Deep Field,
+1996, NewA, 1, 1-16.
+% (\url{http://www.elsevier.com/PII/S1384107696000061})
+
+\bibitem{Gea97}
+Governato, F., Moore, B., Cen, R., Stadel, J., Lake, G., \& Quinn, T.,
+The Local Group as a test of cosmological models,
+1997, NewA 2, 91-106.
+
+\bibitem{note}%
+  \note We consider an exactly solvable two-band model of electrons moving in
+one dimension and interacting with a $\delta$-function spin-exchange
+potential.
+
+\begin{subbibitems}{Lee}
+\bibitem{Lee:a} N.~Nagaosa and P.~A.~Lee, Phys. Rev. Lett. {\bf 79}, 3755
+(1997).
+\bibitem{Lee:b}C.~P\'epin and P.~A.~Lee, Phys. Rev. Lett. {\bf 81},
+  2779 (1998).
+\end{subbibitems}
+
+\bibitem{x} K.~Gorny, O.~M.~Vyasilev,
+J.~A.~Marindale, V.~A.~Nandor, C.~H.~Pennington, P.~C.~Hammel,
+W.~L.~Hults, J.~L.~Smith, P.~L.~Kuhns, A.~P.~Reyes and W.~G.~Moulton,
+Phys. Rev. Lett.  {\bf 82}, 177 (1999).
+\note These references demonstrate that for some high-$T_c$ compounds
+the gap does not seem to depend on the magnetic field.
+
+\end{thebibliography}
+
+\end{document}
