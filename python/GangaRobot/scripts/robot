@@ -1,0 +1,77 @@
+"""Script for running GangaRobot."""
+
+def _usage():
+    usage = """
+Usage (default configuration):
+  ganga --config-path=GangaRobot/ROBOT.INI robot run [pattern]...
+    => Perform the following actions:
+       * load and submit 'Hello World' or specified exported jobs
+       * sleep 20 seconds
+       * wait for jobs to finish based on job status (timeout 1 hour)
+       * extract generic data to XML in ~/gangadir/robot/extract/
+       * generate text and html reports based on extract data in
+         ~/gangadir/robot/report/
+
+  ganga --config-path=GangaRobot/ROBOT.INI robot help
+    => View this message.
+
+  ganga --config-path=GangaRobot/ROBOT.INI robot doc
+    => View single-page GangaRobot API documentation.
+
+  N.B. The default configuration 'GangaRobot/ROBOT.INI' puts repository,
+  workspace, extracts and reports in ~/gangadir/robot to avoid modifying your
+  user repository and workspace.
+
+Usage (custom configuration):
+  Copy GangaRobot/ROBOT.INI locally, as say ~/MYROBOT.INI
+  Modify options in MYROBOT.INI
+  Start robot: ganga --config=~/MYROBOT.INI robot run [pattern]...
+
+Examples:
+  (Patterns are absolute or local/codebase relative paths to exported jobs.)
+  ganga --config-path=GangaRobot/ROBOT.INI robot run
+  ganga --config-path=GangaRobot/ROBOT.INI robot run ~/jobs1.txt ~/jobs2.txt
+  ganga --config-path=GangaRobot/ROBOT.INI robot run ~/jobs/*.txt
+  ganga --config-path=GangaRobot/ROBOT.INI robot run GangaRobot/exports/local-echo-jobs.txt
+  ganga --config=~/MYROBOT.INI robot run
+  ganga --config=~/MYROBOT.INI robot run ~/jobs1.txt ~/jobs2.txt
+  ganga --config=~/MYROBOT.INI robot run ~/jobs/*.txt
+  ganga --config=~/MYROBOT.INI robot run GangaRobot/exports/dirac-root-jobs.txt
+
+See full GangaRobot API documentation for more details.
+
+"""
+    print usage
+
+
+def _doc():
+    import GangaRobot
+    print ''
+    print GangaRobot.__doc__
+    
+
+def _run(patterns):
+    if patterns:
+        print 'Setting export file patterns to %s.' % patterns
+        config['Robot']['CoreSubmitter_Patterns'] = patterns
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+    from GangaRobot.Framework import Driver
+    logger.info('Loading Ganga Robot Driver.')
+    driver = Driver.loaddriver()
+    logger.info('Starting Ganga Robot Driver.')
+    driver.dorun()
+    logger.info('Exiting Ganga Robot Driver.')
+
+if __name__ == '__main__':
+    import sys
+    args = sys.argv[1:]
+    if len(args) >= 1 and args[0] == 'run':
+        # args match 'run [pattern]...'
+        _run(args[1:])
+    elif len(args) == 1 and args[0] == 'doc':
+        # args match 'doc'
+        _doc()
+    else:
+        _usage()
+

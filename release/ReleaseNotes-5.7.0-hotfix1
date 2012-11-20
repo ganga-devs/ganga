@@ -1,0 +1,26 @@
+**************************************************************************************************************
+5.7.0-hotfix1 (2011/11/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Changed option_file to NOT be prepareable	 
+Add is_prepared flag if tarball is provided	 
+Changed the comment to getUnitJob to something sensible	 
+Small fix for AthenaUtils.extFile
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+support for rebrokerage added. (https://savannah.cern.ch/bugs/?73457)	 
+Took account of server side retries - new PandaID is retrieved from TaskBuffer Error	 
+add is_prepared to ProdTrans app	 
+Changed input.txt generation due to alteration in pilot	 
+Another fix for #88356: remove tarball after upload if inputsandbox is used	 
+Fix bug #88356, move source tarball from InputWorkspace to path of user_area	 
+added getStateTime so that that job.time.runtime() works (the backend_running and backend_final
+times are now filled for Panda).
+
+**************************************************************************************************************

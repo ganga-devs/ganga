@@ -1,0 +1,75 @@
+**************************************************************************************************************
+5.1.1 (2008/11/21)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+Fixing the issue that the overall master job status not being updated properly.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Fix bug #42661: User packages not being recognised in Athena Root dir
+* Fix bug #43946, DQ2_COPY mode for multiple datasets should work now 
+  properly again. (AthenaLCGRTHandlerpy, AthenaLocalRTHandler.py)
+* Fix bug #44213: input.txt is now created in DQ2_COPY mode for ARA 
+* Fix bug #43702: if no files to stage-out, job should be marked as failed 
+* Add new version of libdcap.so to fix read ahead buffer problems
+* Make DCACHE_RA_BUFFER configurable - 
+  Default is config['Athena']['DCACHE_RA_BUFFER'] = 32768
+* Add Athena.stats: collects statistics after job finish 
+  from logfiles for the LCG backend - not correct for DQ2_COPY mode
+* run-athena-lcg.sh: Improve fail-over mechanisms for DQ2_COPY mode,
+  check file download, more retries, add debug mode
+* Fix bug
+* DQ2JobSplitter: spitting in subjobs now correctly only per single dataset
+* DQ2JobSplitter.update_siteindex=True/False: switch for file
+  location update call during job submission
+* Add warning message for failed submission in dataset splitting 
+  mode (AthenaLCGRTHandler.py)
+
+AthenaMC:
+* AthenaMCLCGRTHandler.py: Fixing condition trigger false warning 
+  in input data splitting
+* Updating default output storage location to CERN-PROD_USERDISK 
+  as CERNCAF is long obsolete. Relaxing constraint on job matching 
+  to let jobs running at CERN as CERN Tier 2 facility is not 
+  properly tagged in LCG BDII
+* AthenaMCDatasets: adding exception handling of incomplete records 
+  of input datasets in the DQ2 database (datasets with no known locations)
+* AthenaMC: 
+  - Change defvalue of partition_number
+  - Bug fix for inputdata.inputfiles type, improving timeout evaluation 
+    for stage-out, allowing support for stage-in files from SRMV2 space 
+    tokens, extending splitter to allow partial resubmission of master 
+    jobs (all failed subjobs at once instead of one by one.)
+
+AMAAthena:
+* introduce the exit code in the athena_setup routine and stop 
+  the main wrapper when the exit code returned is not 0
+
+tests:
+* Updated AthenaMC.gpi input datasets. The previously used datasets 
+  have been removed from DQ2 database, causing the tests to crash
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Adds additional control for user to determine where job output files go.
+Also improves error reporting for Dirac monitoring.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- savannah 43998: new option j.backend.supStream can be used to suppress some output streams. e.g.,
+j.backend.supStream=['ESD','TAG']
+- savannah 43844: corrected error message
+- changed the level of some logging messages. You will need to enable [Logging]GangaPanda='INFO' to
+see the INFO level messages.
+
+**************************************************************************************************************

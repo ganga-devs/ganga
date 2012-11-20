@@ -1,0 +1,32 @@
+from GangaTest.Framework.utils import sleep_until_completed,failureException,file_contains
+
+# test full chain of splitting and retrieving output from local subjobs
+
+j = Job()
+j.backend=Local()
+j.application=Executable()
+j.splitter=ArgSplitter()
+
+LEN = 10
+
+j.splitter.args = [['ARGUMENT %d'%i] for i in range(LEN)]
+
+j.application.exe='/bin/echo'
+
+assert(not j.subjobs)
+assert(len(j.subjobs) == 0)
+
+j.submit()
+
+assert(len(j.subjobs) == LEN)
+
+for s in j.subjobs:
+    assert(s.master is j)
+    assert(s.status in ['submitted','running','completed'])
+
+if not sleep_until_completed(j,60):
+    raise failureException("Timeout on job submission: job is still not finished")
+
+for i,s in zip(range(len(j.subjobs)),j.subjobs):
+    assert(s.status == 'completed')
+    assert(file_contains(s.outputdir+'/stdout','ARGUMENT %d'%i))

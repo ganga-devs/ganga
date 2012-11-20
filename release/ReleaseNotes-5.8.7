@@ -1,0 +1,69 @@
+**************************************************************************************************************
+5.8.7 (2012/7/25)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+I have removed the exception raised when a splitter returns empty list. It should now be down to the
+splitter to throw exception when an error occurs. Because of this I have also allowed in job.submit
+a job which upon splitting receives an empty list to just go ahead and submit itself as a non split
+job. This was necessary for the LHCb Dirac bulk submission.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Allow GenericSplitter in Athena application for HammerCloud workflow
+* Update to panda-client 0.4.7
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGaudi
+--------------------------------------------------------------------------------------------------------------
+Fix to dynamic backend modification
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v508r7 (GangaLHCb-24-14)
+************
+
+This release contains a fix for expanding the CMTCONFIG environment variable when running ROOT
+applications on the Dirac backend. This fix has been back ported for all releases in the v508rX branch.
+
+Major new feature
+*****************
+New to this release is the ability to bulk submit to the Dirac backend. This should be considered
+very much experimental at this stage but can be switched on within the splitter using the bulksubmit
+attribute, example below.
+
+In[1]: j=Job(application=DaVinci(),backend=Dirac())
+In[2]: j.inputdata = [some data here...]
+In[3]: j.splitter = SplitByFiles(filesPerJob=10, ignoremissing=True)
+In[4]: j.splitter.bulksubmit=True
+In[5]: j.submit()
+
+doing this should lead to a single submission to dirac where you jobs will be created server side.
+There is a safeguard placed on the number of bulk submitted jobs allowed per submission. The reason
+for this is as there is no difference user side between submitting 100 vs 1000000000 jobs there
+clearly needs to be a safeguard against user error. The maximum number of dirac bulk submit subjobs
+is currently defaulted to 100 but is configurable via config options.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Update to panda-client 0.4.7
+* Added the coreCount option for the ProdTrans plugin.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaService
+--------------------------------------------------------------------------------------------------------------
+First upload of the full service code. For more info, see:
+
+https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaService
+
+**************************************************************************************************************
