@@ -1,0 +1,78 @@
+**************************************************************************************************************
+5.3.3 (2009/8/17)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+uuid fix for subjobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* add resource match-making as an option before job submission to WMS
+  - this option can be activated by setting config.LCG.MatchBeforeSubmit = True
+* introduce j.backend.match() method for job list match
+* add support for two JDL attributes: DataRequirements & DataAccessProtocol
+* bugfix for https://savannah.cern.ch/bugs/?50048
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/ARDADashboard
+--------------------------------------------------------------------------------------------------------------
+handle gridJobId as list
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/MSGMS
+--------------------------------------------------------------------------------------------------------------
+Added separate UUIDs for master job and 
+sub-jobs in split-jobs.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Fix bug 53707, filter lcg-cr against malformed output
+* AthenaLocalRTHandler.py:
+  Add additional protection against empty output_location
+* Fix access for StoRM at Milano and clean-up some special SE access cases
+* Fail over code for new lcg-gt timeout syntax 
+* use "file" protocol in FILE_STAGER mode for SToRM SE.
+* Added failover mechanisms to TAG workflow
+
+AthenaMC:
+---------
+* stage-in.sh: using dq2-get without -s flag first as it will look for
+             local instances of input dataset first
+* AthenaMCDatasets.py: minor bug fixes and verbosity changes
+  bug fix to support backend.requirements.excluded_sites
+* AthenaMC.py + wrapper.sh: Improved handling of trf errors.
+  Any job with non-zero trf return code will return as 'completed', but 
+  AthenaMC.postprocess() will issue a WARNING recommending to check the 
+  logfiles.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaKISTI
+--------------------------------------------------------------------------------------------------------------
+bug fix in Gridway.py
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes including Gaudi(DaVinci,Gauss,...).readInputData bugfix.  Also switched the
+CMT "make" command to be "cmt make".
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Detect outMeta and outMS in runConfig.
+   https://savannah.cern.ch/bugs/?54166
+
+**************************************************************************************************************

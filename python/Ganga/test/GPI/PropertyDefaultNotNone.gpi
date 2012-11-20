@@ -1,0 +1,32 @@
+
+from Ganga.Utility.Plugin.GangaPlugin import allPlugins
+import Ganga.Utility.logging
+logger=Ganga.Utility.logging.getLogger()
+
+# List of properties that fail test
+failList = []
+
+# Obtain list of plugin categories
+for category in allPlugins.allCategories().keys():
+
+   # Obtain dictionary of classes for category
+   classDict = allPlugins.allClasses( category )
+
+   # Check each class in turn
+   for className in classDict.keys():
+
+      # Obtain list of ( property, SimpleItem ) tuples for class
+      for name,item in classDict[ className ]._schema.simpleItems():
+    	 # Check default property value
+    	 if item._meta[ "defvalue" ] is None and item._meta["typelist"] == []:
+    	    failList.append( "%s.%s has default None and typelist is []" %\
+    		( className, name ) )
+
+for item in failList:
+   logger.warning( item )
+
+if failList:
+   logger.warning( "cannot infer type for %s SimpleItem properties " %\
+      str( len( failList ) ) )
+
+assert( not failList )
