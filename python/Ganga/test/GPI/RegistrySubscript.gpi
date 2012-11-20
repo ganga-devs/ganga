@@ -1,0 +1,4 @@
+j1,j2,j3,j4 = Job(),Job(),Job(),Job()
+r = jobs
+assert(r(j1.id) is j1)
+#assert(r[0] is None)

@@ -1,0 +1,58 @@
+import tempfile
+import os
+ura = tempfile.mkdtemp()
+
+# Write blank optsfile...needed now since default removed
+file=open(os.path.join(ura,'test.opts'),'w')
+file.write('import os')
+file.close()
+
+# Set-up the DaVinci InstallArea by getting sub package Tutorial/Analysis and building
+t = JobTemplate( application = DaVinci( version = 'v28r1p1' ))
+t.application.user_release_area = ura
+t.application.getpack( "Tutorial/Analysis v10r1" )
+t.application.masterpackage = "Phys/DaVinci"
+t.application.optsfile = File( os.path.join(ura,'test.opts') )
+t.application.make()
+
+# Write dummy python files at varying depths all with name test and dir names including test
+pypath=os.path.join(ura,'DaVinci_%s/InstallArea/%s' % (t.application.version,t.application.platform), 'python')
+file = open(os.path.join(pypath,'test1.py'),'w')
+file.write('import os')
+file.close()
+
+os.makedirs(os.path.join(pypath,'testSubDir1'))
+file = open(os.path.join(pypath,'testSubDir1','test2.py'),'w')
+file.write('import os')
+file.close()
+
+os.makedirs(os.path.join(pypath,'testSubDir1','testSubDir2'))
+file = open(os.path.join(pypath,'testSubDir1','testSubDir2','test3.py'),'w')
+file.write('import os')
+file.close()
+
+
+# Create and submit job to pack-up the InstallArea
+j=Job(t)
+j.submit()
+
+sharedname = j.application.is_prepared.name
+gangadir = config['Configuration'].gangadir
+user = config['Configuration'].user
+filename = gangadir+'/shared/'+user+'/'+sharedname+'/inputsandbox/'
+# Un-zip and un-tar input sandbox and search for the test string if the same number as expected exits
+# job passes
+os.system('cd '+filename+';tar -xzvf _input_sandbox_'+sharedname+'.tgz|grep test |tee pyfiles.log')
+
+file = open(os.path.join(filename,'pyfiles.log'),'r')
+
+lines = [line for line in file.readlines()]
+status = [line.find('test')>=0 for line in lines]
+print "Lines =",lines
+print 'status list =', status
+print 'expected = [True, True, True]',
+
+file.close()
+if False in status or len(status)!=3:
+    assert false, 'didnt pick up the python files from install area'
+

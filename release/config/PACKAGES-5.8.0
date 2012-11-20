@@ -1,0 +1,44 @@
+#The packages are processed in top-down order
+
+#kuba
+ganga/bin                                                              Ganga-bin-20-0
+ganga/doc                                                              Ganga-doc-20-0
+ganga/python/Ganga                                                     Ganga-Base-30-89
+
+#hclee
+ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-9
+
+#dtuckett
+ganga/python/Ganga/Lib/MonitoringServices                              Ganga-MonitoringServices-30-8
+
+#mark
+ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-2
+
+#johannes/dan/mark
+ganga/python/GangaAtlas                                                GangaAtlas-24-29
+
+#alex/will/ulrik
+ganga/python/GangaGaudi                                                GangaGaudi-01-00
+ganga/python/GangaLHCb                                                 GangaLHCb-24-00
+
+#dan/johannes
+ganga/python/GangaPanda                                                GangaPanda-24-21
+
+#hclee
+ganga/python/GangaPlotter                                              GangaPlotter-21-2
+
+#ulrik
+ganga/python/GangaRobot                                                GangaRobot-20-9
+
+#ole weidner
+ganga/python/GangaSAGA                                                 GangaSAGA-1-1
+
+#mslater
+ganga/python/GangaService                                              GangaService-1-0
+
+#kuba
+ganga/python/GangaTest                                                 GangaTest-30-11
+
+#kuba/hclee
+ganga/python/GangaTutorial                                             GangaTutorial-20-5
+

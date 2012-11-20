@@ -1,0 +1,55 @@
+**************************************************************************************************************
+5.7.8 (2012/2/23)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fixes for bugs #91570, #73323 and #71129
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Bug fix for #91570; ShareDir is hard coded, and not relative to Gangadir
+* Bug fix for savannah item 71129: handling of 'sets module is deprecated'
+* Bug fix in Athena.py: Remove already existing RootCore tmp dir
+* Athena on Local/Batch/LCG/CREAM backend:
+  Add ATLAS_ARCH variable to allow 32 and 64 bit athena setup  
+* Add --user_area_path and possibility to use --user_area with --useRootCore
+* Update to panda-client 0.3.85
+* Update to DQ2Clients 1.0.0
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 5.7.8
+***********
+
+New in this release:
+1) Resubmitting a job regenerates LFN->PFN Catalog to take account of moved data.[Savannah bug #88188]
+2) JobTemplate.outputdata now accepts a list of strings in line with the behavious of Job [Savannah
+bug #91320]
+3) Removed duplicate entries in the outputsandbox
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+ProdTransforms:
+* Check site status for jobs not using DQ2JobSplitter (to avoid not creating useless datasets)
+* add caching for LATEST dbrelease
+* protection for missing inputdata
+* refreshPandaSpecs even when there is no splitter
+* Added the forcestaged option to force the staging of the input DS
+
+* Update to panda-client 0.3.85
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+* Fixed problem preventing collection of pre-release test results
+
+**************************************************************************************************************

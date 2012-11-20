@@ -1,0 +1,93 @@
+**************************************************************************************************************
+5.5.8 (2010/6/10)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+* Backend now caches passphrases for SSH keys
+* Startup now only opens transport rather than fully connecting and running Ganga
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* DQ2OutputDataset:
+  - Fix bug #68504: datasetname is now autoamtically sanatized 
+    prepending user.nickname or group.groupname if the variable is set
+  - Fix bug #68459: the automatic datasetname assigment is now
+    extended by hour, minute, second in datasetname
+  - Fix bug #68353: only one download dq2-get thread if invoked by 
+    master job with jobs(42).outputdata.retrieve() 
+    The output is downloaded to the master job output directory by 
+    default. Keep old mode by calling 
+    j.outputdata.retrieve(subjobDownload=True)
+* DQ2JobSplitter:
+  Fix bug #68016 and add warning if MaxJobsDQ2JobSplitter is reached
+* AthenaOutputMerger:
+  add jobs(42).merger.merge(local_location='/path/to/output/') 
+  configuration option, if jobs(42).outputdata.local_location='' was
+  left empty, but the dataset has been retrieved with
+  jobs(42).outputdata.retrieve(local_location='/path/to/output')
+
+AthenaMC:
+---------
+* AthenaMCPandaRTHandler: fixed issue with lib dataset ownership 
+  (Savannah #67959), took opportunity to move dataset registration 
+  to master_configure level. Both handlers: restricted use of -t 
+  flag to evgen only. 
+* AthenaMC.py: improved one error message from diagnostic() method, 
+  allowing to distinguish between failed jobs with no output at all 
+  and jobs with non-zero exit code. 
+* stage-in.sh: fixed argument bug preventing the use of dq2-get
+* Redesigned extraArgs parsing method which fell foul of python 
+  commands inserted through preExec/ppostExec parameters of 
+  Reco_trf.py. 
+* Also removed the systematic creation of a NTUP output dataset in 
+  recon mode (it will have to be requested through outrootfiles) 
+  and removed creation of output datasets which are set to NONE
+
+tests:
+-----
+* Updated AthenaMC Panda evgen and simul tests: corrected input random 
+  seed for evgen (too large, was causing an athena crash) and updated 
+  parameters for simul. 
+* Corrected AthenaMC Panda reconstruction job as well. Updated 
+  transform, input dataset and parameters according to production tags
+
+externals:
+----------
+* update to panda-client 0.2.51
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+- Fixed bug when run as part of a GangaRobot execution
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor features plus:
+
+* T1 sites are now banned by default for user jobs that do not have any input data.  This is to help
+avoid overloading these sites.  
+
+* There is now a new config setting, config.LHCb.DiracOutputDataSE, that can be used to direct user
+grid outputdata to a specific grid SE.  The default value is [], which means let Dirac decide where
+to put the output.  If it's set to ['CERN-USER'], then Dirac will first try to put the data at CERN;
+if that fails, it will then put it somewhere else.
+
+* There are now several more ways to query the bookkeeping using the BKQuery object.  These include
+by run, by date, etc.  Do help(BKQuery) for details.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+update to panda-client 0.2.51
+
+**************************************************************************************************************

@@ -1,0 +1,31 @@
+from Ganga.Core.GangaThread import GangaThread
+
+jobs.remove()
+j=Job()
+j.splitter = ArgSplitter()
+j.splitter.args=[[str(x)] for x in range(10)]
+j.submit()
+
+def copy_thread():
+    while not ct.should_stop():
+        for job in jobs:
+            j2=job.copy()
+            j2.submit()
+
+ct = GangaThread(name="CopyThread", target=copy_thread)
+ct.start()
+
+import time
+start = time.time()
+x=1
+while time.time()<start+60: #assuming 120 seconds timeout
+    try:
+       for j in jobs:
+          for sj in j.subjobs:
+              x=1-x
+    except:
+        import traceback
+        traceback.print_exc()
+        raise Exception('bug occurred')
+
+
