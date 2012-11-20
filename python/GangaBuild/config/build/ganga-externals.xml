@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<gangaBuild xmlns="http://ganga.cern.ch/build/1">
+
+    <externals>
+    
+	    <component name="numpy" >
+                <release  version="1.2.1-1" uriType="local"
+                        uri="/afs/cern.ch/sw/arda/dashboard/common/rpms/numpy-1.2.1-1.el4.art.x86_64.rpm"/>
+        </component>
+
+        <!-- ### LFC externals ### -->
+        <component name="LFC-client" homepage="http://lcg.web.cern.ch/lcg/">
+            <release version="1.6.6" uriType="local"
+                uri="/afs/cern.ch/atlas/offline/external/GRID/EXTERNALS/lfc-1.6.6/LFC-client-1.6.6-3sec.slc4.i386.rpm"/>
+        </component>
+        
+    </externals>     
+</gangaBuild>

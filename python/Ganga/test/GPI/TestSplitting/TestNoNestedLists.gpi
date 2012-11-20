@@ -1,0 +1,29 @@
+from Ganga.GPIDev.Base.Proxy import TypeMismatchError
+
+#check the GenericSplitter
+g = GenericSplitter(attribute = 'application.args')
+try:
+    g.values = [[File('foo')]]
+    assert False, 'TypeMismatchError should be thrown'
+except TypeMismatchError:
+    pass
+g.values = [['foo'],['bar']]
+try:
+    g = GenericSplitter(attribute = 'application.args',values = [[File('foo')]])
+    assert False, 'TypeMismatchError should be thrown'
+except TypeMismatchError:
+    pass
+
+#check the ArgSplitter
+a = ArgSplitter()
+try:
+    a.args = [[File('foo')]]
+    assert False, 'TypeMismatchError should be thrown'
+except TypeMismatchError:
+    pass
+a.args = [['foo'],['bar']]
+try:
+    a = ArgSplitter(args = [[File('foo')]])
+    assert False, 'TypeMismatchError should be thrown'
+except TypeMismatchError:
+    pass

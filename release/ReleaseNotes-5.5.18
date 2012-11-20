@@ -1,0 +1,86 @@
+**************************************************************************************************************
+5.5.18 (2010/12/7)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- fixed: bug #73328: Make Job.submit args configurable
+- fixed: bug #74402: forcing into completed from failed does not work
+- added a possibility to change backend with j.resubmit()
+- support for keep_going=True with j.submit()
+- fixed odd import problem for python 2.6 with  sys.path.insert call in job wrapper
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* set default middleware flavor to GLITE
+* implement master_kill in CREAM backend for bulk job killing
+* delay sys.path.insert call in job wrapper for different import behavior in PYTHON 2.6
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+j.info.monitoring_links is now list of tuples (URL,name) where name is optional and is a name 
+of a  ink shown through ganga --webgui
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Added some TAG updates:
+  - Fixed bug that only allowed EXE type jobs
+  - Added a warning if multiple TAG files reference the same GUID
+  - Added an error that checks if the appropriate TAG JO options are set
+  - Removed a pointless printout
+* Change Panda jobs splitting to use schedconfig maxinputsize or
+  config.Athena.DefaultNumFilesPandaDirectDQ2JobSplitter files
+* Enable FileStager mode for SGE backend on DESY NAF, switch it
+  on/off via config.Athena.ENABLE_SGE_FILESTAGER
+* Allow SGE/DQ2JobSplitter via config.Athena.ENABLE_SGE_DQ2JOBSPLITTER,
+  add special SGE/DQ2Dataste/DQ2JobSplitter mataching for DESY NAF
+
+Tasks:
+------
+* Added check for empty datasets
+
+externals:
+----------
+* updated to panda-client 0.3.16
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+GangaJEM now refers to version 0.3.2.0 of the external JEM library, including small fixes and
+performance improvements.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Dirac space tokens are now user configurable.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added some TAG updates:
+  - Fixed bug that only allowed EXE type jobs
+  - Added a warning if multiple TAG files reference the same GUID
+  - Added an error that checks if the appropriate TAG JO options are set
+  - Removed a pointless printout
+* updated to panda-client 0.3.16
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaSAGA
+--------------------------------------------------------------------------------------------------------------
+First production implementation of GangaSAGA plugin. Includes optimized sandbox file transfer and 
+monitoring plugins.
+
+**************************************************************************************************************

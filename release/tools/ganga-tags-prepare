@@ -1,0 +1,36 @@
+#!/bin/env python
+'''
+Split the PACKAGES-<release> file into tags file to be used in the
+next development cycle by the tag collection page
+'''
+
+import os
+import sys
+
+try:
+    tags_dir=sys.argv[1]
+    packages_file=sys.argv[2]
+except:
+    print "Usage:\n\t split TAGSDIR PACKAGES_FILE\n"
+    sys.exit(1)
+
+f=open(packages_file, 'r')
+os.chdir(tags_dir)
+currentUser = ''
+
+for line in f.readlines()[2:]:
+    line = line.strip()
+    if not line:
+	continue
+    if line[0]=='#':
+	currentUser=line[1:].strip()
+    else:
+	module=line.split()
+	modulePath=module[0]
+	moduleTag=module[1]
+	
+	fileLines = [currentUser+'\n',moduleTag+'\n']
+	FILE = open(modulePath.replace('/','.'),"w")
+	FILE.writelines(fileLines)
+	FILE.close()
+

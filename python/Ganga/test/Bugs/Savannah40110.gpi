@@ -1,0 +1,4 @@
+import os
+
+assert not os.environ.has_key('GANGA_INTERNAL_PROCREEXEC'), "GANGA_INTERNAL_PROCREEXEC should not be set"
+

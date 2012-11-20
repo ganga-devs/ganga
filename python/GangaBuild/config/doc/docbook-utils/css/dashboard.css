@@ -1,0 +1,105 @@
+body {
+  background-color: white;
+  font-family: "Book Antiqua";
+  font-size: 10pt;
+  line-height: 145%;
+}
+
+a, a:visited {
+  font-size: 10pt;
+  font-family: "Book Antiqua";
+  color: #0000ef;
+  text-decoration: none;
+}
+
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Lucida Grande", "Book Antiqua";
+}
+
+h2, h3, h4 {
+  margin-top: 1em;
+}
+
+h1 {
+  font-size: 180%;
+  color: maroon;
+}
+
+h2 {
+  font-size: 140%;
+}
+
+h3 {
+  font-size: 120%;
+}
+
+h4 {
+  font-size: 100%;
+}
+
+hr {
+  border: 0px;
+  background-color: maroon;
+  height: 1px;
+}
+
+.tip, .note, .warning, .caution, .important, .footnote {
+  margin: 1em 2em 1em 2em;
+}
+
+.screen, .programlisting, .example table {
+  background: #EEEEEE;
+  line-height: 150%;
+  font-size: 90%;
+}
+
+.calloutlist table, .calloutlist p, .qandaset table, .qandaset p {
+    width: 100%;
+}
+
+.calloutlist p, .qandaset p {
+    margin: 0;
+    padding: 0;
+}
+
+.navbar input {
+    border: solid 1px #CCCCCC;
+}
+
+/* ----- Python code syntax coloring ----- */
+.computeroutput, .traceback, .pykeyword, .pystring, .pycomment, .pyfunction, .pyclass {
+  background-color: white;
+}
+
+.pykeyword, .pyfunction, .pyclass {
+  font-weight: bold;
+}
+
+.computeroutput {
+  color: teal;
+}
+
+.traceback {
+  color: red;
+}
+
+.pykeyword {
+  color: navy;
+}
+
+.pystring {
+  color: olive;
+}
+
+.pycomment {
+  color: green;
+  font-style: italic;
+}
+
+.pyfunction {
+  color: teal;
+}
+
+.pyclass {
+  color: blue;
+}

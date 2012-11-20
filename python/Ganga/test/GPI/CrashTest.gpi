@@ -1,0 +1,141 @@
+import sys
+def p(*args):
+    print >> sys.stderr, ' '.join(map(str,args))
+    
+t = Job()
+t.application = CrashTestApplication()
+t.backend = CrashTestBackend()
+
+GangaException = CrashType(expr='raise GangaException("fake ganga problem","testing")')
+ApplicationException = CrashType(expr='raise ApplicationConfigurationError("fake application problem","testing")')
+BackendException = CrashType(expr='raise BackendError("fake backend problem","testing")')
+AnyException = CrashType(expr='raise Exception("arbitrary fake problem")')
+
+p('='*80)
+p('testing backend errors')
+p('='*80)
+
+def assert_cannot_submit(j):
+    try:
+        j.submit()
+        assert False, 'should raise JobError'
+    except JobError:
+        pass  
+
+for e in [BackendException, AnyException]:
+    for l in ['submit','master_submit']:
+        p('*'*80)
+        j1 = t.copy()
+        j1.backend.error = e
+        j1.backend.error.method = l
+        p(j1.backend.error)
+        p('-'*20,'Trying simple job')
+
+        assert_cannot_submit(j1)
+        assert(j1.status == 'new')
+
+        p('-'*20,'Trying split job')
+        for c in ['val==0','val==3']:
+            p('+++++++++ condition',c)
+            j2 = t.copy()
+            j2.splitter = CrashTestSplitter()
+            j2.backend = j1.backend
+            j2.backend.error.condition = c
+
+            # FIXME: IncompleteJobSubmissionError - a special case arise when non-first subjob fails to submit, in this case
+            # the submission succeeded (True) and a warning is printed (to be reviewed)
+            if c == 'val==3' and l == 'submit':
+                assert(j2.submit())
+                assert(j2.status == 'submitted')
+                for s in j2.subjobs:
+                    if not s.status in ['new','submitted']:
+                        print s
+                        assert(0)
+            else:
+                assert_cannot_submit(j2)
+                assert(j2.status == 'new')
+
+p('='*80)
+p('testing splitter errors')
+p('='*80)
+
+for e in [GangaException,AnyException]:
+    l = 'split'
+    p('*'*80)
+    
+    for c in ['val==0','val==3']:
+        j1 = t.copy()
+        j1.splitter = CrashTestSplitter()
+        j1.splitter.error = e
+        j1.splitter.error.method = 'split'
+        j1.splitter.error.condition = c
+        p(j1.splitter.error)
+        p('+++++++++ condition',c)
+
+        assert_cannot_submit(j1)
+        assert(j1.status == 'new')
+        
+p('='*80)
+p('testing application errors')
+p('='*80)
+
+for e in [ApplicationException, AnyException]:
+    for l in ['configure','master_configure']:
+        p('*'*80)
+        j1 = t.copy()
+        j1.application.application_error = e
+        j1.application.application_error.method = l
+        p(j1.application.application_error)
+        p('-'*20,'Trying simple job')
+        assert_cannot_submit(j1)
+        assert(j1.status == 'new')
+
+        p('-'*20,'Trying split jobs')
+        j2 = t.copy()
+        j2.splitter = CrashTestSplitter()
+        j2.application = j1.application
+
+        assert_cannot_submit(j2)
+        assert(j2.status == 'new')
+
+p('='*80)
+p('testing runtime errors')
+p('='*80)
+
+for e in [GangaException, AnyException]:
+    for l in ['prepare','master_prepare']:
+        p('*'*80)
+        j1 = t.copy()
+        j1.application.rthandler_error = e
+        j1.application.rthandler_error.method = l
+        p(j1.application.rthandler_error)
+        p('-'*20,'Trying simple job')
+        assert_cannot_submit(j1)
+        assert(j1.status == 'new')
+
+        p('-'*20,'Trying split job')
+        j2 = t.copy()
+        j2.splitter = CrashTestSplitter()
+        j2.application = j1.application
+
+        assert_cannot_submit(j2)
+        assert(j2.status == 'new')
+
+
+
+
+if 0:
+    j = j.copy()
+    j.application.application_error.method = 'master_configure'
+    assert(not j.submit())
+    assert(j.status == 'new')
+    
+    j = j.copy()
+    
+    j.application.rthandler_error = 'except'
+    assert(not j.submit())
+    
+    j = t.copy()
+    j.application.backend_error = 'except'
+    assert(not j.submit())
+

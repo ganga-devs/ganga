@@ -1,0 +1,2229 @@
+\documentclass{howto}
+
+\RequirePackage{xspace}
+
+\def\ganga {\textsc{Ganga}\xspace}
+\def\python {\textsc{Python}\xspace}
+\def\ipython {\textsc{IPython}\xspace}
+\def\lhcb {LHC{\em b\/}\xspace}
+\def\Atlas {Atlas\xspace}
+\def\davinci {\textsc{DaVinci}\xspace}
+\def\majorv {5}
+\def\minorv {0\xspace}
+\def\totalv {\majorv.\minorv}
+\def\release{\ganga-\totalv}
+
+\title{Working with \ganga \totalv}
+
+% At minimum, give your name and an email address.  You can include a
+% snail-mail address if you like.
+\author{Ulrik Egede, Jakub T. Mo\'scicki}
+\authoraddress{U.Egede@imperial.ac.uk, Jakub.Moscicki@cern.ch}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Migration from previous versions of \ganga}
+\label{sec:migration}
+This sections explains how to migrate from using \ganga 4 to \ganga 5. 
+If you never used Ganga before then go to Introduction in section \ref{Introduction}.
+
+\ganga 4 and \ganga 5 may be used concurrently and the jobs defined in
+one will not be seen in the other. So you may try out \ganga 5 without
+a worry that you loose your previosuly defined jobs. A downside is
+that you cannot automatically migrate your jobs. You may however use
+the export/load facility to restore some of your old jobs in Ganga 5
+(see section \ref{sec:ExportImport}). Beware that this may sometimes 
+require some manual editing if schema changed for certain objects.
+
+
+\begin{notice}
+The configuration (\texttt{.gangarc}) files are NOT compatible. You will get errors
+using old configuration file against new ganga release.
+
+You should create a new configuration file by running \texttt{ganga -g} 
+once to avoid any potential problems. 
+
+\end{notice}
+
+
+The list of major new features is available in the Release Notes in section \ref{ReleaseNotes}.
+
+\paragraph{The configuration changes}
+
+\begin{enumerate}
+\item \texttt{[DefaultJobRepository]} section is removed. Instead there are sections for each type of the repository: \texttt{LocalAMGA_Repository}, \texttt{RemoteAMGA_Repository},\texttt{LocalXML_Repository}.
+\item  \texttt{[FileWorkspace]} is removed.
+\item The \texttt{[Configuration]repositorytype} option specifies the type used in a \ganga session. 
+\item The \texttt{[Configuration]gangadir} specifies the location of file workspace and the local repositories.
+\item The \texttt{[Configuration]user} specifies the user name (if left blank then this will be current user name).
+\item Default object attribute values are now defined in \texttt{[defaults_XXX]} sections (previously there were defined in \texttt{[XXX_Properties]}.
+\end{enumerate}
+
+At present there is not automatic conversion tool for configuration options, so you should apply the changes manually.
+
+\paragraph{The location of the local workspace and repositories}
+\begin{enumerate}
+\item The local workspace is located in \begin{verbatim}$gangadir/workspace/$user/$repositorytype\end{verbatim}
+\item The local repository is located in \begin{verbatim}$gangadir/repository/$user/$repositorytype\end{verbatim}
+\end{enumerate}
+
+
+\paragraph{Backwards-incompatible GPI changes.}
+
+\subparagraph{Job exceptions.}
+
+If an operation on a job fails (e.g. \texttt{j.submit()}) then there is always an exception raised. This means that the loop 
+\begin{verbatim}
+for j in jobs:
+ j.submit()
+\end{verbatim}
+will not continue past the first submission failure. Use job slices instead: jobs.submit(). See section \ref{sec:collective}.
+
+\subparagraph{The meaning of operator \texttt{jobs[]} and \texttt{jobs()}}
+
+The operator \texttt{jobs(id)} gives back the job with the specified
+id whereas \texttt{jobs[i]} gives back the i-th job in the
+sequence. For exmaple \texttt{jobs[-1]} gives the last job.
+
+
+\section{Introduction}
+\label{Introduction}
+\noindent
+
+\ganga is a front end for job definition and management of analysis jobs to
+run locally and in an distributed environment. It helps in the creation and
+configuration of analysis job, submission of the jobs and finally monitors job
+status and take care of saving any output. \ganga particularly aims to help
+with setting up jobs that run the main ATLAS and \lhcb applications, all of
+which have been developed in the Gaudi C++ framework, and are configured by
+options files.
+
+For a list of latest features  have look into Release Notes in section
+\ref{ReleaseNotes}.
+
+The \python scripting interface for working with jobs in \ganga is called the
+GPI~(Ganga Public Interface). To start \ganga you simply type
+\begin{verbatim}
+ganga
+\end{verbatim}
+at the command line after entering the directory of \ganga into your PATH.
+
+At CERN you will find \ganga installed in the directory
+\begin{verbatim}
+/afs/cern.ch/sw/ganga/install/5.0.x/bin
+\end{verbatim}
+
+For detailed setup and installation procedure for \Atlas and \lhcb see \url{http://cern.ch/ganga/user}.
+
+\begin{seealso}
+  If you are not familiar with \python the following URL will be a big help:
+  \seeurl{http://docs.python.org/tut/tut.html}{}
+\end{seealso}
+
+Starting \ganga you should see the output below which includes a few questions
+asked only the first time you start \ganga. Notice that \ganga at startup
+ask you to validate your Grid proxy so you can submit jobs to the Grid. If you
+do not have a certificate \ganga will continue anyway.
+\begin{verbatim}
+~% ganga
+
+*** Welcome to Ganga ***
+Version: Ganga-5-0-0
+Documentation and support: http://cern.ch/ganga
+Type help() or help('index') for online help.
+
+This is free software (GPL), and you are welcome to redistribute it
+under certain conditions; type license() for details.
+
+It seems that you run Ganga for the first time and you do not have the config file: ~/.gangarc
+Would you like to create config file with standard settings ([y]/n) ?y
+Created standard config file /afs/cern.ch/user/m/moscicki/.gangarc
+Press <Enter> to continue.
+Ganga.GPIDev.Lib.JobRegistry       : INFO     Found 0 jobs in "jobs", completed in 0 seconds
+Ganga.GPIDev.Lib.JobRegistry       : INFO     Found 0 jobs in "templates", completed in 0 seconds
+Ganga.GPIDev.Credentials           : WARNING  Grid proxy has expired!
+Ganga.GPIDev.Credentials           : WARNING  Renew by typing 'gridProxy.renew()' at the prompt.
+
+\end{verbatim}
+You are now ready to try out the simplest features of \ganga.
+
+
+\subsection{Online help}
+\label{sec:OnlineHelp}
+To get online help in \ganga inside a session simply type \texttt{help()} at
+the prompt. this will give you a screen as:
+\begin{verbatim}
+In [1]:help()
+
+************************************
+
+*** Welcome to Ganga ***
+Version: Ganga-5-0-0
+Documentation and support: http:/cern.ch/ganga
+Type help() or help('index') for online help.
+
+
+This is an interactive help based on standard pydoc help.
+
+Type 'index'  to see GPI help index.
+Type 'python' to see standard python help screen.
+Type 'interactive' to get online interactive help from an expert.
+Type 'quit'   to return to Ganga.
+************************************
+\end{verbatim}
+Here the \texttt{index} section is where you will find help on the use of
+\ganga. Below is the full list:
+\begin{verbatim}
+help> index
+Ganga Public Interface (GPI) Index
+
+Classes:
+    File                   Represent the files, both local and remote and
+                           provide an interface to transparently get access to
+                           them.
+    GenericSplitter        Split job by changing arbitrary job attribute.
+    GaussSplitter          Create a set of Gauss jobs based on the total number
+                           of jobs and the number of events per subjob
+    OptionsFileSplitter    Split a jobs based on a list of option file fragments
+    SplitByFiles           Splits a job into sub-jobs by partitioning the input
+                           data
+    ArgSplitter            Split job by changing the args attribute of the
+                           application.
+    DiracSplitter          Query the LFC, via Dirac, to find optimal data file
+                           grouping.
+    EmptyDataset           Documentation missing.
+    LHCbDataset            Documentation missing.
+    JobTemplate            A placeholder for Job configuration parameters.
+    Job                    Job is an interface for submision, killing and
+                           querying the jobs :-).
+    MigrationLHCbDataset10
+    LSF                    LSF backend - submit jobs to Load Sharing Facility.
+    Dirac                  The backend that submits LHCb jobs to the Grid via
+                           DIRAC
+    PBS                    PBS backend - submit jobs to Portable Batch System.
+    Condor                 Condor backend - submit jobs to a Condor pool.
+    SGE                    SGE backend - submit jobs to Sun Grid Engine.
+    LCG                    LCG backend - submit jobs to the EGEE/LCG Grid using
+                           gLite/EDG middleware.
+    Local                  Run jobs in the background on local host.
+    Interactive            Run jobs interactively on local host.
+    JobInfo
+    Executable             Executable application -- running arbitrary programs.
+    Brunel                 The Brunel Application handler
+    Moore                  The Moore Application handler
+    DaVinci                The DaVinci Application handler
+    Gauss                  The Gauss Application handler
+    Boole                  The Boole Application handler
+    Gaudi                  The Gaudi Application handler
+    Vetra                  The Vetra Application handler
+    Root                   Root application -- running ROOT
+    Euler                  The Euler Application handler
+    LCGRequirements        Helper class to group LCG requirements.
+    CondorRequirements     Helper class to group Condor requirements.
+    LHCbDataFile           Documentation missing.
+    MultipleMerger         Merger class when merges of different file types are
+                           needed.
+    SmartMerger            Allows the different types of merge to be run
+                           according to file extension in an automatic way.
+    RootMerger             Merger class for ROOT files
+    TextMerger             Merger class for text
+
+
+Exceptions:
+     GangaAttributeError
+     ProtectedAttributeError Attribute is read-only and may not be modified by
+                             the user (for example job.id)
+     ReadOnlyObjectError     Object cannot be modified (for example job in a
+                             submitted state)
+     JobError
+     TreeError
+     ConfigError             ConfigError indicates that an option does not exist
+                             or it cannot be set.
+
+
+Functions:
+     license             Print the full license (GPL)
+     load                Function to load previously exported Ganga objects
+     export              Function to export Ganga objects to a file
+     applications        return a list of all available applications, OBSOLETE:
+                         use plugins("applications")
+     backends            return a list of all available backends, OBSOLETE: use
+                         plugins("backends")
+     list_plugins        List all plugins in a given category, OBSOLETE: use
+                         plugins(category)
+     typename            Return a name of Ganga object as a string, example:
+                         typename(j.application) -> "DaVinci"
+     categoryname        Return a category of Ganga object as a string, example:
+                         categoryname(j.application) -> "applications"
+     plugins             List loaded plugins.
+     force_job_completed manually make the job 'completed' if stuck in
+                         completing state
+     force_job_failed    manually make the job 'failed' if stuck in submitting
+                         or completing state
+     full_print          Print the full contents of a GPI object without
+                         abbreviation.
+     reactivate          activates the internal services previously disabled due
+                         to expired credentials
+     runMonitoring
+
+
+Objects:
+    gridProxy Grid proxy management object.
+    afsToken  AFS token management object.
+    jobs      default job registry
+    templates default registry of job templates
+    jobtree   Logical tree view of the jobs
+    config    access to Ganga configuration
+
+\end{verbatim}
+At this point you can just type the name of the command to see specific help.
+You exit the help system by typing Ctrl-D. To get help on an individual
+command from the prompt type help and the name of the command:
+\begin{verbatim}
+Help on class Localhost in module Ganga.GPIDev.Base.Proxy:
+
+class Localhost(GPIProxyObject)
+ |  Local backend -- run jobs as processes on local host.
+ |  
+ |  Properties:
+ |  
+ |   actualCE Hostname where the job was submitted.. (simple property,
+ |            default=None,protected,comparable)
+ |  
+ |   workdir  Working directory.. (simple property,
+ |            default=None,protected,comparable)
+ |  
+ |   id       Process id.. (simple property, default=None,protected,comparable)
+ |  
+ |   exitcode Process exit code.. (simple property,
+ |            default=None,protected,comparable)
+:
+:
+\end{verbatim}
+
+\section{Hello World with \ganga}
+You can create jobs that runs arbitrary executables and scripts. In the first
+example below we use \texttt{/bin/echo} executable which is present in most
+most Unix systems to create a Hello World job.
+\begin{verbatim}
+In [4]:j = Job(application=Executable(exe='/bin/echo',args=['Hello World']))
+In [5]:j.submit()
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 1
+Ganga.GPIDev.Adapters              : INFO     submitting subjob 1
+Ganga.Lib.Localhost                : INFO     job 1 submitted
+Out[5]: 1
+\end{verbatim}
+The job is submitted to the default batch backend which is the local host. The
+monitoring will report output each time you type return. After it has finished
+you can get the output.
+\begin{verbatim}
+In [6]:
+Ganga.Lib.Localhost                : INFO     Local job 1 status changed to running, pid=9642
+Ganga.Lib.Localhost                : INFO     Local job 1 finished with exitcode 0
+
+In [6]:outfile = file(j.outputdir+'stdout')
+In [7]:print outfile.read()
+Hello World
+In [8]:j.peek('stdout')
+\end{verbatim}
+
+The \texttt{peek()} executes an external command to show the files in
+the job output directory. The command may be customized in
+\texttt{[File_Associations]} configuration section.
+
+You may also invoke the shell commands directly from \ganga.
+
+\begin{verbatim}
+In [9]:!cat $j.outputdir/stdout
+Hello World
+\end{verbatim}
+The exclamation mark before the cat command above is the way to tell \ipython
+that you issue a shell command. The dollar sign indicates that you return to a
+python command.  Your first \ganga job was successfully completed!  If you
+have problems with the job you should check the other files in the directory
+given by \texttt{j.outputdir}.
+
+\begin{seealso}
+  \ipython is a third party product that makes it much nicer to work with the
+  \python prompt. It provies shortcuts, command line history, colouring etc.
+  See \seeurl{http://ipython.scipy.org}{} for further information.
+  documentation.
+\end{seealso}
+
+
+
+\section{Running executables with \ganga}
+
+The  HelloWorld example  uses  the {\tt  /bin/echo}  command which  is
+available  on  any computer.  However  if you  want  to  run your  own
+executable (a binary or a script) you should tell \ganga that you want
+to use  this executable  {\it file} not  a simple command.  Your job
+should be specified like this:
+
+\begin{verbatim}
+j = Job()
+j.application = Executable(exe=File('~/somescript'), args=['1','2','3'])
+j.submit()
+\end{verbatim}
+
+Ganga  will  make  sure  that  the file  {\tt$\tilde{}$/somescript}  will  be
+correctly copied  and executed  with the command  {\tt ./somescript  1 2
+3}. This mechanism is called an {\it input sandbox} and is designed to
+handle small files (up to few MB). More information about handling files
+in section \ref{sec:files}.
+
+\begin{notice}
+Do not confuse the {\tt File} class
+which  is  a \ganga-specific  class  to  ship  files remotely  with  a
+python's  {\tt file}  built-in function  which is  used  to read/write
+local files.
+\end{notice}
+
+
+\section{More on \ganga job objects}
+Each job in \ganga has a unique number (identifier).  \ganga jobs are
+automatically stored on in a {\em job registry}. You can use the job id number
+to find jobs submitted in previous \ganga sessions.
+\begin{verbatim}
+In [10]: print j.id
+1
+\end{verbatim}
+
+Print the summary of a job by just typing the object on a line of its own:
+\begin{verbatim}
+In [10]:j
+Out[10]: Job (
+ status = 'completed' ,
+ name = '' ,
+ inputdir = '/afs/cern.ch/user/u/uegede/gangadir/workspace/Local/1/input/' ,
+ outputdir = '/afs/cern.ch/user/u/uegede/gangadir/workspace/Local/1/output/' ,
+ id = 1 ,
+ outputsandbox = [] ,
+ splitter = None ,
+ inputsandbox = [ ] ,
+ application = Executable (
+    exe = '/bin/echo' ,
+    env = {} ,
+    args = ['Hello World'] 
+    ) ,
+ subjobs = [ ] ,
+ inputdata = None ,
+ backend = Local (
+    actualCE = 'lxplus059.cern.ch' ,
+    workdir = '/tmp/@8263.2' ,
+    id = 9642 ,
+    exitcode = 0 
+    ) 
+ ) 
+\end{verbatim}
+
+\begin{notice}
+Sometimes the full printout of job attributes may get quite lengthy, especially
+if a job has many files or subjobs. So by default \ganga does a summary print in
+a way similar to the standard python \texttt{repr} module. To get the
+full print of a job (or any other \ganga object) you may use the \texttt{full_print()} function:
+\begin{verbatim}
+full_print(j)
+\end{verbatim}
+\end{notice}
+
+You can access the properties of the job directly as attributes and use the
+programmatic properties of \python. For example:
+\begin{verbatim}
+In [14]: j.application
+Executable {
+ exe = '/bin/date'
+ }
+In [17]: if j.status == 'completed':
+   ....:     print 'Great, I completed job',j.id,'.'
+   ....:
+Great, I completed job 1 .
+\end{verbatim}
+
+All jobs are stored in the job registry, called \texttt{jobs}:
+\begin{verbatim}
+In [30]:jobs
+Out[30]: Statistics: 4  jobs
+--------------
+#   id      status        name    application   backend   backend.actualCE  
+#    1   completed                 Executable     Local  lxplus059.cern.ch  
+#    2   completed      Hello2     Executable     Local  lxplus059.cern.ch  
+#    3         new  myAnalysis        DaVinci     Dirac                     
+#    4     running      Hello3     Executable     Local  lxplus059.cern.ch  
+\end{verbatim}
+
+You may retrieve job objects from a registry using their ids:
+\begin{verbatim}
+In [27]: print jobs(18).status
+completed
+In [28]: for job in jobs:
+   ....:     print job.id
+   ....:
+18
+19
+20
+21
+\end{verbatim}
+
+If a job is in the \texttt{submitted} or \texttt{running} state you can kill
+it. Otherwise you will get an error.
+above.
+\begin{verbatim}
+In [32]:jobs(4).kill()
+Ganga.GPIDev.Lib.Job               : INFO     killing job 4
+Out[32]: 1
+
+In [33]:jobs(1).kill()
+Ganga.GPIDev.Lib.Job               : INFO     killing job 1
+Ganga.GPIDev.Lib.Job               : WARNING  cannot kill job which is in 'completed' state
+\end{verbatim} 
+Notice that from the \ipython prompt tab expansion works to explore available
+methods on an object so you can do:
+\begin{verbatim}
+In [34]:j.
+j.application    j.fqid           j.inputdir       j.merger         j.outputsandbox  j.splitter
+j.backend        j.id             j.inputsandbox   j.name           j.peek           j.status
+j.copy           j.info           j.kill           j.outputdata     j.remove         j.subjobs
+j.fail           j.inputdata      j.master         j.outputdir      j.resubmit       j.submit
+\end{verbatim} 
+to see the available commands. Attributes starting by an underscore are internal and are not shown.
+As an example you can see there is a remove method which will remove the job from the registry
+(after killing it first if running). 
+
+Notice that jobs in \ganga are persisted. If you quit \ganga (type Ctrl-D at
+the prompt) and reenter you will find all your jobs again.
+
+\section{Complex Jobs}
+\ganga is implemented as a small core that provides you with the syntax as
+well as the functionality of storing and retrieving jobs. Everything else is
+achieved through particular plugins. Many of these are experiment specific
+(like Athena jobs for ATLAS and \davinci jobs for \lhcb) so only a few general
+ones will be described here. Look in the specific manuals for experiment
+specific plugins.
+
+\subsection{Submission backends}
+Job submission backend defines where your job will be run. You can run the
+same job you ran locally just by attaching a different backend. The
+\texttt{Local}, \texttt{LSF} and \texttt{LCG} handlers are available in all
+\ganga sessions. As an example we can start a set of jobs to run on LSF.
+\begin{verbatim}
+In [58]:for i in range(10):
+   ....:     j = Job(application=myexe, backend='LSF', name='LSFHostname')
+   ....: 
+In [59]:jobs[-10:].submit() #submit last 10 created jobs
+
+< wait for jobs to finish >
+
+In [85]:for j in jobs[-10:]:
+   ....:     !grep '^lxb' $j.outputdir/stdout
+   ....:     
+lxb1456.cern.ch
+lxb0040.cern.ch
+lxb0422.cern.ch
+lxb0422.cern.ch
+lxb1002.cern.ch
+lxb1270.cern.ch
+lxb6619.cern.ch
+lxb5407.cern.ch
+lxb0581.cern.ch
+lxb6084.cern.ch
+\end{verbatim}
+
+To get a list of available backends in your session type \texttt{plugins("backends")}.
+The output will depend on the experiment specific plugins you have loaded.
+\begin{verbatim}
+In [86]:plugins("backends")
+Out[86]: ['LSF', 'LCG', 'Dirac', 'gLite', 'PBS', 'Condor', 'Local']
+\end{verbatim}
+While LSF might be available in \ganga as a backend it of course still depends
+on that you have a local LSF batch system. There is no magic here.
+
+Each backend object will store an \texttt{id} for the job when it is running.
+For the local handler it is the process id, for LSF it is the LSF job id etc.
+You can use this to get access to further information. As an example you can
+get the output from a running LSf job with the \texttt{bpeek} command like:
+\begin{verbatim}
+In [67]:!/usr/local/lsf/bin/bpeek $j.backend.id
+<< output from stdout >>
+@(#)CERN job starter $Date: 2009-02-26 21:38:52 $
+Working directory is </pool/lsf/uegede/767136> on <lxb6084.cern.ch>
+
+lxb6084.cern.ch
+DEBUG: cwd= /pool/lsf/uegede/767136
+DEBUG: ls = ['1142590441.767136.out', '1142590441.767136.err', '.lsf.start', '__jobscript__']
+DEBUG: Job finshed with exit code:  0
+
+Job finished at Fri Mar 17 11:16:01 CET 2006 on node 
+ under linux version Scientific Linux CERN Release 3.0.6 (SL)
+
+
+CERN statistics: This job used 0:00:00 NCU hours (0 NCU seconds)
+
+CERN statistics: This job used 0:00:00 KSI2K hours (0 KSI2K seconds)
+
+KSI2K = kilo-SpecInt2000 benchmark units = 1.00 NCU
+
+<< output from stderr >>
+\end{verbatim}
+
+\subsection{Applications}
+In principle it would be possible to perform all analysis simply by writing
+scripts that are executed via the simple \texttt{Executable} application
+backend as in the examples above. For a complicated analysis job this is far
+from trivial though. To help on this \ganga provides a set of specific
+application backends. For \lhcb there are applications for all the standard
+\textsc{Gaudi} jobs (\textsc{Gauss}, \textsc{Bool}, \textsc{Brunel},
+\textsc{DaVinci}) while for ATLAS there is an \textsc{Athena} application.
+
+Too see the applications that are available in your current \ganga session
+simply type \texttt{plugins('applications')}. Notice that the output will depend on the
+experiment specific handlers you have loaded.
+\begin{verbatim}
+In [76]: plugins('applications')
+Out[76]: ['Boole', 'Gaudi', 'Executable', 'Brunel', 'Euler', 'DaVinci', 'Gauss', 'Moore']
+\end{verbatim}
+
+The application interface provides information necessary to configure a job in
+a way which is the most convenient for a given application. For example, it may
+automatically find the executable file using some conventions, it may define
+application-specific options etc.  Each job object has a corresponding
+application interface.
+
+Typically applications live inside the job objects but they may also be
+created separately. Below is given an \lhcb example:
+\begin{verbatim}
+In [77]:dv = DaVinci(version='v12r16')
+In [78]:print dv
+DaVinci (
+ version = 'v12r16' ,
+ extraopts = None ,
+ configured = 0 ,
+ package = 'Phys' ,
+ cmt_user_path = '/afs/cern.ch/user/u/uegede/cmtuser' ,
+ masterpackage = None ,
+ optsfile = File (
+    name = '' ,
+    subdir = '.' 
+    ) 
+ ) 
+\end{verbatim}
+
+Application objects may be assigned to jobs.  In that case all properties of
+the application will be copied into the job.application object. In \ganga the
+copying of complex structures such as applications within the job context is
+always done by value. This guarantees the consistency of the jobs:
+\begin{verbatim}
+In [79]:j = Job(application=dv)
+In [80]:j.application.version='v16r0'
+In [81]:print dv.version
+v12r16
+In [82]:print j.application.version
+v16r0
+\end{verbatim}
+
+Within the job context you can also use string names of the applications to
+create new objects. The example below will create an empty
+\code{Executable()} application object and assign it to the job:
+\begin{verbatim}
+>>> j.application = 'Executable'
+\end{verbatim}
+
+\begin{notice}
+  Not all applications can be matched with all backends. This is to not
+  enforce the system to artificially support situations that wouldn't make
+  sense anyway like submitting an \lhcb \davinci job to the ATLAS production
+  system. If you combine an application with a non-compatible backend you will
+  get an error at submission time.
+\end{notice}
+
+\subsection{Input data and input sandbox}
+You may specify additional files which will be copied to the worker node as
+the inputsandbox. This mechanism works for small files (less than a few MB).
+Submission backends may impose limitations on the size of the sandbox, so
+occasionally you may get an error if you exceed the quota. Also remember that
+\ganga keeps the input sandbox for all jobs in the file workspace (typically in
+\texttt{$\tilde{}$/gangadir/workspace}) so you may run into quota problems.
+
+The input data is an application-specific description of the large data files or
+datasets which are required for the job. The transfer of input data is handled
+in a special way and typically there are no restrictions on the size. The
+input data may also influence the brokering process on the Grid your job may go
+the sites where the data is found.
+
+You are able to find further details about how the input data and input
+sandbox parameters are used in the documentation of individual applications
+and backends.
+
+\subsection{Handling files and input/output sandbox}
+\label{sec:files}
+
+The Executable application allows to specify sandbox files directly as executables or the arguments:
+
+\begin{verbatim}
+j = Job()
+j.application = Executable(exe=File('/opt/anotherscript'), args=['-d',File('/etc/x')])
+j.submit()
+\end{verbatim}
+
+In this example \ganga has two files to copy around in the sandbox and
+the  executed command  is {\tt  anotherscript  -d x}.  Both files  are
+copied to the same directory on the worker node.
+
+\begin{notice}
+Note the difference between \texttt{File} and \texttt{file}.
+
+
+\texttt{File('name')} is \ganga-specific object which just tells
+\ganga to put the file into the sandbox, whereas  \texttt{file('name')} is a
+standard python file object which opens the file for reading.  The two
+flavours of file objects are NOT interchangeable.
+\end{notice}
+
+
+What if  you just need to  copy the file  which is not an  argument of
+Executable or you are dealing with a different application? You simply
+add it to the inputsandbox, like in this example:
+
+\begin{verbatim}
+j = Job()
+j.application = Executable(exe=File('do_something_script'), args=[])
+j.inputsandbox = [File('~/extra_file')]
+j.submit()
+\end{verbatim}
+
+Note, that  if you  use the {\tt  File('do_something_script')} object,
+the file  name will be  automatically converted to its  absolute path.
+This is useful, because the {\tt File}  object will still be usable, even if
+you change the  current directory. If you are  writing scripts you may
+want to disable this feature  by assigning the file name directly like
+this: {\tt File(name='a/b/myfile')}.
+
+Also note,  that if  you assign strings  to {\tt  j.inputsandbox} they
+will  be automatically  converted to  {\tt File}  objects. So  the two
+lines below are equivalent:
+
+\begin{verbatim}
+j.inputsandbox = [File(extra_file')]
+j.inputsandbox = ['extra_file']
+\end{verbatim}
+
+Finally you  may control the file  destination on the  worker node. By
+default the  files are copied  to the current working  directory ({\tt
+'.'}) but  specifying a File's  {\tt subdir} attribute you  may change
+it.
+
+The {\tt  outputsandbox} specifies which  files should be  copied from
+the worker  node to  the submitter  machine and is  a list  of strings
+(contrary  to the {\tt  inputsandbox} which  is a  list of  {\tt File}
+objects). The {\tt  outputsandbox} individual names or shell patterns, for example:
+
+\begin{verbatim}
+j.outputsandbox = ['b.dat','a*.txt']
+\end{verbatim}
+
+The {\tt b.dat} file will be copied (if exists) as well as all files which match the 
+{\tt a*.txt} pattern.
+
+
+\section{Job manipulation}
+
+\subsection{Copying jobs}
+You may use an existing job object to create a new job. The first non-named
+object in the creation of a new object will be used as a copy
+constructor. Hence the two examples below will both create a copy of the old
+job, but with a different name:
+\begin{verbatim}
+In [1]:j = Job(name='original')
+In [2]:jcopy1 = j.copy()
+In [3]:jcopy1.name='Copy1'
+In [4]:jcopy2 = Job(j,name='Copy2')
+In [5]:print jobs
+Statistics: 3  jobs
+--------------
+#   id      status        name   application   backend 
+#   57         new    original    Executable     Local 
+#   58         new       Copy1    Executable     Local 
+#   59         new       Copy2    Executable     Local 
+\end{verbatim}
+
+\subsection{Failing jobs}
+It may be sometimes useful to explicitly mark the job as failed e.g. to indicate wrong output or some other malfunction. 
+
+A submitted or running job must be first killed.
+
+\begin{verbatim}
+j.force_status("failed")
+\end{verbatim}
+
+\subsection{Job Templates}
+Job templates in \ganga are very similar to normal jobs except that they
+cannot be submitted. Instead they are a way of predefining and saving job
+parameters for future use. They are stored in a separate register called
+\texttt{templates}. The example below creates a template.
+
+\begin{verbatim}
+In [6]:dv=DaVinci(version='v12r16')
+In [7]:dv.masterpackage='Tutorial/UKAnalysis/v1r0'
+In [8]:dv.cmt_user_path='/afs/cern.ch/user/u/uegede/cmttest'
+In [9]:dv.optsfile='myopts.opts'
+In [10]:t = JobTemplate(application=dv,name='Tutorial')
+In [11]:print templates
+Statistics: 1  templates
+--------------
+#   id      status        name   application  backend
+#    1    template    Tutorial       DaVinci    Local
+\end{verbatim}
+
+You can then in the same or in a future \ganga session create jobs based on
+the template.
+\begin{verbatim}
+In [12]:tdv=templates[1]
+In [13]:j1 = Job(tdv,name='JobFromTemplate')
+In [14]:j2 = Job(tdv,backend=LSF(),name='JobWithModifiedBackend')
+In [15]:print j1,j2
+Job (
+ status = 'new' ,
+ name = 'JobFromTemplate' ,
+ id = 60 ,
+:
+ application = DaVinci (
+    version = 'v12r16' ,
+:
+    ) ,
+ backend = Local (
+:
+    ) 
+ ) 
+ Job (
+ status = 'new' ,
+ name = 'JobWithModifiedBackend' ,
+ id = 61 ,
+:
+ application = DaVinci (
+    version = 'v12r16' ,
+:
+    ) ,
+ backend = LSF (
+:
+    ) 
+ ) 
+\end{verbatim}
+
+% It is also useful to refer to templates by name. The command
+% \begin{verbatim}
+% In [28]: list = templates['Tutorial']
+% \end{verbatim}
+% will give you a list of job templates with the name Tutorial. If you only have
+% one (or want the first one with this name), the following is an easy way to
+% submit a job based on this template:
+% \begin{verbatim}
+% In [29]: Job(templates['Tutorial'][0]).submit()
+% \end{verbatim}
+
+\subsection{Removing jobs}
+You may see the status of all your active jobs as in the example below:
+\begin{verbatim}
+In [1]: print jobs
+Statistics: 5  jobs
+--------------
+  ID     status           name
+# 61        new    original
+# 62        new       Copy1
+# 63        new       Copy2
+# 64        new  JobFromTemplate
+# 65        new  JobWithModifiedBackend
+\end{verbatim}
+
+If you consider that your jobs occupy too much space you may easily remove
+them and associated directories from disk:
+\begin{verbatim}
+In [2]: jobs(64).remove()
+Ganga.GPIDev.Lib.Job               : INFO     removing job 64
+\end{verbatim}
+To remove all jobs in the registry you can use the \texttt{remove} command
+\begin{verbatim}
+In [4]: jobs.remove()
+In [5]: print jobs
+Statistics: 0  jobs
+\end{verbatim}
+Take care; this acts like \emph{rm -rf *} in your file system.
+
+\subsection{Export and import of jobs}
+\label{sec:ExportImport}
+It is possible in \ganga to export jobs into a text format and then later read
+them back in. This is not a replacement for your repository where job
+definitions are stored between \ganga sessions, but may serve as a useful way
+to exchange job definitions with other users. The following example shows the
+\texttt{export} of a job, the context of the text file it is saved in and a
+subsequent \texttt{load} of the job.
+\begin{verbatim}
+In [16]:j = Job(application=DaVinci(), backend=Dirac())
+In [17]:export(j,'myjob.txt')
+In [18]:!cat myjob.txt
+#Ganga# File created by Ganga - Fri Mar 17 11:37:48 2006
+#Ganga#
+#Ganga# Object properties may be freely edited before reloading into Ganga
+#Ganga#
+#Ganga# Lines beginning #Ganga# are used to divide object definitions,
+#Ganga# and must not be deleted
+
+#Ganga# Job object (category: jobs)
+Job (
+ name = '' ,
+ outputsandbox = [] ,
+ splitter = None ,
+ inputsandbox = [ ] ,
+ application = DaVinci (
+    version = 'v15r0' ,
+    extraopts = None ,
+    package = 'Phys' ,
+    cmt_user_path = '/afs/cern.ch/user/u/uegede/cmtuser' ,
+    masterpackage = None ,
+    optsfile = File (
+       name = '' ,
+       subdir = '.' 
+       ) 
+    ) ,
+ inputdata = None ,
+ backend = Dirac (
+    )  ) 
+\end{verbatim}
+Notice that the file is written in a clear text format. You can edit this in a
+text editor and maybe use it as a starting point for writing scripts. 
+
+You can also \texttt{export} the whole or part of your repository like
+\texttt{export(jobs)}. See the help text for \texttt{export} and \texttt{load}
+for all the available options (type \texttt{help load} at the \ipython
+prompt).
+
+
+
+\section{Tracking jobs}
+\label{sec:tracking}
+
+You may see the status of all your active jobs as in the example below:
+\begin{verbatim}
+In [14]:jobs
+Out[14]:
+Job slice:  jobs (6 jobs)
+--------------
+# fqid      status        name   subjobs      application          backend                               backend.actualCE
+#    0   completed                             Executable            Local                              lxplus232.cern.ch
+#    1      failed         old                 Executable              LSF
+#    2   completed   important                 Executable            Local                              lxplus232.cern.ch
+#    3   completed   important                 Executable            Local                              lxplus232.cern.ch
+#    4         new         old                 Executable              LCG
+#    6         new  a special one!             Executable              LSF
+\end{verbatim}
+
+The easiest way to access a job is using the id number:
+
+\begin{verbatim}
+In [15]: print jobs(1)
+Job (
+ status = 'failed' ,
+ name = 'old' ,
+ id = 1 ,
+ ...
+ )
+
+\end{verbatim}
+
+The job name may be used as an additional label. A name does not have
+to be unique. However if the name is unique there is a shortcut which
+allows to find it easily:
+
+\begin{verbatim}
+
+In [16]:j = jobs['a special one!']
+In [17]:print j
+Out[17]: Job (
+ status = 'new' ,
+ name = 'a special one!' ,
+ id = 6 ,
+ ...
+
+In [18]:jobs['old']
+JobAccessError: job "old" not unique
+\end{verbatim}
+
+To get all jobs with a given name, you may use the select method:
+
+\begin{verbatim}
+In [25]:old_jobs=jobs.select(name='old')
+In [26]:print old_jobs
+Job slice:  jobs.select(minid=None,maxid=None,name='old') (2 jobs)
+--------------
+# fqid      status        name   subjobs      application          backend                               backend.actualCE
+#    1      failed         old                 Executable              LSF
+#    4         new         old                 Executable              LCG
+\end{verbatim}
+
+See section \ref{sec:collective} for more on select operations.
+
+Another way of accessing jobs is using the standard python list indexing and slicing. This is the way to access the first and the last job:
+
+\begin{verbatim}
+In [50]:first=jobs[0]
+In [51]:print first
+Job (
+ status = 'completed' ,
+ name = '' ,
+ id = 0
+...)
+
+In [52]:last=jobs[-1]
+In [53]:print last
+Job (
+ status = 'new' ,
+ name = 'a special one!' ,
+ id = 6
+ ... )
+\end{verbatim}
+
+The two first jobs
+
+\begin{verbatim}
+In [59]:first2=jobs[:2]
+In [60]:print first2
+Out[60]:
+Job slice:  jobs[0:2] (2 jobs)
+--------------
+# fqid      status        name   subjobs      application          backend                               backend.actualCE
+#    0   completed                             Executable            Local                              lxplus232.cern.ch
+#    1      failed         old                 Executable              LSF
+\end{verbatim}
+
+The last two jobs:
+
+\begin{verbatim}
+In [61]:last2=jobs[-2:]
+In [62]:print last2
+Out[62]:
+Job slice:  jobs[4:2147483647] (2 jobs)
+--------------
+# fqid      status        name   subjobs      application          backend                               backend.actualCE
+#    4         new         old                 Executable              LCG
+#    6         new  a special one!             Executable              LSF
+\end{verbatim}
+
+The jobs access notation is optimized to give maximum flexibility and convenience.
+
+\begin{notice}
+Syntax to access individual jobs:
+\begin{enumerate}
+\item \texttt{jobs[i]}: get i-th job (counting from 0) (*)
+\item \texttt{jobs['name']}: get job by name if the name is unique (**)
+\item \texttt{jobs(id)}: get the job by the id number (**)
+\item \texttt{jobs((id1,id2)} is equivalent to \texttt{jobs(id1).subjobs(id2)} (**)
+\item \texttt{jobs('id1.id2')} like above (**)
+\end{enumerate}
+\begin{itemize}
+\item [*] raise JobAccessIndexError if not found. This exception is derived from IndexError.
+\item [**] raise JobAccessError if not found.
+\end{itemize}
+\end{notice}
+
+\begin{notice}
+Syntax to access job slices:
+\begin{enumerate}
+\item \texttt{jobs[i:k]}: get a slice like for the list
+\item \texttt{jobs.select(min_id,max_id)}: get a slice for all jobs for which \texttt{min_id<=id<=max_id}
+\end{enumerate}
+If no jobs are found in the selected range, the empty selection is returned.
+
+For a complete syntax of select operation see section \ref{sec:collective}.
+\end{notice}
+\subsection{Job tree}
+\label{sec:jobtree}
+The \texttt{jobtree} object in \ganga gives you the possibility to organise
+jobs in a directory structure. Look at the session below to get a feeling for
+what is possible.
+\begin{verbatim}
+In [1]:jobs
+Out[1]: Statistics: 6  jobs
+--------------
+#   id  status        name  application    backend
+#   57     new    original   Executable      Local
+#   58     new       Copy1   Executable      Local
+#   59     new       Copy2   Executable      Local
+#   60     new  JobFromTem      DaVinci      Local
+#   61     new  JobWithMod      DaVinci        LSF
+#   62     new  MyAnalysis      DaVinci      Dirac
+In [2]:jobtree
+Out[2]: 
+[Folders]: 0
+[Jobs]: 0
+In [3]:jobtree.mkdir('testJobs')
+In [4]:jobtree.mkdir('myAnalysis')
+In [5]:jobtree.cd('testJobs')
+In [6]:jobtree.add(jobs(57))
+In [7]:jobtree.cd('/myAnalysis')
+In [8]:jobtree.add(jobs(60))
+In [9]:jobtree.add(jobs(61))
+In [10]:jobtree.add(jobs(62))
+In [11]:jobtree.cd('/')
+In [12]:jobtree.printtree
+------->jobtree.printtree()
+  [/]
+    |-[myAnalysis]
+        |-60
+        |-61
+        |-62
+    |-[testJobs]
+        |-57
+In [13]:jobtree.cd('/myAnalysis')
+In [14]:for j in jobtree.getjobs(): print j.name
+   ....: 
+JobFromTemplate
+JobWithModifiedBackend
+ MyAnalysis
+\end{verbatim}
+
+Jobs are stored in the jobtree by their index and you can think of it as a
+softlink. This also means that jobs can be placed in several folders at the
+same time. If you remove a job from the repository the references in the
+jobtree will also automatically disappear. The jobtree is persisted in
+between \ganga sessions.
+
+To see the full list of commands on the jobtree type \texttt{help(jobtree)} on the command line.
+ 
+
+
+
+
+\section{Collective job operations}
+\label{sec:collective}
+
+Consider the following jobs:
+
+\begin{verbatim}
+In [14]:jobs
+Out[14]:
+Job slice:  jobs (6 jobs)
+--------------
+# fqid      status        name   subjobs      application          backend                               backend.actualCE
+#    0   completed                             Executable            Local                              lxplus232.cern.ch
+#    1      failed         old                 Executable              LSF
+#    2   completed   important                 Executable            Local                              lxplus232.cern.ch
+#    3   completed   important                 Executable            Local                              lxplus232.cern.ch
+#    4         new         old                 Executable              LCG
+#    6         new  a special one!             Executable              LSF
+\end{verbatim}
+
+A subset of jobs may be selected using simple criteria such as name, status, application or backend:
+
+\begin{verbatim}
+In [29]:new_jobs=jobs.select(status='new')
+
+In [30]:print new_jobs
+Job slice:  jobs.select(minid=None,maxid=None,status='new') (3 jobs)
+--------------
+# fqid      status        name   subjobs      application          backend                               backend.actualCE
+#    3         new   important                 Executable            Local
+#    4         new         old                 Executable              LCG
+#    6         new  a special one!             Executable              LSF
+\end{verbatim}
+
+\begin{notice}
+Full syntax of select operation:
+
+\texttt{jobs.select(min_id,max_id,attr=value,...)} yields a selection of jobs \texttt{j} for which:
+\begin{enumerate}
+\item \texttt{min_id<=j.id<=max_id} (min_id or max_id may be ommited)
+\item \texttt{j.attr==value} (the supported attributes are \texttt{name,status,backend,application})
+\end{enumerate}
+
+Multiple attributes may be specified, each attribute narrows the selection (AND).
+\end{notice}
+
+
+The jobs in the selection may be manipulated in a single operation:
+
+\begin{verbatim}
+In [31]:new_jobs.submit()
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 3
+Ganga.GPIDev.Adapters              : INFO     submitting job 3 to Local backend
+Ganga.GPIDev.Lib.Job               : INFO     job 3 status changed to "submitted"
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 4
+Ganga.GPIDev.Adapters              : INFO     submitting job 4 to LCG backend
+...
+\end{verbatim}
+
+The advantage of calling methods on the selection of jobs is not only
+the short notation but also a possibility of optimizing certain
+operations internally. The optimization depends however on the
+implementation details of the submission backends and may not always
+be possible.
+
+Here the list of all supported operations:
+
+\begin{enumerate}
+\item \texttt{submit(keep_going=True)}
+\item \texttt{copy(keep_going=True)}
+\item \texttt{kill(keep_going=True)}
+\item \texttt{resubmit(keep_going=True)}
+\item \texttt{remove(keep_going=True,force=True)}
+\end{enumerate}
+
+Here is how to mark all jobs as failed (whenever this operation is permitted):
+
+\begin{verbatim}
+
+In [2]:jobs.force_status("failed")
+Ganga.GPIDev.Lib.Job               : INFO     job 0 status changed to "failed"
+Ganga.GPIDev.Lib.Job               : INFO     job 1 status changed to "failed"
+Ganga.GPIDev.Lib.Job               : INFO     job 2 status changed to "failed"
+Ganga.GPIDev.Lib.Job               : INFO     job 3 status changed to "failed"
+Ganga.GPIDev.Lib.Job               : WARNING  JobStatusError:  ('forbidden status transition of job 4 from "new" to "failed"',)
+Ganga.GPIDev.Lib.Job               : WARNING  JobStatusError:  ('forbidden status transition of job 6 from "new" to "failed"',)
+
+In [3]:jobs
+Out[3]:
+Job slice:  jobs (6 jobs)
+--------------
+# fqid      status        name   subjobs      application          backend                               backend.actualCE
+#    0      failed                             Executable            Local                              lxplus232.cern.ch
+#    1      failed         old                 Executable              LSF
+#    2      failed   important                 Executable            Local                              lxplus232.cern.ch
+#    3      failed   important                 Executable            Local                              lxplus232.cern.ch
+#    4         new         old                 Executable              LCG
+#    6         new  a special one!             Executable              LSF
+
+\end{verbatim}
+
+If the \texttt{keep_going} option is set to True (default) then the operation continues despite possible errors. Consider this example:
+
+\begin{verbatim}
+In [11]:jobs.submit(keep_going=True)
+Ganga.GPIDev.Lib.Job               : WARNING  cannot submit job 0 which is in 'failed' state
+Ganga.GPIDev.Lib.Job               : WARNING  cannot submit job 1 which is in 'failed' state
+Ganga.GPIDev.Lib.Job               : WARNING  cannot submit job 2 which is in 'failed' state
+Ganga.GPIDev.Lib.Job               : WARNING  cannot submit job 3 which is in 'failed' state
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 4
+Ganga.GPIDev.Adapters              : INFO     submitting job 4 to LCG backend
+Ganga.GPIDev.Lib.Job               : WARNING  JobManagerError: error during submit ... reverting job 4 to the new status
+Ganga.GPIDev.Lib.Job               : INFO     job 4 status changed to "new"
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 6
+Ganga.GPIDev.Adapters              : INFO     submitting job 6 to LSF backend
+Ganga.GPIDev.Lib.Job               : INFO     job 6 status changed to "submitted"
+\end{verbatim}
+
+On the other hand, if setting the \texttt{keep_going} option to False, makes the whole operation abort at the first error:
+
+\begin{verbatim}
+In [10]:jobs.submit(keep_going=False)
+Ganga.GPIDev.Lib.Job               : WARNING  cannot submit job 0 which is in 'failed' state
+
+JobError: cannot submit job 0 which is in 'failed' state
+\end{verbatim}
+
+Additionally, the \texttt{force=True} flag may be used to always override the job status for \texttt{remove} and \texttt{fail} operations.
+
+The collective operations and selections may also be performed on subjobs. For example the following provides convenient shorthand notation:
+
+\begin{verbatim}
+j.subjobs.resubmit()
+j.subjobs.select(status='killed').force_status("failed")
+\end{verbatim}
+ 
+
+\section{Job splitting and merging}
+
+Often computing tasks are far too big to be carried out on a single CPU within
+an acceptable amount of time. To solve this we can divide a job into bits that
+can execute in parallel on different worker nodes. To support this way of
+working \ganga has the concept of job splitting. You define a \emph{master
+  job} that contains the complete job and the provide a \emph{splitter} that
+has the knowledge to divide the problem into many \emph{sub jobs}. The typical
+application is the analysis of a very large dataset. What the splitter does in
+this case is to divide the dataset into may smaller chunks that are analysed
+in individual jobs.
+
+
+\subsection{Subjobs}
+\label{sec:subjobs}
+
+In the core of \ganga there is a simplistic splitter called
+\texttt{ArgSplitter}. This splitter simply takes an list of args
+creates a sub job for each of them, assuming that the application has
+the args attribute (which is the case of Executable and Root).  Below
+is an example that creates a master job with 3 sub jobs. The sub jobs
+simply prints the letters \texttt{A}, \texttt{B}, and \texttt{C}
+\begin{verbatim}
+In [21]:s = ArgSplitter(args=[['A'],['B'],['C']])
+In [22]:j = Job(splitter=s)
+In [23]:j.submit()
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 164
+Ganga.GPIDev.Adapters              : INFO     submitting subjob 16400001
+Ganga.Lib.Localhost                : INFO     job 16400001 submitted
+Ganga.GPIDev.Adapters              : INFO     submitting subjob 16400002
+Ganga.Lib.Localhost                : INFO     job 16400002 submitted
+Ganga.GPIDev.Adapters              : INFO     submitting subjob 16400003
+Ganga.Lib.Localhost                : INFO     job 16400003 submitted
+Out[23]: 1
+\end{verbatim}
+Notice how the single submit command on the master job causes the 3 sub jobs
+to be created and submitted. To look at the output of the sub jobs we can
+access them as a list from the master job:
+\begin{verbatim}
+In [24]:for sj in j.subjobs:
+   ....:     sj.peek('stdout','cat')
+   ....:     
+A
+B
+C
+\end{verbatim}
+
+The status of a master job is determined by the status of the sub jobs. If any
+jobs are in the \texttt{running} state, the master will be in the
+\texttt{running} state. Only once all sub jobs have completed will the master
+go into \texttt{completed} state.
+
+For splitting according to datasets which is probably more useful, the only
+implementation so far is for \lhcb Gaudi jobs. See the \lhcb specific manual
+for how this is used.
+
+To get the list of available splitters type \texttt{plugins('splitters')}:
+\begin{verbatim}
+In [1]:plugins('splitters')
+Out[1]: ['GenericSplitter', 'ArgSplitter']
+\end{verbatim}
+
+\subsection{Merging subjobs}
+
+Users often partition jobs, either manually, or automatically with a
+splitter, so that the output files from several jobs needs to be
+combined at the later stage.
+
+\ganga provides a few predefined mergers which may be listed by typing \texttt{plugins('mergers')}:
+
+\begin{verbatim}
+In [1]:plugins('mergers')
+Out[1]: ['MultipleMerger', 'SmartMerger', 'RootMerger', 'TextMerger']
+\end{verbatim}
+
+Consider the job defined in the previous section:
+
+\begin{verbatim}
+In [2]:s = ArgSplitter(args=[['A'],['B'],['C']))
+In [3]:j = Job(splitter=s)
+\end{verbatim}
+
+The automatic merger of the standard output may be enabled as follows:
+
+\begin{verbatim}
+In [4]:j.merger=TextMerger()
+In [5]:j.merger.files=['stdout']
+In [6]:j.merger.ignorefailed = True
+In [7]:j.submit()
+\end{verbatim}
+
+The merging of subjobs is done automatically when the status of the
+master job changes to completed. If the ignorefailed flag has been
+set, then it will also be run when the master jobs status is set to
+failed.
+
+The output of the merge will be put in the master jobs outputdir
+unless the merger tool has its outputdir variable set, in which case
+the specified location will be used. Any files output will be
+decorated with the master job ID to avoid clashes.
+
+\begin{verbatim}
+In [17]:j.peek()
+total 3.0K
+-rw-r--r--  1 moscicki sf  903 Jun 11 13:08 stdout.merge_summary
+-rw-r--r--  1 moscicki sf 1.2K Jun 11 13:08 stdout
+\end{verbatim}
+
+\subsection{Merging collections of jobs}
+
+Manual merging allows a user to combine the output of arbitrary collection of jobs. 
+
+Consider the following jobs:
+
+\begin{verbatim}
+In [3]:j = Job(name='merge-demo')
+In [4]:j = Job(name='merge-demo')
+In [5]:demojobs = j.select(name='merge-demo')
+In [6]:demojobs.submit()
+\end{verbatim}
+
+The merger object does the rest. Note that the outputdir must be
+specified, eventually having a sensible default in .gangarc.
+
+\begin{verbatim}
+In [8]:m = TextMerger()
+In [10]:m.files=['stderr']
+In [13]:m.merge(demojobs,outputdir = '~/merge_dir')
+Out[13]: True
+
+In [14]:!ls -l ~/merge_dir
+total 2
+-rw-r--r--  1 kuba z5 274 Jun 11 13:47 stderr
+-rw-r--r--  1 kuba z5 203 Jun 11 13:47 stderr.merge_summary
+\end{verbatim}
+
+No name decoration will be done, so if an operation would have caused
+overwriting, then an error will be raised.  If the user wants to force
+overwriting, they can set the overwrite flag on the Merge object:
+\texttt{rm.overwrite = True}
+
+The \texttt{merge()} method accepts any list of Jobs, or a single Job
+object. This includes both a simple list and a job slice or selection.
+If any of the Jobs in the list contain subjobs then the merge object
+will first be set on the Job and then merge called.
+
+The user can use the same merge instance to merge multiple lists of jobs.
+
+
+\section{Running \ganga jobs on the LHC Computing Grid}
+\subsection{Introduction}
+The LHC Computing Grid (LCG) is a world-wide distributed computing environment
+developed for supporting the LHC experiments in High Energy Physics. The LCG
+jobs are submitted from a User Interface (LCG-UI) and managed by a
+Workload Management System (WMS).
+
+The \ganga LCG backend handler implements the interactions with the WMS for
+running jobs on LCG. It supports the two versions of the WMS, the EDG version
+(EDG-WMS) and the gLite version (gLite-WMS).
+
+\subsection{Getting start}
+Running the \ganga LCG backend handler requires a LCG-UI environment. \ganga
+allows user to specify alternative LCG-UI environments by specifying the configuration parameters,
+\texttt{EDG_SETUP} and \texttt{GLITE_SETUP} corresponding to the UI setup for
+accessing the EDG-WMS and the gLite-WMS, respectively.
+
+By default, the module of the LCG backend handler is automatically loaded
+with only the support for the EDG-WMS. The module first checks the availability
+and the validity of the Grid credential. Credential renewal will be
+triggered if the module cannot find a valid one to access LCG.   
+
+To enable the support for the gLite-WMS, one can either set the parameter
+\texttt{GLITE_ENABLE} to \texttt{True} within the \texttt{LCG} section of the
+\texttt{.gangarc} configuration file before starting \ganga or directly enable it
+inside a running \ganga session by:
+\begin{verbatim}
+In [1]:config['LCG']['GLITE_ENABLE'] = True
+\end{verbatim}
+
+As soon as the support for gLite-WMS is enabled, the module will check the
+availability of the VOMS information attached with the Grid credential and
+will force a credential re-initialization if no VOMS information is obtained.  
+
+Running a simple LCG job through \ganga can be done as follows:
+\begin{verbatim}
+In [1]:j = Job(backend=LCG())
+
+In [2]:j.submit()
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 117
+Ganga.GPIDev.Adapters              : INFO     submitting job 117 to LCG backend
+Ganga.Lib.LCG                      : INFO     using the VO defined as atlas.
+Out[2]: 1
+
+In [3]:jobs(117)
+Out[3]: Job (
+ status = 'completed' ,
+ name = '' ,
+ inputdir = '/afs/cern.ch/user/h/hclee/gangadir/workspace/Local/117/input/' ,
+ outputdir = '/afs/cern.ch/user/h/hclee/gangadir/workspace/Local/117/output/' ,
+ id = 117 ,
+ outputsandbox = [] ,
+ splitter = None ,
+ merger = None ,
+ inputsandbox = [ ] ,
+ application = Executable (
+    exe = 'echo' ,
+    env = {} ,
+    args = ['Hello World']
+    ) ,
+ outputdata = None ,
+ subjobs = [ ] ,
+ inputdata = None ,
+ backend = LCG (
+    status = 'Done (Success)' ,
+    reason = 'Job terminated successfully' ,
+    middleware = 'EDG' ,
+    actualCE = 'gridce.roma3.infn.it:2119/jobmanager-lcgpbs-atlas' ,
+    id = 'https://gdrb01.cern.ch:9000/JLiZPFLOD9zaa5aLNCITEQ' ,
+    CE = None ,
+    exitcode = '0' ,
+    requirements = LCGRequirements (
+       other = [] ,
+       memory = None ,
+       software = [] ,
+       ipconnectivity = None ,
+       cputime = None ,
+       walltime = None
+       )
+    )
+ )
+\end{verbatim}
+
+In the example, \ganga submits a simple "Hello World" job to LCG through the
+EDG-WMS. During the job runtime, the \ganga monitoring loop will update the
+backend attributes, \texttt{backend.status}, \texttt{backend.reason}, \texttt{backend.actualCE} and
+\texttt{backend.id}, based on the job information retrieved from the LCG
+Logging-and-Bookkeeping System (LCG-LB).
+
+Once the job is reported as "completed", one can find the output in the directory of \texttt{outputdir}.
+\begin{verbatim}
+In [5]:ls $jobs(117).outputdir
+__jobscript__.log  stderr  stdout
+
+In [6]:cat $jobs(117).outputdir/stdout
+Hello World
+\end{verbatim}
+
+One could switch \ganga to submit jobs through the gLite-WMS by simply
+changing the attribute, \texttt{backend.middleware}. For example,
+\begin{verbatim}
+In [7]:j=Job(backend=LCG())
+
+In [8]:j.backend.middleware = 'GLITE'
+
+In [9]:j.submit()
+Ganga.GPIDev.Lib.Job               : INFO     submitting job 118
+Ganga.GPIDev.Adapters              : INFO     submitting job 118 to LCG backend
+Ganga.Lib.LCG                      : INFO     using the VO defined as atlas.
+Out[9]: 1
+
+In [10]:j.backend
+Out[10]: LCG (
+ status = None ,
+ reason = None ,
+ middleware = 'GLITE' ,
+ actualCE = None ,
+ id = 'https://rb101.cern.ch:9000/nnp5ftGXe7DjADPLFGWbzg' ,
+ CE = None ,
+ exitcode = None ,
+ requirements = LCGRequirements (
+    other = [] ,
+    memory = None ,
+    software = [] ,
+    ipconnectivity = None ,
+    cputime = None ,
+    walltime = None
+    )
+ )
+\end{verbatim}
+
+\subsection{\ganga configuration for the LCG backend handler}
+The \ganga configuration parameters for the LCG backend handler are summarized
+in the following tables.
+
+The parameters related to the setup of the WMS and the UI:
+\begin{tableiv}{l|l|l|l}{constant}{Parameter}{Description}{Data type}{Default value}
+\lineiv{EDG_ENABLE}{enables the supports for the EDG-WMS}{boolean}{\texttt{True}}
+\lineiv{GLITE_ENABLE}{enables the supports for the gLite-WMS}{boolean}{\texttt{False}}
+\lineiv{EDG_SETUP}{sets the LCG-UI configuration for the EDG-WMS}{str}{the setup
+script for CERN LCG-UI}
+\lineiv{GLITE_SETUP}{sets the LCG-UI configuration for the
+gLite-WMS}{str}{the setup script for CERN LCG-UI}
+\lineiv{Config}{sets alternative WMS configuration for job submission}{str}{None}
+\lineiv{ConfigVO}{sets alternative VO-specific WMS configuration for job
+submission}{str}{None}
+\end{tableiv}
+
+The parameters related to the Grid credential properties:
+\begin{tableiv}{l|l|l|l}{constant}{Parameter}{Description}{Data type}{Default value}
+\lineiv{VirtualOrganisation}{specifies the name of the Virtual
+Organisation}{str}{\texttt{dteam}}
+%%\lineiv{ProxyTimeValid}{sets the validity of the Grid credential in minutes}{int}{\texttt{24*60}}
+%%\lineiv{ProxyTimeLife}{sets the Grid credential to be invalid if its lifetime is
+%%shorter than the given minutes}{int}{\texttt{1*60}}
+\end{tableiv}
+
+\begin{seealso}
+    \seetext{More configurable Grid credential properties could be found in section 10, \textit{Credential management}.}
+\end{seealso}
+
+The parameters related to the LCG job description:
+\begin{tableiv}{l|l|l|l}{constant}{Parameter}{Function}{Data type}{Default value}
+\lineiv{AllowedCEs}{restricts the jobs to be submitted to the given list of
+CEs}{JDL regular expression}{None}
+\lineiv{ExcludeCEs}{restricts the jobs to be NOT submitted to the given list of
+CEs}{JDL regular expression}{None}
+\lineiv{RetryCount}{sets the retry number for the WMS scheduling}{int}{WMS
+default}
+\lineiv{MyProxyServer}{sets the hostname of the MyProxy server}{str}{UI
+default}
+\lineiv{Rank}{sets the expression for resource ranking}{JDL
+expression}{None}
+\end{tableiv}
+
+\begin{notice}
+\ganga will raise an \texttt{Exception} if the change on Virtual
+Organisation is attampted in a single session.
+\end{notice}
+
+\subsection{Attributes of the LCG backend handler object}
+The attributes of the \ganga LCG backend handler are summarized
+in the following table.
+
+\begin{tableiv}{l|l|l|l}{constant}{Attribute}{Function}{Data type}{Default value}
+\lineiv{middleware}{sets the middleware type of the target WMS}{str}{EDG}
+\lineiv{CE}{restricts the job to be run on the given CE}{str}{None}
+\lineiv{requirements}{specifies the resource requirement}{LCGRequirement}{LCGRequirement default}
+\end{tableiv}
+
+The attributes of the \texttt{LCGRequirement} object:
+\begin{tableiv}{l|l|l|l}{constant}{Attribute}{Function}{Data type}{Default value}
+\lineiv{memory}{sets the minimum requirement of memory}{int}{None}
+\lineiv{ipconnectivity}{sets if outbound connectivity is
+required}{boolean}{None}
+\lineiv{cputime}{sets the minimum requirement of cputime}{int}{None}
+\lineiv{walltime}{sets the minimum requirement of walltime}{int}{None}
+\lineiv{software}{sets the required software installation}{list}{[]}
+\lineiv{other}{sets other requirements}{list}{[]}
+\end{tableiv}
+
+\section{Writing scripts}
+You can take advantage of \ganga to write scripts that will perform a large
+set of actions for you. As an example there is a script \texttt{submitjobs.py}
+below that will submit a set of jobs corresponding to all scripts in a
+directory \texttt{mydir} below your home directory:
+\begin{verbatim}
+import os
+dir=os.environ['HOME']+'/mydir'
+file=os.listdir(dir)
+for line in file:
+  print line
+  j = Job(Executable(exe=File(dir+'/'+line))
+  j.submit
+
+\end{verbatim}
+Note that you cannot use the \ipython short hand notations script. To run
+this script you can either do it from within \ganga like
+\begin{verbatim}
+In [16]: execfile('submitjobs.py')
+\end{verbatim}
+or indeed straight from the shell command line
+\begin{verbatim}
+[lxplus061]~% ganga submitjobs.py
+\end{verbatim}
+If you do more that just a single thing there is an advantage in running from
+within \ganga. If you run multiple scripts at the shell prompt you will for
+each new script get the penalty of initialising your job repository.
+
+\begin{seealso}
+
+\ganga contains a few scripts for basic job operations such as submit, kill etc. The scripts
+are available in {\tt ganga/python/Ganga/scripts} directory in each \ganga release.
+
+CVS \ganga scripts via the Web:
+\seeurl{http://isscvs.cern.ch/cgi-bin/viewcvs-all.cgi/ganga/python/Ganga/scripts/?cvsroot=ganga}{}
+
+Atlas defines the {\tt athena} script for simplified submission of Athena jobs in {\tt ganga/python/GangaAtlas/scripts}.
+
+CVS \ganga Atlas scripts via the Web:
+\seeurl{http://isscvs.cern.ch/cgi-bin/cvsweb.cgi/ganga/python/GangaAtlas/scripts/?cvsroot=ganga}{}
+\end{seealso}
+
+The configuration  option {\tt [Configuration]  SCRIPTS_PATH } defines
+the  search path  for the  scripts. The  current working  directory is
+always searched first.
+
+\section{Configuration}
+\subsection{Command line options}
+\ganga takes several command line arguments which are listed below.
+\begin{verbatim}
+[lxplus059]~% ganga --help
+usage: 
+*** Welcome to Ganga ***
+Version: Ganga-4-2-1
+Documentation and support: http:/cern.ch/ganga
+Type help() or help('index') for online help.
+
+usage: ganga [options] [script] [args] ...
+
+options:
+  --version             show program's version number and exit
+  -h, --help            show this help message and exit
+  -i                    enter interactive mode after running script
+  --gui                 Run Ganga in the GUI mode.
+  --config=FILE         read user configuration from FILE (default ~/.gangarc)
+  --config-path=CONFIG_PATH
+                        site/experiment config customization path, overrides the
+                        GANGA_CONFIG_PATH variable
+  -g, --generate-config
+                        generate a default config file, backup the existing one
+  -oEXPR, --option=EXPR
+                        set configuration options, may be repeated mutiple
+                        times,for example: -o[Logging]Ganga.Lib=DEBUG
+                        -oGangaLHCb=INFO -o[Configuration]TextShell = IPython
+                        FIXME: PATH-like variables are reset and not appended to
+                        (unlike the config file behaviour)
+  --quiet               only ERROR messages are printed
+  --very-quiet          only CRITICAL messages are printed
+  --debug               all messages including DEBUG are printed
+  --no-prompt           never prompt interactively for anything except IPython
+                        (FIXME: this is not fully implemented)
+  --no-rexec            rely on existing environment and do not re-exec ganga
+                        processto setup runtime plugin modules (affects
+                        LD_LIBRARY_PATH)
+\end{verbatim}
+
+\subsection{Startup file}
+
+If you have a file \texttt{~/.ganga.py} when \ganga starts, it will execute all the commands in there exactly as if you had typed them on the screen after the appearance of the prompt. As an exmaple we might list all the running jobs in the repository. For that you would just place
+\begin{verbatim}
+slice = jobs.select(status='running')
+slice
+\end{verbatim}
+into the file.
+
+\subsection{Configuration file}
+
+The configuration file will be covered here while the options related to
+verbosity are covered in the next section. The remaining options are for
+advanced use and will not be covered.
+
+By default when \ganga starts  it tries to read the configuration file
+\texttt{\~{}/.gangarc} but  as seen from  above a command  line argument
+can change  this. The configuration file  itself is in  the INI format
+and you can create an empty  one by running \texttt{ganga -g}. A small
+section of a default configuration file is shown below.
+
+\begin{verbatim}
+# Ganga configuration file ($Name: Ganga-SVN $). DO NOT remove this line.
+#
+:
+:
+#=======================================================================
+[Configuration]
+
+# The path to runtime plugin packages where you can add custom handlers
+# Normally you should not worry about it.
+# If an element of the path is just a name (like in the example below)
+# then the plugins will be loaded using current python path. This means that
+# some packages such as GangaAtlas or GangaLHCb may be taken from the release area
+# Examples:
+#RUNTIME_PATH = GangaAtlas
+#RUNTIME_PATH = GangaLHCb:GangaAtlas
+:
+:
+#=======================================================================
+[Logging]
+
+# Logging controls the Ganga output messages.
+# The settings are applied hierarchically to the loggers.
+# Ganga is the name of the top-level logger.
+# The log level may be one of: CRITICAL ERROR WARNING INFO DEBUG
+# Examples:
+#Ganga = CRITICAL
+#Ganga.Runtime = DEBUG
+\end{verbatim}
+
+The most  important parameter here is  the \texttt{RUNTIME_PATH}. This
+decides which  directories are searched  for handlers. The  default is
+decided by your group setup. Note, that in the automatically generated
+user config  file all the settings  are commented out  (void) and thus
+your group settings will be used. 
+
+The environment  variable GANGA_CONFIG_PATH specifies  the sequence of
+configuration   files  which   are  loaded   {\it  before}   the  user
+configuration  file.  These  files contain  the your  group  and local
+sitre settings.   The experiment-related settings are  defined in {\tt
+python/GangaLHCb/LHCb.ini} and {\tt python/GangaAtlas/Atlas.ini}.
+
+\subsection{Configuration in GPI}
+
+You may also see the configuration options interactively using the built-in \texttt{config} object:
+
+\begin{verbatim}
+In [14]:print config
+Ganga Configuration
+Configuration                   : global configuration parameters.
+DIRAC                           : Parameters for DIRAC
+Display                         : control the printing style of the job registry ("print jobs")
+File_Associations               : default associations between file types and file-viewing commands.
+GPIComponentFilters             : Customization of GPI component object assignment
+LCG                             : LCG/gLite/EGEE configuration parameters
+LHCb                            : Parameters for LHCb
+LSF                             : internal LSF command line interface
+Local                           : parameters of the local backend (jobs in the background on localhost)
+LocalAMGA_Repository            : Settings for the local AMGA job repository
+LocalXML_Repository             : Parameters of the local XML-based job repository
+Logging                         : control the messages printed by Ganga
+...
+
+In [15]:print config.Logging
+Logging : control the messages printed by Ganga
+The settings are applied hierarchically to the loggers. Ganga is the name of the top-level logger which
+applies by default to all Ganga.* packages unless overriden in sub-packages.
+You may define new loggers in this section.
+The log level may be one of: CRITICAL ERROR WARNING INFO DEBUG
+
+     Ganga = 'WARNING'
+          top-level logger
+          Type: <type 'str'>
+     Ganga.GPIDev = 'INFO'
+          logger of Ganga.GPIDev.* packages
+          Type: <type 'str'>
+     Ganga.Runtime.bootstrap = 'INFO'
+          FIXME
+          Type: <type 'str'>
+     Ganga.Utility.logging = 'WARNING'
+          logger of the Ganga logging package itself (use with care!)
+          Type: <type 'str'>
+     _colour = True
+          enable ASCII colour formatting of messages e.g. errors in red
+          Type: <type 'bool'>
+     _format = 'NORMAL'
+          format of logging messages: TERSE,NORMAL,VERBOSE,DEBUG
+          Type: <type 'str'>
+     _interactive_cache = True
+          if True then the cache used for interactive sessions, False disables
+          caching
+          Type: <type 'bool'>
+     _logfile = '~/.ganga.log'
+          location of the logfile
+          Type: <type 'str'>
+     _logfile_size = 100000
+          the size of the logfile (in bytes), the rotating log will never exceed
+          this file size
+          Type: <type 'int'>
+\end{verbatim}
+
+You may also change some configuration options but BEWARE: not all
+configuration options may take effect when changed inside the Ganga
+session. Option set at \ganga startup (in the configuration file or
+via -o command line option) are marked with one asterisk (*) while
+options changed interactively are marked with two asterisks (**):
+
+\begin{verbatim}
+In [16]:config.Logging._colour=False
+In [17]:print config.Logging
+...
+**   _colour = False
+          enable ASCII colour formatting of messages e.g. errors in
+          red
+          Type: <type 'bool'>
+...
+\end{verbatim}
+
+You may also use TAB expansion to see the options. Caveat: options
+starting with an underscore will not be presented as a tab expansion
+choice. Some options, especially in the Logging section may contain
+dots. Due to the rules of python syntax such names may not be
+tab-expanded and you must use special syntax to access them:
+
+\begin{verbatim}
+In [1]:config.Logging.Ganga.GPIDev
+---------------------------------------------------------------------------
+exceptions.AttributeError                            Traceback (most recent call last)
+
+/afs/cern.ch/user/k/kuba/<console>
+
+AttributeError: 'str' object has no attribute 'GPIDev'
+
+In [2]:config.Logging['Ganga.GPIDev']
+Out[2]: INFO
+\end{verbatim}
+
+
+
+\section{Credential management}
+
+\subsection{Introduction}
+
+Ganga automatically checks the user credentials. If credentials, such
+as AFS token, expire \ganga may no longer save job output files or
+update the job information stored in the AFS directory. In such a case
+\ganga will automatically freeze job output retrieval and switch to
+the read-only mode. The command \texttt{reactivate()} may be used to
+bring this functionality back once all required credentials have been restored.
+
+At startup, \ganga creates the objects \texttt{gridProxy}
+and \texttt{afsToken}, using which you can interact with your Grid Proxy
+and AFS token respectively.  These credential objects have properties
+that you can set in your \texttt{/.gangarc} configuration file, or modify
+at the \ganga prompt.
+
+\subsection{gridProxy properties, and automatic proxy checking}
+Properties for the gridProxy object can be set in the configuration file as
+in the following example:
+
+\begin{verbatim}
+[defaults_GridProxy]
+# Default validity (hh:mm) with which Grid proxy should be created
+validityAtCreation = 50:00
+# Default minimum validity (hh:mm) for creating new proxy
+minValididty = 20:00
+# Maximum number of attempts allowed when entering passphrase
+maxTry = 3
+# Options to be passed to underlying command for creating proxy
+init_opts =
+# Virtual Organisation Management System to be used
+voms = atlas
+\end{verbatim}
+
+In general, you should set the value of the \texttt{voms} property to
+the name of your Virtual Organisation (VO), for example \texttt{atlas} or
+\texttt{lhcb}.  In this case, \ganga will make use of VOMS-based commands
+(for example, \texttt{voms-proxy-init} for proxy creation), and you will
+have the permissions that have been set for you by your VO.  If you
+specifically want \ganga to use non-VOMS commands (for example,
+\texttt{grid-proxy-init} for proxy creation), then you should set
+\texttt{voms} to a null value.
+
+As part of its monitoring procedure, \ganga periodically checks
+your Grid proxy's validity.  If this is less than the value
+specified for \texttt{minValidity} then \ganga will prompt
+you for creation of a new proxy.
+
+\subsection{afsToken properties}
+
+Properties for the afsToken object can be set in the configuration file as
+in the following example:
+
+\begin{verbatim}
+[defaults_AfsToken]
+# Default validity with which AFS token should be crreated
+validityAtCreation = 12:00
+# Default minimum validity (hh:mm) for creating new AFS token
+minValididty = 00:15
+# Maximum number of attempts allowed when entering password
+maxTry = 2
+# AFS username - if no value is set then login name is used
+username = myName
+# AFS cell - if no value is set then local AFS cell is used
+# (cern.ch for users on lxplus.cern.ch)
+cell = cern.ch
+\end{verbatim}
+
+\subsection{Actions with gridProxy and afsToken}
+
+The following methods may be invoked for gridProxy and afsToken:
+
+\begin{description}
+\item[create] Create a new credential (Grid proxy or AFS totken).
+\item[renew] Create a new credential, but only if the existing credential
+is no longer valid.
+\item[timeleft] Return remaining time for which credential is valid.
+\item[isValid] Determine whether credential is valid.
+\item[location] Return credential location (Grid proxy only).
+\item[destroy] Destroy credential - to be used with care.
+\end{description}
+
+Details of the arguments that can be passed with each method call can be
+found in \ganga's online help.  Some example usage is shown below.
+
+\begin{verbatim}
+# Examine gridProxy properties
+In [1]:gridProxy 
+Out[1]: GridProxy (
+ validityAtCreation = '24:00' ,
+ minValidity = '00:30' ,
+ maxTry = 1 ,
+ init_opts = '' ,
+ voms = 'lhcb'
+ )
+
+# Determine time for which proxy remains valid
+In [2]:gridProxy.timeleft()
+Out[2]: 1:50:44 
+
+# Create new proxy with default validity
+# (i.e. as specified by validityAtCreation property)
+In [3]:gridProxy.create()
+Your identity: /C=UK/O=eScience/OU=Cambridge/L=UCS/CN=karl harrison
+Enter GRID pass phrase:
+Creating temporary proxy ......................................... Done
+Contacting  lcg-voms.cern.ch:15003 [/C=CH/O=CERN/OU=GRID/CN=host/lcg-voms.cern.ch] "lhcb" Done
+Creating temporary proxy .................................... Done
+Contacting  lcg-voms.cern.ch:15003 [/C=CH/O=CERN/OU=GRID/CN=host/lcg-voms.cern.ch] "lhcb" Done
+Creating proxy ..................................................... Done
+Your proxy is valid until Wed Oct 18 11:58:22 2006
+Ganga: INFO     Credential renewal process successful.
+Out[3]: 1
+
+# Determine time for which new proxy remains valid
+In [4]:gridProxy.timeleft()
+Out[4]: 23:59:24
+
+# Create AFS token valid for 12 hours
+In [5]:afsToken.create(validity="12:00")
+Password:
+Ganga: INFO     Credential renewal process successful.
+Out[5]: 1
+
+# Determine time for which AFS token is valid
+# (initial actual validity can be larger than requested validity) 
+In [6]:afsToken.timeleft()
+Out[6]: 12:11:20
+\end{verbatim}
+
+\section{Verbosity of \ganga}
+As is the case in many other software projects you can change the verbosity of
+\ganga through the levels: CRITICAL, ERROR, WARNING, INFO, and DEBUG. This can
+be done either at a global level or for specific parts of \ganga.
+
+If you simply want on a case by case situation for \ganga to adjust the
+verbosity you can use the command line options as listed in the extract below:
+\begin{verbatim}
+~% ganga -h
+usage:
+*** Welcome to Ganga-5 ***
+Documentation and support: http:/cern.ch/ganga
+
+usage: ganga [options] [script] [args] ...
+
+options:
+  -h, --help            show this help message and exit
+  --quiet               only ERROR messages are printed
+  --very-quiet          only CRITICAL messages are printed
+  --debug               all messages including DEBUG are printed
+\end{verbatim}
+
+If you want to change the verbosity in a permanent way you can do this by
+editing the \texttt{.gangarc} initialisation file. Look in the file itself for
+documentation about how the logging can be turned up and down for individual
+packages. 
+
+For example, to turn DEBUG mode for GangaLHCb you may use any of the following methods:
+\begin{enumerate}
+\item change the configuration file \texttt{\~{}gangarc: [Logging]GangaLHCb=DEBUG} 
+\item set command-line option: \texttt{ganga -o'[Logging]GangaLHCb=DEBUG'}
+\item interactively: \texttt{[In 1]: config.Logging.GangaLHCb='DEBUG'}
+\end{enumerate}
+
+
+If you submit a bug to \ganga please run your session with full debugging
+information for your documentation of the bug.
+
+\section{Reporting bugs}
+As with all other software reporting of bugs is an essential task any user can
+help with. To report a bug to \ganga go to the page in Savannah.
+\begin{seealso}
+\seeurl{https://savannah.cern.ch/bugs/?group_id=195}{}
+\end{seealso}
+Check if the bug is already reported, and if not submit a new one. Please
+include maximal information about how to reproduce the bug and if you include
+output from the command line turn debug information on first (just start
+\ganga with the \texttt{--debug} option).
+
+\section{Extending \ganga}
+\label{sec:Extending}
+It is easy to extend \ganga to include a new plugin with \texttt{backends},
+\texttt{applications} or \texttt{splitters} that are not part of the main
+distribution. The extension can be done without making any changes in the core
+part of the distribution but simply appending the \texttt{RUNTIME_PATH} in the
+configuration file to where the new code is located.
+
+Before you start on writing your own extensions think carefully about if the
+same functionality can be achieved by creating a template job that simply
+configures one of the existing plugins for your specific jobs.
+
+\begin{seealso}
+  The \emph{Developer Survival Guide} will give you many hints and
+  instructions if you want to develop something yourself.
+  \seeurl{http://ganga.web.cern.ch/ganga/work/Ganga4/survival/tut/tut.html}{}
+\end{seealso}
+
+The \lhcb and ATLAS extensions are implemented as plugins to the \ganga core
+so you can use them as examples for how to develop your own plugin. Please get
+in contact with the development team if you need help.
+
+\section{Release Notes}
+\label{ReleaseNotes}
+
+\subsection{New features in \ganga-5.7}
+\subsubsection{A `prepared' state for Ganga applications }
+This documents the `prepared' state for Ganga Core applications, as introduced in Ganga 5.7.0.
+\subsubsection{High-level overview }
+The purpose of the prepared state is to allow users to `freeze' an application in a known state, such that the exact same analysis job can be executed in the future (optionally over different input data). During the prepare phase, files that are integral to the applications execution (such as custom binaries or experiment-specific software areas) are copied to the user's Shared Directory (ShareDir) which is by default
+\begin{verbatim}
+<gangadir>/shared/<user>
+\end{verbatim}
+\par
+This functionality already existed in the Athena backend, as exposed by the prepare() method, but the resulting configuration files were stored in the /tmp directory, the persistence of which cannot be predicted. Similar underlying techniques will be exploited to allow initially Executable and later Root applications, plus any defined within the GangaTutorial package, be place into a prepared state.
+\textbf{\\}
+\subsubsection{Demonstration - Executable() application }
+We use an attribute attached to the application to indicate whether it has been prepared:
+\begin{verbatim}Out[23]: Executable (
+ exe = 'echo' ,
+ env = {} ,
+ args = [Hello World] ,
+ is_prepared = None 
+ ) 
+\end{verbatim}
+\par
+The \texttt{\textbf{is\_prepared}} attribute will hold a ShareDir object, which is generated with a random name in the users gangadir/shared directory:
+\begin{verbatim}Out[27]: ShareDir (
+ name = '/home/mkenyon/gangadir/shared/mkenyon/conf-41540084-7372-1309946661-72' ,
+ subdir = '.'  
+ ) 
+\end{verbatim}
+\par
+As an example, we can configure the default Ganga job, which has the above Executable() application attached to it:
+\begin{verbatim}In [1]:a=Job()
+In [2]:a.prepare()
+Ganga.GPIDev.Schema                : INFO     Preparing Executable application.
+Ganga.GPIDev.Schema                : INFO     Created shared directory: /home/gangadir/shared/conf-d7533df3-066a-4922-81ca-ec6404a10c6a</div>\end{verbatim}
+\par
+
+Note that it is equivalent to prepare the job, or the application associated with the job. In other words
+\begin{verbatim}job.prepare()
+\end{verbatim}
+\par
+and
+\begin{verbatim}job.application.prepare()
+\end{verbatim}
+\par
+are equivalent. Additionally, submitting a job also automatically calls the prepare method behind-the-scenes. The result of running the prepare phase is a job with the following application attributes.
+\begin{verbatim}Out[10]: Executable (
+ exe = 'echo' ,
+ env = {} ,
+ args = [Hello World] ,
+ is_prepared = ShareDir(name='/home/gangadir/shared/conf-d7533df3-066a-4922-81ca-ec6404a10c6a',subdir='.') 
+ ) 
+\end{verbatim}
+\par
+The contents of the ShareDir depend on the type of application that was prepared. In the basic example above, the application would attempt to execute the command `echo' on the backend/workernode, so we don't need to copy anything to the ShareDir. In a more realistic case, though, we might have a custom script that we wish to run on the worker node. This would then be copied to the ShareDir during the prepare phase.
+Once an application has been prepared, it gains a reference counter which is stored in the Ganga metadata system, and can be checked by calling shareref:
+\begin{verbatim}
+In [10]:shareref
+Out[10]: 
+                                 Shared directory |         Date created |  Reference count
+ ------------------------------------------------ | -------------------- |  ---------------
+                 conf-12754112-8042-1314361528-33 | 26 Aug 2011 13:25:28 |                1
+                    conf-86403407-38-1314361595-8 | 26 Aug 2011 13:26:35 |                1
+                 conf-24411345-7135-1314361709-42 | 26 Aug 2011 13:28:29 |                1
+                 conf-69852897-3565-1314541740-23 | 28 Aug 2011 15:29:00 |                1
+\end{verbatim}
+\par
+If an application is later associated with another job, or placed in the box, the reference counter is incremented. Likewise, it's decremented when a job or box object is removed. ShareDirs with a reference count of 0 will be removed when Ganga next closes down; in the event that an application's ShareDir cannot be found during Ganga closedown, the application will be unprepared.
+The contents of the shared directories can be viewed:
+\begin{verbatim}In [12]:shareref.ls('conf-284cbb3e-da37-4f6c-87e3-55576ec82cb7')
+|  conf-284cbb3e-da37-4f6c-87e3-55576ec82cb7/
+|  |  runMain.C
+\end{verbatim}
+\par
+Applications not associated with a persisted Ganga object (such as a job or the box) can be prepared, but they, and their associated ShareDir, will not persist beyond the current Ganga session.
+\subsubsection{Unpreparing an application }
+Once an application has been prepared, some of its attributes (as determined by that application's developers) will become read-only. This is to prevent the user accidentally changing an attribute on a prepared application (and hence violating the sense of a prepared application). In the event that the user really does want to modify a procted attribute, they should either unprepare the application/job
+\begin{verbatim}j.app.unprepare()
+app.unprepare()
+\end{verbatim}
+\par
+or copy the application/job to a new instance in the following manner:
+\begin{verbatim}newjob=oldjob.copy(unprepare=True)
+\end{verbatim}
+\par
+Applications can also be unprepared by resetting their \texttt{is\_prepared} attribute to \texttt{None}:
+\begin{verbatim}In [1]:a.application.is_prepared=None
+Ganga.GPIDev.Base.Proxy            : INFO     Unpreparing application.
+\end{verbatim}
+\par
+
+
+\subsection{New features in \release}
+
+\emph{This release is not backwards compatible}. The changes cover
+the persistently saved data (job repository), configuration options and the GPI
+interface.  Consult migration instructions in section \ref{sec:migration}.
+
+The main purpose of this release is to clean-up the interface, to
+introduce a number of long-awaited features and to prepare Ganga for
+potential new features such as remote workspace.
+
+The main changes in Ganga 5.0 release:
+\begin{itemize}
+\item improved configuration interface and restructed some of the configuration options
+\item support for job selections, slicing and collective operations
+\item usability improvement: summary print and \texttt{full_print()}
+\item optimized job repository for memory and speed
+\item changed default location of the local workspace and repository (still under \~{}/gangadir)
+\item type checking of job parameters and configuration options
+\end{itemize}
+
+\subsubsection{\Atlas}
+The main changes for \Atlas experiment include:
+\begin{itemize}
+\item Athena
+\begin{itemize}
+\item DQ2Dataset and all other routine support multiple datasets
+\texttt{j.inputdata.dataset=['datasetname1','datasetname2']}
+\item \texttt{DQ2Dataset.type='DQ2_COPY'} Copies input files and starts athena on the worker node one-by-one
+\item many small updates and bug-fixes
+\end{itemize}
+
+\item AthenaMC
+\begin{itemize}
+\item Added new production mode, template, to cover all transformations that
+  cannot be run with the three existing modes.
+\item Added new production mode, "template", to handle any transformation
+  not covered by the three existing modes (evgen, simul, recon).
+\item AthenaMCInputDatasets has been extended to 4 new members, 2 related to
+  input minimum bias and 2 related to cavern noise, to allow the use of
+  the pileup transformation.
+\item many small updates and bug-fixes
+\end{itemize}
+\item Tasks
+\begin{itemize}
+\item many updates and sync with Ganga 4.4.x developments
+\end{itemize}
+\end{itemize}
+
+\subsubsection{\lhcb}
+
+The main changes for \lhcb experiment include:
+\begin{itemize}
+\item Options files can now be specified in Python format as well.
+\item The optsfile attribute of the Gaudi applications in now a list.
+If more than one element is given to the list they are simply
+concatenated. Ex \texttt{j.application.optsfile=['file1.py','file2.py]}
+Mixing of old text format and new Python format is not allowed.
+\item The platform of an application can now be specified.
+\texttt{j.application.platform='slc4_ia32_gcc34'}. This will override the
+CMTCONFIG value. Make sure you have your shared libraries
+compiled for the platform you submit with!
+\end{itemize}
+
+\subsection{New features in \ganga-4.2}
+Compared to the last production release \ganga-4.1 the following new features are available:
+\begin{itemize}
+\item optimized bulk submission and handling of the input sandboxes
+\item new GangaPlotter utility and support for Root application and Interactive/PBS/SGE backends
+\item \lhcb bookkeeping database browser (enable with GangaLHCb and GangaGUI in the RUNTIME_PATH)
+\item \lhcb optimization in Dirac submission (shared sandboxes)
+\item Atlas DDM/DQ2 dataset integration and complete support for Athena analysis
+\item Atlas support for private Monte-Carlo productions (AthenaMC)
+\end{itemize}
+
+\subsection{New featues in \ganga-4.1}
+Compared to the last production release \ganga-4.0.2 the following new
+features are available:
+\begin{itemize}
+\item A \texttt{jobtree} to support a logical directory structure for jobs.
+\item Graphical User Interface available. Start it with
+\begin{verbatim}
+     ganga --gui
+\end{verbatim}
+  See separate manual for usage.
+\item Implementation of sub jobs to analyse large datasets as a single logical
+  job.
+\item Ten times faster submission of \lhcb analysis if implemented through sub
+  jobs.
+\item Many improvements and bug fixes in interaction with Dirac backend.
+\item Migration to production version of remote repository.
+\item PBS and Condor backend handlers added.
+\item Support for default properties to be set in configuration file.
+\item Possibility to check out and compile \lhcb code from within \ganga
+  session.
+\item Direct submission of \lhcb jobs to LCG.
+\item Rewritten local backend handler.
+\end{itemize}
+
+Some anticipated features did not make it into this release:
+\begin{itemize}
+\item Support for automatic merging of output from sub jobs
+\item Improved treatment of grid proxy and afs token handling.
+\item Direct access to the bookkeeping databases of the experiments.
+\end{itemize}
+
+\end{document}
