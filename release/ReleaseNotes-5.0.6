@@ -1,0 +1,115 @@
+**************************************************************************************************************
+5.0.6 (2008/8/25)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+#40071: added force_status() method to replace job.fail(), force_job_failed() and force_job_completed()
+#38646: added jobs.select([ids])
+#40110: GANGA_INTERNAL_PROCREEXEC should be unset after use
+
+VirtualOrganisation should not be set in test config files, it should be set in the ~/.gangarc of
+the release manager
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Condor
+--------------------------------------------------------------------------------------------------------------
+Updates for changes to JobConfig class in Ganga 5
+
+Updates for type-checking system of Ganga 5
+
+Improvements to documentation for CondorRequirements properties
+
+Error message printed in case submit command fails
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Bug fix to avoid problems in tcsh
+
+Improved the pre-script to allow an array of commands to be run before ganga
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Fix bug #39010, Add ATLASLocalDataset support for list of datasets,
+  add ATLASLocalDataset: get_dataset_filenames and get_dataset_from_list()
+* Fix bug #40269, ATLAS_PRODUCTION environment variable is now handled 
+  properly in Local/Batch backend
+* Change GangaTNT warning to debug message if lfc module is missing
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+New features:
+=============
+The Gaudi and GaudiPython applications have a new attribute called
+'setupProjectOptions'. It contains extra options to be passed onto the
+SetupProject command used for configuring the environment. As an
+example setting it to '--dev' will give access to the DEV area. For
+full documentation of the available options see
+https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject. The
+'lhcb_release_area' attribute has been taken away as it was not useful. 
+
+The Gaudi and GaudiPython applications can now read data from the
+detector. For this a new attribute, 'datatype_string', is added to the
+LHCbDataset. It contains the string that is added after the filename
+in the options to tell Gaudi how to read the data. If reading raw data
+(mdf files) it should be set to "SVC='LHCb::MDFSelector'".
+
+Minor changes:
+==============
+The identification of which default application version to pick is now
+using SetupProject.
+
+Many test cases have been updated to Ganga 5.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+removed python dependency
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPlotter
+--------------------------------------------------------------------------------------------------------------
+- deprecate slc3_gcc323 support
+- remove python2.3 dependency
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaRobot
+--------------------------------------------------------------------------------------------------------------
+The individual actions in the Robot can now throw exceptions that decide how the Robot will continue
+
+GangaRobotContinueError: 
+------------------------
+Issue a warning but continue with next action
+
+GangaRobotBreakError:
+---------------------
+Issue a warning and start over from beginning if running in infinite loop. If no infinite loop, the
+Robot will quit.
+
+GangaRobotFatalError:
+---------------------
+The Robot will quit.
+
+
+The default behaviour if any other exception is thrown is the same as GangaRobotFatalError but this
+can be changed in the initialisation. See the ROBOT.INI file for an example.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+removed python 2.3 dependency (not needed anymore)
+
+**************************************************************************************************************

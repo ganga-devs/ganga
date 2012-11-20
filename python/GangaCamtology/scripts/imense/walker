@@ -1,0 +1,329 @@
+#!/usr/bin/python
+
+import commands
+import os
+import sys
+from optparse import OptionParser
+from urllib import pathname2url
+tagList = [ "URLImage", "URLPage", "Categories", "License", "Text" ]
+
+def findFiles( topdir = ".", suffixList = [], nPerGroup = 1000, maxFile = -1, \
+   outdir = ".", outPrefix = "", verbose = False, rootUrl = "", \
+   infileName = "", urltag = "", outputAllTags = False, exclude = False ):
+   """
+   Walk through directory tree, or scan through input file, 
+   and write out groups of files with suffix in specified list
+   """
+   global iGroup, iFile, nFile, outFile
+  # Define full paths to top directory in tree,
+  # and to directory for output lists
+   if os.path.exists( fullpath( infileName ) ):
+      topdirPath = ""
+      infilePath = fullpath( infileName )
+      indirPath = os.path.dirname( infilePath )
+   elif os.path.isdir( fullpath( topdir ) ):
+      topdirPath = fullpath( topdir )
+      infilePath = ""
+      indirPath = topdirPath
+   outdirPath = fullpath( outdir )
+   if ( verbose ):
+      print ""
+      if topdirPath:
+         print "Walking through directories starting from '%s'" % topdirPath
+      if infilePath:
+         print "Scanning input file '%s'" % infilePath
+      print "File lists to be written in directory '%s'" % outdirPath
+      print ""
+
+  # Return immediately if no list of suffixes is given
+   if not suffixList:
+      return 0
+
+  # Initialise counters
+   iFile = 0
+   iGroup = 0
+   nFile = 0
+
+  # Initialise list of directories
+   if topdirPath:
+      dirList = [ topdirPath ]
+   else:
+      dirList = []
+
+   while dirList:
+
+     # Take the next directory, and list its contents
+      currentDir = dirList.pop()
+      if ( verbose ):
+         print "Scanning directory '%s'" % currentDir
+      fileList = os.listdir ( currentDir )
+
+      for filename in fileList:
+         path = fullpath ( os.path.join( currentDir, filename ) )
+
+         if os.path.isdir( path ):
+        # If path is a directory, then add it to the list
+            if ( not exclude ) or ( filename != "vseg" ): 
+               dirList.append( path )
+
+         else:
+        # If suffix is one of the ones looked for,
+        # then write out file information
+            fileBase, fileSuffix = os.path.splitext( filename )
+            if fileSuffix in suffixList:
+               listFile = True
+               if exclude:
+                  listFile = False
+                  facPath = "".join( [ path, ".fac" ] )
+                  if not os.path.exists( facPath ):
+                     listFile = True
+                  vsegBase = os.path.join( currentDir, "vseg", fileBase )  
+                  ipropPath = "".join( [ vsegBase, ".iprop" ] )
+                  if not os.path.exists( ipropPath ):
+                     listFile = True
+                  thumbPath = "".join( [ vsegBase, "_thumb.jpg" ] )
+                  if not os.path.exists( thumbPath ):
+                     listFile = True
+               if listFile:
+                  relPath = path[ 1 + len( topdirPath ) : ]
+                  url = pathname2url( os.path.join( rootUrl, relPath ) )
+                  url = url.replace( "%3A", ":" )
+                  terminate = writeInfo( url = url, tagDict = {},
+                     relPath = relPath, nPerGroup = nPerGroup, \
+                     verbose = verbose, indirPath = indirPath, \
+                     outdirPath = outdirPath, outPrefix = outPrefix, \
+                     maxFile = maxFile )
+                  if terminate:
+                     dirList = []
+                     break
+
+   if infilePath:
+      infile = open( infilePath )
+      line = "abc"
+      tagDict = {}
+      for tag in tagList:
+         tagDict[ tag ] = ""
+      while line:
+         line = infile.readline()
+         if line:
+            try:
+               tag, tagValue = line.strip().split( ":", 1 )
+               tag = tag.strip()
+               tagValue = tagValue.strip()
+            except ValueError:
+               tag = ""
+               tagValue = ""
+            if tag:
+               if tag in tagList:
+                  tagDict[ tag ] = tagValue
+               else:
+                  print "Warning: unknown tag '%s' found - data discarded" % tag
+            if tag == urltag:
+               url = pathname2url( tagValue )
+               url = url.replace( "%3A", ":" )
+
+            terminate = False
+
+            if outputAllTags:
+               if not tag:
+                  if tagDict[ urltag ]:
+                     terminate = writeInfo( url = url, tagDict = tagDict, \
+                        relPath = "", nPerGroup = nPerGroup, \
+                        verbose = verbose, indirPath = "", \
+                        outdirPath = outdirPath, outPrefix = outPrefix, \
+                        maxFile = maxFile )
+                  for tag in tagList:
+                     tagDict[ tag ] = ""
+            else:
+              if tag == urltag:
+               terminate = writeInfo( url = url, tagDict = {}, relPath = "", \
+                  nPerGroup = nPerGroup, verbose = verbose, \
+                  indirPath = indirPath, outdirPath = outdirPath, \
+                  outPrefix = outPrefix, maxFile = maxFile )
+            if terminate:
+               line = ""
+               break
+
+      infile.close()
+
+  # Make sure output file is closed
+   try:
+      outFile.close()
+   except:
+      pass
+
+   return nFile
+         
+def fullpath( path = "" ):
+   """
+   Evaluate full path, expanding '~', environment variables and symbolic links
+   """
+   import os
+   expandedPath = ""
+   if path:
+      tmpPath = ( os.path.expandvars( path.strip() ) )
+      tmpPath = os.path.abspath( os.path.expanduser( tmpPath ) )
+      tmpList = ( tmpPath.strip( os.sep ) ).split( os.sep )
+
+      for tmpElement in tmpList:
+         tmpPath = expandedPath + os.sep + tmpElement
+         if os.path.islink( tmpPath ):
+            expandedPath = os.readlink( tmpPath )
+         else:
+            expandedPath = tmpPath
+
+   return expandedPath
+
+def parseOptions():
+   """
+   Parse command-line options,
+   and check in some cases that sensible values are given
+   """
+
+   usage = "walker <options>" \
+      + "        => walk through directory tree or file containing URLs," \
+      + "            and write out groups of files with requested suffix(es)"
+   
+   parser = OptionParser( usage = usage )
+   parser.add_option( "-a", "--all_tags", action = "store_true", \
+      dest = "outputAllTags", default = False, \
+      help = "Include in output all image tags read from file, not only URLs" )
+   parser.add_option( "-s", "--suffix_list", action = "store", \
+      type = "string", \
+      dest = "suffixList", default = "[ '.jpg', '.JPG', '.jpeg', '.JPEG' ]", \
+      help = "list of suffixes for files to be grouped" )
+   parser.add_option( "-n", "--number_per_group", action = "store", \
+      type = "int", dest = "nPerGroup", default = 1000, \
+      help = "Number of input files to be grouped per output file" )
+   parser.add_option( "-m", "--max", action = "store", \
+      type = "int", dest = "maxFile", default = -1, \
+      help = "Maximum number of input files to be used"
+      + " [negative value = no limit]" )
+   parser.add_option( "-f", "--infile", action = "store", type = "string", \
+      dest = "infile", default = "", \
+      help = "input file, containing URLs" )
+   parser.add_option( "-i", "--indir", action = "store", type = "string", \
+      dest = "indir", default = ".", \
+      help = "input directory, defining the top level in the tree" )
+   parser.add_option( "-o", "--outdir", action = "store", type = "string", \
+      dest = "outdir", default = ".", \
+      help = "directory for output file(s)" )
+   parser.add_option( "-p", "--prefix", action = "store", type = "string", \
+      dest = "outPrefix", default = "list_", \
+      help = "prefix of name to be given to output files" )
+   parser.add_option( "-t", "--urltag", action = "store", type = "string", \
+      dest = "urltag", default = "URLImage", \
+      help = "Tag defining URL lines in input file" )
+   parser.add_option( "-u", "--url", action = "store", type = "string", \
+      dest = "rootUrl", default = "", \
+      help = "URL for input directory" )
+   parser.add_option( "-v", "--verbose", action = "store_true", \
+      dest = "verbose", default = False, \
+      help = "print information about directories being processed" )
+   parser.add_option( "-x", "--exclude", action = "store_true", \
+      dest = "exclude", default = False, \
+      help = "exclude vseg directories, and images for which .fac file exists" )
+
+   optList, argList = parser.parse_args()
+
+   optsOK = False
+   if os.path.isdir( fullpath( optList.indir ) ):
+      optsOK = True
+   if os.path.exists( fullpath( optList.infile) ):
+      optsOK = True
+      
+   if not optsOK:
+      print "Input directory '%s' not found" % fullpath( optList.indir )
+      print "Input file '%s' not found" % fullpath( optList.infile )
+
+   if not optList.rootUrl:
+      optList.rootUrl = "file://%s" % fullpath( optList.indir )
+
+   if not os.path.isdir( fullpath( optList.outdir ) ):
+      optsOK = False
+      print "Output directory '%s' not found" % fullpath( optList.outdir )
+
+   try:
+      suffixList = eval( optList.suffixList )
+      optList.suffixList = suffixList
+   except:
+      suffixList = []
+      optsOK = False
+      print "Problems with suffix list '%s'" % optList.suffixList
+
+   if not optsOK:
+      print ""
+      parser.print_help()
+
+   return ( optList, optsOK )
+
+def writeInfo( url = "", tagDict = {}, relPath = "", nPerGroup = 1000, \
+   verbose = False, indirPath = "", outdirPath = "", outPrefix = "", \
+   maxFile = -1 ):
+   global iGroup, iFile, nFile, outFile
+   status = 0
+  # Start new group
+   if 0 == iFile:
+      iGroup = iGroup + 1 
+      outName = "".join( [ outPrefix, "%05d" % iGroup, ".txt" ] )
+      outPath = os.path.join( outdirPath, outName )
+      outFile = open( outPath, "w" )
+      outFile.write( indirPath + "\n" )
+
+  # Write path relative to top-level directory, and update counters
+   if relPath:
+      outFile.write( url + " " + relPath + "\n" )
+   else:
+      if tagDict:
+         for tag in tagList:
+            outFile.write( "%s: %s\n" % ( tag, tagDict[ tag ] ) )
+         outFile.write( "\n" )
+      else:
+         outFile.write( url + "\n" )
+   iFile = iFile + 1
+   nFile = nFile + 1 
+   if ( verbose ):
+      if relPath:
+         print "%05d %05d %s %s" % ( iGroup, iFile, url, relPath )
+      else:
+         if tagDict:
+            print "%05d %05d %s" % ( iGroup, iFile, str( tagDict ) )
+         else:
+            print "%05d %05d %s" % ( iGroup, iFile, url )
+
+  # Terminate if maximum number of requested files is reached
+   if ( maxFile > -1 ):
+      if ( nFile >= maxFile ):
+         outFile.close()
+         status = 1
+
+  # End group
+   if ( iFile == nPerGroup ):
+      iFile = 0
+      outFile.close()
+
+   return status
+
+# Parse and check command line options
+optList, optsOK = parseOptions()
+
+if optsOK:
+  # Search for files
+   nFile = findFiles( topdir = optList.indir, \
+      suffixList = optList.suffixList, \
+      nPerGroup = optList.nPerGroup, maxFile = optList.maxFile, \
+      outdir = optList.outdir, outPrefix = optList.outPrefix, \
+      verbose = optList.verbose, rootUrl = optList.rootUrl, \
+      infileName = optList.infile, urltag = optList.urltag,
+      outputAllTags = optList.outputAllTags, exclude = optList.exclude )
+
+  # Summarise results
+   print ""
+   if 0 == nFile:
+      comment = "No files"
+   elif 1 == nFile:
+      comment = "One file"
+   else:
+      comment = "Total of %s files" % str( nFile )
+   print "%s found with suffix in list %s" \
+      % ( comment, str( optList.suffixList ) ) 

@@ -1,0 +1,36 @@
+**************************************************************************************************************
+5.6.5 (2011/7/11)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Exclude atlasmctape atlasdatatape spacetokens on CREAM/LCG
+
+AthenaMC:
+---------
+* Restricting output dataset postprocessing to the LCG backend, as the Panda backend does not need
+any. Savannah #83343: better protection against null values of destinationDBlock in Panda jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Fixed Savannah Bug #83982 appending a dummy opts file rather than stop
+
+Fixed Savannah Bug #83982 re-opened allow no opts rather than appending dummy or fetching default.
+
+URGENT BugFix Reverting LHCbDataset.py to revision 5885 see Savannah bug #82532
+
+Fixed bug wereby specifing command line options to gaudi that included speechmark characters messed
+up the arg parsing code
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+Fix for individual out containers
+
+**************************************************************************************************************

@@ -1,0 +1,16 @@
+**************************************************************************************************************
+5.7.13 (2012/4/24)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Test implementation of checksum verification for prepared applications.
+     When an application (currently only true for Executable apps) is prepared
+     a checksum is calculated of the text representation of its preparable attributes.
+     This fingerprint should not change and if it does, an error will be raised. 
+     Either the prepared application's locking mechanism was overridden by the user 
+     (perhaps intentionally) or a problem arose. In the latter case, a bug report should
+     be filed at http://savannah.cern.ch/projects/ganga/
+
+**************************************************************************************************************

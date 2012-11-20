@@ -1,0 +1,65 @@
+**************************************************************************************************************
+5.5.2 (2010/3/11)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+1) fixed bug #64073: schema evolution problems with lists
+
+2) fixed bug #64080: GangaBox error message
+
+3) changed logic of activating monitoring plugins: use all plugins which match all patterns defined in
+the config, rather a first pattern only
+
+For example: the following configuration 
+
+[MonitoringServices]
+Executable/LCG = MyMonitoring
+*/* = YourMonitoring
+
+will activate both MyMonitoring and YourMonitoring for Executable/LCG jobs and YourMonitoring for
+all other jobs. [old logic would not activate YourMonitoring for Executable/LCG jobs]
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+delay the call of lcg-infosites to get LFC_HOST until this value is needed.
+set default dq2client setup path in DQ2SandboxCache
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Fixed continuous retries for unreachable hosts (bug #58527)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Athena: Add glue_packages option
+* DQ2OutputDataset.fill: Fix output location registration problem
+* TagPrepare: Fixed some minor bugs and added slc5/15.6.3+ support
+* Add default: config.LCG.MatchBeforeSubmit=True
+* Fix bug #62416
+
+AthenaMC:
+* Savannah bug 64110 fix: prepare method had mispelled member user_area -> userarea
+
+externals:
+* DQ2Clients 0.1.33.1 - fixed typo in x509.py
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- allow groupXY output datasets. Use outputdata.isGroupDS=True and outputdata.groupname
+- remove .ganga. from output dataset name
+- write message to backend.reason in case of brokerage error
+- send ganga version in lockedby field.
+- write buildjob url
+- runBrokerage checks athena release even when site is forced
+
+**************************************************************************************************************

@@ -1,0 +1,55 @@
+**************************************************************************************************************
+5.7.5 (2012/1/16)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Reverting changes made in SVN revision 6936 (dynamic checking of ShareDir presence).
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 5.7.5 (from GangaLHCb-23-29)
+***********
+
+This version contains bugfixes and feature requests over the last version. for the full list see below.
+
+1)Fixed GaussSplitter and OptionsSplitter.
+There was a big in these splitters which aborted job submission reverting job to 'new' status. This
+is now fixed.
+
+2)Unprepare if parsing python options fails.
+Before when option file parsing failed the job reverted to 'new' status but was still in a partially
+prepared state.
+
+3)Fix to allow both GaudiPython and Bender to properly integrate with the Tasks framework
+
+4)Put in place a visual warning if a user tries to specify a value of 'filesPerJob' >100 in
+DiracSplitter.
+Dirac jobs were failing if the user specified a 'filesPerJob' greater than 100 and returning
+"Exceeded Maximum dataset limit(100)". To avoid users having to experience this problem now when
+setting the 'filesPerJob' value in Ganga a warning is presented if given a value >100 and the
+maximum value of 100 is taken instead.
+
+5)can reset the monitoring of subjobs backends at the job level.
+Now instead of having to do the following by hand:
+for sj in jobs(177).subjobs.select(status='completing') : sj.backend.reset() 
+for sj in jobs(177).subjobs.select(status='failed') : sj.backend.reset() 
+
+It is possible to do this automatically at the job level like so:
+jobs(177).backend.reset(True)
+
+Where the arg True is a bool that indicates that one wishes to reset all subjobs in stat
+'completing' or 'failed'. Without the True arg the behaviour is the same as before (only master job
+reset) except that a message is displayed if there are subjobs present alerting the user to the fact
+that they can use this new form.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Allow GangaRobot to submit to queues in 'test' status
+
+**************************************************************************************************************

@@ -1,0 +1,33 @@
+from GangaTest.Framework.utils import sleep_until_state
+import os
+
+dictConfig = config.Output.MassStorageFile
+dictConfig['uploadOptions']['path'] = dictConfig['uploadOptions']['path'].replace('$user', '%s/%s' % (os.environ['USER'][0], os.environ['USER']))
+
+config.Output.MassStorageFile = dictConfig
+
+j = Job(application=Root(),backend=LSF())
+
+j.application.script = File('fillrandom.py')
+
+j.outputfiles = ['*.root', '*.root1']
+
+assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
+assert(j.outputfiles[1].__class__.__name__ == 'LCGStorageElementFile')
+
+j.submit()
+
+sleep_until_state(j, timeout=1200, state='completed')
+
+assert(j.outputfiles[0].location() != [])
+assert(j.outputfiles[1].location() != [])
+
+j.outputfiles[0].localDir = j.outputdir
+j.outputfiles[1].localDir = j.outputdir
+
+j.outputfiles[0].get()
+j.outputfiles[1].get()
+
+for filename in ['fillrandom.root', 'fillrandom1.root', j.outputfiles[1].location()[0][-10:], j.outputfiles[1].location()[1][-10:]]:
+    assert(filename in os.listdir(j.outputdir)) 
+    
