@@ -1,0 +1,20 @@
+from GangaLHCb.test import *
+
+addLocalTestSubmitter()
+
+#datafile = 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst'#updating datafile to stripping 17
+datafile = 'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012914/0000/00012914_00000255_1.dimuon.dst'
+data = []
+for f in range(0,20000): data.append(datafile)
+
+j = Job(application=DaVinci(), backend=TestSubmitter(time=1))
+j.splitter=SplitByFiles(filesPerJob=100)
+j.inputdata = data
+
+j.submit()
+
+assert(len(j.subjobs)==200)
+for s in range(0,200):
+    assert(len(j.subjobs[s].inputdata.files)==100)
+
+# don't need to assert much, it just shouldn't time out (set to 5 minutes)

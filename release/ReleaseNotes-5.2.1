@@ -1,0 +1,77 @@
+**************************************************************************************************************
+5.2.1 (2009/5/14)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+LocalXML repository: fixed a problem with newline characters
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* bugfix for https://savannah.cern.ch/bugs/?49806
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena
+------
+* Added log file downloading and outputdata filling (DQ2Dataset) to Panda 
+  backend
+* Fix but #50086: global name 'match' is not defined
+* FileStager: fix bugs in falling back to lcg-cp protocol when local protocol
+  fails
+* Change DQ2 output datasets to begin with: user09
+* Added option to download Panda output via job.outputdata.retrieve() if
+  config['Panda']['enableDownloadLogs']=True
+
+AthenaMC
+--------
+* DB Release treatment: now parsing properly DBRelease=DBRelease-x.y.z.tar.gz 
+  in extraArgs
+* Adding protection to master job completion in AthenaMC.postprocess(), 
+  forcing the thread to wait for subjobs in completing state to finish 
+  before running outputdata.fill()
+* Bug fix in stage-in.sh: prevent dq2-get from downloading the whole dataset, 
+  overriding input list of files when the input dataset has more than one 
+  source. Plus some debug lines in AthenaMCDatasets.py
+* Fixing bug #46482 in wrapper.sh by moving the call to stage-in.sh before 
+  setup-release.sh
+* Bug fix for cavern/minbias file handling 
+
+AMAAthena
+---------
+* export prepare_old method
+
+Externals
+----------
+* Update to panda-client 0.1.53
+
+tests
+-----
+* Increase timeouts to 2700s
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A number of minor bug fixes.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Important fix of the srm url used in lfc registration. Without this the users are not able to
+download  output datasets with dq2.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+use panda-client 0.1.53 (CERN Panda server is now the default)
+Log file and data output downloading (disabled by default)
+
+**************************************************************************************************************

@@ -1,0 +1,60 @@
+**************************************************************************************************************
+5.4.3 (2009/12/8)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices/JobExecutionMonitorMS
+--------------------------------------------------------------------------------------------------------------
+* several minor bugfixes in GangaJEM and the associated MonitoringService.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Remote
+--------------------------------------------------------------------------------------------------------------
+Minor fix for properly handling Executable path on remote machine
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Root
+--------------------------------------------------------------------------------------------------------------
+Fixed the dodgy tag
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Add AMAAthena to DQ2OutputDataset
+* Fix outputsandbox problem in DQ2OutputDataset.fill()
+* Fix bug #59849: use only scratchdisk for backup tokens
+* Fix inputdata StagerDataset problem in Local backend
+* Fix for older lcg-getturl versions
+* add fail-over for empty usedProtocol
+* Remove dataset creation in AthenaLCGRTHandler.py
+* Fix for TagPrepare workflow to allow ELSSI files to be used properly
+* Minor fix for the 'ALL' cloud option to specify CERN rather than T0
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+* several minor bugfixes in GangaJEM and the associated MonitoringService.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A minor bug-fix release.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaNG
+--------------------------------------------------------------------------------------------------------------
+Tagging GangaNG for 5.4.3
+
+- Fixed resubmit(), problem with cleaning old grid files
+  (No, we're not allowed to remove all of srm.ndgf.org... Luckily...)
+- Fixed bug in handling of user-supplied database releases, related to lfc path convention
+
+**************************************************************************************************************

@@ -1,0 +1,97 @@
+**************************************************************************************************************
+5.5.7 (2010/6/4)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+fixed: [bug #68006] Submit counter broken for subjobs
+
+Added timeout specification for shell commands: Shell.cmd() and Shell.cmd1()
+New timeout=None parameter specifies in seconds the timeout, after which the command gets killed with 
+SIGTERM. If after another 5 seconds the 
+process still exists, then it is killed with SIGKILL. The semantics is that you can be pretty sure 
+that the process in not alive after cmd() 
+returns.
+
+Reverted to a patched version of ipython 0.6.13, which works with python 2.6. This is a temporary 
+measure until a newer ipython version resolves the globals scoping problem.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* apply the user dataset naming convention on the datasets created by DQ2SandboxCache for over-sized
+input sandboxes.
+* add timeout feature in job submission, default timeout for a single bulk job is 5 minutes. The
+timeout value can be reset by user via config.LCG.SubmissionTimeout.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+Dashboard Job Monitoring (prototype): modifications to TASK_META and JOB_META messages.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+------
+* Add AthSummary.txt print-out to job logs
+* Fix bug #68304: Fix typo in AthenaLocalRTHandler and AthenaLCGRTHandler
+
+Tasks:
+-----
+* Added check for monitoring_component.enabled in Tasks loop and Session cleanup loop
+
+scripts:
+-------
+* make athena script less verbose
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaJEM
+--------------------------------------------------------------------------------------------------------------
+GangaJEM now uses JEM 0.3.0.5. Changelog:
+
+0.3.0.5
+-------
+- Triggers and Valves can now also be implemented in C for performance benefit (formerly: only Python)
+- Low level triggers have already been ported to C (DiscardAllTrigger, ApproveAllTrigger)
+- Bug fixes
+
+0.3.0.4
+-------
+- Fixed bug in StompServer, deleting non-existing job ID key
+- Fixed: Processes run via App.py didn't adhere to --stdout switch
+- Fixed: --help display was broken when invalid cmd-switch was specified (#48)
+- Fixed crashbug in PythonMonitor
+- Fixed: directory name obviously cannot be resolved on -c "foo.py" (path+file then just is "<string>")
+- Added level 1 trigger. ScriptMonitors should decide with these if each monitoring event should be
+created or not.
+- Added level 1 trigger handling for PythonMonitor, and one default trigger that filters out
+calls/returns from python system lib code into python system lib code.
+- Added negating options to ConfigManager. Now, for every boolean config option (e.g. --debug),
+there's an implicit negating longOpt prefixed with "dont-" (e.g. --dont-debug). So, boolean options
+can now have default values True and False, working correctly.
+- Added flag to change/disable the netlogd's auto-suicide timeout.
+- Added "-c" mode to PythonMonitor (python -c "foo" drop-in)
+- Added verbose stderr output to JEM-log (remove-me after bugfinding!)
+- Further loglevel tweaks and minor fixes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- Register output dataset location at submit time (to allow subsequent deletion by the user).
+- disallow resubmit() of subjobs. Use j.resubmit() (on the master job) and the failed subjobs will be 
+automatically selected and retried.
+
+**************************************************************************************************************

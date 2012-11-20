@@ -1,0 +1,44 @@
+print 'number of jobs in repository',len(jobs)
+
+import time, profile
+t0 = time.time()
+
+cnt = 0
+
+last_t = t0
+
+N = 100
+
+def pp(updated,traversed):
+    global last_t
+    dt = time.time()-last_t
+    last_t = time.time()
+    print 'time %d'%dt
+    print 'traversed %d jobs'%traversed
+    print 'updated %d jobs (%s j/s)'%(updated,updated/dt)
+
+def update(j,i):
+    global cnt
+    if j.status == 'new':
+        cnt += 1
+        j.name = 'job_no_%d'%i
+
+last_i = 0
+
+for i,j in enumerate(jobs):
+    #profile.run("update(j,i)","ganga.%i.profile"%i)
+    update(j,i)
+    last_i = i
+    if cnt % N == N-1:
+        pp(N,i)
+    if cnt > 1000:
+        break
+
+last_t = t0
+
+pp(cnt,last_i)
+
+
+
+
+

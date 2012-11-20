@@ -1,0 +1,66 @@
+from Ganga.Core.exceptions import GangaException
+
+# all cases below are equivalent and are expected to work
+config['MonitoringServices']['Executable/Local'] = None
+j1 = Job()
+j1.submit()
+
+config['MonitoringServices']['Executable/Local'] = ""
+j2 = Job()
+j2.submit()
+
+config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.MonitoringServices.DummyMS.DummyMS"
+j3 = Job()
+j3.submit()
+
+
+################
+
+from GangaTest.Framework.utils import sleep_until_completed
+
+for j in [j1,j2,j3]:
+  assert sleep_until_completed(j,timeout=30)
+
+
+################
+# INFO: resetting config will affect alread submitted jobs!
+
+# testing for failures
+
+# specify module instead of the class
+config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.MonitoringServices.DummyMS"
+try:
+ assert Job().submit() == 0
+ #PENDING: 
+ #assert 'Should fail!' is None
+except GangaException,x:
+ pass
+
+# specify a non-existing module (and non-existing object)
+config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.MonitoringServices.SomethingNotExistingForSure_98984298458340.x"
+try:
+ assert Job().submit() == 0
+ #assert 'Should fail!' is None
+except GangaException,x:
+ pass
+
+
+# specify a non-existing object within the existing module
+config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.MonitoringServices.SomethingNotExistingForSure_98984298458340"
+try:
+ assert Job().submit() == 0
+ #assert 'Should fail!' is None
+except GangaException,x:
+ pass
+
+
+# specify a class not derived from IMonitoringService
+config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.Localhost.Localhost"
+try:
+ assert Job().submit() == 0
+ #assert 'Should fail!' is None
+except GangaException,x:
+ pass
+
+
+
