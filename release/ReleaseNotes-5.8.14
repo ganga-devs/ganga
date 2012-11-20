@@ -1,0 +1,26 @@
+**************************************************************************************************************
+5.8.14 (2012/9/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Improved the errors for not finding DSs in container in MultiTask
+* Added a output dataset name check in MultiTask
+* AtlasTask Downloading now uses the master job outDS to grab files (allowing merged output to
+downloaded properly)
+* Added a wrapper for the regexp variables from TaskLocalCopy in AtlasTask
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga v508r14 (GangaLHCb-24-23)
+*************
+
+1) Fixed the bulk resubmission bug for jobs with >256 subjobs
+2) Improved the efficiency of the DIRAC monitoring loop by removing unnecessary dirac call
+3) Moved to LHCbDirac_v7r8p38
+4) Hopefully fixed the threading conflict issue with the auto_resubmit, see Savannah bug #90084
+
+**************************************************************************************************************

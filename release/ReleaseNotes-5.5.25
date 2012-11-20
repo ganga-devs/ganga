@@ -1,0 +1,56 @@
+**************************************************************************************************************
+5.5.25 (2011/3/10)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Grid messaging hostname (gridmsg101) is being deprecated; switch to using aliases (ganga.msg.cern.ch
+ganga-atlas.msg.cern.ch)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* implement resubmission for CREAM backend
+* add workaround for transferring environment variables with "space" characters to the WNs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/MonitoringServices
+--------------------------------------------------------------------------------------------------------------
+change messaging service hostname
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+* Added the options to retrieve:
+  - useDSNameForDir: Uses the output DS name as the directory name
+  - outputNamesRE: Only retrieves the files passing the given 
+    regular expression
+* Fixed the AthenaOutputMerger to work with the Panda backend and 
+  subjobs without a defined master
+* Major updates to MultiTask package to allow proper unit creation, 
+  download and merger
+* Disable CREAM environement variables fix since it now has been 
+  fixed in the backend, fixes also bug #79209
+* StagerDataset: add missing function "execSyscmdSubprocess" that 
+  was originally provided by AMAAthena class
+* Move the work/ directory to base directory for EXE/Cream workflows
+
+scripts:
+--------
+athena: 
+- Fix missing AtlasCREAMRequirements
+- Fix wrong pfnlistfile variable name
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Minor updates for new Gaudi.
+
+**************************************************************************************************************

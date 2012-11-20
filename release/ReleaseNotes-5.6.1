@@ -1,0 +1,64 @@
+**************************************************************************************************************
+5.6.1 (2011/5/17)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Fix for bug #80450 (Python deprecation warning caused by redundant popen2 import).
+
+Implemented feature request #81871 (Addition of a --no-mon option that disables the monitoring loop at 
+Ganga startup).
+
+Environment variables can now be specified in .gangarc and .ini files using $$VARIABLE$$ notation.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+-------
+Local/Batch/CREAM/LCG:
+* Add 5 retries to lcg-gt call for dcap/gsidcap
+* Use local proxy copy if possible
+* Remove prepending gfal in front of gsidcap
+* Added multi-threaded download option of DQ2Dataset.retrieve
+* Added helper functions for Unit access and control
+* Stopped task pausing on unit failure
+* Added a unit overview function
+* Improved TAG dataset name detection logic
+* Fixed some bugs with the new unit management code
+
+AthenaMC:
+---------
+* Bug fixes concerning handling of input datasets by the 
+  Local backend and handling of athena flags by the LocalRTHandler
+
+externals:
+----------
+* Updated to panda-client 0.3.39
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+A few minor bug fixes.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* add merging job retrieval, bookkeeping and monitoring
+* master job status stays "running" until all merging jobs are at 
+  final state in Panda
+  requires new pandatools 0.3.38-dev with updated Client.py for 
+  merging job retrieval and bookkeeping
+* adding merging job specifications
+* Print warning message for "-c" or j.application.athena_options to
+  use proper quotes.
+
+externals:
+----------
+* Updated to panda-client 0.3.39
+
+**************************************************************************************************************

@@ -1,0 +1,6 @@
+a = Condor()
+c = a.requirements
+assert(typename(c.other) is "GangaList")
+assert(c.other == [ 'POOL == "General"' ])
+assert(c.opsys == 'print')
+

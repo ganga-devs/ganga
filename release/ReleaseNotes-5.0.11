@@ -1,0 +1,59 @@
+**************************************************************************************************************
+5.0.11 (2008/11/4)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+install the shutdown manager for atexit handlers before loading system plugins (e.g. LCG download
+thread registers the atexit handler using a tuple (priority,handler))
+
+LocalXML repository: fixed the rollback to new state problem of split jobs: reset the subjob counter
+to the original value so that j.subjobs[0].id == 0 (Ganga/test/GPI/CrashMultipleSubmitSubjobs testcase)
+
+bugfix #40932: Ganga incompatible with shell functions (using os.environ directly instead of printenv)
+request #41137: Please add a nice level option to the Local backend
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Condor
+--------------------------------------------------------------------------------------------------------------
+Removed spurious print statement.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+fix DQ2SandboxCache issues:
+ - https://savannah.cern.ch/bugs/index.php?43496
+ - https://savannah.cern.ch/bugs/index.php?43251
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/Mergers
+--------------------------------------------------------------------------------------------------------------
+Fixes an error in the format string of one of the error messages
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Add AthenaSplitterJob.split_per_dataset which introduces splitting per dataset 
+* Fix occasional max_events hick-up
+* Fix bug #42944 - retrieve show work now also for Dq2OutputDataset
+* Upgrae to DQ2Clients 0.1.22
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGUI
+--------------------------------------------------------------------------------------------------------------
+Added dependency on LCG/external Python2.5, pyqt (3.17.3_python2.5) and sip (4.7.7_python2.5).
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+fixed typo in AthenaPandaRTHandler.py: https://savannah.cern.ch/bugs/index.php?43317
+
+**************************************************************************************************************

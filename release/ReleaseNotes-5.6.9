@@ -1,0 +1,37 @@
+**************************************************************************************************************
+5.6.9 (2011/9/7)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Athena on Panda:
+  - Enable 64bit kit submission,
+    Remove ApplicationConfigurationError for 64bit kits and
+    change default values of atlas_run_dir, atlas_run_config
+* Tasks:
+  - Fix for MutliTask to allow enableMerge to be used
+  - fixed 'fix' not working properly on master jobs, accept panda
+    reporting of ddm site instead of analy_xyz for output data
+* Athena on CREAM/LCG:
+  - Add fix to prevent endless-loop for lcg-gt
+  - Patch for CVMFS sites in DQ2_LOCAL_SITE_ID look-up
+  - Add athena v17 setup in job submission
+* scripts
+  athena: Add --cmtConfig option
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Add 64bit brokering support
+* Move log message in case no container dataset is created
+* Panda test case updated according to Athena release 16.6.7
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+- small fix in xmldifferencer.py
+
+**************************************************************************************************************
