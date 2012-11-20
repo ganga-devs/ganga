@@ -1,0 +1,16 @@
+
+id = Job().id
+r = jobs
+
+# can get jobs by index
+assert(r(id))
+
+# cannot set jobs by index
+try:
+    r[1] = Job()
+except AttributeError,x:
+    assert(str(x).find("instance has no attribute '__setitem__'") != -1)
+except TypeError,x:
+    assert(str(x).find("object does not support item assignment") != -1 or
+    "object doesn't support item assignment" != -1)
+

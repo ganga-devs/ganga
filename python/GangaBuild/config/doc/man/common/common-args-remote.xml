@@ -1,0 +1,8 @@
+    <group>
+        <arg choice="plain"><option>-s <replaceable>SERVICE</replaceable></option></arg>
+        <arg choice="plain"><option>--service=<replaceable>SERVICE</replaceable></option></arg>
+    </group>
+    <group>
+        <arg choice="plain"><option>-p <replaceable>PORT</replaceable></option></arg>
+        <arg choice="plain"><option>--port=<replaceable>PORT</replaceable></option></arg>
+    </group>

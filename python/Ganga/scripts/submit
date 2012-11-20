@@ -1,0 +1,132 @@
+# File: submit
+# Author: K. Harrison
+# Created: 060106
+#
+# 16 Mar 2006 - KH : Reorganised script
+#                    Added possibility of launching a Ganga job
+#                    to perform job submission in background
+# 11 Apr 2006 - KH : Make background job submission the default
+# 
+# 29 Aug 2006 - KH : Make foreground job submission the default again
+#                    Add option to specify backend at command line
+#                    Add option to invoke application's prepare method
+
+"""GPI script for submitting exported Ganga job(s)"""
+
+__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__    = "29 August 2006"
+__version__ = "1.2"
+
+import os
+import sys
+
+def batchSubmit( pathList = [], backend = "", prepare = False ):
+   argList = [ "submit" ]
+   if prepare:
+      argList.append( "-p" )
+   if backend:
+      argList.extend( [ "-b", backend ] )
+   argList.extend( pathList )
+   j = Job( application = Executable(), backend = Local() )
+   j.application.exe = "ganga"
+   j.application.args = argList
+   j.name = "submit"
+   j.submit()
+   print "Submitting in background via local Ganga job (id %s)" % j.id
+   return
+
+def getPathList( fileList = [] ):
+   pathList = []
+   for fileName in fileList:
+      filepath = \
+         os.path.abspath( os.path.expanduser( os.path.expandvars( fileName ) ) )
+      if os.path.isfile( filepath ):
+         pathList.append( filepath )
+      else:
+         print "File %s not found" % fileName
+   return pathList
+
+def interactiveSubmit( pathList = [], backend = "", prepare = False ):
+   nsubTot = 0
+   for filepath in pathList:
+      objectList = []
+      if os.path.isfile( filepath ):
+         try:
+            objectList = load( filepath )
+            if not objectList:
+               print "No Ganga object descriptions found in file %s" % arg
+         except:
+            print "Error parsing file %s" % arg
+      else:
+         print "File %s not found" % arg
+
+      if objectList:
+         nsub = 0
+         for object in objectList:
+            if "Job" == typename( object ):
+               try:
+                  if backend:
+                     object.backend = backend
+                     print "Backend set to '%s' for job %s" % \
+                        ( backend, str( object.id ) )
+                  if prepare:
+                     if hasattr( object.application, "prepare" ):
+                        object.application.prepare()
+                        print "Prepared application for job %s" % \
+                           str( object.id ) 
+                  object.submit()
+                  print "Job %s submitted" % str( object.id )
+                  nsub = nsub + 1
+               except:
+                  print "Error submitting job from file %s" % arg
+         if 0 == nsub:
+            print "No job descriptions found in file %s" % arg
+         nsubTot = nsubTot + nsub
+
+   print ""
+   if 0 == nsubTot:
+      print "No jobs submitted"
+   elif 1 == nsubTot:
+      print "1 job submitted"
+   else:
+      print "%s jobs submitted" % str( nsubTot )
+   return
+
+def parseOptions():
+   from optparse import OptionParser
+   usage = "ganga submit [options] <file1.py> <file2.py> ...\n"\
+      + "       => submit job(s) defined in file(s) <file1.py>, <file2.py> ..."
+
+   parser = OptionParser( usage = usage )
+   parser.add_option( "-b", "--backend", action = "store", type = "string",\
+      dest = "backend", default = "", \
+      help = "submit job to specified backend" )
+   parser.add_option( "-p", "--prepare", action = "store_true",\
+      dest = "prepare", default = False, \
+      help = "invoke application's prepare method before submission" )
+   parser.add_option( "-j", "--job", action = "store_true",\
+      dest = "batchMode", default = False, \
+      help = "perform submission in background via local Ganga job" )
+
+   optList, argList = parser.parse_args()
+   if not argList:
+      parser.print_help()
+
+   return (optList, argList )
+
+optList,argList = parseOptions()
+pathList = getPathList( argList )
+
+if optList.backend:
+   if not optList.backend in backends():
+      print "Requested backend '%s' not recognised - submission aborted" % \
+         ( optList.backend )
+      print " => Known backends are:"
+      print "    %s" % str( backends() )
+      argList = []
+
+if argList:
+   if optList.batchMode:
+      batchSubmit( pathList, optList.backend, optList.prepare )
+   else:
+      interactiveSubmit( pathList, optList.backend, optList.prepare )

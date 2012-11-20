@@ -1,0 +1,12 @@
+for repeat in range(5):
+    print "sorted registry pass",repeat
+
+    for start in range(50):
+	j = Job()
+	print 'created job ',j.id, start
+
+    ids1 = jobs.ids()
+    ids2 = jobs.ids()
+    ids2.sort()
+    assert(ids1==ids2)
+    jobs.remove()

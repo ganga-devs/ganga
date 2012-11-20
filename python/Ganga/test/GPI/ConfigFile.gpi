@@ -1,0 +1,14 @@
+# grep in GangaTest for String_OPT to see the module where the options are defined
+
+c = config['TestConfig']
+print c
+assert(c['String_OPT'] == 'some string')
+assert(c['None_OPT'] == 9)
+assert(c['Int_OPT'] == 9)
+assert(c['List_OPT'] == [1,2,3,4,5,6])
+
+try:
+    assert(c['Undefined_OPT'] == '3*3')
+    assert False, "undefined option should raise ConfigError but it hasn't"
+except ConfigError:
+    pass

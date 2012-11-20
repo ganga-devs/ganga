@@ -1,0 +1,62 @@
+from GangaTest.Framework.tests import GangaGPITestCase
+
+"""
+   Test suite for Credentials package (AfsToken)
+"""
+
+import os
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
+class TestAfsToken( GangaGPITestCase ):
+    """
+    Class defining tests for Credentials package (AfsToken)
+    """
+
+    def __init__( self, *args, **kwargs ):
+       GangaGPITestCase.__init__( self, *args, **kwargs )
+       self.credential = AfsToken()
+
+    def test001_RenewAndDestroyCredential( self ):
+
+       if self.credential is None:
+          logger.warning( "No credential object defined" )
+       else:
+
+          # Request credential renewal, with default validity
+          status = self.credential.renew()
+
+          # Check credential created successfully
+          assert( status == True )
+
+          # Destroy credential
+          self.credential.destroy()
+
+          # Check that credential has been destroyed
+          assert( self.credential.timeleft() == "-1" )
+
+       return None
+
+    def test002_Validity( self ):
+
+       if self.credential is None:
+          logger.warning( "No credential object defined" )
+       else:
+
+          # Request renewal of credential, with validity of 24 hours
+          status = self.credential.renew( validity = "24:00" )
+
+          # Check credential created successfully
+          assert( status == True )
+
+          # Check that credential has required validity
+          timeleftInHours = eval( self.credential.timeleft( "hours" ) )
+          assert( timeleftInHours > 23.99 )
+          assert( self.credential.isValid( "23:55" ) == True )
+
+       return None
+
+    def test003_Location( self ):
+       # Location not defined for AFS token
+       return None

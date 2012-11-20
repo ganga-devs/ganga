@@ -1,0 +1,52 @@
+**************************************************************************************************************
+5.5.1-hotfix1 (2010/3/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Athena:
+* Fix bug 52028: exclude_from_user_area now correctly used with new 
+  prepare method
+* Athena/LCG/Local: catch the exit code of athena_setup routine and 
+  quit the job immediately when the exit code != 0 to catch compilation
+  errors
+* Athena/LCG: Fix gcc43 >athena 15.6.3 compilation issues
+* Add to dq2info tarball additional files and fix setup environment
+* Feature request 63167: Change workflow to create output container 
+  on the worker node and attach open datasets
+* Athena/LCG/Local: add -tag=setup and add more fail-overs to dq2-get 
+  environment for DBRelease download
+* Fix bug 63922: Athena/LCG/Local DQ2OutputDataset files now also
+  are registered with LFC checksum 
+* Add glue_packages option
+
+AthenaMC:
+* Removed spurious error messages from stage-in.sh. 
+* Simplified input file copy in the job: first try dq2-get once. If 
+  it fails, use lcg-cp with local cloud's lfc to ensure that the 
+  input file copy comes from the same cloud. 
+* Removed INPUTSITES from environment variables transmitted by 
+  AthenaMCLCGRTHandler.py as it is no longer used. 
+* Also first try to address conflicting set ups between grid 
+  (kits) and afs installations for grid sites with AFS, like NAF.
+
+tests:
+* Update some tests to newer datasets and releases
+
+externals:
+* panda-client 0.2.17
+* DQ2Clients 0.1.33
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+- allow groupXY output datasets. Use outputdata.isGroupDS=True and outputdata.groupname
+- remove .ganga. from output dataset name
+- write message to backend.reason in case of brokerage error
+- send ganga version in lockedby field.
+- write buildjob url
+- runBrokerage checks athena release even when site is forced
+
+**************************************************************************************************************
