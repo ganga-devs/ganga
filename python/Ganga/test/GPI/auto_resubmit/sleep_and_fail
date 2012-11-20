@@ -1,0 +1,5 @@
+#!/usr/bin/env sh
+
+echo sleeping for $1 seconds now
+sleep $1
+fail_with_an_error_DJDSKLEWIEWIOEWIJDKJLCXNMLKLKKL

@@ -1,0 +1,35 @@
+
+import time,os
+j = Job()
+j.application.exe = File('test_bug_18178_process.py')
+j.application.args = [j.outputdir]
+j.backend = Local()
+j.submit()
+
+fn = j.outputdir+'/proc_stat'
+cnt = 10
+
+while cnt>0:
+    print 'trying to read file',fn
+    time.sleep(5)
+    if os.path.exists(fn):
+        proc_num = int(file(fn).read())
+        print 'internal process number',proc_num
+        break
+    cnt -= 1
+
+j.kill()
+
+#time.sleep(2)
+
+from GangaTest.Framework.utils import sleep_until_state
+sleep_until_state(j,10,'killed')
+
+# try to find out if the internal process is still running
+try:
+    os.kill(proc_num,0)
+    assert(0) # process not killed
+except OSError,x:
+    print 'got',x
+    pass
+

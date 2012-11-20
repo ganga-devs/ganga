@@ -1,0 +1,36 @@
+**************************************************************************************************************
+5.6.11 (2011/10/6)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* AMI client uses replica at CERN for reading and voms 
+  proxy for authentication
+* Fixed a bug where the limit of DS name length was tested 
+  against container limit
+* Ensured that forced unit output is still added to parent containers
+* Added a --rootver option to scripts/athena
+* Cleared the reason field when reactivating a unit and shifted DS 
+  creations to INFO
+* Fixed a problem with PYARA adding a '-c' when using --options
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+GangaLHCb-23-18
+
+Improved the tasks framework
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added a rootver option to PandaRequirements to specify a different 
+  root version for EXE/PYARA/ROOT jobs
+* warning -> info for adding dataset to container
+* ProductionTests: Renamed output dataset from user* to prod_test*
+  Added possibility to configure processingType
+
+**************************************************************************************************************

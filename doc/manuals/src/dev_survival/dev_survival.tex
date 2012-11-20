@@ -1,0 +1,357 @@
+\documentclass{howto}
+\title{Ganga 4 -- Developer Survival Guide}
+
+\release{Ganga 4.1}
+
+% At minimum, give your name and an email address.  You can include a
+% snail-mail address if you like.
+\author{Jakub T. Moscicki}
+\authoraddress{Jakub.Moscicki@cern.ch}
+
+\usepackage{graphicx}
+
+\begin{document}
+\maketitle
+\tableofcontents
+
+\section{Introduction}
+\noindent
+
+Survival guide for Ganga 4 developers. Please make sure you read and understand {\em before}
+you ask for help {\bf:-)}
+
+\section{Job States}
+
+The meaning of the Ganga  job states and their transitions is descibed
+here.
+
+The \code{job.status} property, which  holds the state information, is
+a  string and  it is  the responsability  of the  backend  handlers to
+comply  with this  definition (it  is not  otherwise  enforced).  Each
+submission  backend should  provide  a mapping  from internal  backend
+states  to  one  of  the  following Ganga  states  ({\em  <monitoring>
+transitions} in the diagram below).
+
+\begin{itemize}
+\item running : application is being executed
+\item  completed  :   application  finished  correctly  (for  example,
+      executable  exit code  is 0)  and the  output sandbox  have been
+      correctly retrieved
+\item failed : application failed, or backend error (such as unable to
+      retrieve the output sandbox)
+\end{itemize}
+
+This  mapping is done  in \code{backend.updateMonitoringInformation()}
+method.
+
+All other states are assigned by Ganga automatically.
+
+\begin{figure}
+  \centering
+  \includegraphics[width=5in,bb=0 0 1000 800]{./user-states.gif}
+  \caption{User view of the job states.}
+\end{figure}
+
+In  the  future Ganga  will  support  remote  JobManager (running  the
+monitoring loop in the remote  service). For this usage we reserve the
+{\em unknown} state which is presented below.
+
+
+\begin{figure}
+  \centering
+  \includegraphics[width=5in,bb=0 0 1000 800]{./transient-states.gif}
+  \caption{Unknown state (not currently used)}
+\end{figure}
+
+
+\section{Configuration}
+
+Ganga 4 configuration subsystem: \code{Ganga.Utility.Config}
+
+Some design objectives:
+
+\begin{itemize}
+\item Experiment-specific configuration (for example plugin modules) may be defined at site config level.
+\item Both Atlas and LHCb will shared the same release but will have different config files 
+\item Users may work with multiple ganga configurations and easily switch between them
+\end{itemize}
+
+\subsection{Configuration sequence}
+
+Configs  are loaded  in sequence:  user config  overrides  site config
+which overrides release config. User and site configuration is defined
+in the configuration files.
+
+\begin{seealso}
+Configuration file format \code{*.ini} is defined by the standard python module ConfigParser
+\seeurl{http://docs.python.org/lib/module-ConfigParser.html}{}
+
+The overriding mechanism is a standard way of interpreting a sequence of INI files.
+
+There is one Ganga-specific rule for PATH-like variables: if a name of a variable is of form *_PATH then the value will not be overriden but
+prepended, for example:
+
+\begin{verbatim}
+file1.ini:
+ANY_PATH = x
+
+file2.ini:
+ANY_PATH = y
+\end{verbatim}
+
+The result of the merge of (file1.ini,file2.ini) is: ANY_PATH = y:x
+
+You may also reset the value of the path completely if this is needed with the following syntax:
+\begin{verbatim}
+file1.ini:
+ANY_PATH = x
+
+file2.ini:
+ANY_PATH = :::y
+\end{verbatim}
+
+The result of the merge of (file1.ini,file2.ini) is: ANY_PATH = y
+
+\end{seealso}
+
+\subsection{User configuration}
+
+User configuration file (default): \code{\${HOME}/.gangarc}.
+
+The location of the user config file may be set in the command line argument: 
+\begin{verbatim}
+% ganga --config /my/path/config.ini
+\end{verbatim}
+
+
+\subsection{Site configuration}
+
+Site config is  a file (or a sequence of files)  which is defined from
+the  \code{GANGA_CONFG_PATH}  environment  variable  or which  may  be
+specified  with  \code{ --config-path} command  line  option.  It is  a
+colon-separated sequence of the configuration files. 
+
+Example:
+\begin{verbatim} 
+SITE_CONFIG_PATH = /some/physics/subgroup.ini:GangaLHCb/LHCb.ini
+\end{verbatim}
+
+In  this  example  the  \code{/some/subgroup.ini}  will  override  the
+settings        defined        in        \code{GangaLHCb/LHCb.ini}.The
+\code{GangaLHCb/LHCb.ini} is  a relative path and it  will be resolved
+with respect to the Ganga release  area. In this way you depend on the
+default  settings prepared  for LHCb  by  Ganga release  team but  you
+customize  some  of  them  for  your subgroup  (and  you  stored  them
+separately)
+
+
+\subsection{Default release configuration}
+
+Release  config corresponds to  the defaults  hardcoded in  the source
+code  (see the  section  below  to understand  how  to define  default
+configuration in your code).
+
+
+\subsection{Defining the configuration in the source code}
+
+First create config object for your package. The corresponding section
+in the configuration file will have the same name.
+
+\begin{verbatim}
+import Ganga.Utility.Config 
+config = Ganga.Utility.Config.getConfig("YOUR_PACKAGE")
+\end{verbatim}
+
+Assign default values using one of the following methods. These values
+will be in the default release configuration.
+
+\begin{verbatim}
+config['option1'] = val1
+config.setDefaultOptions({'opt1':'x','opt2':'y','opt3':'z'})
+\end{verbatim}
+
+At  runtime  in   your  code  you  may  retrieve   the  value  of  the
+options.  Note that  you will  get  the {\em  effective} values.   The
+effective value takes into  account default, session and user settings
+and may change at runtime.
+
+\begin{verbatim}
+print config['option1']
+\end{verbatim}
+
+\begin{notice}
+
+Because the options may be changed  in a different thread by the user,
+the long-lasting operations should first  get the value of the options
+to avoid surprising change in the course of the execution.
+
+However you  should not  cache the  value of the  option in  static or
+global variables for more time than it is neccessary.
+\end{notice}
+
+\subsection{User access to the configuration}
+
+Ganga user has the access to the effective configuration with the predefined \code{config} object.
+Access to the configuration options defined above is provided as:
+\begin{verbatim}
+>>> print config['YOUR_PACKAGE']['option1']
+val1
+\end{verbatim}
+
+\subsection{Actions on user configuration changes}
+
+You may also attach the callback handlers which will be called every time a user modifies an option via the GPI.
+
+\begin{verbatim}
+def pre(opt,val):
+    print 'always setting a square of the value'
+    return val*2
+
+def post(opt,val):
+    print 'effectively set',val
+    
+config.attachUserHandler(pre,post)
+\end{verbatim}
+
+
+\section{Logging}
+
+Ganga 4 logging subsystem: \code{Ganga.Utility.logging}
+
+
+\begin{seealso}
+Logging is based on standard python module logging.py:
+\seeurl{http://docs.python.org/lib/module-logging.html}{}
+\end{seealso}
+
+\subsection{Configuring loggers in a Ganga session}
+
+Logging level may be flexibly set for individual packages or groups of
+package in configuration file \code{\${HOME}/.ganga4}.
+
+In  the example below  all Ganga  packages are  in INFO  level, except
+Ganga.Lib.LSF   (DEBUG)   and   Ganga.Utility.Logging  (ERROR).    The
+verbosity of  the messages  is controlled by  \code{format_string} and
+may have one of the values: \code{TERSE NORMAL VERBOSE DEBUG}
+
+\begin{verbatim}
+[Logging]
+Ganga = INFO
+Ganga.Lib.LSF = DEBUG
+Ganga.Utility.Logging = ERROR
+format_string = TERSE
+\end{verbatim}
+
+\subsection{Using loggers in your packages}
+
+The recommended way of using loggers in Ganga 4 development:
+\begin{verbatim}
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
+\end{verbatim}
+
+This creates a logger for your Ganga 4 package and it may be placed in
+one or  many modules in  that package. Each  module will get  the same
+logger   instance.  For   example:   if  this   code   is  placed   in
+\code{Ganga/Lib/LFS/whatever.py} then  the name of the  logger will be
+\code{Ganga.Lib.LFS}
+
+Sometimes it is desirable to  create logger for individual module (for
+example \code{Ganga.Lib.LFS.whatever}). You can do this like this:
+\begin{verbatim}
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger(modulename=1)
+\end{verbatim}
+
+You can also give any name you like to your logger but it MUST start with string \code{'Ganga.'}
+\begin{verbatim}
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger("Ganga.special_logger")
+\end{verbatim}
+
+\begin{notice}
+
+\code{Ganga.Utility.logging}  just   makes  it  easier   to  configure
+standard  loggers   to  use  within   Ganga  packages.   If   you  use
+\code{Ganga.Utility.logging} in an  executable script then the default
+name of your logger will  not start with \code{'Ganga.'} and therefore
+you will not be able to control it with the Ganga configuration file.
+
+\end{notice}
+
+\section{Extending Ganga: adding new applications and backends}
+
+\subsection{Basic rules}
+
+The rules and good practices described below should be followed if you
+want to write good Ganga code (plugins and core).
+
+\subsubsection{Do not modify or rely on shared environment}
+
+If possible  you should  not modify environment  of the  Ganga process
+because  it may  affect other  handlers.  So avoid  doing things  like
+\code{os.environ['PATH'] = mypath}.  If you do it, you may break other
+handlers. The  better way  is to use  private, cached  environment and
+source it on-the-fly when  invoking a subprocess. For example consider
+the LCG  handler. It uses  the \code{lcg-job-submit} shell  command to
+submit jobs. Each time Ganga is about to execute this command, the LCG
+environment which has previously been cached, is set.
+
+Sometimes  you  must rely  on  the  common  environment of  the  Ganga
+process.  For  example,  you  use  some  extension  modules  (compiled
+libraries dynamically  loaded by python)  then at least you  must have
+the  LD_LIBRARY_PATH set  correctly.  Use the  \code{getEnvironment()}
+function  in the runtime  package. Ganga  will know  that you  need to
+modify common environment and at least you will get better diagnostics
+when there is a clash with other package.
+
+PENDING: MORE INFO ABOUT RUNTIME PACKAGES.
+
+\subsubsection{Do not modify the properties which users may directly modify}
+
+The properties which  are declared {\em protected }  in the schema are
+meant to  be modified by  the system. The  other properties are under 
+user's control.
+
+Your handler should  not modify the properties which  are under user's
+control.  This  will confuse the  users (they will not  understand why
+the properties they have set changed).
+
+\subsubsection{Be careful with storing filenames automatically }
+
+If during job submission you create additional files (which are stored
+in the job's input directory) you should be careful with storing their
+filenames  in  the  persistent  schema.   You may  silently  create  a
+dependency on the files which are specific to a certain job. When such
+job  is  copied   the  references  will  be  copied   as  well  (check
+\code{copyable} declaration in the  schema) and the job defintion will
+not  be self-contained.  This means  that a  user may  encounter wierd
+effects on the copy if the original is removed.
+
+\subsection{Inheriting classes from GangaObject}
+
+To  make  your  class visible  in  Ganga  GPI  you must  inherit  from
+GangaObject. This is the common procedure for all handler classes like
+LSF or Gaudi.
+
+If you  want to further derive  classes from your base  class you must
+make sure that the _schema object is copied properly. Example:
+
+\begin{verbatim}
+class Gaudi(GangaObject):
+   _schema = Schema(...)
+   _name = 'Gaudi'
+   _category = 'application'
+
+dv_schema = Gaudi._schema.inherit_copy()
+#modify dv_schema at will
+
+class DaVinci(Gaudi):
+   _schema = dv_schema
+   _name = 'DaVinci'
+   _category = 'application'
+\end{verbatim}
+
+
+
+\end{document}

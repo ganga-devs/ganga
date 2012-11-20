@@ -1,0 +1,37 @@
+from GangaTest.Framework.utils import sleep_until_state
+import os
+
+dictConfig = config.Output.MassStorageFile
+dictConfig['uploadOptions']['path'] = dictConfig['uploadOptions']['path'].replace('$user', '%s/%s' % (os.environ['USER'][0], os.environ['USER']))
+
+config.Output.MassStorageFile = dictConfig
+
+j = Job(application=Root(),backend=LSF())
+
+j.application.script = File('fillrandom2.py')
+
+j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
+
+assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
+assert(j.outputfiles[1].__class__.__name__ == 'MassStorageFile')
+assert(j.outputfiles[2].__class__.__name__ == 'MassStorageFile')
+
+j.submit()
+
+sleep_until_state(j, timeout=1200, state='completed')
+
+assert(j.outputfiles[0].location() != [])
+assert(j.outputfiles[1].location() != [])
+assert(j.outputfiles[2].location() != [])
+
+j.outputfiles[0].localDir = j.outputdir
+j.outputfiles[1].localDir = j.outputdir
+j.outputfiles[2].localDir = j.outputdir
+
+j.outputfiles[0].get()
+j.outputfiles[1].get()
+j.outputfiles[2].get()
+
+for filename in ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']:
+    assert(filename in os.listdir(j.outputdir)) 
+    
