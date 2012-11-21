@@ -95,6 +95,7 @@ p.add_option('--cream', action='store_const', const='cream', dest='backend', hel
 p.add_option('--ng', action='store_const', const='ng', dest='backend', help='Submit job(s) to NorduGrid')
 p.add_option('--panda', action='store_const', const='panda', dest='backend', help='Submit job(s) to Panda')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
+p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
 p.add_option('--pbs', action='store_const', const='pbs', dest='backend', help='Submit job(s) to the local PBS batch system')
 p.add_option('--sge', action='store_const', const='sge', dest='backend', help='Submit job(s) to the local SGE batch system')
 p.add_option('--local', action='store_const', const='local', dest='backend', help='Execute job on the local desktop computer')
@@ -578,7 +579,9 @@ elif opt.backend == 'cream':
     else:
         print >>sys.stderr, 'ERROR: CREAM backend requires "--ce" or "--site" to be configured'
         sys.exit(100)
-        
+
+elif opt.backend == 'condor':
+    j.backend = Condor()
 elif opt.backend == 'pbs':
     j.backend = PBS()
     if opt.queue: j.backend.queue = opt.queue
@@ -654,7 +657,7 @@ if opt.backend in [ 'lcg', 'cream' ] or opt.glite:
     if opt.walltime: j.backend.requirements.walltime = opt.walltime
     if opt.memory: j.backend.requirements.memory = opt.memory
 
-if opt.backend in ['sge', 'pbs', 'lsf']:
+if opt.backend in ['sge', 'pbs', 'lsf', 'condor']:
    if opt.batchextraopts: j.backend.extraopts = opt.batchextraopts
 
 # Inputsandbox
