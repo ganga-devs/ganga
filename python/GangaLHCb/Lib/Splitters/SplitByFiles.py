@@ -1,6 +1,8 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
-from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
-from SplitterUtils import DiracSplitter
+#from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
+from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
+#from SplitterUtils import DiracSplitter
+from GangaLHCb.Lib.LHCbDataset import LogicalFile
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -49,7 +51,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
-        j.inputdata = LHCbDataset( files             = dataset,
+        j.inputdata = LHCbDataset( files             = [LogicalFile(file) for file in dataset],
                                    persistency       = self.persistency,
                                    depth             = self.depth )
         j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice

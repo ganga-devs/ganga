@@ -60,6 +60,9 @@ class MetadataDict(GangaObject):
         out: An output stream to print to. The last line of output should be printed without a newline.'
         selection: See VPrinter for an explaintion of this.
         """
+        if len(self.data) == 0:
+            print >> out, '{}'
+            return
         print >> out, '{'
         for key, value in self.data.iteritems():
             print >> out, whitespace_marker, '   ', key, '=', value

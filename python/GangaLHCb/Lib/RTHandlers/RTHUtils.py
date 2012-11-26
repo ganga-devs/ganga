@@ -7,8 +7,6 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-from GangaLHCb.Lib.DIRAC.Dirac import Dirac
-from GangaLHCb.Lib.DIRAC.DiracUtils import *
 import GangaLHCb.Lib.Applications.AppsBaseUtils
 
 logger = Ganga.Utility.logging.getLogger()
@@ -102,8 +100,9 @@ def getXMLSummaryScript(indent=''):
 """
   return script.replace('###INDENT###',indent)
 
-def create_runscript(app,outputdata,job):
+def create_runscript(app):
 
+  job = app.getJobObject()
   config = Ganga.Utility.Config.getConfig('LHCb')
   which = 'GaudiPython'
   opts = None
@@ -114,7 +113,7 @@ def create_runscript(app,outputdata,job):
   jstr = jobid_as_string(job)
 
   script =  "#!/usr/bin/env python\n\nimport os,sys\n\n"
-  script += 'data_output = %s\n' % outputdata.files
+  script += 'data_output = %s\n' % job.outputdata.files
   script += 'xml_cat = \'%s\'\n' % 'catalog.xml'
   script += 'data_opts = \'data.py\'\n'
   script += 'opts = \'%s\'\n' % opts
@@ -124,7 +123,7 @@ def create_runscript(app,outputdata,job):
   script += 'version = \'%s\'\n' % app.version
   script += 'package = \'%s\'\n' % app.package
   script += "job_output_dir = '%s/%s/%s/outputdata'\n" % \
-            (config['DataOutput'],outputdata.location,jstr)
+            (config['DataOutput'],job.outputdata.location,jstr)
   script += 'cp = \'%s\'\n' % config['cp_cmd']
   script += 'mkdir = \'%s\'\n' % config['mkdir_cmd']
   script += 'platform = \'%s\'\n' % app.platform

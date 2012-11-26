@@ -25,7 +25,7 @@ def master_prepare(self, masterjobconfig):
         if sjc.getSandboxFiles():
             inputsandbox += super(type(self),self).master_prepare(sjc)
         return inputsandbox
-    return super(type(self),self).master_prepare(masterjobconfig)
+    return []#super(type(self),self).master_prepare(masterjobconfig)
    
 setattr(Localhost,'master_prepare',master_prepare)
 setattr(Interactive,'master_prepare',master_prepare)

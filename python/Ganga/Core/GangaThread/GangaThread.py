@@ -45,3 +45,5 @@ class GangaThread(Thread):
     def unregister(self):
         GangaThreadPool.getInstance().delServiceThread(self)
 
+    def register(self):
+        GangaThreadPool.getInstance().addServiceThread(self)
