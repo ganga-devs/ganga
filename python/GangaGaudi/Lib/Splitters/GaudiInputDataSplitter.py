@@ -25,7 +25,7 @@ class GaudiInputDataSplitter(ISplitter):
     # this may be useful if generator must change dependent on job properties like
     # backend for example. (see GangaLHCb.Lib.Splitters.SplitByFiles.py)
     def _splitter(self, job, inputdata):
-        if (inputdata is None) or (len(inputdata.files) is 0):
+        if (inputdata is None) or (len(inputdata.files) == 0):
             logger.error('Cannot split if no inputdata given!')
             raise SplittingError('inputdata is None')
         return DatasetSplitter(inputdata, self.filesPerJob, self.maxFiles)

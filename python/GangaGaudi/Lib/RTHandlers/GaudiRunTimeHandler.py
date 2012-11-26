@@ -23,122 +23,33 @@ class GaudiRunTimeHandler(IRuntimeHandler):
     """This is the application runtime handler class for Gaudi applications 
     using the local, interactive and LSF backends."""
   
-    def __init__(self):
-        pass
-
     def master_prepare(self,app,appmasterconfig):
-        ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
-        ## the subjob inputsandbox depending if the jobmasterconfig object is present
-        ## or not... Therefore combine the job.inputsandbox with appmasterconfig.
-        job=app.getJobObject()
-        ## catch errors from not preparing properly
-        if not hasattr(app,'is_prepared') or app.is_prepared is None:
-            logger.warning('Application is not prepared properly')
-            raise GangaException(None,'Application not prepared properly')
-
-        ## user added items from the interactive GPI
-        inputsandbox=job.inputsandbox[:]
-        outputsandbox=job.outputsandbox[:]
-
-        ## inputsandbox files stored in share_dir from prepare method
-        sharedir_handler(app, 'inputsandbox', inputsandbox)
-
-
-##         share_dir = os.path.join(app.is_prepared.name,'inputsandbox')
-##         for root, dirs, files in os.walk(share_dir):
-##             subdir = root.replace(share_dir,'')[1:] ## [1:] removes the preceeding /
-##             for f in files:
-##                 inputsandbox += [File(name=os.path.join(root,f),subdir=subdir)]
-
-        # Handle debug prep_dir e.g. copy the option pickling env to debug
-        #sharedir_handler(app, 'debug', job.getDebugWorkspace().getPath())
-     
-        ## Here add any sandbox files/data coming from the appmasterconfig
-        ## from master_configure. Catch the case where None is passed (as in tests)
-        if appmasterconfig:            
-            inputsandbox  += appmasterconfig.getSandboxFiles()
-            outputsandbox += appmasterconfig.getOutputSandboxFiles()
-   
-        return self._additional_master_prepare( app,
-                                                appmasterconfig,
-                                                unique(inputsandbox),
-                                                unique(outputsandbox) )
-
-    def _additional_master_prepare( self,
-                                    app,
-                                    appmasterconfig,
-                                    inputbox,
-                                    outputbox ):
-        
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
         return StandardJobConfig( inputbox=unique(inputsandbox),
                                   outputbox=unique(outputsandbox))
     
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
 
-##         inputsandbox=[]
-##         outputsandbox=[]
-        job=app.getJobObject()
-        
-        ## Add the job.in/outputsandbox as splitters create subjobs that are
-        ## seperate Job objects and therefore have their own job.in/outputsandbox
-        ## which is NOT in general copied from the master in/outputsandbox
-        #inputsandbox = job.inputsandbox[:] # copied in splitter
-        #outputsandbox = job.outputsandbox[:]
-        inputsandbox  = []
-        outputsandbox = []
-        
-        ## Here add any sandbox files coming from the appsubconfig
-        ## currently none. masterjobconfig inputsandbox added automatically
-        if appsubconfig   : inputsandbox  += appsubconfig.getSandboxFiles()
+        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
-        ## Strangly NEITHER the master outputsandbox OR job.outputsandbox
-        ## are added automatically.
-        if jobmasterconfig: outputsandbox += jobmasterconfig.getOutputSandboxFiles()
-        if appsubconfig   : outputsandbox += appsubconfig.getOutputSandboxFiles()
+        run_script = self.__create_run_script(app,
+                                              appsubconfig,
+                                              appmasterconfig,
+                                              jobmasterconfig,
+                                              inputsandbox,
+                                              outputsandbox)
+        return StandardJobConfig( FileBuffer('gaudi-script.py', run_script, executable=1),
+                                  inputbox   = unique(inputsandbox),
+                                  outputbox  = unique(outputsandbox) )
 
-#        script, inputsandbox, outputsandbox = self._create_runscript_sandboxes( app,
-#                                                                                appsubconfig,
-#                                                                                appmasterconfig,
-#                                                                                jobmasterconfig,
-#                                                                                unique(inputsandbox),
-#                                                                                unique(outputsandbox) )
-
-        return self._additional_prepare( app,
-                                         appsubconfig,
-                                         appmasterconfig,
-                                         jobmasterconfig,
-                                         unique(inputsandbox),
-                                         unique(outputsandbox) )#,
-#                                         script )
-    
-##         return StandardJobConfig(FileBuffer('gaudiscript.py',script,
-##                                             executable=1),
-##                                  inputbox=unique(inputsandbox),
-##                                  outputbox=unique(outputsandbox) )
-
-    def _additional_prepare( self,
-                             app,
-                             appsubconfig,
-                             appmasterconfig,
-                             jobmasterconfig,
-                             inputsandbox,
-                             outputsandbox ):#,
-#                             script ):
-
-        script = self._create_runscript( app )
-
-        
-        return StandardJobConfig( FileBuffer('gaudiscript.py', script, executable=1),
-                                  inputbox  = unique(inputsandbox ),
-                                  outputbox = unique(outputsandbox) )
-
-##         return StandardJobConfig( FileBuffer('gaudiscript.py', script, executable=1),
-##                                   inputbox=unique(inputsandbox),
-##                                   outputbox=unique(outputsandbox) )
-
-
-    def _create_runscript( self, app ):
+    def __create_run_script(self,
+                            app,
+                            appsubconfig,
+                            appmasterconfig,
+                            jobmasterconfig,
+                            inputsandbox,
+                            outputsandbox):
         job=app.getJobObject()
 
         config = Ganga.Utility.Config.getConfig('Gaudi')
@@ -154,7 +65,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
         script += 'version = \'%s\'\n' % app.version
         script += 'package = \'%s\'\n' % app.package
         script += "job_output_dir = '%s/%s/%s/outputdata'\n" % \
-                  (config['DataOutput'],outputdata.location,jstr)
+                  (config['DataOutput'],job.outputdata.location,jstr)
         script += 'cp = \'%s\'\n' % config['cp_cmd']
         script += 'mkdir = \'%s\'\n' % config['mkdir_cmd']
         script += 'platform = \'%s\'\n' % app.platform

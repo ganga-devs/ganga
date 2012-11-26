@@ -10,7 +10,6 @@ from Ganga.Core import GangaException, GangaAttributeError
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 import Ganga.Utility.Config
 from copy import deepcopy
-#import sets
 import os
 config = Ganga.Utility.Config.getConfig('Configuration')
 

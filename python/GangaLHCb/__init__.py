@@ -2,7 +2,7 @@ import os
 import Ganga.Utility.logging
 import Ganga.Utility.Config
 configLHCb=Ganga.Utility.Config.makeConfig('LHCb','Parameters for LHCb')
-configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
+#configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
 logger=Ganga.Utility.logging.getLogger()
 config=Ganga.Utility.Config.getConfig('Configuration')
 
@@ -34,32 +34,32 @@ dscrpt = 'If a file matches one of these patterns, then the string here '\
          'overrides the datatype_string_default value.'
 defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
-dscrpt = 'Automatically download sandbox for failed jobs?'
-configLHCb.addOption('failed_sandbox_download',True,dscrpt)
-dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\
-         'let DIRAC decide where to put the data).'
-configLHCb.addOption('DiracOutputDataSE',[],dscrpt)
-dscrpt = 'List of sites to ban when a user job has no input data (this is '\
-         'meant to reduce the load on these sites)'
-sites = ['LCG.CERN.ch','LCG.CNAF.it','LCG.GRIDKA.de','LCG.IN2P3.fr',
-         'LCG.NIKHEF.nl','LCG.PIC.es','LCG.RAL.uk','LCG.SARA.nl']
-configLHCb.addOption('noInputDataBannedSites',sites,dscrpt)
+## dscrpt = 'Automatically download sandbox for failed jobs?'
+## configLHCb.addOption('failed_sandbox_download',True,dscrpt)
+## dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\
+##          'let DIRAC decide where to put the data).'
+## configLHCb.addOption('DiracOutputDataSE',[],dscrpt)
+## dscrpt = 'List of sites to ban when a user job has no input data (this is '\
+##          'meant to reduce the load on these sites)'
+## sites = ['LCG.CERN.ch','LCG.CNAF.it','LCG.GRIDKA.de','LCG.IN2P3.fr',
+##          'LCG.NIKHEF.nl','LCG.PIC.es','LCG.RAL.uk','LCG.SARA.nl']
+## configLHCb.addOption('noInputDataBannedSites',sites,dscrpt)
 tokens = ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','SARA-USER',
           'PIC-USER','RAL-USER']
 dscrpt = 'Space tokens allowed for replication, etc.'
 configLHCb.addOption('DiracSpaceTokens',tokens,dscrpt)
 dscrpt = 'Switch whether or not a check that the required app version/platform is valid for the backend'
 configLHCb.addOption('ignore_version_check',False,dscrpt)
-dscrpt = 'The Maximum allowed number of bulk submitted jobs before Ganga intervenes'
-configLHCb.addOption('MaxDiracBulkJobs',500,dscrpt)
+#dscrpt = 'The Maximum allowed number of bulk submitted jobs before Ganga intervenes'
+#configLHCb.addOption('MaxDiracBulkJobs',500,dscrpt)
  
 # Set default values for the Dirac section.
-dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
-configDirac.addOption('ShowDIRACstdout',False,dscrpt)
-dscrpt = 'Global timeout (seconds) for Dirac commands'
-configDirac.addOption('Timeout',1000,dscrpt)
-dscrpt = 'Wait time (seconds) prior to first poll of Dirac child proc'
-configDirac.addOption('StartUpWaitTime',3,dscrpt)
+#dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
+#configDirac.addOption('ShowDIRACstdout',False,dscrpt)
+#dscrpt = 'Global timeout (seconds) for Dirac commands'
+#configDirac.addOption('Timeout',1000,dscrpt)
+#dscrpt = 'Wait time (seconds) prior to first poll of Dirac child proc'
+#configDirac.addOption('StartUpWaitTime',3,dscrpt)
 dscrpt = 'Base dir appended to create LFN name from DiracFile(\'name\')'
 configDirac.addOption('DiracLFNBase','/lhcb/user/%s/%s'%(config['user'][0],config['user']),dscrpt)
 
@@ -72,14 +72,14 @@ def getEnvironment( config = {} ):
    return
 
 def loadPlugins( config = {} ):
+    import Lib.Backends
     import Lib.Applications
     import Lib.LHCbDataset
     import Lib.Mergers
     import Lib.RTHandlers
     import Lib.Splitters
-    import Lib.DIRAC
+#    import Lib.DIRAC
     import Lib.Tasks
 
 #from Ganga.GPIDev.Credentials import getCredential
 #proxy = getCredential('GridProxy', '')
-

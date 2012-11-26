@@ -18,8 +18,8 @@ def get_dirac_space_tokens():
 #            'PIC-USER','RAL-USER']
 
 def get_result(cmd,log_msg,except_msg):
-    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
-    from GangaLHCb.Lib.DIRAC.DiracUtils import result_ok
+    from GangaLHCb.Lib.Backends.Dirac import Dirac
+    from GangaDirac.Lib.Backends.DiracUtils import result_ok
     result = Dirac.execAPI(cmd)
     if not result_ok(result):
         logger.warning('%s: %s' % (log_msg,str(result)))
@@ -118,7 +118,7 @@ class LogicalFile(GangaObject):
 
     def bkMetadata(self):
         'Returns the bookkeeping meta-data for this file.'
-        cmd = 'result = DiracCommands.bkMetaData(["%s"])' % self.name
+        cmd = 'result = DiracLHCbCommands.bkMetaData(["%s"])' % self.name
         r = get_result(cmd,'Error removing replica','Replica rm error.')
         return r['Value'].get(self.name,{})
 

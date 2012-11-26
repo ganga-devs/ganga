@@ -66,7 +66,7 @@ import os, threading, time, tempfile
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.Utility.Config import ConfigError, getConfig, expandgangasystemvars
+from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Plugin.GangaPlugin import allPlugins, PluginManagerError
 from Ganga.Utility.Shell import Shell
@@ -93,14 +93,11 @@ class ICommandSet( GangaObject ):
    """
    _schema = Schema( Version( 1, 0 ), {
       "init" : SimpleItem( defvalue = "",
-         doc = "Command for creating/initialising credential",
-         filter = '__expandGangaSystemVars__'),
+         doc = "Command for creating/initialising credential"),
       "info" : SimpleItem( defvalue = "",
-         doc = "Command for obtaining information about credential",
-         filter = '__expandGangaSystemVars__'),
+         doc = "Command for obtaining information about credential"),
       "destroy" : SimpleItem( defvalue = "",
-         doc = "Command for destroying credential",
-         filter = '__expandGangaSystemVars__'),
+         doc = "Command for destroying credential"),
       "init_parameters" : SimpleItem( defvalue = {},
          doc = "Dictionary of parameter-value pairs to pass to init command" ),
       "destroy_parameters" : SimpleItem( defvalue = {},
@@ -114,9 +111,6 @@ class ICommandSet( GangaObject ):
    _name = "ICommandSet"
    _hidden = 1
    _enable_config = 1
-
-   def __expandGangaSystemVars__(self, value):
-       return expandgangasystemvars(None,value)
 
    def __init__( self ):
       super( ICommandSet, self ).__init__()
