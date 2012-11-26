@@ -7,11 +7,12 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from DiracScript import *
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-def exe_dirac_wrapper(cmdline):
-    return """#!/usr/bin/env python
+def exe_dirac_wrapper(cmdline,job):
+    cmd = """#!/usr/bin/env python
 '''Script to run Executable application'''
 
 from os import system, environ, pathsep, getcwd
@@ -21,9 +22,14 @@ import sys
 if __name__ == '__main__':
 
     environ['PATH'] = getcwd() + (pathsep + environ['PATH'])        
-    sys.exit(system('''%s''')/256)
+    rc = (system('''%s''')/256)
+    ###OUTPUTFILESINJECTEDCODE###
+
+    sys.exit(rc)
   """ % cmdline
 
+    cmd = cmd.replace('###OUTPUTFILESINJECTEDCODE###',getWNCodeForOutputPostprocessing(job, '    '))
+    return cmd
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
@@ -59,6 +65,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
         #dirac_script.exe = DiracExe(app.exe,app.args)
         dirac_script.exe = DiracExe('exe-script.py',[])
         dirac_script.output_sandbox = j.outputsandbox[:]
+        dirac_script.output_sandbox += getOutputSandboxPatterns(j)
 
         if j.inputdata: dirac_script.inputdata = DiracInputData(j.inputdata)
         if j.outputdata: dirac_script.outputdata = j.outputdata
@@ -74,8 +81,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
         if app.args:
             for arg in app.args: commandline += " %s" % arg        
         logger.debug('Command line: %s: ', commandline)
-        wrapper = exe_dirac_wrapper(commandline)
         j = app.getJobObject()
+        wrapper = exe_dirac_wrapper(commandline, j)
         script = "%s/exe-script.py" % j.getInputWorkspace().getPath()
         file = open(script,'w')
         file.write(wrapper)

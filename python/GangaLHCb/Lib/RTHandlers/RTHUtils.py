@@ -58,47 +58,49 @@ class filenameFilter:
         return file.name == self.filename
 
 
-def getXMLSummaryScript():
+def getXMLSummaryScript(indent=''):
   '''Returns the necessary script to parse and make sense of the XMLSummary data'''
   import inspect
   from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
-  script  = "# Parsed XMLSummary data extraction methods\n"
+  script  = "###INDENT#### Parsed XMLSummary data extraction methods\n"
   
   for summaryItem in activeSummaryItems().values():
-    script += inspect.getsource(summaryItem)
-  script += inspect.getsource(activeSummaryItems)
+    script += ''.join(['###INDENT###'+line for line in inspect.getsourcelines(summaryItem)[0]])
+  script += ''.join(['###INDENT###'+line for line in inspect.getsourcelines(activeSummaryItems)[0]])
+##     script += inspect.getsource(summaryItem)
+##   script += inspect.getsource(activeSummaryItems)
 
   script += """
-# XMLSummary parsing
-import os, sys
-if 'XMLSUMMARYBASEROOT' not in os.environ:
-    sys.stderr.write(\"\'XMLSUMMARYBASEROOT\' env var not defined so summary.xml not parsed\")
-else:
-    schemapath  = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'xml/XMLSummary.xsd')
-    summarypath = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'python/XMLSummaryBase')
-    sys.path.append(summarypath)
-    import summary
-
-    outputxml = os.path.join(os.getcwd(), 'summary.xml')
-    if not os.path.exists(outputxml):
-        sys.stderr.write(\"XMLSummary not passed as \'summary.xml\' not present in working dir\")
-    else:
-        try:
-            XMLSummarydata = summary.Summary(schemapath,construct_default=False)
-            XMLSummarydata.parse(outputxml)
-        except:
-            sys.stderr.write(\"Failure when parsing XMLSummary file \'summary.xml\'\")
-
-        # write to file
-        with open('__parsedxmlsummary__','w') as parsedXML:
-            for name, method in activeSummaryItems().iteritems():
-                try:
-                    parsedXML.write( '%s = %s\\n' % ( name, str(method(XMLSummarydata)) ) )
-                except:
-                    parsedXML.write( '%s = None\\n' % name )
-                    sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n' % name)
+###INDENT#### XMLSummary parsing
+###INDENT###import os, sys
+###INDENT###if 'XMLSUMMARYBASEROOT' not in os.environ:
+###INDENT###    sys.stderr.write(\"\'XMLSUMMARYBASEROOT\' env var not defined so summary.xml not parsed\")
+###INDENT###else:
+###INDENT###    schemapath  = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'xml/XMLSummary.xsd')
+###INDENT###    summarypath = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'python/XMLSummaryBase')
+###INDENT###    sys.path.append(summarypath)
+###INDENT###    import summary
+###INDENT###
+###INDENT###    outputxml = os.path.join(os.getcwd(), 'summary.xml')
+###INDENT###    if not os.path.exists(outputxml):
+###INDENT###        sys.stderr.write(\"XMLSummary not passed as \'summary.xml\' not present in working dir\")
+###INDENT###    else:
+###INDENT###        try:
+###INDENT###            XMLSummarydata = summary.Summary(schemapath,construct_default=False)
+###INDENT###            XMLSummarydata.parse(outputxml)
+###INDENT###        except:
+###INDENT###            sys.stderr.write(\"Failure when parsing XMLSummary file \'summary.xml\'\")
+###INDENT###
+###INDENT###        # write to file
+###INDENT###        with open('__parsedxmlsummary__','w') as parsedXML:
+###INDENT###            for name, method in activeSummaryItems().iteritems():
+###INDENT###                try:
+###INDENT###                    parsedXML.write( '%s = %s\\n' % ( name, str(method(XMLSummarydata)) ) )
+###INDENT###                except:
+###INDENT###                    parsedXML.write( '%s = None\\n' % name )
+###INDENT###                    sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n' % name)
 """
-  return script
+  return script.replace('###INDENT###',indent)
 
 def create_runscript(app,outputdata,job):
 
