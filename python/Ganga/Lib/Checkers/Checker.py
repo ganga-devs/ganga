@@ -46,13 +46,13 @@ class MetaDataChecker(IChecker):
         Checks metadata of job is within a certain range.
         """
         if self.expression == None:
-            raise PostProcessException('No expression is set. The checker will do nothing!')
+            raise PostProcessException('No expression is set. MetaDataChecker will do nothing!')
         try:
             self.result = self.calculateResult(job)
         except Exception, e:
-            raise PostProcessException('There was an error parsing the checker expression: %s - the checker will do nothing!'%e)
+            raise PostProcessException('There was an error parsing the checker expression: %s - MetaDataChecker will do nothing!'%e)
         if self.result is not True and self.result is not False:
-            raise PostProcessException('The expression "%s" did not evaluate to True or False, the checker will do nothing!'%self.expression)
+            raise PostProcessException('The expression "%s" did not evaluate to True or False, MetaDataChecker will do nothing!'%self.expression)
         if self.result is False:
             logger.info('MetaDataChecker has failed job(%s) because the expression "%s" is False'%(job.fqid,self.expression))
         return self.result
@@ -77,6 +77,11 @@ class FileChecker(IChecker):
         """
         Check that a string is in a file
         """
+        if not len(self.files):
+            raise PostProcessException('No files specified, FileChecker will do nothing!')
+
+        if not len(self.searchStrings):
+            raise PostProcessException('No serachStrings specified, FileChecker will do nothing!')
         filepaths = []
         for f in self.files:
             filepath = os.path.join(job.outputdir,f)
@@ -85,16 +90,15 @@ class FileChecker(IChecker):
             else:
                 logger.warning('File %s does not exist',filepath)
         if not len(filepaths):
-            raise PostProcessException('None of the files to check exist, checker will do nothing!') 
-
+            raise PostProcessException('None of the files to check exist, FileChecker will do nothing!') 
  
         for f in filepaths:
             for searchString in self.searchStrings:
                 grepoutput = commands.getoutput('grep %s %s' % (searchString,filepath))
-                if len(grepoutput) > 0 and self.failIfFound is True:            
+                if len(grepoutput) and self.failIfFound is True:            
                     logger.info('The string %s has been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
-                if len(grepoutput) == 0 and self.failIfFound is False:            
+                if not len(grepoutput) and self.failIfFound is False:            
                     logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
         return self.success 
@@ -124,7 +128,7 @@ class CustomChecker(IChecker):
         if self.module is None or not self.module:
             raise PostProcessException("No module is specified and so the check will fail.")
         if not os.path.exists(self.module.name):
-            raise PostProcessException("The module '%s' does not exist and so the checker will do nothing!"%(self.module.name))
+            raise PostProcessException("The module '%s' does not exist and so CustomChecker will do nothing!"%(self.module.name))
 
         result = None     
            
@@ -134,9 +138,9 @@ class CustomChecker(IChecker):
             exec('_result = check(job)',ns)
             result = ns.get('_result',result)
         except Exception,e:
-            raise PostProcessException('There was a problem with executing the module: %s, the checker will do nothing!'%e)
+            raise PostProcessException('There was a problem with executing the module: %s, CustomChecker will do nothing!'%e)
         if result is not True and result is not False:
-            raise PostProcessException('The custom check module did not return True or False, the checker will do nothing!')
+            raise PostProcessException('The custom check module did not return True or False, CustomChecker will do nothing!')
         if result is not True:
             logger.info('The custom check module returned False for job(%s)',job.fqid)
             return self.failure
