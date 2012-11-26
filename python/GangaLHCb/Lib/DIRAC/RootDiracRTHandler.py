@@ -10,7 +10,7 @@ import Ganga.Utility.logging
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 logger = Ganga.Utility.logging.getLogger()
-
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 rootVersions = None
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -74,7 +74,8 @@ class RootDiracRTHandler(IRuntimeHandler):
         dirac_script.exe = DiracRoot(app,c.exe)
         dirac_script.platform = getConfig('ROOT')['arch']
         dirac_script.output_sandbox = j.outputsandbox[:]
-
+        dirac_script.output_sandbox += getOutputSandboxPatterns(j)
+        
         if j.inputdata: dirac_script.inputdata = DiracInputData(j.inputdata)
         if j.outputdata: dirac_script.outputdata = j.outputdata
         c.script = dirac_script

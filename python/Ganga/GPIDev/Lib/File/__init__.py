@@ -19,7 +19,7 @@ outputfilesConfig = {}
 
 keys = getConfig('Output').options.keys()
 keys.remove('PostProcessLocationsFileName')
-#keys.remove('ProvideLegacyCode')                     
+keys.remove('ForbidLegacyOutput')                     
 
 for key in keys:
     try:

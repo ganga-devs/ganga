@@ -767,7 +767,7 @@ class AthenaLCGRTHandler(IRuntimeHandler):
 
 allHandlers.add('Athena','LCG',AthenaLCGRTHandler)
 allHandlers.add('Athena','CREAM',AthenaLCGRTHandler)
-allHandlers.add('Athena','Condor',AthenaLCGRTHandler)
+#allHandlers.add('Athena','Condor',AthenaLCGRTHandler)
 allHandlers.add('Athena','Cronus',AthenaLCGRTHandler)
 
 config = getConfig('Athena')

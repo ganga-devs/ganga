@@ -143,8 +143,15 @@ class Job(GangaObject):
     Datasets: PENDING
     Datasets are highly application and virtual organisation specific.
     '''
+
+    if getConfig('Output')['ForbidLegacyOutput']:
+        outputfieldCopyable = 0
+    else:
+        outputfieldCopyable = 1
+        
+
     _schema = Schema(Version(1,6),{ 'inputsandbox' : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
-                                    'outputsandbox' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of filenames or patterns shipped from the worker node"),
+                                    'outputsandbox' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,copyable=outputfieldCopyable,doc="list of filenames or patterns shipped from the worker node"),
                                     'info':ComponentItem('jobinfos',defvalue=None,doc='JobInfo '),
                                     'comment':SimpleItem('', protected=0, doc='comment of the job'),
                                     'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
@@ -159,7 +166,7 @@ class Job(GangaObject):
                                     'outputdir':SimpleItem(getter="getStringOutputDir",defvalue=None,transient=1,protected=1,comparable=0,load_default=0,optional=1,copyable=0,typelist=['str'],doc='location of output directory (file workspace)'),
 
                                     'inputdata':ComponentItem('datasets',defvalue=None,typelist=['Ganga.GPIDev.Lib.Dataset.Dataset'],load_default=0,optional=1,doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
-                                    'outputdata':ComponentItem('datasets',defvalue=None,load_default=0,optional=1,doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
+                                    'outputdata':ComponentItem('datasets',defvalue=None,load_default=0,optional=1,copyable=outputfieldCopyable,doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                     'splitter':ComponentItem('splitters',defvalue=None,load_default=0,optional=1,doc='optional splitter'),
                                     'subjobs':ComponentItem('jobs',defvalue=[],sequence=1,protected=1,load_default=0,copyable=0,optional=1,proxy_get="_subjobs_proxy",doc='list of subjobs (if splitting)',summary_print = '_subjobs_summary_print'),
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
@@ -232,7 +239,7 @@ class Job(GangaObject):
                 
     keys = getConfig('Output').options.keys()
     keys.remove('PostProcessLocationsFileName')         
-    #keys.remove('ProvideLegacyCode')                
+    keys.remove('ForbidLegacyOutput')                
 
     for key in keys:
         try:
@@ -1390,10 +1397,10 @@ class Job(GangaObject):
 
             if value != []:     
                 if self.outputdata is not None:
-                    logger.error('job.outputdata is set, you can\'t set.outputfiles')
+                    logger.error('job.outputdata is set, you can\'t set job.outputfiles')
                     return
                 elif self.outputsandbox != []:
-                    logger.error('job.outputsandbox is set, you can\'t set.outputfiles')
+                    logger.error('job.outputsandbox is set, you can\'t set job.outputfiles')
                     return      
                         
             #reduce duplicate values here, leave only duplicates for LCG, where we can have replicas    
@@ -1416,17 +1423,29 @@ class Job(GangaObject):
         elif attr == 'outputsandbox':
 
             if value != []:     
-                if self.outputfiles != []:
-                    logger.error('job.outputfiles is set, you can\'t set.outputsandbox')
+
+                if getConfig('Output')['ForbidLegacyOutput']:
+                    logger.error('Use of job.outputsandbox is forbidden, please use job.outputfiles')
                     return
+
+                if self.outputfiles != []:
+                    logger.error('job.outputfiles is set, you can\'t set job.outputsandbox')
+                    return
+                
+
 
             super(Job,self).__setattr__(attr, value)
 
         elif attr == 'outputdata':
 
             if value != None:   
+
+                if getConfig('Output')['ForbidLegacyOutput']:
+                    logger.error('Use of job.outputdata is forbidden, please use job.outputfiles')
+                    return
+
                 if self.outputfiles != []:
-                    logger.error('job.outputfiles is set, you can\'t set.outputdata')
+                    logger.error('job.outputfiles is set, you can\'t set job.outputdata')
                     return
             super(Job,self).__setattr__(attr, value)
         elif attr == 'merger':

@@ -678,6 +678,7 @@ class AthenaRemoteRTHandler(IRuntimeHandler):
 
 allHandlers.add('Athena', 'Local', AthenaLocalRTHandler)
 allHandlers.add('Athena', 'LSF'  , AthenaLocalRTHandler)
+allHandlers.add('Athena', 'Condor'  , AthenaLocalRTHandler)
 allHandlers.add('Athena', 'PBS'  , AthenaLocalRTHandler)
 allHandlers.add('Athena', 'SGE'  , AthenaLocalRTHandler)
 allHandlers.add('Athena', 'Remote'  , AthenaRemoteRTHandler)

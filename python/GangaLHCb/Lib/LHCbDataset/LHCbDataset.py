@@ -357,13 +357,13 @@ def string_datafile_shortcut(name,item):
 allComponentFilters['datafiles'] = string_datafile_shortcut
 
 def string_dataset_shortcut(files,item):
-    from GangaLHCb.Lib.Tasks.LHCbAnalysisTransform import LHCbAnalysisTransform
+    from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
     inputdataList  = [Job._schema['inputdata'],
-                      LHCbAnalysisTransform._schema['inputdata'],
+                      LHCbTransform._schema['inputdata'],
                       JobTemplate._schema['inputdata']
                       ]
     outputdataList = [Job._schema['outputdata'],
-                      LHCbAnalysisTransform._schema['outputdata'],
+                      LHCbTransform._schema['outputdata'],
                       JobTemplate._schema['outputdata']
                       ]
     if type(files) is not type([]): return None

@@ -4,6 +4,7 @@ import Ganga.Utility.Config
 configLHCb=Ganga.Utility.Config.makeConfig('LHCb','Parameters for LHCb')
 configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
 logger=Ganga.Utility.logging.getLogger()
+config=Ganga.Utility.Config.getConfig('Configuration')
 
 # Set default values for the LHCb config section.
 dscrpt = 'The name of the local site to be used for resolving LFNs into PFNs.'
@@ -59,7 +60,9 @@ dscrpt = 'Global timeout (seconds) for Dirac commands'
 configDirac.addOption('Timeout',1000,dscrpt)
 dscrpt = 'Wait time (seconds) prior to first poll of Dirac child proc'
 configDirac.addOption('StartUpWaitTime',3,dscrpt)
-    
+dscrpt = 'Base dir appended to create LFN name from DiracFile(\'name\')'
+configDirac.addOption('DiracLFNBase','/lhcb/user/%s/%s'%(config['user'][0],config['user']),dscrpt)
+
 def getEnvironment( config = {} ):
    import sys
    import os.path
