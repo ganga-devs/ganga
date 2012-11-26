@@ -132,7 +132,7 @@ class ITask(GangaObject):
         logger.info("Task #%s deleted" % self.id)
 
     def clone(self):
-        c = super(Task,self).clone()
+        c = super(ITask,self).clone()
         for tf in c.transforms:
             tf.status = "new"
         c.check()

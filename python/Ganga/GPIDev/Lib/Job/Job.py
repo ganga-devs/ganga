@@ -9,9 +9,8 @@ from Ganga.GPIDev.Schema import *
 from MetadataDict import *
 from MetadataDict import *
 
-from Ganga.Lib.Checkers.Checker import Checker
-from Ganga.Lib.Notifier.Notifier import Notifier
 import Ganga.Utility.logging
+from Ganga.Lib.Notifier import Notifier
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiProcessor
 logger = Ganga.Utility.logging.getLogger()
 
@@ -135,10 +134,11 @@ class Job(GangaObject):
     individual subjobs. The "master" attribute of a subjob points back to the
     master job.
 
-    Merging:
+    Postprocessors:
 
-    The "merger" attribute defines how the output of the subjobs may be merged.
-    Merging is not perfromed automatically and it is triggered by the merge() method.
+    The "postprocessors" attribute is a list of actions to perform once the job has completed.
+    This includes how the output of the subjobs may be merged, user defined checks which may fail
+    the job, and an email notification.
         
     Datasets: PENDING
     Datasets are highly application and virtual organisation specific.
@@ -164,7 +164,7 @@ class Job(GangaObject):
                                     'subjobs':ComponentItem('jobs',defvalue=[],sequence=1,protected=1,load_default=0,copyable=0,optional=1,proxy_get="_subjobs_proxy",doc='list of subjobs (if splitting)',summary_print = '_subjobs_summary_print'),
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
                                     'postprocessors':ComponentItem('postprocessor',defvalue=MultiProcessor(),load_default=0,optional=1,doc='list of postprocessors to run after job has finished'),
-                                    'merger':ComponentItem('mergers',defvalue=None,hidden=1,load_default=0,optional=1,doc='optional output merger'),
+                                    'merger':ComponentItem('mergers',defvalue=None,hidden=1,copyable=0,load_default=0,optional=1,doc='optional output merger'),
                                     'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
                                     'metadata':ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
                                     'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0)
@@ -1427,7 +1427,10 @@ class Job(GangaObject):
                 if self.outputfiles != []:
                     logger.error('job.outputfiles is set, you can\'t set.outputdata')
                     return
-
+            super(Job,self).__setattr__(attr, value)
+        elif attr == 'merger':
+            if value != None:
+                logger.error('j.merger is depricated in Ganga 6, please use j.postprocessors instead.')
             super(Job,self).__setattr__(attr, value)
                 
         elif attr == 'comment':

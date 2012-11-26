@@ -19,7 +19,6 @@ class IPostProcessor(GangaObject):
     _category = 'postprocessor'
     _hidden = 1
 
-    set_outputdir_for_automerge = True
     order = 0
     success = True
     failure = False
@@ -37,7 +36,7 @@ class MultiProcessor(IPostProcessor):
     """
 
     _category = 'postprocessor'
-    _exportmethods = ['__add__','__get__','__set__','__str__','__setitem__','__getitem__','append','remove']
+    _exportmethods = ['__add__','__get__','__set__','__str__','__setitem__','__getitem__','append','remove','__len__']
     _name = 'MultiProcessor'
     _schema = Schema(Version(1,0), {
         'process_objects' : ComponentItem('postprocessor', defvalue = [], hidden = 1,doc = 'A list of Processors to run', sequence = 1)
@@ -53,15 +52,20 @@ class MultiProcessor(IPostProcessor):
              for process in value:
                  self.addProcess(process)
         else: self.addProcess(value)
+        self.process_objects=sorted(self.process_objects,key=lambda process: process.order)
 
     def __str__(self):
         return str(GPIProxyObjectFactory(self.process_objects))
 
     def append(self,value):
         self.addProcess(value)
+        self.process_objects=sorted(self.process_objects,key=lambda process: process.order)
 
     def remove(self,value):
         self.process_objects.remove(value)
+
+    def __len__(self):
+        return len(self.process_objects)
 
     def __get__(self):
         return GPIProxyObjectFactory(self.process_objects)
@@ -69,13 +73,9 @@ class MultiProcessor(IPostProcessor):
     def __getitem__(self,i):
         return GPIProxyObjectFactory(self.process_objects[i])
 
-    def __setitem__(self,i,value):
-        self.process_objects[i] = value
-
     def execute(self, job, newstatus, **options):
         #run the merger objects one at a time
         process_results = []
-        self.process_objects=sorted(self.process_objects,key=lambda process: process.order)
         for p in self.process_objects:
             #stop infinite recursion
             if p is self:

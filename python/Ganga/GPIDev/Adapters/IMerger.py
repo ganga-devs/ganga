@@ -5,6 +5,7 @@
 ################################################################################
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor, MultiProcessor
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
+from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
@@ -12,6 +13,25 @@ import commands
 import os
 import string
 
+
+#set the mergers config up
+config = makeConfig('Mergers','parameters for mergers')
+config.addOption('associate',"{'log':'TextMerger','root':'RootMerger',"
+                 "'text':'TextMerger','txt':'TextMerger'}",'Dictionary of file associations')
+gangadir = getConfig('Configuration')['gangadir']
+config.addOption('merge_output_dir', gangadir+'/merge_results',"location of the merger's outputdir")
+config.addOption('std_merge','TextMerger','Standard (default) merger')
+
+def getDefaultMergeDir():
+    """Gets the default location of the mergers outputdir from the config"""
+    
+    outputdir = gangadir + "/merge_results"
+    try:
+        config = getConfig('Mergers')
+        outputdir = config['merge_output_dir']
+    except ConfigError:
+        pass
+    return os.path.expanduser(outputdir)
 
 class IMerger(IPostProcessor):
     """
@@ -69,8 +89,7 @@ class IMerger(IPostProcessor):
 
         files = {}
 
-        for f in self.files:
-            files[f] = []
+
         for j in jobs:
             #first check that the job is ok
             if j.status != 'completed':
@@ -90,25 +109,28 @@ class IMerger(IPostProcessor):
 
             
             import glob 
-            for f in files.keys():
-                matchedFiles = []
-                for matchedFile in glob.glob(os.path.join(j.outputdir,f)):
-                    matchedFiles.append(matchedFile)    
+            for f in self.files:
 
-                if len(matchedFiles) == 0:
+                for matchedFile in glob.glob(os.path.join(j.outputdir,f)):
+                    relMatchedFile = os.path.relpath(matchedFile,j.outputdir)
+                    if relMatchedFile in files:
+                        files[relMatchedFile].append(matchedFile)
+                    else:
+                        files[relMatchedFile] = [matchedFile]    
+
+                if len(files[relMatchedFile]) == 0:
                     if ignorefailed:
-                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.',str(f),j.fqid)
+                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.',str(relMatchedFile),j.fqid)
                         continue
                     else:
                         logger.error('The file pattern %s in Job %s was not found and so the merge can not continue. '\
-                                     'This can be overridden with the ignorefailed flag.', str(f), j.fqid)
+                                     'This can be overridden with the ignorefailed flag.', str(relMatchedFile), j.fqid)
                         return self.failure
-                files[f].extend(matchedFiles)
+                #files[f].extend(matchedFiles)
 
         for k in files.keys():
             # make sure we are not going to over write anything
             outputfile = os.path.join(outputdir,k)
-
             if os.path.exists(outputfile) and not overwrite:
                 logger.error('The merge process can not continue as it will result in over writing. '\
                              'Either move the file %s or set the overwrite flag to True.', str(outputfile))

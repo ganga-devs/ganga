@@ -4,7 +4,8 @@
 ################################################################################
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
+from Ganga.GPIDev.Adapters.IChecker import IChecker
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
 from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
@@ -21,85 +22,49 @@ logger = getLogger()
 
 
 
-class Checker(IPostProcessor):
+
+
+class MetaDataChecker(IChecker):
     """
-    Abstract class which all checkers inherit from.
+    Checks the meta data of a job This class must be overidden to convert the experiment specific metadata.
     """
-    _schema = Schema(Version(1,0), {
-        'checkSubjobs' : SimpleItem(defvalue = False, doc='Run on subjobs')
-        } )
-    _category = 'postprocessor'
-    _name = 'Checker'
-    _hidden = 1
-    order = 2
-
-    def execute(self, job,newstatus):
-        """
-        Execute
-        """
-        if newstatus == 'completed':
-            if len(job.subjobs) != 0 or self.checkSubjobs == True:
-                return self.check(job)
-        else:
-            return True
-
-    def check(self,job):
-        """
-        Method to check the output of jobs.
-        jobs may be a single job instance or a sequence of Jobs
-        outputdir is the name of the directry to put the check results in.
-        """
-        raise NotImplementedError
-
-
-
-class MetaDataChecker(Checker):
-    """
-    Checks the meta data of a job is within somerange, defined by minVal and maxVal
-    """
-    _schema = Checker._schema.inherit_copy()
-    _schema.datadict['minVal'] = SimpleItem(defvalue = None,typelist=['float','int','type(None)'], doc='The mix value allowed to pass')
-    _schema.datadict['maxVal'] = SimpleItem(defvalue = None,typelist=['float','int','type(None)'],doc='The max value allowed to pass')
-    _schema.datadict['attribute'] = SimpleItem(defvalue = None,typelist=['str','type(None)'],doc='The metadata attribute')
-    _schema.datadict['convert_metadata'] = SimpleItem(defvalue = None,typelist=['float','int','type(None)'],hidden =1,doc='Function to compare attribute with values.')
+    _schema = IChecker._schema.inherit_copy()
+    _schema.datadict['expression'] = SimpleItem(defvalue = None,typelist=['str','type(None)'],doc='The metadata attribute')
+    _schema.datadict['result'] = SimpleItem(defvalue = None,typelist=['bool','type(None)'],hidden =1,doc='Check result')
     _category = 'postprocessor'
     _name = 'MetaDataChecker'
     _hidden = 1 
 
-
+    def calculateResult(self,job):
+        """
+        To be overidden by experiment specific class
+        """
+        raise NotImplementedError
 
     def check(self,job):
         """
         Checks metadata of job is within a certain range.
         """
-        if self.attribute == None:
-            logger.error('No attribute set. The checker will do nothing!')
-            return True
-        if self.minVal == None and self.maxVal == None:
-            logger.error('No min or max values set. The checker will do nothing!')
-            return True
-        if self.convert_metadata is not None:
-            metaDataValue = self.convert_metadata
+        if self.expression == None:
+            raise PostProcessException('No expression is set. The checker will do nothing!')
         try:
-            failOnMin = self.minVal != None and metaDataValue < self.minVal
-            failOnMax = self.maxVal != None and metaDataValue > self.maxVal
-            if failOnMax == True or failOnMin == True:
-                logger.info('MetaData attribute not within desired range, will fail job %s',job.fqid)
-                return self.failure
-            else:
-                return self.success
-        except: 
-            logger.error('The attribute %s is not defined as a metadata object, the checker will do nothing!',self.attribute)
-            return self.success
+            self.result = self.calculateResult(job)
+        except Exception, e:
+            raise PostProcessException('There was an error parsing the checker expression: %s - the checker will do nothing!'%e)
+        if self.result is not True and self.result is not False:
+            raise PostProcessException('The expression "%s" did not evaluate to True or False, the checker will do nothing!'%self.expression)
+        if self.result is False:
+            logger.info('MetaDataChecker has failed job(%s) because the expression "%s" is False'%(job.fqid,self.expression))
+        return self.result
 
-class FileChecker(Checker):
+class FileChecker(IChecker):
     """
     Checks if string is in file.
     searchStrings are the files you would like to check for.
     files are the files you would like to check.
     failIfFound (default = True) decides whether to fail the job if the string is found. If you set this to false the job will fail if the string *isnt* found. 
     """
-    _schema = Checker._schema.inherit_copy()
+    _schema = IChecker._schema.inherit_copy()
     _schema.datadict['searchStrings'] = SimpleItem(defvalue = [], doc='String to search for')
     _schema.datadict['files'] = SimpleItem(defvalue = [], doc='File to search in')
     _schema.datadict['failIfFound'] = SimpleItem(True, doc='Toggle whether job fails if string is found or not found.')
@@ -118,27 +83,40 @@ class FileChecker(Checker):
             if os.path.exists(filepath):
                 filepaths.append(filepath)
             else:
-                logger.warning('File %s does not exist, Checker will do nothing!',filepath)
+                logger.warning('File %s does not exist',filepath)
+        if not len(filepaths):
+            raise PostProcessException('None of the files to check exist, checker will do nothing!') 
 
  
         for f in filepaths:
             for searchString in self.searchStrings:
                 grepoutput = commands.getoutput('grep %s %s' % (searchString,filepath))
                 if len(grepoutput) > 0 and self.failIfFound is True:            
-                    logger.warning('The string %s has been found in file %s, will fail job',searchString,filepath)
+                    logger.info('The string %s has been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
                 if len(grepoutput) == 0 and self.failIfFound is False:            
-                    logger.warning('The string %s has not found in file %s, will fail job',searchString,filepath)
+                    logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
         return self.success 
 
-class CustomChecker(Checker):
-    """User tool for writing custom check with Python
+class CustomChecker(IChecker):
+    """User tool for writing custom check with Python.
+       Make a file, e.g customcheck.py,
+       In that file, do something like:
+
+       def check(j):
+           if j has passed:
+               return True
+           else: 
+               return False
+
+
+       When the job is about to be completed, Ganga will call this function and fail the job if False is returned.
     
     """
     _category = 'postprocessor'
     _name = 'CustomChecker'
-    _schema = Checker._schema.inherit_copy()
+    _schema = IChecker._schema.inherit_copy()
     _schema.datadict['module'] = FileItem(defvalue = None, doc='Path to a python module to perform the check.')
     _exportmethods = ['check']        
 
@@ -146,7 +124,7 @@ class CustomChecker(Checker):
         if self.module is None or not self.module:
             raise PostProcessException("No module is specified and so the check will fail.")
         if not os.path.exists(self.module.name):
-            raise PostProcessException("The module '&s' does not exist and so the check will fail.",self.module.name)
+            raise PostProcessException("The module '%s' does not exist and so the checker will do nothing!"%(self.module.name))
 
         result = None     
            
@@ -155,13 +133,13 @@ class CustomChecker(Checker):
             execfile(self.module.name, ns)
             exec('_result = check(job)',ns)
             result = ns.get('_result',result)
-        except PostProcessException,e:
-            raise e
-            
+        except Exception,e:
+            raise PostProcessException('There was a problem with executing the module: %s, the checker will do nothing!'%e)
         if result is not True and result is not False:
-            raise PostProcessException('The custom module did not return True or False')
+            raise PostProcessException('The custom check module did not return True or False, the checker will do nothing!')
         if result is not True:
-            logger.info('The check module returned False for job(%s)',job.fqid)
+            logger.info('The custom check module returned False for job(%s)',job.fqid)
+            return self.failure
         return self.success
   
 

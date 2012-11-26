@@ -1,1 +1,1 @@
-from Checker import Checker, CustomChecker
+from Checker import FileChecker, CustomChecker

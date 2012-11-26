@@ -19,24 +19,8 @@ import string
 
 logger = getLogger()
 
-#set the mergers config up
-config = makeConfig('Mergers','parameters for mergers')
-config.addOption('associate',"{'log':'TextMerger','root':'RootMerger',"
-                 "'text':'TextMerger','txt':'TextMerger'}",'Dictionary of file associations')
-gangadir = getConfig('Configuration')['gangadir']
-config.addOption('merge_output_dir', gangadir+'/merge_results',"location of the merger's outputdir")
-config.addOption('std_merge','TextMerger','Standard (default) merger')
 
-def getDefaultMergeDir():
-    """Gets the default location of the mergers outputdir from the config"""
-    
-    outputdir = gangadir + "/merge_results"
-    try:
-        config = getConfig('Mergers')
-        outputdir = config['merge_output_dir']
-    except ConfigError:
-        pass
-    return os.path.expanduser(outputdir)
+
 
 def getMergerObject(file_ext):
     """Returns an instance of the correct merger tool, or None if there is not one"""
@@ -62,11 +46,6 @@ def getMergerObject(file_ext):
         pass #just return None
     return result
 
-
-
-
-
-    
 
 
             
@@ -255,7 +234,7 @@ class CustomMerger(IMerger):
     Allows a script to be supplied that performs the merge of some custom file type.
     The script must be a python file which defines the following function:
     
-    def mergefiles(file_list, output_file):
+    def merge(file_list, output_file):
     
         #perform the merge
         if not success:
@@ -289,7 +268,7 @@ class CustomMerger(IMerger):
             ns = {'file_list':copy.copy(file_list),
                   'outputfile':copy.copy(outputfile)}
             execfile(self.module.name, ns)
-            exec('_result = (file_list,outputfile)',file_list,outputfile)
+            exec('_result = merge(file_list,outputfile)',file_list,outputfile)
             result = ns.get('_result',result)
         except PostProcessException,e:
             raise e
@@ -420,6 +399,9 @@ class SmartMerger(IMerger):
 
 
 #configure the plugins
+allPlugins.add(SmartMerger,'mergers','SmartMerger') 
+allPlugins.add(TextMerger,'mergers','TextMerger')
+allPlugins.add(RootMerger,'mergers','RootMerger')        
 #allPlugins.add(_CustomMergeTool,'merge_tools','_CustomMergeTool') 
 #allPlugins.add(_TextMergeTool,'merge_tools','_TextMergeTool')
 #allPlugins.add(_RootMergeTool,'merge_tools','_RootMergeTool')        

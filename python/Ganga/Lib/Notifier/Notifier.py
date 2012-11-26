@@ -45,11 +45,7 @@ class Notifier(IPostProcessor):
         * job has failed but do not have auto resubmit
         * job has not failed but verbose is set to true
         """
-        if len(job.subjobs):
-            return self.email(job,newstatus)
-        if newstatus == 'failed' and job.do_auto_resubmit is False:
-            return self.email(job,newstatus)
-        if newstatus != 'failed' and self.verbose is True:
+        if len(job.subjobs) or (newstatus == 'failed' and job.do_auto_resubmit is False) or (newstatus != 'failed' and self.verbose is True):
             return self.email(job,newstatus)
         return True
 
@@ -79,7 +75,7 @@ remove the notifier object from future jobs.
             smtpObj = smtplib.SMTP(config['SMTPHost'])
             smtpObj.sendmail(sender, receivers, string_message)         
         
-        except smtplib.SMTPException:
-            logger.warning("Could not send email notification email, did you supply an email address?")     
+        except smtplib.SMTPException, e:
+            raise PostProcessException(str(e))     
         return True
  

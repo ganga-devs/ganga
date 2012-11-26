@@ -15,6 +15,7 @@ import commands
 import copy
 import os
 import string
+logger = getLogger()
 
 
 
@@ -24,7 +25,7 @@ import string
 
 class LHCbMetaDataChecker(MetaDataChecker):
     """
-    Checks the meta data of a job is within some range, defined by minVal and maxVal
+    Checks the meta data of a job is within some range,
     Currently accepts 'lumi', 'inputevents', 'outputevents'.
     """
     _schema = MetaDataChecker._schema.inherit_copy()
@@ -33,24 +34,32 @@ class LHCbMetaDataChecker(MetaDataChecker):
     _exportmethods = ['check']    
 
 
-    def convertLHCbMetadata(self,job):
-        try:
-            if self.attribute == 'inputevents':
-                return job.metadata['events']['input']
-            if self.attribute == 'outputevents':
-                return job.metadata['events']['output']
-            if self.attribute == 'lumi':
-                return float(job.metadata['lumi'][1:job.metadata['lumi'].find(' ')])
-            return job.metadata[self.attribute]
-        except:
-            return None
+    def calculateResult(self,j):
+        """
+        
+        """
+        inputevents = None
+        outputevents = None
+        lumi = None
+        if self.expression.find('inputevents') > -1:
+            try:
+                inputevents = j.metadata['events']['input']
+            except: 
+                raise PostProcessException("The metadata value j.events['input'] was not defined")
+        if self.expression.find('outputevents') > -1:
+            try:
+                outputevents = j.metadata['events']['output']
+            except: 
+                raise PostProcessException("The metadata value j.events['output'] was not defined")
+        if self.expression.find('lumi') > -1:
+            try:
+                lumi = float(j.metadata['lumi'][1:j.metadata['lumi'].find(' ')])
+            except: 
+                raise PostProcessException("The metadata value j.lumi was not defined")            
+        return eval(self.expression)
 
-    def check(self,job):
-        """
-        Checks metadata of job is within a certain range.
-        """
-        self.convert_metadata = self.convertLHCbMetadata(job)
-        return super(LHCbMetaDataChecker,self).check(job)
+
+            
 
 
 
