@@ -195,7 +195,7 @@ class LHCbDataset(Dataset):
         lfns = self.getLFNs()
         depth = self.depth
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
-        cmd = 'result = DiracCommands.getInputDataCatalog(%s,%d,"%s","%s")' \
+        cmd = 'result = DiracLHCbCommands.getInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns),depth,site,tmp_xml.name)
         result = get_result(cmd,'LFN->PFN error','XML catalog error.')
         xml_catalog = tmp_xml.read()
@@ -310,7 +310,7 @@ class LHCbDataset(Dataset):
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '        
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
-        cmd = 'result = DiracCommands.bkMetaData(%s)' % self.getLFNs()
+        cmd = 'result = DiracLHCbCommands.bkMetaData(%s)' % self.getLFNs()
         b =  get_result(cmd,'Error removing replica','Replica rm error.')
         return b
         
@@ -342,7 +342,7 @@ class LHCbDataset(Dataset):
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut(name,item):
-    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
+    from GangaLHCb.Lib.Backends.Dirac import Dirac
     if type(name) is not type(''): return None
     if item is None: return None # used to be c'tor, but shouldn't happen now
     else: # something else...require pfn: or lfn:

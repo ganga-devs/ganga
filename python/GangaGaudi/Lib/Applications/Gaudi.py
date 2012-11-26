@@ -71,7 +71,7 @@ class Gaudi(GaudiBase):
     _exportmethods = GaudiBase._exportmethods[:]
     #_exportmethods.append['readInputData','prepare','unprepare']
     _exportmethods +=['prepare','unprepare']
-
+    _hidden = 1
     _schema = GaudiBase._schema.inherit_copy()
 
     docstr = 'The gaudirun.py cli args that will be passed at run-time'

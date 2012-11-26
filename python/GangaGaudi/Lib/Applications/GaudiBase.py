@@ -64,7 +64,8 @@ class GaudiBase(IPrepareApp):
     _name = 'GaudiBase'
     _exportmethods = ['getenv','getpack', 'make', 'cmt']
     _schema = Schema(Version(0, 1), schema)
-
+    _hidden = 1
+    
     def _get_default_version(self,gaudi_app):
         raise NotImplementedError
 

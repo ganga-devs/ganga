@@ -1,14 +1,9 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 ''' Splitter for DIRAC jobs. '''
 
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
-from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 import Ganga.Utility.logging
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from Dirac import Dirac
-from DiracUtils import *
 
 logger = Ganga.Utility.logging.getLogger()
 

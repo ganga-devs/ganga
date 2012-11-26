@@ -2,13 +2,13 @@
 import tempfile,os, sys
 #from PythonOptionsParser import PythonOptionsParser
 #from Ganga.Core import ApplicationConfigurationError
-from Ganga.Utility.Shell import Shell
-import Ganga.Utility.logging
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
-from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
+from Ganga.Utility.Shell                                   import Shell
+from Ganga.Utility.logging                                 import getLogger
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler      import LHCbGaudiRunTimeHandler
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 import Ganga.Utility.Config
 
-logger = Ganga.Utility.logging.getLogger()
+logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
@@ -20,7 +20,7 @@ def backend_handlers():
             'Local'       : LHCbGaudiRunTimeHandler,
             'Condor'      : LHCbGaudiRunTimeHandler,
             'Remote'      : LHCbGaudiRunTimeHandler,
-            'Dirac'       : GaudiDiracRTHandler
+            'Dirac'       : LHCbGaudiDiracRunTimeHandler
             }
   return backends
 

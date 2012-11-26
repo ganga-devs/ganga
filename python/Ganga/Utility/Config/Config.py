@@ -722,6 +722,8 @@ def read_ini_files(filenames,system_vars):
                     
                 value = transform_PATH_option(name,value,current_value)
 
+                from Ganga.Utility.Config import expandgangasystemvars
+                value = expandgangasystemvars(None, value)
                 # check for the use of environment vars
                 #m = re.search('\$\{[^${}]*\}', value)     # matches on ${...}
                 m = re.search('\$\$[^${}]*\$\$', value)     # matches on $$...$$

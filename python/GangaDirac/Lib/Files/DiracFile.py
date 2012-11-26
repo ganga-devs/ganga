@@ -6,7 +6,7 @@ from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd, shellEnvUpdate_
 import Ganga.Utility.Config
 from Ganga.Utility.Config import getConfig
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
-configLHCb  = Ganga.Utility.Config.getConfig('LHCb' )
+#configLHCb  = Ganga.Utility.Config.getConfig('LHCb' )
 import fnmatch,subprocess
 from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
@@ -197,12 +197,13 @@ class DiracFile(IOutputFile):
             sourceDir = self.joboutputdir
 
 
-
+        if not os.path.exists(os.path.join(sourceDir,self.namePattern)):
+            raise GangaException('File "%s" must exist!'% os.path.join(sourceDir,self.namePattern))
 
             #raise GangaException('Can\'t upload a file without a logical file name (LFN).')
 ##         storage_elements = self.diracSE
 ##         if not self.diracSE:
-        storage_elements=configLHCb['DiracSpaceTokens']
+        storage_elements=configDirac['DiracSpaceTokens']
 
         self._getEnv()
         stderr=''
@@ -335,7 +336,7 @@ class DiracFile(IOutputFile):
                        [file.lfn for file in outputFiles if file.lfn != '']
         output_guids = [file.guid for file in outputFiles]
         cmd = cmd.replace('###OUTPUTFILES###', str(zip(output_nps, output_lfns, output_guids)) )
-        cmd = cmd.replace('###SE###',   str(configLHCb['DiracSpaceTokens']))
+        cmd = cmd.replace('###SE###',   str(configDirac['DiracSpaceTokens']))
         cmd = cmd.replace('###INDENT###',indent)
         cmd = cmd.replace('###LOCATIONSFILE###',postProcessLocationsFP)
         if self._parent and self._parent.backend._name=='Dirac':
