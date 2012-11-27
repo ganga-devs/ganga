@@ -3,7 +3,7 @@
 #
 # $Id: IMerger.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ################################################################################
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor, MultiProcessor
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject

@@ -29,7 +29,7 @@ class IPostProcessor(GangaObject):
 
         raise NotImplementedError
 
-class MultiProcessor(IPostProcessor):
+class MultiPostProcessor(IPostProcessor):
     """
     Contains and executes many postprocessors. This is the object which is attached to a job.
     Should behave like a list to the user.
@@ -37,7 +37,7 @@ class MultiProcessor(IPostProcessor):
 
     _category = 'postprocessor'
     _exportmethods = ['__add__','__get__','__set__','__str__','__setitem__','__getitem__','append','remove','__len__']
-    _name = 'MultiProcessor'
+    _name = 'MultiPostProcessor'
     _schema = Schema(Version(1,0), {
         'process_objects' : ComponentItem('postprocessor', defvalue = [], hidden = 1,doc = 'A list of Processors to run', sequence = 1)
         })
@@ -45,7 +45,7 @@ class MultiProcessor(IPostProcessor):
         
 
     def __init__(self):
-        super(MultiProcessor,self).__init__()
+        super(MultiPostProcessor,self).__init__()
 
     def __construct__(self,value):
         if type(value) is type([]):
@@ -109,7 +109,7 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 def postprocessor_filter(value,item):
     from Ganga.GPIDev.Lib.Job.Job import Job
     if item is Job._schema['postprocessors']:
-       ds = MultiProcessor()
+       ds = MultiPostProcessor()
        ds.__construct__(value)
        return ds               
     else:

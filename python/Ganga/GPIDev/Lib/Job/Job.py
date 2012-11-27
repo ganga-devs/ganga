@@ -11,7 +11,7 @@ from MetadataDict import *
 
 import Ganga.Utility.logging
 from Ganga.Lib.Notifier import Notifier
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiProcessor
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiPostProcessor
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.util import isStringLike
@@ -170,7 +170,7 @@ class Job(GangaObject):
                                     'splitter':ComponentItem('splitters',defvalue=None,load_default=0,optional=1,doc='optional splitter'),
                                     'subjobs':ComponentItem('jobs',defvalue=[],sequence=1,protected=1,load_default=0,copyable=0,optional=1,proxy_get="_subjobs_proxy",doc='list of subjobs (if splitting)',summary_print = '_subjobs_summary_print'),
                                     'master':ComponentItem('jobs',getter="_getParent",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,doc='master job',visitable=0),
-                                    'postprocessors':ComponentItem('postprocessor',defvalue=MultiProcessor(),load_default=0,optional=1,doc='list of postprocessors to run after job has finished'),
+                                    'postprocessors':ComponentItem('postprocessor',defvalue=MultiPostProcessor(),load_default=0,optional=1,doc='list of postprocessors to run after job has finished'),
                                     'merger':ComponentItem('mergers',defvalue=None,hidden=1,copyable=0,load_default=0,optional=1,doc='optional output merger'),
                                     'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
                                     'failed_by_checker':SimpleItem(defvalue = False, doc='Flag to indicate if job has been failed by a checker'),
@@ -1447,10 +1447,6 @@ class Job(GangaObject):
                 if self.outputfiles != []:
                     logger.error('job.outputfiles is set, you can\'t set job.outputdata')
                     return
-            super(Job,self).__setattr__(attr, value)
-        elif attr == 'merger':
-            if value != None:
-                logger.error('j.merger is depricated in Ganga 6, please use j.postprocessors instead.')
             super(Job,self).__setattr__(attr, value)
                 
         elif attr == 'comment':
