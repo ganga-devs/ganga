@@ -331,6 +331,12 @@ class Job(GangaObject):
                 #we call this even if there was a hook
                 newstatus = self.transition_update(newstatus)       
 
+                if newstatus == 'completed':
+                    if self.outputFilesFailures():
+
+                        self.force_status('failed')
+                        return
+
             if self.status != newstatus:
                 self.time.timenow(str(newstatus))
                 logger.debug("timenow('%s') called.", self.status)
@@ -345,9 +351,6 @@ class Job(GangaObject):
             raise JobStatusError(x)
 
         logger.info('job %s status changed to "%s"',fqid,self.status)
-
-        if self.status == 'completed':
-            self.checkOutputFiles()
 
     def transition_update(self,new_status):
         """Propagate status transitions""" 
@@ -395,7 +398,7 @@ class Job(GangaObject):
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
 
-    def checkOutputFiles(self):
+    def outputFilesFailures(self):
 
         postprocessFailure = False
 
@@ -403,8 +406,7 @@ class Job(GangaObject):
             if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''): 
                 postprocessFailure = True
 
-        if postprocessFailure:
-            self.force_status('failed')
+        return postprocessFailure
         
     def updateMasterJobStatus(self):
         """
