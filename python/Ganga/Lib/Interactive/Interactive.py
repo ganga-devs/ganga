@@ -174,6 +174,20 @@ class Interactive( IBackend ):
       exeString = repr( jobconfig.getExeString() )
       argList = jobconfig.getArgStrings()
       argString = " ".join( map( lambda x : "' \\'%s\\' '" % x, argList ) )
+
+      outputSandboxPatterns = jobconfig.outputbox
+      patternsToZip = []        
+
+      if job.outputfiles != []:
+         outputSandboxPatterns = []
+         for outputFile in job.outputfiles:
+            if outputFile.__class__.__name__ == 'OutputSandboxFile':
+               if outputFile.compressed:
+                  outputSandboxPatterns.append('%s.gz' % outputFile.namePattern)
+                  patternsToZip.append(outputFile.namePattern)
+               else:       
+                  outputSandboxPatterns.append(outputFile.namePattern)
+        
       
       commandList = [
          "#!/usr/bin/env python",
@@ -184,6 +198,7 @@ class Interactive( IBackend ):
          "import os",
          "import sys",
          "import time",
+         "import glob",
          "",
          "sys.path.insert( 0, '%s' )" % \
             getConfig( "System" )[ "GANGA_PYTHONPATH" ],
@@ -232,8 +247,12 @@ class Interactive( IBackend ):
          "",
          "result = os.system( '%s' % commandString )",
          "",
+         "for patternToZip in " + str(patternsToZip) +":",
+         "   for currentFile in glob.glob(patternToZip):",
+         "      os.system('gzip %s' % currentFile)",
+         "",
          "createOutputSandbox( %s, None, '%s' )" % \
-            ( jobconfig.outputbox, outDir ),
+            ( outputSandboxPatterns, outDir ),
          "",
          "statfile.write( 'EXITCODE: ' + str( result >> 8 ) + os.linesep )",
          "timeString = time.strftime"\
