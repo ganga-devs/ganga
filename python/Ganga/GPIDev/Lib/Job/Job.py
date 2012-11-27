@@ -339,11 +339,6 @@ class Job(GangaObject):
                 logger.debug("timenow('%s') called.", self.status)
             else:
                 logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
-            if newstatus == 'completed' or newstatus == 'failed' or newstatus == 'killed':
-                if self.postprocessors:
-                    passed = self.postprocessors.execute(self,newstatus)
-                    if passed is not True:
-                        newstatus = 'failed'
             self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
         except Exception,x:
@@ -359,7 +354,11 @@ class Job(GangaObject):
     def transition_update(self,new_status):
         """Propagate status transitions""" 
 
-        
+        if new_status == 'completed' or new_status == 'failed' or new_status == 'killed':
+            if self.postprocessors:
+                passed = self.postprocessors.execute(self,new_status)
+                if passed is not True:
+                    new_status = 'failed'        
         #Propagate transition updates to applications
         if self.application:
             self.application.transition_update(new_status)

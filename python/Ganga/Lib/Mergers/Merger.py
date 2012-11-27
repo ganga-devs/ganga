@@ -402,10 +402,5 @@ class SmartMerger(IMerger):
 allPlugins.add(SmartMerger,'mergers','SmartMerger') 
 allPlugins.add(TextMerger,'mergers','TextMerger')
 allPlugins.add(RootMerger,'mergers','RootMerger')        
-#allPlugins.add(_CustomMergeTool,'merge_tools','_CustomMergeTool') 
-#allPlugins.add(_TextMergeTool,'merge_tools','_TextMergeTool')
-#allPlugins.add(_RootMergeTool,'merge_tools','_RootMergeTool')        
-#we need a default, but don't care much what it is
-#allPlugins.setDefault('merge_tools','_TextMergeTool')
 
 
