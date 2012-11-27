@@ -34,7 +34,7 @@ class CopySplitter(ISplitter):
             j.backend = job.backend
 
             j.inputsandbox = job.inputsandbox[:]
-            j.outputsandbox = job.outputsandbox[:]
+            j.outputfiles = job.outputfiles[:]
 
             #gives tests a chance to alter subjobs
             if self.function_hook:
