@@ -1,3 +1,5 @@
-j = Job(outputsandbox = [ 'stdin', 'stdout' ])
+j = Job(outputfiles = [ OutputSandboxFile('stdin'), OutputSandboxFile('stdout')])
+
+
 j.backend = LCG()
 assert(j.submit())
