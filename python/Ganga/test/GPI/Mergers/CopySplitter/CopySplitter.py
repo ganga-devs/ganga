@@ -27,7 +27,6 @@ class CopySplitter(ISplitter):
         for i in range(self.number):
             j = self.createSubjob(job)
 
-            j.merger = None
             j.splitter = None
 
             j.application = job.application

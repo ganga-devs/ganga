@@ -230,7 +230,7 @@ if __name__ == '__main__':
         #add a merger
         rm = RootMerger()
         rm.files = ['fillrandom.root']
-        j.merger = rm
+        j.postprocessors = rm
 
         # and a test splitter
         s = CopySplitter()
