@@ -18,7 +18,9 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     if not result_ok(result):
         logger.error('Error splitting files: %s' % str(result))
         raise SplittingError('Error splitting files.')
+    print "result = ",result
     split_files = result.get('Value',[])
+    print "split_files",split_files
     if len(split_files) == 0:
         raise SplittingError('An unknown error occured.')
 
@@ -26,6 +28,7 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     big_list = []
     for l in split_files: big_list.extend(l)
     diff = set(inputs.getFileNames()).difference(big_list)
+    print "diff",diff
     if len(diff) > 0:            
         for f in diff: logger.warning('Ignored file: %s' % f)
         if not ignoremissing:
