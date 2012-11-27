@@ -46,12 +46,14 @@ class SplitByFiles(GaudiInputDataSplitter):
         return value
 
     def _create_subjob(self, job, dataset):
+        if True in (isinstance(i,str) for i in dataset):
+            dataset = [LogicalFile(file) for file in dataset]
         j=Job()
         j.copyFrom(stripProxy(job))
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
-        j.inputdata = LHCbDataset( files             = [LogicalFile(file) for file in dataset],
+        j.inputdata = LHCbDataset( files             = dataset[:],
                                    persistency       = self.persistency,
                                    depth             = self.depth )
         j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice

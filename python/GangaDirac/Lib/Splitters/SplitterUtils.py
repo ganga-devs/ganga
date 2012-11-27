@@ -34,3 +34,4 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
    
     for dataset in split_files:
         yield dataset
+
