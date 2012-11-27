@@ -804,8 +804,16 @@ class CustomMerger(AbstractMerger):
 #configure the plugins
 allPlugins.add(_CustomMergeTool,'merge_tools','_CustomMergeTool') 
 allPlugins.add(_TextMergeTool,'merge_tools','_TextMergeTool')
-allPlugins.add(_RootMergeTool,'merge_tools','_RootMergeTool')        
+allPlugins.add(_RootMergeTool,'merge_tools','_RootMergeTool')
 #we need a default, but don't care much what it is
 allPlugins.setDefault('merge_tools','_TextMergeTool')
+
+
+#Ganga 6 compatibility hack
+config = makeConfig('defaults__TextMergeTool','parameters for merger_tools (obsolete)')
+allPlugins.add(SmartMerger,'postprocessor','SmartMerger')      
+allPlugins.add(RootMerger,'postprocessor','RootMerger')      
+allPlugins.add(TextMerger,'postprocessor','TextMerger')      
+allPlugins.add(CustomMerger,'postprocessor','CustomMerger')      
 
 
