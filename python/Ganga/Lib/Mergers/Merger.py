@@ -402,5 +402,6 @@ class SmartMerger(IMerger):
 allPlugins.add(SmartMerger,'mergers','SmartMerger') 
 allPlugins.add(TextMerger,'mergers','TextMerger')
 allPlugins.add(RootMerger,'mergers','RootMerger')        
+allPlugins.add(CustomMerger,'mergers','CustomMerger')        
 
 

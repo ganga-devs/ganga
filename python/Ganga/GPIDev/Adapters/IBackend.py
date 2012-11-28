@@ -200,8 +200,7 @@ class IBackend(GangaObject):
         """ A hook for the backend to check if this job can be
         automatically resubmitted.
         """
-        job = self.getJobObject()
-        return not job.failed_by_checker
+        return True
         
     def master_resubmit(self,rjobs,backend=None):
         """ Resubmit (previously submitted) job. Configuration phase is skipped.
