@@ -1,12 +1,13 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os, shutil
-from Ganga.Core.exceptions                import GangaException
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File                import File
-from Ganga.Utility.Config                 import getConfig
-from Ganga.Utility.logging                import getLogger
-from Ganga.Utility.files                  import expandfilename
-from Ganga.Utility.util                   import unique
+from Ganga.Core.exceptions                   import GangaException
+from Ganga.GPIDev.Lib.GangaList.GangaList    import GangaList
+from Ganga.GPIDev.Lib.File                   import File
+from Ganga.Utility.Config                    import getConfig
+from Ganga.Utility.logging                   import getLogger
+from Ganga.Utility.files                     import expandfilename
+from Ganga.Utility.util                      import unique
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -57,7 +58,7 @@ def master_sandbox_prepare(app,appmasterconfig, sharedir_roots=['']):
     
     ## user added items from the interactive GPI
     inputsandbox=job.inputsandbox[:]
-    outputsandbox=job.outputsandbox[:]
+    outputsandbox=getOutputSandboxPatterns(job)#job.outputsandbox[:]
     
     ## inputsandbox files stored in share_dir from prepare method
     sharedir_handler(app, sharedir_roots, inputsandbox)
@@ -97,6 +98,7 @@ def sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig):
 def script_generator( script_template,
                       outputfile_path    = None,
                       remove_None        = True,
+                      remove_unreplaced  = True,
                       extra_manipulation = None,
                       **kwords ):
     ## Remove those keywords that have None value if necessary
@@ -112,9 +114,10 @@ def script_generator( script_template,
         script = extra_manipulation(script, **kwords)
 
     ## Take out the unreplaced lines
-    lines  = script.strip().split('\n')
-    lines  = [line for line in lines if not line.find('###') >=0]
-    script = '\n'.join(lines)
+    if remove_unreplaced is True:
+        lines  = script.strip().split('\n')
+        lines  = [line for line in lines if not line.find('###') >=0]
+        script = '\n'.join(lines)
 
     if outputfile_path:
         f = open(outputfile_path, 'w')

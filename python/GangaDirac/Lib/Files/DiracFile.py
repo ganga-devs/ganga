@@ -320,7 +320,10 @@ class DiracFile(IOutputFile):
 ###INDENT###        ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' didn\\'t exist:NotAvailable\\n' % (file, file))
 ###INDENT###        continue
 ###INDENT###    for se in ###SE###:
-###INDENT###        rc, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
+###INDENT###        try:
+###INDENT###            rc, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
+###INDENT###        except Exception,x:
+###INDENT###            ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:Exception running command \\'%s\\' - %s:NotAvailable\\n' % (file,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x.replace(':',';')))
 ###INDENT###        if stdout.find('Successful') >=0  and stdout.find(lfn) >=0:
 ###INDENT###            try:
 ###INDENT###                import datetime
@@ -329,10 +332,11 @@ class DiracFile(IOutputFile):
 ###INDENT###            except:
 ###INDENT###                ###LOCATIONSFILE###.write('DiracFile:%s->%s:%s:NotAvailable\\n' % (file, lfn, se))                
 ###INDENT###            break
+###INDENT###        else: print (rc, stdout, stderr)
 ###INDENT###        if se == ###SE###[-1]: ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' could not be uploaded to any SE (%s,%s):NotAvailable\\n' % (file, file,stdout.replace(':',';'),stderr.replace(':',';')))
 """
         output_nps   = [file.namePattern for file in outputFiles]
-        output_lfns  = [os.path.join(configDirac['DiracLFNBase'], file.namePattern) for file in outputFiles if file.lfn==''] +\
+        output_lfns  = [os.path.join(configDirac['DiracLFNBase'], file._getParent().fqid, file.namePattern) for file in outputFiles if file.lfn==''] +\
                        [file.lfn for file in outputFiles if file.lfn != '']
         output_guids = [file.guid for file in outputFiles]
         cmd = cmd.replace('###OUTPUTFILES###', str(zip(output_nps, output_lfns, output_guids)) )
@@ -342,7 +346,7 @@ class DiracFile(IOutputFile):
         if self._parent and self._parent.backend._name=='Dirac':
             cmd = cmd.replace('###SETUP###','')
         else:
-            cmd = cmd.replace('###SETUP###','. SetupProject.sh LHCbDirac >/dev/null && ')
+            cmd = cmd.replace('###SETUP###','. SetupProject.sh LHCbDirac &>/dev/null && ')
 
         return cmd
 

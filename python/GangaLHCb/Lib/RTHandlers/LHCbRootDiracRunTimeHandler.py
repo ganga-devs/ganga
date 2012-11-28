@@ -1,8 +1,10 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
+from GangaLHCb.Lib.RTHandlers.RTHUtils             import lhcbdiracAPI_script_template
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare,sandbox_prepare,script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils       import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils       import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils            import result_ok
+from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns
 from Ganga.GPIDev.Adapters.IRuntimeHandler         import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
 from Ganga.Core.exceptions                         import ApplicationConfigurationError
@@ -60,7 +62,9 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         inputsandbox, outputsandbox        = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
-        outputdata,   outputdata_path      = dirac_ouputdata(app)
+#        outputdata,   outputdata_path      = dirac_ouputdata(app)
+        job=app.getJobObject()
+        outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
 
 
         params = { 'DIRAC_IMPORT'         : 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
@@ -71,11 +75,11 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                    'INPUTDATA'            : input_data,
                    'PARAMETRIC_INPUTDATA' : parametricinput_data,
                    'OUTPUT_SANDBOX'       : API_nullifier(outputsandbox),
-                   'OUTPUTDATA'           : API_nullifier(outputdata),
-                   'OUTPUT_PATH'          : outputdata_path,
-                   'OUTPUT_SE'            : getConfig('DIRAC')['DiracOutputDataSE'],
+##                    'OUTPUTDATA'           : API_nullifier(list(outputfiles)),
+##                    'OUTPUT_PATH'          : job.fqid,
+##                    'OUTPUT_SE'            : getConfig('DIRAC')['DiracOutputDataSE'],
                    'SETTINGS'             : diracAPI_script_settings(app),
-                   'DIRAC_OPTS'           : app.getJobObject().backend.diracOpts,
+                   'DIRAC_OPTS'           : job.backend.diracOpts,
                    'PLATFORM'             : getConfig('ROOT')['arch'],
                    # leave the sandbox for altering later as needs
                    # to be done in backend.submit to combine master.
@@ -96,7 +100,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                            'ROOT_LOG_FILE' : 'Ganga_Root.log',
                            'ROOT_ARGS'     : app.args, })
 
-        dirac_script = script_generator(diracAPI_script_template(),
+        dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         **params)
         return StandardJobConfig( dirac_script,
                                   inputbox  = unique(inputsandbox ),

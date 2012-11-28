@@ -9,13 +9,13 @@ logger=Ganga.Utility.logging.getLogger()
 # Set default values for the LHCb config section.
 dscrpt = 'The name of the local site to be used for resolving LFNs into PFNs.'
 configLHCb.addOption('LocalSite','',dscrpt)
-dscrpt = 'The place where OutputData should go.'
-configLHCb.addOption('DataOutput',os.environ['HOME'],dscrpt)
-dscrpt = 'The command to used to create a directory in the locations of \
-`DataOutput`'
-configLHCb.addOption('mkdir_cmd','/bin/mkdir',dscrpt)
-dscrpt = 'The command used to copy out data to the `DataOutput` locations'
-configLHCb.addOption('cp_cmd','/bin/cp',dscrpt)
+#dscrpt = 'The place where OutputData should go.'
+#configLHCb.addOption('DataOutput',os.environ['HOME'],dscrpt)
+#dscrpt = 'The command to used to create a directory in the locations of \
+#`DataOutput`'
+#configLHCb.addOption('mkdir_cmd','/bin/mkdir',dscrpt)
+#dscrpt = 'The command used to copy out data to the `DataOutput` locations'
+#configLHCb.addOption('cp_cmd','/bin/cp',dscrpt)
 dscrpt = 'Files from these services will go to the output sandbox (unless \
 overridden by the user in a specific job via the Job.outputdata field). Files \
 from all other known handlers will go to output data (unless overridden by \

@@ -1,10 +1,11 @@
 import copy, os, pickle
 from GangaLHCb.Lib.LHCbDataset.OutputData               import OutputData
-from GangaLHCb.Lib.RTHandlers.RTHUtils                  import getXMLSummaryScript,is_gaudi_child
+from GangaLHCb.Lib.RTHandlers.RTHUtils                  import getXMLSummaryScript,is_gaudi_child,lhcbdiracAPI_script_template
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils                 import result_ok
+from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
 from Ganga.GPIDev.Lib.File                              import FileBuffer
 from Ganga.Utility.Config                               import getConfig
@@ -59,6 +60,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job=app.getJobObject()
+        outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+
         data_str  = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
 
@@ -103,15 +106,13 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
            f.close()
 
            outbox, outdata = parser.get_output(job)
-           if job.outputdata:
-               new_job.outputdata.files = unique(job.outputdata.files[:] + outdata[:])
-           else:
-               new_job.outputdata = OutputData(files=unique(outdata[:]))
+
+           outputfiles.update(set(outdata[:]))
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
 
         input_data,   parametricinput_data = dirac_inputdata(new_job.application)
-        outputdata,   outputdata_path      = dirac_ouputdata(new_job.application)
+#        outputdata,   outputdata_path      = dirac_ouputdata(new_job.application)
 
 
 
@@ -124,12 +125,14 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         gaudi_script_path = os.path.join(job.getInputWorkspace().getPath(), "gaudi-script.py")
         script_generator(gaudi_script_template(),
-                         outputfile_path = gaudi_script_path,
+                         remove_unreplaced = False,
+                         outputfile_path   = gaudi_script_path,
                          PLATFORM          = app.platform,
                          COMMAND           = commandline,
-                         XMLSUMMARYPARSING = getXMLSummaryScript())
+                         XMLSUMMARYPARSING = getXMLSummaryScript(),
+                         OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '))
         
-        dirac_script = script_generator(diracAPI_script_template(),
+        dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         DIRAC_IMPORT         = 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                                         DIRAC_JOB_IMPORT     = 'from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
                                         DIRAC_OBJECT         = 'DiracLHCb()',
@@ -142,9 +145,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         INPUTDATA            = input_data,
                                         PARAMETRIC_INPUTDATA = parametricinput_data,
                                         OUTPUT_SANDBOX       = API_nullifier(outputsandbox),
-                                        OUTPUTDATA           = API_nullifier(outputdata),
-                                        OUTPUT_PATH          = outputdata_path,
-                                        OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
+##                                         OUTPUTDATA           = API_nullifier(list(outputfiles)),
+##                                         OUTPUT_PATH          = job.fqid,#outputdata_path,
+##                                         OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS             = diracAPI_script_settings(new_job.application),
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         PLATFORM             = app.platform,
@@ -164,8 +167,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
 def gaudi_script_template():
     '''Creates the script that will be executed by DIRAC job. '''
-    script_template = """
-#!/usr/bin/env python
+    script_template = """#!/usr/bin/env python
 '''Script to run Gaudi application'''
 
 from os import curdir, system, environ, pathsep, sep, getcwd
@@ -187,6 +189,7 @@ if __name__ == '__main__':
 
     ###XMLSUMMARYPARSING###
 
+    ###OUTPUTFILESINJECTEDCODE###
     sys.exit(rc)
 """
 

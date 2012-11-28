@@ -16,6 +16,7 @@ from Ganga.Core import TypeMismatchError
 from Ganga.Utility.util import unique
 import shutil
 from RunTimeHandlerUtils import sharedir_handler
+from Ganga.GPIDev.Lib.File.OutputFileManager      import getOutputSandboxPatterns
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -52,24 +53,15 @@ class GaudiRunTimeHandler(IRuntimeHandler):
                             outputsandbox):
         job=app.getJobObject()
 
-        config = Ganga.Utility.Config.getConfig('Gaudi')
-
         opts = 'options.pkl'
   
-        jstr = jobid_as_string(job)
         script =  "#!/usr/bin/env python\n\nimport os,sys\n\n"
-        script += 'data_output = %s\n' % job.outputdata.files
         script += 'opts = \'%s\'\n' % opts
         script += 'app = \'%s\'\n' % app.appname
         script += 'app_upper = \'%s\'\n' % app.appname.upper()
         script += 'version = \'%s\'\n' % app.version
         script += 'package = \'%s\'\n' % app.package
-        script += "job_output_dir = '%s/%s/%s/outputdata'\n" % \
-                  (config['DataOutput'],job.outputdata.location,jstr)
-        script += 'cp = \'%s\'\n' % config['cp_cmd']
-        script += 'mkdir = \'%s\'\n' % config['mkdir_cmd']
         script += 'platform = \'%s\'\n' % app.platform
-        script += 'import os \n'   
   
         if opts:
             script += """# check that options file exists
@@ -108,23 +100,6 @@ cmdline = \"\"\"gaudirun.py '
         script += """
 # run command
 os.system(cmdline)
-
-# make output directory + cp files to it
-if data_output:
-    os.system('%s -p %s' % (mkdir,job_output_dir))
-for f in data_output:
-    cpval = os.system('%s %s %s/%s' % (cp,f,job_output_dir,f))
-    print 'Copying %s to %s' % (f,job_output_dir)
-    sys.stdout.flush()
-    if cpval != 0:
-        print 'WARNING:  Could not copy file %s to %s' % (f,job_output_dir)
-        print 'WARNING:  File %s will be lost' % f
-        cmd = 'ls -l %s' % f
-        print 'DEBUG INFO: Performing \"%s\" (check stdout & stderr)' % cmd
-        os.system(cmd)
-        sys.stdout.flush()
-    # sneaky rm
-    os.system('rm -f ' + f)
 """    
         return script, inputsandbox, outputsandbox
 

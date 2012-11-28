@@ -1,14 +1,15 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import copy, os, pickle
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from RTHUtils import *
-from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
-from Ganga.GPIDev.Lib.File import FileBuffer
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import unique
+from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
+from RTHUtils                                      import *
+from GangaLHCb.Lib.LHCbDataset.OutputData          import OutputData
+from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Lib.File                         import FileBuffer
+from Ganga.Utility.Config                          import getConfig
+from Ganga.Utility.logging                         import getLogger
+from Ganga.Utility.util                            import unique
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
-from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import script_generator, get_share_path, master_sandbox_prepare, sandbox_prepare
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -31,7 +32,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
-        
+        outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
         ## Cant wait to get rid of this when people no-longer specify
         ## inputdata in options file
         #######################################################################
@@ -66,10 +67,9 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
            f.close()
 
            outbox, outdata = parser.get_output(job)
-           if job.outputdata:
-               new_job.outputdata.files = unique(job.outputdata.files[:] + outdata[:])
-           else:
-               new_job.outputdata = OutputData(files=unique(outdata[:]))
+           
+
+           outputfiles.update(set(outdata[:]))
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
 
@@ -86,8 +86,23 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
             data_str += job._splitter_data
         inputsandbox.append(FileBuffer('data.py',data_str))
 
+        cmd='python ./gaudipython-wrapper.py'
+        opts=''
+        if is_gaudi_child(new_job.application):
+            opts = 'options.pkl'
+            cmd='gaudirun.py ' + ' '.join(new_job.application.args) + ' %s data.py' % opts
 
-        script = create_runscript(new_job.application)
+        script = script_generator(create_runscript(),
+                                  remove_unreplaced = False,
+                                  OPTS              = opts,
+                                  PROJECT_OPTS      = new_job.application.setupProjectOptions,
+                                  APP_NAME          = new_job.application.appname,
+                                  APP_VERSION       = new_job.application.version,
+                                  APP_PACKAGE       = new_job.application.package,
+                                  PLATFORM          = new_job.application.platform,
+                                  CMDLINE           = cmd,
+                                  XMLSUMMARYPARSING = getXMLSummaryScript())#,
+#                                  OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
         
         return StandardJobConfig( FileBuffer('gaudi-script.py', script, executable=1),
                                   inputbox  = unique(inputsandbox ),

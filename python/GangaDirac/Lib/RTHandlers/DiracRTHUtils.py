@@ -105,7 +105,7 @@ j.setInputSandbox(###INPUT_SANDBOX###)
 j.setOutputSandbox(###OUTPUT_SANDBOX###)
 j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
-j.setOutputData(###OUTPUTDATA###,OutputPath='###OUTPUT_PATH###',OutputSE=###OUTPUT_SE###)
+j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
 j.setSystemConfig('###PLATFORM###')
 
 # <-- user settings
