@@ -410,11 +410,5 @@ allPlugins.add(RootMerger,'mergers','RootMerger')
 allPlugins.add(CustomMerger,'mergers','CustomMerger')        
 
 
-#Ganga 6 compatibility hack
-config = makeConfig('defaults__TextMergeTool','parameters for merger_tools (obsolete)')
-allPlugins.add(SmartMerger,'postprocessor','SmartMerger')      
-allPlugins.add(RootMerger,'postprocessor','RootMerger')      
-allPlugins.add(TextMerger,'postprocessor','TextMerger')      
-allPlugins.add(CustomMerger,'postprocessor','CustomMerger')      
 
 
