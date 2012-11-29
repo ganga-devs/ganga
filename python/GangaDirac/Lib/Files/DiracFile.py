@@ -315,15 +315,17 @@ class DiracFile(IOutputFile):
 ###INDENT####        zipped_files.append(file_name+'.gz')
 ###INDENT####    return list(set(output_files).difference(set(files_to_zip)).update(set(zipped_files)))
 ###INDENT###
+###INDENT###outputfiles = ###OUTPUTFILES###
+###INDENT###storage_elements = ###SE###
 ###INDENT###
 ###INDENT####for file in zip_files(###OUTPUTFILES###, ###ZIPFILES###):
-###INDENT###for file, lfn, guid in ###OUTPUTFILES###:
+###INDENT###for file, lfn, guid in outputfiles:
 ###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file)):
 ###INDENT###        ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::File \\'%s\\' didn\\'t exist:::NotAvailable\\n' % (file, file))
 ###INDENT###        continue
-###INDENT###    for se in ###SE###:
+###INDENT###    for se in storage_elements:
 ###INDENT###        try:
-###INDENT###            rc, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
+###INDENT###            retcode, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
 ###INDENT###        except Exception,x:
 ###INDENT###            ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::Exception running command \\'%s\\' - %s:::NotAvailable\\n' % (file,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
 ###INDENT###        if stdout.find('Successful') >=0  and stdout.find(lfn) >=0:
@@ -334,8 +336,7 @@ class DiracFile(IOutputFile):
 ###INDENT###            except:
 ###INDENT###                ###LOCATIONSFILE###.write('DiracFile:::%s->%s:::%s:::NotAvailable\\n' % (file, lfn, se))                
 ###INDENT###            break
-###INDENT###        else: print (rc, stdout, stderr)
-###INDENT###        if se == ###SE###[-1]: ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::File \\'%s\\' could not be uploaded to any SE (%s,%s):::NotAvailable\\n' % (file, file,stdout,stderr))
+###INDENT###        if se == storage_elements[-1]: ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::File \\'%s\\' could not be uploaded to any SE (%s,%s):::NotAvailable\\n' % (file, file, stdout, stderr))
 """
         import uuid
         uid = str(uuid.uuid4())
