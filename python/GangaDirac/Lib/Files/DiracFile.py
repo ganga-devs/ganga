@@ -79,15 +79,15 @@ class DiracFile(IOutputFile):
         
         for line in postprocesslocations.readlines():
             if line.startswith('DiracFile'):
-                names = line.split(':')[1].split('->')
+                names = line.split(':::')[1].split('->')
                 if names[0] == self.namePattern:
                     if names[1] == '###FAILED###':
-                        self.failureReason = line.split(':')[2]
+                        self.failureReason = line.split(':::')[2]
                     else:
                         self.lfn = names[1]
                         # self.diracSE= line.split(':')[2]
-                        self.locations= line.split(':')[2]
-                        self.guid = line.split(':')[3].replace('\n','')
+                        self.locations= line.split(':::')[2]
+                        self.guid = line.split(':::')[3].replace('\n','')
                 
         postprocesslocations.close()
 
@@ -106,7 +106,7 @@ class DiracFile(IOutputFile):
             #self.namePattern +="-<REMOVED>"
             self.locations=[]
             #self.diracSE=[]
-            self.guid=None
+            self.guid=''
         return stdout
         
     def getMetadata(self):
@@ -114,7 +114,8 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t obtain metadata with no LFN set.')
         self._getEnv()
         ret =  eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])
-        self.guid = ret['Successful'][self.lfn]['GUID']
+        try: self.guid = ret['Successful'][self.lfn]['GUID']
+        except: pass
         return ret
         
     def getGUID(self):
@@ -182,7 +183,8 @@ class DiracFile(IOutputFile):
         if self.namePattern == "":
             raise GangaException('Can\'t upload a file without a local file name.')
         if self.lfn == "":
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], os.path.split(self.namePattern)[1])
+            from uuid import uuid4
+            self.lfn = os.path.join(configDirac['DiracLFNBase'], str(uuid4()),os.path.split(self.namePattern)[1])
 
 
         sourceDir = ''
@@ -317,26 +319,28 @@ class DiracFile(IOutputFile):
 ###INDENT####for file in zip_files(###OUTPUTFILES###, ###ZIPFILES###):
 ###INDENT###for file, lfn, guid in ###OUTPUTFILES###:
 ###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file)):
-###INDENT###        ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' didn\\'t exist:NotAvailable\\n' % (file, file))
+###INDENT###        ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::File \\'%s\\' didn\\'t exist:::NotAvailable\\n' % (file, file))
 ###INDENT###        continue
 ###INDENT###    for se in ###SE###:
 ###INDENT###        try:
 ###INDENT###            rc, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
 ###INDENT###        except Exception,x:
-###INDENT###            ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:Exception running command \\'%s\\' - %s:NotAvailable\\n' % (file,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x.replace(':',';')))
+###INDENT###            ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::Exception running command \\'%s\\' - %s:::NotAvailable\\n' % (file,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
 ###INDENT###        if stdout.find('Successful') >=0  and stdout.find(lfn) >=0:
 ###INDENT###            try:
 ###INDENT###                import datetime
 ###INDENT###                id = eval(run_command('###SETUP###dirac-dms-lfn-metadata %s' % lfn)[1])['Successful'][lfn]['GUID']
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:%s->%s:%s:%s\\n' % (file, lfn, se, id))
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:::%s->%s:::%s:::%s\\n' % (file, lfn, se, id))
 ###INDENT###            except:
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:%s->%s:%s:NotAvailable\\n' % (file, lfn, se))                
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:::%s->%s:::%s:::NotAvailable\\n' % (file, lfn, se))                
 ###INDENT###            break
 ###INDENT###        else: print (rc, stdout, stderr)
-###INDENT###        if se == ###SE###[-1]: ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' could not be uploaded to any SE (%s,%s):NotAvailable\\n' % (file, file,stdout.replace(':',';'),stderr.replace(':',';')))
+###INDENT###        if se == ###SE###[-1]: ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::File \\'%s\\' could not be uploaded to any SE (%s,%s):::NotAvailable\\n' % (file, file,stdout,stderr))
 """
+        import uuid
+        uid = str(uuid.uuid4())
         output_nps   = [file.namePattern for file in outputFiles]
-        output_lfns  = [os.path.join(configDirac['DiracLFNBase'], file._getParent().fqid, file.namePattern) for file in outputFiles if file.lfn==''] +\
+        output_lfns  = [os.path.join(configDirac['DiracLFNBase'], uid, file.namePattern) for file in outputFiles if file.lfn==''] +\
                        [file.lfn for file in outputFiles if file.lfn != '']
         output_guids = [file.guid for file in outputFiles]
         cmd = cmd.replace('###OUTPUTFILES###', str(zip(output_nps, output_lfns, output_guids)) )
