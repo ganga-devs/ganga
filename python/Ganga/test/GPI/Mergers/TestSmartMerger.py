@@ -34,7 +34,7 @@ class TestSmartMerger(GangaGPITestCase):
 
             j.application.exe = 'sh'
             j.application.args = [File(fileName), str(j.id),str(j.id*10)]
-            j.outputsandbox = ['out.txt','out2.txt']
+            j.outputfiles = [OutputSandboxFile('out.txt'),OutputSandboxFile('out2.txt')]
             self.jobslice.append(j)
 
     def runJobSlice(self):
@@ -54,26 +54,26 @@ class TestSmartMerger(GangaGPITestCase):
     
     def testNoFilesSpecifiedAllSame(self):
         
-        files = ['foo.root','bar.root','out.log']
+        files = [OutputSandboxFile('foo.root'),OutputSandboxFile('bar.root'),OutputSandboxFile('out.log')]
         
-        j1 = Job(outputsandbox = files)
-        j2 = Job(outputsandbox = files)
+        j1 = Job(outputfiles = files)
+        j2 = Job(outputfiles = files)
         
-        assert j1.outputsandbox == j2.outputsandbox, 'File lists should be the same'
+        assert j1.outputfiles == j2.outputfiles, 'File lists should be the same'
         
-        assert findFilesToMerge([j1,j2]) == files, 'Should merge all files'
+        assert findFilesToMerge([j1,j2]) == ['foo.root', 'bar.root', 'out.log'], 'Should merge all files'
         
     def testNoFilesSpecifiedSomeOverlap(self):
         
-        j1 = Job(outputsandbox = ['foo.root','bar.root','out.log'])
-        j2 = Job(outputsandbox = ['a.root','b.root','out.log'])
+        j1 = Job(outputfiles = [OutputSandboxFile('foo.root'),OutputSandboxFile('bar.root'),OutputSandboxFile('out.log')])
+        j2 = Job(outputfiles = [OutputSandboxFile('a.root'),OutputSandboxFile('b.root'),OutputSandboxFile('out.log')])
         
         assert findFilesToMerge([j1,j2]) == ['out.log'], 'Should merge only some files'
         
     def testNoFilesSpecifiedNoOverlap(self):
         
-        j1 = Job(outputsandbox = ['foo.root','bar.root','out.log'])
-        j2 = Job(outputsandbox = ['a.root','b.root','c.log'])
+        j1 = Job(outputfiles = [OutputSandboxFile('foo.root'),OutputSandboxFile('bar.root'),OutputSandboxFile('out.log')])
+        j2 = Job(outputfiles = [OutputSandboxFile('a.root'),OutputSandboxFile('b.root'),OutputSandboxFile('c.log')])
         
         assert findFilesToMerge([j1,j2]) == [], 'Should merge no files'
         

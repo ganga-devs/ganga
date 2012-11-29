@@ -6,7 +6,7 @@ app=Executable()
 app.exe = 'touch'
 fname = 'abc'
 app.args = [fname]
-j = Job(backend=Interactive(),application=app, outputsandbox=[fname]) 
+j = Job(backend=Interactive(),application=app, outputfiles=[OutputSandboxFile(fname)]) 
 j.submit()
 
 if not sleep_until_completed(j):

@@ -286,8 +286,13 @@ def findFilesToMerge(jobs):
     file_map = {}
     jobs_len = len(jobs)
     for j in jobs:
-        for file_name in j.outputsandbox:
-            file_map[file_name] = file_map.setdefault(file_name,0) + 1
+        if j.outputsandbox != []:
+            for file_name in j.outputsandbox:
+                file_map[file_name] = file_map.setdefault(file_name,0) + 1
+        elif j.outputfiles != []:
+            for file_name in j.outputfiles:
+                if file_name.__class__.__name__ == 'OutputSandboxFile':
+                    file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern,0) + 1
     
     for file_name, count in file_map.iteritems():
         if count == jobs_len: result.append(file_name)
@@ -403,5 +408,13 @@ allPlugins.add(SmartMerger,'mergers','SmartMerger')
 allPlugins.add(TextMerger,'mergers','TextMerger')
 allPlugins.add(RootMerger,'mergers','RootMerger')        
 allPlugins.add(CustomMerger,'mergers','CustomMerger')        
+
+
+#Ganga 6 compatibility hack
+config = makeConfig('defaults__TextMergeTool','parameters for merger_tools (obsolete)')
+allPlugins.add(SmartMerger,'postprocessor','SmartMerger')      
+allPlugins.add(RootMerger,'postprocessor','RootMerger')      
+allPlugins.add(TextMerger,'postprocessor','TextMerger')      
+allPlugins.add(CustomMerger,'postprocessor','CustomMerger')      
 
 

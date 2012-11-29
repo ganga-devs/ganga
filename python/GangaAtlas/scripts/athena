@@ -360,11 +360,29 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
 
         if opt.inputtype=='Local':
             j.inputdata = ATLASLocalDataset()
-            print opt.locallocation
+
+            # decide where to get input info from: locallocation or inDS
             if opt.locallocation:
+                print "Using locallocation for input: " + opt.locallocation[0] + ", " +  opt.locallocation[1]
                 j.inputdata.get_dataset(opt.locallocation[0],opt.locallocation[1])
+            elif opt.input_dataset:
+                print "Using inDS for input: " + opt.input_dataset
+
+                # can only have mulitple dirs if not using --inputnames
+                if opt.inputnames and len(opt.input_dataset.split(",")) > 1:
+                    print >>sys.stderr, 'ERROR: Cannot give multiple dirs and input name list for Local backends.'
+                    sys.exit(4)
+                elif opt.inputnames:
+                    for name in opt.inputnames.split(","):
+                        j.inputdata.names.append( os.path.join(opt.input_dataset, name) )
+                else:
+                    for ds in opt.input_dataset.split(","):
+                        if opt.inputnamespattern:
+                            j.inputdata.get_dataset(ds, opt.inputnamespattern)
+                        else:
+                            j.inputdata.get_dataset(ds, "")                    
             else:
-                print >>sys.stderr, 'ERROR: No parameter --locallocation for AthenaLocalDataset given'
+                print >>sys.stderr, 'ERROR: No parameter --locallocation or --inDS for AthenaLocalDataset given'
                 sys.exit(4)
 	    if opt.use_poolfilecatalog_failover:
 	        j.inputdata.use_poolfilecatalog_failover=True
@@ -582,6 +600,7 @@ elif opt.backend == 'cream':
 
 elif opt.backend == 'condor':
     j.backend = Condor()
+    if opt.queue: j.backend.queue = opt.queue        
 elif opt.backend == 'pbs':
     j.backend = PBS()
     if opt.queue: j.backend.queue = opt.queue
