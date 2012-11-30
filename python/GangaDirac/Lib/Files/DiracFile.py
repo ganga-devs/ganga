@@ -128,8 +128,13 @@ class DiracFile(IOutputFile):
         Retrieves locally all files matching this DiracFile object pattern
         """
 ##         from LogicalFile import get_result
+
+        from_location = self.localDir
         if not os.path.isdir(self.localDir):
-            raise GangaException('%s is not a valid directory... ' % self.localDir)
+            if self._parent is not None and os.path.isdir(self.joboutputdir):
+                from_location = self.joboutputdir
+            else:
+                raise GangaException('"%s" is not a valid directory... Please set the localDir attribute' % self.localDir)
 
         if self.lfn == "":
             raise GangaException('Can\'t download a file without an LFN.')
@@ -141,7 +146,7 @@ class DiracFile(IOutputFile):
         ## OTHER WAY... doesn't pollute the environment!
         ##caching the environment for future use.
         self._getEnv()
-        r=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, self.localDir)[1]
+        r=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, from_location)[1]
         self.namePattern = os.path.split(self.lfn)[1]
         self.getMetadata()
         return r
