@@ -1,1 +1,1 @@
-from DSTMerger import *
+from LHCbFileMerger import *
