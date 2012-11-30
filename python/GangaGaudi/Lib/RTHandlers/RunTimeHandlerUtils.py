@@ -59,6 +59,7 @@ def master_sandbox_prepare(app,appmasterconfig, sharedir_roots=['']):
     ## user added items from the interactive GPI
     inputsandbox=job.inputsandbox[:]
     outputsandbox=getOutputSandboxPatterns(job)#job.outputsandbox[:]
+    
     ## inputsandbox files stored in share_dir from prepare method
     sharedir_handler(app, sharedir_roots, inputsandbox)
     ## Here add any sandbox files/data coming from the appmasterconfig
@@ -66,7 +67,7 @@ def master_sandbox_prepare(app,appmasterconfig, sharedir_roots=['']):
     if appmasterconfig:            
         inputsandbox  += appmasterconfig.getSandboxFiles()
         outputsandbox += appmasterconfig.getOutputSandboxFiles()
-          
+
     return unique(inputsandbox), unique(outputsandbox)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
