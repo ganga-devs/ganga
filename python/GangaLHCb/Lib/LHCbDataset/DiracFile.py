@@ -1,73 +1,66 @@
+################################################################################
+# Ganga Project. http://cern.ch/ganga
+#
+# $Id: DiracFile.py,v 0.1 2012-16-25 15:40:00 idzhunov Exp $
+################################################################################
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File.IOutputFile import IOutputFile
-import copy, os, datetime
+import copy, os
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd, shellEnvUpdate_cmd
 import Ganga.Utility.Config
 from Ganga.Utility.Config import getConfig
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 configLHCb  = Ganga.Utility.Config.getConfig('LHCb' )
-import fnmatch,subprocess
+import fnmatch
 from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 class DiracFile(IOutputFile):
+    """todo DiracFile represents a class marking a file ...todo
     """
-    File stored on a DIRAC storage element
-    """
-    _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
-                                     'localDir'      : SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),    
-                                     'joboutputdir'  : SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                     'locations'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
-                                     'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere'),
-                                     'lfn'           : SimpleItem(defvalue="",typelist=['str'],doc='The logical file name'),
-#                                     'diracSE'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,hidden=1,doc='The dirac SE sites to try to upload to'),
-                                     'guid'          : SimpleItem(defvalue='',typelist=['str'],doc='The files GUID'),
-                                     'failureReason' : SimpleItem(defvalue="",doc='reason for the upload failure')
-                                     })
+    _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='name of the file'),
+                                    'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
+                                        })
 
-#    _schema.datadict['lfn']=SimpleItem(defvalue="",typelist=['str'],doc='The logical file name')
-#    _schema.datadict['diracSE']=SimpleItem(defvalue=[],typelist=['list'],doc='The dirac SE sites')
-#    _schema.datadict['guid']=SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='The files GUID')
-#    _schema.version.major += 0
-#    _schema.version.minor += 1
+    _schema.datadict['lfn']=SimpleItem(defvalue="",typelist=['str'],doc='The logical file name')
+    _schema.datadict['diracSE']=SimpleItem(defvalue=[],typelist=['list'],doc='The dirac SE sites')
+    _schema.datadict['guid']=SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='The files GUID')
+    _schema.version.major += 0
+    _schema.version.minor += 1
     _env=None
 
     _category = 'outputfiles'
     _name = "DiracFile"
-    _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'upload' ]
+    _exportmethods = [  "get", "getMetadata", 'remove', 'upload' ]
         
-    def __init__(self,namePattern='',  localDir='', **kwds):
+    def __init__(self,name='', **kwds):
         """ name is the name of the output file that has to be written ...
         """
         super(DiracFile, self).__init__()
-        self.namePattern = namePattern
-        self.localDir = localDir
+        self.name = name
         self.locations = []
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
-            self.namePattern = args[0]
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
-            self.namePattern = args[0]
-            self.localDir = args[1]     
+            self.name = args[0]
 
     def _attribute_filter__set__(self,name, value):
         if name == 'lfn':
-            self.namePattern = os.path.split(value)[1]
-        if name == 'localDir':
-            return expandfilename(value)
+            self.name = os.path.split(value)[1]
         return value
 
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "DiracFile(namePattern='%s', lfn='%s')" % (self.namePattern, self.lfn)
+        return "DiracFile(name='%s', lfn='%s')" % (self.name, self.lfn)
     
 
     def setLocation(self):
         """
+        Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
@@ -80,15 +73,10 @@ class DiracFile(IOutputFile):
         for line in postprocesslocations.readlines():
             if line.startswith('DiracFile'):
                 names = line.split(':')[1].split('->')
-                if names[0] == self.namePattern:
-                    if names[1] == '###FAILED###':
-                        self.failureReason = line.split(':')[2]
-                    else:
-                        self.lfn = names[1]
-                        # self.diracSE= line.split(':')[2]
-                        self.locations= line.split(':')[2]
-                        self.guid = line.split(':')[3].replace('\n','')
-                
+                if names[0] == self.name:
+                    self.lfn = names[1]
+                    self.diracSE = line.split(':')[2]
+                    self.guid = line.split(':')[3]
         postprocesslocations.close()
 
     def _getEnv(self):
@@ -103,9 +91,8 @@ class DiracFile(IOutputFile):
         rc, stdout, stderr = shellEnv_cmd('dirac-dms-remove-lfn %s' % self.lfn, self._env)
         if not rc:
             self.lfn=""
-            #self.namePattern +="-<REMOVED>"
-            self.locations=[]
-            #self.diracSE=[]
+            self.name +="-<REMOVED>"
+            self.diracSE=[]
             self.guid=None
         return stdout
         
@@ -113,23 +100,16 @@ class DiracFile(IOutputFile):
         if self.lfn == "":
             raise GangaException('Can\'t obtain metadata with no LFN set.')
         self._getEnv()
-        ret =  eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])
-        self.guid = ret['Successful'][self.lfn]['GUID']
-        return ret
+        return shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1]
         
-    def getGUID(self):
-        if self.guid: return self.guid
-        self.getMetadata()
-        return self.guid
-    
-    def get(self):
+    def get(self, dir='.'):
         """
         Retrieves locally all files matching this DiracFile object pattern
         """
 ##         from LogicalFile import get_result
-        if not os.path.isdir(self.localDir):
-            raise GangaException('%s is not a valid directory... ' % self.localDir)
-
+        dir=os.path.abspath(expandfilename(dir))
+        if not os.path.isdir(dir):
+            raise GangaException('%s is not a valid directory... ' % dir)
         if self.lfn == "":
             raise GangaException('Can\'t download a file without an LFN.')
 ##         cmd = 'result = DiracCommands.getFile("%s","%s")' % (self.lfn,dir)
@@ -140,37 +120,11 @@ class DiracFile(IOutputFile):
         ## OTHER WAY... doesn't pollute the environment!
         ##caching the environment for future use.
         self._getEnv()
-        r=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, self.localDir)[1]
-        self.namePattern = os.path.split(self.lfn)[1]
-        self.getMetadata()
-        return r
+        return shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, dir)[1]
         #todo Alex      
 
-    def replicate(self, destSE):
-        if not self.locations:
-            raise GangaException('Can\'t replicate a file if it isn\'t already on a DIRAC SE, upload it first')
-        if self.lfn == '':
-            raise GangaException('Must supply an lfn to replicate')
-        rc, stdout, stderr = shellEnv_cmd('dirac-dms-replicate-lfn %s %s %s' % (self.lfn, destSE, self.locations[0]),
-                                          self._env)
-
-        if 'Successful' in eval(stdout) and self.lfn in eval(stdout)['Successful']:
-            self.locations.append(destSE)
-        return stdout
-         
-
-    def upload(self):#, SEs=[]):
-        """
-        Try to upload file sequentially to storage elements in SEs.
-
-        File will be uploaded to the first SE that the upload command succeeds for.
-        """
-        #self.diracSE = SEs
-        #r = self.put()
-        #self.diracSE = []
-        #return r
+    def upload(self):
         return self.put()
-    
     def put(self):
         """
         this method will be called on the client
@@ -179,169 +133,131 @@ class DiracFile(IOutputFile):
         
 ##    def upload(self,lfn,diracSE,guid=None):
         'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
-        if self.namePattern == "":
+        if self.name == "":
             raise GangaException('Can\'t upload a file without a local file name.')
         if self.lfn == "":
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], os.path.split(self.namePattern)[1])
-
-
-        sourceDir = ''
-
-        #if used as a stand alone object
-        if self._parent == None:
-            if self.localDir == '':
-                raise GangaException('localDir attribute is empty, don\'t know from which dir to take the file' )
-            else:
-                sourceDir = self.localDir
-        else:
-            sourceDir = self.joboutputdir
-
-
-
+            self.lfn = os.path.join(configDirac['DiracLFNBase'], os.path.split(self.name)[1])
 
             #raise GangaException('Can\'t upload a file without a logical file name (LFN).')
-##         storage_elements = self.diracSE
-##         if not self.diracSE:
-        storage_elements=configLHCb['DiracSpaceTokens']
+        storage_elements = self.diracSE
+        if not self.diracSE:
+            storage_elements=configLHCb['DiracSpaceTokens']
 
         self._getEnv()
-        stderr=''
-        stdout=''
         for se in storage_elements:
             if self.guid:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, guid), self._env)
+                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, self.name, se, guid), self._env)
             else:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se), self._env)
+                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, self.name, se), self._env)
 
-            if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']: continue
-#            if rc: continue
-
-#            self.diracSE = [se]
-            self.locations = [se]
-            try:
-                import datetime
-                self.guid = self.getGUID()
-            except:
-                self.guid = None
-            return stdout
-        self.failureReason = "Error in uploading file %s. : %s"% (self.namePattern,stdout)
-        return self.failureReason
+            if not rc:
+                self.diracSE = [se]
+                try:
+                    import datetime
+                    self.guid = eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])['Successful'][self.lfn]['GUID']
+                except:
+                    self.guid = None
+                return stdout
+        return "Error in uploading file %s. : %s"% (self.name,stdout)
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
-##         cmd = """
-## ###INDENT###def run_command(cmd):
-## ###INDENT###    import os, subprocess        
-## ###INDENT###    pipe = subprocess.Popen(cmd,
-## ###INDENT###                            shell=True,
-## ###INDENT###                            env=os.environ,
-## ###INDENT###                            cwd=os.getcwd(),
-## ###INDENT###                            stdout=subprocess.PIPE,
-## ###INDENT###                            stderr=subprocess.PIPE)
-## ###INDENT###    stdout, stderr = pipe.communicate()
-## ###INDENT###    return pipe.returncode, stdout, stderr
-## ###INDENT###
-## ###INDENT####def zip_files(output_files, patterns_to_zip):
-## ###INDENT####    import gzip
-## ###INDENT####    zipped_files = []
-## ###INDENT####    files_to_zip =[]
-## ###INDENT####    for p in patterns_to_zip: files_to_zip.extend(glob.glob(p))
-## ###INDENT####    for file in files_to_zip:
-## ###INDENT####        if os.path.exists(os.path.join(os.getcwd(),file)):
-## ###INDENT####            f_in = open(file_name, 'rb')
-## ###INDENT####            f_out = gzip.open(file_name+'.gz', 'wb')
-## ###INDENT####            f_out.writelines(f_in)
-## ###INDENT####            f_out.close()
-## ###INDENT####            f_in.close()
-## ###INDENT####        else: errorfile.write('Could not zip file %s as it was not found' % file)
-## ###INDENT####        zipped_files.append(file_name+'.gz')
-## ###INDENT####    return list(set(output_files).difference(set(files_to_zip)).update(set(zipped_files)))
-## ###INDENT###
-## ###INDENT###
-## ###INDENT####for file in zip_files(###OUTPUTFILES###, ###ZIPFILES###):
-## ###INDENT###for file, lfn, guid in ###OUTPUTFILES###:
-## ###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file)):
-## ###INDENT###        ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' didn\\'t exist:NotAvailable\\n' % (file, file))
-## ###INDENT###        continue
-## ###INDENT###    for se in ###SE###:
-## ###INDENT###        rc, stdout, stderr = run_command('. SetupProject.sh LHCbDirac >/dev/null && dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
-## ###INDENT###        print stdout
-## ###INDENT###        print stderr    
-## ###INDENT###        if stdout.find('Successful') >=0  and stdout.find(lfn) >=0:
-## ###INDENT###            try:
-## ###INDENT###                import datetime
-## ###INDENT###                id = eval(run_command('. SetupProject.sh LHCbDirac >/dev/null && dirac-dms-lfn-metadata %s' % lfn)[1])['Successful'][lfn]['GUID']
-## ###INDENT###                ###LOCATIONSFILE###.write('DiracFile:%s->%s:%s:%s\\n' % (file, lfn, se, id))
-## ###INDENT###            except:
-## ###INDENT###                ###LOCATIONSFILE###.write('DiracFile:%s->%s:%s:NotAvailable\\n' % (file, lfn, se))                
-## ###INDENT###            break
-## ###INDENT###        if se == ###SE###[-1]: ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' could not be uploaded to any SE:NotAvailable\\n' % (file, file))
-## """
         #todo Alex
         ## Might not even need to inject this code when running on the Dirac backend as use API to
         ## ensure that the output is sent to SE
 
         ## looks like only need this for non dirac backend, see above
         cmd = """
-###INDENT###def run_command(cmd):
-###INDENT###    import os, subprocess        
+###INDENT###import os, sys, copy, glob
+###INDENT###def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
+###INDENT###    import subprocess, time, tempfile, pickle
+###INDENT###    f = tempfile.NamedTemporaryFile(mode='w+b')
+###INDENT###    fname = f.name
+###INDENT###    f.close()
+###INDENT###
+###INDENT###    if not cmd.endswith(';'): cmd += ';'
+###INDENT###    envdump  = 'import os, pickle;'
+###INDENT###    envdump += 'f=open(\\\'%s\\\',\\\'w+b\\\');' % fname
+###INDENT###    envdump += 'pickle.dump(os.environ,f);'
+###INDENT###    envdump += 'f.close();'
+###INDENT###    envdumpcommand = 'python -c \"%s\"' % envdump
+###INDENT###    cmd += envdumpcommand
+###INDENT###
 ###INDENT###    pipe = subprocess.Popen(cmd,
 ###INDENT###                            shell=True,
-###INDENT###                            env=os.environ,
-###INDENT###                            cwd=os.getcwd(),
+###INDENT###                            env=environ,
+###INDENT###                            cwd=cwdir,
 ###INDENT###                            stdout=subprocess.PIPE,
 ###INDENT###                            stderr=subprocess.PIPE)
-###INDENT###    stdout, stderr = pipe.communicate()
+###INDENT###    stdout, stderr  = pipe.communicate()
+###INDENT###    while pipe.poll() is None:
+###INDENT###        time.sleep(0.5)
+###INDENT###
+###INDENT###    f = open(fname,'r+b')
+###INDENT###    environ=environ.update(pickle.load(f))
+###INDENT###    f.close()
+###INDENT###    os.system('rm -f %s' % fname)
+###INDENT###
 ###INDENT###    return pipe.returncode, stdout, stderr
 ###INDENT###
-###INDENT####def zip_files(output_files, patterns_to_zip):
-###INDENT####    import gzip
-###INDENT####    zipped_files = []
-###INDENT####    files_to_zip =[]
-###INDENT####    for p in patterns_to_zip: files_to_zip.extend(glob.glob(p))
-###INDENT####    for file in files_to_zip:
-###INDENT####        if os.path.exists(os.path.join(os.getcwd(),file)):
-###INDENT####            f_in = open(file_name, 'rb')
-###INDENT####            f_out = gzip.open(file_name+'.gz', 'wb')
-###INDENT####            f_out.writelines(f_in)
-###INDENT####            f_out.close()
-###INDENT####            f_in.close()
-###INDENT####        else: errorfile.write('Could not zip file %s as it was not found' % file)
-###INDENT####        zipped_files.append(file_name+'.gz')
-###INDENT####    return list(set(output_files).difference(set(files_to_zip)).update(set(zipped_files)))
-###INDENT###
-###INDENT###
-###INDENT####for file in zip_files(###OUTPUTFILES###, ###ZIPFILES###):
-###INDENT###for file, lfn, guid in ###OUTPUTFILES###:
-###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file)):
-###INDENT###        ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' didn\\'t exist:NotAvailable\\n' % (file, file))
-###INDENT###        continue
-###INDENT###    for se in ###SE###:
-###INDENT###        rc, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
-###INDENT###        if stdout.find('Successful') >=0  and stdout.find(lfn) >=0:
-###INDENT###            try:
-###INDENT###                import datetime
-###INDENT###                id = eval(run_command('###SETUP###dirac-dms-lfn-metadata %s' % lfn)[1])['Successful'][lfn]['GUID']
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:%s->%s:%s:%s\\n' % (file, lfn, se, id))
-###INDENT###            except:
-###INDENT###                ###LOCATIONSFILE###.write('DiracFile:%s->%s:%s:NotAvailable\\n' % (file, lfn, se))                
-###INDENT###            break
-###INDENT###        if se == ###SE###[-1]: ###LOCATIONSFILE###.write('DiracFile:%s->###FAILED###:File \\'%s\\' could not be uploaded to any SE (%s,%s):NotAvailable\\n' % (file, file,stdout.replace(':',';'),stderr.replace(':',';')))
+###INDENT###env = copy.deepcopy(os.environ)
+###INDENT###if shellEnvUpdate_cmd('which dirac-dms-add-file' , env)[1].find('no dirac-dms-add-file in')>=0 or shellEnvUpdate_cmd('which dirac-dms-lfn-metadata' , env)[1].find('no dirac-dms-lfn-metadata in')>=0:
+###INDENT###    if shellEnvUpdate_cmd('which SetupProject.sh' , env)[1].find('no SetupProject.sh in')<0:
+###INDENT###        shellEnvUpdate_cmd('. SetupProject.sh LHCbDirac' , env)
+###INDENT###    else:
+###INDENT###        print \'ERROR: Could not find the SetupProject.sh script so dirac commands could not be set up\'
+###INDENT###        sys.exit(1)
 """
-        output_nps   = [file.namePattern for file in outputFiles]
-        output_lfns  = [os.path.join(configDirac['DiracLFNBase'], file.namePattern) for file in outputFiles if file.lfn==''] +\
-                       [file.lfn for file in outputFiles if file.lfn != '']
-        output_guids = [file.guid for file in outputFiles]
-        cmd = cmd.replace('###OUTPUTFILES###', str(zip(output_nps, output_lfns, output_guids)) )
-        cmd = cmd.replace('###SE###',   str(configLHCb['DiracSpaceTokens']))
+
+        for f in outputFiles:
+            if f.name == "":
+                logger.warning('Skipping dirac SE file %s as it\'s name attribute is not defined'% str(f))
+                continue
+            cmd += """
+###INDENT###if os.path.exists('###NAME###'):
+###INDENT###    for se in ###SE###:"""
+            if f.name in patternsToZip:
+                cmd +="""
+###INDENT###        if not shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME###.gz %s ###GUID###' % se, env)[0]:
+###INDENT###            try:                
+###INDENT###                import datetime
+###INDENT###                guid = eval(shellEnvUpdate_cmd('dirac-dms-lfn-metadata ###LFN###', env)[1])['Successful']['###LFN###']['GUID']
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###.gz->###LFN###:%s:%s\n' % (se, guid))
+###INDENT###            except:
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###.gz->###LFN###:%s:NotAvailable\n' % se)                
+###INDENT###            break
+"""
+            else:
+                cmd += """
+###INDENT###        if not shellEnvUpdate_cmd('dirac-dms-add-file ###LFN### ###NAME### %s ###GUID###' % se, env)[0]:
+###INDENT###            try:                
+###INDENT###                import datetime
+###INDENT###                guid = eval(shellEnvUpdate_cmd('dirac-dms-lfn-metadata ###LFN###', env)[1])['Successful']['###LFN###']['GUID']
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###->###LFN###:%s:%s\n' % (se, guid))
+###INDENT###            except:
+###INDENT###                ###LOCATIONSFILE###.write('DiracFile:###NAME###->###LFN###:%s:NotAvailable\n' % se)                
+###INDENT###            break
+"""
+            # Set LFN here but when job comes back test which worked
+            # by which in file, and remove appropriate failed ones
+            if f.lfn == "":
+                f.lfn=os.path.join(configDirac['DiracLFNBase'], os.path.split(f.name)[1])
+            cmd = cmd.replace('###LFN###',  f.lfn         )
+            cmd = cmd.replace('###NAME###', f.name        )
+            if f.diracSE:
+                cmd = cmd.replace('###SE###',   str(f.diracSE))                
+            else:
+                cmd = cmd.replace('###SE###',   str(configLHCb['DiracSpaceTokens']))
+            if f.guid:
+                cmd = cmd.replace('###GUID###', f.guid )
+            else:
+                cmd = cmd.replace('###GUID###', '' )
+                
+
         cmd = cmd.replace('###INDENT###',indent)
         cmd = cmd.replace('###LOCATIONSFILE###',postProcessLocationsFP)
-        if self._parent and self._parent.backend._name=='Dirac':
-            cmd = cmd.replace('###SETUP###','')
-        else:
-            cmd = cmd.replace('###SETUP###','. SetupProject.sh LHCbDirac >/dev/null && ')
 
         return cmd
 

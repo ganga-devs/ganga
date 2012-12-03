@@ -16,13 +16,12 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 #from GangaLHCb.Lib.Applications.GaudiJobConfig import GaudiJobConfig
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
-from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 import pickle
 import Ganga.Utility.Config
 from Ganga.Utility.util import unique
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-def gaudi_dirac_wrapper(cmdline,platform,job):
+def gaudi_dirac_wrapper(cmdline,platform):
     script = """#!/usr/bin/env python
 '''Script to run Gaudi application'''
 
@@ -45,13 +44,10 @@ if __name__ == '__main__':
 
     ###XMLSUMMARYPARSING###
 
-    ###OUTPUTFILESINJECTEDCODE###
-
     sys.exit(rc)
 """ % (platform,cmdline)
     
-    script = script.replace('###XMLSUMMARYPARSING###',getXMLSummaryScript('    '))
-    script = script.replace('###OUTPUTFILESINJECTEDCODE###',getWNCodeForOutputPostprocessing(job, '    '))
+    script = script.replace('###XMLSUMMARYPARSING###',getXMLSummaryScript())
     return script
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -187,7 +183,6 @@ class GaudiDiracRTHandler(GaudiRunTimeHandler):
         dirac_script.exe = DiracApplication(app,script)
         dirac_script.platform = app.platform
         dirac_script.output_sandbox = outputsandbox
-        dirac_script.output_sandbox += getOutputSandboxPatterns(job)
 
         if indata:
             if not job.master and job.splitter: # master job with a splitter hence bulk submit
@@ -220,8 +215,8 @@ class GaudiDiracRTHandler(GaudiRunTimeHandler):
                 commandline+=arg+' '
             commandline+='options.pkl data-wrapper.py\"\"\"'
         logger.debug('Command line: %s: ', commandline)
+        wrapper = gaudi_dirac_wrapper(commandline,app.platform)
         j = app.getJobObject()
-        wrapper = gaudi_dirac_wrapper(commandline,app.platform,j)
         script = os.path.join(j.getInputWorkspace().getPath(),"gaudi-script.py")
         file = open(script,'w')
         file.write(wrapper)
