@@ -719,7 +719,7 @@ class JobRegistry_Monitor( GangaThread ):
                             # Check for max number of resubmissions
                             skip = False
                             for s in j.subjobs:
-                                if s.info.submit_counter > config['MaxNumResubmits']:
+                                if s.info.submit_counter > config['MaxNumResubmits'] or s.status == "killed":
                                     skip = True
 
                             if skip:
