@@ -75,9 +75,6 @@ class IMerger(IPostProcessor):
 
         from Ganga.GPIDev.Lib.Job import Job
 
-        #make a guess of what to merge if nothing is specified
-        if not self.files:
-            self.files = findFilesToMerge(jobs)
         if not outputdir:
             outputdir = getDefaultMergeDir()
         else:
@@ -118,13 +115,13 @@ class IMerger(IPostProcessor):
                     else:
                         files[relMatchedFile] = [matchedFile]    
 
-                if len(files[relMatchedFile]) == 0:
+                if not len(glob.glob(os.path.join(j.outputdir,f))):
                     if ignorefailed:
-                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.',str(relMatchedFile),j.fqid)
+                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.',str(f),j.fqid)
                         continue
                     else:
                         logger.error('The file pattern %s in Job %s was not found and so the merge can not continue. '\
-                                     'This can be overridden with the ignorefailed flag.', str(relMatchedFile), j.fqid)
+                                     'This can be overridden with the ignorefailed flag.', str(f), j.fqid)
                         return self.failure
                 #files[f].extend(matchedFiles)
 
