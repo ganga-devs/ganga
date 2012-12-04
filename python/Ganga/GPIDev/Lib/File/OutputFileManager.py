@@ -54,6 +54,28 @@ def getOutputSandboxPatterns(job):
     return outputPatterns
 
 """
+This should be used from only from Interactive backend
+"""
+def getOutputSandboxPatternsForInteractive(job):
+
+    patternsToSandbox = [getConfig('Output')['PostProcessLocationsFileName']]
+    patternsToZip = []  
+
+    for outputFile in job.outputfiles:
+
+        outputFileClassName = outputFile.__class__.__name__
+
+        if outputFileClassName == 'OutputSandboxFile' or (outputFileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
+            if outputFile.compressed:
+                patternsToSandbox.append('%s.gz' % outputFile.namePattern)
+                patternsToZip.append(outputFile.namePattern)
+            else:       
+                patternsToSandbox.append(outputFile.namePattern)
+
+    return (patternsToSandbox, patternsToZip)
+
+
+"""
 This should be used from Local and Batch backend, where there is code on the WN for 
 sending the output(optionally compressed before that) to the outputsandbox
 """
@@ -129,11 +151,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
             backendClassName = job.backend.__class__.__name__
 
             if outputFile.compressed:   
-                if outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF']:
+                if outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
                     patternsToZip.append(outputFile.namePattern)  
                 elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
                     patternsToZip.append(outputFile.namePattern)  
-                elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF']:
+                elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
                     patternsToZip.append(outputFile.namePattern)  
     
             if outputfileClassName not in outputFilesProcessedOnWN.keys():
