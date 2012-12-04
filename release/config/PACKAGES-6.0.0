@@ -1,5 +1,7 @@
 #The packages are processed in top-down order
 
 #kuba
-ganga                                                                  Ganga6-beta3
+ganga/bin                                                              Ganga-bin-20-0
+ganga/doc                                                              Ganga-doc-20-0
+ganga/python                                                           Ganga6-beta4
 
