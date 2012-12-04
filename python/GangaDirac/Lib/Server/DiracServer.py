@@ -265,8 +265,8 @@ def start_server( env_file            = None,
             f=open(env_file,'r')
             lines = f.readlines()
             f.close()
-            env = dict(zip([line.split('=')[0] for line in lines],
-                           [line.split('=')[1].replace('\n','') for line in lines]
+            env = dict(zip([line.split('=',1)[0] for line in lines if len(line.split('=',1)) == 2],
+                           [line.split('=',1)[1].replace('\n','') for line in lines if len(line.split('=',1)) == 2]
                            )
                        )
 
