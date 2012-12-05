@@ -21,7 +21,7 @@ Default distutils 'setup' method overwritten.
 #  for filename in files:
 #      data_files.append((root, [os.path.join(root,filename)]))
 
-this_version = glob.glob('ThisTagVersion-*')[0].lstrip('ThisTagVersion-')
+this_version = glob.glob('../ThisTagVersion-*')[0].lstrip('../ThisTagVersion-')
 print "Building RPMs for Ganga version: " + this_version
 
 os.chdir('../python')
