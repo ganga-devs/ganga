@@ -176,19 +176,15 @@ class Interactive( IBackend ):
       argString = " ".join( map( lambda x : "' \\'%s\\' '" % x, argList ) )
 
       outputSandboxPatterns = jobconfig.outputbox
-      patternsToZip = []        
+      patternsToZip = []  
+      wnCodeForPostprocessing = ''            
 
-      if job.outputfiles != []:
-         outputSandboxPatterns = []
-         for outputFile in job.outputfiles:
-            if outputFile.__class__.__name__ == 'OutputSandboxFile':
-               if outputFile.compressed:
-                  outputSandboxPatterns.append('%s.gz' % outputFile.namePattern)
-                  patternsToZip.append(outputFile.namePattern)
-               else:       
-                  outputSandboxPatterns.append(outputFile.namePattern)
+      if (len(job.outputfiles) > 0):
         
-      
+         from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatternsForInteractive, getWNCodeForOutputPostprocessing   
+         (outputSandboxPatterns, patternsToZip) = getOutputSandboxPatternsForInteractive(job)
+         wnCodeForPostprocessing = 'def printError(message):pass\ndef printInfo(message):pass' + getWNCodeForOutputPostprocessing(job, '')      
+
       commandList = [
          "#!/usr/bin/env python",
          "# Interactive job wrapper created by Ganga",
@@ -247,6 +243,7 @@ class Interactive( IBackend ):
          "",
          "result = os.system( '%s' % commandString )",
          "",
+         wnCodeForPostprocessing,
          "for patternToZip in " + str(patternsToZip) +":",
          "   for currentFile in glob.glob(patternToZip):",
          "      os.system('gzip %s' % currentFile)",

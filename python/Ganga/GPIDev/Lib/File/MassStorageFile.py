@@ -201,7 +201,7 @@ class MassStorageFile(IOutputFile):
 
                 
         script = """\n
-
+###INDENT###import subprocess
 ###INDENT####system command executor with subprocess
 ###INDENT###def execSyscmdSubprocessAndReturnOutputMAS(cmd):
 
