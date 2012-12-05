@@ -17,6 +17,9 @@ ganga/python/Ganga/Lib/Remote                                          GangaRemo
 #johannes/dan/mark
 ganga/python/GangaAtlas                                                GangaAtlas-24-50
 
+#alex/patrick/ulrik
+ganga/python/GangaDirac                                                GangaDirac-01-01
+
 #alex/will/ulrik
 ganga/python/GangaGaudi                                                GangaGaudi-01-13
 ganga/python/GangaLHCb                                                 GangaLHCb-24-27
