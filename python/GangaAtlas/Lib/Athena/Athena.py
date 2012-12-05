@@ -29,6 +29,7 @@ from Ganga.GPIDev.Lib.File import ShareDir, File
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from pandatools import AthenaUtils
+from Ganga.Utility.Plugin import allPlugins
 
 def mktemp(extension,name,path):
     """Create a unique file"""
@@ -1823,13 +1824,13 @@ class AthenaOutputMerger(IMerger):
         return rc
 
 
-class RootMergerAANT(AbstractMerger):
+class RootMergerAANT(IMerger):
     """Merger class for AANT ROOT files"""
     
-    _category = 'mergers'
+    _category = 'postprocessor'
     _exportmethods = ['merge']
     _name = 'RootMergerAANT'
-    _schema = AbstractMerger._schema.inherit_copy()
+    _schema = IMerger._schema.inherit_copy()
 
     def __init__(self):
         super(RootMergerAANT,self).__init__(_RootMergeToolAANT())
@@ -1838,13 +1839,15 @@ class RootMergerAANT(AbstractMerger):
         #needed as exportmethods doesn't seem to cope with inheritance
         return super(RootMergerAANT,self).merge(jobs, outputdir, ignorefailed, overwrite)
 
-class _RootMergeToolAANT(IMergeTool):
+allPlugins.add(RootMergerAANT,'mergers','RootMergerAANT')
+
+class _RootMergeToolAANT(IMerger):
     """Wrapper around addAANT that merges root files."""
 
-    _category = 'merge_tools'
+    _category = 'postprocessor'
     _hidden = 1
     _name = '_RootMergeToolAANT'
-    _schema = IMergeTool._schema.inherit_copy()
+    _schema = IMerger._schema.inherit_copy()
 
     def mergefiles(self, file_list, output_file):
 

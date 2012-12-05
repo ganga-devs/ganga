@@ -8,8 +8,8 @@ import pickle
 import subprocess
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Adapters.IMerger import MergerError
-from Ganga.Lib.Mergers.Merger import AbstractMerger, IMergeTool
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
+from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
@@ -118,15 +118,27 @@ class GaudiXMLSummary(GangaObject):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-class _GaudiXMLSummaryMergeTool(IMergeTool):
-    
-    _category = 'merge_tools'
-    _hidden = 1
-    _name = '_GaudiXMLSummaryMergeTool'
-    _schema = IMergeTool._schema.inherit_copy()
+
+
+
+class GaudiXMLSummaryMerger(IMerger):
+    '''Merger for XML summary files.'''
+    _category = 'postprocessors'
+    _exportmethods = ['merge']
+    _name = 'GaudiXMLSummaryMerger'
+    _schema = IMerger._schema.inherit_copy()
     _schema.datadict['env_var'] = SimpleItem(defvalue='',typelist=['str'])
-    
-    def mergefiles(self, file_list, output_file):
+
+
+    def mergefiles(self, file_list, output_file, jobs):
+        from Ganga.GPIDev.Lib.Job import Job
+        gaudi_env = {}
+        if isinstance(jobs,GPIProxyObject) and isinstance(jobs._impl,Job):
+            gaudi_env = jobs.application.getenv()
+        elif len(jobs) > 0:
+            gaudi_env = jobs[0].application.getenv()
+        self.env_var = gaudi_env['XMLSUMMARYBASEROOT']
+        #needed as exportmethods doesn't seem to cope with inheritance
         if not self.env_var:
             raise GangaException('XMLSummary env not set!')
         script_name = tempfile.mktemp('.py')
@@ -154,33 +166,10 @@ class _GaudiXMLSummaryMergeTool(IMergeTool):
         if not os.path.exists(output_file):
             raise GangaException('Failed to merge XML summary file!')
 
-
-class GaudiXMLSummaryMerger(AbstractMerger):
-    '''Merger for XML summary files.'''
-    _category = 'mergers'
-    _exportmethods = ['merge']
-    _name = 'GaudiXMLSummaryMerger'
-    _schema = AbstractMerger._schema.inherit_copy()
-
-    def __init__(self):
-        super(GaudiXMLSummaryMerger,self).__init__(_GaudiXMLSummaryMergeTool())
-
-    def merge(self,jobs,outputdir=None,ignorefailed=None,overwrite=None):
-        from Ganga.GPIDev.Lib.Job import Job
-        gaudi_env = {}
-        if isinstance(jobs,GPIProxyObject) and isinstance(jobs._impl,Job):
-            gaudi_env = jobs.application.getenv()
-        elif len(jobs) > 0:
-            gaudi_env = jobs[0].application.getenv()
-        self.merge_tool.env_var = gaudi_env['XMLSUMMARYBASEROOT']
-        #needed as exportmethods doesn't seem to cope with inheritance
-        return super(GaudiXMLSummaryMerger,self).merge(jobs,outputdir,
-                                                       ignorefailed,overwrite)
-
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 # Add it to the list of plug-ins
-allPlugins.add(_GaudiXMLSummaryMergeTool,'merge_tools',
-               '_GaudiXMLSummaryMergeTool')
+#allPlugins.add(_GaudiXMLSummaryMergeTool,'merge_tools',
+#               '_GaudiXMLSummaryMergeTool')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

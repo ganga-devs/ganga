@@ -3,7 +3,7 @@ from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_
 import os
 import tempfile
 
-from Ganga.GPIDev.Adapters.IMerger import MergerError
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
 class TestCustomMerger(GangaGPITestCase):
     
@@ -98,12 +98,12 @@ class TestCustomMerger(GangaGPITestCase):
         try:
             cm.merge(self.jobslice,tmpdir)
             assert False,'Merge should fail'
-        except MergerError:
+        except PostProcessException:
             pass
         
         j = self.jobslice[0].copy()
         j.splitter = CopySplitter()
-        j.merger = cm
+        j.postprocessors = cm
         j.submit()
         
         sleep_until_completed(j)

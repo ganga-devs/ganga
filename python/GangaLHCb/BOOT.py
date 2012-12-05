@@ -24,7 +24,7 @@ def browseBK(gui=True):
     from Ganga.GPIDev.Base.Proxy import addProxy
     logger = Ganga.Utility.logging.getLogger()
     try: 
-        from GangaLHCb.Lib.DIRAC.Bookkeeping import Bookkeeping
+        from GangaLHCb.Lib.Backends.Bookkeeping import Bookkeeping
         from Ganga.GPI import LHCbDataset
     except ImportError:
         logger.warning('Could not start Bookkeeping Browser')
@@ -34,32 +34,6 @@ def browseBK(gui=True):
 
 exportToGPI('browseBK',browseBK,'Functions')        
     
-def diracAPI(cmd,timeout=None):
-    '''Execute DIRAC API commands from w/in Ganga.
-
-    The value of local variable \"result\" will be returned, e.g.:
-    
-    # this will simply return 87
-    diracAPI(\'result = 87\')
-    
-    # this will return the status of job 66
-    diracAPI(\'result = Dirac().status(66)\')
-
-    If \"result\" is not set, then the commands are still executed but no value
-    is returned.
-    '''
-    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
-    return Dirac.execAPI(cmd,timeout)
-
-exportToGPI('diracAPI',diracAPI,'Functions')
-
-def killDiracServer():
-    '''Kills the child proces which runs the DIRAC server.'''
-    from GangaLHCb.Lib.DIRAC.Dirac import Dirac
-    return Dirac.killServer()
-
-exportToGPI('killDiracServer',killDiracServer,'Functions')    
-
 def fixBKQueryInBox(newCategory='query'):
     import os
     from Ganga.Utility.Config import getConfig

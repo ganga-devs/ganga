@@ -1,1 +1,1 @@
-from Merger import RootMerger, TextMerger, MultipleMerger
+from Merger import RootMerger, TextMerger

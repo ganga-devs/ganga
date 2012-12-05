@@ -228,11 +228,11 @@ class Bender(GaudiBase):
                 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
-from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 
 for backend in ['LSF','Interactive','PBS','SGE','Local','Condor','Remote']:
     allHandlers.add('Bender', backend, LHCbGaudiRunTimeHandler)
-allHandlers.add('Bender', 'Dirac', GaudiDiracRTHandler)
+allHandlers.add('Bender', 'Dirac', LHCbGaudiDiracRunTimeHandler)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

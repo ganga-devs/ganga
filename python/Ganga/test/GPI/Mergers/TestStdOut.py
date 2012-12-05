@@ -51,7 +51,7 @@ class TestStdOut(GangaGPITestCase):
 
     def testCanSetStdOutMerge(self):
 
-        from Ganga.GPIDev.Adapters.IMerger import MergerError
+        from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 
         self.runJobSlice()
 
@@ -62,7 +62,7 @@ class TestStdOut(GangaGPITestCase):
         sm.files = ['stdout']
         try:
             assert not sm.merge(self.jobslice,tmpdir), 'Merge should fail'
-        except MergerError:
+        except PostProcessException:
             pass
 
                 

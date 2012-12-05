@@ -17,7 +17,7 @@ class TestMergeFailures(GangaGPITestCase):
         j.backend = Local()
         j.outputfiles = [OutputSandboxFile('out.txt')]
         j.splitter = CopySplitter()
-        j.merger = MergerTester(files = ['out.txt'])
+        j.postprocessors = MergerTester(files = ['out.txt'])
         
         j.submit()
         
@@ -32,7 +32,7 @@ class TestMergeFailures(GangaGPITestCase):
         j.backend = Local()
         j.outputfiles = [OutputSandboxFile('out.txt')]
         j.splitter = CopySplitter()
-        j.merger = MergerTester(files = ['out.txt'],ignorefailed = True)
+        j.postprocessors = MergerTester(files = ['out.txt'],ignorefailed = True)
         
         j.submit()
         
@@ -47,7 +47,7 @@ class TestMergeFailures(GangaGPITestCase):
         j.backend = Local()
         j.outputfiles = [OutputSandboxFile('out.txt')]
         j.splitter = CopySplitter()
-        j.merger = MergerTester(files = ['out.txt'],overwrite = True)
+        j.postprocessors = MergerTester(files = ['out.txt'],overwrite = True)
         
         j.submit()
         
@@ -62,7 +62,7 @@ class TestMergeFailures(GangaGPITestCase):
         j.backend = Local()
         j.outputfiles = [OutputSandboxFile('out.txt')]
         j.splitter = CopySplitter()
-        j.merger = MergerTester(files = ['out.txt'], ignorefailed = True, overwrite = True)
+        j.postprocessors = MergerTester(files = ['out.txt'], ignorefailed = True, overwrite = True)
         
         j.submit()
         
@@ -80,11 +80,11 @@ class TestMergeFailures(GangaGPITestCase):
         j.backend = Local()
         j.outputfiles = [OutputSandboxFile('out.txt')]
         j.splitter = CopySplitter()
-        j.merger = MergerTester(files = ['out.txt'])
+        j.postprocessors = MergerTester(files = ['out.txt'])
         
-        j.merger.ignorefailed = True
-        j.merger.alwaysfail = True
-        j.merger.wait = 10
+        j.postprocessors[0].ignorefailed = True
+        j.postprocessors[0].alwaysfail = True
+        j.postprocessors[0].wait = 10
         
         j.submit()
         sleep_until_state(j, state = 'running')

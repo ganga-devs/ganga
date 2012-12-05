@@ -136,9 +136,9 @@ class TestTextMerger(GangaGPITestCase):
 
         tm = TextMerger()
         tm.files = ['out.txt']
-        j.merger = tm
+        j.postprocessors = tm
 
-        assert j.merger, 'Merger should be set'
+        assert j.postprocessors, 'Postprocessors should be set'
                         
         j.submit()
         if not sleep_until_completed(j):
@@ -202,7 +202,7 @@ class TestTextMerger(GangaGPITestCase):
         tm = TextMerger()
         tm.files = ['out.txt']
         tm.ignorefailed = True
-        j.merger = tm
+        j.postprocessors = tm
 
         j.submit()
 
@@ -233,11 +233,9 @@ class TestTextMerger(GangaGPITestCase):
         tm2 = TextMerger()
         tm2.files = ['out2.txt']
 
-        mm = MultipleMerger()
-        mm.addMerger(tm1)
-        mm.addMerger(tm2)
 
-        j.merger = mm
+        j.postprocessors.append(tm1)
+        j.postprocessors.append(tm2)
 
         j.submit()
         if not sleep_until_completed(j):
@@ -259,7 +257,7 @@ class TestTextMerger(GangaGPITestCase):
         tm = TextMerger()
         tm.files = ['stdout','stderr']
 
-        j.merger = tm
+        j.postprocessors = tm
 
         j.submit()
         
@@ -318,8 +316,7 @@ class TestTextMerger(GangaGPITestCase):
         tm2 = TextMerger()
         tm2.files = ['out2.txt']
 
-        mm = MultipleMerger(merger_objects = [tm1,tm2])
-        j.merger = mm
+        j.postprocessors = [tm1,tm2]
 
         j.submit()
         if not sleep_until_completed(j):

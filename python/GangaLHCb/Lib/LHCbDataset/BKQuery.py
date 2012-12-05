@@ -113,13 +113,13 @@ RecoToDST-07/90000000/DST" ,
                 raise GangaException(msg)
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
-                raise GangaException(msg)            
-        cmd = 'result = DiracCommands.getDataset("%s","%s","%s","%s","%s",\
-        "%s")' % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
+                raise GangaException(msg) 
+        cmd = "result = DiracLHCbCommands.getDataset('%s','%s','%s','%s','%s',\
+        '%s')" % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
                   self.selection)
         if type(self.dqflag) == type([]):
-            cmd = 'result = DiracCommands.getDataset("%s",%s,"%s","%s","%s",\
-            "%s")' % (self.path,self.dqflag,self.type,self.startDate,
+            cmd = "result = DiracLHCbCommands.getDataset('%s',%s,'%s','%s','%s',\
+            '%s')" % (self.path,self.dqflag,self.type,self.startDate,
                      self.endDate,self.selection)
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
@@ -150,12 +150,12 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)            
-        cmd = 'result = DiracCommands.getDataset("%s","%s","%s","%s","%s",\
-        "%s")' % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
+        cmd = "result = DiracLHCbCommands.getDataset('%s','%s','%s','%s','%s',\
+        '%s')" % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
                   self.selection)
         if type(self.dqflag) == type([]):
-            cmd = 'result = DiracCommands.getDataset("%s",%s,"%s","%s","%s",\
-            "%s")' % (self.path,self.dqflag,self.type,self.startDate,
+            cmd = "result = DiracLHCbCommands.getDataset('%s',%s,'%s','%s','%s',\
+            '%s')" % (self.path,self.dqflag,self.type,self.startDate,
                      self.endDate,self.selection)
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
@@ -222,7 +222,7 @@ class BKQueryDict(GangaObject):
     def getDatasetMetadata(self):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict: return None
-        cmd = 'result = DiracCommands.bkQueryDict(%s)' % self.dict
+        cmd = 'result = DiracLHCbCommands.bkQueryDict(%s)' % self.dict
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
@@ -239,7 +239,7 @@ class BKQueryDict(GangaObject):
     def getDataset(self):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict: return None
-        cmd = 'result = DiracCommands.bkQueryDict(%s)' % self.dict
+        cmd = 'result = DiracLHCbCommands.bkQueryDict(%s)' % self.dict
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']

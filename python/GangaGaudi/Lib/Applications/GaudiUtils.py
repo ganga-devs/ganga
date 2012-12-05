@@ -190,6 +190,47 @@ def shellEnvUpdate_cmd(cmd, environ=os.environ, cwdir=None):
   
   return pipe.returncode, stdout, stderr
 
+  #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+  ##NEW, better version?
+import subprocess
+import tempfile
+import os
+import time
+import collections
+
+CommandOutput = collections.namedtuple('CommandOutput', ['returncode', 'stdout', 'stderr'])
+
+class TimeoutException(Exception):
+    def __init__(self, message):
+        super(TimeoutException, self).__init__(message)
+
+def run(cmd, env=None, cwd=None, timeout=None):
+    proc = subprocess.Popen(cmd,
+                            shell=True,
+                            env=env,
+                            cwd=cwd,
+                            stdout=subprocess.PIPE,
+                            stderr=subprocess.PIPE)
+    if timeout is not None:
+        time_start = time.time()
+        while proc.poll() is None:
+            if time.time()-time_start >= timeout:
+                proc.kill()
+                raise TimeoutException("Command '%s' timed out!" % cmd)
+            time.sleep(0.5) 
+    stdout, stderr = proc.communicate()    
+    return CommandOutput(proc.returncode, stdout, stderr)
+
+def runUpdate(cmd, env=None, cwd=None, timeout=None):
+    (fd, filename) = tempfile.mkstemp()
+    command_output = run(cmd+'; printenv &> ' + filename, env, cwd, timeout)        
+    with os.fdopen(fd,'r') as file:
+        env.update(dict([tuple(line.split('=',1)) for line in file.read().splitlines()]))
+    return command_output
+  
+
+
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def fillPackedSandbox(sandbox_files,destination):
   """Put all sandbox_files into tarball called name and write it into to the destination.
