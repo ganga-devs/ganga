@@ -13,6 +13,20 @@ import commands
 import os
 import string
 
+from posixpath import curdir, sep, pardir, join, abspath, commonprefix
+
+def relpath(path, start=curdir):
+    """Return a relative version of a path"""
+    if not path:
+        raise ValueError("no path specified")
+    start_list = abspath(start).split(sep)
+    path_list = abspath(path).split(sep)
+    # Work out how much of the filepath is shared by start and path.
+    i = len(commonprefix([start_list, path_list]))
+    rel_list = [pardir] * (len(start_list)-i) + path_list[i:]
+    if not rel_list:
+        return curdir
+    return join(*rel_list)
 
 #set the mergers config up
 config = makeConfig('Mergers','parameters for mergers')
@@ -66,7 +80,7 @@ class IMerger(IPostProcessor):
 
         
     def merge(self, jobs, outputdir = None, ignorefailed = None, overwrite = None):
-        #following same as in AbstractMerger
+
         if ignorefailed == None:
             ignorefailed = self.ignorefailed
             
@@ -104,12 +118,22 @@ class IMerger(IPostProcessor):
                     'Supported statuses are 'completed', 'failed' or 'killed' (if the ignorefailed flag is set).", j.fqid, j.status)
                     return self.failure
 
+            if len(j.subjobs):
+                sub_result = self.merge(j.subjobs,outputdir = j.outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
+                if (sub_result == self.failure) and not ignorefailed:
+                    logger.error('The merge of Job %s failed and so the merge can not continue. '\
+                                 'This can be overridden with the ignorefailed flag.', j.fqid)
+                    return self.failure
             
             import glob 
             for f in self.files:
 
                 for matchedFile in glob.glob(os.path.join(j.outputdir,f)):
-                    relMatchedFile = os.path.relpath(matchedFile,j.outputdir)
+                    relMatchedFile = ''
+                    try:
+                        relMatchedFile = os.path.relpath(matchedFile,j.outputdir)
+                    except:
+                        relMatchedFile = relpath(matchedFile,j.outputdir)
                     if relMatchedFile in files:
                         files[relMatchedFile].append(matchedFile)
                     else:
