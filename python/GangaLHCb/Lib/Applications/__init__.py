@@ -11,19 +11,19 @@ for app in available_apps():
     if app in dir(): continue
     exec(cls.replace('AppName',app))
 ##     # dont seem necessary
-##     exec('%sTask = taskify(%s,"%sTask")' %(app,app,app))
-##     exec('task_map["%s"] = %sTask' %(app,app))
-    exec('task_map["%s"] = %s' %(app,app))
+    exec('%sTask = taskify(%s,"%sTask")' %(app,app,app))
+    exec('task_map["%s"] = %sTask' %(app,app))
+##    exec('task_map["%s"] = %s' %(app,app))
 
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 from GaudiPython import *
-#GaudiPythonTask = taskify(GaudiPython,"GaudiPythonTask")
-#task_map["GaudiPython"] = GaudiPythonTask
-task_map["GaudiPython"] = GaudiPython
+GaudiPythonTask = taskify(GaudiPython,"GaudiPythonTask")
+task_map["GaudiPython"] = GaudiPythonTask
+#task_map["GaudiPython"] = GaudiPython
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 from Bender import *
-#BenderTask = taskify(Bender,"BenderTask")
-#task_map["Bender"] = BenderTask
-task_map["Bender"] = Bender
+BenderTask = taskify(Bender,"BenderTask")
+task_map["Bender"] = BenderTask
+#task_map["Bender"] = Bender
