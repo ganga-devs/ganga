@@ -11,14 +11,14 @@ stripping16down = '/LHCb/Collision11/Beam3500GeV-VeloClosed-MagDown/Real Data/Re
 bkQueryList = [GPI.BKTestQuery(stripping15down), GPI.BKTestQuery(stripping16up), GPI.BKTestQuery(stripping16down)]
 
 
-class TestLHCbAnalysisTransform(GangaGPITestCase):
+class TestLHCbTransform(GangaGPITestCase):
      def test_overview(self):
-          tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
+          tr = GPI.LHCbTransform(application=DaVinci(),backend=Local())
           tr.overview()
 
      def test_update(self):
-          t = GPI.LHCbAnalysisTask()
-          tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Dirac())
+          t = GPI.LHCbTask()
+          tr = GPI.LHCbTransform(application=DaVinci(),backend=Dirac())
           t.appendTransform(tr)
           try:
                tr.update()

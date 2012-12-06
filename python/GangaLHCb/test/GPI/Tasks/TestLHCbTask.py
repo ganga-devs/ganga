@@ -10,10 +10,10 @@ stripping16down = '/LHCb/Collision11/Beam3500GeV-VeloClosed-MagDown/Real Data/Re
 bkQueryList = [GPI.BKTestQuery(stripping15down), GPI.BKTestQuery(stripping16up), GPI.BKTestQuery(stripping16down)]
 
 
-class TestLHCbAnalysisTask(GangaGPITestCase):
+class TestLHCbTask(GangaGPITestCase):
      def test_addQuery(self):
-          tr = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
-          t = GPI.LHCbAnalysisTask()
+          tr = GPI.LHCbTransform(application=DaVinci(),backend=Local())
+          t = GPI.LHCbTask()
           
           ## Check non-lists and adding query to transform and non-associated
           t.addQuery(tr,GPI.BKTestQuery(stripping15up))
@@ -28,31 +28,31 @@ class TestLHCbAnalysisTask(GangaGPITestCase):
                assert tran.query.path in tmpList, 'Query attribute not setup properly for all transforms'
          
      def test_appendTransform(self):
-          tr1 = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
-          t = GPI.LHCbAnalysisTask()
+          tr1 = GPI.LHCbTransform(application=DaVinci(),backend=Local())
+          t = GPI.LHCbTask()
           
           ## Try appending
           t.appendTransform(tr1)
           assert len(t.transforms),'Didn\'t append a transform properly'
 
           ## Try appending a transform with a query and check for update
-          tr2 = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
+          tr2 = GPI.LHCbTransform(application=DaVinci(),backend=Local())
           tr2.query = GPI.BKTestQuery(stripping15up)
           t.appendTransform(tr2)
           assert len(t.transforms[-1]._impl.toProcess_dataset.files),'Transform not updated properly after appending'
          
      def test_help(self):
-          t = GPI.LHCbAnalysisTask()
+          t = GPI.LHCbTask()
           t.help()
 
      def test_overview(self):
-          t = GPI.LHCbAnalysisTask()
+          t = GPI.LHCbTask()
           t.overview()  
 
      def test_update(self):
-          t = GPI.LHCbAnalysisTask()
-          tr1 = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
-          tr2 = GPI.LHCbAnalysisTransform(application=DaVinci(),backend=Local())
+          t = GPI.LHCbTask()
+          tr1 = GPI.LHCbTransform(application=DaVinci(),backend=Local())
+          tr2 = GPI.LHCbTransform(application=DaVinci(),backend=Local())
           t.appendTransform(tr1)
           t.appendTransform(tr2)
           tr1.query = GPI.BKTestQuery(stripping15up)
