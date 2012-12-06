@@ -19,7 +19,7 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
         #self.extra.input_buffers['subjob.buffer'] = '###SUBJOBBUFFER###'
         self.input_files = [File(name='subjob.in'),File(FileBuffer('subjob.buffer','###SUBJOBBUFFER###').create().name)]        
         self.appmasterconfig = StandardJobConfig(inputbox=[File(name='master.in'),File(FileBuffer('master.buffer','###MASTERBUFFER###').create().name)])
-        j.outputsandbox = ['dummy1.out','dummy2.out','dummy3.out']
+        j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.rth = LHCbGaudiRunTimeHandler()
 
     def test_GaudiRunTimeHandler_master_prepare(self):
