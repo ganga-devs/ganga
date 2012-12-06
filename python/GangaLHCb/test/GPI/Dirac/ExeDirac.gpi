@@ -14,7 +14,7 @@ jcommand.backend.settings['CPUTime'] = 300
 jcommand.application.args=['input.txt','output.txt']
 jcommand.application.exe='cp'
 jcommand.inputsandbox=[testname]
-jcommand.outputsandbox=['output.txt']
+jcommand.outputfiles=['output.txt']
 assert(jcommand.submit())
 
 # Job with a script
@@ -29,7 +29,7 @@ jscript=Job(application=Executable(),backend=Dirac(CPUTime=300))
 jscript.application.args=['input.txt','output.txt']
 jscript.application.exe=File(scriptname)
 jscript.inputsandbox=[testname]
-jscript.outputsandbox=['output.txt']
+jscript.outputfiles=['output.txt']
 jscript.submit()
 
 assert(sleep_until_completed(jcommand,1800))
