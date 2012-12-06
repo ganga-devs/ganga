@@ -381,6 +381,13 @@ class PrereleaseCommand:
         print 'Updating file with available releases'
         acmd("touch %s && date +'%s - %%d %%b %%Y %%k:%%m:%%S' >> %s"% (versionfile, CONFIG['version-pre'], versionfile))
 
+
+        print '#############'
+        print 'Building RPMs'
+        print '#############'
+        toolcmd('package_builder %(version)s'%CONFIG)
+        
+
         if askYesNo('Do you want to send email to Ganga developers list that the prerelease is ready?') == "YES":
             send_mail('prerelease')
 
