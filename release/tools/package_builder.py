@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glob
 import sys
-import os
+import os, getopt, shutil
 from subprocess import call
 #sys.path.append('../../../stage/lib')
 #print os.listdir('./')
@@ -14,6 +14,27 @@ from subprocess import call
 Default distutils 'setup' method overwritten.
 """
 
+def usage():
+    print '''
+usage: package-builder VERSION
+
+Tool to build Ganga RPMs and/or Python Eggs.
+'''
+
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "", ["svnurl=",'platf='])
+except getopt.error, x:
+    print "command line syntax error"
+    usage()
+    sys.exit(2)
+
+try:
+    version = args[0]
+except IndexError:
+    usage()
+    sys.exit(2)
+
+
 
 #for root, dirs, files in os.walk('./'):
 #  if '.svn' in dirs:
@@ -21,10 +42,15 @@ Default distutils 'setup' method overwritten.
 #  for filename in files:
 #      data_files.append((root, [os.path.join(root,filename)]))
 
-this_version = glob.glob('../ThisTagVersion-*')[0].lstrip('../ThisTagVersion-')
+#this_version = glob.glob('../ThisTagVersion-*')[0].lstrip('../ThisTagVersion-')
+this_version = version
 print "Building RPMs for Ganga version: " + this_version
 
-os.chdir('../python')
+os.chdir('../../python')
+for eggDir in glob.glob('*egg-info*'):
+    shutil.rmtree(eggDir, ignore_errors=True)
+
+
 packageDirs = glob.glob('Ganga[A-Z]*')
 for p in packageDirs:
     if p.endswith('egg-info'):
@@ -37,6 +63,7 @@ rpm_require_map = {
 'GangaAtlas' : "Ganga = "+this_version,
 'GangaCamtology' : "Ganga = "+this_version,
 'GangaCMS' : "Ganga = "+this_version,
+'GangaDirac' : "Ganga = "+this_version,
 'GangaGaudi' : "Ganga = "+this_version,
 'GangaLHCb' : "Ganga = "+this_version,
 'GangaPanda' : "Ganga = "+this_version,
@@ -54,6 +81,7 @@ egg_require_map = {
 'GangaAtlas' : ["Ganga=="+this_version],
 'GangaCamtology' : ["Ganga=="+this_version],
 'GangaCMS' : ["Ganga=="+this_version],
+'GangaDirac' : ["Ganga=="+this_version],
 'GangaGaudi' : ["Ganga=="+this_version],
 'GangaLHCb' : ["Ganga=="+this_version],
 'GangaPanda' : ["Ganga=="+this_version],
@@ -75,6 +103,7 @@ description_map = {
 'GangaAtlas' : 'The Ganga ATLAS package',
 'GangaCamtology' : 'The Ganga Camtology package',
 'GangaCMS' : 'The Ganga CMS package',
+'GangaDirac' : 'The Ganga Dirac package',
 'GangaGaudi' : 'The Ganga Gaudi package',
 'GangaLHCb' : 'The Ganga LHCb package',
 'GangaPanda' : 'The Ganga Panda package',
@@ -164,6 +193,6 @@ setup(
     setup_file.write(setup_script)
     setup_file.close()
 
-
-    call(["python setup.py bdist_rpm --post-uninstall ../release/postun-packages.sh"], shell=True)
+    print os.getcwd()
+    call(["python setup.py bdist_rpm --post-uninstall ../release/tools/postun-packages.sh"], shell=True)
 
