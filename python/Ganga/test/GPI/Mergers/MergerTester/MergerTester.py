@@ -4,7 +4,7 @@
 # $Id: MergerTester.py,v 1.1 2008-07-17 16:41:12 moscicki Exp $
 ################################################################################
 
-from Ganga.GPIDev.Adapters.IMerger import IMerger,
+from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Schema import SimpleItem
 
