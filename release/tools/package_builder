@@ -125,14 +125,14 @@ verbose         = 1
 force-manifest  = 1
 
 [sdist]
-dist-dir        = /home/mkenyon/dist/src
+dist-dir        = /afs/cern.ch/sw/ganga/www/download/repo/src
 
 [bdist]
-dist-dir        = /home/mkenyon/dist/bin
+dist-dir        = /afs/cern.ch/sw/ganga/www/download/repo/bin
 plat-name       = noarch
 
 [bdist_rpm]
-dist-dir = /home/mkenyon/dist
+dist-dir = /afs/cern.ch/sw/ganga/www/download/repo/NOARCH
 vendor = "Ganga <project-ganga-developers@cern.ch>"
 ###REQUIREMENTS###
 
