@@ -1,8 +1,10 @@
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 try:
-    from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
-    from GangaLHCb.Lib.DIRAC.RootDiracRTHandler import RootDiracRTHandler
+##    from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
+##    from GangaLHCb.Lib.DIRAC.RootDiracRTHandler import RootDiracRTHandler
+    from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
+    from GangaLHCb.Lib.RTHandlers.LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
     loadRootHandler=True
 except ImportError:
     loadRootHandler=False
@@ -20,10 +22,10 @@ def addLocalTestSubmitter():
 
 # Add Dirac runtimehandler for Testsubmitter
 def addDiracTestSubmitter():
-    allHandlers.add('DaVinci', 'TestSubmitter', GaudiDiracRTHandler)
-    allHandlers.add('GaudiPython', 'TestSubmitter', GaudiDiracRTHandler)
+    allHandlers.add('DaVinci', 'TestSubmitter', LHCbGaudiDiracRunTimeHandler)
+    allHandlers.add('GaudiPython', 'TestSubmitter', LHCbGaudiDiracRunTimeHandler)
     if loadRootHandler:
-        allHandlers.add('Root', 'TestSubmitter', RootDiracRTHandler)
+        allHandlers.add('Root', 'TestSubmitter', LHCbRootDiracRunTimeHandler)
 
 # Get Current test version
 def getTestDaVinciVersion():
