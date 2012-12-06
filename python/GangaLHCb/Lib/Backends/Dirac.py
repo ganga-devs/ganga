@@ -60,7 +60,7 @@ class Dirac(DiracBase):
      def getOutputDataLFNs(self,force_query=False):
           """Get a list of outputdata that has been uploaded by Dirac. Excludes
           the outputsandbox if it is there."""        
-          lfns = super(LHCbDirac,self).getOutputDataLFNs(force_query)
+          lfns = super(Dirac,self).getOutputDataLFNs(force_query)
           ds = LHCbDataset()
           for f in lfns: ds.files.append(LogicalFile(f))
           return GPIProxyObjectFactory(ds)
@@ -70,7 +70,7 @@ class Dirac(DiracBase):
           """Retrieve data stored on SE to dir (default=job output workspace).
           If names=None, then all outputdata is downloaded otherwise names should
           be a list of files to download."""
-          downloaded_files = super(LHCbDirac,self).getOutputData(dir, names)
+          downloaded_files = super(Dirac,self).getOutputData(dir, names)
           ds = LHCbDataset()
           for f in downloaded_files: ds.files.append(LogicalFile(f))
           return GPIProxyObjectFactory(ds)
