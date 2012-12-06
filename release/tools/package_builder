@@ -119,6 +119,17 @@ description_map = {
 long_desc_map = {}
 
 for package in packageDirs:
+    print "################################################################"
+    print "################################################################"
+    print "################################################################"
+    print "################################################################"
+    print "################################################################"
+    print "working on package " + str(package)
+    print "################################################################"
+    print "################################################################"
+    print "################################################################"
+    print "################################################################"
+    print "################################################################"
 
     config_script = '''[global]
 verbose         = 1
@@ -153,6 +164,9 @@ compile         = 0
 import glob
 import sys
 import os
+#Removing os.link() gets around the fact that hardlinks across directories arent supported by AFS
+#See http://qwone.com/~jason/python/
+del os.link
 from setuptools import setup, find_packages
 
 setup(
@@ -183,6 +197,7 @@ setup(
     filenames = []
     
     setup_script = setup_script.replace('###PACKAGES###', 'packages = ' + str([package])+',')
+    #setup_script = setup_script.replace('###PACKAGEDIR###', 'package_dir = {\'\':\'' + str(package)+'\'},')
     #install_requires is a string or list of strings
     setup_script = setup_script.replace('###REQUIREMENTS###', 'install_requires = ' + str(egg_require_map[package])+',')
     setup_script = setup_script.replace('###PACKAGENAME###', 'name = \"' + package + '\",')
