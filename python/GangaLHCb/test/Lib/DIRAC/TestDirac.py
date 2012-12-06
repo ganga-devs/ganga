@@ -20,7 +20,7 @@ class TestDirac(GangaGPITestCase):
         j.backend.diracOpts = '# 87 71 66 68'
         j.submit()
         # this was already called in setUp
-        script = open(j.backend._impl._getDiracScript()).read()
+        script = open(os.path.join(j._impl.getInputWorkspace().getPath(),'dirac-script.py')).read()
         assert script.find('# 87 71 66 68') >= 0, 'diracOpts not found'
         # TODO: expand this test to check more API commands in job def
         
