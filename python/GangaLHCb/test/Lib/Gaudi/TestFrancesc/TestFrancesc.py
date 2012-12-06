@@ -37,6 +37,8 @@ class TestFrancesc(GangaGPITestCase):
         apps = available_apps()
         #apps.remove('Gaudi')
         for app in apps:
+            if app.appname == 'Gauss':
+                app.platform = 'x86_64-slc5-gcc43-opt'
             instance = eval('%s()' % app)
             instance._impl._getshell()
 
