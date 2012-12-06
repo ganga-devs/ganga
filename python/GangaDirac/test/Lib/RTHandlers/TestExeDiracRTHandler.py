@@ -104,8 +104,7 @@ class TestExeDiracRTHandler(GangaGPITestCase):
                 
 
     def test_exe_script_template(self):
-        script_template = """
-#!/usr/bin/env python
+        script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
 
 from os import system, environ, pathsep, getcwd
@@ -115,7 +114,10 @@ import sys
 if __name__ == '__main__':
 
     environ['PATH'] = getcwd() + (pathsep + environ['PATH'])        
-    sys.exit(system('''###COMMAND###''')/256)
+    rc = (system('''###COMMAND###''')/256)
+
+    ###OUTPUTFILESINJECTEDCODE###
+    sys.exit(rc)
 """
         # check that exe_script_template matches above
         self.assertEqual(script_template, exe_script_template(), 'Returned template doesn\'t match expectation.')

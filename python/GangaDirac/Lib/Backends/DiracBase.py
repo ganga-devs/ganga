@@ -179,7 +179,7 @@ class DiracBase(IBackend):
             j=Job()
             j.copyFrom(master_job)
             j.splitter = None
-            j.merger = None
+#            j.merger = None
             j.backend.id = dirac_ids[i]
             j.id = i
             j.inputdata = self._setup_subjob_dataset(parametric_datasets[i])

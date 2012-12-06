@@ -68,7 +68,7 @@ print result
 
         j=Job(application=DaVinci(),
               splitter=SplitByFiles(),
-              merger=SmartMerger(),
+#              merger=SmartMerger(),
               inputdata=Dataset(),
               backend=self.db)
         self.db._parent = j._impl
@@ -87,7 +87,7 @@ print result
             self.assertEqual(backend_id,subjob.backend.id,'backend.ids dont match')
             self.assertTrue(isinstance(subjob.application._impl, j.application._impl.__class__),'apps dont match')
             self.assertEqual(subjob.splitter, None,'splitter not done')
-            self.assertEqual(subjob.merger, None,'mergers dont match')
+ #           self.assertEqual(subjob.merger, None,'mergers dont match')
             self.assertEqual(subjob.inputdata, None,'inputdata dont match')
             self.assertTrue(isinstance(subjob.backend._impl, j.backend._impl.__class__),'backend dont match')
 
