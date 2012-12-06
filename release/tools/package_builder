@@ -19,21 +19,30 @@ def usage():
 usage: package-builder VERSION
 
 Tool to build Ganga RPMs and/or Python Eggs.
+p/prereldir = location of prerelease python directory
+v/version = version of ganga we're building
 '''
 
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "", ["svnurl=",'platf='])
+    options, args = getopt.getopt(sys.argv[1:], "p:hv:", ["prereldir=", "help", "version="])
 except getopt.error, x:
     print "command line syntax error"
     usage()
-    sys.exit(2)
 
-try:
-    version = args[0]
-except IndexError:
-    usage()
-    sys.exit(2)
+#try:
+#    version = args[0]
+#except IndexError:
+#    usage()
+#    sys.exit(2)
 
+for opt, arg in options:
+    if opt in ('-h', '--help'):
+        usage()
+        sys.exit(2)
+    elif opt in ('-p', '--prereldir'):
+        prereldir = os.path.join(arg, 'python')
+    elif opt in ('-v', '--version'):
+        this_version = arg
 
 
 #for root, dirs, files in os.walk('./'):
@@ -43,10 +52,10 @@ except IndexError:
 #      data_files.append((root, [os.path.join(root,filename)]))
 
 #this_version = glob.glob('../ThisTagVersion-*')[0].lstrip('../ThisTagVersion-')
-this_version = version
+#this_version = version
 print "Building RPMs for Ganga version: " + this_version
 
-os.chdir('../../python')
+os.chdir(prereldir)
 for eggDir in glob.glob('*egg-info*'):
     shutil.rmtree(eggDir, ignore_errors=True)
 
