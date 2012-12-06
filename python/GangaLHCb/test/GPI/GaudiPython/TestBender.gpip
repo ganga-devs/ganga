@@ -36,7 +36,7 @@ class TestBender(GangaGPITestCase):
         global module
         j = Job(application=Bender(), backend=Local())
         j.application.module = module
-				j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000006_1.dimuon.dst','LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000007_1.dimuon.dst'])
+        j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000006_1.dimuon.dst','LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000007_1.dimuon.dst'])
         j.splitter = SplitByFiles()
         j.submit()
         return SplitJob(j)
