@@ -65,10 +65,69 @@ class TestRTHUtils(GangaGPITestCase):
 
     def test_create_runscript(self):
         # just check that it properly resolves Gaudi vs GaudiPython jobs
-        dv = DaVinci()._impl
-        gp = GaudiPython()._impl
-        j = Job()
-        script = create_runscript(dv,OutputData(),j)
-        assert script.find('gaudirun.py') >= 0
-        script = create_runscript(gp,OutputData(),j)
-        assert script.find('gaudipython-wrapper.py') >= 0
+        script = """#!/usr/bin/env python
+
+import os,sys
+opts = '###OPTS###'
+project_opts = '###PROJECT_OPTS###'
+app = '###APP_NAME###'
+app_upper = app.upper()
+version = '###APP_VERSION###'
+package = '###APP_PACKAGE###'
+platform = '###PLATFORM###'
+
+
+# check that options file exists
+if not os.path.exists(opts):
+    opts = 'notavailable'
+    os.environ['JOBOPTPATH'] = opts
+else:
+    os.environ['JOBOPTPATH'] = os.path.join(os.environ[app + '_release_area'],
+                                            app_upper,
+                                            app_upper,
+                                            version,
+                                            package,
+                                            app,
+                                            version,
+                                            'options',
+                                            'job.opts')
+    print 'Using the master optionsfile:', opts
+    sys.stdout.flush()
+    
+
+# check that SetupProject.sh script exists, then execute it
+os.environ['User_release_area'] = ''  
+os.environ['CMTCONFIG'] = platform  
+f=os.popen('which SetupProject.sh')
+setup_script=f.read()[:-1]
+f.close()
+if os.path.exists(setup_script):
+    os.system('/usr/bin/env bash -c \"source %s %s %s %s && printenv > \
+env.tmp\"' % (setup_script,project_opts,app,version))
+    for line in open('env.tmp').readlines():
+        varval = line.strip().split('=')
+        os.environ[varval[0]] = ''.join(varval[1:])
+    os.system('rm -f env.tmp')
+else:
+    print 'Could not find %s. Your job will probably fail.' % setup_script
+    sys.stdout.flush()
+        
+# add lib subdir in case user supplied shared libs where copied to pwd/lib
+os.environ['LD_LIBRARY_PATH'] = '.:%s/lib:%s\' %(os.getcwd(),
+                                                 os.environ['LD_LIBRARY_PATH'])
+                                                 
+#run
+sys.stdout.flush()
+os.environ['PYTHONPATH'] = '%s/InstallArea/python:%s' % \\
+                            (os.getcwd(), os.environ['PYTHONPATH'])
+os.environ['PYTHONPATH'] = '%s/InstallArea/%s/python:%s' % \\
+                            (os.getcwd(), platform,os.environ['PYTHONPATH'])
+
+cmdline = '''###CMDLINE###'''
+
+# run command
+os.system(cmdline)
+
+###XMLSUMMARYPARSING###
+"""
+        assert script == create_runscript()
