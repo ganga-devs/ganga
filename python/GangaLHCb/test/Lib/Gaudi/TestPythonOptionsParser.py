@@ -65,24 +65,22 @@ class TestPythonOptionsParser(GangaGPITestCase):
                             ['NTupleSvc','HistogramPersistencySvc',
                              'MicroDSTStream'])
         j = self.job
-        j.outputsandbox = []
-        j.outputdata = None
         sandbox, data = self.parser.get_output(j)
         ok = sandbox.count('GaussHistos.root') == 1  and \
              data.count('Gauss.sim') == 1
         assert ok, 'collecting/sorting of output files failed (default)'
-        j.outputsandbox = ['Gauss.sim']
+        j.outputfiles = ['Gauss.sim']
         sandbox, data = self.parser.get_output(j)
         ok = sandbox.count('Gauss.sim') == 1 and len(data) == 0
         assert ok, 'collecting/sorting of output files failed (.sim->sandbox)'
-        j.outputsandbox = []
-        j.outputdata = ['*.root']
+        j.outputfiles = []
+        j.outputfiles = [DiracFile('*.root')]
         sandbox, data = self.parser.get_output(j)
         ok = len(sandbox) == 0 and data.count('GaussHistos.root') == 1
         assert ok, 'collecting/sorting of output files failed (.root->data)'
         # make sure if matches both goes to data
-        j.outputsandbox = ['*.sim']
-        j.outputdata = ['*.sim']
+        j.outputfiles = ['*.sim']
+        j.outputfiles = [DiracFile('*.sim')]
         sandbox, data = self.parser.get_output(j)
         ok = data.count('Gauss.sim') == 1 and sandbox.count('Gauss.sim') == 0
         assert ok, 'collecting/sorting of output files failed (matches both)'

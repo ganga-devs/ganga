@@ -75,7 +75,7 @@ class FileChecker(IChecker):
 
     def check(self,job):
         """
-        Check that a string is in a file
+        Check that a string is in a file, takes the job object as input.
         """
         if not len(self.files):
             raise PostProcessException('No files specified, FileChecker will do nothing!')

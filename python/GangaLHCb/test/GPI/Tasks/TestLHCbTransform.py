@@ -24,7 +24,7 @@ class TestLHCbTransform(GangaGPITestCase):
                tr.update()
                assert false, 'Should have thrown exception if updated with no query'
           except:
-               tr.query = GPI.BKTestQuery(stripping15down)
+               tr.addQuery(GPI.BKTestQuery(stripping15down))
                tr.update()
              
                ## Check some new data added

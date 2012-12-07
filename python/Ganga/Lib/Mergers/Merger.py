@@ -16,6 +16,7 @@ from Ganga.Utility.logging import getLogger, log_user_exception
 import commands
 import os
 import string
+import copy
 
 logger = getLogger()
 

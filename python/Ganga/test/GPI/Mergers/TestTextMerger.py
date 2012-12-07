@@ -6,6 +6,7 @@
 from __future__ import division
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 import os
 import tempfile
 
@@ -85,7 +86,9 @@ class TestTextMerger(GangaGPITestCase):
 
         tm = TextMerger()
         tm.files = ['out.txt']
-        assert not tm.merge(self.jobslice,tmpdir), 'Merge should fail with an error'
+        try: tm.merge(self.jobslice,tmpdir)
+        except PostProcessException: pass
+        else: assert False,'Merge should raise exception'
 
     def testOverWriteProtection(self):
 
@@ -98,7 +101,9 @@ class TestTextMerger(GangaGPITestCase):
 
         tm = TextMerger()
         tm.files = ['out.txt']
-        assert not tm.merge(self.jobslice,tmpdir), 'Merge should fail with an error'
+        try: tm.merge(self.jobslice,tmpdir)
+        except PostProcessException: pass
+        else: assert False,'Merge should raise exception'
 
     def testOverWriteProtectionForce(self):
 
@@ -126,7 +131,9 @@ class TestTextMerger(GangaGPITestCase):
 
         tm = TextMerger()
         tm.files = ['out.txt']
-        assert not tm.merge(self.jobslice,tmpdir), 'Merge should fail'
+        try: tm.merge(self.jobslice,tmpdir)
+        except PostProcessException: pass
+        else: assert False,'Merge should fail with an error'
 
     def testMergeOnTransitionOneJob(self):
 

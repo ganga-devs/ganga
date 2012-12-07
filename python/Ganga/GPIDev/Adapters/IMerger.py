@@ -74,7 +74,10 @@ class IMerger(IPostProcessor):
         Execute
         """
         if (len(job.subjobs) != 0):
-            return self.merge(job.subjobs, job.outputdir)
+            try: return self.merge(job.subjobs, job.outputdir)
+            except PostProcessException, e:
+                logger.error(str(e))
+                return self.failure
         else:
             return True
 
@@ -101,6 +104,15 @@ class IMerger(IPostProcessor):
         files = {}
 
 
+        if isinstance(jobs,GPIProxyObject) and isinstance(jobs._impl,Job):
+            if outputdir is None:
+                outputdir = jobs.outputdir
+            return self.merge(jobs.subjobs,outputdir = outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
+
+        if not len(jobs):
+            logger.warning('The jobslice given was empty. The merge will not continue.')
+            return self.success
+
         for j in jobs:
             #first check that the job is ok
             if j.status != 'completed':
@@ -110,20 +122,17 @@ class IMerger(IPostProcessor):
                         logger.warning('Job %s has status %s and is being ignored.', j.fqid, j.status)
                         continue
                     else:
-                        logger.error('Job %s has status %s and so the merge can not continue. '\
-                                     'This can be overridden with the ignorefailed flag.', j.fqid, j.status)
-                        return self.failure
+                        raise PostProcessException('Job %s has status %s and so the merge can not continue. '\
+                                     'This can be overridden with the ignorefailed flag.'%(j.fqid,j.status))
                 else:
-                    logger.error("Job %s is in an unsupported status %s and so the merge can not continue. '\
-                    'Supported statuses are 'completed', 'failed' or 'killed' (if the ignorefailed flag is set).", j.fqid, j.status)
-                    return self.failure
+                    raise PostProcessException("Job %s is in an unsupported status %s and so the merge can not continue. '\
+                    'Supported statuses are 'completed', 'failed' or 'killed' (if the ignorefailed flag is set)."%(j.fqid,j.status))
 
             if len(j.subjobs):
                 sub_result = self.merge(j.subjobs,outputdir = j.outputdir, ignorefailed = ignorefailed, overwrite = overwrite)
                 if (sub_result == self.failure) and not ignorefailed:
-                    logger.error('The merge of Job %s failed and so the merge can not continue. '\
-                                 'This can be overridden with the ignorefailed flag.', j.fqid)
-                    return self.failure
+                    raise PostProcessException('The merge of Job %s failed and so the merge can not continue. '\
+                                 'This can be overridden with the ignorefailed flag.'%j.fqid)
             
             import glob 
             for f in self.files:
@@ -144,18 +153,16 @@ class IMerger(IPostProcessor):
                         logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.',str(f),j.fqid)
                         continue
                     else:
-                        logger.error('The file pattern %s in Job %s was not found and so the merge can not continue. '\
-                                     'This can be overridden with the ignorefailed flag.', str(f), j.fqid)
-                        return self.failure
+                        raise PostProcessException('The file pattern %s in Job %s was not found and so the merge can not continue. '\
+                                     'This can be overridden with the ignorefailed flag.'%(str(f), j.fqid))
                 #files[f].extend(matchedFiles)
 
         for k in files.keys():
             # make sure we are not going to over write anything
             outputfile = os.path.join(outputdir,k)
             if os.path.exists(outputfile) and not overwrite:
-                logger.error('The merge process can not continue as it will result in over writing. '\
-                             'Either move the file %s or set the overwrite flag to True.', str(outputfile))
-                return self.failure
+                raise PostProcessException('The merge process can not continue as it will result in over writing. '\
+                             'Either move the file %s or set the overwrite flag to True.'%str(outputfile))
 
             #make the directory if it does not exist
             if not os.path.exists(outputdir):
@@ -175,10 +182,7 @@ class IMerger(IPostProcessor):
             #check outputfile != inputfile
             for f in files[k]:
                 if f == outputfile:
-                    logger.error('Output file %s equals input file %s. The merge will fail.',
-                                 outputfile, f)
-                    return self.failure
-                            
+                    raise PostProcessException('Output file %s equals input file %s. The merge will fail.'%(outputfile, f))
             #merge the lists of files with a merge tool into outputfile
             msg = None
             try:

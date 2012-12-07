@@ -41,4 +41,4 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
         assert len(stdjobconfig.getSandboxFiles()) == 4, 'inputsandbox error'
         l = len(stdjobconfig.getOutputSandboxFiles())
         print "outputsandbox =",stdjobconfig.getOutputSandboxFiles()
-        assert  l == 3, 'outputsandbox error'
+        assert  l == 4, 'outputsandbox error'

@@ -25,7 +25,7 @@ class LHCbTask(ITask):
         BKQuery type objects given in the second argument. The first argument
         is a transform object to use as the basis for the creation of further
         transforms."""
-        if not isType(transform,LHCbTransform):
+        if not isInstance(transform,LHCbTransform):
             raise GangaException(None,'First argument must be an LHCbTransform object to use as the basis for establishing the new transforms')
 
         ## Check if the template transform is associated with the Task
@@ -39,7 +39,7 @@ class LHCbTask(ITask):
         ## Check if the BKQuery input is correct and append/update
         if type(bkQuery) is not list: bkQuery = [bkQuery]
         for bk in bkQuery:
-            if not isType(bk,BKQuery):
+            if not isInstance(bk,BKQuery):
                 raise GangaAttributeError(None,'LHCbTransform expects a BKQuery object or list of BKQuery objects passed to the addQuery method')
             if len(transform.queries) != 0: ## If template has no query itself
                 logger.info('Attaching query to transform')

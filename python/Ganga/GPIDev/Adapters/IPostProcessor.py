@@ -22,6 +22,9 @@ class IPostProcessor(GangaObject):
     order = 0
     success = True
     failure = False
+    def __init__(self):
+        super(IPostProcessor,self).__init__()
+
     def execute(self,job,**options):
         """
         To be overidden by inherited class
@@ -36,13 +39,11 @@ class MultiPostProcessor(IPostProcessor):
     """
 
     _category = 'postprocessor'
-    _exportmethods = ['__add__','__get__','__set__','__str__','__setitem__','__getitem__','append','remove','__len__']
+    _exportmethods = ['__add__','__get__','__str__','__getitem__','append']
     _name = 'MultiPostProcessor'
     _schema = Schema(Version(1,0), {
         'process_objects' : ComponentItem('postprocessor', defvalue = [], hidden = 1,doc = 'A list of Processors to run', sequence = 1)
         })
-
-        
 
     def __init__(self):
         super(MultiPostProcessor,self).__init__()
@@ -60,12 +61,6 @@ class MultiPostProcessor(IPostProcessor):
     def append(self,value):
         self.addProcess(value)
         self.process_objects=sorted(self.process_objects,key=lambda process: process.order)
-
-    def remove(self,value):
-        self.process_objects.remove(value)
-
-    def __len__(self):
-        return len(self.process_objects)
 
     def __get__(self):
         return GPIProxyObjectFactory(self.process_objects)

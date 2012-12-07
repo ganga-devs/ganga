@@ -27,7 +27,7 @@ class IChecker(IPostProcessor):
 
     def execute(self, job,newstatus):
         """
-        Execute
+        Execute the check method, if check fails pass the check and issue an ERROR message. Message is also added to the debug folder.
         """
         if newstatus == 'completed':
             if len(job.subjobs) or self.checkSubjobs == True:

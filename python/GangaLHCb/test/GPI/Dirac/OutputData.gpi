@@ -21,7 +21,7 @@ jscript=Job(name='OutputData',application=Executable(),backend=Dirac())
 jscript.backend.settings['CPUTime'] = 300
 jscript.application.exe = File(scriptname)
 jscript.application.args=[]
-jscript.outputdata=['output.txt']
+jscript.outputfiles=[DiracFile('output.txt')]
 jscript.submit()
 
 sleep_until_completed(jscript)
