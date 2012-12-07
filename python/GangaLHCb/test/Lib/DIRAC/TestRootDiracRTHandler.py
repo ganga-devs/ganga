@@ -1,5 +1,5 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.DIRAC.RootDiracRTHandler import RootDiracRTHandler
+from GangaLHCb.Lib.RTHandlers.LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
 
 class TestRootDiracRTHandler(GangaGPITestCase):
 
@@ -9,7 +9,7 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         j.outputsandbox = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
-        self.rth = RootDiracRTHandler()
+        self.rth = LHCbRootDiracRunTimeHandler()
 
     def test_RootDiracRTHandler_master_prepare(self):
         os.system('touch /tmp/testrdrth_mp.C')

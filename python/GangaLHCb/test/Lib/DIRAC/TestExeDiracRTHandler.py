@@ -1,5 +1,5 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.DIRAC.ExeDiracRTHandler import ExeDiracRTHandler
+from GangaDirac.Lib.RTHandlers.ExeDiracRTHandler import ExeDiracRTHandler
 
 class TestExeDiracRTHandler(GangaGPITestCase):
 
