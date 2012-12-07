@@ -9,11 +9,13 @@ from DiracUtils import *
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.util import unique
 import GangaDirac.Lib.Server.DiracServer as DiracServer
+import GangaDirac.Lib.Files.DiracFile as DiracFile
 from GangaDirac.Lib.Server.DiracClient import DiracClient
 from Ganga.Core.GangaThread import GangaThread
 import os
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
+from Ganga.Core.exceptions import GangaException
 logger = getLogger()
 
 
@@ -430,42 +432,33 @@ class DiracBase(IBackend):
         If names=None, then all outputdata is downloaded otherwise names should
         be a list of files to download."""
         j = self.getJobObject()
-        if not names: names = ''
+        if not names: names = []
         if not dir: dir = j.getOutputWorkspace().getPath()
 
-        cmd = "result = DiracCommands.getOutputData(%d, '%s','%s')" \
-              % (self.id, names, dir)
-        result = DiracBase.dirac_ganga_server.execute(cmd)
 
-        downloaded_files = []
-        if not result_ok(result):
-            logger.error('Output download failed: %s' % str(result))
-        return result.get('Value',[])
-        
-    def getOutputDataLFNs(self,force_query=False):
+        if names:
+            files_to_download = [f for f in j.outputfiles if isinstance(f, DiracFile) and f.namePattern in names]
+        else
+            files_to_download = [f for f in j.outputfiles if isinstance(f, DiracFile)]
+
+        suceeded = []
+        for f in files_to_download:
+            f.localDir = dir
+            try:
+                f.get()
+            except GangaException, e:
+                logger.warning(e)
+                continue
+            suceeded.append(f.lfn)
+                            
+        return suceeded
+            
+    def getOutputDataLFNs(self):
+        """Retrieve the list of LFNs assigned to outputdata"""   
+
         j = self.getJobObject()
-        lfns = []
-        fname = j.getOutputWorkspace().getPath() + '/lfns.lst'
-        if not force_query:
-            if os.path.exists(fname):
-                file = open(fname)
-                lfns = file.read().strip().split('\n')
-                file.close()                
-        if not lfns:        
-            if not j.status == 'completed' and not force_query:
-                logger.warning('LFN query will only work for completed jobs')
-                return []
-            cmd = 'result = DiracCommands.getOutputDataLFNs(%d)' % self.id
-            result = DiracBase.dirac_ganga_server.execute(cmd)
-            if not result_ok(result):
-                logger.warning('LFN query failed: %s' % str(result))
-                return []
-            lfns = result.get('Value',[])
-            file = open(fname,'w')
-            for lfn in lfns: file.write(lfn.replace(' ','')+'\n')
-            file.close()
-        return lfns
-
+        return [f.lfn for f in j.outputfiles if isinstance(f, DiracFile) and f.lfn != ""]
+        
     def debug(self):
         '''Obtains some (possibly) useful DIRAC debug info. '''
         # check services
