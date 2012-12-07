@@ -438,7 +438,7 @@ class DiracBase(IBackend):
 
         if names:
             files_to_download = [f for f in j.outputfiles if isinstance(f, DiracFile) and f.namePattern in names]
-        else
+        else:
             files_to_download = [f for f in j.outputfiles if isinstance(f, DiracFile)]
 
         suceeded = []
