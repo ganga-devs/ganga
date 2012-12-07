@@ -8,7 +8,7 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaLHCb.test import addDiracTestSubmitter
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
-from GangaLHCb.Lib.DIRAC.DiracSplitter import DiracSplitter
+from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 addDiracTestSubmitter()
 
@@ -27,7 +27,7 @@ class TestDiracSplitter(GangaGPITestCase):
             ]
 
         #len_files = len(inputdata.files)
-        ds = DiracSplitter()
+        ds = SplitByFiles()
         ds.filesPerJob = 2        
         result = ds.split(j)
         assert len(result) >= 3, 'Unexpected number of subjobs'
@@ -45,7 +45,7 @@ class TestDiracSplitter(GangaGPITestCase):
             'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
             ]
 
-        ds = DiracSplitter()
+        ds = SplitByFiles()
         ds.ignoremissing = True
         # shouldn't throw exception
         result = ds.split(j)
