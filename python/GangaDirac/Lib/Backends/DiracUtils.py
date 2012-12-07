@@ -1,3 +1,4 @@
+from Ganga.Core.exceptions                         import BackendError
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 def result_ok(result):
@@ -9,11 +10,11 @@ def result_ok(result):
 
 def get_job_ident(dirac_script_lines):
     '''parse the dirac script for the label given to the job object'''
-    target_line = [line for line in dirac_script_lines if (len(line.split('.')) is 2)]
+    target_line = [line for line in dirac_script_lines if (len(line.split('.',1)) == 2)]
     if not len(target_line):
         raise BackendError('Dirac','Could not determine the identifier of the Dirac Job object in API script')
 
-    return target_line[0].split('.')[0]
+    return target_line[0].split('.',1)[0]
         
 def get_parametric_datasets(dirac_script_lines):
     '''parse the dirac script and retrieve the parametric inputdataset'''

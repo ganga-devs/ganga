@@ -17,7 +17,7 @@ class TestRootDirac(GangaGPITestCase):
         
         r = Root(script=script_file)
 
-        j = Job(application=r, backend=TestSubmitter())
+        j = Job(application=r, backend=DiracTestSubmitter())
         j.submit()
         sleep_until_completed(j)
         assert j.status == 'completed', 'Job should complete'

@@ -20,6 +20,12 @@ def getDiracAppPlatform():
 def addLocalTestSubmitter():
     allHandlers.add('DaVinci', 'TestSubmitter', LHCbGaudiRunTimeHandler)
 
+class DiracTestSubmitter(TestSubmitter):
+    def __init__(self):
+        super(DiracTestSubmitter,self).__init__()
+        self._impl.diracOpts=''
+        self._impl.settings={}
+
 # Add Dirac runtimehandler for Testsubmitter
 def addDiracTestSubmitter():
     allHandlers.add('DaVinci', 'TestSubmitter', LHCbGaudiDiracRunTimeHandler)

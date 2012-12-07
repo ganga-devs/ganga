@@ -598,7 +598,7 @@ class DiracBase(IBackend):
             
             ## Is this really catching a real problem?
             if job.status != old_state:
-                logger.warning('User changed Ganga job status from %s -> %s' % (str(ganga_job_status[i]),j.status))
+                logger.warning('User changed Ganga job status from %s -> %s' % (str(old_state),j.status))
                 continue
             ####################
             updated_status = state[3]

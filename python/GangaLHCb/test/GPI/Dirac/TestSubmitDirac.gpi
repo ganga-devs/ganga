@@ -1,7 +1,7 @@
 from GangaLHCb.test import *
 
 ap = DaVinci()
-j = Job(application=ap, backend=TestSubmitter())
+j = Job(application=ap, backend=DiracTestSubmitter())
 print j
 
 # Test that submission fails before adding runtime handler
