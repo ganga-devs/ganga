@@ -267,15 +267,14 @@ class CustomMerger(IMerger):
         result = False
         try:
             ns = {'file_list':copy.copy(file_list),
-                  'outputfile':copy.copy(outputfile)}
+                  'output_file':copy.copy(output_file)}
             execfile(self.module.name, ns)
-            exec('_result = merge(file_list,outputfile)',file_list,outputfile)
+            exec('_result = mergefiles(file_list,output_file)',ns)
             result = ns.get('_result',result)
-        except PostProcessException,e:
-            raise e
+        except Exception,e:
+            raise PostProcessException('There was a problem executing the custom merge: %s. Merge will fail.'%e)
         if result is not True:
             raise PostProcessException('The custom merge did not return True, merge will fail.')
-            return self.failure
         return self.success
 
 

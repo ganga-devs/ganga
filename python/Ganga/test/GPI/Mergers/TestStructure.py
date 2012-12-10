@@ -6,6 +6,7 @@
 from __future__ import division
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed,write_file
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 import os
 import tempfile
 
@@ -82,7 +83,9 @@ class TestStructure(GangaGPITestCase):
         tm.files = ['out.txt']
 
         for j in self.jobslice:
-            assert not tm.merge(self.jobslice,outputdir = j.outputdir), 'Merge must always fail'
+            try: tm.merge(self.jobslice,outputdir = j.outputdir)
+            except PostProcessException: pass
+            else: assert False, 'Must raise PostProcessException'
 
 
         

@@ -69,7 +69,7 @@ class TestCustomMerger(GangaGPITestCase):
     finally:
         out.close()
     
-    return 0
+    return True
         """)
         module_file.close()
         
@@ -89,7 +89,7 @@ class TestCustomMerger(GangaGPITestCase):
         module_file = file(file_name,'w')
         module_file.write("""def mergefiles(file_list, output_file):
     '''Free script for merging files'''
-    return 1
+    return False
         """)
         module_file.close()
         
