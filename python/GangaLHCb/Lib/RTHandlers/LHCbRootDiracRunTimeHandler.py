@@ -33,9 +33,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
 
         ## check version
         if LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
-            print 'hello'
             if not app.version in LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
-                print 'hello2'
                 msg = 'Invalid version: %s.  Valid versions: %s' \
                       % (app.version, str(LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache.keys()))
                 raise ApplicationConfigurationError(None,msg)

@@ -31,7 +31,7 @@ def checkCommandArgs(job):
             print '* Located :', line[line.find('gaudirun.py'):]
             print '*******************************************************'
             raise JobError('Command line args wrong for Local() job')
-        elif type(job.backend)==type(Dirac()) and line[line.find('gaudirun.py'):]!="gaudirun.py -T -v options.pkl data-wrapper.py'''/256)":
+        elif type(job.backend)==type(Dirac()) and line[line.find('gaudirun.py'):]!="gaudirun.py -T -v options.pkl data-wrapper.py''')/256":
             print '******************************************************************'
             print '* Dirac backend job failed - Problem with GaudiDiracRTHandler.py *'
             print '******************************************************************'
