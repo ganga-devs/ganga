@@ -140,7 +140,6 @@ class TestExeDiracRTHandler(GangaGPITestCase):
             self.assertEqual(idiff, set(), 'jobsubconfig.inputbox != appsubconfig.inputbox + exe-script.py + exe file: sym_diff = %s'%idiff)
             self.assertEqual(odiff, set(), 'jobsubconfig.outputbox != appsubconfig.outputbox + jobmasterconfig.outputbox: sym_diff = %s'%odiff)
 
-            ## NEED SOME CHECK THAT THE SCRIPTS ARE GENERATED PROPERLY
             script = \
 """# dirac job created by ganga
 from DIRAC.Interfaces.API.Dirac import Dirac
@@ -168,6 +167,8 @@ result = dirac.submit(j)
 print result"""
             self.assertEqual(jobsubconfig.exe,
                              script.replace('###JOB_ID###',app._getParent().fqid))
+
+            ## NEED SOME CHECK THAT THE EXE SCRIPT IS GENERATED PROPERLY            
             
     def test_exe_script_template(self):
         script_template = """#!/usr/bin/env python
