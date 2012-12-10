@@ -28,6 +28,7 @@ class TestDiracSplitter(GangaGPITestCase):
 
         #len_files = len(inputdata.files)
         ds = SplitByFiles()
+        ds.bulksubmit=False
         ds.filesPerJob = 2        
         result = ds.split(j)
         assert len(result) >= 3, 'Unexpected number of subjobs'
@@ -46,6 +47,7 @@ class TestDiracSplitter(GangaGPITestCase):
             ]
 
         ds = SplitByFiles()
+        ds.bulksubmit=False
         ds.ignoremissing = True
         # shouldn't throw exception
         result = ds.split(j)
