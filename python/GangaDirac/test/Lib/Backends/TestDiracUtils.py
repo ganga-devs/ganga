@@ -25,7 +25,6 @@ class TestDiracUtils(GangaGPITestCase):
 
         error_script = """
 from DIRAC import Job
-j=Job()
 """
         script = """
 from DIRAC import Job
