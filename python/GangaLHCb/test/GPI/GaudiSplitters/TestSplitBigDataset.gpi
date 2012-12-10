@@ -7,8 +7,9 @@ datafile = 'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012914/0000/00012914_0000025
 data = []
 for f in range(0,20000): data.append(datafile)
 
-j = Job(application=DaVinci(), backend=TestSubmitter(time=1))
+j = Job(application=DaVinci(), backend=DiracTestSubmitter())
 j.splitter=SplitByFiles(filesPerJob=100)
+j.splitter.bulksubmit=False
 j.inputdata = data
 
 j.submit()
