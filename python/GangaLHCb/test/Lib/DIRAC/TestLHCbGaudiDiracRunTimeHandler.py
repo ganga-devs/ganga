@@ -15,7 +15,7 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         j = Job(application=DaVinci(),backend=Dirac())
         j.prepare()
         j.inputsandbox = [File(name='dummy.in')]
-        j.outputsandbox = ['dummy1.out','dummy2.out','dummy3.out']
+        j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
         self.app.platform = getDiracAppPlatform()
@@ -49,7 +49,7 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         assert len(stdjobconfig.getSandboxFiles()) == 3, 'inputsandbox error'
         l = len(stdjobconfig.getOutputSandboxFiles())
         print "outputsandbox =",stdjobconfig.getOutputSandboxFiles()
-        assert  l == 3, 'outputsandbox error'
+        assert  l == 4, 'outputsandbox error'
 
     # not sure what's testable here
     #def test_GaudiDiracRTHandler__create_dirac_script(self):

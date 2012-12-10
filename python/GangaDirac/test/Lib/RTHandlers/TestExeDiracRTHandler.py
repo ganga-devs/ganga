@@ -24,13 +24,13 @@ class TestExeDiracRTHandler(GangaGPITestCase):
         ## setup test app jobs
         j_command = Job(application   = Executable(exe='ls'),
                         inputsandbox  = inputsandbox,
-                        outputsandbox = outputsandbox)
+                        outputfiles   = outputsandbox)
         j_command.prepare()
         job_list.append(j_command)
         ##
         j_app_qualified = Job(application   = Executable(exe='/bin/echo', args=['Hello','World']),
                               inputsandbox  = inputsandbox,
-                              outputsandbox = outputsandbox)
+                              outputfiles   = outputsandbox)
         j_app_qualified.prepare()
         job_list.append(j_app_qualified)
         ##
@@ -38,7 +38,7 @@ class TestExeDiracRTHandler(GangaGPITestCase):
         f.write('#!/bin/bash\necho 123')
         j_file = Job(application   = Executable(exe=File(f.name)),
                      inputsandbox  = inputsandbox,
-                     outputsandbox = outputsandbox)
+                     outputfiles   = outputsandbox)
         j_file.prepare()
         f.close()
         job_list.append(j_file)
@@ -74,7 +74,7 @@ class TestExeDiracRTHandler(GangaGPITestCase):
 
             # find the difference between the in/outputbox and those from the defined job in/outputsandbox and appconfig_in/outputbox
             idiff = ipb.symmetric_difference(set([f.name for f in inputsandbox] + [f.name for f in appconfig_inputbox]))
-            odiff = opb.symmetric_difference(set(outputsandbox + appconfig_outputbox))
+            odiff = opb.symmetric_difference(set(outputsandbox + appconfig_outputbox + ['__postprocesslocations__']))# added __postprocesslocations__
 
             # expect that things placed in the sharedir on preparation will feature in idiff so check and remove them
             for root, dirs, files in os.walk(get_share_path(app)):
