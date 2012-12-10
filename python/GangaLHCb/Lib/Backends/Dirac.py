@@ -57,10 +57,10 @@ class Dirac(DiracBase):
           return result.get('Value',{})
 
 
-     def getOutputDataLFNs(self,force_query=False):
+     def getOutputDataLFNs(self):
           """Get a list of outputdata that has been uploaded by Dirac. Excludes
           the outputsandbox if it is there."""        
-          lfns = super(Dirac,self).getOutputDataLFNs(force_query)
+          lfns = super(Dirac,self).getOutputDataLFNs()
           ds = LHCbDataset()
           for f in lfns: ds.files.append(LogicalFile(f))
           return GPIProxyObjectFactory(ds)

@@ -36,7 +36,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = app.getJobObject()
-        outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
 
         commandline = app.exe
         if type(app.exe) == File:

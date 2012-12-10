@@ -3,6 +3,8 @@ from GangaDirac.Lib.Server.DiracServer import SocketAddress
 from Ganga.GPIDev.Credentials import getCredential
 from Ganga.Core import GangaException
 from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 import collections, Queue, threading
 
 
@@ -152,8 +154,10 @@ class DiracClient(object):
         client_socket.shutdown(DiracClient.socket.SHUT_RDWR)
         client_socket.close()
         if type(result) == type('') and result.find('###TRACEBACK###') >= 0:
+            logger.warning('Exception executing DIRAC API code: %s' % result)
             raise GangaException('Exception executing DIRAC API code: %s' % result)
         if type(result) == type('') and result.find('###TIMEOUT###') >= 0:
+            logger.warning('Timeout executing DIRAC API code: %s' % result)
             raise GangaException('Timeout executing DIRAC API code: %s' % result)
         return result
 

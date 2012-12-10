@@ -10,39 +10,46 @@ from Ganga.GPI                                     import *
 import unittest, tempfile, os
 
 class TestExeDiracRTHandler(GangaGPITestCase):
-        
-    def test_master_prepare(self):
+    def setUp(self):
         ## initial setup
-        inputsandbox  = [File('a'),File('b'),File('c')]
-        outputsandbox = ['d','e','f']
-        appconfig_inputbox = [File('g')._impl,File('h')._impl,File('i')._impl]
-        appconfig_outputbox = ['j','k','l']
-        appmasterconfig = StandardJobConfig(inputbox=appconfig_inputbox, outputbox=appconfig_outputbox)
-        _rthandler = ExeDiracRTHandler()
-        job_list=[]
+        self.inputsandbox  = [File('a'),File('b'),File('c')]
+        self.outputsandbox = ['d','e','f']
+        self.appconfig_inputbox = [File('g')._impl,File('h')._impl,File('i')._impl]
+        self.appconfig_outputbox = ['j','k','l']
+        self.appmasterconfig = StandardJobConfig(inputbox=self.appconfig_inputbox,
+                                                 outputbox=self.appconfig_outputbox)
+        self._rthandler = ExeDiracRTHandler()
+        self.job_list=[]
 
         ## setup test app jobs
         j_command = Job(application   = Executable(exe='ls'),
-                        inputsandbox  = inputsandbox,
-                        outputfiles   = outputsandbox)
+                        backend       = Dirac(),
+                        inputsandbox  = self.inputsandbox,
+                        outputfiles   = self.outputsandbox)
         j_command.prepare()
-        job_list.append(j_command)
+        self.job_list.append(j_command)
         ##
         j_app_qualified = Job(application   = Executable(exe='/bin/echo', args=['Hello','World']),
-                              inputsandbox  = inputsandbox,
-                              outputfiles   = outputsandbox)
+                              backend       = Dirac(),
+                              inputsandbox  = self.inputsandbox,
+                              outputfiles   = self.outputsandbox)
         j_app_qualified.prepare()
-        job_list.append(j_app_qualified)
+        self.job_list.append(j_app_qualified)
         ##
         f=tempfile.NamedTemporaryFile(mode='w')
+        self.tmp_filename = os.path.basename(f.name)
         f.write('#!/bin/bash\necho 123')
         j_file = Job(application   = Executable(exe=File(f.name)),
-                     inputsandbox  = inputsandbox,
-                     outputfiles   = outputsandbox)
+                     backend       = Dirac(),
+                     inputsandbox  = self.inputsandbox,
+                     outputfiles   = self.outputsandbox)
         j_file.prepare()
         f.close()
-        job_list.append(j_file)
+        self.job_list.append(j_file)
         ##
+        
+        
+    def test_master_prepare(self):
 
         ## setup failing app jobs
         g = tempfile.NamedTemporaryFile(mode='w')
@@ -54,12 +61,12 @@ class TestExeDiracRTHandler(GangaGPITestCase):
         j_prep_fail = Job(application=Executable(exe='ls'))
         
         ## Start the testing for each app type
-        for app in (j.application._impl for j in job_list):
+        for app in (j.application._impl for j in self.job_list):
             # check its a known app type
             self.assertTrue(isinstance(app.exe,str) or isinstance(app.exe,File._impl), 'Unknown app.exe type! %s'%type(app.exe))
 
             # run the method we are testing
-            jobconfig = _rthandler.master_prepare(app, appmasterconfig)
+            jobconfig = self._rthandler.master_prepare(app, self.appmasterconfig)
 
             # check the return value is of the right type
             self.assertTrue(isinstance(jobconfig,StandardJobConfig), 'Expected a StandardJobConfig object returned. Instead got %s'%repr(jobconfig))
@@ -73,8 +80,8 @@ class TestExeDiracRTHandler(GangaGPITestCase):
             self.assertEqual(len(opb), len(jobconfig.outputbox), 'Returned outputsandbox did not contain only unique elements')
 
             # find the difference between the in/outputbox and those from the defined job in/outputsandbox and appconfig_in/outputbox
-            idiff = ipb.symmetric_difference(set([f.name for f in inputsandbox] + [f.name for f in appconfig_inputbox]))
-            odiff = opb.symmetric_difference(set(outputsandbox + appconfig_outputbox + ['__postprocesslocations__']))# added __postprocesslocations__
+            idiff = ipb.symmetric_difference(set([f.name for f in self.inputsandbox] + [f.name for f in self.appconfig_inputbox]))
+            odiff = opb.symmetric_difference(set(self.outputsandbox + self.appconfig_outputbox + ['__postprocesslocations__']))# added __postprocesslocations__
 
             # expect that things placed in the sharedir on preparation will feature in idiff so check and remove them
             for root, dirs, files in os.walk(get_share_path(app)):
@@ -86,23 +93,82 @@ class TestExeDiracRTHandler(GangaGPITestCase):
 
             # check that no extra files, i.e. those not from the job.in/outputsandbox or appconfig_in/outputbox or sharedir are present
             self.assertEqual(idiff, set(), 'jobconfig.inputbox != job.inputsandbox + appconfig.inputbox + prepared_sharedir_files: sym_diff = %s'%idiff)
-            self.assertEqual(odiff, set(), 'jobconfig.outputbox != job.outputssandbox + appconfig.outputbox: sym_diff = %s'%odiff)
+            self.assertEqual(odiff, set(), 'jobconfig.outputbox != job.outputsandbox + appconfig.outputbox: sym_diff = %s'%odiff)
 
         # check that the proper exception is raised in case of the exe file not existing
         print "Checking that Exception raised if file doesn't exist"
         self.assertRaises( ApplicationConfigurationError,
-                           _rthandler.master_prepare,
+                           self._rthandler.master_prepare,
                            j_fail.application._impl,
-                           appmasterconfig )
+                           self.appmasterconfig )
 
         # check that the proper exception is raised in case of the app not being prepared.
         print "Checking exception raised if app not prepared"
         self.assertRaises( GangaException,
-                           _rthandler.master_prepare,
+                           self._rthandler.master_prepare,
                            j_prep_fail.application._impl,
-                           appmasterconfig )
-                
+                           self.appmasterconfig )
 
+    def test_prepare(self):
+        appsubconfig = StandardJobConfig(inputbox=[File('file1.txt')._impl,File('file2.txt')._impl],
+                                         outputbox=['file3.txt','file4.txt'])
+        jobmasterconfig = StandardJobConfig(inputbox=[File('file5.txt')._impl,File('file6.txt')._impl],
+                                            outputbox=['file7.txt','file8.txt'])
+        ## Start the testing for each app type
+        for app in (j.application._impl for j in self.job_list): 
+            jobsubconfig = self._rthandler.prepare(app, appsubconfig, self.appmasterconfig, jobmasterconfig)
+
+            # create sets from the text string file names from the inputbox and outputbox
+            ipb = set(f.name for f in jobsubconfig.inputbox)
+            opb = set(jobsubconfig.outputbox)
+             
+            # check that inputbox and outputbox contain only unique elements 
+            self.assertEqual(len(ipb), len(jobsubconfig.inputbox),  'Returned inputsandbox did not contain only unique elements')
+            self.assertEqual(len(opb), len(jobsubconfig.outputbox), 'Returned outputsandbox did not contain only unique elements')
+
+            # find the difference between the in/outputbox and those from the defined job in/outputsandbox and appconfig_in/outputbox
+            idiff = ipb.symmetric_difference(set([f.name for f in appsubconfig.inputbox] + ['exe-script.py']))
+            odiff = opb.symmetric_difference(set(appsubconfig.outputbox + jobmasterconfig.outputbox))
+
+            if isinstance(app.exe, File._impl):
+                fname = os.path.join(get_share_path(app), self.tmp_filename)
+                self.assertTrue(fname in idiff,"Couldn't find the exe file in inputsandbox")
+                #once checked that they exist in the idiff then remove them for ultimate check next
+                idiff.remove(fname)
+                
+            # check that no extra files, i.e. those not from the job.in/outputsandbox or appconfig_in/outputbox or sharedir are present
+            self.assertEqual(idiff, set(), 'jobsubconfig.inputbox != appsubconfig.inputbox + exe-script.py + exe file: sym_diff = %s'%idiff)
+            self.assertEqual(odiff, set(), 'jobsubconfig.outputbox != appsubconfig.outputbox + jobmasterconfig.outputbox: sym_diff = %s'%odiff)
+
+            ## NEED SOME CHECK THAT THE SCRIPTS ARE GENERATED PROPERLY
+            script = \
+"""# dirac job created by ganga
+from DIRAC.Interfaces.API.Dirac import Dirac
+from DIRAC.Interfaces.API.Job import Job
+dirac = Dirac()
+j = Job()
+
+# default commands added by ganga
+j.setName('{Ganga_Executable_(###JOB_ID###)}')
+j.setExecutable('exe-script.py','','Ganga_Executable.log')
+j.setInputSandbox(##INPUT_SANDBOX##)
+j.setOutputSandbox(['file4.txt', 'file3.txt', 'file8.txt', 'file7.txt'])
+
+# <-- user settings
+j.setCPUTime(172800)
+j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
+
+# user settings -->
+
+# diracOpts added by user
+
+
+# submit the job to dirac
+result = dirac.submit(j)
+print result"""
+            self.assertEqual(jobsubconfig.exe,
+                             script.replace('###JOB_ID###',app._getParent().fqid))
+            
     def test_exe_script_template(self):
         script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
