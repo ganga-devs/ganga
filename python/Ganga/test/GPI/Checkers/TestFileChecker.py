@@ -11,9 +11,7 @@ import os
 
 class TestFileChecker(GangaGPITestCase):
     """
-    Most of the generic merge functionality is tested in TestTextMerger as it is
-    more straight forward to write tests for txt. However, the basic functionality of the root
-    merge will be tested here.
+    Test the file checker for protection against bad input and do a standard check.
     """
     def __init__(self):
         self.c = FileChecker()
