@@ -24,12 +24,12 @@ def get_parametric_datasets(dirac_script_lines):
         #return API_line.find('.setParametricInputData(') >= 0
 
     parametric_line = filter(parametric_input_filter, dirac_script_lines)
-    end_method_marker = parametric_line[0].find(method_str) + len(method_str)
     if len(parametric_line) is 0:
         raise BackendError('Dirac','No "setParametricInputData()" lines in dirac API')
     if len(parametric_line) > 1:
         raise BackendError('Dirac','Multiple "setParametricInputData()" lines in dirac API')
 
+    end_method_marker = parametric_line[0].find(method_str) + len(method_str)
     dataset_str = parametric_line[0][end_method_marker:-1]
     return eval(dataset_str)
 
