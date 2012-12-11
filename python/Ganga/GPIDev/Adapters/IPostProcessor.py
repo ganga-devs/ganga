@@ -39,7 +39,7 @@ class MultiPostProcessor(IPostProcessor):
     """
 
     _category = 'postprocessor'
-    _exportmethods = ['__add__','__get__','__str__','__getitem__','append']
+    _exportmethods = ['__add__','__get__','__str__','__getitem__','append','remove']
     _name = 'MultiPostProcessor'
     _schema = Schema(Version(1,0), {
         'process_objects' : ComponentItem('postprocessor', defvalue = [], hidden = 1,doc = 'A list of Processors to run', sequence = 1)
@@ -61,6 +61,12 @@ class MultiPostProcessor(IPostProcessor):
     def append(self,value):
         self.addProcess(value)
         self.process_objects=sorted(self.process_objects,key=lambda process: process.order)
+
+    def remove(self,value):
+        for process in self.process_objects:
+            if (isinstance(value._impl,type(process)) == True):
+                self.process_objects.remove(process)
+                break
 
     def __get__(self):
         return GPIProxyObjectFactory(self.process_objects)

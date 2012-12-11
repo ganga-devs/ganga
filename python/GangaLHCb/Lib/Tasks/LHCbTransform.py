@@ -89,8 +89,8 @@ class LHCbTransform(ITransform):
       if len(parent.active_job_ids) == 0 or GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == "":
          return None
       
-      unit = AtlasUnit()
-      unit.inputdata = DQ2Dataset()
+      unit = LHCbUnit()
+      unit.inputdata = LHCbDataset()
       unit.inputdata.dataset = GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname
       return unit
    

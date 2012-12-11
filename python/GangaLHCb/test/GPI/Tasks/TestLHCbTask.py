@@ -52,7 +52,7 @@ class TestLHCbTask(GangaGPITestCase):
           t.appendTransform(tr1)
           t.appendTransform(tr2)
           tr1.addQuery(GPI.BKTestQuery(stripping15up))
-          tr2.addQuery = (GPI.BKTestQuery(stripping15down))
+          tr2.addQuery(GPI.BKTestQuery(stripping15down))
           
           ## Check that update produces some files to process over multiple transforms
           t.update()

@@ -25,7 +25,7 @@ class LHCbTask(ITask):
         BKQuery type objects given in the second argument. The first argument
         is a transform object to use as the basis for the creation of further
         transforms."""
-        if not isInstance(transform,LHCbTransform):
+        if not isinstance(transform,LHCbTransform):
             raise GangaException(None,'First argument must be an LHCbTransform object to use as the basis for establishing the new transforms')
 
         ## Check if the template transform is associated with the Task
