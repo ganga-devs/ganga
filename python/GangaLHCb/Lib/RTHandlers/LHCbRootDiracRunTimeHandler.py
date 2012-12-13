@@ -4,7 +4,7 @@ from GangaLHCb.Lib.RTHandlers.RTHUtils             import lhcbdiracAPI_script_te
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare,sandbox_prepare,script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils       import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils            import result_ok
-from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns
+from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.IRuntimeHandler         import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
 from Ganga.Core.exceptions                         import ApplicationConfigurationError
@@ -64,7 +64,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         input_data,   parametricinput_data = dirac_inputdata(app)
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
         job=app.getJobObject()
-        outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
 
 
         params = { 'DIRAC_IMPORT'         : 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
@@ -89,17 +89,53 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
 
         scriptpath = os.path.join(get_share_path(app),
                                   os.path.basename(app.script.name))
-        if app.usepython:
-            params.update({'ROOTPY_SCRIPT'   : scriptpath,
-                           'ROOTPY_VERSION'  : app.version,
-                           'ROOTPY_LOG_FILE' : 'Ganga_Root.log',
-                           'ROOTPY_ARGS'     : app.args, })
-        else:
-            params.update({'ROOT_MACRO'    : scriptpath,
-                           'ROOT_VERSION'  : app.version,
-                           'ROOT_LOG_FILE' : 'Ganga_Root.log',
-                           'ROOT_ARGS'     : app.args, })
 
+
+        wrapper_path = os.path.join(job.getInputWorkspace().getPath(),
+                                    'script_wrapper.py')
+        python_wrapper =\
+"""#!/usr/bin/env python
+import os, sys
+del sys.argv[sys.argv.index('script_wrapper.py')]
+os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
+###INJECTEDCODE###
+"""
+        params.update({'ROOTPY_SCRIPT'   : wrapper_path,
+                       'ROOTPY_VERSION'  : app.version,
+                       'ROOTPY_LOG_FILE' : 'Ganga_Root.log',
+                       'ROOTPY_ARGS'     : app.args })
+
+        f=open(wrapper_path,'w')
+        if app.usepython:
+            python_wrapper = script_generator( python_wrapper,
+                                               remove_unreplaced = False,
+                                               COMMAND = '/usr/bin/env python %s %s' % (os.path.basename(app.script.name),'%s'),
+                                               JOINER = ' ',
+                                               INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
+                                               )
+            
+           
+##             params.update({'ROOTPY_SCRIPT'   : wrapper_path,
+##                            'ROOTPY_VERSION'  : app.version,
+##                            'ROOTPY_LOG_FILE' : 'Ganga_Root.log',
+##                            'ROOTPY_ARGS'     : app.args, })
+        else:
+            python_wrapper = script_generator( python_wrapper,
+                                               remove_unreplaced = False,
+                                               COMMAND = 'export DISPLAY=\"localhoast:0.0\" && root -l -q \"%s(%s)\"' % (os.path.basename(app.script.name),'%s'),
+                                               JOINER = ',',
+                                               INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
+                                               )
+                      
+##            params.update({'ROOT_MACRO'    : wrapper_path,
+##                            'ROOT_VERSION'  : app.version,
+##                            'ROOT_LOG_FILE' : 'Ganga_Root.log',
+##                            'ROOT_ARGS'     : app.args, })
+
+        
+        f.write(python_wrapper)
+        f.close()
+        
         dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         **params)
         return StandardJobConfig( dirac_script,
