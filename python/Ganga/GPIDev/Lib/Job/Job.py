@@ -11,6 +11,7 @@ from MetadataDict import *
 
 import Ganga.Utility.logging
 from Ganga.Lib.Notifier import Notifier
+from Ganga.Lib.Checkers import FileChecker, CustomChecker
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiPostProcessor
 logger = Ganga.Utility.logging.getLogger()
 

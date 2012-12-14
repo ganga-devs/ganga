@@ -94,6 +94,7 @@ under certain conditions; type license() for details.
           print >> sys.stderr,'ganga:',m
        sys.exit(1)
 
+
     # parse the options
     
     def parseOptions(self):
@@ -692,6 +693,7 @@ default_backends = LCG
         # initialize external monitoring services subsystem
         import Ganga.GPIDev.MonitoringServices
 
+
         def license():
            'Print the full license (GPL)'
            print file(os.path.join(_gangaPythonPath,'..','LICENSE_GPL')).read()
@@ -723,7 +725,7 @@ default_backends = LCG
         def typename(obj):
             'Return a name of Ganga object as a string, example: typename(j.application) -> "DaVinci"'
             return obj._impl._name
-
+        
         def categoryname(obj):
             'Return a category of Ganga object as a string, example: categoryname(j.application) -> "applications"'
             return obj._impl._category
@@ -761,7 +763,16 @@ default_backends = LCG
         def backends():
             'return a list of all available backends, OBSOLETE: use plugins("backends")'
             return list_plugins('backends')
-
+        from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
+        def convert_merger_to_postprocessor(j):
+            if not len(j.postprocessors._impl.process_objects) and j._impl.merger is not None:
+                mp = MultiPostProcessor()
+                mp.process_objects.append(j._impl.merger)
+                j._impl.postprocessors = mp
+            if len(j.postprocessors._impl.process_objects):
+                self.logger.info('job(%s) already has postprocessors'%j.fqid)
+            if j._impl.merger is None:
+                self.logger.info('job(%s) does not have a merger to convert'%j.fqid)
         exportToGPI('applications',applications,'Functions')
         exportToGPI('backends',backends,'Functions')
         exportToGPI('list_plugins',list_plugins,'Functions')
@@ -770,6 +781,7 @@ default_backends = LCG
         exportToGPI('typename',typename,'Functions')
         exportToGPI('categoryname',categoryname,'Functions')
         exportToGPI('plugins',plugins,'Functions')
+        exportToGPI('convert_merger_to_postprocessor',convert_merger_to_postprocessor,'Functions')
 
 
         def force_job_completed(j):
@@ -853,6 +865,8 @@ default_backends = LCG
             except Exception,x:
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error("problems with post bootstrap hook for %s",r.name,)
+
+        
         
     def startTestRunner(self):
        """
@@ -1141,6 +1155,8 @@ default_backends = LCG
        else:
           print >>sys.stderr, x
           print >>sys.stderr, '(consider --debug option for more information)'
+
+
 
 #
 #
