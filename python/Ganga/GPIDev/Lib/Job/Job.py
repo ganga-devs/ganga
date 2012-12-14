@@ -385,7 +385,7 @@ class Job(GangaObject):
             #on Batch backends these files can be compressed only on the client
             if backendClass == 'LSF':  
                 if outputfile.compressed and (outputfile.namePattern == 'stdout' or outputfile.namePattern == 'stderr'):
-                    for currentFile in glob.glob(os.path.join(outputfile.joboutputdir, outputfile.namePattern)):
+                    for currentFile in glob.glob(os.path.join(outputdir, outputfile.namePattern)):
                         os.system("gzip %s" % currentFile)
 
             if self.backend_output_postprocess.has_key(backendClass):
@@ -456,7 +456,7 @@ class Job(GangaObject):
     def postprocess_hook(self):
         self.application.postprocess()
         self.getMonitoringService().complete()
-        self.postprocessoutput(self.outputfiles, self.getOutputWorkspace(create=False).getPath())
+        self.postprocessoutput(self.outputfiles, self.outputdir)
 
     def postprocess_hook_failed(self):
         self.application.postprocess_failed()
@@ -875,9 +875,6 @@ class Job(GangaObject):
                             cfg = Ganga.Utility.Config.getConfig('Configuration')
                             if cfg['autoGenerateJobWorkspace']:
                                 j._init_workspace()
-
-                            for outputfile in j.outputfiles:
-                                outputfile.joboutputdir = j.outputdir
 
                         rjobs = self.subjobs
                         logger.info('submitting %d subjobs', len(rjobs))
@@ -1416,9 +1413,6 @@ class Job(GangaObject):
                 elif val.__class__.__name__ == 'LCGStorageElementFile':   
                     uniqueValues.append(val) 
         
-            for value in uniqueValues:
-                value.joboutputdir = self.outputdir
-
             super(Job,self).__setattr__(attr, uniqueValues) 
 
         elif attr == 'outputsandbox':
