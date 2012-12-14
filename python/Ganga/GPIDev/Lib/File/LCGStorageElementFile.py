@@ -83,7 +83,9 @@ class LCGStorageElementFile(IOutputFile):
         Sets the location of output files that were uploaded to lcg storage element from the WN
         """
 
-        postprocessLocationsPath = os.path.join(self.joboutputdir, getConfig('Output')['PostProcessLocationsFileName'])
+        job = self.getJobObject()
+
+        postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
 
@@ -152,7 +154,8 @@ class LCGStorageElementFile(IOutputFile):
             else:
                 sourceDir = self.localDir
         else:
-            sourceDir = self.joboutputdir
+            job = self.getJobObject()
+            sourceDir = job.outputdir
 
         os.environ['LFC_HOST'] = self.lfc_host
 
