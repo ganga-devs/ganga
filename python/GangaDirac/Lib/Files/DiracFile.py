@@ -45,7 +45,7 @@ class DiracFile(IOutputFile):
         self.namePattern = namePattern
         self.localDir = localDir
         self.locations = []
-
+##COULD MAKE os.getcwd THE DEFAULT LOCALDIR
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
@@ -97,11 +97,15 @@ class DiracFile(IOutputFile):
             shellEnvUpdate_cmd('. SetupProject.sh LHCbDirac', self._env)
         
     def remove(self):
+        """
+        Remove this lfn and all replicas from DIRAC LFC/SEs
+        """
         if self.lfn == "":
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         self._getEnv()
         rc, stdout, stderr = shellEnv_cmd('dirac-dms-remove-lfn %s' % self.lfn, self._env)
-        if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']:
+        # if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']:
+        if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
 ##        if not rc:
             self.lfn=""
             #self.namePattern +="-<REMOVED>"
@@ -111,13 +115,26 @@ class DiracFile(IOutputFile):
         return stdout
         
     def getMetadata(self):
+        """
+        Get Metadata associated with this files lfn
+        """
         if self.lfn == "":
             raise GangaException('Can\'t obtain metadata with no LFN set.')
+
+        def inTokens(element):
+            return element in configDirac['DiracSpaceTokens']
+
         self._getEnv()
-        ret =  eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])
+        ret  =  eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])
+        reps =  filter(inTokens,shellEnv_cmd('dirac-dms-lfn-replicas %s' % self.lfn, self._env)[1].split(' '))
         try:
             if self.guid != ret['Successful'][self.lfn]['GUID']:
                 self.guid = ret['Successful'][self.lfn]['GUID']
+        except: pass
+        try:
+            if self.locations != reps:
+                self.locations = reps
+                ret['Successful'][self.lfn].update({'replicas': self.locations})
         except: pass
         return ret
         
@@ -156,21 +173,25 @@ class DiracFile(IOutputFile):
         #todo Alex      
 
     def replicate(self, destSE):
+        """
+        Replicate this file from self.locations[0] to destSE
+        """
         if not self.locations:
             raise GangaException('Can\'t replicate a file if it isn\'t already on a DIRAC SE, upload it first')
         if self.lfn == '':
             raise GangaException('Must supply an lfn to replicate')
+        self._getEnv()
         rc, stdout, stderr = shellEnv_cmd('dirac-dms-replicate-lfn %s %s %s' % (self.lfn, destSE, self.locations[0]),
                                           self._env)
-
-        if 'Successful' in eval(stdout) and self.lfn in eval(stdout)['Successful']:
+        if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
+            # if 'Successful' in eval(stdout) and self.lfn in eval(stdout)['Successful']:
             self.locations.append(destSE)
         return stdout
          
 
     def upload(self):#, SEs=[]):
         """
-        Try to upload file sequentially to storage elements in SEs.
+        Try to upload file sequentially to storage elements in configDirac['DiracSpaceTokens'].
 
         File will be uploaded to the first SE that the upload command succeeds for.
         """
@@ -213,32 +234,34 @@ class DiracFile(IOutputFile):
             #raise GangaException('Can\'t upload a file without a logical file name (LFN).')
 ##         storage_elements = self.diracSE
 ##         if not self.diracSE:
+        if self.guid == '':
+            md5 = hashlib.md5(self.lfn).hexdigest()
+            self.guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
+
+
         storage_elements=configDirac['DiracSpaceTokens']
 
         self._getEnv()
         stderr=''
         stdout=''
         for se in storage_elements:
-            if self.guid == '':
-                md5 = hashlib.md5(self.lfn).hexdigest()
-                self.guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
 ##                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, guid), self._env)
 ##             else:
 ##                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se), self._env)
 
             rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, self.guid), self._env)
-            if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']: continue
+            # if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']: continue
 #            if rc: continue
-
+            if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
 #            self.diracSE = [se]
-            self.locations = [se]
+                self.locations = [se]
 ##             self.guid = None # try and get the GUID now to check it's correct
 ##             try:
 ##                 import datetime
 ##                 self.guid = self.getGUID()
 ##             except:
 ##                 self.guid = None
-            return stdout
+                return stdout
         self.failureReason = "Error in uploading file %s. : %s"% (self.namePattern,stdout)
         return self.failureReason
 
@@ -340,7 +363,7 @@ class DiracFile(IOutputFile):
 ###INDENT###            retcode, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
 ###INDENT###        except Exception,x:
 ###INDENT###            ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::Exception running command \\'%s\\' - %s:::NotAvailable\\n' % (file,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
-###INDENT###        if stdout.find('Successful') >=0  and stdout.find(lfn) >=0:
+###INDENT###        if stdout.find(\"'Successful': {'%s'\" % lfn) >=0:
 ###INDENT###            try:
 ###INDENT###                import datetime
 ###INDENT###                id = eval(run_command('###SETUP###dirac-dms-lfn-metadata %s' % lfn)[1])['Successful'][lfn]['GUID']
