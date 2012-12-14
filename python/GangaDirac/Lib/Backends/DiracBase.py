@@ -528,7 +528,7 @@ class DiracBase(IBackend):
 
 
     def _finalisation_jobThread(job, updated_status):
-        if updated_status == 'completing':
+        if updated_status == 'completed':
             cmd = 'result = DiracCommands.normCPUTime(%d)' % job.backend.id
             job.backend.normCPUTime = DiracBase.dirac_monitoring_server.execute(cmd)
             r = DiracBase.dirac_monitoring_server.execute("result = DiracCommands.getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
@@ -548,16 +548,16 @@ class DiracBase(IBackend):
                 file = open(job.getOutputWorkspace().getPath() + '/lfns.lst','w')
                 for lfn in lfns: file.write(lfn.replace(' ','')+'\n')
                 file.close()
-            DiracBase._getStateTime(job,'completed')
-            job.updateStatus('completed')
+            DiracBase._getStateTime(job,updated_status)
+            job.updateStatus(updated_status)
             if job.master: job.master.updateMasterJobStatus()
         elif updated_status == 'failed':
             if getConfig('DIRAC')['failed_sandbox_download']:
                 DiracBase.dirac_monitoring_server.execute("result = DiracCommands.getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
                                                           priority=7)    
-            DiracBase._getStateTime(job,'failed')
-            job.updateStatus('failed')
-            if job.master: job.master.updateMasterJobStatus()
+##             DiracBase._getStateTime(job,'failed')
+##             job.updateStatus('failed')
+##             if job.master: job.master.updateMasterJobStatus()
     _finalisation_jobThread = staticmethod(_finalisation_jobThread)
     
     def updateMonitoringInformation(jobs):
@@ -607,9 +607,9 @@ class DiracBase(IBackend):
 ##                                 args   = (job, updated_status))
 ##                 t.daemon = True
 ##                 t.start()
-                updated_status = thread_handled_states[updated_status]
-                DiracBase._getStateTime(job,updated_status)
-                job.updateStatus(updated_status)
+##                updated_status = thread_handled_states[updated_status]
+                DiracBase._getStateTime(job,thread_handled_states[updated_status])
+                job.updateStatus(thread_handled_states[updated_status])
                 DiracBase.dirac_monitoring_server.execute_nonblocking(command=None,
                                                                       finalise_code=DiracBase._finalisation_jobThread,
                                                                       args=(job,updated_status))

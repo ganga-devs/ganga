@@ -21,6 +21,7 @@ class DiracSplitter(SplitByFiles):
 
     _name = 'DiracSplitter'
     _schema = SplitByFiles._schema.inherit_copy()
+    _hidden=True
 
     def __init__(self):
         logger.info('The DiracSplitter class is now depricated.')

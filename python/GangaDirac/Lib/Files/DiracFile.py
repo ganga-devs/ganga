@@ -1,7 +1,7 @@
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File.IOutputFile import IOutputFile
-import copy, os, datetime
+import copy, os, datetime, hashlib
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd, shellEnvUpdate_cmd
 import Ganga.Utility.Config
 from Ganga.Utility.Config import getConfig
@@ -21,7 +21,7 @@ class DiracFile(IOutputFile):
                                      'joboutputdir'  : SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
                                      'locations'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
                                      'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere'),
-                                     'lfn'           : SimpleItem(defvalue="",typelist=['str'],doc='The logical file name'),
+                                     'lfn'           : SimpleItem(defvalue='',typelist=['str'],doc='The logical file name'),
 #                                     'diracSE'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,hidden=1,doc='The dirac SE sites to try to upload to'),
                                      'guid'          : SimpleItem(defvalue='',typelist=['str'],doc='The files GUID'),
                                      'failureReason' : SimpleItem(defvalue="",doc='reason for the upload failure')
@@ -101,7 +101,8 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         self._getEnv()
         rc, stdout, stderr = shellEnv_cmd('dirac-dms-remove-lfn %s' % self.lfn, self._env)
-        if not rc:
+        if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']:
+##        if not rc:
             self.lfn=""
             #self.namePattern +="-<REMOVED>"
             self.locations=[]
@@ -114,14 +115,16 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t obtain metadata with no LFN set.')
         self._getEnv()
         ret =  eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])
-        try: self.guid = ret['Successful'][self.lfn]['GUID']
+        try:
+            if self.guid != ret['Successful'][self.lfn]['GUID']:
+                self.guid = ret['Successful'][self.lfn]['GUID']
         except: pass
         return ret
         
-    def getGUID(self):
-        if self.guid: return self.guid
-        self.getMetadata()
-        return self.guid
+##     def getGUID(self):
+##         if self.guid: return self.guid
+##         self.getMetadata()
+##         return self.guid
     
     def get(self):
         """
@@ -216,21 +219,25 @@ class DiracFile(IOutputFile):
         stderr=''
         stdout=''
         for se in storage_elements:
-            if self.guid:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, guid), self._env)
-            else:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se), self._env)
+            if self.guid == '':
+                md5 = hashlib.md5(self.lfn).hexdigest()
+                self.guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
+##                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, guid), self._env)
+##             else:
+##                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se), self._env)
 
+            rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, self.guid), self._env)
             if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']: continue
 #            if rc: continue
 
 #            self.diracSE = [se]
             self.locations = [se]
-            try:
-                import datetime
-                self.guid = self.getGUID()
-            except:
-                self.guid = None
+##             self.guid = None # try and get the GUID now to check it's correct
+##             try:
+##                 import datetime
+##                 self.guid = self.getGUID()
+##             except:
+##                 self.guid = None
             return stdout
         self.failureReason = "Error in uploading file %s. : %s"% (self.namePattern,stdout)
         return self.failureReason
@@ -343,12 +350,30 @@ class DiracFile(IOutputFile):
 ###INDENT###            break
 ###INDENT###        if se == storage_elements[-1]: ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::File \\'%s\\' could not be uploaded to any SE (%s,%s):::NotAvailable\\n' % (file, file, stdout, stderr))
 """
-        import uuid
-        uid = str(uuid.uuid4())
-        output_nps   = [file.namePattern for file in outputFiles]
-        output_lfns  = [os.path.join(configDirac['DiracLFNBase'], uid, file.namePattern) for file in outputFiles if file.lfn==''] +\
-                       [file.lfn for file in outputFiles if file.lfn != '']
-        output_guids = [file.guid for file in outputFiles]
+        import uuid#, hashlib
+        def fileINFOGenerator(outputFiles):
+            for file in outputFiles:
+                lfn = file.lfn
+                guid = file.guid
+                if file.lfn=='':
+                    lfn = os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()), file.namePattern)
+                if file.guid == '':
+                    md5 = hashlib.md5(lfn).hexdigest()
+                    guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
+                yield file.namePattern, lfn, guid
+
+##         uid = str(uuid.uuid4())
+##         output_nps   = [file.namePattern for file in outputFiles]
+##         output_lfns  = [os.path.join(configDirac['DiracLFNBase'], uid, file.namePattern) for file in outputFiles if file.lfn==''] +\
+##                        [file.lfn for file in outputFiles if file.lfn != '']
+##         output_guids = [file.guid for file in outputFiles]
+        output_nps   = []
+        output_lfns  = []
+        output_guids = []
+        for namePattern, lfn, guid in fileINFOGenerator(outputFiles):
+            output_nps.append(namePattern)
+            output_lfns.append(lfn)
+            output_guids.append(guid)
         cmd = cmd.replace('###OUTPUTFILES###', str(zip(output_nps, output_lfns, output_guids)) )
         cmd = cmd.replace('###SE###',   str(configDirac['DiracSpaceTokens']))
         cmd = cmd.replace('###INDENT###',indent)

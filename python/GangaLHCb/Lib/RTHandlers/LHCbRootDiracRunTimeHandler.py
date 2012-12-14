@@ -96,7 +96,15 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         python_wrapper =\
 """#!/usr/bin/env python
 import os, sys
+def formatVar(var):
+    try:
+        float(var)
+        return str(var)
+    except ValueError, v:
+        return '\\\\\"%s\\\\\"'% var
+    
 del sys.argv[sys.argv.index('script_wrapper.py')]
+###FIXARGS###
 os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
 ###INJECTEDCODE###
 """
@@ -109,6 +117,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
         if app.usepython:
             python_wrapper = script_generator( python_wrapper,
                                                remove_unreplaced = False,
+                                               FIXARGS = '',
                                                COMMAND = '/usr/bin/env python %s %s' % (os.path.basename(app.script.name),'%s'),
                                                JOINER = ' ',
                                                INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
@@ -122,6 +131,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
         else:
             python_wrapper = script_generator( python_wrapper,
                                                remove_unreplaced = False,
+                                               FIXARGS = 'sys.argv=[formatVar(v) for v in sys.argv]',
                                                COMMAND = 'export DISPLAY=\"localhoast:0.0\" && root -l -q \"%s(%s)\"' % (os.path.basename(app.script.name),'%s'),
                                                JOINER = ',',
                                                INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
