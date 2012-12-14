@@ -52,7 +52,9 @@ class MassStorageFile(IOutputFile):
         Sets the location of output files that were uploaded to mass storage from the WN
         """
         
-        postprocessLocationsPath = os.path.join(self.joboutputdir, getConfig('Output')['PostProcessLocationsFileName'])
+        job = self.getJobObject()
+
+        postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
 
@@ -123,7 +125,8 @@ class MassStorageFile(IOutputFile):
             else:
                 sourceDir = self.localDir
         else:
-            sourceDir = self.joboutputdir
+            job = self.getJobObject()
+            sourceDir = job.outputdir
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
