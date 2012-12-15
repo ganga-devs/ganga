@@ -1014,7 +1014,7 @@ class Athena(IPrepareApp):
         if self.atlas_exetype in ['PYARA','ROOT','TRF','ARES','EXE']:
             trf = True
 
-        logger.debug('jobO : ', jobO)
+        logger.debug('jobO : %s', jobO)
 
         if not self.atlas_exetype in ['EXE']: 
             rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
