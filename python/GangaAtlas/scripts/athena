@@ -167,6 +167,10 @@ p.add_option('--query', '-q', action='store', type='int', dest='jobid', help='Qu
 p.add_option('--enableJEM', action='store_true', help='Enable the Job Execution Monitor' )
 p.add_option('--configJEM', action='store', type='string', dest='configJEM', help='Config string for the Job Execution Monitor' )
 
+# overwriteQueuedata
+p.add_option('--overwriteQueuedata', action='store_true', help='Expert option: Enable overwriteQueuedata' )
+p.add_option('--overwriteQueuedataConfig', action='store', type='string', dest='overwriteQueuedataConfig', help='Expert option: Config string for overwriteQueuedata' )
+
 p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup Athena env for PYARA' )
 
 p.add_option('--transferredDS', action='store', type='string', dest='transferredDS', help='Specify a comma-separated list of patterns so that only datasets which match the given patterns are transferred when --outputlocation is set. Either \ or "" is required when a wildcard is used. If omitted, all datasets are transferred')
@@ -666,6 +670,11 @@ elif opt.backend=='panda':
         j.backend.requirements.enableJEM = True
         if opt.configJEM:
             j.backend.requirements.configJEM = opt.configJEM
+    if opt.overwriteQueuedata:
+        j.backend.requirements.overwriteQueuedata = True
+        if opt.overwriteQueuedataConfig:
+            j.backend.requirements.overwriteQueuedataConfig = opt.overwriteQueuedataConfig
+
 else:
     j.backend = Local()
 
