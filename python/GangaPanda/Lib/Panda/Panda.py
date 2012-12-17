@@ -545,6 +545,12 @@ class Panda(IBackend):
                 js.jobParameters += ' --enable-jem'
                 if job.backend.requirements.configJEM != '':
                     js.jobParameters += " --jem-config %s" % job.backend.requirements.configJEM
+        # Overwrite Panda queue data
+        if job.backend.requirements.overwriteQueuedata:
+            logger.info("Overwriting Panda queuedata for this job")
+            for js in subjobspecs:
+                if job.backend.requirements.overwriteQueuedataConfig != '':
+                    js.jobParameters += " --overwriteQueuedata={%s} " % job.backend.requirements.overwriteQueuedataConfig
 
         # Merging jobs
         if job.backend.requirements.enableMerge:
