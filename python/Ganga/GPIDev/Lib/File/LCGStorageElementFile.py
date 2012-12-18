@@ -23,7 +23,7 @@ class LCGStorageElementFile(IOutputFile):
 
     _schema = Schema(Version(1,1), {
         'namePattern' : SimpleItem(defvalue="",doc='pattern of the file name'),
-        'localDir'    : SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),    
+        'localDir'    : SimpleItem(defvalue="",copyable=0,doc='local dir where the file is stored, used from get and put methods'),    
         'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
         'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
@@ -32,8 +32,8 @@ class LCGStorageElementFile(IOutputFile):
         'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
-        'locations'   : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
-        'failureReason' : SimpleItem(defvalue="",doc='reason for the upload failure'),
+        'locations'   : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+        'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure'),
         'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "LCGStorageElementFile"
@@ -300,9 +300,14 @@ class LCGStorageElementFile(IOutputFile):
 
             return (exitcode, mystdout, mystderr)
 
+        from_location = self.localDir
+
         if not os.path.isdir(self.localDir):
-            print "%s is not a valid directory.... " % self.localDir
-            return
+            if self._parent is not None:
+                from_location = self.getJobObject().outputdir
+            else:
+                print "%s is not a valid directory.... Please set the localDir attribute" % self.localDir
+                return
 
         #set lfc host
         os.environ['LFC_HOST'] = self.lfc_host
@@ -310,7 +315,7 @@ class LCGStorageElementFile(IOutputFile):
         vo = getConfig('LCG')['VirtualOrganisation']  
 
         for location in self.locations:
-            destFileName = os.path.join(self.localDir, location[-10:])
+            destFileName = os.path.join(from_location, location[-10:])
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
 
