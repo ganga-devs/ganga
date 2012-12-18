@@ -19,8 +19,15 @@ def usage():
 usage: package-builder VERSION
 
 Tool to build Ganga RPMs and/or Python Eggs.
-p/prereldir = location of prerelease python directory
-v/version = version of ganga we're building
+
+-h, --help
+    Display this usage guide.
+
+-p, --prereldir 
+    Location of prerelease python directory.
+
+-v, --version 
+    Version of ganga we're building.
 '''
 
 try:
