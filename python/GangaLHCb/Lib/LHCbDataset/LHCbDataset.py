@@ -250,7 +250,7 @@ class LHCbDataset(Dataset):
             f = open(file,'w')
             if self.persistency=='ROOT':
                 f.write(snew)
-                f.write(sdatssetsnew)
+                f.write(sdatasetsnew)
             else:
                 f.write(snew)
                 f.write(sdatasetsnew)
