@@ -3,7 +3,7 @@
 #kuba
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-30-140
+ganga/python/Ganga                                                     Ganga-Base-30-141
 
 #hclee
 ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-16
@@ -15,17 +15,17 @@ ganga/python/Ganga/Lib/MonitoringServices                              Ganga-Mon
 ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-2
 
 #johannes/dan/mark
-ganga/python/GangaAtlas                                                GangaAtlas-24-50
+ganga/python/GangaAtlas                                                GangaAtlas-25-01
 
 #alex/patrick/ulrik
-ganga/python/GangaDirac                                                GangaDirac-01-04
+ganga/python/GangaDirac                                                GangaDirac-01-05
 
 #alex/will/ulrik
 ganga/python/GangaGaudi                                                GangaGaudi-01-13
-ganga/python/GangaLHCb                                                 GangaLHCb-24-30
+ganga/python/GangaLHCb                                                 GangaLHCb-24-31
 
 #dan/johannes
-ganga/python/GangaPanda                                                GangaPanda-24-32
+ganga/python/GangaPanda                                                GangaPanda-25-01
 
 #hclee
 ganga/python/GangaPlotter                                              GangaPlotter-21-2
