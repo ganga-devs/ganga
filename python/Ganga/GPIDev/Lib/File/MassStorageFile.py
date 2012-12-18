@@ -15,10 +15,10 @@ class MassStorageFile(IOutputFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name'),
-                                    'localDir': SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),        
+                                    'localDir': SimpleItem(defvalue="",copyable=0,doc='local dir where the file is stored, used from get and put methods'),        
                                     'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                    'locations' : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
-                                    'failureReason' : SimpleItem(defvalue="",doc='reason for the upload failure'),
+                                    'locations' : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure'),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
                                         })
 
@@ -96,15 +96,20 @@ class MassStorageFile(IOutputFile):
         Retrieves locally all files matching this MassStorageFile object pattern
         """
 
+        from_location = self.localDir
+
         if not os.path.isdir(self.localDir):
-            print "%s is not a valid directory.... " % self.localDir
-            return
+            if self._parent is not None:
+                from_location = self.getJobObject().outputdir
+            else:
+                print "%s is not a valid directory.... Please set the localDir attribute" % self.localDir
+                return
 
          
         cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
 
         for location in self.locations:
-            targetLocation = os.path.join(self.localDir, os.path.basename(location))      
+            targetLocation = os.path.join(from_location, os.path.basename(location))      
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
     def put(self):
