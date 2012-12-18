@@ -3,12 +3,6 @@ import glob
 import sys
 import os, getopt, shutil
 from subprocess import call
-#sys.path.append('../../../stage/lib')
-#print os.listdir('./')
-#print os.getcwd()
-
-#from distutils.core import setup
-#from ganga.distutils.config import setup
 
 """
 Default distutils 'setup' method overwritten.
@@ -36,12 +30,6 @@ except getopt.error, x:
     print "command line syntax error"
     usage()
 
-#try:
-#    version = args[0]
-#except IndexError:
-#    usage()
-#    sys.exit(2)
-
 for opt, arg in options:
     if opt in ('-h', '--help'):
         usage()
@@ -51,15 +39,6 @@ for opt, arg in options:
     elif opt in ('-v', '--version'):
         this_version = arg
 
-
-#for root, dirs, files in os.walk('./'):
-#  if '.svn' in dirs:
-#      dirs.remove('.svn')
-#  for filename in files:
-#      data_files.append((root, [os.path.join(root,filename)]))
-
-#this_version = glob.glob('../ThisTagVersion-*')[0].lstrip('../ThisTagVersion-')
-#this_version = version
 print "Building RPMs for Ganga version: " + this_version
 
 os.chdir(prereldir)
@@ -109,10 +88,6 @@ egg_require_map = {
 'GangaTest' : ["Ganga=="+this_version],
 'GangaTutorial' : ["Ganga=="+this_version]
 }
-
-
-
-
 
 description_map = {
 'Ganga' : 'The Core Ganga package', 
