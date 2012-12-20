@@ -33,7 +33,7 @@ class TestLHCbMetaDataChecker(GangaGPITestCase):
         assert self.davinci_job.status == 'completed'
 
 
-    def checkDaVinciFail(self,job,message):
+    def checkFail(self,job,message):
         try: self.c.check(job)
         except PostProcessException:
             pass
@@ -64,5 +64,3 @@ class TestLHCbMetaDataChecker(GangaGPITestCase):
         self.c.expression = 'outputevents > 0'
         assert not self.c.check(self.davinci_job)
 
-        self.c.expression = 'lumi == "Not Available"'
-        assert self.c.check(self.davinci_job)

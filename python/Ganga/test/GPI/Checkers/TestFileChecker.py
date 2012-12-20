@@ -66,7 +66,7 @@ class TestFileChecker(GangaGPITestCase):
         
         assert not self.c.check(self.jobslice[0])
         assert not self.c.check(self.jobslice[1])
-        assert self.c.check(self.j.jobslice[2])
+        assert self.c.check(self.jobslice[2])
 
 
 
