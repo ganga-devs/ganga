@@ -10,6 +10,7 @@ configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 import fnmatch,subprocess
 from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
+#from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
 
 class DiracFile(IOutputFile):
@@ -17,14 +18,14 @@ class DiracFile(IOutputFile):
     File stored on a DIRAC storage element
     """
     _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
-                                     'localDir'      : SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),    
+                                     'localDir'      : SimpleItem(defvalue="",copyable=0,doc='local dir where the file is stored, used from get and put methods'),    
                                      'joboutputdir'  : SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                     'locations'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                     'locations'     : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
                                      'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere'),
-                                     'lfn'           : SimpleItem(defvalue='',typelist=['str'],doc='The logical file name'),
+                                     'lfn'           : SimpleItem(defvalue='',copyable=0,typelist=['str'],doc='The logical file name'),
 #                                     'diracSE'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,hidden=1,doc='The dirac SE sites to try to upload to'),
-                                     'guid'          : SimpleItem(defvalue='',typelist=['str'],doc='The files GUID'),
-                                     'failureReason' : SimpleItem(defvalue="",doc='reason for the upload failure')
+                                     'guid'          : SimpleItem(defvalue='',copyable=0,typelist=['str'],doc='The files GUID'),
+                                     'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure')
                                      })
 
 #    _schema.datadict['lfn']=SimpleItem(defvalue="",typelist=['str'],doc='The logical file name')
@@ -45,7 +46,7 @@ class DiracFile(IOutputFile):
         self.namePattern = namePattern
         self.localDir = localDir
         self.locations = []
-##COULD MAKE os.getcwd THE DEFAULT LOCALDIR
+##COULD MAKE os.getcwd THE DEFAULT LOCALDIR, ALSO COULD CONSTRUCT FROM LFN
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
@@ -88,7 +89,7 @@ class DiracFile(IOutputFile):
                         # self.diracSE= line.split(':')[2]
                         self.locations= line.split(':::')[2]
                         self.guid = line.split(':::')[3].replace('\n','')
-                
+                        
         postprocesslocations.close()
 
     def _getEnv(self):
@@ -103,6 +104,7 @@ class DiracFile(IOutputFile):
         if self.lfn == "":
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         self._getEnv()
+        logger.info('Removing file %s' % self.lfn)
         rc, stdout, stderr = shellEnv_cmd('dirac-dms-remove-lfn %s' % self.lfn, self._env)
         # if 'Successful' in eval(stdout) and self.lfn not in eval(stdout)['Successful']:
         if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
@@ -145,14 +147,14 @@ class DiracFile(IOutputFile):
     
     def get(self):
         """
-        Retrieves locally all files matching this DiracFile object pattern
+        Retrieves locally the file matching this DiracFile object pattern
         """
 ##         from LogicalFile import get_result
 
-        from_location = self.localDir
+        to_location = self.localDir
         if not os.path.isdir(self.localDir):
-            if self._parent is not None and os.path.isdir(self.joboutputdir):
-                from_location = self.joboutputdir
+            if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
+                to_location = self.getJobObject().outputdir
             else:
                 raise GangaException('"%s" is not a valid directory... Please set the localDir attribute' % self.localDir)
 
@@ -166,7 +168,7 @@ class DiracFile(IOutputFile):
         ## OTHER WAY... doesn't pollute the environment!
         ##caching the environment for future use.
         self._getEnv()
-        r=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, from_location)[1]
+        r=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, to_location)[1]
         self.namePattern = os.path.split(self.lfn)[1]
         self.getMetadata()
         return r
@@ -225,7 +227,7 @@ class DiracFile(IOutputFile):
             else:
                 sourceDir = self.localDir
         else:
-            sourceDir = self.joboutputdir
+            sourceDir = self.getJobObject().outputdir
 
 
         if not os.path.exists(os.path.join(sourceDir,self.namePattern)):
@@ -244,6 +246,7 @@ class DiracFile(IOutputFile):
         self._getEnv()
         stderr=''
         stdout=''
+        logger.info('Uploading file %s' % self.namePattern)
         for se in storage_elements:
 ##                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(self.lfn, os.path.join(sourceDir,self.namePattern), se, guid), self._env)
 ##             else:
@@ -354,6 +357,7 @@ class DiracFile(IOutputFile):
 ###INDENT###storage_elements = ###SE###
 ###INDENT###
 ###INDENT####for file in zip_files(###OUTPUTFILES###, ###ZIPFILES###):
+###INDENT###import os
 ###INDENT###for file, lfn, guid in outputfiles:
 ###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file)):
 ###INDENT###        ###LOCATIONSFILE###.write('DiracFile:::%s->###FAILED###:::File \\'%s\\' didn\\'t exist:::NotAvailable\\n' % (file, file))
@@ -375,11 +379,12 @@ class DiracFile(IOutputFile):
 """
         import uuid#, hashlib
         def fileINFOGenerator(outputFiles):
+            uid = str(uuid.uuid4())
             for file in outputFiles:
                 lfn = file.lfn
                 guid = file.guid
                 if file.lfn=='':
-                    lfn = os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()), file.namePattern)
+                    lfn = os.path.join(configDirac['DiracLFNBase'], uid, file.namePattern)
                 if file.guid == '':
                     md5 = hashlib.md5(lfn).hexdigest()
                     guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
