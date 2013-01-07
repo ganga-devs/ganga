@@ -952,6 +952,17 @@ run_athena () {
 
 	if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 	    then 
+	    
+	    # if run dir given, change to that 
+            if [ ! -z $ATLAS_RUN_DIR ]
+                then
+		old_run_dir=`pwd`
+		echo "Changing dir from ${old_run_dir} to ${ATLAS_RUN_DIR}..."
+		cp preJobO.py work/$ATLAS_RUN_DIR/.
+		cp input.py work/$ATLAS_RUN_DIR/.
+                cd work/$ATLAS_RUN_DIR   
+		pwd
+            fi
 
 	    if [ n$RECEXTYPE == n'' ]
 		then
@@ -979,6 +990,14 @@ run_athena () {
 
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
+
+	    if [ ! -z $ATLAS_RUN_DIR ]
+                then
+		echo "Reverting dir to ${old_run_dir}..."
+                cd $old_run_dir
+                pwd
+            fi
+
 	elif [ n$ATLAS_EXETYPE == n'PYARA' ]
 	    then
 	    $timecmd $pybin_alt $ATHENA_OPTIONS ; echo $? > retcode.tmp

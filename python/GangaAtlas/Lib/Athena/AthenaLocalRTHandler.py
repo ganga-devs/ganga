@@ -388,6 +388,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         # set RecExCommon options
         environment['RECEXTYPE'] = job.application.recex_type
 
+        # Athena run dir
+        print "AUSNBCAKSJN"
+        if job.application.atlas_exetype == "ATHENA" and job.application.atlas_run_dir != "":
+            environment['ATLAS_RUN_DIR'] = job.application.atlas_run_dir
+            print environment
+            
         # Set DQ2_LOCAL_SITE_ID
         if hasattr(job.backend, 'extraopts'):
             if job.backend.extraopts.find('site=hh')>0:
