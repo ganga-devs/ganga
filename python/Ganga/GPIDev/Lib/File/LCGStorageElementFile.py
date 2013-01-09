@@ -95,7 +95,7 @@ class LCGStorageElementFile(IOutputFile):
 
         def lcgse_line_processor(line, lcgse_file):
             guid = line[line.find('->')+2:line.find('###')]
-            pattern = line.split(':::')[1]
+            pattern = line.split(' ')[1]
             name = line[line.find(';&')+3:]
 
             if pattern == lcgse_file.namePattern:
@@ -228,7 +228,7 @@ class LCGStorageElementFile(IOutputFile):
         lcgCommands = []
 
         for outputFile in outputFiles:
-            lcgCommands.append('lcgse:::%s:::%s:::%s' % (outputFile.namePattern , outputFile.lfc_host,  outputFile.getUploadCmd()))
+            lcgCommands.append('lcgse %s %s %s' % (outputFile.namePattern , outputFile.lfc_host,  outputFile.getUploadCmd()))
                 
         script = """\n
 
@@ -252,7 +252,7 @@ class LCGStorageElementFile(IOutputFile):
         
 ###INDENT###    import re
 
-###INDENT###    lcgseItems = lcgseItem.split(':::')
+###INDENT###    lcgseItems = lcgseItem.split(' ')
 
 ###INDENT###    filenameWildChar = lcgseItems[1]
 ###INDENT###    lfc_host = lcgseItems[2]
@@ -287,11 +287,11 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
 ###INDENT###    guids = uploadToSE(lcgseItem)
 ###INDENT###    for guid in guids.keys():
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s->%s;&%s\\n' % (lcgseItem, guid, guids[guid])) 
+###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s %s->%s;&%s\\n' % (lcgseItem.split(' ')[0], lcgseItem.split(' ')[1], guid, guids[guid])) 
 
 ###INDENT####lets clear after us    
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
-###INDENT###    lcgseItems = lcgseItem.split(':::')
+###INDENT###    lcgseItems = lcgseItem.split(' ')
 
 ###INDENT###    filenameWildChar = lcgseItems[1]
 
