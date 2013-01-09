@@ -416,10 +416,10 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
         from Ganga.GPIDev.Lib.Job.Job import Job        
         if isType(object.__getattribute__(self, '_impl'), Job) and name == 'outputfiles':
             import re
-            regex = re.compile('\[.+?\]')
+            regex = re.compile('[*?\[\]]')
             files = GangaList()
             for f in object.__getattribute__(self, name):
-                if ('*' in f.namePattern or '?' in f.namePattern or regex.search(f.namePattern) is not None ) and hasattr(f._impl,'subfiles') and f._impl.subfiles:
+                if regex.search(f.namePattern) is not None  and hasattr(f._impl,'subfiles') and f._impl.subfiles:
                     files.extend(makeGangaListByRef(f._impl.subfiles))
                 else:
                     files.append(f)
