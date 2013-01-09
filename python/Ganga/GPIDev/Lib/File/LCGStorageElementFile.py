@@ -95,8 +95,8 @@ class LCGStorageElementFile(IOutputFile):
 
         def lcgse_line_processor(line, lcgse_file):
             guid = line[line.find('->')+2:line.find('###')]
-            pattern = line.split(' ')[0]
-            name = line[line.find('###')+3:]
+            pattern = line.split(' ')[1]
+            name = line[line.find(';&')+3:]
 
             if pattern == lcgse_file.namePattern:
                 d=LCGStorageElementFile(namePattern=name)
@@ -276,7 +276,7 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
 ###INDENT###            match = re.search('(guid:\S+)',mystdout)
 ###INDENT###            if match:
-###INDENT###                guidResults[mystdout] = currentFile
+###INDENT###                guidResults[mystdout] = os.path.basename(currentFile)
 
 ###INDENT###        else:
 ###INDENT###            guidResults['ERROR ' + mystderr] = ''
@@ -287,7 +287,7 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
 ###INDENT###    guids = uploadToSE(lcgseItem)
 ###INDENT###    for guid in guids.keys():
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s->%s###%s\\n' % (lcgseItem, guid, guids[guid])) 
+###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s->%s;&%s\\n' % (lcgseItem, guid, guids[guid])) 
 
 ###INDENT####lets clear after us    
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
