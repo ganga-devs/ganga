@@ -94,9 +94,9 @@ class LCGStorageElementFile(IOutputFile):
         postprocesslocations = open(postprocessLocationsPath, 'r')
 
         def lcgse_line_processor(line, lcgse_file):
-            guid = line[line.find('->')+2:line.find('###')]
+            guid = line[line.find('->')+2:]
             pattern = line.split(' ')[1]
-            name = line[line.find(';&')+3:]
+            name = line.split(' ')[2]
 
             if pattern == lcgse_file.namePattern:
                 d=LCGStorageElementFile(namePattern=name)
@@ -287,7 +287,7 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
 ###INDENT###    guids = uploadToSE(lcgseItem)
 ###INDENT###    for guid in guids.keys():
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s %s->%s;&%s\\n' % (lcgseItem.split(' ')[0], lcgseItem.split(' ')[1], guid, guids[guid])) 
+###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s %s %s ->%s\\n' % (lcgseItem.split(' ')[0], lcgseItem.split(' ')[1], guids[guid], guid)) 
 
 ###INDENT####lets clear after us    
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
