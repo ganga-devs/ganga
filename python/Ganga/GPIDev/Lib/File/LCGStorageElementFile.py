@@ -9,6 +9,7 @@ from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig 
 import Ganga.Utility.logging
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
 
 from IOutputFile import IOutputFile
@@ -33,6 +34,7 @@ class LCGStorageElementFile(IOutputFile):
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
         'locations'   : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+        'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGStorageElementFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure'),
         'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
@@ -90,7 +92,35 @@ class LCGStorageElementFile(IOutputFile):
             return
 
         postprocesslocations = open(postprocessLocationsPath, 'r')
-        
+
+        def lcgse_line_processor(line, lcgse_file):
+            guid = line[line.find('->')+2:line.find('###')]
+            pattern = line.split(' ')[0]
+            name = line[line.find('###')+3:]
+
+            if pattern == lcgse_file.namePattern:
+                d=LCGStorageElementFile(namePattern=name)
+                lcgse_file.subfiles.append(GPIProxyObjectFactory(d))
+                lcgse_line_processor(line, d)
+            elif name == lcgse_file.namePattern:
+                if guid.startswith('ERROR'):
+                    logger.error("Failed to upload file '%s' to LSG SE" % name)
+                    lcgse_file.failureReason = guid[6:]
+                    return
+                lcgse_file.locations = guid
+            else:
+                logger.error("Could't decipher the outputfiles location entry!")
+                logger.error("Neither '%s' nor '%s' match the namePattern attribute" % (pattern, name))
+                lcgse_file.failureReason = "Could't decipher the outputfiles location entry!"
+
+        for line in postprocesslocations.readlines():
+                
+            if line.strip() == '':      
+                continue
+         
+            if line.startswith('lcgse'):
+                lcgse_line_processor(line.strip(), self)
+        """
         for line in postprocesslocations.readlines():
                 
             if line.strip() == '':      
@@ -111,6 +141,7 @@ class LCGStorageElementFile(IOutputFile):
                         
                     elif guid not in self.locations:
                         self.locations.append(guid)
+        """
 
         postprocesslocations.close()
         
@@ -230,7 +261,7 @@ class LCGStorageElementFile(IOutputFile):
 
 ###INDENT###    os.environ['LFC_HOST'] = lfc_host
         
-###INDENT###    guidResults = []
+###INDENT###    guidResults = {}
 
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
 ###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
@@ -245,18 +276,18 @@ class LCGStorageElementFile(IOutputFile):
 ###INDENT###            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
 ###INDENT###            match = re.search('(guid:\S+)',mystdout)
 ###INDENT###            if match:
-###INDENT###                guidResults.append(mystdout)
+###INDENT###                guidResults[mystdout] = currentFile
 
 ###INDENT###        else:
-###INDENT###            guidResults.append('ERROR ' + mystderr)
+###INDENT###            guidResults['ERROR ' + mystderr] = ''
 ###INDENT###            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
 
 ###INDENT###    return guidResults    
 
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
 ###INDENT###    guids = uploadToSE(lcgseItem)
-###INDENT###    for guid in guids:
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s->%s\\n' % (lcgseItem, guid)) 
+###INDENT###    for guid in guids.keys():
+###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s->%s###%s\\n' % (lcgseItem, guid, guids[guid])) 
 
 ###INDENT####lets clear after us    
 ###INDENT###for lcgseItem in ###LCGCOMMANDS###:
