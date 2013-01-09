@@ -17,6 +17,8 @@ from IOutputFile import IOutputFile
 import re
 import os
 
+regex = re.compile('[*?\[\]]')
+
 class LCGStorageElementFile(IOutputFile):
     """LCGStorageElementFile represents a class marking an output file to be written into LCG SE
     """
@@ -98,7 +100,7 @@ class LCGStorageElementFile(IOutputFile):
             pattern = line.split(' ')[1]
             name = line.split(' ')[2]
 
-            if pattern == lcgse_file.namePattern:
+            if regex.search(lcgse_file.namePattern) is not None:
                 d=LCGStorageElementFile(namePattern=name)
                 lcgse_file.subfiles.append(GPIProxyObjectFactory(d))
                 lcgse_line_processor(line, d)
