@@ -196,12 +196,9 @@ class Job(GangaObject):
             files = []
             for f in object.__getattribute__(self, name):
                 if '*' in f.namePattern and hasattr(f,'subfiles') and f.subfiles:
-                    for sf in f.subfiles:
-                        if sf.namePattern not in (l.namePattern for l in files):
-                            files.append(sf)
+                    files.extend(f.subfiles)
                 else:
-                    if f.namePattern not in (l.namePattern for l in files):
-                        files.append(f)
+                    files.append(f)
             return files
         return object.__getattribute__(self, name)
 
