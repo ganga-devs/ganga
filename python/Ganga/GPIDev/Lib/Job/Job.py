@@ -191,17 +191,6 @@ class Job(GangaObject):
                   { 'attribute' : 'inputdata' },
                   { 'attribute' : 'outputsandbox' } ]
 
-    def __getattribute__(self, name):
-        if name == 'outputfiles':
-            files = []
-            for f in object.__getattribute__(self, name):
-                if '*' in f.namePattern and hasattr(f,'subfiles') and f.subfiles:
-                    files.extend(f.subfiles)
-                else:
-                    files.append(f)
-            return files
-        return object.__getattribute__(self, name)
-
     # TODO: usage of **kwds may be envisaged at this level to optimize the overriding of values, this must be reviewed
     def __init__(self):
         super(Job, self).__init__()
