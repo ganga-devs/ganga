@@ -410,6 +410,21 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             except:
                 return object.__getattribute__(self,name)
         return object.__getattribute__(self,name)
+ 
+    def _getattribute(self, name):
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
+        from Ganga.GPIDev.Lib.Job.Job import Job        
+        if isType(object.__getattribute__(self, '_impl'), Job) and name == 'outputfiles':
+            import re
+            regex = re.compile('\[.+?\]')
+            files = GangaList()
+            for f in object.__getattribute__(self, name):
+                if ('*' in f.namePattern or '?' in f.namePattern or regex.search(f.namePattern) is not None ) and hasattr(f._impl,'subfiles') and f._impl.subfiles:
+                    files.extend(makeGangaListByRef(f._impl.subfiles))
+                else:
+                    files.append(f)
+            return addProxy(files)
+        return object.__getattribute__(self, name)        
 
     # but at the class level _impl is a ganga plugin class
     d = { '_impl' : pluginclass,
@@ -421,7 +436,8 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
           'copy' : _copy,
           '__doc__' : publicdoc,
           '__setattr__': _setattr,
-          '__getattr__': _getattr
+          '__getattr__': _getattr,
+          '__getattribute__':_getattribute
          }
 
     ## TODO: this makes GangaList inherit from the list
