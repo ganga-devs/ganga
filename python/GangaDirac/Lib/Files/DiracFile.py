@@ -7,11 +7,13 @@ import Ganga.Utility.Config
 from Ganga.Utility.Config import getConfig
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 #configLHCb  = Ganga.Utility.Config.getConfig('LHCb' )
-import fnmatch,subprocess
+import fnmatch,subprocess,re
 from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 logger = Ganga.Utility.logging.getLogger()
+regex = re.compile('[*?\[\]]')
 
 class DiracFile(IOutputFile):
     """
@@ -103,7 +105,7 @@ class DiracFile(IOutputFile):
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
-            logger.warning("Couldn\'t locate the output locations file so couldn't determine the lfn info") ##seems to be called twice (only on Dirac backend... must check) so misleading when second one works??
+            #logger.warning("Couldn\'t locate the output locations file so couldn't determine the lfn info") ##seems to be called twice (only on Dirac backend... must check) so misleading when second one works??
             return
 
         postprocesslocations = open(postprocessLocationsPath, 'r')
@@ -132,6 +134,8 @@ class DiracFile(IOutputFile):
             self.lfn=""
             self.locations=[]
             self.guid=''
+            return
+        logger.error("Error in removing file '%s' : %s" % (self.lfn, stdout))
         return stdout
         
     def getMetadata(self):
@@ -188,11 +192,14 @@ class DiracFile(IOutputFile):
         if self.lfn == '':
             raise GangaException('Must supply an lfn to replicate')
         self._getEnv()
+        logger.info("Replicating file %s to %s" % (self.lfn, destSE))
         rc, stdout, stderr = shellEnv_cmd('dirac-dms-replicate-lfn %s %s %s' % (self.lfn, destSE, self.locations[0]),
                                           self._env)
         if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
             # if 'Successful' in eval(stdout) and self.lfn in eval(stdout)['Successful']:
             self.locations.append(destSE)
+            return
+        logger.error("Error in replicating file '%s' : %s" % (self.lfn, stdout))
         return stdout
          
 
@@ -202,16 +209,12 @@ class DiracFile(IOutputFile):
 
         File will be uploaded to the first SE that the upload command succeeds for.
         Return value will be either the stdout from the dirac upload command if not
-        using the wildcard character '*' in the namePattern. If the wildcard character
-        is used then the return value will be a list containing newly created DiracFile
-        objects which were the result of glob-ing the wildcard. The objects in this list
+        using the wildcard characters '*?[]' in the namePattern. If the wildcard characters
+        are used then the return value will be a list containing newly created DiracFile
+        objects which were the result of glob-ing the wildcards. The objects in this list
         will have been uploaded or had their failureReason attribute populated if the
         upload failed.
         """
-        #self.diracSE = SEs
-        #r = self.put()
-        #self.diracSE = []
-        #return r
         return self.put()
     
     def put(self):
@@ -229,7 +232,7 @@ class DiracFile(IOutputFile):
         if not os.path.isdir(sourceDir):
             raise GangaException('localDir attribute is not a valid dir, don\'t know from which dir to take the file' )
 
-        if '*' in self.namePattern:
+        if regex.search(self.namePattern) is not None:
             if self.lfn != "":
                 logger.warning("Cannot specify a single lfn for a wildcard namePattern")
                 logger.warning("LFN will be generated automatically")
@@ -245,7 +248,7 @@ class DiracFile(IOutputFile):
  
         self._getEnv()
         
-        outputFiles=[]
+        outputFiles=GangaList()
         for file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             if not os.path.exists(file):
                 raise GangaException('File "%s" must exist!'% os.path.join(sourceDir, self.namePattern))
@@ -266,7 +269,7 @@ class DiracFile(IOutputFile):
             for se in storage_elements:
                 rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(lfn, file, se, guid), self._env)
                 if stdout.find("'Successful': {'%s'" % lfn) >=0:
-                    if '*' in self.namePattern:
+                    if regex.search(self.namePattern) is not None:
                         d.lfn = lfn
                         d.locations = [se]
                         d.guid = guid
@@ -276,16 +279,16 @@ class DiracFile(IOutputFile):
                         self.lfn = lfn
                         self.locations = [se]
                         self.guid = guid
-                        return stdout
+                        return
             else:
                 logger.error(failureReason = "Error in uploading file %s. : %s"% (os.path.basename(file), stdout))
-                if '*' in self.namePattern:
+                if regex.search(self.namePattern) is not None:
                     d.failureReason =  failureReason
                     outputFiles.append(GPIProxyObjectFactory(d))
                 else:
                     self.failureReason = failureReason
                     return stdout
-        return outputFiles
+        return GPIProxyObjectFactory(outputFiles)
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
@@ -341,8 +344,8 @@ class DiracFile(IOutputFile):
         import uuid
         lfn_base = os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()))
         for file in outputFiles:
-            if '*' in file.namePattern:
-                script+= wildcard_script(self.namePattern, lfn_base)
+            if regex.search(file.namePattern) is not None:
+                script+= wildcard_script(file.namePattern, lfn_base)
             else:
                 lfn = file.lfn
                 guid = file.guid
