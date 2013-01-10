@@ -182,7 +182,27 @@ class MassStorageFile(IOutputFile):
             if self.compressed:
                 fileName = '%s.gz' % self.namePattern 
 
-            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
+            #here
+            if regex.search(fileName) is not None:      
+                for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
+                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
+
+                    d=MassStorageFile(namePattern=os.path.basename(currentFile))
+                    d.compressed = self.compressed
+
+                    if exitcode != 0:
+                        self.handleUploadFailure(mystderr)
+                    else:
+                        logger.info('%s successfully uploaded to mass storage' % currentFile)              
+                        d.locations = os.path.join(massStoragePath, os.path.basename(currentFile))
+
+                        #remove file from output dir if this object is attached to a job
+                        if self._parent != None:
+                            os.system('rm %s' % os.path.join(sourceDir, currentFile))
+
+                    self.subfiles.append(GPIProxyObjectFactory(d))
+            else:
+                currentFile = os.path.join(sourceDir, fileName)
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
