@@ -73,6 +73,7 @@ class MassStorageFile(IOutputFile):
 
             if regex.search(mass_file.namePattern) is not None:
                 d=MassStorageFile(namePattern=name)
+                d.compressed = mass_file.compressed
                 mass_file.subfiles.append(GPIProxyObjectFactory(d))
                 mass_line_processor(line, d)
             elif name == mass_file.namePattern:
@@ -93,30 +94,6 @@ class MassStorageFile(IOutputFile):
          
             if line.startswith('massstorage'):
                 mass_line_processor(line.strip(), self)
-
-        """
-        for line in postprocesslocations.readlines():
-                
-            if line.strip() == '':      
-                continue
-
-            lineParts = line.split(' ') 
-            outputPattern = lineParts[1]
-            outputPath = lineParts[2]           
-
-            if line.startswith('massstorage'):
-
-                if outputPattern == self.namePattern:
-
-                    if outputPath == 'ERROR':
-                        self.failureReason = line[line.find('ERROR')+5:]
-                        if self._parent != None:
-                            logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
-                    else:       
-                        massStorageLocation = outputPath.strip('\n')        
-                        if massStorageLocation not in self.locations:
-                            self.locations.append(massStorageLocation)
-        """     
 
         postprocesslocations.close()            
         
