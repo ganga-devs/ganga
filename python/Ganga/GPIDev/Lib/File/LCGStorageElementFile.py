@@ -102,6 +102,10 @@ class LCGStorageElementFile(IOutputFile):
 
             if regex.search(lcgse_file.namePattern) is not None:
                 d=LCGStorageElementFile(namePattern=name)
+                d.compressed = lcgse_file.compressed
+                d.lfc_host = lcgse_file.lfc_host
+                d.se = lcgse_file.se
+                #todo copy also the other attributes
                 lcgse_file.subfiles.append(GPIProxyObjectFactory(d))
                 lcgse_line_processor(line, d)
             elif name == lcgse_file.namePattern:
