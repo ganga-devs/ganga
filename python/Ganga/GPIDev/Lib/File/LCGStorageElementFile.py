@@ -98,7 +98,7 @@ class LCGStorageElementFile(IOutputFile):
         def lcgse_line_processor(line, lcgse_file):
             guid = line[line.find('->')+2:]
             pattern = line.split(' ')[1]
-            name = line.split(' ')[2]
+            name = line.split(' ')[2].strip('.gz')
 
             if regex.search(lcgse_file.namePattern) is not None:
                 d=LCGStorageElementFile(namePattern=name)
