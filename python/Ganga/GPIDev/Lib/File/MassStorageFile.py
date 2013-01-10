@@ -78,7 +78,8 @@ class MassStorageFile(IOutputFile):
                 mass_line_processor(line, d)
             else:
                 if outputPath == 'ERROR':
-                    logger.error("Failed to upload file '%s' to LSG SE" % name)
+                    logger.error("Failed to upload file to mass storage")
+                    logger.error(line[line.find('ERROR')+5:])
                     mass_file.failureReason = line[line.find('ERROR')+5:]
                     return
                 mass_file.locations = outputPath.strip('\n')
