@@ -132,6 +132,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                          XMLSUMMARYPARSING = getXMLSummaryScript(),
                          OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '))
         
+        # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
+        # remove after Ganga6 release
         dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         DIRAC_IMPORT         = 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                                         DIRAC_JOB_IMPORT     = 'from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
