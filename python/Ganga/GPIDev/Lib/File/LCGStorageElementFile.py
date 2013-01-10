@@ -122,28 +122,6 @@ class LCGStorageElementFile(IOutputFile):
          
             if line.startswith('lcgse'):
                 lcgse_line_processor(line.strip(), self)
-        """
-        for line in postprocesslocations.readlines():
-                
-            if line.strip() == '':      
-                continue
-
-            #match the full line with lfc and command           
-            if line.startswith('lcgse'):
-
-                lcgSEUpload = line.strip()
-                searchPattern = 'lcgse %s %s %s' % (self.namePattern, self.lfc_host, self.getUploadCmd().replace('filename', self.namePattern))
-
-                if lcgSEUpload.startswith(searchPattern):
-                    guid = lcgSEUpload[lcgSEUpload.find('->')+2:]
-                    if guid.startswith('ERROR'):
-                        self.failureReason = guid[6:]
-                        if self._parent != None:
-                            logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
-                        
-                    elif guid not in self.locations:
-                        self.locations.append(guid)
-        """
 
         postprocesslocations.close()
         
@@ -197,6 +175,62 @@ class LCGStorageElementFile(IOutputFile):
         if self.compressed:
             fileName = '%s.gz' % self.namePattern          
 
+        if regex.search(fileName) is not None:
+            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
+                cmd = self.getUploadCmd()
+                cmd = cmd.replace('filename', currentFile)
+                cmd = cmd + ' file:%s' % currentFile
+
+                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
+
+                d=LCGStorageElementFile(namePattern=os.path.basename(currentFile))
+
+                if exitcode == 0:
+                
+                    match = re.search('(guid:\S+)',mystdout)
+                    if match:
+                        d.locations = mystdout.strip()
+
+                    #remove file from output dir if this object is attached to a job
+                    if self._parent != None:
+                        os.system('rm %s' % os.path.join(sourceDir, currentFile))
+
+                else:
+                    d.failureReason = mystderr
+                    if self._parent != None:
+                        logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
+                    else:
+                        logger.error("The file can't be uploaded because of %s" % (self.failureReason))
+
+                self.subfiles.append(GPIProxyObjectFactory(d))
+                
+        else:
+            currentFile = os.path.join(sourceDir, fileName)
+            cmd = self.getUploadCmd()
+            cmd = cmd.replace('filename', currentFile)
+            cmd = cmd + ' file:%s' % currentFile
+
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
+
+            if exitcode == 0:
+                
+                match = re.search('(guid:\S+)',mystdout)
+                if match:       
+                    self.locations = mystdout.strip()
+
+                #remove file from output dir if this object is attached to a job
+                if self._parent != None:
+                    os.system('rm %s' % os.path.join(sourceDir, currentFile))
+
+            else:
+                self.failureReason = mystderr
+                if self._parent != None:
+                    logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
+                else:
+                    logger.error("The file can't be uploaded because of %s" % (self.failureReason))
+        
+
+        """
         for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
             cmd = self.getUploadCmd()
             cmd = cmd.replace('filename', currentFile)
@@ -221,7 +255,7 @@ class LCGStorageElementFile(IOutputFile):
                     logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
                 else:
                     logger.error("The file can't be uploaded because of %s" % (self.failureReason))
-                                        
+        """                                       
     
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
