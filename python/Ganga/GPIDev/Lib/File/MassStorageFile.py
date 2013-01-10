@@ -69,7 +69,7 @@ class MassStorageFile(IOutputFile):
             lineParts = line.split(' ') 
             pattern = lineParts[1]
             outputPath = lineParts[2]   
-            name = os.path.basename(outputPath)
+            name = os.path.basename(outputPath)..strip('.gz')
 
             if regex.search(mass_file.namePattern) is not None:
                 d=MassStorageFile(namePattern=name)
