@@ -22,11 +22,11 @@ class DiracFile(IOutputFile):
     _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
                                      'localDir'      : SimpleItem(defvalue="",copyable=0,doc='local dir where the file is stored, used from get and put methods'),    
 #                                     'joboutputdir'  : SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                     'locations'     : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                     'locations'     : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of SE locations where the outputfiles are uploaded"),
                                      'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere'),
-                                     'lfn'           : SimpleItem(defvalue='',copyable=0,typelist=['str'],doc='The logical file name'),
+                                     'lfn'           : SimpleItem(defvalue='',copyable=0,typelist=['str'],doc='return the logical file name/set the logical file name to use if not using wildcards in namePattern'),
 #                                     'diracSE'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,hidden=1,doc='The dirac SE sites to try to upload to'),
-                                     'guid'          : SimpleItem(defvalue='',copyable=0,typelist=['str'],doc='The files GUID'),
+                                     'guid'          : SimpleItem(defvalue='',copyable=0,typelist=['str'],doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
                                      'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['GangaDirac.Lib.Files.DiracFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                      'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure')
                                      })
