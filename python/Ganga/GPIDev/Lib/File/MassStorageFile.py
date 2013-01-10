@@ -76,16 +76,12 @@ class MassStorageFile(IOutputFile):
                 d.compressed = mass_file.compressed
                 mass_file.subfiles.append(GPIProxyObjectFactory(d))
                 mass_line_processor(line, d)
-            elif name == mass_file.namePattern:
+            else:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file '%s' to LSG SE" % name)
                     mass_file.failureReason = line[line.find('ERROR')+5:]
                     return
                 mass_file.locations = outputPath.strip('\n')
-            else:
-                logger.error("Could't decipher the outputfiles location entry!")
-                logger.error("Neither '%s' nor '%s' match the namePattern attribute" % (pattern, name))
-                mass_file.failureReason = "Could't decipher the outputfiles location entry!"
 
         for line in postprocesslocations.readlines():
                 
