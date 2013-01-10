@@ -40,7 +40,7 @@ class DiracFile(IOutputFile):
 
     _category = 'outputfiles'
     _name = "DiracFile"
-    _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'upload' ]
+    _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'put']#, 'upload' ]
         
     def __init__(self, namePattern='',  localDir='', **kwds):
         """ name is the name of the output file that has to be written ...
@@ -203,7 +203,21 @@ class DiracFile(IOutputFile):
         return stdout
          
 
-    def upload(self):#, SEs=[]):
+#    def upload(self):
+#        """
+#        Try to upload file sequentially to storage elements defined in configDirac['DiracSpaceTokens'].
+#
+#        File will be uploaded to the first SE that the upload command succeeds for.
+#        Return value will be either the stdout from the dirac upload command if not
+#        using the wildcard characters '*?[]' in the namePattern. If the wildcard characters
+#        are used then the return value will be a list containing newly created DiracFile
+#        objects which were the result of glob-ing the wildcards. The objects in this list
+#        will have been uploaded or had their failureReason attribute populated if the
+#        upload failed.
+#        """
+#        return self.put()
+    
+    def put(self):
         """
         Try to upload file sequentially to storage elements defined in configDirac['DiracSpaceTokens'].
 
@@ -214,12 +228,6 @@ class DiracFile(IOutputFile):
         objects which were the result of glob-ing the wildcards. The objects in this list
         will have been uploaded or had their failureReason attribute populated if the
         upload failed.
-        """
-        return self.put()
-    
-    def put(self):
-        """
-        this method will be called on the client
         """
         ## looks like will only need this for the interactive uploading of jobs.
         
