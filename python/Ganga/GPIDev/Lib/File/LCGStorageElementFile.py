@@ -232,35 +232,7 @@ class LCGStorageElementFile(IOutputFile):
                     logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
                 else:
                     logger.error("The file can't be uploaded because of %s" % (self.failureReason))
-        
-
-        """
-        for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-            cmd = self.getUploadCmd()
-            cmd = cmd.replace('filename', currentFile)
-            cmd = cmd + ' file:%s' % currentFile
-
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
-            if exitcode == 0:
-                
-                match = re.search('(guid:\S+)',mystdout)
-                if match:
-                    location = mystdout.strip()
-                    if location not in self.locations:
-                        self.locations.append(location) 
-
-                #remove file from output dir if this object is attached to a job
-                if self._parent != None:
-                    os.system('rm %s' % os.path.join(sourceDir, currentFile))
-
-            else:
-                self.failureReason = mystderr
-                if self._parent != None:
-                    logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
-                else:
-                    logger.error("The file can't be uploaded because of %s" % (self.failureReason))
-        """                                       
-    
+            
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
