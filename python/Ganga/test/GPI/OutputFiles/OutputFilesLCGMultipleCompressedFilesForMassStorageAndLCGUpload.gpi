@@ -10,13 +10,11 @@ j = Job(application=Root(),backend=LCG())
 
 j.application.script = File('fillrandom.py')
 
-j.outputfiles = ['*.root', '*.root1']
+j.outputfiles = ['*.root']
 
 j.outputfiles[0].compressed = True
-j.outputfiles[1].compressed = True
 
 assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
-assert(j.outputfiles[1].__class__.__name__ == 'LCGStorageElementFile')
 
 j.submit()
 
@@ -31,6 +29,6 @@ j.outputfiles[1].localDir = j.outputdir
 j.outputfiles[0].get()
 j.outputfiles[1].get()
 
-for filename in ['fillrandom.root.gz', 'fillrandom1.root.gz', j.outputfiles[1].location()[0][-10:], j.outputfiles[1].location()[1][-10:]]:
+for filename in ['fillrandom.root.gz', 'fillrandom1.root.gz']:
     assert(filename in os.listdir(j.outputdir)) 
     
