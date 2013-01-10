@@ -3,13 +3,17 @@
 #
 # $Id: MassStorageFile.py,v 0.1 2011-11-09 15:40:00 idzhunov Exp $
 ################################################################################
-
-import os
 from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from IOutputFile import IOutputFile
+
+import re
+import os
+
+regex = re.compile('[*?\[\]]')
 
 class MassStorageFile(IOutputFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
@@ -18,6 +22,7 @@ class MassStorageFile(IOutputFile):
                                     'localDir': SimpleItem(defvalue="",copyable=0,doc='local dir where the file is stored, used from get and put methods'),        
                                     'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
                                     'locations' : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                     'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure'),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
                                         })
@@ -59,7 +64,37 @@ class MassStorageFile(IOutputFile):
             return
 
         postprocesslocations = open(postprocessLocationsPath, 'r')
-        
+
+        def mass_line_processor(line, mass_file):
+            lineParts = line.split(' ') 
+            pattern = lineParts[1]
+            outputPath = lineParts[2]   
+            name = os.path.basename(outputPath)
+
+            if regex.search(mass_file.namePattern) is not None:
+                d=MassStorageFile(namePattern=name)
+                mass_file.subfiles.append(GPIProxyObjectFactory(d))
+                mass_line_processor(line, d)
+            elif name == mass_file.namePattern:
+                if outputPath == 'ERROR':
+                    logger.error("Failed to upload file '%s' to LSG SE" % name)
+                    mass_file.failureReason = line[line.find('ERROR')+5:]
+                    return
+                mass_file.locations = outputPath.strip('\n')
+            else:
+                logger.error("Could't decipher the outputfiles location entry!")
+                logger.error("Neither '%s' nor '%s' match the namePattern attribute" % (pattern, name))
+                mass_file.failureReason = "Could't decipher the outputfiles location entry!"
+
+        for line in postprocesslocations.readlines():
+                
+            if line.strip() == '':      
+                continue
+         
+            if line.startswith('massstorage'):
+                mass_line_processor(line.strip(), self)
+
+        """
         for line in postprocesslocations.readlines():
                 
             if line.strip() == '':      
@@ -81,9 +116,9 @@ class MassStorageFile(IOutputFile):
                         massStorageLocation = outputPath.strip('\n')        
                         if massStorageLocation not in self.locations:
                             self.locations.append(massStorageLocation)
-     
-        postprocesslocations.close()
-            
+        """     
+
+        postprocesslocations.close()            
         
     def location(self):
         """
