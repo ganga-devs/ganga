@@ -64,7 +64,7 @@ def string_file_shortcut(v,item):
                 return LCGStorageElementFile._proxyClass(v)._impl                                
             elif key == 'DiracFile':
                 try:
-                    from GangaLHCb.Lib.LHCbDataset.DiracFile import DiracFile
+                    from GangaDirac.Lib.Files.DiracFile import DiracFile
                     return  DiracFile._proxyClass(v)._impl                                
                 except:
                     pass
