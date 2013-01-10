@@ -108,16 +108,12 @@ class LCGStorageElementFile(IOutputFile):
                 #todo copy also the other attributes
                 lcgse_file.subfiles.append(GPIProxyObjectFactory(d))
                 lcgse_line_processor(line, d)
-            elif name == lcgse_file.namePattern:
+            else:
                 if guid.startswith('ERROR'):
                     logger.error("Failed to upload file '%s' to LSG SE" % name)
                     lcgse_file.failureReason = guid[6:]
                     return
                 lcgse_file.locations = guid
-            else:
-                logger.error("Could't decipher the outputfiles location entry!")
-                logger.error("Neither '%s' nor '%s' match the namePattern attribute" % (pattern, name))
-                lcgse_file.failureReason = "Could't decipher the outputfiles location entry!"
 
         for line in postprocesslocations.readlines():
                 
