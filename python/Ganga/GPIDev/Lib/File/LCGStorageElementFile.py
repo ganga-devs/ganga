@@ -110,7 +110,8 @@ class LCGStorageElementFile(IOutputFile):
                 lcgse_line_processor(line, d)
             else:
                 if guid.startswith('ERROR'):
-                    logger.error("Failed to upload file '%s' to LSG SE" % name)
+                    logger.error("Failed to upload file to LSG SE")
+                    logger.error(guid[6:])
                     lcgse_file.failureReason = guid[6:]
                     return
                 lcgse_file.locations = guid
