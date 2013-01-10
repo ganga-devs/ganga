@@ -97,7 +97,7 @@ class DiracFile(IOutputFile):
                 dirac_file.guid      = tokens[3]
             else:
                 logger.error("Could't decipher the outputfiles location entry!")
-                logger.error("Neither '%s' nor '%s' match the namePattern attribute" % (pattern, name))
+                logger.error("Neither '%s' nor '%s' match the namePattern attribute of '%s'" % (pattern, name, dirac_file.namePattern))
                 dirac_file.failureReason = "Could't decipher the outputfiles location entry!"
                 
   
