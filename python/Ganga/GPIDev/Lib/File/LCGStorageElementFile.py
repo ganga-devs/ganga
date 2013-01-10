@@ -184,6 +184,10 @@ class LCGStorageElementFile(IOutputFile):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
 
                 d=LCGStorageElementFile(namePattern=os.path.basename(currentFile))
+                d.compressed = self.compressed
+                d.lfc_host = self.lfc_host
+                d.se = self.se
+                #todo copy also the other attributes
 
                 if exitcode == 0:
                 
