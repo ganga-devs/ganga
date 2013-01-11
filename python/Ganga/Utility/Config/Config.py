@@ -709,6 +709,13 @@ def read_ini_files(filenames,system_vars):
             for name in cc.options(sec):
                 value = cc.get(sec,name)
 
+                for localvar in re.finditer('\$\{[^${}]*\}', value):
+                    localvarstripped = re.sub(r'[^\w]', '', localvar.group(0))
+                    try:
+                        value = value.replace(localvar.group(0),cc.get(sec,localvarstripped))
+                    except:
+                        logger.warn('The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
+                        logger.warn('[' + sec + '] configuration section of ' + f)
                 # do not put the DEFAULTS into the sections (no need)
                 if name in cc.defaults().keys():
                     continue
@@ -725,18 +732,22 @@ def read_ini_files(filenames,system_vars):
                 from Ganga.Utility.Config import expandgangasystemvars
                 value = expandgangasystemvars(None, value)
                 # check for the use of environment vars
-                #m = re.search('\$\{[^${}]*\}', value)     # matches on ${...}
-                m = re.search('\$\$[^${}]*\$\$', value)     # matches on $$...$$
-                while m:
-                    envvar = m.group(0).strip('$')
+                re.search('\$\{[^${}]*\}', value)     # matches on ${...}
+                for envvar in re.finditer('\$\$[^${}]*\$\$', value):
+                    #yeah, if the same variable appears more than once, we'll look it up in the 
+                    #environment more than once too...but that's not too arduous.
+                    envvar = envvar.group(0)
+                    envvarclean = envvar.strip('$')
 
                     # is env variable
                     envval = ''
-                    if os.environ.has_key(envvar):
-                        envval = os.environ[envvar]
-                        
-                    value = value.replace( m.group(0), envval )
-                    m = re.search('\$\{[^${}]*\}', value )
+                    logger.debug('looking for ' + str(envvarclean) + ' in the shell environment')
+                    if os.environ.has_key(envvarclean):
+                        envval = os.environ[envvarclean]
+                        logger.debug(str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
+                    else:
+                        logger.warn('The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
+                    value = value.replace( envvar, envval )
                     
                 # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF AT ALL?
                 value = value.rstrip()
