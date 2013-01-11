@@ -85,6 +85,7 @@ class DiracFile(IOutputFile):
 
             if pattern == dirac_file.namePattern:
                 d=DiracFile(namePattern=name)
+                d.compressed = dirac_file.compressed
                 dirac_file.subfiles.append(GPIProxyObjectFactory(d))
                 dirac_line_processor(line, d)
             elif name == dirac_file.namePattern:
@@ -178,10 +179,20 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t download a file without an LFN.')
 
         self._getEnv()
-        r=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, to_location)[1]
-        self.namePattern = os.path.split(self.lfn)[1]
-        self.getMetadata()
-        return r
+        logger.info("Getting file %s" % self.lfn)
+        rc, stdout, stderr=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, to_location)
+        if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
+            if self.namePattern=="":
+                name = os.path.basename(self.lfn)
+                if self.compressed:
+                    name = name[:-3]
+                self.namePattern = name
+        
+            if self.guid =="" or not self.locations:
+                self.getMetadata()
+            return
+        logger.error("Error in getting file '%s' : %s" % (self.lfn, stdout))
+        return stdout
 
     def replicate(self, destSE):
         """
@@ -235,7 +246,7 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t upload a file without a local file name.')
 
         sourceDir = self.localDir
-        if self._parent != None: # attached to a job, use the joboutputdir
+        if self._parent != None and os.path.isdir(self.getJobObject().outputdir): # attached to a job, use the joboutputdir
             sourceDir = self.getJobObject().outputdir
         if not os.path.isdir(sourceDir):
             raise GangaException('localDir attribute is not a valid dir, don\'t know from which dir to take the file' )
@@ -258,25 +269,31 @@ class DiracFile(IOutputFile):
         
         outputFiles=GangaList()
         for file in glob.glob(os.path.join(sourceDir, self.namePattern)):
-            if not os.path.exists(file):
-                raise GangaException('File "%s" must exist!'% os.path.join(sourceDir, self.namePattern))
+            name = file
+            if self.compressed:
+                os.system('gzip -c %s > %s.gz' % (name,name))
+                name+='.gz'
+            if not os.path.exists(name):
+                raise GangaException('File "%s" must exist!'% os.path.join(sourceDir, name))
             lfn = self.lfn
             guid = self.guid
             if lfn == "":
-                lfn = os.path.join(lfn_base, os.path.basename(file))
+                lfn = os.path.join(lfn_base, os.path.basename(name))
             if guid == "":
                 md5 = hashlib.md5(lfn).hexdigest()
                 guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
             
             d=DiracFile()
             d.namePattern = os.path.basename(file)
+            d.compressed  = self.compressed
             d.localDir    = sourceDir
             stderr=''
             stdout=''
-            logger.info('Uploading file %s' % file)
+            logger.info('Uploading file %s' % name)
             for se in storage_elements:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(lfn, file, se, guid), self._env)
+                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(lfn, name, se, guid), self._env)
                 if stdout.find("'Successful': {'%s'" % lfn) >=0:
+                    if self.compressed: os.system('rm -f %s'% name)
                     if regex.search(self.namePattern) is not None:
                         d.lfn = lfn
                         d.locations = [se]
@@ -289,7 +306,8 @@ class DiracFile(IOutputFile):
                         self.guid = guid
                         return
             else:
-                logger.error(failureReason = "Error in uploading file %s. : %s"% (os.path.basename(file), stdout))
+                if self.compressed: os.system('rm -f %s'% name)
+                logger.error(failureReason = "Error in uploading file %s. : %s"% (os.path.basename(name), stdout))
                 if regex.search(self.namePattern) is not None:
                     d.failureReason =  failureReason
                     outputFiles.append(GPIProxyObjectFactory(d))
@@ -303,14 +321,16 @@ class DiracFile(IOutputFile):
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
 
-        def wildcard_script(namePattern, lfnBase):
+        def wildcard_script(namePattern, lfnBase, compressed, wildCard):
             return """
 ###INDENT###for f in glob.glob('###NAME_PATTERN###'):
+###INDENT###    label = f
+###INDENT###    if ###COMPRESSED###: label=label[:-3]
 ###INDENT###    wildcard_lfn = os.path.join('###LFN_BASE###', os.path.basename(f))
 ###INDENT###    md5 = hashlib.md5(wildcard_lfn).hexdigest()
 ###INDENT###    wildcard_guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
-###INDENT###    uploadFile(os.path.basename(f), wildcard_lfn, wildcard_guid, storage_elements, '###NAME_PATTERN###')
-""".replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase)
+###INDENT###    uploadFile(os.path.basename(f), wildcard_lfn, wildcard_guid, storage_elements, label, '###WILD_CARD###')
+""".replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', compressed).replace('###WILD_CARD###', wildCard)
 
         script = """
 ###INDENT###def run_command(cmd):
@@ -324,10 +344,10 @@ class DiracFile(IOutputFile):
 ###INDENT###    stdout, stderr = pipe.communicate()
 ###INDENT###    return pipe.returncode, stdout, stderr
 ###INDENT###
-###INDENT###def uploadFile(file, lfn, guid, SEs, wildcard=''):
+###INDENT###def uploadFile(file, lfn, guid, SEs, file_label, wildcard=''):
 ###INDENT###    import os, datetime
 ###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file)):
-###INDENT###        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\\n" % (wildcard, file, file))
+###INDENT###        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\\n" % (wildcard, file_label, file))
 ###INDENT###        return
 ###INDENT###    stdout=''
 ###INDENT###    stderr=''
@@ -335,15 +355,15 @@ class DiracFile(IOutputFile):
 ###INDENT###        try:
 ###INDENT###            retcode, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
 ###INDENT###        except Exception,x:
-###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
+###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
 ###INDENT###        if stdout.find(\"'Successful': {'%s'\" % lfn) >=0:
 ###INDENT###            try:
 ###INDENT###                id = eval(run_command('###SETUP###dirac-dms-lfn-metadata %s' % lfn)[1])['Successful'][lfn]['GUID']
-###INDENT###                ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::%s\\n" % (wildcard, file, lfn, se, id))
+###INDENT###                ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::%s\\n" % (wildcard, file_label, lfn, se, id))
 ###INDENT###            except:
-###INDENT###                ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::NotAvailable\\n" % (wildcard, file, lfn, se))                
+###INDENT###                ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::NotAvailable\\n" % (wildcard, file_label, lfn, se))                
 ###INDENT###            return
-###INDENT###    ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s,%s):::NotAvailable\\n" % (wildcard, file, file, stdout, stderr))
+###INDENT###    ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s,%s):::NotAvailable\\n" % (wildcard, file_label, file, stdout, stderr))
 ###INDENT###
 ###INDENT###storage_elements = ###STORAGE_ELEMENTS###
 ###INDENT###import os, glob, hashlib
@@ -352,18 +372,21 @@ class DiracFile(IOutputFile):
         import uuid
         lfn_base = os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()))
         for file in outputFiles:
+            name = file.namePattern
+            if file.namePattern in patternsToZip:
+                name+='.gz'
             if regex.search(file.namePattern) is not None:
-                script+= wildcard_script(file.namePattern, lfn_base)
+                script+= wildcard_script(name, lfn_base, str(file.namePattern in patternsToZip), file.namePattern)
             else:
                 lfn = file.lfn
                 guid = file.guid
                 if file.lfn=='':
-                    lfn = os.path.join(lfn_base, file.namePattern)
+                    lfn = os.path.join(lfn_base, name)
                 if file.guid == '':
                     md5 = hashlib.md5(lfn).hexdigest()
                     guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
 
-                script+='###INDENT###uploadFile("%s", "%s", "%s", storage_elements)' % (file.namePattern, lfn, guid)
+                script+='###INDENT###uploadFile("%s", "%s", "%s", storage_elements, "%s")' % (name, lfn, guid, file.namePattern)
 
         script = script.replace('###STORAGE_ELEMENTS###', str(configDirac['DiracSpaceTokens']))
         script = script.replace('###INDENT###',           indent)
