@@ -714,8 +714,8 @@ def read_ini_files(filenames,system_vars):
                     try:
                         value = value.replace(localvar.group(0),cc.get(sec,localvarstripped))
                     except:
-                        logger.warn('The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
-                        logger.warn('[' + sec + '] configuration section of ' + f)
+                        logger.debug('The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
+                        logger.debug('[' + sec + '] configuration section of ' + f)
                 # do not put the DEFAULTS into the sections (no need)
                 if name in cc.defaults().keys():
                     continue
@@ -747,7 +747,7 @@ def read_ini_files(filenames,system_vars):
                         logger.debug(str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
                         value = value.replace( envvar, envval )
                     else:
-                        logger.warn('The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
+                        logger.debug('The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
                     
                 # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF AT ALL?
                 value = value.rstrip()
