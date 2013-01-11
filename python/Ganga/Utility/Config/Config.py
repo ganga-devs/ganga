@@ -745,9 +745,9 @@ def read_ini_files(filenames,system_vars):
                     if os.environ.has_key(envvarclean):
                         envval = os.environ[envvarclean]
                         logger.debug(str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
+                        value = value.replace( envvar, envval )
                     else:
                         logger.warn('The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
-                    value = value.replace( envvar, envval )
                     
                 # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF AT ALL?
                 value = value.rstrip()
