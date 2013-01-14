@@ -198,9 +198,11 @@ class PythonOptionsParser:
     def get_output(self, job):
         '''Builds lists of output files and output data.'''
 
-        outputdata = []
-        if job.outputdata: outputdata = job.outputdata.files
-        outsandbox = [f for f in job.outputsandbox]
+##        outputdata = []
+##        if job.outputdata: outputdata = job.outputdata.files
+##        outsandbox = [f for f in job.outputsandbox]
+        outputdata = [f.namePattern for f in job.outputfiles if f._impl._name != 'OutputSandboxFile']
+        outsandbox = [f.namePattern for f in job.outputfiles if f._impl._name == 'OutputSandboxFile']
 
         # if user put any files in both, remove them from the sandbox
         for f in outsandbox:
