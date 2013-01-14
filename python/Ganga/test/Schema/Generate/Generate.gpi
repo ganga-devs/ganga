@@ -9,6 +9,7 @@ logger = getLogger()
 ##We have to determine the Ganga version this way because the PRE always thinks config['System']['GANGA_VERSION'] is GANGA-SVN
 this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
 this_repo=getConfig('Configuration')['gangadir']
+excludelist = getConfig('TestingFramework')['SchemaTest_ignore_obj']
 
 logger.info('#################### RUNNING JOB GENERATOR')
 logger.info('#################### Executing Ganga version: ' + this_version)
@@ -23,19 +24,6 @@ logger.info('#################### Creating repo at: ' + this_repo)
 totnumobs = 0
 box.clean(confirm=True)
 
-excludelist = ['LHCbTaskDummySplitter', 
-                'LHCbTask', 
-                'ITask',
-                'ITransform',
-                'LHCbUnit',
-                'IUnit',
-                'IOutputFile',
-                'TestGangaObject', 
-                'EmptyDataset', 
-                'TestListViewDataset', 
-                'JobTree',
-                '_RootMergeToolAANT',
-                'TestDataset']
 #Create an Executable job for each of the available backends
 for category in allPlugins.all_dict:
     for clsname in allPlugins.all_dict[category]:

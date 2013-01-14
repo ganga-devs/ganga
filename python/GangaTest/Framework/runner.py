@@ -62,9 +62,10 @@ myConfig.addOption('CoverageReport', '', 'The file used to save the testing cove
 myConfig.addOption('timeout', 600, 'timeout when the test is forcibly stopped ')
 myConfig.addOption('AutoCleanup',True,'cleanup the job registry before running the testcase')
 
-myConfig.addOption('SchemaTesting', '', 'Pass Ganga version number to enable/disable Schema testing mode.')
+myConfig.addOption('SchemaTesting', False, 'Set to True to enable Schema testing mode.')
+myConfig.addOption('SchemaTest_ignore_obj', [], 'Objects to ignore when in Schema testing mode.')
 
-if myConfig['SchemaTesting'] == '':
+if myConfig['SchemaTesting'] == False:
     myConfig.addOption('Config', 'default.ini', 'ganga configuration(s)')
 else:
     myConfig.addOption('Config', 'Schema.ini', 'ganga configuration(s)')

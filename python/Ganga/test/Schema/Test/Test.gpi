@@ -10,6 +10,7 @@ logger = getLogger()
 this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
 this_repo=getConfig('Configuration')['gangadir']
 this_user=getConfig('Configuration')['user']
+excludelist = getConfig('TestingFramework')['SchemaTest_ignore_obj']
 
 logger.error('#################### RUNNING SCHEMA TESTER')
 logger.error('#################### Executing Ganga version: ' + this_version)
@@ -39,8 +40,6 @@ logger.info('##########################################')
 box
 
 
-assert num_box_obj_dirs== len(box), "The number of object directories in the box repository " + str(num_box_obj_dirs) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
-assert len(box) == int(read_data), "The number of objects in the box repository (" + str(len(box)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
 assert len(box) != 0, "Then number of objects in the box repository was zero"
 
 print box
@@ -59,3 +58,5 @@ for thing in box:
     index += 1
 
 assert exc_counter == 0, "We had " + str(exc_counter) + " problem(s) when reading the box objects."
+assert num_box_obj_dirs== len(box), "The number of object directories in the box repository " + str(num_box_obj_dirs) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
+assert len(box) == int(read_data), "The number of objects in the box repository (" + str(len(box)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
