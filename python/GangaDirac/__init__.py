@@ -1,6 +1,6 @@
 import os
 import Ganga.Utility.Config
-from multiprocessing import cpu_count
+#from multiprocessing import cpu_count
 configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
 config=Ganga.Utility.Config.getConfig('Configuration')
  
@@ -14,7 +14,8 @@ configDirac.addOption('Timeout', 1000,
 configDirac.addOption('StartUpWaitTime', 1.0,
                       'Wait time (seconds) prior to first poll of Dirac child proc')
 
-configDirac.addOption('NumWorkerThreads', cpu_count(),
+#configDirac.addOption('NumWorkerThreads', cpu_count(),
+configDirac.addOption('NumWorkerThreads', 2,
                       'Number of worker threads that the local DIRAC server and client should establish')
 
 configDirac.addOption('EndDataString', '###END-DATA-TRANS###',
