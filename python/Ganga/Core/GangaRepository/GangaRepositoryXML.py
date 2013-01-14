@@ -277,6 +277,9 @@ class GangaRepositoryLocal(GangaRepository):
                 cnt[x.__class__.__name__] = cnt.get(x.__class__.__name__,[]) + [str(id)]
                 examples[x.__class__.__name__] = str(x)
                 self.known_bad_ids.append(id)
+                # add object to incomplete_objects
+                if not id in self.incomplete_objects:
+                    self.incomplete_objects.append(id)
             global printed_explanation
             for exc,ids in cnt.items():
                 if examples[exc].find('comments') > 0:
