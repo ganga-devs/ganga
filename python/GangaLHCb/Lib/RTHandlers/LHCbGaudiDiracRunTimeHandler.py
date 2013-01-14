@@ -5,9 +5,11 @@ from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTime
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils                 import result_ok
+from GangaDirac.Lib.Files.DiracFile                     import DiracFile
 from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
 from Ganga.GPIDev.Lib.File                              import FileBuffer
+from Ganga.GPIDev.Base.Proxy                            import addProxy
 from Ganga.Utility.Config                               import getConfig
 from Ganga.Utility.logging                              import getLogger
 from Ganga.Utility.util                                 import unique
@@ -60,7 +62,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job=app.getJobObject()
-        outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
 
         data_str  = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
@@ -107,7 +109,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
            outbox, outdata = parser.get_output(job)
 
-           outputfiles.update(set(outdata[:]))
+           #outputfiles.update(set(outdata[:]))
+           job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
 

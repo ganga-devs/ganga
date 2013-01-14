@@ -92,15 +92,16 @@ class DiracFile(IOutputFile):
                 if lfn == '###FAILED###':
                     logger.error("Failed to upload file '%s' to Dirac" % name)
                     dirac_file.failureReason = tokens[2]
-                    return
+                    return True
                 dirac_file.lfn       = lfn
                 dirac_file.locations = tokens[2]
                 dirac_file.guid      = tokens[3]
             else:
-                logger.error("Could't decipher the outputfiles location entry!")
-                logger.error("Neither '%s' nor '%s' match the namePattern attribute of '%s'" % (pattern, name, dirac_file.namePattern))
-                dirac_file.failureReason = "Could't decipher the outputfiles location entry!"
-                
+                return False
+#                logger.error("Could't decipher the outputfiles location entry! %s" % line.strip())
+#                logger.error("Neither '%s' nor '%s' match the namePattern attribute of '%s'" % (pattern, name, dirac_file.namePattern))
+#                dirac_file.failureReason = "Could't decipher the outputfiles location entry!"
+            return True
   
             
         job = self.getJobObject()
@@ -113,7 +114,8 @@ class DiracFile(IOutputFile):
         
         for line in postprocesslocations.readlines():
             if line.startswith('DiracFile'):
-                dirac_line_processor(line, self)
+                 if dirac_line_processor(line, self):
+                     break
                         
         postprocesslocations.close()
 
@@ -386,7 +388,7 @@ class DiracFile(IOutputFile):
                     md5 = hashlib.md5(lfn).hexdigest()
                     guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
 
-                script+='###INDENT###uploadFile("%s", "%s", "%s", storage_elements, "%s")' % (name, lfn, guid, file.namePattern)
+                script+='###INDENT###uploadFile("%s", "%s", "%s", storage_elements, "%s")\n' % (name, lfn, guid, file.namePattern)
 
         script = script.replace('###STORAGE_ELEMENTS###', str(configDirac['DiracSpaceTokens']))
         script = script.replace('###INDENT###',           indent)
