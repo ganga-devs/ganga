@@ -393,6 +393,17 @@ class DiracFile(IOutputFile):
         script = script.replace('###LOCATIONSFILE###',    postProcessLocationsFP)
         if self._parent and self._parent.backend._name=='Dirac':
             script = script.replace('###SETUP###', '')
+        elif self._parent and self._parent.backend._name=='Local' and self._parent.application._name=='Root' and self._parent.application.usepython:
+            # THIS WHOLE IF STATEMENT IS A HORRIBLE HACK AS THE LOCAL ROOT RTHANDLER OVERWRITES THE PYTHONPATH ENV VAR
+            # WITH A REDUCED PATH
+            extra_setup=''
+#            if 'LHCBPROJECTPATH' in os.environ:
+#                extra_setup+='export LHCBPROJECTPATH=%s && ' % os.environ['LHCBPROJECTPATH']
+#            if 'CMTCONFIG' in os.environ:
+#                 extra_setup+='export CMTCONFIG=%s && ' % os.environ['CMTCONFIG']
+            if 'PYTHONPATH' in os.environ:
+                 extra_setup+='export PYTHONPATH=%s && ' % os.environ['PYTHONPATH']
+            script = script.replace('###SETUP###', extra_setup + '. SetupProject.sh LHCbDirac &&')#&>/dev/null && ')          
         else:
             script = script.replace('###SETUP###', '. SetupProject.sh LHCbDirac &>/dev/null && ')
 

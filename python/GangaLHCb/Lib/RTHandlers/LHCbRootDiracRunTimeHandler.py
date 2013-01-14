@@ -111,7 +111,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
         params.update({'ROOTPY_SCRIPT'   : wrapper_path,
                        'ROOTPY_VERSION'  : app.version,
                        'ROOTPY_LOG_FILE' : 'Ganga_Root.log',
-                       'ROOTPY_ARGS'     : app.args })
+                       'ROOTPY_ARGS'     : [str(a) for a in app.args] })
 
         f=open(wrapper_path,'w')
         if app.usepython:

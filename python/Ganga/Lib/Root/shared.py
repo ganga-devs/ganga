@@ -43,7 +43,7 @@ def findPythonVersion(rootsys):
             
 
     version = None
-    for f in ['config.h','RConfigure.h']:
+    for f in ['RConfigOptions.h','config.h','RConfigure.h']:
         version = lookInFile(os.path.join(rootsys,'include',f))
         if version is not None:
             break
