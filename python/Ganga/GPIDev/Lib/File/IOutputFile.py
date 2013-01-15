@@ -8,7 +8,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 
 class IOutputFile(GangaObject):
-    """IOutputFile represents base class for output files, such as MassStorageFile, LCGStorageElementFile, DiracFile, OutputSandboxFile, etc 
+    """IOutputFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, SandboxFile, etc 
     """
     _schema = Schema(Version(1,1), {})
     _category = 'outputfiles'
