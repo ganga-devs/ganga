@@ -34,7 +34,7 @@ class TestSmartMerger(GangaGPITestCase):
 
             j.application.exe = 'sh'
             j.application.args = [File(fileName), str(j.id),str(j.id*10)]
-            j.outputfiles = [OutputSandboxFile('out.txt'),OutputSandboxFile('out2.txt')]
+            j.outputfiles = [SandboxFile('out.txt'),SandboxFile('out2.txt')]
             self.jobslice.append(j)
 
     def runJobSlice(self):
@@ -54,7 +54,7 @@ class TestSmartMerger(GangaGPITestCase):
     
     def testNoFilesSpecifiedAllSame(self):
         
-        files = [OutputSandboxFile('foo.root'),OutputSandboxFile('bar.root'),OutputSandboxFile('out.log')]
+        files = [SandboxFile('foo.root'),SandboxFile('bar.root'),SandboxFile('out.log')]
         
         j1 = Job(outputfiles = files)
         j2 = Job(outputfiles = files)
@@ -65,15 +65,15 @@ class TestSmartMerger(GangaGPITestCase):
         
     def testNoFilesSpecifiedSomeOverlap(self):
         
-        j1 = Job(outputfiles = [OutputSandboxFile('foo.root'),OutputSandboxFile('bar.root'),OutputSandboxFile('out.log')])
-        j2 = Job(outputfiles = [OutputSandboxFile('a.root'),OutputSandboxFile('b.root'),OutputSandboxFile('out.log')])
+        j1 = Job(outputfiles = [SandboxFile('foo.root'),SandboxFile('bar.root'),SandboxFile('out.log')])
+        j2 = Job(outputfiles = [SandboxFile('a.root'),SandboxFile('b.root'),SandboxFile('out.log')])
         
         assert findFilesToMerge([j1,j2]) == ['out.log'], 'Should merge only some files'
         
     def testNoFilesSpecifiedNoOverlap(self):
         
-        j1 = Job(outputfiles = [OutputSandboxFile('foo.root'),OutputSandboxFile('bar.root'),OutputSandboxFile('out.log')])
-        j2 = Job(outputfiles = [OutputSandboxFile('a.root'),OutputSandboxFile('b.root'),OutputSandboxFile('c.log')])
+        j1 = Job(outputfiles = [SandboxFile('foo.root'),SandboxFile('bar.root'),SandboxFile('out.log')])
+        j2 = Job(outputfiles = [SandboxFile('a.root'),SandboxFile('b.root'),SandboxFile('c.log')])
         
         assert findFilesToMerge([j1,j2]) == [], 'Should merge no files'
         
