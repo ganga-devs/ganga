@@ -1,4 +1,4 @@
-j = Job(outputfiles = [ OutputSandboxFile('stdin'), OutputSandboxFile('stdout')])
+j = Job(outputfiles = [ SandboxFile('stdin'), SandboxFile('stdout')])
 
 
 j.backend = LCG()
