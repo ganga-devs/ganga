@@ -1,7 +1,7 @@
 j = Job()
 j.application.exe='python'
 j.application.args=["-c","file('output.out','w').write('output test')"]
-j.outputfiles = [OutputSandboxFile('*.out')]
+j.outputfiles = [SandboxFile('*.out')]
 j.submit()
 
 from GangaTest.Framework.utils import sleep_until_state
