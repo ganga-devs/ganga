@@ -31,6 +31,9 @@ else:
     j.outputfiles[0].get()
     j.outputfiles[1].get()
 
+    import time
+    time.sleep(30)
+
     for filename in ['fillrandom.root', j.outputfiles[1].location()[0][-10:], 'fillrandom2.root']:
         assert(filename in os.listdir(j.outputdir)) 
     

@@ -32,6 +32,9 @@ j.outputfiles[0].get()
 j.outputfiles[1].get()
 j.outputfiles[2].get()
 
+import time
+time.sleep(30)
+
 for filename in ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']:
     assert(filename in os.listdir(j.outputdir)) 
     
