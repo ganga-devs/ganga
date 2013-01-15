@@ -1408,7 +1408,7 @@ class Job(GangaObject):
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
                     uniqueValues.append(val) 
-                elif val.__class__.__name__ == 'LCGStorageElementFile':   
+                elif val.__class__.__name__ == 'LCGSEFile':   
                     uniqueValues.append(val) 
         
             super(Job,self).__setattr__(attr, uniqueValues) 
