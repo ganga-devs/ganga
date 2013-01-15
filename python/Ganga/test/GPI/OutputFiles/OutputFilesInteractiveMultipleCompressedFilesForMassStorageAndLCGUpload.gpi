@@ -14,7 +14,7 @@ j.outputfiles = ['*.root1']
 
 j.outputfiles[0].compressed = True
 
-assert(j.outputfiles[0].__class__.__name__ == 'LCGStorageElementFile')
+assert(j.outputfiles[0].__class__.__name__ == 'LCGSEFile')
 
 j.submit()
 

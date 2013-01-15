@@ -12,7 +12,7 @@ j.application.script = File('fillrandom.py')
 
 j.outputfiles = ['*.root1']
 
-assert(j.outputfiles[0].__class__.__name__ == 'LCGStorageElementFile')
+assert(j.outputfiles[0].__class__.__name__ == 'LCGSEFile')
 
 j.submit()
 
