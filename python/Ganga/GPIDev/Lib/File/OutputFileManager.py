@@ -44,7 +44,7 @@ def getOutputSandboxPatterns(job):
 
             outputFileClassName = outputFile.__class__.__name__
 
-            if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'OutputSandboxFile': 
+            if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'SandboxFile': 
                 if outputFile.namePattern not in outputPatterns:
                     if outputFile.compressed:
                         outputPatterns.append('%s.gz' % outputFile.namePattern)
@@ -65,7 +65,7 @@ def getOutputSandboxPatternsForInteractive(job):
 
         outputFileClassName = outputFile.__class__.__name__
 
-        if outputFileClassName == 'OutputSandboxFile' or (outputFileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
+        if outputFileClassName == 'SandboxFile' or (outputFileClassName != 'SandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
             if outputFile.compressed:
                 patternsToSandbox.append('%s.gz' % outputFile.namePattern)
                 patternsToZip.append(outputFile.namePattern)
@@ -92,7 +92,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
             
             outputFileClassName = outputFile.__class__.__name__
         
-            if outputFileClassName == 'OutputSandboxFile' or (outputFileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
+            if outputFileClassName == 'SandboxFile' or (outputFileClassName != 'SandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
                 patternsToSandbox.append(outputFile.namePattern)
 
                 if outputFile.compressed:
@@ -151,11 +151,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
             backendClassName = job.backend.__class__.__name__
 
             if outputFile.compressed:   
-                if outputfileClassName == 'OutputSandboxFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
+                if outputfileClassName == 'SandboxFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
                     patternsToZip.append(outputFile.namePattern)  
-                elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
+                elif outputfileClassName != 'SandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
                     patternsToZip.append(outputFile.namePattern)  
-                elif outputfileClassName != 'OutputSandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
+                elif outputfileClassName != 'SandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
                     patternsToZip.append(outputFile.namePattern)  
     
             if outputfileClassName not in outputFilesProcessedOnWN.keys():
