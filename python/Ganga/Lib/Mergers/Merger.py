@@ -291,7 +291,7 @@ def findFilesToMerge(jobs):
                 file_map[file_name] = file_map.setdefault(file_name,0) + 1
         elif j.outputfiles != []:
             for file_name in j.outputfiles:
-                if file_name.__class__.__name__ == 'OutputSandboxFile':
+                if file_name.__class__.__name__ == 'SandboxFile':
                     file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern,0) + 1
     
     for file_name, count in file_map.iteritems():
