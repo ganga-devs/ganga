@@ -3,9 +3,9 @@ from File import ShareDir
 from FileBuffer import FileBuffer
 
 from IOutputFile import IOutputFile
-from OutputSandboxFile import OutputSandboxFile
+from SandboxFile import SandboxFile
 from MassStorageFile import MassStorageFile
-from LCGStorageElementFile import LCGStorageElementFile
+from LCGSEFile import LCGSEFile
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
@@ -59,9 +59,9 @@ def string_file_shortcut(v,item):
             if key == 'MassStorageFile':
                 from MassStorageFile import MassStorageFile
                 return MassStorageFile._proxyClass(v)._impl         
-            elif key == 'LCGStorageElementFile':
-                from LCGStorageElementFile import LCGStorageElementFile
-                return LCGStorageElementFile._proxyClass(v)._impl                                
+            elif key == 'LCGSEFile':
+                from LCGSEFile import LCGSEFile
+                return LCGSEFile._proxyClass(v)._impl                                
             elif key == 'DiracFile':
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -69,7 +69,7 @@ def string_file_shortcut(v,item):
                 except:
                     pass
 
-        return OutputSandboxFile._proxyClass(v)._impl
+        return SandboxFile._proxyClass(v)._impl
 
     return None 
         
