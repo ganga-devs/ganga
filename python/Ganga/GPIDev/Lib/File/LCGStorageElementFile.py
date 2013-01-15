@@ -2,7 +2,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: LCGStorageElementFile.py,v 0.1 2011-02-12 15:40:00 idzhunov Exp $
+# $Id: LCGSEFile.py,v 0.1 2011-02-12 15:40:00 idzhunov Exp $
 ################################################################################
 
 from Ganga.GPIDev.Schema import *
@@ -19,10 +19,10 @@ import os
 
 regex = re.compile('[*?\[\]]')
 
-class LCGStorageElementFile(IOutputFile):
-    """LCGStorageElementFile represents a class marking an output file to be written into LCG SE
+class LCGSEFile(IOutputFile):
+    """LCGSEFile represents a class marking an output file to be written into LCG SE
     """
-    lcgSEConfig = getConfig('Output')['LCGStorageElementFile']['uploadOptions']
+    lcgSEConfig = getConfig('Output')['LCGSEFile']['uploadOptions']
 
     _schema = Schema(Version(1,1), {
         'namePattern' : SimpleItem(defvalue="",doc='pattern of the file name'),
@@ -36,17 +36,17 @@ class LCGStorageElementFile(IOutputFile):
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
         'locations'   : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
-        'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGStorageElementFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+        'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure'),
         'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
-    _name = "LCGStorageElementFile"
+    _name = "LCGSEFile"
     _exportmethods = [ "location" , "setLocation" , "get" , "put" , "getUploadCmd"]
 
     def __init__(self,namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into LCG SE
         """
-        super(LCGStorageElementFile, self).__init__()
+        super(LCGSEFile, self).__init__()
         self.namePattern = namePattern
         self.localDir = localDir
 
@@ -55,7 +55,7 @@ class LCGStorageElementFile(IOutputFile):
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
             raise AttributeError('invalid se_type: %s' % value)
-        super(LCGStorageElementFile,self).__setattr__(attr, value)
+        super(LCGSEFile,self).__setattr__(attr, value)
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
@@ -67,7 +67,7 @@ class LCGStorageElementFile(IOutputFile):
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "LCGStorageElementFile(namePattern='%s')"% self.namePattern
+        return "LCGSEFile(namePattern='%s')"% self.namePattern
 
     
     def __get_unique_fname__(self):
@@ -101,7 +101,7 @@ class LCGStorageElementFile(IOutputFile):
             name = line.split(' ')[2].strip('.gz')
 
             if regex.search(lcgse_file.namePattern) is not None:
-                d=LCGStorageElementFile(namePattern=name)
+                d=LCGSEFile(namePattern=name)
                 d.compressed = lcgse_file.compressed
                 d.lfc_host = lcgse_file.lfc_host
                 d.se = lcgse_file.se
@@ -184,7 +184,7 @@ class LCGStorageElementFile(IOutputFile):
 
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
 
-                d=LCGStorageElementFile(namePattern=os.path.basename(currentFile))
+                d=LCGSEFile(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
                 d.lfc_host = self.lfc_host
                 d.se = self.se
@@ -324,7 +324,7 @@ class LCGStorageElementFile(IOutputFile):
 
     def get(self):
         """
-        Retrieves locally all files matching this LCGStorageElementFile object pattern
+        Retrieves locally all files matching this LCGSEFile object pattern
         """
         import subprocess
         
@@ -370,6 +370,6 @@ class LCGStorageElementFile(IOutputFile):
                 print 'most probably you need to source the grid environment , set environment variable LFC_HOST to %s and try again with the lcg-cp command to download the job output' % self.lfc_host
 
 
-# add LCGStorageElementFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGStorageElementFile() objects via config file)
+# add LCGSEFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGSEFile() objects via config file)
 import Ganga.Utility.Config
-Ganga.Utility.Config.config_scope['LCGStorageElementFile'] = LCGStorageElementFile
+Ganga.Utility.Config.config_scope['LCGSEFile'] = LCGSEFile
