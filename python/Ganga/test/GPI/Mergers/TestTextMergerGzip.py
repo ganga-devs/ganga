@@ -43,7 +43,7 @@ class TestTextMergerGzip(GangaGPITestCase):
 
             j.application.exe = 'sh'
             j.application.args = [File(fileName), str(j.id),str(j.id*10)]
-            j.outputfiles = [OutputSandboxFile('out.txt.gz'),OutputSandboxFile('out2.txt.gz')]
+            j.outputfiles = [SandboxFile('out.txt.gz'),SandboxFile('out2.txt.gz')]
             self.jobslice.append(j)
 
     def runJobSlice(self):
