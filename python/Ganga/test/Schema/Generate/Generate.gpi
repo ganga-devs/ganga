@@ -26,32 +26,33 @@ box.clean(confirm=True)
 
 #Create an Executable job for each of the available backends
 for category in allPlugins.all_dict:
-    for clsname in allPlugins.all_dict[category]:
-        if clsname not in excludelist:
-            logger.info('##########################################')
-            cls = allPlugins.find(category, clsname)
-            logger.info("Class: " +str(cls))
-#            obj = super(cls, cls).__new__(cls)
-#            logger.info(obj)
+    if category not in excludelist:
+        for clsname in allPlugins.all_dict[category]:
+            if clsname not in excludelist:
+                logger.info('##########################################')
+                cls = allPlugins.find(category, clsname)
+                logger.info("Class: " +str(cls))
+    #            obj = super(cls, cls).__new__(cls)
+    #            logger.info(obj)
 
-            new_name = str(this_version + "_" + category + "_" + clsname)
-            logger.info("Ganga Box name: " + str(new_name))
+                new_name = str(this_version + "_" + category + "_" + clsname)
+                logger.info("Ganga Box name: " + str(new_name))
 
 #the following if statement (using box.select) will not work on Ganga versions < 5.8.17 (see bug #98232)
 #therefore, use the following to generate schemas prior to that
-            if new_name + " |" not in box.__str__():
-#            if len(box.select(name=new_name)) == 0:
-                try:
-                    logger.info(str(new_name) + " not found in box...adding object #" + str(totnumobs) + "...")
-                    box.add(cls.__call__(), new_name)
-                    totnumobs += 1
-                except Exception, e:
-                    logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
-                    #logger.error(str(e))
-                    logger.error(traceback.print_exc())
-                    #raise
-            else:
-                logger.warn("Already in box: " + str(new_name))
+                if new_name + " |" not in box.__str__():
+    #            if len(box.select(name=new_name)) == 0:
+                    try:
+                        logger.info(str(new_name) + " not found in box...adding object #" + str(totnumobs) + "...")
+                        box.add(cls.__call__(), new_name)
+                        totnumobs += 1
+                    except Exception, e:
+                        logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
+                        #logger.error(str(e))
+                        logger.error(traceback.print_exc())
+                        #raise
+                else:
+                    logger.warn("Already in box: " + str(new_name))
 
 logger.info('##########################################')
 logger.info('Total number of objects added to Box: ' + str(totnumobs))
