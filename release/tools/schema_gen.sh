@@ -112,7 +112,7 @@ then
         rm -rf ${NEW_REPO_LOC}
     fi
     echo "Generating repository:" ${GANGADIR}
-    cmd="${GANGA_EXE}  -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES $GANGA_GEN"
+    cmd="${GANGA_EXE}  --test -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=True -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES $GANGA_GEN"
     echo $cmd
     $cmd
     echo "Moving repository: " ${GANGADIR} "->" ${NEW_REPO_LOC}
