@@ -14,6 +14,7 @@ excludelist = getConfig('TestingFramework')['SchemaTest_ignore_obj']
 logger.info('#################### RUNNING JOB GENERATOR')
 logger.info('#################### Executing Ganga version: ' + this_version)
 logger.info('#################### Creating repo at: ' + this_repo)
+logger.error('#################### Exclude: ' + str(excludelist))
 
 
 #        cls = allPlugins.find(category, classname)
