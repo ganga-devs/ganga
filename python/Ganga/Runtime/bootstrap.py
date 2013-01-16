@@ -765,14 +765,14 @@ default_backends = LCG
             return list_plugins('backends')
         from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
         def convert_merger_to_postprocessor(j):
-            if not len(j.postprocessors._impl.process_objects) and j._impl.merger is not None:
-                mp = MultiPostProcessor()
-                mp.process_objects.append(j._impl.merger)
-                j._impl.postprocessors = mp
             if len(j.postprocessors._impl.process_objects):
                 self.logger.info('job(%s) already has postprocessors'%j.fqid)
             if j._impl.merger is None:
                 self.logger.info('job(%s) does not have a merger to convert'%j.fqid)
+            if not len(j.postprocessors._impl.process_objects) and j._impl.merger is not None:
+                mp = MultiPostProcessor()
+                mp.process_objects.append(j._impl.merger)
+                j._impl.postprocessors = mp
         exportToGPI('applications',applications,'Functions')
         exportToGPI('backends',backends,'Functions')
         exportToGPI('list_plugins',list_plugins,'Functions')
