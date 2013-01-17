@@ -33,7 +33,8 @@ from Ganga.Core.GangaRepository import *
 
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.File import File
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, addProxy, stripProxy
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 import os, shutil, sys
 from Ganga.Utility.Config import getConfig
@@ -198,6 +199,21 @@ class Job(GangaObject):
 
     def _readonly(self):
         return self.status != 'new'
+
+    def _attribute_filter__get__(self, name):
+        if name == 'outputfiles':
+            import re
+            regex = re.compile('[*?\[\]]')
+            files = GangaList()
+            for f in object.__getattribute__(self, name):
+                if regex.search(f.namePattern) is not None and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
+                    files.extend(makeGangaListByRef(stripProxy(f).subfiles))
+                else:
+                    files.append(f)
+            return addProxy(files)
+        if name in self.metadata.data.keys():
+            return self.metadata[name]
+        return object.__getattribute__(self, name)
 
     # status may only be set directly using updateStatus() method
     # only modules comming from Ganga.GPIDev package may change it directly

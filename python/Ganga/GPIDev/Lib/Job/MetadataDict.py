@@ -14,15 +14,15 @@ class MetadataDict(GangaObject):
         })
     _name='MetadataDict'
     _category='metadata'
-    _exportmethods = ['__getitem__','__str__']
+    _exportmethods = ['__getitem__']#,'__str__']
 
 
     def __init__(self):
         super(MetadataDict,self).__init__()
 
-    def __str__(self):
-        return str(self.data)
-
+##    def __str__(self):
+##        return str(self.data)
+    
     def __getitem__(self, key):
         return addProxy(copy.deepcopy(self.data[key]))
 

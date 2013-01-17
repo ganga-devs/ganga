@@ -397,34 +397,30 @@ def GPIProxyClassFactory(name, pluginclass):
     helptext(_setattr,"""Set a property of %(classname)s with consistency and safety checks.
 Setting a [protected] or a unexisting property raises AttributeError.""")
 
-    def _getattr(self,name):
-        ## need to know about the types that require metadata attribute checking
-        ## this allows derived types to get same behaviour for free.
-        from Ganga.GPIDev.Lib.Job.Job import Job
-        from Ganga.GPIDev.Lib.Tasks.Task import Task
-        from Ganga.GPIDev.Lib.Tasks.Transform import Transform        
-        metadata_objects=[Job]
-        if True in (isType(self,t) for t in metadata_objects):
-            try:
-                return self.metadata[name]
-            except:
-                return object.__getattribute__(self,name)
-        return object.__getattribute__(self,name)
+#    def _getattr(self, name):
+#        print "HERE", type(self), name, type(name)
+#        if name == '_impl': return self._impl
+#        if '_attribute_filter__get__' in dir(self._impl):
+#            return self._impl._attribute_filter__get__(name)
+#        return self.name
+#        ## need to know about the types that require metadata attribute checking
+#        ## this allows derived types to get same behaviour for free.
+#        from Ganga.GPIDev.Lib.Job.Job import Job
+#        from Ganga.GPIDev.Lib.Tasks.Task import Task
+#        from Ganga.GPIDev.Lib.Tasks.Transform import Transform        
+#        metadata_objects=[Job]
+#        if True in (isType(self,t) for t in metadata_objects):
+#            try:
+#                return self.metadata[name]
+#            except:
+#                return object.__getattribute__(self,name)
+#        return object.__getattribute__(self,name)
  
     def _getattribute(self, name):
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
-        from Ganga.GPIDev.Lib.Job.Job import Job        
-        if isType(object.__getattribute__(self, '_impl'), Job) and name == 'outputfiles':
-            import re
-            regex = re.compile('[*?\[\]]')
-            files = GangaList()
-            for f in object.__getattribute__(self, name):
-                if regex.search(f.namePattern) is not None  and hasattr(f._impl,'subfiles') and f._impl.subfiles:
-                    files.extend(makeGangaListByRef(f._impl.subfiles))
-                else:
-                    files.append(f)
-            return addProxy(files)
-        return object.__getattribute__(self, name)        
+        if name == '_impl': return object.__getattribute__(self, '_impl')
+        if '_attribute_filter__get__' in dir(object.__getattribute__(self, '_impl')) and object.__getattribute__(self, '_impl').__class__.__name__ != 'ObjectMetaclass':
+            return addProxy(object.__getattribute__(object.__getattribute__(self, '_impl'), '_attribute_filter__get__')(name))
+        return addProxy(object.__getattribute__(self, name))
 
     # but at the class level _impl is a ganga plugin class
     d = { '_impl' : pluginclass,
@@ -436,7 +432,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
           'copy' : _copy,
           '__doc__' : publicdoc,
           '__setattr__': _setattr,
-          '__getattr__': _getattr,
+#          '__getattr__': _getattr,
           '__getattribute__':_getattribute
          }
 
