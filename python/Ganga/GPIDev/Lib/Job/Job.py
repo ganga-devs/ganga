@@ -160,6 +160,7 @@ class Job(GangaObject):
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
                                     'outputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
+                                    'non_copyable_outputfiles' : OutputFileItem(defvalue=[], hidden=1, typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
                                     'status': SimpleItem('new',protected=1,checkset='_checkset_status',doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"'),
                                     'name':SimpleItem('',doc='optional label which may be any combination of ASCII characters',typelist=['str']),
@@ -205,7 +206,7 @@ class Job(GangaObject):
             import re
             regex = re.compile('[*?\[\]]')
             files = GangaList()
-            for f in object.__getattribute__(self, name):
+            for f in object.__getattribute__(self, name) + object.__getattribute__(self, 'non_copyable_outputfiles'):
                 if regex.search(f.namePattern) is not None and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
                     files.extend(makeGangaListByRef(stripProxy(f).subfiles))
                 else:

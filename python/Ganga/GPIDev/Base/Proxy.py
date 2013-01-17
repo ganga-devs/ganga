@@ -417,10 +417,10 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #        return object.__getattribute__(self,name)
  
     def _getattribute(self, name):
-        if name == '_impl': return object.__getattribute__(self, '_impl')
+        if name.startswith('__') or name in d.keys(): return object.__getattribute__(self, name)
         if '_attribute_filter__get__' in dir(object.__getattribute__(self, '_impl')) and object.__getattribute__(self, '_impl').__class__.__name__ != 'ObjectMetaclass':
-            return addProxy(object.__getattribute__(object.__getattribute__(self, '_impl'), '_attribute_filter__get__')(name))
-        return addProxy(object.__getattribute__(self, name))
+            return addProxy(object.__getattribute__(self, '_impl')._attribute_filter__get__(name))
+        return object.__getattribute__(self, name)
 
     # but at the class level _impl is a ganga plugin class
     d = { '_impl' : pluginclass,
