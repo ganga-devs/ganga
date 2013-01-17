@@ -89,10 +89,12 @@ class GangaList(GangaObject):
     
     def get(self, to_match):
         def matching_filter(item):
-            if '_list_get__match__' in dir(stripProxy(item)):
-                return stripProxy(item)._list_get__match__(to_match)
+            if '_list_get__match__' in dir(item):
+                return item._list_get__match__(to_match)
             return to_match == item
-        return addProxy(makeGangaListByRef(filter(matching_filter, self._list)))
+        return makeGangaListByRef(filter(matching_filter, self._list))
+    def _export_get(self, to_match):
+        return addProxy(self.get(stripProxy(to_match)))
 
     def strip_proxy(self, obj, filter = False):
         """Removes proxies and calls shortcut if needed"""
