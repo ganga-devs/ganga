@@ -6,11 +6,12 @@
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
+from fnmatch import fnmatch
 
 class IOutputFile(GangaObject):
     """IOutputFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, SandboxFile, etc 
     """
-    _schema = Schema(Version(1,1), {})
+    _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name')})
     _category = 'outputfiles'
     _name = 'IOutputFile'
     _hidden = 1
@@ -47,6 +48,11 @@ class IOutputFile(GangaObject):
 
     def _readonly(self):
         return False
+
+    def _list_get__match__(self, to_match):
+        if type(to_match) == str:
+            return fnmatch(self.namePattern, to_match)
+        return to_match==self
 
     def execSyscmdSubprocess(self, cmd):
 

@@ -69,7 +69,7 @@ class GangaList(GangaObject):
                       '__getitem__', '__getslice__', '__gt__', '__iadd__', '__imul__',\
                       '__iter__', '__le__', '__len__', '__lt__', '__mul__', '__ne__','__reversed__','__radd__','__rmul__',\
                       '__setitem__', '__setslice__', 'append', 'count', 'extend', 'index',\
-                      'insert', 'pop', 'remove', 'reverse', 'sort','__hash__']
+                      'insert', 'pop', 'remove', 'reverse', 'sort','__hash__','get']
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
@@ -87,6 +87,13 @@ class GangaList(GangaObject):
         result = (obj != None) and (isType(obj, GangaList) or isinstance(obj,list))
         return result
     
+    def get(self, to_match):
+        def matching_filter(item):
+            if '_list_get__match__' in dir(stripProxy(item)):
+                return stripProxy(item)._list_get__match__(to_match)
+            return to_match == item
+        return addProxy(makeGangaListByRef(filter(matching_filter, self._list)))
+
     def strip_proxy(self, obj, filter = False):
         """Removes proxies and calls shortcut if needed"""
         
