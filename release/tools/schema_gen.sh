@@ -83,7 +83,8 @@ if [[ -z "$GEN_VER" ]]
 then
     GANGA_GEN=/afs/cern.ch/sw/ganga/install/${VERSION}/python/Ganga/test/Schema/Generate/Generate.gpi
 else
-    GANGA_GEN=/afs/cern.ch/sw/ganga/install/${GEN_VER}/python/Ganga/test/Schema/Generate/Generate.gpi
+#    GANGA_GEN=/afs/cern.ch/sw/ganga/install/${GEN_VER}/python/Ganga/test/Schema/Generate/Generate.gpi
+    GANGA_GEN='Ganga/test/Schema/Generate'
 fi
 
 if [ ! -e ${GANGA_EXE} ]
@@ -113,7 +114,7 @@ then
     fi
     echo "Generating repository:" ${GANGADIR}
     #cmd="${GANGA_EXE}  --test -o[Configuration]user=testframework -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=True -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES $GANGA_GEN"
-    cmd="${GANGA_EXE}  --test -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=True -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False $GANGA_GEN"
+    cmd="${GANGA_EXE}  --test -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${VERSION} -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False $GANGA_GEN"
     echo $cmd
     $cmd
     echo "Moving repository: " ${GANGADIR} "->" ${NEW_REPO_LOC}
