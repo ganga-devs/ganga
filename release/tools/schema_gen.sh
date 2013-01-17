@@ -117,9 +117,10 @@ then
     cmd="${GANGA_EXE}  --test -o[Configuration]gangadir=${GANGADIR}  -o[TestingFramework]SchemaTesting=${VERSION} -o[Configuration]RUNTIME_PATH=$LOAD_PACKAGES -o[TestingFramework]ReleaseTesting=True -o[TestingFramework]AutoCleanup=False $GANGA_GEN"
     echo $cmd
     $cmd
+    
     echo "Moving repository: " ${GANGADIR} "->" ${NEW_REPO_LOC}
     mkdir -p ${NEW_REPO_LOC}
-    mv ${GANGADIR}/*  ${NEW_REPO_LOC}/
+    mv ${GANGADIR}/${VERSION}/*  ${NEW_REPO_LOC}
 else
     echo "Test repository" ${NEW_REPO_LOC} "already exists. Use -f to force regeneration."
 fi
