@@ -23,6 +23,7 @@ logger.error('#################### Exclude: ' + str(excludelist))
 #        obj._data = Non
 
 totnumobs = 0
+numerrors = 0
 box.clean(confirm=True)
 
 #Create an Executable job for each of the available backends
@@ -51,6 +52,8 @@ for category in allPlugins.all_dict:
                         logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
                         #logger.error(str(e))
                         logger.error(traceback.print_exc())
+                        numerrors += 1
+                        
                         #raise
                 else:
                     logger.warn("Already in box: " + str(new_name))
@@ -65,6 +68,7 @@ else:
     logger.warning("We didn't create any test objects; perhaps they all existed already?")
     logger.warning("There are %i objects in the box repository" % (len(box)))
     
+assert numerrors == 0, '%i errors were raised when trying to generate Ganga objects.' % (numerrors)
 
 
 
