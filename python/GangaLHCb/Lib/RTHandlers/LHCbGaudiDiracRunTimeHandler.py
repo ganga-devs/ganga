@@ -8,7 +8,7 @@ from GangaDirac.Lib.Backends.DiracUtils                 import result_ok
 from GangaDirac.Lib.Files.DiracFile                     import DiracFile
 from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
-from Ganga.GPIDev.Lib.File                              import FileBuffer
+from Ganga.GPIDev.Lib.File                              import FileBuffer, SandboxFile
 from Ganga.GPIDev.Base.Proxy                            import addProxy
 from Ganga.Utility.Config                               import getConfig
 from Ganga.Utility.logging                              import getLogger
@@ -110,7 +110,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
            outbox, outdata = parser.get_output(job)
 
            #outputfiles.update(set(outdata[:]))
-           job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
+           #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
+           job.non_copyable_outputfiles.extend([addProxy(DiracFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
+           job.non_copyable_outputfiles.extend([addProxy(SandboxFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
 
