@@ -83,6 +83,9 @@ class DiracFile(IOutputFile):
 #                pattern = name.split('&&')[0]
 #                name    = name.split('&&')[1]
 
+            if pattern == name:
+                logger.error("Failed to parse outputfile data for file '%s'" % name)
+                return True
             if pattern == dirac_file.namePattern:
                 d=DiracFile(namePattern=name)
                 d.compressed = dirac_file.compressed
@@ -114,7 +117,7 @@ class DiracFile(IOutputFile):
         
         for line in postprocesslocations.readlines():
             if line.startswith('DiracFile'):
-                 if dirac_line_processor(line, self):
+                 if dirac_line_processor(line, self) and regex.search(self.namePattern) is None:
                      break
                         
         postprocesslocations.close()
@@ -359,11 +362,7 @@ class DiracFile(IOutputFile):
 ###INDENT###        except Exception,x:
 ###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
 ###INDENT###        if stdout.find(\"'Successful': {'%s'\" % lfn) >=0:
-###INDENT###            try:
-###INDENT###                id = eval(run_command('###SETUP###dirac-dms-lfn-metadata %s' % lfn)[1])['Successful'][lfn]['GUID']
-###INDENT###                ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::%s\\n" % (wildcard, file_label, lfn, se, id))
-###INDENT###            except:
-###INDENT###                ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::NotAvailable\\n" % (wildcard, file_label, lfn, se))                
+###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::%s\\n" % (wildcard, file_label, lfn, se, guid))
 ###INDENT###            return
 ###INDENT###    ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s,%s):::NotAvailable\\n" % (wildcard, file_label, file, stdout, stderr))
 ###INDENT###
