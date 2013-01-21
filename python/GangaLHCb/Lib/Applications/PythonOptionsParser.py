@@ -202,8 +202,8 @@ class PythonOptionsParser:
 ##        outputdata = []
 ##        if job.outputdata: outputdata = job.outputdata.files
 ##        outsandbox = [f for f in job.outputsandbox]
-        outputdata = [f.namePattern for f in job.outputfiles if stripProxy(f)._name != 'OutputSandboxFile']
-        outsandbox = [f.namePattern for f in job.outputfiles if stripProxy(f)._name == 'OutputSandboxFile']
+        outputdata = [f.namePattern for f in job.outputfiles if stripProxy(f)._name != 'SandboxFile']
+        outsandbox = [f.namePattern for f in job.outputfiles if stripProxy(f)._name == 'SandboxFile']
 
         # if user put any files in both, remove them from the sandbox
         for f in outsandbox:
