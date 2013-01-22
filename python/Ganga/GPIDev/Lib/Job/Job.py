@@ -214,6 +214,8 @@ class Job(GangaObject):
             return addProxy(files)
         if name in self.metadata.data.keys():
             return self.metadata[name]
+        if name == 'subjobs':
+            return self._subjobs_proxy()
         return object.__getattribute__(self, name)
 
     # status may only be set directly using updateStatus() method
