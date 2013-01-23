@@ -3,6 +3,7 @@ from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, setConfigOption
 from Ganga.Core.GangaRepository import getRegistry
+from xml.dom import minidom
 
 logger = getLogger()
 
@@ -16,6 +17,7 @@ logger.error('#################### RUNNING SCHEMA TESTER')
 logger.error('#################### Executing Ganga version: ' + this_version)
 logger.error('#################### Using repo at: ' + this_repo)
 
+assert len(box) != 0, "The number of objects in the box repository was zero"
 
 #count the number of directories in this_repo from the cnt file
 #num_box_obj_dirs = len(glob.glob(this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/*.index"))
@@ -24,7 +26,22 @@ dir = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/"
 
 num_box_obj_dirs = len([name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))])
 
+
+classNameList ={} 
+for name in os.listdir(dir):
+    try:
+        xmldoc = minidom.parse(os.path.join(dir, name,'data'))
+        itemlist = xmldoc.getElementsByTagName('class')
+        #print len(itemlist)
+        className = itemlist[0].attributes['name'].value
+        classNameList[int(name)] = className
+        #for s in itemlist:
+            #print s.attributes['name'].value
+    except:
+        pass
+
 counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/cnt"
+print classNameList
 
 f = open(counter_file_name, 'r') 
 #read_data should hold a single integer value representing the total number of objects in the box repo.
@@ -32,15 +49,29 @@ read_data = f.read()
 f.close()
 
 logger.info('##########################################')
+logger.info("GangaObjects to ignore: " + str(excludelist))
 logger.info("Number of object dirs in repo directory: " + str(num_box_obj_dirs))
 logger.info("Number of objects in box: " + str(len(box)))
-logger.info("Incomplete box ID(s): " +str(box.incomplete_ids()))
+incompleteClassIDs = box.incomplete_ids()
+logger.info("Incomplete box ID(s): " +str(incompleteClassIDs))
+
+if len(incompleteClassIDs) > 0:
+    for num in incompleteClassIDs:
+        logger.info("Incomplete object: " + classNameList[num])
+        if classNameList[num] in excludelist:
+            logger.info(classNameList[num] + " is known to be incompatible with this version of Ganga. Ignoring")
+            del(classNameList[num])
+            incompleteClassIDs.remove(num)
+num_incomplete_objs = len(incompleteClassIDs)
+if len(incompleteClassIDs) > 0:
+    logger.info("Unexpected incomplete box ID(s): " +str(incompleteClassIDs))
+    for num in incompleteClassIDs:
+        logger.info("Unexpected incomplete object: " + classNameList[num])
 logger.info('##########################################')
 
+assert len(incompleteClassIDs) == 0, "There were some objects that (unexpectedly) couldn't be loaded"
+
 box
-
-
-assert len(box) != 0, "Then number of objects in the box repository was zero"
 
 print box
 index = 0
@@ -58,5 +89,5 @@ for thing in box:
     index += 1
 
 assert exc_counter == 0, "We had " + str(exc_counter) + " problem(s) when reading the box objects."
-assert num_box_obj_dirs== len(box), "The number of object directories in the box repository " + str(num_box_obj_dirs) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
-assert len(box) == int(read_data), "The number of objects in the box repository (" + str(len(box)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
+#assert num_box_obj_dirs== len(box), "The number of object directories in the box repository " + str(num_box_obj_dirs) + " in " + this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/ didn't match the number of objects available in the GPI (" +str(len(box))+")"
+#assert len(box) == int(read_data), "The number of objects in the box repository (" + str(len(box)) + ") didn't match the number found in the repository 'cnt' file (" + str(int(read_data)) + ")"
