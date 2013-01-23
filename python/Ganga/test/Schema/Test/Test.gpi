@@ -13,9 +13,9 @@ this_repo=getConfig('Configuration')['gangadir']
 this_user=getConfig('Configuration')['user']
 excludelist = getConfig('TestingFramework')['SchemaTest_ignore_obj']
 
-logger.error('#################### RUNNING SCHEMA TESTER')
-logger.error('#################### Executing Ganga version: ' + this_version)
-logger.error('#################### Using repo at: ' + this_repo)
+logger.error('RUNNING SCHEMA TESTER')
+logger.error('Executing Ganga version: ' + this_version)
+logger.error('Using repo at: ' + this_repo)
 
 assert len(box) != 0, "The number of objects in the box repository was zero"
 
@@ -55,13 +55,25 @@ logger.info("Number of objects in box: " + str(len(box)))
 incompleteClassIDs = box.incomplete_ids()
 logger.info("Incomplete box ID(s): " +str(incompleteClassIDs))
 
+tmpIncompleteClassIDs = []
 if len(incompleteClassIDs) > 0:
     for num in incompleteClassIDs:
+        #logger.error('NUM: ' + str(num))
         logger.info("Incomplete object: " + classNameList[num])
-        if classNameList[num] in excludelist:
-            logger.info(classNameList[num] + " is known to be incompatible with this version of Ganga. Ignoring")
-            del(classNameList[num])
-            incompleteClassIDs.remove(num)
+        #logger.info("Searching for " + str(classNameList[num]) + " in " + str(excludelist))
+        try:
+            excludelist.index(classNameList[num])
+            logger.info(classNameList[num] + " is known to be incompatible with this version of Ganga. Ignoring.")
+            #del(classNameList[num])
+            #incompleteClassIDs.remove(num)
+        except ValueError:
+            logger.info(classNameList[num] + " was thought to be compatible with this version of Ganga. That's a problem!!!") 
+            tmpIncompleteClassIDs.append(num)
+            
+            
+
+incompleteClassIDs = tmpIncompleteClassIDs
+
 num_incomplete_objs = len(incompleteClassIDs)
 if len(incompleteClassIDs) > 0:
     logger.info("Unexpected incomplete box ID(s): " +str(incompleteClassIDs))
