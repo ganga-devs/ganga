@@ -247,7 +247,7 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
             # append
             workDirFiles.append(tmpPath)
     if skippedFlag:
-        logger.info("please use --inputsandbox or j.inputdata.inputsandox or change config.Athena.EXE_MAXFILESIZE if you need to send the skipped files to WNs")
+        logger.info("please use --inputsandbox or j.inputdata.inputsandbox or change config.Athena.EXE_MAXFILESIZE if you need to send the skipped files to WNs")
 
     # create archive
     # use 'jobO' for libDS/noBuild
