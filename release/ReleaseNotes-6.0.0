@@ -1,11 +1,32 @@
 **************************************************************************************************************
-6.0.0 (2012/12/18)
+6.0.0 (2013/1/24)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-Updating for Ganga6 pre
+Ganga6
+******
+Change in the output definition system. Outputsandbox and outputdata are now replaced by the more
+generic outputfiles. The destination/type of the file determines where it will end up.
+
+e.g.
+j.outputfiles=[OutputSandboxFile('A.txt')]
+
+will cause file A.txt to be returned as if it had been put in the outputsandbox in Ganga5
+
+For more details, please see: https://twiki.cern.ch/twiki/bin/view/ArdaGrid/Ganga6OutputTutorial
+
+The postprocessor object is a new concept which includes the mergers that were previously available
+and at the same time 
+introduce a whole new set of actions that can be carried out when a job has finished. This included
+the ability for Ganga to 
+send email notifications and the ability for a user to fail jobs under certain conditions. This
+means that j.merger is now 
+obsolete; from Ganga 6 onwards you must use j.postprocessors instead.
+
+For more details on postprocessors, see
+https://twiki.cern.ch/twiki/bin/view/ArdaGrid/PostProcessTutorial
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -14,18 +35,40 @@ ganga/python/GangaAtlas
 * Add Panda overwriteQueuedata variable mainly for FAX support
 * Fixed a minor debug issue during prepare
 * Update to panda-client 0.4.11
+* Local backend Athena jobs now change to the atlas_run_dir
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
-"Updating the tests"
+Tagging for Ganga6
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGaudi
+--------------------------------------------------------------------------------------------------------------
+Tagging for Ganga6
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-updating for next pre
+Ganga6 (GangaLHCb-24-36)
+******
+As mentioned in the Ganga Core release notes, output specification system has changed see them for
+more details.
+
+Specifically for LHCb:
+
+j.outputfiles=[DiracFile('*.root')]
+
+Will cause all .root files to end up on a DIRAC SE just as if the outputdata attribute had
+been used in Ganga5
+
+The j.postprocessor attribute has been introduced and replaces j.merger. See the Ganga core release
+notes for more details. 
+Specifically for LHCb: The DSTMerger has been removed and has been replaced by a more generic
+LHCbFileMerger.
 
 
 --------------------------------------------------------------------------------------------------------------
