@@ -27,21 +27,21 @@ dir = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/0xxx/"
 num_box_obj_dirs = len([name for name in os.listdir(dir) if os.path.isdir(os.path.join(dir, name))])
 
 
-classNameList ={} 
+classNameDict ={} 
 for name in os.listdir(dir):
     try:
         xmldoc = minidom.parse(os.path.join(dir, name,'data'))
         itemlist = xmldoc.getElementsByTagName('class')
         #print len(itemlist)
         className = itemlist[0].attributes['name'].value
-        classNameList[int(name)] = className
+        classNameDict[int(name)] = className
         #for s in itemlist:
             #print s.attributes['name'].value
     except:
         pass
 
 counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/cnt"
-print classNameList
+print classNameDict
 
 f = open(counter_file_name, 'r') 
 #read_data should hold a single integer value representing the total number of objects in the box repo.
@@ -59,15 +59,15 @@ tmpIncompleteClassIDs = []
 if len(incompleteClassIDs) > 0:
     for num in incompleteClassIDs:
         #logger.error('NUM: ' + str(num))
-        logger.info("Incomplete object: " + classNameList[num])
-        #logger.info("Searching for " + str(classNameList[num]) + " in " + str(excludelist))
+        logger.info("Incomplete object: " + classNameDict[num])
+        #logger.info("Searching for " + str(classNameDict[num]) + " in " + str(excludelist))
         try:
-            excludelist.index(classNameList[num])
-            logger.info(classNameList[num] + " is known to be incompatible with this version of Ganga. Ignoring.")
-            #del(classNameList[num])
+            excludelist.index(classNameDict[num])
+            logger.info(classNameDict[num] + " is known to be incompatible with this version of Ganga. Ignoring.")
+            #del(classNameDict[num])
             #incompleteClassIDs.remove(num)
         except ValueError:
-            logger.info(classNameList[num] + " was thought to be compatible with this version of Ganga. That's a problem!!!") 
+            logger.info(classNameDict[num] + " was thought to be compatible with this version of Ganga. That's a problem!!!") 
             tmpIncompleteClassIDs.append(num)
             
             
@@ -75,13 +75,15 @@ if len(incompleteClassIDs) > 0:
 incompleteClassIDs = tmpIncompleteClassIDs
 
 num_incomplete_objs = len(incompleteClassIDs)
+classNameList = []
 if len(incompleteClassIDs) > 0:
     logger.info("Unexpected incomplete box ID(s): " +str(incompleteClassIDs))
     for num in incompleteClassIDs:
-        logger.info("Unexpected incomplete object: " + classNameList[num])
+        logger.info("Unexpected incomplete object: " + classNameDict[num])
+        classNameList.append(classNameDict[num])
 logger.info('##########################################')
 
-assert len(incompleteClassIDs) == 0, "There were some objects that (unexpectedly) couldn't be loaded"
+assert len(incompleteClassIDs) == 0, "There were some objects " + str(classNameList) + " that (unexpectedly) couldn't be loaded"
 
 box
 
