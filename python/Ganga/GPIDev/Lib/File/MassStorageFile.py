@@ -141,6 +141,11 @@ class MassStorageFile(IOutputFile):
         else:
             job = self.getJobObject()
             sourceDir = job.outputdir
+                
+            #if there are subjobs, the put method will be called on every subjob
+            #and will upload the resulted output file 
+            if len (job.subjobs) > 0:
+                return
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
