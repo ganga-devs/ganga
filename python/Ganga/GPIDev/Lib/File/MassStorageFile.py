@@ -226,6 +226,7 @@ class MassStorageFile(IOutputFile):
 
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """        
@@ -292,7 +293,7 @@ class MassStorageFile(IOutputFile):
 
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
 ###INDENT###        currentFileBaseName = os.path.basename(currentFile)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, ###JOBDIR###, currentFileBaseName)))
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
@@ -306,6 +307,7 @@ class MassStorageFile(IOutputFile):
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
         script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
+        script = script.replace('###JOBDIR###', self.getJobObject().fqid.replace('.', os.path.sep))
 
         return script   
 
