@@ -293,10 +293,7 @@ class MassStorageFile(IOutputFile):
 
 
 
-
-
-
-
+###INDENT###    pathToDirName = pathToDirName + dirName
 ###INDENT###    pathToDirName = os.path.join(pathToDirName, '###JOBDIR###')
 ###INDENT###    dirName = '###JOBDIR###'
 
@@ -320,6 +317,7 @@ class MassStorageFile(IOutputFile):
 ###INDENT###            continue
 
 ###INDENT###    if '###SUBJOBDIR###' != '':
+###INDENT###        pathToDirName = pathToDirName + dirName
 ###INDENT###        pathToDirName = os.path.join(pathToDirName, '###SUBJOBDIR###')
 ###INDENT###        dirName = '###SUBJOBDIR###'
 
