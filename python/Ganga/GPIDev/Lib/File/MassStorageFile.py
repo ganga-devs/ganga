@@ -309,6 +309,7 @@ class MassStorageFile(IOutputFile):
 ###INDENT###            break
 
 ###INDENT###    if not directoryExists:
+###INDENT###        path = os.path.join(pathToDirName, dirName)
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
@@ -332,6 +333,7 @@ class MassStorageFile(IOutputFile):
 ###INDENT###                break
 
 ###INDENT###        if not directoryExists:
+###INDENT###            path = os.path.join(pathToDirName, dirName)
 ###INDENT###            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
 ###INDENT###            if exitcode != 0:
 ###INDENT###                printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
@@ -354,7 +356,7 @@ class MassStorageFile(IOutputFile):
 
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
 ###INDENT###        currentFileBaseName = os.path.basename(currentFile)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, '###FULLJOBDIR###', currentFileBaseName)))
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
