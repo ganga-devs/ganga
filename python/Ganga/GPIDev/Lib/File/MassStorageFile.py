@@ -325,8 +325,7 @@ class MassStorageFile(IOutputFile):
 
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
 ###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing nsls %s command, be aware that Castor commands can be executed 
-###INDENT###only from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
+###INDENT###            printError('Error while executing nsls %s command' % pathToDirName + os.linesep + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
 
