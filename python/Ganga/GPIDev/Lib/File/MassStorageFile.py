@@ -293,7 +293,7 @@ class MassStorageFile(IOutputFile):
 
 
 
-###INDENT###    pathToDirName = os.path.join(pathToDirName, dirName, '###JOBDIR###')
+###INDENT###    pathToDirName = os.path.join(pathToDirName, dirName)
 ###INDENT###    dirName = '###JOBDIR###'
 
 ###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
@@ -316,7 +316,7 @@ class MassStorageFile(IOutputFile):
 ###INDENT###            continue
 
 ###INDENT###    if '###SUBJOBDIR###' != '':
-###INDENT###        pathToDirName = os.path.join(pathToDirName, dirName, '###SUBJOBDIR###')
+###INDENT###        pathToDirName = os.path.join(pathToDirName, dirName)
 ###INDENT###        dirName = '###SUBJOBDIR###'
 
 ###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
