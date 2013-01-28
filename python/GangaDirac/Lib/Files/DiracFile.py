@@ -135,7 +135,7 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         self._getEnv()
         logger.info('Removing file %s' % self.lfn)
-        rc, stdout, stderr = shellEnv_cmd('dirac-dms-remove-file %s' % self.lfn, self._env)
+        rc, stdout, stderr = shellEnv_cmd('dirac-dms-remove-lfn %s' % self.lfn, self._env)
         if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
             self.lfn=""
             self.locations=[]
