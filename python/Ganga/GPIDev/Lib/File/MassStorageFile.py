@@ -191,7 +191,7 @@ class MassStorageFile(IOutputFile):
                 pathToDirName = os.path.join(pathToDirName, dirName)
                 dirName = jobid
 
-                (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                     return
@@ -204,7 +204,7 @@ class MassStorageFile(IOutputFile):
 
                 if not directoryExists:
                     massStoragePath = os.path.join(pathToDirName, dirName)
-                    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
                     if exitcode != 0:
                         self.handleUploadFailure(mystderr)
                         return
@@ -213,7 +213,7 @@ class MassStorageFile(IOutputFile):
                     pathToDirName = os.path.join(pathToDirName, dirName)
                     dirName = subjobid
 
-                    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
                     if exitcode != 0:
                         self.handleUploadFailure(mystderr)
                         return
@@ -226,7 +226,7 @@ class MassStorageFile(IOutputFile):
 
                     if not directoryExists:
                         massStoragePath = os.path.join(pathToDirName, dirName)
-                        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+                        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (cm_mkdir, path))
                         if exitcode != 0:
                             self.handleUploadFailure(mystderr)
                             return
