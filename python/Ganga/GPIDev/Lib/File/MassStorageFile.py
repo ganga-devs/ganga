@@ -287,13 +287,79 @@ class MassStorageFile(IOutputFile):
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
    
+
+
+
+
+
+
+
+
+
+
+###INDENT###    pathToDirName = os.path.join(pathToDirName, '###JOBDIR###')
+###INDENT###    dirName = '###JOBDIR###'
+
+###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+###INDENT###    if exitcode != 0:
+###INDENT###        printError('Error while executing nsls %s command, be aware that Castor commands can be executed only ###INDENT###from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
+###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+###INDENT###        continue
+
+###INDENT###    directoryExists = False 
+###INDENT###    for directory in mystdout.split('\\n'):
+###INDENT###        if directory.strip() == dirName:
+###INDENT###            directoryExists = True
+###INDENT###            break
+
+###INDENT###    if not directoryExists:
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+###INDENT###        if exitcode != 0:
+###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+###INDENT###            continue
+
+###INDENT###    if '###SUBJOBDIR###' != '':
+###INDENT###        pathToDirName = os.path.join(pathToDirName, '###SUBJOBDIR###')
+###INDENT###        dirName = '###SUBJOBDIR###'
+
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+###INDENT###        if exitcode != 0:
+###INDENT###            printError('Error while executing nsls %s command, be aware that Castor commands can be executed 
+###INDENT###only from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
+###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+###INDENT###            continue
+
+###INDENT###        directoryExists = False 
+###INDENT###        for directory in mystdout.split('\\n'):
+###INDENT###            if directory.strip() == dirName:
+###INDENT###                directoryExists = True
+###INDENT###                break
+
+###INDENT###        if not directoryExists:
+###INDENT###            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+###INDENT###            if exitcode != 0:
+###INDENT###                printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+###INDENT###                ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
+###INDENT###                continue
+
+
+
+
+
+
+
+
+
+
+
 ###INDENT###    filenameWildCharZipped = filenameWildChar
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
 ###INDENT###        filenameWildCharZipped = '%s.gz' % filenameWildChar
 
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
 ###INDENT###        currentFileBaseName = os.path.basename(currentFile)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, '###JOBDIR###', currentFileBaseName)))
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, '###FULLJOBDIR###', currentFileBaseName)))
 ###INDENT###        if exitcode != 0:
 ###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
@@ -307,7 +373,19 @@ class MassStorageFile(IOutputFile):
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
         script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
-        script = script.replace('###JOBDIR###', str(self.getJobObject().fqid.replace('.', os.path.sep)))
+
+        jobfqid = self.getJobObject().fqid
+        
+        jobid = jobfqid
+        subjobid = ''
+
+        if (jobfqid.find('.') > -1):
+            jobid = jobfqid.split('.')[0]
+            subjobid = jobfqid.split('.')[1]
+        
+        script = script.replace('###FULLJOBDIR###', str(jobfqid.replace('.', os.path.sep)))
+        script = script.replace('###JOBDIR###', str(jobid))
+        script = script.replace('###SUBJOBDIR###', str(subjobid))
 
         return script   
 
