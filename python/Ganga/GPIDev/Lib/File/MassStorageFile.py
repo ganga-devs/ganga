@@ -307,7 +307,7 @@ class MassStorageFile(IOutputFile):
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
         script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
-        script = script.replace('###JOBDIR###', self.getJobObject().fqid.replace('.', os.path.sep))
+        script = script.replace('###JOBDIR###', str(self.getJobObject().fqid.replace('.', os.path.sep)))
 
         return script   
 
