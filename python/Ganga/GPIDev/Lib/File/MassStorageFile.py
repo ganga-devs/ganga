@@ -177,6 +177,59 @@ class MassStorageFile(IOutputFile):
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                     return
+
+            if self._parent != None:
+                jobfqid = self.getJobObject().fqid
+        
+                jobid = jobfqid
+                subjobid = ''
+
+                if (jobfqid.find('.') > -1):
+                    jobid = jobfqid.split('.')[0]
+                    subjobid = jobfqid.split('.')[1]
+        
+                pathToDirName = os.path.join(pathToDirName, dirName)
+                dirName = jobid
+
+                (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+                if exitcode != 0:
+                    self.handleUploadFailure(mystderr)
+                    return
+
+                directoryExists = False 
+                for directory in mystdout.split('\n'):
+                    if directory.strip() == dirName:
+                        directoryExists = True
+                        break
+
+                if not directoryExists:
+                    massStoragePath = os.path.join(pathToDirName, dirName)
+                    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+                    if exitcode != 0:
+                        self.handleUploadFailure(mystderr)
+                        return
+
+                if subjobid != '':
+                    pathToDirName = os.path.join(pathToDirName, dirName)
+                    dirName = subjobid
+
+                    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+                    if exitcode != 0:
+                        self.handleUploadFailure(mystderr)
+                        return
+
+                    directoryExists = False 
+                    for directory in mystdout.split('\n'):
+                        if directory.strip() == dirName:
+                            directoryExists = True
+                            break
+
+                    if not directoryExists:
+                        massStoragePath = os.path.join(pathToDirName, dirName)
+                        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+                        if exitcode != 0:
+                            self.handleUploadFailure(mystderr)
+                            return
             
             fileName = self.namePattern
             if self.compressed:
