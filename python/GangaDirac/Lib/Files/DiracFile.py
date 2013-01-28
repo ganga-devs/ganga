@@ -312,7 +312,8 @@ class DiracFile(IOutputFile):
                         return
             else:
                 if self.compressed: os.system('rm -f %s'% name)
-                logger.error(failureReason = "Error in uploading file %s. : %s"% (os.path.basename(name), stdout))
+                failureReason = "Error in uploading file %s. : %s"% (os.path.basename(name), stdout)
+                logger.error(failureReason)
                 if regex.search(self.namePattern) is not None:
                     d.failureReason =  failureReason
                     outputFiles.append(GPIProxyObjectFactory(d))
