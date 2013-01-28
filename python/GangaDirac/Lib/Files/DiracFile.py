@@ -296,7 +296,7 @@ class DiracFile(IOutputFile):
             stdout=''
             logger.info('Uploading file %s' % name)
             for se in storage_elements:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(lfn, name, se, guid), self._env)
+                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-files %s %s %s %s' %(lfn, name, se, guid), self._env)
                 if stdout.find("'Successful': {'%s'" % lfn) >=0:
                     if self.compressed: os.system('rm -f %s'% name)
                     if regex.search(self.namePattern) is not None:
@@ -312,7 +312,7 @@ class DiracFile(IOutputFile):
                         return
             else:
                 if self.compressed: os.system('rm -f %s'% name)
-                failureReason = "Error in uploading file %s. : %s"% (os.path.basename(name), stdout)
+                failureReason = "Error in uploading file %s : %s"% (os.path.basename(name), stdout)
                 logger.error(failureReason)
                 if regex.search(self.namePattern) is not None:
                     d.failureReason =  failureReason
@@ -359,7 +359,7 @@ class DiracFile(IOutputFile):
 ###INDENT###    stderr=''
 ###INDENT###    for se in SEs:
 ###INDENT###        try:
-###INDENT###            retcode, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
+###INDENT###            retcode, stdout, stderr = run_command('###SETUP###dirac-dms-add-files %s %s %s %s' % (lfn, file, se, guid))
 ###INDENT###        except Exception,x:
 ###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
 ###INDENT###        if stdout.find(\"'Successful': {'%s'\" % lfn) >=0:
