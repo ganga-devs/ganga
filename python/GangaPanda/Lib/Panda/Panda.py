@@ -1368,7 +1368,7 @@ class Panda(IBackend):
                     continue
                 tokens = convertQueueNameToDQ2Names(s)
                 for t in tokens:
-                    if allowTape or not Client.isTapeSite(t):
+                    if (allowTape or not Client.isTapeSite(t)) and t.find("TZERO") == -1:
                         spacetokens.append(t)
         else: # direct site submission
             try:
@@ -1381,7 +1381,7 @@ class Panda(IBackend):
                 raise BackendError('Panda','Cannot submit to %s because it is in your requirements.excluded_sites list'%self.site)
             tokens = convertQueueNameToDQ2Names(self.site)
             for t in tokens:
-                if allowTape or not Client.isTapeSite(t):
+                if (allowTape or not Client.isTapeSite(t)) and t.find("TZERO") == -1:
                     spacetokens.append(t)
 
         return spacetokens
