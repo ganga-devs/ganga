@@ -7,6 +7,7 @@ from Ganga.Utility.logging import getLogger
 
 import os,os.path
 import datetime
+import shlex
 import time
 
 from subprocess import Popen, PIPE
@@ -18,6 +19,7 @@ from Ganga.GPIDev.Schema import *
 
 logger = getLogger()
 
+
 class CRABServer(GangaObject):
 
     _schema =  Schema(Version(0,0), {})
@@ -28,16 +30,21 @@ class CRABServer(GangaObject):
         code = 'x'
         stdout, stderr = '',''
 
-        try:        
+        try:       
+            cmd = shlex.split(cmd)
+            logger.debug('Launching a CRAB command: %s' %str(cmd))
             init = datetime.datetime.now()
-            p = Popen(cmd,shell=True,stdout=PIPE,stderr=PIPE,env=env)
+            p = Popen(cmd,bufsize=-1,stdout=PIPE,stderr=PIPE,env=env)
             stdout, stderr = p.communicate()
-
             code = p.returncode
+            logger.debug('Command ended with code %d' % code)
+            # Remove zombie processes.
+            p.wait()
+            logger.debug('Finished CRAB command: %s' %str(cmd))
             end = datetime.datetime.now()
+
             time = (end-init).seconds
-            if type != 'checking status':
-              logger.info('%s took %d seconds'%(type,time))
+            logger.info('%s took %d seconds'%(type,time))
         except OSError,e:
             logger.error(stdout)
             logger.error(stderr)

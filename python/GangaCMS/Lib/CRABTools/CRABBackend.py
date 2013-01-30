@@ -48,7 +48,6 @@ class CRABBackend(IBackend):
 
         super(CRABBackend, self).__init__()
 
-#        try:
         config = Ganga.Utility.Config.getConfig('CMSSW')
         cmssw_setup = config['CMSSW_SETUP'] # the directory
         cmssw_version = config['CMSSW_VERSION'] # e.g. CMSSW_3_7_0, CMSSW_generic
@@ -57,8 +56,6 @@ class CRABBackend(IBackend):
         from Ganga.Utility.Shell import Shell
         shell = Shell(cmssw_setup_script,[cmssw_version,crab_version])
         self.crab_env = shell.env
-#        except:
-#          pass    
 
     def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
 
@@ -78,7 +75,6 @@ class CRABBackend(IBackend):
                 job.updateMasterJobStatus()
                 logger.error('Submission through CRAB failed. All subjobs have been reverted to new.')
                 return 1
-#            job.backend.server.submit(job)
 
             self.master_updateMonitoringInformation((job,))
 
@@ -87,14 +83,9 @@ class CRABBackend(IBackend):
                 if subjob.status in ('submitting'):
                     subjob.updateStatus('submitted')
 
-#            try:
-#                server.status(job)
-#            except:
-#                logger.warning('CRAB status failed. Submission could have been failed too.')
-#            job.backend.server.status(job)
+            job.updateMasterJobStatus()
 
             return 1        
-        #j.updateMasterJobStatus()
         logger.error('Not submitting job without subjobs.')
         return 1           
 
@@ -103,16 +94,15 @@ class CRABBackend(IBackend):
         logger.error('master_resubmit() called. THIS METHOD IS BUGGY, CHECK.')
         server = CRABServer()
         server.resubmit(job)
-#        self.server.resubmit(job)
 
         #If first raises exception, all are caput
         #Controll that.
         for job in rjobs:
-
             subjob.updateStatus('submitting')  
             server.resubmit(job)
             subjob.updateStatus('submitted')  
-        #j.updateMasterJobStatus()
+
+        job.updateMasterJobStatus()
         return 1         
 
     def master_kill(self):
@@ -155,6 +145,7 @@ class CRABBackend(IBackend):
         except:
             logger.warning('PostMortem retrival with CRAB failed.')
 
+        job.updateMasterJobStatus()
         return 1
 
     def parseResults(self):
@@ -169,14 +160,12 @@ class CRABBackend(IBackend):
             logger.error('Could not get the output of the job.')
             # Let's not raise this yet (in case of a double call).
             # raise CRABServerError('Impossible to get the output of the job')
-#        job.backend.server.getOutput(job)
 
         workdir = job.inputdata.ui_working_dir
         index = int(job.id) + 1
         doc_path = '%s/res/crab_fjr_%d.xml'%(workdir,index)
 
         if not os.path.exists(doc_path):
-            #raise CRABServerError.CRABServerError('FJR %s not found.'%(doc_path))
             logger.error('FJR %s not found.'%(doc_path))
             return
 
@@ -188,7 +177,6 @@ class CRABBackend(IBackend):
         status = doc.firstChild.getAttribute("Status")
 
         if status in ["Failed"]:
-            #logger.warning('Failed job detected in parsing.')
             self.postMortem(job)
             job.updateStatus('failed')
         elif status in ["Success"]:
@@ -197,24 +185,6 @@ class CRABBackend(IBackend):
             job.updateStatus('completed')
         else:
             logger.warning("UNKNOWN PARSE STATUS: "+str(status))
-
-        #exitcode = ''
-        #line = doc.getElementsByTagName("ExitCode")[0]
-        #try:       
-        #    exitcode = line.getAttribute("Value")
-        #except:
-        #    pass
-        #
-        #job.backend.fjr['ExitCode'] = {'exitcode':exitcode}
-
-        #frameworkerrors = doc.getElementsByTagName("FrameworkError")
-
-        #if not job.backend.fjr.has_key('FrameworkError'):
-        #    job.backend.fjr['FrameworkError'] = {}
-
-        #for fwe in frameworkerrors:
-        #    name = fwe.getAttribute("Type")
-        #    job.backend.fjr['FrameworkError'][name] = fwe.getAttribute("ExitStatus")
 
         config = Ganga.Utility.Config.getConfig('Metrics')
         location = config['location']
@@ -239,7 +209,6 @@ class CRABBackend(IBackend):
             performancesummary = performancereport.getElementsByTagName("PerformanceSummary")
             for pfs in performancesummary:
                 if pfs.getAttribute("Metric") == section:
-#                    METRIC_NAMES = config.options(section)
                     metrics = pfs.getElementsByTagName("Metric")
                     for metric in metrics:
                         name = metric.getAttribute("Name")
@@ -250,8 +219,6 @@ class CRABBackend(IBackend):
                             if name:
                                 job.backend.fjr[section][name] = metric.getAttribute("Value")
 
-        ## BE CAREFUL WITH NEGATIVE VALUES: eg StageoutTime ##   
-        # more than 1 exitcode?
 
     def checkReport(self,jobDoc):
 
@@ -279,20 +246,21 @@ class CRABBackend(IBackend):
     def checkStatus(self):
 
         GANGA_S = ['completed','failed','killed','new','running','submitted','submitting']
-        STATUS  = {'A':'submitted, not known to scheduler / aborted anyway',
-                   'C':'created, not submitted yet',
-                   'CS':'created on the server, not submitted yet',
-                   'DA':'done and failed',
-                   'E':'ended,output retrieved and DB updated from journal',
-                   'K':'killed by user',
-                   'R':'submitted,started, the scheduler reports running',
-                   'SD':'',
-                   'SR':'',
+        STATUS  = {'A':'aborted',
+                   'C':'created',
+                   'CS':'created on the server',
+                   'DA':'failed',
+                   'E':'cleared',
+                   'K':'killed',
+                   'R':'running',
+                   'SD':'done',
+                   'SR':'ready',
                    'S':'submitted on the server',
-                   'SS':'',
-                   'SU':'',
-                   'SW':'',
-                   'W':'declared, not submitted'
+                   'SS':'scheduled',
+                   'SU':'submitted',
+                   'SW':'waiting',
+                   'W':'declared',
+                   'UN':'undefined',
                    }
 
         job = self.getJobObject()
@@ -302,31 +270,31 @@ class CRABBackend(IBackend):
             logger.warning('Missing the status for the job %d while checking' % job.id)
             return
 
-        if (status=='R' and not (job.status in ['killed'])):
-            if (job.status in ['submitting','new']):
+        if status=='R' and job.status != 'killed':
+            if job.status in ['submitting','new']:
+                # The job has to pass by this status at least once.
                 job.updateStatus('submitted')
-            elif not (job.status in ['running'] ):
+            if job.status != 'running':
+                # A job could come from the died (i.e. completed -> running).
                 job.updateStatus('running')
-        elif (status == 'C' or status == 'CS') and not (job.status in ['submitted','submitting','new']):
+        elif status in ['UN','C','CS','W'] and job.status not in ['submitting','new','killed']:
             logger.warning('The job is an invalid status (%s - %s), it will  be reverted.' % (status, job.status))
             job.rollbackToNewState()
-        elif (status == 'SS' or status == 'W') and not (job.status in ['submitting','submitted','killed']):
-            job.updateStatus("submitting")
-        elif (status == 'SU' or status == 'S' or status=='SR') and not (job.status in ['submitted','killed']):
+        elif status in ['SU','S','SR','SS','SW'] and job.status not in ['submitted','killed']:
             job.updateStatus('submitted')
-        elif (status == 'SD') and not (job.status in ['completed','failed','killed']):
+        elif status == 'SD' and job.status not in ['completed','failed','killed']:
             logger.info('Retrieving %d.'%(job.id))
             job.backend.parseResults()
             # The job can be done, but failed...
             # So, let's update the status retrieved from the output file.
-            if job.status not in (['completed','failed','killed']):
+            if job.status not in ['completed','failed','killed']:
                 logger.warning('Processing a done job ended in not final status. Parhaps the output getting failed?')
-        elif (status == 'A' or status == 'DA') and not (job.status in ['failed','killed']):
+        elif status in ['A','DA'] and job.status not in ['failed','killed']:
             self.postMortem(job)
             job.updateStatus('failed')
-        elif (status == 'k') and not (job.status in ['killed']):
+        elif status == 'K' and job.status not in ['killed']:
             job.updateStatus('killed')
-        elif (status in ['E']) and not (job.status in ['completed','killed']):
+        elif status == 'E' and job.status not in ['completed','failed','killed']:
             logger.info('Job %d has been purged.'%(job.id))
             job.backend.parseResults()
             # We have to set this now (can be repeated) in case output retrieval fails.
@@ -335,29 +303,25 @@ class CRABBackend(IBackend):
                 job.updateStatus('failed')
         else:
             if not STATUS.has_key(status):  
-                logger.warning('UNKNOWN STATUS: '+str(status)+' ')
+                logger.warning('UNKNOWN STATUS: ' + str(status))
 
         # Check the CRAB created jobs that are set as submitted... for a timeout
-        if (status in ['C','CS']) and (job.status in ['submitted']):
+        if status in ['C','CS','W'] and job.status in ['submitted']:
             try:
                 # If submission time is more than one hour ago, a problem happened...
-                if datetime.datetime.utcnow() - job.time.timestamps['submitted'] > datetime.timedelta(hours=1):
+                if datetime.datetime.utcnow() - job.time.timestamps['submitted'] > datetime.timedelta(hours=0.5):
                     logger.info('Submission for job %d failed (timeout).' % job.id)
                     job.updateStatus('failed')
             except:
                 logger.warning('Error while retrieving submit time for job %d.' % job.id)
 
     def master_updateMonitoringInformation(jobs):
-
-        logger.info('Going to update the monitoring information of ' + str(len(jobs)) + ' jobs')
+        """Updates the statuses of the list of jobs provided by issuing crab -status."""
+        logger.debug('Updating the monitoring information of ' + str(len(jobs)) + ' jobs')
+        server = CRABServer()
  
         for j in jobs:
-
-            if not j.status in ['submitting','submitted','running']:
-              logger.info('Skipping job in monitring loop: %s - %s'%(j.id,j.status))
-              continue 
-
-            server = CRABServer()
+            logger.debug('Updating monitoring information for job %d (%s)' % (j.id, j.status))
 
             try:
                 server.status(j)
@@ -365,27 +329,20 @@ class CRABBackend(IBackend):
                 logger.error('Get status for job %d failed, skipping.' % j.id)
                 continue
 
-            workdir = j.inputdata.ui_working_dir
+            doc_path = '%s/share/%s' % (j.inputdata.ui_working_dir, j.inputdata.xml_report)
 
-            doc_path = '%s/share/%s'%(workdir,j.inputdata.xml_report)
-            res = os.path.isfile(doc_path)
-            if res:
-
-                doc = parse(doc_path)
-                jobDoc = doc.getElementsByTagName("RunningJob")
-                subjobs = j.subjobs    
+            if os.path.isfile(doc_path):
+                logger.debug('Found XML report for the job %d' % j.id)
+                jobDoc = parse(doc_path).getElementsByTagName("RunningJob")
 
                 for subjobDoc in jobDoc:
                     index  = subjobDoc.getAttribute("jobId")
-
-                    subjobs[int(index)-1].backend.checkReport(subjobDoc)                   
-                    subjobs[int(index)-1].backend.checkStatus()
+                    j.subjobs[int(index) - 1].backend.checkReport(subjobDoc)                   
+                    j.subjobs[int(index) - 1].backend.checkStatus()
 
                 j.updateMasterJobStatus()
-
             else:
-
-                logger.info('No results.xml for %s'%(j.id))
+                logger.info('No results.xml for %s' % (j.id))
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
