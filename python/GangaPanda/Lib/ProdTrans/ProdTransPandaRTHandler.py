@@ -171,10 +171,11 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
 
         # Input files.
         if job.inputdata:
-            for guid, lfn in zip(job.inputdata.guids, job.inputdata.names):
+            for guid, lfn, scope in zip(job.inputdata.guids, job.inputdata.names, job.inputdata.scopes):
                 ifspec = FileSpec()
                 ifspec.lfn = lfn
                 ifspec.GUID = guid
+                ifspec.scope = scope
                 ifspec.dataset = jspec.prodDBlock
                 ifspec.prodDBlock = jspec.prodDBlock
                 ifspec.type = 'input'

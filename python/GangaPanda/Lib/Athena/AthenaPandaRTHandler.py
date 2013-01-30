@@ -636,12 +636,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       input files FIXME: many more input types
         if job.inputdata and self.inputdatatype=='DQ2':
-            for guid, lfn, size, checksum in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.sizes, job.inputdata.checksums): 
+            for guid, lfn, size, checksum, scope in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.sizes, job.inputdata.checksums, job.inputdata.scopes): 
                 finp = FileSpec()
                 finp.lfn            = lfn
                 finp.GUID           = guid
                 finp.fsize          = size
                 finp.md5sum         = checksum
+                finp.scope          = scope
                 finp.dataset        = job.inputdata.dataset[0]
                 finp.prodDBlock     = job.inputdata.dataset[0]
                 finp.dispatchDBlock = job.inputdata.dataset[0]
@@ -658,11 +659,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 tag_contents = job.inputdata.get_tag_contents(size=True)
                 tag_files = map(lambda x: x[1][0],tag_contents)
                 tag_guids = map(lambda x: x[0],tag_contents)
+                tag_scopes = map(lambda x: x[1][2],tag_contents)
 
-                for guid, lfn in zip(tag_guids,tag_files): 
+                for guid, lfn, scope in zip(tag_guids,tag_files,tag_scopes): 
                     finp = FileSpec()
                     finp.lfn            = lfn
                     finp.GUID           = guid
+                    finp.scope          = scope
                     #            finp.fsize =
                     #            finp.md5sum =
                     finp.dataset        = job.inputdata.tagdataset[0]

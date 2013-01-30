@@ -275,10 +275,12 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
 #       input files FIXME: many more input types
         if job.inputdata:
-            for guid, lfn in zip(job.inputdata.guids,job.inputdata.names): 
+            for guid, lfn, scope in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.scopes): 
                 finp = FileSpec()
                 finp.lfn            = lfn
                 finp.GUID           = guid
+                finp.scope          = scope
+                
 #            finp.fsize =
 #            finp.md5sum =
                 finp.dataset        = job.inputdata.dataset[0]
