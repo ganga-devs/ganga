@@ -990,6 +990,7 @@ class DQ2JobSplitter(ISplitter):
                     j.inputdata.guids = []
                     j.inputdata.names = []
                     j.inputdata.checksums = []
+                    j.inputdata.scopes = []
                     j.application   = job.application
                     j.application.run_event   = []
 
@@ -1042,6 +1043,7 @@ class DQ2JobSplitter(ISplitter):
                         j.inputdata.names = [allcontent[g][0] for g in j.inputdata.guids]
                         j.inputdata.sizes = [allcontent[g][1] for g in j.inputdata.guids]
                         j.inputdata.checksums = [allcontent[g][2] for g in j.inputdata.guids]
+                        j.inputdata.scopes = [allcontent[g][3] for g in j.inputdata.guids]
                         j.application.skip_events = nevtstoskip
                         j.application.max_events = num_of_events
                         events_processed += num_of_events
@@ -1100,6 +1102,7 @@ class DQ2JobSplitter(ISplitter):
                                         j.inputdata.names.append(allcontent[next_guid][0])
                                         j.inputdata.sizes.append(allcontent[next_guid][1])
                                         j.inputdata.checksums.append(allcontent[next_guid][2])
+                                        j.inputdata.scopes.append(allcontent[next_guid][3])
                                         if job.inputdata._name != 'EventPicking':
                                             break
                                     
