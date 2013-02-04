@@ -11,7 +11,7 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     from Ganga.GPI import Dirac
     inputs.files = inputs.files[:maxFiles]
     
-    result = Dirac._impl.execAPI('result = DiracCommands.splitInputData(%s,%d)'\
+    result = Dirac._impl.execAPI('splitInputData(%s,%d)'\
                                  % (inputs.getLFNs(),filesPerJob)
                                  )
 
