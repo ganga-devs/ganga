@@ -52,41 +52,41 @@ class DiracBase(IBackend):
     
     """
     
-    user_server_pid, user_server_port = \
-                     DiracServer.start_server(env_file            = Ganga.Utility.Config.getConfig('DIRAC')['DiracEnvFile'],
-                                              port_min            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMin'],
-                                              port_max            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMax'],
-                                              command_files       = Ganga.Utility.Config.getConfig('DIRAC')['DiracCommandFiles'],
-                                              command_timeout     = Ganga.Utility.Config.getConfig('DIRAC')['Timeout'],
-                                              num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
-                                              end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
-                                              server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'],
-                                              poll_delay          = Ganga.Utility.Config.getConfig('DIRAC')['StartUpWaitTime'],
-                                              show_dirac_output   = Ganga.Utility.Config.getConfig('DIRAC')['ShowDIRACstdout'])
-    monitoring_server_pid, monitoring_server_port = \
-                           DiracServer.start_server(env_file            = Ganga.Utility.Config.getConfig('DIRAC')['DiracEnvFile'],
-                                                    port_min            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMin'],
-                                                    port_max            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMax'],
-                                                    command_files       = Ganga.Utility.Config.getConfig('DIRAC')['DiracCommandFiles'],
-                                                    command_timeout     = Ganga.Utility.Config.getConfig('DIRAC')['Timeout'],
-                                                    num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
-                                                    end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
-                                                    server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'],
-                                                    poll_delay          = Ganga.Utility.Config.getConfig('DIRAC')['StartUpWaitTime'],
-                                                    show_dirac_output   = Ganga.Utility.Config.getConfig('DIRAC')['ShowDIRACstdout'])
-    dirac_ganga_server = DiracClient(port                = user_server_port,
-                                     num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
-                                     end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
-                                     server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'])
-    dirac_monitoring_server = DiracClient(port                = monitoring_server_port,
-                                          num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
-                                          end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
-                                          server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'])
+#    user_server_pid, user_server_port = \
+#                     DiracServer.start_server(env_file            = Ganga.Utility.Config.getConfig('DIRAC')['DiracEnvFile'],
+#                                              port_min            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMin'],
+#                                              port_max            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMax'],
+#                                              command_files       = Ganga.Utility.Config.getConfig('DIRAC')['DiracCommandFiles'],
+#                                              command_timeout     = Ganga.Utility.Config.getConfig('DIRAC')['Timeout'],
+#                                              num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
+#                                              end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
+#                                              server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'],
+#                                              poll_delay          = Ganga.Utility.Config.getConfig('DIRAC')['StartUpWaitTime'],
+#                                              show_dirac_output   = Ganga.Utility.Config.getConfig('DIRAC')['ShowDIRACstdout'])
+#    monitoring_server_pid, monitoring_server_port = \
+#                           DiracServer.start_server(env_file            = Ganga.Utility.Config.getConfig('DIRAC')['DiracEnvFile'],
+#                                                    port_min            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMin'],
+ #                                                   port_max            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMax'],
+ ##                                                   command_files       = Ganga.Utility.Config.getConfig('DIRAC')['DiracCommandFiles'],
+ #                                                   command_timeout     = Ganga.Utility.Config.getConfig('DIRAC')['Timeout'],
+ #                                                   num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
+  #                                                  end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
+ #                                                   server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'],
+ #                                                   poll_delay          = Ganga.Utility.Config.getConfig('DIRAC')['StartUpWaitTime'],
+ #                                                   show_dirac_output   = Ganga.Utility.Config.getConfig('DIRAC')['ShowDIRACstdout'])
+    dirac_ganga_server = DiracClient(#port                = user_server_port,
+                                     num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'])#,
+                                     #end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
+                                     #server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'])
+    dirac_monitoring_server = DiracClient(#port                = monitoring_server_port,
+                                          num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'])#,
+                                          #end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
+                                          #server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'])
 
-    if user_server_pid is None:
-        raise GangaException('Failed to set up the user DIRAC server on any of the given port')
-    if monitoring_server_pid is None:
-        raise GangaException('Failed to set up the monitoring DIRAC server on any of the given port')
+    #if user_server_pid is None:
+    #    raise GangaException('Failed to set up the user DIRAC server on any of the given port')
+    #if monitoring_server_pid is None:
+    #    raise GangaException('Failed to set up the monitoring DIRAC server on any of the given port')
         
     dirac_monitoring_is_active = True
     
@@ -197,19 +197,31 @@ class DiracBase(IBackend):
         self.actualCE = None
         self.status = None
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
-        result = server.execute(dirac_cmd)
-  
-        err_msg = 'Error submitting job to Dirac: %s' % str(result)
-        if not result_ok(result) or not result.has_key('Value'):
-            logger.error(err_msg)
-            raise BackendError('Dirac',err_msg)
-        
-        idlist = result['Value']
-        if type(idlist) is list:
-            return self._setup_bulk_subjobs(idlist, dirac_script)
-        
-        self.id = idlist
-        return type(self.id) == int
+        #result = eval(server.execute(dirac_cmd).stdout)
+        def submit_checker(result, job, script):
+            err_msg = 'Error submitting job to Dirac: %s' % str(result)
+            if not result_ok(result) or not result.has_key('Value'):
+                logger.error(err_msg)
+                raise BackendError('Dirac',err_msg)
+            
+            idlist = result['Value']
+            if type(idlist) is list:
+                return job._setup_bulk_subjobs(idlist, script)
+            job.id = idlist
+        server.execute_nonblocking(dirac_cmd, callback_func=submit_checker, args=(self, dirac_script))
+        return True
+
+#        err_msg = 'Error submitting job to Dirac: %s' % str(result)
+#        if not result_ok(result) or not result.has_key('Value'):
+#            logger.error(err_msg)
+#            raise BackendError('Dirac',err_msg)
+#        
+#        idlist = result['Value']
+#        if type(idlist) is list:
+#            return self._setup_bulk_subjobs(idlist, dirac_script)
+#        
+#        self.id = idlist
+#        return type(self.id) == int
    
 
     def _addition_sandbox_content(self, subjobconfig):
@@ -401,7 +413,7 @@ class DiracBase(IBackend):
     def kill(self):
         """ Kill a Dirac jobs"""         
         if not self.id: return None
-        dirac_cmd = 'result = DiracCommands.kill(%d)' % self.id
+        dirac_cmd = 'kill(%d)' % self.id
         result = DiracBase.dirac_ganga_server.execute(dirac_cmd)
         if not result_ok(result):
             raise BackendError('Dirac','Could not kill job: %s' % str(result))
@@ -409,7 +421,7 @@ class DiracBase(IBackend):
 
     def peek(self,filename=None,command=None):
         """Peek at the output of a job (Note: filename/command are ignored)."""
-        dirac_cmd = 'result = DiracCommands.peek(%d)' % self.id
+        dirac_cmd = 'peek(%d)' % self.id
         result = DiracBase.dirac_ganga_server.execute(dirac_cmd)
         if result_ok(result): print result['Value']
         else: logger.error("No peeking available for Dirac job '%i'.", self.id)
@@ -417,7 +429,7 @@ class DiracBase(IBackend):
     def getOutputSandbox(self,dir=None):
         j = self.getJobObject()
         if dir is None: dir = j.getOutputWorkspace().getPath()
-        dirac_cmd = "result = DiracCommands.getOutputSandbox(%d,'%s')" \
+        dirac_cmd = "getOutputSandbox(%d,'%s')" \
                     % (self.id,dir)
         result = DiracBase.dirac_ganga_server.execute(dirac_cmd)
         if not result_ok(result):
@@ -462,7 +474,7 @@ class DiracBase(IBackend):
     def debug(self):
         '''Obtains some (possibly) useful DIRAC debug info. '''
         # check services
-        cmd = 'result = DiracCommands.getServicePorts()'
+        cmd = 'getServicePorts()'
         result = DiracBase.dirac_ganga_server.execute(cmd)
         if not result_ok(result):
             logger.warning('Could not obtain services: %s' % str(result))
@@ -470,7 +482,7 @@ class DiracBase(IBackend):
         services = result.get('Value',{})
         for category in services:
             system,service = category.split('/')
-            cmd = "result = DiracCommands.ping('%s','%s')" % (system,service)
+            cmd = "ping('%s','%s')" % (system,service)
             result = DiracBase.dirac_ganga_server.execute(cmd)
             msg = 'OK.'
             if not result_ok(result): msg = '%s' % result['Message']
@@ -480,7 +492,7 @@ class DiracBase(IBackend):
         j = self.getJobObject()
         cwd = os.getcwd()
         debug_dir = j.getDebugWorkspace().getPath()
-        cmd = "result = DiracCommands.getJobPilotOutput(%d,'%s')" % \
+        cmd = "getJobPilotOutput(%d,'%s')" % \
               (self.id, debug_dir)
         result = DiracBase.dirac_ganga_server.execute(cmd)
         #print 'result =', result
@@ -504,7 +516,7 @@ class DiracBase(IBackend):
                 for childstatus in b_list:
                     if job.backend.id:
                         logger.debug("Accessing getStateTime() in diracAPI")
-                        dirac_cmd = "result = DiracCommands.getStateTime(%d,\'%s\')" % (job.backend.id, childstatus)
+                        dirac_cmd = "getStateTime(%d,\'%s\')" % (job.backend.id, childstatus)
                         be_statetime = DiracBase.dirac_monitoring_server.execute(dirac_cmd)
                         if childstatus in backend_final:
                             job.time.timestamps["backend_final"] = be_statetime 
@@ -522,43 +534,8 @@ class DiracBase(IBackend):
         """Prints contents of the loggingInfo from the Dirac API."""
         if not self.id: return None
         logger.debug("Accessing timedetails() in diracAPI")
-        dirac_cmd = 'result = DiracCommands.timedetails(%d)' % self.id
-        result = DiracBase.dirac_ganga_server.execute(dirac_cmd)
-        return result
-
-
-    def _finalisation_jobThread(job, updated_status):
-        if updated_status == 'completed':
-            cmd = 'result = DiracCommands.normCPUTime(%d)' % job.backend.id
-            job.backend.normCPUTime = DiracBase.dirac_monitoring_server.execute(cmd)
-            r = DiracBase.dirac_monitoring_server.execute("result = DiracCommands.getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
-                                                          priority=5)
-
-            if not result_ok(r):
-                logger.warning('Problem retrieving outputsandbox: %s' % str(r))
-                DiracBase._getStateTime(job,'failed')
-                job.updateStatus('failed')
-                return
-            if job.outputdata:
-                r = DiracBase.dirac_monitoring_server.execute('DiracCommands.getOutputDataLFNs(%d)' % job.backend.id,
-                                                              priority=5)
-                if not result_ok(r):
-                    logger.warning('LFN query failed: %s' % str(r))
-                lfns = r.get('Value',[])
-                file = open(job.getOutputWorkspace().getPath() + '/lfns.lst','w')
-                for lfn in lfns: file.write(lfn.replace(' ','')+'\n')
-                file.close()
-            DiracBase._getStateTime(job,updated_status)
-            job.updateStatus(updated_status)
-            if job.master: job.master.updateMasterJobStatus()
-        elif updated_status == 'failed':
-            if getConfig('DIRAC')['failed_sandbox_download']:
-                DiracBase.dirac_monitoring_server.execute("result = DiracCommands.getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
-                                                          priority=7)    
-##             DiracBase._getStateTime(job,'failed')
-##             job.updateStatus('failed')
-##             if job.master: job.master.updateMasterJobStatus()
-    _finalisation_jobThread = staticmethod(_finalisation_jobThread)
+        dirac_cmd = 'timedetails(%d)' % self.id
+        return DiracBase.dirac_ganga_server.execute(dirac_cmd)
     
     def updateMonitoringInformation(jobs):
         """Check the status of jobs and retrieve output sandboxes"""
@@ -576,14 +553,15 @@ class DiracBase(IBackend):
         else:
             DiracBase.dirac_monitoring_is_active = True
 
-        cmd = 'result = DiracCommands.status(%s)' % str([j.backend.id for j in jobs])
-        result = DiracBase.dirac_monitoring_server.execute(cmd,priority=1)
+        # now that can submit in non_blocking mode, can see jobs in submitting
+        # that have yet to be assigned an id so ignore them 
+        cmd = 'status(%s)' % str([j.backend.id for j in jobs if j.backend.id is not None])
+        result = DiracBase.dirac_monitoring_server.execute(cmd)
         if type(result) != type([]):
             logger.warning('DIRAC monitoring failed: %s' % str(result))
             return
                 
-
-        thread_handled_states = {'completed':'completing', 'failed':'failed'}
+        #thread_handled_states = {'completed':'completing', 'failed':'failed'}
         #thread_code           = {'completing':__completed_finalise, 'failed':__failed_finalise}
         for job, state, old_state in zip(jobs, result, ganga_job_status):
             if monitoring_component:
@@ -598,97 +576,54 @@ class DiracBase(IBackend):
                 continue
             ####################
             updated_status = state[3]
-            if updated_status == job.status: continue
 
-            ## maybe should have a thread Queue object here.
-            if updated_status in thread_handled_states:
-##                 t = GangaThread(name   = 'job_finalisation_thread',
-##                                 target = DiracBase._finalisation_jobThread,
-##                                 args   = (job, updated_status))
-##                 t.daemon = True
-##                 t.start()
-##                updated_status = thread_handled_states[updated_status]
-                DiracBase._getStateTime(job,thread_handled_states[updated_status])
-                job.updateStatus(thread_handled_states[updated_status])
-                DiracBase.dirac_monitoring_server.execute_nonblocking(command=None,
-                                                                      finalise_code=DiracBase._finalisation_jobThread,
-                                                                      args=(job,updated_status))
+            if updated_status == job.status: continue
+ 
+            if updated_status == 'failed':
+                DiracBase._getStateTime(job,'failed')
+                job.updateStatus('failed')
+                if getConfig('DIRAC')['failed_sandbox_download']:
+                    DiracBase.dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
+                                                                          priority=7)
+            elif updated_status == 'completed':
+                def job_finalisation(result, job):
+                    cmd = 'normCPUTime(%d)' % job.backend.id
+                    job.backend.normCPUTime = DiracBase.dirac_monitoring_server.execute(cmd)
+                    if not result_ok(result):
+                        logger.warning('Problem retrieving outputsandbox: %s' % str(result))
+                        DiracBase._getStateTime(job,'failed')
+                        job.updateStatus('failed')
+                        return
+                        ## This should no-longer be the case but keep it around so know the command if ppl need it
+#                        if job.outputdata:
+#                            r = DiracBase.dirac_monitoring_server.execute('print getOutputDataLFNs(%d)' % job.backend.id,
+#                                                                          priority=5)
+                    DiracBase._getStateTime(job,'completed')
+                    job.updateStatus('completed')
+                    if job.master: job.master.updateMasterJobStatus()
+                DiracBase._getStateTime(job,'completing')
+                job.updateStatus('completing')
+                DiracBase.dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
+                                                                      priority=5,
+                                                                      callback_func=job_finalisation,
+                                                                      args=(job,))
             else:
                 #updated_status = thread_handled_states[updated_status]
                 DiracBase._getStateTime(job,updated_status)
                 job.updateStatus(updated_status)
-
-
-
-
-
-
-
-
-
-
-
-
-                
-##             if updated_status == 'completed':
-##                 updated_status = 'completing'
-##                 t = GangaThread(name   = 'job_completed_thread',
-##                                 target = DiracBase.__completed_jobThread,
-##                                 args   = (job,))
-##                 t.daemon = True
-##                 t.start()
-##                 DiracBase._getStateTime(job,'completing')
-##                 job.updateStatus('completing')
-##                 cmd = 'DiracCommands.normCPUTime(%d)' % job.backend.id
-##                 job.backend.normCPUTime = DiracBase.dirac_monitoring_server.execute(cmd)
-##                 r = DiracBase.dirac_monitoring_server.execute("DiracCommands.getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()) )
-                
-##                 if not result_ok(r):
-##                     logger.warning('Problem retrieving output: %s' % str(r))
-##                     DiracBase._getStateTime(job,'failed')
-##                     job.updateStatus('failed')
-##                     continue
-##                 if job.outputdata:
-##                     r = DiracBase.dirac_monitoring_server.execute('DiracCommands.getOutputDataLFNs(%d)' % job.backend.id)
-##                     if not result_ok(r):
-##                         logger.warning('LFN query failed: %s' % str(r))
-##                     lfns = r.get('Value',[])
-##                     file = open(job.getOutputWorkspace().getPath() + '/lfns.lst','w')
-##                     for lfn in lfns: file.write(lfn.replace(' ','')+'\n')
-##                     file.close()
-##             elif updated_status == 'failed':
-##                 if getConfig('DIRAC')['failed_sandbox_download']:
-##                     t = GangaThread(name   = 'job_failed_thread',
-##                                     target = DiracBase.__failed_jobThread,
-##                                     args   = (job,))
-##                     t.daemon = True
-##                     t.start()
-
-##             DiracBase._getStateTime(job,updated_status)
-##             job.updateStatus(updated_status)
-                   
+                  
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
-    def execAPI(cmd,priority = 1,timeout=Ganga.Utility.Config.getConfig('DIRAC')['Timeout']):
+    def execAPI(cmd,timeout=Ganga.Utility.Config.getConfig('DIRAC')['Timeout']):
         """Executes DIRAC API commands.  If variable 'result' is set, then
         it is returned by this method. """
-        return DiracBase.dirac_ganga_server.execute(cmd, priority,timeout)
+        return DiracBase.dirac_ganga_server.execute(cmd, timeout)
 
     execAPI = staticmethod(execAPI)
 
-    def killServer():
-        '''Kills the DIRAC server child process.'''
-        DiracBase.dirac_ganga_server.shutdown_server()
-        DiracBase.dirac_monitoring_server.shutdown_server()
-    killServer = staticmethod(killServer)
+    def getQueue():
+        return DiracBase.dirac_ganga_server.get_queue()
+    getQueue = staticmethod(getQueue)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-## from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-## from GangaDirac.Lib.RTHandlers.ExeDiracRTHandler import ExeDiracRTHandler
-## #from RootDiracRTHandler import *
-
-## allHandlers.add('Executable','Dirac', ExeDiracRTHandler)
-## #allHandlers.add('Root','Dirac', RootDiracRTHandler)
-
-#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

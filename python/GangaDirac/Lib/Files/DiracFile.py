@@ -12,6 +12,8 @@ from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
+from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async
 logger = Ganga.Utility.logging.getLogger()
 regex = re.compile('[*?\[\]]')
 
@@ -124,18 +126,21 @@ class DiracFile(IOutputFile):
 
     def _getEnv(self):
         if not self._env:
-            self._env = copy.deepcopy(os.environ)
-            shellEnvUpdate_cmd('. SetupProject.sh LHCbDirac', self._env)
-        
+            self._env=getDiracEnv()
+            #with open(configDirac['DiracEnvFile'],'r') as envfile:
+                #self._env.update(dict((tuple(line.split('=',1)) for line in envfile.read().splitlines() if len(line.split('=',1)) == 2)))
+            #self._env = copy.deepcopy(os.environ)
+            #shellEnvUpdate_cmd('. SetupProject.sh LHCbDirac', self._env)
+        return self._env
+
     def remove(self):
         """
         Remove this lfn and all replicas from DIRAC LFC/SEs
         """
         if self.lfn == "":
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
-        self._getEnv()
         logger.info('Removing file %s' % self.lfn)
-        rc, stdout, stderr = shellEnv_cmd('dirac-dms-remove-lfn %s' % self.lfn, self._env)
+        rc, stdout, stderr = runcmd('dirac-dms-remove-lfn %s' % self.lfn, env=self._getEnv())
         if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
             self.lfn=""
             self.locations=[]
@@ -155,9 +160,8 @@ class DiracFile(IOutputFile):
         def inTokens(element):
             return element in configDirac['DiracSpaceTokens']
 
-        self._getEnv()
-        ret  =  eval(shellEnv_cmd('dirac-dms-lfn-metadata %s' % self.lfn, self._env)[1])
-        reps =  filter(inTokens,shellEnv_cmd('dirac-dms-lfn-replicas %s' % self.lfn, self._env)[1].split(' '))
+        ret  =  eval(runcmd('dirac-dms-lfn-metadata %s' % self.lfn, env=self._getEnv()).stdout)
+        reps =  filter(inTokens, runcmd('dirac-dms-lfn-replicas %s' % self.lfn, env=self._getEnv()).stdout.split(' '))
         try:
             if self.guid != ret['Successful'][self.lfn]['GUID']:
                 self.guid = ret['Successful'][self.lfn]['GUID']
@@ -183,9 +187,8 @@ class DiracFile(IOutputFile):
         if self.lfn == "":
             raise GangaException('Can\'t download a file without an LFN.')
 
-        self._getEnv()
         logger.info("Getting file %s" % self.lfn)
-        rc, stdout, stderr=shellEnv_cmd('dirac-dms-get-file %s' % self.lfn, self._env, to_location)
+        rc, stdout, stderr=runcmd('dirac-dms-get-file %s' % self.lfn, env=self._getEnv(), cwd=to_location)
         if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
             if self.namePattern=="":
                 name = os.path.basename(self.lfn)
@@ -207,10 +210,10 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t replicate a file if it isn\'t already on a DIRAC SE, upload it first')
         if self.lfn == '':
             raise GangaException('Must supply an lfn to replicate')
-        self._getEnv()
+
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        rc, stdout, stderr = shellEnv_cmd('dirac-dms-replicate-lfn %s %s %s' % (self.lfn, destSE, self.locations[0]),
-                                          self._env)
+        rc, stdout, stderr = runcmd('dirac-dms-replicate-lfn %s %s %s' % (self.lfn, destSE, self.locations[0]),
+                                          env=self._getEnv())
         if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
             # if 'Successful' in eval(stdout) and self.lfn in eval(stdout)['Successful']:
             self.locations.append(destSE)
@@ -269,9 +272,7 @@ class DiracFile(IOutputFile):
         import glob, uuid
         lfn_base =  os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()))
         storage_elements=configDirac['DiracSpaceTokens']
- 
-        self._getEnv()
-        
+       
         outputFiles=GangaList()
         for file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = file
@@ -296,7 +297,7 @@ class DiracFile(IOutputFile):
             stdout=''
             logger.info('Uploading file %s' % name)
             for se in storage_elements:
-                rc, stdout, stderr = shellEnv_cmd('dirac-dms-add-file %s %s %s %s' %(lfn, name, se, guid), self._env)
+                rc, stdout, stderr = runcmd('dirac-dms-add-file %s %s %s %s' %(lfn, name, se, guid), env=self._getEnv())
                 if stdout.find("'Successful': {'%s'" % lfn) >=0:
                     if self.compressed: os.system('rm -f %s'% name)
                     if regex.search(self.namePattern) is not None:
@@ -339,11 +340,12 @@ class DiracFile(IOutputFile):
 """.replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', compressed).replace('###WILD_CARD###', wildCard)
 
         script = """
-###INDENT###def run_command(cmd):
+###INDENT###dirac_env_setup = ###DIRAC_ENV###
+###INDENT###def run_command(cmd, env=None):
 ###INDENT###    import os, subprocess        
 ###INDENT###    pipe = subprocess.Popen(cmd,
 ###INDENT###                            shell=True,
-###INDENT###                            env=os.environ,
+###INDENT###                            env=env,
 ###INDENT###                            cwd=os.getcwd(),
 ###INDENT###                            stdout=subprocess.PIPE,
 ###INDENT###                            stderr=subprocess.PIPE)
@@ -359,9 +361,9 @@ class DiracFile(IOutputFile):
 ###INDENT###    stderr=''
 ###INDENT###    for se in SEs:
 ###INDENT###        try:
-###INDENT###            retcode, stdout, stderr = run_command('###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid))
+###INDENT###            retcode, stdout, stderr = run_command('dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid), dirac_env_setup)
 ###INDENT###        except Exception,x:
-###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'###SETUP###dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
+###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
 ###INDENT###        if stdout.find(\"'Successful': {'%s'\" % lfn) >=0:
 ###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::%s\\n" % (wildcard, file_label, lfn, se, guid))
 ###INDENT###            return
@@ -394,20 +396,25 @@ class DiracFile(IOutputFile):
         script = script.replace('###INDENT###',           indent)
         script = script.replace('###LOCATIONSFILE###',    postProcessLocationsFP)
         if self._parent and self._parent.backend._name=='Dirac':
-            script = script.replace('###SETUP###', '')
-        elif self._parent and self._parent.backend._name=='Local' and self._parent.application._name=='Root' and self._parent.application.usepython:
-            # THIS WHOLE IF STATEMENT IS A HORRIBLE HACK AS THE LOCAL ROOT RTHANDLER OVERWRITES THE PYTHONPATH ENV VAR
-            # WITH A REDUCED PATH
-            extra_setup=''
-#            if 'LHCBPROJECTPATH' in os.environ:
-#                extra_setup+='export LHCBPROJECTPATH=%s && ' % os.environ['LHCBPROJECTPATH']
-#            if 'CMTCONFIG' in os.environ:
-#                 extra_setup+='export CMTCONFIG=%s && ' % os.environ['CMTCONFIG']
-            if 'PYTHONPATH' in os.environ:
-                 extra_setup+='export PYTHONPATH=%s && ' % os.environ['PYTHONPATH']
-            script = script.replace('###SETUP###', extra_setup + '. SetupProject.sh LHCbDirac &&')#&>/dev/null && ')          
+            script = script.replace('###DIRAC_ENV###', str(None))
         else:
-            script = script.replace('###SETUP###', '. SetupProject.sh LHCbDirac &>/dev/null && ')
+            script = script.replace('###DIRAC_ENV###', str(self._getEnv()))
+
+#        if self._parent and self._parent.backend._name=='Dirac':
+#            script = script.replace('###SETUP###', '')
+#        elif self._parent and self._parent.backend._name=='Local' and self._parent.application._name=='Root' and self._parent.application.usepython:
+#            # THIS WHOLE IF STATEMENT IS A HORRIBLE HACK AS THE LOCAL ROOT RTHANDLER OVERWRITES THE PYTHONPATH ENV VAR
+#            # WITH A REDUCED PATH
+#            extra_setup=''
+##            if 'LHCBPROJECTPATH' in os.environ:
+##                extra_setup+='export LHCBPROJECTPATH=%s && ' % os.environ['LHCBPROJECTPATH']
+##            if 'CMTCONFIG' in os.environ:
+##                 extra_setup+='export CMTCONFIG=%s && ' % os.environ['CMTCONFIG']
+#            if 'PYTHONPATH' in os.environ:
+#                 extra_setup+='export PYTHONPATH=%s && ' % os.environ['PYTHONPATH']
+#            script = script.replace('###SETUP###', extra_setup + '. SetupProject.sh LHCbDirac &&')#&>/dev/null && ')          
+#        else:
+#            script = script.replace('###SETUP###', '. SetupProject.sh LHCbDirac &>/dev/null && ')
 
         return script
 
