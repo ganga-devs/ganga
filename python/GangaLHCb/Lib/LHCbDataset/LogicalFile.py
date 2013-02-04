@@ -67,7 +67,7 @@ class LogicalFile(GangaObject):
             
     def getReplicas(self):
         'Returns replicas for the LFN.'
-        cmd = 'result = DiracCommands.getReplicas("%s")' % self.name
+        cmd = 'getReplicas("%s")' % self.name
         result = get_result(cmd,'LFC query error','Could not get replicas.')
         replicas = result['Value']['Successful']
         if replicas.has_key(self.name): return replicas[self.name]
@@ -77,14 +77,14 @@ class LogicalFile(GangaObject):
         'Downloads the LFN to dir (default is current directory).'
         dir = expandfilename(dir)
         dir = os.path.abspath(dir)
-        cmd = 'result = DiracCommands.getFile("%s","%s")' % (self.name,dir)
+        cmd = 'getFile("%s","%s")' % (self.name,dir)
         result = get_result(cmd,'Problem during download','Download error.')
         from PhysicalFile import PhysicalFile
         return GPIProxyObjectFactory(PhysicalFile(name=result['Value']))
 
     def remove(self):
         'Removes the LFN (and all replicas) from the LFC.'
-        cmd = 'result = DiracCommands.removeFile("%s")' % self.name
+        cmd = 'removeFile("%s")' % self.name
         return get_result(cmd,'Problem during remove','Could not rm file.')
 
     def replicate(self,destSE='',srcSE='',locCache=''):
@@ -98,7 +98,7 @@ class LogicalFile(GangaObject):
             msg = '"%s" is not a valid space token. Please choose from: %s' \
                   % (destSE,str(tokens))
             raise GangaException(msg)
-        cmd = 'result = DiracCommands.replicateFile("%s","%s","%s","%s")' % \
+        cmd = 'replicateFile("%s","%s","%s","%s")' % \
               (self.name,destSE,srcSE,locCache)
         return get_result(cmd,'Replication error','Error replicating file.')
 
@@ -110,7 +110,7 @@ class LogicalFile(GangaObject):
 
     def getMetadata(self):
         'Returns the metadata for the LFN (e.g. creation time, etc.).'
-        cmd = 'result = DiracCommands.getMetadata("%s")' % self.name
+        cmd = 'getMetadata("%s")' % self.name
         result = get_result(cmd,'Error w/ metadata','Could not get metadata.')
         metadata = result['Value']['Successful']
         if metadata.has_key(self.name): return metadata[self.name]
@@ -118,7 +118,7 @@ class LogicalFile(GangaObject):
 
     def bkMetadata(self):
         'Returns the bookkeeping meta-data for this file.'
-        cmd = 'result = DiracLHCbCommands.bkMetaData(["%s"])' % self.name
+        cmd = 'bkMetaData(["%s"])' % self.name
         r = get_result(cmd,'Error removing replica','Replica rm error.')
         return r['Value'].get(self.name,{})
 

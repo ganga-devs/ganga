@@ -55,10 +55,10 @@ class PhysicalFile(GangaObject):
         'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
         from LogicalFile import get_result
         if guid is None:
-            cmd = 'result = DiracCommands.addFile("%s","%s","%s",None)' % \
+            cmd = 'addFile("%s","%s","%s",None)' % \
                   (lfn,self.name,diracSE)
         else:
-            cmd = 'result = DiracCommands.addFile("%s","%s","%s","%s")' % \
+            cmd = 'addFile("%s","%s","%s","%s")' % \
                   (lfn,self.name,diracSE,guid)
         result = get_result(cmd,'Problem w/ upload','Error uploading file.')
         from LogicalFile import LogicalFile

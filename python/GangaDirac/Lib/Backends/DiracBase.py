@@ -197,31 +197,34 @@ class DiracBase(IBackend):
         self.actualCE = None
         self.status = None
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
-        #result = eval(server.execute(dirac_cmd).stdout)
-        def submit_checker(result, job, script):
-            err_msg = 'Error submitting job to Dirac: %s' % str(result)
-            if not result_ok(result) or not result.has_key('Value'):
-                logger.error(err_msg)
-                raise BackendError('Dirac',err_msg)
-            
-            idlist = result['Value']
-            if type(idlist) is list:
-                return job._setup_bulk_subjobs(idlist, script)
-            job.id = idlist
-        server.execute_nonblocking(dirac_cmd, callback_func=submit_checker, args=(self, dirac_script))
-        return True
+        result = server.execute(dirac_cmd)
+        ## Could use the below code instead to submit on a thread
+        ## If submitting many then user may terminate ganga before
+        ## all jobs submitted
+#        def submit_checker(result, job, script):
+#            err_msg = 'Error submitting job to Dirac: %s' % str(result)
+#            if not result_ok(result) or not result.has_key('Value'):
+#                logger.error(err_msg)
+#                raise BackendError('Dirac',err_msg)
+#            
+#            idlist = result['Value']
+#            if type(idlist) is list:
+#                return job._setup_bulk_subjobs(idlist, script)
+#            job.id = idlist
+#        server.execute_nonblocking(dirac_cmd, callback_func=submit_checker, args=(self, dirac_script))
+#        return True
 
-#        err_msg = 'Error submitting job to Dirac: %s' % str(result)
-#        if not result_ok(result) or not result.has_key('Value'):
-#            logger.error(err_msg)
-#            raise BackendError('Dirac',err_msg)
-#        
-#        idlist = result['Value']
-#        if type(idlist) is list:
-#            return self._setup_bulk_subjobs(idlist, dirac_script)
-#        
-#        self.id = idlist
-#        return type(self.id) == int
+        err_msg = 'Error submitting job to Dirac: %s' % str(result)
+        if not result_ok(result) or not result.has_key('Value'):
+            logger.error(err_msg)
+            raise BackendError('Dirac',err_msg)
+        
+        idlist = result['Value']
+        if type(idlist) is list:
+            return self._setup_bulk_subjobs(idlist, dirac_script)
+        
+        self.id = idlist
+        return type(self.id) == int
    
 
     def _addition_sandbox_content(self, subjobconfig):
@@ -622,7 +625,7 @@ class DiracBase(IBackend):
     execAPI = staticmethod(execAPI)
 
     def getQueue():
-        return DiracBase.dirac_ganga_server.get_queue()
+        return DiracBase.dirac_monitoring_server.get_queue()
     getQueue = staticmethod(getQueue)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

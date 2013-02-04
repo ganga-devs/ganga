@@ -95,7 +95,7 @@ class LHCbDataset(Dataset):
     def getReplicas(self):
         'Returns the replicas for all files in the dataset.'
         lfns = self.getLFNs()
-        cmd = 'result = DiracCommands.getReplicas(%s)' % str(lfns)
+        cmd = 'getReplicas(%s)' % str(lfns)
         result = get_result(cmd,'LFC query error','Could not get replicas.')
         return result['Value']['Successful']
 
@@ -195,7 +195,7 @@ class LHCbDataset(Dataset):
         lfns = self.getLFNs()
         depth = self.depth
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
-        cmd = 'result = DiracLHCbCommands.getInputDataCatalog(%s,%d,"%s","%s")' \
+        cmd = 'getInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns),depth,site,tmp_xml.name)
         result = get_result(cmd,'LFN->PFN error','XML catalog error.')
         xml_catalog = tmp_xml.read()
@@ -310,7 +310,7 @@ class LHCbDataset(Dataset):
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '        
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
-        cmd = 'result = DiracLHCbCommands.bkMetaData(%s)' % self.getLFNs()
+        cmd = 'bkMetaData(%s)' % self.getLFNs()
         b =  get_result(cmd,'Error removing replica','Replica rm error.')
         return b
         
