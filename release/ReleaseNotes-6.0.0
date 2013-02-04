@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.0 (2013/1/28)
+6.0.0 (2013/2/4)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -32,9 +32,10 @@ https://twiki.cern.ch/twiki/bin/view/ArdaGrid/PostProcessTutorial
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
-* Add Panda overwriteQueuedata variable mainly for FAX support
-* Fixed a minor debug issue during prepare
-* Update to panda-client 0.4.11
+* Added scopes to input data for Panda submission to aid RUCIO transition
+* Update panda-client 0.4.16
+* Stopped brokering to CERN T0 site
+* Fixed a minor typo
 * Local backend Athena jobs now change to the atlas_run_dir
 
 
@@ -74,7 +75,8 @@ LHCbFileMerger.
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaPanda
 --------------------------------------------------------------------------------------------------------------
-* Add Panda overwriteQueuedata variable mainly for FAX support
-* Update to panda-client 0.4.11
+* Added scopes to input data for Panda submission to aid RUCIO transition
+* Update panda-client 0.4.16
+* Stopped brokering to CERN T0 site
 
 **************************************************************************************************************
