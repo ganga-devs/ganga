@@ -1196,7 +1196,10 @@ class DQ2JobSplitter(ISplitter):
 
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
-        
+
+        # reset missing files in case of a previous submission attempt
+        self.missing_files = []
+
         if self.numevtsperjob > 0:
             logger.info('Total events assigned to subjobs is %d'%events_processed)
             if not (allevents == events_processed) :
@@ -1206,7 +1209,6 @@ class DQ2JobSplitter(ISplitter):
             if not (totalfiles == allfiles):
                 logger.error('DQ2JobSplitter was only able to assign %s out of %s files to the subjobs ! Please check your job configuration if this is intended and possibly change to a different cloud or choose different sites!', totalfiles, allfiles)
                 
-                self.missing_files = []
                 for name in allnames:
                     found=False
                     for sj in subjobs:
