@@ -83,9 +83,14 @@ class Popen(subprocess.Popen):
                 raise Exception('To run a python command/script give the arg as type str')
             if not shell:
                 raise Exception('To run a python command/script use the shell=True option')
-            code_string = compile(args, '<string>', 'exec')
-            args = '''python -c "import marshal, base64; exec(marshal.loads(base64.b64decode('%s')))"''' % base64.b64encode(marshal.dumps(code_string))
-
+#            code_string = compile(args, '<string>', 'exec')
+#            args = '''python -c "import marshal, base64; exec(marshal.loads(base64.b64decode('%s')))"''' % base64.b64encode(marshal.dumps(code_string))
+            ## Could use this new way to do the env as well using platform independent os.environ
+            script = args
+            inread, inwrite = os.pipe()
+            ## This allows for arbitrary length python scripts to be read in
+            args = '''exec %i>&-; python -c "import os; exec(os.fdopen(%i, 'rb', %i).read())"''' % (inwrite, inread, bufsize)
+            
         if timeout is None and callback_func is None and not update: # no need for the thread.
             super(Popen, self).__init__( args               = args,
                                          bufsize            = bufsize,
@@ -157,6 +162,12 @@ class Popen(subprocess.Popen):
             t=Thread(target=self._proc_timeout, args=(timeout, outwrite, errwrite, envread, env, callback_func, cbfunc_args, cbfunc_kwds))
             t.deamon=True        
             t.start()
+
+        if usepython:
+            os.close(inread)
+            with os.fdopen(inwrite, 'wb', bufsize) as f:
+                f.write(script)
+            
 
 def runcmd(cmd, timeout=None, env=None, cwd=None, update=False, usepython=False):
     p=Popen(cmd, shell=True, timeout=timeout, env=env, cwd=cwd, update=update, usepython=usepython, stdout=PIPE, stderr=PIPE)

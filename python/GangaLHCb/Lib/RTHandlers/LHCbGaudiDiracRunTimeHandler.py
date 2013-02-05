@@ -23,7 +23,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         ## cache versions dict
         if not LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
             from GangaLHCb.Lib.Backends.Dirac import Dirac
-            result = Dirac.execAPI('result = DiracLHCbCommands.getSoftwareVersions()')
+            result = Dirac.execAPI('getSoftwareVersions()')
             if not result_ok(result):
                 logger.error('Could not obtain available versions: %s' \
                              % str(result))
