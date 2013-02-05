@@ -17,7 +17,7 @@ def _initconfig():
         from Ganga.Utility import Config
         # create configuration
         config = Config.makeConfig('DashboardMS', 'Settings for Dashboard Messaging Service.')
-        config.addOption('server', 'ganga.msg.cern.ch', 'The MSG server name.')
+        config.addOption('server', 'dashb-mb.cern.ch', 'The MSG server name.')
         config.addOption('port', 6163, 'The MSG server port.')
         config.addOption('user', 'ganga-atlas', '')
         config.addOption('password', 'analysis', '')
