@@ -8,41 +8,41 @@ dirac = Dirac()
 
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-def kill(id): print dirac.delete(id)
+def kill(id): return dirac.delete(id)
 
-def peek(id): print dirac.peek(id)
+def peek(id): return dirac.peek(id)
 
-def getJobCPUTime(id): print dirac.getJobCPUTime(id)
+def getJobCPUTime(id): return dirac.getJobCPUTime(id)
 
-def reschedule(id): print dirac.reschedule(id)
+def reschedule(id): return dirac.reschedule(id)
 
-def submit(djob,mode='wms'): print dirac.submit(djob,mode=mode)
+def submit(djob,mode='wms'): return dirac.submit(djob,mode=mode)
 
-def ping(system,service): print dirac.ping(system,service)
+def ping(system,service): return dirac.ping(system,service)
 
-def removeFile(lfn): print dirac.removeFile(lfn)
+def removeFile(lfn): return dirac.removeFile(lfn)
 
-def getMetadata(lfn): print dirac.getMetadata(lfn)
+def getMetadata(lfn): return dirac.getMetadata(lfn)
 
-def getReplicas(files): print dirac.getReplicas(files)
+def getReplicas(files): return dirac.getReplicas(files)
 
 def replicateFile(lfn,destSE,srcSE,locCache):
-    print dirac.replicateFile(lfn,destSE,srcSE,locCache)
+    return dirac.replicateFile(lfn,destSE,srcSE,locCache)
 
 def removeReplica(lfn,sE):
-    print dirac.removeReplica(lfn,sE)
+    return dirac.removeReplica(lfn,sE)
 
 def getOutputData(id, outputFiles='', destinationDir=''):
-    print dirac.getJobOutputData(id, outputFiles, destinationDir)
+    return dirac.getJobOutputData(id, outputFiles, destinationDir)
 
 def splitInputData(files,files_per_job):        
-    print dirac.splitInputData(files,files_per_job)
+    return dirac.splitInputData(files,files_per_job)
 
 def getInputDataCatalog(lfns,site,xml_file):
-    print dirac.getInputDataCatalog(lfns,site,xml_file)
+    return dirac.getInputDataCatalog(lfns,site,xml_file)
 
 def addFile(lfn,file,diracSE,guid):
-    print dirac.addFile(lfn,file,diracSE,guid)
+    return dirac.addFile(lfn,file,diracSE,guid)
 
 def getOutputSandbox(id, outputDir = os.getcwd(), oversized = True):    
     result = dirac.getOutputSandbox(id, outputDir, oversized)
@@ -54,7 +54,7 @@ def getOutputSandbox(id, outputDir = os.getcwd(), oversized = True):
 
         if ganga_logs:
             os.system('ln -s %s %s/stdout' % (ganga_logs[0],outputDir))
-    print result
+    return result
 
 def getOutputDataLFNs(id): ## could shrink this with dirac.getJobOutputLFNs from ##dirac    
     parameters = dirac.parameters(id)
@@ -83,7 +83,7 @@ def getOutputDataLFNs(id): ## could shrink this with dirac.getJobOutputLFNs from
     if ok: result['Value'] = lfns
     else: result['Message'] = message
         
-    print result
+    return result
 
 def normCPUTime(id):    
     parameters = dirac.parameters(id)
@@ -92,7 +92,7 @@ def normCPUTime(id):
         parameters = parameters['Value']        
         if parameters.has_key('NormCPUTime(s)'):
             ncput = parameters['NormCPUTime(s)']
-    print ncput
+    return ncput
 
 
 def status(job_ids):
@@ -111,9 +111,7 @@ def status(job_ids):
                      'Waiting'   : 'submitted'}
         
     result = dirac.status(job_ids)
-    if not result['OK']: 
-        print result
-        return
+    if not result['OK']: return result
     status_list = []
     bulk_status = result['Value']
     for id in job_ids:
@@ -128,13 +126,11 @@ def status(job_ids):
         status_list.append([minor_status,dirac_status,dirac_site,
                             ganga_status])
             
-    print status_list
+    return status_list
 
 def getFile(lfn,dir):
     result = dirac.getFile(lfn)
-    if not result or not result.get('OK',False):
-        print result
-        return
+    if not result or not result.get('OK',False): return result
     f = result['Value']['Successful'][lfn]
     fname = f.split('/')[-1]
     fdir = f.split('/')[0:-2]
@@ -142,13 +138,11 @@ def getFile(lfn,dir):
     os.system('mv -f %s %s' % (f,new_f))
     os.system('rmdir %s' % fdir)
     result['Value'] = new_f
-    print result
+    return result
 
 def getStateTime(id, status):
     log = dirac.loggingInfo(id)
-    if not log.has_key('Value'):
-        print None
-        return
+    if not log.has_key('Value'): return None
     L = log['Value']
     checkstr = ''
         
@@ -164,22 +158,21 @@ def getStateTime(id, status):
         checkstr = ''
             
     if checkstr=='':
-        print None
-        return
-
+        return None
+        
     for l in L:
         if checkstr in l[0]:
             T = datetime.datetime(*(time.strptime(l[3],"%Y-%m-%d %H:%M:%S")[0:6]))
-            print T
-            return
-    print None
+            return T
+            
+    return None
 
 def timedetails(id):
     log = dirac.loggingInfo(id)
     d = {}        
     for i in range(0, len(log['Value'])):
         d[i] = log['Value'][i]  
-    print d
+    return d
 
 # DiracAdmin commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -192,6 +185,6 @@ def getJobPilotOutput(id,dir):
         result = DiracAdmin().getJobPilotOutput(id)
     finally:
         os.chdir(pwd)
-    print result
+    return result
 
-def getServicePorts(): print DiracAdmin().getServicePorts()
+def getServicePorts(): return DiracAdmin().getServicePorts()

@@ -1,51 +1,54 @@
 import os, sys, inspect
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
+#import GangaDirac.Lib.Server.DiracCommands
 
-diraclhcb=DiracLHCb()
+## sys.path.append(inspect.getsourcefile(getRootVersions)[:inspect.getsourcefile(getRootVersions).find('GangaLHCb')]+'GangaDirac/Lib/Server')
+## import DiracCommands
+
+
+dirac=DiracLHCb()
 
 # DiracLHCb commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-def getRootVersions(): print diraclhcb.getRootVersions()
+def getRootVersions(): return dirac.getRootVersions()
 
-def getSoftwareVersions(): print diraclhcb.getSoftwareVersions()
+def getSoftwareVersions(): return dirac.getSoftwareVersions()
 
-def bkQueryDict(dict): print diraclhcb.bkQuery(dict)
+def bkQueryDict(dict): return dirac.bkQuery(dict)
    
-def checkSites(): print diraclhcb.checkSites()
+def checkSites(): return dirac.checkSites()
 
-def bkMetaData(files): print diraclhcb.bkMetadata(files)
+def bkMetaData(files): return dirac.bkMetadata(files)
 
 def getInputDataCatalog(lfns,depth,site,xml_file):
     if depth > 0:
-        result = diraclhcb.getBKAncestors(lfns,depth)
-        if not result or not result.get('OK',False): 
-            print result
-            return
+        result = dirac.getBKAncestors(lfns,depth)
+        if not result or not result.get('OK',False): return result
         lfns = result['Value']
-    print diraclhcb.getInputDataCatalog(lfns,site,xml_file)
+    return dirac.getInputDataCatalog(lfns,site,xml_file)
 
 def bookkeepingGUI(file):
-    print os.system('dirac-bookkeeping-gui %s' % file)
+    return os.system('dirac-bookkeeping-gui %s' % file)
 
 def getDataset(path,dqflag,type,start,end,sel):
     if type is 'Path':
-        result = diraclhcb.bkQueryPath(path,dqflag)##diraclhcb
+        result = dirac.bkQueryPath(path,dqflag)##diraclhcb
     elif type is 'RunsByDate':
-        result = diraclhcb.bkQueryRunsByDate(path,start,end,
+        result = dirac.bkQueryRunsByDate(path,start,end,
                                          dqflag,sel)##diraclhcb
     elif type is 'Run':
-        result = diraclhcb.bkQueryRun(path,dqflag)##diraclhcb
+        result = dirac.bkQueryRun(path,dqflag)##diraclhcb
     elif type is 'Production':
-        result = diraclhcb.bkQueryProduction(path,dqflag)##diraclhcb
+        result = dirac.bkQueryProduction(path,dqflag)##diraclhcb
     else:
         result = {'OK':False,'Message':'Unsupported type!'}
-    print result
+    return result
 
 def checkTier1s():
-    result =  diraclhcb.gridWeather()
+    result =  dirac.gridWeather()
     if result.get('OK',False):
         result['Value'] = result['Value']['Tier-1s']
-    print result
+    return result
 
 

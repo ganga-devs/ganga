@@ -141,11 +141,6 @@ class MassStorageFile(IOutputFile):
         else:
             job = self.getJobObject()
             sourceDir = job.outputdir
-                
-            #if there are subjobs, the put method will be called on every subjob
-            #and will upload the resulted output file 
-            if len (job.subjobs) > 0:
-                return
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
@@ -182,59 +177,6 @@ class MassStorageFile(IOutputFile):
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                     return
-
-            if self._parent != None:
-                jobfqid = self.getJobObject().fqid
-        
-                jobid = jobfqid
-                subjobid = ''
-
-                if (jobfqid.find('.') > -1):
-                    jobid = jobfqid.split('.')[0]
-                    subjobid = jobfqid.split('.')[1]
-        
-                pathToDirName = os.path.join(pathToDirName, dirName)
-                dirName = jobid
-
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
-                if exitcode != 0:
-                    self.handleUploadFailure(mystderr)
-                    return
-
-                directoryExists = False 
-                for directory in mystdout.split('\n'):
-                    if directory.strip() == dirName:
-                        directoryExists = True
-                        break
-
-                if not directoryExists:
-                    massStoragePath = os.path.join(pathToDirName, dirName)
-                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-                    if exitcode != 0:
-                        self.handleUploadFailure(mystderr)
-                        return
-
-                if subjobid != '':
-                    pathToDirName = os.path.join(pathToDirName, dirName)
-                    dirName = subjobid
-
-                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
-                    if exitcode != 0:
-                        self.handleUploadFailure(mystderr)
-                        return
-
-                    directoryExists = False 
-                    for directory in mystdout.split('\n'):
-                        if directory.strip() == dirName:
-                            directoryExists = True
-                            break
-
-                    if not directoryExists:
-                        massStoragePath = os.path.join(pathToDirName, dirName)
-                        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-                        if exitcode != 0:
-                            self.handleUploadFailure(mystderr)
-                            return
             
             fileName = self.namePattern
             if self.compressed:
@@ -284,7 +226,6 @@ class MassStorageFile(IOutputFile):
 
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
-
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """        
@@ -345,69 +286,6 @@ class MassStorageFile(IOutputFile):
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
    
-
-
-
-
-
-
-###INDENT###    pathToDirName = os.path.join(pathToDirName, dirName)
-###INDENT###    dirName = '###JOBDIR###'
-
-###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
-###INDENT###    if exitcode != 0:
-###INDENT###        printError('Error while executing nsls %s command, be aware that Castor commands can be executed only ###INDENT###from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###        continue
-
-###INDENT###    directoryExists = False 
-###INDENT###    for directory in mystdout.split('\\n'):
-###INDENT###        if directory.strip() == dirName:
-###INDENT###            directoryExists = True
-###INDENT###            break
-
-###INDENT###    if not directoryExists:
-###INDENT###        path = os.path.join(pathToDirName, dirName)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
-###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###            continue
-
-###INDENT###    if '###SUBJOBDIR###' != '':
-###INDENT###        pathToDirName = os.path.join(pathToDirName, dirName)
-###INDENT###        dirName = '###SUBJOBDIR###'
-
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
-###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing nsls %s command' % pathToDirName + os.linesep + mystderr)
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###            continue
-
-###INDENT###        directoryExists = False 
-###INDENT###        for directory in mystdout.split('\\n'):
-###INDENT###            if directory.strip() == dirName:
-###INDENT###                directoryExists = True
-###INDENT###                break
-
-###INDENT###        if not directoryExists:
-###INDENT###            path = os.path.join(pathToDirName, dirName)
-###INDENT###            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
-###INDENT###            if exitcode != 0:
-###INDENT###                printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
-###INDENT###                ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###                continue
-
-
-
-
-
-
-
-
-
-
-
 ###INDENT###    filenameWildCharZipped = filenameWildChar
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
 ###INDENT###        filenameWildCharZipped = '%s.gz' % filenameWildChar
@@ -428,19 +306,6 @@ class MassStorageFile(IOutputFile):
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
         script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
-
-        jobfqid = self.getJobObject().fqid
-        
-        jobid = jobfqid
-        subjobid = ''
-
-        if (jobfqid.find('.') > -1):
-            jobid = jobfqid.split('.')[0]
-            subjobid = jobfqid.split('.')[1]
-        
-        script = script.replace('###FULLJOBDIR###', str(jobfqid.replace('.', os.path.sep)))
-        script = script.replace('###JOBDIR###', str(jobid))
-        script = script.replace('###SUBJOBDIR###', str(subjobid))
 
         return script   
 
