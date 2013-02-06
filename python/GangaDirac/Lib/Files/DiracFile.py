@@ -44,20 +44,25 @@ class DiracFile(IOutputFile):
     _name = "DiracFile"
     _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'put']#, 'upload' ]
         
-    def __init__(self, namePattern='',  localDir='', **kwds):
+    def __init__(self, namePattern='', localDir='', lfn='', **kwds):
         """ name is the name of the output file that has to be written ...
         """
         super(DiracFile, self).__init__()
         self.namePattern = namePattern
-        self.localDir = localDir
-        self.locations = []
+        self.lfn         = lfn
+        self.localDir    = localDir
+        self.locations   = []
 ##COULD MAKE os.getcwd THE DEFAULT LOCALDIR, ALSO COULD CONSTRUCT FROM LFN
     def __construct__(self,args):
-        if len(args) == 1 and type(args[0]) == type(''):
+        if   len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
-            self.localDir = args[1]    
+            self.localDir    = args[1]
+        elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
+            self.namePattern = args[0]
+            self.localDir    = args[1]
+            self.lfn         = args[2]
 
     def _attribute_filter__set__(self,name, value):
         if name == 'lfn':
