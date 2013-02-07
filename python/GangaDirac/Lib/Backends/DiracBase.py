@@ -222,7 +222,7 @@ class DiracBase(IBackend):
         if not result_ok(result) or not result.has_key('Value'):
             # new hack for bulk submit
             result_check = eval(result[result.find('{'):])
-            if type(result_check) == dict and 'Message' in result and result['Message'] == 'Socket read timeout exceeded':
+            if type(result_check) == dict and 'Message' in result_check and result_check['Message'] == 'Socket read timeout exceeded':
                 self.retrieveJobs = True
                 return True
             # end hack
