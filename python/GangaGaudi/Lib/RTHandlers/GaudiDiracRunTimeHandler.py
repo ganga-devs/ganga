@@ -59,7 +59,8 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX        = '##INPUT_SANDBOX##'
+                                        INPUT_SANDBOX        = '##INPUT_SANDBOX##',
+                                        JOBGROUP             = '##JOBGROUP##'
                                         )
         
         return StandardJobConfig( dirac_script,

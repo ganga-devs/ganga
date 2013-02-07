@@ -2,58 +2,42 @@ import subprocess
 from subprocess import STDOUT, PIPE
 import os, collections
 
-# could use this
 CommandOutput = collections.namedtuple('CommandOutput', ['returncode', 'stdout', 'stderr'])
-
 
 class Popen(subprocess.Popen):
 
-    def _proc_timeout(self, timeout, outwrite, errwrite, envread, env, callback_func, cbfunc_args, cbfunc_kwds):
+    def _proc_timeout(self, timeout, errwrite, envread, env, bufsize, callback_func, cbfunc_args, cbfunc_kwds):
         import time, os
         time_start = time.time()
         while self.poll() is None:
             if timeout is not None:
                 if time.time()-time_start >= timeout:
-                    outstream = outwrite
-                    errstream = errwrite
-                    if outwrite is None:
-                        outstream = sys.stdout
-                    elif isinstance(outwrite, int):
-                        outstream = os.fdopen(outwrite, 'wb')
-                    outstream.write('')
-
-                    if errwrite is None:
-                        errstream = sys.stderr
-                    elif errwrite == STDOUT:
-                        errstream = outstream
-                    elif isinstance(errwrite, int):
-                        errstream = os.fdopen(errwrite, 'wb')
-                    errstream.write("Command timed out!")
+                    with os.fdopen(errwrite, 'ab', bufsize) as f:
+                        f.write("Command timed out!")
                     self.kill()
-                    self.wait()
-                    # cant use the os.close below as the fd will close but leave an open file object which will die when trying to close on destruction
-                    if isinstance(outwrite, int):
-                        outstream.close()
-                    if isinstance(errwrite, int) and errwrite != STDOUT:
-                        errstream.close()
+                    try: # can throw exception if they call communicate without pipe
+                        self.wait()
+                    except: pass
                     break
             time.sleep(0.5)
         else:
-            if isinstance(outwrite, int):
-                os.close(outwrite)
-            if isinstance(errwrite, int) and errwrite != STDOUT:
+            if timeout is not None:
                 os.close(errwrite)
         
         if envread is not None:
+            import pickle
             if type(env) != dict:
                 raise Exception("Env dict not passed properly.")
-            envstream = os.fdopen(envread,'r', 0)
-            env.update(dict((tuple(line.strip().split('=',1)) for line in envstream.readlines() if len(line.strip().split('=',1)) == 2)))
-            envstream.close()
+            with os.fdopen(envread,'r', bufsize) as f:
+                env.update(pickle.loads(f.read()))
 
         if callback_func is not None:
             stdout, stderr = self.communicate()
             callback_func(CommandOutput(self.returncode, stdout, stderr), *cbfunc_args, **cbfunc_kwds)
+
+        # This can be used to inspect the open file descriptors
+        # print os.system('ls -l /proc/$$/fd')
+        # Might want to pass all the remaining fd to close at end. cant close pipes though as communiate will read them
 
     def __init__( self,
                   args,
@@ -78,95 +62,109 @@ class Popen(subprocess.Popen):
                   usepython          = False):
 
         if usepython:
-            import marshal, base64
             if type(args) != str:
                 raise Exception('To run a python command/script give the arg as type str')
             if not shell:
                 raise Exception('To run a python command/script use the shell=True option')
-#            code_string = compile(args, '<string>', 'exec')
-#            args = '''python -c "import marshal, base64; exec(marshal.loads(base64.b64decode('%s')))"''' % base64.b64encode(marshal.dumps(code_string))
-            ## Could use this new way to do the env as well using platform independent os.environ
+            if close_fds:
+                raise Exception('To run a python command/script use the close_fds=False option')
             script = args
             inread, inwrite = os.pipe()
-            ## This allows for arbitrary length python scripts to be read in
+            # allows arbitrary length python scripts (with indents) to be read in on command line
             args = '''exec %i>&-; python -c "import os; exec(os.fdopen(%i, 'rb', %i).read())"''' % (inwrite, inread, bufsize)
             
-        if timeout is None and callback_func is None and not update: # no need for the thread.
-            super(Popen, self).__init__( args               = args,
-                                         bufsize            = bufsize,
-                                         executable         = executable,
-                                         stdin              = stdin,
-                                         stdout             = stdout,
-                                         stderr             = stderr,
-                                         preexec_fn         = preexec_fn,
-                                         close_fds          = close_fds,
-                                         shell              = shell,
-                                         cwd                = cwd,
-                                         env                = env,
-                                         universal_newlines = universal_newlines,
-                                         startupinfo        = startupinfo,
-                                         creationflags      = creationflags )
-        else:      
-            outwrite = stdout
-            errwrite = stderr
-            envread = None
-
+        outwrite = stdout
+        errwrite = stderr
+        if timeout is not None:
+            if close_fds:
+                raise Exception('To run with a timeout use the close_fds=False option')
             # essentially handling the PIPEing ourselves so super constructor just sees
             # file descriptors instead and never PIPE
-            if stdout == PIPE:
-                outread, outwrite = os.pipe()
-                
             if stderr == PIPE:
                 errread, errwrite = os.pipe()
+            elif stderr == STDOUT and stdout == PIPE:
+                outread, outwrite = os.pipe()
 
-            if update:
-                if type(args)!= str:
-                    raise Exception('To update the environment please use the args as type str')    
-                if not shell:
-                    raise Exception('To update the environment please use the shell=True option')
-                if env is None:
-                    raise Exception('To update the environment you must pass an environment into the env arg as type dict')
-                envread, envwrite = os.pipe()
-                args += '; printenv >&%s' % str(envwrite)# could instead use OS neutral python -c "import os; print os.environ" >&%s
-
-            super(Popen, self).__init__( args               = args,
-                                         bufsize            = bufsize,
-                                         executable         = executable,
-                                         stdin              = stdin,
-                                         stdout             = outwrite,
-                                         stderr             = errwrite,
-                                         preexec_fn         = preexec_fn,
-                                         close_fds          = close_fds,
-                                         shell              = shell,
-                                         cwd                = cwd,
-                                         env                = env,
-                                         universal_newlines = universal_newlines,
-                                         startupinfo        = startupinfo,
-                                         creationflags      = creationflags )
-        
-            if stdout == PIPE:
-                if universal_newlines:
-                    self.stdout = os.fdopen(outread,'rU', bufsize)
-                else:
-                    self.stdout = os.fdopen(outread,'rb', bufsize)
-            if stderr == PIPE:
-                if universal_newlines:
-                    self.stderr = os.fdopen(errread,'rU', bufsize)
-                else:
-                    self.stderr = os.fdopen(errread,'rb', bufsize)
-        
-            if update:
-                os.close(envwrite) # must close the write end in the parent process else read will hang
-
-            from threading import Thread
-            t=Thread(target=self._proc_timeout, args=(timeout, outwrite, errwrite, envread, env, callback_func, cbfunc_args, cbfunc_kwds))
-            t.deamon=True        
-            t.start()
+        envread=None
+        if update:
+            if type(args)!= str:
+                raise Exception('To update the environment please use the args as type str')    
+            if not shell:
+                raise Exception('To update the environment please use the shell=True option')
+            if env is None:
+                raise Exception('To update the environment you must pass an environment into the env arg as type dict')
+            if close_fds:
+                raise Exception('To update the environment please use the close_fds=False option')
+            envread, envwrite = os.pipe()
+            args += '''; exec %i>&-; python -c "import os, pickle; f=os.fdopen(%i, 'wb', %i); f.write(pickle.dumps(os.environ))"''' % (envread, envwrite, bufsize)
+            
+        super(Popen, self).__init__( args               = args,
+                                     bufsize            = bufsize,
+                                     executable         = executable,
+                                     stdin              = stdin,
+                                     stdout             = outwrite,
+                                     stderr             = errwrite,
+                                     preexec_fn         = preexec_fn,
+                                     close_fds          = close_fds,
+                                     shell              = shell,
+                                     cwd                = cwd,
+                                     env                = env,
+                                     universal_newlines = universal_newlines,
+                                     startupinfo        = startupinfo,
+                                     creationflags      = creationflags )
+           
 
         if usepython:
             os.close(inread)
             with os.fdopen(inwrite, 'wb', bufsize) as f:
-                f.write(script)
+                f.write(script)      
+
+        if timeout is not None or callback_func is not None or update:
+            if update:
+                os.close(envwrite) # must close the write end in the parent process else read will hang
+            
+            if timeout is not None:
+                import sys
+                if stderr is None:
+                    errwrite = os.dup(sys.stderr.fileno())
+                elif stderr == PIPE:
+                    if universal_newlines:
+                        self.stderr = os.fdopen(errread,'rU', bufsize)
+                    else:
+                        self.stderr = os.fdopen(errread,'rb', bufsize)
+                elif stderr == STDOUT:
+                    if stdout == PIPE:
+                        errwrite = outwrite
+                        if universal_newlines:
+                            self.stdout = os.fdopen(outread,'rU', bufsize)
+                        else:
+                            self.stdout = os.fdopen(outread,'rb', bufsize)
+                    elif stdout is None:
+                        errwrite = os.dup(sys.stdout.fileno())
+                    elif isinstance(stdout, int):
+                        errwrite = os.dup(stdout)
+                    elif isinstance(stdout, file):
+                        errwrite = os.dup(stdout.fileno())
+                elif isinstance(stderr, int):
+                    errwrite = os.dup(stderr)
+                elif isinstance(stderr, file):
+                    errwrite = os.dup(stderr.fileno())
+
+            from threading import Thread
+            t=Thread(target=self._proc_timeout,
+                     kwargs={'timeout'       : timeout,
+                             'errwrite'      : errwrite,
+                             'envread'       : envread,
+                             'env'           : env,
+                             'bufsize'       : bufsize,
+                             'callback_func' : callback_func,
+                             'cbfunc_args'   : cbfunc_args,
+                             'cbfunc_kwds'   : cbfunc_kwds
+                             })
+            t.deamon=True        
+            t.start()       
+            
+
             
 
 def runcmd(cmd, timeout=None, env=None, cwd=None, update=False, usepython=False):

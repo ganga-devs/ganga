@@ -8,6 +8,8 @@ dirac = Dirac()
 
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+def getJobGroupJobs(jg): print dirac.selectJobs(jobGroup=jg)
+
 def kill(id): print dirac.delete(id)
 
 def peek(id): print dirac.peek(id)

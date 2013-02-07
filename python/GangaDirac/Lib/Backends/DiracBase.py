@@ -12,7 +12,7 @@ import GangaDirac.Lib.Server.DiracServer as DiracServer
 import GangaDirac.Lib.Files.DiracFile as DiracFile
 from GangaDirac.Lib.Server.DiracClient import DiracClient
 from Ganga.Core.GangaThread import GangaThread
-import os
+import os, uuid
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
@@ -113,6 +113,10 @@ class DiracBase(IBackend):
         'diracOpts' : SimpleItem(defvalue='',
                                  doc='DIRAC API commands to add the job definition script. Only edit ' \
                                  'if you *really* know what you are doing'),
+        'jobGroup'  : SimpleItem(defvalue='', protected=1, copyable=0,
+                                 doc='The DIRAC jobGroup this job belongs to'),
+        'retrieveJobs'  : SimpleItem(defvalue=False, protected=1, copyable=0,hidden=1,
+                                 doc='Determins if jobGroup is used to locate any more subjobs'),
         'settings' : SimpleItem(defvalue={'CPUTime':2*86400},
                                 doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)')
         })
@@ -215,6 +219,9 @@ class DiracBase(IBackend):
 #        return True
 
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
+        if type(result) == dict and 'Message' in result and result['Message'] == 'Socket read timeout exceeded':
+            self.retrieveJobs = True
+            return True
         if not result_ok(result) or not result.has_key('Value'):
             logger.error(err_msg)
             raise BackendError('Dirac',err_msg)
@@ -245,7 +252,7 @@ class DiracBase(IBackend):
         
         input_sandbox  += self._addition_sandbox_content(subjobconfig)
         
-        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##',str(input_sandbox))
+        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##',str(input_sandbox)).replace('##JOBGROUP##',str(uuid.uuid4()))
 
         dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(),'dirac-script.py')
         f=open(dirac_script_filename,'w')
@@ -322,6 +329,11 @@ class DiracBase(IBackend):
             script = script.replace('.setParametricInputData(%s)' % str(parametric_datasets),
                                     '.setInputData(%s)' % str(parametric_datasets[j.id]))
             script = script.replace('%n',str(j.id)) #name
+
+        ## create new jobgroup
+        jobgroup_str = ".setJobGroup('"
+        new_id = str(uuid.uuid4())
+        script = script[:script.find(jobgroup_str) + len(jobgroup_str)] + new_id + script[script.find(jobgroup_str) + len(jobgroup_str)+len(new_id):]
 
         start_user_settings = '# <-- user settings\n'
         new_script = script[:script.find(start_user_settings) + len(start_user_settings)]
@@ -569,6 +581,34 @@ class DiracBase(IBackend):
         for job, state, old_state in zip(jobs, result, ganga_job_status):
             if monitoring_component:
                 if monitoring_component.should_stop(): break
+            
+            if job.backend.retrieveJobs:
+                def add_subjobs(result, job):
+                    if not result_ok(result):
+                        return
+                    if type(result['Value']) != list:
+                        return
+                    
+                    if len(result['Value']) == len(job.subjobs):
+                        job.backend.retrieveJobs=False
+                    from Ganga.GPIDev.Lib.Job.Job import Job
+                    for id in result['Value']:
+                        if int(id) in (sj.backend.id for sj in job.subjobs): continue
+                        j=Job()
+                        j.copyFrom(job)
+                        j.splitter = None
+            #            j.merger = None
+                        j.backend.id = int(id)
+                        j.id = len(job.subjobs)
+                        j.inputdata = None
+                        j.status = 'submitted'
+                        j.time.timenow('submitted')
+                        job.subjobs.append(j)
+                        job._commit()            
+                DiracBase.dirac_monitoring_server.execute_nonblocking("getJobGroupJobs('%s')" % (job.backend.jobGroup),
+                                                                      priority=4,
+                                                                      callback_func=add_subjobs,
+                                                                      args=(job,))
             job.backend.statusInfo = state[0]
             job.backend.status     = state[1]
             job.backend.actualCE   = state[2]
@@ -579,7 +619,7 @@ class DiracBase(IBackend):
                 continue
             ####################
             updated_status = state[3]
-
+            
             if updated_status == job.status: continue
  
             if updated_status == 'failed':
