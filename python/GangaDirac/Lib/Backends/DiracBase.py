@@ -221,13 +221,10 @@ class DiracBase(IBackend):
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
         if not result_ok(result) or not result.has_key('Value'):
             # new hack for bulk submit
-            print "HERE1"
-            result_check = eval(result[result.find('{'):])
-            print "HERE2"
-            if type(result_check) == dict and 'Message' in result_check and result_check['Message'] == 'Socket read timeout exceeded':
-                print "HERE3"
+            #result_check = eval(result[result.find('{'):])
+#            if type(result_check) == dict and 'Message' in result_check and result_check['Message'] == 'Socket read timeout exceeded':
+            if result.find('Socket read timeout exceeded') >= 0:
                 self.retrieveJobs = True
-                print "HERE4"
                 return True
             # end hack
             logger.error(err_msg)
@@ -595,9 +592,13 @@ class DiracBase(IBackend):
                         return
                     if type(result['Value']) != list:
                         return
-                    
+
+                    if job.backend.id is not None: # not a split job
+                        job.backend.retrieveJobs=False
+                        return                        
                     if len(result['Value']) == len(job.subjobs):
                         job.backend.retrieveJobs=False
+                        return
                     from Ganga.GPIDev.Lib.Job.Job import Job
                     for id in result['Value']:
                         if int(id) in (sj.backend.id for sj in job.subjobs): continue
