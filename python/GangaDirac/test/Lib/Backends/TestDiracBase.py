@@ -32,6 +32,7 @@ j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 j.setOutputData(###OUTPUTDATA###,OutputPath='###OUTPUT_PATH###',OutputSE=###OUTPUT_SE###)
 j.setSystemConfig('###PLATFORM###')
+j.setJobGroup('###JOBGROUP###')
 
 # <-- user settings
 ###SETTINGS###
@@ -264,7 +265,7 @@ print result
 
         class server:
             def execute(this, dirac_cmd):
-                self.assertEqual(dirac_cmd,'result = DiracCommands.kill(1234)','command not right')
+                self.assertEqual(dirac_cmd,'kill(1234)','command not right')
                 return {'OK': True}
         setattr(DiracBase,'dirac_ganga_server',server())
         self.assertTrue(self.db.kill(),'didn\'t run properly')
@@ -272,7 +273,7 @@ print result
     def test_peek(self):
         class server:
             def execute(this, dirac_cmd):
-                self.assertEqual(dirac_cmd,'result = DiracCommands.peek(1234)')
+                self.assertEqual(dirac_cmd,'peek(1234)')
                 return {'OK':True,'Value':True}
         setattr(DiracBase,'dirac_ganga_server',server())
 
@@ -288,7 +289,7 @@ print result
         class server:
             def execute(this, dirac_cmd):
                 self.assertEqual(dirac_cmd,
-                                 "result = DiracCommands.getOutputSandbox(1234,'%s')"%dir,
+                                 "getOutputSandbox(1234,'%s')"%dir,
                                  'command not right')
                 return {'OK':True}
         setattr(DiracBase,'dirac_ganga_server',server())
@@ -316,7 +317,7 @@ print result
         class server:
             def execute(this, dirac_cmd):
                 self.assertEqual(dirac_cmd,
-                                 "result = DiracCommands.getOutputData(1234, '%s','%s')"%(names,dir))
+                                 "getOutputData(1234, '%s','%s')"%(names,dir))
                 if names =='': return {'OK':True}
                 return {'OK':True, 'Value':names+dir}
         setattr(DiracBase,'dirac_ganga_server',server())

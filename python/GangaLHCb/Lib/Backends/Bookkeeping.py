@@ -37,7 +37,7 @@ class Bookkeeping(GangaObject):
     def browse(self,gui=True):
         f=self._createTmpFile()
         if gui:
-            cmd = 'result = DiracLHCbCommands.bookkeepingGUI("%s")' % f
+            cmd = 'bookkeepingGUI("%s")' % f
             Dirac.execAPI(cmd)
             l = self._fileToList(f)
             ds = LHCbDataset()

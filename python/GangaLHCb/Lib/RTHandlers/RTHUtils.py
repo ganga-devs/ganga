@@ -141,8 +141,8 @@ f=os.popen('which SetupProject.sh')
 setup_script=f.read()[:-1]
 f.close()
 if os.path.exists(setup_script):
-    os.system('/usr/bin/env bash -c \"source %s %s %s %s && printenv > \
-env.tmp\"' % (setup_script,project_opts,app,version))
+    os.system('''/usr/bin/env bash -c 'source %s %s %s %s && printenv > \
+env.tmp' ''' % (setup_script,project_opts,app,version))
     for line in open('env.tmp').readlines():
         varval = line.strip().split('=')
         os.environ[varval[0]] = ''.join(varval[1:])

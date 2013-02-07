@@ -104,7 +104,7 @@ class LogicalFile(GangaObject):
 
     def removeReplica(self,diracSE):
         'Removes replica of LFN from diracSE.'
-        cmd = 'result = DiracCommands.removeReplica("%s","%s")' % \
+        cmd = 'removeReplica("%s","%s")' % \
               (self.name,diracSE)
         return get_result(cmd,'Error removing replica','Replica rm error.')
 

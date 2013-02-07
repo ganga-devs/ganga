@@ -6,9 +6,9 @@ class TestLogicalFile(GangaGPITestCase):
     #def test_get_dirac_space_tokens(self):
 
     def test_get_result(self):
-        get_result('result = {"OK": True}','','')
+        get_result('print {"OK": True}','','')
         try:
-            get_result('result = {"OK": False}','','')
+            get_result('print {"OK": False}','','')
             raise 'should have thrown exception'
         except:
             pass

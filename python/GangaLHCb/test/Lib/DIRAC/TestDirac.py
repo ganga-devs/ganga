@@ -66,7 +66,7 @@ class TestDirac(GangaGPITestCase):
     #def test_Dirac_updateMonitoringInformation(self):
 
     def test_Dirac_execAPI(self):
-        cmd = 'result = 87'
+        cmd = 'print 87'
         from GangaLHCb.Lib.Backends.Dirac import Dirac
         assert Dirac.execAPI(cmd) == 87, 'DIRAC API commands broken'
     

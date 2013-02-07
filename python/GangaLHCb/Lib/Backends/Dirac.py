@@ -41,7 +41,7 @@ class Dirac(DiracBase):
         
 
      def checkSites(self):
-          cmd = 'result = DiracLHCbCommands.checkSites()'
+          cmd = 'checkSites()'
           result = Dirac.dirac_ganga_server.execute(cmd)
           if not result_ok(result):
                logger.warning('Could not obtain site info: %s' % str(result))
@@ -49,7 +49,7 @@ class Dirac(DiracBase):
           return result.get('Value',{})
 
      def checkTier1s(self):
-          cmd = 'result = DiracLHCbCommands.checkTier1s()'
+          cmd = 'checkTier1s()'
           result = Dirac.dirac_ganga_server.execute(cmd)
           if not result_ok(result):
                logger.warning('Could not obtain Tier-1 info: %s' % str(result))
