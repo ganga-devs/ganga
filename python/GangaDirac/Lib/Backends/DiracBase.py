@@ -219,10 +219,13 @@ class DiracBase(IBackend):
 #        return True
 
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
-        if type(result) == dict and 'Message' in result and result['Message'] == 'Socket read timeout exceeded':
-            self.retrieveJobs = True
-            return True
         if not result_ok(result) or not result.has_key('Value'):
+            # new hack for bulk submit
+            result_check = eval(result[result.find('{'):])
+            if type(result_check) == dict and 'Message' in result and result['Message'] == 'Socket read timeout exceeded':
+                self.retrieveJobs = True
+                return True
+            # end hack
             logger.error(err_msg)
             raise BackendError('Dirac',err_msg)
         
