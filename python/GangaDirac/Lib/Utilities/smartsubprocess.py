@@ -14,10 +14,11 @@ class Popen(subprocess.Popen):
                 if time.time()-time_start >= timeout:
                     with os.fdopen(errwrite, 'ab', bufsize) as f:
                         f.write("Command timed out!")
+                    self.returncode = -9
                     self.kill()
-                    try: # can throw exception if they call communicate without pipe
-                        self.wait()
-                    except: pass
+                    #try: # can throw exception if they call communicate without pipe
+                        #self.wait()
+                    #except: pass
                     break
             time.sleep(0.5)
         else:
@@ -71,7 +72,7 @@ class Popen(subprocess.Popen):
             script = args
             inread, inwrite = os.pipe()
             # allows arbitrary length python scripts (with indents) to be read in on command line
-            args = '''exec %i>&-; python -c "import os; exec(os.fdopen(%i, 'rb', %i).read())"''' % (inwrite, inread, bufsize)
+            args = '''python -c "import os; os.close(%i); exec(os.fdopen(%i, 'rb', %i).read())"''' % (inwrite, inread, bufsize)
             
         outwrite = stdout
         errwrite = stderr
@@ -96,7 +97,7 @@ class Popen(subprocess.Popen):
             if close_fds:
                 raise Exception('To update the environment please use the close_fds=False option')
             envread, envwrite = os.pipe()
-            args += '''; exec %i>&-; python -c "import os, pickle; f=os.fdopen(%i, 'wb', %i); f.write(pickle.dumps(os.environ))"''' % (envread, envwrite, bufsize)
+            args += '''; python -c "import os, pickle; os.close(%i); os.fdopen(%i, 'wb', %i).write(pickle.dumps(os.environ))"''' % (envread, envwrite, bufsize)
             
         super(Popen, self).__init__( args               = args,
                                      bufsize            = bufsize,
