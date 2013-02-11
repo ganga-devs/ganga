@@ -201,6 +201,17 @@ class Job(GangaObject):
     def _readonly(self):
         return self.status != 'new'
 
+    # on the deepcopy reattach the outputfiles to call their _on_attribute__set__
+    def __deepcopy__(self, memo = None):
+        c = super(Job,self).__deepcopy__(memo)
+        c.outputfiles = []
+        for f in self.outputfiles:
+            if hasattr(f, '_on_attribute__set__'):
+                c.outputfiles.append(f._on_attribute__set__(self, 'outputfiles'))
+                continue
+            c.outputfiles.append(f)
+        return c
+
     def _attribute_filter__get__(self, name):
         if name == 'outputfiles':
             import re

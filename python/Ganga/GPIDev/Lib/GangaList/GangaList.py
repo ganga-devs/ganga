@@ -87,6 +87,16 @@ class GangaList(GangaObject):
         result = (obj != None) and (isType(obj, GangaList) or isinstance(obj,list))
         return result
     
+    def _on_attribute__set__(self, obj_type, attrib_name):
+        new_list=[]
+        for i in self._list:
+            if hasattr(i, '_on_attribute__set__'):
+                new_list.append(i._on_attribute__set__(obj_type, attrib_name))
+                continue
+            new_list.append(i)
+        self._list = new_list
+        return self
+
     def get(self, to_match):
         def matching_filter(item):
             if '_list_get__match__' in dir(item):

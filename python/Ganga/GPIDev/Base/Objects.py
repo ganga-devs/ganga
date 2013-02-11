@@ -591,6 +591,8 @@ class GangaObject(Node):
     # Returns the attribute value (converted or original)
     #
     def _attribute_filter__set__(self,name,v):
+        if (hasattr(v, '_on_attribute__set__')):
+            return v._on_attribute__set__(self, name)
         return v
 
 # define the default component object filter:
