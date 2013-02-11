@@ -32,7 +32,6 @@ j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 j.setOutputData(###OUTPUTDATA###,OutputPath='###OUTPUT_PATH###',OutputSE=###OUTPUT_SE###)
 j.setSystemConfig('###PLATFORM###')
-j.setJobGroup('###JOBGROUP###')
 
 # <-- user settings
 ###SETTINGS###
