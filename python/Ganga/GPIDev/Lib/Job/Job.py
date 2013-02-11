@@ -1378,13 +1378,13 @@ class Job(GangaObject):
             reg._flush(objects)
         
 
-    def _attribute_filter__set__(self,n,v):
+#    def _attribute_filter__set__(self,n,v):
         # a workaround for bug #8111
 ##        if n == 'name':
 ##            if len(v)>0 and not v.isalnum():
 ##                raise ValueError('%s: the job name may contain only numbers and letters (a temporary workaround for bug #8111)'%v)
             
-        return v
+#        return v
 
     def _repr(self):
         if self.id is None:
