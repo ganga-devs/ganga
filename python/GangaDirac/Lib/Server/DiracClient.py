@@ -4,6 +4,7 @@ from Ganga.Core import GangaException
 from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
+from Ganga.Utility.ColourText import getColour
 import collections, Queue, threading
 import os
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
@@ -21,20 +22,23 @@ class DiracClient(object):
     Client class through which Ganga objects interact with the local DIRAC server.
     """
     
-    __slots__ = ['__proxy','__queue']
+    __slots__ = ['__proxy','__queue', '__worker_threads']
 
-    def __init__( self, num_worker_threads  = 5):
+    def __init__( self, num_worker_threads  = 5, worker_thread_prefix=''):
         self.__proxy = getCredential('GridProxy', '')
         self.__queue = Queue.PriorityQueue()
+        self.__worker_threads = []
 
         for i in range(num_worker_threads):
             t = GangaThread(name='DiracClient_Thread_%i'%i,
                             auto_register = False,
                             target=self.__worker_thread)
             t._Thread__args=(t,)
-            #t.name = 'Worker' + t.name
+            t.name = getColour('fg.green') + 'Worker_' + str(i) + getColour('fg.normal')
+            t._command = 'idle'
+            t._timeout = 'N/A'
             t.start()
-            #self.__worker_threads.append(t)
+            self.__worker_threads.append(t)
 
 
     def __worker_thread(self, thread):
@@ -50,7 +54,9 @@ class DiracClient(object):
 
             #regster as a working thread
             GangaThreadPool.getInstance().addServiceThread(thread)
-
+            thread.name     = thread.name.replace(getColour('fg.green'), getColour('fg.red'))
+            thread._command = item.command_input.command
+            thread._timeout = item.command_input.timeout
             result = self.execute(*item.command_input)
 
             if item.callback_func is not None:
@@ -58,6 +64,9 @@ class DiracClient(object):
 
             #unregster as a working thread bcoz free
             GangaThreadPool.getInstance().delServiceThread(thread)
+            thread.name     = thread.name.replace(getColour('fg.red'), getColour('fg.green'))
+            thread._command = 'idle'
+            thread._timeout = 'N/A'
             self.__queue.task_done()
 
     def proxyValid(self): return self.__proxy.isValid()
@@ -109,3 +118,7 @@ class DiracClient(object):
         Returns the current state of the multiprocess queue that the local DIRAC server is working through.
         """
         return self.__queue.queue[:]
+
+
+    def worker_status(self):
+        return [(w.name, w._command, w._timeout) for w in self.__worker_threads]

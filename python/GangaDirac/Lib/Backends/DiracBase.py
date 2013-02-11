@@ -672,9 +672,37 @@ class DiracBase(IBackend):
 
     execAPI = staticmethod(execAPI)
 
-    def getQueue():
-        return DiracBase.dirac_monitoring_server.get_queue()
-    getQueue = staticmethod(getQueue)
+    def execAPI_async(cmd,timeout=Ganga.Utility.Config.getConfig('DIRAC')['Timeout']):
+        """Executes DIRAC API commands.  If variable 'result' is set, then
+        it is returned by this method. """
+        return DiracBase.dirac_ganga_server.execute_nonblocking(cmd, timeout, priority=4)
 
+    execAPI_async = staticmethod(execAPI_async)
+
+#    def getQueue():
+#        return DiracBase.dirac_monitoring_server.get_queue()
+#    getQueue = staticmethod(getQueue)
+
+    def getQueues():
+        print '{0:^55} | {1:^50}'.format('Ganga user threads:','Ganga monitoring threads:')
+        print '{0:^55} | {1:^50}'.format('------------------', '------------------------')
+        print '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}'.format('Name', 'Command', 'Timeout')
+        print '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}'.format('----', '-------', '-------')
+        for u, m in zip( DiracBase.dirac_ganga_server.worker_status(),
+                         DiracBase.dirac_monitoring_server.worker_status() ):
+            # name has extra spaces as colour characters are invisible but still count
+            print '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}'.format(u[0], u[1][:30], u[2], m[0], m[1][:30], m[2])
+
+        print ''
+        print "Ganga user queue:"
+        print "----------------"
+        print [i.command_input.command for i in DiracBase.dirac_ganga_server.get_queue()]
+        
+        print ''
+        print "Ganga monitoring queue:"
+        print "----------------------"            
+        print [i.command_input.command for i in DiracBase.dirac_monitoring_server.get_queue()]
+        
+    getQueues = staticmethod(getQueues)
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

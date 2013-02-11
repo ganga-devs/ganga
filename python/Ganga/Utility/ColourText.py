@@ -155,6 +155,7 @@ class Foreground:
       """Set ANSI codes for defined colours"""
 
       _base  = '\033[%sm'
+      self.normal = _base % "0"
       self.black = _base % "0;30"
       self.red = _base % "0;31"
       self.green = _base % "0;32"

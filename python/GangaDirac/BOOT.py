@@ -8,7 +8,7 @@ logger = getLogger()
 def diracAPI(cmd, timeout = 60):
     '''Execute DIRAC API commands from w/in Ganga.
 
-    The value of local variable \"result\" will be returned, e.g.:
+    The stdout will be returned, e.g.:
     
     # this will simply return 87
     diracAPI(\'print 87\')
@@ -25,22 +25,29 @@ def diracAPI(cmd, timeout = 60):
 
 exportToGPI('diracAPI',diracAPI,'Functions')
 
-def diracQueue():
+def diracAPI_async(cmd, timeout = 60):
+    '''Execute DIRAC API commands from w/in Ganga.
+    '''
+    from Ganga.GPI import Dirac
+    return Dirac._impl.execAPI_async(cmd, timeout)
+
+exportToGPI('diracAPI_async',diracAPI_async,'Functions')
+
+def diracQueues():
     '''Return the current local DIRAC server queue.'''
     from Ganga.GPI import Dirac
-    return Dirac._impl.getQueue()
+    return Dirac._impl.getQueues()
 
+exportToGPI('diracQueues',diracQueues,'Functions')
 
-exportToGPI('diracQueue',diracQueue,'Functions')
+#def killDiracServer():
+#    '''Kills the child proces which runs the DIRAC server.'''
+#    #from GangaDirac.Lib.Backends.Dirac import Dirac
+#    #from GangaDirac.Lib.Backends.DiracBase import DiracBase
+#    from Ganga.GPI import Dirac
+#    return Dirac._impl.killServer()
 
-def killDiracServer():
-    '''Kills the child proces which runs the DIRAC server.'''
-    #from GangaDirac.Lib.Backends.Dirac import Dirac
-    #from GangaDirac.Lib.Backends.DiracBase import DiracBase
-    from Ganga.GPI import Dirac
-    return Dirac._impl.killServer()
-
-exportToGPI('killDiracServer',killDiracServer,'Functions')    
+#exportToGPI('killDiracServer',killDiracServer,'Functions')    
 
 
 def getDiracFiles():
