@@ -1,13 +1,14 @@
-from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Config  import getConfig
 from Ganga.Core.exceptions import GangaException
 import os
 
-
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def getDiracEnv():
     with open(getConfig('DIRAC')['DiracEnvFile'],'r') as env_file:
         return dict((tuple(line.strip().split('=',1)) for line in env_file.readlines() if len(line.strip().split('=',1)) == 2))
     return {}
 
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def getDiracCommandIncludes():
     default_includes = ''
     for fname in getConfig('DIRAC')['DiracCommandFiles']:
@@ -17,3 +18,5 @@ def getDiracCommandIncludes():
         default_includes += f.read() + '\n'
         f.close()
     return default_includes
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\

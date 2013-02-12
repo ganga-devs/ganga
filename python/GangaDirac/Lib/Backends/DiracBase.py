@@ -2,20 +2,17 @@
 """The Ganga backendhandler for the Dirac system."""
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.Core import BackendError,GangaException
-from DiracUtils import *
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.util import unique
-import GangaDirac.Lib.Server.DiracServer as DiracServer
-import GangaDirac.Lib.Files.DiracFile as DiracFile
-from GangaDirac.Lib.Server.DiracClient import DiracClient
-from Ganga.Core.GangaThread import GangaThread
 import os
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
-from Ganga.Core.exceptions import GangaException
+from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from Ganga.GPIDev.Schema                     import Schema, Version, SimpleItem
+from Ganga.GPIDev.Adapters.IBackend          import IBackend
+from Ganga.Core                              import BackendError, GangaException
+from GangaDirac.Lib.Backends.DiracUtils      import *
+from GangaDirac.Lib.Files.DiracFile          import DiracFile
+from GangaDirac.Lib.Server.DiracClient       import DiracClient
+from Ganga.Utility.ColourText                import getColour
+from Ganga.Utility.Config                    import getConfig
+from Ganga.Utility.logging                   import getLogger
 logger = getLogger()
 
 
@@ -51,70 +48,37 @@ class DiracBase(IBackend):
     # submit and resubmit.
     
     """
-    
-#    user_server_pid, user_server_port = \
-#                     DiracServer.start_server(env_file            = Ganga.Utility.Config.getConfig('DIRAC')['DiracEnvFile'],
-#                                              port_min            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMin'],
-#                                              port_max            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMax'],
-#                                              command_files       = Ganga.Utility.Config.getConfig('DIRAC')['DiracCommandFiles'],
-#                                              command_timeout     = Ganga.Utility.Config.getConfig('DIRAC')['Timeout'],
-#                                              num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
-#                                              end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
-#                                              server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'],
-#                                              poll_delay          = Ganga.Utility.Config.getConfig('DIRAC')['StartUpWaitTime'],
-#                                              show_dirac_output   = Ganga.Utility.Config.getConfig('DIRAC')['ShowDIRACstdout'])
-#    monitoring_server_pid, monitoring_server_port = \
-#                           DiracServer.start_server(env_file            = Ganga.Utility.Config.getConfig('DIRAC')['DiracEnvFile'],
-#                                                    port_min            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMin'],
- #                                                   port_max            = Ganga.Utility.Config.getConfig('DIRAC')['ServerPortMax'],
- ##                                                   command_files       = Ganga.Utility.Config.getConfig('DIRAC')['DiracCommandFiles'],
- #                                                   command_timeout     = Ganga.Utility.Config.getConfig('DIRAC')['Timeout'],
- #                                                   num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'],
-  #                                                  end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
- #                                                   server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'],
- #                                                   poll_delay          = Ganga.Utility.Config.getConfig('DIRAC')['StartUpWaitTime'],
- #                                                   show_dirac_output   = Ganga.Utility.Config.getConfig('DIRAC')['ShowDIRACstdout'])
-    dirac_ganga_server = DiracClient(#port                = user_server_port,
-                                     num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'])#,
-                                     #end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
-                                     #server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'])
-    dirac_monitoring_server = DiracClient(#port                = monitoring_server_port,
-                                          num_worker_threads  = Ganga.Utility.Config.getConfig('DIRAC')['NumWorkerThreads'])#,
-                                          #end_data_str        = Ganga.Utility.Config.getConfig('DIRAC')['EndDataString'],
-                                          #server_shutdown_str = Ganga.Utility.Config.getConfig('DIRAC')['ServerShutdownString'])
 
-    #if user_server_pid is None:
-    #    raise GangaException('Failed to set up the user DIRAC server on any of the given port')
-    #if monitoring_server_pid is None:
-    #    raise GangaException('Failed to set up the monitoring DIRAC server on any of the given port')
+    dirac_ganga_server      = DiracClient(num_worker_threads  = getConfig('DIRAC')['NumWorkerThreads'])
+    dirac_monitoring_server = DiracClient(num_worker_threads  = getConfig('DIRAC')['NumWorkerThreads'])
         
     dirac_monitoring_is_active = True
     
     _schema = Schema(Version(3, 2),{
-        'id' : SimpleItem(defvalue=None, protected=1, copyable=0,
-                          typelist=['int','type(None)'],
-                          doc='The id number assigned to the job by the DIRAC WMS. If seeking help'\
-                          ' on jobs with the Dirac backend, please always report this id ' \
-                          'number in addition to a full description of your problem. The id '\
-                          'can also be used to further inspect the job at ' \
-                          'https://lhcbweb.pic.es/DIRAC/info/general/diracOverview'),
-        'status' : SimpleItem(defvalue=None, protected=1, copyable=0,
-                              typelist=['str','type(None)'],
-                              doc='The detailed status as reported by the DIRAC WMS'),
-        'actualCE' : SimpleItem(defvalue=None, protected=1, copyable=0,
-                                typelist=['str','type(None)'],
-                                doc='The location where the job ran'),
+        'id'          : SimpleItem(defvalue=None, protected=1, copyable=0,
+                                   typelist=['int','type(None)'],
+                                   doc='The id number assigned to the job by the DIRAC WMS. If seeking help'\
+                                       ' on jobs with the Dirac backend, please always report this id ' \
+                                       'number in addition to a full description of your problem. The id '\
+                                       'can also be used to further inspect the job at ' \
+                                       'https://lhcbweb.pic.es/DIRAC/info/general/diracOverview'),
+        'status'      : SimpleItem(defvalue=None, protected=1, copyable=0,
+                                   typelist=['str','type(None)'],
+                                   doc='The detailed status as reported by the DIRAC WMS'),
+        'actualCE'    : SimpleItem(defvalue=None, protected=1, copyable=0,
+                                   typelist=['str','type(None)'],
+                                   doc='The location where the job ran'),
         'normCPUTime' : SimpleItem(defvalue=None, protected=1, copyable=0,
                                    typelist=['str','type(None)'],
                                    doc='The normalized CPU time reported by the DIRAC WMS'),
-        'statusInfo' : SimpleItem(defvalue='', protected=1, copyable=0,
-                                  typelist=['str','type(None)'],
-                                  doc='Minor status information from Dirac'),
-        'diracOpts' : SimpleItem(defvalue='',
-                                 doc='DIRAC API commands to add the job definition script. Only edit ' \
-                                 'if you *really* know what you are doing'),
-        'settings' : SimpleItem(defvalue={'CPUTime':2*86400},
-                                doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)')
+        'statusInfo'  : SimpleItem(defvalue='', protected=1, copyable=0,
+                                   typelist=['str','type(None)'],
+                                   doc='Minor status information from Dirac'),
+        'diracOpts'   : SimpleItem(defvalue='',
+                                   doc='DIRAC API commands to add the job definition script. Only edit ' \
+                                       'if you *really* know what you are doing'),
+        'settings'    : SimpleItem(defvalue={'CPUTime':2*86400},
+                                   doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)')
         })
     _exportmethods = ['getOutputData','getOutputSandbox',
                       'getOutputDataLFNs','peek','reset','debug']
@@ -141,29 +105,8 @@ class DiracBase(IBackend):
             if sjc.getSandboxFiles():
                 inputsandbox += super(DiracBase,self).master_prepare(sjc)
             return inputsandbox
-        return []#super(DiracBase,self).master_prepare(masterjobconfig)
+        return []
 
-
-## OLD way might not have worked if package made API script 
-##   used job.setPara... or parrot.setPara... instead of j.setPara...
-##   now in dracutils.py
-##     def __get_parametric_datasets(self, dirac_script_lines):
-##         parametric_key = 'setParametricInputData('
-##         def parametric_input_filter(API_line):
-##             return API_line.find(parametric_key) >= 0
-##             #return API_line.find('setParametricInputData(') >= 0
-
-##         #f=open(dirac_script_filename,'r')
-##         #script_lines = f.readlines()
-##         #f.close()
-##         parametric_line = filter(parametric_input_filter, dirac_script_lines)
-##         parametric_data_start = parametric_line.find(parametric_key) + len(parametric_key)
-##         if len(parametric_line) is 0:
-##             raise BackendError('DiracBase','No "setParametricInputData()" lines in dirac API')
-##         if len(parametric_line) is > 1:
-##             raise BackendError('DiracBase','Multiple "setParametricInputData()" lines in dirac API')
-##         return eval(parametric_line[0][parametric_data_start:-1])#-1 removes the trailing )
-        
 
     def _setup_subjob_dataset(self, dataset):
         return None
@@ -181,7 +124,6 @@ class DiracBase(IBackend):
             j=Job()
             j.copyFrom(master_job)
             j.splitter = None
-#            j.merger = None
             j.backend.id = dirac_ids[i]
             j.id = i
             j.inputdata = self._setup_subjob_dataset(parametric_datasets[i])
@@ -343,53 +285,6 @@ class DiracBase(IBackend):
         f.close()
         
         return self._common_submit(new_script_filename, server)
-##     def resubmit(self):
-##         """Resubmit a DIRAC job"""
-##         j=self.getJobObject()
-##         parametric = False
-##         new_script_path = os.path.join(j.getInputWorkspace().getPath(),
-##                                        'dirac-script.py')
-##         ## Read old script
-##         script_path = new_script_path
-##         if not os.path.exists(script_path):
-##             if j.master is None or \
-##                    not isinstance(j.master.splitter,SplitByFiles) or \
-##                    j.master.splitter.bulksubmit is False:
-##                 raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir')
-##             script_path = os.path.join(j.master.getInputWorkspace().getPath(),
-##                                        'dirac-script.py')
-##             if not os.path.exist(script_path):
-##                  raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir')
-##             parametric = True
-            
-##         f=open(script_path,'r')
-##         script = f.read()
-##         f.close()
-
-##         ## Create new script
-##         if parametric is True:
-##             parametric_datasets = self.__get_parametric_datasets(script.split('\n'))
-##             if len(parametric_datasets) is not len(j.master.subjobs):
-##                   raise BackendError('Dirac','wrong number of subjobs!')
-##             script = script.replace('j.setParametricInputData(%s)' % str(parametric_datasets),
-##                                     'j.setInputData(%s)' % str(parametric_datasets[j.id]))
-##             script = script.replace('%n',str(j.id)) #name
-
-##         start_user_settings = '# <-- user settings\n'
-##         new_script = script[:script.find(start_user_settings) + len(start_user_settings)]
-##         for key, value in self.settings.iteritems():
-##             if type(value)is type(''):
-##                 new_script += 'j.set%s("%s")\n' % (key, value)
-##             else:
-##                 new_script += 'j.set%s(%s)\n' % (key, str(value))
-##         new_script += script[script.find('# user settings -->'):]
-
-
-##         f = open(new_script_path, 'w')
-##         f.write(new_script)
-##         f.close()
-        
-##         return self._submit(new_script)
 
     def reset(self, doSubjobs =False):
         """Resets the state of a job back to 'submitted' so that the
@@ -618,23 +513,19 @@ class DiracBase(IBackend):
                   
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
-    def execAPI(cmd,timeout=Ganga.Utility.Config.getConfig('DIRAC')['Timeout']):
+    def execAPI(cmd,timeout=getConfig('DIRAC')['Timeout']):
         """Executes DIRAC API commands.  If variable 'result' is set, then
         it is returned by this method. """
         return DiracBase.dirac_ganga_server.execute(cmd, timeout)
 
     execAPI = staticmethod(execAPI)
 
-    def execAPI_async(cmd,timeout=Ganga.Utility.Config.getConfig('DIRAC')['Timeout']):
+    def execAPI_async(cmd,timeout=getConfig('DIRAC')['Timeout']):
         """Executes DIRAC API commands.  If variable 'result' is set, then
         it is returned by this method. """
         return DiracBase.dirac_ganga_server.execute_nonblocking(cmd, timeout, priority=4)
 
     execAPI_async = staticmethod(execAPI_async)
-
-#    def getQueue():
-#        return DiracBase.dirac_monitoring_server.get_queue()
-#    getQueue = staticmethod(getQueue)
 
     def getQueues():
         print '{0:^55} | {1:^50}'.format('Ganga user threads:','Ganga monitoring threads:')
@@ -644,7 +535,13 @@ class DiracBase(IBackend):
         for u, m in zip( DiracBase.dirac_ganga_server.worker_status(),
                          DiracBase.dirac_monitoring_server.worker_status() ):
             # name has extra spaces as colour characters are invisible but still count
-            print '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}'.format(u[0], u[1][:30], u[2], m[0], m[1][:30], m[2])
+            name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
+            name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
+            if u[1] == 'idle':
+                name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
+            if m[1] == 'idle':
+                name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
+            print '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}'.format(name_user, u[1][:30], u[2], name_monitor, m[1][:30], m[2])
 
         print ''
         print "Ganga user queue:"

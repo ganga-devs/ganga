@@ -1,49 +1,46 @@
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File.IOutputFile import IOutputFile
-import copy, os, datetime, hashlib
-from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd, shellEnvUpdate_cmd
-import Ganga.Utility.Config
-from Ganga.Utility.Config import getConfig
-configDirac = Ganga.Utility.Config.getConfig('DIRAC')
-#configLHCb  = Ganga.Utility.Config.getConfig('LHCb' )
-import fnmatch,subprocess,re
-from Ganga.Utility.files import expandfilename
-import Ganga.Utility.logging
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
-from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async
-from Ganga.GPIDev.Lib.Job.Job import Job
-logger = Ganga.Utility.logging.getLogger()
-regex = re.compile('[*?\[\]]')
+import copy, os, datetime, hashlib, re
+from Ganga.GPIDev.Base.Proxy                  import GPIProxyObjectFactory
+from Ganga.GPIDev.Lib.GangaList.GangaList     import GangaList
+from Ganga.GPIDev.Schema                      import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Lib.File.IOutputFile        import IOutputFile
+from Ganga.GPIDev.Lib.Job.Job                 import Job
+from Ganga.Core.exceptions                    import GangaException
+from Ganga.Utility.files                      import expandfilename
+from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv
+from GangaDirac.Lib.Utilities.smartsubprocess import runcmd
+from Ganga.Utility.Config                     import getConfig
+from Ganga.Utility.logging                    import getLogger
+configDirac = getConfig('DIRAC')
+logger      = getLogger()
+regex       = re.compile('[*?\[\]]')
 
 class DiracFile(IOutputFile):
     """
     File stored on a DIRAC storage element
     """
     _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
-                                     'localDir'      : SimpleItem(defvalue="",copyable=1,doc='local dir where the file is stored, used from get and put methods'),    
-#                                     'joboutputdir'  : SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                     'locations'     : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of SE locations where the outputfiles are uploaded"),
-                                     'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere'),
-                                     'lfn'           : SimpleItem(defvalue='',copyable=1,typelist=['str'],doc='return the logical file name/set the logical file name to use if not using wildcards in namePattern'),
-#                                     'diracSE'       : SimpleItem(defvalue=[],typelist=['str'],sequence=1,hidden=1,doc='The dirac SE sites to try to upload to'),
-                                     'guid'          : SimpleItem(defvalue='',copyable=1,typelist=['str'],doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
-                                     'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['GangaDirac.Lib.Files.DiracFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-                                     'failureReason' : SimpleItem(defvalue="",copyable=1,doc='reason for the upload failure')
+                                     'localDir'      : SimpleItem(defvalue="",copyable=1,
+                                                                  doc='local dir where the file is stored, used from get and put methods'),
+                                     'locations'     : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,
+                                                                  doc="list of SE locations where the outputfiles are uploaded"),
+                                     'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,
+                                                                  doc='wheather the output file should be compressed before sending somewhere'),
+                                     'lfn'           : SimpleItem(defvalue='',copyable=1,typelist=['str'],
+                                                                  doc='return the logical file name/set the logical file name to use if not '\
+                                                                      'using wildcards in namePattern'),
+                                     'guid'          : SimpleItem(defvalue='',copyable=1,typelist=['str'],
+                                                                  doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
+                                     'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, sequence=1, copyable=0,
+                                                                     typelist=['GangaDirac.Lib.Files.DiracFile'],
+                                                                     doc="collected files from the wildcard namePattern"),
+                                     'failureReason' : SimpleItem(defvalue="", copyable=1, doc='reason for the upload failure')
                                      })
 
-#    _schema.datadict['lfn']=SimpleItem(defvalue="",typelist=['str'],doc='The logical file name')
-#    _schema.datadict['diracSE']=SimpleItem(defvalue=[],typelist=['list'],doc='The dirac SE sites')
-#    _schema.datadict['guid']=SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='The files GUID')
-#    _schema.version.major += 0
-#    _schema.version.minor += 1
     _env=None
 
     _category = 'outputfiles'
     _name = "DiracFile"
-    _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'put']#, 'upload' ]
+    _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'put']
         
     def __init__(self, namePattern='', localDir='', lfn='', **kwds):
         """ name is the name of the output file that has to be written ...
@@ -53,7 +50,7 @@ class DiracFile(IOutputFile):
         self.lfn         = lfn
         self.localDir    = localDir
         self.locations   = []
-##COULD MAKE os.getcwd THE DEFAULT LOCALDIR, ALSO COULD CONSTRUCT FROM LFN
+##COULD MAKE os.getcwd THE DEFAULT LOCALDIR
     def __construct__(self,args):
         if   len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
@@ -143,10 +140,6 @@ class DiracFile(IOutputFile):
     def _getEnv(self):
         if not self._env:
             self._env=getDiracEnv()
-            #with open(configDirac['DiracEnvFile'],'r') as envfile:
-                #self._env.update(dict((tuple(line.split('=',1)) for line in envfile.read().splitlines() if len(line.split('=',1)) == 2)))
-            #self._env = copy.deepcopy(os.environ)
-            #shellEnvUpdate_cmd('. SetupProject.sh LHCbDirac', self._env)
         return self._env
 
     def remove(self):
@@ -238,20 +231,6 @@ class DiracFile(IOutputFile):
         return stdout
          
 
-#    def upload(self):
-#        """
-#        Try to upload file sequentially to storage elements defined in configDirac['DiracSpaceTokens'].
-#
-#        File will be uploaded to the first SE that the upload command succeeds for.
-#        Return value will be either the stdout from the dirac upload command if not
-#        using the wildcard characters '*?[]' in the namePattern. If the wildcard characters
-#        are used then the return value will be a list containing newly created DiracFile
-#        objects which were the result of glob-ing the wildcards. The objects in this list
-#        will have been uploaded or had their failureReason attribute populated if the
-#        upload failed.
-#        """
-#        return self.put()
-    
     def put(self):
         """
         Try to upload file sequentially to storage elements defined in configDirac['DiracSpaceTokens'].

@@ -2,7 +2,7 @@ import os
 import time
 import datetime
 import glob
-from DIRAC.Interfaces.API.Dirac import Dirac
+from DIRAC.Interfaces.API.Dirac      import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
 

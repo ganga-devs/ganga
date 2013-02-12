@@ -4,7 +4,6 @@ from Ganga.Core import GangaException
 from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
-from Ganga.Utility.ColourText import getColour
 import collections, Queue, threading
 import os
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
@@ -34,7 +33,7 @@ class DiracClient(object):
                             auto_register = False,
                             target=self.__worker_thread)
             t._Thread__args=(t,)
-            t.name = getColour('fg.green') + 'Worker_' + str(i) + getColour('fg.normal')
+            t.name     = "Worker_" + str(i)
             t._command = 'idle'
             t._timeout = 'N/A'
             t.start()
@@ -54,7 +53,6 @@ class DiracClient(object):
 
             #regster as a working thread
             GangaThreadPool.getInstance().addServiceThread(thread)
-            thread.name     = thread.name.replace(getColour('fg.green'), getColour('fg.red'))
             thread._command = item.command_input.command
             thread._timeout = item.command_input.timeout
             result = self.execute(*item.command_input)
@@ -64,7 +62,6 @@ class DiracClient(object):
 
             #unregster as a working thread bcoz free
             GangaThreadPool.getInstance().delServiceThread(thread)
-            thread.name     = thread.name.replace(getColour('fg.red'), getColour('fg.green'))
             thread._command = 'idle'
             thread._timeout = 'N/A'
             self.__queue.task_done()
