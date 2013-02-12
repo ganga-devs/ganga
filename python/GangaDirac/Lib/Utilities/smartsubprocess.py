@@ -14,11 +14,7 @@ class Popen(subprocess.Popen):
                 if time.time()-time_start >= timeout:
                     with os.fdopen(errwrite, 'ab', bufsize) as f:
                         f.write("Command timed out!")
-                    self.returncode = -9
                     self.kill()
-                    #try: # can throw exception if they call communicate without pipe
-                        #self.wait()
-                    #except: pass
                     break
             time.sleep(0.5)
         else:
