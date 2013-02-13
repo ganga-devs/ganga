@@ -16,6 +16,7 @@ from IOutputFile import IOutputFile
 
 import re
 import os
+import copy
 
 regex = re.compile('[*?\[\]]')
 
@@ -26,7 +27,7 @@ class LCGSEFile(IOutputFile):
 
     _schema = Schema(Version(1,1), {
         'namePattern' : SimpleItem(defvalue="",doc='pattern of the file name'),
-        'localDir'    : SimpleItem(defvalue="",copyable=0,doc='local dir where the file is stored, used from get and put methods'),    
+        'localDir'    : SimpleItem(defvalue="",copyable=1,doc='local dir where the file is stored, used from get and put methods'),    
         'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
         'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
@@ -35,9 +36,9 @@ class LCGSEFile(IOutputFile):
         'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
-        'locations'   : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+        'locations'   : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
         'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-        'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure'),
+        'failureReason' : SimpleItem(defvalue="",copyable=1,doc='reason for the upload failure'),
         'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "LCGSEFile"
@@ -64,6 +65,14 @@ class LCGSEFile(IOutputFile):
             self.namePattern = args[0]
             self.localDir = args[1]     
             
+    def _on_attribute__set__(self, obj_type, attrib_name):
+        r = copy.deepcopy(self)
+        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
+            r.locations=[]
+            r.localDir=''
+            r.failureReason=''
+        return r
+
     def __repr__(self):
         """Get the representation of the file."""
 
