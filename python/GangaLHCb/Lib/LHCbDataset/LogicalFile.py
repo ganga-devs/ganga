@@ -17,10 +17,15 @@ def get_dirac_space_tokens():
 #    return ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','NIKHEF-USER',
 #            'PIC-USER','RAL-USER']
 
-def get_result(cmd,log_msg,except_msg):
+def get_result(cmd,log_msg,except_msg, extra_imports=None):
     from GangaLHCb.Lib.Backends.Dirac import Dirac
     from GangaDirac.Lib.Backends.DiracUtils import result_ok
     result = Dirac.execAPI(cmd)
+
+    if not result_ok(result) and extra_imports is not None:
+        exec('import %s' % extra_imports)
+        result = eval(result)
+    
     if not result_ok(result):
         logger.warning('%s: %s' % (log_msg,str(result)))
         raise GangaException(except_msg)
@@ -111,7 +116,7 @@ class LogicalFile(GangaObject):
     def getMetadata(self):
         'Returns the metadata for the LFN (e.g. creation time, etc.).'
         cmd = 'getMetadata("%s")' % self.name
-        result = get_result(cmd,'Error w/ metadata','Could not get metadata.')
+        result = get_result(cmd,'Error w/ metadata','Could not get metadata.', 'datetime')
         metadata = result['Value']['Successful']
         if metadata.has_key(self.name): return metadata[self.name]
         return {}        
