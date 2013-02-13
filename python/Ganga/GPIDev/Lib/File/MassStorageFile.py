@@ -7,6 +7,7 @@ from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Lib.Job.Job import Job
 
 from IOutputFile import IOutputFile
 
@@ -19,11 +20,11 @@ class MassStorageFile(IOutputFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name'),
-                                    'localDir': SimpleItem(defvalue="",copyable=0,doc='local dir where the file is stored, used from get and put methods'),        
+                                    'localDir': SimpleItem(defvalue="",copyable=1,doc='local dir where the file is stored, used from get and put methods'),        
                                     'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-                                    'locations' : SimpleItem(defvalue=[],copyable=0,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'locations' : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
                                     'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-                                    'failureReason' : SimpleItem(defvalue="",copyable=0,doc='reason for the upload failure'),
+                                    'failureReason' : SimpleItem(defvalue="",copyable=1,doc='reason for the upload failure'),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
                                         })
 
@@ -46,6 +47,14 @@ class MassStorageFile(IOutputFile):
             self.namePattern = args[0]
             self.localDir = args[1]     
             
+    def _on_attribute__set__(self, obj_type, attrib_name):
+        r = copy.deepcopy(self)
+        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
+            r.locations=[]
+            r.localDir=''
+            r.failureReason=''
+        return r
+
     def __repr__(self):
         """Get the representation of the file."""
 
