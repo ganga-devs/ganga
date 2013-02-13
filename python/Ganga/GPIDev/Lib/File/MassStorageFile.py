@@ -7,7 +7,6 @@ from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Lib.Job.Job import Job
 
 from IOutputFile import IOutputFile
 
@@ -49,7 +48,7 @@ class MassStorageFile(IOutputFile):
             
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
-        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
+        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
             r.locations=[]
             r.localDir=''
             r.failureReason=''
