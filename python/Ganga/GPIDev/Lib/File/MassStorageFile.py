@@ -12,6 +12,7 @@ from IOutputFile import IOutputFile
 
 import re
 import os
+import copy
 
 regex = re.compile('[*?\[\]]')
 
