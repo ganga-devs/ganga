@@ -274,7 +274,7 @@ class CRABBackend(IBackend):
             if job.status in ['submitting','new']:
                 # The job has to pass by this status at least once.
                 job.updateStatus('submitted')
-            if job.status != 'running':
+            elif job.status != 'running':
                 # A job could come from the died (i.e. completed -> running).
                 job.updateStatus('running')
         elif status in ['UN','C','CS','W'] and job.status not in ['submitting','new','killed']:
