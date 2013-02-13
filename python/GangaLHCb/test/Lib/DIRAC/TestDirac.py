@@ -37,7 +37,7 @@ class TestDirac(GangaGPITestCase):
             j.backend._impl.kill()
         except BackendError:
             assert False, 'BackendError should not have been thrown.'
-        j.kill()
+        #j.kill()
         
     def test_Dirac_peek(self):
         j = Job(backend=Dirac())
