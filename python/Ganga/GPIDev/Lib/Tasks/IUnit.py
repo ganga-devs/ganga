@@ -271,15 +271,22 @@ class IUnit(GangaObject):
 
          # try to preserve lazy loading
          if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
-            for sj_stat in j._index_cache['subjobs:status']:
-               if sj_stat in active_states:
+            if len(j._index_cache['subjobs:status']) > 0:
+               for sj_stat in j._index_cache['subjobs:status']:
+                  if sj_stat in active_states:
+                     tot_active += 1
+            else:
+               if j._index_cache['status'] in active_states:
                   tot_active += 1
          else:            
             #logger.warning("WARNING: (active check) No index cache for job object %d" % jid)
             if j.status in active_states:
-               for sj in j.subjobs:
-                  if sj.status in active_states:
-                     tot_active += 1
+               if j.subjobs:
+                  for sj in j.subjobs:
+                     if sj.status in active_states:
+                        tot_active += 1
+               else:
+                  tot_active += 1
                      
       return tot_active
 
@@ -300,15 +307,24 @@ class IUnit(GangaObject):
 
          # try to preserve lazy loading
          if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
-            for sj_stat in j._index_cache['subjobs:status']:
-               if sj_stat == status:
+            if len(j._index_cache['subjobs:status']) > 0:
+               for sj_stat in j._index_cache['subjobs:status']:
+                  if sj_stat == status:
+                     tot_active += 1
+            else:
+               if j._index_cache['status'] == status:
                   tot_active += 1
+                  
          else:            
             #logger.warning("WARNING: (status check) No index cache for job object %d" % jid)
-            for sj in j.subjobs:
-               if sj.status == status:
+            if j.subjobs:
+               for sj in j.subjobs:
+                  if sj.status == status:
+                     tot_active += 1
+            else:
+               if j.status == status:
                   tot_active += 1
-
+               
       return tot_active
    
    def n_all(self):
@@ -328,10 +344,16 @@ class IUnit(GangaObject):
 
          # try to preserve lazy loading
          if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
-            total += len(j._index_cache['subjobs:status'])
+            if len(j._index_cache['subjobs:status']) != 0:
+               total += len(j._index_cache['subjobs:status'])
+            else:
+               total += 1
          else:            
             #logger.warning("WARNING: (status check) No index cache for job object %d" % jid)
-            total = len(j.subjobs)
+            if j.subjobs:
+               total = len(j.subjobs)
+            else:
+               total = 1
 
       return total
          
