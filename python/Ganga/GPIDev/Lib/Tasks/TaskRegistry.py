@@ -37,6 +37,7 @@ from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, Registr
 
 # add monitoring loop option
 config.addOption('TaskLoopFrequency', 60, "Frequency of Task Monitoring loop in seconds")
+config.addOption('ForceTaskMonitoring', True, "Monitor tasks even if the monitoring loop isn't enabled")
 
 class TaskRegistry(Registry):
     def getProxy(self):
@@ -73,7 +74,7 @@ class TaskRegistry(Registry):
 
         while True:
             from Ganga.Core import monitoring_component
-            if not monitoring_component is None and monitoring_component.enabled:
+            if (not monitoring_component is None and monitoring_component.enabled) or config['ForceTaskMonitoring']:
                 break
             time.sleep(0.1)
             if self._main_thread.should_stop():
@@ -91,7 +92,7 @@ class TaskRegistry(Registry):
         ## Main loop
         while not self._main_thread.should_stop():
             ## For each task try to run it
-            if monitoring_component.enabled:
+            if config['ForceTaskMonitoring'] or monitoring_component.enabled:
                 for tid in self.ids():
                     try:
                         if hasattr(self[tid], "_tasktype") and self[tid]._tasktype == "ITask":
