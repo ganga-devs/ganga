@@ -18,18 +18,6 @@ configDirac.addOption('StartUpWaitTime', 1.0,
 configDirac.addOption('NumWorkerThreads', 2,
                       'Number of worker threads that the local DIRAC server and client should establish')
 
-configDirac.addOption('EndDataString', '###END-DATA-TRANS###',
-                      'String that indicates end of data transmit')
-
-configDirac.addOption('ServerShutdownString', '###SERVER-SHUTDOWN###',
-                      'String that tells local DIRAC server to shutdown')
-
-configDirac.addOption('ServerPortMin', 49000,
-                      'The minimum port number that the local DIRAC server should try listening on')
-
-configDirac.addOption('ServerPortMax', 65000,
-                      'The maximum port number that the local DIRAC server should try listening on')
-
 configDirac.addOption('DiracEnvFile', os.environ["GANGADIRACENVIRONMENT"],
                       'Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
 

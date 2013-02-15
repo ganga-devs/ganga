@@ -108,8 +108,8 @@ class DiracFile(IOutputFile):
                 dirac_line_processor(line, d)
             elif name == dirac_file.namePattern:
                 if lfn == '###FAILED###':
-                    logger.error("Failed to upload file '%s' to Dirac" % name)
                     dirac_file.failureReason = tokens[2]
+                    logger.error("Failed to upload file '%s' to Dirac: %s" % (name, dirac_file.failureReason))
                     return True
                 dirac_file.lfn       = lfn
                 dirac_file.locations = tokens[2]
@@ -356,10 +356,10 @@ class DiracFile(IOutputFile):
 ###INDENT###    stderr=''
 ###INDENT###    for se in SEs:
 ###INDENT###        try:
-###INDENT###            retcode, stdout, stderr = run_command('dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid), dirac_env_setup)
+###INDENT###            retcode, stdout, stderr = run_command('###ADD_COMMAND### %s %s %s %s' % (lfn, file, se, guid), dirac_env_setup)
 ###INDENT###        except Exception,x:
 ###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
-###INDENT###        if stdout.find(\"'Successful': {'%s'\" % lfn) >=0:
+###INDENT###        if ###SUCCESS_CHECK###:
 ###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::%s\\n" % (wildcard, file_label, lfn, se, guid))
 ###INDENT###            return
 ###INDENT###    ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s,%s):::NotAvailable\\n" % (wildcard, file_label, file, stdout, stderr))
@@ -391,9 +391,13 @@ class DiracFile(IOutputFile):
         script = script.replace('###INDENT###',           indent)
         script = script.replace('###LOCATIONSFILE###',    postProcessLocationsFP)
         if self._parent and self._parent.backend._name=='Dirac':
-            script = script.replace('###DIRAC_ENV###', str(None))
+            script = script.replace('###DIRAC_ENV###', 'os.environ')
+            script = script.replace('###ADD_COMMAND###', 'dirac-dms-add-files') # necessary until we switch to new LHCbDirac
+            script = script.replace('###SUCCESS_CHECK###','''stdout == '' ''')
         else:
             script = script.replace('###DIRAC_ENV###', str(self._getEnv()))
+            script = script.replace('###ADD_COMMAND###', 'dirac-dms-add-file')
+            script = script.replace('###SUCCESS_CHECK###','''stdout.find(\"'Successful': {'%s'\" % lfn) >=0''')
 
 #        if self._parent and self._parent.backend._name=='Dirac':
 #            script = script.replace('###SETUP###', '')
