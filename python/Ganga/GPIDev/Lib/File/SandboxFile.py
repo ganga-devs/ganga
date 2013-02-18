@@ -9,11 +9,21 @@ from Ganga.GPIDev.Schema import *
 
 from IOutputFile import IOutputFile   
 
+
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+
+import re
+import os
+
+regex = re.compile('[*?\[\]]')
+
 class SandboxFile(IOutputFile):
     """SandboxFile represents base class for output files, such as MassStorageFile, LCGSEFile, etc 
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name'),
                                     'localDir': SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods'),
+                                    'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.SandboxFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "SandboxFile"
@@ -37,3 +47,22 @@ class SandboxFile(IOutputFile):
         """Get the representation of the file."""
 
         return "SandboxFile(namePattern='%s')"% self.namePattern
+
+    def processWildcardMatches(self):
+
+        import glob
+
+        fileName = self.namePattern
+
+        if self.compressed:
+            fileName = '%s.gz' % self.namePattern   
+
+        sourceDir = self.getJobObject().outputdir       
+
+        if regex.search(fileName) is not None:
+            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
+
+                d=SandboxFile(namePattern=os.path.basename(currentFile))
+                d.compressed = self.compressed
+
+                self.subfiles.append(GPIProxyObjectFactory(d))
