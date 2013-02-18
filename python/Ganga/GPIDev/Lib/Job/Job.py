@@ -424,6 +424,10 @@ class Job(GangaObject):
 
                         outputfile.setLocation()
 
+            if outputfileClass == 'SandboxFile':
+                outputfile.processWildcardMatches()
+
+
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
 
