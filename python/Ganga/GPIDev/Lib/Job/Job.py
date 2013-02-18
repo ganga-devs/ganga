@@ -453,7 +453,7 @@ class Job(GangaObject):
 
         new_stat = None
         
-        for s in ['submitting','submitted','running','failed','killed','completing','completed']:
+        for s in ['submitting','submitted','running','completing','failed','killed','completed']:
             if s in stats:
                 new_stat = s
                 break
