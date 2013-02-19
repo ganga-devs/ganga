@@ -321,7 +321,7 @@ under certain conditions; type license() for details.
                    Ganga.Utility.logging.getLogger().error('file %s is old an Ganga 4 configuration file (%s)',self.options.config_file,r.group('version'))
                    Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
                else:
-                   if cv[1] != '5':
+                   if cv[1] != '5' and cv[1] != '6':
                        Ganga.Utility.logging.getLogger().error('file %s was created by a development release (%s)',self.options.config_file, r.group('version'))
                        Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
         except IOError,x:
