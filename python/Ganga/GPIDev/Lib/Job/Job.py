@@ -268,7 +268,8 @@ class Job(GangaObject):
     keys = getConfig('Output').options.keys()
     keys.remove('PostProcessLocationsFileName')         
     keys.remove('ForbidLegacyOutput')                
-
+    keys.remove('AutoRemoveFilesWithJob')
+    keys.remove('AutoRemoveFileTypes')
     for key in keys:
         try:
             for configEntry in getConfig('Output')[key]['backendPostprocess']:
@@ -1041,7 +1042,15 @@ class Job(GangaObject):
             if self._registry:
                 self._registry._remove(self,auto_removed=1)
             return 
-            
+
+        if getConfig('Output')['AutoRemoveFilesWithJob']:
+            def removeFiles(file):
+                if stripProxy(file).__class__.__name__ in getConfig('Output')['AutoRemoveFileTypes'] and hasattr(file, '_auto_remove'):
+                    file._auto_remove()
+
+            for sj in self.subjobs:
+                map(removeFiles, sj.outputfiles)
+            map(removeFiles, self.outputfiles)
         
         if self.status in ['submitted','running']:
             try:

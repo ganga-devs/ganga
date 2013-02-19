@@ -437,6 +437,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         #[Output] section
         outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
+        outputconfig.addOption('AutoRemoveFilesWithJob', False, 'if True, each outputfile of type in list AutoRemoveFileTypes will be removed when the job is')
+        outputconfig.addOption('AutoRemoveFileTypes', ['DiracFile'], 'List of outputfile types that will be auto removed when job is removed if AutoRemoveFilesWithJob is True')
 
         outputconfig.addOption('PostProcessLocationsFileName', '__postprocesslocations__', 'name of the file that will contain the locations of the uploaded from the WN files')
 
