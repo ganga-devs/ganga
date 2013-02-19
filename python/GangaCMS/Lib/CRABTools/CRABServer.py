@@ -30,7 +30,7 @@ class CRABServer(GangaObject):
         code = 'x'
         stdout, stderr = '',''
 
-        try:       
+        try:
             cmd = shlex.split(cmd)
             logger.debug('Launching a CRAB command: %s' %str(cmd))
             init = datetime.datetime.now()
@@ -40,6 +40,12 @@ class CRABServer(GangaObject):
             logger.debug('Command ended with code %d' % code)
             # Remove zombie processes.
             p.wait()
+            # Really wait for everything to finish.
+            while True:
+                try:
+                    os.waitpid(-1, os.WNOHANG)
+                except OSError:
+                    break
             logger.debug('Finished CRAB command: %s' %str(cmd))
             end = datetime.datetime.now()
 
@@ -52,13 +58,13 @@ class CRABServer(GangaObject):
 
         if code != 0:
             logger.info(stdout)
-            logger.info(stderr) 
-            raise CRABServerError.CRABServerError('CRAB %s exit code %s'%(type,code))  
+            logger.info(stderr)
+            raise CRABServerError.CRABServerError('CRAB %s exit code %s'%(type,code))
 
     def _send_with_retry(self,cmd,type,env,retries=3,delay=60):
         assert retries > 0
         assert delay >= 0
-        
+
         for i in range(retries):
             try:
                 self._send(cmd,type,env)
@@ -68,13 +74,13 @@ class CRABServer(GangaObject):
                 continue
 
         # If we reach this code, all the retries failed.
-        raise CRABServerError.CRABServerError('CRAB %s failed on all retries (%d)'%(type,retries))  
+        raise CRABServerError.CRABServerError('CRAB %s failed on all retries (%d)'%(type,retries))
 
     def create(self, job):
 
         cfgfile = '%scrab.cfg'%(job.inputdir)
         if not os.path.isfile(cfgfile):
-            raise CRABServerError('File "%s" not found.'%(cfgfile))     
+            raise CRABServerError('File "%s" not found.'%(cfgfile))
 
         cmd = 'crab -create -cfg %s'%(cfgfile)
         self._send_with_retry(cmd,'creating',job.backend.crab_env)
@@ -89,8 +95,8 @@ class CRABServer(GangaObject):
 
         cmd = 'crab -submit -c %s'%(workdir)
         self._send_with_retry(cmd,'submitting',job.backend.crab_env)
-#        msg = telltale.submit('%slog/crab.log'%(job.outputdir))   
-        return 1    
+#        msg = telltale.submit('%slog/crab.log'%(job.outputdir))
+        return 1
 
     def status(self, job):
 
