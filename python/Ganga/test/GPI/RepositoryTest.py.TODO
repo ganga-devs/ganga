@@ -11,8 +11,6 @@ from repositoryTest import __file__
 _gangaPath = os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 sys.path.append(_gangaPath)
 del _gangaPath
-if sys.hexversion < 0x20300f0:
-    sys.path.insert(0,'/afs/cern.ch/sw/ganga/external/Optik-1.4.1/lib/python2.2/site-packages')
 
 from multipass import MultipassTest
 import Ganga.Runtime
