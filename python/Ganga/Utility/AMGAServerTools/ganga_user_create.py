@@ -21,9 +21,6 @@ from directoryManagement import Collections
 #_defaultMinHexVersion = 0x20200f0
 _defaultPlatform = 'slc3_gcc323'
 _defaultExternalHome = "/afs/cern.ch/sw/ganga/external"
-_externalPackage = {'name':'Optik', 'version': '1.4.1',
-                    'syspath': 'lib/python2.2/site-packages',
-                    'maxHexVersion': '0x20300f0'}
 
 DEBUG = False
 #DEBUG = True
@@ -85,13 +82,6 @@ def create(user,
 
 #---------------------------------------------------------------------------
 def main():
-    if sys.hexversion < _externalPackage['maxHexVersion']:
-        path = os.path.join(_defaultExternalHome,
-                            _externalPackage['name'],
-                            _externalPackage['version'],
-                            _defaultPlatform,
-                            _externalPackage['syspath'])
-        sys.path.insert(1,path)
         
     from optparse import OptionParser
     parser = OptionParser()
