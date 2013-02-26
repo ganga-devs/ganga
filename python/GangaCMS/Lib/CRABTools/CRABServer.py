@@ -8,6 +8,7 @@ from Ganga.Utility.logging import getLogger
 import os,os.path
 import datetime
 import shlex
+import shutil
 import time
 
 from subprocess import Popen, PIPE
@@ -71,7 +72,6 @@ class CRABServer(GangaObject):
                 return
             except:
                 time.sleep(delay) # Introduce a delay to avoid flooding
-                continue
 
         # If we reach this code, all the retries failed.
         raise CRABServerError.CRABServerError('CRAB %s failed on all retries (%d)'%(type,retries))
@@ -81,6 +81,9 @@ class CRABServer(GangaObject):
         cfgfile = '%scrab.cfg'%(job.inputdir)
         if not os.path.isfile(cfgfile):
             raise CRABServerError('File "%s" not found.'%(cfgfile))
+
+        # Clean up the working dir for the CRAB UI.
+        shutil.rmtree(job.inputdata.ui_working_dir, ignore_errors=True)
 
         cmd = 'crab -create -cfg %s'%(cfgfile)
         self._send_with_retry(cmd,'creating',job.backend.crab_env)
