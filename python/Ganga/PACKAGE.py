@@ -51,6 +51,10 @@ _externalPackages = {
                  'syspath' : 'lib/python2.2/site-packages',
                  'maxHexVersion' : '0x20501f0', # in 2.5.0 subprocess is broken, bugfix: http://savannah.cern.ch/bugs/?36178
                  'noarch':True},
+   'tarfile' : {'version' : '2.4.2',
+                'syspath': 'lib/python2.2/site-packages',
+                'maxHexVersion' : '0x20300f0',
+                'noarch':True},
    'paramiko' : {'version' : '1.7.3',
                  'noarch':True,
                  'syspath':'lib/python2.3/site-packages'},
