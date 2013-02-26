@@ -11,6 +11,9 @@ this_version=getConfig('System')['GANGA_PYTHONPATH'].split('/')[6]
 this_repo=getConfig('Configuration')['gangadir']
 excludelist = getConfig('TestingFramework')['SchemaTest_ignore_obj']
 
+for item in ['TestGangaObject', 'EmptyDataset', 'TestListViewDataset', 'TestDataset']:
+    excludelist.append(item)
+
 logger.info('#################### RUNNING JOB GENERATOR')
 logger.info('#################### Executing Ganga version: ' + this_version)
 logger.info('#################### Creating repo at: ' + this_repo)
