@@ -1381,7 +1381,7 @@ sys.exit(0)
             #f    = open(fname,'w')
 
             sh = grids[self.middleware.upper()].shell
-            re, output, m = sh.cmd("glite-wms-job-perusal --get --noint --all -f stdout %s" % self.id, fname)
+            re, output, m = sh.cmd("glite-wms-job-perusal --get --all -f stdout %s" % self.id, fname)
             job.viewFile(fname,cmd)
 
         return None
