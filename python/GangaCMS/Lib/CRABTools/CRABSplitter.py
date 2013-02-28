@@ -7,9 +7,15 @@ from xml.dom.minidom import parse
 class CRABSplitter(ISplitter):
     """Splitter object for CRAB jobs."""
     schemadic = {}
-    schemadic['maxevents'] = SimpleItem(defvalue=None, typelist=['type(None)', 'int'], doc='')
-    schemadic['inputfiles'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], doc='')
-    schemadic['skipevents'] = SimpleItem(defvalue=None, typelist=['type(None)', 'int'], doc='')
+    schemadic['maxevents'] = SimpleItem(defvalue=None,
+                                        typelist=['type(None)', 'int'],
+                                        doc='Maximum number of events/task')
+    schemadic['inputfiles'] = SimpleItem(defvalue=None,
+                                         typelist=['type(None)', 'str'],
+                                         doc='Number of input files')
+    schemadic['skipevents'] = SimpleItem(defvalue=None,
+                                         typelist=['type(None)', 'int'],
+                                         doc='Offset for the events')
     _name = 'CRABSplitter'
     _schema = Schema(Version(1, 0), schemadic)
 
