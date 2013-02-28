@@ -4,4 +4,3 @@ from CRABDataset import *
 from CRABRuntimeHandler import *
 from CRABSplitter import *
 from CRABServer import *
-from Telltale import *
