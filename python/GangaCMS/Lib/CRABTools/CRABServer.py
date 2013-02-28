@@ -1,165 +1,135 @@
-from GangaCMS.Lib.CRABTools import CRABServerError
-from GangaCMS.Lib.CRABTools import Telltale
-
-from Ganga.Core import ApplicationConfigurationError, BackendError
-from Ganga.GPIDev.Credentials import getCredential
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.Utility.logging import getLogger
+from GangaCMS.Lib.CRABTools.CRABServerError import CRABServerError
 
-import os,os.path
 import datetime
+import os
 import shlex
 import shutil
+import subprocess
 import time
 
-from subprocess import Popen, PIPE
-
-import Ganga.Utility.Config
-
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
 
 logger = getLogger()
 
 
 class CRABServer(GangaObject):
+    """Helper class to launch CRAB commands."""
+    _schema = Schema(Version(0, 0), {})
+    _hidden = True
 
-    _schema =  Schema(Version(0,0), {})
-    _hidden = 1
-
-    def _send(self,cmd,type,env):
-
-        code = 'x'
-        stdout, stderr = '',''
-
+    def _send(self, cmd, operation, env):
+        """Launches a command and waits for output."""
         try:
-            cmd = shlex.split(cmd)
-            logger.debug('Launching a CRAB command: %s' %str(cmd))
+            logger.debug('Launching a CRAB command: %s' % cmd)
             init = datetime.datetime.now()
-            p = Popen(cmd,bufsize=-1,stdout=PIPE,stderr=PIPE,env=env)
+            p = subprocess.Popen(shlex.split(cmd), stdout=subprocess.PIPE,
+                                 stderr=subprocess.PIPE, bufsize=-1, env=env)
             stdout, stderr = p.communicate()
-            code = p.returncode
-            logger.debug('Command ended with code %d' % code)
-            # Remove zombie processes.
             p.wait()
-            # Really wait for everything to finish.
-            while True:
-                try:
-                    os.waitpid(-1, os.WNOHANG)
-                except OSError:
-                    break
-            logger.debug('Finished CRAB command: %s' %str(cmd))
             end = datetime.datetime.now()
+            logger.debug('Finished CRAB command: %s' % cmd)
+            logger.info('%s took %d sec.' % (operation, (end - init).seconds))
 
-            time = (end-init).seconds
-            logger.info('%s took %d seconds'%(type,time))
-        except OSError,e:
+            if p.returncode != 0:
+                raise CRABServerError('CRAB %s returned %s' % (operation,
+                                                               p.returncode))
+        except OSError, e:
             logger.error(stdout)
             logger.error(stderr)
-            raise CRABServerError.CRABServerError(e,'OSError %s crab job(s).'%(type))
+            raise CRABServerError(e, 'OSError %s crab job(s).' % operation)
 
-        if code != 0:
-            logger.info(stdout)
-            logger.info(stderr)
-            raise CRABServerError.CRABServerError('CRAB %s exit code %s'%(type,code))
-
-    def _send_with_retry(self,cmd,type,env,retries=3,delay=60):
+    def _send_with_retry(self, cmd, operation, env, retries=3, delay=60):
+        """Wrapper to add some retries to the CRAB command launching."""
         assert retries > 0
         assert delay >= 0
 
-        for i in range(retries):
+        for _ in range(retries):
             try:
-                self._send(cmd,type,env)
+                self._send(cmd, operation, env)
                 return
-            except:
-                time.sleep(delay) # Introduce a delay to avoid flooding
+            except CRABServerError:
+                time.sleep(delay)
 
-        # If we reach this code, all the retries failed.
-        raise CRABServerError.CRABServerError('CRAB %s failed on all retries (%d)'%(type,retries))
+        raise CRABServerError('CRAB %s failed %d times' % (operation, retries))
 
     def create(self, job):
-
-        cfgfile = '%scrab.cfg'%(job.inputdir)
+        """Create a new CRAB jobset."""
+        cfgfile = os.path.join(job.inputdir, 'crab.cfg')
         if not os.path.isfile(cfgfile):
-            raise CRABServerError('File "%s" not found.'%(cfgfile))
+            raise CRABServerError('File "%s" not found.' % cfgfile)
 
         # Clean up the working dir for the CRAB UI.
         shutil.rmtree(job.inputdata.ui_working_dir, ignore_errors=True)
 
-        cmd = 'crab -create -cfg %s'%(cfgfile)
-        self._send_with_retry(cmd,'creating',job.backend.crab_env)
-#        msg = telltale.create('%slog/crab.log'%(job.outputdir))
-        return 1
+        cmd = 'crab -create -cfg %s' % cfgfile
+        self._send_with_retry(cmd, 'create', job.backend.crab_env)
+        return True
 
     def submit(self, job):
+        """Submit an already created jobset."""
+        if not os.path.exists(job.inputdata.ui_working_dir):
+            raise CRABServerError('Workdir "%s" not found.' %
+                                  job.inputdata.ui_working_dir)
 
-        workdir = job.inputdata.ui_working_dir
-        if not os.path.exists(workdir):
-            raise CRABServerError('Workdir %s not found.'%(workdir))
-
-        cmd = 'crab -submit -c %s'%(workdir)
-        self._send_with_retry(cmd,'submitting',job.backend.crab_env)
-#        msg = telltale.submit('%slog/crab.log'%(job.outputdir))
-        return 1
+        cmd = 'crab -submit -c %s' % job.inputdata.ui_working_dir
+        self._send_with_retry(cmd, 'submit', job.backend.crab_env)
+        return True
 
     def status(self, job):
+        """Get the status of a jobset."""
+        if not os.path.exists(job.inputdata.ui_working_dir):
+            raise CRABServerError('Workdir "%s" not found.' %
+                                  job.inputdata.ui_working_dir)
 
-        workdir = job.inputdata.ui_working_dir
-        if not os.path.exists(workdir):
-            raise CRABServerError('Workdir %s not found.'%(workdir))
-
-        cmd = 'crab -status -c %s'%(workdir)
-        self._send_with_retry(cmd,'checking status',job.backend.crab_env)
-#        msg = telltale.submit('%slog/crab.log'%(job.outputdir))
-        return 1
+        cmd = 'crab -status -c %s' % job.inputdata.ui_working_dir
+        self._send_with_retry(cmd, 'status', job.backend.crab_env)
+        return True
 
     def kill(self, job):
-
-        workdir = job.inputdata.ui_working_dir
-        if not os.path.exists(workdir):
-            raise CRABServerError('Workdir %s not found.'%(workdir))
+        """Kill all the jobs on the task."""
+        if not os.path.exists(job.inputdata.ui_working_dir):
+            raise CRABServerError('Workdir "%s" not found.' %
+                                  job.inputdata.ui_working_dir)
 
         if not job.master:
-            cmd = 'crab -kill all -c %s'%(workdir)
+            cmd = 'crab -kill all -c %s' % job.inputdata.ui_working_dir
         else:
-            index = int(job.id) + 1
-            cmd = 'crab -kill %d -c %s'%(index,workdir)
-        self._send_with_retry(cmd,'killing',job.backend.crab_env)
-#        msg = telltale.kill('%slog/crab.log'%(job.outputdir))
-        return 1
+            cmd = 'crab -kill %d -c %s' % (int(job.id) + 1,
+                                           job.inputdata.ui_working_dir)
+        self._send_with_retry(cmd, 'kill', job.backend.crab_env)
+        return True
 
     def resubmit(self, job):
+        """Resubmit an already created job."""
+        if not os.path.exists(job.inputdata.ui_working_dir):
+            raise CRABServerError('Workdir "%s" not found.' %
+                                  job.inputdata.ui_working_dir)
 
-        workdir = job.inputdata.ui_working_dir
-        if not os.path.exists(workdir):
-            raise CRABServerError('Workdir %s not found.'%(workdir))
-
-        index = int(job.id) + 1
-        cmd = 'crab -resubmit %d -c %s'%(index,workdir)
-        self._send_with_retry(cmd,'resubmitting',job.backend.crab_env)
-#        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
-        return 1
+        cmd = 'crab -resubmit %d -c %s' % (int(job.id) + 1,
+                                           job.inputdata.ui_working_dir)
+        self._send_with_retry(cmd, 'resubmit', job.backend.crab_env)
+        return True
 
     def getOutput(self, job):
+        """Retrieve the output of the job."""
+        if not os.path.exists(job.inputdata.ui_working_dir):
+            raise CRABServerError('Workdir "%s" not found.' %
+                                  job.inputdata.ui_working_dir)
 
-        workdir = job.inputdata.ui_working_dir
-        if not os.path.exists(workdir):
-            raise CRABServerError('Workdir %s not found.'%(workdir))
-
-        index = int(job.id) + 1
-        cmd = 'crab -getoutput %d -c %s'%(index,workdir)
-        self._send_with_retry(cmd,'getting Output',job.backend.crab_env)
-#        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
-        return 1
+        cmd = 'crab -getoutput %d -c %s' % (int(job.id) + 1,
+                                            job.inputdata.ui_working_dir)
+        self._send_with_retry(cmd, 'getoutput', job.backend.crab_env)
+        return True
 
     def postMortem(self, job):
+        """Retrieves the postmortem information."""
+        if not os.path.exists(job.inputdata.ui_working_dir):
+            raise CRABServerError('Workdir %s not found.' %
+                                  job.inputdata.ui_working_dir)
 
-        workdir = job.inputdata.ui_working_dir
-        if not os.path.exists(workdir):
-            raise CRABServerError('Workdir %s not found.'%(workdir))
-
-        index = int(job.id) + 1
-        cmd = 'crab -postMortem %d -c %s'%(index,workdir)
-        self._send_with_retry(cmd,'getting postMortem',job.backend.crab_env)
-#        msg = telltale.resubmit('%slog/crab.log'%(job.outputdir))
-        return 1
-
+        cmd = 'crab -postMortem %d -c %s' % (int(job.id) + 1,
+                                             job.inputdata.ui_working_dir)
+        self._send_with_retry(cmd, 'postMortem', job.backend.crab_env)
+        return True
