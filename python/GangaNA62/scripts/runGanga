@@ -1,0 +1,53 @@
+#!/bin/env bash
+
+GANGAHOME=/clusterhome/home/protopop/Ganga/install/
+GANGAVERSION=""
+PARAMETER_LIST=""
+
+until [ -z "$1" ]
+do
+   if [ "$1" = "LATEST" ]
+   then
+      shift
+   elif [[ "$1" =~ "[0-9]+\.[0-9]+\.[0-9]+" ]]
+   then
+      GANGAVERSION=$1
+      shift
+   elif [ "$1" = "--disableLCG" ]
+   then
+      PARAMETER_LIST="$PARAMETER_LIST -o[LCG]EDG_ENABLE=False -o[LCG]GLITE_ENABLE=False"
+      shift
+   else
+      PARAMETER_LIST="$PARAMETER_LIST $1"
+      shift
+   fi
+done            
+
+
+if [ -z "${GANGAVERSION}" ]
+then
+   GANGAVERSION="LATEST";
+   echo "Ganga version not specified. Using LATEST version."
+elif [ -d "${BHAMGANGAHOME}/slc3_gcc323/${GANGAVERSION}/" ]
+then
+      GANGAVERSION="slc3_gcc323/${GANGAVERSION}"
+      
+elif [ -d "${BHAMGANGAHOME}/${GANGAVERSION}/" ]
+then
+      GANGAVERSION="${GANGAVERSION}"
+else
+      echo "GANGA version ${GANGAVERSION} does not exist.";
+      exit 1
+fi
+
+
+#export LFC_HOST='prod-lfc-atlas-local.cern.ch';
+export GANGA_CONFIG_PATH='GangaNA62/NA62.ini';
+
+echo "Running Ganga ${GANGAVERSION} with the following parameters:"
+echo ${PARAMETER_LIST}
+echo
+${GANGAHOME}/${GANGAVERSION}/bin/ganga -o'[Tasks]TaskLoopFrequency=15' -o'[Configuration]gangadir=/clusterhome/home/protopop/gangadir' -o'[PollThread]autostart=False' ${PARAMETER_LIST}
+
+
+exit 0
