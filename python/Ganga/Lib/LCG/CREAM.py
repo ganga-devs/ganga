@@ -1194,10 +1194,16 @@ sys.exit(0)
                     if doStatusUpdate:
                         job.backend.status = info['Current Status']
                         if info.has_key('ExitCode'):
-                            job.backend.exitcode_cream = int( info['ExitCode'] )
+                            try:
+                                job.backend.exitcode_cream = int( info['ExitCode'] )
+                            except:
+                                job.backend.exitcode_cream = 1
 
                         if info.has_key('FailureReason'):
-                            job.backend.reason = info['FailureReason']
+                            try:        
+                                job.backend.reason = info['FailureReason']
+                            except:
+                                pass    
 
                         job.backend.updateGangaJobStatus()
             else:
