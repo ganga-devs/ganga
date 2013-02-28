@@ -3,6 +3,8 @@ from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from GangaCMS.Lib.Utils import SplitterError
 from xml.dom.minidom import parse
 
+import os
+
 
 class CRABSplitter(ISplitter):
     """Splitter object for CRAB jobs."""
@@ -31,8 +33,9 @@ class CRABSplitter(ISplitter):
     def split(self, job):
         """Main splitter for the job."""
         try:
-            splittingData = self.parseArguments('%sshare/arguments.xml' %
-                                                job.inputdata.ui_working_dir)
+            arguments_path = os.path.join(job.inputdata.ui_working_dir,
+                                          'share/arguments.xml')
+            splittingData = self.parseArguments(arguments_path)
         except IOError, e:
             raise SplitterError(e)
 
