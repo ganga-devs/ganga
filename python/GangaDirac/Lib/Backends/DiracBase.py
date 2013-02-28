@@ -338,7 +338,14 @@ class DiracBase(IBackend):
     def getOutputData(self,dir=None,names=None):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
-        be a list of files to download."""
+        be a list of files to download.
+
+        Note that if called on a master job then all subjobs outputwill be downloaded.
+        If dir is None then the subjobs output goes into their individual
+        outputworkspaces as expected. If however one specifies a dir then this is
+        treated as a top dir and a subdir for each job will be created below it. This
+        will avoid overwriting files with the same name from each subjob.
+        """
         from GangaDirac.Lib.Files.DiracFile import DiracFile
         j = self.getJobObject()
         if dir is not None and not os.path.exists(dir) :
@@ -361,7 +368,7 @@ class DiracBase(IBackend):
                                            [f for f in sj.non_copyable_outputfiles if isinstance(f, DiracFile)]):
                     output_dir = sj.getOutputWorkspace().getPath()
                     if dir is not None:
-                        output_dir = os.path.join(dir, sj.fqid())
+                        output_dir = os.path.join(dir, sj.fqid)
                         os.mkdir(output_dir)
                     df.localDir = output_dir
                     try: 
