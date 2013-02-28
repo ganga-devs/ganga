@@ -1,0 +1,52 @@
+# Script created by the online UI maintainned by protopop@cern.ch
+# http://na62.gla.ac.uk
+# MC Software revision: r244
+# Job comment: Kch2pigee-1 production job
+/output/fileName pluto_v8_r10060.root
+/beam/SetBeam turtle
+/beam/fileName ./Beam/datacard/k12hika+_cedar_kp
+/beam/Halo Off
+/beam/HaloFile muons_upstream_gtk3_pip.bin
+/beam/HaloType mu+
+/decay/force 1
+/decay/type 84
+/decay/radcor 0
+/decay/pizeroDecay 0
+/decay/zMin 104000.
+/decay/zMax 180000.
+/Detector/EnableSubDetector CHANTI
+/Detector/EnableSubDetector Cedar
+/Detector/EnableSubDetector CHOD
+/Detector/EnableSubDetector GigaTracker
+/Detector/EnableSubDetector IRC
+/Detector/EnableSubDetector LAV
+/Detector/EnableSubDetector LKr
+/Detector/EnableSubDetector RICH
+/Detector/EnableSubDetector Spectrometer
+/Detector/EnableSubDetector MUV0
+/Detector/EnableSubDetector MUV1
+/Detector/EnableSubDetector MUV2
+/Detector/EnableSubDetector MUV3
+/Detector/EnableSubDetector HAC
+/Detector/EnableSubDetector SAC
+/Detector/Cedar/EnableCherenkovEffect true
+/Detector/LAV/EfficiencyMatrix ./LAV/LAVEff.txt
+/Detector/LAV/TimeMatrix ./LAV/LAVDelay.txt
+/Detector/RICH/EnableFastSimulation false
+/Detector/MUV1/EnableFullOpticalSimulation false
+/Detector/UpdateGeometry
+/kine/SaveAllSteps 0
+/kine/SaveAllTracks 0
+/kine/ParticleTypeToReject opticalphoton
+/kine/CreatorProcessToReject PionPlusInelastic
+/kine/CreatorProcessToReject PionMinusInelastic
+/kine/CreatorProcessToReject KaonPlusInelastic
+/kine/CreatorProcessToReject eBrem
+/kine/CreatorProcessToReject muIoni
+/kine/EndProcessToReject Scintillation
+/kine/MinimumEnergy 0.
+/kine/MaximumInteractionLevel 2
+/kine/SaveTrackVerbose 0
+/random/seedDecay 10060
+/run/number 10060
+/run/beamOn 3000
