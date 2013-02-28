@@ -124,7 +124,7 @@ class LogicalFile(GangaObject):
     def bkMetadata(self):
         'Returns the bookkeeping meta-data for this file.'
         cmd = 'bkMetaData(["%s"])' % self.name
-        r = get_result(cmd,'Error removing replica','Replica rm error.')
+        r = get_result(cmd,'Error removing replica','Replica rm error.', 'datetime')
         return r['Value'].get(self.name,{})
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

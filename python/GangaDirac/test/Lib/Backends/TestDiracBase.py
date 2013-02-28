@@ -157,8 +157,9 @@ print result
             self.assertEqual(subjobconfig,sjc,'config objects not equal')
             return ['g']
         def _common_submit(dirac_script, server):
-            from GangaDirac.Lib.Server.DiracClient import DiracClient
-            self.assertTrue(isinstance(server, DiracClient),'not a dirac client')
+            #this needs to change to workerpool
+            #from GangaDirac.Lib.Server.DiracClient import DiracClient
+            #self.assertTrue(isinstance(server, DiracClient),'not a dirac client')
             f=open(dirac_script,'r')
             script = f.read()
             f.close()
@@ -191,8 +192,9 @@ print result
     def test_resubmit(self):
 
         def _resubmit(server):
-            from GangaDirac.Lib.Server.DiracClient import DiracClient
-            self.assertTrue(isinstance(server, DiracClient),'not a dirac client')
+            #This needs to change to workerpool
+            #from GangaDirac.Lib.Server.DiracClient import DiracClient
+            #self.assertTrue(isinstance(server, DiracClient),'not a dirac client')
             return True
 
         setattr(self.db,'_resubmit',_resubmit)

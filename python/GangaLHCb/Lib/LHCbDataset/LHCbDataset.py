@@ -311,7 +311,7 @@ class LHCbDataset(Dataset):
         'Returns the bookkeeping metadata for all LFNs. '        
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b =  get_result(cmd,'Error removing replica','Replica rm error.')
+        b =  get_result(cmd,'Error removing replica','Replica rm error.', 'datetime')
         return b
         
 

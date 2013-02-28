@@ -8,11 +8,23 @@ from Ganga.Core.exceptions                    import GangaException
 from Ganga.Utility.files                      import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv
 from GangaDirac.Lib.Utilities.smartsubprocess import runcmd
+from GangaDirac.Lib.Backends.DiracBase        import dirac_ganga_server
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
 configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
+
+def upload_ok(lfn):
+    import datetime
+    retcode, stdout, stderr = dirac_ganga_server.execute('dirac-dms-lfn-metadata %s' % lfn, shell=True)
+    try:
+        r = eval(stdout)
+    except: pass
+    if type(r) == dict:
+        if r.get('Successful', False) and type(r.get('Successful', False)) == dict:
+            return lfn in r['Successful']
+    return stdout.find("'Successful': {'%s'" % lfn) >=0
 
 class DiracFile(IOutputFile):
     """
@@ -146,9 +158,7 @@ class DiracFile(IOutputFile):
         """
         Remove called when job is removed as long as config option allows
         """
-        ## This shows that need to re-write DiracClient to allow shell commands as well as python
-        from Ganga.GPI import Dirac
-        Dirac._impl.execAPI_async('''import os\nos.system('dirac-dms-remove-lfn %s')''' % self.lfn)
+        dirac_ganga_server.execute_nonblocking('dirac-dms-remove-lfn %s' % self.lfn, shell=True, priority = 6)
 
     def remove(self):
         """

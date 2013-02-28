@@ -121,7 +121,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
 
 
-        commandline = "'python ./gaudipython-wrapper.py'"
+        commandline = "python ./gaudipython-wrapper.py"
         if is_gaudi_child(app):
             commandline  = 'gaudirun.py '
             commandline += ' '.join([str(arg) for arg in app.args])

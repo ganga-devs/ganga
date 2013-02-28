@@ -2,21 +2,29 @@ from Ganga.Utility.Config  import getConfig
 from Ganga.Core.exceptions import GangaException
 import os
 
+## Cache
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-def getDiracEnv():
-    with open(getConfig('DIRAC')['DiracEnvFile'],'r') as env_file:
-        return dict((tuple(line.strip().split('=',1)) for line in env_file.readlines() if len(line.strip().split('=',1)) == 2))
-    return {}
+DIRAC_ENV={}
+DIRAC_INCLUDE=''
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-def getDiracCommandIncludes():
-    default_includes = ''
-    for fname in getConfig('DIRAC')['DiracCommandFiles']:
-        if not os.path.exists(fname):
-            raise GangaException("Specified Dirac command file '%s' does not exist." % fname )
-        f=open(fname, 'r')
-        default_includes += f.read() + '\n'
-        f.close()
-    return default_includes
+def getDiracEnv(force=False):
+    DIRAC_ENV={}
+    if DIRAC_ENV == {} or force:
+        with open(getConfig('DIRAC')['DiracEnvFile'],'r') as env_file:
+            DIRAC_ENV = dict((tuple(line.strip().split('=',1)) for line in env_file.readlines() if len(line.strip().split('=',1)) == 2))
+    return DIRAC_ENV
+
+# /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+def getDiracCommandIncludes(force=False):
+    DIRAC_INCLUDE=''
+    if DIRAC_INCLUDE == '' or force:
+        for fname in getConfig('DIRAC')['DiracCommandFiles']:
+            if not os.path.exists(fname):
+                raise GangaException("Specified Dirac command file '%s' does not exist." % fname )
+            with open(fname, 'r') as inc_file:
+                DIRAC_INCLUDE += inc_file.read() + '\n'
+
+    return DIRAC_INCLUDE
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\

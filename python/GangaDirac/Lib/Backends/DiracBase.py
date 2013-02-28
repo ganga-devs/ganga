@@ -8,12 +8,13 @@ from Ganga.GPIDev.Schema                     import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend          import IBackend
 from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
-from GangaDirac.Lib.Files.DiracFile          import DiracFile
-from GangaDirac.Lib.Server.DiracClient       import DiracClient
+from GangaDirac.Lib.Server.WorkerThreadPool  import WorkerThreadPool
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 logger = getLogger()
+dirac_ganga_server      = WorkerThreadPool()
+dirac_monitoring_server = WorkerThreadPool()
 
 
 class DiracBase(IBackend):
@@ -48,10 +49,7 @@ class DiracBase(IBackend):
     # submit and resubmit.
     
     """
-
-    dirac_ganga_server      = DiracClient(num_worker_threads  = getConfig('DIRAC')['NumWorkerThreads'])
-    dirac_monitoring_server = DiracClient(num_worker_threads  = getConfig('DIRAC')['NumWorkerThreads'])
-        
+       
     dirac_monitoring_is_active = True
     
     _schema = Schema(Version(3, 2),{
@@ -193,7 +191,7 @@ class DiracBase(IBackend):
         f=open(dirac_script_filename,'w')
         f.write(dirac_script)
         f.close()
-        return self._common_submit(dirac_script_filename, DiracBase.dirac_ganga_server)
+        return self._common_submit(dirac_script_filename, dirac_ganga_server)
  
     def master_auto_resubmit(self,rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
@@ -213,7 +211,7 @@ class DiracBase(IBackend):
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
-                    result = b._resubmit(DiracBase.dirac_monitoring_server)
+                    result = b._resubmit(dirac_monitoring_server)
                     if result:
                         sj.updateStatus('submitted')
                         #sj._commit() # PENDING: TEMPORARY DISABLED
@@ -231,7 +229,7 @@ class DiracBase(IBackend):
 
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        return self._resubmit(DiracBase.dirac_ganga_server)
+        return self._resubmit(dirac_ganga_server)
 
     def _resubmit(self, server):
         """Resubmit a DIRAC job"""
@@ -312,7 +310,7 @@ class DiracBase(IBackend):
         """ Kill a Dirac jobs"""         
         if not self.id: return None
         dirac_cmd = 'kill(%d)' % self.id
-        result = DiracBase.dirac_ganga_server.execute(dirac_cmd)
+        result = dirac_ganga_server.execute(dirac_cmd)
         if not result_ok(result):
             raise BackendError('Dirac','Could not kill job: %s' % str(result))
         return result['OK']
@@ -320,7 +318,7 @@ class DiracBase(IBackend):
     def peek(self,filename=None,command=None):
         """Peek at the output of a job (Note: filename/command are ignored)."""
         dirac_cmd = 'peek(%d)' % self.id
-        result = DiracBase.dirac_ganga_server.execute(dirac_cmd)
+        result = dirac_ganga_server.execute(dirac_cmd)
         if result_ok(result): print result['Value']
         else: logger.error("No peeking available for Dirac job '%i'.", self.id)
 
@@ -329,7 +327,7 @@ class DiracBase(IBackend):
         if dir is None: dir = j.getOutputWorkspace().getPath()
         dirac_cmd = "getOutputSandbox(%d,'%s')" \
                     % (self.id,dir)
-        result = DiracBase.dirac_ganga_server.execute(dirac_cmd)
+        result = dirac_ganga_server.execute(dirac_cmd)
         if not result_ok(result):
             msg = 'Problem retrieving output: %s' % str(result)
             logger.warning(msg)
@@ -341,39 +339,75 @@ class DiracBase(IBackend):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
         be a list of files to download."""
+        from GangaDirac.Lib.Files.DiracFile import DiracFile
         j = self.getJobObject()
-        if not names: names = []
-        if not dir: dir = j.getOutputWorkspace().getPath()
+        if dir is not None and not os.path.exists(dir) :
+            raise GangaException("Designated outupt path '%s' must exist" % dir)
 
+        def diracfile_getter(diracfiles):
+            for df in diracfiles:
+                if df.subfiles:
+                    for sf in df.subfiles:
+                        if sf.lfn!='' and (names is None or sf.namePattern in names):
+                            yield sf
+                else:
+                    if df.lfn!='' and (names is None or sf.namePattern in names):
+                        yield df
 
-        if names:
-            files_to_download = [f for f in j.outputfiles if isinstance(f, DiracFile) and f.namePattern in names]
+        suceeded=[]
+        if j.subjobs:
+            for sj in j.subjobs:
+                for df in diracfile_getter([f for f in sj.outputfiles if isinstance(f, DiracFile)] +
+                                           [f for f in sj.non_copyable_outputfiles if isinstance(f, DiracFile)]):
+                    output_dir = sj.getOutputWorkspace().getPath()
+                    if dir is not None:
+                        output_dir = os.path.join(dir, sj.fqid())
+                        os.mkdir(output_dir)
+                    df.localDir = output_dir
+                    try: 
+                        df.get()
+                        suceeded.append(df.lfn)
+                    except GangaException, e: # should really make the get method throw if doesn't suceed. todo
+                        logger.warning(e)
         else:
-            files_to_download = [f for f in j.outputfiles if isinstance(f, DiracFile)]
+            for df in diracfile_getter([f for f in j.outputfiles if isinstance(f, DiracFile)] +
+                                       [f for f in j.non_copyable_outputfiles if isinstance(f, DiracFile)]):
+                df.localDir = j.getOutputWorkspace().getPath()
+                if dir is not None:
+                    df.localDir = dir
+                try:
+                    df.get()
+                    suceeded.append(df.lfn)
+                except GangaException, e:
+                    logger.warning(e)
 
-        suceeded = []
-        for f in files_to_download:
-            f.localDir = dir
-            try:
-                f.get()
-            except GangaException, e:
-                logger.warning(e)
-                continue
-            suceeded.append(f.lfn)
-                            
         return suceeded
             
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""   
-
+        from GangaDirac.Lib.Files.DiracFile import DiracFile
         j = self.getJobObject()
-        return [f.lfn for f in j.outputfiles if isinstance(f, DiracFile) and f.lfn != ""]
+        lfns=[]
+        
+        def job_lfn_getter(job):
+            def lfn_getter(diracfile):
+                if diracfile.lfn != "":
+                    lfns.append(diracfile.lfn)
+                lfns.extend((f.lfn for f in diracfile.subfiles if f.lfn != "")) 
+            map(lfn_getter, (f for f in job.outputfiles              if isinstance(f, DiracFile)))
+            map(lfn_getter, (f for f in job.non_copyable_outputfiles if isinstance(f, DiracFile)))
+        
+        if j.subjobs:
+            map(job_lfn_getter, j.subjobs)
+        else:
+            job_lfn_getter(j)
+        return lfns
         
     def debug(self):
         '''Obtains some (possibly) useful DIRAC debug info. '''
         # check services
         cmd = 'getServicePorts()'
-        result = DiracBase.dirac_ganga_server.execute(cmd)
+        result = dirac_ganga_server.execute(cmd)
         if not result_ok(result):
             logger.warning('Could not obtain services: %s' % str(result))
             return
@@ -381,7 +415,7 @@ class DiracBase(IBackend):
         for category in services:
             system,service = category.split('/')
             cmd = "ping('%s','%s')" % (system,service)
-            result = DiracBase.dirac_ganga_server.execute(cmd)
+            result = dirac_ganga_server.execute(cmd)
             msg = 'OK.'
             if not result_ok(result): msg = '%s' % result['Message']
             print '%s: %s' %  (category,msg)
@@ -392,7 +426,7 @@ class DiracBase(IBackend):
         debug_dir = j.getDebugWorkspace().getPath()
         cmd = "getJobPilotOutput(%d,'%s')" % \
               (self.id, debug_dir)
-        result = DiracBase.dirac_ganga_server.execute(cmd)
+        result = dirac_ganga_server.execute(cmd)
         #print 'result =', result
         if result_ok(result):
             print 'Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id)
@@ -415,7 +449,7 @@ class DiracBase(IBackend):
                     if job.backend.id:
                         logger.debug("Accessing getStateTime() in diracAPI")
                         dirac_cmd = "getStateTime(%d,\'%s\')" % (job.backend.id, childstatus)
-                        be_statetime = DiracBase.dirac_monitoring_server.execute(dirac_cmd)
+                        be_statetime = dirac_monitoring_server.execute(dirac_cmd)
                         if childstatus in backend_final:
                             job.time.timestamps["backend_final"] = be_statetime 
                             logger.debug("Wrote 'backend_final' to timestamps.")
@@ -433,7 +467,7 @@ class DiracBase(IBackend):
         if not self.id: return None
         logger.debug("Accessing timedetails() in diracAPI")
         dirac_cmd = 'timedetails(%d)' % self.id
-        return DiracBase.dirac_ganga_server.execute(dirac_cmd)
+        return dirac_ganga_server.execute(dirac_cmd)
     
     def updateMonitoringInformation(jobs):
         """Check the status of jobs and retrieve output sandboxes"""
@@ -442,7 +476,7 @@ class DiracBase(IBackend):
         ganga_job_status = [ j.status for j in jobs ]
       #  dirac_job_ids = [j.backend.id for j in jobs ]
 ##         for j in jobs: dirac_job_ids.append(j.backend.id)
-        if not DiracBase.dirac_monitoring_server.proxyValid():
+        if not dirac_monitoring_server.proxyValid():
             if DiracBase.dirac_monitoring_is_active:
                 logger.warning('DIRAC monitoring inactive (no valid proxy '\
                                'found).')
@@ -454,7 +488,7 @@ class DiracBase(IBackend):
         # now that can submit in non_blocking mode, can see jobs in submitting
         # that have yet to be assigned an id so ignore them 
         cmd = 'status(%s)' % str([j.backend.id for j in jobs if j.backend.id is not None])
-        result = DiracBase.dirac_monitoring_server.execute(cmd)
+        result = dirac_monitoring_server.execute(cmd)
         if type(result) != type([]):
             logger.warning('DIRAC monitoring failed: %s' % str(result))
             return
@@ -482,12 +516,12 @@ class DiracBase(IBackend):
                 DiracBase._getStateTime(job,'failed')
                 job.updateStatus('failed')
                 if getConfig('DIRAC')['failed_sandbox_download']:
-                    DiracBase.dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
-                                                                          priority=7)
+                    dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
+                                                                priority=7)
             elif updated_status == 'completed':
                 def job_finalisation(result, job):
                     cmd = 'normCPUTime(%d)' % job.backend.id
-                    job.backend.normCPUTime = DiracBase.dirac_monitoring_server.execute(cmd)
+                    job.backend.normCPUTime = dirac_monitoring_server.execute(cmd)
                     if not result_ok(result):
                         logger.warning('Problem retrieving outputsandbox: %s' % str(result))
                         DiracBase._getStateTime(job,'failed')
@@ -502,10 +536,10 @@ class DiracBase(IBackend):
                     if job.master: job.master.updateMasterJobStatus()
                 DiracBase._getStateTime(job,'completing')
                 job.updateStatus('completing')
-                DiracBase.dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
-                                                                      priority=5,
-                                                                      callback_func=job_finalisation,
-                                                                      args=(job,))
+                dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
+                                                            priority=5,
+                                                            callback_func=job_finalisation,
+                                                            args=(job,))
             else:
                 #updated_status = thread_handled_states[updated_status]
                 DiracBase._getStateTime(job,updated_status)
@@ -516,43 +550,45 @@ class DiracBase(IBackend):
     def execAPI(cmd,timeout=getConfig('DIRAC')['Timeout']):
         """Executes DIRAC API commands.  If variable 'result' is set, then
         it is returned by this method. """
-        return DiracBase.dirac_ganga_server.execute(cmd, timeout)
+        return dirac_ganga_server.execute(cmd, timeout)
 
     execAPI = staticmethod(execAPI)
 
-    def execAPI_async(cmd,timeout=getConfig('DIRAC')['Timeout']):
-        """Executes DIRAC API commands.  If variable 'result' is set, then
-        it is returned by this method. """
-        return DiracBase.dirac_ganga_server.execute_nonblocking(cmd, timeout, priority=4)
+#    def execAPI_async(cmd,timeout=getConfig('DIRAC')['Timeout']):
+#        """Executes DIRAC API commands.  If variable 'result' is set, then
+#        it is returned by this method. """
+#        return dirac_ganga_server.execute_nonblocking(cmd, timeout, priority=4)
 
-    execAPI_async = staticmethod(execAPI_async)
+#    execAPI_async = staticmethod(execAPI_async)
 
-    def getQueues():
-        print '{0:^55} | {1:^50}'.format('Ganga user threads:','Ganga monitoring threads:')
-        print '{0:^55} | {1:^50}'.format('------------------', '------------------------')
-        print '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}'.format('Name', 'Command', 'Timeout')
-        print '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}'.format('----', '-------', '-------')
-        for u, m in zip( DiracBase.dirac_ganga_server.worker_status(),
-                         DiracBase.dirac_monitoring_server.worker_status() ):
-            # name has extra spaces as colour characters are invisible but still count
-            name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
-            name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
-            if u[1] == 'idle':
-                name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
-            if m[1] == 'idle':
-                name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
-            print '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}'.format(name_user, u[1][:30], u[2], name_monitor, m[1][:30], m[2])
+#    def getQueues():
+#        output=''
+#        output+= '{0:^55} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
+#        output+= '{0:^55} | {1:^50}\n'.format('------------------', '------------------------')
+#        output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('Name', 'Command', 'Timeout')
+#        output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('----', '-------', '-------')
+#        for u, m in zip( dirac_ganga_server.worker_status(),
+#                         dirac_monitoring_server.worker_status() ):
+#            # name has extra spaces as colour characters are invisible but still count
+#            name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
+#            name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
+#            if u[1] == 'idle':
+#                name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
+#            if m[1] == 'idle':
+#                name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
+#            output+= '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}\n'.format(name_user, u[1][:30], u[2], name_monitor, m[1][:30], m[2])
+#
+#        output+= '\n'
+#        output+= "Ganga user queue:\n"
+#        output+= "----------------\n"
+#        output+= str([i.command_input.command for i in dirac_ganga_server.get_queue()])
+#        
+#        output+= '\n'
+#        output+= "Ganga monitoring queue:\n"
+#        output+= "----------------------\n"
+#        output+= str([i.command_input.command for i in dirac_monitoring_server.get_queue()])
+#        return output
 
-        print ''
-        print "Ganga user queue:"
-        print "----------------"
-        print [i.command_input.command for i in DiracBase.dirac_ganga_server.get_queue()]
-        
-        print ''
-        print "Ganga monitoring queue:"
-        print "----------------------"            
-        print [i.command_input.command for i in DiracBase.dirac_monitoring_server.get_queue()]
-        
-    getQueues = staticmethod(getQueues)
+#    getQueues = staticmethod(getQueues)
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

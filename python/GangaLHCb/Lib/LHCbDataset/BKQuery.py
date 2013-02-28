@@ -121,7 +121,7 @@ RecoToDST-07/90000000/DST" ,
             cmd = "getDataset('%s',%s,'%s','%s','%s',\
             '%s')" % (self.path,self.dqflag,self.type,self.startDate,
                      self.endDate,self.selection)
-        result = get_result(cmd,'BK query error.','BK query error.')
+        result = get_result(cmd,'BK query error.','BK query error.', 'datetime')
         files = []
         metadata = {}
         value = result['Value']
@@ -223,7 +223,7 @@ class BKQueryDict(GangaObject):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict: return None
         cmd = 'bkQueryDict(%s)' % self.dict
-        result = get_result(cmd,'BK query error.','BK query error.')
+        result = get_result(cmd,'BK query error.','BK query error.', 'datetime')
         files = []
         value = result['Value']
         if value.has_key('LFNs'): files = value['LFNs']

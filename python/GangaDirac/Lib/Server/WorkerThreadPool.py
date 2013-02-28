@@ -14,31 +14,35 @@ default_timeout  = getConfig('DIRAC')['Timeout']
 default_env      = getDiracEnv()
 default_includes = getDiracCommandIncludes()
 QueueElement  = collections.namedtuple('QueueElement',  ['priority', 'command_input','callback_func','args','kwds'])
-CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd'])
+CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell'])
 
-class DiracClient(object):
+class WorkerThreadPool(object):
     """
     Client class through which Ganga objects interact with the local DIRAC server.
     """
     
     __slots__ = ['__proxy','__queue', '__worker_threads']
 
-    def __init__( self, num_worker_threads  = 5, worker_thread_prefix=''):
+    def __init__( self,
+                  num_worker_threads   = getConfig('DIRAC')['NumWorkerThreads'],
+                  worker_thread_prefix = 'Worker_' ):
         self.__proxy = getCredential('GridProxy', '')
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
 
         for i in range(num_worker_threads):
-            t = GangaThread(name='DiracClient_Thread_%i'%i,
+            t = GangaThread(name = worker_thread_prefix + str(i),
                             auto_register = False,
                             target=self.__worker_thread)
             t._Thread__args=(t,)
-            t.name     = "Worker_" + str(i)
+            t.name     = worker_thread_prefix + str(i)
             t._command = 'idle'
             t._timeout = 'N/A'
             t.start()
             self.__worker_threads.append(t)
 
+    def proxyValid(self):
+        return self.__proxy.isValid()
 
     def __worker_thread(self, thread):
         """
@@ -50,25 +54,36 @@ class DiracClient(object):
             try:
                 item = self.__queue.get(True, 0.05)
             except Queue.Empty: continue #wait 0.05 sec then loop again to give shutdown a chance
-
+            
+            result=None
             #regster as a working thread
             GangaThreadPool.getInstance().addServiceThread(thread)
-            thread._command = item.command_input.command
-            thread._timeout = item.command_input.timeout
-            result = self.execute(*item.command_input)
+            if item.command_input.command is not None:
+                thread._command = item.command_input.command
+                thread._timeout = item.command_input.timeout
+                result = self.execute(*item.command_input)
 
             if item.callback_func is not None:
-                item.callback_func(result, *item.args, **item.kwds)
+                thread._command = item.callback_func.__name__
+                thread._timeout = 'N/A'
+                if result is None:
+                    try:
+                        item.callback_func(*item.args, **item.kwds)
+                    except Exception, e:
+                        logger.error('Exception raised in %s: %s'%(thread.name,e))
+                else:
+                    try:
+                        item.callback_func(result, *item.args, **item.kwds)
+                    except Exception, e:
+                        logger.error('Exception raised in %s: %s'%(thread.name,e))
 
             #unregster as a working thread bcoz free
             GangaThreadPool.getInstance().delServiceThread(thread)
             thread._command = 'idle'
             thread._timeout = 'N/A'
             self.__queue.task_done()
-
-    def proxyValid(self): return self.__proxy.isValid()
-        
-    def execute(self, command, timeout=default_timeout, env=default_env, cwd=None):
+      
+    def execute(self, command, timeout=default_timeout, env=default_env, cwd=None, shell=False, pyincludes=default_includes):
         """
         Execute a command on the local DIRAC server.
 
@@ -79,7 +94,10 @@ class DiracClient(object):
             if not self.__proxy.isValid():
                 raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
         
-        ret = runcmd(default_includes+command, timeout=timeout, env=env, cwd=cwd, usepython=True).stdout
+        if shell:
+            ret = runcmd(command, timeout=timeout, env=env, cwd=cwd, usepython=False).stdout
+        else:
+            ret = runcmd(pyincludes+command, timeout=timeout, env=env, cwd=cwd, usepython=True).stdout
         try:
             ret=eval(ret)
         except: pass
@@ -90,6 +108,7 @@ class DiracClient(object):
                              timeout       = default_timeout,
                              env           = default_env,
                              cwd           = None,
+                             shell         = False,
                              priority      = 5,
                              callback_func = None,
                              args          = (),
@@ -104,7 +123,7 @@ class DiracClient(object):
         DIRAC server as the first arg.
         """
         self.__queue.put( QueueElement(priority      = priority,
-                                       command_input = CommandInput(command, timeout, env, cwd),
+                                       command_input = CommandInput(command, timeout, env, cwd, shell),
                                        callback_func = callback_func,
                                        args          = args,
                                        kwds          = kwds
