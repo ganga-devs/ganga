@@ -21,10 +21,8 @@ class CRABSplitter(ISplitter):
 
     def parseArguments(self, path):
         """Gets some job arguments from the FJR."""
-        jobs = parse(path).getElementsByTagName("Job")
         splittingData = []
-
-        for job in jobs:
+        for job in parse(path).getElementsByTagName("Job"):
             splittingData.append([job.getAttribute("MaxEvents"),
                                   job.getAttribute("InputFiles"),
                                   job.getAttribute("SkipEvents")])
@@ -39,7 +37,7 @@ class CRABSplitter(ISplitter):
             raise SplitterError(e)
 
         subjobs = []
-        for index in range(len(splittingData)):
+        for maxevents, inputfiles, skipevents in splittingData:
             j = self.createSubjob(job)
             j.master = job
             j.application = job.application
@@ -47,9 +45,9 @@ class CRABSplitter(ISplitter):
             j.backend = job.backend
 
             splitter = CRABSplitter()
-            splitter.maxevents = splittingData[index][0]
-            splitter.inputfiles = splittingData[index][1]
-            splitter.skipevents = splittingData[index][2]
+            splitter.maxevents = maxevents
+            splitter.inputfiles = inputfiles
+            splitter.skipevents = skipevents
             j.splitter = splitter
             subjobs.append(j)
         return subjobs
