@@ -13,7 +13,6 @@ from ConfigParser import ConfigParser
 import Ganga.Utility.Config
 
 from GangaCMS.Lib.CRABTools.CRABServer import *
-from GangaCMS.Lib.Utils import Timeout, TimeoutError
 
 import os,os.path,datetime
 import subprocess
