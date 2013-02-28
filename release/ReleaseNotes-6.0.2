@@ -1,0 +1,64 @@
+**************************************************************************************************************
+6.0.2 (2013/2/28)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- fix for savannah 99021 - remove of redundant external Optik module
+
+- changed the default ForceTaskMonitoring to False
+
+- small fix in the schema tests - added some test objects to the black list of objects that
+shouldn't be tested
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+fixes in the LCG and CREAM backends - savannah entries :
+ - 95223 - invalid option in glite-wms-job-perusal command
+ - 90406 - CREAM backend problem for aborted jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+Ganga 6.0.2
+***********
+fixed getOutputData() and getOutputDataLFNs()
+
+diracQueues() has become just queues which has two new functions to give the user more control over
+the user thread pool
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 6.0.2 (GangaLHCb-24-40)
+***********
+
+Fixed a bug (Savannah #100617) which stopped GaudiPython jobs running.
+
+Fixed a bug that stopped the bkMetadata being got from an LHCbDataset
+
+diracQueues() has been removed and the all new queues object added.
+queues allows the user to monitor the state of the user and monitoring thread pools and queues.
+In addition it provides two functions.
+
+queues.add : This allows the user to queue up any python callable object into the thread pool for
+             asynchronous execution.
+
+(for experts)
+queues.addProcess : This is mainly for the experts and allows the spawning of a new process which is
+                    still fully monitored by the queues system. This process can execute python code
+                    in an environment already set up with useful functions and an instance of the
+                    DIRAC API object Dirac() already instantiated. It can also execute shell
+                    commands in a modifyable environment which (by default) is a DIRAC aware
+                    environment so dirac command line tools will work. The addProcess function also
+                    allows the user to specify a callback function which must take at least one arg
+                    which will be the results (stdout) of executing the command. During each stage
+                    (process execution and callback_funck) the monitoring interface invoked with 
+                    queues should keep the user up to date with the status.
+
+**************************************************************************************************************
