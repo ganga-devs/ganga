@@ -1,108 +1,105 @@
-#
-# CRAB Backend
-#
-# 08/06/10 @ ubeda
-#
-
-
+from ConfigParser import ConfigParser
 from Ganga.Core import BackendError
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
+from Ganga.Utility import Config
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Shell import Shell
+from GangaCMS.Lib.CRABTools.CRABServer import CRABServer
+from GangaCMS.Lib.CRABTools.CRABServerError import CRABServerError
+from xml.dom.minidom import parse
 
-from ConfigParser import ConfigParser
-import Ganga.Utility.Config
+import datetime
+import os
 
-from GangaCMS.Lib.CRABTools.CRABServer import *
 
-import os,os.path,datetime
-import subprocess
-import xml.dom.minidom
-from xml.dom.minidom import parse,Node
+logger = getLogger()
 
-########################################################################################
-#
-#  CRAB LOWEST INDEX IS 1   |
-#  GANGA LOWEST INDEX IS 0  |  be careful...
-#
-########################################################################################
 
 class CRABBackend(IBackend):
-
-    comments = []
-    comments.append('Set this variable to 0 if you dont want to see crab logs in the screen.')
-    comments.append('Set this variable to 1 if you want to keep crab -status logs.')         
-
-    schemadic={}
-    schemadic['verbose']                   = SimpleItem(defvalue=1, typelist=['int'], doc=comments[0])
-    schemadic['statusLog']                 = SimpleItem(defvalue=0, typelist=['int'], doc=comments[1])  
-    schemadic['report']                    = SimpleItem(defvalue={})
-    schemadic['fjr']                       = SimpleItem(defvalue={})
-    schemadic['crab_env']                  = SimpleItem(defvalue={})
-
-    _schema = Schema(Version(1,0), schemadic)
+    """Backend implementation for CRAB."""
+    schemadic = {}
+    schemadic['verbose'] = SimpleItem(defvalue=1,
+                                      typelist=['int'],
+                                      doc='Set to 0 to disable CRAB logging')
+    schemadic['statusLog'] = SimpleItem(defvalue=0,
+                                        typelist=['int'],
+                                        doc='Set to 1 to keep -status logs')
+    schemadic['report'] = SimpleItem(defvalue={})
+    schemadic['fjr'] = SimpleItem(defvalue={})
+    schemadic['crab_env'] = SimpleItem(defvalue={})
+    _schema = Schema(Version(1, 0), schemadic)
     _category = 'backends'
-    _name  = 'CRABBackend'
+    _name = 'CRABBackend'
 
     def __init__(self):
-
         super(CRABBackend, self).__init__()
-
-        config = Ganga.Utility.Config.getConfig('CMSSW')
-        cmssw_setup = config['CMSSW_SETUP'] # the directory
-        cmssw_version = config['CMSSW_VERSION'] # e.g. CMSSW_3_7_0, CMSSW_generic
-        crab_version = config['CRAB_VERSION']
-        cmssw_setup_script = os.path.join(cmssw_setup,'CMSSW_generic.sh')
-        from Ganga.Utility.Shell import Shell
-        shell = Shell(cmssw_setup_script,[cmssw_version,crab_version])
+        config = Config.getConfig('CMSSW')
+        shell = Shell(os.path.join(config['CMSSW_SETUP'], 'CMSSW_generic.sh'),
+                      [config['CMSSW_VERSION'], config['CRAB_VERSION']])
         self.crab_env = shell.env
 
-    def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
-
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig):
+        """Perform de submission of the master job (the CRAB task)."""
         if rjobs[0]:
-
             job = rjobs[0].master
-
-            server = CRABServer()
             for subjob in job.subjobs:
                 subjob.updateStatus('submitting')
 
             try:
-                server.submit(job)
-            except:
+                CRABServer().submit(job)
+            except CRABServerError:
+                logger.error('Submission through CRAB failed.')
                 for subjob in job.subjobs:
                     subjob.rollbackToNewState()
                 job.updateMasterJobStatus()
-                logger.error('Submission through CRAB failed. All subjobs have been reverted to new.')
-                return 1
+                logger.info('All subjobs have been reverted to "new".')
+                return False
 
+            # This will perform a crab -status and parse the XML.
             self.master_updateMonitoringInformation((job,))
 
-            # Forcing all the jobs to be submitted, so the monitoring loops keeps issuing calls.
+            # Forcing all the jobs to be submitted, so the monitoring loops
+            # keeps issuing calls after to update.
             for subjob in job.subjobs:
                 if subjob.status in ('submitting'):
                     subjob.updateStatus('submitted')
 
             job.updateMasterJobStatus()
+        else:
+            logger.warning('Not submitting job without subjobs.')
+        return True
 
-            return 1        
-        logger.error('Not submitting job without subjobs.')
-        return 1           
+    def master_resubmit(self, rjobs):
+        """Performs the resubmission of all the jobs in a jobset."""
+        if rjobs[0]:
+            job = rjobs[0].master
+            for subjob in job.subjobs:
+                subjob.updateStatus('submitting')
 
-    def master_resubmit(self,rjobs):             
+            try:
+                CRABServer().resubmit(job)
+            except CRABServerError:
+                logger.error('Resubmission through CRAB failed.')
+                for subjob in job.subjobs:
+                    subjob.rollbackToNewState()
+                job.updateMasterJobStatus()
+                logger.info('All subjobs have been reverted to "new".')
+                return False
 
-        logger.error('master_resubmit() called. THIS METHOD IS BUGGY, CHECK.')
-        server = CRABServer()
-        server.resubmit(job)
+            # This will perform a crab -status and parse the XML.
+            self.master_updateMonitoringInformation((job,))
 
-        #If first raises exception, all are caput
-        #Controll that.
-        for job in rjobs:
-            subjob.updateStatus('submitting')  
-            server.resubmit(job)
-            subjob.updateStatus('submitted')  
+            # Forcing all the jobs to be submitted, so the monitoring loops
+            # keeps issuing calls after to update.
+            for subjob in job.subjobs:
+                if subjob.status in ('submitting'):
+                    subjob.updateStatus('submitted')
 
-        job.updateMasterJobStatus()
-        return 1         
+            job.updateMasterJobStatus()
+        else:
+            logger.warning('Not resubmitting job without subjobs.')
+        return True
 
     def master_kill(self):
 
@@ -344,5 +341,4 @@ class CRABBackend(IBackend):
                 logger.info('No results.xml for %s' % (j.id))
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
-
 
