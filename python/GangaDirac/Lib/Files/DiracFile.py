@@ -158,7 +158,8 @@ class DiracFile(IOutputFile):
         """
         Remove called when job is removed as long as config option allows
         """
-        dirac_ganga_server.execute_nonblocking('dirac-dms-remove-lfn %s' % self.lfn, shell=True, priority = 6)
+        if self.lfn!='':
+            dirac_ganga_server.execute_nonblocking('dirac-dms-remove-lfn %s' % self.lfn, shell=True, priority = 6)
 
     def remove(self):
         """

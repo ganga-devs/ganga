@@ -358,7 +358,7 @@ class DiracBase(IBackend):
                         if sf.lfn!='' and (names is None or sf.namePattern in names):
                             yield sf
                 else:
-                    if df.lfn!='' and (names is None or sf.namePattern in names):
+                    if df.lfn!='' and (names is None or df.namePattern in names):
                         yield df
 
         suceeded=[]

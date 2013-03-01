@@ -200,7 +200,7 @@ class queues(object):
                                    as a dict.
         """
         from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
-        if env is None:
+        if env is None: # rather than have getDiracEnv() as default in arg list as looks messy in help ;-)
             env = getDiracEnv()
         return dirac_ganga_server.execute_nonblocking(command, 
                                                       timeout,
