@@ -952,7 +952,10 @@ run_athena () {
 
 	if [ n$ATLAS_EXETYPE == n'ATHENA' ]
 	    then 
-	    
+
+	    # set the TestArea
+	    export TestArea=`pwd`/work
+
 	    # if run dir given, change to that 
             if [ ! -z $ATLAS_RUN_DIR ]
                 then
@@ -960,6 +963,7 @@ run_athena () {
 		echo "Changing dir from ${old_run_dir} to ${ATLAS_RUN_DIR}..."
 		cp preJobO.py work/$ATLAS_RUN_DIR/.
 		cp input.py work/$ATLAS_RUN_DIR/.
+		cp input_files work/$ATLAS_RUN_DIR/.
                 cd work/$ATLAS_RUN_DIR   
 		pwd
             fi

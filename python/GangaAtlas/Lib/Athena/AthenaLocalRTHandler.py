@@ -252,6 +252,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if input_esd_files: 
             inputbox += [ FileBuffer('input_esd_files','\n'.join(input_esd_files)+'\n') ]
 
+        # check for output data given in prepare info
+        if job.outputdata and job.application.atlas_exetype == "ATHENA":
+            for of in job.application.atlas_run_config['output']['alloutputs']:
+                if not of in job.outputdata.outputdata:
+                    job.outputdata.outputdata.append(of)
+            
         if job.outputdata and job.outputdata.outputdata:
             inputbox += [ FileBuffer('output_files','\n'.join(job.outputdata.outputdata)+'\n') ]
         elif job.outputdata and not job.outputdata.outputdata:
