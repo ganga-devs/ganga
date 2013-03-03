@@ -88,6 +88,7 @@ p.add_option('--splitfiles', action='store', type='int', dest='numfiles_subjob',
 p.add_option('--splitfilesize', action='store', type='int', dest='filesize', help='Maximum filesize sum per subjob im MB, if a job should be splitted.')
 p.add_option('--match_subjobs_files', action='store_const', const='match_subjobs_files', dest='match_subjobs_files', help='Match the number of subjobs to the number of inputfiles"')
 p.add_option('--noblacklist', action='store_true', dest='noblacklist', help='Do not use black list of sites create by GangaRobot functional tests')
+p.add_option('--usefax', action='store_true', dest='usefax', help='Allow submission to a site although data is not there for FAX usage')
 
 # Backends
 p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='Submit job(s) to LCG Grid')
@@ -572,6 +573,10 @@ if opt.match_subjobs_files:
 if opt.noblacklist:
     if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
         j.splitter.use_blacklist=False
+
+if opt.usefax:
+    if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
+        j.splitter.use_fax=True
 
 # backend
 

@@ -60,15 +60,21 @@ def appendFile(file_path, archive_path):
     #print "Delete cmd %s " %cmd
     out = commands.getoutput(cmd)
 
-def dq2_siteinfo(dataset, allowed_sites, locations, udays):
+def dq2_siteinfo(dataset, allowed_sites, locations, udays, faxSites):
 
-    result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites= allowed_sites) 
-
+    if faxSites:
+        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites=allowed_sites+locations, fax_sites=faxSites)
+    else:
+        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites= allowed_sites, fax_sites=faxSites)
+        
     siteinfo = {}
     for guid, sites in result.iteritems():
         newsites = [ site for site in sites if site in allowed_sites ]
-        # Remove inconsistencies 
-        newsites = [ site for site in newsites if site in locations ]
+        # Remove inconsistencies
+        if faxSites:
+            newsites = [ site for site in newsites if site in locations+faxSites ]
+        else:
+            newsites = [ site for site in newsites if site in locations ]
 
         for site in newsites:
             if site.find('TAPE')>=0:
@@ -114,7 +120,8 @@ class DQ2JobSplitter(ISplitter):
         'filesize'          : SimpleItem(defvalue=0, doc = 'Maximum filesize sum per subjob im MB.'),
         'numevtsperjob'     : SimpleItem(defvalue=0, doc='Number of events per subjob'),
         'numevtsperfile'    : SimpleItem(defvalue=0,doc='Maximum number of events in a file of input dataset'),
-        'missing_files'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=1,doc='List of names that could not be assigned to a subjob')
+        'missing_files'     : SimpleItem(defvalue=[],typelist=['str'],sequence=1,protected=1,doc='List of names that could not be assigned to a subjob'),
+        'use_fax'           : SimpleItem(defvalue = False, doc = 'Allow submission to a site although data is not there for FAX usage'),
     })
 
     _GUIPrefs = [ { 'attribute' : 'numfiles',         'widget' : 'Int' },
@@ -131,6 +138,8 @@ class DQ2JobSplitter(ISplitter):
     def split(self,job):
 
         logger.debug('DQ2JobSplitter called')
+
+        faxSites = []
 
         if not job.inputdata:
             if (job.application.options.find("%SKIPEVENTS") != 0) or (job.application.options.find("%RNDM") != 0):
@@ -602,6 +611,8 @@ class DQ2JobSplitter(ISplitter):
                     
         elif job.backend._name == 'Panda':
             allowed_sites = job.backend.list_ddm_sites()
+            if self.use_fax:
+                faxSites = allowed_sites
         elif job.backend._name == 'NG':
             allowed_sites = config['AllowedSitesNGDQ2JobSplitter']
         elif job.backend._name == 'SGE':
@@ -742,9 +753,11 @@ class DQ2JobSplitter(ISplitter):
                     udays = 10000
                 if locations and locations.has_key(dataset):
                     cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, indata_buf.getvalue().replace('\n', '') + dataset)
-                    siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays)
+                    siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites)
+                    #siteinfo = dq2_siteinfo(dataset, allowed_sites, locations[dataset]+faxSites, udays, faxSites)
                 else:
                     siteinfo = {}
+
             siteinfos[dataset]=siteinfo
             allcontents[dataset]=content
 

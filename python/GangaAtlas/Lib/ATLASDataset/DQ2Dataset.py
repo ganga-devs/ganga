@@ -101,7 +101,7 @@ def isDQ2SRMSite(location):
         return False
 
 
-def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=False, allowed_sites = [] ):
+def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=False, allowed_sites = [], fax_sites = [] ):
 
     if datasets.__class__.__name__=='str':
         datasets = [ datasets ]
@@ -164,6 +164,9 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         locations_num = {}
         retry = 0
         allchecked = False
+
+        if fax_sites:
+            allowed_sites = allowed_sites+fax_sites
         
         if allowed_sites:
             alllocations = [ site for site in alllocations if site in allowed_sites ]
@@ -233,6 +236,10 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                     if guid in guidsSite:
                         temp = guidLocation[guid]
                         temp.append(location)
+                        if fax_sites:
+                            for faxsite in fax_sites:
+                                if not faxsite in temp:
+                                    temp.append(faxsite)
                         guidLocation[guid] = temp
             else:
                 logger.warning('cannot get file replica info - ignore site %s' % location)
@@ -1034,7 +1041,7 @@ class DQ2Dataset(Dataset):
         else:
             return dataset_locations_list
 
-    def list_locations_siteindex(self,dataset=None, timeout=15, days=2, replicaList=False):
+    def list_locations_siteindex(self,dataset=None, timeout=15, days=2, replicaList=False, faxSites=[]):
 
         if not dataset:
             datasets = self.dataset
@@ -1043,7 +1050,7 @@ class DQ2Dataset(Dataset):
 
         datasets = resolve_container(datasets)
 
-        return dq2_list_locations_siteindex(datasets, timeout, days, replicaList)
+        return dq2_list_locations_siteindex(datasets, timeout, days, replicaList, fax_sites=faxSites)
 
 class DQ2OutputDataset(Dataset):
     """DQ2 Dataset class for a dataset of output files"""
