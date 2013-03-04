@@ -182,7 +182,7 @@ class CRABBackend(IBackend):
         else:
             logger.warning("UNKNOWN PARSE STATUS: "+str(status))
 
-        config = Ganga.Utility.Config.getConfig('Metrics')
+        config = Config.getConfig('Metrics')
         location = config['location']
         if not os.path.exists(location):
             raise BackendError(0,'Location %s file doesnt exist.'%(location))
@@ -220,7 +220,7 @@ class CRABBackend(IBackend):
 
         job = self.getJobObject()     
 
-        config = Ganga.Utility.Config.getConfig('Metrics')
+        config = Config.getConfig('Metrics')
         location = config['location']
         if not os.path.exists(location):
             raise BackendError(0,'Location %s file doesnt exist.'%(location))
