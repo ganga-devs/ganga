@@ -225,6 +225,15 @@ class RootMerger(IMerger):
         merge_cmd += string.join(arg_list,' ')
 
         rc, out = commands.getstatusoutput(merge_cmd)
+
+        log_file = '%s.hadd_output' % output_file
+        log = file(log_file,'w')
+        try:
+            log.write('# -- Hadd output -- #\n')
+            log.write('%s\n' % out)
+        finally:
+            log.close()
+        
         if rc:
             logger.error(out)
             raise PostProcessException('The ROOT merge failed to complete. The command used was %s.' % merge_cmd)
