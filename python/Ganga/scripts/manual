@@ -27,11 +27,11 @@ class Manual:
 
    def __init__( self ):
       self.categoryList = [ \
-         "Applications", "Backends", "Datasets", "Splitters", "Mergers", \
+         "Applications", "Backends", "Datasets", "Splitters", "Postprocessor", \
          "Exceptions", "Miscellaneous Classes", "Functions", "Objects" ] 
 
-      #for Ganga tutorial remove Datasets category, otherwise it crashes
-      if config["Configuration"]["RUNTIME_PATH"] == 'Ganga:':
+      #for Ganga and GangaLHCb tutorial remove Datasets category, otherwise it crashes	
+      if config["Configuration"]["RUNTIME_PATH"] == 'Ganga:' or config["Configuration"]["RUNTIME_PATH"] == 'GangaLHCb:':
          self.categoryList.remove("Datasets")
 
       self.creationTime = time.strftime( "%c" )
