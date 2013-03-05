@@ -481,7 +481,9 @@ if opt.pickevent:
 
 # outputdata
 
-if opt.outputdata or opt.backend == 'panda':
+# local backends can now run without specifying outputdata
+#if opt.outputdata or opt.backend == 'panda':
+if True:
     if opt.outputtype:         
         if opt.outputtype == 'ATLAS':
             j.outputdata = ATLASOutputDataset()
@@ -511,6 +513,10 @@ if opt.outputdata or opt.backend == 'panda':
         j.outputdata.use_shortfilename = True
     if opt.transferredDS:
         j.outputdata.transferredDS = opt.transferredDS
+
+    # check for extOutFile with ATLASOutputDataset
+    if opt.outputtype == 'ATLAS' and opt.extOutFile:
+	j.outputdata.outputdata += opt.extOutFile.split(':')
 
 # splitter
 
