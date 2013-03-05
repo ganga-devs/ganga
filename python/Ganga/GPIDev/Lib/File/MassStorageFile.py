@@ -158,24 +158,45 @@ class MassStorageFile(IOutputFile):
 
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
-        #if Castor mass storage (we understand from the nsls command)
-        if massStorageConfig['ls_cmd'] == 'nsls':
-            host = getConfig('System')['GANGA_HOSTNAME']
-            lxplusHost = re.match('lxplus.*cern\.ch', host)
-            if lxplusHost is None:
-                logger.warning('Output files can be uploaded to Castor only from lxplus')
-                logger.warning('skipping %s for uploading to Castor' % self.namePattern)
-                return 
+        mkdir_cmd = massStorageConfig['mkdir_cmd']
+        cp_cmd = massStorageConfig['cp_cmd']
+        ls_cmd = massStorageConfig['ls_cmd']
+        massStoragePath = massStorageConfig['path']
 
-            mkdir_cmd = massStorageConfig['mkdir_cmd']
-            cp_cmd = massStorageConfig['cp_cmd']
-            ls_cmd = massStorageConfig['ls_cmd']
-            massStoragePath = massStorageConfig['path']
+        pathToDirName = os.path.dirname(massStoragePath)
+        dirName = os.path.basename(massStoragePath)
 
-            pathToDirName = os.path.dirname(massStoragePath)
-            dirName = os.path.basename(massStoragePath)
+        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
+        if exitcode != 0:
+            self.handleUploadFailure(mystderr)
+            return
 
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
+        directoryExists = False 
+        for directory in mystdout.split('\n'):
+            if directory.strip() == dirName:
+                directoryExists = True
+                break
+
+        if not directoryExists:
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
+            if exitcode != 0:
+                self.handleUploadFailure(mystderr)
+                return
+
+        if self._parent != None:
+            jobfqid = self.getJobObject().fqid
+        
+            jobid = jobfqid
+            subjobid = ''
+
+            if (jobfqid.find('.') > -1):
+                jobid = jobfqid.split('.')[0]
+                subjobid = jobfqid.split('.')[1]
+        
+            pathToDirName = os.path.join(pathToDirName, dirName)
+            dirName = jobid
+
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr)
                 return
@@ -187,25 +208,17 @@ class MassStorageFile(IOutputFile):
                     break
 
             if not directoryExists:
+                massStoragePath = os.path.join(pathToDirName, dirName)
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                     return
 
-            if self._parent != None:
-                jobfqid = self.getJobObject().fqid
-        
-                jobid = jobfqid
-                subjobid = ''
-
-                if (jobfqid.find('.') > -1):
-                    jobid = jobfqid.split('.')[0]
-                    subjobid = jobfqid.split('.')[1]
-        
+            if subjobid != '':
                 pathToDirName = os.path.join(pathToDirName, dirName)
-                dirName = jobid
+                dirName = subjobid
 
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
+                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                     return
@@ -222,66 +235,44 @@ class MassStorageFile(IOutputFile):
                     if exitcode != 0:
                         self.handleUploadFailure(mystderr)
                         return
-
-                if subjobid != '':
-                    pathToDirName = os.path.join(pathToDirName, dirName)
-                    dirName = subjobid
-
-                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('nsls %s' % pathToDirName)
-                    if exitcode != 0:
-                        self.handleUploadFailure(mystderr)
-                        return
-
-                    directoryExists = False 
-                    for directory in mystdout.split('\n'):
-                        if directory.strip() == dirName:
-                            directoryExists = True
-                            break
-
-                    if not directoryExists:
-                        massStoragePath = os.path.join(pathToDirName, dirName)
-                        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-                        if exitcode != 0:
-                            self.handleUploadFailure(mystderr)
-                            return
             
-            fileName = self.namePattern
-            if self.compressed:
-                fileName = '%s.gz' % self.namePattern 
+        fileName = self.namePattern
+        if self.compressed:
+            fileName = '%s.gz' % self.namePattern 
 
-            #here
-            if regex.search(fileName) is not None:      
-                for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
-
-                    d=MassStorageFile(namePattern=os.path.basename(currentFile))
-                    d.compressed = self.compressed
-
-                    if exitcode != 0:
-                        self.handleUploadFailure(mystderr)
-                    else:
-                        logger.info('%s successfully uploaded to mass storage' % currentFile)              
-                        d.locations = os.path.join(massStoragePath, os.path.basename(currentFile))
-
-                        #remove file from output dir if this object is attached to a job
-                        if self._parent != None:
-                            os.system('rm %s' % os.path.join(sourceDir, currentFile))
-
-                    self.subfiles.append(GPIProxyObjectFactory(d))
-            else:
-                currentFile = os.path.join(sourceDir, fileName)
+        #here
+        if regex.search(fileName) is not None:      
+            for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
                 (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
+
+                d=MassStorageFile(namePattern=os.path.basename(currentFile))
+                d.compressed = self.compressed
+
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                 else:
                     logger.info('%s successfully uploaded to mass storage' % currentFile)              
-                    location = os.path.join(massStoragePath, os.path.basename(currentFile))
-                    if location not in self.locations:
-                        self.locations.append(location)         
+                    d.locations = os.path.join(massStoragePath, os.path.basename(currentFile))
 
                     #remove file from output dir if this object is attached to a job
                     if self._parent != None:
                         os.system('rm %s' % os.path.join(sourceDir, currentFile))
+
+                self.subfiles.append(GPIProxyObjectFactory(d))
+        else:
+            currentFile = os.path.join(sourceDir, fileName)
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
+            if exitcode != 0:
+                self.handleUploadFailure(mystderr)
+            else:
+                logger.info('%s successfully uploaded to mass storage' % currentFile)              
+                location = os.path.join(massStoragePath, os.path.basename(currentFile))
+                if location not in self.locations:
+                    self.locations.append(location)         
+
+                #remove file from output dir if this object is attached to a job
+                if self._parent != None:
+                    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
     def handleUploadFailure(self, error):
             
@@ -335,9 +326,8 @@ class MassStorageFile(IOutputFile):
 ###INDENT###    pathToDirName = os.path.dirname(path)
 ###INDENT###    dirName = os.path.basename(path)
 
-###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
 ###INDENT###    if exitcode != 0:
-###INDENT###        printError('Error while executing nsls %s command, be aware that Castor commands can be executed only ###INDENT###from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
 ###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###        continue
 
@@ -354,18 +344,11 @@ class MassStorageFile(IOutputFile):
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
    
-
-
-
-
-
-
 ###INDENT###    pathToDirName = os.path.join(pathToDirName, dirName)
 ###INDENT###    dirName = '###JOBDIR###'
 
-###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
 ###INDENT###    if exitcode != 0:
-###INDENT###        printError('Error while executing nsls %s command, be aware that Castor commands can be executed only ###INDENT###from lxplus, also check if the folder name is correct and existing' % pathToDirName + os.linesep + mystderr)
 ###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###        continue
 
@@ -387,9 +370,8 @@ class MassStorageFile(IOutputFile):
 ###INDENT###        pathToDirName = os.path.join(pathToDirName, dirName)
 ###INDENT###        dirName = '###SUBJOBDIR###'
 
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('nsls %s' % pathToDirName)
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
 ###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing nsls %s command' % pathToDirName + os.linesep + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
 
@@ -406,16 +388,6 @@ class MassStorageFile(IOutputFile):
 ###INDENT###                printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
 ###INDENT###                ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###                continue
-
-
-
-
-
-
-
-
-
-
 
 ###INDENT###    filenameWildCharZipped = filenameWildChar
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
