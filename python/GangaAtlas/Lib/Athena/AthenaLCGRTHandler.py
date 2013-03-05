@@ -336,7 +336,14 @@ class AthenaLCGRTHandler(IRuntimeHandler):
             for tag_file in job.inputdata.tag_info:
                 if job.inputdata.tag_info[tag_file]['path'] != '':
                     inputbox.append( File( os.path.join( job.inputdata.tag_info[tag_file]['path'], tag_file) ) )
-                
+
+        # check for output data given in prepare info
+        if job.outputdata and job.application.atlas_exetype == "ATHENA":
+            for of in job.application.atlas_run_config['output']['alloutputs']:
+                if not of in job.outputdata.outputdata:
+                    job.outputdata.outputdata.append(of)
+
+                                        
         if job.outputdata and job.outputdata.outputdata:
             _append_file_buffer(inputbox,'output_files',job.outputdata.outputdata)
         elif job.outputdata and not job.outputdata.outputdata:
