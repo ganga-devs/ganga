@@ -1,0 +1,35 @@
+**************************************************************************************************************
+6.0.3 (2013/3/7)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- fixes in the MassStorageFile, so that it can be used with local file repository, not only with CASTOR
+- fix in the script that generates Ganga manuals - it was broken because of the switch from mergers
+to postprocessor category 
+- dump output of hadd for RootMerger
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Allowed LCG backends to use prepare info to fill OutputData from atlas_run_config
+* Allowed outputdata to be left blank for non-panda backends
+* --extOutFile for local backends now add to the ATLASOutputDataset
+* Add support for FAX site job splitting
+* Set TestArea properly for Local/LCG jobs
+* Transferred output data info from atlas_run_config for Local/LCG jobs
+* Fixed a bug with the run_dir change previously - now copies input_files correctly
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+Ganga 6.0.3
+***********
+
+Updated j.backend.getOutputData to take a boolean value "force" which determines whether data should
+be downloaded if it already exists on the local file system.
+
+**************************************************************************************************************
