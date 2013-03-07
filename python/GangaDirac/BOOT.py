@@ -1,4 +1,4 @@
-
+import types
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 from Ganga.Runtime.GPIexport                 import exportToGPI
 from Ganga.GPIDev.Base.Proxy                 import addProxy, stripProxy
@@ -80,18 +80,28 @@ class queues(object):
                 name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
             output+= '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}\n'.format(name_user, u[1][:30], u[2], name_monitor, m[1][:30], m[2])
 
+        def display_element(item):
+            if type(item.command_input[0]) != str:
+                return item.command_input[0].__name__
+            return item.command_input[0]
         output+= '\n'
         output+= "Ganga user queue:\n"
         output+= "----------------\n"
-        output+= str([i.command_input.command for i in dirac_ganga_server.get_queue()])
-        
+        output+= str([display_element(i) for i in dirac_ganga_server.get_queue()])
         output+= '\n'
         output+= "Ganga monitoring queue:\n"
         output+= "----------------------\n"
-        output+= str([i.command_input.command for i in dirac_monitoring_server.get_queue()])
+        output+= str([display_element(i) for i in dirac_monitoring_server.get_queue()])
         return output
         #from Ganga.GPI import Dirac
         #return Dirac._impl.getQueues()
+
+    def purge(self):
+        """
+        Purge the Ganga user thread pool's queue
+        """
+        from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
+        dirac_ganga_server.clear_queue()
 
     def add(self, worker_code, args=(), kwargs={}, priority = 5):
         """
@@ -104,7 +114,7 @@ class queues(object):
 
         A simple example might be to download user data which would in the
         past block the prompt. Here I use job #72 and '/home/alex' arbitrarily
-        for more info about the getOutputData command type help(getOutputData).
+        for more info about the getOutputData command type help(Dirac.getOutputData).
 
         In[0]: queues.add(jobs(72).backend.getOutputData, ('/home/alex',))
 
@@ -127,11 +137,13 @@ class queues(object):
                                  This then should be an int normally 0-9
         """
         from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
-        return dirac_ganga_server.execute_nonblocking(None,
-                                                      callback_func = worker_code,
-                                                      args          = args,
-                                                      kwds          = kwargs,
-                                                      priority      = priority)
+        if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
+            logger.error('Only python callable objects can be added to the queue')
+            return
+        dirac_ganga_server.execute_nonblocking(worker_code,
+                                               c_args        = args,
+                                               c_kwargs      = kwargs,
+                                               priority      = priority)
 #         return queue(worker_code, args, kwargs, priority)
 
     def addProcess(self, 
@@ -202,15 +214,17 @@ class queues(object):
         from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
         if env is None: # rather than have getDiracEnv() as default in arg list as looks messy in help ;-)
             env = getDiracEnv()
-        return dirac_ganga_server.execute_nonblocking(command, 
-                                                      timeout,
-                                                      env,
-                                                      cwd,
-                                                      shell,
-                                                      priority,
-                                                      callback_func,
-                                                      args,
-                                                      kwds)
+        dirac_ganga_server.execute_nonblocking(command,
+                                               (),
+                                               {},
+                                               timeout,
+                                               env,
+                                               cwd,
+                                               shell,
+                                               priority,
+                                               callback_func,
+                                               args,
+                                               kwds)
 exportToGPI('queues',queues(),'Classes')
 
 #def killDiracServer():

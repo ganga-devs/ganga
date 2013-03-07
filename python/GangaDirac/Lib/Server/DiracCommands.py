@@ -22,11 +22,20 @@ def submit(djob,mode='wms'): print dirac.submit(djob,mode=mode)
 
 def ping(system,service): print dirac.ping(system,service)
 
-def removeFile(lfn): print dirac.removeFile(lfn)
+def removeFile(lfn):
+    ret={}
+    if type(lfn) is list:
+        for l in lfn:
+            ret.update(dirac.removeFile(l))
+    else:
+        ret.update(dirac.removeFile(lfn))
+    print ret
 
 def getMetadata(lfn): print dirac.getMetadata(lfn)
 
-def getReplicas(files): print dirac.getReplicas(files)
+def getReplicas(lfns): print dirac.getReplicas(lfns)
+
+def getFile(lfns, destDir = ''): print dirac.getFile(lfns, destDir=destDir)
 
 def replicateFile(lfn,destSE,srcSE,locCache):
     print dirac.replicateFile(lfn,destSE,srcSE,locCache)
@@ -132,19 +141,19 @@ def status(job_ids):
             
     print status_list
 
-def getFile(lfn,dir):
-    result = dirac.getFile(lfn)
-    if not result or not result.get('OK',False):
-        print result
-        return
-    f = result['Value']['Successful'][lfn]
-    fname = f.split('/')[-1]
-    fdir = f.split('/')[0:-2]
-    new_f = os.path.join(dir,fname)
-    os.system('mv -f %s %s' % (f,new_f))
-    os.system('rmdir %s' % fdir)
-    result['Value'] = new_f
-    print result
+#def getFile(lfn,dir):
+#    result = dirac.getFile(lfn)
+#    if not result or not result.get('OK',False):
+#        print result
+ #       return
+ ##   f = result['Value']['Successful'][lfn]
+ #   fname = f.split('/')[-1]
+ #   fdir = f.split('/')[0:-2]
+ # #  new_f = os.path.join(dir,fname)
+ #   os.system('mv -f %s %s' % (f,new_f))
+ #   os.system('rmdir %s' % fdir)
+ #   result['Value'] = new_f
+ #   print result
 
 def getStateTime(id, status):
     log = dirac.loggingInfo(id)

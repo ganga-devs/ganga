@@ -15,16 +15,16 @@ configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
 
-def upload_ok(lfn):
-    import datetime
-    retcode, stdout, stderr = dirac_ganga_server.execute('dirac-dms-lfn-metadata %s' % lfn, shell=True)
-    try:
-        r = eval(stdout)
-    except: pass
-    if type(r) == dict:
-        if r.get('Successful', False) and type(r.get('Successful', False)) == dict:
-            return lfn in r['Successful']
-    return stdout.find("'Successful': {'%s'" % lfn) >=0
+#def upload_ok(lfn):
+#    import datetime
+#    retcode, stdout, stderr = dirac_ganga_server.execute('dirac-dms-lfn-metadata %s' % lfn, shell=True)
+#    try:
+#        r = eval(stdout)
+#    except: pass
+#    if type(r) == dict:
+#        if r.get('Successful', False) and type(r.get('Successful', False)) == dict:
+#            return lfn in r['Successful']
+#    return stdout.find("'Successful': {'%s'" % lfn) >=0
 
 class DiracFile(IOutputFile):
     """
@@ -149,17 +149,17 @@ class DiracFile(IOutputFile):
                         
         postprocesslocations.close()
 
-    def _getEnv(self):
-        if not self._env:
-            self._env=getDiracEnv()
-        return self._env
+#    def _getEnv(self):
+#        if not self._env:
+#            self._env=getDiracEnv()
+#        return self._env
 
     def _auto_remove(self):
         """
         Remove called when job is removed as long as config option allows
         """
         if self.lfn!='':
-            dirac_ganga_server.execute_nonblocking('dirac-dms-remove-lfn %s' % self.lfn, shell=True, priority = 6)
+            dirac_ganga_server.execute_nonblocking('removeFile("%s")' % self.lfn, priority = 7)
 
     def remove(self):
         """
@@ -168,8 +168,8 @@ class DiracFile(IOutputFile):
         if self.lfn == "":
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
-        rc, stdout, stderr = runcmd('dirac-dms-remove-lfn %s' % self.lfn, env=self._getEnv())
-        if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
+        stdout = dirac_ganga_server.execute('removeFile("%s")' % self.lfn)
+        if stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
             self.lfn=""
             self.locations=[]
             self.guid=''
@@ -185,24 +185,20 @@ class DiracFile(IOutputFile):
         if self.lfn == "":
             raise GangaException('Can\'t obtain metadata with no LFN set.')
 
-        # NEW WAY TO GET LOCATIONS
-        #def SE_getter(element):
-        #    return element.split(':',1)[0].strip()   
-        #map(SE_getter, runcmd('dirac-dms-lfn-replicas %s' % self.lfn, env=self._getEnv()).stdout.splitlines()[2:])
-        def inTokens(element):
-            return element in configDirac['DiracSpaceTokens']
-
-        ret  =  eval(runcmd('dirac-dms-lfn-metadata %s' % self.lfn, env=self._getEnv()).stdout)
-        reps =  filter(inTokens, runcmd('dirac-dms-lfn-replicas %s' % self.lfn, env=self._getEnv()).stdout.split(' '))
-        try:
-            if self.guid != ret['Successful'][self.lfn]['GUID']:
-                self.guid = ret['Successful'][self.lfn]['GUID']
-        except: pass
-        try:
-            if self.locations != reps:
-                self.locations = reps
-                ret['Successful'][self.lfn].update({'replicas': self.locations})
-        except: pass
+        # eval again here as datatime not included in dirac_ganga_server
+        ret  =  eval(dirac_ganga_server.execute('getMetadata("%s")' % self.lfn))
+        reps =  dirac_ganga_server.execute('getReplicas("%s")' % self.lfn)
+        if ret.get('OK', False) and self.lfn in ret.get('Value', {'Successful': {}})['Successful']:
+            try:
+                if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
+                    self.guid = ret['Value']['Successful'][self.lfn]['GUID']
+            except: pass
+        if reps.get('OK', False) and self.lfn in reps.get('Value', {'Successful': {}})['Successful']:
+            try:
+                if self.locations != reps['Value']['Successful'][self.lfn].keys():
+                    self.locations = reps['Value']['Successful'][self.lfn].keys()
+                ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
+            except: pass
         return ret
           
     def get(self):
@@ -220,8 +216,8 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        rc, stdout, stderr=runcmd('dirac-dms-get-file %s' % self.lfn, env=self._getEnv(), cwd=to_location)
-        if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
+        stdout = dirac_ganga_server.execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
+        if stdout.get('OK',False) and self.lfn in stdout.get('Value',{'Successful':{}})['Successful']:
             if self.namePattern=="":
                 name = os.path.basename(self.lfn)
                 if self.compressed:
@@ -231,7 +227,7 @@ class DiracFile(IOutputFile):
             if self.guid =="" or not self.locations:
                 self.getMetadata()
             return
-        logger.error("Error in getting file '%s' : %s" % (self.lfn, stdout))
+        logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
         return stdout
 
     def replicate(self, destSE):
@@ -244,9 +240,9 @@ class DiracFile(IOutputFile):
             raise GangaException('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        rc, stdout, stderr = runcmd('dirac-dms-replicate-lfn %s %s %s' % (self.lfn, destSE, self.locations[0]),
-                                          env=self._getEnv())
-        if stdout.find("'Successful': {'%s'" % self.lfn) >=0:
+        stdout = dirac_ganga_server.execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, self.locations[0]),
+                                            shell=True)
+        if stdout.get('OK',False) and self.lfn in stdout.get('Value',{'Successful':{}})['Successful']:
             # if 'Successful' in eval(stdout) and self.lfn in eval(stdout)['Successful']:
             self.locations.append(destSE)
             return
@@ -267,6 +263,8 @@ class DiracFile(IOutputFile):
         upload failed.
         """
         ## looks like will only need this for the interactive uploading of jobs.
+        ## Also if any backend need dirac upload on client then when downloaded
+        ## this will upload then delete the file.
         
         if self.namePattern == "":
             raise GangaException('Can\'t upload a file without a local file name.')
@@ -315,9 +313,10 @@ class DiracFile(IOutputFile):
             stdout=''
             logger.info('Uploading file %s' % name)
             for se in storage_elements:
-                rc, stdout, stderr = runcmd('dirac-dms-add-file %s %s %s %s' %(lfn, name, se, guid), env=self._getEnv())
-                if stdout.find("'Successful': {'%s'" % lfn) >=0:
+                stdout = dirac_ganga_server.execute('addFile("%s", "%s", "%s", "%s")' %(lfn, name, se, guid))
+                if stdout.get('OK', False) and lfn in stdout.get('Value',{'Successful':{}})['Successful']:
                     if self.compressed: os.system('rm -f %s'% name)
+                    if self._parent !=None: os.remove(name)# when doing the two step upload delete the temp file
                     if regex.search(self.namePattern) is not None:
                         d.lfn = lfn
                         d.locations = [se]
@@ -331,14 +330,14 @@ class DiracFile(IOutputFile):
                         return
             else:
                 if self.compressed: os.system('rm -f %s'% name)
-                failureReason = "Error in uploading file %s : %s"% (os.path.basename(name), stdout)
+                failureReason = "Error in uploading file %s : %s"% (os.path.basename(name), str(stdout))
                 logger.error(failureReason)
                 if regex.search(self.namePattern) is not None:
                     d.failureReason =  failureReason
                     outputFiles.append(GPIProxyObjectFactory(d))
                 else:
                     self.failureReason = failureReason
-                    return stdout
+                    return str(stdout)
         return GPIProxyObjectFactory(outputFiles)
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
@@ -432,7 +431,7 @@ class DiracFile(IOutputFile):
             script = script.replace('###DIRAC_ENV###', 'os.environ')
             script = script.replace('###ADD_COMMAND###', 'dirac-dms-add-files') # necessary until we switch to new LHCbDirac
         else:
-            script = script.replace('###DIRAC_ENV###', str(self._getEnv()))
+            script = script.replace('###DIRAC_ENV###', str(getDiracEnv()))
             script = script.replace('###ADD_COMMAND###', 'dirac-dms-add-file')
 
 #        if self._parent and self._parent.backend._name=='Dirac':

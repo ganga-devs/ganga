@@ -78,7 +78,7 @@ class DiracBase(IBackend):
         'settings'    : SimpleItem(defvalue={'CPUTime':2*86400},
                                    doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)')
         })
-    _exportmethods = ['getOutputData','getOutputSandbox',
+    _exportmethods = ['getOutputData','getOutputSandbox','removeOutputData',
                       'getOutputDataLFNs','peek','reset','debug']
     _packed_input_sandbox = True
     _category = "backends"
@@ -335,10 +335,28 @@ class DiracBase(IBackend):
 
         return True
 
-    def getOutputData(self,dir=None,names=None):
+    def removeOutputData(self):
+        """
+        Remove all the LFNs associated with this job.
+        """
+        ## Note when the API can accept a list for removeFile I will change this.
+        import tempfile
+        j = self.getJobObject()
+        lfns = DiracBase.getOutputDataLFNs(self)
+        lfn_file_name=''
+        with tempfile.NamedTemporaryFile(delete=False) as lfn_file:
+            lfn_file_name = lfn_file.name
+            for lfn in lfns:
+                lfn_file.write(lfn+'\n')
+        dirac_ganga_server.execute('dirac-dms-remove-lfn %s' % lfn_file_name, shell=True)
+        os.remove(lfn_file_name)
+
+
+    def getOutputData(self,dir=None,names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
-        be a list of files to download.
+        be a list of files to download. If force=True then data will be redownloaded
+        even if the file already exists.
 
         Note that if called on a master job then all subjobs outputwill be downloaded.
         If dir is None then the subjobs output goes into their individual
@@ -371,6 +389,8 @@ class DiracBase(IBackend):
                         output_dir = os.path.join(dir, sj.fqid)
                         os.mkdir(output_dir)
                     df.localDir = output_dir
+                    if os.path.exists(os.path.join(output_dir,os.path.basename(df.lfn))) and not force:
+                        continue
                     try: 
                         df.get()
                         suceeded.append(df.lfn)
@@ -382,6 +402,8 @@ class DiracBase(IBackend):
                 df.localDir = j.getOutputWorkspace().getPath()
                 if dir is not None:
                     df.localDir = dir
+                if os.path.exists(os.path.join(df.localDir, os.path.basename(df.lfn))) and not force:
+                    continue
                 try:
                     df.get()
                     suceeded.append(df.lfn)

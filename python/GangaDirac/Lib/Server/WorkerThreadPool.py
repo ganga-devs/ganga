@@ -5,7 +5,7 @@ from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 import collections, Queue, threading
-import os
+import os, subprocess, types, time
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
 from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async, CommandOutput
 
@@ -15,6 +15,7 @@ default_env      = getDiracEnv()
 default_includes = getDiracCommandIncludes()
 QueueElement  = collections.namedtuple('QueueElement',  ['priority', 'command_input','callback_func','args','kwds'])
 CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell'])
+FunctionInput  = collections.namedtuple('FunctionInput',  ['function', 'args', 'kwargs'])
 
 class WorkerThreadPool(object):
     """
@@ -55,10 +56,12 @@ class WorkerThreadPool(object):
                 item = self.__queue.get(True, 0.05)
             except Queue.Empty: continue #wait 0.05 sec then loop again to give shutdown a chance
             
-            result=None
             #regster as a working thread
             GangaThreadPool.getInstance().addServiceThread(thread)
-            if item.command_input.command is not None:
+            if isinstance(item.command_input, FunctionInput):
+                thread._command = item.command_input.function.__name__
+                result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)
+            else:
                 thread._command = item.command_input.command
                 thread._timeout = item.command_input.timeout
                 result = self.execute(*item.command_input)
@@ -66,24 +69,18 @@ class WorkerThreadPool(object):
             if item.callback_func is not None:
                 thread._command = item.callback_func.__name__
                 thread._timeout = 'N/A'
-                if result is None:
-                    try:
-                        item.callback_func(*item.args, **item.kwds)
-                    except Exception, e:
-                        logger.error('Exception raised in %s: %s'%(thread.name,e))
-                else:
-                    try:
-                        item.callback_func(result, *item.args, **item.kwds)
-                    except Exception, e:
-                        logger.error('Exception raised in %s: %s'%(thread.name,e))
+                try:
+                    item.callback_func(result, *item.args, **item.kwds)
+                except Exception, e:
+                    logger.error('Exception raised in %s: %s'%(thread.name,e))
 
-            #unregster as a working thread bcoz free
+            #unregister as a working thread bcoz free
             GangaThreadPool.getInstance().delServiceThread(thread)
             thread._command = 'idle'
             thread._timeout = 'N/A'
             self.__queue.task_done()
       
-    def execute(self, command, timeout=default_timeout, env=default_env, cwd=None, shell=False, pyincludes=default_includes):
+    def execute(self, command, timeout=default_timeout, env=default_env, cwd=None, shell=False):
         """
         Execute a command on the local DIRAC server.
 
@@ -95,16 +92,36 @@ class WorkerThreadPool(object):
                 raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
         
         if shell:
-            ret = runcmd(command, timeout=timeout, env=env, cwd=cwd, usepython=False).stdout
+            p=subprocess.Popen(command, shell=True, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
-            ret = runcmd(pyincludes+command, timeout=timeout, env=env, cwd=cwd, usepython=True).stdout
+            inread, inwrite = os.pipe()
+            p=subprocess.Popen('''python -c "import os,sys\nos.close(%i)\nexec(os.fdopen(%i, 'rb').read())"''' % (inwrite, inread), shell=True, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            os.close(inread)
+            with os.fdopen(inwrite,'wb') as instream:
+                instream.write(default_includes + command)
+            
+        out=''
+#        err=''
+        if timeout is not None:
+            start_time = time.time()
+            while p.poll() is None:
+                if time.time()-start_time >=timeout:
+                    p.kill()
+                    out='Command timed out!'
+#                    err='Command timed out!'
+                    break
+                time.sleep(0.5)
+        stdout, stderr = p.communicate()
+        stdout+=out
         try:
-            ret=eval(ret)
+            stdout = eval(stdout)
         except: pass
-        return ret
+        return stdout
 
     def execute_nonblocking( self, 
-                             command, 
+                             command,
+                             c_args        = (),
+                             c_kwargs      = {},
                              timeout       = default_timeout,
                              env           = default_env,
                              cwd           = None,
@@ -122,12 +139,23 @@ class WorkerThreadPool(object):
         only with args. Otherwise it is called with the result of executing the command on the local
         DIRAC server as the first arg.
         """
-        self.__queue.put( QueueElement(priority      = priority,
-                                       command_input = CommandInput(command, timeout, env, cwd, shell),
-                                       callback_func = callback_func,
-                                       args          = args,
-                                       kwds          = kwds
-                                       ) )
+        if isinstance(command, types.FunctionType) or isinstance(command, types.MethodType):
+            self.__queue.put( QueueElement(priority      = priority,
+                                           command_input = FunctionInput(command, c_args, c_kwargs),
+                                           callback_func = callback_func,
+                                           args          = args,
+                                           kwds          = kwds
+                                           ) )
+        else:
+            self.__queue.put( QueueElement(priority      = priority,
+                                           command_input = CommandInput(command, timeout, env, cwd, shell),
+                                           callback_func = callback_func,
+                                           args          = args,
+                                           kwds          = kwds
+                                           ) )
+
+    def clear_queue(self):
+        self.__queue.queue=[]
 
     def get_queue(self):
         """

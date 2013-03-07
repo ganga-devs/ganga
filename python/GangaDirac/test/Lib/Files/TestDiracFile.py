@@ -3,7 +3,7 @@ from GangaDirac.Lib.Files.DiracFile                import DiracFile
 #from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path
 #from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
 #from Ganga.Core.exceptions                         import ApplicationConfigurationError, GangaException
-from Ganga.GPI                                     import *
+#from Ganga.GPI                                     import *
 #import GangaDirac.Lib.Server.DiracServer as DiracServer
 #GangaTest.Framework.utils defines some utility methods
 #from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
@@ -35,7 +35,7 @@ class TestDiracFile(GangaGPITestCase):
         self.assertEqual(self.df.namePattern, 'newlfn', "Setting the lfn didn't change the namePattern accordingly")
         self.assertEqual(self.df._attribute_filter__set__('localDir','~'), os.path.expanduser('~'), "Didn't fully expand the path")
 
-    def test___on_attribute__set__(self):
+    def test__on_attribute__set__(self):
         d1 = self.df._on_attribute__set__('','dummyAttrib')
         d2 = self.df._on_attribute__set__(Job()._impl,'outputfiles')
         self.assertEqual(d1, self.df, "didn't create a copy as default action")
@@ -47,9 +47,15 @@ class TestDiracFile(GangaGPITestCase):
     def test__repr__(self):
         self.assertEqual(repr(self.df), "DiracFile(namePattern='%s', lfn='%s')" % (self.df.namePattern, self.df.lfn))
 
-    def test_getEnv(self):
-        def getDiracEnv():
-            print "WOOT"
-        self.assertEqual(self.df._env, None, "_env should start out as None")
-        self.df.__dict__['getDiracEnv'] = getDiracEnv
+    def test__auto_remove(self):
+        from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
+        def execute_nonblocking(this, command, shell, priority):
+            self.assertEqual(command, 'removeFile("lfn")', 'command not removeFile("lfn")')
+            self.assertTrue(shell,'Shell not True')
+            self.assertEqual(priority, 6, 'Priority not 6')
+        setattr(WorkerThreadPool, "execute_nonblocking", execute_nonblocking)
+
+        self.assertEqual(self.df._auto_remove(), None)
+        self.df.lfn=''
+        self.assertEqual(self.df._auto_remove(), None)
 
