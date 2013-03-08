@@ -280,10 +280,10 @@ class DiracFile(IOutputFile):
                 logger.warning("Cannot specify a single lfn for a wildcard namePattern")
                 logger.warning("LFN will be generated automatically")
                 self.lfn=""
-            if self.guid != "":
-                logger.warning("Cannot specify a single guid for a wildcard namePattern")
-                logger.warning("GUID will be generated automatically")
-                self.guid=""
+#            if self.guid != "":
+#                logger.warning("Cannot specify a single guid for a wildcard namePattern")
+#                logger.warning("GUID will be generated automatically")
+#                self.guid=""
  
         import glob, uuid
         lfn_base =  os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()))
@@ -298,12 +298,12 @@ class DiracFile(IOutputFile):
             if not os.path.exists(name):
                 raise GangaException('File "%s" must exist!'% os.path.join(sourceDir, name))
             lfn = self.lfn
-            guid = self.guid
+#            guid = self.guid
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
-            if guid == "":
-                md5 = hashlib.md5(lfn).hexdigest()
-                guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
+#            if guid == "":
+#                md5 = hashlib.md5(lfn).hexdigest()
+#                guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
             
             d=DiracFile()
             d.namePattern = os.path.basename(file)
@@ -313,20 +313,21 @@ class DiracFile(IOutputFile):
             stdout=''
             logger.info('Uploading file %s' % name)
             for se in storage_elements:
-                stdout = dirac_ganga_server.execute('addFile("%s", "%s", "%s", "%s")' %(lfn, name, se, guid))
+                stdout = dirac_ganga_server.execute('print dirac.addFile("%s", "%s", "%s")' %(lfn, name, se))
+                if type(stdout)==str: continue
                 if stdout.get('OK', False) and lfn in stdout.get('Value',{'Successful':{}})['Successful']:
                     if self.compressed: os.system('rm -f %s'% name)
                     if self._parent !=None: os.remove(name)# when doing the two step upload delete the temp file
                     if regex.search(self.namePattern) is not None:
                         d.lfn = lfn
                         d.locations = [se]
-                        d.guid = guid
+#                        d.guid = guid
                         outputFiles.append(GPIProxyObjectFactory(d))
                         break
                     else:
                         self.lfn = lfn
                         self.locations = [se]
-                        self.guid = guid
+#                        self.guid = guid
                         return
             else:
                 if self.compressed: os.system('rm -f %s'% name)
@@ -351,9 +352,7 @@ class DiracFile(IOutputFile):
 ###INDENT###    label = f
 ###INDENT###    if ###COMPRESSED###: label=label[:-3]
 ###INDENT###    wildcard_lfn = os.path.join('###LFN_BASE###', os.path.basename(f))
-###INDENT###    md5 = hashlib.md5(wildcard_lfn).hexdigest()
-###INDENT###    wildcard_guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
-###INDENT###    uploadFile(os.path.basename(f), wildcard_lfn, wildcard_guid, storage_elements, label, '###WILD_CARD###')
+###INDENT###    uploadFile(os.path.basename(f), wildcard_lfn, storage_elements, label, '###WILD_CARD###')
 """.replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', compressed).replace('###WILD_CARD###', wildCard)
 
         script = """
@@ -381,7 +380,7 @@ class DiracFile(IOutputFile):
 ###INDENT###            return lfn in r['Successful']
 ###INDENT###    return stdout.find("'Successful': {'%s'" % lfn) >=0
 ###INDENT###            
-###INDENT###def uploadFile(file, lfn, guid, SEs, file_label, wildcard=''):
+###INDENT###def uploadFile(file, lfn, SEs, file_label, wildcard=''):
 ###INDENT###    import os, datetime
 ###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file)):
 ###INDENT###        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\\n" % (wildcard, file_label, file))
@@ -391,12 +390,12 @@ class DiracFile(IOutputFile):
 ###INDENT###    errmsg=''
 ###INDENT###    for se in SEs:
 ###INDENT###        try:
-###INDENT###            retcode, stdout, stderr = run_command('###ADD_COMMAND### %s %s %s %s' % (lfn, file, se, guid), dirac_env_setup)
+###INDENT###            retcode, stdout, stderr = run_command('###ADD_COMMAND### %s %s %s' % (lfn, file, se), dirac_env_setup)
 ###INDENT###        except Exception,x:
-###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'dirac-dms-add-file %s %s %s %s' % (lfn, file, se, guid),x))
+###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::Exception running command '%s' - %s:::NotAvailable\\n" % (wildcard, file_label,'dirac-dms-add-file %s %s %s' % (lfn, file, se),x))
 ###INDENT###            return
 ###INDENT###        if upload_ok(lfn):
-###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::%s\\n" % (wildcard, file_label, lfn, se, guid))
+###INDENT###            ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->%s:::%s:::NotAvailable\\n" % (wildcard, file_label, lfn, se))
 ###INDENT###            return
 ###INDENT###        errmsg+="(%s,%s,%s)" % (se, stdout, stderr)
 ###INDENT###    ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s):::NotAvailable\\n" % (wildcard, file_label, file, errmsg))
@@ -415,14 +414,14 @@ class DiracFile(IOutputFile):
                 script+= wildcard_script(name, lfn_base, str(file.namePattern in patternsToZip), file.namePattern)
             else:
                 lfn = file.lfn
-                guid = file.guid
+#                guid = file.guid
                 if file.lfn=='':
                     lfn = os.path.join(lfn_base, name)
-                if file.guid == '':
-                    md5 = hashlib.md5(lfn).hexdigest()
-                    guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
+#                if file.guid == '':
+#                    md5 = hashlib.md5(lfn).hexdigest()
+#                    guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
 
-                script+='###INDENT###uploadFile("%s", "%s", "%s", storage_elements, "%s")\n' % (name, lfn, guid, file.namePattern)
+                script+='###INDENT###uploadFile("%s", "%s", storage_elements, "%s")\n' % (name, lfn, file.namePattern)
 
         script = script.replace('###STORAGE_ELEMENTS###', str(configDirac['DiracSpaceTokens']))
         script = script.replace('###INDENT###',           indent)
