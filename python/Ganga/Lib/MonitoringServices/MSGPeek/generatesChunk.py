@@ -102,7 +102,7 @@ f.close()
 ##            
 #
 #        
-#conn = stomp.Connection([('dashb-mb.cern.ch', 6163)])
+#conn = stomp.Connection([('ganga.msg.cern.ch', 6163)])
 #listener = CompareListener()
 #conn.add_listener(listener)
 #conn.start()
