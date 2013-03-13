@@ -1209,6 +1209,7 @@ class DQ2JobSplitter(ISplitter):
 
         if not subjobs:
             logger.error('DQ2JobSplitter did not produce any subjobs! Either the dataset is not present in the cloud or at the site or all chosen sites are black-listed for the moment.')
+            raise ApplicationConfigurationError(None,'!!! Stopping submission now !!!')
 
         # reset missing files in case of a previous submission attempt
         self.missing_files = []
