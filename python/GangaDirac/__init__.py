@@ -15,7 +15,7 @@ configDirac.addOption('StartUpWaitTime', 1.0,
                       'Wait time (seconds) prior to first poll of Dirac child proc')
 
 #configDirac.addOption('NumWorkerThreads', cpu_count(),
-configDirac.addOption('NumWorkerThreads', 2,
+configDirac.addOption('NumWorkerThreads', 5,
                       'Number of worker threads that the local DIRAC server and client should establish')
 
 configDirac.addOption('DiracEnvFile', os.environ["GANGADIRACENVIRONMENT"],

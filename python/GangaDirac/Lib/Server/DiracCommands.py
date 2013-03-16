@@ -2,6 +2,7 @@ import os
 import time
 import datetime
 import glob
+import pickle
 from DIRAC.Interfaces.API.Dirac      import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
@@ -37,8 +38,10 @@ def getReplicas(lfns): print dirac.getReplicas(lfns)
 
 def getFile(lfns, destDir = ''): print dirac.getFile(lfns, destDir=destDir)
 
-def replicateFile(lfn,destSE,srcSE,locCache):
-    print dirac.replicateFile(lfn,destSE,srcSE,locCache)
+def replicateFile(lfn,destSE,srcSE,locCache=''):
+    res = dirac.replicateFile(lfn,destSE,srcSE,locCache)
+    output(res)
+    print res
 
 def removeReplica(lfn,sE):
     print dirac.removeReplica(lfn,sE)
@@ -51,6 +54,35 @@ def splitInputData(files,files_per_job):
 
 def getInputDataCatalog(lfns,site,xml_file):
     print dirac.getInputDataCatalog(lfns,site,xml_file)
+
+def output(object):
+    outpipe.write(pickle.dumps(object))
+
+def uploadFile(lfn, file, diracSEs, guid=None):
+    outerr={}
+    for se in diracSEs:
+        result = dirac.addFile(lfn,file,se,guid)
+        if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
+            result['Value']['Successful'][lfn].update({'DiracSE':se})
+            md = dirac.getMetadata(lfn)
+            if md.get('OK',False) and lfn in md.get('Value',{'Successful':{}})['Successful']:
+                guid=md['Value']['Successful'][lfn]['GUID']
+                result['Value']['Successful'][lfn].update({'GUID':guid})
+            output(result)
+            print result
+            return
+        outerr.update({se:result})
+    else:
+        output(outerr)
+        print outerr
+#def uploadFile(lfn, file, diracSE, guid=None):
+#    result = dirac.addFile(lfn,file,diracSE,guid)
+#    if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
+#        md = dirac.getMetadata(lfn)
+#        if md.get('OK',False) and lfn in md.get('Value',{'Successful':{}})['Successful']:
+#            guid=md['Value']['Successful'][lfn]['GUID']
+#            result['Value']['Successful'][lfn].update({'GUID':guid})
+#    print result
 
 def addFile(lfn,file,diracSE,guid):
     print dirac.addFile(lfn,file,diracSE,guid)
@@ -66,6 +98,27 @@ def getOutputSandbox(id, outputDir = os.getcwd(), oversized = True):
         if ganga_logs:
             os.system('ln -s %s %s/stdout' % (ganga_logs[0],outputDir))
     print result
+
+def getOutputDataInfo(id):
+    ret={}
+    result = getOutputDataLFNs(id)
+    if result.get('OK',False) and 'Value' in result:
+        for lfn in result.get('Value',[]):
+            file_name = os.path.basename(lfn)
+            ret.update({file_name:{'LFN':lfn}})
+            md = dirac.getMetadata(lfn)
+            if md.get('OK',False) and lfn in md.get('Value',{'Successful':{}})['Successful']:
+                ret[file_name].update({'GUID':md['Value']['Successful'][lfn]['GUID']})
+            elif md.get('OK',False) and lfn in md.get('Value',{'Failed':{}})['Failed']:# this catches if fail upload, note lfn still exists in list as dirac tried it
+                ret[file_name].update({'LFN':'###FAILED###'})
+                ret[file_name].update({'LOCATIONS':md['Value']['Failed'][lfn]})
+                ret[file_name].update({'GUID':'NotAvailable'})
+                continue
+            rp = dirac.getReplicas(lfn)
+            if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
+                ret[file_name].update({'LOCATIONS':rp['Value']['Successful'][lfn].keys()})
+    output(ret)
+    print ret
 
 def getOutputDataLFNs(id): ## could shrink this with dirac.getJobOutputLFNs from ##dirac    
     parameters = dirac.parameters(id)
@@ -94,7 +147,9 @@ def getOutputDataLFNs(id): ## could shrink this with dirac.getJobOutputLFNs from
     if ok: result['Value'] = lfns
     else: result['Message'] = message
         
+    #output(result)
     print result
+    return result
 
 def normCPUTime(id):    
     parameters = dirac.parameters(id)

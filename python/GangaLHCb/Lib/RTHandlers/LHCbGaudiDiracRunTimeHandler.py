@@ -63,6 +63,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
 
         data_str  = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
@@ -113,6 +114,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            job.non_copyable_outputfiles.extend([addProxy(DiracFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            job.non_copyable_outputfiles.extend([addProxy(SandboxFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
+           outputfiles = unique(outputfiles + [f.namePattern for f in job.non_copyable_outputfiles if isinstance(f, DiracFile)])
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
 
@@ -130,12 +132,13 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         gaudi_script_path = os.path.join(job.getInputWorkspace().getPath(), "gaudi-script.py")
         script_generator(gaudi_script_template(),
-                         remove_unreplaced = False,
+                         #remove_unreplaced = False,
                          outputfile_path   = gaudi_script_path,
                          PLATFORM          = app.platform,
                          COMMAND           = commandline,
-                         XMLSUMMARYPARSING = getXMLSummaryScript(),
-                         OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '))
+                         XMLSUMMARYPARSING = getXMLSummaryScript()#,
+                         #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
+                         )
         
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
@@ -152,9 +155,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         INPUTDATA            = input_data,
                                         PARAMETRIC_INPUTDATA = parametricinput_data,
                                         OUTPUT_SANDBOX       = API_nullifier(outputsandbox),
-##                                         OUTPUTDATA           = API_nullifier(list(outputfiles)),
-##                                         OUTPUT_PATH          = job.fqid,#outputdata_path,
-##                                         OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
+                                        OUTPUTDATA           = API_nullifier(list(outputfiles)),
+                                        OUTPUT_PATH          = job.fqid,#outputdata_path,
+                                        OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS             = diracAPI_script_settings(new_job.application),
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         PLATFORM             = app.platform,

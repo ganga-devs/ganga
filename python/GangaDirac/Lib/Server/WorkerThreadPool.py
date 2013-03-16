@@ -5,12 +5,12 @@ from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 import collections, Queue, threading
-import os, subprocess, types, time
+import os, subprocess, types, time, threading
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
 from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async, CommandOutput
 
 logger = getLogger()
-default_timeout  = getConfig('DIRAC')['Timeout']
+#default_timeout  = getConfig('DIRAC')['Timeout']
 default_env      = getDiracEnv()
 default_includes = getDiracCommandIncludes()
 QueueElement  = collections.namedtuple('QueueElement',  ['priority', 'command_input','callback_func','args','kwds'])
@@ -51,6 +51,18 @@ class WorkerThreadPool(object):
 
         Can be used for executing non-blocking calls to local DIRAC server
         """
+        # Occasionally when shutting down the Queue import at top has been garbage collected
+        # and line "except Queue.Empty: continue" will throw
+        # <type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'Empty'
+        # im hoping that importing within the thread will avoid this.
+        import Queue
+        def tearDown():
+            #unregister as a working thread bcoz free
+            GangaThreadPool.getInstance().delServiceThread(thread)
+            thread._command = 'idle'
+            thread._timeout = 'N/A'
+            self.__queue.task_done()
+
         while not thread.should_stop():
             try:
                 item = self.__queue.get(True, 0.05)
@@ -60,11 +72,21 @@ class WorkerThreadPool(object):
             GangaThreadPool.getInstance().addServiceThread(thread)
             if isinstance(item.command_input, FunctionInput):
                 thread._command = item.command_input.function.__name__
-                result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)
+                try:
+                    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)
+                except Exception, e:
+                    logger.error('Exception raised in function of %s: %s'%(thread.name,e))
+                    tearDown()
+                    continue
             else:
                 thread._command = item.command_input.command
                 thread._timeout = item.command_input.timeout
-                result = self.execute(*item.command_input)
+                try:
+                    result = self.execute(*item.command_input)
+                except Exception, e:
+                    logger.error('Exception raised in command of %s: %s'%(thread.name,e))
+                    tearDown()
+                    continue
 
             if item.callback_func is not None:
                 thread._command = item.callback_func.__name__
@@ -72,15 +94,10 @@ class WorkerThreadPool(object):
                 try:
                     item.callback_func(result, *item.args, **item.kwds)
                 except Exception, e:
-                    logger.error('Exception raised in %s: %s'%(thread.name,e))
+                    logger.error('Exception raised in callback_func of %s: %s'%(thread.name,e))
 
-            #unregister as a working thread bcoz free
-            GangaThreadPool.getInstance().delServiceThread(thread)
-            thread._command = 'idle'
-            thread._timeout = 'N/A'
-            self.__queue.task_done()
-      
-    def execute(self, command, timeout=default_timeout, env=default_env, cwd=None, shell=False):
+            tearDown()
+    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False):
         """
         Execute a command on the local DIRAC server.
 
@@ -94,25 +111,65 @@ class WorkerThreadPool(object):
         if shell:
             p=subprocess.Popen(command, shell=True, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         else:
-            inread, inwrite = os.pipe()
-            p=subprocess.Popen('''python -c "import os,sys\nos.close(%i)\nexec(os.fdopen(%i, 'rb').read())"''' % (inwrite, inread), shell=True, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            inread,  inwrite  = os.pipe()
+            outread, outwrite = os.pipe()
+            p=subprocess.Popen('''python -c "import os,sys\nos.close(%i)\nos.close(%i)\noutpipe=os.fdopen(%i,'wb')\nexec(os.fdopen(%i, 'rb').read())\noutpipe.close()"''' % (inwrite, outread, outwrite,inread), shell=True, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             os.close(inread)
+            os.close(outwrite)
             with os.fdopen(inwrite,'wb') as instream:
                 instream.write(default_includes + command)
-            
-        out=''
-#        err=''
-        if timeout is not None:
-            start_time = time.time()
-            while p.poll() is None:
-                if time.time()-start_time >=timeout:
-                    p.kill()
-                    out='Command timed out!'
-#                    err='Command timed out!'
-                    break
+                
+                
+        def timeout_func(process, timeout, command_done, timed_out):
+            import time
+            start = time.time()
+            while time.time()-start < timeout:
+                if command_done.isSet(): break
                 time.sleep(0.5)
+            else:
+                if process.returncode is None:
+                    timed_out.set()
+                    try:
+                        process.kill()
+                    except Exception, e:
+                        logger.error("Exception trying to kill process: %s"%e)
+
+        command_done = threading.Event()
+        timed_out    = threading.Event()
+        if timeout is not None:
+            t=threading.Thread(target=timeout_func,args=(p, timeout, command_done, timed_out))
+            t.deamon=True
+            t.start()
+
+## Unfortunately using poll() is buggy as if the user code (e.g. lhcbdirac.getDataset called from BKQuery)
+## uses os.wait() or something like it then poll will always return None. Need thread solution above
+## a shame as messy.
+#        if timeout is not None:
+#            start_time = time.time()
+#            while p.poll() is None:
+#                if time.time()-start_time >=timeout:
+#                    p.kill()
+#                    if not shell: os.close(outread)
+#                    p.communicate()
+#                    #out='Command timed out!'
+#                    return 'Command timed out!'
+##                    break
+#                time.sleep(0.5)
+            
         stdout, stderr = p.communicate()
-        stdout+=out
+        command_done.set()
+        obj=None
+        if not shell:
+            with os.fdopen(outread,'rb') as outstream:
+                tmp=outstream.read()
+            if tmp !='':
+                import pickle
+                obj=pickle.loads(tmp)
+
+        if obj is not None:
+            return obj
+        if timed_out.isSet():
+            return 'Command timed out!'
         try:
             stdout = eval(stdout)
         except: pass
@@ -122,7 +179,7 @@ class WorkerThreadPool(object):
                              command,
                              c_args        = (),
                              c_kwargs      = {},
-                             timeout       = default_timeout,
+                             timeout       = getConfig('DIRAC')['Timeout'],
                              env           = default_env,
                              cwd           = None,
                              shell         = False,

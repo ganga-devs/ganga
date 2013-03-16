@@ -4,6 +4,7 @@ from GangaLHCb.Lib.RTHandlers.RTHUtils             import lhcbdiracAPI_script_te
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare,sandbox_prepare,script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils       import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils            import result_ok
+from GangaDirac.Lib.Files.DiracFile                import DiracFile
 from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.IRuntimeHandler         import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
@@ -65,6 +66,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
 
 
         params = { 'DIRAC_IMPORT'         : 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
@@ -75,9 +77,9 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                    'INPUTDATA'            : input_data,
                    'PARAMETRIC_INPUTDATA' : parametricinput_data,
                    'OUTPUT_SANDBOX'       : API_nullifier(outputsandbox),
-##                    'OUTPUTDATA'           : API_nullifier(list(outputfiles)),
-##                    'OUTPUT_PATH'          : job.fqid,
-##                    'OUTPUT_SE'            : getConfig('DIRAC')['DiracOutputDataSE'],
+                   'OUTPUTDATA'           : API_nullifier(list(outputfiles)),
+                   'OUTPUT_PATH'          : job.fqid,
+                   'OUTPUT_SE'            : getConfig('DIRAC')['DiracOutputDataSE'],
                    'SETTINGS'             : diracAPI_script_settings(app),
                    'DIRAC_OPTS'           : job.backend.diracOpts,
                    'PLATFORM'             : getConfig('ROOT')['arch'],
@@ -120,7 +122,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
                                                FIXARGS = '',
                                                COMMAND = '/usr/bin/env python %s %s' % (os.path.basename(app.script.name),'%s'),
                                                JOINER = ' ',
-                                               INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
+                                               #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
                                                )
             
            
@@ -134,7 +136,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
                                                FIXARGS = 'sys.argv=[formatVar(v) for v in sys.argv]',
                                                COMMAND = 'export DISPLAY=\"localhoast:0.0\" && root -l -q \"%s(%s)\"' % (os.path.basename(app.script.name),'%s'),
                                                JOINER = ',',
-                                               INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
+                                               #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
                                                )
                       
 ##            params.update({'ROOT_MACRO'    : wrapper_path,

@@ -2,6 +2,7 @@
 import os
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils       import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings
+from GangaDirac.Lib.Files.DiracFile                import DiracFile
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
 from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
@@ -28,15 +29,17 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
         #outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job=app.getJobObject()
-        outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
 
         gaudi_script_path = os.path.join(job.getInputWorkspace().getPath(), "gaudi-script.py")
         script_generator(gaudi_script_template(),
-                         remove_unreplaced = False,
+                         #remove_unreplaced = False,
                          outputfile_path = gaudi_script_path,
                          PLATFORM = app.platform,
-                         COMMAND  = 'gaudirun.py',
-                         OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    '))
+                         COMMAND  = 'gaudirun.py'#,
+                         #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
+                         )
         
         dirac_script = script_generator(diracAPI_script_template(),
                                         DIRAC_IMPORT         = 'from DIRAC.Interfaces.API.Dirac import Dirac',
@@ -50,9 +53,9 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
                                         INPUTDATA            = input_data,
                                         PARAMETRIC_INPUTDATA = parametricinput_data,
                                         OUTPUT_SANDBOX       = outputsandbox,
-##                                         OUTPUTDATA           = list(outputfiles),
-##                                         OUTPUT_PATH          = job.fqid,
-##                                         OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
+                                        OUTPUTDATA           = list(outputfiles),
+                                        OUTPUT_PATH          = job.fqid,
+                                        OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS             = diracAPI_script_settings(app),
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         PLATFORM             = app.platform,

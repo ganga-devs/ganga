@@ -2,7 +2,7 @@
 """The Ganga backendhandler for the Dirac system."""
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-import os
+import os, re, fnmatch
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Schema                     import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend          import IBackend
@@ -13,9 +13,9 @@ from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 logger = getLogger()
+regex  = re.compile('[*?\[\]]')
 dirac_ganga_server      = WorkerThreadPool()
 dirac_monitoring_server = WorkerThreadPool()
-
 
 class DiracBase(IBackend):
     """The backend that submits jobs to the Grid via DIRAC.
@@ -551,6 +551,25 @@ class DiracBase(IBackend):
                 def job_finalisation(result, job):
                     cmd = 'normCPUTime(%d)' % job.backend.id
                     job.backend.normCPUTime = dirac_monitoring_server.execute(cmd)
+                    file_info_dict = dirac_monitoring_server.execute('getOutputDataInfo(%d)'% job.backend.id)
+
+                    wildcards = [f.namePattern for f in job.outputfiles if regex.search(f.namePattern) is not None]
+                    
+                    if not os.path.exists(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName'])):##REMOVE this check before commiting
+                        with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
+                            for file_name, info in file_info_dict.iteritems():
+                                valid_wildcards = ['']
+                                if (wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)):
+                                    valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
+                            
+                                for wc in valid_wildcards:
+                                    postprocesslocationsfile.write('DiracFile:::%s&&%s->%s:::%s:::%s\n'% (wc,
+                                                                                                          file_name,
+                                                                                                          info.get('LFN','Error Getting LFN!'),
+                                                                                                          str(info.get('LOCATIONS',['NotAvailable'])),
+                                                                                                          info.get('GUID','NotAvailable')
+                                                                                                          ))
+                    
                     if not result_ok(result):
                         logger.warning('Problem retrieving outputsandbox: %s' % str(result))
                         DiracBase._getStateTime(job,'failed')

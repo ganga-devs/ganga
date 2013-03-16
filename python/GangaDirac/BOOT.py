@@ -26,10 +26,11 @@ def diracAPI(cmd, timeout = 60):
 
     '''
     #    from GangaDirac.Lib.Backends.Dirac import Dirac
-    from Ganga.GPI import Dirac
-    return Dirac._impl.execAPI(cmd, timeout)
-    #from GangaDirac.Lib.Backends.DiracBase import DiracBase
+    #from Ganga.GPI import Dirac
+    #return Dirac._impl.execAPI(cmd, timeout)
     #return DiracBase.execAPI(cmd, priority, timeout)
+    from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
+    return dirac_ganga_server.execute(cmd, timeout=timeout)
 
 exportToGPI('diracAPI',diracAPI,'Functions')
 
@@ -37,7 +38,7 @@ def diracAPI_async(cmd, timeout = 120):
     '''Execute DIRAC API commands from w/in Ganga.
     '''
     from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
-    return dirac_ganga_server.execute_nonblocking(cmd, timeout, priority = 2)
+    return dirac_ganga_server.execute_nonblocking(cmd, timeout=timeout, priority = 2)
 
 exportToGPI('diracAPI_async',diracAPI_async,'Functions')
 
@@ -138,7 +139,10 @@ class queues(object):
         """
         from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
         if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
-            logger.error('Only python callable objects can be added to the queue')
+            logger.error('Only python callable objects can be added to the queue using queues.add()')
+            logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
+            logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
+            logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
         dirac_ganga_server.execute_nonblocking(worker_code,
                                                c_args        = args,
