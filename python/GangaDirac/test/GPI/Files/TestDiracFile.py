@@ -1,4 +1,4 @@
-#from GangaTest.Framework.tests                     import GangaGPITestCase
+from GangaTest.Framework.tests                     import GangaGPITestCase
 #from GangaDirac.Lib.Files.DiracFile                import DiracFile
 #from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path
 #from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
@@ -16,7 +16,7 @@ echo HelloWorld > a.root
 echo WorldHello > b.root
 '''
         tmpf = tempfile.NamedTemporaryFile(delete=False)
-        tmpf.write(scrpt)
+        tmpf.write(script)
         self.root, self.filename = os.path.split(tmpf.name)
         tmpf.close()
         self.filepath = os.path.join(self.root, self.filename)
