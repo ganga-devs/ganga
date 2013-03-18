@@ -312,7 +312,18 @@ class AthenaLCGRTHandler(IRuntimeHandler):
         
 #       prepare inputsandbox
 
-        inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
+        #inputbox = [File(os.path.join(__directory__,'athena-utility.sh')) ]
+        __tpdirectory__ = sys.modules['GangaAtlas.Lib.TagPrepare'].__path__[0]                
+        if (str(app.atlas_release[:3]) == '16.'):
+            __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r16' )
+        else:
+            __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r15' )
+
+        inputbox = [ ( File(os.path.join(__directory__,'athena-utility.sh')) ),
+                     ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so.cmtref'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'CollInflateEventInfo.exe'))),
+                     ( File(os.path.join(__tpdirectory__,'template.root')))]
         if input_guids:     _append_file_buffer(inputbox,'input_guids',input_guids)
         if input_files:     _append_file_buffer(inputbox,'input_files',input_files)
         if add_files:     _append_file_buffer(inputbox,'add_files',add_files)

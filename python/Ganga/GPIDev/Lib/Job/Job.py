@@ -428,17 +428,17 @@ class Job(GangaObject):
             if outputfileClass == 'SandboxFile':
                 outputfile.processWildcardMatches()
 
+
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
 
     def outputFilesFailures(self):
-        
+
         postprocessFailure = False
 
         for outputfile in self.outputfiles:
-            for subfile in outputfile.subfiles:
-                if (hasattr(subfile, 'failureReason') and subfile.failureReason != ''): 
-                    postprocessFailure = True
+            if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''): 
+                postprocessFailure = True
 
         return postprocessFailure
         

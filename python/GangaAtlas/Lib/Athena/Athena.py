@@ -1048,6 +1048,23 @@ class Athena(IPrepareApp):
 
         archiveDir = self.user_area_path
 
+        # Add TAG specifc files if required
+        if 'uncompress.py' in self.append_to_user_area and 'subcoll.tar.gz' in self.append_to_user_area:
+            logger.warning('Copying TAG system files to current directory...')
+            __tpdirectory__ = sys.modules['GangaAtlas.Lib.TagPrepare'].__path__[0]   
+            if (str(self.atlas_release[:3]) == '16.'):
+                __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r16' )
+            else:
+                __tpdirectoryrel__ = os.path.join( __tpdirectory__, 'r15' )
+            
+            for f in ['CollInflateEventInfo.exe','libPOOLCollectionTools.so.cmtref','libPOOLCollectionTools.so']:
+                shutil.copyfile( '%s/%s' % (__tpdirectoryrel__, f), '%s/%s' % (os.getcwd(), os.path.basename(f)))
+                self.append_to_user_area.append(f)
+
+            # check run config conforms to a TAG analysis
+            if not self.atlas_exetype in ['EXE'] and (not self.atlas_run_config['input'].has_key('collRefName') or not self.atlas_run_config['input'].has_key('inColl')):
+                raise ApplicationConfigurationError(None, 'Attempt to run a TAG based analysis without appropriate settings in Job Options.\nPlease set e.g.\nServiceMgr.EventSelector.CollectionType="ExplicitROOT"\nServiceMgr.EventSelector.Query = ""\nServiceMgr.EventSelector.RefName= "StreamAOD"')
+
         # set extFile
         AthenaUtils.extFile=[]
         AthenaUtils.setExtFile(self.append_to_user_area)

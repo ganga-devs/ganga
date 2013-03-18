@@ -132,11 +132,19 @@ class TagPrepareLocalRTHandler(IRuntimeHandler):
             app.atlas_release = '15.6.9'
             
         logger.warning("Copying grid proxy to input sandbox for transfer to WN...")
+        if (str(app.atlas_release[:3]) == '16.'):
+            __tpdirectoryrel__ = os.path.join( __directory__, 'r16' )
+        else:
+            __tpdirectoryrel__ = os.path.join( __directory__, 'r15' )
                 
         inputbox = [ ( File(os.path.join(__athdirectory__,'athena-utility.sh')) ),
                      ( File(os.path.join(__directory__,'get_tag_info.py')) ),
                      ( File(os.path.join(__directory__,'get_tag_info2.py')) ),
                      ( File(os.path.join(__directory__,'template.root')) ),
+                     ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so.cmtref'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'libPOOLCollectionTools.so'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'CollSplitByGUID.exe'))),
+                     ( File(os.path.join(__tpdirectoryrel__,'CollCompressEventInfo.exe'))),
                      ( File(gridProxy.location())) ]
             
         ## insert more scripts to inputsandbox for FileStager
