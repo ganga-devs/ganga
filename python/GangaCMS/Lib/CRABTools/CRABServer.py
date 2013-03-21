@@ -121,6 +121,11 @@ class CRABServer(GangaObject):
         cmd = 'crab -getoutput %d -c %s' % (int(job.id) + 1,
                                             job.inputdata.ui_working_dir)
         self._send_with_retry(cmd, 'getoutput', job.backend.crab_env)
+        # Make output files coming from the WMS readable.
+        for root, _, files in os.walk(os.path.join(job.inputdata.ui_working_dir,
+                                                   'res')): # Just 'res'.
+            for f in files:
+                os.chmod(os.path.join(root, f), 0644)
         return True
 
     def postMortem(self, job):
