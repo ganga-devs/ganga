@@ -81,18 +81,10 @@ class MassStorageFile(IOutputFile):
             name = os.path.basename(outputPath).strip('.gz')
 
             if regex.search(mass_file.namePattern) is not None:
-                if outputPath == 'ERROR':
-                    logger.error("Failed to upload file to mass storage")
-                    logger.error(line[line.find('ERROR')+5:])
-                    d=MassStorageFile(namePattern=pattern)
-                    d.compressed = mass_file.compressed
-                    d.failureReason = line[line.find('ERROR')+5:]
-                    mass_file.subfiles.append(GPIProxyObjectFactory(d))             
-                else:
-                    d=MassStorageFile(namePattern=name)
-                    d.compressed = mass_file.compressed
-                    mass_file.subfiles.append(GPIProxyObjectFactory(d))
-                    mass_line_processor(line, d)
+                d=MassStorageFile(namePattern=name)
+                d.compressed = mass_file.compressed
+                mass_file.subfiles.append(GPIProxyObjectFactory(d))
+                mass_line_processor(line, d)
             else:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
