@@ -282,22 +282,32 @@ class AppName(Gaudi):
 
 
     def getpack(self, options=''):
+        """Performs a getpack on the package given within the environment
+           of the application. The unix exit code is returned
+        """
         command = 'getpack ' + options + '\n'
         if options == '':
             command = 'getpack -i'
-        CMTscript.CMTscript(self,command)
+        return CMTscript.CMTscript(self,command)
         
-    def make(self, argument=''):
+    def make(self, argument=None):
+        """Performs a CMT make on the application. The unix exit code is 
+           returned. Any arguments given are passed onto CMT as in
+           dv.make('clean').
+        """
         config = Ganga.Utility.Config.getConfig('GAUDI')
         command = config['make_cmd']
-        CMTscript.CMTscript(self,command)
+        if argument:
+            command+=' '+argument
+        return CMTscript.CMTscript(self,command)
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
-        proper configuration. Do not include the word "cmt" yourself."""
+        proper configuration. Do not include the word "cmt" yourself. The 
+        unix exit code is returned."""
         command = '###CMT### ' + command
-        CMTscript.CMTscript(self,command)
+        return CMTscript.CMTscript(self,command)
 
     def _getshell(self):
         super(type(self), self)._getshell()

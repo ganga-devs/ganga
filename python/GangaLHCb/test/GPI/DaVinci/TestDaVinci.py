@@ -40,7 +40,7 @@ class TestDaVinci(GangaGPITestCase):
             j.submit()
         except JobError:
             got_err = True
-        assert got_err, 'an error should have been raise'
+        assert got_err, 'an error should have been raised'
         #assert sleep_until_completed(j,1800)
         #j.peek()
         #assert(os.path.exists(os.path.join(j.outputdir,'DVHistos.root')))
@@ -51,3 +51,8 @@ class TestDaVinci(GangaGPITestCase):
         j.outputdata = ['Something.root']
         j.submit()
         j.kill()
+
+    def test_cmt_exitcodes(self):
+        dv = DaVinci()
+        assert dv.cmt('version')==0, 'CMT command that should succeed, report non-zero exit code.'
+        assert dv.cmt('ThisIsNotValid')!=0, 'CMT command that should fail, report zero exit code.'

@@ -42,7 +42,8 @@ def parse_master_package(mstrpckg):
       raise ValueError,"wrongly formatted masterpackage"
 
 def CMTscript(app,command=''):
-   """Function to execute a cmt command for a specific job
+   """Function to execute a cmt command for a specific job. Returns the unix
+      exit code.
 
       Arguments:
          app       - The Gaudi application object to take information from
@@ -101,6 +102,6 @@ def CMTscript(app,command=''):
    rc=shell.system(fn)
    if os.path.exists(tmppath): shutil.rmtree(tmppath)
 
-   return True
+   return rc
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
