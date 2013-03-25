@@ -389,7 +389,7 @@ def GPIProxyClassFactory(name, pluginclass):
             raise AttributeError("Internal implementation object '_impl' cannot be reassigned")
 
         if not self._impl._schema.hasAttribute(x):
-            if True in (isType(self,t) for t in metadata_objects) and x in self._impl.metadata.data.keys():
+            if True in [isType(self,t) for t in metadata_objects] and x in self._impl.metadata.data.keys():
                 raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)       
             raise GangaAttributeError("'%s' has no attribute '%s'" % (self._impl._name,x))
 
