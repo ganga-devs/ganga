@@ -554,21 +554,21 @@ class DiracBase(IBackend):
                     file_info_dict = dirac_monitoring_server.execute('getOutputDataInfo(%d)'% job.backend.id)
 
                     wildcards = [f.namePattern for f in job.outputfiles if regex.search(f.namePattern) is not None]
-                    
-                    if not os.path.exists(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName'])):##REMOVE this check before commiting
-                        with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
-                            for file_name, info in file_info_dict.iteritems():
-                                valid_wildcards = ['']
-                                if (wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)):
-                                    valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
-                            
-                                for wc in valid_wildcards:
-                                    postprocesslocationsfile.write('DiracFile:::%s&&%s->%s:::%s:::%s\n'% (wc,
-                                                                                                          file_name,
-                                                                                                          info.get('LFN','Error Getting LFN!'),
-                                                                                                          str(info.get('LOCATIONS',['NotAvailable'])),
-                                                                                                          info.get('GUID','NotAvailable')
-                                                                                                          ))
+
+                    #if not os.path.exists(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName'])):##REMOVE this check before commiting
+                    with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
+                        for file_name, info in file_info_dict.iteritems():
+                            valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
+                            if not valid_wildcards:
+                                valid_wildcards=['']
+
+                            for wc in valid_wildcards:
+                                postprocesslocationsfile.write('DiracFile:::%s&&%s->%s:::%s:::%s\n'% (wc,
+                                                                                                      file_name,
+                                                                                                      info.get('LFN','Error Getting LFN!'),
+                                                                                                      str(info.get('LOCATIONS',['NotAvailable'])),
+                                                                                                      info.get('GUID','NotAvailable')
+                                                                                                      ))
                     
                     if not result_ok(result):
                         logger.warning('Problem retrieving outputsandbox: %s' % str(result))

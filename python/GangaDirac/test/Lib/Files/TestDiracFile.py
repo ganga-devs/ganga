@@ -92,12 +92,6 @@ class TestDiracFile(GangaGPITestCase):
         self.assertEqual(self.df._auto_remove(), None)
 
     def test_remove(self):
-#        from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
-#        def working_execute(this,command,timeout=60,env=None,cwd=None,shell=False):
-#            self.assertEqual(command, 'removeFile("lfn")')
-#            return {'OK': True, 'Value':{'Successful':{'lfn':True}}}
-#        setattr(WorkerThreadPool, "execute", working_execute)
-
         self.ts.toCheck={'command':'removeFile("lfn")'}
         self.ts.returnObject = {'OK': True, 'Value':{'Successful':{'lfn':True}}}
         self.assertEqual(self.df.remove(),  None)
@@ -110,10 +104,6 @@ class TestDiracFile(GangaGPITestCase):
 
         self.df.lfn='lfn'
 
-#        def not_dict_execute(this,command,timeout=60,env=None,cwd=None,shell=False):
-#            self.assertEqual(command, 'removeFile("lfn")')
-#            return 'STRING!'
-#        setattr(WorkerThreadPool, "execute", not_dict_execute)
         fail_returns = [ ('Not Dict',                      'STRING!'),
                          ("No 'OK' present",               {'Value':{'Successful':{'lfn':True}}}),
                          ('OK is False',                   {'OK':False, 'Value':{'Successful':{'lfn':True}}}),
@@ -127,46 +117,6 @@ class TestDiracFile(GangaGPITestCase):
             self.assertEqual(self.df.remove(), self.ts.returnObject)
             self.assertEqual(self.df.lfn, 'lfn')
             print "Pass"
-
-#        self.ts.returnObject = 'STRING!'
-#        self.assertEqual(self.df.remove(), self.ts.returnObject)
-#        self.assertEqual(self.df.lfn, 'lfn')
-
-#        ret = {'Value':{'Successful':{'lfn':True}}}
-#        def no_ok_execute(this,command,timeout=60,env=None,cwd=None,shell=False):
-#            self.assertEqual(command, 'removeFile("lfn")')
-#            return ret
-#        setattr(WorkerThreadPool, "execute", no_ok_execute)
-#        self.ts.returnObject = {'Value':{'Successful':{'lfn':True}}}
-#        self.assertEqual(self.df.remove(), self.ts.returnObject)
-#        self.assertEqual(self.df.lfn, 'lfn')
-
-#        ret = {'OK':False, 'Value':{'Successful':{'lfn':True}}}
-#        def ok_false_execute(this,command,timeout=60,env=None,cwd=None,shell=False):
-#            self.assertEqual(command, 'removeFile("lfn")')
-#            return ret
-#        setattr(WorkerThreadPool, "execute", ok_false_execute)
-#        self.ts.returnObject = {'OK':False, 'Value':{'Successful':{'lfn':True}}}
-#        self.assertEqual(self.df.remove(), self.ts.returnObject)
-#        self.assertEqual(self.df.lfn, 'lfn')
-
-#        ret = {'OK':True}
-#        def no_value_execute(this,command,timeout=60,env=None,cwd=None,shell=False):
-#            self.assertEqual(command, 'removeFile("lfn")')
-#            return ret
-#        setattr(WorkerThreadPool, "execute", no_value_execute)
-#        self.ts.returnObject = {'OK':True}
-#        self.assertEqual(self.df.remove(), self.ts.returnObject)
-#        self.assertEqual(self.df.lfn, 'lfn')
-
- #       ret = {'OK':True, 'Value':{'Successful':{}}}
- #       def no_lfn_execute(this,command,timeout=60,env=None,cwd=None,shell=False):
- #           self.assertEqual(command, 'removeFile("lfn")')
- #           return ret
- #       setattr(WorkerThreadPool, "execute", no_lfn_execute)
- #       self.ts.returnObject = {'OK':True, 'Value':{'Successful':{}}}
- #       self.assertEqual(self.df.remove(), self.ts.returnObject)
- #       self.assertEqual(self.df.lfn, 'lfn')       
 
     def test_replicate(self):
         from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
