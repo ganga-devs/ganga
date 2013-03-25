@@ -195,7 +195,7 @@ class LHCbDataset(Dataset):
         lfns = self.getLFNs()
         depth = self.depth
         tmp_xml = tempfile.NamedTemporaryFile(suffix='.xml')
-        cmd = 'getInputDataCatalog(%s,%d,"%s","%s")' \
+        cmd = 'getLHCbInputDataCatalog(%s,%d,"%s","%s")' \
               % (str(lfns),depth,site,tmp_xml.name)
         result = get_result(cmd,'LFN->PFN error','XML catalog error.')
         xml_catalog = tmp_xml.read()

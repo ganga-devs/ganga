@@ -16,7 +16,7 @@ def checkSites(): print diraclhcb.checkSites()
 
 def bkMetaData(files): print diraclhcb.bkMetadata(files)
 
-def getInputDataCatalog(lfns,depth,site,xml_file):
+def getLHCbInputDataCatalog(lfns,depth,site,xml_file):
     if depth > 0:
         result = diraclhcb.getBKAncestors(lfns,depth)
         if not result or not result.get('OK',False): 
