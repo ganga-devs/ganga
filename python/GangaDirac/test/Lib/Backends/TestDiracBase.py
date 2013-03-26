@@ -11,6 +11,38 @@ import unittest, tempfile, os
 
 class TestDiracBase(GangaGPITestCase):
     def setUp(self):
+    from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
+        class testServer(object):
+            def __init__(this, returnObject):
+                this.returnObject = returnObject
+                this.toCheck      = {}
+
+            def execute(this,command,timeout=60,env=None,cwd=None,shell=False):
+                import inspect
+                frame = inspect.currentframe()
+                fedInVars = inspect.getargvalues(frame).locals
+                del frame
+
+                for key, value in this.toCheck.iteritems():
+                    if key in fedInVars:
+                        self.assertEqual(fedInVars[key], value)
+
+                return this.returnObject
+            def execute_nonblocking( this,command,c_args=(),c_kwargs={},timeout=60,env=None,cwd=None,shell=False,
+                                     priority=5,callback_func=None,args =(),kwds={} ):
+                import inspect
+                frame = inspect.currentframe()
+                fedInVars = inspect.getargvalues(frame).locals
+                del frame
+                
+                for key, value in this.toCheck.iteritems():
+                    if key in fedInVars:
+                        self.assertEqual(fedInVars[key], value)
+
+                return this.returnObject
+        self.ts = testServer(None)
+        setattr(WorkerThreadPool, "execute", self.ts.execute)
+        setattr(WorkerThreadPool, "execute_nonblocking", self.ts.execute_nonblocking)
         self.db = DiracBase()
         self.script="""
 # dirac job created by ganga
@@ -102,9 +134,10 @@ print result
         file.write(self.script.replace('###PARAMETRIC_INPUTDATA###',
                                        str([['a'],['b']])))
         file.close()
-        class errorserver:
-            def execute(this, dirac_cmd):
-                return {}
+        self.ts.returnObject={}
+#        class errorserver:
+#            def execute(this, dirac_cmd):
+#                return {}
 
         self.db.id = 1234
         self.db.actualCE='test'
@@ -112,22 +145,25 @@ print result
         self.assertRaises(BackendError,
                           self.db._common_submit,
                           name,
-                          errorserver())
+                          self.ts)
+#                          errorserver())
 
         self.assertEqual(self.db.id,None,'id not None')
         self.assertEqual(self.db.actualCE,None,'actualCE not None')
         self.assertEqual(self.db.status,None,'status not None')
 
-        class server:
-            def __init__(this, list_return=False):
-                this.list_return = list_return 
-            def execute(this, dirac_cmd):
-                self.assertEqual(dirac_cmd,"execfile('%s')"%name,'cmd wrong')
-                if this.list_return is True:
-                    return {'OK':True, 'Value': [123,456]}
-                return {'OK':True, 'Value': 12345}
+#        class server:
+#            def __init__(this, list_return=False):
+#                this.list_return = list_return 
+#            def execute(this, dirac_cmd):
+#                self.assertEqual(dirac_cmd,"execfile('%s')"%name,'cmd wrong')
+#                if this.list_return is True:
+#                    return {'OK':True, 'Value': [123,456]}
+#                return {'OK':True, 'Value': 12345}
 
-        self.assertTrue(self.db._common_submit(name, server(list_return=False)),'didnt run')
+        self.ts.toCheck={'command':"execfile('%s')"%name}
+        self.returnObject={'OK':True, 'Value': 12345}
+        self.assertTrue(self.db._common_submit(name, self.ts))
         self.assertEqual(self.db.id,12345,'id not set')
 
         def _setup_bulk_subjobs(dirac_ids, dirac_script):
@@ -136,7 +172,8 @@ print result
             return True
 
         setattr(self.db,'_setup_bulk_subjobs',_setup_bulk_subjobs)
-        self.assertTrue(self.db._common_submit(name, server(list_return=True)),'didnt run')
+        self.returnObject={'OK':True, 'Value': [123,456]}
+        self.assertTrue(self.db._common_submit(name, self.ts))
 
         os.remove(name)
 
@@ -203,9 +240,9 @@ print result
 
     def test__resubmit(self):
         from Ganga.Core import BackendError
-        class server:
-            def execute(this, dirac_cmd):
-                return {}
+ #       class server:
+ #           def execute(this, dirac_cmd):
+ #               return {}
         def _common_submit(dirac_script, server):
             
             return True
@@ -217,9 +254,11 @@ print result
 
         # problem as keeps finding job 0 in main repository which has this 'dirac-script' file
         self.db._parent = masterj._impl        
+        self.ts.returnObject={}
         self.assertRaises(BackendError,
                           self.db._resubmit,
-                          server())
+                          self.ts)
+#                          server())
 
 ##         self.db._parent = j._impl        
 ##         self.assertRaises(BackendError,
@@ -254,31 +293,36 @@ print result
         self.assertNotEqual([j.status for j in self.db.getJobObject().subjobs],['submitted','submitted'], 'subjobs not supposed to reset')
 
     def test_kill(self):
-        class errorserver:
-            def execute(this, dirac_cmd):
-                return {}
-        setattr(DiracBase,'dirac_ganga_server',errorserver())
+#        class errorserver:
+#            def execute(this, dirac_cmd):
+#                return {}
+#        setattr(DiracBase,'dirac_ganga_server',errorserver())
+        self.ts.returnObject={}
         self.db.id=1234
 
         from Ganga.Core import BackendError
         self.assertRaises(BackendError,
                           self.db.kill)
 
-        class server:
-            def execute(this, dirac_cmd):
-                self.assertEqual(dirac_cmd,'kill(1234)','command not right')
-                return {'OK': True}
-        setattr(DiracBase,'dirac_ganga_server',server())
+#        class server:
+#            def execute(this, dirac_cmd):
+#                self.assertEqual(dirac_cmd,'kill(1234)','command not right')
+#                return {'OK': True}
+#        setattr(DiracBase,'dirac_ganga_server',server())
+        self.ts.toCheck={'command':'kill(1234)'}
+        self.ts.returnObject={'OK': True}
         self.assertTrue(self.db.kill(),'didn\'t run properly')
 
     def test_peek(self):
-        class server:
-            def execute(this, dirac_cmd):
-                self.assertEqual(dirac_cmd,'peek(1234)')
-                return {'OK':True,'Value':True}
-        setattr(DiracBase,'dirac_ganga_server',server())
+#        class server:
+#            def execute(this, dirac_cmd):
+#                self.assertEqual(dirac_cmd,'peek(1234)')
+#                return {'OK':True,'Value':True}
+#        setattr(DiracBase,'dirac_ganga_server',server())
 
         self.db.id=1234
+        self.ts.toCheck={'command':'peek(1234)'}
+        self.ts.returnObject={'OK':True,'Value':True}
         self.db.peek()
 
     def test_getOutputSandbox(self):
@@ -287,24 +331,27 @@ print result
         self.db.id=1234
 
         dir = j._impl.getOutputWorkspace().getPath()
-        class server:
-            def execute(this, dirac_cmd):
-                self.assertEqual(dirac_cmd,
-                                 "getOutputSandbox(1234,'%s')"%dir,
-                                 'command not right')
-                return {'OK':True}
-        setattr(DiracBase,'dirac_ganga_server',server())
-
+#        class server:
+#            def execute(this, dirac_cmd):
+#                self.assertEqual(dirac_cmd,
+#                                 "getOutputSandbox(1234,'%s')"%dir,
+#                                 'command not right')
+#                return {'OK':True}
+#        setattr(DiracBase,'dirac_ganga_server',server())
+        self.ts.toCheck={'command': "getOutputSandbox(1234,'%s')"%dir}
+        self.ts.returnObject={'OK':True}
         self.assertTrue(self.db.getOutputSandbox(),'didn\'t run')
 
         dir = 'test_dir'
         self.assertTrue(self.db.getOutputSandbox(dir),'didn\'t run with modified dir')
 
-        class errorserver:
-            def execute(this, dirac_cmd):
-                return {}
-        setattr(DiracBase,'dirac_ganga_server',errorserver())
-        
+#        class errorserver:
+#            def execute(this, dirac_cmd):
+#                return {}
+#        setattr(DiracBase,'dirac_ganga_server',errorserver())
+ 
+        self.toCheck={}
+        self.returnObject={}
         self.assertFalse(self.db.getOutputSandbox(dir),'didn\'t fail gracefully')
 
 
@@ -315,14 +362,15 @@ print result
         names = ''
         dir   = j._impl.getOutputWorkspace().getPath()
 
-        class server:
-            def execute(this, dirac_cmd):
-                self.assertEqual(dirac_cmd,
-                                 "getOutputData(1234, '%s','%s')"%(names,dir))
-                if names =='': return {'OK':True}
-                return {'OK':True, 'Value':names+dir}
-        setattr(DiracBase,'dirac_ganga_server',server())
-
+#        class server:
+#            def execute(this, dirac_cmd):
+#                self.assertEqual(dirac_cmd,
+#                                 "getOutputData(1234, '%s','%s')"%(names,dir))
+#                if names =='': return {'OK':True}
+#                return {'OK':True, 'Value':names+dir}
+#        setattr(DiracBase,'dirac_ganga_server',server())
+        self.ts.toCheck={'command': "getOutputData(1234, '%s','%s')"%(names,dir)}
+        self.ts.returnObject={'OK':True}
         self.assertEqual(self.db.getOutputData(),[],'didn\'t run properly')
         self.assertEqual(self.db.getOutputData(dir, names),[],'should product same as default')
         

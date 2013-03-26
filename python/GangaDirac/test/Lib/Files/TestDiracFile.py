@@ -251,18 +251,11 @@ class TestDiracFile(GangaGPITestCase):
         setattr(WorkerThreadPool, "execute", no_lfn_execute)
         self.assertEqual(self.df.get(), ret)
 
-    def test_tmp(self):
-        import os
-        #from GangaDirac.Lib.Backends.DiracBase import ganga_dirac_server
-        #print "HERE", ganga_dirac_server.__class__.__name__, dir(ganga_dirac_server)
-        self.df.localDir=os.getcwd()
-        self.ts.toCheck={'timeout':20}
-        self.assertEqual(self.df.get(),None)
+#    def test_tmp(self):
+#        import os
+#        #from GangaDirac.Lib.Backends.DiracBase import ganga_dirac_server
+#        #print "HERE", ganga_dirac_server.__class__.__name__, dir(ganga_dirac_server)
+#        self.df.localDir=os.getcwd()
+#        self.ts.toCheck={'timeout':20}
+#        self.assertEqual(self.df.get(),None)
 
-    def test__auto_remove_new(self):
-        self.ts.toCheck={'command'  : 'removeFile("lfn")',
-                         'shell'    : False,
-                         'priority' : 7}
-        self.assertEqual(self.df._auto_remove(), None)
-        self.df.lfn=''
-        self.assertEqual(self.df._auto_remove(), None)
