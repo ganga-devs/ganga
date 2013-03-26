@@ -31,7 +31,7 @@ class Manual:
          "Exceptions", "Miscellaneous Classes", "Functions", "Objects" ] 
 
       #for Ganga and GangaLHCb tutorial remove Datasets category, otherwise it crashes  
-      if config["Configuration"]["RUNTIME_PATH"] == 'Ganga:' or config["Configuration"]["RUNTIME_PATH"] == 'GangaLHCb:':
+      if (config["Configuration"]["RUNTIME_PATH"] == 'Ganga:' or config["Configuration"]["RUNTIME_PATH"].find('GangaLHCb') > -1):
          self.categoryList.remove("Datasets")
          self.categoryList.append("Outputfiles")
 
