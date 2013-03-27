@@ -67,6 +67,9 @@ GANGA_ACCOUNT_TEST = [('gangage', 'test_ganga_generic'),('gangaat', 'test_ganga_
 #generation config files
 GANGA_ACCOUNT_CONFIG = {'gangage':'generate_generic_config_files', 'gangaat':'generate_atlas_config_files', 'gangalb':'generate_lhcb_config_files' }
 
+#generation manuals
+GANGA_ACCOUNT_MANUAL = {'gangage':'generate_generic_manual', 'gangaat':'generate_atlas_manual', 'gangalb':'generate_lhcb_manual' }
+
 GANGA_RUNTIME_PACKAGES = {}
 
 for pkg,account in GANGA_ACCOUNTS:
@@ -724,7 +727,21 @@ class ReleaseCommand:
             except Exception,e:
                 print 'Warning! Cannot write %s. %s' % (newfile,str(e))
 
-        
+class GenerateManuals:
+    "GENERATE LHCB MANUAL: generate LHCb reference manuals"
+    def do(self):
+
+        for x in GANGA_ACCOUNTS:
+            if not x[0] in ['GangaLHCb']:
+                continue
+
+
+            print 'login to %s@lxplus and run this command:'%x[1]
+            print 'sh ~/test/%s.sh %s'%(GANGA_ACCOUNT_MANUAL[x[1]], version.replace('.',' '))
+            print
+            
+        raw_input("When you have executed the command, press Enter to continue ...")
+
         
 class PrepareNextRelease:
     "PREPARE NEXT development cycle: prepare tags dir for the next releases"
@@ -796,7 +813,7 @@ def _setlib():
 
 _setlib()
 
-commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, SetVerCommand, ReleaseCommand, PrepareNextRelease, ChangeReleaseManager, QuitCommand]
+commands = [ShowConfig,CollectTags, PrereleaseCommand, GenerateConfigFilesCommand, CommitConfigFilesCommand, PretestCommand, TestReportCommand, TagCommand, SetVerCommand, ReleaseCommand, GenerateManuals, PrepareNextRelease, ChangeReleaseManager, QuitCommand]
 
 ShowConfig().do()
 
