@@ -17,5 +17,5 @@ class TestCMTscript(GangaGPITestCase):
     def test_CMTscript(self):
         cmd = "###CMT### -h"
         dv = DaVinci()
-        assert CMTscript(dv._impl,cmd), 'write permisions error'
+        assert CMTscript(dv._impl,cmd)==0, 'write permisions error'
 
