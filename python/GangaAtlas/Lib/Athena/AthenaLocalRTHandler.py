@@ -174,7 +174,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         if output_location and job.outputdata and job.outputdata._name!='DQ2OutputDataset':
 
             if job._getRoot().subjobs:
-                if config['SingleDirForLocalOutput']:
+                if config['NoSubDirsAtAllForLocalOutput']:
+                    output_location = output_location
+                elif config['SingleDirForLocalOutput']:
                     output_location = os.path.join(output_location, "%d" % (job._getRoot().id))
                 elif config['IndividualSubjobDirsForLocalOutput']:
                     output_location = os.path.join(output_location, "%d/%d" % (job._getRoot().id, job.id))
@@ -187,7 +189,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 if re.findall(pat,output_location):
                     output_location = re.sub(pat, '', output_location)
 
-                    if config['SingleDirForLocalOutput']:
+                    if config['NoSubDirsAtAllForLocalOutput']:
+                        output_location = output_location
+                    elif config['SingleDirForLocalOutput']:
                         output_location = os.path.join(output_location, "%d" % (job._getRoot().id))
                     elif config['IndividualSubjobDirsForLocalOutput']:
                         output_location = os.path.join(output_location, "%d/%d" % (job._getRoot().id, job.id))
@@ -311,7 +315,7 @@ class AthenaLocalRTHandler(IRuntimeHandler):
         environment['EOS_COMMAND_PATH'] = config['PathToEOSBinary']
 
         # flag for single output dir
-        if config['SingleDirForLocalOutput'] and job._getParent():
+        if (config['SingleDirForLocalOutput'] or config['NoSubDirsAtAllForLocalOutput']) and job._getParent():
             environment['SINGLE_OUTPUT_DIR'] = jid
 
             # change the filename

@@ -997,6 +997,16 @@ run_athena () {
 
 	    if [ ! -z $ATLAS_RUN_DIR ]
                 then
+
+		# copy any output back to the run dir
+		echo "Copying output to ${old_run_dir}..."
+		cat $old_run_dir/output_files | while read filespec; do
+		    for file in $filespec; do
+			echo cp $file $old_run_dir/$file
+			cp $file $old_run_dir/$file
+		    done
+		done
+		# revert the dir back
 		echo "Reverting dir to ${old_run_dir}..."
                 cd $old_run_dir
                 pwd
