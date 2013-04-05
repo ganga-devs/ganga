@@ -431,14 +431,28 @@ class Job(GangaObject):
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
 
+    def validateOutputfilesOnSubmit(self):
+
+        for outputfile in self.outputfiles:
+            if outputfile.__class__.__name__ == 'MassStorageFile':
+                (validOutputFiles, errorMsg) = outputfile.validate()            
+
+                if validOutputFiles == False:
+                    return (validOutputFiles, errorMsg)
+
+        return  (True, '')
+
     def outputFilesFailures(self):
         
         postprocessFailure = False
 
         for outputfile in self.outputfiles:
-            for subfile in outputfile.subfiles:
-                if (hasattr(subfile, 'failureReason') and subfile.failureReason != ''): 
-                    postprocessFailure = True
+            if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''): 
+                postprocessFailure = True
+            else:
+                for subfile in outputfile.subfiles:
+                    if (hasattr(subfile, 'failureReason') and subfile.failureReason != ''): 
+                        postprocessFailure = True
 
         return postprocessFailure
         
@@ -917,6 +931,11 @@ class Job(GangaObject):
                 else:
                     rjobs = [self]
 
+            (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
+        
+            if not validOutputFiles:
+                raise JobError(errorMsg)
+
             # configure the application of each subjob
             appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
             appconfig = (appmasterconfig,appsubconfig)
@@ -1249,6 +1268,10 @@ class Job(GangaObject):
             msg = "job %s: cannot change backend when auto_resubmit=True. This is most likely an internal implementation problem."%fqid
             logger.error(msg)
             raise JobError(msg)
+
+        (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
+        if not validOutputFiles:
+            raise JobError(errorMsg)
 
         #the status check is disabled when auto_resubmit
         if not self.status in ['completed','failed','killed'] and not auto_resubmit:
