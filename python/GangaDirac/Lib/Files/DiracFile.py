@@ -7,8 +7,9 @@ from Ganga.GPIDev.Lib.Job.Job                 import Job
 from Ganga.Core.exceptions                    import GangaException
 from Ganga.Utility.files                      import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv
-from GangaDirac.Lib.Utilities.smartsubprocess import runcmd
-from GangaDirac.Lib.Backends.DiracBase        import dirac_ganga_server
+#from GangaDirac.Lib.Utilities.smartsubprocess import runcmd
+from GangaDirac.BOOT                          import dirac_ganga_server
+#from GangaDirac.Lib.Backends.DiracBase        import dirac_ganga_server
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
 configDirac = getConfig('DIRAC')
@@ -31,7 +32,7 @@ class DiracFile(IOutputFile):
     File stored on a DIRAC storage element
     """
     _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
-                                     'localDir'      : SimpleItem(defvalue="",copyable=1,
+                                     'localDir'      : SimpleItem(defvalue=None,copyable=1,typelist=['str','type(None)'],
                                                                   doc='local dir where the file is stored, used from get and put methods'),
                                      'locations'     : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,
                                                                   doc="list of SE locations where the outputfiles are uploaded"),
@@ -59,10 +60,10 @@ class DiracFile(IOutputFile):
         """
         super(DiracFile, self).__init__()
         self.namePattern = namePattern
-        self.lfn         = lfn
         self.localDir    = localDir
+        self.lfn         = lfn
         self.locations   = []
-##COULD MAKE os.getcwd THE DEFAULT LOCALDIR
+
     def __construct__(self,args):
         if   len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
@@ -87,7 +88,7 @@ class DiracFile(IOutputFile):
             r.lfn=''
             r.guid=''
             r.locations=[]
-            r.localDir=''
+            r.localDir=None
             r.failureReason=''
         return r
 
@@ -215,11 +216,13 @@ class DiracFile(IOutputFile):
         Retrieves locally the file matching this DiracFile object pattern
         """
         to_location = self.localDir
-        if not os.path.isdir(self.localDir):
+        if self.localDir is None:
+            to_location = os.getcwd()
             if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
                 to_location = self.getJobObject().outputdir
-            else:
-                raise GangaException('"%s" is not a valid directory... Please set the localDir attribute' % self.localDir)
+
+        if not os.path.isdir(to_location):
+            raise GangaException('"%s" is not a valid directory... Please set the localDir attribute to a valid directory' % self.localDir)
 
         if self.lfn == "":
             raise GangaException('Can\'t download a file without an LFN.')
@@ -278,8 +281,11 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t upload a file without a local file name.')
 
         sourceDir = self.localDir
-        if self._parent != None and os.path.isdir(self.getJobObject().outputdir): # attached to a job, use the joboutputdir
-            sourceDir = self.getJobObject().outputdir
+        if self.localDir is None:
+            sourceDir = os.getcwd()
+            if self._parent != None and os.path.isdir(self.getJobObject().outputdir): # attached to a job, use the joboutputdir
+                sourceDir = self.getJobObject().outputdir
+
         if not os.path.isdir(sourceDir):
             raise GangaException('localDir attribute is not a valid dir, don\'t know from which dir to take the file' )
 

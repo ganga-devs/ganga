@@ -5,6 +5,8 @@ from Ganga.Core                            import BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from GangaLHCb.Lib.LHCbDataset.LogicalFile import LogicalFile
 from Ganga.GPIDev.Base.Proxy               import GPIProxyObjectFactory
+#from GangaDirac.Lib.Backends.DiracBase     import dirac_ganga_server
+from GangaDirac.BOOT                       import dirac_ganga_server
 
 
 class Dirac(DiracBase):
@@ -42,7 +44,8 @@ class Dirac(DiracBase):
 
      def checkSites(self):
           cmd = 'checkSites()'
-          result = Dirac.dirac_ganga_server.execute(cmd)
+          result = dirac_ganga_server.execute(cmd)
+#          result = Dirac.dirac_ganga_server.execute(cmd)
           if not result_ok(result):
                logger.warning('Could not obtain site info: %s' % str(result))
                return
@@ -50,7 +53,8 @@ class Dirac(DiracBase):
 
      def checkTier1s(self):
           cmd = 'checkTier1s()'
-          result = Dirac.dirac_ganga_server.execute(cmd)
+          result = dirac_ganga_server.execute(cmd)
+#          result = Dirac.dirac_ganga_server.execute(cmd)
           if not result_ok(result):
                logger.warning('Could not obtain Tier-1 info: %s' % str(result))
                return

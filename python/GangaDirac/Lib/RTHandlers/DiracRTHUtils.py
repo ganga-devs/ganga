@@ -89,6 +89,8 @@ def dirac_ouputdata(app):
 def diracAPI_script_template():
     script_template = """
 # dirac job created by ganga
+from DIRAC.Core.Base.Script import parseCommandLine
+parseCommandLine()
 ###DIRAC_IMPORT###
 ###DIRAC_JOB_IMPORT###
 dirac = ###DIRAC_OBJECT###

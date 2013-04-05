@@ -8,14 +8,15 @@ from Ganga.GPIDev.Schema                     import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend          import IBackend
 from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
-from GangaDirac.Lib.Server.WorkerThreadPool  import WorkerThreadPool
+#from GangaDirac.Lib.Server.WorkerThreadPool  import WorkerThreadPool
+from GangaDirac.BOOT                         import dirac_ganga_server, dirac_monitoring_server
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
-dirac_ganga_server      = WorkerThreadPool()
-dirac_monitoring_server = WorkerThreadPool()
+#dirac_ganga_server      = WorkerThreadPool()
+#dirac_monitoring_server = WorkerThreadPool()
 
 class DiracBase(IBackend):
     """The backend that submits jobs to the Grid via DIRAC.
@@ -543,11 +544,14 @@ class DiracBase(IBackend):
  
             if updated_status == 'failed':
                 DiracBase._getStateTime(job,'failed')
+                if job.status in ['removed', 'killed'] or (job.master and job.master in ['removed','killed']): continue #user changed it under us
                 job.updateStatus('failed')
+                if job.master: job.master.updateMasterJobStatus()
                 if getConfig('DIRAC')['failed_sandbox_download']:
                     dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
                                                                 priority=7)
             elif updated_status == 'completed':
+                ##################################################
                 def job_finalisation(result, job):
                     cmd = 'normCPUTime(%d)' % job.backend.id
                     job.backend.normCPUTime = dirac_monitoring_server.execute(cmd)
@@ -555,7 +559,6 @@ class DiracBase(IBackend):
 
                     wildcards = [f.namePattern for f in job.outputfiles if regex.search(f.namePattern) is not None]
 
-                    #if not os.path.exists(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName'])):##REMOVE this check before commiting
                     with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
                         for file_name, info in file_info_dict.iteritems():
                             valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
@@ -573,17 +576,23 @@ class DiracBase(IBackend):
                     if not result_ok(result):
                         logger.warning('Problem retrieving outputsandbox: %s' % str(result))
                         DiracBase._getStateTime(job,'failed')
+                        if job.status in ['removed', 'killed'] or (job.master and job.master in ['removed','killed']): return #user changed it under us
                         job.updateStatus('failed')
+                        if job.master: job.master.updateMasterJobStatus()
                         return
                         ## This should no-longer be the case but keep it around so know the command if ppl need it
 #                        if job.outputdata:
 #                            r = DiracBase.dirac_monitoring_server.execute('print getOutputDataLFNs(%d)' % job.backend.id,
 #                                                                          priority=5)
                     DiracBase._getStateTime(job,'completed')
+                    if job.status in ['removed', 'killed'] or (job.master and job.master in ['removed','killed']): return #user changed it under us
                     job.updateStatus('completed')
                     if job.master: job.master.updateMasterJobStatus()
+                ##################################################
                 DiracBase._getStateTime(job,'completing')
+                if job.status in ['removed', 'killed'] or (job.master and job.master in ['removed','killed']): continue #user changed it under us
                 job.updateStatus('completing')
+                if job.master: job.master.updateMasterJobStatus()
                 dirac_monitoring_server.execute_nonblocking("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()),
                                                             priority=5,
                                                             callback_func=job_finalisation,
@@ -591,8 +600,10 @@ class DiracBase(IBackend):
             else:
                 #updated_status = thread_handled_states[updated_status]
                 DiracBase._getStateTime(job,updated_status)
+                if job.status in ['removed', 'killed'] or (job.master and job.master in ['removed','killed']): continue #user changed it under us
                 job.updateStatus(updated_status)
-                  
+                if job.master: job.master.updateMasterJobStatus()
+  
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
     def execAPI(cmd,timeout=getConfig('DIRAC')['Timeout']):

@@ -136,7 +136,8 @@ def getOutputDataLFNs(id): ## could shrink this with dirac.getJobOutputLFNs from
         #now find out about the outputdata
         if parameters.has_key('UploadedOutputData'):
             lfn_list = parameters['UploadedOutputData']
-            lfns = lfn_list.split(',')                
+            import re
+            lfns = re.split(',\s*',lfn_list)
             if sandbox is not None and sandbox in lfns:
                 lfns.remove(sandbox)
             ok = True

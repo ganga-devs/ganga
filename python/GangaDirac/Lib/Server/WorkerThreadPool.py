@@ -7,7 +7,7 @@ from Ganga.Utility.Config import getConfig
 import collections, Queue, threading
 import os, subprocess, types, time, threading
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
-from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async, CommandOutput
+#from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async, CommandOutput
 
 logger = getLogger()
 #default_timeout  = getConfig('DIRAC')['Timeout']
@@ -56,47 +56,51 @@ class WorkerThreadPool(object):
         # <type 'exceptions.AttributeError'>: 'NoneType' object has no attribute 'Empty'
         # im hoping that importing within the thread will avoid this.
         import Queue
-        def tearDown():
-            #unregister as a working thread bcoz free
-            GangaThreadPool.getInstance().delServiceThread(thread)
-            thread._command = 'idle'
-            thread._timeout = 'N/A'
-            self.__queue.task_done()
 
         while not thread.should_stop():
             try:
                 item = self.__queue.get(True, 0.05)
             except Queue.Empty: continue #wait 0.05 sec then loop again to give shutdown a chance
-            
+
             #regster as a working thread
             GangaThreadPool.getInstance().addServiceThread(thread)
+
             if isinstance(item.command_input, FunctionInput):
                 thread._command = item.command_input.function.__name__
-                try:
-                    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)
-                except Exception, e:
-                    logger.error('Exception raised in function of %s: %s'%(thread.name,e))
-                    tearDown()
-                    continue
             else:
                 thread._command = item.command_input.command
                 thread._timeout = item.command_input.timeout
-                try:
+
+            try:
+                if isinstance(item.command_input, FunctionInput):
+                    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)
+                else:
                     result = self.execute(*item.command_input)
-                except Exception, e:
-                    logger.error('Exception raised in command of %s: %s'%(thread.name,e))
-                    tearDown()
-                    continue
-
-            if item.callback_func is not None:
-                thread._command = item.callback_func.__name__
+            except Exception, e:
+                logger.error("Exception raised executing '%s' in Thread '%s': %s"%(thread._command, thread.name, e))
+#                if item.fallback_func is not None:
+#                    thread._command = item.fallback_func.__name__
+#                    thread._timeout = 'N/A'
+#                    try:
+#                        item.fallback_func()
+#                    except Exception, x:
+#                        logger.error("Exception raised in fallback function of Thread '%s': %s"%(thread.name, x))
+            else:
+                if item.callback_func is not None:
+                    thread._command = item.callback_func.__name__
+                    thread._timeout = 'N/A'
+                    try:
+                        item.callback_func(result, *item.args, **item.kwds)
+                    except Exception, e:
+                        logger.error("Exception raised in callback_func '%s' in Thread '%s': %s"%(thread._command, thread.name, e))
+            finally:
+                # unregister as a working thread bcoz free
+                GangaThreadPool.getInstance().delServiceThread(thread)
+                thread._command = 'idle'
                 thread._timeout = 'N/A'
-                try:
-                    item.callback_func(result, *item.args, **item.kwds)
-                except Exception, e:
-                    logger.error('Exception raised in callback_func of %s: %s'%(thread.name,e))
+                self.__queue.task_done()
 
-            tearDown()
+            
     def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False):
         """
         Execute a command on the local DIRAC server.

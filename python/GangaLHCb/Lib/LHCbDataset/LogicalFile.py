@@ -82,10 +82,14 @@ class LogicalFile(GangaObject):
         'Downloads the LFN to dir (default is current directory).'
         dir = expandfilename(dir)
         dir = os.path.abspath(dir)
-        cmd = 'getFile("%s","%s")' % (self.name,dir)
-        result = get_result(cmd,'Problem during download','Download error.')
-        from PhysicalFile import PhysicalFile
-        return GPIProxyObjectFactory(PhysicalFile(name=result['Value']))
+        logger.error("LogicalFile.download method is deprecated as this functionality should be provided by DiracFile")
+        logger.error("To get a file based on this LFN please use the following:")
+        logger.error("     DiracFile(lfn='%s',localDir='%s').get()"%(self.name, dir))
+        return
+#        cmd = 'getFile("%s","%s")' % (self.name,dir)
+#        result = get_result(cmd,'Problem during download','Download error.')
+#        from PhysicalFile import PhysicalFile
+#        return GPIProxyObjectFactory(PhysicalFile(name=result['Value']))
 
     def remove(self):
         'Removes the LFN (and all replicas) from the LFC.'
