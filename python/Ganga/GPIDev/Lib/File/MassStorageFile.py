@@ -23,6 +23,7 @@ class MassStorageFile(IOutputFile):
                                     'localDir': SimpleItem(defvalue="",copyable=1,doc='local dir where the file is stored, used from get and put methods'),        
                                     'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
                                     'locations' : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+                                    'outputfilenameformat' : SimpleItem(defvalue=None, typelist=['str', 'type(None)'],protected=0,doc="keyword path to where the output should be uploaded, i.e. /some/path/here/{jid}/{sjid}/{fname}, if this field is not set, the output will go in {jid}/{sjid}/{fname} or in {jid}/{fname} depending on whether the job is split or not"),
                                     'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                     'failureReason' : SimpleItem(defvalue="",copyable=1,doc='reason for the upload failure'),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
@@ -91,6 +92,7 @@ class MassStorageFile(IOutputFile):
                 else:
                     d=MassStorageFile(namePattern=name)
                     d.compressed = mass_file.compressed
+                    d.outputfilenameformat = mass_file.outputfilenameformat
                     mass_file.subfiles.append(GPIProxyObjectFactory(d))
                     mass_line_processor(line, d)
             else:
@@ -155,6 +157,13 @@ class MassStorageFile(IOutputFile):
                 return
             else:
                 sourceDir = self.localDir
+
+                (result, message) = self.validate()
+
+                if result == False:
+                    logger.warning(message)
+                    return
+                    
         else:
             job = self.getJobObject()
             sourceDir = job.outputdir
@@ -171,6 +180,7 @@ class MassStorageFile(IOutputFile):
         ls_cmd = massStorageConfig['ls_cmd']
         massStoragePath = massStorageConfig['path']
 
+        #create the last directory (if not exist) from the config path
         pathToDirName = os.path.dirname(massStoragePath)
         dirName = os.path.basename(massStoragePath)
 
@@ -191,6 +201,11 @@ class MassStorageFile(IOutputFile):
                 self.handleUploadFailure(mystderr)
                 return
 
+        #the folder part of self.outputfilenameformat
+        folderStructure = ''
+        #the file name part of self.outputfilenameformat
+        filenameStructure = ''
+
         if self._parent != None:
             jobfqid = self.getJobObject().fqid
         
@@ -200,58 +215,51 @@ class MassStorageFile(IOutputFile):
             if (jobfqid.find('.') > -1):
                 jobid = jobfqid.split('.')[0]
                 subjobid = jobfqid.split('.')[1]
-        
-            pathToDirName = os.path.join(pathToDirName, dirName)
-            dirName = jobid
+            
+            if self.outputfilenameformat == None:
+                filenameStructure = '{fname}'
+                #create jid/sjid directories
+                folderStructure = jobid
+                if subjobid != '':
+                    folderStructure = os.path.join(jobid, subjobid)
+                    
+            else:
+                filenameStructure = os.path.basename(self.outputfilenameformat)
+                filenameStructure = filenameStructure.replace('{jid}', jobid)
 
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
+                folderStructure = os.path.dirname(self.outputfilenameformat)
+                folderStructure = folderStructure.replace('{jid}', jobid)
+
+                if subjobid != '':
+                    filenameStructure = filenameStructure.replace('{sjid}', subjobid)
+                    folderStructure = folderStructure.replace('{sjid}', subjobid)
+        else:
+            if self.outputfilenameformat != None:
+                folderStructure = os.path.dirname(self.outputfilenameformat)
+                filenameStructure = os.path.basename(self.outputfilenameformat)
+            else:
+                filenameStructure = '{fname}'
+        
+        #create the folder structure
+        if folderStructure != '':
+                
+            folderStructure = folderStructure.strip('/')
+            massStoragePath = os.path.join(massStoragePath, folderStructure)
+            command = '%s -p %s' % (mkdir_cmd, massStoragePath)
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(command)
             if exitcode != 0:
                 self.handleUploadFailure(mystderr)
                 return
 
-            directoryExists = False 
-            for directory in mystdout.split('\n'):
-                if directory.strip() == dirName:
-                    directoryExists = True
-                    break
-
-            if not directoryExists:
-                massStoragePath = os.path.join(pathToDirName, dirName)
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-                if exitcode != 0:
-                    self.handleUploadFailure(mystderr)
-                    return
-
-            if subjobid != '':
-                pathToDirName = os.path.join(pathToDirName, dirName)
-                dirName = subjobid
-
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
-                if exitcode != 0:
-                    self.handleUploadFailure(mystderr)
-                    return
-
-                directoryExists = False 
-                for directory in mystdout.split('\n'):
-                    if directory.strip() == dirName:
-                        directoryExists = True
-                        break
-
-                if not directoryExists:
-                    massStoragePath = os.path.join(pathToDirName, dirName)
-                    (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
-                    if exitcode != 0:
-                        self.handleUploadFailure(mystderr)
-                        return
-            
+        #here filenameStructure has replaced jid and sjid if any, and only not replaced keyword is fname    
         fileName = self.namePattern
         if self.compressed:
             fileName = '%s.gz' % self.namePattern 
 
-        #here
         if regex.search(fileName) is not None:      
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
+                finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
 
                 d=MassStorageFile(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
@@ -260,7 +268,7 @@ class MassStorageFile(IOutputFile):
                     self.handleUploadFailure(mystderr)
                 else:
                     logger.info('%s successfully uploaded to mass storage' % currentFile)              
-                    d.locations = os.path.join(massStoragePath, os.path.basename(currentFile))
+                    d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
 
                     #remove file from output dir if this object is attached to a job
                     if self._parent != None:
@@ -269,18 +277,67 @@ class MassStorageFile(IOutputFile):
                 self.subfiles.append(GPIProxyObjectFactory(d))
         else:
             currentFile = os.path.join(sourceDir, fileName)
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, massStoragePath))
+            finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr)
             else:
                 logger.info('%s successfully uploaded to mass storage' % currentFile)              
-                location = os.path.join(massStoragePath, os.path.basename(currentFile))
+                location = os.path.join(massStoragePath, os.path.basename(finalFilename))
                 if location not in self.locations:
                     self.locations.append(location)         
 
                 #remove file from output dir if this object is attached to a job
                 if self._parent != None:
                     os.system('rm %s' % os.path.join(sourceDir, currentFile))
+
+    def validate(self):
+        
+        #if the user has set outputfilenameformat, validate for presence of
+        #jid, sjid and fname keywords depending on job type - split or non-split
+        if self.outputfilenameformat != None:
+
+            searchFor = ['{fname}']
+            isJob = False
+            isSplitJob = False
+
+            if self._parent != None:
+
+                isJob = True
+                
+                searchFor.append('{jid}')    
+
+                if (self.getJobObject().splitter != None):
+
+                    isSplitJob = True
+                    searchFor.append('{sjid}')    
+
+            missingKeywords = []
+            
+            for item in searchFor:
+                if self.outputfilenameformat.find(item) == -1:
+                    missingKeywords.append(item)
+
+            if len(missingKeywords):
+                return (False, 'Error in MassStorageFile.outputfilenameformat field : missing keywords %s ' % ','.join(missingKeywords))
+                
+            if isSplitJob == False and self.outputfilenameformat.find('{sjid}') > -1:
+                return (False, 'Error in MassStorageFile.outputfilenameformat field :  job is non-split, but {\'sjid\'} keyword found')
+
+            if isJob == False and self.outputfilenameformat.find('{sjid}') > -1:
+                return (False, 'Error in MassStorageFile.outputfilenameformat field :  no parent job, but {\'sjid\'} keyword found')
+
+            if isJob == False and self.outputfilenameformat.find('{jid}') > -1:
+                return (False, 'Error in MassStorageFile.outputfilenameformat field :  no parent job, but {\'jid\'} keyword found')
+
+            invalidUnixChars = ['"', ' ']
+            test = self.outputfilenameformat.replace('{jid}', 'a').replace('{sjid}', 'b').replace('{fname}', 'c')
+            
+            for invalidUnixChar in invalidUnixChars:
+                if test.find(invalidUnixChar) > -1:
+                    return (False, 'Error in MassStorageFile.outputfilenameformat field :  invalid char %s found' % invalidUnixChar)    
+
+        return (True, '')
 
     def handleUploadFailure(self, error):
             
@@ -301,7 +358,12 @@ class MassStorageFile(IOutputFile):
         massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']  
 
         for outputFile in outputFiles:
-            massStorageCommands.append('massstorage %s %s %s %s %s' % (outputFile.namePattern , massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
+
+            outputfilenameformat = 'None'
+            if outputFile.outputfilenameformat != None and outputFile.outputfilenameformat != '':
+                outputfilenameformat = outputFile.outputfilenameformat
+
+            massStorageCommands.append('massstorage %s %s %s %s %s %s' % (outputFile.namePattern , outputfilenameformat, massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
 
                 
         script = """\n
@@ -326,10 +388,11 @@ class MassStorageFile(IOutputFile):
 ###INDENT###    massStorageList = massStorageLine.split(' ')
 
 ###INDENT###    filenameWildChar = massStorageList[1]
-###INDENT###    cm_mkdir = massStorageList[2]
-###INDENT###    cm_cp = massStorageList[3]
-###INDENT###    cm_ls = massStorageList[4]
-###INDENT###    path = massStorageList[5]
+###INDENT###    outputfilenameformat = massStorageList[2]
+###INDENT###    cm_mkdir = massStorageList[3]
+###INDENT###    cm_cp = massStorageList[4]
+###INDENT###    cm_ls = massStorageList[5]
+###INDENT###    path = massStorageList[6]
 
 ###INDENT###    pathToDirName = os.path.dirname(path)
 ###INDENT###    dirName = os.path.basename(path)
@@ -351,51 +414,40 @@ class MassStorageFile(IOutputFile):
 ###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
-   
-###INDENT###    pathToDirName = os.path.join(pathToDirName, dirName)
-###INDENT###    dirName = '###JOBDIR###'
 
-###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
-###INDENT###    if exitcode != 0:
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###        continue
-
-###INDENT###    directoryExists = False 
-###INDENT###    for directory in mystdout.split('\\n'):
-###INDENT###        if directory.strip() == dirName:
-###INDENT###            directoryExists = True
-###INDENT###            break
-
-###INDENT###    if not directoryExists:
-###INDENT###        path = os.path.join(pathToDirName, dirName)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
+###INDENT###    folderStructure = ''
+###INDENT###    filenameStructure = ''
+###INDENT###
+###INDENT###    jobid = '###JOBDIR###'
+###INDENT###    subjobid = '###SUBJOBDIR###'
+###INDENT###        
+###INDENT###    if outputfilenameformat == 'None':
+###INDENT###        filenameStructure = '{fname}'
+###INDENT###        folderStructure = jobid
+###INDENT###        if subjobid != '':
+###INDENT###            folderStructure = os.path.join(jobid, subjobid)
+###INDENT###                
+###INDENT###    else:
+###INDENT###        filenameStructure = os.path.basename(outputfilenameformat)
+###INDENT###        filenameStructure = filenameStructure.replace('{jid}', jobid)
+###INDENT###
+###INDENT###        folderStructure = os.path.dirname(outputfilenameformat)
+###INDENT###        folderStructure = folderStructure.replace('{jid}', jobid)
+###INDENT###
+###INDENT###        if subjobid != '':
+###INDENT###            filenameStructure = filenameStructure.replace('{sjid}', subjobid)
+###INDENT###            folderStructure = folderStructure.replace('{sjid}', subjobid)
+###INDENT###
+###INDENT###    if folderStructure != '':               
+###INDENT###        folderStructure = folderStructure.strip('/')
+###INDENT###        path = os.path.join(path, folderStructure)
+###INDENT###        command = '%s -p %s' % (cm_mkdir, path)
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS(command)
 ###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+###INDENT###            printError('Error while executing %s  command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % command + os.linesep + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###            continue
 
-###INDENT###    if '###SUBJOBDIR###' != '':
-###INDENT###        pathToDirName = os.path.join(pathToDirName, dirName)
-###INDENT###        dirName = '###SUBJOBDIR###'
-
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
-###INDENT###        if exitcode != 0:
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###            continue
-
-###INDENT###        directoryExists = False 
-###INDENT###        for directory in mystdout.split('\\n'):
-###INDENT###            if directory.strip() == dirName:
-###INDENT###                directoryExists = True
-###INDENT###                break
-
-###INDENT###        if not directoryExists:
-###INDENT###            path = os.path.join(pathToDirName, dirName)
-###INDENT###            (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
-###INDENT###            if exitcode != 0:
-###INDENT###                printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
-###INDENT###                ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###                continue
 
 ###INDENT###    filenameWildCharZipped = filenameWildChar
 ###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
@@ -403,12 +455,13 @@ class MassStorageFile(IOutputFile):
 
 ###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
 ###INDENT###        currentFileBaseName = os.path.basename(currentFile)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)))
+###INDENT###        finalFilename = filenameStructure.replace('{fname}', currentFileBaseName)
+###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, finalFilename)))
 ###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, currentFileBaseName)) + os.linesep ###INDENT### + mystderr)
+###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, finalFilename)) + os.linesep ###INDENT### + mystderr)
 ###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
 ###INDENT###        else:
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, currentFileBaseName)))
+###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, finalFilename)))
 ###INDENT###            #remove file from output dir
 ###INDENT###            os.system('rm %s' % currentFile)
 """
