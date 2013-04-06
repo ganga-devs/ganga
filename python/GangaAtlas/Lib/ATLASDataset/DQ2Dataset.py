@@ -566,11 +566,14 @@ class DQ2Dataset(Dataset):
 
             # Process only certain file name pattern ?
             if self.names_pattern:
+                old_contents = contents
+                contents = []
                 for expattern in self.names_pattern:
                     regex = fnmatch.translate(expattern)
                     pat = re.compile(regex, re.IGNORECASE)
-                    contents = [ (guid,lfn) for guid, lfn in contents if pat.match(lfn) ]
-
+                    contents += [ (guid,lfn) for guid, lfn in old_contents if pat.match(lfn) and not (guid,lfn) in contents ]
+                    
+                    
             # Exclude certain filenames ?
             if self.exclude_names:
                 #job = self.getJobObject()
