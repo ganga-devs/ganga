@@ -1,5 +1,19 @@
 **************************************************************************************************************
-6.0.7 (2013/4/6)
+6.0.7 (2013/4/8)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- added outputfilenameformat field in the MassStorageFile. 
+It will allow the user to configure the path to the output 
+on the mass storage, i.e it could be set to /some/path/here/{jid}/{sjid}/{fname}
+or /path/to/my/output/{fname}. {jid}, {sjid} and {fname} are 
+keyword parameters that will be replaced respectively by job id, 
+subjob id and file name. Some of these parameters are mandatory if
+the user sets outputfilenameformat to something different from the
+default 'None' value - {fname} is always mandatory, {sjid} is
+mandatory if the job is split-job.
 
 
 --------------------------------------------------------------------------------------------------------------
