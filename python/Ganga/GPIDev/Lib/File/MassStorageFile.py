@@ -303,9 +303,7 @@ class MassStorageFile(IOutputFile):
 
             if self._parent != None:
 
-                isJob = True
-                
-                searchFor.append('{jid}')    
+                isJob = True  
 
                 if (self.getJobObject().splitter != None):
 
