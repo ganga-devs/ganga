@@ -102,7 +102,8 @@ class AtlasUnit(IUnit):
                             (self.getID(), trf.getID(), task.getID(), task_container, x.__class__, x))
                fail = True 
 
-         ds_list = dq2.listDatasetsInContainer(job.outputdata.datasetname)
+         ds_list = self.getOutputDatasetList()
+
          for ds in ds_list:
             try:
                dq2.registerDatasetsInContainer(task_container, [ ds ] )
@@ -134,7 +135,7 @@ class AtlasUnit(IUnit):
             
          if containerinfo != {}:
             job = GPI.jobs(self.active_job_ids[0])
-            ds_list = dq2.listDatasetsInContainer(job.outputdata.datasetname)
+            ds_list = self.getOutputDatasetList()
             for ds in ds_list:
                
                try:
@@ -167,7 +168,7 @@ class AtlasUnit(IUnit):
             
          if containerinfo != {}:
             job = GPI.jobs(self.active_job_ids[0])
-            ds_list = dq2.listDatasetsInContainer(job.outputdata.datasetname)
+            ds_list = self.getOutputDatasetList()
             for ds in ds_list:
                
                try:
@@ -185,6 +186,27 @@ class AtlasUnit(IUnit):
 
       return not fail
 
+   def getOutputDatasetList(self):
+      """Return a list of the output datasets associated with this unit"""
+      
+      job = GPI.jobs(self.active_job_ids[0])
+      
+      if job.backend.individualOutDS:
+         # find all the individual out ds's
+         cont_list = []
+         for ds in job.subjobs(0).outputdata.output:
+            cont_name = ds.split(",")[0]
+            if not cont_name in cont_list:
+               cont_list.append(cont_name)
+
+         ds_list = []
+         for cont in cont_list:
+            ds_list += dq2.listDatasetsInContainer(cont)
+            
+         return ds_list
+      else:
+         return dq2.listDatasetsInContainer(job.outputdata.datasetname)
+      
    def createNewJob(self):
       """Create any jobs required for this unit"""      
       j = GPI.Job()
