@@ -1,0 +1,34 @@
+**************************************************************************************************************
+6.0.8 (2013/4/12)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Update to DQ2Clients 2.4.0
+* Fixed the datasets created using individualOutDS not being added 
+  to the parent container
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+Ganga 6.0.8 (GangaDirac-01-22)
+************
+
+Implementation updates.
+1) jobs which have been put on queue for completing will be reinstated to queue when ganga restarts
+as long as threads haven't picked them off.
+should have less jobs stuck in completing as a result.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 6.0.8 (GangaLHCb-24-45)
+***********
+
+General bug fixing. Switched the default value of ignore_version_check to false. This is because the
+dirac API command getSoftwareVersions is no longer relevant with software installed on cvmfs.
+
+**************************************************************************************************************
