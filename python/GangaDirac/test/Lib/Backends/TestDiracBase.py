@@ -28,8 +28,8 @@ class TestDiracBase(GangaGPITestCase):
                         self.assertEqual(fedInVars[key], value)
 
                 return this.returnObject
-            def execute_nonblocking( this,command,c_args=(),c_kwargs={},timeout=60,env=None,cwd=None,shell=False,
-                                     priority=5,callback_func=None,args =(),kwds={} ):
+            def execute_nonblocking( this,command,command_args=(),command_kwargs={},timeout=60,env=None,cwd=None,shell=False,
+                                     priority=5,callback_func=None,callback_args =(),callback_kwargs={} ):
                 import inspect
                 frame = inspect.currentframe()
                 fedInVars = inspect.getargvalues(frame).locals

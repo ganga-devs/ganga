@@ -96,9 +96,10 @@ def getXMLSummaryScript(indent=''):
 ###INDENT###            for name, method in activeSummaryItems().iteritems():
 ###INDENT###                try:
 ###INDENT###                    parsedXML.write( '%s = %s\\n' % ( name, str(method(XMLSummarydata)) ) )
-###INDENT###                except:
+###INDENT###                except Exception, e:
+###INDENT###                    import traceback
 ###INDENT###                    parsedXML.write( '%s = None\\n' % name )
-###INDENT###                    sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n' % name)
+###INDENT###                    sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n%s\\n' % (name,traceback.format_exc()))
 """
   return script.replace('###INDENT###',indent)
 

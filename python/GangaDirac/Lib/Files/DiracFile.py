@@ -55,7 +55,7 @@ class DiracFile(IOutputFile):
     _name = "DiracFile"
     _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'put']
         
-    def __init__(self, namePattern='', localDir='', lfn='', **kwds):
+    def __init__(self, namePattern='', localDir=None, lfn='', **kwds):
         """ name is the name of the output file that has to be written ...
         """
         super(DiracFile, self).__init__()

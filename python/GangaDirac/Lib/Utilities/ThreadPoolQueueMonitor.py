@@ -109,21 +109,21 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
             logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
         dirac_ganga_server.execute_nonblocking(worker_code,
-                                               c_args        = args,
-                                               c_kwargs      = kwargs,
-                                               priority      = priority)
+                                               command_args   = args,
+                                               command_kwargs = kwargs,
+                                               priority       = priority)
 #         return queue(worker_code, args, kwargs, priority)
 
     def addProcess(self, 
                    command, 
-                   timeout       = getConfig('DIRAC')['Timeout'],
-                   env           = None,
-                   cwd           = None,
-                   shell         = False,
-                   priority      = 5,
-                   callback_func = None,
-                   args          = (),
-                   kwds          = {}):
+                   timeout         = getConfig('DIRAC')['Timeout'],
+                   env             = None,
+                   cwd             = None,
+                   shell           = False,
+                   priority        = 5,
+                   callback_func   = None,
+                   callback_args   = (),
+                   callback_kwargs = {}):
         """
         Run a command asynchronously in a new process monitored by the user thread pool.
 
@@ -179,18 +179,20 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
                    kwds          = kwargs for the callback_func are given here
                                    as a dict.
         """
+        if type(command)!= str:
+            logger.error("Input command must be of type 'string'")
+            return
+
         from GangaDirac.BOOT import dirac_ganga_server
         #from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
         if env is None: # rather than have getDiracEnv() as default in arg list as looks messy in help ;-)
             env = getDiracEnv()
         dirac_ganga_server.execute_nonblocking(command,
-                                               (),
-                                               {},
-                                               timeout,
-                                               env,
-                                               cwd,
-                                               shell,
-                                               priority,
-                                               callback_func,
-                                               args,
-                                               kwds)
+                                               timeout          = timeout,
+                                               env              = env,
+                                               cwd              = cwd,
+                                               shell            = shell,
+                                               priority         = priority,
+                                               callback_func    = callback_func,
+                                               callback_args    = callback_args,
+                                               callback_kwargs  = callback_kwargs)

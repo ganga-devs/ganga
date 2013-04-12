@@ -70,11 +70,12 @@ class Dirac(DiracBase):
           return GPIProxyObjectFactory(ds)
 
 
-     def getOutputData(self,dir=None,names=None):
+     def getOutputData(self,dir=None,names=None, force=False):
           """Retrieve data stored on SE to dir (default=job output workspace).
           If names=None, then all outputdata is downloaded otherwise names should
-          be a list of files to download."""
-          downloaded_files = super(Dirac,self).getOutputData(dir, names)
+          be a list of files to download. If force is True then download performed
+          even if data already exists."""
+          downloaded_files = super(Dirac,self).getOutputData(dir, names, force)
           ds = LHCbDataset()
           for f in downloaded_files: ds.files.append(LogicalFile(f))
           return GPIProxyObjectFactory(ds)

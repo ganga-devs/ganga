@@ -28,8 +28,8 @@ class TestDiracFile(GangaGPITestCase):
                         self.assertEqual(fedInVars[key], value)
 
                 return this.returnObject
-            def execute_nonblocking( this,command,c_args=(),c_kwargs={},timeout=60,env=None,cwd=None,shell=False,
-                                     priority=5,callback_func=None,args =(),kwds={} ):
+            def execute_nonblocking( this,command,command_args=(),command_kwargs={},timeout=60,env=None,cwd=None,shell=False,
+                                     priority=5,callback_func=None,callback_args =(),callback_kwargs={} ):
                 import inspect
                 frame = inspect.currentframe()
                 fedInVars = inspect.getargvalues(frame).locals
@@ -77,7 +77,7 @@ class TestDiracFile(GangaGPITestCase):
         self.assertEqual(d1, self.df, "didn't create a copy as default action")
         self.assertNotEqual(d2, self.df, "didn't modify properly when called with Job and outputfiles")
         self.assertEqual(d2.namePattern, self.df.namePattern, 'namePattern should be unchanged')
-        self.assertEqual(d2.localDir, '', "localDir should be blanked")
+        self.assertEqual(d2.localDir, None, "localDir should be blanked")
         self.assertEqual(d2.lfn, '', "lfn should be blanked")
 
     def test__repr__(self):

@@ -32,6 +32,30 @@ def diracAPI(cmd, timeout = 60):
 
 exportToGPI('diracAPI',diracAPI,'Functions')
 
+def diracAPI_interactive(connection_attempts=5):
+    '''
+    '''
+    import os, time,inspect,traceback
+    from GangaDirac.Lib.Server.InspectionClient import runClient
+    serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)),'InspectionServer.py')
+    dirac_ganga_server.execute_nonblocking("execfile('%s')"%serverpath, timeout=None, shell=False, priority = 1)
+    
+    time.sleep(1)
+    print "\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D"
+    i=0
+    excpt = None
+    while i < connection_attempts:
+        try:
+            runClient()
+            break
+        except:
+            if i==(connection_attempts - 1):
+                excpt=traceback.format_exc()
+        finally:
+            ++i
+    return excpt
+exportToGPI('diracAPI_interactive',diracAPI_interactive,'Functions')
+
 def diracAPI_async(cmd, timeout = 120):
     '''Execute DIRAC API commands from w/in Ganga.
     '''

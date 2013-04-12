@@ -34,7 +34,7 @@ echo WorldHello > b.root
         d1.put()
         self.assertNotEqual(d1.lfn,'','lfn not set upon return')
         self.assertNotEqual(d1.guid,'','guid not set upon return')
-        self.assertNotEqual(d1.locations,[],'lfn not set upon return')
+        self.assertNotEqual(d1.locations,[],'location not set upon return')
         d1.remove()
         os.remove(os.path.join(root, filename))
 
