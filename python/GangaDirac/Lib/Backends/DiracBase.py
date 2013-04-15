@@ -441,6 +441,11 @@ class DiracBase(IBackend):
         # check services
         cmd = 'getServicePorts()'
         result = dirac_ganga_server.execute(cmd)
+        if type(result) == str:
+            import datetime
+            try:
+                result = eval(result)
+            except: pass
         if not result_ok(result):
             logger.warning('Could not obtain services: %s' % str(result))
             return
@@ -449,6 +454,11 @@ class DiracBase(IBackend):
             system,service = category.split('/')
             cmd = "ping('%s','%s')" % (system,service)
             result = dirac_ganga_server.execute(cmd)
+            if type(result) == str:
+                import datetime
+                try:
+                    result = eval(result)
+                except: pass
             msg = 'OK.'
             if not result_ok(result): msg = '%s' % result['Message']
             print '%s: %s' %  (category,msg)

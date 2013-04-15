@@ -142,6 +142,8 @@ class TestExeDiracRTHandler(GangaGPITestCase):
 
             script = \
 """# dirac job created by ganga
+from DIRAC.Core.Base.Script import parseCommandLine
+parseCommandLine()
 from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.Job import Job
 dirac = Dirac()

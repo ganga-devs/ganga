@@ -57,7 +57,7 @@ class TestDiracFile(GangaGPITestCase):
         d1=DiracFile()
         self.assertEqual(d1.namePattern, '', 'namePattern not default initialised as empty')
         self.assertEqual(d1.lfn,         '', 'lfn not default initialised as empty')
-        self.assertEqual(d1.localDir,    '', 'localDir not default initialised as empty')
+        self.assertEqual(d1.localDir,    None, 'localDir not default initialised as None')
         self.assertEqual(d1.locations,   [], 'locations not initialised as empty list')
 
         d2=DiracFile(namePattern='np', lfn='lfn', localDir='ld')
