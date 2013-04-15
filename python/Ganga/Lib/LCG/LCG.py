@@ -48,14 +48,15 @@ def start_lcg_output_downloader():
     global lcg_output_downloader
     lcg_output_downloader = None
     if not lcg_output_downloader:
-        lcg_output_downloader = LCGOutputDownloader(numThread=10)
+
+        numberOfThreads = getConfig('LCG')['OutputDownloaderThread']
+
+        lcg_output_downloader = LCGOutputDownloader(numThread=numberOfThreads)
         lcg_output_downloader.start()
 
 def get_lcg_output_downloader():
     global lcg_output_downloader
     return lcg_output_downloader
-
-start_lcg_output_downloader()
 
 ## helper routines
 def __fail_missing_jobs__(missing_glite_jids, jobdict):
@@ -2327,6 +2328,8 @@ if config['EDG_ENABLE']:
     config.setSessionValue('EDG_ENABLE', grids['EDG'].active)
 
 logger.debug('LCG module initialization: end')
+
+start_lcg_output_downloader()
 
 # $Log: not supported by cvs2svn $
 # Revision 1.38  2009/07/15 08:23:29  hclee
