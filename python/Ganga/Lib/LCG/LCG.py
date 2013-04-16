@@ -2330,8 +2330,6 @@ if config['EDG_ENABLE']:
 
 logger.debug('LCG module initialization: end')
 
-start_lcg_output_downloader()
-
 # $Log: not supported by cvs2svn $
 # Revision 1.38  2009/07/15 08:23:29  hclee
 # add resource match-making as an option before doing real job submission to WMS.
