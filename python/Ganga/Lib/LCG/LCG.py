@@ -44,20 +44,18 @@ if simulator_enabled:
 else:
     from Grid import Grid
 
-global lcg_output_downloader
-lcg_output_downloader = None
+def start_lcg_output_downloader():
+    global lcg_output_downloader
+    lcg_output_downloader = None
+    if not lcg_output_downloader:
+        lcg_output_downloader = LCGOutputDownloader(numThread=10)
+        lcg_output_downloader.start()
 
 def get_lcg_output_downloader():
     global lcg_output_downloader
-
-    if not lcg_output_downloader:
-
-        numberOfThreads = getConfig('LCG')['OutputDownloaderThread']
-
-        lcg_output_downloader = LCGOutputDownloader(numThread=numberOfThreads)
-        lcg_output_downloader.start()
-
     return lcg_output_downloader
+
+start_lcg_output_downloader()
 
 ## helper routines
 def __fail_missing_jobs__(missing_glite_jids, jobdict):

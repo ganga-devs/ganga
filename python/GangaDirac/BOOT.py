@@ -69,8 +69,8 @@ def getDiracFiles():
     from Ganga.GPI import DiracFile
     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = getConfig('DIRAC')['DiracLFNBase'].replace('/','-') + '.lfns'
-    logger.info('Creating list, this can take a while if you have a large number of SE files, please wait...')
-    dirac_ganga_server.execute('dirac-dms-user-lfns &> /dev/null', shell=True, timeout=None)
+    logger.info('Creating list, please wait...')
+    os.system('dirac-dms-user-lfns &> /dev/null')
     g=GangaList()
     with open(filename[1:],'r') as lfnlist:
         lfnlist.seek(0)
