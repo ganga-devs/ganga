@@ -15,7 +15,7 @@ externals_arch = [['matplotlib','1.1.1'],
                   ['numpy','1.6.2'],
                   ['pycrypto','2.0.1']]
 #                  ['pyqt','3.18.1_python2.5']]
-archs = ['x86_64-slc5-gcc46-opt','x86_64-slc5-gcc43-opt']
+archs = ['x86_64-slc6-gcc46-opt','x86_64-slc5-gcc46-opt','x86_64-slc5-gcc43-opt']
 
 # when comparing to top level Ganga PACKAGE.py need to compare just
 # the numeric versions so list here the bits that bloat the version
