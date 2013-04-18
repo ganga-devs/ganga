@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import glob
 import sys
-import os, getopt, shutil
+import os, getopt, shutil, string
 from subprocess import call
 
 """
@@ -17,11 +17,22 @@ Tool to build Ganga RPMs and/or Python Eggs.
 -h, --help
     Display this usage guide.
 
--p, --prereldir 
-    Location of prerelease python directory.
+-b  --builddir
+    Location in which to perform RPM builds
+    Default: /tmp/gangabuild
+
+#-p, --prereldir 
+#    Location of prerelease python directory.
+#    Example /afs/cern.ch/sw/ganga/install/6.0.0-pre
+#    If not given, will assume this script is running in the 
+#    prerelease tree. 
 
 -v, --version 
-    Version of ganga we're building.
+    Version of ganga we're building. This will be checked out of
+    SVN and into [builddir]. Assumed to be available at 
+    svn.cern.ch/reps/ganga/tags/Ganga-n-n-n<version>
+    Example: 6.0.0 will retrieve tags/Ganga-6-0-0 (note the automatic
+    conversion of '.' to '-'.
 '''
 
 try:
@@ -29,48 +40,87 @@ try:
 except getopt.error, x:
     print "command line syntax error"
     usage()
+    sys.exit(2)
 
+this_version = None
+builddir = None
+#prereldir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../python')
 for opt, arg in options:
     if opt in ('-h', '--help'):
         usage()
         sys.exit(2)
+    elif opt in ('-b', '--builddir'):
+        builddir = arg
     elif opt in ('-p', '--prereldir'):
         prereldir = os.path.join(arg, 'python')
     elif opt in ('-v', '--version'):
-        this_version = arg
+        this_version = arg 
+    else:
+        usage()
+        sys.exit(2)
 
-print "Building RPMs for Ganga version: " + this_version
+if this_version == None:
+   print "Missing [-v/--version] parameter"
+   usage()
+   sys.exit(2)
 
-os.chdir(prereldir)
-for eggDir in glob.glob('*egg-info*'):
-    shutil.rmtree(eggDir, ignore_errors=True)
+if builddir == None:
+   builddir = '/tmp/gangabuild'
+else:
+   print "Missing builddir option"
+   usage()
+   sys.exit()
+
+workdir = os.path.join(builddir, 'workspace')
+
+if os.path.isdir(builddir):
+   shutil.rmtree(builddir)
+   os.makedirs(workdir)
+else:
+   os.makedirs(workdir)
+
+topdir = 'Ganga-' + string.replace(this_version, '.', '-')
+
+print "Attempting to export Ganga " + this_version + " from SVN."
+#print "Using pre-release directory: " + prereldir
+os.chdir(builddir)
+svnurl = 'svn+ssh://svn.cern.ch/reps/ganga/tags/' + topdir
+svncmd = 'svn export -q ' + svnurl
+exitcode = call([svncmd], shell=True)
+if exitcode != 0:
+   print "Problem exporting Ganga from SVN. Exiting."
+   sys.exit()
+else:
+   print "Successfully exported Ganga " + this_version + " from SVN."
 
 
-packageDirs = glob.glob('Ganga[A-Z]*')
-for p in packageDirs:
-    if p.endswith('egg-info'):
-        packageDirs.remove(p)    
-#packageDirs = ['Ganga', 'GangaAtlas', 'GangaLHCb']
+#for eggDir in glob.glob('*egg-info*'):
+#    shutil.rmtree(eggDir, ignore_errors=True)
 
+abstopdir = os.path.join(builddir, topdir)
+print abstopdir
+print  glob.glob(abstopdir + '/python/Ganga*')
+packageDirs = glob.glob(abstopdir + '/python/Ganga*')
+print packageDirs
 
 rpm_require_map = {
 'Ganga' : "python >= 2.4.3",
-'GangaAtlas' : "Ganga = "+this_version,
-'GangaCamtology' : "Ganga = "+this_version,
-'GangaCMS' : "Ganga = "+this_version,
-'GangaDirac' : "Ganga = "+this_version,
-'GangaGaudi' : "Ganga = "+this_version,
-'GangaLHCb' : "Ganga = "+this_version + 
+'GangaAtlas' : "Ganga >= "+this_version,
+'GangaCamtology' : "Ganga >= "+this_version,
+'GangaCMS' : "Ganga >= "+this_version,
+'GangaDirac' : "Ganga >= "+this_version,
+'GangaGaudi' : "Ganga >= "+this_version,
+'GangaLHCb' : "Ganga >= "+this_version+ 
                 "\npython >= 2.6.0",
-'GangaNA62' : "Ganga = "+this_version,
-'GangaPanda' : "Ganga = "+this_version,
-'GangaPlotter' : "Ganga = "+this_version,
-'GangaRobot' : "Ganga = "+this_version,
-'GangaSAGA' : "Ganga = "+this_version,
-'GangaService' : "Ganga = "+this_version,
-'GangaSuperB' : "Ganga = "+this_version,
-'GangaTest' : "Ganga = "+this_version,
-'GangaTutorial' : "Ganga = "+this_version
+'GangaNA62' : "Ganga >= "+this_version,
+'GangaPanda' : "Ganga >= "+this_version,
+'GangaPlotter' : "Ganga >= "+this_version,
+'GangaRobot' : "Ganga >= "+this_version,
+'GangaSAGA' : "Ganga >= "+this_version,
+'GangaService' : "Ganga >= "+this_version,
+'GangaSuperB' : "Ganga >= "+this_version,
+'GangaTest' : "Ganga >= "+this_version,
+'GangaTutorial' : "Ganga >= "+this_version
 }
 
 egg_require_map = {
@@ -113,18 +163,18 @@ description_map = {
 
 long_desc_map = {}
 
+os.chdir(workdir)
+
 for package in packageDirs:
+    pack = str(os.path.basename(package))
     print "################################################################"
+    print "Working on package " + pack 
     print "################################################################"
-    print "################################################################"
-    print "################################################################"
-    print "################################################################"
-    print "working on package " + str(package)
-    print "################################################################"
-    print "################################################################"
-    print "################################################################"
-    print "################################################################"
-    print "################################################################"
+
+    fullpath = os.path.join(abstopdir+'/python/'+pack)
+    print str(fullpath)
+    print str(pack)
+    shutil.move(str(fullpath), './' + str(pack))
 
     config_script = '''[global]
 verbose         = 1
@@ -144,12 +194,11 @@ vendor = "Ganga <project-ganga-developers@cern.ch>"
 
 [install]
 prefix = /opt/ganga/install/python
-#install_data    = /opt/ganga/Ganga
 install_lib     = /opt/ganga/install/python
 compile         = 0
 '''
 
-    config_script = config_script.replace('###REQUIREMENTS###', 'requires = ' + rpm_require_map[package])
+    config_script = config_script.replace('###REQUIREMENTS###', 'requires = ' + rpm_require_map[pack])
     conf_file = open('setup.cfg','w')
     print "Writing " + conf_file.name
     conf_file.write(config_script)
@@ -166,7 +215,7 @@ from setuptools import setup, find_packages
 
 setup(
         #find all of the pythonic files
-        ###PACKAGES###
+        packages = find_packages(),
         #and also things other than *.py, e.g. *.gpi, *.gpim etc
         include_package_data = True,
 
@@ -191,18 +240,24 @@ setup(
 
     filenames = []
     
-    setup_script = setup_script.replace('###PACKAGES###', 'packages = ' + str([package])+',')
-    #setup_script = setup_script.replace('###PACKAGEDIR###', 'package_dir = {\'\':\'' + str(package)+'\'},')
-    #install_requires is a string or list of strings
-    setup_script = setup_script.replace('###REQUIREMENTS###', 'install_requires = ' + str(egg_require_map[package])+',')
-    setup_script = setup_script.replace('###PACKAGENAME###', 'name = \"' + package + '\",')
-    setup_script = setup_script.replace('###THISVERSION###', 'version = \"' + this_version + '\",')
+#    setup_script = setup_script.replace('###PACKAGES###', 'packages = ' + str([pack])+',')
+    setup_script = setup_script.replace('###REQUIREMENTS###', 'install_requires = ' + str(egg_require_map[pack])+',')
+    setup_script = setup_script.replace('###PACKAGENAME###', 'name = \"' + pack + '\",')
+    setup_script = setup_script.replace('###THISVERSION###', 'version = \"' + this_version+ '\",')
 
     setup_file = open('setup.py','w')
     print "Writing " + setup_file.name
     setup_file.write(setup_script)
     setup_file.close()
 
-    print os.getcwd()
-    call(["python setup.py bdist_rpm --post-uninstall ../release/tools/postun-packages.sh"], shell=True)
+    call(["python setup.py bdist_rpm --post-uninstall " + abstopdir + "/release/tools/postun-packages.sh >> /dev/null"], shell=True)
+    print "I am in " + os.getcwd()
+    print "Moving " + str(pack) + " to " + str(fullpath)
+    shutil.move(str(pack), str(fullpath))
+    print "I am in " + os.getcwd()
+    os.chdir(builddir)
+    print "Removing workspace"
+    shutil.rmtree('workspace')
+    print "Creating workspace"
+    os.makedirs('workspace')
 
