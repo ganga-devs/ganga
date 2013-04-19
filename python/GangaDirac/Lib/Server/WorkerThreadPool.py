@@ -36,7 +36,7 @@ class WorkerThreadPool(object):
                             auto_register = False,
                             target=self.__worker_thread)
             t._Thread__args=(t,)
-            t.name     = worker_thread_prefix + str(i)
+            t._name    = worker_thread_prefix + str(i)
             t._command = 'idle'
             t._timeout = 'N/A'
             t.start()
@@ -229,4 +229,4 @@ class WorkerThreadPool(object):
 
 
     def worker_status(self):
-        return [(w.name, w._command, w._timeout) for w in self.__worker_threads]
+        return [(w._name, w._command, w._timeout) for w in self.__worker_threads]

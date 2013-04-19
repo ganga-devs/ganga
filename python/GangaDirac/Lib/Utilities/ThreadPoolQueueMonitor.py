@@ -134,7 +134,7 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
         is already set up and called dirac. ( see help(diracAPI) )
         This makes it trivial to replace the diracAPI command using:
         
-        In[0]: queues.addProcess('print dirac.status[123]')
+        In[0]: queues.addProcess('print dirac.status([123])')
 
         By default the command is executed within the DIRAC environment 
         meaning that one can use all the DIRAC command line tools easily as

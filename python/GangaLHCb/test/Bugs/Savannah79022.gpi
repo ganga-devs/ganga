@@ -7,9 +7,9 @@ file.write('import os')
 file.close()
 
 from Ganga.Core import ApplicationConfigurationError
-j1=Job(name='testing',application=DaVinci(version='v30r0p1'),backend=Local())
-j2=Job(name='testing',application=DaVinci(version='v30r0p1',optsfile=[path]),backend=Local())
-j3=Job(name='testing',application=DaVinci(version='v30r0p1',optsfile=['~/deadparrot.opts']),backend=Local())
+j1=Job(name='testing',application=DaVinci(),backend=Local())
+j2=Job(name='testing',application=DaVinci(optsfile=[path]),backend=Local())
+j3=Job(name='testing',application=DaVinci(optsfile=['~/deadparrot.opts']),backend=Local())
 
 try:
     j1.submit()

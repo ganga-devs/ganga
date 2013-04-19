@@ -230,7 +230,12 @@ class DiracBase(IBackend):
 
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        return self._resubmit(dirac_ganga_server)
+        j=self.getJobObject()
+        result = self._resubmit(dirac_ganga_server)
+        if result:
+            j.updateStatus('submitted')
+            return result
+        raise Exception('resubmission failed for job %s'%j.fqid)
 
     def _resubmit(self, server):
         """Resubmit a DIRAC job"""
@@ -282,7 +287,9 @@ class DiracBase(IBackend):
         f = open(new_script_filename, 'w')
         f.write(new_script)
         f.close()
-        
+        self.statusInfo = ''
+        self.status     = None
+        self.actualCE   = None
         return self._common_submit(new_script_filename, server)
 
     def reset(self, doSubjobs =False):
@@ -295,9 +302,9 @@ class DiracBase(IBackend):
             logger.warning("Can not reset a job in status '%s'." % j.status)
         else:
             j.getOutputWorkspace().remove(preserve_top=True)
-            j.backend.statusInfo = ''
-            j.backend.status     = None
-            j.backend.actualCE   = None
+            self.statusInfo = ''
+            self.status     = None
+            self.actualCE   = None
             j.updateStatus('submitted')
             if j.subjobs and not doSubjobs:
                 logger.info('This job has subjobs, if you would like the backends '\
@@ -545,7 +552,7 @@ class DiracBase(IBackend):
 
             ## check outputsandbox downloaded correctly
             if not result_ok(getSandboxResult):
-                logger.warning('Problem retrieving outputsandbox: %s' % str(result))
+                logger.warning('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
                 DiracBase._getStateTime(job,'failed')
                 if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): return #user changed it under us
                 job.updateStatus('failed')
@@ -592,6 +599,11 @@ class DiracBase(IBackend):
         else:
             DiracBase.dirac_monitoring_is_active = True
 
+        # remove from consideration any jobs already in the queue. Checking this non persisted attribute
+        # is better than querying the queue as cant tell if a job has just been taken off queue and is being processed
+        # also by not being persistent, this attribute automatically allows queued jobs from last session to be considered
+        # for requeing
+        interesting_jobs = [ j for j in jobs if not hasattr(j, 'been_queued') ]
         ## status that correspond to a ganga 'completed' or 'failed' (see DiracCommands.status(id))
         ## if backend status is these then the job should be on the queue
         requeue_dirac_status = { 'Done'                       : 'completed',
@@ -599,16 +611,16 @@ class DiracBase(IBackend):
                                  'Deleted'                    : 'failed',
                                  'Unknown: No status for Job' : 'failed' }
 
-        monitor_jobs = [ j for j in jobs if j.backend.status not in requeue_dirac_status ]
-        requeue_jobs = [ j for j in jobs if j.backend.status     in requeue_dirac_status ]
+        monitor_jobs = [ j for j in interesting_jobs if j.backend.status not in requeue_dirac_status]
+        requeue_jobs = [ j for j in interesting_jobs if j.backend.status     in requeue_dirac_status]
         
         ## requeue existing completed job
         for j in requeue_jobs:
-            if j.backend.status in requeue_dirac_status:
-                dirac_monitoring_server.execute_nonblocking(DiracBase.job_finalisation,
-                                                            command_args = (j, requeue_dirac_status[j.backend.status]),
-                                                            priority     = 5)           
-
+#            if j.backend.status in requeue_dirac_status:
+            dirac_monitoring_server.execute_nonblocking(DiracBase.job_finalisation,
+                                                        command_args = (j, requeue_dirac_status[j.backend.status]),
+                                                        priority     = 5)           
+            j.been_queued=True
 
         # now that can submit in non_blocking mode, can see jobs in submitting
         # that have yet to be assigned an id so ignore them
@@ -647,6 +659,7 @@ class DiracBase(IBackend):
                 dirac_monitoring_server.execute_nonblocking(DiracBase.job_finalisation,
                                                             command_args = (job, updated_dirac_status),
                                                             priority     = 5)
+                job.been_queued=True
 
             else:
                 DiracBase._getStateTime(job,updated_dirac_status)

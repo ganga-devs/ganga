@@ -46,6 +46,8 @@ class TestDiracBase(GangaGPITestCase):
         self.db = DiracBase()
         self.script="""
 # dirac job created by ganga
+from DIRAC.Core.Base.Script import parseCommandLine
+parseCommandLine()
 ###DIRAC_IMPORT###
 ###DIRAC_JOB_IMPORT###
 dirac = ###DIRAC_OBJECT###
