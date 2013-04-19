@@ -5,7 +5,7 @@ from Ganga.GPI                                     import *
 #from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
 import unittest, tempfile, os
 
-class TestDiracBase(GangaGPITestCase):
+class TestWorkerThreadPool(GangaGPITestCase):
     def setUp(self):
         pass
     def test__init__(self):
