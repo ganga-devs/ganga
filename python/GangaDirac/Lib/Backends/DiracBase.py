@@ -230,12 +230,7 @@ class DiracBase(IBackend):
 
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        j=self.getJobObject()
-        result = self._resubmit(dirac_ganga_server)
-        if result:
-            j.updateStatus('submitted')
-            return result
-        raise Exception('resubmission failed for job %s'%j.fqid)
+        return self._resubmit(dirac_ganga_server)
 
     def _resubmit(self, server):
         """Resubmit a DIRAC job"""

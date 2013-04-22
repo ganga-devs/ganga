@@ -1,4 +1,6 @@
 import os, sys, inspect
+from DIRAC.Core.Base.Script import parseCommandLine
+parseCommandLine()
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
 
 diraclhcb=DiracLHCb()
