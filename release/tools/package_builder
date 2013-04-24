@@ -21,12 +21,6 @@ Tool to build Ganga RPMs and/or Python Eggs.
     Location in which to perform RPM builds
     Default: /tmp/gangabuild
 
-#-p, --prereldir 
-#    Location of prerelease python directory.
-#    Example /afs/cern.ch/sw/ganga/install/6.0.0-pre
-#    If not given, will assume this script is running in the 
-#    prerelease tree. 
-
 -v, --version 
     Version of ganga we're building. This will be checked out of
     SVN and into [builddir]. Assumed to be available at 
@@ -36,7 +30,7 @@ Tool to build Ganga RPMs and/or Python Eggs.
 '''
 
 try:
-    options, args = getopt.getopt(sys.argv[1:], "p:hv:", ["prereldir=", "help", "version="])
+    options, args = getopt.getopt(sys.argv[1:], "hv:", ["help", "version="])
 except getopt.error, x:
     print "command line syntax error"
     usage()
@@ -44,15 +38,12 @@ except getopt.error, x:
 
 this_version = None
 builddir = None
-#prereldir = os.path.join(os.path.dirname(os.path.abspath(__file__)),'../../python')
 for opt, arg in options:
     if opt in ('-h', '--help'):
         usage()
         sys.exit(2)
     elif opt in ('-b', '--builddir'):
         builddir = arg
-    elif opt in ('-p', '--prereldir'):
-        prereldir = os.path.join(arg, 'python')
     elif opt in ('-v', '--version'):
         this_version = arg 
     else:
@@ -82,7 +73,6 @@ else:
 topdir = 'Ganga-' + string.replace(this_version, '.', '-')
 
 print "Attempting to export Ganga " + this_version + " from SVN."
-#print "Using pre-release directory: " + prereldir
 os.chdir(builddir)
 svnurl = 'svn+ssh://svn.cern.ch/reps/ganga/tags/' + topdir
 svncmd = 'svn export -q ' + svnurl
