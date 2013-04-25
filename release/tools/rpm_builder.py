@@ -351,12 +351,12 @@ else:
    print "################################"
    print "##### Build Yum repository #####"
    print "################################"
-   os.chdir('/afs/cern.ch/sw/ganga/www/download/repo/NOARCH')
-   exitcode = call(['createrepo .'], shell=True)
+   exitcode = call(['createrepo /afs/cern.ch/sw/ganga/www/download/repo/NOARCH'], shell=True)
    if exitcode != 0:
       print "Problem creating repo."
       sys.exit(1)
-   print "Successfully created Yum repository" 
+   print "Successfully created Yum repository at:" 
+   print "/afs/cern.ch/sw/ganga/www/download/repo/NOARCH"
    sys.exit(0)
 
 
