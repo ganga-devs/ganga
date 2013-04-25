@@ -105,6 +105,7 @@ then
   rm -rf $RPM_INSTALL_PREFIX/python/bin
   rm -rf $RPM_INSTALL_PREFIX/python/LICENSE_GPL
   rm -rf $RPM_INSTALL_PREFIX/python/release
+  rm -rf $RPM_INSTALL_PREFIX/python/doc
   rm -rf $RPM_INSTALL_PREFIX/python/templates
 else
   #echo "Deleting" $RPM_INSTALL_PREFIX/python/%{name}
