@@ -86,7 +86,11 @@ rpm_script = '''
 rm -rf $RPM_INSTALL_PREFIX/python/%{name}*egg*
 if [ \"%{name}\" == "GangaBin" ]
 then
-  mv $RPM_INSTALL_PREFIX/python/%{name}/* $RPM_INSTALL_PREFIX/python/
+  mv $RPM_INSTALL_PREFIX/python/%{name}/bin $RPM_INSTALL_PREFIX/python/
+  mv $RPM_INSTALL_PREFIX/python/%{name}/release $RPM_INSTALL_PREFIX/python/
+  mv $RPM_INSTALL_PREFIX/python/%{name}/doc $RPM_INSTALL_PREFIX/python/
+  mv $RPM_INSTALL_PREFIX/python/%{name}/templates $RPM_INSTALL_PREFIX/python/
+  mv $RPM_INSTALL_PREFIX/python/%{name}/LICENSE_GPL $RPM_INSTALL_PREFIX/python/
   rm -rf $RPM_INSTALL_PREFIX/python/%{name}
   rm -rf $RPM_INSTALL_PREFIX/python/__init__.py
 fi
@@ -143,7 +147,6 @@ abstopdir = os.path.join(builddir, topdir)
 #copy this set of directories into a fake package directory so we can package them all up together
 #this could probably be much more elegant.
 shutil.copytree(str(abstopdir)+'/bin', abstopdir + '/python/GangaBin/bin')
-#omit the doc directory, as this invokes complicated perl requirements
 shutil.copytree(str(abstopdir)+'/doc', abstopdir + '/python/GangaBin/doc')
 shutil.copytree(str(abstopdir)+'/release', abstopdir + '/python/GangaBin/release')
 shutil.copytree(str(abstopdir)+'/templates', abstopdir + '/python/GangaBin/templates')
