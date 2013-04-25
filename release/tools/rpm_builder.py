@@ -225,7 +225,6 @@ long_desc_map = {}
 os.chdir(workdir)
 
 summaryDict = {}
-packageDirs = ['Ganga']
 for package in packageDirs:
     os.chdir(workdir)
     pack = str(os.path.basename(package))
