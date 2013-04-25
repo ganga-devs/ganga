@@ -225,6 +225,7 @@ long_desc_map = {}
 os.chdir(workdir)
 
 summaryDict = {}
+packageDirs = ['Ganga']
 for package in packageDirs:
     os.chdir(workdir)
     pack = str(os.path.basename(package))
@@ -338,9 +339,25 @@ setup(
     os.makedirs('workspace')
 
 print "################################"
-print "################################"
 print "######## Build Summary #########"
-print "################################"
 print "################################"
 for k in summaryDict.keys():
     print "%15s: %15s" % (k, summaryDict[k])
+
+if 'Failure' in summaryDict.values():
+   print "######## Detected a problem building at least one package ########"
+   print "Not running createrepo. Exiting"
+   sys.exit(1)
+else:
+   print "################################"
+   print "##### Build Yum repository #####"
+   print "################################"
+   os.chdir('/afs/cern.ch/sw/ganga/www/download/repo/NOARCH')
+   exitcode = call(['createrepo .'], shell=True)
+   if exitcode != 0:
+      print "Problem creating repo."
+      sys.exit(1)
+   print "Successfully created Yum repository" 
+   sys.exit(0)
+
+
