@@ -73,6 +73,9 @@ class WorkerThreadPool(object):
                 thread._timeout = item.command_input.timeout
             else:
                 logger.error("Unrecognised input command type")
+                self.__queue.task_done()
+                GangaThreadPool.getInstance().delServiceThread(thread)
+                continue
 
             try:
                 if isinstance(item.command_input, FunctionInput):
