@@ -53,7 +53,7 @@ class PhysicalFile(GangaObject):
         
     def upload(self,lfn,diracSE,guid=None):
         'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
-        from LogicalFile import get_result
+        from GangaDirac.Lib.Backends.DiracUtils import get_result
         if guid is None:
             cmd = 'addFile("%s","%s","%s",None)' % \
                   (lfn,self.name,diracSE)

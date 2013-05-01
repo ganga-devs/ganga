@@ -9,7 +9,7 @@ DIRAC_INCLUDE=''
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def getDiracEnv(force=False):
-    DIRAC_ENV={}
+    global DIRAC_ENV
     if DIRAC_ENV == {} or force:
         with open(getConfig('DIRAC')['DiracEnvFile'],'r') as env_file:
             DIRAC_ENV = dict((tuple(line.strip().split('=',1)) for line in env_file.readlines() if len(line.strip().split('=',1)) == 2))
@@ -17,7 +17,7 @@ def getDiracEnv(force=False):
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def getDiracCommandIncludes(force=False):
-    DIRAC_INCLUDE=''
+    global DIRAC_INCLUDE
     if DIRAC_INCLUDE == '' or force:
         for fname in getConfig('DIRAC')['DiracCommandFiles']:
             if not os.path.exists(fname):

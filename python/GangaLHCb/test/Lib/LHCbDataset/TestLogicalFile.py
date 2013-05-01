@@ -1,6 +1,6 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaLHCb.Lib.LHCbDataset.LogicalFile import *
-
+from GangaDirac.Lib.Backends.DiracUtils import get_result
 class TestLogicalFile(GangaGPITestCase):
 
     #def test_get_dirac_space_tokens(self):

@@ -23,8 +23,8 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
     def __check_versions_against_dirac(self, app):
         ## cache versions dict
         if not LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
-            from GangaLHCb.Lib.Backends.Dirac import Dirac
-            result = Dirac.execAPI('getRootVersions()')
+            from GangaDirac.BOOT import dirac_ganga_server
+            result = dirac_ganga_server.execute('getRootVersions()')
             if not result_ok(result):
                 logger.error('Could not obtain available ROOT versions: %s' \
                              % str(result))

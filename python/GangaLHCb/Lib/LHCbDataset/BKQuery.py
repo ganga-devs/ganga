@@ -4,7 +4,7 @@ from Ganga.GPIDev.Base import GangaObject
 from LogicalFile import *
 from LHCbDataset import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-
+from GangaDirac.Lib.Backends.DiracUtils import get_result
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class BKQuery(GangaObject):
@@ -115,14 +115,12 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg) 
-        cmd = "getDataset('%s','%s','%s','%s','%s',\
-        '%s')" % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
                   self.selection)
         if type(self.dqflag) == type([]):
-            cmd = "getDataset('%s',%s,'%s','%s','%s',\
-            '%s')" % (self.path,self.dqflag,self.type,self.startDate,
+            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path,self.dqflag,self.type,self.startDate,
                      self.endDate,self.selection)
-        result = get_result(cmd,'BK query error.','BK query error.', 'datetime')
+        result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         metadata = {}
         value = result['Value']
@@ -151,14 +149,12 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)            
-        cmd = "getDataset('%s','%s','%s','%s','%s',\
-        '%s')" % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
                   self.selection)
         if type(self.dqflag) == type([]):
-            cmd = "getDataset('%s',%s,'%s','%s','%s',\
-            '%s')" % (self.path,self.dqflag,self.type,self.startDate,
+            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path,self.dqflag,self.type,self.startDate,
                      self.endDate,self.selection)
-        result = get_result(cmd,'BK query error.','BK query error.', 'datetime')
+        result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
         if value.has_key('LFNs'): files = value['LFNs']
@@ -224,7 +220,7 @@ class BKQueryDict(GangaObject):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict: return None
         cmd = 'bkQueryDict(%s)' % self.dict
-        result = get_result(cmd,'BK query error.','BK query error.', 'datetime')
+        result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
         if value.has_key('LFNs'): files = value['LFNs']
@@ -241,7 +237,7 @@ class BKQueryDict(GangaObject):
         '''Gets the dataset from the bookkeeping for current dict.'''
         if not self.dict: return None
         cmd = 'bkQueryDict(%s)' % self.dict
-        result = get_result(cmd,'BK query error.','BK query error.', 'datetime')
+        result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
         if value.has_key('LFNs'): files = value['LFNs']

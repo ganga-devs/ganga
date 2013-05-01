@@ -8,6 +8,7 @@ from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
+from GangaDirac.Lib.Backends.DiracUtils import get_result
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -17,19 +18,16 @@ def get_dirac_space_tokens():
 #    return ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','NIKHEF-USER',
 #            'PIC-USER','RAL-USER']
 
-def get_result(cmd,log_msg,except_msg, extra_imports=None):
-    from GangaLHCb.Lib.Backends.Dirac import Dirac
-    from GangaDirac.Lib.Backends.DiracUtils import result_ok
-    result = Dirac.execAPI(cmd)
+#def get_result(cmd,log_msg,except_msg, eval_includes=''):
+#    from GangaDirac.Lib.Backends.DiracUtils import result_ok
+#    from GangaDirac.BOOT import dirac_ganga_server
+#    result = dirac_ganga_server.execute(cmd,eval_includes=eval_includes)
 
-    if not result_ok(result) and extra_imports is not None:
-        exec('import %s' % extra_imports)
-        result = eval(result)
-    
-    if not result_ok(result):
-        logger.warning('%s: %s' % (log_msg,str(result)))
-        raise GangaException(except_msg)
-    return result
+#    print result
+#    if not result_ok(result):#, extra_imports):
+#        logger.warning('%s: %s' % (log_msg,str(result)))
+#        raise GangaException(except_msg)
+#    return result
 
 def strip_filename(name):
     if len(name) >= 4 and name[0:4].upper() == 'PFN:':
@@ -120,7 +118,7 @@ class LogicalFile(GangaObject):
     def getMetadata(self):
         'Returns the metadata for the LFN (e.g. creation time, etc.).'
         cmd = 'getMetadata("%s")' % self.name
-        result = get_result(cmd,'Error w/ metadata','Could not get metadata.', 'datetime')
+        result = get_result(cmd,'Error w/ metadata','Could not get metadata.')
         metadata = result['Value']['Successful']
         if metadata.has_key(self.name): return metadata[self.name]
         return {}        
@@ -128,7 +126,7 @@ class LogicalFile(GangaObject):
     def bkMetadata(self):
         'Returns the bookkeeping meta-data for this file.'
         cmd = 'bkMetaData(["%s"])' % self.name
-        r = get_result(cmd,'Error removing replica','Replica rm error.', 'datetime')
+        r = get_result(cmd,'Error removing replica','Replica rm error.')
         return r['Value'].get(self.name,{})
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

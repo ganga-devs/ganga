@@ -1,31 +1,35 @@
-import os, sys, inspect
+import os, sys, inspect, pickle
 from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
 
 diraclhcb=DiracLHCb()
+# Write to output pipe
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+def output(object):
+    print >> sys.stdout, pickle.dumps(object)
 
 # DiracLHCb commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
-def getRootVersions(): print diraclhcb.getRootVersions()
+def getRootVersions(): output( diraclhcb.getRootVersions() )
 
-def getSoftwareVersions(): print diraclhcb.getSoftwareVersions()
+def getSoftwareVersions(): output( diraclhcb.getSoftwareVersions() )
 
-def bkQueryDict(dict): print diraclhcb.bkQuery(dict)
+def bkQueryDict(dict): output( diraclhcb.bkQuery(dict) )
    
-def checkSites(): print diraclhcb.checkSites()
+def checkSites(): output( diraclhcb.checkSites() )
 
-def bkMetaData(files): print diraclhcb.bkMetadata(files)
+def bkMetaData(files): output( diraclhcb.bkMetadata(files) )
 
 def getLHCbInputDataCatalog(lfns,depth,site,xml_file):
     if depth > 0:
         result = diraclhcb.getBKAncestors(lfns,depth)
         if not result or not result.get('OK',False): 
-            print result
+            output( result )
             return
         lfns = result['Value']
-    print diraclhcb.getInputDataCatalog(lfns,site,xml_file)
+    output( diraclhcb.getInputDataCatalog(lfns,site,xml_file) )
 
 def bookkeepingGUI(file):
     print os.system('dirac-bookkeeping-gui %s' % file)
@@ -42,12 +46,12 @@ def getDataset(path,dqflag,type,start,end,sel):
         result = diraclhcb.bkQueryProduction(path,dqflag)##diraclhcb
     else:
         result = {'OK':False,'Message':'Unsupported type!'}
-    print result
+    output( result )
 
 def checkTier1s():
     result =  diraclhcb.gridWeather()
     if result.get('OK',False):
         result['Value'] = result['Value']['Tier-1s']
-    print result
+    output( result )
 
 

@@ -22,8 +22,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
     def __check_versions_against_dirac(self, app):
         ## cache versions dict
         if not LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
-            from GangaLHCb.Lib.Backends.Dirac import Dirac
-            result = Dirac.execAPI('getSoftwareVersions()')
+            from GangaDirac.BOOT import dirac_ganga_server
+            result = dirac_ganga_server.execute('getSoftwareVersions()')
             if not result_ok(result):
                 logger.error('Could not obtain available versions: %s' \
                              % str(result))

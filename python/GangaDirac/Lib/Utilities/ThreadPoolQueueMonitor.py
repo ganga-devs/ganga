@@ -5,28 +5,20 @@ from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 from Ganga.Utility.ColourText                import getColour
-#from Ganga.GPIDev.Base.Objects               import GangaObject
-#from Ganga.GPIDev.Schema.Schema              import Schema, Version
 logger = getLogger()
 
 
-class ThreadPoolQueueMonitor(object):#GangaObject):
+class ThreadPoolQueueMonitor(object):
     '''
     This class displays the user and monitor thread pools and associated queues
 
     The number of worker threads in the pool is controlled by
     the getConfig('DIRAC')['NumWorkerThreads'] config option.
     '''
-#    _name = 'queues'
-#    _category = 'queues'
-#    _schema = Schema(Version(1,0),{})
-#    _exportmethods = ['_display','purge','add','addProcess']
-    #_impl = None
 
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
         from GangaDirac.BOOT import dirac_ganga_server, dirac_monitoring_server
-        #from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server, dirac_monitoring_server
         output=''
         output+= '{0:^55} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
         output+= '{0:^55} | {1:^50}\n'.format('------------------', '------------------------')
@@ -56,15 +48,12 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
         output+= "----------------------\n"
         output+= str([display_element(i) for i in dirac_monitoring_server.get_queue()])
         return output
-        #from Ganga.GPI import Dirac
-        #return Dirac._impl.getQueues()
 
     def purge(self):
         """
         Purge the Ganga user thread pool's queue
         """
         from GangaDirac.BOOT import dirac_ganga_server
-        #from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
         dirac_ganga_server.clear_queue()
 
     def add(self, worker_code, args=(), kwargs={}, priority = 5):
@@ -101,7 +90,6 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
                                  This then should be an int normally 0-9
         """
         from GangaDirac.BOOT import dirac_ganga_server
-        #from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
         if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
             logger.error('Only python callable objects can be added to the queue using queues.add()')
             logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
@@ -112,7 +100,6 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
                                                command_args   = args,
                                                command_kwargs = kwargs,
                                                priority       = priority)
-#         return queue(worker_code, args, kwargs, priority)
 
     def addProcess(self, 
                    command, 
@@ -120,10 +107,14 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
                    env             = None,
                    cwd             = None,
                    shell           = False,
+                   eval_includes   = None,
                    priority        = 5,
                    callback_func   = None,
                    callback_args   = (),
-                   callback_kwargs = {}):
+                   callback_kwargs = {},
+                   fallback_func   = None,
+                   fallback_args   = (),
+                   fallback_kwargs = {}):
         """
         Run a command asynchronously in a new process monitored by the user thread pool.
 
@@ -156,43 +147,58 @@ class ThreadPoolQueueMonitor(object):#GangaObject):
 
         args:
         ----
-                   command       = The command to run as a string 
-                   timeout       = timeout for the command as int or None
-                   env           = environment to run command in as dict or None
-                   cwd           = working dir to run command in as string
-                   shell         = True/False whether to interpret the
-                                   command as a python or shell command
-                   priority      = The thread queuing system is a priority
-                                   queue with lower number = higher priority.
-                                   This then should be an int normally 0-9
-                   callback_func = Any python callable object. This is called
-                                   once the command has finished running (or 
-                                   timed out) and must take at least one arg.
-                                   This first arg will be the stdout of the 
-                                   executed command. This arg will be the
-                                   result of eval(stdout) such that '{}' will
-                                   become a dict. Fall back to str representation
-                                   if the eval fails.
-                             
-                   args          = Any additional args to the callback_func 
-                                   are specified here as a tuple
-                   kwds          = kwargs for the callback_func are given here
-                                   as a dict.
+                   command         = The command to run as a string 
+                   timeout         = timeout for the command as int or None
+                   env             = environment to run command in as dict or None
+                   cwd             = working dir to run command in as string
+                   shell           = True/False whether to interpret the
+                                     command as a python or shell command
+                   eval_includes   = This is a string that will be exec'ed before
+                                     trying to eval the stdout. This allows for the
+                                     the user to import certain libs before attempting
+                                     to parse the output.
+                   priority        = The thread queuing system is a priority
+                                     queue with lower number = higher priority.
+                                     This then should be an int normally 0-9
+                   callback_func   = Any python callable object. This is called
+                                     once the command has finished running (or 
+                                     timed out) and must take at least one arg.
+                                     This first arg will be the stdout of the 
+                                     executed command. This arg will be the
+                                     result of unpickling stdout, falling back to 
+                                     eval(stdout) such that '{}' will
+                                     become a dict. Fall back to str representation
+                                     if the eval fails.
+                   callback_args   = Any additional args to the callback_func 
+                                     are specified here as a tuple
+                   callback_kwargs = kwargs for the callback_func are given here
+                                     as a dict.
+                   fallback_func   = Any python callable object. This is called
+                                     if the command execution throws an exception.
+                                     The function must take at least one arg that
+                                     will be the exception that was thrown.
+                   args            = Any additional args to the fallback_func 
+                                     are specified here as a tuple
+                   kwds            = kwargs for the fallback_func are given here
+                                     as a dict.
         """
         if type(command)!= str:
             logger.error("Input command must be of type 'string'")
             return
 
         from GangaDirac.BOOT import dirac_ganga_server
-        #from GangaDirac.Lib.Backends.DiracBase import dirac_ganga_server
         if env is None: # rather than have getDiracEnv() as default in arg list as looks messy in help ;-)
             env = getDiracEnv()
-        dirac_ganga_server.execute_nonblocking(command,
-                                               timeout          = timeout,
-                                               env              = env,
-                                               cwd              = cwd,
-                                               shell            = shell,
-                                               priority         = priority,
-                                               callback_func    = callback_func,
-                                               callback_args    = callback_args,
-                                               callback_kwargs  = callback_kwargs)
+        dirac_ganga_server.execute_nonblocking( command,
+                                                timeout          = timeout,
+                                                env              = env,
+                                                cwd              = cwd,
+                                                shell            = shell,
+                                                eval_includes    = eval_includes,
+                                                priority         = priority,
+                                                callback_func    = callback_func,
+                                                callback_args    = callback_args,
+                                                callback_kwargs  = callback_kwargs,
+                                                fallback_func    = fallback_func,
+                                                fallback_args    = fallback_args,
+                                                fallback_kwargs  = fallback_kwargs )

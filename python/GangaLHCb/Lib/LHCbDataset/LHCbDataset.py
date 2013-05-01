@@ -13,7 +13,7 @@ from LogicalFile import *
 from OutputData import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job,JobTemplate
-
+from GangaDirac.Lib.Backends.DiracUtils import get_result
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -311,7 +311,7 @@ class LHCbDataset(Dataset):
         'Returns the bookkeeping metadata for all LFNs. '        
         logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
-        b =  get_result(cmd,'Error removing replica','Replica rm error.', 'datetime')
+        b =  get_result(cmd,'Error removing replica','Replica rm error.')
         return b
         
 

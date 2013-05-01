@@ -1,4 +1,5 @@
 import os
+import sys
 import time
 import datetime
 import glob
@@ -9,21 +10,26 @@ from DIRAC.Interfaces.API.Dirac      import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
 
+# Write to output pipe
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+def output(object):
+    print >> sys.stdout, pickle.dumps(object)
+
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-def getJobGroupJobs(jg): print dirac.selectJobs(jobGroup=jg)
+def getJobGroupJobs(jg): output(dirac.selectJobs(jobGroup=jg))
 
-def kill(id): print dirac.delete(id)
+def kill(id): output( dirac.delete(id) )
 
-def peek(id): print dirac.peek(id)
+def peek(id): output( dirac.peek(id) )
 
-def getJobCPUTime(id): print dirac.getJobCPUTime(id)
+def getJobCPUTime(id): output( dirac.getJobCPUTime(id) )
 
-def reschedule(id): print dirac.reschedule(id)
+def reschedule(id): output( dirac.reschedule(id) )
 
-def submit(djob,mode='wms'): print dirac.submit(djob,mode=mode)
+def submit(djob,mode='wms'): output( dirac.submit(djob,mode=mode) )
 
-def ping(system,service): print dirac.ping(system,service)
+def ping(system,service): output( dirac.ping(system,service) )
 
 def removeFile(lfn):
     ret={}
@@ -32,13 +38,13 @@ def removeFile(lfn):
             ret.update(dirac.removeFile(l))
     else:
         ret.update(dirac.removeFile(lfn))
-    print ret
+    output( ret )
 
-def getMetadata(lfn): print dirac.getMetadata(lfn)
+def getMetadata(lfn): output( dirac.getMetadata(lfn) )
 
-def getReplicas(lfns): print dirac.getReplicas(lfns)
+def getReplicas(lfns): output( dirac.getReplicas(lfns) )
 
-def getFile(lfns, destDir = ''): print dirac.getFile(lfns, destDir=destDir)
+def getFile(lfns, destDir = ''): output( dirac.getFile(lfns, destDir=destDir) )
 
 def replicateFile(lfn,destSE,srcSE,locCache=''):
     res = dirac.replicateFile(lfn,destSE,srcSE,locCache)
@@ -46,19 +52,16 @@ def replicateFile(lfn,destSE,srcSE,locCache=''):
     print res
 
 def removeReplica(lfn,sE):
-    print dirac.removeReplica(lfn,sE)
+    output( dirac.removeReplica(lfn,sE) )
 
 def getOutputData(id, outputFiles='', destinationDir=''):
-    print dirac.getJobOutputData(id, outputFiles, destinationDir)
+    output( dirac.getJobOutputData(id, outputFiles, destinationDir) )
 
-def splitInputData(files,files_per_job):        
-    print dirac.splitInputData(files,files_per_job)
+def splitInputData(files,files_per_job):
+    output( dirac.splitInputData(files,files_per_job) )
 
 def getInputDataCatalog(lfns,site,xml_file):
-    print dirac.getInputDataCatalog(lfns,site,xml_file)
-
-def output(object):
-    outpipe.write(pickle.dumps(object))
+    output( dirac.getInputDataCatalog(lfns,site,xml_file) )
 
 def uploadFile(lfn, file, diracSEs, guid=None):
     outerr={}
@@ -71,12 +74,10 @@ def uploadFile(lfn, file, diracSEs, guid=None):
                 guid=md['Value']['Successful'][lfn]['GUID']
                 result['Value']['Successful'][lfn].update({'GUID':guid})
             output(result)
-            print result
             return
         outerr.update({se:result})
     else:
         output(outerr)
-        print outerr
 #def uploadFile(lfn, file, diracSE, guid=None):
 #    result = dirac.addFile(lfn,file,diracSE,guid)
 #    if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
@@ -87,7 +88,7 @@ def uploadFile(lfn, file, diracSEs, guid=None):
 #    print result
 
 def addFile(lfn,file,diracSE,guid):
-    print dirac.addFile(lfn,file,diracSE,guid)
+    output( dirac.addFile(lfn,file,diracSE,guid) )
 
 def getOutputSandbox(id, outputDir = os.getcwd(), oversized = True):    
     result = dirac.getOutputSandbox(id, outputDir, oversized)
@@ -99,11 +100,11 @@ def getOutputSandbox(id, outputDir = os.getcwd(), oversized = True):
 
         if ganga_logs:
             os.system('ln -s %s %s/stdout' % (ganga_logs[0],outputDir))
-    print result
+    output( result )
 
 def getOutputDataInfo(id):
     ret={}
-    result = getOutputDataLFNs(id)
+    result = getOutputDataLFNs(id, pipe_out=False)
     if result.get('OK',False) and 'Value' in result:
         for lfn in result.get('Value',[]):
             file_name = os.path.basename(lfn)
@@ -120,9 +121,8 @@ def getOutputDataInfo(id):
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
                 ret[file_name].update({'LOCATIONS':rp['Value']['Successful'][lfn].keys()})
     output(ret)
-    print ret
 
-def getOutputDataLFNs(id): ## could shrink this with dirac.getJobOutputLFNs from ##dirac    
+def getOutputDataLFNs(id, pipe_out=True): ## could shrink this with dirac.getJobOutputLFNs from ##dirac    
     parameters = dirac.parameters(id)
     lfns = []
     ok = False
@@ -149,9 +149,9 @@ def getOutputDataLFNs(id): ## could shrink this with dirac.getJobOutputLFNs from
     result = {'OK':ok}
     if ok: result['Value'] = lfns
     else: result['Message'] = message
-        
-    #output(result)
-    print result
+    
+    if pipe_out:
+        output(result)
     return result
 
 def normCPUTime(id):    
@@ -161,7 +161,7 @@ def normCPUTime(id):
         parameters = parameters['Value']        
         if parameters.has_key('NormCPUTime(s)'):
             ncput = parameters['NormCPUTime(s)']
-    print ncput
+    output( ncput )
 
 
 def status(job_ids):
@@ -181,7 +181,7 @@ def status(job_ids):
         
     result = dirac.status(job_ids)
     if not result['OK']: 
-        print result
+        output( result )
         return
     status_list = []
     bulk_status = result['Value']
@@ -197,7 +197,7 @@ def status(job_ids):
         status_list.append([minor_status,dirac_status,dirac_site,
                             ganga_status])
             
-    print status_list
+    output( status_list )
 
 #def getFile(lfn,dir):
 #    result = dirac.getFile(lfn)
@@ -216,7 +216,7 @@ def status(job_ids):
 def getStateTime(id, status):
     log = dirac.loggingInfo(id)
     if not log.has_key('Value'):
-        print None
+        output( None )
         return
     L = log['Value']
     checkstr = ''
@@ -239,16 +239,16 @@ def getStateTime(id, status):
     for l in L:
         if checkstr in l[0]:
             T = datetime.datetime(*(time.strptime(l[3],"%Y-%m-%d %H:%M:%S")[0:6]))
-            print T
+            output(T)
             return
-    print None
+    output( None )
 
 def timedetails(id):
     log = dirac.loggingInfo(id)
     d = {}        
     for i in range(0, len(log['Value'])):
         d[i] = log['Value'][i]  
-    print d
+    output( d )
 
 # DiracAdmin commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -261,6 +261,6 @@ def getJobPilotOutput(id,dir):
         result = DiracAdmin().getJobPilotOutput(id)
     finally:
         os.chdir(pwd)
-    print result
+    output( result )
 
-def getServicePorts(): print DiracAdmin().getServicePorts()
+def getServicePorts(): output( DiracAdmin().getServicePorts() )

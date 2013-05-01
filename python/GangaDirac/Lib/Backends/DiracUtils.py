@@ -1,11 +1,30 @@
-from Ganga.Core.exceptions                         import BackendError
+from Ganga.Core.exceptions                         import GangaException, BackendError
+from GangaDirac.BOOT import dirac_ganga_server
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-def result_ok(result):
-    '''Check if result of DIRAC API command is OK.'''
+def result_ok( result ):
+    '''
+    Check if result of DIRAC API command is OK.
+    '''
     if result is None: return False
-    if type(result) is not type({}): return False
+    if type(result) is not dict: return False
     return result.get('OK',False)
+
+def get_result( command,
+                logger_message    = None,
+                exception_message = None,
+                eval_includes     = None ):
+    result = dirac_ganga_server.execute(command, eval_includes = eval_includes)
+
+    if not result_ok(result):
+        if logger_message is not None:
+            logger.warning('%s: %s' % (logger_message, str(result)))
+        if exception_message is not None:
+            raise GangaException(exception_message)          
+        raise GangaException("Failed to return result of '%s': %s"% (command, result))
+    return result    
 
 
 def get_job_ident(dirac_script_lines):

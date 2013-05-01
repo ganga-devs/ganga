@@ -5,7 +5,7 @@ from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
 import collections, Queue, threading, traceback
-import os, subprocess, types, time, threading
+import os, pickle, subprocess, types, time, threading
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
 #from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async, CommandOutput
 
@@ -14,7 +14,7 @@ logger = getLogger()
 default_env      = getDiracEnv()
 default_includes = getDiracCommandIncludes()
 QueueElement  = collections.namedtuple('QueueElement',  ['priority', 'command_input','callback_func','fallback_func'])
-CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell'])
+CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes'])
 FunctionInput  = collections.namedtuple('FunctionInput',  ['function', 'args', 'kwargs'])
 
 class WorkerThreadPool(object):
@@ -63,6 +63,7 @@ class WorkerThreadPool(object):
             except Queue.Empty: continue #wait 0.05 sec then loop again to give shutdown a chance
 
             #regster as a working thread
+            #thread.register()
             GangaThreadPool.getInstance().addServiceThread(thread)
 
             if isinstance(item.command_input, FunctionInput):
@@ -100,10 +101,24 @@ class WorkerThreadPool(object):
                 thread._command = 'idle'
                 thread._timeout = 'N/A'
                 self.__queue.task_done()
+                #thread.unregister()
                 GangaThreadPool.getInstance().delServiceThread(thread)
 
-            
-    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False):
+    def __timeout_func(self, process, timeout, command_done, timed_out):
+        import time
+        start = time.time()
+        while time.time()-start < timeout:
+            if command_done.isSet(): break
+            time.sleep(0.5)
+        else:
+            if process.returncode is None:
+                timed_out.set()
+                try:
+                    process.kill()
+                except Exception, e:
+                    logger.error("Exception trying to kill process: %s"%e)
+ 
+    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False, python_setup=default_includes, eval_includes=None):
         """
         Execute a command on the local DIRAC server.
 
@@ -115,35 +130,33 @@ class WorkerThreadPool(object):
                 raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
         
         if shell:
-            p=subprocess.Popen(command, shell=True, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#            stream_command = '`cat<&0`' # didn't quite work for complicated ones using " marks, possibily due to ``
+            stream_command = 'cat<&0 | sh'
         else:
-            inread,  inwrite  = os.pipe()
-            outread, outwrite = os.pipe()
-            p=subprocess.Popen('''python -c "import os,sys\nos.close(%i)\nos.close(%i)\noutpipe=os.fdopen(%i,'wb')\nexec(os.fdopen(%i, 'rb').read())\noutpipe.close()"''' % (inwrite, outread, outwrite,inread), shell=True, env=env, cwd=cwd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            os.close(inread)
-            os.close(outwrite)
-            with os.fdopen(inwrite,'wb') as instream:
-                instream.write(default_includes + command)
+            stream_command = 'python -'
+            command = python_setup + command
+
+        p=subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 
-                
-        def timeout_func(process, timeout, command_done, timed_out):
-            import time
-            start = time.time()
-            while time.time()-start < timeout:
-                if command_done.isSet(): break
-                time.sleep(0.5)
-            else:
-                if process.returncode is None:
-                    timed_out.set()
-                    try:
-                        process.kill()
-                    except Exception, e:
-                        logger.error("Exception trying to kill process: %s"%e)
+## This has been moved into a separate "private method to alow exec in function"
+#        def timeout_func(process, timeout, command_done, timed_out):
+#            import time
+#            start = time.time()
+#            while time.time()-start < timeout:
+#                if command_done.isSet(): break
+#                time.sleep(0.5)
+#            else:
+#                if process.returncode is None:
+#                    timed_out.set()
+#                    try:
+#                        process.kill()
+#                    except Exception, e:
+#                        logger.error("Exception trying to kill process: %s"%e)
 
         command_done = threading.Event()
         timed_out    = threading.Event()
         if timeout is not None:
-            t=threading.Thread(target=timeout_func,args=(p, timeout, command_done, timed_out))
+            t=threading.Thread(target=self.__timeout_func,args=(p, timeout, command_done, timed_out))
             t.deamon=True
             t.start()
 
@@ -161,25 +174,23 @@ class WorkerThreadPool(object):
 #                    return 'Command timed out!'
 ##                    break
 #                time.sleep(0.5)
-            
-        stdout, stderr = p.communicate()
+#        print "Command =",command
+        stdout, stderr = p.communicate(command)
         command_done.set()
-        obj=None
-        if not shell:
-            with os.fdopen(outread,'rb') as outstream:
-                tmp=outstream.read()
-            if tmp !='':
-                import pickle
-                obj=pickle.loads(tmp)
-
-        if obj is not None:
-            return obj
         if timed_out.isSet():
             return 'Command timed out!'
+
         try:
-            stdout = eval(stdout)
-        except: pass
+            stdout = pickle.loads(stdout)
+        except:
+            local_ns = {}
+            if type(eval_includes) is str:
+                exec(eval_includes, {}, local_ns)
+            try:
+                stdout = eval(stdout, {}, local_ns)
+            except: pass
         return stdout
+
 
     def execute_nonblocking( self, 
                              command,
@@ -189,6 +200,8 @@ class WorkerThreadPool(object):
                              env             = default_env,
                              cwd             = None,
                              shell           = False,
+                             python_setup    = default_includes,
+                             eval_includes   = None,
                              priority        = 5,
                              callback_func   = None,
                              callback_args   = (),
@@ -213,7 +226,7 @@ class WorkerThreadPool(object):
                                            ) )
         else:
             self.__queue.put( QueueElement(priority      = priority,
-                                           command_input = CommandInput(command, timeout, env, cwd, shell),
+                                           command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes),
                                            callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
                                            fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
                                            ) )

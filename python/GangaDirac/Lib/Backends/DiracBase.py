@@ -664,49 +664,5 @@ class DiracBase(IBackend):
   
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
-
-    def execAPI(cmd,timeout=getConfig('DIRAC')['Timeout']):
-        """Executes DIRAC API commands.  If variable 'result' is set, then
-        it is returned by this method. """
-        return dirac_ganga_server.execute(cmd, timeout)
-
-    execAPI = staticmethod(execAPI)
-
-#    def execAPI_async(cmd,timeout=getConfig('DIRAC')['Timeout']):
-#        """Executes DIRAC API commands.  If variable 'result' is set, then
-#        it is returned by this method. """
-#        return dirac_ganga_server.execute_nonblocking(cmd, timeout, priority=4)
-
-#    execAPI_async = staticmethod(execAPI_async)
-
-#    def getQueues():
-#        output=''
-#        output+= '{0:^55} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
-#        output+= '{0:^55} | {1:^50}\n'.format('------------------', '------------------------')
-#        output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('Name', 'Command', 'Timeout')
-#        output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('----', '-------', '-------')
-#        for u, m in zip( dirac_ganga_server.worker_status(),
-#                         dirac_monitoring_server.worker_status() ):
-#            # name has extra spaces as colour characters are invisible but still count
-#            name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
-#            name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
-#            if u[1] == 'idle':
-#                name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
-#            if m[1] == 'idle':
-#                name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
-#            output+= '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}\n'.format(name_user, u[1][:30], u[2], name_monitor, m[1][:30], m[2])
-#
-#        output+= '\n'
-#        output+= "Ganga user queue:\n"
-#        output+= "----------------\n"
-#        output+= str([i.command_input.command for i in dirac_ganga_server.get_queue()])
-#        
-#        output+= '\n'
-#        output+= "Ganga monitoring queue:\n"
-#        output+= "----------------------\n"
-#        output+= str([i.command_input.command for i in dirac_monitoring_server.get_queue()])
-#        return output
-
-#    getQueues = staticmethod(getQueues)
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
