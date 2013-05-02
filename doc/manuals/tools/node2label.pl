@@ -9,7 +9,7 @@ use English;
 $INPLACE_EDIT = '.bak';
 
 # read the labels, then reverse the mappings
-require "labels.pl";
+#require "labels.pl";
 
 %nodes = ();
 my $key;
@@ -29,7 +29,7 @@ foreach $label (sort keys %external_labels) {
 
 # This adds the "internal" labels added for indexing.  These labels will not
 # be used for file names.
-require "intlabels.pl";
+#require "intlabels.pl";
 foreach $label (keys %internal_labels) {
   $key = $internal_labels{$label};
   $key =~ s|^/||;
