@@ -22,9 +22,9 @@ Tool to build Ganga RPMs and/or Python Eggs.
 -v, --version 
     Version of ganga we're building. This will be checked out of
     SVN and into [builddir]. Assumed to be available at 
-    svn.cern.ch/reps/ganga/tags/Ganga-n-n-n<version>
-    Example: 6.0.0 will retrieve tags/Ganga-6-0-0 (note the automatic
-    conversion of '.' to '-'.
+    svn.cern.ch/reps/ganga/tags/Ganga-<version>
+    Example: 6.0.0 will retrieve tags/Ganga-6-0-0 
+    Note the automatic conversion of '.' to '-'.
 '''
 
 try:
@@ -161,23 +161,23 @@ print abstopdir
 packageDirs = glob.glob(abstopdir + '/python/Ganga*')
 
 rpm_require_map = {
-'GangaBin' : "python >= 2.4.3, Ganga >= "+this_version,
-'Ganga' : "GangaBin >= "+this_version,
-'GangaAtlas' : "Ganga >= "+this_version,
-'GangaCamtology' : "Ganga >= "+this_version,
-'GangaCMS' : "Ganga >= "+this_version,
-'GangaDirac' : "Ganga >= "+this_version,
-'GangaGaudi' : "Ganga >= "+this_version,
-'GangaLHCb' : "Ganga >= "+this_version,
-'GangaNA62' : "Ganga >= "+this_version,
-'GangaPanda' : "Ganga >= "+this_version,
-'GangaPlotter' : "Ganga >= "+this_version,
-'GangaRobot' : "Ganga >= "+this_version,
-'GangaSAGA' : "Ganga >= "+this_version,
-'GangaService' : "Ganga >= "+this_version,
-'GangaSuperB' : "Ganga >= "+this_version,
-'GangaTest' : "Ganga >= "+this_version,
-'GangaTutorial' : "Ganga >= "+this_version
+'GangaBin' : "python >= 2.4.3, Ganga == "+this_version,
+'Ganga' : "GangaBin == "+this_version,
+'GangaAtlas' : "Ganga == "+this_version,
+'GangaCamtology' : "Ganga == "+this_version,
+'GangaCMS' : "Ganga == "+this_version,
+'GangaDirac' : "Ganga == "+this_version,
+'GangaGaudi' : "Ganga == "+this_version,
+'GangaLHCb' : "Ganga == "+this_version,
+'GangaNA62' : "Ganga == "+this_version,
+'GangaPanda' : "Ganga == "+this_version,
+'GangaPlotter' : "Ganga == "+this_version,
+'GangaRobot' : "Ganga == "+this_version,
+'GangaSAGA' : "Ganga == "+this_version,
+'GangaService' : "Ganga == "+this_version,
+'GangaSuperB' : "Ganga == "+this_version,
+'GangaTest' : "Ganga == "+this_version,
+'GangaTutorial' : "Ganga == "+this_version
 }
 
 egg_require_map = {
