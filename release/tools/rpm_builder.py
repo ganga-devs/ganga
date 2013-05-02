@@ -176,7 +176,7 @@ rpm_require_map = {
 'GangaSAGA' : "Ganga == "+this_version,
 'GangaService' : "Ganga == "+this_version,
 'GangaSuperB' : "Ganga == "+this_version,
-'GangaSNOplus' : "Ganga == "+this+version,
+'GangaSNOplus' : "Ganga == "+this_version,
 'GangaTest' : "Ganga == "+this_version,
 'GangaTutorial' : "Ganga == "+this_version
 }
@@ -197,7 +197,7 @@ egg_require_map = {
 'GangaSAGA' : ["Ganga=="+this_version],
 'GangaService' : ["Ganga=="+this_version],
 'GangaSuperB' : ["Ganga=="+this_version],
-'GangaSNOplus' : ["Ganga =="+this+version],
+'GangaSNOplus' : ["Ganga =="+this_version],
 'GangaTest' : ["Ganga=="+this_version],
 'GangaTutorial' : ["Ganga=="+this_version]
 }
