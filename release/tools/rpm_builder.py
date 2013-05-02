@@ -320,7 +320,8 @@ setup(
     build_cmd = "python setup.py bdist_rpm "
     build_cmd += " --post-install " + builddir + "/postin-packages.sh "
     build_cmd += " --post-uninstall " + builddir + "/postun-packages.sh "
-    build_cmd += " --no-autoreq "
+#uncomment the following line to prevent automatic determination of RPM dependencies
+#    build_cmd += " --no-autoreq "
     build_cmd += " &> " + builddir + "/" + pack + ".log"
     print build_cmd
     if call(build_cmd, shell=True) == 0:
