@@ -176,6 +176,7 @@ rpm_require_map = {
 'GangaSAGA' : "Ganga == "+this_version,
 'GangaService' : "Ganga == "+this_version,
 'GangaSuperB' : "Ganga == "+this_version,
+'GangaSNOplus' : "Ganga == "+this+version,
 'GangaTest' : "Ganga == "+this_version,
 'GangaTutorial' : "Ganga == "+this_version
 }
@@ -196,6 +197,7 @@ egg_require_map = {
 'GangaSAGA' : ["Ganga=="+this_version],
 'GangaService' : ["Ganga=="+this_version],
 'GangaSuperB' : ["Ganga=="+this_version],
+'GangaSNOplus' : ["Ganga =="+this+version],
 'GangaTest' : ["Ganga=="+this_version],
 'GangaTutorial' : ["Ganga=="+this_version]
 }
@@ -216,6 +218,7 @@ description_map = {
 'GangaSAGA' : 'The Ganga SAGA package',
 'GangaService' : 'The Ganga Service package',
 'GangaSuperB' : 'The Ganga SuperB package',
+'GangaSNOplus' : 'The Ganga SNO+ package',
 'GangaTest' : 'The Ganga Testing package',
 'GangaTutorial' : 'The Ganga Tutorial package'
 }
