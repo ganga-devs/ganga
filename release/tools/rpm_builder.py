@@ -80,6 +80,8 @@ if exitcode != 0:
    sys.exit()
 else:
    print "Successfully exported Ganga " + this_version + " from SVN."
+   shutil.move(builddir + '/' + topdir, builddir + '/GangaSuite')
+   topdir = 'GangaSuite'
    os.makedirs(builddir + '/' + topdir + '/python/GangaBin')
 
 rpm_script = '''
@@ -161,6 +163,7 @@ print abstopdir
 packageDirs = glob.glob(abstopdir + '/python/Ganga*')
 
 rpm_require_map = {
+'GangaSuite' : "python >= 2.4.3",
 'GangaBin' : "python >= 2.4.3, Ganga == "+this_version,
 'Ganga' : "GangaBin == "+this_version,
 'GangaAtlas' : "Ganga == "+this_version,
@@ -182,6 +185,7 @@ rpm_require_map = {
 }
 
 egg_require_map = {
+'GangaSuite' : ["python>=2.4.3"],
 'GangaBin' : ["python>=2.4.3"],
 'Ganga' : ["GangaBin=="+this_version],
 'GangaAtlas' : ["Ganga=="+this_version],
@@ -203,6 +207,7 @@ egg_require_map = {
 }
 
 description_map = {
+'GangaSuite' : 'The entire Ganga suite in a single package',
 'Ganga' : 'The Core Ganga package', 
 'GangaBin' : 'Contains the Ganga executable, release scripts, documents and templates', 
 'GangaAtlas' : 'The Ganga ATLAS package',
@@ -228,20 +233,33 @@ long_desc_map = {}
 os.chdir(workdir)
 
 summaryDict = {}
+packageDirs.append('GangaSuite')
 for package in packageDirs:
-    os.chdir(workdir)
     pack = str(os.path.basename(package))
+    if not pack == 'GangaSuite':
+        os.chdir(workdir)
+        fullpath = os.path.join(abstopdir+'/python/'+pack)
+        shutil.copy(builddir+'/MANIFEST.in', workdir)
+        shutil.copytree(str(fullpath), './' + str(pack))
+    else:
+        os.chdir(abstopdir)
+        #we need to trick distutils into thinking GangaSuite is a real python package
+        #for this we need to add a __init__.py file
+        #this should then be removed with the post_install script
+        trickfile = open(abstopdir + '/__init__.py','w')
+        trickfile.close()
+        shutil.copy(builddir+'/MANIFEST.in', abstopdir)
+
+
+
     print "################################################################"
     print "Working on package " + pack 
     print "################################################################"
 
-    fullpath = os.path.join(abstopdir+'/python/'+pack)
     print str(fullpath)
     print str(pack)
-    shutil.copytree(str(fullpath), './' + str(pack))
 #    if pack == 'GangaBin':
 #        os.chdir('GangaBin')
-    shutil.copy(builddir+'/MANIFEST.in', workdir)
 
     config_script = '''[global]
 verbose         = 1
@@ -334,12 +352,13 @@ setup(
    
 #    print "Moving " + str(pack) + " to " + str(fullpath)
 #    shutil.copytree(str(pack), str(fullpath))
-    shutil.rmtree(str(pack))
-    os.chdir(builddir)
-    print "Removing workspace"
-    shutil.rmtree('workspace')
-    print "Creating workspace"
-    os.makedirs('workspace')
+    if not pack == 'GangaSuite':
+        shutil.rmtree(str(pack))
+        os.chdir(builddir)
+        print "Removing workspace"
+        shutil.rmtree('workspace')
+        print "Creating workspace"
+        os.makedirs('workspace')
 
 print "################################"
 print "######## Build Summary #########"
