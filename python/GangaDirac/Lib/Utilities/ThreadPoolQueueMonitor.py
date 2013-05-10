@@ -33,7 +33,7 @@ class ThreadPoolQueueMonitor(object):
                 name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
             if m[1] == 'idle':
                 name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
-            output+= '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}\n'.format(name_user, u[1][:30], u[2], name_monitor, m[1][:30], m[2])
+            output+= '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}\n'.format(name_user, u[1][:30].replace("\n","\\n"), u[2], name_monitor, m[1][:30].replace("\n","\\n"), m[2])
 
         def display_element(item):
             if type(item.command_input[0]) != str:
@@ -108,6 +108,7 @@ class ThreadPoolQueueMonitor(object):
                    cwd             = None,
                    shell           = False,
                    eval_includes   = None,
+                   update_env      = False,
                    priority        = 5,
                    callback_func   = None,
                    callback_args   = (),
@@ -157,6 +158,9 @@ class ThreadPoolQueueMonitor(object):
                                      trying to eval the stdout. This allows for the
                                      the user to import certain libs before attempting
                                      to parse the output.
+                   update_env      = Boolean value determining if the value of env should
+                                     be updated with the environment after running the
+                                     command.
                    priority        = The thread queuing system is a priority
                                      queue with lower number = higher priority.
                                      This then should be an int normally 0-9
@@ -177,9 +181,9 @@ class ThreadPoolQueueMonitor(object):
                                      if the command execution throws an exception.
                                      The function must take at least one arg that
                                      will be the exception that was thrown.
-                   args            = Any additional args to the fallback_func 
+                   fallback_args   = Any additional args to the fallback_func 
                                      are specified here as a tuple
-                   kwds            = kwargs for the fallback_func are given here
+                   fallback_kwargs = kwargs for the fallback_func are given here
                                      as a dict.
         """
         if type(command)!= str:
@@ -195,6 +199,7 @@ class ThreadPoolQueueMonitor(object):
                                                 cwd              = cwd,
                                                 shell            = shell,
                                                 eval_includes    = eval_includes,
+                                                update_env       = update_env,
                                                 priority         = priority,
                                                 callback_func    = callback_func,
                                                 callback_args    = callback_args,

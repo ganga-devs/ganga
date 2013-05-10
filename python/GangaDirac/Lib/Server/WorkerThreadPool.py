@@ -4,7 +4,7 @@ from Ganga.Core import GangaException
 from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig
-import collections, Queue, threading, traceback
+import collections, Queue, threading, traceback, signal
 import os, pickle, subprocess, types, time, threading
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
 #from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async, CommandOutput
@@ -14,7 +14,7 @@ logger = getLogger()
 default_env      = getDiracEnv()
 default_includes = getDiracCommandIncludes()
 QueueElement  = collections.namedtuple('QueueElement',  ['priority', 'command_input','callback_func','fallback_func'])
-CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes'])
+CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
 FunctionInput  = collections.namedtuple('FunctionInput',  ['function', 'args', 'kwargs'])
 
 class WorkerThreadPool(object):
@@ -117,11 +117,12 @@ class WorkerThreadPool(object):
             if process.returncode is None:
                 timed_out.set()
                 try:
-                    process.kill()
+                    os.killpg(process.pid, signal.SIGKILL)
+                    #process.kill()
                 except Exception, e:
                     logger.error("Exception trying to kill process: %s"%e)
  
-    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False, python_setup=default_includes, eval_includes=None):
+    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False, python_setup=default_includes, eval_includes=None, update_env=False):
         """
         Execute a command on the local DIRAC server.
 
@@ -131,15 +132,42 @@ class WorkerThreadPool(object):
             self.__proxy.create()
             if not self.__proxy.isValid():
                 raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
-        
+
+        if update_env:
+            if env is None:
+                raise GangaException('Cannot update the environment if None given.')
+            else:
+                envread, envwrite = os.pipe()
+                env_update_script = '''
+###INDENT###import os, pickle
+###INDENT###os.close(%d)
+###INDENT###with os.fdopen(%d,'wb') as envpipe:
+###INDENT###    pickle.dump(os.environ, envpipe)
+''' % (envread, envwrite)
+
         if shell:
 #            stream_command = '`cat<&0`' # didn't quite work for complicated ones using " marks, possibily due to ``
             stream_command = 'cat<&0 | sh'
+            if update_env:
+                command += ''';python -c "%s"''' % env_update_script.replace('###INDENT###','')
         else:
             stream_command = 'python -'
-            command = python_setup + command
+           # command = python_setup + command
+            command = '''
+import sys, pickle, traceback
+try:
+    exec("""###SETUP###""")
+    exec("""###COMMAND###""")
+except:
+    print >> sys.stdout, pickle.dumps(traceback.format_exc())
+finally:###FINALLY###
+'''.replace('###SETUP###',python_setup).replace('###COMMAND###',command)
+            if update_env:
+                command = command.replace('###FINALLY###',env_update_script.replace('###INDENT###','    '))
+            else:
+                command = command.replace('###FINALLY###','pass')
 
-        p=subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        p=subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid)
                 
 ## This has been moved into a separate "private method to alow exec in function"
 #        def timeout_func(process, timeout, command_done, timed_out):
@@ -180,9 +208,20 @@ class WorkerThreadPool(object):
 #        print "Command =",command
         stdout, stderr = p.communicate(command)
         command_done.set()
+
+        if stderr != '':
+            logger.debug(stderr)
+
         if timed_out.isSet():
+            if update_env:
+                os.close(envwrite)
+                os.close(envread)
             return 'Command timed out!'
 
+        if update_env:
+             os.close(envwrite)
+             with os.fdopen(envread, 'rb') as envfd:
+                 env.update(pickle.load(envfd))
         try:
             stdout = pickle.loads(stdout)
         except:
@@ -205,6 +244,7 @@ class WorkerThreadPool(object):
                              shell           = False,
                              python_setup    = default_includes,
                              eval_includes   = None,
+                             update_env      = False,
                              priority        = 5,
                              callback_func   = None,
                              callback_args   = (),
@@ -229,12 +269,15 @@ class WorkerThreadPool(object):
                                            ) )
         else:
             self.__queue.put( QueueElement(priority      = priority,
-                                           command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes),
+                                           command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
                                            callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
                                            fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
                                            ) )
 
     def clear_queue(self):
+        """
+        Purges the thread pools queue.
+        """
         self.__queue.queue=[]
 
     def get_queue(self):
@@ -245,4 +288,7 @@ class WorkerThreadPool(object):
 
 
     def worker_status(self):
+        """
+        Returns a informatative tuple containing the threads name, current command it's working on and the timeout for that command.
+        """
         return [(w._name, w._command, w._timeout) for w in self.__worker_threads]

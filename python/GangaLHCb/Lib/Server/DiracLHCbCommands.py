@@ -5,12 +5,13 @@ from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
 
 diraclhcb=DiracLHCb()
 # Write to output pipe
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+
 def output(object):
     print >> sys.stdout, pickle.dumps(object)
 
 # DiracLHCb commands
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
 def getRootVersions(): output( diraclhcb.getRootVersions() )
 

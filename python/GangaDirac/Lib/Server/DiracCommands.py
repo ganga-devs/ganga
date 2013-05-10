@@ -11,12 +11,14 @@ from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
 
 # Write to output pipe
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+
 def output(object):
     print >> sys.stdout, pickle.dumps(object)
 
 # Dirac commands
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+
 def getJobGroupJobs(jg): output(dirac.selectJobs(jobGroup=jg))
 
 def kill(id): output( dirac.delete(id) )
@@ -251,7 +253,8 @@ def timedetails(id):
     output( d )
 
 # DiracAdmin commands
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
+#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+
 def getJobPilotOutput(id,dir):
     pwd = os.getcwd()
     try:
