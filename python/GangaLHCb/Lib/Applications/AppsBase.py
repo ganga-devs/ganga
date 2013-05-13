@@ -310,7 +310,10 @@ class AppName(Gaudi):
         return CMTscript.CMTscript(self,command)
 
     def _getshell(self):
-        super(type(self), self)._getshell()
+        self.env = os.environ
+        shellEnvUpdate_cmd('LbLogin -c %s' % self.platform, self.env)
+        self.env['User_release_area'] = self.user_release_area
+
         opts = ''
         if self.setupProjectOptions: opts = self.setupProjectOptions
         

@@ -70,7 +70,8 @@ def CMTscript(app,command=''):
    # generate shell script
    script='#!/bin/sh\n'
    script+='unalias -a\n'
-   script+='export CMTCONFIG='+str(app.platform)+'\n' 
+#   script+='export CMTCONFIG='+str(app.platform)+'\n' 
+   script+='LbLogin -c '+str(app.platform)+'\n' 
    script+='export User_release_area='+str(ura)+'\n'
    script+='unset CMTPROJECTPATH\n'
    script+='. setenvProject.sh '
