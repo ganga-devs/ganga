@@ -910,6 +910,9 @@ class Athena(IPrepareApp):
             self.athena_compile = opt_athena_compile  
             logger.warning('prepare(athena_compile=True/False) has been used - please change to the new option Athena.athena_compile=True/False.')
 
+        # make sure the exetype is upper case
+        self.atlas_exetype = self.atlas_exetype.upper()
+        
         if not self.atlas_exetype in ['EXE'] or self.atlas_release=='': 
             # get Athena versions
             rc, out = AthenaUtils.getAthenaVer()
