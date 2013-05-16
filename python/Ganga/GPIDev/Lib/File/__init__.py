@@ -19,6 +19,7 @@ outputfilesConfig = {}
 
 keys = getConfig('Output').options.keys()
 keys.remove('PostProcessLocationsFileName')
+keys.remove('PreProcessInputLocationsFileName')
 keys.remove('ForbidLegacyOutput')                     
 keys.remove('AutoRemoveFilesWithJob')
 keys.remove('AutoRemoveFileTypes')
