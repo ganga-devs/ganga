@@ -442,6 +442,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         outputconfig.addOption('PostProcessLocationsFileName', '__postprocesslocations__', 'name of the file that will contain the locations of the uploaded from the WN files')
 
+        outputconfig.addOption('PreProcessInputLocationsFileName', '__preprocessinputlocations__', 'name of the file that will contain the locations of the input files that have to be downloaded from the WN script before running the application')
+
         outputconfig.addOption('ForbidLegacyOutput', False, 'if True, writing to the job outputdata and outputsandbox fields will be forbidden')
 
         outputconfig.addOption('LCGSEFile',{'fileExtensions':['*.root', '*.asd'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{'LFC_HOST':'lfc-dteam.cern.ch', 
