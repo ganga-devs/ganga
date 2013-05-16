@@ -10,6 +10,9 @@ from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
+from Ganga.GPIDev.Lib.File import File
+
 import os
 
 import datetime
@@ -180,7 +183,13 @@ class IBackend(GangaObject):
         if masterjobconfig:
             files = masterjobconfig.getSandboxFiles() # FIXME: assume that all jobconfig object have getSandboxFiles() method
         else:
-            files = self.getJobObject().inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
+            if len(job.inputfiles) > 0:
+                fileNames = getInputFilesPatterns(job)
+                files = []
+                for fileName in fileNames:
+                    files.append(File(fileName))
+            else:
+                files = job.inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
 
         if self._packed_input_sandbox:
             return job.createPackedInputSandbox(files,master=True)
