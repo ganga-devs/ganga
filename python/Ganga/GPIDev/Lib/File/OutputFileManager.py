@@ -1,4 +1,7 @@
-from Ganga.Utility.Config import getConfig      
+from Ganga.Utility.Config import getConfig   
+
+import os
+import glob   
 
 """
 Checks if the output files of a given job(we are interested in the backend) 
@@ -52,6 +55,37 @@ def getOutputSandboxPatterns(job):
                         outputPatterns.append(outputFile.namePattern)
                 
     return outputPatterns
+
+"""
+we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
+"""
+def getInputFilesPatterns(job):
+
+    #inputPatterns = [getConfig('Output')['PreProcessInputLocationsFileName']]
+    inputPatterns = []
+
+    for inputFile in job.inputfiles:   
+
+        inputFileClassName = inputFile.__class__.__name__
+
+        if inputFileClassName == 'SandboxFile':
+            for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
+                if currentFile not in inputPatterns:
+                    inputPatterns.append(currentFile)
+
+        elif outputFilePostProcessingOnClient(job, inputFileClassName): 
+            #first download in the input workspace
+            #then add to the list if not in the list already
+            if inputFile.namePattern not in inputPatterns:
+                    inputPatterns.append(inputFile.namePattern)
+
+        elif outputFilePostProcessingOnWN(job, inputFileClassName): 
+            pass
+            #write in PreProcessInputLocationsFileName the command for downloading the file from the WN
+
+                
+    return inputPatterns
+
 
 """
 This should be used from only from Interactive backend
