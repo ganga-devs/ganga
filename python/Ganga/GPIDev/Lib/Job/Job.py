@@ -159,6 +159,7 @@ class Job(GangaObject):
                                     'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
+                                    'inputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
                                     'outputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
                                     'non_copyable_outputfiles' : OutputFileItem(defvalue=[], hidden=1, typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
@@ -267,9 +268,11 @@ class Job(GangaObject):
                 
     keys = getConfig('Output').options.keys()
     keys.remove('PostProcessLocationsFileName')         
+    keys.remove('PreProcessInputLocationsFileName')
     keys.remove('ForbidLegacyOutput')                
     keys.remove('AutoRemoveFilesWithJob')
     keys.remove('AutoRemoveFileTypes')
+
     for key in keys:
         try:
             for configEntry in getConfig('Output')[key]['backendPostprocess']:
