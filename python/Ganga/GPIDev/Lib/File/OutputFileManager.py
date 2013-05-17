@@ -1,7 +1,8 @@
 from Ganga.Utility.Config import getConfig   
 
 import os
-import glob   
+import glob 
+import tempfile  
 
 """
 Checks if the output files of a given job(we are interested in the backend) 
@@ -63,6 +64,7 @@ def getInputFilesPatterns(job):
 
     #inputPatterns = [getConfig('Output')['PreProcessInputLocationsFileName']]
     inputPatterns = []
+    tmpDir = tempfile.mkdtemp()
 
     for inputFile in job.inputfiles:   
 
@@ -74,17 +76,23 @@ def getInputFilesPatterns(job):
                     inputPatterns.append(currentFile)
 
         elif outputFilePostProcessingOnClient(job, inputFileClassName): 
-            #first download in the input workspace
-            #then add to the list if not in the list already
-            if inputFile.namePattern not in inputPatterns:
-                    inputPatterns.append(inputFile.namePattern)
+
+            #download in temp dir
+            inputFile.localDir = tmpDir
+            inputFile.get()
+
+            print os.listdir(inputFile.localDir)
+
+            for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
+                if currentFile not in inputPatterns:
+                    inputPatterns.append(currentFile)
 
         elif outputFilePostProcessingOnWN(job, inputFileClassName): 
             pass
             #write in PreProcessInputLocationsFileName the command for downloading the file from the WN
 
                 
-    return inputPatterns
+    return inputPatterns, tmpDir
 
 
 """
