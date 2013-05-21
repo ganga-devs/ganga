@@ -124,11 +124,11 @@ class MassStorageFile(IOutputFile):
         Retrieves locally all files matching this MassStorageFile object pattern
         """
 
-        from_location = self.localDir
+        to_location = self.localDir
 
         if not os.path.isdir(self.localDir):
             if self._parent is not None:
-                from_location = self.getJobObject().outputdir
+                to_location = self.getJobObject().outputdir
             else:
                 print "%s is not a valid directory.... Please set the localDir attribute" % self.localDir
                 return
@@ -137,8 +137,15 @@ class MassStorageFile(IOutputFile):
         cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
 
         for location in self.locations:
-            targetLocation = os.path.join(from_location, os.path.basename(location))      
+            targetLocation = os.path.join(to_location, os.path.basename(location))      
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
+
+    def getDownloadCommand(self, dest_dir='.'):
+
+        cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
+
+        return '%s %s %s' % (cp_cmd, self.locations[0], dest_dir)
+
 
     def put(self):
         """
