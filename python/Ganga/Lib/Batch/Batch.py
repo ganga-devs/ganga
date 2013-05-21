@@ -443,6 +443,9 @@ for f in input_sandbox:
 
 # -- END OF MOVED CODE BLOCK
 
+#get input files
+###DOWNLOADINPUTFILES###
+
 import sys
 sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
@@ -537,11 +540,13 @@ sys.exit(result)
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
         from Ganga.Utility.Config import getConfig
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
         jobidRepr = repr(self.getJobObject().getFQID('.'))
         text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr))
 
         text = text.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, ''))
+
+        text = text.replace('###DOWNLOADINPUTFILES###',getWNCodeForDownloadingInputFiles(job, ''))
 
         text = text.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
         text = text.replace('###INLINEHOSTNAMEFUNCTION###',inspect.getsource(Utility.util.hostname))
