@@ -293,7 +293,7 @@ class Job(GangaObject):
                                               State('killed','j.kill()',hook='monitorKilled_hook'),
                                               State('unknown','forced remove'),
                                               State('failed', 'j.fail(force=1)',hook='monitorFailed_hook'),
-                                              State('completing','job output already in outputdir',hook='postprocess_hook'),
+                                              State('completing'),
                                               State('completed',hook='postprocess_hook'),
                                               State('submitting','j.resubmit(force=1)')),
                     'running' : Transitions(State('completing'),
