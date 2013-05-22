@@ -379,6 +379,13 @@ class LCGSEFile(IOutputFile):
                 print 'most probably you need to source the grid environment , set environment variable LFC_HOST to %s and try again with the lcg-cp command to download the job output' % self.lfc_host
 
 
+    def getDownloadCommand(self, dest_dir='.'):
+
+        vo = getConfig('LCG')['VirtualOrganisation']  
+
+        return 'lcg-cp --vo %s %s file:%s' % (vo, self.locations[0], os.path.join(dest_dir, self.namePattern))
+
+
 # add LCGSEFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGSEFile() objects via config file)
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['LCGSEFile'] = LCGSEFile
