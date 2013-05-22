@@ -608,6 +608,10 @@ class DiracBase(IBackend):
 
         monitor_jobs = [ j for j in interesting_jobs if j.backend.status not in requeue_dirac_status]
         requeue_jobs = [ j for j in interesting_jobs if j.backend.status     in requeue_dirac_status]
+
+        logger.debug('Interesting jobs: '+ repr([j.fqid for j in interesting_jobs]))
+        logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs]))
+        logger.debug('Requeue jobs    : ' + repr([j.fqid for j in requeue_jobs]))
         
         ## requeue existing completed job
         for j in requeue_jobs:
