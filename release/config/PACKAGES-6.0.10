@@ -14,14 +14,14 @@ ganga/python/Ganga/Lib/Remote                                          GangaRemo
 ganga/python/GangaAtlas                                                GangaAtlas-25-14
 
 #alex/patrick/ulrik
-ganga/python/GangaDirac                                                GangaDirac-01-28
+ganga/python/GangaDirac                                                GangaDirac-01-29
 
 #alex/ulrik
 ganga/python/GangaGaudi                                                GangaGaudi-01-20
-ganga/python/GangaLHCb                                                 GangaLHCb-24-49
+ganga/python/GangaLHCb                                                 GangaLHCb-24-50
 
 #johannes
-ganga/python/GangaPanda                                                GangaPanda-25-06
+ganga/python/GangaPanda                                                GangaPanda-25-07
 
 #ulrik
 ganga/python/GangaPlotter                                              GangaPlotter-21-2
