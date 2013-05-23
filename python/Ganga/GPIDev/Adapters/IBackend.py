@@ -201,7 +201,6 @@ class IBackend(GangaObject):
         if tmpDir != None:
             import shutil
                 
-            print tmpDir
             #remove temp dir
             if os.path.exists(tmpDir):
                 shutil.rmtree(tmpDir)  
