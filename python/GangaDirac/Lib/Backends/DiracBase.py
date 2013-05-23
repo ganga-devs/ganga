@@ -8,6 +8,7 @@ from Ganga.GPIDev.Schema                     import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend          import IBackend
 from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
+from GangaDirac.Lib.Files.DiracFile          import DiracFile
 #from GangaDirac.Lib.Server.WorkerThreadPool  import WorkerThreadPool
 from GangaDirac.BOOT                         import dirac_ganga_server, dirac_monitoring_server
 from Ganga.Utility.ColourText                import getColour
@@ -370,7 +371,6 @@ class DiracBase(IBackend):
         treated as a top dir and a subdir for each job will be created below it. This
         will avoid overwriting files with the same name from each subjob.
         """
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
         j = self.getJobObject()
         if dir is not None and not os.path.exists(dir) :
             raise GangaException("Designated outupt path '%s' must exist" % dir)
@@ -420,7 +420,6 @@ class DiracBase(IBackend):
             
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""   
-        from GangaDirac.Lib.Files.DiracFile import DiracFile
         j = self.getJobObject()
         lfns=[]
         
@@ -529,7 +528,7 @@ class DiracBase(IBackend):
             file_info_dict          = dirac_monitoring_server.execute('getOutputDataInfo(%d)'% job.backend.id)
 
             ## Set DiracFile metadata
-            wildcards = [f.namePattern for f in job.outputfiles if regex.search(f.namePattern) is not None]
+            wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
 
             with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
                 for file_name, info in file_info_dict.iteritems():
@@ -609,9 +608,9 @@ class DiracBase(IBackend):
         monitor_jobs = [ j for j in interesting_jobs if j.backend.status not in requeue_dirac_status]
         requeue_jobs = [ j for j in interesting_jobs if j.backend.status     in requeue_dirac_status]
 
-        logger.debug('Interesting jobs: '+ repr([j.fqid for j in interesting_jobs]))
-        logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs]))
-        logger.debug('Requeue jobs    : ' + repr([j.fqid for j in requeue_jobs]))
+        logger.debug('Interesting jobs: ' + repr([j.fqid for j in interesting_jobs]))
+        logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs    ]))
+        logger.debug('Requeue jobs    : ' + repr([j.fqid for j in requeue_jobs    ]))
         
         ## requeue existing completed job
         for j in requeue_jobs:

@@ -8,7 +8,7 @@ file.write('import os')
 file.close()
 
 # Set-up the DaVinci InstallArea by getting sub package Tutorial/Analysis and building
-t = JobTemplate( application = DaVinci( version = 'v33r1' ))
+t = JobTemplate( application = DaVinci( version = 'v33r2' ))
 t.application.user_release_area = ura
 t.application.getpack( "Tutorial/Analysis v10r1" )
 t.application.masterpackage = "Phys/DaVinci"

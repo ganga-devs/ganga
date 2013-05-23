@@ -42,8 +42,8 @@ class TestSavannah(GangaGPITestCase):
         
         r =  Root()
         r.version = '5.32.00'
-        r.script = fileName
-        j = Job(application=r, backend=Dirac(CPUTime=600))
+        r.script = File(fileName)
+        j = Job(application=r, backend=Dirac(settings={'CPUTime':600}))
         j.submit()
         return Savannah33992(j)
         
@@ -97,8 +97,9 @@ class Savannah33992(ICheckTest):
         self.j.backend.getOutputSandbox()
         f = os.path.join(self.j.outputdir,'std.out')
         assert os.path.exists(f)
-        for line in f:
-           print line
+        with open(f,'r') as std_out:
+            for line in std_out.readlines():
+                print line
         assert file_contains(f, 'Status after exitCode.C execution is 45'), 'Incorrect exit code'
 
 

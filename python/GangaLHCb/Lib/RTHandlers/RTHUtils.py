@@ -142,7 +142,7 @@ f=os.popen('which SetupProject.sh')
 setup_script=f.read()[:-1]
 f.close()
 if os.path.exists(setup_script):
-    os.system('''/usr/bin/env bash -c 'LbLogin -c %s && source %s %s %s %s && printenv > \
+    os.system('''/usr/bin/env bash -c '. `which LbLogin.sh` -c %s && source %s %s %s %s && printenv > \
 env.tmp' ''' % (platform, setup_script,project_opts,app,version))
     for line in open('env.tmp').readlines():
         varval = line.strip().split('=')

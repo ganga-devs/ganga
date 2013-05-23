@@ -9,7 +9,7 @@ dirac_ganga_server      = WorkerThreadPool()
 dirac_monitoring_server = WorkerThreadPool()
 exportToGPI('queues',ThreadPoolQueueMonitor(),'Objects')
 
-
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI(cmd, timeout = 60):
     '''Execute DIRAC API commands from w/in Ganga.
 
@@ -32,6 +32,7 @@ def diracAPI(cmd, timeout = 60):
 
 exportToGPI('diracAPI',diracAPI,'Functions')
 
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI_interactive(connection_attempts=5):
     '''
     '''
@@ -56,6 +57,7 @@ def diracAPI_interactive(connection_attempts=5):
     return excpt
 exportToGPI('diracAPI_interactive',diracAPI_interactive,'Functions')
 
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI_async(cmd, timeout = 120):
     '''Execute DIRAC API commands from w/in Ganga.
     '''
@@ -63,7 +65,7 @@ def diracAPI_async(cmd, timeout = 120):
 
 exportToGPI('diracAPI_async',diracAPI_async,'Functions')
 
-
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def getDiracFiles():
     import os
     from Ganga.GPI import DiracFile
@@ -79,7 +81,7 @@ def getDiracFiles():
  
 exportToGPI('getDiracFiles',getDiracFiles,'Functions')
 
-
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def dumpObject(object, filename):
     import pickle
     f=open(filename, 'wb')
@@ -94,3 +96,5 @@ def loadObject(filename):
     f.close()
     return addProxy(r)
 exportToGPI('loadObject',loadObject,'Functions')
+
+#\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#

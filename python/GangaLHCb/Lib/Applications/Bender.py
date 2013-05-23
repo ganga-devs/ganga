@@ -102,7 +102,7 @@ class Bender(GaudiBase):
             script += 'User_release_area=%s; export User_release_area\n' % \
                       expandfilename(self.user_release_area)
         if self.platform:    
-            script += 'LbLogin -c %s\n' % self.platform
+            script += '. `which LbLogin.sh` -c %s\n' % self.platform
 #            script += 'export CMTCONFIG=%s\n' % self.platform
         useflag = ''
         if self.masterpackage:

@@ -1,6 +1,6 @@
+import os
 from Ganga.Utility.Config  import getConfig
 from Ganga.Core.exceptions import GangaException
-import os
 
 ## Cache
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\

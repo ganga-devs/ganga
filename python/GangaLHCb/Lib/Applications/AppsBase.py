@@ -311,7 +311,7 @@ class AppName(Gaudi):
 
     def _getshell(self):
         self.env = os.environ
-        shellEnvUpdate_cmd('LbLogin -c %s' % self.platform, self.env)
+        shellEnvUpdate_cmd('. `which LbLogin.sh` -c %s' % self.platform, self.env)
         self.env['User_release_area'] = self.user_release_area
 
         opts = ''

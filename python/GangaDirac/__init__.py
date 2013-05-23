@@ -1,18 +1,15 @@
 import os
-import Ganga.Utility.Config
-#from multiprocessing import cpu_count
-configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
-config=Ganga.Utility.Config.getConfig('Configuration')
+#from multiprocessing     import cpu_count
+from Ganga.Utility.Config import makeConfig, getConfig
+configDirac = makeConfig('DIRAC','Parameters for DIRAC')
+config      = getConfig('Configuration')
  
 # Set default values for the Dirac section.
-configDirac.addOption('ShowDIRACstdout', False,
-                      'Display DIRAC API stdout to the screen in Ganga?')
+#configDirac.addOption('ShowDIRACstdout', False,
+#                      'Display DIRAC API stdout to the screen in Ganga?')
 
 configDirac.addOption('Timeout', 1000,
                       'Default timeout (seconds) for Dirac commands')
-
-configDirac.addOption('StartUpWaitTime', 1.0,
-                      'Wait time (seconds) prior to first poll of Dirac child proc')
 
 #configDirac.addOption('NumWorkerThreads', cpu_count(),
 configDirac.addOption('NumWorkerThreads', 5,
@@ -62,6 +59,4 @@ def loadPlugins( config = {} ):
     import Lib.Backends
     import Lib.RTHandlers
     import Lib.Files
-#from Ganga.GPIDev.Credentials import getCredential
-#proxy = getCredential('GridProxy', '')
 
