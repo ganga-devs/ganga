@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.10 (2013/5/19)
+6.0.10 (2013/5/23)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -11,11 +11,19 @@ ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-Ganga 6.0.10 (GangaLHCb-24-49)
+Ganga 6.0.10 (GangaLHCb-24-50)
 ************
 
 1) Made several updates to the queues and subprocess system before it's migrated into the Core.
-2) Now call LbLogin -c to set the arch rather than just relying on changing the CMTCONFIG env var
+2) Now call LbLogin.sh -c to set the arch rather than just relying on changing the CMTCONFIG env var
+3) Fixed the writing of postprocesslocations file for DiracFiles
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fixed a problem with jobs submitted without a splitter
+* Fixed source upload problem when running Executable Application with Panda backend
 
 
 --------------------------------------------------------------------------------------------------------------
