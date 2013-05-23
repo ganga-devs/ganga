@@ -1458,6 +1458,7 @@ class Job(GangaObject):
         return rslice._display(1)
         
     def __setattr__(self, attr, value):
+
         if attr == 'outputfiles':
 
             if value != []:     
@@ -1482,6 +1483,15 @@ class Job(GangaObject):
         
             super(Job,self).__setattr__(attr, uniqueValues) 
 
+        elif attr == 'inputfiles':
+
+            if value != []:     
+                if self.inputsandbox != []:
+                    logger.error('job.inputsandbox is set, you can\'t set job.inputfiles')
+                    return      
+                                
+            super(Job,self).__setattr__(attr, value) 
+
         elif attr == 'outputsandbox':
 
             if value != []:     
@@ -1493,9 +1503,21 @@ class Job(GangaObject):
                 if self.outputfiles != []:
                     logger.error('job.outputfiles is set, you can\'t set job.outputsandbox')
                     return
+
+            super(Job,self).__setattr__(attr, value)
+
+        elif attr == 'inputsandbox':
+
+            if value != []:     
+
+                if getConfig('Output')['ForbidLegacyOutput']:
+                    logger.error('Use of job.inputsandbox is forbidden, please use job.inputfiles')
+                    return
+
+                if self.inputfiles != []:
+                    logger.error('job.inputfiles is set, you can\'t set job.inputsandbox')
+                    return
                 
-
-
             super(Job,self).__setattr__(attr, value)
 
         elif attr == 'outputdata':
