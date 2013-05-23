@@ -353,11 +353,11 @@ class LCGSEFile(IOutputFile):
 
             return (exitcode, mystdout, mystderr)
 
-        from_location = self.localDir
+        to_location = self.localDir
 
         if not os.path.isdir(self.localDir):
             if self._parent is not None:
-                from_location = self.getJobObject().outputdir
+                to_location = self.getJobObject().outputdir
             else:
                 print "%s is not a valid directory.... Please set the localDir attribute" % self.localDir
                 return
@@ -368,16 +368,13 @@ class LCGSEFile(IOutputFile):
         vo = getConfig('LCG')['VirtualOrganisation']  
 
         for location in self.locations:
-            destFileName = os.path.join(from_location, location[-10:])
+            destFileName = os.path.join(to_location, self.namePattern)
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
             (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
 
-            if exitcode == 0:
-                print 'job output downloaded here %s' % destFileName
-            else:
+            if exitcode != 0:
                 print 'command %s failed to execute , reason for failure is %s' % (cmd, mystderr)
-                print 'most probably you need to source the grid environment , set environment variable LFC_HOST to %s and try again with the lcg-cp command to download the job output' % self.lfc_host
-
+                print 'most probably you need to source the grid environment , set environment variable LFC_HOST to %s and try again to download the job output' % self.lfc_host
 
     def getDownloadCommand(self, dest_dir='.'):
 
