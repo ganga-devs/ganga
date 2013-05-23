@@ -21,7 +21,7 @@ from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 
-from GangaPanda.Lib.Panda.Panda import setChirpVariables
+from GangaPanda.Lib.Panda.Panda import setChirpVariables, uploadSources
 
 class ExecutablePandaRTHandler(IRuntimeHandler):
     '''Executable Panda Runtime Handler'''
@@ -47,7 +47,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if hasattr(job.application.exe, "name"):
             if not job.application.exe in job.inputsandbox:
                 job.inputsandbox.append(job.application.exe)
-            
+
         for fname in [f.name for f in job.inputsandbox]:
             fname.rstrip(os.sep)
             path = fname[:fname.rfind(os.sep)]
@@ -70,17 +70,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 #       Upload Inputsandbox
         if inputsandbox:
             logger.debug('Uploading source tarball ...')
-            try:
-                cwd = os.getcwd()
-                os.chdir(inpw.getPath())
-                rc, output = Client.putFile(inputsandbox)
-                if output != 'True':
-                    logger.error('Uploading inputsandbox %s failed. Status = %d', inputsandbox, rc)
-                    logger.error(output)
-                    raise ApplicationConfigurationError(None,'Uploading inputsandbox failed')
-                self.inputsandbox = inputsandbox
-            finally:
-                os.chdir(cwd)
+            uploadSources(inpw.getPath(),os.path.basename(inputsandbox))
+            self.inputsandbox = inputsandbox
         else:
             self.inputsandbox = None
 
@@ -206,10 +197,18 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
 #       in case of a simple job get the dataset content, otherwise subjobs are filled by the splitter
         if job.inputdata and not job._getRoot().subjobs:
+
             if not job.inputdata.names:
-                for guid, lfn in job.inputdata.get_contents():
-                    job.inputdata.guids.append(guid)
-                    job.inputdata.names.append(lfn)
+                
+                contents = job.inputdata.get_contents(overlap=False, size=True)
+
+                for ds in contents.keys():
+                    job.inputdata.guids.append( contents[ds][0][0] )
+                    job.inputdata.names.append( contents[ds][0][1][0] )
+                    job.inputdata.sizes.append( contents[ds][0][1][1] )
+                    job.inputdata.checksums.append( contents[ds][0][1][2] )
+                    job.inputdata.scopes.append( contents[ds][0][1][3] )
+
 
         site = job._getRoot().backend.site
         job.backend.site = site
@@ -274,8 +273,8 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             jspec.addFile(flib)
 
 #       input files FIXME: many more input types
-        if job.inputdata:
-            for guid, lfn, scope in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.scopes): 
+        if job.inputdata:            
+            for guid, lfn, size, checksum, scope in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.sizes, job.inputdata.checksums, job.inputdata.scopes):
                 finp = FileSpec()
                 finp.lfn            = lfn
                 finp.GUID           = guid

@@ -559,9 +559,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       in case of a simple job get the dataset content, otherwise subjobs are filled by the splitter
         if job.inputdata and self.inputdatatype=='DQ2' and not masterjob.subjobs:
             if not job.inputdata.names:
-                for guid, lfn in job.inputdata.get_contents():
-                    job.inputdata.guids.append(guid)
-                    job.inputdata.names.append(lfn)
+                
+                contents = job.inputdata.get_contents(overlap=False, size=True)
+
+                for ds in contents.keys():
+                    job.inputdata.guids.append( contents[ds][0][0] )
+                    job.inputdata.names.append( contents[ds][0][1][0] )
+                    job.inputdata.sizes.append( contents[ds][0][1][1] )
+                    job.inputdata.checksums.append( contents[ds][0][1][2] )
+                    job.inputdata.scopes.append( contents[ds][0][1][3] )
 
         job.backend.actualCE = job.backend.site
         job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']
@@ -636,7 +642,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
 #       input files FIXME: many more input types
         if job.inputdata and self.inputdatatype=='DQ2':
-            for guid, lfn, size, checksum, scope in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.sizes, job.inputdata.checksums, job.inputdata.scopes): 
+            for guid, lfn, size, checksum, scope in zip(job.inputdata.guids,job.inputdata.names,job.inputdata.sizes, job.inputdata.checksums, job.inputdata.scopes):
+
                 finp = FileSpec()
                 finp.lfn            = lfn
                 finp.GUID           = guid
