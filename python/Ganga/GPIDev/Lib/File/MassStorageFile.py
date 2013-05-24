@@ -140,11 +140,11 @@ class MassStorageFile(IOutputFile):
             targetLocation = os.path.join(to_location, os.path.basename(location))      
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
-    def getDownloadCommand(self, dest_dir='.'):
+    def getDownloadCommand(self):
 
         cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
 
-        return ['%s %s %s' % (cp_cmd, self.locations[0], dest_dir)]
+        return ['%s %s .' % (cp_cmd, self.locations[0])]
 
 
     def put(self):
