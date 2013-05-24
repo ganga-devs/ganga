@@ -34,7 +34,7 @@ class IOutputFile(GangaObject):
         """
         raise NotImplementedError
 
-    def getDownloadCommand(self, dest_dir='.'):
+    def getDownloadCommand(self):
         """
         Gets the command used to download already uploaded file
         """
