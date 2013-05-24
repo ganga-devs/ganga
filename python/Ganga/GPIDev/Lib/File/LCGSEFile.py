@@ -376,16 +376,23 @@ class LCGSEFile(IOutputFile):
                 print 'command %s failed to execute , reason for failure is %s' % (cmd, mystderr)
                 print 'most probably you need to source the grid environment , set environment variable LFC_HOST to %s and try again to download the job output' % self.lfc_host
 
-    def getDownloadCommand(self, dest_dir='.'):
+    def getWNScriptDownloadCommand(self, indent):
 
-        vo = getConfig('LCG')['VirtualOrganisation']  
+        script = """\n
 
-        commands = []
-        commands.append('os.environ[\'LFC_HOST\'] = %s' % self.lfc_host)
-        commands.append('lcg-cp --vo %s %s file:%s' % (vo, self.locations[0], os.path.join(dest_dir, self.namePattern)))
+###INDENT###os.environ['LFC_HOST'] = ###LFC_HOST###
+###INDENT###cwDir = os.getcwd()
+###INDENT###dwnCmd = 'lcg-cp --vo ###VO### ###LOCATION### file:%s' % os.path.join(cwDir, ###NAMEPATTERN###)
+###INDENT###os.system(dwnCmd)
+"""     
+        
+        script = script.replace('###INDENT###', indent)
+        script = script.replace('###LFC_HOST###', self.lfc_host)
+        script = script.replace('###VO###', getConfig('LCG')['VirtualOrganisation'])
+        script = script.replace('###LOCATION###', self.locations[0])
+        script = script.replace('###NAMEPATTERN###', self.namePattern)
 
-        return commands
-
+        return script
 
 # add LCGSEFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGSEFile() objects via config file)
 import Ganga.Utility.Config
