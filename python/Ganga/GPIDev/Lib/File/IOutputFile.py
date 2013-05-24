@@ -34,7 +34,7 @@ class IOutputFile(GangaObject):
         """
         raise NotImplementedError
 
-    def getWNScriptDownloadCommand(self):
+    def getWNScriptDownloadCommand(self, indent):
         """
         Gets the command used to download already uploaded file
         """
