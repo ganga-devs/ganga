@@ -140,12 +140,18 @@ class MassStorageFile(IOutputFile):
             targetLocation = os.path.join(to_location, os.path.basename(location))      
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
-    def getDownloadCommand(self):
+    def getWNScriptDownloadCommand(self, indent):
 
-        cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
+        script = """\n
 
-        return ['%s %s .' % (cp_cmd, self.locations[0])]
+###INDENT###os.system(###CP_COMMAND###)
 
+"""     
+        cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  , self.locations[0])
+        script = script.replace('###INDENT###', indent)
+        script = script.replace('###CP_COMMAND###', cp_cmd)
+
+        return script
 
     def put(self):
         """
