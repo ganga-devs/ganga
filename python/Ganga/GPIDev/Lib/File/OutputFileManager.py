@@ -94,8 +94,9 @@ def getInputFilesPatterns(job):
 
         elif outputFilePostProcessingOnWN(job, inputFileClassName): 
             #write in PreProcessInputLocationsFileName the command for downloading the file from the WN
-            downloadCommand = inputFile.getDownloadCommand()
-            preProcessInputFile.write('%s\n' % downloadCommand)
+            downloadCommands = inputFile.getDownloadCommand()
+            for line in downloadCommands:
+                preProcessInputFile.write('%s\n' % line)
             
 
     preProcessInputFile.close()
