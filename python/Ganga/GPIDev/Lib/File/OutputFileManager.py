@@ -64,12 +64,7 @@ def getInputFilesPatterns(job):
 
     tmpDir = tempfile.mkdtemp()
 
-    preProcessInputFileName = getConfig('Output')['PreProcessInputLocationsFileName']
-    preProcessInputFilePath = os.path.join(tmpDir, preProcessInputFileName)
-
-    inputPatterns = [preProcessInputFilePath]
-
-    preProcessInputFile = open(preProcessInputFilePath, 'w')
+    inputPatterns = []
 
     for inputFile in job.inputfiles:   
 
@@ -86,23 +81,9 @@ def getInputFilesPatterns(job):
             inputFile.localDir = tmpDir
             inputFile.get()
 
-            #print os.listdir(inputFile.localDir)
-
             for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
                 if currentFile not in inputPatterns:
-                    inputPatterns.append(currentFile)
-
-        elif outputFilePostProcessingOnWN(job, inputFileClassName): 
-            pass
-            #write in PreProcessInputLocationsFileName the command for downloading the file from the WN
-            """
-            downloadCommands = inputFile.getDownloadCommand()
-            for line in downloadCommands:
-                preProcessInputFile.write('%s\n' % line)
-            """
-            
-
-    preProcessInputFile.close()
+                    inputPatterns.append(currentFile)            
                 
     return inputPatterns, tmpDir
 
