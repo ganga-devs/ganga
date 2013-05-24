@@ -187,23 +187,22 @@ for fn in final_list_to_copy:
 
     return insertScript 
 
+
 def getWNCodeForDownloadingInputFiles(job, indent):
 
     if len(job.inputfiles) == 0:
         return ""
 
     insertScript = """\n
-###INDENT###import os
-
-###INDENT###preprocessinputfiles = file('###PREPROCESSFILENAME###', 'r')  
-###INDENT###inputFileLines = preprocessinputfiles.readlines()
-###INDENT###for line in inputFileLines:
-###INDENT###    os.system(line)
-
-###INDENT###preprocessinputfiles.close()
 """
 
-    insertScript = insertScript.replace('###PREPROCESSFILENAME###', getConfig('Output')['PreProcessInputLocationsFileName'])
+    for inputFile in job.inputfiles:  
+
+        inputfileClassName = inputFile.__class__.__name__
+
+        if outputFilePostProcessingOnWN(job, inputfileClassName):
+            insertScript += inputFile.getWNScriptDownloadCommand(indent)
+
     insertScript = insertScript.replace('###INDENT###', indent)
 
     return insertScript
