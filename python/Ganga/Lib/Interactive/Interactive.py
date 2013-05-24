@@ -166,9 +166,10 @@ class Interactive( IBackend ):
 
       job = self.getJobObject()
 
-      tmpDir = None
+      #tmpDir = None
       inputfiles = jobconfig.getSandboxFiles()  
 
+      """
       if len(job.inputfiles) > 0:
 
          from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
@@ -177,14 +178,17 @@ class Interactive( IBackend ):
          (fileNames, tmpDir) = getInputFilesPatterns(job)
          for fileName in fileNames:
             inputfiles.append(File(fileName))
+      """
 
       inbox = job.createPackedInputSandbox( inputfiles )
 
+      """
       if tmpDir != None:
          import shutil
                 
          if os.path.exists(tmpDir):
             shutil.rmtree(tmpDir)  
+      """
 
       inbox.extend( master_input_sandbox )
       inpDir = job.getInputWorkspace().getPath()
