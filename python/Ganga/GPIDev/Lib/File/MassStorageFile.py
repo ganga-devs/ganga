@@ -144,7 +144,7 @@ class MassStorageFile(IOutputFile):
 
         cp_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  
 
-        return '%s %s %s' % (cp_cmd, self.locations[0], dest_dir)
+        return ['%s %s %s' % (cp_cmd, self.locations[0], dest_dir)]
 
 
     def put(self):
