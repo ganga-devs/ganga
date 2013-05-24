@@ -177,13 +177,20 @@ class Interactive( IBackend ):
 
       outputSandboxPatterns = jobconfig.outputbox
       patternsToZip = []  
-      wnCodeForPostprocessing = ''            
+      wnCodeForPostprocessing = '' 
+      wnCodeToDownloadInputFiles = ''            
 
       if (len(job.outputfiles) > 0):
         
          from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatternsForInteractive, getWNCodeForOutputPostprocessing   
          (outputSandboxPatterns, patternsToZip) = getOutputSandboxPatternsForInteractive(job)
          wnCodeForPostprocessing = 'def printError(message):pass\ndef printInfo(message):pass' + getWNCodeForOutputPostprocessing(job, '')      
+
+      if (len(job.inputfiles) > 0):
+
+         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForDownloadingInputFiles
+
+         wnCodeToDownloadInputFiles = getWNCodeForDownloadingInputFiles(job, '')
 
       commandList = [
          "#!/usr/bin/env python",
@@ -224,6 +231,7 @@ class Interactive( IBackend ):
          "for inFile in %s:" % inbox,
          "   getPackedInputSandbox( inFile )",
          "", 
+         wnCodeToDownloadInputFiles,
          "for key, value in %s.iteritems():" % jobconfig.env,
          "   os.environ[ key ] = value",
          "",
