@@ -380,7 +380,11 @@ class LCGSEFile(IOutputFile):
 
         vo = getConfig('LCG')['VirtualOrganisation']  
 
-        return 'lcg-cp --vo %s %s file:%s' % (vo, self.locations[0], os.path.join(dest_dir, self.namePattern))
+        commands = []
+        commands.append('os.environ[\'LFC_HOST\'] = %s' % self.lfc_host)
+        commands.append('lcg-cp --vo %s %s file:%s' % (vo, self.locations[0], os.path.join(dest_dir, self.namePattern)))
+
+        return commands
 
 
 # add LCGSEFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGSEFile() objects via config file)
