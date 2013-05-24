@@ -382,7 +382,7 @@ class LCGSEFile(IOutputFile):
 
 ###INDENT###os.environ['LFC_HOST'] = \'###LFC_HOST###\'
 ###INDENT###cwDir = os.getcwd()
-###INDENT###dwnCmd = 'lcg-cp --vo ###VO### ###LOCATION### file:%s' % os.path.join(cwDir, ###NAMEPATTERN###)
+###INDENT###dwnCmd = 'lcg-cp --vo ###VO### ###LOCATION### file:%s' % os.path.join(cwDir, \'###NAMEPATTERN###\')
 ###INDENT###os.system(dwnCmd)
 """     
         
