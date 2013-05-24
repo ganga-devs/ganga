@@ -144,7 +144,7 @@ class MassStorageFile(IOutputFile):
 
         script = """\n
 
-###INDENT###os.system(###CP_COMMAND###)
+###INDENT###os.system(\'###CP_COMMAND###\')
 
 """     
         cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd']  , self.locations[0])
