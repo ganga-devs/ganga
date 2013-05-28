@@ -1247,9 +1247,6 @@ try:
 
     printInfo('Unpack inputsandbox passed.')
 
-    #get input files
-    ###DOWNLOADINPUTFILES###
-
     printInfo('Loading Python modules ...')     
 
     sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
@@ -1409,11 +1406,8 @@ sys.exit(0)
         script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
         script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
 
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
-
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing
         script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
-
-        script = script.replace('###DOWNLOADINPUTFILES###',getWNCodeForDownloadingInputFiles(job, '    '))
 
         if jobconfig.env:
             script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))

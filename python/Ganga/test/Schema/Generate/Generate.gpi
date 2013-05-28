@@ -29,7 +29,7 @@ totnumobs = 0
 numerrors = 0
 box.clean(confirm=True)
 
-#for all objects not on the exclusion list, add one of them to the box
+#Create an Executable job for each of the available backends
 for category in allPlugins.all_dict:
     if category not in excludelist:
         logger.warn(category + " not found in excludelist")

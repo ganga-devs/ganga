@@ -159,7 +159,6 @@ class Job(GangaObject):
                                     'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
-                                    'inputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
                                     'outputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
                                     'non_copyable_outputfiles' : OutputFileItem(defvalue=[], hidden=1, typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
@@ -268,11 +267,9 @@ class Job(GangaObject):
                 
     keys = getConfig('Output').options.keys()
     keys.remove('PostProcessLocationsFileName')         
-    keys.remove('PreProcessInputLocationsFileName')
     keys.remove('ForbidLegacyOutput')                
     keys.remove('AutoRemoveFilesWithJob')
     keys.remove('AutoRemoveFileTypes')
-
     for key in keys:
         try:
             for configEntry in getConfig('Output')[key]['backendPostprocess']:
@@ -293,7 +290,7 @@ class Job(GangaObject):
                                               State('killed','j.kill()',hook='monitorKilled_hook'),
                                               State('unknown','forced remove'),
                                               State('failed', 'j.fail(force=1)',hook='monitorFailed_hook'),
-                                              State('completing'),
+                                              State('completing','job output already in outputdir',hook='postprocess_hook'),
                                               State('completed',hook='postprocess_hook'),
                                               State('submitting','j.resubmit(force=1)')),
                     'running' : Transitions(State('completing'),

@@ -34,12 +34,6 @@ class IOutputFile(GangaObject):
         """
         raise NotImplementedError
 
-    def getDownloadCommand(self, dest_dir='.'):
-        """
-        Gets the command used to download already uploaded file
-        """
-        raise NotImplementedError
-
     def put(self):
         """
         Postprocesses (upload) output file to the desired destination from the client

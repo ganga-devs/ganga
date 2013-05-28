@@ -1,8 +1,4 @@
-from Ganga.Utility.Config import getConfig   
-
-import os
-import glob 
-import tempfile  
+from Ganga.Utility.Config import getConfig      
 
 """
 Checks if the output files of a given job(we are interested in the backend) 
@@ -56,52 +52,6 @@ def getOutputSandboxPatterns(job):
                         outputPatterns.append(outputFile.namePattern)
                 
     return outputPatterns
-
-"""
-we have to set the inputsandbox patterns for the input files that will be copied from the client, also write the commands for downloading input files from the WN
-"""
-def getInputFilesPatterns(job):
-
-    tmpDir = tempfile.mkdtemp()
-
-    preProcessInputFileName = getConfig('Output')['PreProcessInputLocationsFileName']
-    preProcessInputFilePath = os.path.join(tmpDir, preProcessInputFileName)
-
-    inputPatterns = [preProcessInputFilePath]
-
-    preProcessInputFile = open(preProcessInputFilePath, 'w')
-
-    for inputFile in job.inputfiles:   
-
-        inputFileClassName = inputFile.__class__.__name__
-
-        if inputFileClassName == 'SandboxFile':
-            for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
-                if currentFile not in inputPatterns:
-                    inputPatterns.append(currentFile)
-
-        elif outputFilePostProcessingOnClient(job, inputFileClassName): 
-
-            #download in temp dir
-            inputFile.localDir = tmpDir
-            inputFile.get()
-
-            #print os.listdir(inputFile.localDir)
-
-            for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
-                if currentFile not in inputPatterns:
-                    inputPatterns.append(currentFile)
-
-        elif outputFilePostProcessingOnWN(job, inputFileClassName): 
-            #write in PreProcessInputLocationsFileName the command for downloading the file from the WN
-            downloadCommand = inputFile.getDownloadCommand()
-            preProcessInputFile.write('%s\n' % downloadCommand)
-            
-
-    preProcessInputFile.close()
-                
-    return inputPatterns, tmpDir
-
 
 """
 This should be used from only from Interactive backend
@@ -185,27 +135,6 @@ for fn in final_list_to_copy:
     insertScript = insertScript.replace('###JOBID###', jobid)
 
     return insertScript 
-
-def getWNCodeForDownloadingInputFiles(job, indent):
-
-    if len(job.inputfiles) == 0:
-        return ""
-
-    insertScript = """\n
-###INDENT###import os
-
-###INDENT###preprocessinputfiles = file('###PREPROCESSFILENAME###', 'r')  
-###INDENT###inputFileLines = preprocessinputfiles.readlines()
-###INDENT###for line in inputFileLines:
-###INDENT###    os.system(line)
-
-###INDENT###preprocessinputfiles.close()
-"""
-
-    insertScript = insertScript.replace('###PREPROCESSFILENAME###', getConfig('Output')['PreProcessInputLocationsFileName'])
-    insertScript = insertScript.replace('###INDENT###', indent)
-
-    return insertScript
 
 def getWNCodeForOutputPostprocessing(job, indent):
 

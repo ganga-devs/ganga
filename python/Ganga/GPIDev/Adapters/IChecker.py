@@ -11,14 +11,14 @@ from Ganga.GPIDev.Schema import *
 import commands
 import os
 import string
-import glob
+
 
 class IChecker(IPostProcessor):
     """
     Abstract class which all checkers inherit from.
     """
     _schema = Schema(Version(1,0), {
-        'checkSubjobs' : SimpleItem(defvalue = True, doc='Run on subjobs')
+        'checkSubjobs' : SimpleItem(defvalue = False, doc='Run on subjobs')
         } )
     _category = 'postprocessor'
     _name = 'IChecker'
@@ -33,7 +33,7 @@ class IChecker(IPostProcessor):
             if len(job.subjobs) or self.checkSubjobs == True:
                 try:
                     return self.check(job)
-                except Exception, e:
+                except PostProcessException, e:
                     debug_file = open(os.path.join(job.getDebugWorkspace().getPath(),'checker_errors.txt'),'a')
                     debug_file.write('\n Checker has failed with the following error: \n')
                     debug_file.write(str(e))
@@ -48,40 +48,5 @@ class IChecker(IPostProcessor):
         Should be overidden.
         """
         raise NotImplementedError
-        
-
-class IFileChecker(IChecker):
-    """
-    Abstract class which all checkers inherit from.
-    """
-    _schema = IChecker._schema.inherit_copy()
-    _schema.datadict['files'] = SimpleItem(defvalue = [], doc='File to search in')
-    _schema.datadict['filesMustExist'] = SimpleItem(True, doc='Toggle whether to fail job if a file isnt found.')
-    _category = 'postprocessor'
-    _name = 'IFileChecker'
-    _hidden = 1
-    result = True
-    order = 2
-
-    def findFiles(self,job):
-
-        if not len(self.files):
-            raise PostProcessException('No files specified, %s will do nothing!'%self._name)
-
-        filepaths = []
-        for f in self.files:
-            filepath = os.path.join(job.outputdir,f)
-            for expanded_file in glob.glob(filepath):
-                filepaths.append(expanded_file)
-            if not len(glob.glob(filepath)):
-                if (self.filesMustExist):
-                    logger.info('The files %s does not exist, %s will fail job(%s) (to ignore missing files set filesMustExist to False)',filepath,_name,job.fqid)
-                    self.result = False
-                else:
-                    logger.warning('Ignoring file %s as it does not exist.',expanded_file)
-        return filepaths
-
-        
-
 
     

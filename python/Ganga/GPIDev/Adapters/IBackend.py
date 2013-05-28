@@ -10,9 +10,6 @@ from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
-from Ganga.GPIDev.Lib.File import File
-
 import os
 
 import datetime
@@ -178,34 +175,17 @@ class IBackend(GangaObject):
         The input sandbox is created according to self._packed_input_sandbox flag (a class attribute)
         """
         
-        tmpDir = None
-
         job = self.getJobObject()
         files = []
         if masterjobconfig:
             files = masterjobconfig.getSandboxFiles() # FIXME: assume that all jobconfig object have getSandboxFiles() method
         else:
-            if len(job.inputfiles) > 0:
-                (fileNames, tmpDir) = getInputFilesPatterns(job)
-                files = []
-                for fileName in fileNames:
-                    files.append(File(fileName))
-            else:
-                files = job.inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
+            files = self.getJobObject().inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
 
         if self._packed_input_sandbox:
-            result = job.createPackedInputSandbox(files,master=True)
+            return job.createPackedInputSandbox(files,master=True)
         else:
-            result = job.createInputSandbox(files,master=True)
-
-        if tmpDir != None:
-            import shutil
-                
-            #remove temp dir
-            if os.path.exists(tmpDir):
-                shutil.rmtree(tmpDir)  
-
-        return result
+            return job.createInputSandbox(files,master=True)
 
 
     def master_auto_resubmit(self,rjobs):
