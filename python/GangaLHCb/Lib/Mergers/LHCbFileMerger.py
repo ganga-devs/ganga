@@ -115,13 +115,13 @@ exit $?
 """ % (self.version, opts_file_name)
 
         script_file_name = tempfile.mktemp('.sh')
-        script_file_name = '/afs/cern.ch/user/p/powen/merge/dst.sh'
         try:
             script_file = file(script_file_name,'w')
             script_file.write(shell_script)
-        finally:
             script_file.close()
-        
+        except:
+            raise PostProcessException('Problem writing merge script')
+ 
         return_code = subprocess.call(['/bin/sh',script_file_name])
         if return_code != 0:
             msg = 'The LHCbFileMerger returned %i when calling gaudirun'
