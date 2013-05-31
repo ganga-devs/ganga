@@ -798,6 +798,27 @@ def configure(filenames,system_vars):
 
     _configured = True
 
+def load_user_config(filename, system_vars):
+    import os
+    logger = getLogger()
+    if not os.path.exists(filename): return
+    new_cfg = read_ini_files(filename, system_vars)
+    for name in new_cfg.sections():
+        current_cfg_section = getConfig(name)
+        if not current_cfg_section.options: # if this section does not exists
+            #supressing these messages as depending on what stage of the bootstrap.py you 
+            #call the function more or less of the default options have been loaded
+            #currently calling after initialise() could call after bootstrap()
+            logger.debug("Section '%s' defined in '%s' is not valid exists and will be removed" % (name,filename))
+            continue
+        
+        for o in new_cfg.options(name):
+            if o not in current_cfg_section.options:
+                logger.warning("Option '[%s] %s' defined in '%s' is not valid and will be removed" % (name,o,filename))
+                continue
+            v = new_cfg.get(name,o)
+            current_cfg_section.setUserValue(o,v)
+        
 
 # KH 050725: Add possibility to overwrite at run-time option set in
 #            configuration file

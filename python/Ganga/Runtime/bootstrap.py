@@ -183,65 +183,83 @@ under certain conditions; type license() for details.
 # Can't check here if the file is readable, because the path isn't known
 #           file_opens(self.args[0],'reading script')
 
+    def new_version(self):
+       version = _gangaVersion.lstrip('Ganga-').replace('-','.') # matches Patricks release notes format, could just use _gangaVersion
+       versions_filename = os.path.join(Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
+       if not os.path.exists(versions_filename):
+          with open(versions_filename, 'w') as versions_file:
+             versions_file.write(version + '\n')
+          return True
+
+       with open(versions_filename,'r+') as versions_file:
+          if versions_file.read().find(version) < 0:
+             versions_file.write(version)
+             return True
+       return False
+
+    def generate_config_file(self):
+       from Ganga.GPIDev.Lib.Config.Config import config_file_as_text
+       from Ganga.Utility.logging          import getLogger
+       logger = getLogger()
+
+       ## Old backup routine
+       if os.path.exists(self.default_config_file):
+          i = 0
+          for i in range(100):
+             bn = "%s.%.2d"%(self.default_config_file,i)
+             if not os.path.exists(bn):
+                try:
+                   os.rename(self.default_config_file,bn)
+                except:
+                   logger.error('Failed to create config backup file %s'%bn)
+                   logger.error('Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
+                   return
+                logger.info('Copied current config file to %s' % bn)
+                break
+          else:
+             raise ValueError('too many backup files')
+
+       logger.info('Creating ganga config file %s' % self.default_config_file)
+       new_config = ''
+       with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r') as config_head_file:
+          new_config += config_head_file.read()
+       new_config += config_file_as_text()
+       new_config = new_config.replace('Ganga-SVN',_gangaVersion)
+       with open(self.default_config_file, 'w') as new_config_file:
+          new_config_file.write(new_config)
+
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
     def new_user_wizard(self):
         import os
-
-        def generate(where):
-            import shutil
-
-            flavour = Ganga.Utility.Config.Config.getFlavour()
-            print "Using flavour %s"%flavour
-            if flavour:
-                configtemplate = "CONFIG_TEMPLATE_%s.INI"%flavour   
-            else:
-                configtemplate = "CONFIG_TEMPLATE.INI"   
-            shutil.copy(os.path.join(os.path.dirname(_gangaPythonPath),'templates',configtemplate),where)
-            print >> sys.stderr, 'Created standard config file',where
-            
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()           
         gangadir = os.path.expanduser('~/gangadir')
-        if not os.path.exists(gangadir) \
-           and not os.path.exists(self.default_config_file) \
-           and not self.options.config_file_set_explicitly:
 
-            if self.options.prompt:
-                print >> sys.stderr, 'It seems that you run Ganga for the first time'
-                print >> sys.stderr, 'Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  '
-                if self.options.generate_config:
-                    yes = 'Y'
-                else:
-                    yes = raw_input('Would you like to create config file ~/.gangarc with standard settings ([y]/n) ?')
+        if not os.path.exists(gangadir)\
+               and not os.path.exists(self.default_config_file) \
+               and not self.options.config_file_set_explicitly:
+           logger.info('It seems that you run Ganga for the first time')
+           logger.info('Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
+  
+        if not os.path.exists(gangadir):
+           os.mkdir(gangadir)
+ 
+        if not self.options.generate_config: ## Will generate it after loading any old .gangarc if -g option given
+           if not os.path.exists(self.default_config_file):
+              if not self.options.config_file_set_explicitly:
+                 yes = raw_input('Would you like to create config file ~/.gangarc with standard settings ([y]/n) ?')   
+                 if yes == '' or yes[0:1].upper() == 'Y':
+                    self.generate_config_file()
+                    self.new_version() # call this anyway to update the list of used versions
+                    raw_input('Press <Enter> to continue.') 
+           else:
+              if self.new_version():
+                 logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
+                 logger.info('Your ganga config file will be updated.')
+                 self.generate_config_file()           
 
-                if yes == '' or yes[0:1].upper() == 'Y':
-                    generate(self.default_config_file)
-                    raw_input('Press <Enter> to continue.')
-
-            os.mkdir(gangadir)
-
-        else:
-
-            # FIXME: store_backup is quite badly implemented
-            def store_backup(f):
-                if os.path.exists(f):
-                    i = 0
-                    for i in range(100):
-                        bn = "%s.%.2d"%(f,i)
-                        if not os.path.exists(bn):
-                            os.rename(self.default_config_file,bn)
-                            return bn
-                    raise ValueError('too many backup files')
-
-            if self.options.generate_config:
-                try:
-                    backup_name = store_backup(self.default_config_file)
-                except Exception,x:
-                   self.exit('Failed to create backup file %s'%backup_name)
-                else:
-                    print >> sys.stderr, 'Copied current config file to',backup_name
-                generate(self.default_config_file)
-                sys.exit(0) # FIXME: should not sys.exit()
-                
+                 
     # configuration procedure: read the configuration files, configure and bootstrap logging subsystem
     def configure(self, logLevel = None ):
         import os,os.path
@@ -466,7 +484,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         # because the user config file is put at the end it always may override everything else
         config_files = Ganga.Utility.Config.expandConfigPath(self.options.config_path,_gangaPythonPath)
         config_files.reverse()
-        config_files.append(self.options.config_file)
+        
 
         # read-in config files
 
@@ -474,8 +492,14 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         system_vars = {}
         for opt in syscfg:
            system_vars[opt]=syscfg[opt]
+  
+        if not self.options.generate_config and os.path.exists(self.options.config_file):
+           ## if -g option given we exclude the .gangarc from loading at session level
+           ## otherwise we add it IF it exists.
+           config_files.append(self.options.config_file)
+        Ganga.Utility.Config.configure(config_files,system_vars)       
 
-        Ganga.Utility.Config.configure(config_files,system_vars)
+        self.new_user_wizard()
 
         # set the system variables to the [System] module
         #syscfg.setDefaultOptions(system_vars,reset=1)
@@ -495,7 +519,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         set_cmdline_config_options()
 
-        self.new_user_wizard()
 
         if self.options.GUI:
            ## FIXME: CONFIG CHECK
@@ -621,7 +644,18 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         #bugfix 40110
         if os.environ.has_key('GANGA_INTERNAL_PROCREEXEC'):
            del os.environ['GANGA_INTERNAL_PROCREEXEC']
-        
+
+        ## Depending on where this is put more or less of the config will have been loaded. if put after
+        ## the bootstrap then the defaults_* config options will also be loaded.
+        if self.options.generate_config:
+           from Ganga.Utility.Config.Config import load_user_config
+           
+           load_user_config(self.options.config_file, {})
+           self.generate_config_file()
+           self.new_version() ## register the new version
+           sys.exit(0) # FIXME: should not sys.exit()
+
+
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):
         import Ganga.Utility.Config
@@ -968,22 +1002,24 @@ default_backends = LCG
                 print ' '
 
         #Find out if ganga version has been used before by writing to a hidden file in the gangadir
-        def new_version(version):
-            _new_version = True
-            versionfile_path = config['gangadir']+'/.used_versions'
-            if os.path.isfile(versionfile_path):
-                f_version = open(versionfile_path,'r+')
-                for line in f_version:
-                    if version == line:
-                        _new_version = False
-                if _new_version == True:
-                    f_version.write(version)
-                f_version.close()
-            else:
-                f_version = open(versionfile_path,'w')
-                f_version.write(version)
-                f_version.close()
-            return _new_version
+        ## Now using Alex's new version above as it avoids an extra call to the shell and is more
+        ## streamlined with the other new user functions like updating config.
+#        def new_version(version):
+#            _new_version = True
+#            versionfile_path = config['gangadir']+'/.used_versions'
+#            if os.path.isfile(versionfile_path):
+#                f_version = open(versionfile_path,'r+')
+#                for line in f_version:
+#                    if version == line:
+#                        _new_version = False
+#                if _new_version == True:
+#                    f_version.write(version)
+#                f_version.close()
+#            else:
+#                f_version = open(versionfile_path,'w')
+#                f_version.write(version)
+#                f_version.close()
+#            return _new_version
 
         #print release notes
         if config['ReleaseNotes']==True:
@@ -991,11 +1027,11 @@ default_backends = LCG
             #name = runtime[runtime.find(':')+1:len(runtime)-1]
             name = [n for n in runtime.strip().split(':') if n is not '']
             import commands
-            version = commands.getoutput('ganga --version').lstrip("Ganga-")
-            version = version.replace('-','.')
+#            version = commands.getoutput('ganga --version').lstrip("Ganga-")
+            version = _gangaVersion.lstrip("Ganga-").replace('-','.')
             installdir = commands.getoutput('which ganga').rstrip("/InstallArea/scripts/ganga")
             relnotespath =installdir+'/install/ganga/release/ReleaseNotes-'+version
-            if new_version(version+'\n') == True and os.path.isfile(relnotespath):
+            if self.new_version() == True and os.path.isfile(relnotespath):
                 f_releasenotes = open(installdir+'/install/ganga/release/ReleaseNotes-'+version)
                 filelist = f_releasenotes.readlines()
                 print '\n*****************************************************************************'

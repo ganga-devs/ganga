@@ -212,7 +212,7 @@ def config_file_as_text():
 
         text += "\n"
         text += "#=======================================================================\n"
-	text += textwrap.fill(sect.docstring.strip(),width=80, initial_indent=INDENT,subsequent_indent=INDENT)+"\n"
+        text += textwrap.fill(sect.docstring.strip(),width=80, initial_indent=INDENT,subsequent_indent=INDENT)+"\n"
         text += "[%s]\n\n"%p
 
         opts = sect.options.keys()
@@ -222,22 +222,38 @@ def config_file_as_text():
                 text += ""
                 text += textwrap.fill(sect.options[o].docstring.strip(),width=80, initial_indent=INDENT,subsequent_indent=INDENT)+"\n"
 
+                
                 examples = sect.options[o].examples
                 if examples:
                     text += INDENT+"Examples:\n"
                     for e in examples.splitlines():
                         text += INDENT+"  "+e.strip()+"\n"
-                value = sect.options[o].default_value
-		try:
-		    lines = value.splitlines()
-		    if len(lines)>1:
-		        value = "\n# ".join(lines)
-		except:
-		    pass
-                text +='#%s = %s\n\n'%(o,value)
+                if sect.getEffectiveLevel(o) == 0:
+                     value = sect[o] 
+                     def_value = sect.options[o].default_value
+                     try:
+                          lines = value.splitlines()
+                          def_lines = def_value.splitlines()
+                          if len(lines)>1:
+                            value = "\n# ".join(lines)
+                            def_value = "\n# ".join(def_lines)
+                     except:
+                          pass
+                     text +='#%s = %s\n'%(o,def_value)
+                     text +='%s = %s\n\n'%(o,value)
+                else:
+                     value = sect.getEffectiveOption(o)
+                     try:
+                          lines = value.splitlines()
+                          if len(lines)>1:
+                            value = "\n# ".join(lines)
+                     except:
+                          pass
+                     text +='#%s = %s\n\n'%(o,value)
  
     return text
 
+ 
 def createSectionProxy(name):
     """ Create a class derived from ConfigProxy with all option descriptors and insert it into MainConfigProxy class.
     """
