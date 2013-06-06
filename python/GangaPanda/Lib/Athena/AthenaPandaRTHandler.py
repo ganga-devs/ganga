@@ -559,15 +559,16 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       in case of a simple job get the dataset content, otherwise subjobs are filled by the splitter
         if job.inputdata and self.inputdatatype=='DQ2' and not masterjob.subjobs:
             if not job.inputdata.names:
-                
                 contents = job.inputdata.get_contents(overlap=False, size=True)
-
+                
                 for ds in contents.keys():
-                    job.inputdata.guids.append( contents[ds][0][0] )
-                    job.inputdata.names.append( contents[ds][0][1][0] )
-                    job.inputdata.sizes.append( contents[ds][0][1][1] )
-                    job.inputdata.checksums.append( contents[ds][0][1][2] )
-                    job.inputdata.scopes.append( contents[ds][0][1][3] )
+
+                    for f in contents[ds]:
+                        job.inputdata.guids.append( f[0] )
+                        job.inputdata.names.append( f[1][0] )
+                        job.inputdata.sizes.append( f[1][1] )
+                        job.inputdata.checksums.append( f[1][2] )
+                        job.inputdata.scopes.append( f[1][3] )
 
         job.backend.actualCE = job.backend.site
         job.backend.requirements.cloud = Client.PandaSites[job.backend.site]['cloud']

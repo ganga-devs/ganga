@@ -203,11 +203,13 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
                 contents = job.inputdata.get_contents(overlap=False, size=True)
 
                 for ds in contents.keys():
-                    job.inputdata.guids.append( contents[ds][0][0] )
-                    job.inputdata.names.append( contents[ds][0][1][0] )
-                    job.inputdata.sizes.append( contents[ds][0][1][1] )
-                    job.inputdata.checksums.append( contents[ds][0][1][2] )
-                    job.inputdata.scopes.append( contents[ds][0][1][3] )
+
+                    for f in contents[ds]:
+                        job.inputdata.guids.append( f[0] )
+                        job.inputdata.names.append( f[1][0] )
+                        job.inputdata.sizes.append( f[1][1] )
+                        job.inputdata.checksums.append( f[1][2] )
+                        job.inputdata.scopes.append( f[1][3] )
 
 
         site = job._getRoot().backend.site
