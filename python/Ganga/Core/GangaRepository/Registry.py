@@ -58,6 +58,9 @@ def makeRepository(registry):
         return GangaRepositorySQLite(registry)
     elif registry.type in ["Transient"]:
         return GangaRepository(registry)
+    elif registry.type in ["ImmutableTransient"]:
+        from GangaRepositoryImmutableTransient import GangaRepositoryImmutableTransient
+        return GangaRepositoryImmutableTransient(registry, registry.location, registry.file_ext, registry.pickle_files)
     else:
         raise RegistryError("Repository %s: Unknown repository type %s" % (registry.name, registry.type))
 

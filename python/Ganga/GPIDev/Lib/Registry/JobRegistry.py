@@ -109,7 +109,22 @@ class JobRegistrySlice(RegistrySlice):
         elif t is tuple:
             ids = id
         elif t is str:
-            ids = id.split(".")
+            if id.isdigit():
+                try:
+                    return self.objects[int(id)]
+                except KeyError:
+                    if self.name == 'templates':
+                        raise RegistryKeyError('Template %d not found'%id)
+                    else:
+                        raise RegistryKeyError('Job %d not found'%id)
+            elif id.count('.') == 1 and id.split('.')[0].isdigit() and id.split('.')[1].isdigit():
+                ids = id.split(".")
+            else:
+                import fnmatch
+                jlist=[j for j in self.objects if fnmatch.fnmatch(j.name,id)]
+                if len(jlist) == 1:
+                    return jlist[0]
+                return jobSlice(jlist)
         else:
             raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 

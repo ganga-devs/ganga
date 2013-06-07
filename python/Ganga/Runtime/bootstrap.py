@@ -836,14 +836,18 @@ default_backends = LCG
         import Ganga.Core
         import associations
 
-        # bootstrap user-defined runtime modules
-
+        # bootstrap user-defined runtime modules and enable transient named template registries
         for n,r in zip(allRuntimes.keys(),allRuntimes.values()):
             try:
                 r.bootstrap(Ganga.GPI.__dict__)
             except Exception,x:
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error('problems with bootstrapping %s -- ignored',n)
+            try:
+                r.loadNamedTemplates(Ganga.GPI.__dict__)
+            except Exception,x:
+                Ganga.Utility.logging.log_user_exception()
+                self.logger.error('problems with loading Named Templates for %s',n)
         
         # bootstrap runtime modules
         import Ganga.GPIDev.Lib.Registry

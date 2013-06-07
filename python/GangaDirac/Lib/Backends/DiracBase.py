@@ -135,9 +135,12 @@ class DiracBase(IBackend):
 
     def _common_submit(self, dirac_script, server):
         '''Submit the job via the Dirac server.'''
-        self.id = None
-        self.actualCE = None
-        self.status = None
+        j = self.getJobObject()
+        self.id         = None
+        self.actualCE   = None
+        self.status     = None
+        self.statusInfo = ''
+        j.been_queued   = False
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
         result = server.execute(dirac_cmd)
         ## Could use the below code instead to submit on a thread
@@ -283,9 +286,6 @@ class DiracBase(IBackend):
         f = open(new_script_filename, 'w')
         f.write(new_script)
         f.close()
-        self.statusInfo = ''
-        self.status     = None
-        self.actualCE   = None
         return self._common_submit(new_script_filename, server)
 
     def reset(self, doSubjobs =False):
@@ -301,6 +301,7 @@ class DiracBase(IBackend):
             self.statusInfo = ''
             self.status     = None
             self.actualCE   = None
+            j.been_queued   = False
             j.updateStatus('submitted')
             if j.subjobs and not doSubjobs:
                 logger.info('This job has subjobs, if you would like the backends '\
@@ -654,6 +655,11 @@ class DiracBase(IBackend):
             if updated_dirac_status == job.status: continue
 
             if updated_dirac_status in thread_handled_states:
+                if job.status != 'running':
+                    DiracBase._getStateTime(job,'running')
+                    if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
+                    job.updateStatus('running')
+                    if job.master: job.master.updateMasterJobStatus()                   
                 dirac_monitoring_server.execute_nonblocking(DiracBase.job_finalisation,
                                                             command_args = (job, updated_dirac_status),
                                                             priority     = 5)

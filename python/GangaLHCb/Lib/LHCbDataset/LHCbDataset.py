@@ -358,21 +358,30 @@ allComponentFilters['datafiles'] = string_datafile_shortcut
 
 def string_dataset_shortcut(files,item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
-    inputdataList  = [Job._schema['inputdata'],
-                      LHCbTransform._schema['inputdata'],
-                      JobTemplate._schema['inputdata']
-                      ]
-    outputdataList = [Job._schema['outputdata'],
-                      LHCbTransform._schema['outputdata'],
-                      JobTemplate._schema['outputdata']
-                      ]
+    from Ganga.GPIDev.Base.Objects import ObjectMetaclass
+    ## This clever change mirrors that in IPostprocessor (see there)
+    ## essentially allows for dynamic extensions to JobTemplate
+    ## such as LHCbJobTemplate etc.
+    inputdataList  = [i._impl._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()\
+                          if hasattr(i, '_impl')\
+                          and isinstance(i._impl, ObjectMetaclass)\
+                          and (issubclass(i._impl, Job) or issubclass(i._impl, LHCbTransform))\
+                          and 'inputdata' in i._impl._schema.datadict]
+#    inputdataList  = [Job._schema['inputdata'],
+#                      LHCbTransform._schema['inputdata'],
+#                      JobTemplate._schema['inputdata']
+#                      ]
+#    outputdataList = [Job._schema['outputdata'],
+#                      LHCbTransform._schema['outputdata'],
+#                      JobTemplate._schema['outputdata']
+#                      ]
     if type(files) is not type([]): return None
     if item in inputdataList:
         ds = LHCbDataset()
         ds.__construct__([files])
-        return ds               
-    elif item in outputdataList:
-        return OutputData(files=files)
+        return ds
+#    elif item in outputdataList: ## job.outputdata not used anymore.
+#        return OutputData(files=files)
     else:
         return None # used to be c'tors, but shouldn't happen now
 

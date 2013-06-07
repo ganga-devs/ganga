@@ -71,9 +71,17 @@ class GaudiDataset(Dataset):
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 def string_dataset_shortcut(files,item):
-    filterList  = [Job._schema['inputdata'], Job._schema['outputdata']]
+    from Ganga.GPIDev.Base.Objects import ObjectMetaclass
+    filterList = [i._impl._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()\
+                      if hasattr(i, '_impl')\
+                      and isinstance(i._impl, ObjectMetaclass)\
+                      and issubclass(i._impl, Job)\
+                      and 'inputdata' in i._impl._schema.datadict]
+
+    # job.outputdata not used any more, use job.outputfiles
+    #filterList  = [Job._schema['inputdata'], Job._schema['outputdata']]
     if type(files) is not type([]): return None
-    if item in inputdataList:
+    if item in filterList:#inputdataList:
         ds = GaudiDataset(files)
         return ds               
     else:

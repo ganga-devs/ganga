@@ -178,7 +178,8 @@ class Job(GangaObject):
                                     'merger':ComponentItem('mergers',defvalue=None,hidden=1,copyable=0,load_default=0,optional=1,doc='optional output merger'),
                                     'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
                                     'metadata':ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1, copyable=0),
-                                    'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0)
+                                    'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0),
+                                    'been_queued':SimpleItem(transient=1,hidden=1,defvalue=False,optional=0,copyable=0,comparable=0,typelist=['bool'],doc='flag to show job has been queued for postprocessing',visitable=0)
                                     })
 
     _category = 'jobs'

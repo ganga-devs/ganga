@@ -174,7 +174,23 @@ class RuntimePackage:
         except IOError,x:
             logger.debug("problems with bootstrap of runtime package %s",self.name)
             logger.debug(x)
-
+    def loadNamedTemplates(self, globals):
+       try:
+          import os
+          from Ganga.GPIDev.Lib.Job.NamedJobTemplate import establishNamedTemplates
+          template_classname    = '%sJobTemplate' % self.name.strip('Ganga')
+          template_registryname = 'templates%s' % self.name.strip('Ganga')
+          template_pathname     = os.path.join(self.modpath, 'templates')
+          if os.path.isdir(template_pathname):
+             establishNamedTemplates( template_classname,
+                                      template_registryname,
+                                      template_pathname,
+                                      file_ext     = 'tpl',
+                                      pickle_files = False)
+       except:
+          logger.debug('failed to load named template registry')
+          raise
+       
     def loadTemplates( self, globals ):
         try:
             import os.path

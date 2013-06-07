@@ -74,8 +74,10 @@ def bootstrap():
     retval = []
     for registry in getRegistries():
         if registry.name in started_registries: continue
-        registry.type = config["repositorytype"]
-        registry.location = getLocalRoot()
+        if not hasattr(registry,'type'):
+            registry.type = config["repositorytype"]
+        if not hasattr(registry, 'location'):
+            registry.location = getLocalRoot()
         registry.startup()
         logger.debug("started " + registry.info(full=False))
         if registry.name == "prep":

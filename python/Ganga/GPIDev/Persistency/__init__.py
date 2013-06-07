@@ -18,6 +18,7 @@ __version__ = "1.0"
 
 from Ganga.GPI import *
 from Ganga.Utility.Runtime import getScriptPath, getSearchPath
+from Ganga.GPIDev.Base.Proxy import stripProxy
 import Ganga.Utility.logging
 import os
 import sys
@@ -26,7 +27,12 @@ import types
 
 logger = Ganga.Utility.logging.getLogger()
 
+## This is exported at bootstrap to the GPI
 def export( item = None, filename = "", mode = "w" ):
+   return stripped_export(stripProxy(item), filename, mode)
+
+## Now we can use it internally without having to wrap a proxy
+def stripped_export( item = None, filename = "", mode = "w" ):
 
    """Function to export Ganga objects to a file
 
@@ -107,11 +113,11 @@ def export( item = None, filename = "", mode = "w" ):
    nObject = 0
    for object in objectList:
       try:
-         name = object._impl._name
-         category = object._impl._category
+         name = object._name
+         category = object._category
          outFile.write( "#Ganga# %s object (category: %s)\n" \
             % ( name, category ) )  
-         object._impl.printTree( outFile, "copyable" )
+         object.printTree( outFile, "copyable" )
          nObject = nObject + 1
       except AttributeError:
          logger.info( "Unable to save item - not a GangaObject" )
@@ -192,7 +198,7 @@ def load( filename = "", returnList = True ):
       item = item.strip()
       if item:
          try:
-            object = eval( item )
+            object = eval( item, Ganga.GPI.__dict__ )
             objectList.append( object )
          except NameError:
             logger.warning( "Unable to load object with definition %s" % item )

@@ -63,6 +63,11 @@ configLHCb.addOption('ignore_version_check',True,dscrpt)
 ## dscrpt = 'Base dir appended to create LFN name from DiracFile(\'name\')'
 ## configDirac.addOption('DiracLFNBase','/lhcb/user/%s/%s'%(config['user'][0],config['user']),dscrpt)
 
+#This is now done for all plugin packages automatically by the bootstrap
+#but leave here to remind how to set up another registry if needed.
+#from Ganga.GPIDev.Lib.Job.NamedJobTemplate import establishNamedTemplates
+#establishNamedTemplates('LHCbJobTemplate', 'templatesLHCb', os.path.join(os.path.dirname(__file__),'templates'), file_ext='tpl', pickle_files=True)
+
 def getEnvironment( config = {} ):
    import sys
    import os.path
