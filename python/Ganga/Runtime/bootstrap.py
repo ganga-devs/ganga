@@ -407,6 +407,10 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
 
         config.addOption('autoGenerateJobWorkspace',True,'Autogenerate workspace dirs for new jobs')
 
+        # add named template options
+        config.addOption('namedTemplates_ext','tpl','The default file extension for the named template system. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option')
+        config.addOption('namedTemplates_pickle',False,'Determines if named template system stores templates in pickle file format (True) or in the Ganga streamed object format (False). By default streamed object format which is human readable is used. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option') 
+
         # add server options
         config.addOption('ServerPort',434343,'Port for the Ganga server to listen on')
         config.addOption('ServerTimeout',60,'Timeout in minutes for auto-server shutdown')
@@ -844,7 +848,9 @@ default_backends = LCG
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error('problems with bootstrapping %s -- ignored',n)
             try:
-                r.loadNamedTemplates(Ganga.GPI.__dict__)
+                r.loadNamedTemplates(Ganga.GPI.__dict__,
+                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
+                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
             except Exception,x:
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error('problems with loading Named Templates for %s',n)
