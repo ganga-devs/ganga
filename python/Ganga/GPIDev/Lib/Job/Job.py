@@ -385,6 +385,8 @@ class Job(GangaObject):
             raise JobStatusError(x)
 
         logger.info('job %s status changed to "%s"',fqid,self.status)
+        if self.master is not None:
+            self.master.updateMasterJobStatus()
 
     def transition_update(self,new_status):
         """Propagate status transitions""" 
@@ -1178,8 +1180,8 @@ class Job(GangaObject):
                     x.what += "Use force_status('%s',force=True) to ignore kill errors."%status
                     raise x
         try:
+            logger.info('Forcing job %s to status "%s"',self.getFQID('.'),status)
             self.updateStatus(status)
-            logger.info('Job %s forced to status "%s"',self.getFQID('.'),status)
         except JobStatusError,x:
             logger.error(x)
             raise x
