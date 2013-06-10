@@ -251,12 +251,16 @@ under certain conditions; type license() for details.
                  yes = raw_input('Would you like to create config file ~/.gangarc with standard settings ([y]/n) ?')   
                  if yes == '' or yes[0:1].upper() == 'Y':
                     self.generate_config_file()
-                    self.new_version() # call this anyway to update the list of used versions
+                    #self.new_version() # call this anyway to update the list of used versions
                     raw_input('Press <Enter> to continue.') 
            else:
-              if self.new_version():
+              if self.newVersion:
+                 from Ganga.Utility.Config.Config import load_user_config
+#              if self.new_version():
                  logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
                  logger.info('Your ganga config file will be updated.')
+           
+                 load_user_config(self.options.config_file, {})
                  self.generate_config_file()           
 
                  
@@ -497,13 +501,16 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         for opt in syscfg:
            system_vars[opt]=syscfg[opt]
   
-        if not self.options.generate_config and os.path.exists(self.options.config_file):
+        self.newVersion = self.new_version()## register the new version
+        if not self.options.generate_config \
+               and not self.newVersion\
+               and os.path.exists(self.options.config_file):
            ## if -g option given we exclude the .gangarc from loading at session level
            ## otherwise we add it IF it exists.
            config_files.append(self.options.config_file)
         Ganga.Utility.Config.configure(config_files,system_vars)       
 
-        self.new_user_wizard()
+        #self.new_user_wizard()
 
         # set the system variables to the [System] module
         #syscfg.setDefaultOptions(system_vars,reset=1)
@@ -651,12 +658,13 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         ## Depending on where this is put more or less of the config will have been loaded. if put after
         ## the bootstrap then the defaults_* config options will also be loaded.
+        self.new_user_wizard()
         if self.options.generate_config:
            from Ganga.Utility.Config.Config import load_user_config
            
            load_user_config(self.options.config_file, {})
            self.generate_config_file()
-           self.new_version() ## register the new version
+           #self.new_version() ## register the new version
            sys.exit(0) # FIXME: should not sys.exit()
 
 
