@@ -7,7 +7,7 @@ from GangaDirac.Lib.Utilities.ThreadPoolQueueMonitor import ThreadPoolQueueMonit
 logger = getLogger()
 dirac_ganga_server      = WorkerThreadPool()
 dirac_monitoring_server = WorkerThreadPool()
-exportToGPI('queues',ThreadPoolQueueMonitor(),'Objects')
+exportToGPI('queues', ThreadPoolQueueMonitor(), 'Objects')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI(cmd, timeout = 60):
@@ -30,11 +30,12 @@ def diracAPI(cmd, timeout = 60):
     '''
     return dirac_ganga_server.execute(cmd, timeout=timeout)
 
-exportToGPI('diracAPI',diracAPI,'Functions')
+exportToGPI('diracAPI', diracAPI, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
-def diracAPI_interactive(connection_attempts=5):
+def diracAPI_interactive(connection_attempts = 5):
     '''
+    Run an interactive server within the DIRAC environment.
     '''
     import os, time,inspect,traceback
     from GangaDirac.Lib.Server.InspectionClient import runClient
@@ -55,15 +56,16 @@ def diracAPI_interactive(connection_attempts=5):
         finally:
             ++i
     return excpt
-exportToGPI('diracAPI_interactive',diracAPI_interactive,'Functions')
+exportToGPI('diracAPI_interactive', diracAPI_interactive, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI_async(cmd, timeout = 120):
-    '''Execute DIRAC API commands from w/in Ganga.
+    '''
+    Execute DIRAC API commands from w/in Ganga.
     '''
     return dirac_ganga_server.execute_nonblocking(cmd, timeout=timeout, priority = 2)
 
-exportToGPI('diracAPI_async',diracAPI_async,'Functions')
+exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def getDiracFiles():
@@ -79,22 +81,39 @@ def getDiracFiles():
         g.extend((DiracFile(lfn='%s'% lfn.strip()) for lfn in lfnlist.readlines()))
     return addProxy(g)
  
-exportToGPI('getDiracFiles',getDiracFiles,'Functions')
+exportToGPI('getDiracFiles', getDiracFiles, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def dumpObject(object, filename):
-    import pickle
-    f=open(filename, 'wb')
-    pickle.dump(stripProxy(object), f)
-    f.close()
-exportToGPI('dumpObject',dumpObject,'Functions')
+    '''
+    These are complimentary functions to export/load which are already exported to
+    the GPI from Ganga.GPIDev.Persistency. The difference being that these functions will
+    export the objects using the pickle persistency format rather than a Ganga streaming
+    (human readable) format.
+    '''
+    import os, pickle, traceback
+    try:
+        with open(os.path.expandvars(os.path.expanduser(filename)), 'wb') as f:
+            pickle.dump(stripProxy(object), f)
+    except:
+        logger.error("Problem when dumping file '%s': %s" % (filename, traceback.format_exc()) )
+exportToGPI('dumpObject', dumpObject, 'Functions')
 
 def loadObject(filename):
-    import pickle
-    f=open(filename, 'rb')
-    r = pickle.load(f)
-    f.close()
-    return addProxy(r)
-exportToGPI('loadObject',loadObject,'Functions')
+    '''
+    These are complimentary functions to export/load which are already exported to
+    the GPI from Ganga.GPIDev.Persistency. The difference being that these functions will
+    export the objects using the pickle persistency format rather than a Ganga streaming
+    (human readable) format.
+    '''
+    import os, pickle, traceback
+    try:
+        with open(os.path.expandvars(os.path.expanduser(filename)), 'rb') as f:
+            r = pickle.load(f)
+    except:
+        logger.error("Problem when loading file '%s': %s" % (filename, traceback.format_exc()) )
+    else:
+        return addProxy(r)
+exportToGPI('loadObject', loadObject, 'Functions')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#

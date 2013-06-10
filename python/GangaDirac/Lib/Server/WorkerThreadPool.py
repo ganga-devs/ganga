@@ -1,21 +1,19 @@
 #!/usr/bin/env python
-from Ganga.GPIDev.Credentials import getCredential
-from Ganga.Core import GangaException
-from Ganga.Core.GangaThread import GangaThread, GangaThreadPool
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig
 import collections, Queue, threading, traceback, signal
 import os, pickle, subprocess, types, time, threading
-from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv,getDiracCommandIncludes
-#from GangaDirac.Lib.Utilities.smartsubprocess import runcmd, runcmd_async, CommandOutput
+from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes
+from Ganga.Core.GangaThread                  import GangaThread, GangaThreadPool
+from Ganga.Core                              import GangaException
+from Ganga.GPIDev.Credentials                import getCredential
+from Ganga.Utility.logging                   import getLogger
+from Ganga.Utility.Config                    import getConfig
 
 logger = getLogger()
-#default_timeout  = getConfig('DIRAC')['Timeout']
 default_env      = getDiracEnv()
 default_includes = getDiracCommandIncludes()
-QueueElement  = collections.namedtuple('QueueElement',  ['priority', 'command_input','callback_func','fallback_func'])
-CommandInput  = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
-FunctionInput  = collections.namedtuple('FunctionInput',  ['function', 'args', 'kwargs'])
+QueueElement   = collections.namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func'])
+CommandInput   = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
+FunctionInput  = collections.namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
 
 class WorkerThreadPool(object):
     """
@@ -66,13 +64,21 @@ class WorkerThreadPool(object):
             #thread.register()
             GangaThreadPool.getInstance().addServiceThread(thread)
 
+            if not isinstance(item, QueueElement):
+                logger.error("Unrecognised queue element: '%s'" % repr(item))
+                logger.error("                  expected: 'QueueElement'")
+                self.__queue.task_done()
+                GangaThreadPool.getInstance().delServiceThread(thread)
+                continue
+             
             if isinstance(item.command_input, FunctionInput):
                 thread._command = item.command_input.function.__name__
             elif isinstance(item.command_input, CommandInput):
                 thread._command = item.command_input.command
                 thread._timeout = item.command_input.timeout
             else:
-                logger.error("Unrecognised input command type")
+                logger.error("Unrecognised input command type: '%s'" % repr(item.command_input))
+                logger.error("                       expected: ('FunctionInput' or 'CommandInput')")
                 self.__queue.task_done()
                 GangaThreadPool.getInstance().delServiceThread(thread)
                 continue
@@ -84,21 +90,29 @@ class WorkerThreadPool(object):
                     result = self.execute(*item.command_input)
             except Exception, e:
                 logger.error("Exception raised executing '%s' in Thread '%s':\n%s"%(thread._command, thread.name, traceback.format_exc()))
-                if isinstance(item.fallback_func, FunctionInput) and item.fallback_func.function is not None:
-                    thread._command = item.fallback_func.function.__name__
-                    thread._timeout = 'N/A'
-                    try:
-                        item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
-                    except Exception, x:
-                        logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s"%(thread._command, thread.name, traceback.format_exc()))
+                if item.fallback_func.function is not None:
+                    if isinstance(item.fallback_func, FunctionInput):
+                        thread._command = item.fallback_func.function.__name__
+                        thread._timeout = 'N/A'
+                        try:
+                            item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
+                        except Exception, x:
+                            logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s"%(thread._command, thread.name, traceback.format_exc()))
+                    else:
+                        logger.error("Unrecognised fallback_func type: '%s'" % repr(item.fallback_func))
+                        logger.error("                       expected: 'FunctionInput'")
             else:
-                if isinstance(item.callback_func, FunctionInput) and item.callback_func.function is not None:
-                    thread._command = item.callback_func.function.__name__
-                    thread._timeout = 'N/A'
-                    try:
-                        item.callback_func.function(result, *item.callback_func.args, **item.callback_func.kwargs)
-                    except Exception, e:
-                        logger.error("Exception raised in callback_func '%s' of Thread '%s': %s"%(thread._command, thread.name, traceback.format_exc()))
+                if item.callback_func.function is not None:
+                    if isinstance(item.callback_func, FunctionInput):
+                        thread._command = item.callback_func.function.__name__
+                        thread._timeout = 'N/A'
+                        try:
+                            item.callback_func.function(result, *item.callback_func.args, **item.callback_func.kwargs)
+                        except Exception, e:
+                            logger.error("Exception raised in callback_func '%s' of Thread '%s': %s"%(thread._command, thread.name, traceback.format_exc()))
+                    else:
+                        logger.error("Unrecognised callback_func type: '%s'" % repr(item.callback_func))
+                        logger.error("                       expected: 'FunctionInput'") 
             finally:
                 # unregister as a working thread bcoz free
                 thread._command = 'idle'
@@ -118,7 +132,6 @@ class WorkerThreadPool(object):
                 timed_out.set()
                 try:
                     os.killpg(process.pid, signal.SIGKILL)
-                    #process.kill()
                 except Exception, e:
                     logger.error("Exception trying to kill process: %s"%e)
  
@@ -152,18 +165,23 @@ class WorkerThreadPool(object):
                 command += ''';python -c "%s"''' % env_update_script.replace('###INDENT###','')
         else:
             stream_command = 'python -'
-           # command = python_setup + command
+            pkl_read, pkl_write = os.pipe()
             command = '''
-import sys, pickle, traceback
-try:
-    exec("""###SETUP###""")
-    exec("""###COMMAND###""")
-except:
-    print >> sys.stdout, pickle.dumps(traceback.format_exc())
-finally:###FINALLY###
-'''.replace('###SETUP###',python_setup).replace('###COMMAND###',command)
+import os, sys, pickle, traceback
+os.close(###PKL_FDREAD###)
+with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
+    def output(data):
+        print >> PICKLE_STREAM, pickle.dumps(data)
+    local_ns = {'output':output, 'PICKLE_STREAM':PICKLE_STREAM}
+    try:
+        exec("""###SETUP###""",   local_ns)
+        exec("""###COMMAND###""", local_ns)
+    except:
+        print >> PICKLE_STREAM, pickle.dumps(traceback.format_exc())
+    finally:###FINALLY###
+'''.replace('###SETUP###',python_setup).replace('###COMMAND###',command).replace('###PKL_FDREAD###', str(pkl_read)).replace('###PKL_FDWRITE###', str(pkl_write))
             if update_env:
-                command = command.replace('###FINALLY###',env_update_script.replace('###INDENT###','    '))
+                command = command.replace('###FINALLY###',env_update_script.replace('###INDENT###','        '))
             else:
                 command = command.replace('###FINALLY###','pass')
 
@@ -210,18 +228,31 @@ finally:###FINALLY###
         command_done.set()
 
         if stderr != '':
-            logger.debug(stderr)
+            logger.error(stderr)
 
         if timed_out.isSet():
             if update_env:
                 os.close(envwrite)
                 os.close(envread)
+            if not shell:
+                os.close(pkl_read)
+                os.close(pkl_write)
             return 'Command timed out!'
 
         if update_env:
              os.close(envwrite)
              with os.fdopen(envread, 'rb') as envfd:
                  env.update(pickle.load(envfd))
+
+        if not shell:
+            tmp = None
+            os.close(pkl_write)
+            with os.fdopen(pkl_read, 'rb') as pickle_file:
+                tmp = pickle_file.read()
+            if tmp is not None and tmp != '':
+                if stdout != '':
+                    logger.info(stdout)
+                stdout = tmp
         try:
             stdout = pickle.loads(stdout)
         except:

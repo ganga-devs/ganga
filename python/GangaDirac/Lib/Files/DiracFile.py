@@ -7,9 +7,7 @@ from Ganga.GPIDev.Lib.Job.Job                 import Job
 from Ganga.Core.exceptions                    import GangaException
 from Ganga.Utility.files                      import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv
-#from GangaDirac.Lib.Utilities.smartsubprocess import runcmd
 from GangaDirac.BOOT                          import dirac_ganga_server
-#from GangaDirac.Lib.Backends.DiracBase        import dirac_ganga_server
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
 configDirac = getConfig('DIRAC')

@@ -4,7 +4,7 @@ import time
 import datetime
 import glob
 import pickle
-from DIRAC.Core.Base.Script import parseCommandLine
+from DIRAC.Core.Base.Script          import parseCommandLine
 parseCommandLine()
 from DIRAC.Interfaces.API.Dirac      import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
@@ -12,9 +12,12 @@ dirac = Dirac()
 
 # Write to output pipe
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
-
-def output(object):
-    print >> sys.stdout, pickle.dumps(object)
+#reserved_stdout = sys.stdout
+#sys.stdout = sys.stderr
+#def output(object):
+#    print >> reserved_stdout, "CHECK ME", object
+#    print >> reserved_stdout, pickle.dumps(object)
+#    print >> sys.stdout, pickle.dumps(object)
 
 # Dirac commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/

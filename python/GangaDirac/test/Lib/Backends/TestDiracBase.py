@@ -230,15 +230,13 @@ print result
     
 
     def test_resubmit(self):
-
         def _resubmit(server):
-            #This needs to change to workerpool
-            #from GangaDirac.Lib.Server.DiracClient import DiracClient
-            #self.assertTrue(isinstance(server, DiracClient),'not a dirac client')
-            return True
-
+            from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
+            self.assertTrue(isinstance(server, WorkerThreadPool), 'server passes as arg is not of type WorkerThreadPool')
+            return server
         setattr(self.db,'_resubmit',_resubmit)
-        self.assertTrue(self.db.resubmit(),'did not run properly')
+        from GangaDirac.BOOT import dirac_ganga_server
+        self.assertEqual(self.db.resubmit(), dirac_ganga_server )
 
 
     def test__resubmit(self):
@@ -358,6 +356,14 @@ print result
         self.ts.returnObject={}
         self.assertFalse(self.db.getOutputSandbox(dir)), 'didn\'t fail gracefully'
 
+    def test_removeOutputData(self):
+        def getOutputDataLFNs(self):
+            return ['a.root', 'b.root']
+        setattr(self.db, 'getOutputDataLFNs', getOutputDataLFNs)
+        
+        self.ts.toCheck={'command': "dirac-dms-remove-lfn"}
+        self.ts.returnObject={}
+        self.assertEqual(self.db.removeOutputData(), None)
 
     def test_getOutputData(self):
         j=Job(backend=self.db)

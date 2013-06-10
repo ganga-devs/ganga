@@ -119,7 +119,7 @@ j.setSystemConfig('###PLATFORM###')
 
 # submit the job to dirac
 result = dirac.submit(j)
-print result
+output(result)
 """
     return script_template
 

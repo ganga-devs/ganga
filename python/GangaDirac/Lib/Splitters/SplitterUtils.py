@@ -1,7 +1,7 @@
-from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from GangaDirac.BOOT import dirac_ganga_server
+from Ganga.GPIDev.Adapters.ISplitter    import SplittingError
+from GangaDirac.BOOT                    import dirac_ganga_server
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
-from Ganga.Utility.logging import getLogger
+from Ganga.Utility.logging              import getLogger
 logger = getLogger()
 
 def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):

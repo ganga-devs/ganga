@@ -1,7 +1,7 @@
 import sys, socket
 import collections
-from pprint import pformat
-from Ganga.Utility.ColourText                import getColour
+from pprint                   import pformat
+from Ganga.Utility.ColourText import getColour
 SocketAddress = collections.namedtuple('SocketAddress', ['address', 'port'])
 
 

@@ -9,15 +9,12 @@ from Ganga.GPIDev.Adapters.IBackend          import IBackend
 from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
 from GangaDirac.Lib.Files.DiracFile          import DiracFile
-#from GangaDirac.Lib.Server.WorkerThreadPool  import WorkerThreadPool
 from GangaDirac.BOOT                         import dirac_ganga_server, dirac_monitoring_server
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
-#dirac_ganga_server      = WorkerThreadPool()
-#dirac_monitoring_server = WorkerThreadPool()
 
 class DiracBase(IBackend):
     """The backend that submits jobs to the Grid via DIRAC.
@@ -660,6 +657,7 @@ class DiracBase(IBackend):
                     if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
                     job.updateStatus('running')
                     if job.master: job.master.updateMasterJobStatus()                   
+
                 dirac_monitoring_server.execute_nonblocking(DiracBase.job_finalisation,
                                                             command_args = (job, updated_dirac_status),
                                                             priority     = 5)

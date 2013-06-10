@@ -1,5 +1,5 @@
-from Ganga.Core.exceptions                         import GangaException, BackendError
-from GangaDirac.BOOT import dirac_ganga_server
+from Ganga.Core.exceptions import GangaException, BackendError
+from GangaDirac.BOOT       import dirac_ganga_server
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

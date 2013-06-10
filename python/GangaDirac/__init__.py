@@ -55,7 +55,6 @@ def getEnvironment( config = {} ):
    return
 
 def loadPlugins( config = {} ):
-    #import Lib.Server
     import Lib.Backends
     import Lib.RTHandlers
     import Lib.Files
