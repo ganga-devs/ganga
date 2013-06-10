@@ -391,14 +391,14 @@ class AppName(Gaudi):
                 stdout.close()
                 stderr.close()
                 msg = 'Unable to parse job options! Please check options ' \
-                      'files and extraopts. The output and error streams from gaudyrun.py can be ' \
+                      'files and extraopts. The output and error streams from gaudirun.py can be ' \
                       'found in %s and %s respectively . ' % (stdout.name, stderr.name)
             else:
                 f = open(debug_dir + '/gaudirun.out','w')
                 f.write(e.message)
                 f.close()
                 msg = 'Unable to parse job options! Please check options ' \
-                      'files and extraopts. The output from gaudyrun.py can be ' \
+                      'files and extraopts. The output from gaudirun.py can be ' \
                       'found in %s . ' % f.name
             msg+=msg2
             # logger.error(msg)
