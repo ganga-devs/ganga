@@ -195,10 +195,8 @@ under certain conditions; type license() for details.
           try:
              versions_file=open(versions_filename, 'w')
              versions_file.write(version + '\n')
-          except:
+          finally:
              versions_file.close()
-             raise
-          versions_file.close()
           return True
 
           ## As soon as we ditch slc5 support and get above python 2.4 can put this back
@@ -210,12 +208,9 @@ under certain conditions; type license() for details.
           versions_file = open(versions_filename,'r+')
           if versions_file.read().find(version) < 0:
              versions_file.write(version)
-             versions_file.close()
              return True
-       except:
+       finally:
           versions_file.close()
-          raise
-       versions_file.close()
        return False
 
     def generate_config_file(self):
@@ -253,10 +248,8 @@ under certain conditions; type license() for details.
        try:
           config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r')
           new_config += config_head_file.read()
-       except:
+       finally:
           config_head_file.close()
-          raise
-       config_head_file.close()
 
        new_config += config_file_as_text()
        new_config = new_config.replace('Ganga-SVN',_gangaVersion)
@@ -264,10 +257,8 @@ under certain conditions; type license() for details.
        try:
           new_config_file = open(self.default_config_file, 'w')
           new_config_file.write(new_config)
-       except:
+       finally:
           new_config_file.close()
-          raise
-       new_config_file.close()
 
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
