@@ -268,7 +268,8 @@ class Job(GangaObject):
     backend_output_postprocess = {}
                 
     keys = getConfig('Output').options.keys()
-    keys.remove('PostProcessLocationsFileName')         
+    keys.remove('PostProcessLocationsFileName')      
+    keys.remove('ForbidLegacyInput')                   
     keys.remove('ForbidLegacyOutput')                
     keys.remove('AutoRemoveFilesWithJob')
     keys.remove('AutoRemoveFileTypes')
@@ -1512,7 +1513,7 @@ class Job(GangaObject):
 
             if value != []:     
 
-                if getConfig('Output')['ForbidLegacyOutput']:
+                if getConfig('Output')['ForbidLegacyInput']:
                     logger.error('Use of job.inputsandbox is forbidden, please use job.inputfiles')
                     return
 
