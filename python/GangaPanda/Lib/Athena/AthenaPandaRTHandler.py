@@ -886,15 +886,16 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 # set correct name in outMap
                 tmpOutMap.append((tmpName,tmpLFN))
             outMap['IROOT'] = tmpOutMap 
-            # input 
-            minList = []
-            cavList = []
-            bhaloList = []
-            bgasList = []
-            inPattList = [('%IN', input_files ),('%MININ',minList),('%CAVIN',cavList),('%BHIN',bhaloList),('%BGIN',bgasList)]    
-            for tmpPatt,tmpInList in inPattList:
-                if tmpJobO.find(tmpPatt) != -1 and len(tmpInList) > 0:
-                    tmpJobO = AthenaUtils.replaceParam(tmpPatt,tmpInList,tmpJobO)
+            # input
+            if not job.backend.accessmode == 'DIRECT':
+                minList = []
+                cavList = []
+                bhaloList = []
+                bgasList = []
+                inPattList = [('%IN', input_files ),('%MININ',minList),('%CAVIN',cavList),('%BHIN',bhaloList),('%BGIN',bgasList)]    
+                for tmpPatt,tmpInList in inPattList:
+                    if tmpJobO.find(tmpPatt) != -1 and len(tmpInList) > 0:
+                        tmpJobO = AthenaUtils.replaceParam(tmpPatt,tmpInList,tmpJobO)
  
            # DBRelease
             tmpItems = tmpJobO.split()
