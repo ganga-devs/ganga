@@ -944,6 +944,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 inBS = True
             isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
 
+            # Patch to allow directIO for new Reco_tf
+            if job.backend.accessmode == 'DIRECT':
+                inTRF=False
+                isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
+
             #if not isDirectAccess:
             if not isDirectAccess and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
                 param += ' --useLocalIO '
