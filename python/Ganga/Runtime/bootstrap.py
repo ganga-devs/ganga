@@ -194,9 +194,12 @@ under certain conditions; type license() for details.
 
           try:
              versions_file=open(versions_filename, 'w')
-             versions_file.write(version + '\n')
-          finally:
-             versions_file.close()
+          except: pass
+          else:
+             try:
+                versions_file.write(version + '\n')
+             except: pass
+             versions_file.close()  
           return True
 
           ## As soon as we ditch slc5 support and get above python 2.4 can put this back
@@ -206,10 +209,13 @@ under certain conditions; type license() for details.
 #             return True
        try:
           versions_file = open(versions_filename,'r+')
-          if versions_file.read().find(version) < 0:
-             versions_file.write(version)
-             return True
-       finally:
+       except: pass
+       else:
+          try:
+             if versions_file.read().find(version) < 0:
+                versions_file.write(version)
+                return True
+          except: pass
           versions_file.close()
        return False
 
@@ -247,8 +253,11 @@ under certain conditions; type license() for details.
 
        try:
           config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r')
-          new_config += config_head_file.read()
-       finally:
+       except: pass
+       else:
+          try:
+             new_config += config_head_file.read()
+          except: pass
           config_head_file.close()
 
        new_config += config_file_as_text()
@@ -256,10 +265,13 @@ under certain conditions; type license() for details.
 
        try:
           new_config_file = open(self.default_config_file, 'w')
-          new_config_file.write(new_config)
-       finally:
+       except: pass
+       else:
+          try:
+             new_config_file.write(new_config)
+          except: pass
           new_config_file.close()
-
+          
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
     def new_user_wizard(self):
