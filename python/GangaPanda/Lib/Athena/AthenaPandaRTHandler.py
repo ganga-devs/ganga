@@ -893,7 +893,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             bgasList = []
             useNewTRF = app.useNewTRF
 
-            if if app.atlas_exetype in ['TRF'] and job.backend.accessmode == 'DIRECT':
+            if app.atlas_exetype in ['TRF'] and job.backend.accessmode == 'DIRECT':
                 param += ' --directIn ' 
                 param += ' --usePFCTurl ' 
             else:
