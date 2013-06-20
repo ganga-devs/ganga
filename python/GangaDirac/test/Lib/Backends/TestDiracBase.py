@@ -76,7 +76,7 @@ j.setSystemConfig('###PLATFORM###')
 
 # submit the job to dirac
 result = dirac.submit(j)
-print result
+output(result)
 """
         
     def test__setup_subjob_dataset(self):
@@ -131,6 +131,8 @@ print result
 
     def test__common_submit(self):
         from Ganga.Core import BackendError
+        j=Job(backend=self.db)
+        self.db._parent=j._impl
 
         fd, name=tempfile.mkstemp()
         file = os.fdopen(fd,'w')
@@ -357,39 +359,131 @@ print result
         self.assertFalse(self.db.getOutputSandbox(dir)), 'didn\'t fail gracefully'
 
     def test_removeOutputData(self):
-        def getOutputDataLFNs(self):
-            return ['a.root', 'b.root']
-        setattr(self.db, 'getOutputDataLFNs', getOutputDataLFNs)
+        j=Job(backend=self.db)
+        self.db._parent=j._impl
+        #######################
+        class testfile:
+            def __init__(this):pass
+            def remove(this):
+                return 27
+                
+        #######################
+
+        import GangaDirac.Lib.Backends.DiracBase
+        def outputfiles_foreach(job, file_type, func):
+            import types
+            self.assertTrue(isinstance(job, Job._impl))
+            if subjob:
+                self.assertNotEqual(job.master, None)
+            else:
+                self.assertEqual(job.master, None)
+            self.assertEqual(file_type, DiracFile._impl)
+            self.assertEqual(type(func), types.FunctionType)
+            self.assertEqual(func(testfile()), 27, 'Didn\'t call remove function')
+        setattr(GangaDirac.Lib.Backends.DiracBase, 'outputfiles_foreach', outputfiles_foreach)
+
+        subjob=False
+        self.assertEqual(self.db.removeOutputData(), None)
+
+
+        j._impl.subjobs = [Job()._impl, Job()._impl, Job()._impl]
+        for sj in j._impl.subjobs: sj.master = j._impl
         
-        self.ts.toCheck={'command': "dirac-dms-remove-lfn"}
-        self.ts.returnObject={}
+        subjob=True
         self.assertEqual(self.db.removeOutputData(), None)
 
     def test_getOutputData(self):
         j=Job(backend=self.db)
         self.db._parent=j._impl
-        self.db.id=1234
-        names = ''
-        dir   = j._impl.getOutputWorkspace().getPath()
 
-#        class server:
-#            def execute(this, dirac_cmd):
-#                self.assertEqual(dirac_cmd,
-#                                 "getOutputData(1234, '%s','%s')"%(names,dir))
-#                if names =='': return {'OK':True}
-#                return {'OK':True, 'Value':names+dir}
-#        setattr(DiracBase,'dirac_ganga_server',server())
-        self.ts.toCheck={'command': "getOutputData(1234, '%s','%s')"%(names,dir)}
-        self.ts.returnObject={'OK':True}
-        self.assertEqual(self.db.getOutputData(),[],'didn\'t run properly')
-        self.assertEqual(self.db.getOutputData(dir, names),[],'should product same as default')
-        
-##        names = 'test_'
-##        dir   = '_case'
-##        self.assertEqual(self.db.getOutputData(dir,names),
-##                         'test__case', 'output should match')
-        
+        self.assertRaises(GangaException, self.db.getOutputData, '/false/dir')
+
+        #######################
+        class testfile:
+            def __init__(this, lfn, namePattern):
+                this.lfn = lfn
+                this.namePattern = namePattern
+            def get(this):
+                this.check = 42
+        test_files = [ testfile('a', 'alpha'  ),testfile('' , 'delta'  ),
+                       testfile('b', 'beta'   ),testfile('' , 'bravo'  ),
+                       testfile('c', 'charlie'),testfile('' , 'foxtrot') ]
+        #######################
+
+        import GangaDirac.Lib.Backends.DiracBase
+        def outputfiles_iterator(job, file_type):
+            import types
+            self.assertTrue(isinstance(job, Job._impl))
+            if subjob:
+                self.assertNotEqual(job.master, None)
+            else:
+                self.assertEqual(job.master, None)
+            self.assertEqual(file_type, DiracFile._impl)
+            return test_files
+        setattr(GangaDirac.Lib.Backends.DiracBase, 'outputfiles_iterator', outputfiles_iterator)
+
+        ## master jobs
+        #######################
+        subjob=False
+        self.assertEqual(self.db.getOutputData(), ['a','b','c'])
+        for f in test_files:
+            if f.lfn in ['a','b','c']:
+                self.assertEqual(f.localDir, j._impl.getOutputWorkspace().getPath())
+                self.assertEqual(f.check, 42,"didn't call get")
+                #delattr(f, 'localDir')
+            else:
+                self.assertFalse(hasattr(f,'localDir'))
+                self.assertFalse(hasattr(f,'check'))
+        self.assertEqual(self.db.getOutputData(None, ['alpha','charlie']), ['a','c'])
+        self.assertEqual(self.db.getOutputData(os.path.expanduser('~/gangadir_testing'), ['alpha','charlie']), ['a','c'])
+
+        ## subjobs
+        ########################
+        j._impl.subjobs = [Job()._impl, Job()._impl, Job()._impl]
+        i=0
+        for sj in j._impl.subjobs:
+            sj.master = j._impl
+            sj.id = i
+            i+=1
+
+        subjob=True
+        self.assertEqual(self.db.getOutputData(), ['a','b','c']*3)
+        self.assertEqual(self.db.getOutputData(None, ['beta']), ['b']*3)
+        self.assertEqual(self.db.getOutputData(os.path.expanduser('~/gangadir_testing'), ['alpha','charlie']), ['a','c']*3)
+        for i in range(3):
+            self.assertTrue(os.path.isdir(os.path.join(os.path.expanduser('~/gangadir_testing'),'0.%d'%i)))
+            os.rmdir(os.path.join(os.path.expanduser('~/gangadir_testing'),'0.%d'%i))
 
     def test_getOutputDataLFNs(self):
-        pass
-    
+        j=Job(backend=self.db)
+        self.db._parent=j._impl
+        
+        #######################
+        class testfile:
+            def __init__(this, lfn):
+                this.lfn = lfn
+        #######################
+
+        import GangaDirac.Lib.Backends.DiracBase
+        def outputfiles_iterator(job, file_type):
+            import types
+            self.assertTrue(isinstance(job, Job._impl))
+            if subjob:
+                self.assertNotEqual(job.master, None)
+            else:
+                self.assertEqual(job.master, None)
+            self.assertEqual(file_type, DiracFile._impl)
+            return [testfile('a'),testfile(''),
+                    testfile('b'),testfile(''),
+                    testfile('c'),testfile('')]
+        setattr(GangaDirac.Lib.Backends.DiracBase, 'outputfiles_iterator', outputfiles_iterator)
+
+        subjob=False
+        self.assertEqual(self.db.getOutputDataLFNs(), ['a','b','c'])
+
+        j._impl.subjobs = [Job()._impl, Job()._impl, Job()._impl]
+        for sj in j._impl.subjobs:
+            sj.master = j._impl
+        
+        subjob=True
+        self.assertEqual(self.db.getOutputDataLFNs(), ['a','b','c']*3)

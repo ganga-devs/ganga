@@ -52,4 +52,63 @@ def get_parametric_datasets(dirac_script_lines):
     dataset_str = parametric_line[0][end_method_marker:-1]
     return eval(dataset_str)
 
+
+## Note could combine selection_pred with file_type
+## using types.typetype or types.functiontype
+def outputfiles_iterator(job, file_type, selection_pred=None,
+                         include_subfiles = True):
+    def combined_pred(f):
+        if selection_pred is not None:
+            return issubclass(f.__class__, file_type) and selection_pred(f)
+        return issubclass(f.__class__, file_type)
+
+    import itertools
+    for f in itertools.chain(job.outputfiles, job.non_copyable_outputfiles):
+        if include_subfiles and hasattr(f, 'subfiles') and f.subfiles:
+            for sf in itertools.ifilter(combined_pred, f.subfiles):
+                yield sf
+        else:
+            if cobmined_pred(f):
+                yield f
+
+#    import itertools
+#    for f in itertools.chain(job.outputfiles, job.non_copyable_outputfiles):
+#        if include_subfiles and and hasattr(f, 'subfiles') and f.subfiles:
+#            for sf in f.subfiles:
+#                if combined_pred(sf):
+#                    yield sf
+#        else:
+#            if cobmined_pred(f):
+#                yield f
+
+
+#    for f in job.outputfiles:
+#        if issubclass(f.__class__, file_type):
+#            yield f
+#    for f in job.non_copyable_outputfiles:
+#        if issubclass(f.__class__, file_type):
+#            yield f
+
+def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs={},
+                        selection_pred=None, include_subfiles=True):
+    output=[]
+    for f in outputfiles_iterator(job, file_type, selection_pred,include_subfiles):
+        output.append(func(f, *fargs, **fkwargs))
+    return output
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
+def ifilter_chain(selection_pred, *iterables):
+    import itertools
+    for item in itertools.ifilter( selection_pred,
+                                   itertools.chain(*iterables) ):
+        yield item
+
+def for_each(func, *iterables, **kwargs):
+    result = []
+    for item in ifilter_chain( kwargs.get('selection_pred', None),
+                               *iterables ):
+        result.append(func(item,
+                           *kwargs.get('fargs', ()),
+                           **kwargs.get('fkwargs', {})))
+    return result

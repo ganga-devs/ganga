@@ -41,8 +41,8 @@ class TestGaudi(GangaGPITestCase):
         job.application.platform = 'x86_64-slc5-gcc43-opt'
         gauss = job.application
         job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']
-        job.outputdata = ['Gauss.sim']
-        job.outputsandbox = ['GaussHistos.root','GaussMonitor.root']
+        job.outputfiles = ['Gauss.sim','GaussHistos.root','GaussMonitor.root']
+        #job.outputsandbox = ['GaussHistos.root','GaussMonitor.root']
         #inputs,extra = gauss._impl.master_configure()
         # provide basic test of where output goes - a more complete test is
         # run on the PythonOptionsParser methods.

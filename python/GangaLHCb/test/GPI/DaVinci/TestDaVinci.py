@@ -21,7 +21,7 @@ class TestDaVinci(GangaGPITestCase):
         j.backend=Dirac()
         #outfile_name = 'Presel_test.dst'
         outfile_name = 'DVHistos_1.root'
-        j.outputsandbox = [outfile_name]        
+        j.outputfiles = [SandboxFile(outfile_name)]        
         j.inputdata = self.input_data
         j.submit()
         assert sleep_until_completed(j,1800)
@@ -45,10 +45,10 @@ class TestDaVinci(GangaGPITestCase):
         #j.peek()
         #assert(os.path.exists(os.path.join(j.outputdir,'DVHistos.root')))
 
-    def test_outputdata_submit(self):
+    def test_outputfiles_submit(self):
         j = Job(application=DaVinci(),backend=Dirac())
         j.application.platform = getDiracAppPlatform()
-        j.outputdata = ['Something.root']
+        j.outputfiles = ['Something.root']
         j.submit()
         j.kill()
 

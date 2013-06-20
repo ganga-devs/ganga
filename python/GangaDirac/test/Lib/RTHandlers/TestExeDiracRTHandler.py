@@ -7,7 +7,7 @@ from Ganga.GPI                                     import *
 
 #GangaTest.Framework.utils defines some utility methods
 #from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
-import unittest, tempfile, os
+import unittest, tempfile, os, difflib, itertools
 
 class TestExeDiracRTHandler(GangaGPITestCase):
     def setUp(self):
@@ -166,9 +166,14 @@ j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr',
 
 # submit the job to dirac
 result = dirac.submit(j)
-print result"""
+output(result)"""
             self.assertEqual(jobsubconfig.exe,
-                             script.replace('###JOB_ID###',app._getParent().fqid))
+                             script.replace('###JOB_ID###',app._getParent().fqid),
+                             'Dirac API script does not match, see diff below:\n' +\
+                                 '\n'.join(difflib.unified_diff(jobsubconfig.exe.splitlines(),
+                                                                script.replace('###JOB_ID###',app._getParent().fqid).splitlines(),
+                                                                fromfile = 'Coming from prepare method',
+                                                                tofile   = 'What the test expected')))
 
             ## NEED SOME CHECK THAT THE EXE SCRIPT IS GENERATED PROPERLY            
             

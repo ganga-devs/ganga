@@ -345,17 +345,12 @@ class DiracBase(IBackend):
         Remove all the LFNs associated with this job.
         """
         ## Note when the API can accept a list for removeFile I will change this.
-        import tempfile
         j = self.getJobObject()
-        lfns = DiracBase.getOutputDataLFNs(self)
-        lfn_file_name=''
-        with tempfile.NamedTemporaryFile(delete=False) as lfn_file:
-            lfn_file_name = lfn_file.name
-            for lfn in lfns:
-                lfn_file.write(lfn+'\n')
-        dirac_ganga_server.execute('dirac-dms-remove-lfn %s' % lfn_file_name, shell=True)
-        os.remove(lfn_file_name)
-
+        if j.subjobs:
+            for sj in j.subjobs:
+                outputfiles_foreach(sj, DiracFile, lambda x: x.remove())
+        else:
+            outputfiles_foreach(j, DiracFile, lambda x: x.remove())
 
     def getOutputData(self,dir=None,names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
@@ -373,66 +368,49 @@ class DiracBase(IBackend):
         if dir is not None and not os.path.exists(dir) :
             raise GangaException("Designated outupt path '%s' must exist" % dir)
 
-        def diracfile_getter(diracfiles):
-            for df in diracfiles:
-                if df.subfiles:
-                    for sf in df.subfiles:
-                        if sf.lfn!='' and (names is None or sf.namePattern in names):
-                            yield sf
-                else:
-                    if df.lfn!='' and (names is None or df.namePattern in names):
-                        yield df
+        def download(dirac_file, job, is_subjob=False):
+            dirac_file.localDir = job.getOutputWorkspace().getPath()
+            if dir is not None:
+                output_dir = dir
+                if is_subjob:
+                    output_dir = os.path.join(dir, job.fqid)
+                    if not os.path.isdir(output_dir): os.mkdir(output_dir) 
+                dirac_file.localDir = output_dir
+            if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
+                return
+            try:
+                dirac_file.get()
+                return dirac_file.lfn
+            except GangaException, e: # should really make the get method throw if doesn't suceed. todo
+                logger.warning(e)
 
         suceeded=[]
         if j.subjobs:
             for sj in j.subjobs:
-                for df in diracfile_getter([f for f in sj.outputfiles if isinstance(f, DiracFile)] +
-                                           [f for f in sj.non_copyable_outputfiles if isinstance(f, DiracFile)]):
-                    output_dir = sj.getOutputWorkspace().getPath()
-                    if dir is not None:
-                        output_dir = os.path.join(dir, sj.fqid)
-                        os.mkdir(output_dir)
-                    df.localDir = output_dir
-                    if os.path.exists(os.path.join(output_dir,os.path.basename(df.lfn))) and not force:
-                        continue
-                    try: 
-                        df.get()
-                        suceeded.append(df.lfn)
-                    except GangaException, e: # should really make the get method throw if doesn't suceed. todo
-                        logger.warning(e)
+#                suceeded.extend(outputfiles_foreach(sj, DiracFile, download,
+#                                                    fargs=(sj, True)))
+                suceeded.extend([download(f, sj, True) for f in outputfiles_iterator(sj, DiracFile) if f.lfn !='' and (names is None or f.namePattern in names)])
         else:
-            for df in diracfile_getter([f for f in j.outputfiles if isinstance(f, DiracFile)] +
-                                       [f for f in j.non_copyable_outputfiles if isinstance(f, DiracFile)]):
-                df.localDir = j.getOutputWorkspace().getPath()
-                if dir is not None:
-                    df.localDir = dir
-                if os.path.exists(os.path.join(df.localDir, os.path.basename(df.lfn))) and not force:
-                    continue
-                try:
-                    df.get()
-                    suceeded.append(df.lfn)
-                except GangaException, e:
-                    logger.warning(e)
+#            suceeded.extend(outputfiles_foreach(j, DiracFile, download,
+#                                                fargs(j,False)))
+            suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile) if f.lfn !='' and (names is None or f.namePattern in names)])
 
-        return suceeded
+        return filter(lambda x: x!= None,suceeded)
             
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""   
         j = self.getJobObject()
         lfns=[]
-        
-        def job_lfn_getter(job):
-            def lfn_getter(diracfile):
-                if diracfile.lfn != "":
-                    lfns.append(diracfile.lfn)
-                lfns.extend((f.lfn for f in diracfile.subfiles if f.lfn != "")) 
-            map(lfn_getter, (f for f in job.outputfiles              if isinstance(f, DiracFile)))
-            map(lfn_getter, (f for f in job.non_copyable_outputfiles if isinstance(f, DiracFile)))
-        
+
         if j.subjobs:
-            map(job_lfn_getter, j.subjobs)
+            for sj in j.subjobs:
+#                lfns.extend(outputfiles_foreach(sj, DiracFile, lambda x: x.lfn,
+#                                                selection_pred= lambda x: x.lfn !=''))
+                lfns.extend([ f.lfn for f in outputfiles_iterator(sj, DiracFile) if f.lfn != ''])
         else:
-            job_lfn_getter(j)
+#            lfns.extend(outputfiles_foreach(j, DiracFile, lambda x: x.lfn,
+#                                            selection_pred= lambda x: x.lfn !=''))
+            lfns.extend([ f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != ''])
         return lfns
         
     def debug(self):
