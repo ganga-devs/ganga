@@ -951,7 +951,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
 
             #if not isDirectAccess:
-            if not isDirectAccess and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
+            if not isDirectAccess and (job.backend.accessmode != 'DIRECT')  and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
                 param += ' --useLocalIO '
                 param += ' --accessmode=copy '
 
