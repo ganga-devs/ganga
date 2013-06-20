@@ -1,0 +1,41 @@
+**************************************************************************************************************
+6.0.12 (2013/6/20)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+- added different config option (from the one for forbidding the legacy output) for forbidding the
+legacy input - input sandbox field
+
+- added a fix to the hasty switch away from with statement to make core 2.4 compatible
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 6.0.12 (GangaLHCb-24-52)
+************
+
+Core changes
+************
+Changes in this version include:
+
+1) Intelligent migration of .gangarc file when using ganga -g such that user defined options are kept.
+2) Automatic migration of .gangarc in line with new versions of ganga ensuring .gangarc is always up
+to date
+3) Introduction of a generalised named template system (see package release notes.)
+
+LHCb
+****
+Further to core changes:
+
+1) utilise named templates system to set up the 'templatesLHCb' registry of named templates which
+will in time hold a collection of best practise templates or standard debugging templates for use
+within the LHCb community.
+
+2) made less verbose the error messages pronted out from the LHCb metadata methods e.g. lumi. It is
+now the case that the trace back is no longer reported in favour of just the simple warning. (see
+Savannah #101383).
+
+**************************************************************************************************************
