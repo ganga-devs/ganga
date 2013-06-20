@@ -895,11 +895,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
             if app.atlas_exetype in ['TRF'] and job.backend.accessmode == 'DIRECT':
                 param += ' --directIn ' 
-            else:
-                inPattList = [('%IN', input_files ),('%MININ',minList),('%CAVIN',cavList),('%BHIN',bhaloList),('%BGIN',bgasList)]    
-                for tmpPatt,tmpInList in inPattList:
-                    if tmpJobO.find(tmpPatt) != -1 and len(tmpInList) > 0:
-                        tmpJobO = AthenaUtils.replaceParam(tmpPatt,tmpInList,tmpJobO,useNewTRF)
+            
+            inPattList = [('%IN', input_files ),('%MININ',minList),('%CAVIN',cavList),('%BHIN',bhaloList),('%BGIN',bgasList)]    
+            for tmpPatt,tmpInList in inPattList:
+                if tmpJobO.find(tmpPatt) != -1 and len(tmpInList) > 0:
+                    tmpJobO = AthenaUtils.replaceParam(tmpPatt,tmpInList,tmpJobO,useNewTRF)
  
            # DBRelease
             tmpItems = tmpJobO.split()
