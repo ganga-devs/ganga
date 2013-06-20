@@ -876,6 +876,10 @@ class DQ2JobSplitter(ISplitter):
                     # FIXME - set correct parameter values
                     inBS = False
                     inTRF = False
+                    if job.application.atlas_exetype == 'TRF':
+                        inTRF = True
+                    if job.backend.accessmode == 'DIRECT':
+                        inTRF=False
                     inARA = False
                     isDirectAccess = PsubUtils.isDirectAccess(pandaSite, inBS, inTRF, inARA)
                     if isDirectAccess or job.backend.accessmode in ['DIRECT','FILE_STAGER']: 
