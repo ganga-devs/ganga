@@ -573,7 +573,7 @@ class DiracBase(IBackend):
         # is better than querying the queue as cant tell if a job has just been taken off queue and is being processed
         # also by not being persistent, this attribute automatically allows queued jobs from last session to be considered
         # for requeing
-        interesting_jobs = [ j for j in jobs if not hasattr(j, 'been_queued') ]
+        interesting_jobs = [ j for j in jobs if not j.been_queued ]
         ## status that correspond to a ganga 'completed' or 'failed' (see DiracCommands.status(id))
         ## if backend status is these then the job should be on the queue
         requeue_dirac_status = { 'Done'                       : 'completed',
