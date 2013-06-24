@@ -68,7 +68,7 @@ def outputfiles_iterator(job, file_type, selection_pred=None,
             for sf in itertools.ifilter(combined_pred, f.subfiles):
                 yield sf
         else:
-            if cobmined_pred(f):
+            if combined_pred(f):
                 yield f
 
 #    import itertools
