@@ -886,20 +886,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 # set correct name in outMap
                 tmpOutMap.append((tmpName,tmpLFN))
             outMap['IROOT'] = tmpOutMap 
-            # input
+            # input 
             minList = []
             cavList = []
             bhaloList = []
             bgasList = []
-            useNewTRF = app.useNewTRF
-
-            if app.atlas_exetype in ['TRF'] and job.backend.accessmode == 'DIRECT':
-                param += ' --directIn ' 
-            
             inPattList = [('%IN', input_files ),('%MININ',minList),('%CAVIN',cavList),('%BHIN',bhaloList),('%BGIN',bgasList)]    
             for tmpPatt,tmpInList in inPattList:
                 if tmpJobO.find(tmpPatt) != -1 and len(tmpInList) > 0:
-                    tmpJobO = AthenaUtils.replaceParam(tmpPatt,tmpInList,tmpJobO,useNewTRF)
+                    tmpJobO = AthenaUtils.replaceParam(tmpPatt,tmpInList,tmpJobO)
  
            # DBRelease
             tmpItems = tmpJobO.split()
@@ -949,13 +944,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 inBS = True
             isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
 
-            # Patch to allow directIO for new Reco_tf
-            if job.backend.accessmode == 'DIRECT':
-                inTRF=False
-                isDirectAccess = PsubUtils.isDirectAccess(job.backend.site, inBS, inTRF, inARA)
-
             #if not isDirectAccess:
-            if not isDirectAccess and (job.backend.accessmode != 'DIRECT')  and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
+            if not isDirectAccess and (( self.inputdatatype != 'DQ2' ) or (len(job.inputdata.tagdataset) == 0 and not job.inputdata.tag_info)):
                 param += ' --useLocalIO '
                 param += ' --accessmode=copy '
 

@@ -364,7 +364,6 @@ class Athena(IPrepareApp):
                  'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
                  'useRootCoreNoBuild'     : SimpleItem(defvalue = False, doc='Use RootCore with NoBuild'),
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
-                 'useNewTRF'              : SimpleItem(defvalue = False, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
                  })
                      
     _category = 'applications'
