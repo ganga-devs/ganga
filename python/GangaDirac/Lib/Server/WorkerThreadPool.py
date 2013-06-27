@@ -189,12 +189,10 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
         exec("""###COMMAND###""", local_ns)
     except:
         print >> PICKLE_STREAM, pickle.dumps(traceback.format_exc())
-    finally:###FINALLY###
+###FINALLY###
 '''.replace('###SETUP###',python_setup).replace('###COMMAND###',command).replace('###PKL_FDREAD###', str(pkl_read)).replace('###PKL_FDWRITE###', str(pkl_write))
             if update_env:
-                command = command.replace('###FINALLY###',env_update_script.replace('###INDENT###','        '))
-            else:
-                command = command.replace('###FINALLY###','pass')
+                command = command.replace('###FINALLY###',env_update_script.replace('###INDENT###',''))
 
         p=subprocess.Popen(stream_command,
                            shell      = True,
@@ -230,7 +228,9 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
         command_done.set()
 
         if stderr != '':
-            logger.error(stderr)
+            # this is still debug as using the environment from default_env maked a stderr message dump out
+            # even though it works
+            logger.debug(stderr)
 
         if timed_out.isSet():
             return 'Command timed out!'
