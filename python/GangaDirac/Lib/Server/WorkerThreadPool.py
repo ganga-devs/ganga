@@ -135,6 +135,15 @@ class WorkerThreadPool(object):
                 except Exception, e:
                     logger.error("Exception trying to kill process: %s"%e)
  
+
+    def __reader(self, thread, readfd, writefd):
+        thread.output = None
+        os.close(writefd)
+        with os.fdopen(readfd, 'rb') as read_file:
+            try:
+                thread.output = pickle.load(read_file)
+            except: pass # EOFError triggered if command killed with timeout
+
     def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False, python_setup=default_includes, eval_includes=None, update_env=False):
         """
         Execute a command on the local DIRAC server.
@@ -172,7 +181,9 @@ os.close(###PKL_FDREAD###)
 with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
     def output(data):
         print >> PICKLE_STREAM, pickle.dumps(data)
-    local_ns = {'output':output, 'PICKLE_STREAM':PICKLE_STREAM}
+    local_ns = {'pickle'        : pickle,
+                'PICKLE_STREAM' : PICKLE_STREAM,
+                'output'        : output}
     try:
         exec("""###SETUP###""",   local_ns)
         exec("""###COMMAND###""", local_ns)
@@ -185,22 +196,15 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
             else:
                 command = command.replace('###FINALLY###','pass')
 
-        p=subprocess.Popen(stream_command, shell=True, env=env, cwd=cwd, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, preexec_fn=os.setsid)
+        p=subprocess.Popen(stream_command,
+                           shell      = True,
+                           env        = env,
+                           cwd        = cwd,
+                           preexec_fn = os.setsid,
+                           stdin      = subprocess.PIPE,
+                           stdout     = subprocess.PIPE,
+                           stderr     = subprocess.PIPE)
                 
-## This has been moved into a separate "private method to alow exec in function"
-#        def timeout_func(process, timeout, command_done, timed_out):
-#            import time
-#            start = time.time()
-#            while time.time()-start < timeout:
-#                if command_done.isSet(): break
-#                time.sleep(0.5)
-#            else:
-#                if process.returncode is None:
-#                    timed_out.set()
-#                    try:
-#                        process.kill()
-#                    except Exception, e:
-#                        logger.error("Exception trying to kill process: %s"%e)
 
         command_done = threading.Event()
         timed_out    = threading.Event()
@@ -209,20 +213,18 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
             t.deamon=True
             t.start()
 
-## Unfortunately using poll() is buggy as if the user code (e.g. lhcbdirac.getDataset called from BKQuery)
-## uses os.wait() or something like it then poll will always return None. Need thread solution above
-## a shame as messy.
-#        if timeout is not None:
-#            start_time = time.time()
-#            while p.poll() is None:
-#                if time.time()-start_time >=timeout:
-#                    p.kill()
-#                    if not shell: os.close(outread)
-#                    p.communicate()
-#                    #out='Command timed out!'
-#                    return 'Command timed out!'
-##                    break
-#                time.sleep(0.5)
+        if not shell:
+            ti=threading.Thread(target=self.__reader)
+            ti.deamon=True
+            ti._Thread__args=(ti, pkl_read, pkl_write)
+            ti.start()
+
+        if update_env:
+            ev=threading.Thread(target=self.__reader)
+            ev.deamon=True
+            ev._Thread__args=(ev, envread, envwrite)
+            ev.start()
+
 #        print "Command =",command
         stdout, stderr = p.communicate(command)
         command_done.set()
@@ -231,28 +233,17 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
             logger.error(stderr)
 
         if timed_out.isSet():
-            if update_env:
-                os.close(envwrite)
-                os.close(envread)
-            if not shell:
-                os.close(pkl_read)
-                os.close(pkl_write)
             return 'Command timed out!'
 
         if update_env:
-             os.close(envwrite)
-             with os.fdopen(envread, 'rb') as envfd:
-                 env.update(pickle.load(envfd))
+            ev.join()
+            if ev.output is not None:
+                env.update(ev.output)
 
         if not shell:
-            tmp = None
-            os.close(pkl_write)
-            with os.fdopen(pkl_read, 'rb') as pickle_file:
-                tmp = pickle_file.read()
-            if tmp is not None and tmp != '':
-                if stdout != '':
-                    logger.info(stdout)
-                stdout = tmp
+            ti.join()
+            if ti.output is not None:
+                return ti.output
         try:
             stdout = pickle.loads(stdout)
         except:
