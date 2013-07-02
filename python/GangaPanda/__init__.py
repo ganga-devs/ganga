@@ -1,3 +1,23 @@
+## Config options
+from Ganga.Utility.Config import makeConfig, ConfigError
+
+# -------------------------------------------------
+# Panda Options
+config = makeConfig('Panda','Panda backend configuration parameters')
+config.addOption( 'prodSourceLabelBuild', 'panda', 'prodSourceLabelBuild')
+config.addOption( 'prodSourceLabelRun', 'user', 'prodSourceLabelRun')
+config.addOption( 'assignedPriorityBuild', 2000, 'assignedPriorityBuild' )
+config.addOption( 'assignedPriorityRun', 1000, 'assignedPriorityRun' )
+config.addOption( 'processingType', 'ganga', 'processingType' )
+config.addOption( 'enableDownloadLogs', False , 'enableDownloadLogs' )  
+config.addOption( 'trustIS', True , 'Trust the Information System' )  
+config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to the Panda server' )  
+config.addOption( 'chirpconfig', '' , 'Configuration string for chirp data output, e.g. "chirp^etpgrid01.garching.physik.uni-muenchen.de^/tanyasandoval^-d chirp" ' )  
+config.addOption( 'chirpserver', '' , 'Configuration string for the chirp server, e.g. "voatlas92.cern.ch". If this variable is set config.Panda.chirpconfig is filled and chirp output will be enabled.' )  
+config.addOption( 'siteType', 'analysis' , 'Expert only.' )  
+
+
+
 def getEnvironment(c):
     import PACKAGE
     PACKAGE.standardSetup()
