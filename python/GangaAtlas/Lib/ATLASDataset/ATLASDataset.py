@@ -617,8 +617,6 @@ class ATLASOutputDataset(Dataset):
 
 #        logger.debug('Download.rootfile %s', Download.rootfile)
 
-config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
-config.addOption('PathToEOSBinary', '/afs/cern.ch/project/eos/installation/pro/bin/eos.select', 'Path to the EOS binary for output copying/checking')
 
 #$Log: not supported by cvs2svn $
 #Revision 1.7  2009/04/24 08:36:21  dvanders

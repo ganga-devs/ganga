@@ -9,14 +9,12 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, listDatasets
 from Ganga.GPIDev.Schema.Schema import SimpleItem
 from Ganga.GPIDev.Schema.Schema import FileItem
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+from Ganga.Utility.Config import getConfig, ConfigError
 
 import os
 
 logger = getLogger()
-config = makeConfig('AMIDataset','AMI dataset')
-config.addOption('MaxNumOfFiles', 3000, 'Maximum number of files in a given dataset patterns')
-config.addOption('MaxNumOfDatasets', 100, 'Maximum number of datasets in a given dataset patterns')
+config = getConfig('AMIDataset')
 
 try:
     from pyAMI.pyAMI import AMI as AMIClient

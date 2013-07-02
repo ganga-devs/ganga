@@ -14,7 +14,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 
-from Ganga.Utility.Config import makeConfig, ConfigError
+from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename
 
@@ -1869,29 +1869,9 @@ class _RootMergeToolAANT(IMerger):
             raise MergerError('The ROOT merge failed to complete. The cammand used was %s.' % merge_cmd)
 
            
-config = makeConfig('Athena','Athena configuration parameters')
-logger = getLogger()
 
-# some default values
-# some default values
-config.addOption('LCGOutputLocation', 'srm://srm-atlas.cern.ch/castor/cern.ch/grid/atlas/scratch/%s/ganga' % os.environ['USER'], 'FIXME')
-config.addOption('LocalOutputLocation', '/castor/cern.ch/atlas/scratch/%s/ganga' % os.environ['USER'], 'FIXME')
-config.addOption('IndividualSubjobDirsForLocalOutput', False, 'When copying local output, should dir structure be jid.sid (False) or jid/sid (True)' )
-config.addOption('SingleDirForLocalOutput', False, 'When copying local output, only a single dirs used for output and output filenames are changed with jid.sid' )
-config.addOption('NoSubDirsAtAllForLocalOutput', False, 'When copying local output, all output is copied to the given output location with no subdirs created' )
-config.addOption('ATLAS_SOFTWARE', '/afs/cern.ch/project/gd/apps/atlas/slc3/software', 'FIXME')
-config.addOption('PRODUCTION_ARCHIVE_BASEURL', 'http://atlas-computing.web.cern.ch/atlas-computing/links/kitsDirectory/Production/kits/', 'FIXME')
-config.addOption('ExcludedSites', '' , 'FIXME')
-config.addOption('CMTHOME', os.path.join(os.environ['HOME'],'cmthome') , 'The path in which the cmtsetup magic function will look up the setup.sh for CMT environment setup')
-config.addOption('CMTCONFIG', 'i686-slc5-gcc43-opt', 'Default value to be used as CMTCONFIG environment setup value (LCG/Batch backend)')
-config.addOption('CMTCONFIG_LIST', [ 'i686-slc4-gcc34-opt', 'i686-slc5-gcc43-opt' ], 'Allowed values for CMTCONFIG environment setup value (LCG/Batch backend)')
-config.addOption('MaxJobsAthenaSplitterJobLCG', 1000 , 'Number of maximum jobs allowed for job splitting with the AthenaSplitterJob and the LCG backend')
-config.addOption('DCACHE_RA_BUFFER', 32768 , 'Size of the dCache read ahead buffer used for dcap input file reading')
-config.addOption('ENABLE_DQ2COPY', False , 'Enable DQ2_COPY input workflow on LCG backend')
-config.addOption('ENABLE_SGE_DQ2JOBSPLITTER', False , 'Enable DQ2JobSplitter for SGE backend')
-config.addOption('ENABLE_SGE_FILESTAGER', False , 'Enable FILE_STAGER input access mode for SGE backend')
-config.addOption('EXE_MAXFILESIZE', 1024*1024 , 'Athena.exetype=EXE jobs: Maximum size of files to be sent to WNs (default 1024*1024B)')
-config.addOption('dereferenceSymLinks', False , 'Set to True to dereference symlinks in the sources area. E.g. if src is a symlink, the target will be copied into the sources archive.')
+logger = getLogger()
+config = getConfig('Athena')
 
 # $Log: not supported by cvs2svn $
 # Revision 1.63  2009/07/02 19:36:23  elmsheus

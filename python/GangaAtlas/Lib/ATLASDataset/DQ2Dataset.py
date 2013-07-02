@@ -12,6 +12,7 @@ from Ganga.GPIDev.Lib.Dataset import Dataset
 from Ganga.GPIDev.Schema import *
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig, ConfigError
 
 from dq2.common.DQException import *
 from dq2.info.TiersOfATLAS import _refreshToACache, ToACache, getSites
@@ -1921,45 +1922,7 @@ dq2_lock = Lock()
 from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
 
-from Ganga.Utility.Config import makeConfig, ConfigError
-config = makeConfig('DQ2', 'DQ2 configuration options')
-
-try:
-    config.addOption('DQ2_URL_SERVER', os.environ['DQ2_URL_SERVER'], 'FIXME')
-except KeyError:
-    config.addOption('DQ2_URL_SERVER', 'http://atlddmcat.cern.ch/dq2/', 'FIXME')
-try:
-    config.addOption('DQ2_URL_SERVER_SSL', os.environ['DQ2_URL_SERVER_SSL'], 'FIXME')
-except KeyError:
-    config.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
-
-try:
-    config.addOption('DQ2_LOCAL_SITE_ID', os.environ['DQ2_LOCAL_SITE_ID'], 'Sets the DQ2 local site id')
-except KeyError:
-    config.addOption('DQ2_LOCAL_SITE_ID', 'CERN-PROD_DATADISK', 'Sets the DQ2 local site id')
-
-config.addOption('DQ2_OUTPUT_SPACE_TOKENS', [ 'ATLASSCRATCHDISK', 'ATLASLOCALGROUPDISK', 'T2ATLASSCRATCHDISK', 'T2ATLASLOCALGROUPDISK' ] , 'Allowed space tokens names of DQ2OutputDataset output' )
-
-config.addOption('DQ2_BACKUP_OUTPUT_LOCATIONS', [ 'CERN-PROD_SCRATCHDISK', 'CERN-PROD_USERTAPE', 'FZK-LCG2_SCRATCHDISK', 'IN2P3-CC_SCRATCHDISK', 'TRIUMF-LCG2_SCRATCHDISK', 'IFAE_SCRATCHDISK', 'NIKHEF-ELPROD_SCRATCHDISK' ], 'Default backup locations of DQ2OutputDataset output' )
-
-config.addOption('USE_STAGEOUT_SUBSCRIPTION', False, 'Allow DQ2 subscription to aggregate DQ2OutputDataset output on a storage element instead of using remote lcg-cr' )
-
-config.addOption('usertag','user','user tag for a given data taking period')
-
-config.addOption('USE_ACCESS_INFO', False, 'Use automatic best choice of input dataset access mode provided by AtlasLCGRequirements.')
-
-config.addOption('CHECK_OUTPUT_DUPLICATES', False, 'Check for duplicate files in DQ2OutputDataset in LCG backend - this could possibly happen by ShallowRetry of glite WMS. A duplicates dataset is created')
-config.addOption('DELETE_DUPLICATES_DATASET', False, 'If CHECK_OUTPUT_DUPLICATES=True is used, duplicates dataset can be automatically deleted by setting this flag to True.')
-
-config.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', True, 'Use voms nicknames for DQ2OutputDataset.')
-config.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
-
-config.addOption('OUTPUTDATASET_LIFETIME', '', 'Maximum lifetime of a DQ2OutputDataset.')
-config.addOption('OUTPUTDATASET_NAMELENGTH', 131, 'Maximum characters of a DQ2OutputDataset.')
-config.addOption('OUTPUTFILE_NAMELENGTH', 150, 'Maximum characters of a filename in DQ2OutputDataset.')
-config.addOption('NumberOfDQ2DownloadThreads', 5, 'Number of simultaneous DQ2 downloads when calling "retrieve"')
-
-config.addOption('setupScript', '/afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/setup.sh', 'Script to setup DQ2Clients software')
+config = getConfig('DQ2')
 
 baseURLDQ2 = config['DQ2_URL_SERVER']
 baseURLDQ2SSL = config['DQ2_URL_SERVER_SSL']

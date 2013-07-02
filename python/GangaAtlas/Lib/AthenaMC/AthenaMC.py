@@ -16,7 +16,7 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Core import FileWorkspace
 from Ganga.Core.exceptions import ApplicationConfigurationError
 
-from Ganga.Utility.Config import makeConfig, ConfigError
+from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
@@ -982,7 +982,7 @@ class AthenaMCSplitterJob(ISplitter):
             subjobs.append(j)
         return subjobs
 
-config = makeConfig('AthenaMC', 'AthenaMC configuration options')
+config = getConfig('AthenaMC')
 logger = getLogger()
 
 # some default values

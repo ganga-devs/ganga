@@ -1643,36 +1643,11 @@ logger = getLogger()
 
 from Ganga.Utility.Config import getConfig, ConfigError
 configDQ2 = getConfig('DQ2')
-
-
-try:
-   configDQ2['DQ2_URL_SERVER']
-except ConfigError:
-   try:
-       configDQ2.addOption('DQ2_URL_SERVER', os.environ['DQ2_URL_SERVER'], 'FIXME')
-   except KeyError:
-       configDQ2.addOption('DQ2_URL_SERVER', 'http://atlddmcat.cern.ch/dq2/', 'FIXME')
-try:
-   configDQ2['DQ2_URL_SERVER_SSL']
-except ConfigError:
-   try:
-       configDQ2.addOption('DQ2_URL_SERVER_SSL', os.environ['DQ2_URL_SERVER_SSL'], 'FIXME')
-   except KeyError:
-       configDQ2.addOption('DQ2_URL_SERVER_SSL', 'https://atlddmcat.cern.ch:443/dq2/', 'FIXME')
-try:
-    configDQ2['usertag']
-except ConfigError:
-    configDQ2['usertag']="" # removing arbitrary value "users". Will catch this at execution time (somewhere else in the code) as raising an Exception at initialisation time is likely to be drowned among the many startup errors/ warning
     
 _usertag=configDQ2['usertag']
 
 baseURLDQ2 = configDQ2['DQ2_URL_SERVER']
 baseURLDQ2SSL = configDQ2['DQ2_URL_SERVER_SSL']
-
-if not 'USE_NICKNAME_DQ2OUTPUTDATASET' in configDQ2:
-    configDQ2.addOption('USE_NICKNAME_DQ2OUTPUTDATASET', True, 'Use voms nicknames for DQ2OutputDataset.')
-if not 'ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET' in configDQ2:
-    configDQ2.addOption('ALLOW_MISSING_NICKNAME_DQ2OUTPUTDATASET', False, 'Allow that voms nickname is empty for DQ2OutputDataset name creating.')
 
 # Extract username from certificate
 proxy = GridProxy()

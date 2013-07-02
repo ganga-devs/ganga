@@ -41,8 +41,6 @@ task_help_nocolor = task_help.replace(fgcol("blue"),"").replace(fx.normal, "").r
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException
 dq2=DQ2()
 
-config.addOption('merged_files_per_job',1,'OBSOLETE', type=int)
-config.addOption('recon_files_per_job',10,'OBSOLETE', type=int)
 
 class AnaTask(Task):
    __doc__ = task_help_nocolor
