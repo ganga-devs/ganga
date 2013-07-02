@@ -1,4 +1,22 @@
 **************************************************************************************************************
-6.0.13 (2013/6/28)
+6.0.13 (2013/7/2)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Moved all Config options to parent module init to use new config generation system
+* Fix job splitting for TRF and directIO
+* Add useNewTRF option
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Moved all Config options to parent module init to use new config generation system
+* Additional directIO TRF workflow
+* Fix job splitting for TRF and directIO
+* Add useNewTRF option for correct input file treatment
+* Patch to allow directIO for new Reco_tf
 
 **************************************************************************************************************
