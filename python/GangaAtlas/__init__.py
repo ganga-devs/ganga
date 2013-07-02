@@ -1,7 +1,8 @@
 # File: GangaAtlas/__init__.py
 
 ## Config options
-from Ganga.Utility.Config import makeConfig, ConfigError
+from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+import os
 
 # -------------------------------------------------
 # Athena Options
