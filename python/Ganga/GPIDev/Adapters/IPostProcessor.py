@@ -49,8 +49,11 @@ class MultiPostProcessor(IPostProcessor):
         super(MultiPostProcessor,self).__init__()
 
     def __construct__(self,value):
-        if type(value) is type([]):
+        if (type(value) is type([])):
              for process in value:
+                 self.addProcess(process)
+        elif isinstance(value._impl,MultiPostProcessor):
+             for process in value._impl.process_objects:
                  self.addProcess(process)
         else: self.addProcess(value)
         self.process_objects=sorted(self.process_objects,key=lambda process: process.order)
