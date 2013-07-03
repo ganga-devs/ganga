@@ -215,11 +215,14 @@ class Job(GangaObject):
         return c
 
     def _attribute_filter__get__(self, name):
+
         if name == 'outputfiles':
             import re
             regex = re.compile('[*?\[\]]')
             files = GangaList()
+
             for f in object.__getattribute__(self, name) + object.__getattribute__(self, 'non_copyable_outputfiles'):
+
                 if regex.search(f.namePattern) is not None and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
                     files.extend(makeGangaListByRef(stripProxy(f).subfiles))
                 else:
@@ -370,7 +373,7 @@ class Job(GangaObject):
                 if newstatus == 'completed':
                     if self.outputFilesFailures():
 
-                        self.force_status('failed')
+                        self.updateStatus('failed')
                         return
 
             if self.status != newstatus:
