@@ -44,7 +44,7 @@ class DiracFile(IOutputFile):
                                      'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, sequence=1, copyable=0,
                                                                      typelist=['GangaDirac.Lib.Files.DiracFile'],
                                                                      doc="collected files from the wildcard namePattern"),
-                                     'failureReason' : SimpleItem(defvalue="", copyable=1, doc='reason for the upload failure')
+                                     'failureReason' : SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure')
                                      })
 
     _env=None
