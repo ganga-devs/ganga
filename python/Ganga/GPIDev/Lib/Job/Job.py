@@ -429,7 +429,10 @@ class Job(GangaObject):
             if self.backend_output_postprocess.has_key(backendClass):
                 if self.backend_output_postprocess[backendClass].has_key(outputfileClass):
                     if self.backend_output_postprocess[backendClass][outputfileClass] == 'client':
-                        outputfile.put()    
+                        outputfile.put()
+                        for f in glob.glob(os.path.join(self.outputdir,
+                                                        outputfile.namePattern)):
+                            os.remove(f)
                     elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
                         outputfile.setLocation()

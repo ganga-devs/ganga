@@ -283,9 +283,10 @@ class MassStorageFile(IOutputFile):
                     logger.info('%s successfully uploaded to mass storage' % currentFile)              
                     d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
 
+                    ## Alex removed this as more general approach in job.py after put() is called
                     #remove file from output dir if this object is attached to a job
-                    if self._parent != None:
-                        os.system('rm %s' % os.path.join(sourceDir, currentFile))
+                    #if self._parent != None:
+                    #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
                 self.subfiles.append(GPIProxyObjectFactory(d))
         else:
@@ -300,9 +301,10 @@ class MassStorageFile(IOutputFile):
                 if location not in self.locations:
                     self.locations.append(location)         
 
+                ## Alex removed this as more general approach in job.py after put() is called
                 #remove file from output dir if this object is attached to a job
-                if self._parent != None:
-                    os.system('rm %s' % os.path.join(sourceDir, currentFile))
+                #if self._parent != None:
+                #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
     def validate(self):
         

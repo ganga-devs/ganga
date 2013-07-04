@@ -205,9 +205,10 @@ class LCGSEFile(IOutputFile):
                     if match:
                         d.locations = mystdout.strip()
 
+                    ## Alex removed this as more general approach in job.py after put() is called
                     #remove file from output dir if this object is attached to a job
-                    if self._parent != None:
-                        os.system('rm %s' % os.path.join(sourceDir, currentFile))
+                    #if self._parent != None:
+                    #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
                 else:
                     d.failureReason = mystderr
@@ -231,10 +232,11 @@ class LCGSEFile(IOutputFile):
                 match = re.search('(guid:\S+)',mystdout)
                 if match:       
                     self.locations = mystdout.strip()
-
+                
+                ## Alex removed this as more general approach in job.py after put() is called
                 #remove file from output dir if this object is attached to a job
-                if self._parent != None:
-                    os.system('rm %s' % os.path.join(sourceDir, currentFile))
+                #if self._parent != None:
+                #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
             else:
                 self.failureReason = mystderr
