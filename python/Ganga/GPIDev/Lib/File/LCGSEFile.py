@@ -38,7 +38,7 @@ class LCGSEFile(IOutputFile):
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
         'locations'   : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
         'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-        'failureReason' : SimpleItem(defvalue="",copyable=1,doc='reason for the upload failure'),
+        'failureReason' : SimpleItem(defvalue="",protected=1,copyable=0,doc='reason for the upload failure'),
         'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'outputfiles'
     _name = "LCGSEFile"
