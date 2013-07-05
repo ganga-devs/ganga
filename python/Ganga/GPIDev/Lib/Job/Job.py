@@ -432,7 +432,10 @@ class Job(GangaObject):
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir,
                                                         outputfile.namePattern)):
-                            os.remove(f)
+                            try:
+                                os.remove(f)
+                            except:
+                                logger.error('failed to remove temporary/intermediary file: %s'%f)
                     elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
                         outputfile.setLocation()
