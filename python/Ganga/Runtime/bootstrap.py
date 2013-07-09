@@ -520,6 +520,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 'dest_SRM':'srm-public.cern.ch'}},'fileExtensions:list of output files that will be written to LCG SE, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual LCG upload')
 
         outputconfig.addOption('DiracFile',{'fileExtensions':['*.dst'], 'backendPostprocess':{'Dirac':'WN', 'LSF':'WN', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
+        outputconfig.addOption('GoogleFile',{'fileExtensions':[], 'backendPostprocess':{'Dirac':'client', 'LSF':'client', 'LCG':'client', 'CREAM':'client', 'Localhost':'client', 'Interactive':'client'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
 
         massStoragePath = ''
         try:

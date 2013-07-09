@@ -6,6 +6,7 @@ from IOutputFile import IOutputFile
 from SandboxFile import SandboxFile
 from MassStorageFile import MassStorageFile
 from LCGSEFile import LCGSEFile
+from GoogleFile import GoogleFile
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
