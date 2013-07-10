@@ -205,7 +205,7 @@ under certain conditions; type license() for details.
           ## As soon as we ditch slc5 support and get above python 2.4 can put this back
 #       with open(versions_filename,'r+') as versions_file:
 #          if versions_file.read().find(version) < 0:
-#             versions_file.write(version)
+#             versions_file.write(version + '\n')
 #             return True
        try:
           versions_file = open(versions_filename,'r+')
@@ -213,7 +213,7 @@ under certain conditions; type license() for details.
        else:
           try:
              if versions_file.read().find(version) < 0:
-                versions_file.write(version)
+                versions_file.write(version + '\n')
                 return True
           except: pass
           versions_file.close()
