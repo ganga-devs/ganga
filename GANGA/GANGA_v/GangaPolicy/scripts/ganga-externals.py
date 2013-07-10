@@ -3,6 +3,7 @@
 
 # These are the external packages with only Python code.
 externals_noarch = [['ApMon','2.2.11'],
+                    ['google-api-python-client', '1.1'],
                     ['figleaf', '0.6'],
                     ['paramiko', '1.7.3'],
                     ['PYTF','1.5'],
