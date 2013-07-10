@@ -62,7 +62,10 @@ _externalPackages = {
                  'syspath':'lib/python2.3/site-packages'},
    'stomputil' : {'version' : '2.4',
                   'noarch': True,
-                  'syspath' : 'python'} 
+                  'syspath' : 'python'},
+   'google-api-python-client' : {'version' : '1.1',
+                                 'noarch'  : True,
+                                 'syspath' : 'lib/python2.3/site-packages'}
    }
 
 
