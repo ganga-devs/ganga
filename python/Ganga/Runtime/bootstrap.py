@@ -550,7 +550,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
   
         self.newVersion = self.new_version()## register the new version
         if not self.options.generate_config \
-               and not self.newVersion\
+               and (not self.newVersion or self.options.config_file_set_explicitly) \
                and os.path.exists(self.options.config_file):
            ## if -g option given we exclude the .gangarc from loading at session level
            ## otherwise we add it IF it exists.
