@@ -3,6 +3,18 @@
 
 
 --------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+Release 6.0.14
+**************
+
+Fixes to two config related bugs.
+1) fix for HammerCloud when using --config the config file was ignored
+2) fixed the writing of used versions file
+3) Included new GoogleFile object for interaction with Google Drive
+
+
+--------------------------------------------------------------------------------------------------------------
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 * Fix a bug in job splitting for ProdTrans application
