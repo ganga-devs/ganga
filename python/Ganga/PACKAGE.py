@@ -65,7 +65,7 @@ _externalPackages = {
                   'syspath' : 'python'},
    'google-api-python-client' : {'version' : '1.1',
                                  'noarch'  : True,
-                                 'syspath' : 'lib/python2.3/site-packages'}
+                                 'syspath' : 'python'}
    }
 
 
