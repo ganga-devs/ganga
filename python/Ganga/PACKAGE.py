@@ -63,6 +63,9 @@ _externalPackages = {
    'stomputil' : {'version' : '2.4',
                   'noarch': True,
                   'syspath' : 'python'},
+   'python-gflags' : {'version' : '2.0',
+                      'noarch'  : True,
+                      'syspath' : 'python'},
    'google-api-python-client' : {'version' : '1.1',
                                  'noarch'  : True,
                                  'syspath' : 'python'}
