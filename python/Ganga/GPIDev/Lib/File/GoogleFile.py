@@ -10,6 +10,7 @@ from IOutputFile import IOutputFile
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job
+from Ganga.Utility.Config import getConfig
 import re, copy, glob
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
@@ -18,6 +19,7 @@ import pickle
 import httplib2
 from apiclient.discovery import build
 from apiclient import errors
+cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
 
 class GoogleFile(IOutputFile):
 
@@ -46,7 +48,7 @@ class GoogleFile(IOutputFile):
     def __init__(self, namePattern=''):
         super(GoogleFile, self).__init__()
         self.namePattern = namePattern
-        if os.path.isfile("/home/hep/hs4011/GDrive/creddata.pkl") == False :
+        if os.path.isfile(cred_path) == False :
             from oauth2client.client import OAuth2WebServerFlow
 
             # Copy your credentials from the APIs Console
@@ -67,7 +69,7 @@ class GoogleFile(IOutputFile):
             credentials = flow.step2_exchange(code)
             
             #Pickle credential data
-            output = open("/home/hep/hs4011/GDrive/creddata.pkl","wb")
+            output = open(cred_path,"wb")
             pickle.dump(credentials, output)
             output.close()
 
@@ -102,7 +104,7 @@ class GoogleFile(IOutputFile):
         """
         #Retrieves creddata and sets up service connection
         http = httplib2.Http()
-        nput = open("/home/hep/hs4011/GDrive/creddata.pkl","rb")
+        nput = open(cred_path,"rb")
         credentials = pickle.load(nput)
         nput.close()
         http = credentials.authorize(http)
@@ -140,12 +142,12 @@ class GoogleFile(IOutputFile):
                 resp, content = service._http.request(self.downloadURL)
                 if resp.status == 200:
                     #
-                    gotfile1 = open('/home/hep/hs4011/Test/resp.pkl',"wb")
-                    pickle.dump(resp, gotfile1)
-                    gotfile1.close()
-                    gotfile2 = open('/home/hep/hs4011/Test/content.pkl',"wb")
-                    pickle.dump(content, gotfile2)
-                    gotfile2.close()
+                    #gotfile1 = open('/home/hep/hs4011/Test/resp.pkl',"wb")
+                    #pickle.dump(resp, gotfile1)
+                    #gotfile1.close()
+                    #gotfile2 = open('/home/hep/hs4011/Test/content.pkl',"wb")
+                    #pickle.dump(content, gotfile2)
+                    #gotfile2.close()
                     #
                     #print 'Status: %s' % resp
                     logger.info("Download successful")
@@ -185,7 +187,7 @@ class GoogleFile(IOutputFile):
         from apiclient.http import MediaFileUpload
 
         http = httplib2.Http()
-        nput = open("/home/hep/hs4011/GDrive/creddata.pkl","rb")
+        nput = open(cred_path,"rb")
         credentials = pickle.load(nput)
         nput.close()
         http = credentials.authorize(http)
@@ -215,11 +217,17 @@ class GoogleFile(IOutputFile):
 
                 #Metadata file and md5checksum intergrity check
                 file = service.files().insert(body=body, media_body=media_body).execute()
-                with open(FILENAME, 'rb') as thefile:
-                    if file.get('md5Checksum')==hashlib.md5(thefile.read()).hexdigest():
-                        logger.info("File %s uploaded successfully" % filename)
-                    else:
-                        logger.error("File %s uploaded unsuccessfully" % filename)
+                thefile = open(FILENAME, 'rb')               
+                if file.get('md5Checksum')==hashlib.md5(thefile.read()).hexdigest():
+                    logger.info("File %s uploaded successfully" % filename)
+                else:
+                    logger.error("File %s uploaded unsuccessfully" % filename)  
+                thefile.close()
+#                with open(FILENAME, 'rb') as thefile:
+#                    if file.get('md5Checksum')==hashlib.md5(thefile.read()).hexdigest():
+#                        logger.info("File %s uploaded successfully" % filename)
+#                    else:
+#                        logger.error("File %s uploaded unsuccessfully" % filename)
 
                 #Assign new schema components to each file and append to job subfiles
                 g = GoogleFile(filename)
@@ -244,17 +252,26 @@ class GoogleFile(IOutputFile):
             #Metadata storage and md5checksum integrity check
             file = service.files().insert(body=body, media_body=media_body).execute()
             #pprint.pprint(file) #Prints metadata
-            with open(FILENAME, 'rb') as thefile:
-                if file.get('md5Checksum')==hashlib.md5(thefile.read()).hexdigest():
-                    logger.info("Upload Successful")
-                    logger.info("File uploaded: %s" % self.namePattern)
-                else:
-                    logger.error("Upload Unsuccessfull")
+
+            thefile = open(FILENAME, 'rb')
+            if file.get('md5Checksum')==hashlib.md5(thefile.read()).hexdigest():
+                logger.info("Upload Successful")
+                logger.info("File uploaded: %s" % self.namePattern)
+            else:
+                logger.error("Upload Unsuccessfull")
+            thefile.close()
+
+#            with open(FILENAME, 'rb') as thefile:
+#                if file.get('md5Checksum')==hashlib.md5(thefile.read()).hexdigest():
+#                    logger.info("Upload Successful")
+#                    logger.info("File uploaded: %s" % self.namePattern)
+#                else:
+#                    logger.error("Upload Unsuccessfull")
                     
             #
-            outputf=open('/home/hep/hs4011/Test/file.pkl','wb')
-            pickle.dump(file, outputf)
-            outputf.close()
+#            outputf=open('/home/hep/hs4011/Test/file.pkl','wb')
+#            pickle.dump(file, outputf)
+#            outputf.close()
             #
 
             #Assign values to new schema components
@@ -270,7 +287,7 @@ class GoogleFile(IOutputFile):
         Move a file to the trash or permanently delete the file.
         """
         http = httplib2.Http()
-        nput = open("/home/hep/hs4011/GDrive/creddata.pkl","rb")
+        nput = open(cred_path,"rb")
         credentials = pickle.load(nput)
         nput.close()
         http = credentials.authorize(http)
@@ -316,7 +333,7 @@ class GoogleFile(IOutputFile):
         """Restore a file from the trash.
         """
         http = httplib2.Http()
-        nput = open("/home/hep/hs4011/GDrive/creddata.pkl","rb")
+        nput = open(cred_path,"rb")
         credentials = pickle.load(nput)
         nput.close()
         http = credentials.authorize(http)
