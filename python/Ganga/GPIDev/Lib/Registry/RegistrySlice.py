@@ -5,7 +5,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryIndexError, RegistryAccessError
-
+import fnmatch
 from Ganga.Utility.external.ordereddict import oDict
 
 import Ganga.Utility.Config
@@ -133,7 +133,7 @@ class RegistrySlice(object):
                     if self.name == 'box':
                         attrvalue = attrs[a]
                         if a == 'name':
-                            if not obj._getRegistry()._getName(obj) == attrvalue:
+                            if not fnmatch.fnmatch(obj._getRegistry()._getName(obj), attrvalue):
                                 selected = False
                                 break
                         elif a == 'application':
@@ -217,6 +217,19 @@ class RegistrySlice(object):
     def __call__(self,id):
         """ Retrieve an object by id.
         """
+        if type(id) is str:
+            if id.isdigit(): 
+                id = int(id)
+            else:
+                matches = [o for o in self.objects if fnmatch.fnmatch(o._getRegistry()._getName(o),id)]
+                if len(matches)>1:
+                    logger.error('Multiple Matches: Wildcards are allowed for ease of matching, however')
+                    logger.error('                  to keep a uniform response only one item may be matched.')
+                    logger.error('                  If you wanted a slice, please use the select method')
+                    raise RegistryKeyError("Multiple matches for id='%s':%s"%(id, str(map(lambda x:x._getRegistry()._getName(x), matches))))
+                if len(matches) <1:
+                    return
+                return matches[0]
         try:
             return self.objects[id]
         except KeyError:

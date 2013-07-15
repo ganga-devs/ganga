@@ -65,8 +65,8 @@ configLHCb.addOption('ignore_version_check',True,dscrpt)
 
 #This is now done for all plugin packages automatically by the bootstrap
 #but leave here to remind how to set up another registry if needed.
-#from Ganga.GPIDev.Lib.Job.NamedJobTemplate import establishNamedTemplates
-#establishNamedTemplates('LHCbJobTemplate', 'templatesLHCb', os.path.join(os.path.dirname(__file__),'templates'), file_ext='tpl', pickle_files=True)
+#from Ganga.GPIDev.Lib.Registry.RegistryUtils import establishNamedTemplates
+#establishNamedTemplates('templatesLHCb', os.path.join(os.path.dirname(__file__),'templates'), file_ext='tpl', pickle_files=True)
 
 def getEnvironment( config = {} ):
    import sys
