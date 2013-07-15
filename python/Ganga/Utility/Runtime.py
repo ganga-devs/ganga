@@ -177,16 +177,15 @@ class RuntimePackage:
     def loadNamedTemplates(self, globals, file_ext='tpl', pickle_files=False):
        try:
           import os
-          from Ganga.GPIDev.Lib.Job.NamedJobTemplate import establishNamedTemplates
-          template_classname    = '%sJobTemplate' % self.name.strip('Ganga')
+          from Ganga.GPIDev.Lib.Registry.RegistryUtils import establishNamedTemplates
           template_registryname = 'templates%s' % self.name.strip('Ganga')
           template_pathname     = os.path.join(self.modpath, 'templates')
           if os.path.isdir(template_pathname):
-             establishNamedTemplates( template_classname,
-                                      template_registryname,
+             establishNamedTemplates( template_registryname,
                                       template_pathname,
+                                      "Registry for '%s' NamedTemplates" % self.name.strip('Ganga'),
                                       file_ext     = file_ext,
-                                      pickle_files = pickle_files)
+                                      pickle_files = pickle_files )
        except:
           logger.debug('failed to load named template registry')
           raise

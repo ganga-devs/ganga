@@ -41,32 +41,41 @@ _defaultExternalHome = None
 # value specified in the dictionary may be either string or a list of strings (they will be separated by colons ':').
 #
 _externalPackages = {
-   'ipython': {'version' : '0.6.13_ganga_patch1',
-               'noarch':True,
-               'PYTHONPATH' : 'lib/python'},
-   'ApMon' : {'version' : '2.2.11', 
+    'ipython': {'version' : '0.6.13_ganga_patch1',
+                'noarch':True,
+                'PYTHONPATH' : 'lib/python'},
+    'uuid' : {'version' : '1.30', 
               'noarch':True,
               'syspath' : 'python'},
-   'subprocess':{'version' : '2.4.2',
-                 'syspath' : 'lib/python2.2/site-packages',
-                 'maxHexVersion' : '0x20501f0', # in 2.5.0 subprocess is broken, bugfix: http://savannah.cern.ch/bugs/?36178
+    'ApMon' : {'version' : '2.2.11', 
+               'noarch':True,
+               'syspath' : 'python'},
+    'subprocess':{'version' : '2.4.2',
+                  'syspath' : 'lib/python2.2/site-packages',
+                  'maxHexVersion' : '0x20501f0', # in 2.5.0 subprocess is broken, bugfix: http://savannah.cern.ch/bugs/?36178
+                  'noarch':True},
+    'tarfile' : {'version' : '2.4.2',
+                 'syspath': 'lib/python2.2/site-packages',
+                 'maxHexVersion' : '0x20300f0',
                  'noarch':True},
-   'tarfile' : {'version' : '2.4.2',
-                'syspath': 'lib/python2.2/site-packages',
-                'maxHexVersion' : '0x20300f0',
-                'noarch':True},
-   'paramiko' : {'version' : '1.7.3',
-                 'noarch':True,
-                 'syspath':'lib/python2.3/site-packages'},
-   'pycrypto' : {'version' : '2.0.1',
-                 'syspath':'lib/python2.3/site-packages'},
-   'stomputil' : {'version' : '2.4',
-                  'noarch': True,
+    'paramiko' : {'version' : '1.7.3',
+                  'noarch':True,
+                  'syspath':'lib/python2.3/site-packages'},
+    'pycrypto' : {'version' : '2.0.1',
+                  'syspath':'lib/python2.3/site-packages'},
+    'stomputil' : {'version' : '2.4',
+                   'noarch': True,
+                   'syspath' : 'python'},
+    'httplib2' : {'version' : '0.8',
+                  'noarch'  : True,
                   'syspath' : 'python'},
-   'google-api-python-client' : {'version' : '1.1',
-                                 'noarch'  : True,
-                                 'syspath' : 'lib/python2.3/site-packages'}
-   }
+    'python-gflags' : {'version' : '2.0',
+                       'noarch'  : True,
+                       'syspath' : 'python'},
+    'google-api-python-client' : {'version' : '1.1',
+                                  'noarch'  : True,
+                                  'syspath' : 'python'}
+    }
 
 
 def detectPlatform():
@@ -129,6 +138,24 @@ if not _defaultExternalHome:
 
 if not _defaultPlatform:
     _defaultPlatform = detectPlatform()
+
+
+## BEGIN horrid hack as ganga core still supports python 2.4!!
+import sys
+try:
+    from email.mime.multipart import MIMEMultipart
+except:
+    import email
+    import email.MIMEMultipart
+    import email.MIMENonMultipart
+    import email.Generator
+    import email.Parser
+    sys.modules['email.mime'] = email
+    sys.modules['email.mime.multipart'] = email.MIMEMultipart
+    sys.modules['email.mime.nonmultipart'] = email.MIMENonMultipart
+    sys.modules['email.generator'] = email.Generator
+    sys.modules['email.parser'] = email.Parser
+## END horrid hack
 
 from Ganga.Utility.Setup import PackageSetup
 # The setup object

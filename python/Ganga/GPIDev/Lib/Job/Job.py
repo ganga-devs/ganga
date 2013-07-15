@@ -545,7 +545,14 @@ class Job(GangaObject):
         self.info.uuid = Ganga.Utility.guid.uuid()
 
         #increment the shareref counter if the job we're copying is prepared.
+        #ALEX added try/if for loading of named job templates
+        # temporary fix but looks like prep registry hasn't been loaded at the time
+        # Dont think it should matter as templates tend not to be prepared
+        #try:
+        #if hasattr(getRegistry("prep"), 'getShareRef'):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        #except: pass
+
         # register the job (it will also commit it)
         # job gets its id now
         registry._add(self)
