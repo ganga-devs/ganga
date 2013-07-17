@@ -58,9 +58,10 @@ class IOutputFile(GangaObject):
     def _list_get__match__(self, to_match):
         if type(to_match) == str:
             return fnmatch(self.namePattern, to_match)
-        if type(to_match) == type:
-            #note stripProxy wont work on class types that aren't instances
-            return isinstance(self, to_match._impl)
+        ## Note: type(DiracFile) = ObjectMetaclass
+        ##       type(ObjectMetaclass) = type
+        if type(type(to_match)) == type:
+             return isinstance(self, to_match)
         return to_match==self
 
     def execSyscmdSubprocess(self, cmd):

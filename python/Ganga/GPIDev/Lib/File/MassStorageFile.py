@@ -95,7 +95,7 @@ class MassStorageFile(IOutputFile):
                     d.outputfilenameformat = mass_file.outputfilenameformat
                     mass_file.subfiles.append(GPIProxyObjectFactory(d))
                     mass_line_processor(line, d)
-            else:
+            elif pattern == mass_file.namePattern:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
                     logger.error(line[line.find('ERROR')+5:])
