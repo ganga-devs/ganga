@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.14 (2013/7/15)
+6.0.14 (2013/7/17)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -12,6 +12,8 @@ Fixes to two config related bugs.
 1) fix for HammerCloud when using --config the config file was ignored
 2) fixed the writing of used versions file
 3) Included new GoogleFile object for interaction with Google Drive
+4) Fix for the expansion of DiracFiles as well as fixes to the metadata processing of
+MassstorageFile and LCGSEFile
 
 
 --------------------------------------------------------------------------------------------------------------
