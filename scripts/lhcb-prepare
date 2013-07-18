@@ -283,12 +283,13 @@ class InstallLHCb:
                 rc = call(command, shell=True)
     
         # Add correct version numbers to requirement file of GangaPolicy
+        # To comply with CMT, any dashes has to be stripped.
         policyDir = join(self.destination,'GangaPolicy','cmt')
         freq = open(join(policyDir,'requirements'),'w')
         for package in externals_noarch:
-            freq.write('set %s %s\n' % (package[0],package[1]))
+            freq.write('set %s %s\n' % (package[0].replace('-',''),package[1]))
         for package in externals_arch:
-            freq.write('set %s %s\n' % (package[0],package[1]))
+            freq.write('set %s %s\n' % (package[0].replace('-',''),package[1]))
         ftemplate = open(join(policyDir,'requirements_template'),'r')
         for line in ftemplate.readlines():
             freq.write(line)

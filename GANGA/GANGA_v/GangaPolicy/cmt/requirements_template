@@ -155,6 +155,42 @@ cmtpath_pattern \
     path_remove  PYTHONPATH ${GANGA_install_ipython} ; \
     path_prepend PYTHONPATH ${GANGA_install_ipython}
 
+#########################################################################
+# PYTHONPATH googleapipythonclient
+
+cmtpath_pattern \
+   macro <project>_install_googleapipythonclient "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/google-api-python-client/$(googleapipythonclient)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\google-api-python-client\$(googleapipythonclient)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_googleapipythonclient} ; \
+    path_prepend PYTHONPATH ${GANGA_install_googleapipythonclient}
+
+#########################################################################
+# PYTHONPATH pythongflags
+
+cmtpath_pattern \
+   macro <project>_install_pythongflags "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/python-gflags/$(pythongflags)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\python-gflags\$(pythongflags)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_pythongflags} ; \
+    path_prepend PYTHONPATH ${GANGA_install_pythongflags}
+
+#########################################################################
+# PYTHONPATH httplib2
+
+cmtpath_pattern \
+   macro <project>_install_httplib2 "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/httplib2/$(httplib2)/noarch/python2"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\httplib2\$(httplib2)\noarch\python2" ; \
+    path_remove  PYTHONPATH ${GANGA_install_httplib2} ; \
+    path_prepend PYTHONPATH ${GANGA_install_httplib2}
+
 
 
 
