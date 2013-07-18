@@ -20,6 +20,8 @@ j.submit()
 
 sleep_until_state(j, timeout=1200, state='completed')
 
+print j.outputfiles
+
 assert(j.outputfiles[0].location() != [])
 assert(j.outputfiles[1].location() != [])
 assert(j.outputfiles[2].location() != [])
@@ -34,6 +36,8 @@ j.outputfiles[2].get()
 
 import time
 time.sleep(30)
+
+print os.listdir(j.outputdir)
 
 for filename in ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']:
     assert(filename in os.listdir(j.outputdir)) 
