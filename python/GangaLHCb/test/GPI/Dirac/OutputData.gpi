@@ -8,7 +8,7 @@ scriptname=tempfile.mktemp('.py')
 write_file(scriptname,"""#!/bin/env python
 from random import choice
 import string
-f=open('output.txt','w')
+f=open('outputs.txt','w')
 f.write('This is a test\\n')
 chars = string.letters + string.digits
 kbyte=1024
@@ -16,18 +16,18 @@ text=''.join([choice(chars) for i in range(kbyte)])
 f.write(text)
 f.close()
 """)
-os.chmod(scriptname,0700)
+os.chmod(scriptname, 777)
 jscript=Job(name='OutputData',application=Executable(),backend=Dirac())
 jscript.backend.settings['CPUTime'] = 300
 jscript.application.exe = File(scriptname)
 jscript.application.args=[]
-jscript.outputfiles=[DiracFile('output.txt')]
+jscript.outputfiles=[DiracFile('outputs.txt')]
 jscript.submit()
 
 sleep_until_completed(jscript)
 assert jscript.status == 'completed', 'job must complete'
 
-output_file = join(jscript.outputdir,'output.txt')
+output_file = join(jscript.outputdir,'outputs.txt')
 if os.path.exists(output_file):
     os.unlink(output_file)
 
@@ -53,4 +53,6 @@ assert(file_contains(output_file,'This is a test'))
 lfns = jscript.backend.getOutputDataLFNs()
 assert len(lfns) == 1, 'We only expect one LFN'
 print 'lfns',lfns
-assert basename(lfns[0].name) == 'output.txt', 'Check the LFN is as expected'
+assert basename(lfns[0].name) == 'outputs.txt', 'Check the LFN is as expected'
+
+jscript.outputfiles[0].remove()
