@@ -59,7 +59,7 @@ class AtlasUnit(IUnit):
                fail = True
                
          job = GPI.jobs(self.active_job_ids[0])
-         ds_list = dq2.listDatasetsInContainer(job.outputdata.datasetname)
+         ds_list = self.getOutputDatasetList()
          for ds in ds_list:
             try:
                dq2.registerDatasetsInContainer(trf_container, [ ds ] )
