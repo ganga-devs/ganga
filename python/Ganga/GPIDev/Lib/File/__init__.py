@@ -6,13 +6,23 @@ from IOutputFile import IOutputFile
 from SandboxFile import SandboxFile
 from MassStorageFile import MassStorageFile
 from LCGSEFile import LCGSEFile
-from GoogleFile import GoogleFile
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
+# Make ancient systems without simplejson ignore GoogleFile
+try:
+    from GoogleFile import GoogleFile
+except ImportError, e:
+    if e.message.endswith('django.utils'):
+        logger.error('Lacking simplejson on system makes it impossible to use GoogleFile. Should only happen on some Python 2.4 systems')
+    else:
+        raise
+    
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
 
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
 
 import fnmatch 
 
