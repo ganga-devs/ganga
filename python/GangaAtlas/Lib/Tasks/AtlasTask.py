@@ -14,7 +14,7 @@ class AtlasTask(ITask):
     
     _category = 'tasks'
     _name = 'AtlasTask'
-    _exportmethods = ITask._exportmethods + [ 'getContainerName', 'initializeFromDictionary' ]
+    _exportmethods = ITask._exportmethods + [ 'getContainerName', 'initializeFromDictionary', 'checkOutputContainers' ]
 
     _tasktype = "ITask"
     
@@ -28,6 +28,13 @@ class AtlasTask(ITask):
             
         name_base = ["user",getNickname(),self.creation_date, name, "id_%i" % self.id ]            
         return (".".join(name_base) + "/").replace(" ", "_")
+
+    def checkOutputContainers(self):
+        """Go through all transforms and check all datasets are registered"""
+        logger.info("Checking output data has been registered. This can take a few minutes...")
+        for trf in self.transforms:
+            logger.info("Checking containers in Tranform %d..." % trf.getID() )
+            trf.checkOutputContainers()
 
     def initializeFromDictionary(self, ds_dict, template = None, files_per_job = -1, MB_per_job = -1, subjobs_per_unit = -1,
                                  application = None, backend = None):

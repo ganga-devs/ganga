@@ -37,6 +37,7 @@ class AtlasUnit(IUnit):
       """Register in the transform container"""
       trf = self._getParent()
       trf_container = trf.getContainerName()
+
       fail = False
       try:
          containerinfo = {}
@@ -195,9 +196,14 @@ class AtlasUnit(IUnit):
          # find all the individual out ds's
          cont_list = []
          for ds in job.subjobs(0).outputdata.output:
-            cont_name = ds.split(",")[0]
-            if not cont_name in cont_list:
-               cont_list.append(cont_name)
+
+            # find all containers listed
+            for cont_name in ds.split(","):
+               if not cont_name.endswith("/"):
+                  continue
+
+               if not cont_name in cont_list:
+                  cont_list.append(cont_name)
 
          ds_list = []
          for cont in cont_list:

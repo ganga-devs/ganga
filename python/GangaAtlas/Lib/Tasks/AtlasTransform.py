@@ -27,7 +27,7 @@ class AtlasTransform(ITransform):
 
    _category = 'transforms'
    _name = 'AtlasTransform'
-   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets' ]
+   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers' ]
 
    def __init__(self):
       super(AtlasTransform,self).__init__()
@@ -47,7 +47,14 @@ class AtlasTransform(ITransform):
          self.unit_copy_output.local_location = self.local_location
          self.unit_copy_output.include_file_mask = self.include_file_mask
          self.unit_copy_output.exclude_file_mask = self.exclude_file_mask
-      
+
+   def checkOutputContainers(self):
+      """Go through all completed units and make sure datasets are registered as required"""
+      for unit in self.units:
+         if unit.status == "completed" and self.outputdata._name == "DQ2OutputDataset":
+            logger.info("Checking containers in Unit %d..." % unit.getID() )
+            unit.registerDataset()            
+
    def createUnits(self):
       """Create new units if required given the inputdata"""
       
