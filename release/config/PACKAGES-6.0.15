@@ -3,7 +3,7 @@
 #ulrik
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-30-188
+ganga/python/Ganga                                                     Ganga-Base-30-189
 ganga/python/Ganga/Lib/LCG                                             Ganga-LCG-22-19
 ganga/python/Ganga/Lib/MonitoringServices                              Ganga-MonitoringServices-30-8
 
@@ -11,7 +11,7 @@ ganga/python/Ganga/Lib/MonitoringServices                              Ganga-Mon
 ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-2
 
 #johannes/mark
-ganga/python/GangaAtlas                                                GangaAtlas-25-17
+ganga/python/GangaAtlas                                                GangaAtlas-25-18
 
 #alex/patrick/ulrik
 ganga/python/GangaDirac                                                GangaDirac-01-35
