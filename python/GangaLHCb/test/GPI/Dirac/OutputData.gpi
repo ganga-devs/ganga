@@ -31,12 +31,14 @@ output_file = join(jscript.outputdir,'outputs.txt')
 if os.path.exists(output_file):
     os.unlink(output_file)
 
-file = open(join(jscript.outputdir,'std.out'))
-print 'std.out =', file.read()
-file.close()
-file = open(join(jscript.outputdir,'stdout'))
-print 'stdout =', file.read()
-file.close()
+if os.path.exists(join(jscript.outputdir,'std.out')):
+    file = open(join(jscript.outputdir,'std.out'))
+    print 'std.out =', file.read()
+    file.close()
+if os.path.exists(join(jscript.outputdir,'stdout')):
+    file = open(join(jscript.outputdir,'stdout'))
+    print 'stdout =', file.read()
+    file.close()
 
 downloadedFiles = jscript.backend.getOutputData()
 print 'downloadedFiles',downloadedFiles
