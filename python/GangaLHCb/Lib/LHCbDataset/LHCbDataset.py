@@ -42,7 +42,7 @@ class LHCbDataset(Dataset):
     schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
     docstr = 'Specify the dataset persistency technology'
     schema['persistency'] = SimpleItem(defvalue=None,typelist=['str','type(None)'] ,doc=docstr)
-
+    
     _schema = Schema(Version(3,0), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
@@ -57,7 +57,7 @@ class LHCbDataset(Dataset):
         self.files = files
         self.persistency=persistency
         self.depth = depth
-
+        
     def __construct__(self, args):
         if (len(args) != 1) or (type(args[0]) is not type([])):
             super(LHCbDataset,self).__construct__(args)
@@ -69,7 +69,7 @@ class LHCbDataset(Dataset):
                     self.files.append(file)
                 else:
                     self.files.append(f)
-
+                    
     def __len__(self):
         """The number of files in the dataset."""
         result = 0
@@ -91,7 +91,7 @@ class LHCbDataset(Dataset):
             return GPIProxyObjectFactory(self.files[i])
 
     def isEmpty(self): return not bool(self.files)
-
+    
     def getReplicas(self):
         'Returns the replicas for all files in the dataset.'
         lfns = self.getLFNs()
@@ -135,11 +135,9 @@ class LHCbDataset(Dataset):
     def extend(self,files,unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
-        from Ganga.GPIDev.Base import ReadOnlyObjectError
         if not hasattr(files,"__getitem__"):
             raise GangaException('Argument "files" must be a iterable.')
-        if self._readonly():
-            raise ReadOnlyObjectError('object job is read-only and attribute "%s" cannot be modified now'%(self._name))
+        
         names = self.getFileNames()
         files = [f for f in files] # just in case they extend w/ self
         for f in files:
@@ -153,7 +151,7 @@ class LHCbDataset(Dataset):
             self.files.remove(file)
         except:
             raise GangaException('Dataset has no file named %s' % file.name)
-
+        
 
     def getLFNs(self):
         'Returns a list of all LFNs (by name) stored in the dataset.'
@@ -218,11 +216,11 @@ class LHCbDataset(Dataset):
         else:
             logger.warning("Unknown LHCbDataset persistency technology... reverting to None")
             snew='\ntry:\n    #new method\n    from GaudiConf import IOExtension\n    IOExtension().inputFiles(['
-
+            
         sold='\nexcept ImportError:\n    #Use previous method\n    from Gaudi.Configuration import EventSelector\n    EventSelector().Input=['
         sdatasetsnew=''
         sdatasetsold=''
-
+        
         dtype_str_default = getConfig('LHCb')['datatype_string_default']
         dtype_str_patterns = getConfig('LHCb')['datatype_string_patterns']
         for f in self.files:
@@ -315,7 +313,7 @@ class LHCbDataset(Dataset):
         cmd = 'bkMetaData(%s)' % self.getLFNs()
         b =  get_result(cmd,'Error removing replica','Replica rm error.')
         return b
-
+        
 
     #def pop(self,file):
     #    if type(file) is type(''): file = strToDataFile(file,False)
@@ -338,7 +336,7 @@ class LHCbDataset(Dataset):
     #        else: self.removeFile(file)
     #    else:
     #        self.removeFile(file)
-
+        
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters

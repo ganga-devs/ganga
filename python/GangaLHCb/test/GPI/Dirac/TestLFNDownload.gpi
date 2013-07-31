@@ -6,7 +6,7 @@ import time
 # Job with a script
 scriptname=tempfile.mktemp()
 code = """#!/bin/env python
-f=open('outputs.txt','w')
+f=open('output.txt','w')
 f.write('This is a test %f \\n')
 f.close()
 """ % time.time()
@@ -16,11 +16,9 @@ jscript=Job(application=Executable(),backend=Dirac())
 jscript.backend.settings['CPUTime'] = 300
 jscript.application.exe=File(scriptname)
 jscript.application.args=[]
-jscript.outputfiles = [DiracFile(namePattern='outputs.txt')]
+jscript.outputfiles = [DiracFile(namePattern='output.txt')]
 jscript.submit()
-
 sleep_until_completed(jscript)
-assert jscript.status == 'completed', 'job must complete'
 
 print 'j = ', jscript
 
@@ -31,7 +29,7 @@ output = jscript.backend.getOutputData(dir=tmpdir)
 
 assert len(output) == 1, 'Only one file should have been downloaded - %s' % output
 
-outfile = os.path.join(tmpdir,'outputs.txt')
+outfile = os.path.join(tmpdir,'output.txt')
 assert os.path.exists(outfile), 'File should exist'
 
 #clean up
@@ -41,5 +39,3 @@ try:
 except OSError,e:
     print e
     print 'Directory content',os.listdir(tmpdir)
-
-jscript.outputfiles[0].remove()

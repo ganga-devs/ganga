@@ -2,7 +2,8 @@ import os
 import os.path
 from tempfile import mktemp
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
-from GangaTest.Framework.utils import file_contains, is_job_finished, write_file
+from GangaTest.Framework.utils import file_contains, is_job_finished, \
+     write_file
 
 class TestSavannah(GangaGPITestCase):
 
@@ -26,25 +27,26 @@ class TestSavannah(GangaGPITestCase):
         return Savannah18127(j)
 
     def testSavannah33823(self):
-        j = Job(application=Executable(), backend=Dirac())	
+        j = Job(application=Executable(), backend=Dirac())
         j.submit()
         return Savannah33823(j)
 
     def testSavannah33992(self):
-
+        
         scriptString = '#include <cstdlib>\nvoid exitCode(){\n\texit(45);\n}'
-        file_name = 'exitCode.C'
+        file_name = 'exitCode.C'        
         tmpdir = mktemp()
         os.mkdir(tmpdir)
         fileName = os.path.join(tmpdir,file_name)
         write_file(fileName,scriptString)
-
+        
         r =  Root()
+        r.version = '5.32.00'
         r.script = File(fileName)
         j = Job(application=r, backend=Dirac(settings={'CPUTime':600}))
         j.submit()
         return Savannah33992(j)
-
+        
 class Savannah8937(ICheckTest):
 
     def isReadyForCheck(self):
@@ -91,14 +93,14 @@ class Savannah33992(ICheckTest):
         return is_job_finished(self.j)
 
     def checkTest(self):
-        #assert(self.j.status == 'failed'), 'Job should fail'
-	self.j.backend.getOutputSandbox()
-        f = os.path.join(self.j.outputdir, 'std.out')
+        assert(self.j.status == 'failed'), 'Job should fail'
+        self.j.backend.getOutputSandbox()
+        f = os.path.join(self.j.outputdir,'std.out')
         assert os.path.exists(f)
         with open(f,'r') as std_out:
             for line in std_out.readlines():
                 print line
-        assert file_contains(f, 'Status after script_wrapper.py execution is 0'), 'Incorrect exit code'
+        assert file_contains(f, 'Status after exitCode.C execution is 45'), 'Incorrect exit code'
 
 
 
