@@ -273,6 +273,16 @@ class AtlasUnit(IUnit):
          if j.status == "killed":
             return True
 
+      # are most subjobs failed?
+      if job.subjobs:
+         num = 0
+         for j in job.subjobs:
+            if j.status == "failed":
+               num += 1
+
+         if float(num) / len(job.subjobs) > self._getParent().rebroker_fraction:
+            return True
+
       return False
 
    def majorResubmit(self, job):
