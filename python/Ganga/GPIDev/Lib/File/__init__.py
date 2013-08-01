@@ -14,11 +14,10 @@ logger = getLogger()
 try:
     from GoogleFile import GoogleFile
 except ImportError, e:
-    if e.message.endswith('django.utils'):
-        logger.error('Lacking simplejson on system makes it impossible to use GoogleFile. Should only happen on some Python 2.4 systems')
+    if e.args[0].endswith('django.utils'):
+        logger.warning('Lacking simplejson on system makes it impossible to use GoogleFile. Should only happen on some Python 2.4 systems')
     else:
         raise
-    
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
