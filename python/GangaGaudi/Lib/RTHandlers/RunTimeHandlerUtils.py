@@ -58,6 +58,9 @@ def master_sandbox_prepare(app,appmasterconfig, sharedir_roots=['']):
     
     ## user added items from the interactive GPI
     inputsandbox=job.inputsandbox[:]
+    if len(inputsandbox) > 100:
+        logger.warning('InputSandbox exceeds maximum size (100) supported by the Dirac backend')
+        raise GangaException(None,'InputSandbox exceed maximum size')
     outputsandbox=getOutputSandboxPatterns(job)#job.outputsandbox[:]
     
     ## inputsandbox files stored in share_dir from prepare method

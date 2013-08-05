@@ -52,6 +52,13 @@ class IOutputFile(GangaObject):
         """
         raise NotImplementedError
 
+    def _auto_remove(self):
+        """
+        Remove called when job is removed as long as config option allows
+        """
+        self.remove()
+        pass
+
     def _readonly(self):
         return False
 
@@ -63,6 +70,8 @@ class IOutputFile(GangaObject):
         ## hence checking against a class type not an instance
         if type(type(to_match)) == type:
              return issubclass(self.__class__, to_match)
+        if type(to_match) == Ganga.GPIDev.Base.Objects.ObjectMetaclass:
+            return isinstance(self, to_match)
         return to_match==self
 
     def execSyscmdSubprocess(self, cmd):

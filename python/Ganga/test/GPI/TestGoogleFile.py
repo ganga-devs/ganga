@@ -1,17 +1,15 @@
 from GangaTest.Framework.tests                     import GangaGPITestCase
 from Ganga.GPIDev.Lib.File.GoogleFile              import GoogleFile
-#GangaTest.Framework.utils defines some utility methods
-#from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
 import unittest, tempfile, os, pickle
+
 class TestGoogleFile(GangaGPITestCase):
     def setUp(self):
         self.gf = GoogleFile('np')
-        self.gf.downloadURL = 'https://doc-0g-6c-docs.googleusercontent.com/docs/securesc/o3u80g0pc9abquejloteio1k25hm7bjv/js1o8935aqnt0i1dsgb0hgvlmaaeb9b8/1373284800000/05147328031195777820/05147328031195777820/0B7qzUYy3JXvzTUFFeDZaSTYtN1E?h=16653014193614665626&e=download&gd=true'
-        self.gf.id = '0B7qzUYy3JXvzTUFFeDZaSTYtN1E'
+        self.gf.downloadURL = 'downloadURL'
+        self.gf.id = 'id'
         self.gf.title = 'TestFile'
     
     def test__init__(self):
-
         self.assertEqual(self.gf.namePattern, 'np',  'namePattern not initialised as np')
         self.assertEqual(self.gf.localDir,    '', 'localDir not default initialised as None')
 
@@ -24,7 +22,6 @@ class TestGoogleFile(GangaGPITestCase):
         self.assertEqual(g1.localDir,    '', 'localDir not default initialised as None')
     
     def test__on_attribute__set__(self):
-
         g1 = self.gf._on_attribute__set__('','dummyAttrib')
         g2 = self.gf._on_attribute__set__(Job()._impl,'outputfiles')
         self.assertEqual(g1, self.gf, "didn't create a copy as default action")
@@ -33,8 +30,9 @@ class TestGoogleFile(GangaGPITestCase):
         self.assertEqual(g2.localDir, None, "localDir should be blanked")
 
     def test__repr__(self):
-        
         self.assertEqual(repr(self.gf), "GoogleFile(namePattern='%s', downloadURL='%s')" % (self.gf.namePattern, self.gf.downloadURL))
+
+    #def test_deleteCredentials(self):
         
     def test_aput(self):
 
@@ -46,9 +44,7 @@ class TestGoogleFile(GangaGPITestCase):
                         this.body = body
                         this.media_body = media_body
                     def execute(this):
-                        nput = open('/home/hep/hs4011/Test/file.pkl','rb')
-                        file = pickle.load(nput)
-                        nput.close()
+                        file = {'md5Checksum':""}
                         return file
 
         def build(a, b, http):
@@ -72,12 +68,10 @@ class TestGoogleFile(GangaGPITestCase):
         class http:
             def request(this, f):
                 self.assertEqual(f, self.gf.downloadURL)
-                nput = open('/home/hep/hs4011/Test/resp.pkl',"rb")
-                resp = pickle.load(nput)
-                nput.close()
-                nput1 = open('/home/hep/hs4011/Test/content.pkl','rb')
-                content = pickle.load(nput1)
-                nput1.close()
+                class resp:
+                    def status(this):
+                        return 200
+                content = ''
                 return resp, content
 
         class service:
@@ -91,24 +85,18 @@ class TestGoogleFile(GangaGPITestCase):
         setattr(sys.modules[self.gf.__module__], 'build', build)
         #######################################################
 
+        self.assertEqual(self.gf.get(), None, "Method not called or error during execution")
+        self.gf.localDir= 'localDir'
         self.assertEqual(self.gf.get(), None, "")
-        self.assertTrue(os.path.isfile('%s/np'%os.getcwd()), "")
-        os.remove('%s/np'%os.getcwd())
-        self.gf.localDir= '/home/hep/hs4011/'
-        self.assertEqual(self.gf.get(), None, "")
-        self.assertTrue(os.path.isfile('/home/hep/hs4011/np'), "")
-        self.gf.namePattern = ''
-        self.assertRaises(Exception, self.gf.get)
         self.gf.namePattern = 'np'
         self.gf.id = ''
-        self.assertEqual(self.gf.get(), None, "")
+        self.assertEqual(self.gf.get(), None, "Method not called or error during execution")
         self.gf.downloadURL = ''
-        self.assertEqual(self.gf.get(), None, "")
-        os.remove('/home/hep/hs4011/np') 
-
+        self.assertEqual(self.gf.get(), None, "Method not called or error during execution")
 
     def test_remove(self):
 
+#####
         class service:
             class files:
                 class trash:
@@ -122,6 +110,7 @@ class TestGoogleFile(GangaGPITestCase):
             self.assertEqual(b, 'v2')
             return service()
         setattr(sys.modules[self.gf.__module__], 'build', build)
+#####
 
         self.assertEqual(self.gf.remove(), None, "")
         self.gf.namePattern = ''
@@ -136,6 +125,7 @@ class TestGoogleFile(GangaGPITestCase):
 
     def test_restore(self):
 
+#####
         class service:
             class files:
                 class untrash:
@@ -149,6 +139,7 @@ class TestGoogleFile(GangaGPITestCase):
             self.assertEqual(b, 'v2')
             return service()
         setattr(sys.modules[self.gf.__module__], 'build', build)
+#####
 
         self.assertEqual(self.gf.restore(), None, "")
         self.gf.namePattern = ''
