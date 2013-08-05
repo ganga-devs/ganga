@@ -60,8 +60,9 @@ class IOutputFile(GangaObject):
             return fnmatch(self.namePattern, to_match)
         ## Note: type(DiracFile) = ObjectMetaclass
         ##       type(ObjectMetaclass) = type
+        ## hence checking against a class type not an instance
         if type(type(to_match)) == type:
-             return isinstance(self, to_match)
+             return issubclass(self.__class__, to_match)
         return to_match==self
 
     def execSyscmdSubprocess(self, cmd):
