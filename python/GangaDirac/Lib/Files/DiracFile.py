@@ -364,6 +364,22 @@ class DiracFile(IOutputFile):
             return str(stdout)
         return GPIProxyObjectFactory(outputFiles)
 
+    def getWNScriptDownloadCommand(self, indent):
+
+        script = """\n
+
+###INDENT###import os
+###INDENT###from DIRAC.Interfaces.API.Dirac import Dirac
+###INDENT###cwDir = os.getcwd()
+###INDENT###dirac=Dirac()
+###INDENT###dirac.getFile(###LFN###, cwDir)
+"""
+
+        script = script.replace('###INDENT###', indent)
+        script = script.replace('###LFN###', self.lfn)
+
+        return script
+
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
