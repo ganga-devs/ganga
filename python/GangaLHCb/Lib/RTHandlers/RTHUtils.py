@@ -92,15 +92,21 @@ def getXMLSummaryScript(indent=''):
 ###INDENT###            sys.stderr.write(\"Failure when parsing XMLSummary file \'summary.xml\'\")
 ###INDENT###
 ###INDENT###        # write to file
-###INDENT###        with open('__parsedxmlsummary__','w') as parsedXML:
+###INDENT###        #with open('__parsedxmlsummary__','w') as parsedXML: #removed for python 2.4 compatibility
+###INDENT###        try:  
+###INDENT###            fn = open('__parsedxmlsummary__','w')
 ###INDENT###            for name, method in activeSummaryItems().iteritems():
 ###INDENT###                try:
-###INDENT###                    parsedXML.write( '%s = %s\\n' % ( name, str(method(XMLSummarydata)) ) )
+###INDENT###                    fn.write( '%s = %s\\n' % ( name, str(method(XMLSummarydata)) ) )
 ###INDENT###                except Exception, e:
 ###INDENT###                    #import traceback
-###INDENT###                    parsedXML.write( '%s = None\\n' % name )
+###INDENT###                    fn.write( '%s = None\\n' % name )
 ###INDENT###                    #sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n%s\\n' % (name,traceback.format_exc()))
 ###INDENT###                    sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n' % name)
+###INDENT###        except:
+###INDENT###            sys.stderr.write('XMLSummary error: Failed to create __parsedxmlsummary__ file')
+###INDENT###        finally:
+###INDENT###            fn.close()  
 """
   return script.replace('###INDENT###',indent)
 
