@@ -102,7 +102,7 @@ def getXMLSummaryScript(indent=''):
 ###INDENT###                    #import traceback
 ###INDENT###                    fn.write( '%s = None\\n' % name )
 ###INDENT###                    #sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n%s\\n' % (name,traceback.format_exc()))
-###INDENT###                    sys.stderr.write('XMLSummary error: Failed to run the method \"%s\"\\n' % name)
+###INDENT###                    sys.stderr.write('XMLSummary warning: Method \"%s\" not available for this job\\n' % name)
 ###INDENT###        except:
 ###INDENT###            sys.stderr.write('XMLSummary error: Failed to create __parsedxmlsummary__ file')
 ###INDENT###        finally:
