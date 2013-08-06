@@ -37,8 +37,10 @@ class GangaRepositoryImmutableTransient(GangaRepository):
             current_id = self._next_id
             try:
                 if self.pickle_files:
-                    with open(f,'rb') as pck_file:
-                        obj = pickle.load(pck_file)                    
+                    # python 2.4 compatibilty
+                    #with open(f,'rb') as pck_file:
+
+                    obj = pickle.load( open(f,'rb') )
                 else:
                     obj = load(f)[0]._impl
             except:
@@ -75,8 +77,13 @@ class GangaRepositoryImmutableTransient(GangaRepository):
             try:
                 if self.pickle_files:
                     obj._registry = None
-                    with open(fn,'wb') as pck_file:
-                        pickle.dump(obj, pck_file)
+
+                    # python 2.4 compatibilty
+                    #with open(fn,'wb') as pck_file:
+                    #    pickle.dump(obj, pck_file)
+
+                    pickle.dump( obj, open(fn,'wb') )
+
                 else:
                     if not stripped_export(obj, fn):
                         raise Exception ('Failure in stripped_export method, returned False')

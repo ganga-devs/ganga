@@ -163,41 +163,41 @@ cmt_setup () {
 		export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
 		source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
 		if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_PRODUCTION,$ATLAS_ARCH
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_PRODUCTION,$ATLAS_ARCH --cmtconfig=$ATLAS_CMTCONFIG
 		elif [ ! -z $ATLAS_PROJECT ]; then
-		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_RELEASE,$ATLAS_ARCH
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_RELEASE,$ATLAS_ARCH --cmtconfig=$ATLAS_CMTCONFIG
 		else
-		    source $AtlasSetup/scripts/asetup.sh $ATLAS_RELEASE,$ATLAS_ARCH
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_RELEASE,$ATLAS_ARCH --cmtconfig=$ATLAS_CMTCONFIG
 		fi
 	    fi
 
 	elif [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
 	elif [ ! -z $ATLAS_PROJECT ]; then
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
 	else
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
 	fi
 
     else 
         #if [ n$ATLAS_PROJECT = n'AtlasPoint1' ]; then
         if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-            source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT
+            source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT --cmtconfig=$ATLAS_CMTCONFIG
         elif [ ! -z $ATLAS_PROJECT ]; then
-            source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT
+            source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT --cmtconfig=$ATLAS_CMTCONFIG
         else
-            source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE
+            source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE --cmtconfig=$ATLAS_CMTCONFIG
         fi
 
 	# check if 64 bit was made and correct it
 	if [ n$CMTCONFIG == n'x86_64-slc5-gcc43-opt'  ]; then 
 
 	    if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
 	    elif [ ! -z $ATLAS_PROJECT ]; then
-		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=$ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
 	    else
-		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup
+		source $ATLAS_RELEASE_DIR/cmtsite/setup.sh -tag=AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
 	    fi
 	fi    
     fi

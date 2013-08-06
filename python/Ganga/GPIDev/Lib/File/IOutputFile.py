@@ -52,15 +52,26 @@ class IOutputFile(GangaObject):
         """
         raise NotImplementedError
 
+    def _auto_remove(self):
+        """
+        Remove called when job is removed as long as config option allows
+        """
+        self.remove()
+        pass
+
     def _readonly(self):
         return False
 
     def _list_get__match__(self, to_match):
         if type(to_match) == str:
             return fnmatch(self.namePattern, to_match)
-        if type(to_match) == type:
-            #note stripProxy wont work on class types that aren't instances
-            return isinstance(self, to_match._impl)
+        ## Note: type(DiracFile) = ObjectMetaclass
+        ##       type(ObjectMetaclass) = type
+        ## hence checking against a class type not an instance
+        if type(type(to_match)) == type:
+             return issubclass(self.__class__, to_match)
+        if type(to_match) == Ganga.GPIDev.Base.Objects.ObjectMetaclass:
+            return isinstance(self, to_match)
         return to_match==self
 
     def execSyscmdSubprocess(self, cmd):

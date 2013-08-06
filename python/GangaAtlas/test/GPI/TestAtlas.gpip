@@ -5,12 +5,13 @@ from datetime import date
 today = date.today()
 
 srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/ATLAS/"
-srcdirana = srcdir + "v1667"
-release = '16.6.7'
-datasetana = "data11_7TeV.00184066.physics_Muons.merge.AOD.f386_m892"
+srcdirana = srcdir + "v1727"
+release = '17.2.7'
+datasetana = "mc12_8TeV.161005.PowhegPythia8_AU2CT10_ggH125_WW2lep_EF_15_5.merge.AOD.e1197_a159_a165_r3549_tid00842375_00"
 
 import commands
-outputdatasetname_panda = commands.getoutput('uuidgen')
+outputdatasetname_panda = commands.getoutput('uuidgen 2>/dev/null')
+tarfilename = commands.getoutput('uuidgen 2>/dev/null')
 
 class TestAtlas(GangaGPITestCase):
     def testAthenaLocal(self):
@@ -79,6 +80,7 @@ class TestAnaTaskBasic(ICheckTest):
         t = AnaTask()
         t.analysis.application.is_prepared=True
         t.analysis.application.atlas_release=release
+        t.analysis.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
         t.analysis.application.max_events=10
         t.analysis.files_per_job = 1
         t.analysis.inputdata.dataset = datasetana
@@ -99,6 +101,10 @@ class AtlasTest(ICheckTest):
         print 'AtlasTest %s: copying testing data from %s to %s' % (self.__class__.__name__, srcdir, self.tmpdir)
         os.system('rm -rf %s' % self.tmpdir)
         os.system('cp -r %s %s' % (srcdir, self.tmpdir))
+	# Rename file since Panda server does not allow overwrite/upload of file with the same name 
+	archivefile = '%s/EmptyUserArea.tar.gz' % self.tmpdir
+	self.newarchivefile = '%s/%s.tar.gz' % (self.tmpdir, tarfilename)
+	os.system('mv %s %s' % (archivefile, self.newarchivefile))
         self.j = j
         self.setup()
 
@@ -167,7 +173,7 @@ class TestTask(AtlasTest):
 class TestAnaTask(TestTask):
     def setup(self):
         self.joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
-        self.archivefile = '%s/EmptyUserArea.tar.gz' % self.tmpdir
+        self.archivefile = '%s' % (self.newarchivefile)
         t = AnaTask()
         t.analysis.application.is_prepared=True
         t.analysis.application.atlas_release=release
@@ -298,9 +304,10 @@ class TestAthenaLCG(AtlasTest):
 class TestAthenaPanda(AtlasTest):
     def setup(self):
         joboption = '%s/HelloWorldOptions.py' % self.tmpdir
-        self.archivefile = '%s/EmptyUserArea.tar.gz' % self.tmpdir
+        self.archivefile = '%s' % (self.newarchivefile)
         j = Job()
         j.application=Athena()
+	j.application.athena_compile=False
         j.application.is_prepared=True
         j.application.option_file=[ joboption ]
         j.application.atlas_release=release
@@ -311,6 +318,7 @@ class TestAthenaPanda(AtlasTest):
         j.application.user_area = self.archivefile
         j.outputdata=DQ2OutputDataset()
         j.backend=Panda()
+        j.backend.nobuild=True
         #j.backend.site='ANALY_LRZ'
         assert (j.submit()==True)
         self.j = j

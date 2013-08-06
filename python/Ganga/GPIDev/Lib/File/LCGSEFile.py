@@ -117,7 +117,7 @@ class LCGSEFile(IOutputFile):
                 #todo copy also the other attributes
                 lcgse_file.subfiles.append(GPIProxyObjectFactory(d))
                 lcgse_line_processor(line, d)
-            else:
+            elif pattern == lcgse_file.namePattern:
                 if guid.startswith('ERROR'):
                     logger.error("Failed to upload file to LSG SE")
                     logger.error(guid[6:])

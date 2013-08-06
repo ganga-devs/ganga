@@ -13,7 +13,7 @@ from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '2.3.0',
+    'DQ2Clients' : { 'version' : '2.4.0',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
@@ -43,6 +43,11 @@ _external_packages = {
 
     }
 
+# use DQ2Clients 2.3.0 if running SL5
+import platform
+plat_str = platform.platform()
+if plat_str.find("redhat-5") > -1:
+    _external_packages['DQ2Clients']['version'] = '2.3.0'
 
 setup = PackageSetup(_external_packages)
 

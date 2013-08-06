@@ -636,6 +636,8 @@ class AtlasLCGRequirements(LCGRequirements):
                 output[site] = mapping[site]
             except:
                 logger.warning("Could not find cloud associated with site '%s'." % site)
+                if site == 'CERN-MOCKTEST':
+                    output[site] = 'T0'
 
         return output
                                                

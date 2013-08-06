@@ -1,0 +1,20 @@
+**************************************************************************************************************
+6.0.15 (2013/7/29)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Make Ganga ignore GoogleFile on systems lacking simplejson
+* Added support for GoogleFile
+* Merging the branch for migration from job-like namedTemplates repository to box-like
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fixed a minor Tasks issue and upgraded to DQ2Clients 2.4.0 but runs 2.3.0 if running SL5
+* Fixed Tasks not adding all datasets to parent containers
+* Added checkOutputContainers function to check outputs were registered properly
+
+**************************************************************************************************************

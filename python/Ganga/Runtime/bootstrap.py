@@ -443,7 +443,7 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
 
         config.addOption('TextShell','IPython',""" The type of the interactive shell: IPython (cooler) or Console (limited)""")
         config.addOption('StartupGPI','','block of GPI commands executed at startup')
-        config.addOption('ReleaseNotes',False,'Flag to print out the relevent subsection of release notes for each experiment at start up')
+        config.addOption('ReleaseNotes',True,'Flag to print out the relevent subsection of release notes for each experiment at start up')
         config.addOption('gangadir',Ganga.Utility.Config.expandvars(None,'~/gangadir'),'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.',filter=Ganga.Utility.Config.expandvars)
         config.addOption('repositorytype','LocalXML','Type of the repository.',examples='LocalXML')
         config.addOption('workspacetype','LocalFilesystem','Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
@@ -1062,7 +1062,8 @@ default_backends = LCG
                 print line,
            #If there is no release notes:
             if stopprinting-startprinting < 1:
-                print 'No release notes for '+name.lstrip('python/').rstrip('\n')+' in version '+version+'\n'
+                #print 'No release notes for '+name.lstrip('python/').rstrip('\n')+' in version '+version+'\n'
+                return
             else: 
                 print ' '
 

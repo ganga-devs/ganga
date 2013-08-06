@@ -23,11 +23,12 @@ class AtlasTransform(ITransform):
       'files_per_job'     : SimpleItem(defvalue=5, doc='files per job (cf DQ2JobSplitter.numfiles)', modelist=["int"]),
       'MB_per_job'     : SimpleItem(defvalue=0, doc='Split by total input filesize (cf DQ2JobSplitter.filesize)', modelist=["int"]),
       'subjobs_per_unit'     : SimpleItem(defvalue=0, doc='split into this many subjobs per unit master job (cf DQ2JobSplitter.numsubjobs)', modelist=["int"]),
+      'rebroker_fraction'    : SimpleItem(defvalue=0.6, doc='Fraction of failed subjobs to complete subjobs above which the job will be rebrokered', modelist=["float"]),
     }.items()))
 
    _category = 'transforms'
    _name = 'AtlasTransform'
-   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets' ]
+   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers' ]
 
    def __init__(self):
       super(AtlasTransform,self).__init__()
@@ -47,7 +48,14 @@ class AtlasTransform(ITransform):
          self.unit_copy_output.local_location = self.local_location
          self.unit_copy_output.include_file_mask = self.include_file_mask
          self.unit_copy_output.exclude_file_mask = self.exclude_file_mask
-      
+
+   def checkOutputContainers(self):
+      """Go through all completed units and make sure datasets are registered as required"""
+      for unit in self.units:
+         if unit.status == "completed" and self.outputdata._name == "DQ2OutputDataset":
+            logger.info("Checking containers in Unit %d..." % unit.getID() )
+            unit.registerDataset()            
+
    def createUnits(self):
       """Create new units if required given the inputdata"""
       

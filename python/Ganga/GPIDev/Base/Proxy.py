@@ -22,7 +22,13 @@ shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']
 #some proxy related convieniance methods
 def isProxy(obj):
     """Checks if an object is a proxy"""
-    return isinstance(obj, GPIProxyObject)
+#    return isinstance(obj.__class__, GPIProxyObject)
+    ## Alex changed for below as doesn't check class objects, only instances
+    ## e.g. isProxy(DiracFile) fails at the Ganga prompt
+    try:
+        return issubclass(obj, GPIProxyObject)
+    except TypeError:
+        return issubclass(obj.__class__, GPIProxyObject)
 
 def isType(obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
