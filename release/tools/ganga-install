@@ -236,21 +236,29 @@ def main():
                 setup.platform = CONFIG['platform']
                 
             for name in setup.packages:
-                if silent:
-                    print '[%s] Checking %-25s '%(mode,name),
-                else:
-                    print '='*10
-                    print '[%s] Checking %s %s '%(mode,name,setup.packages[name]),
-                try:    
-            	    tarPath, tarball = setup.getPackagePath(name,force=alldeps)
-            	except: #older versions of Ganga does not support extra paramter *force* in  *getPackagePath*
-            	    tarPath, tarball = setup.getPackagePath(name)
-                if tarball:
-            	    print ': REQUIRED'
-                    command(tarball,CONFIG['external_dir'],tarPath=tarPath)
-                else:
-            	    print ': NOT REQUIRED'    
-                
+                ver_list = [ setup.packages[name]['version'] ]
+
+                if setup.packages[name].has_key('alt_version'):
+                    ver_list += setup.packages[name]['alt_version']
+
+                for v in ver_list:
+                    setup.packages[name]['version'] = v
+
+                    if silent:
+                        print '[%s] Checking %-25s (alt %s)'%(mode,name,v),
+                    else:
+                        print '='*10
+                        print '[%s] Checking %s %s (alt %s)'%(mode,name,setup.packages[name], v),
+                    try:    
+                        tarPath, tarball = setup.getPackagePath(name,force=alldeps)
+                    except: #older versions of Ganga does not support extra paramter *force* in  *getPackagePath*
+                        tarPath, tarball = setup.getPackagePath(name)
+                    if tarball:
+                        print ': REQUIRED'
+                        command(tarball,CONFIG['external_dir'],tarPath=tarPath)
+                    else:
+                        print ': NOT REQUIRED'    
+                        
     if mode == 'download':            
         print "Downloading release %(VERSION)s-%(platform)s into %(prefix)s" % CONFIG
     
