@@ -366,25 +366,24 @@ class DiracFile(IOutputFile):
 
     def getWNScriptDownloadCommand(self, indent):
 
-        dirac_env = "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))"%configDirac['DiracEnvFile']
         script = """\n
 
-###INDENT###import os
-###INDENT###from DIRAC.Interfaces.API.Dirac import Dirac
-###INDENT###dirac=Dirac()
-###INDENT###dirac.getFile('###LFN###', os.getcwd())
+###INDENT###upload_script='''
+from DIRAC.Core.Base.Script import parseCommandLine
+parseCommandLine()
+from DIRAC.Interfaces.API.Dirac import Dirac
+dirac=Dirac()
+dirac.getFile('###LFN###', os.getcwd())
+'''
+
+###INDENT###import subprocess
+###INDENT###dirac_env=###DIRAC_ENV###
+###INDENT###subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, stdin=subprocess.PIPE).communicate(upload_script)
 """
+        script = script.replace('###DIRAC_ENV###',"dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))"%configDirac['DiracEnvFile'])
 
         script = script.replace('###INDENT###', indent)
         script = script.replace('###LFN###', self.lfn)
-        inread, inwrite = os.pipe()
-        import subprocess
-        p = subprocess.Popen('''python -c "import os\\nos.close(%i)\\nexec(os.fdopen(%s,'rb'))"'''%(inwrite,inread), shell=True, env=dirac_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        os.close(inread)
-        with os.fdopen(inwrite, 'wb') as instream:
-             instream.write(script)
-        
-
         return script 
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
