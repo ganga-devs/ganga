@@ -366,19 +366,26 @@ class DiracFile(IOutputFile):
 
     def getWNScriptDownloadCommand(self, indent):
 
+        dirac_env = "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))"%configDirac['DiracEnvFile']
         script = """\n
 
 ###INDENT###import os
 ###INDENT###from DIRAC.Interfaces.API.Dirac import Dirac
-###INDENT###cwDir = os.getcwd()
 ###INDENT###dirac=Dirac()
-###INDENT###dirac.getFile(###LFN###, cwDir)
+###INDENT###dirac.getFile('###LFN###', os.getcwd())
 """
 
         script = script.replace('###INDENT###', indent)
         script = script.replace('###LFN###', self.lfn)
+        inread, inwrite = os.pipe()
+        import subprocess
+        p = subprocess.Popen('''python -c "import os\\nos.close(%i)\\nexec(os.fdopen(%s,'rb'))"'''%(inwrite,inread), shell=True, env=dirac_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        os.close(inread)
+        with os.fdopen(inwrite, 'wb') as instream:
+             instream.write(script)
+        
 
-        return script
+        return script 
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
