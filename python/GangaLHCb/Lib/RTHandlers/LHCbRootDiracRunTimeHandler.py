@@ -152,7 +152,8 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
                                         **params)
         return StandardJobConfig( dirac_script,
                                   inputbox  = unique(inputsandbox ),
-                                  outputbox = unique(outputsandbox) )
+                                  outputbox = unique(outputsandbox),
+                                  env = app.env)
 
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
