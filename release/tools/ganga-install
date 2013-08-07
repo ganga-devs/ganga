@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-install,v 1.21 2009-02-05 07:28:24 gangage Exp $
+# $Id: ganga-install,v 1.22 2009-02-05 07:28:24 gangage Exp $
 ################################################################################
 
 # written by: Kuba Moscicki, 2004 CERN, based on lcg.installation.manager and diane.installation.manager
@@ -13,7 +13,7 @@ import os,sys
 
 # default configuration
 CONFIG = {}
-CONFIG['script_revision'] = "$Revision: 1.21 $"
+CONFIG['script_revision'] = "$Revision: 1.22 $"
 CONFIG['website_url'] = 'http://cern.ch/ganga'
 CONFIG['download_url'] = CONFIG['website_url']+'/download'
 CONFIG['prefix'] = os.path.join(os.path.expandvars('$HOME'),'Ganga')
