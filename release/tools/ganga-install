@@ -245,10 +245,10 @@ def main():
                     setup.packages[name]['version'] = v
 
                     if silent:
-                        print '[%s] Checking %-25s (alt %s)'%(mode,name,v),
+                        print '[%s] Checking %-30s'%(mode,("%s (%s)" % (name,v))),
                     else:
                         print '='*10
-                        print '[%s] Checking %s %s (alt %s)'%(mode,name,setup.packages[name], v),
+                        print '[%s] Checking %s %s (%s)'%(mode,name,setup.packages[name], v),
                     try:    
                         tarPath, tarball = setup.getPackagePath(name,force=alldeps)
                     except: #older versions of Ganga does not support extra paramter *force* in  *getPackagePath*
