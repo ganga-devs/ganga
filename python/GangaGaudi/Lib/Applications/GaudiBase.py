@@ -58,6 +58,9 @@ class GaudiBase(IPrepareApp):
                                        typelist=['type(None)','str'],
                                        protected=1,
                                        doc=docstr)
+    docstr = 'The env'
+    schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=copy.deepcopy(os.environ),
+                                   hidden=1,doc=docstr)
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
     schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
 
@@ -95,7 +98,7 @@ class GaudiBase(IPrepareApp):
             
     def _getshell(self):
 
-        self.env = os.environ
+        self.env = copy.deepcopy(os.environ)
 
         self.env['User_release_area'] = self.user_release_area
         self.env['CMTCONFIG'] = self.platform
