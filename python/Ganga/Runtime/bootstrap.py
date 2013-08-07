@@ -289,7 +289,7 @@ under certain conditions; type license() for details.
         if not os.path.exists(gangadir):
            os.mkdir(gangadir)
  
-        if not self.options.generate_config: ## Will generate it after loading any old .gangarc if -g option given
+        if not self.options.generate_config: ## Will generate it after loading any old .gangarc if -g option not given
            if not os.path.exists(self.default_config_file):
               if not self.options.config_file_set_explicitly:
                  yes = raw_input('Would you like to create config file ~/.gangarc with standard settings ([y]/n) ?')   
@@ -703,17 +703,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         if os.environ.has_key('GANGA_INTERNAL_PROCREEXEC'):
            del os.environ['GANGA_INTERNAL_PROCREEXEC']
 
-        ## Depending on where this is put more or less of the config will have been loaded. if put after
-        ## the bootstrap then the defaults_* config options will also be loaded.
-        self.new_user_wizard()
-        if self.options.generate_config:
-           from Ganga.Utility.Config.Config import load_user_config
-           
-           load_user_config(self.options.config_file, {})
-           self.generate_config_file()
-           #self.new_version() ## register the new version
-           sys.exit(0) # FIXME: should not sys.exit()
-
 
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):
@@ -957,6 +946,16 @@ default_backends = LCG
         # export all configuration items, new options should not be added after this point
         Ganga.GPIDev.Lib.Config.bootstrap()
 
+        ## Depending on where this is put more or less of the config will have been loaded. if put after
+        ## the bootstrap then the defaults_* config options will also be loaded.
+        self.new_user_wizard()
+        if self.options.generate_config:
+           from Ganga.Utility.Config.Config import load_user_config
+           
+           load_user_config(self.options.config_file, {})
+           self.generate_config_file()
+           #self.new_version() ## register the new version
+           sys.exit(0) # FIXME: should not sys.exit()
 
         ###########
         # run post bootstrap hooks
