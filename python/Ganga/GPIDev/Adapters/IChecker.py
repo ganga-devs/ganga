@@ -75,7 +75,7 @@ class IFileChecker(IChecker):
                 filepaths.append(expanded_file)
             if not len(glob.glob(filepath)):
                 if (self.filesMustExist):
-                    logger.info('The files %s does not exist, %s will fail job(%s) (to ignore missing files set filesMustExist to False)',filepath,_name,job.fqid)
+                    logger.info('The files %s does not exist, %s will fail job(%s) (to ignore missing files set filesMustExist to False)',filepath,self._name,job.fqid)
                     self.result = False
                 else:
                     logger.warning('Ignoring file %s as it does not exist.',expanded_file)

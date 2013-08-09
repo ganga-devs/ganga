@@ -1,5 +1,6 @@
 """Module for sharing code between the Runtime and Download handlers."""
 import Ganga.Utility.logging
+import copy
 logger = Ganga.Utility.logging.getLogger()
 
 def findPythonVersion(rootsys):
@@ -56,7 +57,7 @@ def setEnvironment(key, value, update=False,environment=None):
     the current value with os.pathsep as the seperator.'''
     import os
     if environment == None:
-        environment = os.environ
+        environment = copy.deepcopy(os.environ)
     
     if update and environment.has_key(key):
         value += (os.pathsep + environment[key])#prepend

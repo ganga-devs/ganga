@@ -119,7 +119,7 @@ class LCGSEFile(IOutputFile):
                 lcgse_line_processor(line, d)
             elif pattern == lcgse_file.namePattern:
                 if guid.startswith('ERROR'):
-                    logger.error("Failed to upload file to LSG SE")
+                    logger.error("Failed to upload file to LCG SE")
                     logger.error(guid[6:])
                     lcgse_file.failureReason = guid[6:]
                     return
@@ -258,6 +258,7 @@ class LCGSEFile(IOutputFile):
 
 ###INDENT####system command executor with subprocess
 ###INDENT###def execSyscmdSubprocessAndReturnOutputLCG(cmd):
+###INDENT###    import subprocess
 
 ###INDENT###    exitcode = -999
 ###INDENT###    mystdout = ''

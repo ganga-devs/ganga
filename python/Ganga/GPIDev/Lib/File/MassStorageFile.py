@@ -101,7 +101,7 @@ class MassStorageFile(IOutputFile):
                     logger.error(line[line.find('ERROR')+5:])
                     mass_file.failureReason = line[line.find('ERROR')+5:]
                     return
-                mass_file.locations = outputPath.strip('\n')
+                mass_file.locations = [outputPath.strip('\n')]
 
         for line in postprocesslocations.readlines():
                 

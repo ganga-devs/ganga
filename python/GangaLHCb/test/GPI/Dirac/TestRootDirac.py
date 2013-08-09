@@ -1,6 +1,7 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
+from Ganga.Utility.Config      import setConfigOption
 from GangaLHCb.test import *
 addDiracTestSubmitter()
 
@@ -12,7 +13,8 @@ class TestRootDirac(GangaGPITestCase):
 
     def testAllowedArchitecture(self):
         """Test the submission of root jobs on dirac"""
-        
+
+        setConfigOption('LHCb','ignore_version_check',False)
         config.ROOT.arch = 'x86_64-slc5-gcc43-opt'
         
         r = Root(script=script_file)
@@ -24,7 +26,8 @@ class TestRootDirac(GangaGPITestCase):
         
     def testNotAllowedArchitecture(self):
         """Tests the architectures not allowed by dirac"""
-
+        
+        setConfigOption('LHCb','ignore_version_check',False)
         config.ROOT.arch = 'x86_64-slc5-gcc43-opt-not-a-valid-version'
         
         r = Root(script=script_file)

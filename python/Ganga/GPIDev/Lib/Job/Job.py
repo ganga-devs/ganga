@@ -765,7 +765,7 @@ class Job(GangaObject):
         return None
 
     def prepare(self,force=False):
-        '''A method to put a job's application into a prepared state. Returns 
+        """A method to put a job's application into a prepared state. Returns 
         True on success.
         
         The benefits of preparing an application are twofold:
@@ -783,7 +783,7 @@ class Job(GangaObject):
         which contains their required files. Details for all Shared Directories in use
         can been seen by calling 'shareref'. See help(shareref) for further details.
         
-        '''
+        """
         if not hasattr(self.application,'is_prepared'):
             logger.warning("Non-preparable application %s cannot be prepared" % self.application._name)
             return

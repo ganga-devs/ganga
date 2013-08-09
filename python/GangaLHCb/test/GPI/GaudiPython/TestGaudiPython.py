@@ -1,5 +1,6 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
+from Ganga.Utility.Config      import setConfigOption
 
 import shutil
 import tempfile
@@ -32,7 +33,7 @@ class TestGaudiPython(GangaGPITestCase):
 
     def testDirac(self):
         gp = GaudiPython(platform=getDiracAppPlatform())
-        #gp.version = configDaVinci['version']
+        gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Dirac())
         j.submit()
         j.remove()
@@ -73,6 +74,7 @@ class TestGaudiPython(GangaGPITestCase):
         shutil.rmtree(dir)
 
     def testInvalidPlatform(self):
+        setConfigOption('LHCb','ignore_version_check',False)
         gp = GaudiPython()
         gp.platform='FooBar'
         #gp.version = configDaVinci['version']

@@ -33,7 +33,6 @@ def export( item = None, filename = "", mode = "w" ):
 
 ## Now we can use it internally without having to wrap a proxy
 def stripped_export( item = None, filename = "", mode = "w" ):
-
    """Function to export Ganga objects to a file
 
       Arguments:
@@ -83,19 +82,13 @@ def stripped_export( item = None, filename = "", mode = "w" ):
       logger.error( "No object saved" )
       return returnValue
 
-   isIterable = False
-
+   from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
    if ( type( item ) is types.ListType ):
-      isIterable = True
-   elif type( item ) is types.TupleType:
-      isIterable = True
-   else:
-      from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
-      if isinstance(item, RegistrySliceProxy):
-         isIterable = True
-
-   if isIterable:
       objectList = item
+   elif type( item ) is types.TupleType:
+      objectList = item
+   elif isinstance(item, RegistrySliceProxy):
+      objectList = item._impl # cant use stripProxy as not a subclass of GPIProxyObject
    else:
       objectList = [ item ]
 

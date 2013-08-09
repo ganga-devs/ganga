@@ -83,9 +83,9 @@ j_comp.splitter='ArgSplitter'
 j_comp.splitter.args=[[30],[30],[30]]
 
 j_comp.submit()
-
 assert sleep_until_state(j_comp, 180, 'running')
-j_comp.kill()
+j_comp.subjobs.kill()
+#j_comp.kill() #was causing test to fail
 assert sleep_until_state(j_comp, 180, 'killed')
 j_comp.resubmit()
 

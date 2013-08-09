@@ -81,7 +81,7 @@ class Savannah33823(ICheckTest):
 
     def checkTest(self):
         assert(self.j.status == 'completed'), 'Job status is not \'completed\''
-        assert(os.path.exists(os.path.join(self.j.outputdir,'stdout')))
+        assert(os.path.exists(os.path.join(self.j.outputdir,'std.out')))
         #assert pwd == os.getcwd(), 'Directory must not have been changed'
 
 

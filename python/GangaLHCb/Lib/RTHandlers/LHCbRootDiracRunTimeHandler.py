@@ -30,13 +30,21 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                              % str(result))
                 logger.error('ROOT version will not be validated.')
             else:
-                LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache = result['Value']
+                LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache = result['Value']    
 
-        ## check version
+        ## check version and platform
         if LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
             if not app.version in LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
                 msg = 'Invalid version: %s.  Valid versions: %s' \
                       % (app.version, str(LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache.keys()))
+                raise ApplicationConfigurationError(None,msg)
+            
+            valid_davinci = LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache[app.version][8:]
+            valid_platforms = dirac_ganga_server.execute('getSoftwareVersions()')['Value']['DaVinci'][valid_davinci]
+            platform = getConfig('ROOT')['arch']
+            if not platform in valid_platforms:
+                msg = 'Invalid root architecture/platform: %s.  Valid architectures/platforms: %s' \
+                          % (platform, ", ".join(valid_arch))
                 raise ApplicationConfigurationError(None,msg)
 
 
