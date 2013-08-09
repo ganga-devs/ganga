@@ -284,7 +284,9 @@ class JobTree(GangaObject):
         registry = self._getRegistry()
         do_clean = False
         if registry is not None:
-            registry = registry._parent
+            try:
+                registry = registry._parent
+            except: pass    
             path = os.path.join(*self.__get_path(path))
             res.name = "jobs found in %s" % path
             cont = self.ls(path)
