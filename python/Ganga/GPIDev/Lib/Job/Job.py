@@ -590,7 +590,9 @@ class Job(GangaObject):
             name = name % "_master"
         else:
             name = name % ""
-        files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]    
+        files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]
+        if not files:
+            return []
         return Sandbox.createPackedInputSandbox(files,self.getInputWorkspace(),name)
 
     def createInputSandbox(self, files, master=False):

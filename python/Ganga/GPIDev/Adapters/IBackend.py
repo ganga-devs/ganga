@@ -201,8 +201,7 @@ class IBackend(GangaObject):
         else:
             files = job.inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
             
-        if len(files):
-            result = create_sandbox(files, master=True)
+        result = create_sandbox(files, master=True)
         if tmpDir != None:
             import shutil
             #remove temp dir
