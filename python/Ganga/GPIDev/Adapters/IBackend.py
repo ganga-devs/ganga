@@ -189,7 +189,9 @@ class IBackend(GangaObject):
             sharedir_pred     = lambda f: f.name.find(job.application.is_prepared.name) > -1
             sharedir_files    = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
             nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
-            return create_sandbox(nonsharedir_files, master=True).extend(sharedir_files)
+            inputsandbox = create_sandbox(nonsharedir_files, master=True)
+            inputsandbox.extend(sharedir_files)
+            return inputsandbox
         
         tmpDir = None
         files=[]
