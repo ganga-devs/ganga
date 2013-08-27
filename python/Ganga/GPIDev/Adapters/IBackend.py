@@ -14,7 +14,7 @@ from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
 from Ganga.GPIDev.Lib.File import File
 
 import os
-
+import itertools
 import datetime
 import time
 
@@ -173,38 +173,40 @@ class IBackend(GangaObject):
         raise NotImplementedError
 
 
-    def master_prepare(self,masterjobconfig):
+    def master_prepare(self, masterjobconfig):
         """ Prepare the master job (shared sandbox files). This method is/should be called by master_submit() exactly once.
         The input sandbox is created according to self._packed_input_sandbox flag (a class attribute)
         """
         
-        tmpDir = None
 
         job = self.getJobObject()
-        files = []
-        if masterjobconfig:
-            files = masterjobconfig.getSandboxFiles() # FIXME: assume that all jobconfig object have getSandboxFiles() method
-        else:
-            if len(job.inputfiles) > 0:
-                (fileNames, tmpDir) = getInputFilesPatterns(job)
-                files = []
-                for fileName in fileNames:
-                    files.append(File(fileName))
-            else:
-                files = job.inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
-
+       
+        create_sandbox = job.createInputSandbox
         if self._packed_input_sandbox:
-            result = job.createPackedInputSandbox(files,master=True)
-        else:
-            result = job.createInputSandbox(files,master=True)
+            create_sandbox = job.createPackedInputSandbox
 
+        if masterjobconfig:
+            sharedir_pred     = lambda f: f.name.find(job.application.is_prepared.name) > -1
+            sharedir_files    = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
+            nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
+            inputsandbox = create_sandbox(nonsharedir_files, master=True)
+            inputsandbox.extend(sharedir_files)
+            return inputsandbox
+        
+        tmpDir = None
+        files=[]
+        if len(job.inputfiles) > 0:
+            (fileNames, tmpDir) = getInputFilesPatterns(job)
+            files = itertools.imap(lambda f: File(f), fileNames)
+        else:
+            files = job.inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
+            
+        result = create_sandbox(files, master=True)
         if tmpDir != None:
             import shutil
-                
             #remove temp dir
             if os.path.exists(tmpDir):
                 shutil.rmtree(tmpDir)  
-
         return result
 
 

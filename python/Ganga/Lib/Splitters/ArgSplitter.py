@@ -5,6 +5,7 @@
 ###############################################################################
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from Ganga.GPIDev.Schema import *
 
 class ArgSplitter(ISplitter):
@@ -40,7 +41,7 @@ class ArgSplitter(ISplitter):
 """    
     _name = "ArgSplitter"
     _schema = Schema(Version(1,0), {
-	'args' : SimpleItem(defvalue=[],typelist=['list','Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'],sequence=1,checkset='_checksetNestedLists',doc='A list of lists of arguments to pass to script')
+            'args' : SimpleItem(defvalue=[],typelist=['list','Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'],sequence=1,checkset='_checksetNestedLists',doc='A list of lists of arguments to pass to script')
         } )
 
     def split(self,job):
@@ -48,11 +49,11 @@ class ArgSplitter(ISplitter):
         subjobs = []
 
         for arg in self.args:
-            j = self.createSubjob(job)
+            j = addProxy(self.createSubjob(job))
             # Add new arguments to subjob
             j.application.args=arg
             logger.debug('Arguments for split job is: '+str(arg))
-            subjobs.append(j)
+            subjobs.append(stripProxy(j))
         return subjobs
 
                 

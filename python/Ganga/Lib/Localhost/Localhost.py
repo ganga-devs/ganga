@@ -13,7 +13,7 @@ import Ganga.Utility.logic, Ganga.Utility.util
 
 from Ganga.GPIDev.Lib.File import FileBuffer
 
-import os,sys
+import os,sys,copy
 import os.path,re,errno
 
 import subprocess
@@ -52,7 +52,7 @@ class Localhost(IBackend):
       super(Localhost,self).__init__()
 
     def submit(self,jobconfig,master_input_sandbox):
-      self.run(self.preparejob(jobconfig,master_input_sandbox))
+      self.run(self.preparejob(jobconfig,master_input_sandbox), jobconfig.env)
       return 1
 
     def resubmit(self):
@@ -73,9 +73,9 @@ class Localhost(IBackend):
         return 0
       return self.run(job.getInputWorkspace().getPath('__jobscript__'))
       
-    def run(self,scriptpath):
+    def run(self,scriptpath, env = copy.deepcopy(os.environ)):
       try:
-          process=subprocess.Popen(["python",scriptpath,'subprocess'])
+          process=subprocess.Popen(["python",scriptpath,'subprocess'], env=env)
       except OSError,x:
           logger.error('cannot start a job process: %s',str(x))
           return 0

@@ -310,8 +310,11 @@ class AppName(Gaudi):
         return CMTscript.CMTscript(self,command)
 
     def _getshell(self):
-        self.env = os.environ
-        shellEnvUpdate_cmd('. `which LbLogin.sh` -c %s' % self.platform, self.env)
+        import copy
+        from GangaDirac.BOOT import dirac_ganga_server
+        self.env = copy.deepcopy(os.environ)
+
+        dirac_ganga_server.execute('. `which LbLogin.sh` -c %s' % self.platform,env= self.env,shell=True,update_env=True)
         self.env['User_release_area'] = self.user_release_area
 
         opts = ''
@@ -323,8 +326,7 @@ class AppName(Gaudi):
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
 
-        
-        shellEnvUpdate_cmd(cmd,self.env)
+        dirac_ganga_server.execute(cmd,env=self.env,shell=True,update_env=True)
 
 
 ##         cmd += ' > /dev/null 2>&1; python -c "import os; print os.environ"'

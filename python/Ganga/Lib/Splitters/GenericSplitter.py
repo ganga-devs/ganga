@@ -7,6 +7,7 @@
 import inspect
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
+from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from Ganga.GPIDev.Schema import *
 
 class GenericSplitter(ISplitter):
@@ -57,7 +58,7 @@ class GenericSplitter(ISplitter):
 
         for value in self.values:
 
-            j = self.createSubjob(job)
+            j = addProxy(self.createSubjob(job))
 
             attrs = self.attribute.split('.')
             obj = j
@@ -68,7 +69,7 @@ class GenericSplitter(ISplitter):
             setattr(obj,attr,value)
 
             logger.debug('set %s = %s to subjob.' % (self.attribute,getattr(obj,attr)))
-            subjobs.append(j)
+            subjobs.append(stripProxy(j))
 
         return subjobs
 #

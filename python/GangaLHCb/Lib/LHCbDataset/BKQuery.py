@@ -37,7 +37,7 @@ class BKQuery(GangaObject):
 
     bkq = BKQuery (
     dqflag = "All" ,
-    path = "/LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data + \
+    path = "/LHCb/Collision09/Beam450GeV-VeloOpen-MagDown/Real Data/\
 RecoToDST-07/90000000/DST" ,
     type = "Path" 
     ) 
@@ -53,13 +53,13 @@ RecoToDST-07/90000000/DST" ,
     
     bkq = BKQuery (
     dqflag = "All" ,
-    path = "/63566-63600/Real Data + RecoToDST-07/90000000/DST" ,
+    path = "111183-126823/Real Data/Reco14/Stripping20/90000000/DIMUON.DST" ,
     type = "Run" 
     ) 
 
     bkq = BKQuery (
     dqflag = "All" ,
-    path = "/5842/Real Data + RecoToDST-07/90000000/DST" ,
+    path = "/5842/Real Data/RecoToDST-07/90000000/DST" ,
     type = "Production" 
     ) 
 

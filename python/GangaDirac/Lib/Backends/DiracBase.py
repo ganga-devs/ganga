@@ -84,27 +84,6 @@ class DiracBase(IBackend):
     _name = 'DiracBase'
     _hidden = True
     
-    def master_prepare(self, masterjobconfig):
-        def filt(sharedsandbox):
-            if sharedsandbox:
-                def shareboxfilter(item):
-                    return item.name.find(self.getJobObject().application.is_prepared.name) != -1
-                return shareboxfilter
-            
-            def nonshareboxfilter(item):
-                return item.name.find(self.getJobObject().application.is_prepared.name) == -1
-            return nonshareboxfilter
-        
-        
-        if masterjobconfig:
-            inputsandbox  = [f.name for f in filter(filt(True) , masterjobconfig.getSandboxFiles())]
-            sjc = StandardJobConfig(inputbox=filter(filt(False), masterjobconfig.getSandboxFiles()))
-            if sjc.getSandboxFiles():
-                inputsandbox += super(DiracBase,self).master_prepare(sjc)
-            return inputsandbox
-        return []
-
-
     def _setup_subjob_dataset(self, dataset):
         return None
     

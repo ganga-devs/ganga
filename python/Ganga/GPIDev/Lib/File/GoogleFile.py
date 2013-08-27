@@ -72,8 +72,8 @@ class GoogleFile(IOutputFile):
             from oauth2client.client import OAuth2WebServerFlow
 
             # Copy your credentials from the APIs Console
-            CLIENT_ID = "585533701608.apps.googleusercontent.com"
-            CLIENT_SECRET = "-4qvKAG1iqeSGaBEQzHBqxyC"
+            CLIENT_ID = "54459939297.apps.googleusercontent.com"
+            CLIENT_SECRET = "mAToHx5RpXtwkeYR6nOIe_Yw"
 
             # Check https://developers.google.com/drive/scopes for all available scopes
             OAUTH_SCOPE = 'https://www.googleapis.com/auth/drive.file'

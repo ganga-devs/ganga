@@ -1,0 +1,44 @@
+**************************************************************************************************************
+6.0.17 (2013/8/7)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+1) Fixed missing options in auto-generated .gangarc config file
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Update to panda-clients 0.4.29
+* Updates for SL6 compatibility on Local backend
+* Update Tests: 
+  - check for submitted instead of finished status
+  - lower to 900s time-out
+  - Update tests to 17.2.7 and SL6 compatibility
+* Excluse CERN-MOCKTEST
+* Forced install of DQ2Clients 2.3.0 & 2.4.0
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Ganga 6.0.17 (GangaLHCb-24-54)
+************
+
+1) various minor bug fixes.
+2) removed the traceback error when lumi method fails and downgraded message to a warning
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Update to panda-clients 0.4.29
+* Update Tests: 
+  - check for submitted instead of finished status
+  - update pick-event test
+  - update libds test
+  - lower to 900s time-out
+
+**************************************************************************************************************

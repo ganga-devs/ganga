@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-install,v 1.21 2009-02-05 07:28:24 gangage Exp $
+# $Id: ganga-install,v 1.22 2009-02-05 07:28:24 gangage Exp $
 ################################################################################
 
 # written by: Kuba Moscicki, 2004 CERN, based on lcg.installation.manager and diane.installation.manager
@@ -13,7 +13,7 @@ import os,sys
 
 # default configuration
 CONFIG = {}
-CONFIG['script_revision'] = "$Revision: 1.21 $"
+CONFIG['script_revision'] = "$Revision: 1.22 $"
 CONFIG['website_url'] = 'http://cern.ch/ganga'
 CONFIG['download_url'] = CONFIG['website_url']+'/download'
 CONFIG['prefix'] = os.path.join(os.path.expandvars('$HOME'),'Ganga')
@@ -236,21 +236,29 @@ def main():
                 setup.platform = CONFIG['platform']
                 
             for name in setup.packages:
-                if silent:
-                    print '[%s] Checking %-25s '%(mode,name),
-                else:
-                    print '='*10
-                    print '[%s] Checking %s %s '%(mode,name,setup.packages[name]),
-                try:    
-            	    tarPath, tarball = setup.getPackagePath(name,force=alldeps)
-            	except: #older versions of Ganga does not support extra paramter *force* in  *getPackagePath*
-            	    tarPath, tarball = setup.getPackagePath(name)
-                if tarball:
-            	    print ': REQUIRED'
-                    command(tarball,CONFIG['external_dir'],tarPath=tarPath)
-                else:
-            	    print ': NOT REQUIRED'    
-                
+                ver_list = [ setup.packages[name]['version'] ]
+
+                if setup.packages[name].has_key('alt_version'):
+                    ver_list += setup.packages[name]['alt_version']
+
+                for v in ver_list:
+                    setup.packages[name]['version'] = v
+
+                    if silent:
+                        print '[%s] Checking %-30s'%(mode,("%s (%s)" % (name,v))),
+                    else:
+                        print '='*10
+                        print '[%s] Checking %s %s (%s)'%(mode,name,setup.packages[name], v),
+                    try:    
+                        tarPath, tarball = setup.getPackagePath(name,force=alldeps)
+                    except: #older versions of Ganga does not support extra paramter *force* in  *getPackagePath*
+                        tarPath, tarball = setup.getPackagePath(name)
+                    if tarball:
+                        print ': REQUIRED'
+                        command(tarball,CONFIG['external_dir'],tarPath=tarPath)
+                    else:
+                        print ': NOT REQUIRED'    
+                        
     if mode == 'download':            
         print "Downloading release %(VERSION)s-%(platform)s into %(prefix)s" % CONFIG
     

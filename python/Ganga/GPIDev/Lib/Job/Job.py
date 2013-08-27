@@ -590,7 +590,9 @@ class Job(GangaObject):
             name = name % "_master"
         else:
             name = name % ""
-        files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]    
+        files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]
+        if not files:
+            return []
         return Sandbox.createPackedInputSandbox(files,self.getInputWorkspace(),name)
 
     def createInputSandbox(self, files, master=False):
@@ -765,7 +767,7 @@ class Job(GangaObject):
         return None
 
     def prepare(self,force=False):
-        '''A method to put a job's application into a prepared state. Returns 
+        """A method to put a job's application into a prepared state. Returns 
         True on success.
         
         The benefits of preparing an application are twofold:
@@ -783,7 +785,7 @@ class Job(GangaObject):
         which contains their required files. Details for all Shared Directories in use
         can been seen by calling 'shareref'. See help(shareref) for further details.
         
-        '''
+        """
         if not hasattr(self.application,'is_prepared'):
             logger.warning("Non-preparable application %s cannot be prepared" % self.application._name)
             return

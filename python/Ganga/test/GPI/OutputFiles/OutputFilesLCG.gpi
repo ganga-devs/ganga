@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_state
+from GangaTest.Framework.utils import sleep_until_completed
 import os
 
 dictConfig = config.Output.MassStorageFile
@@ -18,7 +18,7 @@ assert(j.outputfiles[2].__class__.__name__ == 'SandboxFile')
 
 j.submit()
 
-sleep_until_state(j, timeout=3600, state='completed')
+assert(sleep_until_completed(j, timeout=3600))
 
 if (j.outputfiles[0].location() == []):
     #job script didn't provide output files

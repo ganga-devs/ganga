@@ -37,6 +37,7 @@ import re
 import shutil
 import signal
 import time
+import copy
 
 
 logger = logging.getLogger()
@@ -97,12 +98,12 @@ class Interactive( IBackend ):
       job = self.getJobObject()
 
       scriptpath = self.preparejob( jobconfig, master_input_sandbox )
-      return self._submit(scriptpath)
+      return self._submit(scriptpath, jobconfig.env)
 
    def resubmit( self ):
       return self._submit(self.getJobObject().getInputWorkspace().getPath("__jobscript__"))
 
-   def _submit( self, scriptpath):
+   def _submit( self, scriptpath, env=copy.deepcopy(os.environ)):
       job = self.getJobObject()
       self.actualCE = util.hostname()
       logger.info('Starting job %d', job.id)
@@ -110,7 +111,7 @@ class Interactive( IBackend ):
       try:
          job.updateStatus( "submitted" )
          self.status = "submitted"
-         os.spawnv( os.P_WAIT, scriptpath, ( scriptpath, ) )
+         os.spawnve( os.P_WAIT, scriptpath, ( scriptpath, ), env )
          self.status = "completed"
       except KeyboardInterrupt:
          self.status = "killed"

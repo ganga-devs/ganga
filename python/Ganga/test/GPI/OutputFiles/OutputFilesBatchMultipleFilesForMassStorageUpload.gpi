@@ -1,4 +1,4 @@
-from GangaTest.Framework.utils import sleep_until_state
+from GangaTest.Framework.utils import sleep_until_completed
 import os
 
 dictConfig = config.Output.MassStorageFile
@@ -18,7 +18,7 @@ assert(j.outputfiles[2].__class__.__name__ == 'MassStorageFile')
 
 j.submit()
 
-sleep_until_state(j, timeout=1200, state='completed')
+assert(sleep_until_completed(j, timeout=1200))
 
 assert(j.outputfiles[0].location() != [])
 assert(j.outputfiles[1].location() != [])
