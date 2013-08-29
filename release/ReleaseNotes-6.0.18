@@ -1,0 +1,29 @@
+**************************************************************************************************************
+6.0.18 (2013/8/29)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Prioritised task job submission over downloads
+* removing code for using sharedir stuff in-situ from Dirac as now migrated into the core
+* migrating from LHCb to Core the code to only pack up master sandbox for files not already in the 
+sharedir
+* fix to Arg and Generic Splitters which prevent users from editing the raw proxy unwrapped objects 
+meaning that they can also benefit from the ganga magic on attribute assignment
+* Multiple Test and Core Fixes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix for installing all versions of a package
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+1) Fix for Savannah bug #102269
+https://savannah.cern.ch/bugs/index.php?102269
+
+**************************************************************************************************************
