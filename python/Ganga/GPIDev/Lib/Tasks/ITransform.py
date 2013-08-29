@@ -181,14 +181,29 @@ class ITransform(GangaObject):
       # loop over units and update them ((re)submits will be called here)
       old_status = self.status
       unit_status_list = []
+
+      # find submissions first
+      unit_update_list = []
       for unit in self.units:
-         
+
+         if not unit.checkForSubmission() and not unit.checkForResubmission():
+            unit_update_list.append(unit)
+            continue
+            
          if unit.update() and self.abort_loop_on_submit:
             logger.info("Unit %d of transform %d, Task %d has aborted the loop" % (unit.getID(), self.getID(), task.id))
             return 1
 
          unit_status_list.append( unit.status )
-            
+
+      # now check for download
+      for unit in unit_update_list:
+         if unit.update() and self.abort_loop_on_submit:
+            logger.info("Unit %d of transform %d, Task %d has aborted the loop" % (unit.getID(), self.getID(), task.id))
+            return 1
+         
+         unit_status_list.append( unit.status )
+                                          
       # update status and check
       old_status = self.status
       for state in ['running', 'completed']:

@@ -78,6 +78,19 @@ class IUnit(GangaObject):
          return True
       else:
          return False
+
+   def checkForResubmission(self):
+      """check if this unit should be resubmitted"""
+
+      # check if we already have a job
+      if len(self.active_job_ids) == 0:
+         return False
+      else:
+         job = GPI.jobs(self.active_job_ids[0])
+         if job.status in ["failed", "killed"]:
+            return True
+         
+         return False
       
    def checkMajorResubmit(self, job):
       """check if this job needs to be fully rebrokered or not"""
