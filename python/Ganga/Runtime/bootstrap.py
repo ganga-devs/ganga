@@ -292,8 +292,6 @@ under certain conditions; type license() for details.
        import itertools
        logger = getLogger('ReleaseNotes')
        if getConfig('Configuration')['ReleaseNotes']==True:
-#          packages = ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')
-#          itertools.ifilter(lambda x: x!='', packages)
           packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(lambda x: x!='', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
           version = _gangaVersion.lstrip("Ganga-").replace('-','.')
           pathname = os.path.join(os.path.dirname(__file__), '..','..','..','release', 'ReleaseNotes-%s'%version)
@@ -350,21 +348,6 @@ under certain conditions; type license() for details.
         specified_config   = self.options.config_file
         default_gangadir   = os.path.expanduser('~/gangadir')
         default_config     = self.default_config_file
-        ##########
-
- #       if not os.path.exists(gangadir):
- #          ## if user has no ~/gangadir and no ~/.gangarc and hasn't provided an
- #          ## alternative config file, assume brand new user
- #          if not os.path.exists(self.default_config_file) \
- #                 and not self.options.config_file_set_explicitly:
- #             logger.info('It seems that you run Ganga for the first time')
- #             logger.info('Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
- #             logger.info('Making default gangadir: %s' % gangadir)
- #             try:
- #                os.makedirs(gangadir)
- #             except OSError, e:
- #                logger.error("Failed to create default gangadir '%s': %s" % (gangadir, e.message))
- #                raise
 
         if not os.path.exists(specified_gangadir) \
                and not os.path.exists(specified_config):
