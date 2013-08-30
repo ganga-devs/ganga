@@ -11,7 +11,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import File, ShareDir
 
 import os
 import itertools
@@ -186,9 +186,13 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
 
         if masterjobconfig:
-            sharedir_pred     = lambda f: f.name.find(job.application.is_prepared.name) > -1
-            sharedir_files    = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
-            nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
+            if isinstance(job.application.is_prepared, ShareDir):
+                sharedir_pred     = lambda f: f.name.find(job.application.is_prepared.name) > -1
+                sharedir_files    = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
+                nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
+            else: # ATLAS use bool to bypass the prepare mechanism
+                sharedir_files    = []
+                nonsharedir_files = masterjobconfig.getSandboxFiles()
             inputsandbox = create_sandbox(nonsharedir_files, master=True)
             inputsandbox.extend(sharedir_files)
             return inputsandbox
