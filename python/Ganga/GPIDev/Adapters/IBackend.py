@@ -186,11 +186,11 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
 
         if masterjobconfig:
-            if isinstance(job.application.is_prepared, ShareDir):
+            if hasattr(job.application, 'is_prepared') and isinstance(job.application.is_prepared, ShareDir):
                 sharedir_pred     = lambda f: f.name.find(job.application.is_prepared.name) > -1
                 sharedir_files    = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
                 nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
-            else: # ATLAS use bool to bypass the prepare mechanism
+            else: # ATLAS use bool to bypass the prepare mechanism and some ATLAS apps have no is_prepared
                 sharedir_files    = []
                 nonsharedir_files = masterjobconfig.getSandboxFiles()
             inputsandbox = create_sandbox(nonsharedir_files, master=True)
