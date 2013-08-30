@@ -191,7 +191,7 @@ under certain conditions; type license() for details.
 #          with open(versions_filename, 'w') as versions_file:
 #             versions_file.write(version + '\n')
 #          return True
-
+          if self.options.config_file_set_explicitly: return True
           try:
              versions_file=open(versions_filename, 'w')
           except: pass
@@ -213,25 +213,29 @@ under certain conditions; type license() for details.
        else:
           try:
              if versions_file.read().find(version) < 0:
+                if self.options.config_file_set_explicitly:
+                   versions_file.close()
+                   return True
                 versions_file.write(version + '\n')
+                versions_file.close()
                 return True
           except: pass
           versions_file.close()
        return False
 
-    def generate_config_file(self):
+    def generate_config_file(self, config_file):
        from Ganga.GPIDev.Lib.Config.Config import config_file_as_text
        from Ganga.Utility.logging          import getLogger
-       logger = getLogger()
+       logger = getLogger('ConfigUpdater')
 
        ## Old backup routine
-       if os.path.exists(self.default_config_file):
+       if os.path.exists(config_file):
           i = 0
           for i in range(100):
-             bn = "%s.%.2d"%(self.default_config_file,i)
+             bn = "%s.%.2d"%(config_file,i)
              if not os.path.exists(bn):
                 try:
-                   os.rename(self.default_config_file,bn)
+                   os.rename(config_file,bn)
                 except:
                    logger.error('Failed to create config backup file %s'%bn)
                    logger.error('Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
@@ -241,73 +245,161 @@ under certain conditions; type license() for details.
           else:
              raise ValueError('too many backup files')
 
-       logger.info('Creating ganga config file %s' % self.default_config_file)
+       logger.info('Creating ganga config file %s' % config_file)
        new_config = ''
        ## As soon as we can ditch slc5 and move away from python 2.4 can put this back.
 #       with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r') as config_head_file:
 #          new_config += config_head_file.read()
 #       new_config += config_file_as_text()
 #       new_config = new_config.replace('Ganga-SVN',_gangaVersion)
-#       with open(self.default_config_file, 'w') as new_config_file:
+#       with open(config_file, 'w') as new_config_file:
 #          new_config_file.write(new_config)
 
        try:
           config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r')
-       except: pass
+       except:
+          logger.error("couldn't open the config template file")
+          raise
        else:
           try:
              new_config += config_head_file.read()
-          except: pass
-          config_head_file.close()
+          except:
+             logger.error("failed to read from the config template file")
+             raise
+          finally:
+             config_head_file.close()
 
        new_config += config_file_as_text()
        new_config = new_config.replace('Ganga-SVN',_gangaVersion)
 
        try:
-          new_config_file = open(self.default_config_file, 'w')
-       except: pass
+          new_config_file = open(config_file, 'w')
+       except:
+          logger.error("couldn't open new config file '%s' for writing" % config_file)
+          raise
        else:
           try:
              new_config_file.write(new_config)
-          except: pass
-          new_config_file.close()
+          except:
+             logger.error("failed to write to new config file '%s'" % config_file)
+             raise
+          finally:
+             new_config_file.close()
+
+    def print_release_notes(self):
+       from Ganga.Utility.logging       import getLogger
+       from Ganga.Utility.Config.Config import getConfig
+       import itertools
+       logger = getLogger('ReleaseNotes')
+       if getConfig('Configuration')['ReleaseNotes']==True:
+#          packages = ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')
+#          itertools.ifilter(lambda x: x!='', packages)
+          packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(lambda x: x!='', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
+          version = _gangaVersion.lstrip("Ganga-").replace('-','.')
+          pathname = os.path.join(os.path.dirname(__file__), '..','..','..','release', 'ReleaseNotes-%s'%version)
           
+          if not os.path.exists(pathname):
+             logger.warning("couldn't find release notes for version %s" % version)
+             return
+          
+          bounding_line = '**************************************************************************************************************\n'
+          dividing_line = '--------------------------------------------------------------------------------------------------------------\n'
+          f = open(pathname, 'r')
+          try:
+             notes=[l.strip() for l in f.read().replace(bounding_line,'').split(dividing_line)]
+          except:
+             logger.error('Error while attempting to read release notes')
+             raise
+          finally:
+             f.close()
+          
+          if notes[0].find(version) < 0:
+             logger.error("Release notes version doesn't match the stated version on line 1")
+             logger.error("'%s' does not match '%s'" % (version, notes[0]))
+             return
+          
+          log_divider = '-'*50
+          note_gen = [(p, notes[notes.index(p)+1].splitlines()) for p in packages if p in notes]
+          if note_gen:
+             logger.info(log_divider)
+             logger.info(log_divider)
+             logger.info("Release notes for version 'Ganga-%s':" % version)
+             logger.info(log_divider)
+             logger.info('')
+             logger.info(log_divider)
+             for p, n in note_gen:
+                logger.info(p)
+                logger.info(log_divider)
+                #logger.info('*'*len(p))
+                logger.info('')
+                for l in n:
+                   logger.info(l.strip())
+                logger.info('')           
+                logger.info(log_divider)
+             logger.info(log_divider)             
+
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
     def new_user_wizard(self):
         import os
         from Ganga.Utility.logging import getLogger
-        logger = getLogger()           
-        gangadir = os.path.expanduser('~/gangadir')
+        from Ganga.Utility.Config.Config import load_user_config, getConfig
 
-        if not os.path.exists(gangadir)\
-               and not os.path.exists(self.default_config_file) \
-               and not self.options.config_file_set_explicitly:
+        logger = getLogger('NewUserWizard')
+        specified_gangadir = os.path.expanduser(os.path.expandvars(getConfig('Configuration')['gangadir']))
+        specified_config   = self.options.config_file
+        default_gangadir   = os.path.expanduser('~/gangadir')
+        default_config     = self.default_config_file
+        ##########
+
+ #       if not os.path.exists(gangadir):
+ #          ## if user has no ~/gangadir and no ~/.gangarc and hasn't provided an
+ #          ## alternative config file, assume brand new user
+ #          if not os.path.exists(self.default_config_file) \
+ #                 and not self.options.config_file_set_explicitly:
+ #             logger.info('It seems that you run Ganga for the first time')
+ #             logger.info('Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
+ #             logger.info('Making default gangadir: %s' % gangadir)
+ #             try:
+ #                os.makedirs(gangadir)
+ #             except OSError, e:
+ #                logger.error("Failed to create default gangadir '%s': %s" % (gangadir, e.message))
+ #                raise
+
+        if not os.path.exists(specified_gangadir) \
+               and not os.path.exists(specified_config):
            logger.info('It seems that you run Ganga for the first time')
-           logger.info('Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
-  
-        if not os.path.exists(gangadir):
-           os.mkdir(gangadir)
- 
-        if not self.options.generate_config: ## Will generate it after loading any old .gangarc if -g option not given
-           if not os.path.exists(self.default_config_file):
-              if not self.options.config_file_set_explicitly:
-                 yes = raw_input('Would you like to create config file ~/.gangarc with standard settings ([y]/n) ?')   
-                 if yes == '' or yes[0:1].upper() == 'Y':
-                    self.generate_config_file()
-                    #self.new_version() # call this anyway to update the list of used versions
-                    raw_input('Press <Enter> to continue.') 
-           else:
-              if self.newVersion:
-                 from Ganga.Utility.Config.Config import load_user_config
-#              if self.new_version():
-                 logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
-                 logger.info('Your ganga config file will be updated.')
-           
-                 load_user_config(self.options.config_file, {})
-                 self.generate_config_file()           
+           logger.info('Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')          
 
-                 
+        if not os.path.exists(specified_gangadir) \
+               and not os.path.exists(default_gangadir):
+              logger.info('Making default gangadir: %s' % gangadir)
+              try:
+                 os.makedirs(gangadir)
+              except OSError, e:
+                 logger.error("Failed to create default gangadir '%s': %s" % (gangadir, e.message))
+                 raise  
+        if self.options.generate_config:
+           logger = getLogger('ConfigUpdater')
+           logger.info('re-reading in old config for updating...')
+           load_user_config(specified_config, {})
+           self.generate_config_file(specified_config)
+           sys.exit(0)    
+        if not os.path.exists(specified_config) \
+               and not os.path.exists(default_config):
+           yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?')   
+           if yes == '' or yes[0:1].upper() == 'Y':
+              self.generate_config_file(default_config)
+              raw_input('Press <Enter> to continue.')    
+        elif self.new_version():
+           self.print_release_notes()
+           logger = getLogger('ConfigUpdater')
+           logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
+           logger.info('Your ganga config file will be updated.')
+           logger.info('re-reading in old config for updating...')
+           load_user_config(specified_config, {})
+           self.generate_config_file(specified_config)
+
     # configuration procedure: read the configuration files, configure and bootstrap logging subsystem
     def configure(self, logLevel = None ):
         import os,os.path
@@ -548,12 +640,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         for opt in syscfg:
            system_vars[opt]=syscfg[opt]
   
-        self.newVersion = self.new_version()## register the new version
-        if not self.options.generate_config \
-               and (not self.newVersion or self.options.config_file_set_explicitly) \
-               and os.path.exists(self.options.config_file):
-           ## if -g option given we exclude the .gangarc from loading at session level
-           ## otherwise we add it IF it exists.
+        if os.path.exists(self.options.config_file):
            config_files.append(self.options.config_file)
         Ganga.Utility.Config.configure(config_files,system_vars)       
 
@@ -949,13 +1036,6 @@ default_backends = LCG
         ## Depending on where this is put more or less of the config will have been loaded. if put after
         ## the bootstrap then the defaults_* config options will also be loaded.
         self.new_user_wizard()
-        if self.options.generate_config:
-           from Ganga.Utility.Config.Config import load_user_config
-           
-           load_user_config(self.options.config_file, {})
-           self.generate_config_file()
-           #self.new_version() ## register the new version
-           sys.exit(0) # FIXME: should not sys.exit()
 
         ###########
         # run post bootstrap hooks
@@ -1047,24 +1127,6 @@ default_backends = LCG
            exec code in local_ns
           
 
-        #Go through file line by line, use the 'name' to find where the experiment specific notes are.
-        def printreleasenotes(filelist, name, version):
-            startprinting = 100000
-            stopprinting = 100000
-            for linenumber, line in enumerate(filelist):  
-                if line.find(name) > 0:
-                    print name.lstrip('python/').rstrip('\n')+' release notes for version '+version+':\n'
-                    startprinting = linenumber+2
-                if startprinting < linenumber and stopprinting > linenumber and line[1:5] == '----': 
-                    stopprinting = linenumber-2
-            for line in filelist[startprinting:stopprinting]:
-                print line,
-           #If there is no release notes:
-            if stopprinting-startprinting < 1:
-                #print 'No release notes for '+name.lstrip('python/').rstrip('\n')+' in version '+version+'\n'
-                return
-            else: 
-                print ' '
 
         #Find out if ganga version has been used before by writing to a hidden file in the gangadir
         ## Now using Alex's new version above as it avoids an extra call to the shell and is more
@@ -1086,24 +1148,6 @@ default_backends = LCG
 #                f_version.close()
 #            return _new_version
 
-        #print release notes
-        if config['ReleaseNotes']==True:
-            runtime = config['RUNTIME_PATH']
-            #name = runtime[runtime.find(':')+1:len(runtime)-1]
-            name = [n for n in runtime.strip().split(':') if n is not '']
-            import commands
-#            version = commands.getoutput('ganga --version').lstrip("Ganga-")
-            version = _gangaVersion.lstrip("Ganga-").replace('-','.')
-            installdir = commands.getoutput('which ganga').rstrip("/InstallArea/scripts/ganga")
-            relnotespath =installdir+'/install/ganga/release/ReleaseNotes-'+version
-            if self.new_version() == True and os.path.isfile(relnotespath):
-                f_releasenotes = open(installdir+'/install/ganga/release/ReleaseNotes-'+version)
-                filelist = f_releasenotes.readlines()
-                print '\n*****************************************************************************'
-                printreleasenotes(filelist,'python/Ganga'+'\n',version)
-                for n in name: printreleasenotes(filelist,'python/'+n+'\n',version)
-                print '*****************************************************************************'
-                f_releasenotes.close()
  
         # monitor the  ganga usage
         import spyware
