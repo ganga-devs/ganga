@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.18 (2013/8/29)
+6.0.18 (2013/8/31)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -12,6 +12,7 @@ sharedir
 * fix to Arg and Generic Splitters which prevent users from editing the raw proxy unwrapped objects 
 meaning that they can also benefit from the ganga magic on attribute assignment
 * Multiple Test and Core Fixes
+* migrated in-situ sharedir code
 
 
 --------------------------------------------------------------------------------------------------------------
