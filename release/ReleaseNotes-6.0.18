@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.18 (2013/8/31)
+6.0.18 (2013/9/2)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -13,6 +13,7 @@ sharedir
 meaning that they can also benefit from the ganga magic on attribute assignment
 * Multiple Test and Core Fixes
 * migrated in-situ sharedir code
+* fixed and updated the auto config file updater and release notes printer
 
 
 --------------------------------------------------------------------------------------------------------------
