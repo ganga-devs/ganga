@@ -194,7 +194,7 @@ class IBackend(GangaObject):
                 sharedir_files    = []
                 nonsharedir_files = masterjobconfig.getSandboxFiles()
             inputsandbox = create_sandbox(nonsharedir_files, master=True)
-            inputsandbox.extend(sharedir_files)
+            inputsandbox.extend(itertools.imap(lambda f: f.name, sharedir_files))
             return inputsandbox
         
         tmpDir = None
