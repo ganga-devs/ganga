@@ -255,36 +255,26 @@ under certain conditions; type license() for details.
 #       with open(config_file, 'w') as new_config_file:
 #          new_config_file.write(new_config)
 
+       config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r')
        try:
-          config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r')
+          new_config += config_head_file.read()
        except:
-          logger.error("couldn't open the config template file")
-          raise
-       else:
-          try:
-             new_config += config_head_file.read()
-          except:
-             logger.error("failed to read from the config template file")
-             raise
-          finally:
-             config_head_file.close()
+          logger.error("failed to read from the config template file")
+          config_head_file.close()
+          raise            
+       config_head_file.close()
 
        new_config += config_file_as_text()
        new_config = new_config.replace('Ganga-SVN',_gangaVersion)
 
+       new_config_file = open(config_file, 'w')
        try:
-          new_config_file = open(config_file, 'w')
+          new_config_file.write(new_config)
        except:
-          logger.error("couldn't open new config file '%s' for writing" % config_file)
+          logger.error("failed to write to new config file '%s'" % config_file)
+          new_config_file.close()
           raise
-       else:
-          try:
-             new_config_file.write(new_config)
-          except:
-             logger.error("failed to write to new config file '%s'" % config_file)
-             raise
-          finally:
-             new_config_file.close()
+       new_config_file.close()
 
     def print_release_notes(self):
        from Ganga.Utility.logging       import getLogger
@@ -307,9 +297,9 @@ under certain conditions; type license() for details.
              notes=[l.strip() for l in f.read().replace(bounding_line,'').split(dividing_line)]
           except:
              logger.error('Error while attempting to read release notes')
-             raise
-          finally:
              f.close()
+             raise
+          f.close()
           
           if notes[0].find(version) < 0:
              logger.error("Release notes version doesn't match the stated version on line 1")
