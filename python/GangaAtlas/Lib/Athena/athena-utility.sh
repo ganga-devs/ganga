@@ -1550,9 +1550,11 @@ athena_compile()
         fi
     elif [ ! -z $GROUP_AREA ]
     then
+        tar xzf ../$GROUP_AREA -C work
         tar xzf $GROUP_AREA -C work
     fi
     tar xzf $USER_AREA -C work
+    tar xzf ../$USER_AREA -C work
 
     if [ n$ATLAS_EXETYPE == n'EXE' ]; then
 	mv work/* .
