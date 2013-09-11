@@ -112,7 +112,7 @@ under certain conditions; type license() for details.
 
         parser.add_option('--gui',dest="GUI",action='store_true',default=False,help='Run Ganga in the GUI mode.')
                 
-        parser.add_option("--config", dest="config_file",action="store", metavar="FILE",
+        parser.add_option("--config", dest="config_file",action="store", metavar="FILE", default=None,
                           help='read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. Default: ~/.gangarc')
         
         parser.add_option("--config-path",dest='config_path',action="store", default=None,
@@ -164,6 +164,8 @@ under certain conditions; type license() for details.
             except IOError,x:
                self.exit(message,x)
 
+        if self.options.config_file == '':
+           self.options.config_file = None
         self.options.config_file_set_explicitly = not self.options.config_file is None
 
         # use GANGA_CONFIG_FILE env var if it's set
@@ -255,26 +257,32 @@ under certain conditions; type license() for details.
 #       with open(config_file, 'w') as new_config_file:
 #          new_config_file.write(new_config)
 
-       config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r')
        try:
-          new_config += config_head_file.read()
-       except:
-          logger.error("failed to read from the config template file")
+          config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r')
+       except: pass
+       else:
+          try:
+             new_config += config_head_file.read()
+          except:
+             logger.error("failed to read from the config template file")
+             config_head_file.close()
+             raise            
           config_head_file.close()
-          raise            
-       config_head_file.close()
 
        new_config += config_file_as_text()
        new_config = new_config.replace('Ganga-SVN',_gangaVersion)
 
-       new_config_file = open(config_file, 'w')
        try:
-          new_config_file.write(new_config)
-       except:
-          logger.error("failed to write to new config file '%s'" % config_file)
+          new_config_file = open(config_file, 'w')
+       except: pass
+       else:
+          try:
+             new_config_file.write(new_config)
+          except:
+             logger.error("failed to write to new config file '%s'" % config_file)
+             new_config_file.close()
+             raise
           new_config_file.close()
-          raise
-       new_config_file.close()
 
     def print_release_notes(self):
        from Ganga.Utility.logging       import getLogger
@@ -351,7 +359,7 @@ under certain conditions; type license() for details.
                  os.makedirs(gangadir)
               except OSError, e:
                  logger.error("Failed to create default gangadir '%s': %s" % (gangadir, e.message))
-                 raise  
+                 raise
         if self.options.generate_config:
            logger = getLogger('ConfigUpdater')
            logger.info('re-reading in old config for updating...')
@@ -429,7 +437,7 @@ under certain conditions; type license() for details.
                 print >> sys.stderr, self.hello_string
 #                self.new_user_wizard()
 
-        if self.options.config_file is None:
+        if self.options.config_file is None or self.options.config_file == '':
             self.options.config_file = self.default_config_file
             
         # initialize logging for the initial phase of the bootstrap
