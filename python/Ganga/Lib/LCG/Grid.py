@@ -372,7 +372,7 @@ class Grid(object):
         if ce:
             cmd = cmd + ' -r %s' % ce
 
-        cmd = '%s --debug %s < /dev/null' % (cmd,jdlpath)
+        cmd = '%s --nomsg %s < /dev/null' % (cmd,jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
