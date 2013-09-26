@@ -18,6 +18,8 @@ class LCGRequirements(GangaObject):
       'ipconnectivity'  : SimpleItem(defvalue=False,doc='External connectivity'),
       'allowedCEs'      : SimpleItem(defvalue='', doc='allowed CEs in regular expression'),
       'excludedCEs'     : SimpleItem(defvalue='', doc='excluded CEs in regular expression'),
+      'datarequirements': SimpleItem(defvalue=[],typelist=['dict'],sequence=1,doc='The DataRequirements entry for the JDL. A list of dictionaries, each with "InputData", "DataCatalogType" and optionally "DataCatalog" entries'),
+      'dataaccessprotocol': SimpleItem(defvalue=['gsiftp'],typelist=['str'],sequence=1,doc='A list of strings giving the available DataAccessProtocol protocols'),
       'other'           : SimpleItem(defvalue=[],typelist=['str'],sequence=1,doc='Other Requirements')
    })
 
@@ -44,7 +46,7 @@ class LCGRequirements(GangaObject):
       if not other: return self
       
       merged = LCGRequirements()
-      for name in [ 'software', 'nodenumber', 'memory', 'cputime', 'walltime', 'ipconnectivity', 'allowedCEs', 'excludedCEs', 'other' ]:
+      for name in [ 'software', 'nodenumber', 'memory', 'cputime', 'walltime', 'ipconnectivity', 'allowedCEs', 'excludedCEs', 'datarequirements', 'dataaccessprotocol', 'other' ]:
 
          attr = ''
 

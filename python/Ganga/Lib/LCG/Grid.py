@@ -372,7 +372,7 @@ class Grid(object):
         if ce:
             cmd = cmd + ' -r %s' % ce
 
-        cmd = '%s --nomsg %s < /dev/null' % (cmd,jdlpath)
+        cmd = '%s --debug %s < /dev/null' % (cmd,jdlpath)
 
         logger.debug('job submit command: %s' % cmd)
 
@@ -1070,6 +1070,22 @@ class Grid(object):
             elif key == 'Environment':
                 if value: text += 'Environment = {\n   "%s"\n};\n' % '",\n   "'.join(['%s=\'%s\'' % var for var in value.items()])
 
+            elif key == 'DataRequirements':
+                text += 'DataRequirements = {\n'
+                for entry in value:
+                    text += '  [\n'
+                    text += '    InputData = {\n'
+                    for datafile in entry['InputData']:
+                        text += '      "%s",\n' % datafile
+                    text = text.rstrip(',\n') + '\n' #Get rid of trailing comma
+                    text += '    };\n'
+                    text += '    DataCatalogType = "%s";\n' % entry['DataCatalogType']
+                    if 'DataCatalog' in entry:
+                        text += '    DataCatalog = "%s";\n' % entry['DataCatalog']
+                    text += '  ],\n'
+                text = text.rstrip(',\n') + '\n' #Get rid of trailing comma
+                text += '};\n' 
+
             elif type(value) == ListType:
                 if value: text += '%s = {\n   "%s"\n};\n' % (key,'",\n   "'.join(value)) 
 
@@ -1082,8 +1098,6 @@ class Grid(object):
             elif key in ['PerusalFileEnable', 'AllowZippedISB']:
                 text += '%s = %s;\n' % (key, value)
 
-            elif key in ['DataRequirements']:
-                text += 'DataRequirements = { %s };\n' % value
             else:
                 text += '%s = "%s";\n' % (key,value)
 
