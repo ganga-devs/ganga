@@ -1560,11 +1560,8 @@ sys.exit(0)
             jdl['Environment'].update({'GANGA_LCG_CE': self.CE})
         else:
             jdl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
-#           input data
+            #Set DataRequirements directly from the input information in requirements.datarequirements
             if self.requirements.datarequirements:
-                #If we've only entered one entry for DataRequirements, overwrite InputData with j.inputdata
-                if jobconfig.inputdata and len(self.requirements.datarequirements) == 1:
-                    self.requirements.datarequirements[0]['InputData'] = jobconfig.inputdata
                 jdl['DataRequirements'] = self.requirements.datarequirements
             elif jobconfig.inputdata:
                 #If we have no DataRequirements then fall back to the deprecated method of InputData
