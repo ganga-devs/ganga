@@ -1252,6 +1252,20 @@ default_backends = LCG
 
             # attach magic functions
             import IPythonMagic
+            py_version = float(sys.version.split()[0].rsplit('.',1)[0])
+            if py_version >= 2.6:
+               import readline
+               from Ganga.Runtime.GangaCompleter import GangaCompleter
+               from IPython.iplib import MagicCompleter
+               t = GangaCompleter(readline.get_completer(),
+                                  ipshell.IP.user_ns)
+               setattr(MagicCompleter, 'complete', t.complete)
+               #readline.set_completer(t.complete)
+               readline.parse_and_bind('tab: complete')
+               #readline.parse_and_bind('set input-meta on')
+               #readline.parse_and_bind('set output-meta on')
+               #readline.parse_and_bind('set convert-meta off')
+               readline.set_completion_display_matches_hook(t.displayer)
 
             #set a custom exception handler wich disables printing of errors' traceback for 
             #all exceptions inheriting from GangaException
