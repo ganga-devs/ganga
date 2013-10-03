@@ -381,6 +381,39 @@ under certain conditions; type license() for details.
            load_user_config(specified_config, {})
            self.generate_config_file(specified_config)
 
+           # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
+           # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
+           # (not the session value but the user value has precedence)
+           try:
+              opts = self.parse_cmdline_config_options(self.options.cmdline_options)
+              for section,option,val in opts:
+                 config = getConfig(section).setUserValue(option,val)
+           except ConfigError,x:
+              self.exit('command line option error when resetting after config generation: %s'%str(x))
+
+           
+    def parse_cmdline_config_options(self, cmdline_options):
+       """ Parse a list of command line config options and return a list of triplets (section,option,value).
+       In case of parsing errors, raise ConfigError exception.
+       """
+       import re
+       mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._/]+)=(?P<value>.+)')
+       section = None
+
+       opts = []
+       for o in cmdline_options:
+          rpat = mpat.match(o)
+          if rpat is None:
+             raise ConfigError('syntax error: "%s"'%o)
+          else:
+             if rpat.group('section'):
+                section = rpat.group('section')
+             if section is None:
+                raise ConfigError('section not specified: %s' % o)
+             else:
+                opts.append((section,rpat.group('option'),rpat.group('value')))
+       return opts
+
     # configuration procedure: read the configuration files, configure and bootstrap logging subsystem
     def configure(self, logLevel = None ):
         import os,os.path
@@ -388,32 +421,9 @@ under certain conditions; type license() for details.
         import Ganga.Utility.Config 
         from Ganga.Utility.Config import ConfigError
         
-        def parse_cmdline_config_options(cmdline_options):
-           """ Parse a list of command line config options and return a list of triplets (section,option,value).
-           In case of parsing errors, raise ConfigError exception.
-           """
-           import re
-           mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._/]+)=(?P<value>.+)')
-           section = None
-
-           opts = []
-           for o in cmdline_options:
-              rpat = mpat.match(o)
-              if rpat is None:
-                 raise ConfigError('syntax error: "%s"'%o)
-              else:
-                 if rpat.group('section'):
-                    section = rpat.group('section')
-                 if section is None:
-                    raise ConfigError('section not specified: %s' % o)
-                 else:
-                    opts.append((section,rpat.group('option'),rpat.group('value')))
-           return opts
-
-
         def set_cmdline_config_options(sects=None):
            try:
-              opts = parse_cmdline_config_options(self.options.cmdline_options)
+              opts = self.parse_cmdline_config_options(self.options.cmdline_options)
               for section,option,val in opts:
                  should_set = True
                  if not sects is None and not section in sects:
