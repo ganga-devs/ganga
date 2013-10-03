@@ -1560,10 +1560,13 @@ sys.exit(0)
             jdl['Environment'].update({'GANGA_LCG_CE': self.CE})
         else:
             jdl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
-#           input data
-            if jobconfig.inputdata:
+            #Set DataRequirements directly from the input information in requirements.datarequirements
+            if self.requirements.datarequirements:
+                jdl['DataRequirements'] = self.requirements.datarequirements
+            elif jobconfig.inputdata:
+                #If we have no DataRequirements then fall back to the deprecated method of InputData
                 jdl['InputData'] = jobconfig.inputdata
-                jdl['DataAccessProtocol'] = [ 'gsiftp' ]
+            jdl['DataAccessProtocol'] = self.requirements.dataaccessprotocol #This must be set and will have a sensible default
 
         if self.jobtype.upper() in ['MPICH','NORMAL','INTERACTIVE']:
             jdl['JobType'] = self.jobtype.upper()
@@ -1589,7 +1592,7 @@ sys.exit(0)
             if config[name] >= 0:
                 jdl[name] = config[name]
 
-        for name in [ 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer', 'DataRequirements', 'DataAccessProtocol' ]:
+        for name in [ 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer' ]:
             if config[name]:
                 jdl[name] = config[name]
 
@@ -2289,10 +2292,6 @@ config.addOption('DefaultLFC','prod-lfc-shared-central.cern.ch','sets the file c
 config.addOption('BoundSandboxLimit',10 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
 
 config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full qualified class name for other specific LCG job requirements')
-
-config.addOption('DataRequirements','','sets the DataRequirements of the job')
-
-config.addOption('DataAccessProtocol', ['gsiftp'], 'sets the DataAccessProtocol')
 
 config.addOption('SandboxCache','Ganga.Lib.LCG.LCGSandboxCache','sets the full qualified class name for handling the oversized input sandbox')
 

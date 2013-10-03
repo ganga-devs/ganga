@@ -1,0 +1,40 @@
+**************************************************************************************************************
+6.0.18 (2013/9/11)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Prioritised task job submission over downloads
+* removing code for using sharedir stuff in-situ from Dirac as now migrated into the core
+* migrating from LHCb to Core the code to only pack up master sandbox for files not already in the 
+sharedir
+* fix to Arg and Generic Splitters which prevent users from editing the raw proxy unwrapped objects 
+meaning that they can also benefit from the ganga magic on attribute assignment
+* Multiple Test and Core Fixes
+* migrated in-situ sharedir code
+* fixed and updated the auto config file updater and release notes printer
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix for installing all versions of a package
+* Upgrade to panda-clients 0.4.30
+* Fix GenericSplitter in command line athena submission
+* Fix local backend sandbox packaging problem
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+1) Fix for Savannah bug #102269
+https://savannah.cern.ch/bugs/index.php?102269
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Upgrade to panda-clients 0.4.30
+
+**************************************************************************************************************

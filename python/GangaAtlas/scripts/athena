@@ -529,7 +529,8 @@ if opt.numsubjobs > 0:
 	j.splitter.numsubjobs = opt.numsubjobs	
         if not opt.input_dataset and not opt.tag_input_dataset:
 	    j.splitter=GenericSplitter()
-            j.splitter.values=range(0,opt.numsubjobs)
+	    j.splitter.attribute='comment'
+            j.splitter.values=[str(i) for i in xrange(0,opt.numsubjobs)]
     else:
         j.splitter = AthenaSplitterJob()
         j.splitter.numsubjobs = opt.numsubjobs
