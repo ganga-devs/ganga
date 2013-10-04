@@ -483,11 +483,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
                 
                 jspec.jobName           = commands.getoutput('uuidgen')
-                if app.atlas_release:
+                
+                # release and setup depends on mana or not
+                if app.useMana:
+                    jspec.cmtConfig         = AthenaUtils.getCmtConfig('', cmtConfig=app.atlas_cmtconfig)
+                elif app.atlas_release:
                     jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
                     jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
-                if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore:
+                if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore or app.useMana:
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
                     jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
@@ -519,6 +523,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if app.useRootCore:
                     jspec.jobParameters += " --useRootCore "
                     jspec.jobParameters += ' -r %s ' % self.rundirectory  #'.'
+
+                if app.useMana:
+                    jspec.jobParameters += " --useMana "
+                    if app.atlas_release != "":
+                        jspec.jobParameters += "--manaVer %s " % app.atlas_release
 
                 fout = FileSpec()
                 fout.lfn  = self.libraries[bjsite]
@@ -591,7 +600,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
         
         jspec.jobName           = commands.getoutput('uuidgen')
-        if app.atlas_release:
+
+        if app.useMana:
+            jspec.cmtConfig         = AthenaUtils.getCmtConfig('', cmtConfig=app.atlas_cmtconfig)
+        elif app.atlas_release:
             jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
             jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
             jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
@@ -772,6 +784,12 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         
         if app.useRootCore or app.useRootCoreNoBuild:
             param += "--useRootCore "
+
+        if app.useMana:
+            param += " --useMana "
+            if app.atlas_release != "":
+                param += "--manaVer %s " % app.atlas_release
+
 
         # DBRelease
         if self.dbrelease != '' and (not app.atlas_exetype in [ 'TRF' ] or
