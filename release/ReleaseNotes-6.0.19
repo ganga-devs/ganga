@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.19 (2013/10/3)
+6.0.19 (2013/10/4)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -87,5 +87,22 @@ adds a property to backend.requirements allowing these to be set for each job. T
 stone towards extracting this information automatically from inputdata.
 
 This relates to https://savannah.cern.ch/bugs/?102610
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Added Mana support:
+* use Athena.useMana = True
+* specify the cmdline using Athena.options
+* Use Athena.atlas_release to set the mana version
+
+* Improved error message for filesize constraint in DQ2JobSplitter
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added Mana support
 
 **************************************************************************************************************
