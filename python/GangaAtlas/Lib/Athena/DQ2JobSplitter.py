@@ -1115,7 +1115,15 @@ class DQ2JobSplitter(ISplitter):
                         else:
                             # default splitting
                             while remaining_guids and len(j.inputdata.guids)<max_subjob_numfiles and sum(j.inputdata.sizes)<max_subjob_filesize:
+
+                                too_large_filesizes = []
                                 for next_guid in remaining_guids:
+                                    
+                                    # check if files are bigger than the filesize requirement
+                                    if allcontent[next_guid][1] > max_subjob_filesize:
+                                        too_large_filesizes.append( allcontent[next_guid][1] / (1024*1024) )
+                                    
+
                                     if sum(j.inputdata.sizes)+allcontent[next_guid][1] < max_subjob_filesize:
                                         remaining_guids.remove(next_guid)
                                         j.inputdata.guids.append(next_guid)
@@ -1153,7 +1161,7 @@ class DQ2JobSplitter(ISplitter):
                     j.inputdata.number_of_files = len(j.inputdata.guids)
                     if (self.numevtsperjob == 0):
                         if not (job.inputdata.tag_info and local_tag) and num_remaining_guids == len(remaining_guids):
-                            logger.warning('Filesize constraint blocked the assignment of %d files having guids: %s'%(len(remaining_guids),remaining_guids))
+                            logger.warning('Filesize constraint (%d) is too small for some files and has therefore blocked the assignment of %d files having guids: %s. Filesizes are: %s'%(self.filesize, len(remaining_guids),remaining_guids, too_large_filesizes))
                             break
                     #print j.inputdata.names
                     #print j.inputdata.sizes

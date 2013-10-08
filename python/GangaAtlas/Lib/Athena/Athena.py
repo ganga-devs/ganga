@@ -363,6 +363,7 @@ class Athena(IPrepareApp):
         'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes'),
                  'useRootCore'            : SimpleItem(defvalue = False, doc='Use RootCore'),
                  'useRootCoreNoBuild'     : SimpleItem(defvalue = False, doc='Use RootCore with NoBuild'),
+                 'useMana'            : SimpleItem(defvalue = False, doc='Use Mana'),
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
                  'useNewTRF'              : SimpleItem(defvalue = False, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
                  })
@@ -913,7 +914,57 @@ class Athena(IPrepareApp):
 
         # make sure the exetype is upper case
         self.atlas_exetype = self.atlas_exetype.upper()
+
+        # Set CMTCONFIG
+        if os.environ.has_key('CMTCONFIG'):
+            self.atlas_cmtconfig = os.environ['CMTCONFIG']
+            if self.atlas_cmtconfig.startswith('x86_64'):
+                #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
+                logger.warning('CMTCONFIG = %s, Your CMT setup is using 64 bit - are you sure you want to use 64 bit ?'% self.atlas_cmtconfig)
+        else:
+            self.atlas_cmtconfig = config['CMTCONFIG']
+            os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
+
+
+        # check for conflicts
+        if self.useMana and self.useRootCore:
+            raise ApplicationConfigurationError(None,'Cannot specify RootCore and Mana. One or the other please!')
         
+        # ensure mana jobs are EXE
+        if self.useMana:
+            if not self.atlas_exetype in ['EXE']:
+                logger.info("Setting atlas_exetype to EXE for Mana running...")
+                self.atlas_exetype = 'EXE'
+
+            # setup mana
+            from pandatools import MiscUtils
+
+            # find the workarea
+            tmpSt,tmpOut = MiscUtils.getManaSetupParam('workarea')
+            if not tmpSt:
+                raise ApplicationConfigurationError(None,'Problem getting workarea from Mana setup: "%s"' % tmpOut)
+
+            logger.info("Setting the Mana work area to '%s'"% tmpOut.strip())
+
+            # extract mana version number
+            if self.atlas_release == '':
+                tmpSt,tmpOut = MiscUtils.getManaVer()
+                if not tmpSt:
+                    raise ApplicationConfigurationError(None,'Problem getting Mana version from Mana setup: "%s"' % tmpOut.strip())
+
+                logger.info("Setting the Mana version to '%s'"% tmpOut.strip())
+                self.atlas_release = tmpOut.strip()
+                
+            # check mana version
+            logger.info("Checking Mana version '%s'" % self.atlas_release)
+            sMana, oMana, self.atlas_release, self.atlas_cmtconfig = MiscUtils.checkManaVersion(self.atlas_release, self.atlas_cmtconfig)
+
+            if not sMana:
+                raise ApplicationConfigurationError(None,'Error checking mana version: "%s"' % oMana)
+
+            logger.info("Final Mana version '%s', cmt config '%s'" % (self.atlas_release, self.atlas_cmtconfig))
+
+        # get info from CMT
         if not self.atlas_exetype in ['EXE'] or self.atlas_release=='': 
             # get Athena versions
             rc, out = AthenaUtils.getAthenaVer()
@@ -937,16 +988,6 @@ class Athena(IPrepareApp):
             self.grouparea = ''
             if self.atlas_production and not self.atlas_project:
                 self.atlas_project = 'AtlasProduction'
-
-        # Set CMTCONFIG
-        if os.environ.has_key('CMTCONFIG'):
-            self.atlas_cmtconfig = os.environ['CMTCONFIG']
-            if self.atlas_cmtconfig.startswith('x86_64'):
-                #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
-                logger.warning('CMTCONFIG = %s, Your CMT setup is using 64 bit - are you sure you want to use 64 bit ?'% self.atlas_cmtconfig)
-        else:
-            self.atlas_cmtconfig = config['CMTCONFIG']
-            os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
 
         logger.info('Found Working Directory %s',self.userarea)
         logger.info('Found ATLAS Release %s',self.atlas_release)
@@ -1057,6 +1098,7 @@ class Athena(IPrepareApp):
         AthenaUtils.setExtFile(self.append_to_user_area)
         AthenaUtils.excludeFile=[]
         AthenaUtils.setExcludeFile(','.join(self.exclude_from_user_area))
+
 
         # copy RootCore packages
         if self.useRootCore or self.useRootCoreNoBuild:

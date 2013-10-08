@@ -657,21 +657,30 @@ def transform_PATH_option(name,new_value,current_value):
        result of the merge is: ANY_PATH = y
 
     For other variables just return the new_value.
-    """
-
-
-  
+    """ 
+ 
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
         logger.debug('PATH-like variable: %s %s %s',name,new_value,current_value)
         if current_value is None:
-            return new_value
-        if new_value[:3] != ':::':
+            ret_value = new_value
+        elif new_value[:3] != ':::':
             logger.debug('Prepended %s to PATH-like variable %s',new_value,name)
-            return new_value + ':' + current_value
+            ret_value = new_value + ':' + current_value
         else:
             logger.debug('Resetting PATH-like variable %s to %s',name,new_value)
-            return new_value[3:]
+            ret_value = new_value #[3:]
+
+        # remove duplicate path entries
+        if ret_value[:3] == ':::':
+            new_value = ":::"
+        else:
+            new_value = ""
+
+        for tok in ret_value.strip(":").split(":"):
+            if new_value.find(tok) == -1 or tok == "":
+                new_value += "%s:" % tok
+
     return new_value
 
 def read_ini_files(filenames,system_vars):

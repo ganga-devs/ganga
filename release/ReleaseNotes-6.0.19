@@ -1,0 +1,108 @@
+**************************************************************************************************************
+6.0.19 (2013/10/7)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* ::: is now preserved when regenerating .gangarc and repeated entries are removed from PATH like 
+variables
+* Fixed cmd line config arguments being overwritten with the new user wizard
+* Enhanced the Ganga tab completion functionality to include:
+  1) function prototype completion
+  2) correctness checking when completing constructors of Ganga objects
+  3) Ganga object constructor completion shows only those attributes which are modifiable
+  3) attribute colour coding green = modifiable,  red = locked for modifying
+* New functionality triggered when tab completing after a "(" , "," or "." character
+* whitespace is ignored after the above characters and the tab completion
+
+Simple examples:
+***************
+In [1]:a=Executable( <tab>
+Executable()
+Executable(Executable)
+Executable(args =['Hello World'], env ={}, exe ='echo', is_prepared =None)
+
+In [2]:a.copy( <tab>
+Executable.copy(unprepare =None)
+
+Works with user defined funcs as well
+*************************************
+In [3]:def testfunc(arg): print arg
+
+In [4]:testfunc( <tab>
+testfunc(arg)
+
+Moving to next arg is noticed and the tab completion will show the prototype
+****************************************************************************
+
+**Note the colour coding which I can't show in the release notes**
+
+In [5]:export( <tab>
+export(item =None, filename ='', mode ='w')
+
+In [5]:export( None, <tab>
+export(item =None, filename ='', mode ='w')
+
+
+Locked attributes appear as red whilst modifiable ones in green
+***************************************************************
+In [7]:j=Job()
+
+In [8]:j.<tab>
+**Note the colour coding which I can't show in the release notes**
+
+Correctness checking
+********************
+In [9]:a.copy( , <tab>
+CompletionErrorChecker             : WARNING  Too many arguments provided
+
+Executable.copy(unprepare =None)
+
+
+In [10]:Executable( 12, <tab>
+CompletionErrorChecker             : WARNING  Only one positional arg allowed which must be an
+object of the same type to copy from
+
+Executable()
+Executable(Executable)
+Executable(args =['Hello World'], env ={}, exe ='echo', is_prepared =None)
+
+In [11]:Executable( a=12, <tab>
+CompletionErrorChecker             : WARNING  Unrecognised keyword argument, 'a' is not a modifyable
+attribute of 'Executable'
+
+Executable()
+Executable(Executable)
+Executable(args =['Hello World'], env ={}, exe ='echo', is_prepared =None)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga/Lib/LCG
+--------------------------------------------------------------------------------------------------------------
+* Added the DataRequirements field that gets transferred to the jdl to be processed by the WMS
+
+Until now DataRequirements and DataAccessProtocol were set Ganga-wide inside the config file. This 
+adds a property to backend.requirements allowing these to be set for each job. This is a stepping-
+stone towards extracting this information automatically from inputdata.
+
+This relates to https://savannah.cern.ch/bugs/?102610
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Added Mana support:
+* use Athena.useMana = True
+* specify the cmdline using Athena.options
+* Use Athena.atlas_release to set the mana version
+
+* Improved error message for filesize constraint in DQ2JobSplitter
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added Mana support
+
+**************************************************************************************************************
