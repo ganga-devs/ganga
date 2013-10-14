@@ -1548,19 +1548,25 @@ athena_compile()
         else
 	        echo 'no group area clean up necessary'
         fi
-    elif [ ! -z $GROUP_AREA ]
-    then
-        tar xzf ../$GROUP_AREA -C work
-        tar xzf $GROUP_AREA -C work
     fi
-    tar xzf $USER_AREA -C work
-    tar xzf ../$USER_AREA -C work
+
+    # Ganga wrapper now untars everything in the main directory first so just need to move it all
+    #elif [ ! -z $GROUP_AREA ]
+    #then
+    #    tar xzf ../$GROUP_AREA -C work
+    #    tar xzf $GROUP_AREA -C work
+    #fi
+    #tar xzf $USER_AREA -C work
+    #tar xzf ../$USER_AREA -C work
 
     if [ n$ATLAS_EXETYPE == n'EXE' ]; then
 	mv work/* .
     else
+	# move everything that the wrapper has already untarred
+	ls -d * | grep -v ^dq2_get$ | grep -v ^dq2info.tar.gz$ | grep -v ^ganga-stage-in-out-dq2.py$  | grep -v ^libdcap.so$ | grep -v ^input_files$ | grep -v ^input_guids$ | grep -v ^get_stats.py$ | grep -v ^work$ | grep -v ^stderr$ | grep -v ^stdout$ | grep -v ^_python$ | grep -v ^__syslog__$ | tr '\n' '\0' | xargs -0 -I file mv file work/.
 	cd work
     fi
+
     pwd
     source install.sh; echo $? > retcode.tmp
     retcode=`cat retcode.tmp`
