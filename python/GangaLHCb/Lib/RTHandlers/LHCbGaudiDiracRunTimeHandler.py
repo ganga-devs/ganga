@@ -6,6 +6,7 @@ from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, m
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils                 import result_ok
 from GangaDirac.Lib.Files.DiracFile                     import DiracFile
+from GangaDirac.Lib.Utilities.DiracUtilities            import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
 from Ganga.GPIDev.Lib.File                              import FileBuffer, SandboxFile
@@ -22,8 +23,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
     def __check_versions_against_dirac(self, app):
         ## cache versions dict
         if not LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
-            from GangaDirac.BOOT import dirac_ganga_server
-            result = dirac_ganga_server.execute('getSoftwareVersions()')
+            result = execute('getSoftwareVersions()')
             if not result_ok(result):
                 logger.error('Could not obtain available versions: %s' \
                              % str(result))

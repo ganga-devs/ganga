@@ -19,6 +19,7 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 #from GaudiAppConfig import *
+from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig
@@ -160,9 +161,11 @@ class GaudiBase(IPrepareApp):
 
         if not hasattr(self,'env'): self._getshell()
 #        shellEnv_cmd('getpack %s %s'%(self.appname, self.version),
-        shellEnv_cmd('getpack %s' % options,
-                     self.env,
-                     self.user_release_area)
+        execute('getpack %s' % options,
+                shell=True,
+                timeout=None,
+                env=self.env,
+                cwd=self.user_release_area)
            
     def make(self, argument=''):
         """Build the code in the release area the application object points
@@ -172,18 +175,22 @@ class GaudiBase(IPrepareApp):
         #          % self.user_release_area + argument
         config = Ganga.Utility.Config.getConfig('GAUDI')
         if not hasattr(self,'env'): self._getshell()
-        shellEnv_cmd('cmt broadcast %s %s' % (config['make_cmd'],argument),
-                     self.env,
-                     self.user_release_area)
+        execute('cmt broadcast %s %s' % (config['make_cmd'],argument),
+                shell=True,
+                timeout=None,
+                env=self.env,
+                cwd=self.user_release_area)
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
         if not hasattr(self,'env'): self._getshell()
-        shellEnv_cmd('cmt %s' % command,
-                     self.env,
-                     self.user_release_area)
+        execute('cmt %s' % command,
+                shell=True,
+                timeout=None,
+                env=self.env,
+                cwd=self.user_release_area)
 
     def unprepare(self):
         self._unregister()

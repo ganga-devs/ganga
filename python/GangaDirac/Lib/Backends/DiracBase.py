@@ -9,10 +9,12 @@ from Ganga.GPIDev.Adapters.IBackend          import IBackend
 from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
 from GangaDirac.Lib.Files.DiracFile          import DiracFile
-from GangaDirac.BOOT                         import dirac_ganga_server, dirac_monitoring_server
+from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from GangaDirac.BOOT                         import monitoring_threadpool
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
+from Ganga.GPIDev.Credentials                import getCredential
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
 
@@ -109,7 +111,7 @@ class DiracBase(IBackend):
         master_job._commit()
         return True
 
-    def _common_submit(self, dirac_script, server):
+    def _common_submit(self, dirac_script):
         '''Submit the job via the Dirac server.'''
         j = self.getJobObject()
         self.id         = None
@@ -118,7 +120,7 @@ class DiracBase(IBackend):
         self.statusInfo = ''
         j.been_queued   = False
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
-        result = server.execute(dirac_cmd)
+        result = execute(dirac_cmd)
         ## Could use the below code instead to submit on a thread
         ## If submitting many then user may terminate ganga before
         ## all jobs submitted
@@ -172,7 +174,7 @@ class DiracBase(IBackend):
         f=open(dirac_script_filename,'w')
         f.write(dirac_script)
         f.close()
-        return self._common_submit(dirac_script_filename, dirac_ganga_server)
+        return self._common_submit(dirac_script_filename)
  
     def master_auto_resubmit(self,rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
@@ -192,7 +194,7 @@ class DiracBase(IBackend):
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
-                    result = b._resubmit(dirac_monitoring_server)
+                    result = b._resubmit()
                     if result:
                         sj.updateStatus('submitted')
                         #sj._commit() # PENDING: TEMPORARY DISABLED
@@ -210,9 +212,9 @@ class DiracBase(IBackend):
 
     def resubmit(self):
         """Resubmit a DIRAC job"""
-        return self._resubmit(dirac_ganga_server)
+        return self._resubmit()
 
-    def _resubmit(self, server):
+    def _resubmit(self):
         """Resubmit a DIRAC job"""
         j=self.getJobObject()
         parametric = False
@@ -262,7 +264,7 @@ class DiracBase(IBackend):
         f = open(new_script_filename, 'w')
         f.write(new_script)
         f.close()
-        return self._common_submit(new_script_filename, server)
+        return self._common_submit(new_script_filename)
 
     def reset(self, doSubjobs =False):
         """Resets the state of a job back to 'submitted' so that the
@@ -294,7 +296,7 @@ class DiracBase(IBackend):
         """ Kill a Dirac jobs"""         
         if not self.id: return None
         dirac_cmd = 'kill(%d)' % self.id
-        result = dirac_ganga_server.execute(dirac_cmd)
+        result = execute(dirac_cmd)
         if not result_ok(result):
             raise BackendError('Dirac','Could not kill job: %s' % str(result))
         return result['OK']
@@ -302,7 +304,7 @@ class DiracBase(IBackend):
     def peek(self,filename=None,command=None):
         """Peek at the output of a job (Note: filename/command are ignored)."""
         dirac_cmd = 'peek(%d)' % self.id
-        result = dirac_ganga_server.execute(dirac_cmd)
+        result = execute(dirac_cmd)
         if result_ok(result): print result['Value']
         else: logger.error("No peeking available for Dirac job '%i'.", self.id)
 
@@ -311,7 +313,7 @@ class DiracBase(IBackend):
         if dir is None: dir = j.getOutputWorkspace().getPath()
         dirac_cmd = "getOutputSandbox(%d,'%s')" \
                     % (self.id,dir)
-        result = dirac_ganga_server.execute(dirac_cmd)
+        result = execute(dirac_cmd)
         if not result_ok(result):
             msg = 'Problem retrieving output: %s' % str(result)
             logger.warning(msg)
@@ -396,7 +398,7 @@ class DiracBase(IBackend):
         '''Obtains some (possibly) useful DIRAC debug info. '''
         # check services
         cmd = 'getServicePorts()'
-        result = dirac_ganga_server.execute(cmd)
+        result = execute(cmd)
         if type(result) == str:
             import datetime
             try:
@@ -409,7 +411,7 @@ class DiracBase(IBackend):
         for category in services:
             system,service = category.split('/')
             cmd = "ping('%s','%s')" % (system,service)
-            result = dirac_ganga_server.execute(cmd)
+            result = execute(cmd)
             if type(result) == str:
                 import datetime
                 try:
@@ -425,7 +427,7 @@ class DiracBase(IBackend):
         debug_dir = j.getDebugWorkspace().getPath()
         cmd = "getJobPilotOutput(%d,'%s')" % \
               (self.id, debug_dir)
-        result = dirac_ganga_server.execute(cmd)
+        result = execute(cmd)
         #print 'result =', result
         if result_ok(result):
             print 'Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id)
@@ -448,7 +450,7 @@ class DiracBase(IBackend):
                     if job.backend.id:
                         logger.debug("Accessing getStateTime() in diracAPI")
                         dirac_cmd = "getStateTime(%d,\'%s\')" % (job.backend.id, childstatus)
-                        be_statetime = dirac_monitoring_server.execute(dirac_cmd)
+                        be_statetime = execute(dirac_cmd)
                         if childstatus in backend_final:
                             job.time.timestamps["backend_final"] = be_statetime 
                             logger.debug("Wrote 'backend_final' to timestamps.")
@@ -466,7 +468,7 @@ class DiracBase(IBackend):
         if not self.id: return None
         logger.debug("Accessing timedetails() in diracAPI")
         dirac_cmd = 'timedetails(%d)' % self.id
-        return dirac_ganga_server.execute(dirac_cmd)
+        return execute(dirac_cmd)
     
     def job_finalisation(job, updated_dirac_status):
 
@@ -478,9 +480,9 @@ class DiracBase(IBackend):
             if job.master: job.master.updateMasterJobStatus()
 
             ## contact dirac for information
-            job.backend.normCPUTime = dirac_monitoring_server.execute('normCPUTime(%d)' % job.backend.id)
-            getSandboxResult        = dirac_monitoring_server.execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
-            file_info_dict          = dirac_monitoring_server.execute('getOutputDataInfo(%d)'% job.backend.id)
+            job.backend.normCPUTime = execute('normCPUTime(%d)' % job.backend.id)
+            getSandboxResult        = execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
+            file_info_dict          = execute('getOutputDataInfo(%d)'% job.backend.id)
 
             ## Set DiracFile metadata
             wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
@@ -523,7 +525,7 @@ class DiracBase(IBackend):
             
             ## if requested try downloading outputsandbox anyway
             if getConfig('DIRAC')['failed_sandbox_download']:
-                dirac_monitoring_server.execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
+                execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
         else:
             logger.error("Unexpected dirac status '%s' encountered"%updated_dirac_status)
     job_finalisation = staticmethod(job_finalisation)
@@ -539,7 +541,8 @@ class DiracBase(IBackend):
         from Ganga.Core import monitoring_component
 
         ## make sure proxy is valid
-        if not dirac_monitoring_server.proxyValid():
+        proxy = getCredential('GridProxy', '')
+        if not proxy.isValid():
             if DiracBase.dirac_monitoring_is_active:
                 logger.warning('DIRAC monitoring inactive (no valid proxy '\
                                'found).')
@@ -570,9 +573,9 @@ class DiracBase(IBackend):
         ## requeue existing completed job
         for j in requeue_jobs:
 #            if j.backend.status in requeue_dirac_status:
-            dirac_monitoring_server.execute_nonblocking(DiracBase.job_finalisation,
-                                                        command_args = (j, requeue_dirac_status[j.backend.status]),
-                                                        priority     = 5)           
+            monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                                               args = (j, requeue_dirac_status[j.backend.status]),
+                                               priority     = 5)           
             j.been_queued=True
 
         # now that can submit in non_blocking mode, can see jobs in submitting
@@ -584,7 +587,7 @@ class DiracBase(IBackend):
         ganga_job_status = [ j.status     for j in monitor_jobs ]
         dirac_job_ids    = [ j.backend.id for j in monitor_jobs ]
  
-        result = dirac_monitoring_server.execute( 'status(%s)' % str(dirac_job_ids) )
+        result = execute( 'status(%s)' % str(dirac_job_ids) )
         if type(result) != type([]):
             logger.warning('DIRAC monitoring failed: %s' % str(result))
             return
@@ -615,9 +618,9 @@ class DiracBase(IBackend):
                     job.updateStatus('running')
                     if job.master: job.master.updateMasterJobStatus()                   
 
-                dirac_monitoring_server.execute_nonblocking(DiracBase.job_finalisation,
-                                                            command_args = (job, updated_dirac_status),
-                                                            priority     = 5)
+                monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                                                   args = (job, updated_dirac_status),
+                                                   priority     = 5)
                 job.been_queued=True
 
             else:
