@@ -865,12 +865,18 @@ class DQ2JobSplitter(ISplitter):
                 if job.backend._name == 'Panda':
                     from GangaPanda.Lib.Panda.Panda import selectPandaSite
                     pandaSite = selectPandaSite(job,sites)
+                    logger.debug('pandaSite = %s' % pandaSite)
                     # set maximum input size per subjob 
                     from pandatools import Client
-                    max_subjob_filesize = (Client.PandaSites[pandaSite]['maxinputsize']-1000)*1024*1024
+                    try:
+                        max_subjob_filesize = (Client.PandaSites[pandaSite]['maxinputsize']-1000)*1024*1024
+                    except:
+                        logger.debug('max_subjob_filesize not set !')
+                        pass
                     if not max_subjob_filesize:
                         max_subjob_filesize = config['MaxFileSizePandaDQ2JobSplitter']*1024*1024
 
+                    logger.debug('max_subjob_filesize = %s' % max_subjob_filesize)
                     # direct access site ?
                     from pandatools import PsubUtils
                     # FIXME - set correct parameter values
@@ -885,6 +891,7 @@ class DQ2JobSplitter(ISplitter):
                         inTRF=False
                     inARA = False
                     isDirectAccess = PsubUtils.isDirectAccess(pandaSite, inBS, inTRF, inARA)
+                    logger.debug('isDirectAccess = %s' % isDirectAccess)
                     if isDirectAccess or job.backend.accessmode in ['DIRECT','FILE_STAGER']: 
                        max_subjob_filesize = 0
                        # use numfiles if user has set it, else use MaxSubjobFilesPandaDQ2JobSplitter
