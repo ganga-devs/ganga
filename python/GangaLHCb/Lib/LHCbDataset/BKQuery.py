@@ -196,7 +196,7 @@ class BKQueryDict(GangaObject):
                         'ProductionID'             :     0,
                         'StartRun'                 :     0,
                         'EndRun'                   :     0,
-                        'DataQualityFlag'          : 'All'}
+                        'DataQuality'              : 'All'}
     
     schema = {}
     docstr = 'Dirac BK query dictionary.'
