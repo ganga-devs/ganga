@@ -9,7 +9,7 @@ import time
 class GangaService:
     
     def __init__(self):
-        self.port = 434343
+        self.port = 43434
         self.timeout = 60
         self.gangadir = os.path.normpath(os.path.expandvars(os.path.expanduser("~/gangadir-server")))
         self.prerun = ""
