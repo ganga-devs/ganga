@@ -60,7 +60,7 @@ class GaudiBase(IPrepareApp):
                                        protected=1,
                                        doc=docstr)
     docstr = 'The env'
-    schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=copy.deepcopy(os.environ),
+    schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=None,
                                    hidden=1,doc=docstr)
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
     schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
@@ -111,16 +111,22 @@ class GaudiBase(IPrepareApp):
         
         Note: Editing this does not affect the options processing.
         '''
-        if not hasattr(self,'env'):
+        if self.env is None:
             try:
                 job = self.getJobObject()
             except:
                 self._getshell()
-                return copy.deepcopy(self.env)
+                ret = copy.deepcopy(self.env)
+                if self.is_prepared is None:
+                    self.env = None
+                return ret
             env_file_name = job.getDebugWorkspace().getPath() + '/gaudi-env.py.gz'
             if not os.path.exists(env_file_name):
                 self._getshell()
-                return copy.deepcopy(self.env)
+                ret = copy.deepcopy(self.env)
+                if self.is_prepared is None:
+                    self.env = None
+                return ret
             in_file = gzip.GzipFile(env_file_name,'rb')
             exec(in_file.read())
             in_file.close()
@@ -159,7 +165,7 @@ class GaudiBase(IPrepareApp):
                     logger.error("Can not create cmt user directory: "+cmtpath)
                     return
 
-        if not hasattr(self,'env'): self._getshell()
+        if self.env is None: self._getshell()
 #        shellEnv_cmd('getpack %s %s'%(self.appname, self.version),
         execute('getpack %s' % options,
                 shell=True,
@@ -174,7 +180,7 @@ class GaudiBase(IPrepareApp):
         #command = '###CMT### broadcast -global -select=%s cmt make ' \
         #          % self.user_release_area + argument
         config = Ganga.Utility.Config.getConfig('GAUDI')
-        if not hasattr(self,'env'): self._getshell()
+        if self.env is None: self._getshell()
         execute('cmt broadcast %s %s' % (config['make_cmd'],argument),
                 shell=True,
                 timeout=None,
@@ -185,7 +191,7 @@ class GaudiBase(IPrepareApp):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
-        if not hasattr(self,'env'): self._getshell()
+        if self.env is None: self._getshell()
         execute('cmt %s' % command,
                 shell=True,
                 timeout=None,
@@ -200,6 +206,7 @@ class GaudiBase(IPrepareApp):
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
         self.hash = None
+        self.env = None
 
     def prepare(self, force=False):
         self._register(force)

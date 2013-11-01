@@ -230,7 +230,7 @@ class AppName(Gaudi):
         # use a dummy file to keep the parser happy
         if len(optsfiles)==0: optsfiles.append(dummyfile())
         
-        if not hasattr(self,'env'): self._getshell()
+        if self.env is None: self._getshell()
         if extraopts: extraopts=self.extraopts
         else: extraopts=""
             
@@ -242,7 +242,10 @@ class AppName(Gaudi):
                   'files and extraopts.'
             raise ApplicationConfigurationError(None,msg)
 
-        return GPIProxyObjectFactory(parser.get_input_data())
+        ret = GPIProxyObjectFactory(parser.get_input_data())
+        if self.is_prepared is None:
+            self.env = None ## don't keep it around if not prepared
+        return ret
 
 ##     def _getshell(self):
 ##         opts = ''
