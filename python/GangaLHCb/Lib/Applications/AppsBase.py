@@ -218,6 +218,9 @@ class AppName(Gaudi):
         # Use this to create a new job with data from extraopts of an old job
         j=Job(inputdata=jobs[-1].application.readInputData([],True))
         '''
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'readInputData'")
+            raise Exception('Application must be prepared')
         
         def dummyfile():
             temp_fd,temp_filename=tempfile.mkstemp(text=True,suffix='.py')
@@ -242,10 +245,7 @@ class AppName(Gaudi):
                   'files and extraopts.'
             raise ApplicationConfigurationError(None,msg)
 
-        ret = GPIProxyObjectFactory(parser.get_input_data())
-        if self.is_prepared is None:
-            self.env = None ## don't keep it around if not prepared
-        return ret
+        return GPIProxyObjectFactory(parser.get_input_data())
 
 ##     def _getshell(self):
 ##         opts = ''

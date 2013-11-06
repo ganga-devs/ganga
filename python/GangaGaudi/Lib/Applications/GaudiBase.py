@@ -111,22 +111,19 @@ class GaudiBase(IPrepareApp):
         
         Note: Editing this does not affect the options processing.
         '''
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'getenv'")
+            raise Exception('Application must be prepared')
         if self.env is None:
             try:
                 job = self.getJobObject()
             except:
                 self._getshell()
-                ret = copy.deepcopy(self.env)
-                if self.is_prepared is None:
-                    self.env = None
-                return ret
+                return copy.deepcopy(self.env)
             env_file_name = job.getDebugWorkspace().getPath() + '/gaudi-env.py.gz'
             if not os.path.exists(env_file_name):
                 self._getshell()
-                ret = copy.deepcopy(self.env)
-                if self.is_prepared is None:
-                    self.env = None
-                return ret
+                return copy.deepcopy(self.env)
             in_file = gzip.GzipFile(env_file_name,'rb')
             exec(in_file.read())
             in_file.close()
@@ -164,7 +161,9 @@ class GaudiBase(IPrepareApp):
                 except Exception, e:
                     logger.error("Can not create cmt user directory: "+cmtpath)
                     return
-
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'getpack'")
+            raise Exception('Application must be prepared')
         if self.env is None: self._getshell()
 #        shellEnv_cmd('getpack %s %s'%(self.appname, self.version),
         execute('getpack %s' % options,
@@ -180,6 +179,9 @@ class GaudiBase(IPrepareApp):
         #command = '###CMT### broadcast -global -select=%s cmt make ' \
         #          % self.user_release_area + argument
         config = Ganga.Utility.Config.getConfig('GAUDI')
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'make'")
+            raise Exception('Application must be prepared')
         if self.env is None: self._getshell()
         execute('cmt broadcast %s %s' % (config['make_cmd'],argument),
                 shell=True,
@@ -191,6 +193,9 @@ class GaudiBase(IPrepareApp):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'cmt'")
+            raise Exception('Application must be prepared')
         if self.env is None: self._getshell()
         execute('cmt %s' % command,
                 shell=True,
