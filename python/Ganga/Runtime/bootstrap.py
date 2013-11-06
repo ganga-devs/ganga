@@ -185,7 +185,7 @@ under certain conditions; type license() for details.
 # Can't check here if the file is readable, because the path isn't known
 #           file_opens(self.args[0],'reading script')
 
-    def new_version(self):
+    def new_version(self, update=True):
        version = _gangaVersion.lstrip('Ganga-').replace('-','.') # matches Patricks release notes format, could just use _gangaVersion
        versions_filename = os.path.join(Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
        if not os.path.exists(versions_filename):
@@ -193,15 +193,15 @@ under certain conditions; type license() for details.
 #          with open(versions_filename, 'w') as versions_file:
 #             versions_file.write(version + '\n')
 #          return True
-          if self.options.config_file_set_explicitly: return True
-          try:
-             versions_file=open(versions_filename, 'w')
-          except: pass
-          else:
+          if update:
              try:
-                versions_file.write(version + '\n')
+                versions_file=open(versions_filename, 'w')
              except: pass
-             versions_file.close()  
+             else:
+                try:
+                   versions_file.write(version + '\n')
+                except: pass
+                versions_file.close()  
           return True
 
           ## As soon as we ditch slc5 support and get above python 2.4 can put this back
@@ -215,10 +215,8 @@ under certain conditions; type license() for details.
        else:
           try:
              if versions_file.read().find(version) < 0:
-                if self.options.config_file_set_explicitly:
-                   versions_file.close()
-                   return True
-                versions_file.write(version + '\n')
+                if update:
+                   versions_file.write(version + '\n')
                 versions_file.close()
                 return True
           except: pass
@@ -372,24 +370,30 @@ under certain conditions; type license() for details.
            if yes == '' or yes[0:1].upper() == 'Y':
               self.generate_config_file(default_config)
               raw_input('Press <Enter> to continue.')    
-        elif self.new_version():
+        elif self.new_version(not self.options.config_file_set_explicitly):
            self.print_release_notes()
-           logger = getLogger('ConfigUpdater')
-           logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
-           logger.info('Your ganga config file will be updated.')
-           logger.info('re-reading in old config for updating...')
-           load_user_config(specified_config, {})
-           self.generate_config_file(specified_config)
+           # if config explicitly set we dont want to update the versions file
+           # this is so that next time ganga used with the default .gangarc
+           # it will still be classed as new so the default config is updated.
+           # also if config explicitly set dont try to update it for new version
+           # impacts hammercloud if you do?
+           if not self.options.config_file_set_explicitly:
+              logger = getLogger('ConfigUpdater')
+              logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
+              logger.info('Your ganga config file will be updated.')
+              logger.info('re-reading in old config for updating...')
+              load_user_config(specified_config, {})
+              self.generate_config_file(specified_config)
 
-           # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
-           # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
-           # (not the session value but the user value has precedence)
-           try:
-              opts = self.parse_cmdline_config_options(self.options.cmdline_options)
-              for section,option,val in opts:
-                 config = getConfig(section).setUserValue(option,val)
-           except ConfigError,x:
-              self.exit('command line option error when resetting after config generation: %s'%str(x))
+              # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
+              # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
+              # (not the session value but the user value has precedence)
+              try:
+                 opts = self.parse_cmdline_config_options(self.options.cmdline_options)
+                 for section,option,val in opts:
+                    config = getConfig(section).setUserValue(option,val)
+              except ConfigError,x:
+                 self.exit('command line option error when resetting after config generation: %s'%str(x))
 
            
     def parse_cmdline_config_options(self, cmdline_options):
