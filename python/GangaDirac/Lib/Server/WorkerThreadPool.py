@@ -1,8 +1,8 @@
 #!/usr/bin/env python
 import collections, Queue, threading, traceback, signal
 import os, pickle, subprocess, types, time, threading
-from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes
-from Ganga.Core.GangaThread                  import GangaThread, GangaThreadPool
+from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, execute
+from Ganga.Core.GangaThread                  import GangaThread
 from Ganga.Core                              import GangaException
 from Ganga.GPIDev.Credentials                import getCredential
 from Ganga.Utility.logging                   import getLogger
@@ -20,12 +20,11 @@ class WorkerThreadPool(object):
     Client class through which Ganga objects interact with the local DIRAC server.
     """
     
-    __slots__ = ['__proxy','__queue', '__worker_threads']
+    __slots__ = ['__queue', '__worker_threads']
 
     def __init__( self,
                   num_worker_threads   = getConfig('DIRAC')['NumWorkerThreads'],
                   worker_thread_prefix = 'Worker_' ):
-        self.__proxy = getCredential('GridProxy', '')
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
 
@@ -40,9 +39,6 @@ class WorkerThreadPool(object):
             t.start()
             self.__worker_threads.append(t)
 
-    def proxyValid(self):
-        return self.__proxy.isValid()
-
     def __worker_thread(self, thread):
         """
         Code run by worker threads to allow parallelism in Ganga.
@@ -55,20 +51,21 @@ class WorkerThreadPool(object):
         # im hoping that importing within the thread will avoid this.
         import Queue
 
+        ## Note can use threading.current_thread to get the thread rather than passing it as an arg
+        ## easier to unit test this way though with a dummy thread.
         while not thread.should_stop():
             try:
                 item = self.__queue.get(True, 0.05)
             except Queue.Empty: continue #wait 0.05 sec then loop again to give shutdown a chance
 
             #regster as a working thread
-            #thread.register()
-            GangaThreadPool.getInstance().addServiceThread(thread)
+            thread.register()
 
             if not isinstance(item, QueueElement):
                 logger.error("Unrecognised queue element: '%s'" % repr(item))
                 logger.error("                  expected: 'QueueElement'")
                 self.__queue.task_done()
-                GangaThreadPool.getInstance().delServiceThread(thread)
+                thread.unregister()
                 continue
              
             if isinstance(item.command_input, FunctionInput):
@@ -80,14 +77,14 @@ class WorkerThreadPool(object):
                 logger.error("Unrecognised input command type: '%s'" % repr(item.command_input))
                 logger.error("                       expected: ('FunctionInput' or 'CommandInput')")
                 self.__queue.task_done()
-                GangaThreadPool.getInstance().delServiceThread(thread)
+                thread.unregister()
                 continue
 
             try:
                 if isinstance(item.command_input, FunctionInput):
                     result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)
                 else:
-                    result = self.execute(*item.command_input)
+                    result = execute(*item.command_input)
             except Exception, e:
                 logger.error("Exception raised executing '%s' in Thread '%s':\n%s"%(thread._command, thread.name, traceback.format_exc()))
                 if item.fallback_func.function is not None:
@@ -118,184 +115,99 @@ class WorkerThreadPool(object):
                 thread._command = 'idle'
                 thread._timeout = 'N/A'
                 self.__queue.task_done()
-                #thread.unregister()
-                GangaThreadPool.getInstance().delServiceThread(thread)
+                thread.unregister()
 
-    def __timeout_func(self, process, timeout, command_done, timed_out):
-        import time
-        start = time.time()
-        while time.time()-start < timeout:
-            if command_done.isSet(): break
-            time.sleep(0.5)
-        else:
-            if process.returncode is None:
-                timed_out.set()
-                try:
-                    os.killpg(process.pid, signal.SIGKILL)
-                except Exception, e:
-                    logger.error("Exception trying to kill process: %s"%e)
- 
+    def add_function(self,
+                     function, args=(), kwargs={}, priority=5,
+                     callback_func=None, callback_args=(), callback_kwargs={},
+                     fallback_func=None, fallback_args=(), fallback_kwargs={}):
 
-    def __reader(self, thread, readfd, writefd):
-        thread.output = None
-        os.close(writefd)
-        with os.fdopen(readfd, 'rb') as read_file:
-            try:
-                thread.output = pickle.load(read_file)
-            except: pass # EOFError triggered if command killed with timeout
+        if not isinstance(function, types.FunctionType) and not isinstance(function, types.MethodType):
+            logger.error('Only a python callable object may be added to the queue using the add_function() method')
+            return
+        self.__queue.put( QueueElement(priority      = priority,
+                                       command_input = FunctionInput(function, args, kwargs),
+                                       callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
+                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
+                                       ) )
 
-    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False, python_setup=default_includes, eval_includes=None, update_env=False):
-        """
-        Execute a command on the local DIRAC server.
+    def add_process(self,
+                    command, timeout=None, env=default_env, cwd=None, shell=False,
+                    python_setup=default_includes, eval_includes=None, update_env=False, priority=5,
+                    callback_func=None, callback_args=(), callback_kwargs={},
+                    fallback_func=None, fallback_args=(), fallback_kwargs={}):
 
-        This function blocks until the server returns.
-        """
-        if not self.__proxy.isValid(): 
-            self.__proxy.create()
-            if not self.__proxy.isValid():
-                raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
+        if type(command) != str:
+            logger.error("Input command must be of type 'string'")
+            return
+        self.__queue.put( QueueElement(priority      = priority,
+                                       command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
+                                       callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
+                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
+                                       ) )
+    #simple no need for callback
+#    def add(self, function, *args, **kwargs):
+#        self.add_function(function, args, kwargs)
 
-        if update_env:
-            if env is None:
-                raise GangaException('Cannot update the environment if None given.')
-            else:
-                envread, envwrite = os.pipe()
-                env_update_script = '''
-###INDENT###import os, pickle
-###INDENT###os.close(%d)
-###INDENT###with os.fdopen(%d,'wb') as envpipe:
-###INDENT###    pickle.dump(os.environ, envpipe)
-''' % (envread, envwrite)
+#    def execute(self, command, timeout=None, env=None, cwd=None, shell=False,
+#                python_setup=None, eval_includes=None, update_env=False,priority=5):
+#        pass
 
-        if shell:
-#            stream_command = '`cat<&0`' # didn't quite work for complicated ones using " marks, possibily due to ``
-            stream_command = 'cat<&0 | sh'
-            if update_env:
-                command += ''';python -c "%s"''' % env_update_script.replace('###INDENT###','')
-        else:
-            stream_command = 'python -'
-            pkl_read, pkl_write = os.pipe()
-            command = '''
-import os, sys, pickle, traceback
-os.close(###PKL_FDREAD###)
-with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
-    def output(data):
-        print >> PICKLE_STREAM, pickle.dumps(data)
-    local_ns = {'pickle'        : pickle,
-                'PICKLE_STREAM' : PICKLE_STREAM,
-                'output'        : output}
-    try:
-        exec("""###SETUP###""",   local_ns)
-        exec("""###COMMAND###""", local_ns)
-    except:
-        print >> PICKLE_STREAM, pickle.dumps(traceback.format_exc())
-###FINALLY###
-'''.replace('###SETUP###',python_setup).replace('###COMMAND###',command).replace('###PKL_FDREAD###', str(pkl_read)).replace('###PKL_FDWRITE###', str(pkl_write))
-            if update_env:
-                command = command.replace('###FINALLY###',env_update_script.replace('###INDENT###',''))
+    ## Legacy methods put here to keep it working while I migrate
+    ######################################################################################################
+#    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False, python_setup=default_includes, eval_includes=None, update_env=False):
+#        return execute(command, timeout, env, cwd, shell, python_setup,eval_includes,update_env)
 
-        p=subprocess.Popen(stream_command,
-                           shell      = True,
-                           env        = env,
-                           cwd        = cwd,
-                           preexec_fn = os.setsid,
-                           stdin      = subprocess.PIPE,
-                           stdout     = subprocess.PIPE,
-                           stderr     = subprocess.PIPE)
-                
-
-        command_done = threading.Event()
-        timed_out    = threading.Event()
-        if timeout is not None:
-            t=threading.Thread(target=self.__timeout_func,args=(p, timeout, command_done, timed_out))
-            t.deamon=True
-            t.start()
-
-        if not shell:
-            ti=threading.Thread(target=self.__reader)
-            ti.deamon=True
-            ti._Thread__args=(ti, pkl_read, pkl_write)
-            ti.start()
-
-        if update_env:
-            ev=threading.Thread(target=self.__reader)
-            ev.deamon=True
-            ev._Thread__args=(ev, envread, envwrite)
-            ev.start()
-
-#        print "Command =",command
-        stdout, stderr = p.communicate(command)
-        command_done.set()
-
-        if stderr != '':
-            # this is still debug as using the environment from default_env maked a stderr message dump out
-            # even though it works
-            logger.debug(stderr)
-
-        if timed_out.isSet():
-            return 'Command timed out!'
-
-        if update_env:
-            ev.join()
-            if ev.output is not None:
-                env.update(ev.output)
-
-        if not shell:
-            ti.join()
-            if ti.output is not None:
-                return ti.output
-        try:
-            stdout = pickle.loads(stdout)
-        except:
-            local_ns = {}
-            if type(eval_includes) is str:
-                exec(eval_includes, {}, local_ns)
-            try:
-                stdout = eval(stdout, {}, local_ns)
-            except: pass
-        return stdout
-
-
-    def execute_nonblocking( self, 
-                             command,
-                             command_args        = (),
-                             command_kwargs      = {},
-                             timeout         = getConfig('DIRAC')['Timeout'],
-                             env             = default_env,
-                             cwd             = None,
-                             shell           = False,
-                             python_setup    = default_includes,
-                             eval_includes   = None,
-                             update_env      = False,
-                             priority        = 5,
-                             callback_func   = None,
-                             callback_args   = (),
-                             callback_kwargs = {},
-                             fallback_func   = None,
-                             fallback_args   = (),
-                             fallback_kwargs = {}):
-        """
-        Execute a command on the local DIRAC server and pass the output to finalise_code
-
-        This function pust the request on the queue to be executed when a worker becomes available.
-        This is therefore a non-blocking function.
-        NOTE: if no command is passed i.e. command = None then the function finalise_code is called
-        only with args. Otherwise it is called with the result of executing the command on the local
-        DIRAC server as the first arg.
-        """
-        if isinstance(command, types.FunctionType) or isinstance(command, types.MethodType):
-            self.__queue.put( QueueElement(priority      = priority,
-                                           command_input = FunctionInput(command, command_args, command_kwargs),
-                                           callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
-                                           fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
+#    def execute_nonblocking( self, 
+#                             command,
+#                             command_args    = (),
+#                             command_kwargs  = {},
+#                             timeout         = getConfig('DIRAC')['Timeout'],
+#                             env             = default_env,
+#                             cwd             = None,
+#                             shell           = False,
+#                             python_setup    = default_includes,
+#                             eval_includes   = None,
+#                             update_env      = False,
+#                             priority        = 5,
+#                             callback_func   = None,
+#                             callback_args   = (),
+#                             callback_kwargs = {},
+#                             fallback_func   = None,
+#                             fallback_args   = (),
+#                             fallback_kwargs = {}):
+#        """
+#        Execute a command on the local DIRAC server and pass the output to finalise_code
+#
+#        This function pust the request on the queue to be executed when a worker becomes available.
+#        This is therefore a non-blocking function.
+#        NOTE: if no command is passed i.e. command = None then the function finalise_code is called
+#        only with args. Otherwise it is called with the result of executing the command on the local
+#        DIRAC server as the first arg.
+#        """
+#        if isinstance(command, types.FunctionType) or isinstance(command, types.MethodType):
+#            self.__queue.put( QueueElement(priority      = priority,
+#                                           command_input = FunctionInput(command, command_args, command_kwargs),
+#                                           callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
+#                                           fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
+#                                           ) )
+#        else:
+#            self.__queue.put( QueueElement(priority      = priority,
+#                                           command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
+#                                           callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
+#                                           fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
+#                                           ) )
+#
+#    ######################################################################################################
+    def map(function, *iterables):
+        if not isinstance(function, types.FunctionType) \
+                and not isinstance(function, types.MethodType):
+            raise Exception('must be a function')
+        for args in zip(*iterables):
+            self.__queue.put( QueueElement(priority      = 5,
+                                           command_input = FunctionInput(function, args, {})
                                            ) )
-        else:
-            self.__queue.put( QueueElement(priority      = priority,
-                                           command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
-                                           callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
-                                           fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
-                                           ) )
-
+            
     def clear_queue(self):
         """
         Purges the thread pools queue.
@@ -314,3 +226,4 @@ with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
         Returns a informatative tuple containing the threads name, current command it's working on and the timeout for that command.
         """
         return [(w._name, w._command, w._timeout) for w in self.__worker_threads]
+###################################################################

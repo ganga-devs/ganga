@@ -19,6 +19,7 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 #from GaudiAppConfig import *
+from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig
@@ -59,7 +60,7 @@ class GaudiBase(IPrepareApp):
                                        protected=1,
                                        doc=docstr)
     docstr = 'The env'
-    schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=copy.deepcopy(os.environ),
+    schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=None,
                                    hidden=1,doc=docstr)
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
     schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
@@ -110,7 +111,10 @@ class GaudiBase(IPrepareApp):
         
         Note: Editing this does not affect the options processing.
         '''
-        if not hasattr(self,'env'):
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'getenv'")
+            raise Exception('Application must be prepared')
+        if self.env is None:
             try:
                 job = self.getJobObject()
             except:
@@ -157,12 +161,16 @@ class GaudiBase(IPrepareApp):
                 except Exception, e:
                     logger.error("Can not create cmt user directory: "+cmtpath)
                     return
-
-        if not hasattr(self,'env'): self._getshell()
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'getpack'")
+            raise Exception('Application must be prepared')
+        if self.env is None: self._getshell()
 #        shellEnv_cmd('getpack %s %s'%(self.appname, self.version),
-        shellEnv_cmd('getpack %s' % options,
-                     self.env,
-                     self.user_release_area)
+        execute('getpack %s' % options,
+                shell=True,
+                timeout=None,
+                env=self.env,
+                cwd=self.user_release_area)
            
     def make(self, argument=''):
         """Build the code in the release area the application object points
@@ -171,19 +179,29 @@ class GaudiBase(IPrepareApp):
         #command = '###CMT### broadcast -global -select=%s cmt make ' \
         #          % self.user_release_area + argument
         config = Ganga.Utility.Config.getConfig('GAUDI')
-        if not hasattr(self,'env'): self._getshell()
-        shellEnv_cmd('cmt broadcast %s %s' % (config['make_cmd'],argument),
-                     self.env,
-                     self.user_release_area)
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'make'")
+            raise Exception('Application must be prepared')
+        if self.env is None: self._getshell()
+        execute('cmt broadcast %s %s' % (config['make_cmd'],argument),
+                shell=True,
+                timeout=None,
+                env=self.env,
+                cwd=self.user_release_area)
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
-        if not hasattr(self,'env'): self._getshell()
-        shellEnv_cmd('cmt %s' % command,
-                     self.env,
-                     self.user_release_area)
+        if self.is_prepared is None:
+            logger.error("Please prepare the application before calling 'cmt'")
+            raise Exception('Application must be prepared')
+        if self.env is None: self._getshell()
+        execute('cmt %s' % command,
+                shell=True,
+                timeout=None,
+                env=self.env,
+                cwd=self.user_release_area)
 
     def unprepare(self):
         self._unregister()
@@ -193,6 +211,7 @@ class GaudiBase(IPrepareApp):
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
         self.hash = None
+        self.env = None
 
     def prepare(self, force=False):
         self._register(force)

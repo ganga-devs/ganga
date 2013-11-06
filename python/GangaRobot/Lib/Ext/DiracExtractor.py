@@ -11,11 +11,12 @@ relevant data may be extracted in a later version.
 from GangaRobot.Lib.Base.BaseExtractor import BaseExtractor
 from Ganga.GPI import *
 from GangaLHCb.Lib.DIRAC.DiracUtils import *
-from GangaLHCb.Lib.DIRAC.DiracServer import DiracServer
+#from GangaLHCb.Lib.DIRAC.DiracServer import DiracServer
+from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
 configLHCb = Ganga.Utility.Config.getConfig('LHCb')
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
-dirac_ganga_server = DiracServer()
+#dirac_ganga_server = DiracServer()
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -68,7 +69,6 @@ class DiracExtractor(BaseExtractor):
         empty if querying Dirac returns no corresponding value.
         
         """
-        global dirac_ganga_server
         if job.backend._impl._name != 'Dirac':
             return
         diracnode = jobnode.addnode('dirac')
@@ -82,14 +82,14 @@ class DiracExtractor(BaseExtractor):
         if job.backend._impl._name != 'Dirac':
                         return
         try:
-                command='result = DiracCommands.dirac.getJobSummary([%i])'%diracid
-                result=dirac_ganga_server.execute(command)
+                command='output( dirac.getJobSummary([%i]) )'%diracid
+                result=execute(command)
                 #FIXME missing error checking
 
                 jobSummary=result['Value'][diracid]
                 applicationstatus = jobSummary['ApplicationStatus']
                 
-                command="result = DiracCommands.dirac.getJobCPUTime(%i)"%diracid
+                command="output( dirac.getJobCPUTime(%i) )"%diracid
                 cputime=result['Value'][diracid]
                 cpu=cputime.get('CPUConsumed',None)
                 #FIXME fins example time

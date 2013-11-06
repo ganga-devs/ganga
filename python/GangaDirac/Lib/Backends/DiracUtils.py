@@ -1,5 +1,6 @@
 from Ganga.Core.exceptions import GangaException, BackendError
-from GangaDirac.BOOT       import dirac_ganga_server
+#from GangaDirac.BOOT       import dirac_ganga_server
+from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -16,7 +17,7 @@ def get_result( command,
                 logger_message    = None,
                 exception_message = None,
                 eval_includes     = None ):
-    result = dirac_ganga_server.execute(command, eval_includes = eval_includes)
+    result = execute(command, eval_includes = eval_includes)
 
     if not result_ok(result):
         if logger_message is not None:

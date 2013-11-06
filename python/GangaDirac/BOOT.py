@@ -4,10 +4,11 @@ from Ganga.Utility.Config                            import getConfig
 from Ganga.Utility.logging                           import getLogger
 from GangaDirac.Lib.Server.WorkerThreadPool          import WorkerThreadPool
 from GangaDirac.Lib.Utilities.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
+from GangaDirac.Lib.Utilities.DiracUtilities         import execute
 logger = getLogger()
-dirac_ganga_server      = WorkerThreadPool()
-dirac_monitoring_server = WorkerThreadPool()
-exportToGPI('queues', ThreadPoolQueueMonitor(), 'Objects')
+user_threadpool       = WorkerThreadPool()
+monitoring_threadpool = WorkerThreadPool()
+exportToGPI('queues', ThreadPoolQueueMonitor(user_threadpool, monitoring_threadpool), 'Objects')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI(cmd, timeout = 60):
@@ -28,7 +29,7 @@ def diracAPI(cmd, timeout = 60):
     diracAPI(\'status([66])\')
 
     '''
-    return dirac_ganga_server.execute(cmd, timeout=timeout)
+    return execute(cmd, timeout=timeout)
 
 exportToGPI('diracAPI', diracAPI, 'Functions')
 
@@ -40,7 +41,7 @@ def diracAPI_interactive(connection_attempts = 5):
     import os, time,inspect,traceback
     from GangaDirac.Lib.Server.InspectionClient import runClient
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)),'InspectionServer.py')
-    dirac_ganga_server.execute_nonblocking("execfile('%s')"%serverpath, timeout=None, shell=False, priority = 1)
+    user_threadpool.add_process("execfile('%s')"%serverpath, timeout=None, shell=False, priority = 1)
     
     time.sleep(1)
     print "\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D"
@@ -63,7 +64,7 @@ def diracAPI_async(cmd, timeout = 120):
     '''
     Execute DIRAC API commands from w/in Ganga.
     '''
-    return dirac_ganga_server.execute_nonblocking(cmd, timeout=timeout, priority = 2)
+    return user_threadpool.add_process(cmd, timeout=timeout, priority = 2)
 
 exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 
@@ -74,7 +75,7 @@ def getDiracFiles():
     from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
     filename = getConfig('DIRAC')['DiracLFNBase'].replace('/','-') + '.lfns'
     logger.info('Creating list, this can take a while if you have a large number of SE files, please wait...')
-    dirac_ganga_server.execute('dirac-dms-user-lfns &> /dev/null', shell=True, timeout=None)
+    execute('dirac-dms-user-lfns &> /dev/null', shell=True, timeout=None)
     g=GangaList()
     with open(filename[1:],'r') as lfnlist:
         lfnlist.seek(0)
