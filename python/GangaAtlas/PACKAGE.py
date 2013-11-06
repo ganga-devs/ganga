@@ -13,8 +13,8 @@ from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '2.4.0',
-                     'allversions' : ['2.3.0', '2.4.0'],
+    'DQ2Clients' : { 'version' : '2.4.1',
+                     'allversions' : ['2.4.1', '2.4.0', '2.3.0'],
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
@@ -23,7 +23,7 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'panda-client' : { 'version' : '0.4.30', 
+    'panda-client' : { 'version' : '0.4.31', 
                        'PYTHONPATH':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
@@ -46,7 +46,7 @@ _external_packages = {
 
 # use DQ2Clients 2.3.0 if running <2.6
 import sys
-if sys.hexversion < 0x2060000:
+if sys.hexversion < 0x2050000:
     _external_packages['DQ2Clients']['version'] = '2.3.0'
 
 setup = PackageSetup(_external_packages)
