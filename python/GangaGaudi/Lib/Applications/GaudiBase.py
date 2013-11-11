@@ -61,7 +61,7 @@ class GaudiBase(IPrepareApp):
                                        doc=docstr)
     docstr = 'The env'
     schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=None,
-                                   hidden=1,doc=docstr)
+                                   hidden=1,doc=docstr,typelist=['type(None)','dict'])
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
     schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
 

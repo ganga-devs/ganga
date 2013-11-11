@@ -36,9 +36,9 @@ class TestDiracUtilities(GangaGPITestCase):
 #        self.assertTrue(timeit.timeit('''from GangaDirac.Lib.Server.WorkerThreadPool import execute\nexecute('pwd',shell=True, timeout=10)''',
 #                                      number=1) < 5)
         self.assertTrue(timeit.timeit('''from GangaDirac.Lib.Utilities.DiracUtilities import execute\nexecute('import os\\nprint os.getcwd()',timeout=10)''',
-                                      number=1) < 5)
+                                      number=1) < 10)
         self.assertTrue(timeit.timeit('''from GangaDirac.Lib.Utilities.DiracUtilities import execute\nexecute('pwd',shell=True, timeout=10)''',
-                                      number=1) < 5)
+                                      number=1) < 10)
 
     def test_execute_cwd(self):
 
@@ -56,13 +56,13 @@ class TestDiracUtilities(GangaGPITestCase):
         self.assertEqual(execute('echo $ALEX',shell=True, env=env).strip(),
                          '/hello/world')
         self.assertEqual(execute('import os\nprint os.environ.get("ALEX","BROKEN")',
-                                 env=env).strip(),
+                                 env=env, python_setup='#').strip(),
                          '/hello/world')
 
         ## Test env not updated by default
         execute('export NEWTEST=/new/test',shell=True, env=env)
         self.assertFalse('NEWTEST' in env)
-        execute('import os\nos.environ["NEWTEST"]="/new/test"', env=env)
+        execute('import os\nos.environ["NEWTEST"]="/new/test"', env=env,  python_setup='#')
         self.assertFalse('NEWTEST' in env)
 
         ## Test updating of env
@@ -70,7 +70,7 @@ class TestDiracUtilities(GangaGPITestCase):
         self.assertTrue('NEWTEST' in env)
         del env['NEWTEST']
         self.assertFalse('NEWTEST' in env)
-        execute('import os\nos.environ["NEWTEST"]="/new/test"', env=env, update_env=True)
+        execute('import os\nos.environ["NEWTEST"]="/new/test"', env=env,  python_setup='#', update_env=True)
         self.assertTrue('NEWTEST' in env)
 
     def test_execute_output(self):
