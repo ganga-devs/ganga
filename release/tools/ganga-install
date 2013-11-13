@@ -13,7 +13,7 @@ import os,sys
 
 # default configuration
 CONFIG = {}
-CONFIG['script_revision'] = "$Revision: 1.21 $"
+CONFIG['script_revision'] = "$Revision: 1.23 $"
 CONFIG['website_url'] = 'http://cern.ch/ganga'
 CONFIG['download_url'] = CONFIG['website_url']+'/download'
 CONFIG['prefix'] = os.path.join(os.path.expandvars('$HOME'),'Ganga')
@@ -237,7 +237,7 @@ def main():
                 
             for name in setup.packages:
                 if name == "DQ2Clients":
-                    for v in ['2.3.0', '2.4.0']:
+                    for v in ['2.3.0', '2.4.0', '2.4.1']:
                         setup.packages[name]['version'] = v
 
                         if silent:
