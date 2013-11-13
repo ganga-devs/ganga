@@ -4,7 +4,7 @@
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
-# $Id: ganga-install,v 1.21 2009-02-05 07:28:24 gangage Exp $
+# $Id: ganga-install,v 1.23 2009-02-05 07:28:24 gangage Exp $
 ################################################################################
 
 # written by: Kuba Moscicki, 2004 CERN, based on lcg.installation.manager and diane.installation.manager
