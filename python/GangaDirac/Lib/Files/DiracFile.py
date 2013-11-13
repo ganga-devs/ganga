@@ -6,8 +6,8 @@ from Ganga.GPIDev.Lib.File.IOutputFile        import IOutputFile
 from Ganga.GPIDev.Lib.Job.Job                 import Job
 from Ganga.Core.exceptions                    import GangaException
 from Ganga.Utility.files                      import expandfilename
-from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv, execute
-from GangaDirac.BOOT                          import user_threadpool
+from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv
+from GangaDirac.BOOT                          import dirac_ganga_server
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
 configDirac = getConfig('DIRAC')
@@ -163,7 +163,7 @@ class DiracFile(IOutputFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn!='':
-            user_threadpool.add_process('removeFile("%s")' % self.lfn, priority = 7)
+            dirac_ganga_server.execute_nonblocking('removeFile("%s")' % self.lfn, priority = 7)
 
     def remove(self):
         """
@@ -172,7 +172,7 @@ class DiracFile(IOutputFile):
         if self.lfn == "":
             raise GangaException('Can\'t remove a  file from DIRAC SE without an LFN.')
         logger.info('Removing file %s' % self.lfn)
-        stdout = execute('removeFile("%s")' % self.lfn)
+        stdout = dirac_ganga_server.execute('removeFile("%s")' % self.lfn)
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
             self.lfn=""
             self.locations=[]
@@ -190,12 +190,12 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t obtain metadata with no LFN set.')
 
         # eval again here as datatime not included in dirac_ganga_server
-        r = execute('getMetadata("%s")' % self.lfn)
+        r = dirac_ganga_server.execute('getMetadata("%s")' % self.lfn)
         try:
             ret  =  eval(r)
         except:
             ret = r
-        reps =  execute('getReplicas("%s")' % self.lfn)
+        reps =  dirac_ganga_server.execute('getReplicas("%s")' % self.lfn)
         if isinstance(ret,dict) and ret.get('OK', False) and self.lfn in ret.get('Value', {'Successful': {}})['Successful']:
             try:
                 if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
@@ -226,7 +226,7 @@ class DiracFile(IOutputFile):
             raise GangaException('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
+        stdout = dirac_ganga_server.execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
         if isinstance(stdout, dict) and stdout.get('OK',False) and self.lfn in stdout.get('Value',{'Successful':{}})['Successful']:
             if self.namePattern=="":
                 name = os.path.basename(self.lfn)
@@ -250,7 +250,7 @@ class DiracFile(IOutputFile):
             raise GangaException('Must supply an lfn to replicate')
 
         logger.info("Replicating file %s to %s" % (self.lfn, destSE))
-        stdout = execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, self.locations[0]))
+        stdout = dirac_ganga_server.execute('replicateFile("%s", "%s", "%s")' % (self.lfn, destSE, self.locations[0]))
         if isinstance(stdout, dict) and stdout.get('OK',False) and self.lfn in stdout.get('Value',{'Successful':{}})['Successful']:
             # if 'Successful' in eval(stdout) and self.lfn in eval(stdout)['Successful']:
             self.locations.append(destSE)
@@ -335,7 +335,7 @@ class DiracFile(IOutputFile):
             logger.info('Uploading file %s' % name)
 #            for se in storage_elements:
 #                stdout = dirac_ganga_server.execute('uploadFile("%s", "%s", "%s")' %(lfn, name, se))
-            stdout = execute('uploadFile("%s", "%s", %s)' %(lfn, name, str(storage_elements)))
+            stdout = dirac_ganga_server.execute('uploadFile("%s", "%s", %s)' %(lfn, name, str(storage_elements)))
             if type(stdout)==str: 
                 logger.warning("Couldn't upload file '%s': %s"%(os.path.basename(name), stdout))##FIX this to run on a process so dont need to interpret the string stdout from process
                 continue

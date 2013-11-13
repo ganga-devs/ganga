@@ -5,7 +5,6 @@ from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils       import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils            import result_ok
 from GangaDirac.Lib.Files.DiracFile                import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities       import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.IRuntimeHandler         import IRuntimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
@@ -24,7 +23,8 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
     def __check_versions_against_dirac(self, app):
         ## cache versions dict
         if not LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
-            result = execute('getRootVersions()')
+            from GangaDirac.BOOT import dirac_ganga_server
+            result = dirac_ganga_server.execute('getRootVersions()')
             if not result_ok(result):
                 logger.error('Could not obtain available ROOT versions: %s' \
                              % str(result))
@@ -40,7 +40,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,msg)
             
             valid_davinci = LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache[app.version][8:]
-            valid_platforms = execute('getSoftwareVersions()')['Value']['DaVinci'][valid_davinci]
+            valid_platforms = dirac_ganga_server.execute('getSoftwareVersions()')['Value']['DaVinci'][valid_davinci]
             platform = getConfig('ROOT')['arch']
             if not platform in valid_platforms:
                 msg = 'Invalid root architecture/platform: %s.  Valid architectures/platforms: %s' \

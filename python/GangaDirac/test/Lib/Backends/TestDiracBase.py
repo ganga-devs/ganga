@@ -11,36 +11,39 @@ import unittest, tempfile, os
 
 class TestDiracBase(GangaGPITestCase):
     def setUp(self):
-        self.returnObject = None
-        self.toCheck      = {}
-        def execute(command,timeout=60,env=None,cwd=None,shell=False):
-            import inspect
-            frame = inspect.currentframe()
-            fedInVars = inspect.getargvalues(frame).locals
-            del frame
-            
-            for key, value in self.toCheck.iteritems():
-                if key in fedInVars:
-                    self.assertEqual(fedInVars[key], value)
-
-            return self.returnObject
-        def add_process( this, command,command_args=(),command_kwargs={},timeout=60,env=None,cwd=None,shell=False,
-                         priority=5,callback_func=None,callback_args =(),callback_kwargs={} ):
-            import inspect
-            frame = inspect.currentframe()
-            fedInVars = inspect.getargvalues(frame).locals
-            del frame
-            
-            for key, value in self.toCheck.iteritems():
-                if key in fedInVars:
-                    self.assertEqual(fedInVars[key], value)
-                    
-            return self.returnObject
-
-        self.db = DiracBase()
         from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
-        setattr(sys.modules[self.db.__module__], 'execute'    , execute    )
-        setattr(WorkerThreadPool               , "add_process", add_process)
+        class testServer(object):
+            def __init__(this, returnObject):
+                this.returnObject = returnObject
+                this.toCheck      = {}
+
+            def execute(this,command,timeout=60,env=None,cwd=None,shell=False):
+                import inspect
+                frame = inspect.currentframe()
+                fedInVars = inspect.getargvalues(frame).locals
+                del frame
+
+                for key, value in this.toCheck.iteritems():
+                    if key in fedInVars:
+                        self.assertEqual(fedInVars[key], value)
+
+                return this.returnObject
+            def execute_nonblocking( this,command,command_args=(),command_kwargs={},timeout=60,env=None,cwd=None,shell=False,
+                                     priority=5,callback_func=None,callback_args =(),callback_kwargs={} ):
+                import inspect
+                frame = inspect.currentframe()
+                fedInVars = inspect.getargvalues(frame).locals
+                del frame
+                
+                for key, value in this.toCheck.iteritems():
+                    if key in fedInVars:
+                        self.assertEqual(fedInVars[key], value)
+
+                return this.returnObject
+        self.ts = testServer(None)
+        setattr(WorkerThreadPool, "execute", self.ts.execute)
+        setattr(WorkerThreadPool, "execute_nonblocking", self.ts.execute_nonblocking)
+        self.db = DiracBase()
         self.script="""
 # dirac job created by ganga
 from DIRAC.Core.Base.Script import parseCommandLine
@@ -136,7 +139,7 @@ output(result)
         file.write(self.script.replace('###PARAMETRIC_INPUTDATA###',
                                        str([['a'],['b']])))
         file.close()
-        self.returnObject={}
+        self.ts.returnObject={}
 #        class errorserver:
 #            def execute(this, dirac_cmd):
 #                return {}
@@ -146,7 +149,8 @@ output(result)
         self.db.status='test'
         self.assertRaises(BackendError,
                           self.db._common_submit,
-                          name)
+                          name,
+                          self.ts)
 #                          errorserver())
 
         self.assertEqual(self.db.id,None,'id not None')
@@ -162,9 +166,9 @@ output(result)
 #                    return {'OK':True, 'Value': [123,456]}
 #                return {'OK':True, 'Value': 12345}
 
-        self.toCheck={'command':"execfile('%s')"%name}
-        self.returnObject={'OK':True, 'Value': 12345}
-        self.assertTrue(self.db._common_submit(name))
+        self.ts.toCheck={'command':"execfile('%s')"%name}
+        self.ts.returnObject={'OK':True, 'Value': 12345}
+        self.assertTrue(self.db._common_submit(name, self.ts))
         self.assertEqual(self.db.id,12345,'id not set')
 
         def _setup_bulk_subjobs(dirac_ids, dirac_script):
@@ -173,8 +177,8 @@ output(result)
             return True
 
         setattr(self.db,'_setup_bulk_subjobs',_setup_bulk_subjobs)
-        self.returnObject={'OK':True, 'Value': [123,456]}
-        self.assertTrue(self.db._common_submit(name))
+        self.ts.returnObject={'OK':True, 'Value': [123,456]}
+        self.assertTrue(self.db._common_submit(name, self.ts))
 
         os.remove(name)
 
@@ -194,7 +198,7 @@ output(result)
         def _addition_sandbox_content(subjobconfig):
             self.assertEqual(subjobconfig,sjc,'config objects not equal')
             return ['g']
-        def _common_submit(dirac_script):
+        def _common_submit(dirac_script, server):
             #this needs to change to workerpool
             #from GangaDirac.Lib.Server.DiracClient import DiracClient
             #self.assertTrue(isinstance(server, DiracClient),'not a dirac client')
@@ -228,10 +232,13 @@ output(result)
     
 
     def test_resubmit(self):
-        def _resubmit():
-            return '_resubmit run ok'
+        def _resubmit(server):
+            from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
+            self.assertTrue(isinstance(server, WorkerThreadPool), 'server passes as arg is not of type WorkerThreadPool')
+            return server
         setattr(self.db,'_resubmit',_resubmit)
-        self.assertEqual(self.db.resubmit(), '_resubmit run ok')
+        from GangaDirac.BOOT import dirac_ganga_server
+        self.assertEqual(self.db.resubmit(), dirac_ganga_server )
 
 
     def test__resubmit(self):
@@ -239,8 +246,9 @@ output(result)
  #       class server:
  #           def execute(this, dirac_cmd):
  #               return {}
-        def _common_submit(dirac_script):
-            return '_comon_submit run ok'
+        def _common_submit(dirac_script, server):
+            
+            return True
         setattr(self.db,'_common_submit',_common_submit)
 
         masterj = Job(backend=self.db)
@@ -249,9 +257,10 @@ output(result)
 
         # problem as keeps finding job 0 in main repository which has this 'dirac-script' file
         self.db._parent = masterj._impl        
-        self.returnObject={}
+        self.ts.returnObject={}
         self.assertRaises(BackendError,
-                          self.db._resubmit)
+                          self.db._resubmit,
+                          self.ts)
 #                          server())
 
 ##         self.db._parent = j._impl        
@@ -291,7 +300,7 @@ output(result)
 #            def execute(this, dirac_cmd):
 #                return {}
 #        setattr(DiracBase,'dirac_ganga_server',errorserver())
-        self.returnObject={}
+        self.ts.returnObject={}
         self.db.id=1234
 
         from Ganga.Core import BackendError
@@ -303,8 +312,8 @@ output(result)
 #                self.assertEqual(dirac_cmd,'kill(1234)','command not right')
 #                return {'OK': True}
 #        setattr(DiracBase,'dirac_ganga_server',server())
-        self.toCheck={'command':'kill(1234)'}
-        self.returnObject={'OK': True}
+        self.ts.toCheck={'command':'kill(1234)'}
+        self.ts.returnObject={'OK': True}
         self.assertTrue(self.db.kill(),'didn\'t run properly')
 
     def test_peek(self):
@@ -315,8 +324,8 @@ output(result)
 #        setattr(DiracBase,'dirac_ganga_server',server())
 
         self.db.id=1234
-        self.toCheck={'command':'peek(1234)'}
-        self.returnObject={'OK':True,'Value':True}
+        self.ts.toCheck={'command':'peek(1234)'}
+        self.ts.returnObject={'OK':True,'Value':True}
         self.db.peek()
 
     def test_getOutputSandbox(self):
@@ -332,12 +341,12 @@ output(result)
 #                                 'command not right')
 #                return {'OK':True}
 #        setattr(DiracBase,'dirac_ganga_server',server())
-        self.toCheck={'command': "getOutputSandbox(1234,'%s')"%dir}
-        self.returnObject={'OK':True}
+        self.ts.toCheck={'command': "getOutputSandbox(1234,'%s')"%dir}
+        self.ts.returnObject={'OK':True}
         self.assertTrue(self.db.getOutputSandbox(),'didn\'t run')
 
         dir = 'test_dir'
-        self.toCheck={'command': "getOutputSandbox(1234,'%s')"%dir}
+        self.ts.toCheck={'command': "getOutputSandbox(1234,'%s')"%dir}
         self.assertTrue(self.db.getOutputSandbox(dir),'didn\'t run with modified dir')
 
 #        class errorserver:
@@ -345,8 +354,8 @@ output(result)
 #                return {}
 #        setattr(DiracBase,'dirac_ganga_server',errorserver())
  
-        self.toCheck={}
-        self.returnObject={}
+        self.ts.toCheck={}
+        self.ts.returnObject={}
         self.assertFalse(self.db.getOutputSandbox(dir)), 'didn\'t fail gracefully'
 
     def test_removeOutputData(self):

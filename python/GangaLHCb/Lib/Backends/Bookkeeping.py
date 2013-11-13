@@ -3,7 +3,7 @@
 
 import os
 import sys
-from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from GangaDirac.BOOT import dirac_ganga_server
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
@@ -38,7 +38,7 @@ class Bookkeeping(GangaObject):
         f=self._createTmpFile()
         if gui:
             cmd = 'bookkeepingGUI("%s")' % f
-            execute(cmd)
+            dirac_ganga_server.execute(cmd)
             l = self._fileToList(f)
             ds = LHCbDataset()
             ds.__construct__([l])

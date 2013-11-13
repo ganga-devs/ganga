@@ -2,7 +2,7 @@
 ## in all cases with the relavent app name (DaVinci, Gauss etc...)
 import os, tempfile, pprint, sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
-from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox
+from GangaGaudi.Lib.Applications.GaudiUtils import shellEnvUpdate_cmd, fillPackedSandbox
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems#app_postprocess#lumi, events, xmldatafiles, xmldatanumbers, xmlskippedfiles#,get_parser
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -13,7 +13,6 @@ from PythonOptionsParser import PythonOptionsParser
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from GangaDirac.Lib.Utilities.DiracUtilities       import execute
 import Ganga.Utility.logging
 import subprocess
 import CMTscript
@@ -218,9 +217,6 @@ class AppName(Gaudi):
         # Use this to create a new job with data from extraopts of an old job
         j=Job(inputdata=jobs[-1].application.readInputData([],True))
         '''
-        if self.is_prepared is None:
-            logger.error("Please prepare the application before calling 'readInputData'")
-            raise Exception('Application must be prepared')
         
         def dummyfile():
             temp_fd,temp_filename=tempfile.mkstemp(text=True,suffix='.py')
@@ -233,7 +229,7 @@ class AppName(Gaudi):
         # use a dummy file to keep the parser happy
         if len(optsfiles)==0: optsfiles.append(dummyfile())
         
-        if self.env is None: self._getshell()
+        if not hasattr(self,'env'): self._getshell()
         if extraopts: extraopts=self.extraopts
         else: extraopts=""
             
@@ -315,9 +311,10 @@ class AppName(Gaudi):
 
     def _getshell(self):
         import copy
+        from GangaDirac.BOOT import dirac_ganga_server
         self.env = copy.deepcopy(os.environ)
 
-        execute('. `which LbLogin.sh` -c %s' % self.platform,env= self.env,shell=True,update_env=True)
+        dirac_ganga_server.execute('. `which LbLogin.sh` -c %s' % self.platform,env= self.env,shell=True,update_env=True)
         self.env['User_release_area'] = self.user_release_area
 
         opts = ''
@@ -329,7 +326,7 @@ class AppName(Gaudi):
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
 
-        execute(cmd,env=self.env,shell=True,update_env=True)
+        dirac_ganga_server.execute(cmd,env=self.env,shell=True,update_env=True)
 
 
 ##         cmd += ' > /dev/null 2>&1; python -c "import os; print os.environ"'

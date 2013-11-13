@@ -1,7 +1,6 @@
 import types
 #from GangaDirac.Lib.Backends.DiracBase       import dirac_ganga_server, dirac_monitoring_server
 #from GangaDirac.BOOT                         import dirac_ganga_server, dirac_monitoring_server
-from GangaDirac.Lib.Server.WorkerThreadPool  import WorkerThreadPool
 from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
@@ -17,21 +16,16 @@ class ThreadPoolQueueMonitor(object):
     the getConfig('DIRAC')['NumWorkerThreads'] config option.
     '''
 
-    def __init__(self,
-                 user_threadpool       = WorkerThreadPool(),
-                 monitoring_threadpool = WorkerThreadPool()):
-        self.__user_threadpool       = user_threadpool
-        self.__monitoring_threadpool = monitoring_threadpool
-
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
+        from GangaDirac.BOOT import dirac_ganga_server, dirac_monitoring_server
         output=''
         output+= '{0:^55} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
         output+= '{0:^55} | {1:^50}\n'.format('------------------', '------------------------')
         output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('Name', 'Command', 'Timeout')
         output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('----', '-------', '-------')
-        for u, m in zip( self.__user_threadpool.worker_status(),
-                         self.__monitoring_threadpool.worker_status() ):
+        for u, m in zip( dirac_ganga_server.worker_status(),
+                         dirac_monitoring_server.worker_status() ):
             # name has extra spaces as colour characters are invisible but still count
             name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
             name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
@@ -48,18 +42,19 @@ class ThreadPoolQueueMonitor(object):
         output+= '\n'
         output+= "Ganga user queue:\n"
         output+= "----------------\n"
-        output+= str([display_element(i) for i in self.__user_threadpool.get_queue()])
+        output+= str([display_element(i) for i in dirac_ganga_server.get_queue()])
         output+= '\n'
         output+= "Ganga monitoring queue:\n"
         output+= "----------------------\n"
-        output+= str([display_element(i) for i in self.__monitoring_threadpool.get_queue()])
+        output+= str([display_element(i) for i in dirac_monitoring_server.get_queue()])
         return output
 
     def purge(self):
         """
         Purge the Ganga user thread pool's queue
         """
-        self.__user_threadpool.clear_queue()
+        from GangaDirac.BOOT import dirac_ganga_server
+        dirac_ganga_server.clear_queue()
 
     def add(self, worker_code, args=(), kwargs={}, priority = 5):
         """
@@ -94,16 +89,17 @@ class ThreadPoolQueueMonitor(object):
                                  queue with lower number = higher priority.
                                  This then should be an int normally 0-9
         """
+        from GangaDirac.BOOT import dirac_ganga_server
         if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
             logger.error('Only python callable objects can be added to the queue using queues.add()')
             logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
             logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
             logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
-        self.__user_threadpool.add_function(worker_code,
-                                            args           = args,
-                                            kwargs         = kwargs,
-                                            priority       = priority)
+        dirac_ganga_server.execute_nonblocking(worker_code,
+                                               command_args   = args,
+                                               command_kwargs = kwargs,
+                                               priority       = priority)
 
     def addProcess(self, 
                    command, 
@@ -194,19 +190,20 @@ class ThreadPoolQueueMonitor(object):
             logger.error("Input command must be of type 'string'")
             return
 
+        from GangaDirac.BOOT import dirac_ganga_server
         if env is None: # rather than have getDiracEnv() as default in arg list as looks messy in help ;-)
             env = getDiracEnv()
-        self.__user_threadpool.add_process( command,
-                                            timeout          = timeout,
-                                            env              = env,
-                                            cwd              = cwd,
-                                            shell            = shell,
-                                            eval_includes    = eval_includes,
-                                            update_env       = update_env,
-                                            priority         = priority,
-                                            callback_func    = callback_func,
-                                            callback_args    = callback_args,
-                                            callback_kwargs  = callback_kwargs,
-                                            fallback_func    = fallback_func,
-                                            fallback_args    = fallback_args,
-                                            fallback_kwargs  = fallback_kwargs )
+        dirac_ganga_server.execute_nonblocking( command,
+                                                timeout          = timeout,
+                                                env              = env,
+                                                cwd              = cwd,
+                                                shell            = shell,
+                                                eval_includes    = eval_includes,
+                                                update_env       = update_env,
+                                                priority         = priority,
+                                                callback_func    = callback_func,
+                                                callback_args    = callback_args,
+                                                callback_kwargs  = callback_kwargs,
+                                                fallback_func    = fallback_func,
+                                                fallback_args    = fallback_args,
+                                                fallback_kwargs  = fallback_kwargs )

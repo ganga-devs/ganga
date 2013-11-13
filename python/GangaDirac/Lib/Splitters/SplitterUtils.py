@@ -1,6 +1,5 @@
 from Ganga.GPIDev.Adapters.ISplitter    import SplittingError
-#from GangaDirac.BOOT                    import dirac_ganga_server
-from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from GangaDirac.BOOT                    import dirac_ganga_server
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.Utility.logging              import getLogger
 logger = getLogger()
@@ -11,9 +10,9 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
     inputs.files = inputs.files[:maxFiles]
     
-    result = execute('splitInputData(%s,%d)'\
-                         % (inputs.getLFNs(),filesPerJob)
-                     )
+    result = dirac_ganga_server.execute('splitInputData(%s,%d)'\
+                                            % (inputs.getLFNs(),filesPerJob)
+                                        )
 
     if not result_ok(result):
         logger.error('Error splitting files: %s' % str(result))
