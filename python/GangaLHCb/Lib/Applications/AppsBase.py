@@ -152,25 +152,26 @@ class AppName(Gaudi):
 
         # Combining subjobs XMLSummaries.
         if j.subjobs:
-            env = j.application.getenv()
+            env = self.getenv(self.is_prepared is None)
             if 'XMLSUMMARYBASEROOT' not in env:
-                logger.error('"XMLSUMMARYBASEROOT" env var not defined so summary.xml files not merged for subjobs of job %s' % j.fqid)
+                logger.warning('"XMLSUMMARYBASEROOT" env var not defined so summary.xml files not merged for subjobs of job %s' % j.fqid)
                 return
 
             summaries = []
             for sj in j.subjobs:
                 outputxml = os.path.join(sj.outputdir,'summary.xml')
                 if not os.path.exists(outputxml):
-                    logger.warning("XMLSummary for job %s will not be merged as 'summary.xml' not present in job %s outputdir" % (sj.fqid,sj.fqid))
-                    continue
+                    logger.warning("XMLSummary for job %s subjobs will not be merged as 'summary.xml' not present in job %s outputdir" % (j.fqid,sj.fqid))
+                    return
                 summaries.append(outputxml)
 
-            if not summaries:
-                logger.error('None of the subjobs of job %s produced the output XML summary file "summary.xml". Merging will therefore not happen' % j.fqid)
-                return
+            # Not needed now that we dont merge if ANY of subjobs have missing summary.xml
+            #if not summaries:
+                #logger.debug('None of the subjobs of job %s produced the output XML summary file "summary.xml". Merging will therefore not happen' % j.fqid)
+                #return
             
-            schemapath  = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'xml/XMLSummary.xsd')
-            summarypath = os.path.join(os.environ['XMLSUMMARYBASEROOT'],'python/XMLSummaryBase')
+            schemapath  = os.path.join(env['XMLSUMMARYBASEROOT'],'xml/XMLSummary.xsd')
+            summarypath = os.path.join(env['XMLSUMMARYBASEROOT'],'python/XMLSummaryBase')
             sys.path.append(summarypath)
             import summary
 
@@ -218,10 +219,6 @@ class AppName(Gaudi):
         # Use this to create a new job with data from extraopts of an old job
         j=Job(inputdata=jobs[-1].application.readInputData([],True))
         '''
-        if self.is_prepared is None:
-            logger.error("Please prepare the application before calling 'readInputData'")
-            raise Exception('Application must be prepared')
-        
         def dummyfile():
             temp_fd,temp_filename=tempfile.mkstemp(text=True,suffix='.py')
             os.write(temp_fd,"Dummy file to keep the Optionsparser happy")
@@ -233,13 +230,13 @@ class AppName(Gaudi):
         # use a dummy file to keep the parser happy
         if len(optsfiles)==0: optsfiles.append(dummyfile())
         
-        if self.env is None: self._getshell()
+#        if self.env is None: self._getshell()
         if extraopts: extraopts=self.extraopts
         else: extraopts=""
             
        # parser = check_inputs(optsfiles, extraopts, self.env) 
         try:
-            parser = PythonOptionsParser(optsfiles,extraopts,self.env)
+            parser = PythonOptionsParser(optsfiles,extraopts,self.getenv(False))
         except Exception, e:
             msg = 'Unable to parse the job options. Please check options ' \
                   'files and extraopts.'
@@ -315,10 +312,10 @@ class AppName(Gaudi):
 
     def _getshell(self):
         import copy
-        self.env = copy.deepcopy(os.environ)
+        env = copy.deepcopy(os.environ)
 
-        execute('. `which LbLogin.sh` -c %s' % self.platform,env= self.env,shell=True,update_env=True)
-        self.env['User_release_area'] = self.user_release_area
+        execute('. `which LbLogin.sh` -c %s' % self.platform,env=env,shell=True,update_env=True)
+        env['User_release_area'] = self.user_release_area
 
         opts = ''
         if self.setupProjectOptions: opts = self.setupProjectOptions
@@ -329,7 +326,7 @@ class AppName(Gaudi):
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
 
-        execute(cmd,env=self.env,shell=True,update_env=True)
+        execute(cmd,env=env,shell=True,update_env=True)
 
 
 ##         cmd += ' > /dev/null 2>&1; python -c "import os; print os.environ"'
@@ -348,14 +345,14 @@ class AppName(Gaudi):
         
         app_ok = False
         ver_ok = False
-        for var in self.env:
+        for var in env:
             if var.find(self.appname) >= 0: app_ok = True
-            if self.env[var].find(self.version) >= 0: ver_ok = True
+            if env[var].find(self.version) >= 0: ver_ok = True
         if not app_ok or not ver_ok:
             msg = 'Command "%s" failed to properly setup environment.' % cmd
             logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
-
+        return env
 
 
     def _get_parser(self):
@@ -375,7 +372,7 @@ class AppName(Gaudi):
             extraopts     += "\nLHCbApp().XMLSummary='summary.xml'"
             
         try:
-            parser = PythonOptionsParser(optsfiles,extraopts,self.env)
+            parser = PythonOptionsParser(optsfiles,extraopts,self.getenv(False))
         except ApplicationConfigurationError, e:
             # fix this when preparing not attached to job
             
