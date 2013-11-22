@@ -366,6 +366,7 @@ class Athena(IPrepareApp):
                  'useMana'            : SimpleItem(defvalue = False, doc='Use Mana'),
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
                  'useNewTRF'              : SimpleItem(defvalue = False, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
+                 'useNoAthenaSetup'       : SimpleItem(defvalue = False, doc='Use No Athena setup to allow e.g. free ROOT setup'),
                  })
                      
     _category = 'applications'
@@ -965,7 +966,7 @@ class Athena(IPrepareApp):
             logger.info("Final Mana version '%s', cmt config '%s'" % (self.atlas_release, self.atlas_cmtconfig))
 
         # get info from CMT
-        if not self.atlas_exetype in ['EXE'] or self.atlas_release=='': 
+        if not self.atlas_exetype in ['EXE'] or (self.atlas_release=='' and self.useNoAthenaSetup==False): 
             # get Athena versions
             rc, out = AthenaUtils.getAthenaVer()
             # failed

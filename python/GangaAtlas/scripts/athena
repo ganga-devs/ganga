@@ -122,6 +122,7 @@ p.add_option('--excludedSite', action='store', type='string', dest='excludedSite
 p.add_option('--excludedCloud', action='store', type='string', dest='excludedCloud', default='', help="list of Panda clouds which are not used for site section, e.g., US,FR,TW")
 p.add_option('--useChirpServer', action='store', type='string', dest='useChirpServer', default='', help="Chirp Server to be used to stage out the output e.g., voatlas92.cern.ch")
 p.add_option('--rootver', action='store', type='string', dest='rootver', help='Specify a different ROOT version. Cannot be used with --nobuild specified.' )
+p.add_option('--useNoAthenaSetup', action='store_true', help='No athena setup is used for Panda jobs - recommended to use it together with --rootver' )
 
 # Application options
 p.add_option('--options', '-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
@@ -340,7 +341,8 @@ if opt.useAthenaPackages:
 if opt.cmtConfig:
     j.application.atlas_cmtconfig=opt.cmtConfig
 
-
+if opt.useNoAthenaSetup:
+    j.application.useNoAthenaSetup=True
 
 # inputdata
 
