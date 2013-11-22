@@ -534,6 +534,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 fout.type = 'output'
                 fout.dataset = self.libDatasets[bjsite]
                 fout.destinationDBlock = self.libDatasets[bjsite]
+                if job.outputdata.spacetoken:
+                    fout.destinationDBlockToken = job.outputdata.spacetoken 
                 jspec.addFile(fout)
 
                 flog = FileSpec()
@@ -541,6 +543,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 flog.type = 'log'
                 flog.dataset = self.libDatasets[bjsite]
                 flog.destinationDBlock = self.libDatasets[bjsite]
+                if job.outputdata.spacetoken:
+                    flog.destinationDBlockToken = job.outputdata.spacetoken 
                 if configPanda['chirpconfig']:
                     flog.dispatchDBlockToken = configPanda['chirpconfig']
                 jspec.addFile(flog)
