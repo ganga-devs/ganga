@@ -147,6 +147,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if app.atlas_exetype == 'ATHENA' and not app.user_area.name and not job.backend.libds:
             raise ApplicationConfigurationError(None,'app.user_area.name is null')
 
+        # use the shared area if possible
+        tmp_user_area_name = app.user_area.name
+        if app.is_prepared is not True:
+            from Ganga.Utility.files import expandfilename
+            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+            tmp_user_area_name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.user_area.name))
+            
         # validate inputdata
         if job.inputdata:
             if job.inputdata._name == 'DQ2Dataset':
@@ -383,15 +390,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.inputsandbox:
             logger.warning("Submitting Panda job with inputsandbox. This may slow the submission slightly.")
 
-            if app.user_area.name:
-                inpw = os.path.dirname(app.user_area.name)
+            if tmp_user_area_name:
+                inpw = os.path.dirname(tmp_user_area_name)
                 self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen'))
             else:
                 inpw = job.getInputWorkspace()
                 self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
 
-            if app.user_area.name:
-                rc, output = commands.getstatusoutput('cp %s %s.gz' % (app.user_area.name, self.inputsandbox))
+            if tmp_user_area_name:
+                rc, output = commands.getstatusoutput('cp %s %s.gz' % (tmp_user_area_name, self.inputsandbox))
                 if rc:
                     logger.error('Copying user_area failed with status %d',rc)
                     logger.error(output)
@@ -458,13 +465,13 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 raise ApplicationConfigurationError(None,'Packing inputsandbox failed.')
             self.inputsandbox += ".gz"
         else:
-            self.inputsandbox = app.user_area.name
+            self.inputsandbox = tmp_user_area_name
 
         # upload sources
         if self.inputsandbox and not job.backend.libds:
             uploadSources(os.path.dirname(self.inputsandbox),os.path.basename(self.inputsandbox))
 
-            if not self.inputsandbox == app.user_area.name:
+            if not self.inputsandbox == tmp_user_area_name:
                 logger.info('Removing source tarball %s ...' % self.inputsandbox )
                 os.remove(self.inputsandbox)
 
@@ -534,6 +541,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 fout.type = 'output'
                 fout.dataset = self.libDatasets[bjsite]
                 fout.destinationDBlock = self.libDatasets[bjsite]
+                if job.outputdata.spacetoken:
+                    fout.destinationDBlockToken = job.outputdata.spacetoken 
                 jspec.addFile(fout)
 
                 flog = FileSpec()
@@ -541,6 +550,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 flog.type = 'log'
                 flog.dataset = self.libDatasets[bjsite]
                 flog.destinationDBlock = self.libDatasets[bjsite]
+                if job.outputdata.spacetoken:
+                    flog.destinationDBlockToken = job.outputdata.spacetoken 
                 if configPanda['chirpconfig']:
                     flog.dispatchDBlockToken = configPanda['chirpconfig']
                 jspec.addFile(flog)

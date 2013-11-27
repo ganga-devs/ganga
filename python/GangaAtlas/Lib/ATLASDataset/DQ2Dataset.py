@@ -1068,6 +1068,7 @@ class DQ2OutputDataset(Dataset):
         'datasetname'    : SimpleItem(defvalue='', filter="checkNameConsistency", doc='Name of the DQ2 output dataset automatically filled by the job'),
         'datasetList'    : SimpleItem(defvalue = [], typelist=['str'],  sequence = 1,protected=1, doc='List of DQ2 output datasets automatically filled by the AthenaMC job'),
         'location'       : SimpleItem(defvalue='',doc='SE output path location'),
+        'spacetoken'     : SimpleItem(defvalue='',doc='SE output spacetoken'),
         'local_location' : SimpleItem(defvalue='',doc='Local output path location'),
 #        'use_datasetname' : SimpleItem(defvalue = False, doc = 'Use datasetname as it is and do not prepend users.myname.ganga'),
         'use_shortfilename' : SimpleItem(defvalue = False, doc = 'Use shorter version of filenames and do not prepend users.myname.ganga'),

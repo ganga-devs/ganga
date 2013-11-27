@@ -366,6 +366,7 @@ class Athena(IPrepareApp):
                  'useMana'            : SimpleItem(defvalue = False, doc='Use Mana'),
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
                  'useNewTRF'              : SimpleItem(defvalue = False, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
+                 'useNoAthenaSetup'       : SimpleItem(defvalue = False, doc='Use No Athena setup to allow e.g. free ROOT setup'),
                  })
                      
     _category = 'applications'
@@ -916,14 +917,15 @@ class Athena(IPrepareApp):
         self.atlas_exetype = self.atlas_exetype.upper()
 
         # Set CMTCONFIG
-        if os.environ.has_key('CMTCONFIG'):
-            self.atlas_cmtconfig = os.environ['CMTCONFIG']
-            if self.atlas_cmtconfig.startswith('x86_64'):
-                #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
-                logger.warning('CMTCONFIG = %s, Your CMT setup is using 64 bit - are you sure you want to use 64 bit ?'% self.atlas_cmtconfig)
-        else:
-            self.atlas_cmtconfig = config['CMTCONFIG']
-            os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
+        if self.atlas_cmtconfig == "":
+            if os.environ.has_key('CMTCONFIG'):
+                self.atlas_cmtconfig = os.environ['CMTCONFIG']
+                if self.atlas_cmtconfig.startswith('x86_64'):
+                    #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
+                    logger.warning('CMTCONFIG = %s, Your CMT setup is using 64 bit - are you sure you want to use 64 bit ?'% self.atlas_cmtconfig)
+            else:
+                self.atlas_cmtconfig = config['CMTCONFIG']
+                os.environ['CMTCONFIG'] = self.atlas_cmtconfig 
 
 
         # check for conflicts
@@ -965,7 +967,7 @@ class Athena(IPrepareApp):
             logger.info("Final Mana version '%s', cmt config '%s'" % (self.atlas_release, self.atlas_cmtconfig))
 
         # get info from CMT
-        if not self.atlas_exetype in ['EXE'] or self.atlas_release=='': 
+        if not self.atlas_exetype in ['EXE'] or (self.atlas_release=='' and self.useNoAthenaSetup==False): 
             # get Athena versions
             rc, out = AthenaUtils.getAthenaVer()
             # failed

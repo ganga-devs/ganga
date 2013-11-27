@@ -61,7 +61,7 @@ class GaudiBase(IPrepareApp):
                                        doc=docstr)
     docstr = 'The env'
     schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=None,
-                                   hidden=1,doc=docstr)
+                                   hidden=1,doc=docstr,typelist=['type(None)','dict'])
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
     schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
 
@@ -99,36 +99,42 @@ class GaudiBase(IPrepareApp):
             
     def _getshell(self):
 
-        self.env = copy.deepcopy(os.environ)
+        env = copy.deepcopy(os.environ)
 
-        self.env['User_release_area'] = self.user_release_area
-        self.env['CMTCONFIG'] = self.platform
+        env['User_release_area'] = self.user_release_area
+        env['CMTCONFIG'] = self.platform
+        return env
 
-    def getenv(self):
+    def getenv(self, cache_env=False):
         '''Returns a copy of the environment used to flatten the options, e.g.
         env = DaVinci().getenv(), then calls like env[\'DAVINCIROOT\'] return
         the values.
         
         Note: Editing this does not affect the options processing.
         '''
-        if self.is_prepared is None:
-            logger.error("Please prepare the application before calling 'getenv'")
-            raise Exception('Application must be prepared')
         if self.env is None:
+            shell=None
             try:
                 job = self.getJobObject()
             except:
-                self._getshell()
-                return copy.deepcopy(self.env)
-            env_file_name = job.getDebugWorkspace().getPath() + '/gaudi-env.py.gz'
-            if not os.path.exists(env_file_name):
-                self._getshell()
-                return copy.deepcopy(self.env)
-            in_file = gzip.GzipFile(env_file_name,'rb')
-            exec(in_file.read())
-            in_file.close()
-            return gaudi_env            
+                pass
+            else:
+                env_file_name = job.getDebugWorkspace().getPath() + '/gaudi-env.py.gz'
+                if os.path.exists(env_file_name):
+                    in_file = gzip.GzipFile(env_file_name,'rb')
+                    exec(in_file.read())
+                    in_file.close()
+                    shell=gaudi_env
+
+            if shell is None:
+                shell=self._getshell()
+            if cache_env:
+                self.env = copy.deepcopy(shell)
+            return shell
         return copy.deepcopy(self.env)
+
+    def _export_getenv(self):
+        return self.getenv(False)
         
 ##         try:
 ##             job = self.getJobObject()
@@ -161,15 +167,12 @@ class GaudiBase(IPrepareApp):
                 except Exception, e:
                     logger.error("Can not create cmt user directory: "+cmtpath)
                     return
-        if self.is_prepared is None:
-            logger.error("Please prepare the application before calling 'getpack'")
-            raise Exception('Application must be prepared')
-        if self.env is None: self._getshell()
+#        if self.env is None: self._getshell()
 #        shellEnv_cmd('getpack %s %s'%(self.appname, self.version),
         execute('getpack %s' % options,
                 shell=True,
                 timeout=None,
-                env=self.env,
+                env=self.getenv(False),
                 cwd=self.user_release_area)
            
     def make(self, argument=''):
@@ -179,28 +182,22 @@ class GaudiBase(IPrepareApp):
         #command = '###CMT### broadcast -global -select=%s cmt make ' \
         #          % self.user_release_area + argument
         config = Ganga.Utility.Config.getConfig('GAUDI')
-        if self.is_prepared is None:
-            logger.error("Please prepare the application before calling 'make'")
-            raise Exception('Application must be prepared')
-        if self.env is None: self._getshell()
+#        if self.env is None: self._getshell()
         execute('cmt broadcast %s %s' % (config['make_cmd'],argument),
                 shell=True,
                 timeout=None,
-                env=self.env,
+                env=self.getenv(False),
                 cwd=self.user_release_area)
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
-        if self.is_prepared is None:
-            logger.error("Please prepare the application before calling 'cmt'")
-            raise Exception('Application must be prepared')
-        if self.env is None: self._getshell()
+#        if self.env is None: self._getshell()
         execute('cmt %s' % command,
                 shell=True,
                 timeout=None,
-                env=self.env,
+                env=self.getenv(False),
                 cwd=self.user_release_area)
 
     def unprepare(self):
@@ -218,7 +215,7 @@ class GaudiBase(IPrepareApp):
         if (not self.is_prepared): raise ApplicationConfigurationError(None,"Could not establish sharedir")
 
         #self.extra = GaudiExtras()
-        self._getshell()
+        #self.getenv(True)
         #send_to_share=[]
 
         if (not self.user_release_area): return #GaudiPython and Bender dont need the following.
@@ -233,7 +230,7 @@ class GaudiBase(IPrepareApp):
 
         dlls, pys, subpys = get_user_dlls(self.appname, self.version,
                                           self.user_release_area,self.platform,
-                                          self.env)
+                                          self.getenv(True))
         InstallArea=[]
         #self.appconfig.inputsandbox += [File(f,subdir='lib') for f in dlls]
         for f in dlls:
