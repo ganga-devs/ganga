@@ -1402,10 +1402,8 @@ sys.exit(0)
         wrapperlog = '__jobscript__.log'
 
         import Ganga.Core.Sandbox as Sandbox
-
-        from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
         
-        script = script.replace('###OUTPUTSANDBOX###',repr(jobconfig.outputbox + getOutputSandboxPatterns(job))) #FIXME: check what happens if 'stdout','stderr' are specified here
+        script = script.replace('###OUTPUTSANDBOX###',repr(jobconfig.outputbox)) #FIXME: check what happens if 'stdout','stderr' are specified here
 
         script = script.replace('###APPLICATION_NAME###',job.application._name)
         script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
@@ -1518,10 +1516,14 @@ sys.exit(0)
         ##  - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
 
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+        for outputSandboxPattern in getOutputSandboxPatterns(job):
+            output_sandbox.append(outputSandboxPattern)
+
         if config['JobLogHandler'] == 'WMS':
             output_sandbox += ['stdout.gz','stderr.gz']
 
-        if len(jobconfig.outputbox + getOutputSandboxPatterns(job)):
+        if len(jobconfig.outputbox):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
         ## compose LCG JDL
