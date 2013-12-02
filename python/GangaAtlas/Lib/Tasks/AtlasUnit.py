@@ -228,19 +228,21 @@ class AtlasUnit(IUnit):
          j.outputdata = GPI.DQ2OutputDataset()
 
       # check for ds name specified and length
+      max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 8
       if j.outputdata._impl._name == "DQ2OutputDataset" and j.outputdata.datasetname != "":
          dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
                 (j.id, task.id, trf.getID(), self.getID())]
 
-         if len(".".join(dsn)) > configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2:
-            dsn = [j.outputdata.datasetname[: - (len(".".join(dsn)) - configDQ2['OUTPUTDATASET_NAMELENGTH'] + 2)], "j%i.t%i.trf%i.u%i" %
+         if len(".".join(dsn)) > max_length:
+            dsn = [j.outputdata.datasetname[: - (len(".".join(dsn)) - max_length)], "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
       else:
          dsn = [trf.getContainerName()[:-1], self.name, "j%i.t%i.trf%i.u%i" %
                 (j.id, task.id, trf.getID(), self.getID())]
 
-         if len(".".join(dsn)) > configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2:
-            dsn = [trf.getContainerName()[:-1], self.name[: - (len(".".join(dsn)) - configDQ2['OUTPUTDATASET_NAMELENGTH'] + 2)], "j%i.t%i.trf%i.u%i" %
+         if len(".".join(dsn)) > max_length:
+            dsn2 = [trf.getContainerName(2 * max_length / 3)[:-1], "", "j%i.t%i.trf%i.u%i" % (j.id, task.id, trf.getID(), self.getID())]
+            dsn = [trf.getContainerName(2 * max_length / 3)[:-1], self.name[: - (len(".".join(dsn2)) - max_length)], "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
             
       j.outputdata.datasetname = '.'.join(dsn).replace(":", "_").replace(" ", "").replace(",","_")
@@ -389,22 +391,27 @@ class AtlasUnit(IUnit):
       if len(to_download.keys()) == 0:
          return True
 
-      # nope, so pick the first and grab it
-      fname = to_download.keys()[0]
-      dsname = to_download[fname]
-      exe = 'dq2-get -L ROAMING -a -d -H %s -f %s %s' % (self.copy_output.local_location, fname, dsname)
-      logger.info("Downloading '%s' to %s..." % (fname, self.copy_output.local_location))
+      # nope, so pick the requested number and off we go
+      thread_array = []
+      for fname in to_download.keys()[:self._getParent().num_dq2_threads]:
+         dsname = to_download[fname]
+         exe = 'dq2-get -L ROAMING -a -d -H %s -f %s %s' % (self.copy_output.local_location, fname, dsname)
+         logger.info("Downloading '%s' to %s..." % (fname, self.copy_output.local_location))
 
-      thread = Download.download_dq2(exe)
-      thread.start()
-      thread.join()
+         thread = Download.download_dq2(exe)
+         thread.start()
+         thread_array.append(thread)
+
+      for t in thread_array:
+         t.join()
 
       # check for valid download - SHOULD REALLY BE A HASH CHECK
-      full_path = os.path.join(self.copy_output.local_location, fname)
-      if not os.path.exists(full_path) or os.path.getsize( full_path ) < 4:
-         logger.error("Error downloading '%s'" % full_path)
-      else:
-         self.copy_output.files.append(fname)
-         logger.info("File '%s' downloaded successfully" % full_path)
+      for fname in to_download.keys()[:self._getParent().num_dq2_threads]:
+         full_path = os.path.join(self.copy_output.local_location, fname)
+         if not os.path.exists(full_path) or os.path.getsize( full_path ) < 4:
+            logger.error("Error downloading '%s'" % full_path)
+         else:
+            self.copy_output.files.append(fname)
+            logger.info("File '%s' downloaded successfully" % full_path)
          
       return False
