@@ -153,6 +153,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             from Ganga.Utility.files import expandfilename
             shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
             tmp_user_area_name = os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.user_area.name))
+                             
             
         # validate inputdata
         if job.inputdata:
@@ -498,6 +499,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
                     jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
+                else:
+                    # cmt config
+                    jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
+
                 if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore or app.useMana:
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
@@ -617,6 +622,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         elif app.atlas_release:
             jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_release
             jspec.homepackage       = 'AnalysisTransforms'+self.cacheVer#+nightVer
+            jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
+        else:
+            # cmt config                                                                                                                                                                                                             
             jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
         if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
             jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB

@@ -1,11 +1,12 @@
 **************************************************************************************************************
-6.0.20 (2013/11/7)
+6.0.20 (2013/11/27)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * fixed the new ganga config updater for HammerCloud tests
+* Incorperated a fix for LCG using Sandbox files from Hurng, see Savannah bug #103311
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -15,7 +16,11 @@ ganga/python/GangaAtlas
 * Add debug print-outs to DQ2JobSplitter
 * Update to DQ2Clients 2.4.1
 * change DQ2Clients 2.3.0 usage if python version < 2.5
-* update to panda-clients 0.4.31
+* update to panda-clients 0.4.32
+* Add Athena.useNoAthenaSetup to be used for Panda jobs if no athena should be setup
+* Add DQ2Dataset.spacetoken 
+* Add --useNoAthenaSetup to command line option
+* If cmtconfig variable is specified on prepare, will not be overwritten
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -27,13 +32,18 @@ ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-* application.getenv() and .readInputData() not available until after the application has been prepared.
+* application.getenv() and .readInputData() available before the application has been prepared but
+env not cached until a prepare.
+
+* Fix for the XMLSUMMARYBASEROOT key error problem reported in the mailing list
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaPanda
 --------------------------------------------------------------------------------------------------------------
-* update to panda-clients 0.4.31
+* update to panda-clients 0.4.32
+* Add possibility to change output spacetoken
+* Made RT Handler use shared version of user area if available
 
 
 --------------------------------------------------------------------------------------------------------------

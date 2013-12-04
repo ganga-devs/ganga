@@ -15,6 +15,9 @@ from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDo
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 
+from Ganga.Utility.Config import getConfig
+configDQ2 = getConfig('DQ2')
+
 class AtlasTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
       'local_location'     : SimpleItem(defvalue='', doc='Local location to copy output to', typelist=["str"]),
@@ -24,11 +27,12 @@ class AtlasTransform(ITransform):
       'MB_per_job'     : SimpleItem(defvalue=0, doc='Split by total input filesize (cf DQ2JobSplitter.filesize)', modelist=["int"]),
       'subjobs_per_unit'     : SimpleItem(defvalue=0, doc='split into this many subjobs per unit master job (cf DQ2JobSplitter.numsubjobs)', modelist=["int"]),
       'rebroker_fraction'    : SimpleItem(defvalue=0.6, doc='Fraction of failed subjobs to complete subjobs above which the job will be rebrokered', modelist=["float"]),
+      'num_dq2_threads'     : SimpleItem(defvalue=1, copyable=1, doc='Number of DQ2 download threads to run simultaneously (use setNumDQ2Threads to modify after submission)', typelist=["int"]),
     }.items()))
 
    _category = 'transforms'
    _name = 'AtlasTransform'
-   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers' ]
+   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers', 'setNumDQ2Threads' ]
 
    def __init__(self):
       super(AtlasTransform,self).__init__()
@@ -36,6 +40,10 @@ class AtlasTransform(ITransform):
       # force a delay of 1 minute to ensure DQ2 datasets have been registered properly
       self.chain_delay = 5
 
+   def setNumDQ2Threads(self, num_threads):
+      """Set the number of threads"""
+      self.num_dq2_threads = num_threads
+      
    def check(self):
       """Additional checks to base class"""
 
@@ -91,14 +99,21 @@ class AtlasTransform(ITransform):
       unit.name = outname
       self.addUnitToTRF( unit )
 
-   def getContainerName(self):
+   def getContainerName(self, max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2):
       """Return the container for this transform"""
       if self.name == "":
          name = "trf"
       else:
          name = self.name
          
-      return (self._getParent().getContainerName()[:-1] + ".%s.%i/" % (name, self.getID())).replace(" ", "_")
+      dsn = [self._getParent().getContainerName()[:-1], name, "%i/" % self.getID() ] 
+      if len(".".join(dsn)) > max_length:
+         # too big so force a reduction of Task Name and compress trf name
+         dsn2 = [self._getParent().getContainerName(max_length / 2)[:-1], "", "%i/" % self.getID() ]
+         dsn =  [self._getParent().getContainerName(max_length / 2)[:-1],
+                 name[: - (len(".".join(dsn2)) - max_length) ], "%i/" % self.getID() ]
+
+      return (".".join(dsn)).replace(":", "_").replace(" ", "").replace(",","_")
 
    def createChainUnit( self, parent ):
       """Create an output unit given this output data"""

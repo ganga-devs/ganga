@@ -5,6 +5,9 @@ import time
 from Ganga.GPIDev.Lib.Tasks import ITask
 from GangaAtlas.Lib.Tasks.AtlasTransform import AtlasTransform
 
+from Ganga.Utility.Config import getConfig
+configDQ2 = getConfig('DQ2')
+
 ########################################################################
 
 class AtlasTask(ITask):
@@ -20,14 +23,18 @@ class AtlasTask(ITask):
     
     default_registry = "tasks"
     
-    def getContainerName(self):
+    def getContainerName(self, max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 2):
         if self.name == "":
             name = "task"
         else:
             name = self.name
-            
-        name_base = ["user",getNickname(),self.creation_date, name, "id_%i" % self.id ]            
-        return (".".join(name_base) + "/").replace(" ", "_")
+
+        # check container name isn't too big            
+        dsn = ["user",getNickname(),self.creation_date, name, "id_%i/" % self.id ]
+        if len(".".join(dsn)) > max_length:
+            dsn = ["user",getNickname(),self.creation_date, name[: - (len(".".join(dsn)) - max_length)], "id_%i/" % self.id ]
+
+        return (".".join(dsn)).replace(":", "_").replace(" ", "").replace(",","_")
 
     def checkOutputContainers(self):
         """Go through all transforms and check all datasets are registered"""

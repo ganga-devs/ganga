@@ -11,7 +11,7 @@ ganga/python/Ganga/Lib/MonitoringServices                              Ganga-Mon
 ganga/python/Ganga/Lib/Remote                                          GangaRemote-21-2
 
 #johannes/mark
-ganga/python/GangaAtlas                                                GangaAtlas-25-31
+ganga/python/GangaAtlas                                                GangaAtlas-25-33
 
 #alex/patrick/ulrik
 ganga/python/GangaDirac                                                GangaDirac-01-39
@@ -21,7 +21,7 @@ ganga/python/GangaGaudi                                                GangaGaud
 ganga/python/GangaLHCb                                                 GangaLHCb-24-57
 
 #johannes
-ganga/python/GangaPanda                                                GangaPanda-25-17
+ganga/python/GangaPanda                                                GangaPanda-25-18
 
 #ulrik
 ganga/python/GangaPlotter                                              GangaPlotter-21-2

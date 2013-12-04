@@ -132,7 +132,7 @@ echo '**********************************************************'
 
 """ % { 'athena_compile_flag' : athena_compile_flag } 
 
-def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFile, maxFileSize, useAthenaPackages, verbose ):
+def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFile, maxFileSize, useAthenaPackages, verbose, compile_flag ):
     """Helper function to create EXE tarball"""
     # gather normal files
 
@@ -251,8 +251,13 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
 
     # create archive
     # use 'jobO' for libDS/noBuild
-    archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen')
-    archiveFullName = "%s/%s" % (archiveDir,archiveName)
+    # and 'sources' for build job
+    if not compile_flag:
+        archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen')
+        archiveFullName = "%s/%s" % (archiveDir,archiveName)
+    else:
+        archiveName     = 'sources.%s.tar' % commands.getoutput('uuidgen')
+        archiveFullName = "%s/%s" % (archiveDir,archiveName)
 
     # collect files
     chunkLength = 100
@@ -1148,9 +1153,9 @@ class Athena(IPrepareApp):
 
         # archive sources
         verbose = False
-        if self.atlas_exetype in ['EXE'] and not self.athena_compile:
+        if self.atlas_exetype in ['EXE']: #and not self.athena_compile:  - for EXE, compilation decides what the tarball is called
             maxFileSize = config['EXE_MAXFILESIZE']
-            archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose )
+            archiveName, archiveFullName = create_tarball(self.userarea, runDir, currentDir, archiveDir, self.append_to_user_area, self.exclude_from_user_area, maxFileSize, self.useAthenaPackages, verbose, self.athena_compile )
         else:
             archiveName, archiveFullName = AthenaUtils.archiveSourceFiles(self.userarea, runDir, currentDir, archiveDir, verbose, self.glue_packages, config['dereferenceSymLinks'])
         logger.info('Creating %s ...', archiveFullName )
