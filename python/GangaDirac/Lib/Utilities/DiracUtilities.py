@@ -4,6 +4,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 logger = getLogger()
+proxy = getCredential('GridProxy', '')
 
 ## Cache
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -130,7 +131,6 @@ def execute(command,
 
     ## This will move/change when new credential system in place
     ############################
-    proxy = getCredential('GridProxy', '')
     if not proxy.isValid(): 
         proxy.create()
         if not proxy.isValid():
