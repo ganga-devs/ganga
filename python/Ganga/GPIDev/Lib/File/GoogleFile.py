@@ -45,7 +45,7 @@ class GoogleFile(IOutputFile):
                      {'namePattern'   : SimpleItem( defvalue="", doc='pattern of the file name'),
                       'localDir'      : SimpleItem( defvalue="",copyable=1,
                                                     doc='local dir where the file is stored, used from get and put methods'),
-                      'subfiles'   : ComponentItem( category='outputfiles',defvalue=[], hidden=1,
+                      'subfiles'   : ComponentItem( category='gangafiles',defvalue=[], hidden=1,
                                                     typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0,
                                                     doc="collected files from the wildcard namePattern"),
                       'failureReason' : SimpleItem( defvalue="",copyable=1,
@@ -61,7 +61,7 @@ class GoogleFile(IOutputFile):
                       'GangaFolderId' : SimpleItem( defvalue="",copyable=1, hidden=1, protected=1,
                                                     doc='GoogleDrive Ganga folder  ID')
                       })
-    _category = 'outputfiles'
+    _category = 'gangafiles'
     _name = 'GoogleFile'
     _exportmethods = [ "get" , "put", "remove", "restore","deleteCredentials"]
 
@@ -143,7 +143,7 @@ class GoogleFile(IOutputFile):
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
-        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
+        if isinstance(obj_type, Job) and attrib_name == 'gangafiles':
             r.localDir=None
             r.failureReason=''
         return r
@@ -222,6 +222,9 @@ class GoogleFile(IOutputFile):
         """
         Gets the command used to download already uploaded file
         """
+        raise NotImplementedError
+    
+    def processWildcardMatches(self):
         raise NotImplementedError
 
     def __repr__(self):

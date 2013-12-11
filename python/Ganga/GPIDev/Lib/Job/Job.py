@@ -228,6 +228,21 @@ class Job(GangaObject):
                 else:
                     files.append(f)
             return addProxy(files)
+        
+        if name == 'inputfiles': #If we ask for 'inputfiles', return the expanded list of subfiles
+            import re
+            regex = re.compile('[*?\[\]]')
+            files = GangaList()
+
+            for f in object.__getattribute__(self, name):
+                if f.__class__.__name__ in ["SandboxFile", "LCGSEFile"]: #TODO this check should not be needed as everyone should implement this function soon.
+                    f.processWildcardMatches() #Expand out subfiles for those classes which support it
+                if regex.search(f.namePattern) and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
+                    files.extend(makeGangaListByRef(stripProxy(f).subfiles))
+                else:
+                    files.append(f)
+            return addProxy(files)
+        
         if name in self.metadata.data.keys():
             return self.metadata[name]
         if name == 'subjobs':
@@ -440,8 +455,7 @@ class Job(GangaObject):
 
                         outputfile.setLocation()
 
-            if outputfileClass == 'SandboxFile':
-                outputfile.processWildcardMatches()
+            outputfile.processWildcardMatches()
 
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   

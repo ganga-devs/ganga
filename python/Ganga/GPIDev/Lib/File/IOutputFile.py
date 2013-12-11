@@ -12,7 +12,7 @@ class IOutputFile(GangaObject):
     """IOutputFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, SandboxFile, etc 
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name')})
-    _category = 'outputfiles'
+    _category = 'gangafiles'
     _name = 'IOutputFile'
     _hidden = 1
         
@@ -49,6 +49,12 @@ class IOutputFile(GangaObject):
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
+        """
+        raise NotImplementedError
+    
+    def processWildcardMatches(self):
+        """
+        If namePattern contains a wildcard, 
         """
         raise NotImplementedError
 

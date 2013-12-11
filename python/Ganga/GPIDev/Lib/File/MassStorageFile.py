@@ -7,6 +7,7 @@ from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.Utility import Shell
 
 from IOutputFile import IOutputFile
 
@@ -24,12 +25,13 @@ class MassStorageFile(IOutputFile):
                                     'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
                                     'locations' : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
                                     'outputfilenameformat' : SimpleItem(defvalue=None, typelist=['str', 'type(None)'],protected=0,doc="keyword path to where the output should be uploaded, i.e. /some/path/here/{jid}/{sjid}/{fname}, if this field is not set, the output will go in {jid}/{sjid}/{fname} or in {jid}/{fname} depending on whether the job is split or not"),
-                                    'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+                                    'inputremotedirectory' : SimpleItem(defvalue=None, typelist=['str', 'type(None)'],protected=0,doc="Directory on mass storage where the file is stored"),
+                                    'subfiles'      : ComponentItem(category='gangafiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
                                     'failureReason' : SimpleItem(defvalue="",protected=1,copyable=0,doc='reason for the upload failure'),
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')
                                         })
 
-    _category = 'outputfiles'
+    _category = 'gangafiles'
     _name = "MassStorageFile"
     _exportmethods = [ "location" , "get" , "put" , "setLocation" ]
         
@@ -40,6 +42,8 @@ class MassStorageFile(IOutputFile):
         self.namePattern = namePattern
         self.localDir = localDir
         self.locations = []
+        
+        self.shell = Shell()
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
@@ -50,7 +54,7 @@ class MassStorageFile(IOutputFile):
             
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
-        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
+        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'gangafiles':
             r.locations=[]
             r.localDir=''
             r.failureReason=''
@@ -498,6 +502,23 @@ class MassStorageFile(IOutputFile):
         script = script.replace('###SUBJOBDIR###', str(subjobid))
 
         return script   
+
+    def processWildcardMatches(self):
+        if self.subfiles:
+            return self.subfiles
+        
+        from fnmatch import fnmatch
+        
+        if regex.search(self.namePattern):
+            ls_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['ls_cmd']
+            exitcode,output,m = self.shell.cmd1(ls_cmd + ' ' + self.inputremotedirectory, capture_stderr=True)
+
+            for filename in output.split('\n'):
+                if fnmatch(filename, self.namePattern):
+                    subfile = MassStorageFile(namePattern=filename)
+                    subfile.inputremotedirectory = self.inputremotedirectory
+                    
+                    self.subfiles.append(GPIProxyObjectFactory(subfile))
 
 # add MassStorageFile objects to the configuration scope (i.e. it will be possible to write instatiate MassStorageFile() objects via config file)
 import Ganga.Utility.Config

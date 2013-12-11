@@ -1,5 +1,7 @@
 from Ganga.Utility.Config import getConfig   
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
+import re
 import os
 import glob 
 import tempfile  
@@ -173,6 +175,9 @@ for fn in final_list_to_copy:
 
 
 def getWNCodeForDownloadingInputFiles(job, indent):
+    """
+    Generate the code to be run on the WN to download input files
+    """
 
     if len(job.inputfiles) == 0:
         return ""
@@ -185,7 +190,12 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         inputfileClassName = inputFile.__class__.__name__
 
         if outputFilePostProcessingOnWN(job, inputfileClassName):
-            insertScript += inputFile.getWNScriptDownloadCommand(indent)
+            inputFile.processWildcardMatches()
+            if inputFile.subfiles:
+                for subfile in inputFile.subfiles:
+                    insertScript += subfile.getWNScriptDownloadCommand(indent)
+            else:
+                insertScript += inputFile.getWNScriptDownloadCommand(indent)
 
     insertScript = insertScript.replace('###INDENT###', indent)
 
@@ -243,7 +253,22 @@ def getWNCodeForOutputPostprocessing(job, indent):
     insertScript = insertScript.replace('###INDENT###', indent)
 
     return insertScript
+
+wildcardregex = re.compile('[*?\[\]]')
+def iexpandWildCards(filelist):
+    for f in filelist:
+        if wildcardregex.search(f.namePattern):
+            for subfile in f.subfiles:
+                yield subfile
+        else:
+            yield f
+
+def expandWildCards(filelist):
+    """
     
-        
+    """
+    l = GangaList()
+    l.extend(iexpandWildCards(filelist))
+    return l
 
         
