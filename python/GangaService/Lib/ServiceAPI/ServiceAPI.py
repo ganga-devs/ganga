@@ -34,7 +34,7 @@ class GangaService:
                         wait += 1
 
                     if wait > 29:
-                        print "Could not kill server. Please kill manually on host '%s'" % hostname
+                        print "Could not kill server. Please kill manually on host '%'" % hostname
                         return False
 
                     print "Server killed."

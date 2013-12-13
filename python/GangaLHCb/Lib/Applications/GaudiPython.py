@@ -149,7 +149,7 @@ class GaudiPython(GaudiBase):
             logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
 
-        return self.shell.env
+        self.env = self.shell.env
 
 ##         super(type(self), self)._getshell()
             

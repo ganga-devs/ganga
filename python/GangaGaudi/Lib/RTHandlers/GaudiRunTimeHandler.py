@@ -42,8 +42,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
                                               outputsandbox)
         return StandardJobConfig( FileBuffer('gaudi-script.py', run_script, executable=1),
                                   inputbox   = unique(inputsandbox),
-                                  outputbox  = unique(outputsandbox),
-                                  env = app.getenv(True))
+                                  outputbox  = unique(outputsandbox) )
 
     def __create_run_script(self,
                             app,
