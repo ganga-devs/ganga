@@ -861,7 +861,7 @@ class Grid(object):
 
             mydelid = '%s_%s' % (self.credential.identity(), get_uuid())
 
-            cmd = '%s %s' % (cmd, mydelid)
+            cmd = '%s "%s"' % (cmd, mydelid)
 
             logger.debug('proxy delegation command: %s' % cmd)
 
@@ -899,7 +899,7 @@ class Grid(object):
         mydelid = self.cream_proxy_delegation(ce)
         
         if mydelid:
-            cmd = cmd + ' -D %s' % mydelid
+            cmd = cmd + ' -D "%s"' % mydelid
         else:
             cmd = cmd + ' -a'
 
