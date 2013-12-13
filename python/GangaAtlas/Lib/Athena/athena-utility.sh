@@ -621,25 +621,33 @@ stage_inputs () {
 		retcode=410100
 	    else
 		if [ ! -e PoolFileCatalog.xml ]; then
-		    echo "Adding files to PoolFileCatalog.xml"
 
-		    pool_insertFileToCatalog.py `cat input_files` 2>/dev/null; echo $? > retcode.tmp
-		    retcode=`cat retcode.tmp`
-		    rm -f retcode.tmp
-		    if [ n$USE_POOLFILECATALOG_FAILOVER == n'1' ] && ( [ $retcode -ne 0 ] || [ ! -e PoolFileCatalog.xml ] )
-			then
-			cat input_files | while read file
-			  do
-			  pool_insertFileToCatalog.py $file 2>/dev/null; echo $? > retcode.tmp
-			  retcode=`cat retcode.tmp`
-			  rm -f retcode.tmp
-			done
-		    fi
-		    if ( [ $retcode -ne 0 ] || [ ! -e PoolFileCatalog.xml ] )
-		    then
-			echo "PoolFileCatalog.xml creation failed. Continuing..."
+		    # is it being asked for or not?
+		    if [ n$CREATE_POOLFILECATALOG == n'1' ]; then
+
+			echo "Adding files to PoolFileCatalog.xml"
+
+			pool_insertFileToCatalog.py `cat input_files` 2>/dev/null; echo $? > retcode.tmp
+			retcode=`cat retcode.tmp`
+			rm -f retcode.tmp
+			if [ n$USE_POOLFILECATALOG_FAILOVER == n'1' ] && ( [ $retcode -ne 0 ] || [ ! -e PoolFileCatalog.xml ] )
+			    then
+			    cat input_files | while read file
+			      do
+			      pool_insertFileToCatalog.py $file 2>/dev/null; echo $? > retcode.tmp
+			      retcode=`cat retcode.tmp`
+			      rm -f retcode.tmp
+			    done
+			fi
+			if ( [ $retcode -ne 0 ] || [ ! -e PoolFileCatalog.xml ] )
+			    then
+			    echo "PoolFileCatalog.xml creation failed. Continuing..."
+			    retcode=0
+			fi		
+		    else
+			echo "CREATE_POOLFILECATALOG set to 0. Skipping PFC Creation..."
 			retcode=0
-		    fi		
+		    fi
 		else
 		    echo "PoolFileCatalog provided. Skipping..."
 		    retcode=0
@@ -1563,7 +1571,7 @@ athena_compile()
 	mv work/* .
     else
 	# move everything that the wrapper has already untarred
-	ls -d * | grep -v ^dq2_get$ | grep -v ^dq2info.tar.gz$ | grep -v ^ganga-stage-in-out-dq2.py$  | grep -v ^libdcap.so$ | grep -v ^input_files$ | grep -v ^input_guids$ | grep -v ^get_stats.py$ | grep -v ^work$ | grep -v ^stderr$ | grep -v ^stdout$ | grep -v ^_python$ | grep -v ^__syslog__$ | tr '\n' '\0' | xargs -0 -I file mv file work/.
+	ls -d * | grep -v ^dq2_get$ | grep -v ^dq2info.tar.gz$ | grep -v ^ganga-stage-in-out-dq2.py$  | grep -v ^libdcap.so$ | grep -v ^input_files$ | grep -v ^output_files$ | grep -v ^output_files.new$ |grep -v ^output_files.copy$ |grep -v ^input_guids$ | grep -v ^getstats.py$ | grep -v ^work$ | grep -v ^stderr$ | grep -v ^stdout$ | grep -v ^_python$ | grep -v ^__syslog__$ | grep -v ^Ganga*wrapper.sh$ | tr '\n' '\0' | xargs -0 -I file cp file work/.
 	cd work
     fi
 

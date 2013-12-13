@@ -70,6 +70,7 @@ p.add_option('--pick_dataset_pattern', action='store', type='string', dest='pick
 p.add_option('--pick_event_list', action='store', type='string', dest='pick_event_list', help='A filename which contains list of runs/events for event picking.' )
 p.add_option('--pick_filter_policy', action='store', type='string', dest='pick_filter_policy', help='accept/reject the pick event.' )
 p.add_option('--use_poolfilecatalog_failover', action='store_true', help='Use pool_insertFileToCatalog per single file if bulk insert fails' )
+p.add_option('--create_poolfilecatalog', action='store_true', help='Create the PFC for local (non-grid) jobs' )
 
 
 # Output dataset
@@ -393,6 +394,10 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
                 sys.exit(4)
 	    if opt.use_poolfilecatalog_failover:
 	        j.inputdata.use_poolfilecatalog_failover=True
+
+	    if opt.create_poolfilecatalog:
+	        j.inputdata.create_poolfilecatalog=True
+
         if opt.inputtype=='Castor':
             j.inputdata = ATLASCastorDataset()
     else:        
