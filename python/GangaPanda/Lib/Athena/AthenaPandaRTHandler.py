@@ -531,7 +531,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if job.backend.requirements.rootver != '':
                     rootver = re.sub('/','.', job.backend.requirements.rootver)
                     jspec.jobParameters += ' --rootVer %s ' % rootver
-
+                
+                if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                    if not jspec.cmtConfig in ['','NULL',None]:
+                        jspec.jobParameters += " --cmtConfig %s " % jspec.cmtConfig
+                    
                 if app.useRootCore:
                     jspec.jobParameters += " --useRootCore "
                     jspec.jobParameters += ' -r %s ' % self.rundirectory  #'.'
