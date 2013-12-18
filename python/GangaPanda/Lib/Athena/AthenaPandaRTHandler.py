@@ -503,7 +503,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     # cmt config
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
 
-                if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore or app.useMana:
+                if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore or app.useMana or app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
                     jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
