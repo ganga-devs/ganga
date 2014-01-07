@@ -9,11 +9,13 @@ from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
 from GangaAtlas.Lib.Tasks.AtlasUnit import AtlasUnit
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
+from GangaAtlas.Lib.ATLASDataset.ATLASDataset import ATLASLocalDataset, ATLASOutputDataset
 from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
+import os
 
 from Ganga.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
@@ -115,15 +117,36 @@ class AtlasTransform(ITransform):
 
       return (".".join(dsn)).replace(":", "_").replace(" ", "").replace(",","_")
 
-   def createChainUnit( self, parent ):
+   def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create an output unit given this output data"""
       
-      if len(parent.active_job_ids) == 0 or GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == "":
-         return None
-      
-      unit = AtlasUnit()
-      unit.inputdata = DQ2Dataset()
-      unit.inputdata.dataset = GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname
+      # we need a parent job
+      for parent in parent_units:
+         if len(parent.active_job_ids) == 0 or GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == "":
+            return None
+
+      # should we use the copy_output (ie. local output)
+      if not use_copy_output:
+         unit = AtlasUnit()
+         unit.inputdata = DQ2Dataset()
+         ds_list = []
+         for parent in parent_units:
+            unit.inputdata.dataset.append( GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname )
+         
+      else:
+
+         unit = AtlasUnit()
+         unit.inputdata = ATLASLocalDataset()
+
+         for parent in parent_units:
+            # unit needs to have completed and downloaded
+            if parent.status != "completed":
+               return None
+
+            # we should be OK so copy all output to an ATLASLocalDataset
+            for f in parent.copy_output.files:
+               unit.inputdata.names.append( os.path.join( parent.copy_output.local_location, f ) )
+         
       return unit
    
    def initializeFromContainer(self, dset, template = None):

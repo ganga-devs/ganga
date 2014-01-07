@@ -9,9 +9,10 @@ from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 
-from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
+from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download, ATLASOutputDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
+from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 
@@ -224,41 +225,51 @@ class AtlasUnit(IUnit):
       task = trf._getParent()
       if trf.outputdata:
          j.outputdata = trf.outputdata.clone()
+      elif j.inputdata._impl._name == "ATLASLocalDataset":
+         j.outputdata = GPI.ATLASLocalDataset()
       else:
          j.outputdata = GPI.DQ2OutputDataset()
 
-      # check for ds name specified and length
-      max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 8
-      if j.outputdata._impl._name == "DQ2OutputDataset" and j.outputdata.datasetname != "":
-         dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
-                (j.id, task.id, trf.getID(), self.getID())]
-
-         if len(".".join(dsn)) > max_length:
-            dsn = [j.outputdata.datasetname[: - (len(".".join(dsn)) - max_length)], "j%i.t%i.trf%i.u%i" %
+         # check for ds name specified and length
+         max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 8
+         if j.outputdata._impl._name == "DQ2OutputDataset" and j.outputdata.datasetname != "":
+            dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
-      else:
-         dsn = [trf.getContainerName()[:-1], self.name, "j%i.t%i.trf%i.u%i" %
-                (j.id, task.id, trf.getID(), self.getID())]
 
-         if len(".".join(dsn)) > max_length:
-            dsn2 = [trf.getContainerName(2 * max_length / 3)[:-1], "", "j%i.t%i.trf%i.u%i" % (j.id, task.id, trf.getID(), self.getID())]
-            dsn = [trf.getContainerName(2 * max_length / 3)[:-1], self.name[: - (len(".".join(dsn2)) - max_length)], "j%i.t%i.trf%i.u%i" %
+            if len(".".join(dsn)) > max_length:
+               dsn = [j.outputdata.datasetname[: - (len(".".join(dsn)) - max_length)], "j%i.t%i.trf%i.u%i" %
+                      (j.id, task.id, trf.getID(), self.getID())]
+         else:
+            dsn = [trf.getContainerName()[:-1], self.name, "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
+
+            if len(".".join(dsn)) > max_length:
+               dsn2 = [trf.getContainerName(2 * max_length / 3)[:-1], "", "j%i.t%i.trf%i.u%i" % (j.id, task.id, trf.getID(), self.getID())]
+               dsn = [trf.getContainerName(2 * max_length / 3)[:-1], self.name[: - (len(".".join(dsn2)) - max_length)], "j%i.t%i.trf%i.u%i" %
+                      (j.id, task.id, trf.getID(), self.getID())]
             
-      j.outputdata.datasetname = '.'.join(dsn).replace(":", "_").replace(" ", "").replace(",","_")
+         j.outputdata.datasetname = '.'.join(dsn).replace(":", "_").replace(" ", "").replace(",","_")
                            
       j.inputsandbox = self._getParent().inputsandbox
       j.outputsandbox = self._getParent().outputsandbox
 
       # check for splitter
       if not trf.splitter:
-         j.splitter = DQ2JobSplitter()
-         if trf.MB_per_job > 0:
-            j.splitter.filesize = trf.MB_per_job
-         elif trf.subjobs_per_unit > 0:
-            j.splitter.numsubjobs = trf.subjobs_per_unit
+         if j.inputdata._impl._name == "ATLASLocalDataset":
+            j.splitter = AthenaSplitterJob()
+            if trf.subjobs_per_unit > 0:
+               j.splitter.numsubjobs = trf.subjobs_per_unit
+            else:
+               import math
+               j.splitter.numsubjobs = math.ceil(len(j.inputdata.names) / trf.files_per_job)
          else:
-            j.splitter.numfiles = trf.files_per_job
+            j.splitter = DQ2JobSplitter()
+            if trf.MB_per_job > 0:
+               j.splitter.filesize = trf.MB_per_job
+            elif trf.subjobs_per_unit > 0:
+               j.splitter.numsubjobs = trf.subjobs_per_unit
+            else:
+               j.splitter.numfiles = trf.files_per_job
       else:
          j.splitter = trf.splitter.clone()
          
@@ -305,10 +316,12 @@ class AtlasUnit(IUnit):
    def updateStatus(self, status):
       """Update status hook"""
 
-      # register the dataset
+      # register the dataset if applicable
       if status == "completed":
-         if not self.registerDataset():
-            return
+         job = GPI.jobs(self.active_job_ids[0])
+         if job.outputdata._impl._name == "DQ2OutputDataset":
+            if not self.registerDataset():
+               return
 
       super(AtlasUnit,self).updateStatus(status)
 
@@ -318,9 +331,10 @@ class AtlasUnit(IUnit):
       # call the base class
       if not super(AtlasUnit,self).checkForSubmission():
          return False
-      
+
       # Add a check for chain units to have frozen their input DS
       if len(self.req_units) > 0 and self.inputdata._name == "DQ2Dataset":
+
          for uds in self.inputdata.dataset:
             try:
                dq2_lock.acquire()

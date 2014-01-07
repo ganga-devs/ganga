@@ -622,6 +622,9 @@ stage_inputs () {
 	    else
 		if [ ! -e PoolFileCatalog.xml ]; then
 
+		    # copy the input_files list to input.txt for completeness
+		    cp input_files input.txt
+
 		    # is it being asked for or not?
 		    if [ n$CREATE_POOLFILECATALOG == n'1' ]; then
 
