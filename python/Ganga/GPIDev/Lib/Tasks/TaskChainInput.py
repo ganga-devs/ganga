@@ -7,7 +7,8 @@ class TaskChainInput(Dataset):
 
     _schema = Schema(Version(1,0), {
         'input_trf_id'          : SimpleItem(defvalue = -1, doc="Input Transform ID" ),
-        'single_unit'           : SimpleItem(defvalue = False, doc = 'Create a single unit from all inputs'),
+        'single_unit'           : SimpleItem(defvalue = False, doc = 'Create a single unit from all inputs in the transform'),
+        'use_copy_output'       : SimpleItem(defvalue = True, doc = 'Use the copied output instead of default output (e.g. use local copy instead of grid copy)'),
         })
            
     _category = 'datasets'
