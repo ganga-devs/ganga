@@ -21,7 +21,7 @@ class WatchdogThread ( threading.Thread ):
     def run ( self ):
         # update the server file every 10s
         while self.running:
-            open( os.path.join(config["Configuration"]["gangadir"], "server", "server.info"), "w").write(os.uname()[1])
+            open( os.path.join(config["Configuration"]["gangadir"], "server", "server.info"), "w").write("%s:%d" % (os.uname()[1], port))
             time.sleep(10)
         
 def formatTraceback():
