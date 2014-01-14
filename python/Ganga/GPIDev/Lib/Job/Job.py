@@ -159,9 +159,9 @@ class Job(GangaObject):
                                     'time':ComponentItem('jobtime', defvalue=None,protected=1,comparable=0,doc='provides timestamps for status transitions'),
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
-                                    'inputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
-                                    'outputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
-                                    'non_copyable_outputfiles' : OutputFileItem(defvalue=[], hidden=1, typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
+                                    'inputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
+                                    'outputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
+                                    'non_copyable_outputfiles' : GangaFileItem(defvalue=[], hidden=1, typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
                                     'status': SimpleItem('new',protected=1,checkset='_checkset_status',doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"'),
                                     'name':SimpleItem('',doc='optional label which may be any combination of ASCII characters',typelist=['str']),
@@ -235,7 +235,7 @@ class Job(GangaObject):
             files = GangaList()
 
             for f in object.__getattribute__(self, name):
-                if f.__class__.__name__ in ["SandboxFile", "LCGSEFile"]: #TODO this check should not be needed as everyone should implement this function soon.
+                if f.__class__.__name__ in ["LocalFile", "LCGSEFile"]: #TODO this check should not be needed as everyone should implement this function soon.
                     f.processWildcardMatches() #Expand out subfiles for those classes which support it
                 if regex.search(f.namePattern) and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
                     files.extend(makeGangaListByRef(stripProxy(f).subfiles))

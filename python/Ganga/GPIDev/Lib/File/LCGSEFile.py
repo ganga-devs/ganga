@@ -13,7 +13,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility import GridShell
 
-from IOutputFile import IOutputFile
+from IGangaFile import IGangaFile
 
 import re
 import os
@@ -21,7 +21,7 @@ import copy
 
 regex = re.compile('[*?\[\]]')
 
-class LCGSEFile(IOutputFile):
+class LCGSEFile(IGangaFile):
     """LCGSEFile represents a class marking an output file to be written into LCG SE
     """
     lcgSEConfig = getConfig('Output')['LCGSEFile']['uploadOptions']

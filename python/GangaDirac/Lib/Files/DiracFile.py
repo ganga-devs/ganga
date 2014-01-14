@@ -2,7 +2,7 @@ import copy, os, datetime, hashlib, re
 from Ganga.GPIDev.Base.Proxy                  import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.GangaList.GangaList     import GangaList
 from Ganga.GPIDev.Schema                      import Schema, Version, SimpleItem, ComponentItem
-from Ganga.GPIDev.Lib.File.IOutputFile        import IOutputFile
+from Ganga.GPIDev.Lib.File.IGangaFile         import IGangaFile
 from Ganga.GPIDev.Lib.Job.Job                 import Job
 from Ganga.Core.exceptions                    import GangaException
 from Ganga.Utility.files                      import expandfilename
@@ -25,7 +25,7 @@ regex       = re.compile('[*?\[\]]')
 #            return lfn in r['Successful']
 #    return stdout.find("'Successful': {'%s'" % lfn) >=0
 
-class DiracFile(IOutputFile):
+class DiracFile(IGangaFile):
     """
     File stored on a DIRAC storage element
     """
@@ -41,7 +41,7 @@ class DiracFile(IOutputFile):
                                                                       'using wildcards in namePattern'),
                                      'guid'          : SimpleItem(defvalue='',copyable=1,typelist=['str'],
                                                                   doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
-                                     'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, sequence=1, copyable=0,
+                                     'subfiles'      : ComponentItem(category='gangafiles',defvalue=[], hidden=1, sequence=1, copyable=0,
                                                                      typelist=['GangaDirac.Lib.Files.DiracFile'],
                                                                      doc="collected files from the wildcard namePattern"),
                                      'failureReason' : SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure')
@@ -49,7 +49,7 @@ class DiracFile(IOutputFile):
 
     _env=None
 
-    _category = 'outputfiles'
+    _category = 'gangafiles'
     _name = "DiracFile"
     _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'put']
         

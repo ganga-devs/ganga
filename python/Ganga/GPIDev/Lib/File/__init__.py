@@ -2,7 +2,8 @@ from File import File
 from File import ShareDir
 from FileBuffer import FileBuffer
 
-from IOutputFile import IOutputFile
+from IGangaFile import IGangaFile
+from LocalFile import LocalFile
 from SandboxFile import SandboxFile
 from MassStorageFile import MassStorageFile
 from LCGSEFile import LCGSEFile
@@ -82,7 +83,7 @@ def string_file_shortcut(v,item):
                 except:
                     pass
 
-        return SandboxFile._proxyClass(v)._impl
+        return LocalFile._proxyClass(v)._impl
 
     return None 
         

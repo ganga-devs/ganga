@@ -1,6 +1,6 @@
 from Ganga.GPIDev.Schema import *
 from fnmatch import fnmatch
-from IOutputFile import IOutputFile
+from IGangaFile import IGangaFile
 import logging
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -19,7 +19,7 @@ cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata
 badlogger=logging.getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
-class GoogleFile(IOutputFile):
+class GoogleFile(IGangaFile):
     """
     The GoogleFile outputfile type allows for files to be directly uploaded, downloaded, removed and restored from the GoogleDrive service.
     It can be used as part of a job to output data directly to GoogleDrive, or standalone through the Ganga interface.

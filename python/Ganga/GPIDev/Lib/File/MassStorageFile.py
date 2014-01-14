@@ -9,7 +9,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Utility import Shell
 
-from IOutputFile import IOutputFile
+from IGangaFile import IGangaFile
 
 import re
 import os
@@ -17,7 +17,7 @@ import copy
 
 regex = re.compile('[*?\[\]]')
 
-class MassStorageFile(IOutputFile):
+class MassStorageFile(IGangaFile):
     """MassStorageFile represents a class marking a file to be written into mass storage (like Castor at CERN)
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name'),
