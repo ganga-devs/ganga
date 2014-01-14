@@ -1574,7 +1574,7 @@ athena_compile()
 	mv work/* .
     else
 	# move everything that the wrapper has already untarred
-	ls -d * | grep -v ^dq2_get$ | grep -v ^dq2info.tar.gz$ | grep -v ^ganga-stage-in-out-dq2.py$  | grep -v ^libdcap.so$ | grep -v ^input_files$ | grep -v ^output_files$ | grep -v ^output_files.new$ |grep -v ^output_files.copy$ |grep -v ^input_guids$ | grep -v ^getstats.py$ | grep -v ^work$ | grep -v ^stderr$ | grep -v ^stdout$ | grep -v ^_python$ | grep -v ^__syslog__$ | grep -v ^Ganga*wrapper.sh$ | tr '\n' '\0' | xargs -0 -I file cp file work/.
+	ls -d * | grep -v ^dq2_get$ | grep -v ^dq2info.tar.gz$ | grep -v ^ganga-stage-in-out-dq2.py$  | grep -v ^libdcap.so$ | grep -v ^input_files$ | grep -v ^output_files$ | grep -v ^output_files.new$ |grep -v ^output_files.copy$ |grep -v ^input_guids$ | grep -v ^getstats.py$ | grep -v ^work$ | grep -v ^stderr$ | grep -v ^stdout$ | grep -v ^_python$ | grep -v ^__syslog__$ | grep -v ^Ganga*wrapper.sh$ | tr '\n' '\0' | xargs -0 -I file cp -r file work/.
 	cd work
     fi
 
