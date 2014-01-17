@@ -4,7 +4,6 @@ from FileBuffer import FileBuffer
 
 from IGangaFile import IGangaFile
 from LocalFile import LocalFile
-from SandboxFile import SandboxFile
 from MassStorageFile import MassStorageFile
 from LCGSEFile import LCGSEFile
 

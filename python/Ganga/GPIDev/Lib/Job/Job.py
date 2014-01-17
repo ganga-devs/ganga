@@ -235,8 +235,7 @@ class Job(GangaObject):
             files = GangaList()
 
             for f in object.__getattribute__(self, name):
-                if f.__class__.__name__ in ["LocalFile", "LCGSEFile"]: #TODO this check should not be needed as everyone should implement this function soon.
-                    f.processWildcardMatches() #Expand out subfiles for those classes which support it
+                f.processWildcardMatches() #Expand out subfiles
                 if regex.search(f.namePattern) and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
                     files.extend(makeGangaListByRef(stripProxy(f).subfiles))
                 else:
