@@ -1,0 +1,747 @@
+#
+# command line submission interface for Athena
+#
+
+import optparse
+import sys
+import os
+import re
+from Ganga.Core.exceptions import GangaException
+
+usage = """
+------------------
+Analysis examples:
+------------------
+
+Job to LSF
+
+ganga athena --inDS trig1_misal1_csc11.005009.J0_pythia_jetjet.recon.AOD.v12000604 --outputdata AnalysisSkeleton.aan.root --lsf --maxevt 100 AnalysisSkeleton_jobOptions.py
+
+Job to LCG
+
+ganga athena --inDS trig1_misal1_csc11.005009.J0_pythia_jetjet.recon.AOD.v12000604 --outputdata AnalysisSkeleton.aan.root --split 2 --lcg --site FZK AnalysisSkeleton_jobOptions.py
+
+Job to Nordugrid
+
+ganga athena --inDS trig1_misal1_csc11.005009.J0_pythia_jetjet.recon.AOD.v12000604 --outputdata AnalysisSkeleton.aan.root --split 2 --ng AnalysisSkeleton_jobOptions.py
+
+Job to Panda
+
+ganga athena --inDS trig1_misal1_csc11.005009.J0_pythia_jetjet.recon.AOD.v12000604 --outDS user.FirstLast.result.AANT.v12000604 --split 2 --panda AnalysisSkeleton_jobOptions.py
+
+
+
+
+"""
+
+p = optparse.OptionParser(usage=usage)
+
+p.add_option('--verbose', '-v', action='store_true')
+
+# Job object
+p.add_option('--name', '-n', action='store', type='string', dest='name', help='Job name')
+
+# Input dataset
+p.add_option('--inDS', '-i', action='store', type='string', dest='input_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname to process')
+p.add_option('--inPfnListFile', action='store', type='string', dest='input_pfnlistfile', help='Filename with list of input files to process for ATLASTier3Dataset')
+p.add_option('--inTagDS', action='store', type='string', dest='tag_input_dataset', metavar='TAGDATASETNAME', help='Name of the Tag DQ2 datasetname to process')
+p.add_option('--inTagFiles', action='store', type='string', dest='tag_input_files', help='Name of local TAG files to determine input data' )
+p.add_option('--tagCollRef', action='store', type='string', dest='tag_coll_ref', help='Directly specify the collection reference if not in JOs (e.g. TRF usage)' )
+p.add_option('--inputtype', action='store', type='choice', dest='inputtype', choices = ['DQ2', 'ATLAS', 'Local', 'Castor'],  default='DQ2', help='Type of the input dataset: DQ2, ATLAS, Local, Castor, [default: DQ2]' )
+p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
+p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
+p.add_option('--inputaccessprotocol', action='store', type='string', dest='inputaccessprotocol', help='Access protocol on worker node, like Xrootd'  )
+p.add_option('--locallocation', action='store', type='string', dest='locallocation', nargs=2, help='Directory and file pattern for ATLASLocalDataset: e.g. /path/to/dir/ *AOD*.root')
+p.add_option('--inputlfn', action='store', type='string', dest='inputlfn', help='ATLASDataset lfn parameter, e.g. --inputlfn=rome.004100.recov10.T1_McAtNLO_top._[00001-00010].AOD.pool.root or --inputlfn=lfn:file1.root,lfn:file2.root' )
+p.add_option('--inputlfc', action='store', type='string', dest='inputlfc', help='ATLASDataset lfc host parameter, e.g. --inputlfc=lfc-fzk.gridka.de' )
+p.add_option('--match_ce_all', action='store_const', const='match_ce_all', dest='match_ce_all', help='Job are sent to incomplete and complete inputdataset sources' )
+p.add_option('--inputnames', action='store', type='string', dest='inputnames', help='Logical files names to process with DQ2Dataset seperated by : or ,  e.g. --inputnames=file1.root:file2.root' )
+p.add_option('--inputnamespattern', action='store', type='string', dest='inputnamespattern', help='Logical files names to process with DQ2Dataset seperated by : or ,  e.g. --inputnames=file1.root:file2.root' )
+p.add_option('--excludeinputnames', action='store', type='string', dest='excludeinputnames', help='Logical files names to exclude from processing with DQ2Dataset seperated by : or , e.g. --excludeinputnames=file1.root:file2.root' )
+p.add_option('--excludeinputnamespattern', action='store', type='string', dest='excludeinputnamespattern', help='Logical file name pattern to exclude from processing with DQ2Dataset seperated by : or , e.g. --excludeinputnamespattern=*.tgz:*.bak' )
+p.add_option('--inputnumfiles', action='store', type='int', dest='inputnumfiles', help='Number of files to proccess in a DQ2Dataset, e.g. --inputnumfiles=5' )
+p.add_option('--input_minnumfiles', action='store', type='int', dest='input_minnumfiles', help='Minimum number of files that should exist in a incomplete dataset source location of a DQ2Dataset, e.g. --input_minnumfiles=1' )
+p.add_option('--use_aodesd_backnav', action='store_const', const='use_aodesd_backnav', dest='use_aodesd_backnav', help='Use AOD to ESD Backnavigation' )
+# Event picking
+p.add_option('--pickevent', action='store_true', help='Use Event picking as inputdata' )
+p.add_option('--pick_data_type', action='store', type='string', dest='pick_data_type', help='Type of data for event picking. One of AOD, ESD, RAW.' )
+p.add_option('--pick_stream_name', action='store', type='string', dest='pick_stream_name', help='Stream name for event picking, e.g. physics_L1Calo' )
+p.add_option('--pick_dataset_pattern', action='store', type='string', dest='pick_dataset_pattern', help='Dataset pattern which matches the selection ' )
+p.add_option('--pick_event_list', action='store', type='string', dest='pick_event_list', help='A filename which contains list of runs/events for event picking.' )
+p.add_option('--pick_filter_policy', action='store', type='string', dest='pick_filter_policy', help='accept/reject the pick event.' )
+p.add_option('--use_poolfilecatalog_failover', action='store_true', help='Use pool_insertFileToCatalog per single file if bulk insert fails' )
+p.add_option('--create_poolfilecatalog', action='store_true', help='Create the PFC for local (non-grid) jobs' )
+
+
+# Output dataset
+p.add_option('--outputdata', '-o', action='store', type='string', dest='outputdata', help='List of job output roottuples to be stored, separated by ":", e.g. AnalysisSekeleton.aan.root:Numbers.txt')
+p.add_option('--outputtype', action='store', type='choice', dest='outputtype', choices = ['DQ2', 'ATLAS'], default='DQ2', help='Type of the output dataset: DQ2, ATLAS, [default: DQ2]')
+p.add_option('--outDS', action='store', type='string', dest='output_dataset', metavar='DATASETNAME', help='Name of the DQ2 datasetname for the job output, will be of the type: user.username.ganga.DATSETNAME')
+p.add_option('--outputlocation', action='store', type='string', dest='output_location', help='Location and path of the job output on the remote storage element for grid jobs or local path for local or batch jobs, e.g. sfn://castorgrid.cern.ch/castor/cern.ch/atlas/scratch/$USER/ganga or /path/to/storefiles/')
+p.add_option('--outputlocallocation', action='store', type='string', dest='output_local_location', help='Local path to store output that is transfered with retrieve() method')
+#p.add_option('--use_datasetname', action='store_true', help='Use datasetname as it is and do not prepend users.myname.ganga' )
+p.add_option('--use_shortfilename', action='store_true', help='Use shorter version of filenames and do not prepend users.myname.ganga' )
+
+
+# Job splitting
+p.add_option('--split', '-s', action='store', type='int', dest='numsubjobs', help='Number of subjobs, if a job should be splitted. The splitting is done via the list of inputfile')
+p.add_option('--splitfiles', action='store', type='int', dest='numfiles_subjob', help='Number of files per subjob, if a job should be splitted.')
+p.add_option('--splitfilesize', action='store', type='int', dest='filesize', help='Maximum filesize sum per subjob im MB, if a job should be splitted.')
+p.add_option('--match_subjobs_files', action='store_const', const='match_subjobs_files', dest='match_subjobs_files', help='Match the number of subjobs to the number of inputfiles"')
+p.add_option('--noblacklist', action='store_true', dest='noblacklist', help='Do not use black list of sites create by GangaRobot functional tests')
+p.add_option('--usefax', action='store_true', dest='usefax', help='Allow submission to a site although data is not there for FAX usage')
+
+# Backends
+p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='Submit job(s) to LCG Grid')
+p.add_option('--cream', action='store_const', const='cream', dest='backend', help='Submit job(s) to a CREAM CE')
+p.add_option('--ng', action='store_const', const='ng', dest='backend', help='Submit job(s) to NorduGrid')
+p.add_option('--panda', action='store_const', const='panda', dest='backend', help='Submit job(s) to Panda')
+p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
+p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
+p.add_option('--pbs', action='store_const', const='pbs', dest='backend', help='Submit job(s) to the local PBS batch system')
+p.add_option('--sge', action='store_const', const='sge', dest='backend', help='Submit job(s) to the local SGE batch system')
+p.add_option('--local', action='store_const', const='local', dest='backend', help='Execute job on the local desktop computer')
+p.add_option('--queue', action='store', type='string', dest='queue', help='Specify queue for LSF or PBS submission')
+p.add_option('--ce' , action='store', type='string', dest='ce', help='Specific computing element and queue for LCG or NG submission')
+p.add_option('--rejectce' , action='store', type='string', dest='rejectce', help='Specific computing element and queue to exclude from NG submission')
+p.add_option('--site' , action='store', type='string', dest='site', help='Specific computing element and queue for LCG submission following the DQ2 naming schema, separated by ":", e.g. --site FZK:LRZ')
+p.add_option('--cloud' , action='store', type='string', dest='cloud', help='Cloudname for LCG or Panda submission, e.g. --cloud DE or --cloud US')
+p.add_option('--glite', action='store_true', help='Use gLite resource broker')
+p.add_option('--edg', action='store_true', help='Use the EDG resource broker')
+p.add_option('--walltime' , action='store', type='int', dest='walltime', help='Specify walltime requirement')
+p.add_option('--cputime' , action='store', type='int', dest='cputime', help='Specify cputime requirement')
+p.add_option('--memory' , action='store', type='int', dest='memory', help='Specify memory requirement')
+p.add_option('--long', action='store_true', help='Select only long queues')
+p.add_option('--batchextraopts' , action='store', type='string', dest='batchextraopts', help='extra options for batchsystems')
+p.add_option('--check_availability', action='store_true', help='Check for availability of input files on NG' )
+p.add_option('--runtimeenvironment', action='store', type='string', dest='runtimeenvironment', help='Specify the required runtime environment on an NG site' )
+p.add_option('--bexec', action='store', type='string', dest='bexec', help='Specify the build command for --athena_exe EXE on Panda')
+p.add_option('--libDS', action='store', type='string', dest='libDS', help='Existing Library dataset to use (disables buildjob)')
+p.add_option('--nobuild', action='store_true', help='Panda build job is switched off.' )
+p.add_option('--extOutFile', action='store', type='string', dest='extOutFile', help='define extra output files on Panda, e.g. --extOutFile=output1.txt:output2.dat')
+p.add_option('--excludedSite', action='store', type='string', dest='excludedSite', default='', help="list of Panda sites which are not used for site section, e.g., ANALY_ABC,ANALY_XYZ")
+p.add_option('--excludedCloud', action='store', type='string', dest='excludedCloud', default='', help="list of Panda clouds which are not used for site section, e.g., US,FR,TW")
+p.add_option('--useChirpServer', action='store', type='string', dest='useChirpServer', default='', help="Chirp Server to be used to stage out the output e.g., voatlas92.cern.ch")
+p.add_option('--rootver', action='store', type='string', dest='rootver', help='Specify a different ROOT version. Cannot be used with --nobuild specified.' )
+p.add_option('--useNoAthenaSetup', action='store_true', help='No athena setup is used for Panda jobs - recommended to use it together with --rootver' )
+
+# Application options
+p.add_option('--options', '-c', action='store', type='string', dest='options', help='One-liner, runs before any job Options')
+p.add_option('--maxevt' , action='store', type='int', dest='maxevt', help='Maximal number of events to process')
+p.add_option('--compile', action='store_true', help='Determine if job should be recompiled on Grid worker node' )
+p.add_option('--nocompile', action='store_true', help='Determine if job should *not* be recompiled on Grid worker node' )
+p.add_option('--excludefiles', action='store', type='string', dest='excludefiles', help='List of files to be excluded from user_area tar file, separated by ":", e.g. --excludefiles=*.root:Numbers.txt')
+p.add_option('--appendfiles', action='store', type='string', dest='appendfiles', help='List of files to be included in user_area tar file, separated by ":", e.g. --appendfiles=*.root:Numbers.txt')
+p.add_option('--athena_release', action='store', type='string', dest='athena_release', help='Athena release version to be used' )
+p.add_option('--athena_production', action='store', type='string', dest='athena_production', help='AtlasProduction transformation cache release version to be used' )
+p.add_option('--athena_project', action='store', type='string', dest='athena_project', help='AtlasProject name of release to be used, e.g. AtlasProduction' )
+p.add_option('--athena_exe', action='store', type='choice', dest='athena_exe', choices = ['ATHENA', 'PYARA', 'ROOT','ARES','EXE', 'TRF' ], default='ATHENA', help='Executable type: ATHENA, PYARA, ROOT [default: ATHENA]')
+p.add_option('--athena_dbrelease', action='store', type='string', dest='athena_dbrelease', help='ATLAS DBRelease DQ2 dataset and DQ2Release tar file (DatasetName:FileName). e.g., ddo.000001.Atlas.Ideal.DBRelease.v050101:DBRelease-5.1.1.tar.gz')
+p.add_option('--user_area', action='store', type='string', dest='user_area', help='Tar file of user athena code area produced e.g. by a previous Ganga job' )
+p.add_option('--user_area_path', action='store', type='string', dest='user_area_path', help='Path where user_area tarfile is created' )
+p.add_option('--group_area', action='store', type='string', dest='group_area', help='Tar file of GroupArea produced e.g. by a previous Ganga job' )
+p.add_option('--user_setupfile', action='store', type='string', dest='user_setupfile', help='User setup script for special setup on the grid worker node' )
+p.add_option('--excludepackage', action='store', type='string', dest='excludepackage', help='Pattern of files to exclude from user area requirements files, separated by : , e.g. --excludepackage=MyPackage:YourPackage' )
+p.add_option('--prepare_old', action='store_true', help='Use prepare_old instead of new prepare method' )
+p.add_option('--collectstats', action='store_true', help='Switch to collect application statistics info and store in stats field' )
+p.add_option('--atlas_supp_stream', action='store', type='string', dest='atlas_supp_stream', help='suppress some output streams, e.g. --atlas_supp_stream=GLOBAL:D3PD' )
+p.add_option('--atlas_run_dir', action='store', type='string', dest='atlas_run_dir', help='Athena run directory, e.g. --atlas_run_dir=./' )
+p.add_option('--individualOutDS', action='store_true', dest='individualOutDS', help='Create seperate output datasets/containers for each output type (e.g. AANT, HIST).' )
+p.add_option('--express', action='store_true', dest='express', help='Panda option to send the job using express quota to have higher priority. The number of express subjobs in the queue and the total execution time used by express subjobs are limited (a few subjobs and several hours per day, respectively). This option is intended to be used for quick tests before bulk submission. Note that buildXYZ is not included in quota calculation. If this option is used when quota has already exceeded, the panda server will ignore the option so that subjobs have normal priorities. Also, if you submit 1 buildXYZ and N runXYZ subjobs when you only have quota of M (M < N),  only the first M runXYZ subjobs will have higher priorities' )
+p.add_option('--trf', action='store', type='string', dest='trf', help='Parameters for Athena  transformations' )
+p.add_option('--mergeOutput', action='store_true', dest='mergeOutput', help='Panda option to enable the output merging jobs.')
+p.add_option('--usecommainputtxt', action='store_true', dest='usecommainputtxt', help='Boolean if input.txt contains the input files as comma separated list or separeted by a line break')
+p.add_option('--cmtConfig', action='store', type='string', dest='cmtConfig', help='CMTCONFIG=i686-slc5-gcc43-opt is used on remote worker-node by default even if you use another CMTCONFIG locally. This option allows you to use another CMTCONFIG remotely. e.g., --cmtConfig x86_64-slc5-gcc43-opt. If you use --libDS together with this option, make sure that the libDS was compiled with the same CMTCONFIG, in order to avoid failures due to inconsistency in binary files')
+p.add_option('--useRootCore', action='store_true', dest='useRootCore', help='Use RootCore')
+p.add_option('--useRootCoreNoBuild', action='store_true', dest='useRootCoreNoBuild', help='Use RootCore with no build job on Panda')
+p.add_option('--useNoDebugLogs', action='store_true', dest='useNoDebugLogs', help='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend')
+
+# Inputsandbox
+p.add_option('--inputsandbox', action='store', type='string', dest='inputsandbox', help='List of files to be transfered to the grid worker node with the input sandbox, separated by ":", e.g. --inputsandbox=file1.txt:file2.txt')
+
+# Outputsandbox
+p.add_option('--outputsandbox', action='store', type='string', dest='outputsandbox', help='List of files to be retrieved from the grid worker node with the output sandbox, separated by ":", e.g. --outputsandbox=file1.txt:file2.txt')
+
+
+# Job query
+p.add_option('--query', '-q', action='store', type='int', dest='jobid', help='Query job status, e.q. ganga athena -q jobid, Output: job id, CE, job status, job output' )
+
+# JEM
+p.add_option('--enableJEM', action='store_true', help='Enable the Job Execution Monitor' )
+p.add_option('--configJEM', action='store', type='string', dest='configJEM', help='Config string for the Job Execution Monitor' )
+
+# overwriteQueuedata
+p.add_option('--overwriteQueuedata', action='store_true', help='Expert option: Enable overwriteQueuedata' )
+p.add_option('--overwriteQueuedataConfig', action='store', type='string', dest='overwriteQueuedataConfig', help='Expert option: Config string for overwriteQueuedata' )
+
+p.add_option('--useAthenaPackages', action='store_true', help='Enable to setup Athena env for PYARA' )
+
+p.add_option('--transferredDS', action='store', type='string', dest='transferredDS', help='Specify a comma-separated list of patterns so that only datasets which match the given patterns are transferred when --outputlocation is set. Either \ or "" is required when a wildcard is used. If omitted, all datasets are transferred')
+
+
+opt, args = p.parse_args()
+
+# make panda the default backend
+if not opt.backend:
+    opt.backend = "panda"
+
+# Job query
+if opt.jobid:
+    print '-----------'
+    print 'Job Status:'
+    print '-----------'
+    if jobs[opt.jobid].subjobs:
+        for subjob in jobs[opt.jobid].subjobs:
+                print jobs[opt.jobid].id, subjob.id, subjob.backend.actualCE, subjob.status,
+                if subjob.status=='completed':
+                    try:
+                        print subjob.outputdata.datasetname
+                    except AttributeError:
+                        print subjob.outputdata.output
+    else:
+        print jobs[opt.jobid].id, jobs[opt.jobid].backend.actualCE, jobs[opt.jobid].status, 
+        if jobs[opt.jobid].status=='completed':
+            try:
+                print jobs[opt.jobid].outputdata.datasetname
+            except AttributeError:
+                print jobs[opt.jobid].outputdata.output
+        
+    print '\n-----------'
+    sys.exit(0)        
+
+# Parse additional arguments
+
+if args:
+    option_files=[]
+    if args:  
+        for option_file in args:
+            if not opt.athena_exe in ['EXE', 'TRF']:        
+                if not os.access(option_file,os.R_OK):
+                    print >>sys.stderr, 'ERROR: Cannot read athena job option file: %s' % option_file
+                    sys.exit(4)
+                else:
+                    option_files.append(option_file)
+            else:
+                option_files.append(option_file)
+elif opt.athena_exe in ['EXE', 'TRF']:
+    option_files = []
+else:
+    print >>sys.stderr, 'ERROR: No athena job option file given'
+    sys.exit(4)
+
+
+# Start job configuration
+
+j = Job()
+
+# job object
+
+if opt.name:
+    j.name = opt.name
+
+# application
+
+j.application = Athena()
+if opt.excludefiles:
+    j.application.exclude_from_user_area=opt.excludefiles.split(':')
+if opt.appendfiles:
+    j.application.append_to_user_area=opt.appendfiles.split(':')
+if opt.excludepackage:
+    j.application.exclude_package=opt.excludepackage.split(':')
+if opt.athena_release:
+    match=re.search(r'^([\w+]+.[\w+]+.[\w+]+)',opt.athena_release)
+    if match:
+        j.application.atlas_release=match.group(1)
+        match2=re.search(r'^([\w+]+.[\w+]+.[\w+]+.[\w+]+)',opt.athena_release)        
+        if match2:
+            j.application.atlas_production=opt.athena_release
+    else:
+        j.application.atlas_release=opt.athena_release
+if opt.athena_production:
+    j.application.atlas_production=opt.athena_production
+if opt.athena_project:
+    j.application.atlas_project=opt.athena_project
+if opt.athena_exe:
+    j.application.atlas_exetype=opt.athena_exe
+if opt.athena_dbrelease != None:
+    j.application.atlas_dbrelease=opt.athena_dbrelease
+if opt.atlas_run_dir:
+    j.application.atlas_run_dir=opt.atlas_run_dir
+if opt.trf:
+    if opt.backend == 'panda':
+        j.application.options=opt.trf
+    else: 
+        j.application.trf_parameter=opt.trf
+
+if opt.user_area:
+    j.application.user_area=opt.user_area
+if opt.user_area_path:
+    j.application.user_area_path=opt.user_area_path
+if opt.group_area:
+    j.application.group_area=opt.group_area
+
+j.application.option_file = option_files
+if opt.options:
+    if opt.athena_exe in ['EXE', 'TRF', 'PYARA']:
+        j.application.options = " %s " %opt.options
+    else:
+        aoptions = opt.options.replace('"',"'''")        
+    	aoptions = opt.options.replace('\'',"'''")
+        j.application.options = "-c '''%s''' " %aoptions
+
+if opt.user_setupfile:
+    j.application.user_setupfile = opt.user_setupfile
+
+# max_events
+if opt.maxevt:
+    j.application.max_events = int(opt.maxevt)
+
+if opt.atlas_supp_stream:
+    j.application.atlas_supp_stream=opt.atlas_supp_stream.split(':')
+if opt.collectstats:
+    j.application.collect_stats=True
+
+if opt.useRootCore:
+    j.application.useRootCore = True
+if opt.useRootCoreNoBuild:
+    j.application.useRootCoreNoBuild = True
+if opt.useNoDebugLogs:
+    j.application.useNoDebugLogs= True
+if opt.compile:
+    j.application.athena_compile=True
+    if opt.prepare_old:        
+        j.application.prepare_old(athena_compile=True)
+    else:
+        j.application.prepare()
+elif opt.nocompile:
+    j.application.athena_compile=False
+    if opt.prepare_old:        
+        j.application.prepare_old(athena_compile=False)
+    else:
+        j.application.prepare()
+else:
+    if not (opt.athena_release or opt.user_area) or opt.bexec:
+        if opt.prepare_old:        
+            j.application.prepare_old()
+        else:
+            j.application.prepare()
+    else:
+        if opt.athena_release: 
+            j.application.atlas_release=opt.athena_release
+	    if (opt.useRootCore or opt.useRootCoreNoBuild):
+	        if opt.user_area:
+                    j.application.is_prepared=True
+		else:
+                    j.application.prepare()
+	else:
+	    j.application.is_prepared=True
+
+if opt.useAthenaPackages:
+    j.application.useAthenaPackages = True
+
+if opt.cmtConfig:
+    j.application.atlas_cmtconfig=opt.cmtConfig
+
+if opt.useNoAthenaSetup:
+    j.application.useNoAthenaSetup=True
+
+# inputdata
+
+if opt.input_pfnlistfile:
+    j.inputdata = ATLASTier3Dataset()
+    j.inputdata.pfnListFile = opt.input_pfnlistfile
+
+if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inputtype=='Local':
+    #print opt.inputtype
+    if opt.inputtype:
+        if opt.inputtype=='DQ2':
+            j.inputdata = DQ2Dataset()
+        if opt.inputtype=='ATLAS':
+            j.inputdata = ATLASDataset()
+            if opt.inputlfn:
+                 j.inputdata.lfn=opt.inputlfn.split(',')
+            else:
+                print >>sys.stderr, 'ERROR: No parameter --inputlfn for ATLASDataset given'
+                sys.exit(4)
+            if opt.inputlfc:
+                 j.inputdata.lfc=opt.inputlfc
+
+        if opt.inputtype=='Local':
+            j.inputdata = ATLASLocalDataset()
+
+            # decide where to get input info from: locallocation or inDS
+            if opt.locallocation:
+                print "Using locallocation for input: " + opt.locallocation[0] + ", " +  opt.locallocation[1]
+                j.inputdata.get_dataset(opt.locallocation[0],opt.locallocation[1])
+            elif opt.input_dataset:
+                print "Using inDS for input: " + opt.input_dataset
+
+                # can only have mulitple dirs if not using --inputnames
+                if opt.inputnames and len(opt.input_dataset.split(",")) > 1:
+                    print >>sys.stderr, 'ERROR: Cannot give multiple dirs and input name list for Local backends.'
+                    sys.exit(4)
+                elif opt.inputnames:
+                    for name in opt.inputnames.split(","):
+                        j.inputdata.names.append( os.path.join(opt.input_dataset, name) )
+                else:
+                    for ds in opt.input_dataset.split(","):
+                        if opt.inputnamespattern:
+                            j.inputdata.get_dataset(ds, opt.inputnamespattern)
+                        else:
+                            j.inputdata.get_dataset(ds, "")                    
+            else:
+                print >>sys.stderr, 'ERROR: No parameter --locallocation or --inDS for AthenaLocalDataset given'
+                sys.exit(4)
+	    if opt.use_poolfilecatalog_failover:
+	        j.inputdata.use_poolfilecatalog_failover=True
+
+	    if opt.create_poolfilecatalog:
+	        j.inputdata.create_poolfilecatalog=True
+
+        if opt.inputtype=='Castor':
+            j.inputdata = ATLASCastorDataset()
+    else:        
+        j.inputdata = DQ2Dataset()
+        opt.inputtype = 'DQ2'
+
+    if opt.inputtype == 'DQ2':
+        if opt.input_dataset:
+	    j.inputdata.dataset = opt.input_dataset.split(',')
+
+        if opt.inputaccessmode:
+            j.inputdata.type = opt.inputaccessmode        
+        else:    
+            j.inputdata.type = 'DQ2_LOCAL'
+
+        if opt.inputfailover:
+            j.inputdata.failover=True
+        if opt.inputaccessprotocol:
+            j.inputdata.accessprotocol = opt.inputaccessprotocol        
+        if opt.backend == 'lcg' and not opt.ce and opt.match_ce_all=='match_ce_all':
+            j.inputdata.match_ce_all = True
+        if opt.input_minnumfiles>0:
+            j.inputdata.min_num_files = opt.input_minnumfiles
+        if opt.inputnames:
+            if opt.inputnames.find(':')>0:
+                j.inputdata.names = opt.inputnames.split(':')
+            elif opt.inputnames.find(',')>0:
+                j.inputdata.names = opt.inputnames.split(',')
+            else:
+                j.inputdata.names = opt.inputnames.split('\n')
+        if opt.inputnamespattern:
+            if opt.inputnamespattern.find(':')>0:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(':')
+            elif opt.inputnamespattern.find(',')>0:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(',')
+            else:
+                j.inputdata.names_pattern = opt.inputnamespattern.split('\n')
+        if opt.excludeinputnames:
+            if opt.excludeinputnames.find(':')>0:
+                j.inputdata.exclude_names = opt.excludeinputnames.split(':')
+            elif opt.excludeinputnames.find(',')>0:
+                j.inputdata.exclude_names = opt.excludeinputnames.split(',')
+            else:
+                j.inputdata.exclude_names = opt.excludeinputnames.split('\n')
+        if opt.excludeinputnamespattern:        
+            if opt.excludeinputnamespattern.find(':')>0:
+                j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split(':')
+            elif opt.excludeinputnamespattern.find(',')>0:
+                j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split(',')
+            else:
+                j.inputdata.exclude_pattern = opt.excludeinputnamespattern.split('\n')
+        if opt.inputnamespattern:        
+            if opt.inputnamespattern.find(':')>0:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(':')
+            elif opt.inputnamespattern.find(',')>0:
+                j.inputdata.names_pattern = opt.inputnamespattern.split(',')
+            else:
+                j.inputdata.names_pattern = opt.inputnamespattern.split('\n')
+        if opt.inputnumfiles:
+            j.inputdata.number_of_files = opt.inputnumfiles
+        if opt.tag_input_dataset:
+            j.inputdata.tagdataset = opt.tag_input_dataset.split(',')
+        if opt.tag_input_files:
+            j.inputdata.tag_files = opt.tag_input_files.split(',')
+        if opt.backend == 'lcg' and opt.use_aodesd_backnav:
+            j.inputdata.use_aodesd_backnav = True
+        if opt.tag_coll_ref:
+            j.inputdata.tag_coll_ref = opt.tag_coll_ref
+
+
+if opt.pickevent:
+    j.inputdata=EventPicking()
+    if opt.pick_data_type:
+        j.inputdata.pick_data_type=opt.pick_data_type
+    if opt.pick_stream_name:
+        j.inputdata.pick_stream_name=opt.pick_stream_name
+    if opt.pick_dataset_pattern:
+        j.inputdata.pick_dataset_pattern=opt.pick_dataset_pattern
+    if opt.pick_event_list:
+        j.inputdata.pick_event_list=opt.pick_event_list
+    if opt.pick_filter_policy:
+        j.inputdata.pick_filter_policy=opt.pick_filter_policy
+
+    if not (opt.numsubjobs>0 and opt.numfiles_subjob>0 and opt.filesize>0):
+        if (opt.backend in [ 'lcg', 'cream', 'panda', 'ng' ] or opt.glite):
+            j.splitter = DQ2JobSplitter()
+            j.splitter.numsubjobs = 1
+
+# outputdata
+
+# local backends can now run without specifying outputdata
+#if opt.outputdata or opt.backend == 'panda':
+if True:
+    if opt.outputtype:         
+        if opt.outputtype == 'ATLAS':
+            j.outputdata = ATLASOutputDataset()
+        elif opt.outputtype == 'DQ2':
+            j.outputdata = DQ2OutputDataset()
+            if opt.output_dataset:
+                j.outputdata.datasetname = opt.output_dataset
+    else:        
+        j.outputdata = DQ2OutputDataset()
+        if opt.output_dataset:
+             j.outputdata.datasetname = opt.output_dataset
+
+    if opt.outputdata:
+        if opt.outputdata.find(':')>0:
+            j.outputdata.outputdata = opt.outputdata.split(':')
+        elif opt.outputdata.find(',')>0:
+            j.outputdata.outputdata = opt.outputdata.split(',')
+        else:
+            j.outputdata.outputdata = opt.outputdata.split('\n')
+    if opt.output_location:
+        j.outputdata.location = opt.output_location
+    if opt.output_local_location:
+        j.outputdata.local_location = opt.output_local_location
+#    if opt.use_datasetname:
+#        j.outputdata.use_datasetname = True
+    if opt.use_shortfilename:
+        j.outputdata.use_shortfilename = True
+    if opt.transferredDS:
+        j.outputdata.transferredDS = opt.transferredDS
+
+    # check for extOutFile with ATLASOutputDataset
+    if opt.outputtype == 'ATLAS' and opt.extOutFile:
+	j.outputdata.outputdata += opt.extOutFile.split(':')
+
+# splitter
+
+if opt.numsubjobs > 0:
+    if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
+        j.splitter = DQ2JobSplitter()
+	j.splitter.numsubjobs = opt.numsubjobs
+    elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
+        j.splitter = DQ2JobSplitter()
+	j.splitter.numsubjobs = opt.numsubjobs	
+        if not opt.input_dataset and not opt.tag_input_dataset:
+	    j.splitter=GenericSplitter()
+	    j.splitter.attribute='comment'
+            j.splitter.values=[str(i) for i in xrange(0,opt.numsubjobs)]
+    else:
+        j.splitter = AthenaSplitterJob()
+        j.splitter.numsubjobs = opt.numsubjobs
+
+    if opt.input_pfnlistfile:
+        j.splitter = ATLASTier3Splitter()
+        j.splitter.numjobs = opt.numsubjobs
+
+    if opt.outputdata:
+        #j.merger=AthenaOutputMerger()
+	pass
+elif opt.numfiles_subjob>0:
+    if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
+        j.splitter = DQ2JobSplitter()
+        j.splitter.numfiles = opt.numfiles_subjob
+    elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
+        j.splitter = DQ2JobSplitter()
+        j.splitter.numfiles = opt.numfiles_subjob
+    else:
+        j.splitter = AthenaSplitterJob()
+        j.splitter.numfiles_subjob = opt.numfiles_subjob
+
+    if opt.input_pfnlistfile:
+        j.splitter = ATLASTier3Splitter()
+        j.splitter.numfiles = opt.numfiles_subjob
+
+    if opt.outputdata:
+        #j.merger=AthenaOutputMerger()
+	pass
+
+elif opt.filesize>0:
+    if (opt.backend in [ 'lcg' ] or opt.glite or (opt.backend in ['sge'] and config.Athena.ENABLE_SGE_DQ2JOBSPLITTER)):
+        j.splitter = DQ2JobSplitter()
+        j.splitter.filesize = opt.filesize
+    elif (opt.backend in [ 'cream', 'panda', 'ng' ]):
+        j.splitter = DQ2JobSplitter()
+        j.splitter.filesize = opt.filesize
+
+    if opt.outputdata:
+        #j.merger=AthenaOutputMerger()
+	pass
+
+if opt.match_subjobs_files:
+    j.splitter = AthenaSplitterJob()
+    j.splitter.match_subjobs_files = True
+
+    if opt.outputdata:
+        #j.merger=AthenaOutputMerger()
+	pass	
+
+if opt.noblacklist:
+    if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
+        j.splitter.use_blacklist=False
+
+if opt.usefax:
+    if j.splitter and j.splitter.__class__.__name__=='DQ2JobSplitter':
+        j.splitter.use_fax=True
+
+# backend
+
+if opt.backend == 'lsf':
+    j.backend = LSF()
+    if opt.queue: j.backend.queue = opt.queue
+elif opt.backend == 'lcg' or opt.glite:
+    j.backend = LCG()
+    if opt.ce: j.backend.CE = opt.ce 
+    if opt.site: 
+        j.backend.requirements=AtlasLCGRequirements()
+        j.backend.requirements.sites=opt.site.split(':') 
+    if opt.cloud: 
+        j.backend.requirements=AtlasLCGRequirements()
+        j.backend.requirements.cloud=opt.cloud 
+    if opt.glite: 
+        j.backend.middleware = 'GLITE'
+    elif opt.edg: 
+        j.backend.middleware = 'EDG' 
+elif opt.backend == 'cream':
+    j.backend = CREAM()
+    j.backend.requirements=AtlasCREAMRequirements()
+    if opt.ce: 
+        j.backend.CE = opt.ce 
+    elif opt.site: 
+        j.backend.requirements.sites=opt.site.split(':') 
+    else:
+        print >>sys.stderr, 'ERROR: CREAM backend requires "--ce" or "--site" to be configured'
+        sys.exit(100)
+
+elif opt.backend == 'condor':
+    j.backend = Condor()
+    if opt.queue: j.backend.queue = opt.queue        
+elif opt.backend == 'pbs':
+    j.backend = PBS()
+    if opt.queue: j.backend.queue = opt.queue
+elif opt.backend == 'sge':
+    j.backend = SGE()
+    if opt.queue: j.backend.queue = opt.queue
+elif opt.backend=='ng':
+    try:
+        j.backend = NG()
+    except NameError:
+        print >>sys.stderr, 'ERROR: Nordugrid backend has not been enabled in the gangarc file'
+        sys.exit(100)
+    if opt.ce: j.backend.CE = opt.ce
+    if opt.rejectce: j.backend.RejectCE = opt.rejectce
+    if opt.walltime: j.backend.requirements.walltime = opt.walltime
+    if opt.cputime: j.backend.requirements.cputime = opt.cputime
+    if opt.memory: j.backend.requirements.memory = opt.memory
+    if opt.check_availability: j.backend.check_availability = True
+    if opt.runtimeenvironment: j.backend.requirements.runtimeenvironment = [opt.runtimeenvironment]
+
+elif opt.backend=='panda':
+    try:
+        j.backend = Panda()
+    except NameError:
+        print >>sys.stderr, 'ERROR: Panda backend has not been enabled in the gangarc file'
+        sys.exit(100)
+    if opt.site: j.backend.site = opt.site
+    if opt.cloud: 
+        j.backend.requirements.cloud = opt.cloud
+        j.backend.requirements.anyCloud = False
+    if opt.long: j.backend.requirements.long = True 
+    if opt.express: j.backend.requirements.express = True 
+    if opt.mergeOutput: j.backend.requirements.enableMerge = True 
+    if opt.usecommainputtxt: j.backend.requirements.usecommainputtxt = True 
+    if opt.cputime: j.backend.requirements.cputime = opt.cputime
+    if opt.memory: j.backend.requirements.memory = opt.memory
+    if opt.extOutFile: j.backend.extOutFile = opt.extOutFile.split(':')
+
+    if opt.bexec:
+        j.backend.bexec=opt.bexec
+
+    if opt.nobuild:
+        j.backend.nobuild=opt.nobuild
+
+    if opt.rootver:
+        if opt.nobuild:
+            print >>sys.stderr, 'ERROR: Cannot specify a ROOT version and the nobuild option.'
+            sys.exit(101)
+
+        j.backend.requirements.rootver = opt.rootver
+
+    if opt.libDS:
+        j.backend.libDS=opt.libDS
+
+    if opt.excludedSite: j.backend.requirements.excluded_sites = opt.excludedSite.split(',')
+    if opt.excludedCloud: j.backend.requirements.excluded_clouds = opt.excludedCloud.split(',')
+
+    if opt.useChirpServer: config.Panda.chirpserver = opt.useChirpServer
+
+    if opt.individualOutDS: j.backend.individualOutDS = True
+
+    if opt.enableJEM:
+        j.backend.requirements.enableJEM = True
+        if opt.configJEM:
+            j.backend.requirements.configJEM = opt.configJEM
+    if opt.overwriteQueuedata:
+        j.backend.requirements.overwriteQueuedata = True
+        if opt.overwriteQueuedataConfig:
+            j.backend.requirements.overwriteQueuedataConfig = opt.overwriteQueuedataConfig
+
+else:
+    j.backend = Local()
+
+# Extra queue parameters
+if opt.backend in [ 'lcg', 'cream' ] or opt.glite:
+    if opt.long: j.backend.requirements.cputime = 8 * 60;
+    if opt.cputime: j.backend.requirements.cputime = opt.cputime
+    if opt.walltime: j.backend.requirements.walltime = opt.walltime
+    if opt.memory: j.backend.requirements.memory = opt.memory
+
+if opt.backend in ['sge', 'pbs', 'lsf', 'condor']:
+   if opt.batchextraopts: j.backend.extraopts = opt.batchextraopts
+
+# Inputsandbox
+if opt.inputsandbox:
+   if opt.inputsandbox.find(':')>0:
+      j.inputsandbox = opt.inputsandbox.split(':')        
+   elif opt.inputsandbox.find(',')>0:
+      j.inputsandbox = opt.inputsandbox.split(',')        
+   else:
+      j.inputsandbox = opt.inputsandbox.split('\n')        
+
+# Outputsandbox
+if opt.outputsandbox:
+   if opt.outputsandbox.find(':')>0:
+      j.outputsandbox = opt.outputsandbox.split(':')        
+   elif opt.outputsandbox.find(',')>0:
+      j.outputsandbox = opt.outputsandbox.split(',')        
+   else:
+      j.outputsandbox = opt.outputsandbox.split('\n')        
+
+# Remove default DBRelease='LATEST' if no splitter or AthenaSplitterJob is used
+if not j.splitter:
+    #j.application.atlas_dbrelease=''
+    pass
+if j.splitter and j.splitter.__class__.__name__=='AthenaSplitterJob':
+    #j.application.atlas_dbrelease=''
+    pass
+
+#print j
+
+try:
+    j.submit()
+except GangaException, e:
+    print >>sys.stderr, 'ERROR: %s - %s' % (type(e),e)
+
+
