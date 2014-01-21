@@ -35,6 +35,7 @@ config.addOption('AllowedSitesNGDQ2JobSplitter', [ 'NDGF-T1_DATADISK', 'NDGF-T1_
 config.addOption('AnyCloudPreferenceList', [ ], 'List of clouds that should be preferentially submitted to when using the anyCloud option' )
 config.addOption('ATLASOutputDatasetLFC', 'prod-lfc-atlas-local.cern.ch', 'FIXME')
 config.addOption('PathToEOSBinary', '/afs/cern.ch/project/eos/installation/pro/bin/eos.select', 'Path to the EOS binary for output copying/checking')
+config.addOption('RemoveTempUserAreaAfterPrepare', False, 'If True, user areas created in /tmp are removed after prepare has been called (the version in the gangadir shared area will be used instead)')
 
 # -------------------------------------------------
 # AthenaMC Options

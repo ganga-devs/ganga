@@ -1,0 +1,50 @@
+**************************************************************************************************************
+6.0.21 (2013/12/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* fix to allow '()' characters in the proxy DN provided by Hurng-Chun. See Savannah bug #103462:
+https://savannah.cern.ch/bugs/?103462
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Added more protection for long filenames in tasks
+* Allowed multiple DQ2 download threads
+* Fix for using correct tarball name when running EXEs and athena_compile
+* Fixed issue with local jobs moving files incorrectly
+* Added option to turn off PFC creation in Local/Batch Jobs
+* Got match_subjobs_files working with ATLASLocalDatasets
+* Removed output error for Condor backend
+* Added option config[Athena][[RemoveTempUserAreaAfterPrepare] that will remove the user area created 
+if it's in the /tmp area
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Fix for missing gridProxy in GPI
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Fix for using GaudiPython and Bender on backends other than Dirac which caused an error with
+environment
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Transfer cmtconfig value even if atlas_release isn't specified (i.e. rootver specified)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaService
+--------------------------------------------------------------------------------------------------------------
+* Fixed a bug in the error message when failing to kill the server
+
+**************************************************************************************************************

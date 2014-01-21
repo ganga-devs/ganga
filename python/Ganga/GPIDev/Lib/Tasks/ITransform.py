@@ -33,6 +33,7 @@ class ITransform(GangaObject):
         'abort_loop_on_submit'     : SimpleItem(defvalue=True, doc='Break out of the Task Loop after submissions'),
         'required_trfs'  : SimpleItem(defvalue=[],typelist=['int'],sequence=1,doc="IDs of transforms that must complete before this unit will start. NOTE DOESN'T COPY OUTPUT DATA TO INPUT DATA. Use TaskChainInput Dataset for that."),
         'chain_delay'    : SimpleItem(defvalue=0, doc='Minutes delay between a required/chained unit completing and starting this one', protected=1, typelist=["int"]),
+        #'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
     })
 
    _category = 'transforms'
@@ -203,11 +204,19 @@ class ITransform(GangaObject):
             return 1
          
          unit_status_list.append( unit.status )
-                                          
+
+      # check for any TaskChainInput completions
+      for ds in self.inputdata:
+         if ds._name == "TaskChainInput" and ds.input_trf_id != -1:
+            if task.transforms[ds.input_trf_id].status != "completed":
+               return 0
+                        
       # update status and check
       old_status = self.status
-      for state in ['running', 'completed']:
+      for state in ['running', 'hold', 'bad', 'completed']:
          if state in unit_status_list:
+            if state == 'hold':
+               state = "running"
             if state != self.status:
                self.updateStatus(state)               
             break
@@ -219,28 +228,49 @@ class ITransform(GangaObject):
       for ds in self.inputdata:
          if ds._name == "TaskChainInput" and ds.input_trf_id != -1:
 
-            # loop over units in parent trf and create units as required
-            for in_unit in self._getParent().transforms[ds.input_trf_id].units:
-
+            # check for single unit
+            if ds.single_unit:
+               
                # is there a unit already linked?
                done = False
                for out_unit in self.units:
-                  if '%d:%d' % (ds.input_trf_id, in_unit.getID() ) in out_unit.req_units:
+                  if '%d:ALL' % (ds.input_trf_id) in out_unit.req_units:
                      done = True
-
+                     
                if not done:
-                  new_unit = self.createChainUnit( in_unit )
+                  new_unit = self.createChainUnit( self._getParent().transforms[ds.input_trf_id].units, ds.use_copy_output )
                   if new_unit:
-                     self.addChainUnitToTRF( new_unit, ds, in_unit.getID() )
+                     self.addChainUnitToTRF( new_unit, ds, -1 )
+                           
+            else:
+                  
+               # loop over units in parent trf and create units as required
+               for in_unit in self._getParent().transforms[ds.input_trf_id].units:
 
-   def createChainUnit( self, outdata ):
+                  # is there a unit already linked?
+                  done = False
+                  for out_unit in self.units:
+                     if '%d:%d' % (ds.input_trf_id, in_unit.getID() ) in out_unit.req_units:
+                        done = True
+
+                  if not done:
+                     new_unit = self.createChainUnit( [ in_unit ], ds.use_copy_output )
+                     if new_unit:
+                        self.addChainUnitToTRF( new_unit, ds, in_unit.getID() )
+
+   def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create a chained unit given the parent outputdata"""
       return IUnit()
       
    def addChainUnitToTRF( self, unit, inDS, unit_id = -1 ):
       """Add a chained unit to this TRF. Override for more control"""
-      unit.req_units.append('%d:%d' % (inDS.input_trf_id, unit_id ) )
-      unit.name = "Parent: TRF %d, Unit %d" % (inDS.input_trf_id, unit_id )
+      if unit_id == -1:
+         unit.req_units.append('%d:ALL' % (inDS.input_trf_id ) )
+         unit.name = "Parent: TRF %d, All Units" % (inDS.input_trf_id )
+      else:
+         unit.req_units.append('%d:%d' % (inDS.input_trf_id, unit_id ) )
+         unit.name = "Parent: TRF %d, Unit %d" % (inDS.input_trf_id, unit_id )
+
       self.addUnitToTRF(unit)
    
    def addInputData(self, inDS):

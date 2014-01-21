@@ -4,18 +4,35 @@ import pickle
 import traceback
 from socket import *
 import time
+from commands import getstatusoutput
 
 # Ganga Service class that provides the interface to the server
 class GangaService:
     
     def __init__(self):
-        self.port = 43434
+        self.port = -1 #43434
         self.timeout = 60
         self.gangadir = os.path.normpath(os.path.expandvars(os.path.expanduser("~/gangadir-server")))
         self.prerun = ""
         self.gangacmd = "ganga"
         pass
 
+    def getServerInfo(self):
+        """return a tuple of the hostname and port from the server.info file"""
+        if os.path.exists( os.path.join(self.gangadir, "server", "server.info") ):
+            host_port = open( os.path.join(self.gangadir, "server", "server.info") ).read().strip()
+            if len(host_port.split(":")) == 1:
+                hostname = host_port
+                port = self.port
+                if port == -1:
+                    port = 43434
+            else:
+                hostname = host_port.split(":")[0]
+                port = host_port.split(":")[1]
+
+            return (hostname, port)
+        return ("", -1)
+        
     def killServer(self):
         """send a terminate request to the server"""
         
@@ -23,7 +40,10 @@ class GangaService:
         if os.path.exists( os.path.join(self.gangadir, "server", "server.info") ):
 
             # watchdog file there so check timestamp
-            hostname = open( os.path.join(self.gangadir, "server", "server.info") ).read().strip()
+            host_port = self.getServerInfo()
+            hostname = host_port[0]
+            port = int(host_port[1])
+
             if (time.time() - os.path.getmtime(os.path.join(self.gangadir, "server", "server.info") )) < 60:
                 if hostname != os.uname()[1]:
                     print "Active server running on host '%s' - creating kill file" % hostname
@@ -34,19 +54,19 @@ class GangaService:
                         wait += 1
 
                     if wait > 29:
-                        print "Could not kill server. Please kill manually on host '%'" % hostname
+                        print "Could not kill server. Please kill manually on host '%s'" % hostname
                         return False
 
                     print "Server killed."
                     return True
                 else:
                     # try and connect to this port
-                    addr = ('localhost',self.port)
+                    addr = ('localhost',port)
                     sock = socket(AF_INET,SOCK_STREAM)
                     try:
                         sock.connect(addr)
                     except:
-                        print "Could not connect to server on port %d" % self.port
+                        print "Could not connect to server on port %d" % port
                         return False
 
                     sock.send("###STOP###")
@@ -71,8 +91,11 @@ class GangaService:
         # is there a server up? check the watchdog file
         if os.path.exists(os.path.join(self.gangadir, "server", "server.info")):
 
+            host_port = self.getServerInfo()
+            hostname = host_port[0]
+            self.port = int(host_port[1])
+
             # watchdog file there so check timestamp
-            hostname = open(os.path.join(self.gangadir, "server", "server.info")).read().strip()
             if (time.time() - os.path.getmtime(os.path.join(self.gangadir, "server", "server.info"))) < 60:
                 if hostname != os.uname()[1]:
                     print "Active server running on host '%s'" % hostname
@@ -83,11 +106,29 @@ class GangaService:
             else:
                 print "Stale server file around. Removing..."
                 os.system("rm %s" % os.path.join(self.gangadir, "server", "server.info"))
-                
+
+        # try to get an unsued port
+        if self.port == -1:
+            base_port = 40000
+            import random
+            random.seed()
+            base_num = random.randint(0, 50) * 100
+            
+            # find any runnning ganga instances
+            ret, out = getstatusoutput("ps -Af | grep ganga -i | wc -l")
+            proc_offset = int(out) * 5
+
+            # and a bit random for luck
+            add_offset = random.randint(0, 4)
+            
+            # final port number
+            self.port = base_port + base_num + proc_offset + add_offset
+            print "Trying port %d..." % self.port
+
         # No, so start it
         print "Starting server..."
         cmd = "%s --daemon -o[PollThread]forced_shutdown_timeout=300 -o[Configuration]ServerPort=%d -o[Configuration]ServerTimeout=%d -o[Configuration]gangadir=%s %s/server-script.py" % (self.gangacmd, self.port, self.timeout, self.gangadir,
-                                                                                                                                                 os.path.join(os.path.dirname( os.path.abspath( __file__ ) ), "../Server" ) )
+                                                                                                                                                                                           os.path.join(os.path.dirname( os.path.abspath( __file__ ) ), "../Server" ) )
         if self.prerun != "":
             cmd = "%s && %s" % (self.prerun, cmd)
 

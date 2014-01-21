@@ -503,7 +503,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     # cmt config
                     jspec.cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
 
-                if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore or app.useMana:
+                if (job.backend.bexec != '') or (job.backend.requirements.rootver != '') or app.useRootCore or app.useMana or app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
                     jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
                 else:
                     jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB
@@ -531,7 +531,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if job.backend.requirements.rootver != '':
                     rootver = re.sub('/','.', job.backend.requirements.rootver)
                     jspec.jobParameters += ' --rootVer %s ' % rootver
-
+                
+                if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                    if not jspec.cmtConfig in ['','NULL',None]:
+                        jspec.jobParameters += " --cmtConfig %s " % jspec.cmtConfig
+                    
                 if app.useRootCore:
                     jspec.jobParameters += " --useRootCore "
                     jspec.jobParameters += ' -r %s ' % self.rundirectory  #'.'
@@ -659,6 +663,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             flib.GUID           = self.fileBO.GUID
             flib.md5sum         = self.fileBO.md5sum
             flib.fsize          = self.fileBO.fsize
+            flib.scope          = self.fileBO.scope
             flib.type           = 'input'
             flib.status         = self.fileBO.status
             flib.dataset        = self.fileBO.destinationDBlock
@@ -824,6 +829,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             file.GUID           = vals['guid']
             file.fsize          = vals['fsize']
             file.md5sum         = vals['md5sum']
+            file.scope          = vals['scope']
             file.dataset        = tmpDbrDS
             file.prodDBlock     = tmpDbrDS
             file.dispatchDBlock = tmpDbrDS
@@ -959,6 +965,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     file.GUID           = vals['guid']
                     file.fsize          = vals['fsize']
                     file.md5sum         = vals['md5sum']
+                    file.scope          = vals['scope']
                     file.dataset        = tmpDbrDS
                     file.prodDBlock     = tmpDbrDS
                     file.dispatchDBlock = tmpDbrDS

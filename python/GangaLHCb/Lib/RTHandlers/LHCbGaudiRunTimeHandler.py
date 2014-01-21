@@ -111,7 +111,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         return StandardJobConfig( FileBuffer('gaudi-script.py', script, executable=1),
                                   inputbox  = unique(inputsandbox ),
                                   outputbox = unique(outputsandbox),
-                                  env = app.env)
+                                  env = app.getenv(True))
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

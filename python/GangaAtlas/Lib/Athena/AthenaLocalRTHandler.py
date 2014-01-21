@@ -382,6 +382,12 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             if job.inputdata.use_poolfilecatalog_failover:
                 environment['USE_POOLFILECATALOG_FAILOVER'] = '1'
 
+        # CREATE_POOLFILECATALOG of Local/ATLASLocalDataset
+        environment['CREATE_POOLFILECATALOG'] = '1'
+        if job.inputdata and job.inputdata._name == 'ATLASLocalDataset':
+            if not job.inputdata.create_poolfilecatalog:
+                environment['CREATE_POOLFILECATALOG'] = '0'
+                
         # Write trf parameters
         trf_params = ' '
         for key, value in job.application.trf_parameter.iteritems():

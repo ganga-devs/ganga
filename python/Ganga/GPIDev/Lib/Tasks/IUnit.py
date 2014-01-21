@@ -122,11 +122,18 @@ class IUnit(GangaObject):
       req_ok = True
       for req in self.req_units:
          req_trf_id = int( req.split(":")[0] )
-         req_unit_id = int( req.split(":")[1] )
 
-         if task.transforms[req_trf_id].units[req_unit_id].status != "completed":
-            req_ok = False
-            break
+         if req.find("ALL") == -1:
+            req_unit_id = int( req.split(":")[1] )
+
+            if task.transforms[req_trf_id].units[req_unit_id].status != "completed":
+               req_ok = False
+
+         else:
+            # need all units from this trf
+            for u in task.transforms[req_trf_id].units:
+               if u.status != "completed":
+                  req_ok = False
 
       # set the start time if not already set
       if len(self.req_units) > 0 and req_ok and self.start_time == 0:

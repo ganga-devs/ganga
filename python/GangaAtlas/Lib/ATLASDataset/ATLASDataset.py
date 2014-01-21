@@ -312,7 +312,7 @@ class ATLASLocalDataset(Dataset):
     _schema = Schema(Version(1,0), {
         'names': SimpleItem(defvalue = [], typelist=['str'], sequence=1,doc='List of input files with full path'),
         'use_poolfilecatalog_failover' : SimpleItem(defvalue = False, doc = 'Use pool_insertFileToCatalog per single file if bulk insert fails'),
-
+        'create_poolfilecatalog' : SimpleItem(defvalue = False, doc = 'Try to add these files to the PoolFileCatalog'),
     })
     
     _category = 'datasets'
@@ -418,7 +418,7 @@ class ATLASOutputDataset(Dataset):
         job = self._getParent()
 
 #       Determine local output path to store files
-        if job.outputdata.location and ((job.backend._name == 'Local') or (job.backend._name == 'LSF') or (job.backend._name == 'PBS') or (job.backend._name == 'SGE')):
+        if job.outputdata.location and ((job.backend._name == 'Local') or (job.backend._name == 'LSF') or (job.backend._name == 'PBS') or (job.backend._name == 'SGE') or (job.backend._name == 'Condor')):
             outputlocation =  expandfilename(job.outputdata.location)
             # update the local_location variable to point to the location
             job.outputdata.local_location = outputlocation
@@ -455,7 +455,8 @@ class ATLASOutputDataset(Dataset):
         if (job.backend._name == 'Local' or \
             job.backend._name == 'LSF' or \
             job.backend._name == 'PBS' or \
-            job.backend._name == 'SGE'):
+            job.backend._name == 'SGE' or \
+            job.backend._name == 'Condor'):
             for file in outputfiles:
 
                 pfn = outputlocation+"/"+file

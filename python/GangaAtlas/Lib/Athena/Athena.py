@@ -1202,6 +1202,10 @@ class Athena(IPrepareApp):
         self.checkPreparedHasParent(self)
         self.post_prepare()
 
+        # remove a temporary user area
+        if config['RemoveTempUserAreaAfterPrepare'] and self.user_area_path == tmpDir:
+            os.remove( self.user_area.name )
+
         return 1
 
 
@@ -1403,8 +1407,14 @@ class Athena(IPrepareApp):
         logger.debug('Athena master_configure called')
 
         if self.user_area.name:
-            if not self.user_area.exists():
-                raise ApplicationConfigurationError(None,'The tar file %s with the user area does not exist.' % self.user_area.name)
+            tmp_user_area_name = self.user_area.name
+            if self.is_prepared is not True:
+                from Ganga.Utility.files import expandfilename
+                shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+                tmp_user_area_name = os.path.join(os.path.join(shared_path,self.is_prepared.name),os.path.basename(self.user_area.name))
+                                        
+            if not os.path.exists( tmp_user_area_name ):
+                raise ApplicationConfigurationError(None,'The tar file %s with the user area does not exist.' % tmp_user_area_name)
 
         if self.group_area.name:
             if string.find(self.group_area.name,"http")<0 and not self.group_area.exists():
@@ -1524,9 +1534,11 @@ class AthenaSplitterJob(ISplitter):
             if (job.inputdata._name == 'ATLASCastorDataset') or \
                    (job.inputdata._name == 'ATLASLocalDataset'):
                 inputnames=[]
+                numfiles = len(job.inputdata.get_dataset_filenames())
+                if self.match_subjobs_files:
+                    self.numsubjobs = numfiles 
                 for i in xrange(self.numsubjobs):    
                     inputnames.append([])
-                numfiles = len(job.inputdata.get_dataset_filenames())
                 if numfiles < self.numsubjobs:
                     self.numsubjobs = numfiles
                     logger.warning('Number of requested subjobs larger than number of files found - changing j.splitter.numsubjobs = %d ' %self.numsubjobs )

@@ -1,0 +1,15 @@
+**************************************************************************************************************
+6.0.20-hotfix3 (2013/12/13)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fixed issue with local jobs moving files incorrectly
+* Added option to turn off PFC creation in Local/Batch Jobs
+* Got match_subjobs_files working with ATLASLocalDatasets
+* Removed output error for Condor backend
+* Added option config[Athena][[RemoveTempUserAreaAfterPrepare] that will remove the user area created 
+if it's in the /tmp area
+
+**************************************************************************************************************

@@ -150,7 +150,10 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                           job.inputdata.dataset[0])
             if not m:
                 raise ApplicationConfigurationError(None, "Error retrieving run number from dataset name")
-            jspec.jobParameters += ' RunNumber=%d' % int(m.group(2))
+            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --runNumber %d' % int(m.group(2))
+            else:
+                jspec.jobParameters += ' RunNumber=%d' % int(m.group(2))
         
         # Output files.
         randomized_lfns = []
@@ -167,7 +170,10 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.dataset = jspec.destinationDBlock
             ofspec.type = 'output'
             jspec.addFile(ofspec)
-        jspec.jobParameters += ' output%sFile=%s' % (app.output_type, ','.join(randomized_lfns))
+        if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+            jspec.jobParameters += ' --output%sFile %s' % (app.output_type, ','.join(randomized_lfns))
+        else:
+            jspec.jobParameters += ' output%sFile=%s' % (app.output_type, ','.join(randomized_lfns))
 
         # Input files.
         if job.inputdata:
@@ -186,7 +192,10 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
                 itype = app.input_type
             else:
                 itype = m.group(5)
-            jspec.jobParameters += ' input%sFile=%s' % (itype, ','.join(job.inputdata.names))
+            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --input%sFile %s' % (itype, ','.join(job.inputdata.names))
+            else:
+                jspec.jobParameters += ' input%sFile=%s' % (itype, ','.join(job.inputdata.names))
 
         # Log files.
         lfspec = FileSpec()
