@@ -54,7 +54,7 @@ class MassStorageFile(IGangaFile):
             
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
-        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'gangafiles':
+        if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
             r.locations=[]
             r.localDir=''
             r.failureReason=''

@@ -143,7 +143,7 @@ class GoogleFile(IGangaFile):
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
-        if isinstance(obj_type, Job) and attrib_name == 'gangafiles':
+        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
             r.localDir=None
             r.failureReason=''
         return r
