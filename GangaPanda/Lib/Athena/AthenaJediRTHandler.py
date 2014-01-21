@@ -347,7 +347,15 @@ class AthenaJediRTHandler(IRuntimeHandler):
             taskParamMap['transUses'] = ''
         taskParamMap['transHome'] = 'AnalysisTransforms'+self.cacheVer#+nightVer
 
-        taskParamMap['processingType'] = 'panda-client-{0}-jedi-ganga'.format(PandaToolsPkgInfo.release_version)
+        configSys = getConfig('System')
+        gangaver = configSys['GANGA_VERSION'].lower()
+        if not gangaver:
+            gangaver = "ganga"
+
+        if app.atlas_exetype in ["ATHENA", "TRF"]:
+            taskParamMap['processingType'] = '{0}-jedi-athena'.format(gangaver)
+        else:
+            taskParamMap['processingType'] = '{0}-jedi-run'.format(gangaver)
 
         #if options.eventPickEvtList != '':
         #    taskParamMap['processingType'] += '-evp'
@@ -489,7 +497,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
 
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.number_of_files != 0:
             taskParamMap['nFiles'] = job.inputdata.number_of_files
-        if job.backend.requirements.nFilesPerJob != None:    
+        if job.backend.requirements.nFilesPerJob > 0:    
             taskParamMap['nFilesPerJob'] = job.backend.requirements.nFilesPerJob
 
         if not job.backend.requirements.nGBPerJob in [ 0,'MAX']:
@@ -562,12 +570,12 @@ class AthenaJediRTHandler(IRuntimeHandler):
             # change LATEST to DBR_LATEST
             if dbrDS == 'LATEST':
                 dbrDS = 'DBR_LATEST'
-                dictItem = {'type':'template',
-                            'param_type':'input',
-                            'value':'--dbrFile=${DBR}',
-                            'dataset':dbrDS,
+            dictItem = {'type':'template',
+                        'param_type':'input',
+                        'value':'--dbrFile=${DBR}',
+                        'dataset':dbrDS,
                             }
-                taskParamMap['jobParameters'] += [dictItem]
+            taskParamMap['jobParameters'] += [dictItem]
         # no expansion
         #if options.notExpandDBR:
         #dictItem = {'type':'constant',
