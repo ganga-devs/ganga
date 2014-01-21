@@ -361,11 +361,13 @@ class AthenaJediRTHandler(IRuntimeHandler):
         if job.backend.site != 'AUTO':
             taskParamMap['includedSite'] = job.backend.site
         #taskParamMap['cliParams'] = fullExecString
-        #if options.noEmail:
-        #    taskParamMap['noEmail'] = True
+        if job.backend.requirements.noEmail:
+            taskParamMap['noEmail'] = True
         #if options.skipScout:
         #    taskParamMap['skipScout'] = True
         #taskParamMap['nMaxFilesPerJob'] = options.maxNFilesPerJob
+        if job.backend.requirements.disableAutoRetry:
+            taskParamMap['disableAutoRetry'] = 1
         # source URL
         matchURL = re.search("(http.*://[^/]+)/",Client.baseURLCSRVSSL)
         if matchURL != None:
@@ -482,13 +484,27 @@ class AthenaJediRTHandler(IRuntimeHandler):
         #
         # input
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
-            if job.backend.nFilesPerJob > 0 and job.inputdata.number_of_files == 0 and job.backend.split > 0:
-                job.inputdata.number_of_files = job.backend.nFilesPerJob * job.backend.split
+            if job.backend.requirements.nFilesPerJob > 0 and job.inputdata.number_of_files == 0 and job.backend.requirements.split > 0:
+                job.inputdata.number_of_files = job.backend.requirements.nFilesPerJob * job.backend.requirements.split
 
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.number_of_files != 0:
             taskParamMap['nFiles'] = job.inputdata.number_of_files
-        if job.backend.nFilesPerJob != None:    
-            taskParamMap['nFilesPerJob'] = job.backend.nFilesPerJob
+        if job.backend.requirements.nFilesPerJob != None:    
+            taskParamMap['nFilesPerJob'] = job.backend.requirements.nFilesPerJob
+
+        if not job.backend.requirements.nGBPerJob in [ 0,'MAX']:
+            try:
+                if job.backend.requirements.nGBPerJob != 'MAX':
+                    job.backend.requirments.nGBPerJob = int(job.backend.requirements.nGBPerJob)
+            except:
+                logger.error("nGBPerJob must be an integer or MAX")
+            # check negative                                                                                                                                                         
+            if job.backend.requirements.nGBPerJob <= 0:
+                logger.error("nGBPerJob must be positive")
+
+            # don't set MAX since it is the defalt on the server side
+            if not job.backend.requirements.nGBPerJob in [-1,'MAX']: 
+                taskParamMap['nGBPerJob'] = job.backend.requirements.nGBPerJob
 
         if app.atlas_exetype in ["ATHENA", "TRF"]:
             inputMap = {}
@@ -508,8 +524,8 @@ class AthenaJediRTHandler(IRuntimeHandler):
             else:
                 # no input
                 taskParamMap['noInput'] = True
-                if job.backend.split > 0:
-                    taskParamMap['nEvents'] = job.backend.split
+                if job.backend.requirements.split > 0:
+                    taskParamMap['nEvents'] = job.backend.requirements.split
                 else:
                     taskParamMap['nEvents'] = 1
                 taskParamMap['nEventsPerJob'] = 1
@@ -534,8 +550,8 @@ class AthenaJediRTHandler(IRuntimeHandler):
             else:
                 # no input
                 taskParamMap['noInput'] = True
-                if job.backend.split > 0:
-                    taskParamMap['nEvents'] = job.backend.split
+                if job.backend.requirements.split > 0:
+                    taskParamMap['nEvents'] = job.backend.requirements.split
                 else:
                     taskParamMap['nEvents'] = 1
                 taskParamMap['nEventsPerJob'] = 1
