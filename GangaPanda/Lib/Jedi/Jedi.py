@@ -389,89 +389,89 @@ class Jedi(IBackend):
                 pandaJobIDs[jediTaskDict['jediTaskID']] = jediTaskDict['PandaID']
             logger.debug("jID = %s, pandaJobIDs = %s" % (jID, pandaJobIDs))
 
+            # Check if associated Panda job exist and monitor them
+            if not job.backend.pandajobs:
+                jdefids = pandaJobIDs[jID]
+                # skip if there are no Panda jobs yet 
+                if not jdefids:
+                    continue
+                tot_num_mjobs = 0
+
+                do_master_update = True
+                ick,status,num_mjobs = retrievePandaJobs(job, jdefids)
+                logger.debug('retrievePandaJobs returns: %s %s' % (repr(ick),status))
+                if not ick:
+                    logger.debug('Panda job retrival failure for Jedi task %s with PandaIds %s' % (job.backend.id, jdefids))
+                    do_master_update = False
+
+                tot_num_mjobs += num_mjobs
+                ## for some reason, one should call job._commit() to store panda jobs into the repository
+                job._commit()
+                logger.debug('Job %s retrieved %d Panda jobs' % (job.getFQID('.'),tot_num_mjobs) )
+            # Now monitor the already attached Panda jobs
+            else:
+                jdefids = [ pj.id for pj in job.backend.pandajobs ] 
+                rc, jobsStatus = Client.getFullJobStatus(jdefids,False)
+                if rc:
+                    logger.error('Return code %d retrieving job status information.',rc)
+                    raise BackendError('Jedi','Return code %d retrieving job status information.' % rc)
+
+                for status in jobsStatus:
+                    if not status: continue
+
+                    for pjob in job.backend.pandajobs:
+                        if pjob.id == status.PandaID:
+                            # skip if no status change
+                            if pjob.status == status.jobStatus:
+                                continue 
+                            # Else update job record
+                            pjob.jobSpec = dict(zip(status._attributes,status.values()))
+
+                            for k in pjob.jobSpec.keys():
+                                if type(pjob.jobSpec[k]) not in [type(''),type(1)]:
+                                    pjob.jobSpec[k]=str(pjob.jobSpec[k])
+
+                            logger.debug('Job %s with Panda job %s has changed status from %s to %s',job.getFQID('.'),pjob.id, pjob.status,status.jobStatus)
+                            pjob.status = status.jobStatus
+                            pjob.exitcode = str(status.transExitCode)
+                            pjob.piloterrorcode = str(status.pilotErrorCode)
+                            pjob.reason = ''
+                            for k in pjob.jobSpec.keys():
+                                if k.endswith('ErrorDiag') and pjob.jobSpec[k]!='NULL':
+                                    pjob.reason += '%s: %s, '%(k,str(pjob.jobSpec[k]))
+                            #if job.backend.jobSpec['transExitCode'] != 'NULL':
+                            pjob.reason += 'transExitCode: %s'%pjob.jobSpec['transExitCode']
+
+                            if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                                logger.debug('Panda job %s %s' % (pjob.id, status.jobStatus))
+                            elif status.jobStatus in ['starting','running','holding','transferring']:
+                                logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
+                            elif status.jobStatus in ['finished']:
+                                logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
+                            elif status.jobStatus == 'failed':
+                                logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
+                                # check for server side retry
+                                if pjob.jobSpec.has_key('taskBufferErrorDiag') and pjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                                    # grab the new panda ID
+                                    newPandaID = long(pjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
+                                    pjob.id = newPandaID
+                                    pjob.status = None
+                                    pjob.url = 'http://panda.cern.ch/?job=%d'%newPandaID
+                            elif status.jobStatus == 'cancelled' and pjob.status not in ['completed','failed']: # bug 67716
+                                logger.debug('Panda job %s cancelled'%pjob.id)
+                                if pjob.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in pjob.jobSpec['taskBufferErrorDiag']:
+                                    newPandaID = checkForRebrokerage(pjob.jobSpec['taskBufferErrorDiag'])
+                                    logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(pjob.id, newPandaID))
+                                    pjob.id = newPandaID
+                                    pjob.status = None
+                            else:
+                                logger.warning('Unexpected job status %s',status.jobStatus)
+
             # Jedi job status has changed
             if job.backend.status != jediTaskDict['status']:
                 logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status, jediTaskDict['status'])
                 job.backend.status = jediTaskDict['status']
                 job.backend.reason = jediTaskDict['statistics']
-
-                # Check if associated Panda job exist and monitor them
-                if not job.backend.pandajobs:
-                    jdefids = pandaJobIDs[jID]
-                    # skip if there are no Panda jobs yet 
-                    if not jdefids:
-                        continue
-                    tot_num_mjobs = 0
-
-                    do_master_update = True
-                    ick,status,num_mjobs = retrievePandaJobs(job, jdefids)
-                    logger.debug('retrievePandaJobs returns: %s %s' % (repr(ick),status))
-                    if not ick:
-                        logger.debug('Panda job retrival failure for Jedi task %s with PandaIds %s' % (job.backend.id, jdefids))
-                        do_master_update = False
-
-                    tot_num_mjobs += num_mjobs
-                    ## for some reason, one should call job._commit() to store panda jobs into the repository
-                    job._commit()
-                    logger.debug('Job %s retrieved %d Panda jobs' % (job.getFQID('.'),tot_num_mjobs) )
-                # Now monitor the already attached Panda jobs
-                else:
-                    jdefids = [ pj.id for pj in job.backend.pandajobs ] 
-                    rc, jobsStatus = Client.getFullJobStatus(jdefids,False)
-                    if rc:
-                        logger.error('Return code %d retrieving job status information.',rc)
-                        raise BackendError('Jedi','Return code %d retrieving job status information.' % rc)
-         
-                    for status in jobsStatus:
-                        if not status: continue
-
-                        for pjob in job.backend.pandajobs:
-                            if pjob.id == status.PandaID:
-                                # skip if no status change
-                                if pjob.status == status.jobStatus:
-                                    continue 
-                                # Else update job record
-                                pjob.jobSpec = dict(zip(status._attributes,status.values()))
-
-                                for k in pjob.jobSpec.keys():
-                                    if type(pjob.jobSpec[k]) not in [type(''),type(1)]:
-                                        pjob.jobSpec[k]=str(pjob.jobSpec[k])
-
-                                logger.debug('Job %s with Panda job %s has changed status from %s to %s',job.getFQID('.'),pjob.id, pjob.status,status.jobStatus)
-                                pjob.status = status.jobStatus
-                                pjob.exitcode = str(status.transExitCode)
-                                pjob.piloterrorcode = str(status.pilotErrorCode)
-                                pjob.reason = ''
-                                for k in pjob.jobSpec.keys():
-                                    if k.endswith('ErrorDiag') and pjob.jobSpec[k]!='NULL':
-                                        pjob.reason += '%s: %s, '%(k,str(pjob.jobSpec[k]))
-                                #if job.backend.jobSpec['transExitCode'] != 'NULL':
-                                pjob.reason += 'transExitCode: %s'%pjob.jobSpec['transExitCode']
-
-                                if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
-                                    logger.debug('Panda job %s %s' % (pjob.id, status.jobStatus))
-                                elif status.jobStatus in ['starting','running','holding','transferring']:
-                                    logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
-                                elif status.jobStatus in ['finished']:
-                                    logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
-                                elif status.jobStatus == 'failed':
-                                    logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
-                                    # check for server side retry
-                                    if pjob.jobSpec.has_key('taskBufferErrorDiag') and pjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
-                                        # grab the new panda ID
-                                        newPandaID = long(pjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
-                                        pjob.id = newPandaID
-                                        pjob.status = None
-                                        pjob.url = 'http://panda.cern.ch/?job=%d'%newPandaID
-                                elif status.jobStatus == 'cancelled' and pjob.status not in ['completed','failed']: # bug 67716
-                                    logger.debug('Panda job %s cancelled'%pjob.id)
-                                    if pjob.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in pjob.jobSpec['taskBufferErrorDiag']:
-                                        newPandaID = checkForRebrokerage(pjob.jobSpec['taskBufferErrorDiag'])
-                                        logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(pjob.id, newPandaID))
-                                        pjob.id = newPandaID
-                                        pjob.status = None
-                                else:
-                                    logger.warning('Unexpected job status %s',status.jobStatus)
 
                 # Now update Jedi job status
                 if jediTaskDict['status'] in ['registered', 'waiting', 'defined', 'pending', 'assigning', 'ready']:
