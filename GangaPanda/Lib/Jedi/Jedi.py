@@ -378,7 +378,8 @@ class Jedi(IBackend):
             status, jediTaskDict = Client.getJediTaskDetails({'jediTaskID': jID},False,True,verbose=False)
             if status != 0:
                 logger.error("Failed to get task details for %s" % jID)
-                raise BackendError('Jedi','Return code %d retrieving job status information.' % status)
+                #raise BackendError('Jedi','Return code %d retrieving job status information.' % status)
+                continue
             # Retrieve job
             job = jobdict[jediTaskDict['jediTaskID']]
             # Store associated Panda jobs
@@ -525,10 +526,10 @@ class Jedi(IBackend):
                 logger.warning("No failed jobs to resubmit")
                 return False
             
-            status,out = Client.retryTask(jID, verbose=False)                                                                      
-            if status != 0:                                                                                                                              
-                logger.error(status)                                                                                                                     
-                logger.error(out)                                                                                                                        
+            status,out = Client.retryTask(jID, verbose=False)                                                               
+            if status != 0:
+                logger.error(status)
+                logger.error(out)
                 logger.error("Failed to retry JobID=%s" % jID)                                                                                         
                 return False
             tmpStat,tmpDiag = out
@@ -543,6 +544,23 @@ class Jedi(IBackend):
             job.updateStatus('submitted')
 
         logger.info('Resubmission successful')
+        return True
+
+    def master_setup_bulk_subjobs(self, jobs, jdefids):
+           
+        from Ganga.GPIDev.Lib.Job.Job import Job
+        master_job=self.getJobObject()
+        for i in range(len(jdefids)):
+            j=Job()
+            j.copyFrom(master_job)
+            j.splitter = None
+            j.backend=Panda()
+            j.backend.id = jdefids[i]
+            j.id = i
+            j.status = 'submitted'
+            j.time.timenow('submitted')
+            master_job.subjobs.append(j)
+        master_job._commit()
         return True
 
     def get_stats(self):
