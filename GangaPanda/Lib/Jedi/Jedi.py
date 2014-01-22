@@ -340,16 +340,15 @@ class Jedi(IBackend):
         active_status = [ None, 'registered', 'waiting', 'defined', 'pending', 'assigning', 'ready', 'scouting', 'running', 'holding', 'merging', 'prepared', 'aborting', 'finishing' ]
         #active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
-        jobids = []
         if self.id and self.status in active_status: 
-            jobids.append(self.id)
-
-        status, output = Client.killTask(jobids)
-        if status:
-             logger.error('Failed killing job (status = %d)',status)
-             return False
+            status, output = Client.killTask(self.id)
+            if status:
+                logger.error('Failed killing job (status = %d)',status)
+                return False
+            else:
+                logger.info('Killing Jedi task %s, Server returned: %s' %(self.id, output))
         else:
-             logger.info('Killing Jedi task %s, Server returned: %s' %(jobids, output))
+            logger.error('Cannot kill Jedi job %s since it is not in active status', self.id)
 
         return True
 
