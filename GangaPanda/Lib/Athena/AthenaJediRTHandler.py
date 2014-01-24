@@ -371,9 +371,10 @@ class AthenaJediRTHandler(IRuntimeHandler):
         #taskParamMap['cliParams'] = fullExecString
         if job.backend.requirements.noEmail:
             taskParamMap['noEmail'] = True
-        #if options.skipScout:
-        #    taskParamMap['skipScout'] = True
-        #taskParamMap['nMaxFilesPerJob'] = options.maxNFilesPerJob
+        if job.backend.requirements.skipScout:
+            taskParamMap['skipScout'] = True
+        if not app.atlas_exetype in ["ATHENA", "TRF"]: 
+            taskParamMap['nMaxFilesPerJob'] = job.backend.requirements.maxNFilesPerJob
         if job.backend.requirements.disableAutoRetry:
             taskParamMap['disableAutoRetry'] = 1
         # source URL
