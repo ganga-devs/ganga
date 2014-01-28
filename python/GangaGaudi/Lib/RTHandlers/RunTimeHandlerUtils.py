@@ -8,6 +8,7 @@ from Ganga.Utility.logging                   import getLogger
 from Ganga.Utility.files                     import expandfilename
 from Ganga.Utility.util                      import unique
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
+from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -57,7 +58,10 @@ def master_sandbox_prepare(app,appmasterconfig, sharedir_roots=['']):
     job=app.getJobObject()
     
     ## user added items from the interactive GPI
-    inputsandbox=job.inputsandbox[:]
+    #inputsandbox=job.inputsandbox[:]
+    inputsandbox = []
+    for filepattern in getInputFilesPatterns(job)[0]:
+        inputsandbox.append(File(filepattern))
     if len(inputsandbox) > 100:
         logger.warning('InputSandbox exceeds maximum size (100) supported by the Dirac backend')
         raise GangaException(None,'InputSandbox exceed maximum size')
