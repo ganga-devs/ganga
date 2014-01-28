@@ -373,12 +373,13 @@ from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
 from DIRAC.Interfaces.API.Dirac import Dirac
 dirac=Dirac()
+import os
 dirac.getFile('###LFN###', os.getcwd())
 '''
 
 ###INDENT###import subprocess
 ###INDENT###dirac_env=###DIRAC_ENV###
-###INDENT###subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, stdin=subprocess.PIPE).communicate(upload_script)
+###INDENT###subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(upload_script)
 """
         script = script.replace('###DIRAC_ENV###',"dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))"%configDirac['DiracEnvFile'])
 
