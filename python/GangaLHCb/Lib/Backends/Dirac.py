@@ -38,11 +38,10 @@ class Dirac(DiracBase):
                input_sandbox.append('LFN:'+lfn.name)
           j = self.getJobObject()
           from GangaDirac.Lib.Files.DiracFile import DiracFile
-          for f in j.inputfiles:
-               if type(f) is DiracFile:
-                    if f.lfn == '':
+          for f in j.inputfiles.get(DiracFile):
+                   if f.lfn == '':
                          raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as this property has not been set.' % f.namePattern)
-                    else:
+                   else:
                          input_sandbox.append('LFN:' + f.lfn)
           return input_sandbox
 
