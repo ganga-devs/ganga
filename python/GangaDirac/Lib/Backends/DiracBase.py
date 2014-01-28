@@ -162,6 +162,7 @@ class DiracBase(IBackend):
         
         input_sandbox   = master_input_sandbox[:]
         input_sandbox  += sboxname
+        input_sandbox  += self.genTxtFiles()
         #why send this?
         #input_sandbox  += [dirac_script_filename]
 
