@@ -258,6 +258,10 @@ class DiracFile(IGangaFile):
         logger.error("Error in replicating file '%s' : %s" % (self.lfn, stdout))
         return stdout
          
+    def processWildcardMatches(self):
+        if regex.search(self.namePattern) is not None:
+            raise Exception("No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
+
 
     def put(self):
         """
