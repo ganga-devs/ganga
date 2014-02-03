@@ -84,7 +84,7 @@ def ExecuteSimpleCommand( command, args, env, cwd, exitIfFail=True, verbose = Fa
         del error[-1]
     return process.returncode,output,error #don't always fail on returncode!=0
 
-def runRat( ratMacro , ratV , swDir , gridMode):
+def runRat( ratMacro , ratV , swDir , gridMode , dbAccess):
     '''Run the RAT macro
     '''
     command = ''
@@ -93,7 +93,13 @@ def runRat( ratMacro , ratV , swDir , gridMode):
         command += 'export PATH=$VO_SNOPLUS_SNOLAB_CA_SW_DIR/bin:$PATH \n'
         command += 'export LD_LIBRARY_PATH=$VO_SNOPLUS_SNOLAB_CA_SW_DIR/lib:$LD_LIBRARY_PATH \n'
     command += 'source %s \n' % (os.path.join(swDir,'env_rat-%s.sh'%ratV))
-    command += 'rat -l rat.log %s \n' % ratMacro
+    ratCmd = 'rat'
+    ratCmd += ' -l rat.log'
+    if dbAccess:
+        ratCmd += '-b %s://%s:%s@%s/%s' %(dbAccess['protocol'],dbAccess['user'],dbAccess['password'],
+                                          dbAccess['url'],dbAccess['name'])
+    ratCmd += ' %s ' % ratMacro
+    command += '%s \n' % ratCmd
     ExecuteComplexCommand(os.getcwd() , command)
 
 def runScript( prodScript , ratV , swDir , gridMode):
@@ -109,7 +115,7 @@ def runScript( prodScript , ratV , swDir , gridMode):
         command += (line + '\n')
     ExecuteComplexCommand(os.getcwd() , command)
 
-def copyData(outputDir,outputFiles,gridMode,voproxy,myproxy):
+def copyData(outputDir,outputFiles,gridMode,voproxy):
     '''Copy all output data (i.e. any .root output files)
     gridMode true: use lcg-cr to copy and register file
              false: use cp (the job runs in a temp dir, any files left at end are deleted eventually)
@@ -122,24 +128,32 @@ def copyData(outputDir,outputFiles,gridMode,voproxy,myproxy):
         if gridMode == 'lcg':
             lfcDir = os.path.join('lfn:/grid/snoplus.snolab.ca',outputDir)
             ExecuteSimpleCommand('lfc-mkdir',[lfcDir.lstrip('lfn:')],None,os.getcwd(),False)
+            seName = '%s' % os.environ['VO_SNOPLUS_SNOLAB_CA_DEFAULT_SE']
+            args = ['--list-se','--vo','snoplus.snolab.ca','--attrs',
+                    'VOInfoPath','--query','SE=%s'%(seName)]
+            rtc,out,err = ExecuteSimpleCommand('lcg-info',args,None,os.getcwd())
+            srmPath = "INCOMPLETE"#in case we aren't able to get the path
+            if rtc==0:
+                srmPath = out[-2].split()[-1]
+                if srmPath[0]=="/":
+                    #remove leading / so that os.path.join works
+                    srmPath = srmPath[1:]
             for fout in outputFiles:
+                dumpOut[fout] = {}
                 fout = fout.strip()#remove any spaces or other junk
                 command = 'lcg-cr'
                 sePath = os.path.join(outputDir,fout)
-                seName = '%s' % os.environ['VO_SNOPLUS_SNOLAB_CA_DEFAULT_SE']
                 lfcPath = os.path.join(lfcDir,fout)
                 args = ['--vo','snoplus.snolab.ca','-d',seName,'-P',sePath,'-l',lfcPath,fout]
                 rtc,out,err = ExecuteSimpleCommand(command,args,None,os.getcwd())
-                dumpOut['guid'] = out[0]
-                dumpOut['se'] = lfcPath
-                dumpOut['size'] = os.stat(fout).st_size
-                dumpOut['cksum'] = adler32(fout)
+                dumpOut[fout]['guid'] = out[0]
+                dumpOut[fout]['se'] = os.path.join('srm://%s'%seName,srmPath,sePath)
+                dumpOut[fout]['size'] = os.stat(fout).st_size
+                dumpOut[fout]['cksum'] = adler32(fout)
+                dumpOut[fout]['name'] = seName
+                dumpOut[fout]['lfc'] = lfcPath
         elif gridMode == 'srm':
             srmUrl = 'srm://sehn02.atlas.ualberta.ca/pnfs/atlas.ualberta.ca/data/snoplus'
-            #command = 'export X509_USER_PROXY=%s \n'%(myproxy)
-            #command += 'srmmkdir %s \n'%(srmDir)
-            ##ExecuteSimpleCommand('srmmkdir',[srmDir],None,os.getcwd(),False)
-            #ExecuteComplexCommand(os.getcwd(), command, False)
             for fout in outputFiles:
                 command = 'export X509_USER_PROXY=%s \n'%(voproxy)
                 command += 'lcg-cr'
@@ -152,18 +166,15 @@ def copyData(outputDir,outputFiles,gridMode,voproxy,myproxy):
                     command += ' %s'%arg
                 command += '\n'
                 rtc,out,err = ExecuteComplexCommand(os.getcwd() , command , False)
-                dumpOut['guid'] = out[0]
-                dumpOut['se'] = seFullPath
-                dumpOut['size'] = os.stat(fout).st_size
-                dumpOut['cksum'] = adler32(fout)
+                dumpOut[fout] = {}
+                dumpOut[fout]['guid'] = out[0]
+                dumpOut[fout]['se'] = seFullPath
+                dumpOut[fout]['size'] = os.stat(fout).st_size
+                dumpOut[fout]['cksum'] = adler32(fout)
+                dumpOut[fout]['name'] = seName
+                dumpOut[fout]['lfc'] = lfcPath
             #for fout in outputFiles:
             #    #first copy to the output directory
-            #    command = 'export X509_USER_PROXY=%s \n'%(myproxy)
-            #    command += 'srmcp'
-            #    fileLoc = 'file:///%s'%(os.path.join(os.getcwd(),fout))
-            #    srmPath = os.path.join(srmDir,fout)
-            #    args = [fileLoc,srmPath]
-            #    #ExecuteSimpleCommand(command,args,None,os.getcwd())
             #    for arg in args:
             #        command += ' %s'%arg
             #    ExecuteComplexCommand(os.getcwd() , command)
@@ -184,9 +195,11 @@ def copyData(outputDir,outputFiles,gridMode,voproxy,myproxy):
         for fout in outputFiles:
             fout = fout.strip()#remove any spaces or other junk
             shutil.copy2(fout,outputDir)
-            dumpOut['se'] = '%s:%s'%(socket.gethostname(),os.path.join(outputDir,fout))
-            dumpOut['size'] = os.stat(fout).st_size
-            dumpOut['cksum'] = adler32(fout)
+            dumpOut[fout] = {}
+            dumpOut[fout]['se'] = '%s:%s'%(socket.getfqdn(),os.path.join(outputDir,fout))
+            dumpOut[fout]['size'] = os.stat(fout).st_size
+            dumpOut[fout]['cksum'] = adler32(fout)
+            dumpOut[fout]['name'] = socket.getfqdn()
     return dumpOut
 
 def getData(inputDir,inputFiles,gridMode,voproxy):
@@ -226,8 +239,13 @@ if __name__ == '__main__':
     parser.add_option("-i",dest="inputFiles",help="list of input files, must be in [braces] and comma delimited")
     parser.add_option("-x",dest="inputDir",help="LFC/SURL relative directory if in grid mode, full dir path if not in grid mode")
     parser.add_option("-o",dest="outputFiles",help="list of output files, must be in [braces] and comma delimited")
+    parser.add_option("--dbuser",dest="dbuser",default=None,help="Database user")
+    parser.add_option("--dbpassword",dest="dbpassword",default=None,help="Database password")
+    parser.add_option("--dbname",dest="dbname",default=None,help="Database name")
+    parser.add_option("--dbprotocol",dest="dbprotocol",default=None,help="Database protocol (http or https)")
+    parser.add_option("--dburl",dest="dburl",default=None,help="Database URL (sans protocol)")
+    parser.add_option("--nostore",dest="nostore",action="store_true",help="Don't copy the outputs at the end")
     parser.add_option("--voproxy",dest="voproxy",default=None,help="VO proxy location, MUST be used with grid srm mode")
-    parser.add_option("--myproxy",dest="myproxy",default=None,help="myproxy location, MUST be used with grid srm mode")
     #could also add an option to use a non VO_SNOPLUS_SNOLAB_CA_SW_DIR path
     (options, args) = parser.parse_args()
     if not options.ratV or not options.ratMacro or not options.outputDir or not options.swDir and not options.outputFiles:
@@ -239,12 +257,12 @@ if __name__ == '__main__':
                 raise Exception
             getData(options.inputDir,options.inputFiles,options.gridMode,options.voproxy)
         if options.gridMode=='srm':
-            if not options.voproxy or not options.myproxy:
-                print 'Grid %s mode, must define voproxy and myproxy' % options.gridMode
+            if not options.voproxy:
+                print 'Grid %s mode, must define voproxy' % options.gridMode
                 parser.print_help()
                 raise Exception
-            elif not os.path.exists(options.voproxy) or not os.path.exists(options.myproxy):
-                print 'Grid %s mode, must define valid voproxy and myproxy' % options.gridMode
+            elif not os.path.exists(options.voproxy):
+                print 'Grid %s mode, must define valid voproxy' % options.gridMode
                 parser.print_help()
                 raise Exception
         if options.shellMode:
@@ -252,9 +270,23 @@ if __name__ == '__main__':
             #sets up the snoing/rat environment
             #ExecuteSimpleCommand( "/bin/bash", [options.ratMacro], None, os.getcwd())
             runScript(options.ratMacro,options.ratV,options.swDir,options.gridMode)
+        else:            
+            dbAccess = None
+            if options.dbuser and options.dbpassword and options.dbname and options.dbprotocol and options.dburl:
+                dbAccess = {}
+                dbAccess['user'] = options.dbuser
+                dbAccess['password'] = options.dbpassword
+                dbAccess['name'] = options.dbname
+                dbAccess['protocol'] = options.dbprotocol
+                dbAccess['url'] = options.dburl
+            runRat(options.ratMacro,options.ratV,options.swDir,options.gridMode,dbAccess)
+        dumpOut = {}
+        if not options.nostore:
+            #the nostore option is only applied when running in testing mode for production            
+            dumpOut = copyData(options.outputDir,options.outputFiles,options.gridMode,options.voproxy)
         else:
-            runRat(options.ratMacro,options.ratV,options.swDir,options.gridMode)
-        dumpOut = copyData(options.outputDir,options.outputFiles,options.gridMode,options.voproxy,options.myproxy)
+            #return a dummy output dump - no storage information but the production scripts expect it
+            dumpOut = {"DATA": "DELETED"}
         returnCard = file('return_card.js','w')
         returnCard.write(json.dumps(dumpOut))
         returnCard.close()

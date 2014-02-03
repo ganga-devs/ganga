@@ -46,30 +46,49 @@ from Ganga.Lib.Executable import Executable
 
 ###################################################################
 
+config = Ganga.Utility.Config.makeConfig('defaults_RATProd','Defaults for the RATProd application')
+
+config.addOption('local_softwareDir', None, 'Local snoing-install directory (or directory with env_rat-x.y.sh files)')
+config.addOption('local_environment', [], 'Environment options required to run on local or batch system')
+config.addOption('local_outputDir', None, '*Default* output directory if running on a batch or local system (can override)')
+config.addOption('grid_outputDir', None, '*Defult* output directory if running on system with grid storage (can override)')
+
+# Assume that the applications should come from the same GangaSNOplus directory        
+_app_directory = os.path.dirname(__file__)
+
+###################################################################
+
 class RATProd(IApplication):
     """The RAT job handler for data production and processing"""
 
     #_schema is required for any Ganga plugin
-    _schema = Schema(Version(1,1), {
-            'prodScript'        : SimpleItem(defvalue='',doc='String pointing to the script file to run.  Can be set by splitter.',
+    _schema = Schema(Version(1,1), {            
+            'environment'       : SimpleItem(defvalue=None,doc='list of strings with the commands to setup the correct backend environment, or single string location of a file with the appropriate commands (if necessary)',typelist=['list','str','type(None)']),
+            'discardOutput'     : SimpleItem(defvalue=False,doc='Do not store the output: default False',typelist=['bool']),
+            'inputDir'          : SimpleItem(defvalue='',doc='Provide a relative path (to the base dir - dependent on the backend) for any inputs',
                                              typelist=['str']),
-            'ratMacro'          : SimpleItem(defvalue='',doc='String pointing to the macro file to run.  Can be set by splitter.',
-                                             typelist=['str']),#shouldn't this be in the input sandbox?
-            'outputLog'         : SimpleItem(defvalue='rat_output.log',doc='Log file name (only used if RAT is run)',
-                                             typelist=['str']),
-            'outputFiles'       : SimpleItem(defvalue=[],doc='Output file names (can be a list)',
-                                             typelist=['list','str']),#don't use if splitting
             'inputFiles'        : SimpleItem(defvalue=[],doc='Input file names (must be a list)',
                                              typelist=['list','str']),#don't use if splitting
-            'ratVersion'        : SimpleItem(defvalue='4',doc='RAT version tag, necessary to setup environment (even if not running RAT)',
-                                             typelist=['str']),
-            'ratDirectory'      : SimpleItem(defvalue='',doc='RAT directory information: should be the snoing install directory. If different from the default VO_SNOPLUS_SNOLAB_CA_SW_DIR/snoing-install (grid), or SNOPLUS_SW_DIR (batch/local) then this value must be set',
+            'outputLog'         : SimpleItem(defvalue='rat_output.log',doc='Log file name (only used if RAT is run)',
                                              typelist=['str']),
             'outputDir'        : SimpleItem(defvalue='',doc='Provide a relative path (to the base dir - dependent on the backend) for the file to be archived',
                                              typelist=['str']),
-            'inputDir'          : SimpleItem(defvalue='',doc='Provide a relative path (to the base dir - dependent on the backend) for any inputs',
+            'outputFiles'       : SimpleItem(defvalue=[],doc='Output file names (can be a list)',
+                                             typelist=['list','str']),#don't use if splitting
+            'prodScript'        : SimpleItem(defvalue='',doc='String pointing to the script file to run.  Can be set by splitter.',
                                              typelist=['str']),
-            'environment'       : SimpleItem(defvalue=None,doc='list of strings with the commands to setup the correct backend environment, or single string location of a file with the appropriate commands (if necessary)',typelist=['list','str','type(None)']),
+            'rat_db_name'       : SimpleItem(defvalue=None, doc='RAT db name', typelist=['str', 'type(None)']),
+            'rat_db_pswd'       : SimpleItem(defvalue=None, doc='RAT db password', typelist=['str', 'type(None)']),
+            'rat_db_protocol'   : SimpleItem(defvalue=None, doc='RAT db protocol', typelist=['str', 'type(None)']),
+            'rat_db_url'        : SimpleItem(defvalue=None, doc='RAT db password', typelist=['str', 'type(None)']),
+            'rat_db_user'       : SimpleItem(defvalue=None, doc='RAT db password', typelist=['str', 'type(None)']),
+            'ratDirectory'      : SimpleItem(defvalue='',doc='RAT directory information: should be the snoing install directory. If different from the default VO_SNOPLUS_SNOLAB_CA_SW_DIR/snoing-install (grid), or SNOPLUS_SW_DIR (batch/local) then this value must be set',
+                                             typelist=['str']),
+            'ratMacro'          : SimpleItem(defvalue='',doc='String pointing to the macro file to run.  Can be set by splitter.',
+                                             typelist=['str']),#shouldn't this be in the input sandbox?
+            'ratVersion'        : SimpleItem(defvalue='4',doc='RAT version tag, necessary to setup environment (even if not running RAT)',
+                                             typelist=['str']),
+            'useDB'             : SimpleItem(defvalue=False,doc='Use the RAT database (snopl.us)?',typelist=['bool']),
             })
     
     _category = 'applications'
@@ -89,6 +108,10 @@ class RATProd(IApplication):
         elif self.prodScript!='' and self.ratMacro!='':
             logger.error('both prodScript and ratMacro are defined')
             raise Exception
+        if self.useDB:
+            if not config['rat_db_pswd']:
+                logger.error('Need a password in order to contact the ratdb database')
+                raise Exception
 
         #The production script is added in, line by line, into the submission script
         #job.inputsandbox.append(File(self.prodScript))
@@ -230,13 +253,27 @@ class RTHandler(IRuntimeHandler):
             finList='%s]'%finList[:-1]#remove final comma, add close bracket
 
         if app.environment==None:
+            args = []
+            args += ['-v',app.ratVersion]
+            args += ['-s',swDir]
+            args += ['-d',app.outputDir]
+            args += ['-o',foutList]
+            args += ['-x',app.inputDir]
+            args += ['-i',finList]
             if app.ratMacro!='':
-                args = ['-v',app.ratVersion,'-s',swDir,'-m',macroFile,'-d',app.outputDir,'-o',foutList,'-x',app.inputDir,'-i',finList]
+                args += ['-m',macroFile]
             else:
-                args = ['-v',app.ratVersion,'-s',swDir,'-k','-m',prodFile,'-d',app.outputDir,'-o',foutList,'-x',app.inputDir,'-i',finList]
-
-            gaspDir = os.environ["GASP_DIR"]
-            return StandardJobConfig(File('%s/GangaSNOplus/Lib/ratProdRunner.py' % gaspDir),
+                args += ['-k','-m',prodFile]
+            if app.useDB:
+                args += ['--dbuser',app.config['rat_db_user']]
+                args += ['--dbpassword',app.config['rat_db_pswd']]
+                args += ['--dbname',app.config['rat_db_name']]
+                args += ['--dbprotocol',app.config['rat_db_protocol']]
+                args += ['--dburl',app.config['rat_db_url']]
+            if app.discardOutput:
+                args += ['--nostore']
+                
+            return StandardJobConfig(File('%s/ratProdRunner.py' % _app_directory),
                                      inputbox = app._getParent().inputsandbox,
                                      outputbox = app._getParent().outputsandbox,
                                      args = args)
@@ -254,18 +291,31 @@ class RTHandler(IRuntimeHandler):
             else:
                 app._getParent().inputsandbox.append(app.environment)
                 envFile=os.path.basename(app.environment)
+            args = ''
+            args += '-v %s '%(app.ratVersion)
+            args += '-s %s '%(swDir)
+            args += '-d %s '%(app.outputDir)
+            args += '-o %s '%(foutList)
+            args += '-x %s '%(app.inputDir)
+            args += '-i %s '%(finList)
             if app.ratMacro!='':
-                args = '-v %s -s %s -m %s -d %s -o %s -x %s -i %s' % (app.ratVersion,swDir,macroFile,app.outputDir,foutList,app.inputDir,finList)
+                args += '-m %s '%(macroFile)
             else:
-                args = '-v %s -s %s -k -m %s -d %s -o %s -x %s -i %s' % (app.ratVersion,swDir,prodFile,app.outputDir,foutList,app.inputDir,finList)
+                args += '-k -m %s '%(prodFile)
+            if app.useDB:
+                args += '--dbuser %s '%(app.config['rat_db_user'])
+                args += '--dbpassword %s '%(app.config['rat_db_pswd'])
+                args += '--dbname %s '%(app.config['rat_db_name'])
+                args += '--dbprotocol %s '%(app.config['rat_db_protocol'])
+                args += '--dburl %s '%(app.config['rat_db_url'])
+            if app.discardOutput:
+                args += '--nostore '
 
             wrapperArgs = ['-s','ratProdRunner.py','-l','misc','-f',envFile,'-a',args]
 
-            gaspDir = os.environ["GASP_DIR"]
+            app._getParent().inputsandbox.append('%s/ratProdRunner.py' % _app_directory)
             
-            app._getParent().inputsandbox.append('%s/GangaSNOplus/Lib/ratProdRunner.py' % gaspDir)
-            
-            return StandardJobConfig(File('%s/GangaSNOplus/Lib/sillyPythonWrapper.py' % gaspDir),
+            return StandardJobConfig(File('%s/sillyPythonWrapper.py' % _app_directory),
                                      inputbox = app._getParent().inputsandbox,
                                      outputbox = app._getParent().outputsandbox,
                                      args = wrapperArgs)
@@ -289,11 +339,17 @@ class WGRTHandler(IRuntimeHandler):
             raise Exception
         else:
             swDir = app.ratDirectory
-        if job.backend.voproxy==None or not os.path.exists(job.backend.voproxy):
-            logger.error('Valid WestGrid backend voproxy location MUST be specified.')
-            raise Exception
-        if job.backend.myproxy==None or not os.path.exists(job.backend.myproxy):
-            logger.error('Valid WestGrid backend myproxy location MUST be specified.')
+
+        voproxy = job.backend.voproxy
+        if voproxy==None:
+            #use the proxy from the environment (default behaviour)            
+            try:
+                voproxy = os.environ["X509_USER_PROXY"]
+            except:
+                logger.error('Cannot run without voproxy either in environment (X509_USER_PROXY) or specified for WG backend')
+                raise Exception
+        if not os.path.exists(voproxy):            
+            logger.error('Valid WestGrid backend voproxy location MUST be specified: %s'%(voproxy))
             raise Exception
 
         #we need to know the name of the file to run
@@ -317,18 +373,33 @@ class WGRTHandler(IRuntimeHandler):
         if len(finList)!=1:
             finList='%s]'%finList[:-1]#remove final comma, add close bracket
 
+        args = ''
+        args += '-g srm '
+        args += '-v %s '%(app.ratVersion)
+        args += '-s %s '%(swDir)
+        args += '-d %s '%(app.outputDir)
+        args += '-o %s '%(foutList)
+        args += '-x %s '%(app.inputDir)
+        args += '-i %s '%(finList)
         if app.ratMacro!='':
-            args = '-g srm -v %s -s %s -m %s -d %s -o %s -x %s -i %s --voproxy %s --myproxy %s' % (app.ratVersion,swDir,macroFile,app.outputDir,foutList,app.inputDir,finList,job.backend.voproxy,job.backend.myproxy)
+            args += '-m %s '%(macroFile)
         else:
-            args = '-g srm -v %s -s %s -k -m %s -d %s -o %s -x %s -i %s --voproxy %s --myproxy %s' % (app.ratVersion,swDir,prodFile,app.outputDir,foutList,app.inputDir,finList,job.backend.voproxy,job.backend.myproxy)
+            args += '-k -m %s '%(prodFile)
+        args += '--voproxy %s '%(voproxy)
+        if app.useDB:
+            args += '--dbuser %s '%(app.config['rat_db_user'])
+            args += '--dbpassword %s '%(app.config['rat_db_pswd'])
+            args += '--dbname %s '%(app.config['rat_db_name'])
+            args += '--dbprotocol %s '%(app.config['rat_db_protocol'])
+            args += '--dburl %s '%(app.config['rat_db_url'])
+        if app.discardOutput:
+            args += '--nostore '
 
         wrapperArgs = ['-s','ratProdRunner.py','-l','wg','-a',args]
 
-        gaspDir = os.environ["GASP_DIR"]
-        
-        app._getParent().inputsandbox.append('%s/GangaSNOplus/Lib/ratProdRunner.py' % gaspDir)
+        app._getParent().inputsandbox.append('%s/ratProdRunner.py' % _app_directory)
             
-        return StandardJobConfig(File('%s/GangaSNOplus/Lib/sillyPythonWrapper.py' % gaspDir),
+        return StandardJobConfig(File('%s/sillyPythonWrapper.py' % _app_directory),
                                  inputbox = app._getParent().inputsandbox,
                                  outputbox = app._getParent().outputsandbox,
                                  args = wrapperArgs)
@@ -376,18 +447,32 @@ class LCGRTHandler(IRuntimeHandler):
         if len(finList)!=1:
             finList='%s]'%finList[:-1]#remove final comma, add close bracket
 
+        args = ''
+        args += '-g lcg '
+        args += '-v %s '%(app.ratVersion)
+        args += '-s %s '%(swDir)
+        args += '-d %s '%(app.outputDir)
+        args += '-o %s '%(foutList)
+        args += '-x %s '%(app.inputDir)
+        args += '-i %s '%(finList)
         if app.ratMacro!='':
-            args = '"-g lcg -v %s -s %s -m %s -d %s -o %s -x %s -i %s"' % (app.ratVersion,swDir,macroFile,app.outputDir,foutList,app.inputDir,finList)
+            args += '-m %s '%(macroFile)
         else:
-            args = '"-g lcg -v %s -s %s -k -m %s -d %s -o %s -x %s -i %s"' % (app.ratVersion,swDir,prodFile,app.outputDir,foutList,app.inputDir,finList)
+            args += '-k -m %s '%(prodFile)
+        if app.useDB:
+            args += '--dbuser %s '%(app.config['rat_db_user'])
+            args += '--dbpassword %s '%(app.config['rat_db_pswd'])
+            args += '--dbname %s '%(app.config['rat_db_name'])
+            args += '--dbprotocol %s '%(app.config['rat_db_protocol'])
+            args += '--dburl %s '%(app.config['rat_db_url'])
+        if app.discardOutput:
+            args += '--nostore '
 
-        wrapperArgs = ['-s','ratProdRunner.py','-l','lcg','-a',args]
+        wrapperArgs = ['-s','ratProdRunner.py','-l','lcg','-a','"%s"'%(args)]
 
-        gaspDir = os.environ["GASP_DIR"]
+        app._getParent().inputsandbox.append('%s/ratProdRunner.py' % _app_directory)
 
-        app._getParent().inputsandbox.append('%s/GangaSNOplus/Lib/ratProdRunner.py' % gaspDir)
-
-        return LCGJobConfig(File('%s/GangaSNOplus/Lib/sillyPythonWrapper.py' % gaspDir),
+        return LCGJobConfig(File('%s/sillyPythonWrapper.py' % _app_directory),
                             inputbox = app._getParent().inputsandbox,
                             outputbox = app._getParent().outputsandbox,
                             args = wrapperArgs)

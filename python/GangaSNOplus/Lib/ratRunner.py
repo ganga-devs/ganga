@@ -24,6 +24,7 @@
 ######################################################
 
 import os
+import sys
 import optparse
 import subprocess
 import urllib2
@@ -35,6 +36,7 @@ import base64
 import zlib
 import socket
 import json
+import job_tools
 
 def adler32(fileName):
     adlerBlock = 32*1024*1024
@@ -52,8 +54,14 @@ def adler32(fileName):
 
 def untarLocal(tarName):
     #Shipped code, just unzip, setup correct env and compile
+    print os.getcwd()
+    print "Before"
+    print os.listdir(os.getcwd())
+    print "tar:", tarName
     installPath = os.getcwd()
-    UnTarFile( tarName, installPath, os.getcwd(), 0 )#nothing to strip
+    UnTarFile(tarName, installPath, 'rat', os.getcwd(), 0)#nothing to strip, but do need to move
+    print "After"
+    print os.listdir(os.getcwd())
     #for some reason, configure is not x by default
     ExecuteSimpleCommand( 'chmod', ['u+x','rat/configure'], None, installPath)
 
@@ -75,7 +83,7 @@ def downloadRat(token,runVersion,installPath):
     url = "https://api.github.com/repos/snoplus/rat/tarball/%s" % runVersion
     tarName = 'rat.tar.gz'
     DownloadFile(url=url,token=token,fileName=tarName,cachePath=cachePath)
-    UnTarFile( tarName, installPath, cachePath, 1 ) # Strip the first directory
+    UnTarFile( tarName, installPath, 'rat', cachePath, 1 ) # Strip the first directory
 
 def DownloadFile( url, username = None, password = None, token = None, fileName = "" , cachePath=""): # Never hard code a password!
     """ Download a file at url, using the username and password if provided and save into the cachePath. Optional fileName parameter to manually name the file which gets stored in the cachePath"""
@@ -119,11 +127,17 @@ def DownloadFile( url, username = None, password = None, token = None, fileName 
     os.rename( tempFile, os.path.join( cachePath, fileName ) )
     return "Downloaded %i bytes\n" % downloadSize
 
-def UnTarFile( tarFileName, targetPath, cachePath , strip = 0 ):
+def UnTarFile( tarFileName, targetPath, targetDir, cachePath , strip = 0 ):
     """ Untar the file tarFile to targetPath take off the the first strip folders."""
     if strip == 0: # Can untar directly into target
         tarFile = tarfile.open( os.path.join( cachePath, tarFileName ) )
-        tarFile.extractall( targetPath )
+        tarFile.extractall(targetPath)
+        # Move the file to the appropriate name
+        basedir = os.path.commonprefix(tarFile.getnames())
+        if basedir==".":
+            raise Exception("Cannot find a common base name")
+        shutil.move(os.path.join(cachePath, basedir), os.path.join(cachePath, targetDir))
+        # Finally, close the tar file
         tarFile.close()
     else: # Must untar to temp then to target, note target cannot already exist!
         # First untar to a temp directory
@@ -236,7 +250,7 @@ def ExecuteSimpleCommand( command, args, env, cwd, exitIfFail=True, verbose = Fa
         del error[-1]
     return process.returncode,output,error #don't always fail on returncode!=0
 
-def runRat( ratMacro , baseVersion , runVersion , swDir , inputFile , outputFile , nEvents):
+def runRat( ratMacro , baseVersion , runVersion , swDir , inputFile , outputFile , nEvents , tRun , dbAccess):
     '''Run the RAT macro
     '''
     command = ''
@@ -256,12 +270,92 @@ def runRat( ratMacro , baseVersion , runVersion , swDir , inputFile , outputFile
         ratCmd += '-o %s ' % outputFile
     if nEvents:
         ratCmd += '-N %s ' % nEvents
+    elif tRun:
+        ratCmd += '-T %s ' % tRun
+    if dbAccess:
+        ratCmd += '-b %s://%s:%s@%s/%s' %(dbAccess['protocol'],dbAccess['user'],dbAccess['password'],
+                                          dbAccess['url'],dbAccess['name'])
     ratCmd += ' %s ' % ratMacro
     command += '%s \n' % ratCmd
     ExecuteComplexCommand(os.getcwd() , command)
     print os.listdir(os.getcwd())
 
-def copyData(outputDir,gridMode,voproxy,myproxy):
+def check_outputs(options):
+    '''Before running RAT, check whether output data already exists!
+    '''
+    # Can only check the outputs for files with output file specified in the command options
+    if options.outputFile is None:
+        print "check_outputs::no output file specified"
+        return None
+    if options.gridMode is None:
+        print "check_outputs::no grid mode specified"
+        return None
+    # For output files, check if there is an output root and output ntuple processor in the macro
+    macro = open(options.ratMacro, 'r')
+    ntuple = False
+    root = False
+    for line in macro.readlines():
+        if 'outntuple' in line:
+            ntuple = True
+        if 'outroot' in line:
+            root = True
+    suffixes = []
+    exists = []
+    if root:
+        suffixes.append(".root")
+        exists.append(False)
+    if ntuple:
+        suffixes.append(".ntuple.root")
+        exists.append(False)
+    all_exist = True
+    any_exist = False
+    for i, s in enumerate(suffixes):
+        root_file = "%s%s" % (options.outputFile, s)
+        lfc_path = os.path.join('lfn:/grid/snoplus.snolab.ca', options.outputDir, root_file)
+        exists[i] = False
+        print "Check", lfc_path
+        try:
+            job_tools.exists(lfc_path)
+            # lfc exists, get the replica
+            exists[i] = True
+            any_exist = True
+            print "check_outputs::LFN already in use %s" % lfc_path
+        except job_tools.JobToolsException, e:
+            print "check_outputs::LFN unused %s, %s" % (lfc_path, e)
+            all_exist = False
+    # Now, if all exist, we need to append the return card and show that the job has in fact completed
+    # If only some (i.e. any) exist, but not all, then we need to raise this problem by failing the job!
+    dump_out = {}
+    if all_exist:
+        print "check_outputs::All expected outputs already exist on LFN"
+        for s in suffixes:
+            try:
+                root_file = "%s%s" % (options.outputFile, s)
+                lfc_path = os.path.join('lfn:/grid/snoplus.snolab.ca', options.outputDir, root_file)
+                guid = job_tools.getguid(lfc_path)
+                replica = job_tools.listreps(lfc_path)[0]
+                checksum = job_tools.checksum(replica)
+                size = job_tools.getsize(replica)
+                # Note that the actual se and replica information may be different to the local information
+                se_name = replica
+                if se_name.startswith('srm://'):
+                    se_name = se_name[6:]
+                se_name = se_name.split('/')[0] # never any /
+                dump_out[root_file] = {}
+                dump_out[root_file]['guid'] = guid
+                dump_out[root_file]['se'] = replica
+                dump_out[root_file]['size'] = size
+                dump_out[root_file]['cksum'] = checksum
+                dump_out[root_file]['name'] = se_name
+                dump_out[root_file]['lfc'] = lfc_path
+            except job_tools.JobToolsException, e:
+                print "check_outputs::Problem checking output for %s: %s" % (lfc_path, e)
+                raise
+        return dump_out
+    else:
+        return None
+
+def copyData(outputDir,gridMode,voproxy):
     '''Copy all output data (i.e. any .root output files)
     gridMode true: use lcg-cr to copy and register file
              false: use cp (the job runs in a temp dir, any files left at end are deleted eventually)
@@ -270,27 +364,37 @@ def copyData(outputDir,gridMode,voproxy,myproxy):
     print 'copData: grid',gridMode,'files:',rootFiles
     dumpOut = {}
     if gridMode is not None:
-        if gridMode=='lcg':
+        if gridMode=='lcg':            
             lfcDir = os.path.join('lfn:/grid/snoplus.snolab.ca',outputDir)
             ExecuteSimpleCommand('lfc-mkdir',[lfcDir.lstrip('lfn:')],None,os.getcwd(),False)
+            seName = '%s' % os.environ['VO_SNOPLUS_SNOLAB_CA_DEFAULT_SE']
+            args = ['--list-se','--vo','snoplus.snolab.ca','--attrs',
+                    'VOInfoPath','--query','SE=%s'%(seName)]
+            rtc,out,err = ExecuteSimpleCommand('lcg-info',args,None,os.getcwd())
+            srmPath = "INCOMPLETE"#in case we aren't able to get the path
+            if rtc==0:                
+                srmPath = out[-2].split()[-1]
+                if srmPath[0]=="/":
+                    #so that os.path.join works
+                    srmPath = srmPath[1:]
             for rf in rootFiles:
+                dumpOut[rf] = {}
                 command = 'lcg-cr'
                 sePath = '%s/%s' % (outputDir,rf)
-                seName = '%s' % os.environ['VO_SNOPLUS_SNOLAB_CA_DEFAULT_SE']
                 lfcPath= '%s/%s' % (lfcDir,rf)
-                args = ['--vo','snoplus.snolab.ca','-d',seName,'-P',sePath,'-l',lfcPath,rf]
+                args = ['--vo','snoplus.snolab.ca','--checksum','-d',seName,'-P',sePath,'-l',lfcPath,rf]
                 rtc,out,err = ExecuteSimpleCommand(command,args,None,os.getcwd())
-                dumpOut['guid'] = out[0]
-                dumpOut['se'] = lfcPath
-                dumpOut['size'] = os.stat(rf).st_size
-                dumpOut['cksum'] = adler32(rf)
+                dumpOut[rf]['guid'] = out[0]
+                dumpOut[rf]['se'] = os.path.join('srm://%s'%seName,srmPath,sePath)
+                dumpOut[rf]['size'] = os.stat(rf).st_size
+                dumpOut[rf]['cksum'] = adler32(rf)
+                dumpOut[rf]['name'] = seName
+                dumpOut[rf]['lfc'] = lfcPath
         elif gridMode=='srm':
+            seName = 'sehn02.atlas.ualberta.ca'
             srmUrl = 'srm://sehn02.atlas.ualberta.ca/pnfs/atlas.ualberta.ca/data/snoplus'
-            #No need to make the lfn or srm directories on westgrid!
-            #command = 'export X509_USER_PROXY=%s \n'%(myproxy)
-            #command += 'srmmkdir %s \n'%(srmDir)
-            #ExecuteComplexCommand(os.getcwd() , command , False)
             for rf in rootFiles:
+                dumpOut[rf] = {}
                 #only use one proxy now, could set in the wrapper script and we wouldn't need to run a shell script!
                 command = 'export X509_USER_PROXY=%s \n'%(voproxy)
                 command += 'lcg-cr'
@@ -298,24 +402,18 @@ def copyData(outputDir,gridMode,voproxy,myproxy):
                 seFullPath = os.path.join(srmUrl,seRelPath)
                 lfcDir = os.path.join('lfn:/grid/snoplus.snolab.ca',outputDir)
                 lfcPath = os.path.join(lfcDir,rf)
-                args = ['--vo','snoplus.snolab.ca','-d',seFullPath,'-l',lfcPath,rf]
+                args = ['--vo','snoplus.snolab.ca','--checksum','-d',seFullPath,'-l',lfcPath,rf]
                 for arg in args:
                     command += ' %s'%arg
                 command += '\n'
                 rtc,out,err = ExecuteComplexCommand(os.getcwd() , command , False)
-                dumpOut['guid'] = out[0]
-                dumpOut['se'] = seFullPath
-                dumpOut['size'] = os.stat(rf).st_size
-                dumpOut['cksum'] = adler32(rf)
+                dumpOut[rf]['guid'] = out[0]
+                dumpOut[rf]['se'] = seFullPath
+                dumpOut[rf]['size'] = os.stat(rf).st_size
+                dumpOut[rf]['cksum'] = adler32(rf)
+                dumpOut[rf]['name'] = seName
+                dumpOut[rf]['lfc'] = lfcPath
                 #first copy to the output directory
-                #command = 'export X509_USER_PROXY=%s \n'%(myproxy)
-                #command += 'srmcp'
-                #fileLoc = 'file:///%s'%(os.path.join(os.getcwd(),rf))
-                #srmPath = os.path.join(srmDir,rf)
-                #args = [fileLoc,srmPath]
-                #for arg in args:
-                #    command += ' %s'%arg
-                #ExecuteComplexCommand(os.getcwd() , command)
                 #then log in the lfc
                 #command = 'export X509_USER_PROXY=%s \n'%(voproxy)
                 #command += 'lcg-rf'
@@ -334,9 +432,11 @@ def copyData(outputDir,gridMode,voproxy,myproxy):
             os.makedirs(outputDir)
         for rf in rootFiles:
             shutil.copy2(rf,outputDir)
-            dumpOut['se'] = '%s:%s'%(socket.gethostname(),os.path.join(outputDir,rf))
-            dumpOut['size'] = os.stat(rf).st_size
-            dumpOut['cksum'] = adler32(rf)
+            dumpOut[rf] = {}
+            dumpOut[rf]['se'] = '%s:%s'%(socket.getfqdn(),os.path.join(outputDir,rf))
+            dumpOut[rf]['size'] = os.stat(rf).st_size
+            dumpOut[rf]['cksum'] = adler32(rf)
+            dumpOut[rf]['name'] = socket.getfqdn()
     return dumpOut
 
 if __name__ == '__main__':
@@ -352,9 +452,15 @@ if __name__ == '__main__':
     parser.add_option("-f",dest="zipFileName",help="Zip filename for output file")
     parser.add_option("-i",dest="inputFile",default=None,help="Specify input file")
     parser.add_option("-o",dest="outputFile",default=None,help="Specify output file")
-    parser.add_option("-n",dest="nEvents",default=None,help="Number of events (must not be in macro)")
+    parser.add_option("-N",dest="nEvents",default=None,help="Number of events (must not be in macro)")
+    parser.add_option("-T",dest="tRun",default=None,help="Duration of run (cannot use with nEvents)")
+    parser.add_option("--dbuser",dest="dbuser",default=None,help="Database user")
+    parser.add_option("--dbpassword",dest="dbpassword",default=None,help="Database password")
+    parser.add_option("--dbname",dest="dbname",default=None,help="Database name")
+    parser.add_option("--dbprotocol",dest="dbprotocol",default=None,help="Database protocol (http or https)")
+    parser.add_option("--dburl",dest="dburl",default=None,help="Database URL (sans protocol)")
+    parser.add_option("--nostore",dest="nostore",action="store_true",help="Don't copy the outputs at the end")
     parser.add_option("--voproxy",dest="voproxy",default=None,help="VO proxy location, MUST be used with grid srm mode")
-    parser.add_option("--myproxy",dest="myproxy",default=None,help="myproxy location, MUST be used with grid srm mode")
     #could also add an option to use a non VO_SNOPLUS_SNOLAB_CA_SW_DIR path
     (options, args) = parser.parse_args()
     if not options.baseV:
@@ -368,12 +474,12 @@ if __name__ == '__main__':
     if not options.swDir:
         print ' need software directory'
     if options.gridMode=='srm':
-        if not options.voproxy or not options.myproxy:
-            print 'Grid %s mode, must define voproxy and myproxy' % options.gridMode
+        if not options.voproxy:
+            print 'Grid %s mode, must define voproxy' % options.gridMode
             parser.print_help()
             raise Exception
-        elif not os.path.exists(options.voproxy) or not os.path.exists(options.myproxy):
-            print 'Grid %s mode, must define valid voproxy and myproxy' % options.gridMode
+        elif not os.path.exists(options.voproxy):
+            print 'Grid %s mode, must define valid voproxy' % options.gridMode
             parser.print_help()
             raise Exception
     if not options.baseV or not options.ratMacro or not options.outputDir or not options.swDir:
@@ -392,8 +498,35 @@ if __name__ == '__main__':
                 untarLocal(options.zipFileName)
             #all args have to be strings anyway (from Ganga) - force base version into a string
             installLocal(str(options.baseV),options.runV,options.swDir)
-        runRat(options.ratMacro,options.baseV,options.runV,options.swDir,options.inputFile,options.outputFile,options.nEvents)
-        dumpOut = copyData(options.outputDir,options.gridMode,options.voproxy,options.myproxy)
-        returnCard = file('return_card.js','w')
-        returnCard.write(json.dumps(dumpOut))
-        returnCard.close()
+        dbAccess = None
+        if options.dbuser and options.dbpassword and options.dbname and options.dbprotocol and options.dburl:
+            dbAccess = {}
+            dbAccess['user'] = options.dbuser
+            dbAccess['password'] = options.dbpassword
+            dbAccess['name'] = options.dbname
+            dbAccess['protocol'] = options.dbprotocol
+            dbAccess['url'] = options.dburl
+    
+        # Set the default environments that are needed
+        if options.gridMode=='srm':
+            job_tools.set_all_env(X509_USER_PROXY = options.voproxy)
+        dumpOut = check_outputs(options)
+        if dumpOut is None:
+            # We do need to run the job
+            runRat(options.ratMacro,options.baseV,options.runV,options.swDir,options.inputFile,options.outputFile,options.nEvents,options.tRun,dbAccess)
+            dumpOut = {}
+            if not options.nostore:
+                #the nostore option is only applied when running in testing mode for production
+                dumpOut = copyData(options.outputDir,options.gridMode,options.voproxy)
+            else:
+                #return a dummy output dump - no storage information but the production scripts expect it
+                dumpOut = {"DATA": "DELETED"}
+            returnCard = file('return_card.js','w')
+            returnCard.write(json.dumps(dumpOut))
+            returnCard.close()
+        else:
+            returnCard = file('return_card.js','w')
+            returnCard.write(json.dumps(dumpOut))
+            returnCard.close()
+            raise Exception("RATRUNNER: requested outputs already exist, see return_card.js for details")
+            

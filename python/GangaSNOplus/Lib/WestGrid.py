@@ -23,7 +23,7 @@ config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue name
 config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
-config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*', "String pattern for replay from the submit command")
+config.addOption('submit_res_pattern', '^(?P<id>\S*)', "String pattern for replay from the submit command")
 
 config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
 config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
@@ -50,9 +50,7 @@ config.addOption('postexecute', tempstr, "String contains commands executing bef
 config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
 config.addOption('timeout',600,'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
-config.addOption('voproxy','~/grid/proxy/voProxy','Path to your vo-proxy')
-config.addOption('myproxy','~/grid/proxy/wgMyProxy','Path to your myproxy')
-
+config.addOption('voproxy',None,'Path to your vo-proxy')
 
 class WestGrid(Batch):
     ''' WestGrid backend - submit jobs to Portable Batch System.
@@ -65,13 +63,15 @@ class WestGrid(Batch):
                                     'status' : SimpleItem(defvalue='',protected=1,hidden=1,copyable=0,doc='Batch status of the job'),
                                     'actualqueue' : SimpleItem(defvalue='',protected=1,copyable=0,doc='queue name where the job was submitted.'),
                                     'actualCE' : SimpleItem(defvalue='',protected=1,copyable=0,doc='hostname where the job is/was running.'),
+                                    'voproxy' : SimpleItem(defvalue=None,typelist=['str','type(None)'],doc='select specific proxy location')
                                     })
     _category = 'backends'
     _name = 'WestGrid'
 
     config = Ganga.Utility.Config.getConfig('WestGrid')
     def __init__(self):
-        print 'init westgrid'
         super(WestGrid,self).__init__()
-        self.voproxy = os.path.expanduser(self.config['voproxy'])
-        self.myproxy = os.path.expanduser(self.config['myproxy'])
+        if self.voproxy:
+            print "USING MY OWN VO PROXY:",self.voproxy
+        elif self.config['voproxy']:
+            self.voproxy = os.path.expanduser(self.config['voproxy'])
