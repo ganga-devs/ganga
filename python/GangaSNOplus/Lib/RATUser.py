@@ -343,17 +343,17 @@ class UserRTHandler(IRuntimeHandler):
             if app.inputFile:
                 args += ['-i',app.inputFile]
             if app.nEvents:
-                args += '-N %s '%app.nEvents
+                args += ['-N %s '%app.nEvents]
             elif app.tRun:
-                args += '-T %s '%app.tRun
+                args += ['-T %s '%app.tRun]
             if app.useDB:
-                args += '--dbuser %s '%(app.config['rat_db_user'])
-                args += '--dbpassword %s '%(app.config['rat_db_pswd'])
-                args += '--dbname %s '%(app.config['rat_db_name'])
-                args += '--dbprotocol %s '%(app.config['rat_db_protocol'])
-                args += '--dburl %s '%(app.config['rat_db_url'])
+                args += ['--dbuser %s '%(app.config['rat_db_user'])]
+                args += ['--dbpassword %s '%(app.config['rat_db_pswd'])]
+                args += ['--dbname %s '%(app.config['rat_db_name'])]
+                args += ['--dbprotocol %s '%(app.config['rat_db_protocol'])]
+                args += ['--dburl %s '%(app.config['rat_db_url'])]
             if app.discardOutput:
-                args += '--nostore '
+                args += ['--nostore ']
 
             app._getParent().inputsandbox.append('%s/job_tools.py' % _app_directory)
 
