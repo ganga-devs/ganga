@@ -15,6 +15,8 @@ config.addOption( 'serverMaxJobs', 5000 , 'Maximum number of subjobs to send to 
 config.addOption( 'chirpconfig', '' , 'Configuration string for chirp data output, e.g. "chirp^etpgrid01.garching.physik.uni-muenchen.de^/tanyasandoval^-d chirp" ' )  
 config.addOption( 'chirpserver', '' , 'Configuration string for the chirp server, e.g. "voatlas92.cern.ch". If this variable is set config.Panda.chirpconfig is filled and chirp output will be enabled.' )  
 config.addOption( 'siteType', 'analysis' , 'Expert only.' )  
+config.addOption( 'baseURL', '' , 'Expert only.' )  
+config.addOption( 'baseURLSSL', '' , 'Expert only.' )
 
 # -------------------------------------------------
 # Jedi Options
