@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 ##################################################
-#Toolset to assist with GangaSNOplus RATUser and
-#RATProd.
+# Toolset to assist with GangaSNOplus RATUser and
+# RATProd.
 ##################################################
+
 import os
 import optparse
 import subprocess
@@ -11,6 +12,7 @@ import fnmatch
 import tarfile
 import shutil
 import base64
+import getpass
 import re
 
 ######################################################################################
@@ -76,21 +78,50 @@ def ArchiveRepo(installPath,archivePath,snapshot,prefix):
     ExecuteSimpleCommand(command,args,None,installPath)
     return fileName
 
-def DownloadSnapshot(version):
-    command = 'git'
-    args = ['archive','-o','repo.tar','--remote=git@github.com:snoplus/rat',version]
-    ExecuteSimpleCommand(command,args,None,os.getcwd())
 
-def MakeRatSnapshot(ratVersion,zipPrefix='archived/',cachePath=os.path.expanduser('~/gaspCache')):
+def DownloadSnapshot(fork, version, filename):
+    """Download a tarball of a given rat version.
+
+    Version may be either the commit hash or the branch name (if latest commit is desired).
+    However, a commit hash is preferred as the branch name will mean that newer commits are not 
+    grabbed if rerunning at a later date.
+    """
+    url = "https://github.com/%s/rat/archive/%s.tar.gz" % (fork, version)
+    print "URL:", url
+    url_request = urllib2.Request(url)
+    # Only ever downloading once, so prompt for the username here
+    username = raw_input("Username: ") #This might not be the same as the fork...
+    password = getpass.getpass("Password: ")
+    b64string = base64.encodestring('%s:%s' % (username, password)).replace('\n', '')
+    url_request.add_header("Authorization", "Basic %s" % b64string)
+    try:
+        remote_file = urllib2.urlopen(url_request)
+    except urllib2.URLError, e:
+        print "Cannot connect to GitHub: ", e
+        raise
+    download_size = int(remote_file.info().getheaders("Content-Length")[0])
+    local_file = open(filename, "wb")    
+    local_file.write(remote_file.read())
+    local_file.close()
+    remote_file.close()
+
+
+def MakeRatSnapshot(ratFork, ratVersion, versionUpdate, zipPrefix='archived/',
+                    cachePath=os.path.expanduser('~/gaspCache')):
     '''Create a snapshot of RAT from an existing git repo.
     '''
     if not os.path.exists(cachePath):
         os.makedirs(cachePath)
-    ratPath = os.path.join(cachePath,'rat')
-    if not os.path.exists(ratPath):
-        DownloadRepo(cachePath)
-    fileName = ArchiveRepo(ratPath,cachePath,ratVersion,zipPrefix)
-    return fileName
+    ratPath = os.path.join(cachePath, 'rat')
+    # Old method: download rat git repo, make an tarball of the required commit
+    # if not os.path.exists(ratPath):
+    #     DownloadRepo(cachePath)
+    # filename = ArchiveRepo(ratPath,cachePath,ratVersion,zipPrefix)
+    # New method: download directly from the url
+    filename = os.path.join(cachePath, "rat.%s.%s.tar.gz" % (ratFork, ratVersion))
+    if versionUpdate is True or not os.path.exists(filename):
+        DownloadSnapshot(ratFork, ratVersion, filename)
+    return filename
 
 ######################################################################################
 # Macro checking tools
