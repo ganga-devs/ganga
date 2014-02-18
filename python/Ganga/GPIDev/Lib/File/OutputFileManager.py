@@ -258,6 +258,7 @@ wildcardregex = re.compile('[*?\[\]]')
 def iexpandWildCards(filelist):
     for f in filelist:
         if wildcardregex.search(f.namePattern):
+            f.processWildcardMatches()
             for subfile in f.subfiles:
                 yield subfile
         else:

@@ -49,6 +49,8 @@ class LocalFile(IGangaFile):
         return "LocalFile(namePattern='%s')"% self.namePattern
 
     def processWildcardMatches(self):
+        if self.subfiles:
+            return self.subfiles
 
         import glob
 
@@ -57,7 +59,8 @@ class LocalFile(IGangaFile):
         if self.compressed:
             fileName = '%s.gz' % self.namePattern   
 
-        sourceDir = self.getJobObject().outputdir       
+        #sourceDir = self.getJobObject().outputdir
+        sourceDir = self.localDir      
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):

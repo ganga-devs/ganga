@@ -48,7 +48,7 @@ class IGangaFile(GangaObject):
     
     def processWildcardMatches(self):
         """
-        If namePattern contains a wildcard, 
+        If namePattern contains a wildcard, populate the subfiles property
         """
         raise NotImplementedError
 
