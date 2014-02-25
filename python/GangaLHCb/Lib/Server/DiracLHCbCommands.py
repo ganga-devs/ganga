@@ -20,9 +20,9 @@ diraclhcb=DiracLHCb()
 # DiracLHCb commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
-def getRootVersions(): output( diraclhcb.getRootVersions() )
+#def getRootVersions(): output( diraclhcb.getRootVersions() )
 
-def getSoftwareVersions(): output( diraclhcb.getSoftwareVersions() )
+#def getSoftwareVersions(): output( diraclhcb.getSoftwareVersions() )
 
 def bkQueryDict(dict): output( diraclhcb.bkQuery(dict) )
    

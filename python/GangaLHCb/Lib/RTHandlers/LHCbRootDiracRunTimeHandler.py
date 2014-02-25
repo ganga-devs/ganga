@@ -19,37 +19,38 @@ logger = getLogger()
 
 class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
     """The runtime handler to run ROOT jobs on the Dirac backend"""
-    rootSoftwareVersionsCache = None
-    
-    def __check_versions_against_dirac(self, app):
-        ## cache versions dict
-        if not LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
-            result = execute('getRootVersions()')
-            if not result_ok(result):
-                logger.error('Could not obtain available ROOT versions: %s' \
-                             % str(result))
-                logger.error('ROOT version will not be validated.')
-            else:
-                LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache = result['Value']    
-
-        ## check version and platform
-        if LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
-            if not app.version in LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
-                msg = 'Invalid version: %s.  Valid versions: %s' \
-                      % (app.version, str(LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache.keys()))
-                raise ApplicationConfigurationError(None,msg)
-            
-            valid_davinci = LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache[app.version][8:]
-            valid_platforms = execute('getSoftwareVersions()')['Value']['DaVinci'][valid_davinci]
-            platform = getConfig('ROOT')['arch']
-            if not platform in valid_platforms:
-                msg = 'Invalid root architecture/platform: %s.  Valid architectures/platforms: %s' \
-                          % (platform, ", ".join(valid_arch))
-                raise ApplicationConfigurationError(None,msg)
+## we dont do this anymore
+#    rootSoftwareVersionsCache = None
+#    
+#    def __check_versions_against_dirac(self, app):
+#        ## cache versions dict
+#        if not LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
+#            result = execute('getRootVersions()')
+#            if not result_ok(result):
+#                logger.error('Could not obtain available ROOT versions: %s' \
+#                             % str(result))
+#                logger.error('ROOT version will not be validated.')
+#            else:
+#                LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache = result['Value']    
+#
+#        ## check version and platform
+#        if LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
+#            if not app.version in LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
+#                msg = 'Invalid version: %s.  Valid versions: %s' \
+#                      % (app.version, str(LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache.keys()))
+#                raise ApplicationConfigurationError(None,msg)
+#            
+#            valid_davinci = LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache[app.version][8:]
+#            valid_platforms = execute('getSoftwareVersions()')['Value']['DaVinci'][valid_davinci]
+#            platform = getConfig('ROOT')['arch']
+#            if not platform in valid_platforms:
+#                msg = 'Invalid root architecture/platform: %s.  Valid architectures/platforms: %s' \
+#                          % (platform, ", ".join(valid_arch))
+#                raise ApplicationConfigurationError(None,msg)
 
 
     def master_prepare(self,app,appmasterconfig):
-        self.__check_versions_against_dirac(app)
+        #self.__check_versions_against_dirac(app)
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
         # check file is set OK
         if not app.script.name:

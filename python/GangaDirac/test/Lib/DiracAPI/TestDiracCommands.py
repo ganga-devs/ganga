@@ -270,13 +270,13 @@ output(result)
 
 #LHCb commands:
 
-    def test_getRootVersions(self):
-        confirm = execute('getRootVersions()')
-        self.assertTrue(confirm['OK'], 'Command not executed successfully')
+#    def test_getRootVersions(self):
+#        confirm = execute('getRootVersions()')
+#        self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
-    def test_getSoftwareVersions(self):
-        confirm = execute('getSoftwareVersions()')
-        self.assertTrue(confirm['OK'], 'Command not executed successfully')
+#    def test_getSoftwareVersions(self):
+#        confirm = execute('getSoftwareVersions()')
+#        self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_bkQueryDict(self):
         confirm = execute('bkQueryDict({"FileType":"Path","ConfigName":"LHCb","ConfigVersion":"Collision09","EventType":"10","ProcessingPass":"Real Data","DataTakingConditions":"Beam450GeV-VeloOpen-MagDown"})')
