@@ -2,38 +2,24 @@ import os, unittest, tempfile, pickle, time
 from GangaTest.Framework.tests                     import GangaGPITestCase
 from GangaDirac.Lib.Utilities.DiracUtilities       import execute
 
-def get_id():
-    open_id = open('id_file', 'rb')
-    id = open_id.read()
-    open_id.close()
-    return id
+#def remove_files():
+#    #os.remove('id_file')
+#    #os.remove('datafile')
+#    os.remove('add_file')
+#    os.remove('upload_file')
+#    os.remove('InitTestFile.txt')
+#    os.remove('std.out')
+#    os.remove('Ganga_Executable.log')
+#    return
 
-def get_lfn():
-    open_data = open('datafile', 'rb')
-    datafile = pickle.load(open_data)
-    lfn = datafile['LFN']
-    open_data.close()
-    return lfn
-
-def get_location():
-    open_data = open('datafile', 'rb')
-    datafile = pickle.load(open_data)
-    locationlist = datafile['LOCATIONS']
-    location = locationlist[0]
-    open_data.close()
-    return location
-
-def init_job():
-    exe_script = """
+class TestDiracCommands(GangaGPITestCase):
+    def setUp(self):
+        exe_script = """
 #!/bin/bash
-
 echo ['Test Text19'] > InitTestFile.txt
-
 """
 
-    api_script = """
-from DIRAC.Core.Base.Script import parseCommandLine
-parseCommandLine()
+        api_script = """
 from DIRAC.Interfaces.API.Job import Job
 j = Job()
 j.setName('InitTestJob')
@@ -46,52 +32,43 @@ j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr',
 result = dirac.submit(j)
 output(result)
 """
-        
-    exe_file, exe_path_name = tempfile.mkstemp()
-    open_exe = os.fdopen(exe_file, 'wb')
-    open_exe.write(exe_script)
-    open_exe.close()
+        exe_file, exe_path_name = tempfile.mkstemp()
+        open_exe = os.fdopen(exe_file, 'wb')
+        open_exe.write(exe_script)
+        open_exe.close()
 
-    api_file, api_path_name = tempfile.mkstemp()
-    open_api = os.fdopen(api_file, 'wb')
-    open_api.write( api_script.replace('###EXE_SCRIPT###', exe_path_name)\
-                    .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)) )
-    open_api.close()
+        api_file, api_path_name = tempfile.mkstemp()
+        open_api = os.fdopen(api_file, 'wb')
+        open_api.write( api_script.replace('###EXE_SCRIPT###', exe_path_name)\
+                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)) )
+        open_api.close()
 
-    confirm = execute('execfile("%s")' % api_path_name)
-    id = confirm['Value']
+#        confirm = execute('execfile("%s")' % api_path_name)
+        confirm = execute(api_script.replace('###EXE_SCRIPT###', exe_path_name)\
+                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)))
+        self.id = confirm['Value']
+        print "ID is",self.id
+#        open_id = open('id_file', 'wb')
+#        open_id.write('%d'%id)
+#        open_id.close()
 
-    open_id = open('id_file', 'wb')
-    open_id.write('%d'%id)
-    open_id.close()
+        os.remove(exe_path_name)
+        os.remove(api_path_name)
 
-    os.remove(exe_path_name)
-    os.remove(api_path_name)
-    
-    confirm = ''
-    while "%s"%type(confirm) == "<type 'str'>" :
-        confirm =  execute('getStateTime("%s", "completed")'%id)
+        status = execute('status([%d])'% self.id)
+        while status[0][1] not in ['Completed', 'Failed']:
+            time.sleep(15)
+            status = execute('status([%d])'%self.id)
 
-    confirm1 =  execute('getOutputDataInfo("%s")'%id)
-    datafile = confirm1['InitTestFile.txt']
+        self.assertEqual(status[0][1], 'Completed', 'job not completed properly: %s' % str(status))
+        confirm =  execute('getOutputDataInfo("%s")'%self.id)
+        datafile = confirm['InitTestFile.txt']
 
-    open_data = open('datafile', 'wb')
-    pickle.dump(datafile, open_data)
-    open_data.close()
-    return 
-
-def remove_files():
-    os.remove('id_file')
-    os.remove('datafile')
-    os.remove('add_file')
-    os.remove('upload_file')
-    os.remove('InitTestFile.txt')
-    os.remove('std.out')
-    os.remove('Ganga_Executable.log')
-    return
-
-
-class TestDiracCommands(GangaGPITestCase):
+        self.location = datafile['LOCATIONS'][0]
+        self.lfn = datafile['LFN']
+#        open_data = open('datafile', 'wb')
+#        pickle.dump(datafile, open_data)
+#        open_data.close()
 
 #    def test_test(self):
 #        init_job()
@@ -108,7 +85,10 @@ class TestDiracCommands(GangaGPITestCase):
 #        print "REMOVEFILE:", execute('removeFile("%s")'%lfn)
 #        print "KILLING:", execute('kill("%s")'%id)
         
-    def test_1submit(self):
+    def test_alex(self):
+        print "HERE"
+        print self.id
+    def test_submit(self):
         exe_script = """
 #!/bin/bash
 
@@ -152,73 +132,73 @@ output(result)
         os.remove(api_path_name)
       
     def test_peek(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('peek("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
     def test_getJobCPUTime(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('getJobCPUTime("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
     
     def test_getOutputData(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('getOutputData("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_getOutputSandbox(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('getOutputSandbox("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_getOutputDataInfo(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('getOutputDataInfo("%s")'%id)
         self.assertEqual("%s"%type(confirm['InitTestFile.txt']),"<type 'dict'>", 'Command not executed successfully')
 
     def test_getOutputDataLFNs(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('getOutputDataLFNs("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_normCPUTime(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('normCPUTime("%s")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'str'>", 'Command not executed successfully')
 
     def test_getStateTime(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('getStateTime("%s", "completed")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'datetime.datetime'>", 'Command not executed successfully')
 
     def test_timedetails(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('timedetails("%s")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'dict'>", 'Command not executed successfully')
 
     def test_reschedule(self):
-        id = get_id()
+        id = self.id
         confirm =  execute('reschedule("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
-    def test_zzkill(self):
-        id = get_id()
-        remove_files()
+    def test_kill(self):
+        id = self.id
+        #remove_files()
         confirm =  execute('kill("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_status(self):
-        id = get_id()
+        id = self.id
         confirm = execute('status("%s")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'list'>", 'Command not executed successfully')
 
     def test_getFile(self):
-        lfn = get_lfn()
+        lfn = self.lfn
         confirm = execute('getFile("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_zremoveFile(self):
-        lfn = get_lfn()
+        lfn = self.lfn
         confirm = execute('removeFile("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
@@ -227,19 +207,19 @@ output(result)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
     def test_getMetadata(self):
-        lfn = get_lfn()
+        lfn = self.lfn
         confirm = execute('getMetadata("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
-    def test_3getReplicas(self):
-        lfn = get_lfn()
+    def test_getReplicas(self):
+        lfn = self.lfn
         confirm = execute('getReplicas("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
-    def test_2replicateFile(self):
-        init_job()
-        lfn = get_lfn()
-        location = get_location()
+    def test_replicateFile(self):
+        #init_job()
+        lfn = self.lfn
+        location = self.location
         new_location = 'CERN-USER'
         if new_location==location:
             new_location = 'CNAF-USER'
@@ -247,8 +227,8 @@ output(result)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
     def test_removeReplica(self):
-        lfn = get_lfn()
-        location = get_location()
+        lfn = self.lfn
+        location = self.location
         new_location = 'CERN-USER'
         if new_location==location:
             new_location = 'CNAF-USER'
@@ -256,14 +236,14 @@ output(result)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_splitInputData(self):
-        lfn = get_lfn()
+        lfn = self.lfn
         confirm = execute('splitInputData("%s","1")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_uploadFile(self):
-        lfn = get_lfn()
+        lfn = self.lfn
         new_lfn = '%s/upload_file'%os.path.dirname(lfn)
-        location = get_location()
+        location = self.location
         add_file = open('upload_file','w')
         add_file.write("Upload File")
         add_file.close()
@@ -273,9 +253,9 @@ output(result)
         self.assertTrue(confirm_remove['OK'], 'Command not executed successfully')
         
     def test_addFile(self):
-        lfn = get_lfn()
+        lfn = self.lfn
         new_lfn = '%s/add_file'%os.path.dirname(lfn)
-        location = get_location()
+        location = self.location
         add_file = open('add_file','w')
         add_file.write("Added File")
         add_file.close()
@@ -322,8 +302,8 @@ output(result)
 
     def test_getInputDataCatalog(self):
         #init_job()
-        lfn = get_lfn()
-        #location = get_location()
+        lfn = self.lfn
+        #location = self.location
         confirm = execute('getInputDataCatalog("%s","","")'%lfn)
         print "CONFIRM:", confirm
         print type(confirm)
@@ -333,8 +313,8 @@ output(result)
 
     def test_getLHCbInputDataCatalog(self):
         #init_job()
-        lfn = get_lfn()
-        #location = get_location()
+        lfn = self.lfn
+        #location = self.location
         confirm = execute('getLHCbInputDataCatalog("%s",0,"","")'%(lfn))
         print "CONFIRM:", confirm
         print type(confirm)
