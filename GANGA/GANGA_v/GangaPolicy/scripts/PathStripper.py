@@ -118,7 +118,7 @@ def _store_dirac_environment(option, opt_str, value, parser):
     setup_script = 'SetupProject.sh'
     env = {}
     (fh,fname) = tempfile.mkstemp(prefix='GangaDiracEnv')
-    cmd = '/usr/bin/env bash -c \"source %s LHCBDIRAC %s >& /dev/null && '\
+    cmd = '/usr/bin/env bash -c \"source %s LHCBDIRAC %s ROOT>& /dev/null && '\
         'printenv > %s\"' % (setup_script,diracversion,fname)
     rc = subprocess.Popen([cmd],shell=True).wait()
     if rc != 0 or not os.path.exists(fname):
