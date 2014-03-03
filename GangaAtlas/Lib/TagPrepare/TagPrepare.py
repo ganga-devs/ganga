@@ -110,15 +110,6 @@ class TagPrepare(IApplication):
         for f in ref_files:
             files_to_copy.append( '%s/%s.ref.root' % (job.outputdir, f) )
 
-        # and now the worker files
-        for f in ['uncompress.py', 'template.root']:
-            if f in os.listdir('.'):
-                size = os.path.getsize('%s/%s' % (__directory__, f))
-                if size != os.path.getsize(f):
-                    raise ApplicationConfigurationError(None, "File '%s' already present in current dir. Please rename or remove before continuing." % f)
-            
-            files_to_copy.append('%s/%s' % (__directory__, f))
-
         filelist = []
         logger.warning('Copying the files required for TAG running to the current directory...')
         for f in files_to_copy:

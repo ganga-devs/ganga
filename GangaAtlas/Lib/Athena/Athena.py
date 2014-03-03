@@ -1456,7 +1456,7 @@ class Athena(IPrepareApp):
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AthenaSplitterJob']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
 
-        if job.backend._name in [ 'Jedi']: 
+        elif job.backend._name in [ 'Jedi']: 
             # check splitter
             if job.splitter and not job.splitter._name in [ 'GenericSplitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )

@@ -230,9 +230,10 @@ class AtlasUnit(IUnit):
       else:
          j.outputdata = GPI.DQ2OutputDataset()
 
-         # check for ds name specified and length
+      # check for ds name specified and length
+      if j.outputdata._impl._name == "DQ2OutputDataset":
          max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 8
-         if j.outputdata._impl._name == "DQ2OutputDataset" and j.outputdata.datasetname != "":
+         if j.outputdata.datasetname != "":
             dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
 
