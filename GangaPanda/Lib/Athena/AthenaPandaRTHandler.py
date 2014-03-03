@@ -128,8 +128,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             logger.debug( configPanda['chirpconfig'] )
 
         # validate application
-        if not app.atlas_release and not job.backend.requirements.rootver:
-            raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
+        #if not app.atlas_release and not job.backend.requirements.rootver:
+        #    raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
         self.dbrelease = app.atlas_dbrelease
         if self.dbrelease != '' and self.dbrelease.find(':') == -1:
             raise ApplicationConfigurationError(None,"ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
