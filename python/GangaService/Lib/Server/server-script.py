@@ -23,7 +23,38 @@ class WatchdogThread ( threading.Thread ):
         while self.running:
             open( os.path.join(config["Configuration"]["gangadir"], "server", "server.info"), "w").write("%s:%d" % (os.uname()[1], port))
             time.sleep(10)
+
+
+class UserScriptThread ( threading.Thread ):
+
+    def __init__(self):
+        super(UserScriptThread,self).__init__()
+        self.running = False
         
+        # check for some valid script path (note could be None)
+        if not config["Configuration"]["ServerUserScript"] or len(config["Configuration"]["ServerUserScript"]) < 2:
+            print "No User Script specified. Exiting from thread..."
+            return
+            
+        try:            
+            self.script_text = open(config["Configuration"]["ServerUserScript"], "r").read()
+        except:
+            print "UserScriptThread: ERROR: Could not load script '%s'. Reason: '%s'" % (config["Configuration"]["ServerUserScript"], formatTraceback())
+            return
+        
+        self.running = True
+
+    def run ( self ):
+        # update the server file every 10s
+        while self.running:
+            try:
+                exec self.script_text
+            except:
+                print "Error while executing user script: %s" % formatTraceback()
+
+            time.sleep(config["Configuration"]["ServerUserScriptWaitTime"])
+
+
 def formatTraceback():
     "Helper function to printout a traceback as a string"
     return "\n %s\n%s\n%s\n" % (''.join( traceback.format_tb(sys.exc_info()[2])), sys.exc_info()[0], sys.exc_info()[1])
@@ -58,6 +89,10 @@ logger = getLogger()
 from Ganga.Core import monitoring_component
 monitoring_component.enableMonitoring()
 
+# start the user script execution
+usr_thd = UserScriptThread()
+usr_thd.start()
+
 # main loop
 while True:
     
@@ -86,6 +121,10 @@ while True:
             wdog.running = False
             wdog.join()
 
+            # close the suer thread
+            usr_thd.running = False
+            usr_thd.join()
+            
             os.system("rm -f %s" % os.path.join(config["Configuration"]["gangadir"], "server", "server.kill"))            
             os.system("rm -f %s" % os.path.join(config["Configuration"]["gangadir"], "server", "server.info"))
                     
@@ -146,3 +185,6 @@ os.system("rm -f %s" % os.path.join(config["Configuration"]["gangadir"], "server
 # close watchdog
 wdog.running = False
 wdog.join()
+
+usr_thd.running = False
+usr_thd.join()
