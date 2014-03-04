@@ -549,6 +549,8 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         # add server options
         config.addOption('ServerPort',434343,'Port for the Ganga server to listen on')
         config.addOption('ServerTimeout',60,'Timeout in minutes for auto-server shutdown')
+        config.addOption('ServerUserScript',"","Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
+        config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
         
         # detect default user (equal to unix user name)
         import getpass
