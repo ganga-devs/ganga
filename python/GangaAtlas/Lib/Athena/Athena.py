@@ -513,6 +513,11 @@ class Athena(IPrepareApp):
             self.stats = job.backend.get_stats()
             return
 
+        if job.backend._name in [ 'Jedi' ]:
+            if job.backend.pandajobs:
+                self.stats = [ pj.get_stats() for pj in job.backend.pandajobs ]
+            return
+
         # Collect stats from LCG backend stats.pickle file
         if job.backend._name in [ 'LCG', 'CREAM', 'Local', 'SGE', 'LSF', 'PBS' ]:
             import pickle
@@ -770,7 +775,7 @@ class Athena(IPrepareApp):
         from Ganga.GPIDev.Lib.Job import Job
         job = self.getJobObject()
         
-        if not job.backend._name in [ 'NG', 'Panda' ]:
+        if not job.backend._name in [ 'NG', 'Panda', 'Jedi' ]:
             if job.outputdata:
                 try:
                     job.outputdata.fill()
@@ -783,10 +788,10 @@ class Athena(IPrepareApp):
                     job.updateStatus('failed')
                 
         # collect athena job statistics
-        if self.collect_stats and job.backend._name in [ 'LCG', 'CREAM', 'NG', 'Panda', 'Local', 'SGE', 'LSF', 'PBS' ]:
+        if self.collect_stats and job.backend._name in [ 'LCG', 'CREAM', 'NG', 'Panda', 'Jedi', 'Local', 'SGE', 'LSF', 'PBS' ]:
             self.collectStats()
         # collect statistics for master job   
-        if not job.master and job.subjobs:
+        if not job.master and job.subjobs and not job.backend._name in [ 'Jedi' ]:
             numfiles = 0
             numfiles2 = 0
             numfiles3 = 0
@@ -1449,6 +1454,11 @@ class Athena(IPrepareApp):
             #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
         elif (job.backend._name in ['SGE' ] and config['ENABLE_SGE_DQ2JOBSPLITTER']):
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AthenaSplitterJob']:
+                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+
+        elif job.backend._name in [ 'Jedi']: 
+            # check splitter
+            if job.splitter and not job.splitter._name in [ 'GenericSplitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
  
         else:
