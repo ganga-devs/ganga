@@ -26,4 +26,3 @@ def standardSetup(setup=setup):
         setup.prependPath(p,'LD_LIBRARY_PATH')
         setup.prependPath(p,'PATH')
         setup.setPath(p,'PANDA_SYS')
-
