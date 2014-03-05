@@ -29,6 +29,16 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 logger = getLogger()
 config = getConfig('Panda')
 
+try:
+    from pandatools import Client
+    if config['baseURL']:
+        Client.baseURL = config['baseURL']
+    if config['baseURLSSL']:
+        Client.baseURLSSL = config['baseURLSSL']
+except:
+    logger.error("Failed to correctly configure Client.baseURL or Client.baseURLSSL ")
+
+
 def setChirpVariables():
     """Helper function to fill chirp config variables"""
     configPanda = getConfig('Panda')
@@ -41,7 +51,7 @@ def setChirpVariables():
 
 pandaSpecTS = time.time()
 def refreshPandaSpecs():
-    from pandatools import Client
+    #from pandatools import Client
 
     global pandaSpecsTS
     try:
@@ -56,7 +66,7 @@ def refreshPandaSpecs():
         pandaSpecsTS = time.time()
 
 def convertQueueNameToDQ2Names(queue):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     sites = []
@@ -70,7 +80,7 @@ def convertQueueNameToDQ2Names(queue):
     return allowed_sites
 
 def queueToAllowedSites(queue):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     try:
@@ -124,7 +134,7 @@ def queueToAllowedSites(queue):
     return allowed_allowed_sites
 
 def runPandaBrokerage(job):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     tmpSites = []
@@ -236,7 +246,7 @@ def runPandaBrokerage(job):
 
 
 def selectPandaSite(job,sites):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     pandaSites = []
@@ -280,7 +290,7 @@ def selectPandaSite(job,sites):
     return out
 
 def uploadSources(path,sources):
-    from pandatools import Client
+    #from pandatools import Client
 
     logger.info('Uploading source tarball %s in %s to Panda...'%(sources,path))
     try:
@@ -302,7 +312,7 @@ def uploadSources(path,sources):
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
 def getLibFileSpecFromLibDS(libDS):
-    from pandatools import Client
+    #from pandatools import Client
     from taskbuffer.FileSpec import FileSpec
 
     # query files in lib dataset to reuse libraries
@@ -359,7 +369,7 @@ def retrieveMergeJobs(job, pandaJobDefId):
     '''
     methods for retrieving panda job ids of merging jobs given a jobDefId
     '''
-    from pandatools import Client
+    #from pandatools import Client
 
     ick       = False
     status    = ''
@@ -508,7 +518,10 @@ class Panda(IBackend):
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
        
-        from pandatools import Client
+        logger.debug("Using Panda server baseURL=", Client.baseURL)
+        logger.debug("Using Panda server baseURLSSL=", Client.baseURLSSL)
+
+        #from pandatools import Client
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
@@ -690,7 +703,7 @@ class Panda(IBackend):
     def master_kill(self):
         '''Kill jobs'''  
 
-        from pandatools import Client
+        #from pandatools import Client
 
         job = self.getJobObject()
         logger.debug('Killing job %s' % job.getFQID('.'))
@@ -822,7 +835,7 @@ class Panda(IBackend):
 
     def rebroker(self, cloud=''):
         '''Rebroker failed subjobs'''
-        from pandatools import Client
+        #from pandatools import Client
         jobs = self._getParent()
 
         if self._getParent()._getParent(): # if has a parent then this is a subjob
@@ -871,7 +884,7 @@ class Panda(IBackend):
         
     def master_resubmit(self,jobs):
         '''Resubmit failed subjobs'''
-        from pandatools import Client
+        #from pandatools import Client
 
         if self._getParent()._getParent(): # if has a parent then this is a subjob
             raise BackendError('Panda','Resubmit on subjobs is not supported for Panda backend. \nUse j.resubmit() (i.e. resubmit the master job) and your failed subjobs \nwill be automatically selected and retried.')
@@ -1012,7 +1025,7 @@ class Panda(IBackend):
 
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
-        from pandatools import Client
+        #from pandatools import Client
 
         active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
@@ -1322,7 +1335,7 @@ class Panda(IBackend):
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def list_sites(self):
-        from pandatools import Client
+        #from pandatools import Client
         refreshPandaSpecs()
 
         sites=Client.PandaSites.keys()
@@ -1332,7 +1345,7 @@ class Panda(IBackend):
         return spacetokens
 
     def list_ddm_sites(self,allowTape=False):
-        from pandatools import Client
+        #from pandatools import Client
         refreshPandaSpecs()
 
         spacetokens = []
