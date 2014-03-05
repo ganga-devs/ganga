@@ -74,14 +74,23 @@ class AtlasTransform(ITransform):
       
       # loop over input data and see if we need to create any more units
       for inds in self.inputdata:
-
-         if inds._name != "DQ2Dataset":
-            continue
          
-         ok = False
-         for unit in self.units:
-            if unit.inputdata.dataset == inds.dataset:
-               ok = True
+         ok = True
+
+         if inds._name == "DQ2Dataset":
+            # check if this data is being run over
+            ok = False
+            for unit in self.units:
+               if unit.inputdata.dataset == inds.dataset:
+                  ok = True
+
+         elif inds._name == "ATLASLocalDataset":
+
+            # check if this data is being run over
+            ok = False
+            for unit in self.units:
+               if set(unit.inputdata.names) == set(inds.names):
+                  ok = True
 
          if not ok:
             # new unit required for this dataset
@@ -89,6 +98,9 @@ class AtlasTransform(ITransform):
             unit.name = "Unit %d" % len(self.units)
             self.addUnitToTRF( unit )
             unit.inputdata = inds
+                                                                           
+            
+               
 
    def addUnit(self, outname, dsname, template = None):
       """Create a new unit based on this ds and output"""
@@ -122,11 +134,24 @@ class AtlasTransform(ITransform):
       
       # we need a parent job
       for parent in parent_units:
-         if len(parent.active_job_ids) == 0 or GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == "":
+         if len(parent.active_job_ids) == 0 or \
+                (GPI.jobs(parent.active_job_ids[0]).application._impl._name != "TagPrepare" and \
+                 GPI.jobs(parent.active_job_ids[0]).outputdata and \
+                 GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == ""):
             return None
 
-      # should we use the copy_output (ie. local output)
-      if not use_copy_output:
+      # should we use the copy_output (ie. local output). Special case for TagPrepare
+      if GPI.jobs(parent_units[0].active_job_ids[0]).application._impl._name == "TagPrepare":
+         
+         # make sure all have completed before taking the tag-info
+         if parent_units[0].status != "completed":
+            return None
+         
+         unit = AtlasUnit()
+         unit.inputdata = DQ2Dataset()
+         unit.inputdata.tag_info = GPI.jobs(parent_units[0].active_job_ids[0]).application.tag_info
+         
+      elif not use_copy_output:
          unit = AtlasUnit()
          unit.inputdata = DQ2Dataset()
          ds_list = []

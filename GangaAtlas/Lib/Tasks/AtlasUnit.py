@@ -225,13 +225,13 @@ class AtlasUnit(IUnit):
       task = trf._getParent()
       if trf.outputdata:
          j.outputdata = trf.outputdata.clone()
-      elif j.inputdata._impl._name == "ATLASLocalDataset":
+      elif j.inputdata._impl._name == "ATLASLocalDataset" and j.application._impl._name != "TagPrepare":
          j.outputdata = GPI.ATLASLocalDataset()
-      else:
+      elif j.application._impl._name != "TagPrepare":
          j.outputdata = GPI.DQ2OutputDataset()
 
       # check for ds name specified and length
-      if j.outputdata._impl._name == "DQ2OutputDataset":
+      if j.outputdata and j.outputdata._impl._name == "DQ2OutputDataset":
          max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 8
          if j.outputdata.datasetname != "":
             dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
@@ -254,8 +254,8 @@ class AtlasUnit(IUnit):
       j.inputsandbox = self._getParent().inputsandbox
       j.outputsandbox = self._getParent().outputsandbox
 
-      # check for splitter
-      if not trf.splitter:
+      # check for splitter - TagPrepare doesn't use splitters
+      if not trf.splitter and j.application._impl._name != "TagPrepare":
          if j.inputdata._impl._name == "ATLASLocalDataset":
             j.splitter = AthenaSplitterJob()
             if trf.subjobs_per_unit > 0:
@@ -271,7 +271,7 @@ class AtlasUnit(IUnit):
                j.splitter.numsubjobs = trf.subjobs_per_unit
             else:
                j.splitter.numfiles = trf.files_per_job
-      else:
+      elif j.application._impl._name != "TagPrepare":
          j.splitter = trf.splitter.clone()
          
       return j
@@ -320,7 +320,7 @@ class AtlasUnit(IUnit):
       # register the dataset if applicable
       if status == "completed":
          job = GPI.jobs(self.active_job_ids[0])
-         if job.outputdata._impl._name == "DQ2OutputDataset":
+         if job.outputdata and job.outputdata._impl._name == "DQ2OutputDataset":
             if not self.registerDataset():
                return
 
@@ -334,7 +334,7 @@ class AtlasUnit(IUnit):
          return False
 
       # Add a check for chain units to have frozen their input DS
-      if len(self.req_units) > 0 and self.inputdata._name == "DQ2Dataset":
+      if len(self.req_units) > 0 and self.inputdata._name == "DQ2Dataset" and not self.inputdata.tag_info:
 
          for uds in self.inputdata.dataset:
             try:
