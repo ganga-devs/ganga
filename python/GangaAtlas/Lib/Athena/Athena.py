@@ -253,10 +253,10 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     # use 'jobO' for libDS/noBuild
     # and 'sources' for build job
     if not compile_flag:
-        archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen')
+        archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen 2> /dev/null')
         archiveFullName = "%s/%s" % (archiveDir,archiveName)
     else:
-        archiveName     = 'sources.%s.tar' % commands.getoutput('uuidgen')
+        archiveName     = 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null')
         archiveFullName = "%s/%s" % (archiveDir,archiveName)
 
     # collect files
@@ -1355,7 +1355,7 @@ class Athena(IPrepareApp):
                     cn = os.path.basename( os.path.expanduser( "~" ) )
                     tmp = os.path.realpath('/tmp/' + cn )
             
-                tmpDir = '%s/%s' % (tmp,commands.getoutput('uuidgen'))    
+                tmpDir = '%s/%s' % (tmp,commands.getoutput('uuidgen 2> /dev/null'))    
                 os.makedirs(tmpDir)
                 os.chdir(tmpDir)       
 

@@ -66,7 +66,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         nickname = getNickname(allowMissingNickname=True)
         self.libDataset = '%s.%s.ganga.%s_%d.lib._%06d' % (usertag,nickname,commands.getoutput('hostname').split('.')[0],int(time.time()),job.id)
 #        self.userprefix='%s.%s.ganga' % (usertag,gridProxy.identity())
-        sources = 'sources.%s.tar.gz' % commands.getoutput('uuidgen') 
+        sources = 'sources.%s.tar.gz' % commands.getoutput('uuidgen 2> /dev/null') 
         self.library = '%s.lib.tgz' % self.libDataset
 
         # check DBRelease
@@ -75,7 +75,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
 
 #       unpack library
         logger.debug('Creating source tarball ...')        
-        tmpdir = '/tmp/%s' % commands.getoutput('uuidgen')
+        tmpdir = '/tmp/%s' % commands.getoutput('uuidgen 2> /dev/null')
         os.mkdir(tmpdir)
 
         inputbox=[]
@@ -208,7 +208,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         #       create build job
         jspec = JobSpec()
         jspec.jobDefinitionID   = job.id
-        jspec.jobName           = commands.getoutput('uuidgen')
+        jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_rel
         jspec.homepackage       = 'AnalysisTransforms'+cacheVer#+nightVer
         jspec.transformation    = '%s/buildJob-00-00-03' % Client.baseURLSUB # common base to Athena and AthenaMC jobs: buildJob is a pilot job which takes care of all inputs for the real jobs (in prepare()
@@ -276,7 +276,7 @@ class AthenaMCPandaRTHandler(IRuntimeHandler):
         
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
-        jspec.jobName           = commands.getoutput('uuidgen')  
+        jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')  
         jspec.AtlasRelease      = 'Atlas-%s' % app.atlas_rel
         
         if app.transform_archive:
