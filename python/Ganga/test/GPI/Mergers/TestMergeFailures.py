@@ -15,7 +15,7 @@ class TestMergeFailures(GangaGPITestCase):
         j = Job()
         j.application = Executable(exe = 'sh', args = ['-c','echo foo > out.txt'])
         j.backend = Local()
-        j.outputfiles = [SandboxFile('out.txt')]
+        j.outputfiles = [LocalFile('out.txt')]
         j.splitter = CopySplitter()
         j.postprocessors = MergerTester(files = ['out.txt'])
         
@@ -30,7 +30,7 @@ class TestMergeFailures(GangaGPITestCase):
         j = Job()
         j.application = Executable(exe = 'sh', args = ['-c','echo foo > out.txt'])
         j.backend = Local()
-        j.outputfiles = [SandboxFile('out.txt')]
+        j.outputfiles = [LocalFile('out.txt')]
         j.splitter = CopySplitter()
         j.postprocessors = MergerTester(files = ['out.txt'],ignorefailed = True)
         
@@ -45,7 +45,7 @@ class TestMergeFailures(GangaGPITestCase):
         j = Job()
         j.application = Executable(exe = 'sh', args = ['-c','echo foo > out.txt'])
         j.backend = Local()
-        j.outputfiles = [SandboxFile('out.txt')]
+        j.outputfiles = [LocalFile('out.txt')]
         j.splitter = CopySplitter()
         j.postprocessors = MergerTester(files = ['out.txt'],overwrite = True)
         
@@ -60,7 +60,7 @@ class TestMergeFailures(GangaGPITestCase):
         j = Job()
         j.application = Executable(exe = 'sh', args = ['-c','echo foo > out.txt'])
         j.backend = Local()
-        j.outputfiles = [SandboxFile('out.txt')]
+        j.outputfiles = [LocalFile('out.txt')]
         j.splitter = CopySplitter()
         j.postprocessors = MergerTester(files = ['out.txt'], ignorefailed = True, overwrite = True)
         
@@ -78,7 +78,7 @@ class TestMergeFailures(GangaGPITestCase):
         #job will run for at least 20 seconds
         j.application = Executable(exe = 'sh', args = ['-c','sleep 20; echo foo > out.txt'])
         j.backend = Local()
-        j.outputfiles = [SandboxFile('out.txt')]
+        j.outputfiles = [LocalFile('out.txt')]
         j.splitter = CopySplitter()
         j.postprocessors = MergerTester(files = ['out.txt'])
         
