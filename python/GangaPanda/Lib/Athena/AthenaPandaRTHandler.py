@@ -393,10 +393,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
             if tmp_user_area_name:
                 inpw = os.path.dirname(tmp_user_area_name)
-                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen'))
+                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
             else:
                 inpw = job.getInputWorkspace()
-                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
+                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
 
             if tmp_user_area_name:
                 rc, output = commands.getstatusoutput('cp %s %s.gz' % (tmp_user_area_name, self.inputsandbox))
@@ -490,7 +490,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if job.backend.jobSpec.has_key('provenanceID'):
                     jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
                 
-                jspec.jobName           = commands.getoutput('uuidgen')
+                jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
                 
                 # release and setup depends on mana or not
                 if app.useMana:
@@ -619,7 +619,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.backend.jobSpec.has_key('provenanceID'):
             jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
         
-        jspec.jobName           = commands.getoutput('uuidgen')
+        jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
 
         if app.useMana:
             jspec.cmtConfig         = AthenaUtils.getCmtConfig('', cmtConfig=app.atlas_cmtconfig)

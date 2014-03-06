@@ -252,10 +252,10 @@ class AthenaJediRTHandler(IRuntimeHandler):
 
             if tmp_user_area_name:
                 inpw = os.path.dirname(tmp_user_area_name)
-                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen'))
+                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
             else:
                 inpw = job.getInputWorkspace()
-                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
+                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
 
             if tmp_user_area_name:
                 rc, output = commands.getstatusoutput('cp %s %s.gz' % (tmp_user_area_name, self.inputsandbox))
