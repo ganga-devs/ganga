@@ -362,7 +362,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
         taskParamMap['prodSourceLabel'] = 'user'
         if job.backend.site != 'AUTO':
             taskParamMap['site'] = job.backend.site
-        if job.backend.requirements.cloud != None:
+        if job.backend.requirements.cloud != None and not job.backend.requirements.anyCloud:
             taskParamMap['cloud'] = job.backend.requirements.cloud
         if job.backend.requirements.excluded_sites != []:
             taskParamMap['excludedSite'] = job.backend.requirements.excluded_sites
