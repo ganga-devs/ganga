@@ -265,7 +265,7 @@ class Jedi(IBackend):
         'forcestaged'   : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Force staging of input DS'),
         'individualOutDS': SimpleItem(defvalue=False,protected=0,copyable=1,doc='Create individual output dataset for each data-type. By default, all output files are added to one output dataset'),
         'bexec'         : SimpleItem(defvalue='',protected=0,copyable=1,doc='String for Executable make command - if filled triggers a build job for the Execuatble'),
-        'nobuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if no build job should be sent - use it together with Athena.athena_compile variable'),
+        'nobuild'       : SimpleItem(defvalue=True,protected=0,copyable=1,doc='Boolean if no build job should be sent - use it together with Athena.athena_compile variable'),
     })
 
     _category = 'backends'
@@ -478,7 +478,7 @@ class Jedi(IBackend):
                     job.updateStatus('submitted')
                 elif jediTaskDict['status'] in ['scouting', 'running', 'holding', 'merging', 'prepared' ]:
                     job.updateStatus('running')
-                elif jediTaskDict['status'] == 'finished':
+                elif jediTaskDict['status'] in ['finished', 'done']:
                     job.updateStatus('completed')
                 elif jediTaskDict['status'] == 'failed':
                     job.updateStatus('failed')

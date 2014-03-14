@@ -26,7 +26,7 @@ class JediRequirements(GangaObject):
         'rootver' : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Specify a different root version for non-Athena jobs.'),
         'overwriteQueuedata'     : SimpleItem(defvalue = False,protected=0,copyable=1,doc='Expert option: overwriteQueuedata.'),
         'overwriteQueuedataConfig'     : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Expert option: overwriteQueuedataConfig.'),
-        'disableAutoRetry' : SimpleItem(defvalue=False,protected=0,copyable=1,doc='disable automatic job retry on the server side'),
+        'disableAutoRetry' : SimpleItem(defvalue=True,protected=0,copyable=1,doc='disable automatic job retry on the server side'),
         'noEmail' : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Suppress email notification'),
         'skipScout' : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Skip scout jobs'),
         'split'         : SimpleItem(defvalue=0,typelist=['type(None)','int'],copyable=0,doc='Number of sub-jobs to which a job is split.'),
