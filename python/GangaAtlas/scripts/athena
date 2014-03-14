@@ -96,6 +96,7 @@ p.add_option('--lcg', action='store_const', const='lcg', dest='backend', help='S
 p.add_option('--cream', action='store_const', const='cream', dest='backend', help='Submit job(s) to a CREAM CE')
 p.add_option('--ng', action='store_const', const='ng', dest='backend', help='Submit job(s) to NorduGrid')
 p.add_option('--panda', action='store_const', const='panda', dest='backend', help='Submit job(s) to Panda')
+p.add_option('--jedi', action='store_const', const='jedi', dest='backend', help='Submit job(s) to jedi')
 p.add_option('--lsf', action='store_const', const='lsf', dest='backend', help='Submit job(s) to the local LSF batch system, e.g. on lxplus')
 p.add_option('--condor', action='store_const', const='condor', dest='backend', help='Submit job(s) to the local Condor batch system')
 p.add_option('--pbs', action='store_const', const='pbs', dest='backend', help='Submit job(s) to the local PBS batch system')
@@ -268,7 +269,7 @@ if opt.athena_dbrelease != None:
 if opt.atlas_run_dir:
     j.application.atlas_run_dir=opt.atlas_run_dir
 if opt.trf:
-    if opt.backend == 'panda':
+    if opt.backend == 'panda' or opt.backend == 'jedi':
         j.application.options=opt.trf
     else: 
         j.application.trf_parameter=opt.trf
@@ -648,9 +649,12 @@ elif opt.backend=='ng':
     if opt.check_availability: j.backend.check_availability = True
     if opt.runtimeenvironment: j.backend.requirements.runtimeenvironment = [opt.runtimeenvironment]
 
-elif opt.backend=='panda':
+elif opt.backend=='panda' or opt.backend=='jedi':
     try:
-        j.backend = Panda()
+	if opt.backend=='jedi':
+	   j.backend = Jedi()
+	else:
+	   j.backend = Panda()
     except NameError:
         print >>sys.stderr, 'ERROR: Panda backend has not been enabled in the gangarc file'
         sys.exit(100)
