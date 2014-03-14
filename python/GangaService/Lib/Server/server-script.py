@@ -178,13 +178,14 @@ while True:
 # close the connection
 sock.close()
 
-os.system("rm -f %s" % os.path.join(config["Configuration"]["gangadir"], "server", "server.kill"))            
-os.system("rm -f %s" % os.path.join(config["Configuration"]["gangadir"], "server", "server.info"))
-
-
 # close watchdog
 wdog.running = False
 wdog.join()
 
 usr_thd.running = False
 usr_thd.join()
+
+os.system("rm -f %s" % os.path.join(config["Configuration"]["gangadir"], "server", "server.kill"))            
+os.system("rm -f %s" % os.path.join(config["Configuration"]["gangadir"], "server", "server.info"))
+
+
