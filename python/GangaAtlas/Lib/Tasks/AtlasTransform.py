@@ -151,7 +151,7 @@ class AtlasTransform(ITransform):
          unit.inputdata = DQ2Dataset()
          unit.inputdata.tag_info = GPI.jobs(parent_units[0].active_job_ids[0]).application.tag_info
          
-      elif not use_copy_output:
+      elif not use_copy_output or not parent.copy_output:
          unit = AtlasUnit()
          unit.inputdata = DQ2Dataset()
          ds_list = []
