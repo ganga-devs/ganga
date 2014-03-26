@@ -1,4 +1,4 @@
-# CREAM backend
+# ARC backend
 import os
 import os.path
 import math
@@ -21,51 +21,30 @@ from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.LCG import grids
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
-def __cream_resolveOSBList__(job, jdl):
-
-    osbURIList = []
-
-    re_osb = re.compile('^.*OutputSandbox\s+\=\s+\{(.*)\}\s?\]?$')
-
-    for l in jdl.split(';'):
-        m = re_osb.match( l )
-        if m:
-            osb = m.group(1)
-            osb = re.sub(r'\s?\"\s?', '', osb)
-
-            for f in osb.split(','):
-                if not urlparse(f)[0]:
-                    osbURIList.append('%s/%s' % ( job.backend.osbURI, os.path.basename(f)) )
-                else:
-                    osbURIList.append(f)
-            break
-
-    return osbURIList
-
-class CREAM(IBackend):
-    '''CREAM backend - direct job submission to gLite CREAM CE'''
+class ARC(IBackend):
+    '''ARC backend - direct job submission to an ARC CE'''
     _schema = Schema(Version(1,0), {
-        'CE'                  : SimpleItem(defvalue='',doc='CREAM CE endpoint'),
+        'CE'                  : SimpleItem(defvalue='',doc='ARC CE endpoint'),
         'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
         'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
         'sandboxcache'        : ComponentItem('GridSandboxCache',copyable=1,doc='Interface for handling oversized input sandbox'),
         'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
         'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
         'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
-        'exitcode_cream'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
-        'actualCE'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='The CREAM CE where the job actually runs.'),
+        'exitcode_arc'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
+        'actualCE'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='The ARC CE where the job actually runs.'),
         'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
         'workernode'          : SimpleItem(defvalue='',protected=1,copyable=0,doc='The worker node on which the job actually runs.'),
-        'isbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The input sandbox URI on CREAM CE'),
-        'osbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The output sandbox URI on CREAM CE')
+        'isbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The input sandbox URI on ARC CE'),
+        'osbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The output sandbox URI on ARC CE')
     })
 
     _category = 'backends'
 
-    _name =  'CREAM'
+    _name =  'ARC'
 
     def __init__(self):
-        super(CREAM, self).__init__()
+        super(ARC, self).__init__()
 
         # dynamic requirement object loading
         try:
@@ -100,7 +79,7 @@ class CREAM(IBackend):
         job.backend.reason   = ''
         job.backend.actualCE = ''
         job.backend.exitcode = ''
-        job.backend.exitcode_cream = ''
+        job.backend.exitcode_arc = ''
         job.backend.workernode = ''
         job.backend.isbURI = ''
         job.backend.osbURI = ''
@@ -135,26 +114,7 @@ class CREAM(IBackend):
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
-        elif self.sandboxcache._name == 'DQ2SandboxCache':
 
-            ## generate a new dataset name if not given
-            if not self.sandboxcache.dataset_name:
-                from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name,unused = dq2outputdatasetname("%s.input"%get_uuid(), 0, False, '')
-
-            ## subjobs inherits the dataset name from the master job
-            for sj in job.subjobs:
-                sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
-
-        elif self.sandboxcache._name == 'GridftpSandboxCache':
-                if config['CreamInputSandboxBaseURI']:
-                    self.sandboxcache.baseURI = config['CreamInputSandboxBaseURI']
-                elif self.CE:
-                    ce_host = re.sub(r'\:[0-9]+','',self.CE.split('/cream')[0])
-                    self.sandboxcache.baseURI = 'gsiftp://%s/opt/glite/var/cream_sandbox/%s' % ( ce_host, self.sandboxcache.vo )
-                else:
-                    logger.error('baseURI not available for GridftpSandboxCache')
-                    return False
 
         return True
 
@@ -314,7 +274,7 @@ class CREAM(IBackend):
                 my_sj_id  = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
-                my_sj_jid = self.gridObj.cream_submit(my_sj_jdl, self.ce)
+                my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce)
 
                 if not my_sj_jid:
                     return False
@@ -329,7 +289,7 @@ class CREAM(IBackend):
         myAlg  = MyAlgorithm(gridObj=grids['GLITE'],masterInputWorkspace=job.getInputWorkspace(), ce=self.CE)
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(name='cream_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
+        runner = MTRunner(name='arc_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
         runner.start()
         runner.join(timeout=-1)
 
@@ -848,38 +808,38 @@ sys.exit(0)
         if len(jobconfig.outputbox):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
-        ## compose LCG JDL
-        jdl = {
-            'VirtualOrganisation' : config['VirtualOrganisation'],
-            'Executable' : os.path.basename(scriptPath),
-            'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
-            'StdOutput'               : 'stdout',
-            'StdError'                : 'stderr',
-            'InputSandbox'            : input_sandbox,
-            'OutputSandbox'           : output_sandbox,
-            'OutputSandboxBaseDestURI': 'gsiftp://localhost'
+        ## compose ARC XRSL
+        xrsl = {
+            #'VirtualOrganisation' : config['VirtualOrganisation'],
+            'executable' : os.path.basename(scriptPath),
+            'environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
+            #'stdout'                : 'stdout',
+            #'stderr'                : 'stderr',
+            'inputFiles'            : input_sandbox,
+            'outputFiles'           : output_sandbox,
+            #'OutputSandboxBaseDestURI': 'gsiftp://localhost'
         }
 
-        jdl['Environment'].update({'GANGA_LCG_CE': self.CE})
-        jdl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
+        xrsl['environment'].update({'GANGA_LCG_CE': self.CE})
+        #xrsl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
 
-        if self.jobtype.upper() in ['NORMAL','MPICH']:
-            jdl['JobType'] = self.jobtype.upper()
-            if self.jobtype.upper() == 'MPICH':
-                #jdl['Requirements'].append('(other.GlueCEInfoTotalCPUs >= NodeNumber)')
-                jdl['Requirements'].append('Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
-                jdl['NodeNumber'] = self.requirements.nodenumber
-        else:
-            logger.warning('JobType "%s" not supported' % self.jobtype)
-            return
+        #if self.jobtype.upper() in ['NORMAL','MPICH']:
+            #xrsl['JobType'] = self.jobtype.upper()
+            #if self.jobtype.upper() == 'MPICH':
+                #xrsl['Requirements'].append('(other.GlueCEInfoTotalCPUs >= NodeNumber)')
+                #xrsl['Requirements'].append('Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
+                #xrsl['NodeNumber'] = self.requirements.nodenumber
+        #else:
+        #    logger.warning('JobType "%s" not supported' % self.jobtype)
+        #    return
 
 #       additional settings from the job
-#        if jobconfig.env:
-#            jdl['Environment'].update(jobconfig.env)
+        if jobconfig.env:
+            xrsl['environment'].update(jobconfig.env)
 
-        jdlText = Grid.expandjdl(jdl)
-        logger.debug('subjob JDL: %s' % jdlText)
-        return inpw.writefile(FileBuffer('__jdlfile__',jdlText))
+        xrslText = Grid.expandxrsl(xrsl)
+        logger.debug('subjob XRSL: %s' % xrslText)
+        return inpw.writefile(FileBuffer('__xrslfile__',xrslText))
 
     def kill(self):
         '''Kill the job'''
@@ -891,7 +851,7 @@ sys.exit(0)
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return grids['GLITE'].cream_cancelMultiple([self.id])
+        return grids['GLITE'].arc_cancelMultiple([self.id])
 
     def master_kill(self):
         '''kill the master job to the grid'''
@@ -920,7 +880,7 @@ sys.exit(0)
                 ids.append(sj.backend.id)
 
         ## 2. cancel the collected jobs
-        ck = grids['GLITE'].cream_cancelMultiple(ids)
+        ck = grids['GLITE'].arc_cancelMultiple(ids)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
@@ -967,7 +927,7 @@ sys.exit(0)
         return status
 
     def master_bulk_resubmit(self,rjobs):
-        '''CREAM bulk resubmission'''
+        '''ARC bulk resubmission'''
 
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
@@ -1022,14 +982,14 @@ sys.exit(0)
 
         job = self.getJobObject()
 
-        ## finding CREAM CE endpoint for job submission
+        ## finding ARC CE endpoint for job submission
         allowed_celist = []
         try:
             allowed_celist = self.requirements.getce()
             if not self.CE and allowed_celist:
                 self.CE = allowed_celist[0]
         except:
-            logger.warning('CREAM CE assigment from AtlasCREAMRequirements failed.')
+            logger.warning('ARC CE assigment from ARCRequirements failed.')
 
         if self.CE and allowed_celist:
             if self.CE not in allowed_celist:
@@ -1037,11 +997,11 @@ sys.exit(0)
                 self.CE = allowed_celist[0]
 
         if not self.CE:
-            raise GangaException('CREAM CE endpoint not set')
+            raise GangaException('ARC CE endpoint not set')
 
-        ## delegate proxy to CREAM CE
-        if not grids['GLITE'].cream_proxy_delegation(self.CE):
-            logger.warning('proxy delegation to %s failed' % self.CE)
+        ## delegate proxy to ARC CE
+        #if not grids['GLITE'].arc_proxy_delegation(self.CE):
+        #    logger.warning('proxy delegation to %s failed' % self.CE)
 
         ## doing massive job preparation
         if len(job.subjobs) == 0:
@@ -1058,10 +1018,10 @@ sys.exit(0)
 
         ick = False
 
-        jdlpath = self.preparejob(subjobconfig,master_job_sandbox)
+        xrslpath = self.preparejob(subjobconfig,master_job_sandbox)
 
-        if jdlpath:
-            self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
+        if xrslpath:
+            self.id = grids['GLITE'].arc_submit(xrslpath,self.CE)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1096,8 +1056,8 @@ sys.exit(0)
 
         ick = False
 
-        ## delegate proxy to CREAM CE
-        if not grids['GLITE'].cream_proxy_delegation(self.CE):
+        ## delegate proxy to ARC CE
+        if not grids['GLITE'].arc_proxy_delegation(self.CE):
             logger.warning('proxy delegation to %s failed' % self.CE)
 
         if not job.master and len(job.subjobs) == 0:
@@ -1117,7 +1077,7 @@ sys.exit(0)
             
             ick = self.master_bulk_resubmit(rjobs)
             if not ick:
-                raise GangaException('CREAM bulk submission failure')
+                raise GangaException('ARC bulk submission failure')
 
         profiler.check('job re-submission elapsed time')
 
@@ -1133,7 +1093,7 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
+            self.id = grids['GLITE'].arc_submit(jdlpath,self.CE)
 
             if self.id:
                 # refresh the lcg job information
@@ -1146,10 +1106,17 @@ sys.exit(0)
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
 
-        jobdict   = dict([ [job.backend.id,job] for job in jobs if job.backend.id ])
+        import datetime
 
-        jobInfoDict = grids['GLITE'].cream_status(jobdict.keys())
+        jobdict = {}
+        for j in jobs:            
+            if j.backend.id and ( (datetime.datetime.now() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
+                jobdict[ j.backend.id ] = j
 
+        if len(jobdict.keys()) == 0:
+            return
+
+        jobInfoDict = grids['GLITE'].arc_status(jobdict.keys())
         jidListForPurge = []
 
         ## update job information for those available in jobInfoDict
@@ -1158,66 +1125,45 @@ sys.exit(0)
             if info:
 
                 job = jobdict[id]
-
-                if job.backend.status != info['Current Status'] and (not info.has_key('ExitCode') or (info.has_key('ExitCode') and info['ExitCode'].isdigit())):
-
-                    if info.has_key('Worker Node'):
-                        job.backend.workernode = info['Worker Node']
-
-                    if info.has_key('CREAM ISB URI'):
-                        job.backend.isbURI = info['CREAM ISB URI']
-
-                    if info.has_key('CREAM OSB URI'):
-                        job.backend.osbURI = info['CREAM OSB URI']
-
+                
+                if job.backend.status != info['State']:
+                    
                     doStatusUpdate = True
 
                     ## no need to update Ganga job status if backend status is not changed
-                    if info['Current Status'] == job.backend.status:
+                    if info['State'] == job.backend.status:
                         doStatusUpdate = False
 
                     ## download output sandboxes if final status is reached
-                    elif info['Current Status'] in ['DONE-OK','DONE-FAILED']:
+                    elif info['State'] in ['Finished (FINISHED)']:
 
-                        ## resolve output sandbox URIs based on the JDL information
-                        osbURIList = __cream_resolveOSBList__(job, info['JDL'])
-                        
-                        logger.debug('OSB list:')
-                        for f in osbURIList:
-                            logger.debug(f)
+                        ## grab output sandbox
+                        if grids['GLITE'].arc_get_output( job.backend.id, job.outputdir ):
+                            (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.outputdir)
+                            job.backend.exitcode = app_exitcode
 
-                        if osbURIList:
-                            
-                            if grids['GLITE'].cream_get_output( osbURIList, job.outputdir ):
-                                (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.outputdir)
-                                job.backend.exitcode = app_exitcode
+                            jidListForPurge.append( job.backend.id )
 
-                                jidListForPurge.append( job.backend.id )
-
-                            else:
-                                logger.error('fail to download job output: %s' % jobdict[id].getFQID('.'))
+                        else:
+                            logger.error('fail to download job output: %s' % jobdict[id].getFQID('.'))
 
                     if doStatusUpdate:
-                        job.backend.status = info['Current Status']
-                        if info.has_key('ExitCode') and info['ExitCode'] != "W":
+                        job.backend.status = info['State']
+                        if info.has_key('Exit Code'):
                             try:
-                                job.backend.exitcode_cream = int( info['ExitCode'] )
+                                job.backend.exitcode_arc = int( info['Exit Code'] )
                             except:
-                                job.backend.exitcode_cream = 1
-
-                        if info.has_key('FailureReason'):
-                            try:        
-                                job.backend.reason = info['FailureReason']
-                            except:
-                                pass    
+                                job.backend.exitcode_arc = 1
 
                         job.backend.updateGangaJobStatus()
             else:
                 logger.warning('fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
 
-            ## purging the jobs the output has been fetched locally
-            if jidListForPurge:
-                grids['GLITE'].cream_purgeMultiple(jidListForPurge)
+        ## purging the jobs the output has been fetched locally                                                                                                    
+        if jidListForPurge:
+            if not grids['GLITE'].arc_purgeMultiple(jidListForPurge):
+                logger.warning("Failed to purge all ARC jobs.")
+
                 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1226,15 +1172,14 @@ sys.exit(0)
 
         job = self.getJobObject()
 
-        if self.status in ['RUNNING','REALLY-RUNNING']:
+        if self.status.startswith('Running') or self.status.startswith('Finishing'):
             job.updateStatus('running')
-
-        elif self.status == 'DONE-OK':
+        elif self.status.startswith('Finished'):
             if job.backend.exitcode and job.backend.exitcode != 0:
                 job.backend.reason = 'non-zero app. exit code: %s' % repr(job.backend.exitcode)
                 job.updateStatus('failed')
-            elif job.backend.exitcode_cream and job.backend.exitcode_cream != 0:
-                job.backend.reason = 'non-zero CREAM job exit code: %s' % repr(job.backend.exitcode_cream)
+            elif job.backend.exitcode_arc and job.backend.exitcode_arc != 0:
+                job.backend.reason = 'non-zero ARC job exit code: %s' % repr(job.backend.exitcode_arc)
                 job.updateStatus('failed')
             else:
                 job.updateStatus('completed')
@@ -1245,7 +1190,7 @@ sys.exit(0)
         elif self.status in ['CANCELLED']:
             job.updateStatus('killed')
 
-        elif self.status in ['REGISTERED','PENDING','IDLE','HELD']:
+        elif self.status.startswith('Queuing'):
             pass
 
         else:
@@ -1255,8 +1200,9 @@ logger = getLogger()
 
 config = getConfig('LCG')
 
-## add CREAM specific configuration options
-config.addOption('CreamInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
-config.addOption('CreamOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
-#config.addOption('CreamPrologue','','sets the prologue script')
-#config.addOption('CreamEpilogue','','sets the epilogue script')
+## add ARC specific configuration options
+#config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
+#config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
+config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240, 'Time in seconds to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
+#config.addOption('ArcPrologue','','sets the prologue script')
+#config.addOption('ArcEpilogue','','sets the epilogue script')

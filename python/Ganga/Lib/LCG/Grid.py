@@ -1050,6 +1050,43 @@ class Grid(object):
         else:
             return (True, 0)
 
+    def expandxrsl(items):
+        '''Expand xrsl items'''
+        
+        xrsl = "&\n"
+        for key, value in items.iteritems():
+            
+            if key == "inputFiles":
+                # special case for input files
+                xrsl += "(inputFiles="
+                
+                for f in value:
+                    xrsl += "(\"%s\" \"%s\")\n" % (os.path.basename(f), f)
+                    
+                xrsl += ")\n"
+
+            elif key == "outputFiles":
+                # special case for input files
+                xrsl += "(outputFiles="
+                
+                for f in value:
+                    xrsl += "(\"%s\" \"\")\n" % (os.path.basename(f))
+                    
+                xrsl += ")\n"
+                
+            elif type(value) is dict:
+                # expand if a dictionary
+                xrsl += "(%s=" % key
+                for key2, value2 in value.iteritems():
+                    xrsl += "(\"%s\" \"%s\")\n" % (key2, value2)
+
+                xrsl += ")\n"
+            else:
+                # straight key pair
+                xrsl += "(%s=\"%s\")\n" % (key, value)
+
+        return xrsl
+
     def expandjdl(items):
         '''Expand jdl items'''
 
@@ -1127,3 +1164,167 @@ class Grid(object):
             return output
             
     expandjdl=staticmethod(expandjdl)
+    expandxrsl=staticmethod(expandxrsl)
+
+    def arc_submit(self, jdlpath, ce):
+        '''ARC CE direct job submission'''
+
+        # use the CREAM UI check as it's the same
+        if not self.__cream_ui_check__():
+            return
+
+        if not ce:
+            logger.warning('No CREAM CE endpoint specified')
+            return
+
+        cmd = 'arcsub'
+        exec_bin = True
+
+        #mydelid = self.cream_proxy_delegation(ce)
+        
+        #if mydelid:
+        #    cmd = cmd + ' -D "%s"' % mydelid
+        #else:
+        #    cmd = cmd + ' -a'
+
+        cmd = cmd + ' -c %s' % ce
+
+        cmd = '%s %s < /dev/null' % (cmd,jdlpath)
+
+        logger.debug('job submit command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                                  allowed_exit=[0,255],
+                                                  timeout=self.config['SubmissionTimeout'])
+
+        if output: output = "%s" % output.strip()
+
+        #Job submitted with jobid: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
+        match = re.search('(gsiftp:\/\/\S+:2811\/jobs\/[0-9A-Za-z_\.\-]+)$',output)
+
+        if match:
+            logger.debug('job id: %s' % match.group(1))
+            return match.group(1)
+        else:
+            logger.warning('Job submission failed.')
+            return
+
+    def arc_status(self,jobids):
+        '''ARC CE job status query'''
+        
+        if not self.__cream_ui_check__():
+            return ([],[])
+
+        if not jobids: return ([],[])
+
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('\n'.join(jobids)+'\n')
+
+        cmd = 'arcstat'
+        exec_bin = True
+
+        cmd = '%s -i %s' % (cmd,idsfile)
+        logger.debug('job status command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                        allowed_exit=[0,255],
+                                        timeout=self.config['StatusPollingTimeout'])
+        jobInfoDict = {}
+
+        if rc == 0 and output:
+            jobInfoDict = self.__arc_parse_job_status__(output)
+
+        return jobInfoDict
+
+    def __arc_parse_job_status__(self, log):
+        '''Parsing job status report from CREAM CE status query'''
+
+        #Job: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/FowMDmswEljnvnizHq7yZUKmABFKDmABFKDmxbGKDmABFKDmlw9pKo
+        #State: Finished (FINISHED)
+        #Exit Code: 0
+
+        jobInfoDict = {}        
+        jid = None
+
+        for ln in log.split('\n'):
+
+            ln.strip()
+                
+            # do we have a failed retrieval?
+            if ln.find("Job not found") != -1:
+                logger.warning("Could not find info for job id '%s'" % jid)
+                jid = None
+            elif ln.find("Job:") != -1 and ln.find("gsiftp") != -1:
+                # new job info block
+                jid = ln[ ln.find("gsiftp") :].strip()
+                jobInfoDict[jid] = {}
+
+            # get info
+            if ln.find("State:") != -1:
+                jobInfoDict[jid]['State'] = ln[ ln.find("State:") + len("State:"): ].strip()
+
+            if ln.find("Exit Code:") != -1:
+                jobInfoDict[jid]['Exit Code'] = ln[ ln.find("Exit Code:") + len("Exit Code:"): ].strip()
+
+        return jobInfoDict
+
+    def arc_get_output(self, jid, directory):
+        '''ARC CE job output retrieval'''
+
+        if not self.__cream_ui_check__():
+            return (False,None)
+
+        # construct URI list from ID and output from arcls
+        cmd = 'arcls %s' % jid
+        exec_bin = True
+
+        logger.debug('arcls command: %s' % cmd)
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
+                                                  allowed_exit=[0,255],
+                                                  timeout=self.config['SubmissionTimeout'])
+        
+        if rc:
+            logger.error("Could not find directory associated with ARC job ID '%s'" % jid)
+            return False
+
+        # URI is JID + filename
+        gfiles = []
+        for uri in output.split("\n"):
+            if len(uri) == 0:
+                continue
+            uri = jid + "/" + uri
+            gf = GridftpFileIndex()
+            gf.id = uri
+            gfiles.append(gf)
+
+        cache = GridftpSandboxCache()
+        cache.middleware = 'GLITE'
+        cache.vo = self.config['VirtualOrganisation']
+        cache.uploaded_files = gfiles
+
+        return cache.download( files=map(lambda x:x.id, gfiles), dest_dir=directory )
+
+    def arc_purgeMultiple(self, jobids):
+        '''ARC CE job purging'''
+        
+        if not self.__cream_ui_check__():
+            return False
+
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('\n'.join(jobids)+'\n')
+
+        cmd = 'arcclean'
+        exec_bin = True
+
+        cmd = '%s -i %s' % (cmd,idsfile)
+
+        logger.debug('job purge command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
+
+        logger.debug(output)
+
+        if rc == 0:
+            return True
+        else:
+            return False

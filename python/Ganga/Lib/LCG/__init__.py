@@ -1,5 +1,6 @@
 from LCG import *
 from CREAM import *
+from ARC import *
 from Utility import *
 from LCGRequirements import *
 from GridSandboxCache import *
