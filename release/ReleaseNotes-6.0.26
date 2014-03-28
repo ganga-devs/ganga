@@ -1,0 +1,27 @@
+**************************************************************************************************************
+6.0.26 (2014/3/28)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Added ARC CE direct submission backend
+* Fixed problem with CREAM backend that didn't register a 'waiting' Exit Code properly
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fixed minor problem with copying output properly in AtlasTasks
+* Got Tasks working with Jedi backend (mostly!)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Got build jobs working properly in Jedi
+* Added various options to Jedi jobs (RootCore, bexec, etc.)
+* Added protection for odd race condition where Panda status has been updated but Ganga job status has 
+not
+
+**************************************************************************************************************
