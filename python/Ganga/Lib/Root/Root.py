@@ -445,6 +445,8 @@ allHandlers.add('Root','PBS', RootLocalRTHandler)
 allHandlers.add('Root','SGE', RootLocalRTHandler)
 allHandlers.add('Root','Condor', RootRTHandler)
 allHandlers.add('Root','LCG', RootLCGRTHandler)
+allHandlers.add('Root','CREAM', RootLCGRTHandler)
+allHandlers.add('Root','ARC', RootLCGRTHandler)
 allHandlers.add('Root','TestSubmitter', RootRTHandler)
 allHandlers.add('Root','Remote', RootLCGRTHandler)
 
