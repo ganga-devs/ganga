@@ -1091,17 +1091,22 @@ class Panda(IBackend):
                         #if job.backend.jobSpec['transExitCode'] != 'NULL':
                         job.backend.reason += 'transExitCode: %s'%job.backend.jobSpec['transExitCode']
 
-                        if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                    # can have odd race condition that updates panda info but NOT job status - force check every time
+                    if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                        if job.status != 'submitted':
                             job.updateStatus('submitted')
-                        elif status.jobStatus in ['starting','running','holding','transferring']:
+                    elif status.jobStatus in ['starting','running','holding','transferring']:
+                        if job.status != 'running':
                             job.updateStatus('running')
-                        elif status.jobStatus == 'finished':
+                    elif status.jobStatus == 'finished':
+                        if job.status != 'completed':
                             if not job.backend._name=='PandaBuildJob' and job.status != "completed":
                                 job.backend.fillOutputData(job, status)
                                 if config['enableDownloadLogs']:
                                     job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
                             job.updateStatus('completed')
-                        elif status.jobStatus == 'failed':
+                    elif status.jobStatus == 'failed':
+                        if job.status != 'failed':
                             # check for server side retry
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and job.backend.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                 # grab the new panda ID
@@ -1111,7 +1116,8 @@ class Panda(IBackend):
                                 job.backend.url = 'http://panda.cern.ch/?job=%d'%newPandaID
                             else:
                                 job.updateStatus('failed')
-                        elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
+                    elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
+                        if job.status != 'killed':
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                 newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
                                 logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
@@ -1119,8 +1125,8 @@ class Panda(IBackend):
                                 job.backend.status = None
                             else:
                                 job.updateStatus('killed')
-                        else:
-                            logger.warning('Unexpected job status %s',status.jobStatus)
+                    else:
+                        logger.warning('Unexpected job status %s',status.jobStatus)
 
                 elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
                     if job.backend.buildjob.status != status.jobStatus:

@@ -613,9 +613,11 @@ class AthenaJediRTHandler(IRuntimeHandler):
         # use Athena packages
         if app.atlas_exetype == 'ARES' or (app.atlas_exetype in ['PYARA','ROOT','EXE'] and app.useAthenaPackages):
             jobParameters += "--useAthenaPackages "
+            
         # use RootCore
         if app.useRootCore or app.useRootCoreNoBuild:
             jobParameters += "--useRootCore "
+            
         # use mana
         if app.useMana:
             jobParameters += "--useMana "
@@ -674,7 +676,9 @@ class AthenaJediRTHandler(IRuntimeHandler):
         # build step
         if not job.backend.nobuild:
             jobParameters = '-i ${IN} -o ${OUT} --sourceURL ${SURL} '
-            jobParameters += '-r {0} '.format(self.rundirectory)
+
+            if job.backend.bexec != '':
+                jobParameters += ' --bexec "%s" ' % urllib.quote(job.backend.bexec)
 
             if app.atlas_exetype == 'ARES' or (app.atlas_exetype in ['PYARA','ROOT','EXE'] and app.useAthenaPackages):
                 # use Athena packages
@@ -682,6 +686,11 @@ class AthenaJediRTHandler(IRuntimeHandler):
             # use RootCore
             if app.useRootCore or app.useRootCoreNoBuild:
                 jobParameters += "--useRootCore "
+
+            # run directory
+            if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                jobParameters += '-r {0} '.format(self.rundirectory)
+                
             # no compile
             #if options.noCompile:
             #    jobParameters += "--noCompile "
@@ -695,10 +704,16 @@ class AthenaJediRTHandler(IRuntimeHandler):
             if app.atlas_exetype in ['PYARA','ROOT','EXE'] and job.backend.requirements.rootver != '':
                 rootver = re.sub('/','.', job.backend.requirements.rootver)
                 jobParameters += "--rootVer %s " % rootver
+                
             # cmt config
-            cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
-            if cmtConfig:
-                jobParameters += "--cmtConfig %s " % cmtConfig
+            if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+                if not app.atlas_cmtconfig in ['','NULL',None]:
+                    jobParameters += " --cmtConfig %s " % app.atlas_cmtconfig
+                                            
+            
+            #cmtConfig         = AthenaUtils.getCmtConfig(athenaVer=app.atlas_release, cmtConfig=app.atlas_cmtconfig)
+            #if cmtConfig:
+            #    jobParameters += "--cmtConfig %s " % cmtConfig
             # debug parameters
             #if options.queueData != '':
             #    jobParameters += "--overwriteQueuedata=%s " % options.queueData
