@@ -254,8 +254,11 @@ class AtlasUnit(IUnit):
       j.inputsandbox = self._getParent().inputsandbox
       j.outputsandbox = self._getParent().outputsandbox
 
-      # check for splitter - TagPrepare doesn't use splitters
-      if not trf.splitter and j.application._impl._name != "TagPrepare":
+      # check for splitter - TagPrepare and Jedi don't user splitters
+      if j.application._impl._name == "TagPrepare" or j.backend._impl._name == "Jedi":
+         return j
+      
+      if not trf.splitter:
          if j.inputdata._impl._name == "ATLASLocalDataset":
             j.splitter = AthenaSplitterJob()
             if trf.subjobs_per_unit > 0:
@@ -271,7 +274,7 @@ class AtlasUnit(IUnit):
                j.splitter.numsubjobs = trf.subjobs_per_unit
             else:
                j.splitter.numfiles = trf.files_per_job
-      elif j.application._impl._name != "TagPrepare":
+      else:
          j.splitter = trf.splitter.clone()
          
       return j
