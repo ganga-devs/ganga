@@ -545,6 +545,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     if app.atlas_release != "":
                         jspec.jobParameters += "--manaVer %s " % app.atlas_release
 
+                if job.backend.requirements.transfertype != '':
+                    jspec.transfertype = job.backend.requirements.transfertype
+
                 fout = FileSpec()
                 fout.lfn  = self.libraries[bjsite]
                 fout.type = 'output'
@@ -638,6 +641,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
             jspec.prodDBlock    = 'NULL'
+
+        if job.backend.requirements.transfertype != '':
+            jspec.transfertype = job.backend.requirements.transfertype
+
         jspec.destinationDBlock = job.outputdata.datasetname
         if Client.isDQ2free(job.backend.site):
             jspec.destinationSE = 'local'
