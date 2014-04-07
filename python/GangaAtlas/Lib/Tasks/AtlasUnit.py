@@ -233,6 +233,11 @@ class AtlasUnit(IUnit):
       # check for ds name specified and length
       if j.outputdata and j.outputdata._impl._name == "DQ2OutputDataset":
          max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 8
+
+         # merge names need to be shorter
+         if (j.backend._impl._name == "Panda" or j.backend._impl._name == "Jedi") and j.backend.requirements.enableMerge:
+            max_length -= 12
+            
          if j.outputdata.datasetname != "":
             dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
@@ -426,8 +431,10 @@ class AtlasUnit(IUnit):
       # check for valid download - SHOULD REALLY BE A HASH CHECK
       for fname in to_download.keys()[:self._getParent().num_dq2_threads]:
          full_path = os.path.join(self.copy_output.local_location, fname)
-         if not os.path.exists(full_path) or os.path.getsize( full_path ) < 4:
-            logger.error("Error downloading '%s'" % full_path)
+         if not os.path.exists(full_path):
+            logger.error("Error downloading '%s'. File doesn't exist after download." % full_path)
+         elif os.path.getsize( full_path ) < 4:
+            logger.error("Error downloading '%s'. File size smaller than 4 bytes (%d)" % (full_path, os.path.getsize( full_path ) ))
          else:
             self.copy_output.files.append(fname)
             logger.info("File '%s' downloaded successfully" % full_path)
