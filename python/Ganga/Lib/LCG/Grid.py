@@ -1166,7 +1166,7 @@ class Grid(object):
     expandjdl=staticmethod(expandjdl)
     expandxrsl=staticmethod(expandxrsl)
 
-    def arc_submit(self, jdlpath, ce):
+    def arc_submit(self, jdlpath, ce, verbose=False):
         '''ARC CE direct job submission'''
 
         # use the CREAM UI check as it's the same
@@ -1180,12 +1180,8 @@ class Grid(object):
         cmd = 'arcsub'
         exec_bin = True
 
-        #mydelid = self.cream_proxy_delegation(ce)
-        
-        #if mydelid:
-        #    cmd = cmd + ' -D "%s"' % mydelid
-        #else:
-        #    cmd = cmd + ' -a'
+        if verbose:
+            cmd += ' -d DEBUG '
 
         cmd = cmd + ' -c %s' % ce
 
@@ -1221,7 +1217,7 @@ class Grid(object):
         file(idsfile,'w').write('\n'.join(jobids)+'\n')
 
         cmd = 'arcstat'
-        exec_bin = True
+        exec_bin = True        
 
         cmd = '%s -i %s' % (cmd,idsfile)
         logger.debug('job status command: %s' % cmd)

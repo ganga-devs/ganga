@@ -332,7 +332,7 @@ class Job(GangaObject):
     transient_states = ['incomplete','removed','unknown']
     initial_states = ['new','incomplete','template']
 
-    def updateStatus(self,newstatus, transition_update = True):
+    def updateStatus(self,newstatus, transition_update = True, update_master = True):
         """ Move job to the new status. according to the state transition graph (Job.status_graph).
         If transition is allowed:
           - call the specific transition hook (if exists)
@@ -389,7 +389,7 @@ class Job(GangaObject):
             raise JobStatusError(x)
 
         logger.info('job %s status changed to "%s"',fqid,self.status)
-        if self.master is not None:
+        if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
     def transition_update(self,new_status):

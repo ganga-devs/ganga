@@ -36,7 +36,8 @@ class ARC(IBackend):
         'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
         'workernode'          : SimpleItem(defvalue='',protected=1,copyable=0,doc='The worker node on which the job actually runs.'),
         'isbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The input sandbox URI on ARC CE'),
-        'osbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The output sandbox URI on ARC CE')
+        'osbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The output sandbox URI on ARC CE'),
+        'verbose'             : SimpleItem(defvalue=False,doc='Use verbose options for ARC commands')
     })
 
     _category = 'backends'
@@ -274,7 +275,7 @@ class ARC(IBackend):
                 my_sj_id  = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
-                my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce)
+                my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce, self.verbose)
 
                 if not my_sj_jid:
                     return False
@@ -1021,7 +1022,7 @@ sys.exit(0)
         xrslpath = self.preparejob(subjobconfig,master_job_sandbox)
 
         if xrslpath:
-            self.id = grids['GLITE'].arc_submit(xrslpath,self.CE)
+            self.id = grids['GLITE'].arc_submit(xrslpath,self.CE, self.verbose)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1093,7 +1094,7 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = grids['GLITE'].arc_submit(jdlpath,self.CE)
+            self.id = grids['GLITE'].arc_submit(jdlpath,self.CE,self.verbose)
 
             if self.id:
                 # refresh the lcg job information
