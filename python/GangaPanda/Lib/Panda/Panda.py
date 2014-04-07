@@ -405,19 +405,18 @@ def retrieveMergeJobs(job, pandaJobDefId):
                     (ec2, mjs) = Client.getPandIDsWithJobID(id)
 
                     if ec2 == 0:
-
+                        
                         for jid,jinfo in mjs.items():
                             mjobj = PandaMergeJob()
                             mjobj.id     = jid
                             #mjobj.status = jinfo[0]
                             mjobj.url    = 'http://panda.cern.ch/?job=%d' % jid
 
-                            if mjobj not in job.backend.mergejobs:
+                            if mjobj.id not in [mj2.id for mj2 in job.backend.mergejobs]:
                                 job.backend.mergejobs.append(mjobj)
+                                num_mjobs += 1
                             else:
                                 logger.debug("merging job %s already exists locally" % mjobj.id)
-
-                            num_mjobs += 1
                     else:
                         logger.warning("getPandIDsWithJobID returns non-zero exit code: %d" % ec2)
 
@@ -506,6 +505,7 @@ class Panda(IBackend):
         'individualOutDS': SimpleItem(defvalue=False,protected=0,copyable=1,doc='Create individual output dataset for each data-type. By default, all output files are added to one output dataset'),
         'bexec'         : SimpleItem(defvalue='',protected=0,copyable=1,doc='String for Executable make command - if filled triggers a build job for the Execuatble'),
         'nobuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if no build job should be sent - use it together with Athena.athena_compile variable'),
+        'domergeretrieve' : SimpleItem(defvalue=True,protected=1,hidden=1,copyable=1,doc='Should merge jobs be retrieved'),
     })
 
     _category = 'backends'
@@ -1019,6 +1019,10 @@ class Panda(IBackend):
             job.backend.jobSpec = {}
             job.updateStatus('submitted')
 
+            
+
+        # mark merge job retrieval to be done for any new merges created
+        self.domergeretrieve = True
         logger.info('Resubmission successful')
         return True
 
@@ -1104,7 +1108,11 @@ class Panda(IBackend):
                                 job.backend.fillOutputData(job, status)
                                 if config['enableDownloadLogs']:
                                     job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
-                            job.updateStatus('completed')
+
+                            if job.master and job.master.backend.requirements.enableMerge:
+                                job.updateStatus('completed', update_master = False)
+                            else:
+                                job.updateStatus('completed')
                     elif status.jobStatus == 'failed':
                         if job.status != 'failed':
                             # check for server side retry
@@ -1115,7 +1123,11 @@ class Panda(IBackend):
                                 job.backend.status = None
                                 job.backend.url = 'http://panda.cern.ch/?job=%d'%newPandaID
                             else:
-                                job.updateStatus('failed')
+                                if job.master and job.master.backend.requirements.enableMerge:
+                                    job.updateStatus('failed', update_master = False)
+                                else:
+                                    job.updateStatus('failed')
+                                    
                     elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
                         if job.status != 'killed':
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
@@ -1277,8 +1289,9 @@ class Panda(IBackend):
             if job.backend.requirements.enableMerge:
 
                 ## check if there is a necessary to retrieve merging jobs
-                if not job.backend.mergejobs:
+                if job.backend.domergeretrieve:
 
+                    # check subjobs
                     do_merge_retrieve = True
 
                     for sj in job.subjobs:
@@ -1309,6 +1322,10 @@ class Panda(IBackend):
 
                             tot_num_mjobs += num_mjobs
 
+                        # set the flag to prevent further retrievals unless a resub is called
+                        if tot_num_mjobs > 0:
+                            job.backend.domergeretrieve = False
+                        
                         ## for some reason, one should call job._commit() to store merging jobs into the repository
                         job._commit()
                         

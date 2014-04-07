@@ -361,13 +361,15 @@ class AthenaJediRTHandler(IRuntimeHandler):
         #    taskParamMap['processingType'] += '-evp'
         taskParamMap['prodSourceLabel'] = 'user'
         if job.backend.site != 'AUTO':
+            taskParamMap['cloud'] = Client.PandaSites[job.backend.site]['cloud']
             taskParamMap['site'] = job.backend.site
-        if job.backend.requirements.cloud != None and not job.backend.requirements.anyCloud:
+        elif job.backend.requirements.cloud != None and not job.backend.requirements.anyCloud:
             taskParamMap['cloud'] = job.backend.requirements.cloud
         if job.backend.requirements.excluded_sites != []:
             taskParamMap['excludedSite'] = job.backend.requirements.excluded_sites
-        if job.backend.site != 'AUTO':
-            taskParamMap['includedSite'] = job.backend.site
+        # if only a single site specifed, don't set includedSite
+        #if job.backend.site != 'AUTO':
+        #    taskParamMap['includedSite'] = job.backend.site
         #taskParamMap['cliParams'] = fullExecString
         if job.backend.requirements.noEmail:
             taskParamMap['noEmail'] = True
