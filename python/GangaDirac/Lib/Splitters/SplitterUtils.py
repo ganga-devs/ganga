@@ -22,12 +22,13 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     Generator that yields a datasets for dirac split jobs
     """
     split_files = []
+    i=inputs.__class__()
     for files in igroup(inputs.files[:maxFiles],
                         getConfig('DIRAC')['splitFilesChunks'],
                         leftovers=True):
-
+        i.files = files
         result = execute('splitInputData(%s,%d)'\
-                         % (files.getLFNs(),filesPerJob)
+                         % (i.getLFNs(),filesPerJob)
                          )
 
         if not result_ok(result):
