@@ -23,6 +23,13 @@ GANGATIME1=`date +'%s'`
 # set the wrapper type
 export GANGA_ATHENA_WRAPPER_MODE='local'
 
+#################################################                                                                                                                      
+# make sure some output files are present just in case                                                                                                                 
+echo "Create output files to keep Condor happy..."
+touch  output_location
+touch output_guids
+touch output_data
+
 ################################################
 # load utility functions 
 source athena-utility.sh
