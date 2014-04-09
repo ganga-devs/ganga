@@ -3,10 +3,10 @@
 #ulrik
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-30-204
+ganga/python/Ganga                                                     Ganga-Base-30-205
 
 #johannes/mark
-ganga/python/GangaAtlas                                                GangaAtlas-26-06
+ganga/python/GangaAtlas                                                GangaAtlas-26-07
 
 #alex/patrick/ulrik
 ganga/python/GangaDirac                                                GangaDirac-01-42
