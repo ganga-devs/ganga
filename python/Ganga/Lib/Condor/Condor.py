@@ -389,8 +389,8 @@ class Condor( IBackend ):
       if self.globus_rsl:
          cdfDict[ 'globus_rsl' ] = self.globus_rsl
 
-#     if outfileString:
-#        cdfDict[ 'transfer_output_files' ] = outfileString
+      if outfileString:
+         cdfDict[ 'transfer_output_files' ] = outfileString
 
       cdfList = [
          "# Condor Description File created by Ganga",
