@@ -1054,7 +1054,7 @@ class Panda(IBackend):
                 jobdict[job.backend.id] = job 
 
             for subjob in job.subjobs:
-                if subjob.backend.status in active_status:
+                if subjob.backend.status in active_status or subjob.status in ['running'. 'submitted']:
                     jobdict[subjob.backend.id] = subjob
 
         # split into 2000-job pieces
