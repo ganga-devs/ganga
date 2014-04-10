@@ -1111,7 +1111,7 @@ sys.exit(0)
 
         jobdict = {}
         for j in jobs:            
-            if j.backend.id and ( (datetime.datetime.now() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
+            if j.backend.id and ( (datetime.datetime.utcnow() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
                 jobdict[ j.backend.id ] = j
 
         if len(jobdict.keys()) == 0:
