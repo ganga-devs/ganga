@@ -16,13 +16,17 @@ class TestDiracCommands(GangaGPITestCase):
     _id = None
     _getFileLFN = None
     _removeFileLFN = None
+
+    def setUp(self):
+        if self.__class__._id is None:
+            self.__class__.setUpClass()
     @classmethod
     def setUpClass(cls):
         exe_script = """
 #!/bin/bash
 echo 'sandboxFile' > sandboxFile.txt
-echo 'getFile' > getFile.txt
-echo 'removeFile' > removeFile.txt
+echo 'getFile2' > getFile.dst
+echo 'removeFile2' > removeFile.dst
 """
         exe_file, exe_path_name = tempfile.mkstemp()
         with os.fdopen(exe_file, 'wb') as f:
@@ -36,7 +40,7 @@ j.setName('InitTestJob')
 j.setExecutable('###EXE_SCRIPT_BASE###','','Ganga_Executable.log')
 j.setInputSandbox(['###EXE_SCRIPT###'])
 j.setOutputSandbox(['std.out','std.err','sandboxFile.txt'])
-j.setOutputData(['getFile.txt', 'removeFile.txt'])
+j.setOutputData(['getFile.dst', 'removeFile.dst'])
 j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
 #submit the job to dirac
 dirac=Dirac()
@@ -61,11 +65,12 @@ output(result)
             time.sleep(15)
             status = execute('status([%d])'%cls._id)
 
-        self.assertEqual(status[0][1], 'Completed', 'job not completed properly: %s' % str(status))
+        assert status[0][1]=='Completed', 'job not completed properly: %s' % str(status)
 
         output_data_info = execute('getOutputDataInfo("%s")' % cls._id)
-        cls._getFileLFN = output_data_info['getFile.txt']['LFN']
-        cls._removeFileLFN = output_data_info['removeFile.txt']['LFN']
+        print "HERE",output_data_info 
+        cls._getFileLFN = output_data_info['getFile.dst']['LFN']
+        cls._removeFileLFN = output_data_info['removeFile.dst']['LFN']
 
     @classmethod
     def tearDownClass(cls):
@@ -146,6 +151,7 @@ output(result)
         
     def test_alex(self):
         print "HERE"
+        assert False, 'TESTING'
         print TestDiracCommands.id
 #    def test_submit(self):
 #        exe_script = """

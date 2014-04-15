@@ -87,6 +87,7 @@ def dirac_ouputdata(app):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def diracAPI_script_template():
+    ### NOTE setOutputData(replicate) replicate keyword only for LHCbDirac. must move there when get a chance.
     script_template = """
 # dirac job created by ganga
 from DIRAC.Core.Base.Script import parseCommandLine
@@ -107,7 +108,7 @@ j.setInputSandbox(###INPUT_SANDBOX###)
 j.setOutputSandbox(###OUTPUT_SANDBOX###)
 j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
-j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
+j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###, replicate='###REPLICATE###')
 
 # <-- user settings
 ###SETTINGS###
