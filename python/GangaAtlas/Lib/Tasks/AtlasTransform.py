@@ -61,8 +61,35 @@ class AtlasTransform(ITransform):
 
    def checkOutputContainers(self):
       """Go through all completed units and make sure datasets are registered as required"""
+      logger.info("Cleaning out transform %d container..." % self.getID())
+
+      try:
+         dslist = []
+         dq2_lock.acquire()
+         try:
+            dslist = dq2.listDatasetsInContainer(self.getContainerName())
+         except:
+            dslist = []
+
+         try:
+            dq2.deleteDatasetsFromContainer(self.getContainerName(), dslist )
+
+         except DQContainerDoesNotHaveDataset:
+            pass
+         except Exception, x:
+            logger.error("Problem cleaning out Transform container: %s %s", x.__class__, x)
+         except DQException, x:
+            logger.error('DQ2 Problem cleaning out Transform container: %s %s' %( x.__class__, x))
+      finally:
+         dq2_lock.release()
+
+      logger.info("Checking output data has been registered for Transform %d..." % self.getID())
       for unit in self.units:
-         if unit.status == "completed" and self.outputdata._name == "DQ2OutputDataset":
+         
+         if len(unit.active_job_ids) == 0:
+            continue
+
+         if unit.status == "completed" and GPI.jobs(unit.active_job_ids[0]).outputdata and GPI.jobs(unit.active_job_ids[0]).outputdata._impl._name == "DQ2OutputDataset":
             logger.info("Checking containers in Unit %d..." % unit.getID() )
             unit.registerDataset()            
 

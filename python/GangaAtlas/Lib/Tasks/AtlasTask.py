@@ -4,6 +4,10 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 import time
 from Ganga.GPIDev.Lib.Tasks import ITask
 from GangaAtlas.Lib.Tasks.AtlasTransform import AtlasTransform
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
+from dq2.common.DQException import DQException
+from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
+from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 
 from Ganga.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
@@ -38,6 +42,28 @@ class AtlasTask(ITask):
 
     def checkOutputContainers(self):
         """Go through all transforms and check all datasets are registered"""
+        logger.info("Cleaning out overall Task container...")
+
+        try:
+            dslist = []
+            dq2_lock.acquire()
+            try:
+                dslist = dq2.listDatasetsInContainer(self.getContainerName())
+            except:
+                dslist = []
+
+            try:
+                dq2.deleteDatasetsFromContainer(self.getContainerName(), dslist )
+
+            except DQContainerDoesNotHaveDataset:
+                  pass
+            except Exception, x:
+                logger.error("Problem cleaning out Task container: %s %s", x.__class__, x)
+            except DQException, x:
+                logger.error('DQ2 Problem cleaning out Task container: %s %s' %( x.__class__, x))
+        finally:
+            dq2_lock.release()
+
         logger.info("Checking output data has been registered. This can take a few minutes...")
         for trf in self.transforms:
             logger.info("Checking containers in Tranform %d..." % trf.getID() )
