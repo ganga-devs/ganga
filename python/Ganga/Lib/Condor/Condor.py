@@ -190,6 +190,7 @@ class Condor( IBackend ):
                         or False otherwise"""
 
       job = self.getJobObject()
+
       inpDir = job.getInputWorkspace().getPath()
       outDir = job.getOutputWorkspace().getPath()
 
@@ -231,8 +232,12 @@ class Condor( IBackend ):
 
       idElementList = job.backend.id.split( "#" )
       if 3 == len( idElementList ):
-         killCommand = "condor_rm -name %s %s" % \
-            ( idElementList[ 0 ], idElementList[ 2 ] )
+         if idElementList[ 1 ].find(".") != -1:
+            killCommand = "condor_rm -name %s %s" % \
+                ( idElementList[ 0 ], idElementList[ 1 ] )
+         else:
+            killCommand = "condor_rm -name %s %s" % \
+                ( idElementList[ 0 ], idElementList[ 2 ] )
       else:
          killCommand = "condor_rm %s" % ( idElementList[ 0 ] )
 
@@ -546,8 +551,8 @@ class Condor( IBackend ):
             else:
                backendStatus = ""
 
-            logger.info( colour + 'Job %d %s%s %s %s - %s' + fx.normal,\
-               jobDict[ id ].id, status, backendStatus, preposition, hostInfo,\
+            logger.info( colour + 'Job %s %s%s %s %s - %s' + fx.normal,\
+               jobDict[ id ].fqid, status, backendStatus, preposition, hostInfo,\
                time.strftime( '%c' ) )
 
       return None
