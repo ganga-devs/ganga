@@ -1057,6 +1057,10 @@ class Panda(IBackend):
                 if subjob.backend.status in active_status or subjob.status in ['running', 'submitted']:
                     jobdict[subjob.backend.id] = subjob
 
+            if job.status in ['running', 'submitted'] and not job.backend.domergeretrieve and job.backend.requirements.enableMerge and not job.backend.mergejobs:
+                job.backend.domergeretrieve = True
+                
+                    
         # split into 2000-job pieces
         allJobIDs = jobdict.keys()
         jIDPieces = [allJobIDs[i:i+2000] for i in range(0,len(allJobIDs),2000)]
@@ -1261,23 +1265,23 @@ class Panda(IBackend):
 
                         mj.status = status.jobStatus
 
-                        # update the status of the master job based on what all merge jobs are doing
-                        mjstats = [mj2.status for mj2 in job.backend.mergejobs]
+                    # update the status of the master job based on what all merge jobs are doing
+                    mjstats = [mj2.status for mj2 in job.backend.mergejobs]
 
-                        merge_finished = True
+                    merge_finished = True
 
-                        for s in mjstats:
-                            if s not in ['failed','finished','cancelled']:
-                                merge_finished = False
+                    for s in mjstats:
+                        if s not in ['failed','finished','cancelled']:
+                            merge_finished = False
 
-                        if merge_finished:
-                            ## merge jobs finished, update the master job status respecting the status of subjobs
-                            job.updateMasterJobStatus()
-                            jlist_merge_finished.append(job)
+                    if merge_finished:
+                        ## merge jobs finished, update the master job status respecting the status of subjobs
+                        job.updateMasterJobStatus()
+                        jlist_merge_finished.append(job)
 
-                        elif job.status != 'running':
-                            ## merge jobs are still running, master job status kept running
-                            job.updateStatus('running')
+                    elif job.status != 'running':
+                        ## merge jobs are still running, master job status kept running
+                        job.updateStatus('running')
 
                 else:
                     logger.warning('Unexpected Panda ID %s',status.PandaID)
@@ -1325,11 +1329,11 @@ class Panda(IBackend):
                         # set the flag to prevent further retrievals unless a resub is called
                         if tot_num_mjobs > 0:
                             job.backend.domergeretrieve = False
-                        
+                            logger.info('job %s retrieved %d merging jobs' % (job.getFQID('.'),tot_num_mjobs) )
+
                         ## for some reason, one should call job._commit() to store merging jobs into the repository
                         job._commit()
-                        
-                        logger.info('job %s retrieved %d merging jobs' % (job.getFQID('.'),tot_num_mjobs) )
+                                                
                         
                         if do_master_update:
                             jlist_for_masterjob_update.append(job)
