@@ -308,6 +308,8 @@ if opt.useRootCoreNoBuild:
     j.application.useRootCoreNoBuild = True
 if opt.useNoDebugLogs:
     j.application.useNoDebugLogs= True
+if opt.useNoAthenaSetup:
+    j.application.useNoAthenaSetup=True
 if opt.compile:
     j.application.athena_compile=True
     if opt.prepare_old:        
@@ -343,8 +345,6 @@ if opt.useAthenaPackages:
 if opt.cmtConfig:
     j.application.atlas_cmtconfig=opt.cmtConfig
 
-if opt.useNoAthenaSetup:
-    j.application.useNoAthenaSetup=True
 
 # inputdata
 
