@@ -23,7 +23,7 @@ import os
 
 class AtlasUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
-      'output_file_list'     : SimpleItem(hidden=1, transient=1, defvalue={}, doc='list of output files copied')     
+      'output_file_list'     : SimpleItem(hidden=1, transient=1, defvalue={}, doc='list of output files copied'),
     }.items()))
 
    _category = 'units'
@@ -62,6 +62,7 @@ class AtlasUnit(IUnit):
                
          job = GPI.jobs(self.active_job_ids[0])
          ds_list = self.getOutputDatasetList()
+
          for ds in ds_list:
             try:
                dq2.registerDatasetsInContainer(trf_container, [ ds ] )
@@ -188,14 +189,12 @@ class AtlasUnit(IUnit):
 
       return not fail
 
-   def getOutputDatasetList(self):
-      """Return a list of the output datasets associated with this unit"""
-      
+   def getContainerList(self):
+      """Return a list of the output containers assocaited with this unit"""
       job = GPI.jobs(self.active_job_ids[0])
-      
+      cont_list = []
       if job.backend.individualOutDS:
          # find all the individual out ds's
-         cont_list = []
          for ds in job.subjobs(0).outputdata.output:
 
             # find all containers listed
@@ -205,14 +204,19 @@ class AtlasUnit(IUnit):
 
                if not cont_name in cont_list:
                   cont_list.append(cont_name)
-
-         ds_list = []
-         for cont in cont_list:
-            ds_list += dq2.listDatasetsInContainer(cont)
-            
-         return ds_list
       else:
-         return dq2.listDatasetsInContainer(job.outputdata.datasetname)
+         cont_list.append(job.outputdata.datasetname)
+
+      return cont_list
+
+   def getOutputDatasetList(self):
+      """Return a list of the output datasets associated with this unit"""
+      
+      ds_list = []
+      for cont in self.getContainerList():
+         ds_list += dq2.listDatasetsInContainer(cont)
+
+      return ds_list
       
    def createNewJob(self):
       """Create any jobs required for this unit"""      
@@ -232,11 +236,15 @@ class AtlasUnit(IUnit):
 
       # check for ds name specified and length
       if j.outputdata and j.outputdata._impl._name == "DQ2OutputDataset":
-         max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 8
+         max_length = configDQ2['OUTPUTDATASET_NAMELENGTH'] - 11
 
          # merge names need to be shorter
-         if (j.backend._impl._name == "Panda" or j.backend._impl._name == "Jedi") and j.backend.requirements.enableMerge:
-            max_length -= 12
+         if (j.backend._impl._name == "Panda" or j.backend._impl._name == "Jedi"):
+            if j.backend.requirements.enableMerge:
+               max_length -= 12
+
+            if j.backend.individualOutDS:
+               max_length -= 8
             
          if j.outputdata.datasetname != "":
             dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
@@ -329,6 +337,26 @@ class AtlasUnit(IUnit):
       if status == "completed":
          job = GPI.jobs(self.active_job_ids[0])
          if job.outputdata and job.outputdata._impl._name == "DQ2OutputDataset":
+
+            # make sure all datasets are complete
+            if job.backend.requirements.enableMerge:
+
+               # get container list
+               cont_list = self.getContainerList()
+
+               for mj in job.backend.mergejobs:
+                  if mj.status != "finished":
+                     # merge jobs failed - reset the unit for the moment
+                     logger.error("Merge jobs failed. Resetting unit...")
+                     self._getParent().resetUnit(self.getID())
+                     return
+
+               dq2_list = dq2.listFilesInDataset(job.outputdata.datasetname)
+               for guid in dq2_list[0].keys():                  
+                  if dq2_list[0][guid]['lfn'].find("merge") == -1:
+                     logger.warning("Merged files not transferred to out DS by Panda yet. Waiting...")
+                     return
+
             if not self.registerDataset():
                return
 
