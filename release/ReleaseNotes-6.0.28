@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.28 (2014/4/15)
+6.0.28 (2014/4/25)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -12,6 +12,7 @@ ganga/python/Ganga
 ganga/python/GangaAtlas
 --------------------------------------------------------------------------------------------------------------
 * Improved checkOutputContainers in Tasks
+* Added some more protection for race conditions with merging jobs
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -31,5 +32,6 @@ ganga/python/GangaPanda
 --------------------------------------------------------------------------------------------------------------
 * Fixed some issues with merging jobs not being retrieved properly
 * Another minor fix for odd race condition where job status's aren't updated but Panda status's are
+* Added some more protection for race conditions with merging jobs
 
 **************************************************************************************************************
