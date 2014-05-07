@@ -11,11 +11,11 @@ def igroup(iterable, num, leftovers=False):
     '''
     Generator producing sequential groups of size num from input iterable
     '''
-    nsplits = len(iterable)/num
-    for i in xrange(nsplits):
-        yield iterable[i*nsplits:(i+1)*nsplits]
-    if leftovers and len(iterable)%num:
-        yield iterable[(i+1)*nsplits:]
+    size = len(iterable)
+    for i in xrange(0, size, num):
+        if i+num > size and not leftovers:
+            return
+        yield iterable[i : i+num]
 
 def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
