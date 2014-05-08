@@ -1,4 +1,4 @@
-import os, unittest, tempfile, pickle, time, logging
+import os, unittest, tempfile, pickle, time
 from GangaTest.Framework.tests                     import GangaGPITestCase
 from GangaDirac.Lib.Utilities.DiracUtilities       import execute
 
@@ -13,126 +13,62 @@ from GangaDirac.Lib.Utilities.DiracUtilities       import execute
 #    return
 
 class TestDiracCommands(GangaGPITestCase):
-    _id = None
-    _getFileLFN = None
-    _removeFileLFN = None
-
     def setUp(self):
-        if self.__class__._id is None:
-            self.__class__.setUpClass()
-    @classmethod
-    def setUpClass(cls):
         exe_script = """
 #!/bin/bash
-echo 'sandboxFile' > sandboxFile.txt
-echo 'getFile2' > getFile.dst
-echo 'removeFile2' > removeFile.dst
+echo ['Test Text19'] > InitTestFile.txt
 """
-        exe_file, exe_path_name = tempfile.mkstemp()
-        with os.fdopen(exe_file, 'wb') as f:
-            f.write(exe_script)
 
         api_script = """
-from DIRAC.Interfaces.API.Dirac import Dirac
 from DIRAC.Interfaces.API.Job import Job
 j = Job()
 j.setName('InitTestJob')
 j.setExecutable('###EXE_SCRIPT_BASE###','','Ganga_Executable.log')
 j.setInputSandbox(['###EXE_SCRIPT###'])
-j.setOutputSandbox(['std.out','std.err','sandboxFile.txt'])
-j.setOutputData(['getFile.dst', 'removeFile.dst'])
+j.setOutputSandbox(['std.out','std.err','InitTestFile.txt'])
+j.setOutputData(['InitTestFile.txt'])
 j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
 #submit the job to dirac
-dirac=Dirac()
 result = dirac.submit(j)
 output(result)
 """
-#        api_file, api_path_name = tempfile.mkstemp()
-#        with os.fdopen(api_file, 'wb') as f:
-#            f.write( api_script.replace('###EXE_SCRIPT###', exe_path_name)\
-#                               .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)) )
-#        confirm = execute('execfile("%s")' % api_path_name)
+        exe_file, exe_path_name = tempfile.mkstemp()
+        open_exe = os.fdopen(exe_file, 'wb')
+        open_exe.write(exe_script)
+        open_exe.close()
 
+        api_file, api_path_name = tempfile.mkstemp()
+        open_api = os.fdopen(api_file, 'wb')
+        open_api.write( api_script.replace('###EXE_SCRIPT###', exe_path_name)\
+                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)) )
+        open_api.close()
+
+#        confirm = execute('execfile("%s")' % api_path_name)
         confirm = execute(api_script.replace('###EXE_SCRIPT###', exe_path_name)\
-                                    .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)))
-        cls._id = confirm['Value']
-        print "ID is", cls._id
+                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)))
+        self.id = confirm['Value']
+        print "ID is",self.id
+#        open_id = open('id_file', 'wb')
+#        open_id.write('%d'%id)
+#        open_id.close()
 
         os.remove(exe_path_name)
+        os.remove(api_path_name)
 
-        status = execute('status([%d])'% cls._id)
+        status = execute('status([%d])'% self.id)
         while status[0][1] not in ['Completed', 'Failed']:
             time.sleep(15)
-            status = execute('status([%d])'%cls._id)
+            status = execute('status([%d])'%self.id)
 
-        assert status[0][1]=='Completed', 'job not completed properly: %s' % str(status)
+        self.assertEqual(status[0][1], 'Completed', 'job not completed properly: %s' % str(status))
+        confirm =  execute('getOutputDataInfo("%s")'%self.id)
+        datafile = confirm['InitTestFile.txt']
 
-        output_data_info = execute('getOutputDataInfo("%s")' % cls._id)
-        print "HERE",output_data_info 
-        cls._getFileLFN = output_data_info['getFile.dst']['LFN']
-        cls._removeFileLFN = output_data_info['removeFile.dst']['LFN']
-
-    @classmethod
-    def tearDownClass(cls):
-        confirm = execute('removeFile("%s")' % cls._getFileLFN)
-        self.assertTrue(confirm['OK'], 'Command not executed successfully')
-
-#    def setUp(self):
-#        exe_script = """
-##!/bin/bash
-#echo ['Test Text19'] > InitTestFile.txt
-#"""
-#
-#        api_script = """
-#from DIRAC.Interfaces.API.Job import Job
-#j = Job()
-#j.setName('InitTestJob')
-#j.setExecutable('###EXE_SCRIPT_BASE###','','Ganga_Executable.log')
-#j.setInputSandbox(['###EXE_SCRIPT###'])
-#j.setOutputSandbox(['std.out','std.err','InitTestFile.txt'])
-#j.setOutputData(['InitTestFile.txt'])
-#j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
-##submit the job to dirac
-#result = dirac.submit(j)
-#output(result)
-#"""
-#        exe_file, exe_path_name = tempfile.mkstemp()
-#        open_exe = os.fdopen(exe_file, 'wb')
-#        open_exe.write(exe_script)
-#        open_exe.close()
-#
-#        api_file, api_path_name = tempfile.mkstemp()
-#        open_api = os.fdopen(api_file, 'wb')
-#        open_api.write( api_script.replace('###EXE_SCRIPT###', exe_path_name)\
-#                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)) )
-#        open_api.close()
-#
-#        confirm = execute('execfile("%s")' % api_path_name)
-#        confirm = execute(api_script.replace('###EXE_SCRIPT###', exe_path_name)\
-#                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)))
-#        self.id = confirm['Value']
-#        print "ID is",self.id
-##        open_id = open('id_file', 'wb')
-##        open_id.write('%d'%id)
-##        open_id.close()
-#
-#        os.remove(exe_path_name)
-#        os.remove(api_path_name)
-#
-#        status = execute('status([%d])'% self.id)
-#        while status[0][1] not in ['Completed', 'Failed']:
-#            time.sleep(15)
-#            status = execute('status([%d])'%self.id)
-#
-#        self.assertEqual(status[0][1], 'Completed', 'job not completed properly: %s' % str(status))
-#        confirm =  execute('getOutputDataInfo("%s")'%self.id)
-#        datafile = confirm['InitTestFile.txt']
-#
-#        self.location = datafile['LOCATIONS'][0]
-#        self.lfn = datafile['LFN']
-##        open_data = open('datafile', 'wb')
-##        pickle.dump(datafile, open_data)
-##        open_data.close()
+        self.location = datafile['LOCATIONS'][0]
+        self.lfn = datafile['LFN']
+#        open_data = open('datafile', 'wb')
+#        pickle.dump(datafile, open_data)
+#        open_data.close()
 
 #    def test_test(self):
 #        init_job()
@@ -151,164 +87,162 @@ output(result)
         
     def test_alex(self):
         print "HERE"
-        assert False, 'TESTING'
-        print TestDiracCommands.id
-#    def test_submit(self):
-#        exe_script = """
-##!/bin/bash
-#
-#echo Test Text 
-#
-#"""
-#
-#        api_script = """
-#from DIRAC.Core.Base.Script import parseCommandLine
-#parseCommandLine()
-#from DIRAC.Interfaces.API.Job import Job
-#j = Job()
-#j.setName('SubmitTestJob')
-#j.setExecutable('###EXE_SCRIPT_BASE###','','Ganga_Executable.log')
-#j.setInputSandbox(['###EXE_SCRIPT###'])
-#j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
-##submit the job to dirac
-#result = dirac.submit(j)
-#output(result)
-#"""
-#        
-#        exe_file, exe_path_name = tempfile.mkstemp()
-#        open_exe = os.fdopen(exe_file, 'wb')
-#        open_exe.write(exe_script)
-#        open_exe.close()
-#
-#        api_file, api_path_name = tempfile.mkstemp()
-#        open_api = os.fdopen(api_file, 'wb')
-#        open_api.write( api_script.replace('###EXE_SCRIPT###', exe_path_name)\
-#                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)) )
-#        open_api.close()
-#        
-#        confirm = execute('execfile("%s")' % api_path_name)
-#        self.assertTrue(confirm['OK'], 'Job not submitted correctly')
-#        time.sleep(20)
-#        id = confirm['Value']
-#        confirm_remove = execute('kill("%s")'%id)
-#        self.assertTrue(confirm_remove['OK'], 'Job not removed correctly')
-#        
-#        os.remove(exe_path_name)
-#        os.remove(api_path_name)
+        print self.id
+    def test_submit(self):
+        exe_script = """
+#!/bin/bash
+
+echo Test Text 
+
+"""
+
+        api_script = """
+from DIRAC.Core.Base.Script import parseCommandLine
+parseCommandLine()
+from DIRAC.Interfaces.API.Job import Job
+j = Job()
+j.setName('SubmitTestJob')
+j.setExecutable('###EXE_SCRIPT_BASE###','','Ganga_Executable.log')
+j.setInputSandbox(['###EXE_SCRIPT###'])
+j.setBannedSites(['LCG.CERN.ch', 'LCG.CNAF.it', 'LCG.GRIDKA.de', 'LCG.IN2P3.fr', 'LCG.NIKHEF.nl', 'LCG.PIC.es', 'LCG.RAL.uk', 'LCG.SARA.nl'])
+#submit the job to dirac
+result = dirac.submit(j)
+output(result)
+"""
+        
+        exe_file, exe_path_name = tempfile.mkstemp()
+        open_exe = os.fdopen(exe_file, 'wb')
+        open_exe.write(exe_script)
+        open_exe.close()
+
+        api_file, api_path_name = tempfile.mkstemp()
+        open_api = os.fdopen(api_file, 'wb')
+        open_api.write( api_script.replace('###EXE_SCRIPT###', exe_path_name)\
+                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)) )
+        open_api.close()
+        
+        confirm = execute('execfile("%s")' % api_path_name)
+        self.assertTrue(confirm['OK'], 'Job not submitted correctly')
+        time.sleep(20)
+        id = confirm['Value']
+        confirm_remove = execute('kill("%s")'%id)
+        self.assertTrue(confirm_remove['OK'], 'Job not removed correctly')
+        
+        os.remove(exe_path_name)
+        os.remove(api_path_name)
       
     def test_peek(self):
-        confirm =  execute('peek("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('peek("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
     def test_getJobCPUTime(self):
-        confirm =  execute('getJobCPUTime("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('getJobCPUTime("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
     
     def test_getOutputData(self):
-        confirm =  execute('getOutputData("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('getOutputData("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_getOutputSandbox(self):
-        confirm =  execute('getOutputSandbox("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('getOutputSandbox("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_getOutputDataInfo(self):
-        confirm =  execute('getOutputDataInfo("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('getOutputDataInfo("%s")'%id)
         self.assertEqual("%s"%type(confirm['InitTestFile.txt']),"<type 'dict'>", 'Command not executed successfully')
 
     def test_getOutputDataLFNs(self):
-        confirm =  execute('getOutputDataLFNs("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('getOutputDataLFNs("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_normCPUTime(self):
-        confirm =  execute('normCPUTime("%s")' % self.__class__._id)
+        id = self.id
+        confirm =  execute('normCPUTime("%s")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'str'>", 'Command not executed successfully')
 
     def test_getStateTime(self):
-        confirm =  execute('getStateTime("%s", "completed")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('getStateTime("%s", "completed")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'datetime.datetime'>", 'Command not executed successfully')
 
     def test_timedetails(self):
-        confirm =  execute('timedetails("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('timedetails("%s")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'dict'>", 'Command not executed successfully')
 
     def test_reschedule(self):
-        confirm =  execute('reschedule("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm =  execute('reschedule("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_kill(self):
+        id = self.id
         #remove_files()
-        confirm =  execute('kill("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        confirm =  execute('kill("%s")'%id)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_status(self):
-        confirm = execute('status("%s")' % self.__class__._id)
-        logging.info(str(confirm))
+        id = self.id
+        confirm = execute('status("%s")'%id)
         self.assertEqual("%s"%type(confirm), "<type 'list'>", 'Command not executed successfully')
 
     def test_getFile(self):
-        confirm = execute('getFile("%s")' % self.__class__._getFileLFN)
-        logging.info(str(confirm))
+        lfn = self.lfn
+        confirm = execute('getFile("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
-    def test_removeFile(self):
-        confirm = execute('removeFile("%s")' % self.__class__._removeFileLFN)
-        logging.info(str(confirm))
+    def test_zremoveFile(self):
+        lfn = self.lfn
+        confirm = execute('removeFile("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_ping(self):
         confirm = execute('ping("WorkloadManagement","JobManager")')
-        logging.info(str(confirm))
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
     def test_getMetadata(self):
-        confirm = execute('getMetadata("%s")' % self.__class__._getFileLFN)
-        logging.info(str(confirm))
+        lfn = self.lfn
+        confirm = execute('getMetadata("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
     def test_getReplicas(self):
-        confirm = execute('getReplicas("%s")' % self.__class__._getFileLFN)
-        logging.info(str(confirm))
+        lfn = self.lfn
+        confirm = execute('getReplicas("%s")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_replicateFile(self):
         #init_job()
-        #lfn = self.lfn
+        lfn = self.lfn
         location = self.location
         new_location = 'CERN-USER'
         if new_location==location:
             new_location = 'CNAF-USER'
-        confirm = execute('replicateFile("%s","%s","")' % (self.__class__._getFileLFN, new_location))
+        confirm = execute('replicateFile("%s","%s","")'%(lfn, new_location))
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
         
     def test_removeReplica(self):
-        #lfn = self.lfn
+        lfn = self.lfn
         location = self.location
         new_location = 'CERN-USER'
         if new_location==location:
             new_location = 'CNAF-USER'
-        confirm = execute('removeReplica("%s","%s")' % (self.__class__._getFileLFN, new_location))
+        confirm = execute('removeReplica("%s","%s")'%(lfn, new_location))
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_splitInputData(self):
-        #lfn = self.lfn
-        confirm = execute('splitInputData("%s","1")' % self.__class__._getFileLFN)
-        logging.info(str(confirm))
+        lfn = self.lfn
+        confirm = execute('splitInputData("%s","1")'%lfn)
         self.assertTrue(confirm['OK'], 'Command not executed successfully')
 
     def test_uploadFile(self):
-        #lfn = self.lfn
-        new_lfn = '%s/upload_file'%os.path.dirname(self.__class__._getFileLFN)
+        lfn = self.lfn
+        new_lfn = '%s/upload_file'%os.path.dirname(lfn)
         location = self.location
         add_file = open('upload_file','w')
         add_file.write("Upload File")
@@ -320,7 +254,7 @@ output(result)
         
     def test_addFile(self):
         lfn = self.lfn
-        new_lfn = '%s/add_file'%os.path.dirname(self.__class__._getFileLFN)
+        new_lfn = '%s/add_file'%os.path.dirname(lfn)
         location = self.location
         add_file = open('add_file','w')
         add_file.write("Added File")
@@ -370,7 +304,7 @@ output(result)
         #init_job()
         lfn = self.lfn
         #location = self.location
-        confirm = execute('getInputDataCatalog("%s","","")'%self.__class__._getFileLFN)
+        confirm = execute('getInputDataCatalog("%s","","")'%lfn)
         print "CONFIRM:", confirm
         print type(confirm)
         self.assertEqual(confirm['Message'], 'Failed to access all of requested input data', 'Command not executed successfully')
@@ -381,7 +315,7 @@ output(result)
         #init_job()
         lfn = self.lfn
         #location = self.location
-        confirm = execute('getLHCbInputDataCatalog("%s",0,"","")'%(self.__class__._getFileLFN))
+        confirm = execute('getLHCbInputDataCatalog("%s",0,"","")'%(lfn))
         print "CONFIRM:", confirm
         print type(confirm)
         self.assertEqual(confirm['Message'], 'Failed to access all of requested input data', 'Command not executed successfully')
