@@ -19,7 +19,7 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 #from GaudiAppConfig import *
-from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from Ganga.Utility.execute import execute
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig

@@ -11,7 +11,7 @@ config      = getConfig('Configuration')
 configDirac.addOption('Timeout', 1000,
                       'Default timeout (seconds) for Dirac commands')
 
-configDirac.addOption('splitFilesChunks', 500,
+configDirac.addOption('splitFilesChunks', 5000,
                       'when splitting datasets, pre split into chunks of this int')
 #configDirac.addOption('NumWorkerThreads', cpu_count(),
 configDirac.addOption('NumWorkerThreads', 5,

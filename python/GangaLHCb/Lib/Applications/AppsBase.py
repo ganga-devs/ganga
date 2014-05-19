@@ -13,7 +13,7 @@ from PythonOptionsParser import PythonOptionsParser
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from GangaDirac.Lib.Utilities.DiracUtilities       import execute
+from Ganga.Utility.execute import execute
 import Ganga.Utility.logging
 import subprocess
 import CMTscript
