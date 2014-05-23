@@ -51,7 +51,7 @@ p.add_option('--inputtype', action='store', type='choice', dest='inputtype', cho
 p.add_option('--inputaccessmode', action='store', type='choice', dest='inputaccessmode', choices = ['DQ2_LOCAL', 'LFC', 'TAG', 'TAG_REC', 'FILE_STAGER' ], default='DQ2_LOCAL',  help='Access mode of the DQ2/TAG input dataset: DQ2_LOCAL, FILE_STAGER, LFC, TAG, TAG_REC [default: DQ2_LOCAL]'  )
 p.add_option('--inputfailover', action='store_true', help='Use DQ2_COPY automatically if DQ2_LOCAL fails' )
 p.add_option('--inputaccessprotocol', action='store', type='string', dest='inputaccessprotocol', help='Access protocol on worker node, like Xrootd'  )
-p.add_option('--locallocation', action='store', type='string', dest='locallocation', nargs=2, help='Directory and file pattern for ATLASLocalDataset: e.g. /path/to/dir/ *AOD*.root')
+p.add_option('--locallocation', action='append', type='string', dest='locallocation', nargs=2, help='Directory and file pattern for ATLASLocalDataset: e.g. /path/to/dir/ *AOD*.root. Accepts multiple entries and comma separated dirs.')
 p.add_option('--inputlfn', action='store', type='string', dest='inputlfn', help='ATLASDataset lfn parameter, e.g. --inputlfn=rome.004100.recov10.T1_McAtNLO_top._[00001-00010].AOD.pool.root or --inputlfn=lfn:file1.root,lfn:file2.root' )
 p.add_option('--inputlfc', action='store', type='string', dest='inputlfc', help='ATLASDataset lfc host parameter, e.g. --inputlfc=lfc-fzk.gridka.de' )
 p.add_option('--match_ce_all', action='store_const', const='match_ce_all', dest='match_ce_all', help='Job are sent to incomplete and complete inputdataset sources' )
@@ -372,8 +372,10 @@ if opt.input_dataset or opt.tag_input_dataset or opt.tag_input_files or opt.inpu
 
             # decide where to get input info from: locallocation or inDS
             if opt.locallocation:
-                print "Using locallocation for input: " + opt.locallocation[0] + ", " +  opt.locallocation[1]
-                j.inputdata.get_dataset(opt.locallocation[0],opt.locallocation[1])
+		for loc in opt.locallocation:
+		    for loc_dir in loc[0].split(","):		        
+                        print "Using locallocation for input: " + loc_dir + ", " +  loc[1]
+                        j.inputdata.get_dataset(loc_dir,loc[1])
             elif opt.input_dataset:
                 print "Using inDS for input: " + opt.input_dataset
 
