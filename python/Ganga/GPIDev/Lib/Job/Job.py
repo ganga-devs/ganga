@@ -400,7 +400,6 @@ class Job(GangaObject):
         keys.remove('AutoRemoveFileTypes')
 
         for key in keys:
-            print key
             try:
                 for configEntry in getConfig('Output')[key]['backendPostprocess']:
                     if configEntry not in backend_output_postprocess.keys():
