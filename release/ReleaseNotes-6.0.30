@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.30 (2014/5/21)
+6.0.30 (2014/5/23)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -8,6 +8,13 @@ ganga/python/Ganga
 * fix for execute always needing proxy
 * Fixes for Tasks to use outputfiles
 * Added file masks to TaskChainInput Dataset
+* Changed backend output management dictionary to be created when needed, not at boot time
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Allowed --locallocation to accept multiple entries and comma-separated dirs
 
 
 --------------------------------------------------------------------------------------------------------------
