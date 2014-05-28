@@ -6,6 +6,7 @@ from IGangaFile import IGangaFile
 from LocalFile import LocalFile
 from MassStorageFile import MassStorageFile
 from LCGSEFile import LCGSEFile
+from SandboxFile import SandboxFile
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
