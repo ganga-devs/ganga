@@ -454,7 +454,8 @@ class Job(GangaObject):
 
                         outputfile.setLocation()
 
-            outputfile.processWildcardMatches()
+            if outputfileClass == 'LocalFile':
+                outputfile.processOutputWildcardMatches()
 
         #leave it for the moment for debugging
         #os.system('rm %s' % postprocessLocationsPath)   
