@@ -549,6 +549,8 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         # add server options
         config.addOption('ServerPort',434343,'Port for the Ganga server to listen on')
         config.addOption('ServerTimeout',60,'Timeout in minutes for auto-server shutdown')
+        config.addOption('ServerUserScript',"","Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
+        config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
         
         # detect default user (equal to unix user name)
         import getpass
@@ -603,11 +605,11 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         outputconfig.addOption('ForbidLegacyInput', False, 'if True, writing to the job inputsandbox field will be forbidden')
 
-        outputconfig.addOption('LCGSEFile',{'fileExtensions':['*.root', '*.asd'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{'LFC_HOST':'lfc-dteam.cern.ch', 
+        outputconfig.addOption('LCGSEFile',{'fileExtensions':['*.root', '*.asd'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'ARC':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{'LFC_HOST':'lfc-dteam.cern.ch', 
 'dest_SRM':'srm-public.cern.ch'}},'fileExtensions:list of output files that will be written to LCG SE, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual LCG upload')
 
-        outputconfig.addOption('DiracFile',{'fileExtensions':['*.dst'], 'backendPostprocess':{'Dirac':'WN', 'LSF':'WN', 'LCG':'WN', 'CREAM':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
-        outputconfig.addOption('GoogleFile',{'fileExtensions':[], 'backendPostprocess':{'Dirac':'client', 'LSF':'client', 'LCG':'client', 'CREAM':'client', 'Localhost':'client', 'Interactive':'client'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
+        outputconfig.addOption('DiracFile',{'fileExtensions':['*.dst'], 'backendPostprocess':{'Dirac':'WN', 'LSF':'WN', 'LCG':'WN', 'CREAM':'WN', 'ARC':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
+        outputconfig.addOption('GoogleFile',{'fileExtensions':[], 'backendPostprocess':{'Dirac':'client', 'LSF':'client', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'client', 'Interactive':'client'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
 
         massStoragePath = ''
         try:
@@ -619,7 +621,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         massStorageUploadOptions = {'mkdir_cmd':'nsmkdir', 'cp_cmd':'rfcp', 'ls_cmd':'nsls', 'path':massStoragePath}
 
-        outputconfig.addOption('MassStorageFile', {'fileExtensions':['*.dummy'], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
+        outputconfig.addOption('MassStorageFile', {'fileExtensions':['*.dummy'], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
 
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B

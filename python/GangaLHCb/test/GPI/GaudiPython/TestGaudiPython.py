@@ -73,22 +73,23 @@ class TestGaudiPython(GangaGPITestCase):
 
         shutil.rmtree(dir)
 
-    def testInvalidPlatform(self):
-        setConfigOption('LHCb','ignore_version_check',False)
-        gp = GaudiPython()
-        gp.platform='FooBar'
-        #gp.version = configDaVinci['version']
-        j = Job(application=gp,backend=Dirac())
-
-        try:
-            j.submit()
-        except JobError:
-            pass
-        except Exception, e:
-            assert False, 'Unexpected exception: '+str(e)
-        else:
-            j.remove()
-            assert False, 'Invalid platform should throw exception'
+# we dont do this anymore
+#    def testInvalidPlatform(self):
+#        setConfigOption('LHCb','ignore_version_check',False)
+#        gp = GaudiPython()
+#        gp.platform='FooBar'
+#        #gp.version = configDaVinci['version']
+#        j = Job(application=gp,backend=Dirac())
+#
+#        try:
+#            j.submit()
+#        except JobError:
+#            pass
+#        except Exception, e:
+#            assert False, 'Unexpected exception: '+str(e)
+#        else:
+#            j.remove()
+#            assert False, 'Invalid platform should throw exception'
 
     def testSplit(self):
         gp = GaudiPython()

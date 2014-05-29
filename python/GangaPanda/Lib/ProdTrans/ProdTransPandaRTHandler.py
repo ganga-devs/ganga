@@ -97,7 +97,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec = JobSpec()
         jspec.currentPriority = app.priority
         jspec.jobDefinitionID = masterjob.id
-        jspec.jobName = commands.getoutput('uuidgen')
+        jspec.jobName = commands.getoutput('uuidgen 2> /dev/null')
         jspec.coreCount = app.core_count
         jspec.AtlasRelease = 'Atlas-%s' % app.atlas_release
         jspec.homepackage = app.home_package
@@ -160,7 +160,7 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         for lfn in app.output_files:
             ofspec = FileSpec()
             if app.randomize_lfns:
-                randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen')[:4] ) )
+                randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen 2> /dev/null')[:4] ) )
             else:
                 randomized_lfn = lfn
             ofspec.lfn = randomized_lfn

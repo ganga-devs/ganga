@@ -26,6 +26,7 @@ class PandaRequirements(GangaObject):
         'rootver' : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Specify a different root version for non-Athena jobs.'),
         'overwriteQueuedata'     : SimpleItem(defvalue = False,protected=0,copyable=1,doc='Expert option: overwriteQueuedata.'),
         'overwriteQueuedataConfig'     : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Expert option: overwriteQueuedataConfig.'),
+        'transfertype'     : SimpleItem(defvalue = '',protected=0,copyable=1,doc='Expert option: transfertype.'),
     })
 
     _category = 'PandaRequirements'

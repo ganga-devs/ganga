@@ -41,7 +41,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
             setChirpVariables()
 
 #       Pack inputsandbox
-        inputsandbox = 'sources.%s.tar' % commands.getoutput('uuidgen') 
+        inputsandbox = 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null') 
         inpw = job.getInputWorkspace()
         # add user script to inputsandbox
         if hasattr(job.application.exe, "name"):
@@ -142,7 +142,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
         if job.backend.bexec != '':
             jspec = JobSpec()
             jspec.jobDefinitionID   = job.id
-            jspec.jobName           = commands.getoutput('uuidgen')
+            jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
             jspec.transformation    = '%s/buildGen-00-00-01' % Client.baseURLSUB
             if Client.isDQ2free(job.backend.site):
                 jspec.destinationDBlock = '%s/%s' % (job.outputdata.datasetname,self.libDataset)
@@ -231,7 +231,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
         jspec = JobSpec()
         jspec.jobDefinitionID   = job._getRoot().id
-        jspec.jobName           = commands.getoutput('uuidgen')
+        jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
         jspec.transformation    = '%s/runGen-00-00-02' % Client.baseURLSUB
         if job.inputdata:
             jspec.prodDBlock    = job.inputdata.dataset[0]

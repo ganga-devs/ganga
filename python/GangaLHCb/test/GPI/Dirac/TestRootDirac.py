@@ -10,36 +10,37 @@ script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.C'
 
 class TestRootDirac(GangaGPITestCase):
 
+## we dont do this anymore
+#    def testAllowedArchitecture(self):
+#        """Test the submission of root jobs on dirac"""
+#
+#        setConfigOption('LHCb','ignore_version_check',False)
+#        config.ROOT.arch = 'x86_64-slc5-gcc43-opt'
+#        
+#        r = Root(script=script_file)
+#
+#        j = Job(application=r, backend=DiracTestSubmitter())
+#        j.submit()
+#        sleep_until_completed(j)
+#        assert j.status == 'completed', 'Job should complete'
 
-    def testAllowedArchitecture(self):
-        """Test the submission of root jobs on dirac"""
-
-        setConfigOption('LHCb','ignore_version_check',False)
-        config.ROOT.arch = 'x86_64-slc5-gcc43-opt'
-        
-        r = Root(script=script_file)
-
-        j = Job(application=r, backend=DiracTestSubmitter())
-        j.submit()
-        sleep_until_completed(j)
-        assert j.status == 'completed', 'Job should complete'
-        
-    def testNotAllowedArchitecture(self):
-        """Tests the architectures not allowed by dirac"""
-        
-        setConfigOption('LHCb','ignore_version_check',False)
-        config.ROOT.arch = 'x86_64-slc5-gcc43-opt-not-a-valid-version'
-        
-        r = Root(script=script_file)
-        j = Job(application=r, backend=Dirac())
-        
-        try:
-            j.submit()
-            assert False, 'Exception must be thrown'
-        except JobError, e:
-            pass
-        
-        assert j.status == 'new', 'Job must be rolled back to the new state'
+## we dont do this anymore
+#    def testNotAllowedArchitecture(self):
+#        """Tests the architectures not allowed by dirac"""
+#        
+#        setConfigOption('LHCb','ignore_version_check',False)
+#        config.ROOT.arch = 'x86_64-slc5-gcc43-opt-not-a-valid-version'
+#        
+#        r = Root(script=script_file)
+#        j = Job(application=r, backend=Dirac())
+#        
+#        try:
+#            j.submit()
+#            assert False, 'Exception must be thrown'
+#        except JobError, e:
+#            pass
+#        
+#        assert j.status == 'new', 'Job must be rolled back to the new state'
         
     def testProperSubmit(self):
         

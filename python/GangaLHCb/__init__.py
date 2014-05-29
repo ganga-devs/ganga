@@ -48,8 +48,8 @@ configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
 ##           'PIC-USER','RAL-USER']
 ## dscrpt = 'Space tokens allowed for replication, etc.'
 ## configLHCb.addOption('DiracSpaceTokens',tokens,dscrpt)
-dscrpt = 'Switch whether or not a check that the required app version/platform is valid for the backend'
-configLHCb.addOption('ignore_version_check',True,dscrpt)
+#dscrpt = 'Switch whether or not a check that the required app version/platform is valid for the backend'
+#configLHCb.addOption('ignore_version_check',True,dscrpt)
 #dscrpt = 'The Maximum allowed number of bulk submitted jobs before Ganga intervenes'
 #configLHCb.addOption('MaxDiracBulkJobs',500,dscrpt)
  

@@ -1,0 +1,39 @@
+**************************************************************************************************************
+6.0.30 (2014/5/23)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* fix for execute always needing proxy
+* Fixes for Tasks to use outputfiles
+* Added file masks to TaskChainInput Dataset
+* Changed backend output management dictionary to be created when needed, not at boot time
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Allowed --locallocation to accept multiple entries and comma-separated dirs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+Fixes for:
+* Broken file splitting on the Dirac Backend when using the maxFiles attribute
+* Jobs with backing.id=None after client crash sticking the monitoring
+* executing external commands always requesting a proxy be present.
+* set default splitting chunk size to 5000 as Ulrik has done in site config, this should help obtain
+a more optimal splitting but hopefully avoid timeouts.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+fix for:
+* executing external commands always requesting a proxy be present.
+
+--Alex
+
+**************************************************************************************************************

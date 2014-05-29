@@ -11,6 +11,8 @@ config      = getConfig('Configuration')
 configDirac.addOption('Timeout', 1000,
                       'Default timeout (seconds) for Dirac commands')
 
+configDirac.addOption('splitFilesChunks', 5000,
+                      'when splitting datasets, pre split into chunks of this int')
 #configDirac.addOption('NumWorkerThreads', cpu_count(),
 configDirac.addOption('NumWorkerThreads', 5,
                       'Number of worker threads that the local DIRAC server and client should establish')
@@ -40,6 +42,8 @@ configDirac.addOption('load_default_Dirac_backend', True,
 configDirac.addOption('DiracLFNBase','/lhcb/user/%s/%s'%(config['user'][0],
                                                          config['user']),
                       "Base dir appended to create LFN name from DiracFile('name')")
+
+configDirac.addOption('ReplicateOutputData',True, 'Determines whether outputdata stored on Dirac is replicated')
 
 configDirac.addOption('DiracSpaceTokens',
                       ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','SARA-USER',

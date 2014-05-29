@@ -1,0 +1,36 @@
+**************************************************************************************************************
+6.0.27 (2014/4/9)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Use utcnow in ARC backend
+* Added a debug option to the ARC backend
+* Added option to NOT update master job status when updating subjob status
+* Fixed Condor copying all output back to submission machine
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Made it more obvious for dq2-get failures in Tasks
+* Fixed problems with DS name too long for merged jobs
+* Fixed Condor copying all output back to submission machine
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Fixes for the updated LHCbDirac API
+* Fixes for the testing of Dirac Commands
+* Fixes for the timeout of splitting datasets via Dirac
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fixed specifying single site for brokerage in Jedi
+* Fixed issues with merging jobs
+
+**************************************************************************************************************

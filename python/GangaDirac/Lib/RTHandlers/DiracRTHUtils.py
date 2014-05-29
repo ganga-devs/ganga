@@ -87,6 +87,7 @@ def dirac_ouputdata(app):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def diracAPI_script_template():
+    ### NOTE setOutputData(replicate) replicate keyword only for LHCbDirac. must move there when get a chance.
     script_template = """
 # dirac job created by ganga
 from DIRAC.Core.Base.Script import parseCommandLine
@@ -98,17 +99,16 @@ j = ###JOB_OBJECT###
 
 # default commands added by ganga
 j.setName('###NAME###')
-j.setApplicationScript('###APP_NAME###','###APP_VERSION###','###APP_SCRIPT###',logFile='###APP_LOG_FILE###')
-j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###')
-j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###')
-j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###')
+j.setApplicationScript('###APP_NAME###','###APP_VERSION###','###APP_SCRIPT###',logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
+j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###', systemConfig='###PLATFORM###')
+j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###', systemConfig='###PLATFORM###')
+j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###', systemConfig='###PLATFORM###')
 j.setExecutionEnv(###ENVIRONMENT###)
 j.setInputSandbox(###INPUT_SANDBOX###)
 j.setOutputSandbox(###OUTPUT_SANDBOX###)
 j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
-j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
-j.setSystemConfig('###PLATFORM###')
+j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###, replicate='###REPLICATE###')
 
 # <-- user settings
 ###SETTINGS###
@@ -118,6 +118,7 @@ j.setSystemConfig('###PLATFORM###')
 ###DIRAC_OPTS###
 
 # submit the job to dirac
+j.setDIRACPlatform() 
 result = dirac.submit(j)
 output(result)
 """

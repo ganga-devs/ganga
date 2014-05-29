@@ -8,7 +8,7 @@
 """
 
 _external_packages = {
-    'panda-client' : { 'version' : '0.4.32', 
+    'panda-client' : { 'version' : '0.5.4-jedi', 
                     'PYTHONPATH':['lib/python2.4/site-packages'],
                     'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                     'PANDA_SYS':'.',
@@ -26,4 +26,3 @@ def standardSetup(setup=setup):
         setup.prependPath(p,'LD_LIBRARY_PATH')
         setup.prependPath(p,'PATH')
         setup.setPath(p,'PANDA_SYS')
-

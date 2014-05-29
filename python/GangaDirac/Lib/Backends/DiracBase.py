@@ -584,9 +584,14 @@ class DiracBase(IBackend):
         ## NOT SURE THIS IS VALID NOW BULK SUBMISSION IS GONE
         ## EVEN THOUGH COULD ADD queues.add(j.submit) WILL KEEP AN EYE ON IT
 #        dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
+        ## Correction this did become a problem for a crashed session during submit, see #104454
+        dead_jobs = ( j for j in monitor_jobs if j.backend.id is None )
+        for d in dead_jobs:
+            d.updateStatus('failed')
+            if job.master: job.master.updateMasterJobStatus()
 
         ganga_job_status = [ j.status     for j in monitor_jobs ]
-        dirac_job_ids    = [ j.backend.id for j in monitor_jobs ]
+        dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
  
         result = execute( 'status(%s)' % str(dirac_job_ids) )
         if type(result) != type([]):

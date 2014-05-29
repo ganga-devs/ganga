@@ -1,0 +1,55 @@
+**************************************************************************************************************
+6.0.24 (2014/3/6)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Added some extra options for the GangaService
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Added support for TagPrepare chains in Tasks
+* Update to DQ2Clients 2.5.0
+* Added protection for slc5 64bit Athena use (uuidgen problem)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* removed the deprecated software version check
+* made sure that uploading DiracFiles uses the API from LHCbDirac rather that DIRAC in order to pick
+up the correct GUID calculation for user ROOT files
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* New Jedi backend:
+  - Usage is very similar to Panda backend but without splitter !
+  - Example:
+    j.backend=Jedi()
+    j.backend.nobuild=True
+    j.backend.requirements.disableAutoRetry=True
+  - No DQ2JobSplitter is needed since the splitting is done autmatically on the server
+  - The new backend is not yet enable in the athena command line script
+* Upgrade to DQ2Clients 2.5.0
+* Upgrade to panda-clients 0.5.0-jedi
+* Added protection for slc5 64bit Athena use (uuidgen problem)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaSNOplus
+--------------------------------------------------------------------------------------------------------------
+Removed references to GASPDIR, updated config options for RATUser and RATProd, updated to allow users to submit with their own 
+branches of rat repository.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaService
+--------------------------------------------------------------------------------------------------------------
+* Added the option of a periodically run user script to the server
+
+**************************************************************************************************************

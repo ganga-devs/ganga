@@ -13,9 +13,10 @@ should be postprocessed on the WN, depending on job.backend_output_postprocess d
 def outputFilePostProcessingOnWN(job, outputFileClassName):
     backendClassName = job.backend.__class__.__name__
 
-    if job.backend_output_postprocess.has_key(backendClassName):
-        if job.backend_output_postprocess[backendClassName].has_key(outputFileClassName):
-            if job.backend_output_postprocess[backendClassName][outputFileClassName] == 'WN':
+    backend_output_postprocess = job.getBackendOutputPostprocessDict()
+    if backend_output_postprocess.has_key(backendClassName):
+        if backend_output_postprocess[backendClassName].has_key(outputFileClassName):
+            if backend_output_postprocess[backendClassName][outputFileClassName] == 'WN':
                 return True
         
     return False
@@ -28,9 +29,10 @@ should be postprocessed on the client, depending on job.backend_output_postproce
 def outputFilePostProcessingOnClient(job, outputFileClassName):
     backendClassName = job.backend.__class__.__name__
 
-    if job.backend_output_postprocess.has_key(backendClassName):
-        if job.backend_output_postprocess[backendClassName].has_key(outputFileClassName):
-            if job.backend_output_postprocess[backendClassName][outputFileClassName] == 'client':
+    backend_output_postprocess = job.getBackendOutputPostprocessDict()
+    if backend_output_postprocess.has_key(backendClassName):
+        if backend_output_postprocess[backendClassName].has_key(outputFileClassName):
+            if backend_output_postprocess[backendClassName][outputFileClassName] == 'client':
                 return True
         
     return False

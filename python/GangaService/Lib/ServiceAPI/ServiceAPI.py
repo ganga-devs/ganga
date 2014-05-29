@@ -11,10 +11,12 @@ class GangaService:
     
     def __init__(self):
         self.port = -1 #43434
-        self.timeout = 60
+        self.timeout = 60 # in minutes
         self.gangadir = os.path.normpath(os.path.expandvars(os.path.expanduser("~/gangadir-server")))
         self.prerun = ""
         self.gangacmd = "ganga"
+        self.userscript = None
+        self.userscriptwaittime = 300
         pass
 
     def getServerInfo(self):
@@ -57,7 +59,10 @@ class GangaService:
                         print "Could not kill server. Please kill manually on host '%s'" % hostname
                         return False
 
-                    print "Server killed."
+                    # wait a little longer for the process to finish completely...
+                    time.sleep(10)
+                    
+                    print "Server kill signals sent though you should check the process has exited on host '%s'." % hostname
                     return True
                 else:
                     # try and connect to this port
@@ -74,6 +79,20 @@ class GangaService:
                     while data.find("###STOPPED###") == -1:
                         data += sock.recv(1024)
                     sock.close()
+
+                    # check the process has gone away
+                    print "Stop signal sent. Waiting for Ganga process to finish..."
+                    wait = 0
+                    ret, out = getstatusoutput("ps -Af | grep ganga -i | grep %d" % port)
+                    while ret == 0 and wait < 120:
+                        time.sleep(1)
+                        wait += 1
+                        ret, out = getstatusoutput('ps -Af | grep ganga -i | grep -v "sh -c" | grep %d' % port)
+                        
+                    if wait > 119:
+                        print "Signals sent but ganga still running. Retry killServer or kill process manually."
+                        return False
+                    
                     print "Local server stopped"
                     return True
                                                                                                 
@@ -127,12 +146,30 @@ class GangaService:
 
         # No, so start it
         print "Starting server..."
-        cmd = "%s --daemon -o[PollThread]forced_shutdown_timeout=300 -o[Configuration]ServerPort=%d -o[Configuration]ServerTimeout=%d -o[Configuration]gangadir=%s %s/server-script.py" % (self.gangacmd, self.port, self.timeout, self.gangadir,
-                                                                                                                                                                                           os.path.join(os.path.dirname( os.path.abspath( __file__ ) ), "../Server" ) )
+        if self.userscript:
+            cmd = "%s --daemon -o[PollThread]forced_shutdown_timeout=300 -o[Configuration]ServerPort=%d -o[Configuration]ServerTimeout=%d -o[Configuration]gangadir=%s -o[Configuration]ServerUserScript=%s -o[Configuration]ServerUserScriptWaitTime=%d %s/server-script.py" % (self.gangacmd, self.port, self.timeout, self.gangadir, 
+                                                                                                                                                                                                                                                                                 self.userscript, self.userscriptwaittime,
+                                                                                                                                                                                                                                                                                 os.path.join(os.path.dirname( os.path.abspath( __file__ ) ), "../Server" ) )
+        else:
+            cmd = "%s --daemon -o[PollThread]forced_shutdown_timeout=300 -o[Configuration]ServerPort=%d -o[Configuration]ServerTimeout=%d -o[Configuration]gangadir=%s %s/server-script.py" % (self.gangacmd, self.port, self.timeout, self.gangadir, 
+                                                                                                                                                                                               os.path.join(os.path.dirname( os.path.abspath( __file__ ) ), "../Server" ) )
+            
         if self.prerun != "":
             cmd = "%s && %s" % (self.prerun, cmd)
 
-        print "Starting server using command:\n%s" % cmd
+        print "\nSettings: "
+        print "  - port:               %d" % self.port
+        print "  - timeout:            %d" % self.timeout
+        print "  - gangadir:           %s" % self.gangadir
+        print "  - prerun:             %s" % self.prerun
+        print "  - gangacmd:           %s" % self.gangacmd
+        if self.userscript:
+            print "  - userscript:         %s" % self.userscript
+            print "  - userscriptwaittime: %d" % self.userscriptwaittime
+        else:
+            print "  - default user script specified from .gangarc"
+        
+        print "\nStarting server using command:\n%s" % cmd
         os.system(cmd)
         
         # wait for the server file to be created

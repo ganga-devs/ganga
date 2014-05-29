@@ -18,36 +18,37 @@ from Ganga.Core.exceptions                              import ApplicationConfig
 logger = getLogger()
 
 class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
-    gaudiSoftwareVersionsCache = None
-
-    def __check_versions_against_dirac(self, app):
-        ## cache versions dict
-        if not LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
-            result = execute('getSoftwareVersions()')
-            if not result_ok(result):
-                logger.error('Could not obtain available versions: %s' \
-                             % str(result))
-                logger.error('Version/platform will not be validated.')
-            else:
-                LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache = result['Value']
-
-        ## check version
-        if LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
-            if app.appname in LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
-                soft_info = LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache[app.appname]
-                if not app.version in soft_info:
-                    msg = 'Invalid version: %s.  Valid versions: %s' \
-                          % (app.version, str(soft_info.keys()))
-                    raise ApplicationConfigurationError(None,msg)
-                platforms = soft_info[app.version]
-                if not app.platform in platforms:
-                    msg = 'Invalid platform: %s. Valid platforms: %s' % \
-                          (app.platform,str(platforms))
-                    raise ApplicationConfigurationError(None,msg)
+## we dont do this anymore
+#    gaudiSoftwareVersionsCache = None
+#
+#    def __check_versions_against_dirac(self, app):
+#        ## cache versions dict
+#        if not LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
+#            result = execute('getSoftwareVersions()')
+#            if not result_ok(result):
+#                logger.error('Could not obtain available versions: %s' \
+#                             % str(result))
+#                logger.error('Version/platform will not be validated.')
+#            else:
+#                LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache = result['Value']
+#
+#        ## check version
+#        if LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
+#            if app.appname in LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
+#                soft_info = LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache[app.appname]
+#                if not app.version in soft_info:
+#                    msg = 'Invalid version: %s.  Valid versions: %s' \
+#                          % (app.version, str(soft_info.keys()))
+#                    raise ApplicationConfigurationError(None,msg)
+#                platforms = soft_info[app.version]
+#                if not app.platform in platforms:
+#                    msg = 'Invalid platform: %s. Valid platforms: %s' % \
+#                          (app.platform,str(platforms))
+#                    raise ApplicationConfigurationError(None,msg)
 
 
     def master_prepare(self,app,appmasterconfig):
-        self.__check_versions_against_dirac(app)
+        #self.__check_versions_against_dirac(app)
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig,['inputsandbox'])
 
         # add summary.xml
@@ -161,6 +162,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         SETTINGS             = diracAPI_script_settings(new_job.application),
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         PLATFORM             = app.platform,
+                                        REPLICATE            = getConfig('DIRAC')['ReplicateOutputData'],
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3

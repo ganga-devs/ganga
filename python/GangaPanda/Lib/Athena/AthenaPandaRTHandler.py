@@ -128,8 +128,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             logger.debug( configPanda['chirpconfig'] )
 
         # validate application
-        if not app.atlas_release and not job.backend.requirements.rootver:
-            raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
+        #if not app.atlas_release and not job.backend.requirements.rootver:
+        #    raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
         self.dbrelease = app.atlas_dbrelease
         if self.dbrelease != '' and self.dbrelease.find(':') == -1:
             raise ApplicationConfigurationError(None,"ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
@@ -393,10 +393,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
             if tmp_user_area_name:
                 inpw = os.path.dirname(tmp_user_area_name)
-                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen'))
+                self.inputsandbox = os.path.join(inpw, 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
             else:
                 inpw = job.getInputWorkspace()
-                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen'))
+                self.inputsandbox = inpw.getPath('sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null'))
 
             if tmp_user_area_name:
                 rc, output = commands.getstatusoutput('cp %s %s.gz' % (tmp_user_area_name, self.inputsandbox))
@@ -490,7 +490,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if job.backend.jobSpec.has_key('provenanceID'):
                     jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
                 
-                jspec.jobName           = commands.getoutput('uuidgen')
+                jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
                 
                 # release and setup depends on mana or not
                 if app.useMana:
@@ -544,6 +544,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     jspec.jobParameters += " --useMana "
                     if app.atlas_release != "":
                         jspec.jobParameters += "--manaVer %s " % app.atlas_release
+
+                if job.backend.requirements.transfertype != '':
+                    jspec.transferType = job.backend.requirements.transfertype
 
                 fout = FileSpec()
                 fout.lfn  = self.libraries[bjsite]
@@ -619,7 +622,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if job.backend.jobSpec.has_key('provenanceID'):
             jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
         
-        jspec.jobName           = commands.getoutput('uuidgen')
+        jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
 
         if app.useMana:
             jspec.cmtConfig         = AthenaUtils.getCmtConfig('', cmtConfig=app.atlas_cmtconfig)
@@ -638,6 +641,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             jspec.prodDBlock    = job.inputdata.dataset[0]
         else:
             jspec.prodDBlock    = 'NULL'
+
+        if job.backend.requirements.transfertype != '':
+            jspec.transferType = job.backend.requirements.transfertype
+
         jspec.destinationDBlock = job.outputdata.datasetname
         if Client.isDQ2free(job.backend.site):
             jspec.destinationSE = 'local'
@@ -750,7 +757,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     
 #       output files
         outMap = {}
-        AthenaUtils.convertConfToOutput(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile,masterjob.outputdata.datasetname)
+        AthenaUtils.convertConfToOutputOld(self.runConfig,jspec,outMap,job.backend.individualOutDS,self.extOutFile,masterjob.outputdata.datasetname)
         for file in jspec.Files:
             if file.type in ['output', 'log'] and configPanda['chirpconfig']:
                 file.dispatchDBlockToken = configPanda['chirpconfig']

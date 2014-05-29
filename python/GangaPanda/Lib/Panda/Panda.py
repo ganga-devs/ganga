@@ -29,6 +29,16 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 logger = getLogger()
 config = getConfig('Panda')
 
+try:
+    from pandatools import Client
+    if config['baseURL']:
+        Client.baseURL = config['baseURL']
+    if config['baseURLSSL']:
+        Client.baseURLSSL = config['baseURLSSL']
+except:
+    logger.error("Failed to correctly configure Client.baseURL or Client.baseURLSSL ")
+
+
 def setChirpVariables():
     """Helper function to fill chirp config variables"""
     configPanda = getConfig('Panda')
@@ -41,7 +51,7 @@ def setChirpVariables():
 
 pandaSpecTS = time.time()
 def refreshPandaSpecs():
-    from pandatools import Client
+    #from pandatools import Client
 
     global pandaSpecsTS
     try:
@@ -56,7 +66,7 @@ def refreshPandaSpecs():
         pandaSpecsTS = time.time()
 
 def convertQueueNameToDQ2Names(queue):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     sites = []
@@ -70,7 +80,7 @@ def convertQueueNameToDQ2Names(queue):
     return allowed_sites
 
 def queueToAllowedSites(queue):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     try:
@@ -124,7 +134,7 @@ def queueToAllowedSites(queue):
     return allowed_allowed_sites
 
 def runPandaBrokerage(job):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     tmpSites = []
@@ -236,7 +246,7 @@ def runPandaBrokerage(job):
 
 
 def selectPandaSite(job,sites):
-    from pandatools import Client
+    #from pandatools import Client
     refreshPandaSpecs()
 
     pandaSites = []
@@ -280,7 +290,7 @@ def selectPandaSite(job,sites):
     return out
 
 def uploadSources(path,sources):
-    from pandatools import Client
+    #from pandatools import Client
 
     logger.info('Uploading source tarball %s in %s to Panda...'%(sources,path))
     try:
@@ -302,7 +312,7 @@ def uploadSources(path,sources):
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
 def getLibFileSpecFromLibDS(libDS):
-    from pandatools import Client
+    #from pandatools import Client
     from taskbuffer.FileSpec import FileSpec
 
     # query files in lib dataset to reuse libraries
@@ -355,11 +365,36 @@ def getLibFileSpecFromLibDS(libDS):
         fileBO.scope = tmpScope
     return fileBO
 
+def checkMergeJobStatus(job, pandaJobDefId):
+    """check what state the merging jobs are in"""
+    ick       = False
+    status    = ''
+    num_mjobs = 0
+
+    (ec, info) = Client.checkMergeGenerationStatus(pandaJobDefId)
+
+    if ec == 0:
+
+        try:
+            status         = info['status']
+            mergeJobDefIds = info['mergeIDs']
+
+            ick = True
+
+        except Exception, e:
+            logger.error('general merge job information retrieval error')
+            raise e
+
+    else:
+        logger.error('checkMergeGenerationStatus returns non-zero exit code: %d' % ec)
+
+    return (ick, status)
+
 def retrieveMergeJobs(job, pandaJobDefId):
     '''
     methods for retrieving panda job ids of merging jobs given a jobDefId
     '''
-    from pandatools import Client
+    #from pandatools import Client
 
     ick       = False
     status    = ''
@@ -375,15 +410,12 @@ def retrieveMergeJobs(job, pandaJobDefId):
 
             if status == 'NA':
                 logger.warning('No merging jobs expected')
-                job.backend.mergejobs = []
 
             elif status == 'generating':
                 logger.debug('merging jobs are generating')
-                job.backend.mergejobs = []
 
             elif status == 'standby':
                 logger.debug('merging jobs to be created')
-                job.backend.mergejobs = []
 
             elif status == 'generated':
                 logger.debug('merging jobs are generated')
@@ -395,19 +427,19 @@ def retrieveMergeJobs(job, pandaJobDefId):
                     (ec2, mjs) = Client.getPandIDsWithJobID(id)
 
                     if ec2 == 0:
-
+                        
                         for jid,jinfo in mjs.items():
                             mjobj = PandaMergeJob()
                             mjobj.id     = jid
                             #mjobj.status = jinfo[0]
                             mjobj.url    = 'http://panda.cern.ch/?job=%d' % jid
 
-                            if mjobj not in job.backend.mergejobs:
+                            if mjobj.id not in [mj2.id for mj2 in job.backend.mergejobs]:
                                 job.backend.mergejobs.append(mjobj)
+                                job._commit()
+                                num_mjobs += 1
                             else:
                                 logger.debug("merging job %s already exists locally" % mjobj.id)
-
-                            num_mjobs += 1
                     else:
                         logger.warning("getPandIDsWithJobID returns non-zero exit code: %d" % ec2)
 
@@ -496,6 +528,7 @@ class Panda(IBackend):
         'individualOutDS': SimpleItem(defvalue=False,protected=0,copyable=1,doc='Create individual output dataset for each data-type. By default, all output files are added to one output dataset'),
         'bexec'         : SimpleItem(defvalue='',protected=0,copyable=1,doc='String for Executable make command - if filled triggers a build job for the Execuatble'),
         'nobuild'       : SimpleItem(defvalue=False,protected=0,copyable=1,doc='Boolean if no build job should be sent - use it together with Athena.athena_compile variable'),
+        'domergeretrieve' : SimpleItem(defvalue=True,protected=1,hidden=1,copyable=1,doc='Should merge jobs be retrieved'),
     })
 
     _category = 'backends'
@@ -508,7 +541,10 @@ class Panda(IBackend):
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
        
-        from pandatools import Client
+        logger.debug("Using Panda server baseURL=", Client.baseURL)
+        logger.debug("Using Panda server baseURLSSL=", Client.baseURLSSL)
+
+        #from pandatools import Client
         from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
@@ -690,7 +726,7 @@ class Panda(IBackend):
     def master_kill(self):
         '''Kill jobs'''  
 
-        from pandatools import Client
+        #from pandatools import Client
 
         job = self.getJobObject()
         logger.debug('Killing job %s' % job.getFQID('.'))
@@ -822,7 +858,7 @@ class Panda(IBackend):
 
     def rebroker(self, cloud=''):
         '''Rebroker failed subjobs'''
-        from pandatools import Client
+        #from pandatools import Client
         jobs = self._getParent()
 
         if self._getParent()._getParent(): # if has a parent then this is a subjob
@@ -871,7 +907,7 @@ class Panda(IBackend):
         
     def master_resubmit(self,jobs):
         '''Resubmit failed subjobs'''
-        from pandatools import Client
+        #from pandatools import Client
 
         if self._getParent()._getParent(): # if has a parent then this is a subjob
             raise BackendError('Panda','Resubmit on subjobs is not supported for Panda backend. \nUse j.resubmit() (i.e. resubmit the master job) and your failed subjobs \nwill be automatically selected and retried.')
@@ -1006,13 +1042,20 @@ class Panda(IBackend):
             job.backend.jobSpec = {}
             job.updateStatus('submitted')
 
+            
+
+        # mark merge job retrieval to be done for any new merges created
+        self.domergeretrieve = True
+        self.mergejobs = []
+        job._commit()
+        
         logger.info('Resubmission successful')
         return True
 
 
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
-        from pandatools import Client
+        #from pandatools import Client
 
         active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
@@ -1037,15 +1080,21 @@ class Panda(IBackend):
                 jobdict[job.backend.id] = job 
 
             for subjob in job.subjobs:
-                if subjob.backend.status in active_status:
+                if subjob.backend.status in active_status or subjob.status in ['running', 'submitted']:
                     jobdict[subjob.backend.id] = subjob
 
+            if job.status in ['running', 'submitted'] and job.backend.domergeretrieve:
+                job.backend.mergejobs = []
+                job._commit()
+                
         # split into 2000-job pieces
         allJobIDs = jobdict.keys()
         jIDPieces = [allJobIDs[i:i+2000] for i in range(0,len(allJobIDs),2000)]
 
         jlist_merge_finished = []
-
+        clear_merge_jobs = []
+        update_merge_master_status = []
+        
         for jIDs in jIDPieces:
             rc, jobsStatus = Client.getFullJobStatus(jIDs,False)
             if rc:
@@ -1078,17 +1127,26 @@ class Panda(IBackend):
                         #if job.backend.jobSpec['transExitCode'] != 'NULL':
                         job.backend.reason += 'transExitCode: %s'%job.backend.jobSpec['transExitCode']
 
-                        if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                    # can have odd race condition that updates panda info but NOT job status - force check every time
+                    if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
+                        if job.status != 'submitted':
                             job.updateStatus('submitted')
-                        elif status.jobStatus in ['starting','running','holding','transferring']:
+                    elif status.jobStatus in ['starting','running','holding','transferring']:
+                        if job.status != 'running':
                             job.updateStatus('running')
-                        elif status.jobStatus == 'finished':
+                    elif status.jobStatus == 'finished':
+                        if job.status != 'completed':
                             if not job.backend._name=='PandaBuildJob' and job.status != "completed":
                                 job.backend.fillOutputData(job, status)
                                 if config['enableDownloadLogs']:
                                     job.backend.getLogFiles(job.getOutputWorkspace().getPath(), status)
-                            job.updateStatus('completed')
-                        elif status.jobStatus == 'failed':
+
+                            if job.master and job.master.backend.requirements.enableMerge:
+                                job.updateStatus('completed', update_master = False)
+                            else:
+                                job.updateStatus('completed')
+                    elif status.jobStatus == 'failed':
+                        if job.status != 'failed':
                             # check for server side retry
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and job.backend.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                 # grab the new panda ID
@@ -1097,8 +1155,13 @@ class Panda(IBackend):
                                 job.backend.status = None
                                 job.backend.url = 'http://panda.cern.ch/?job=%d'%newPandaID
                             else:
-                                job.updateStatus('failed')
-                        elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
+                                if job.master and job.master.backend.requirements.enableMerge:
+                                    job.updateStatus('failed', update_master = False)
+                                else:
+                                    job.updateStatus('failed')
+                                    
+                    elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
+                        if job.status != 'killed':
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                 newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
                                 logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
@@ -1106,8 +1169,8 @@ class Panda(IBackend):
                                 job.backend.status = None
                             else:
                                 job.updateStatus('killed')
-                        else:
-                            logger.warning('Unexpected job status %s',status.jobStatus)
+                    else:
+                        logger.warning('Unexpected job status %s',status.jobStatus)
 
                 elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
                     if job.backend.buildjob.status != status.jobStatus:
@@ -1219,38 +1282,59 @@ class Panda(IBackend):
 
                     mj = job.backend.mergejobs[ job.backend.mergejobs.index( tmp_mj ) ]
 
-                    if not mj.jobSpec:
-                        mj.jobSpec = dict(zip(status._attributes,status.values()))
-                        for k in mj.jobSpec.keys():
-                            if type(mj.jobSpec[k]) not in [type(''),type(1)]:
-                                mj.jobSpec[k]=str(mj.jobSpec[k])
+                    # update job spec
+                    mj.jobSpec = dict(zip(status._attributes,status.values()))
+                    for k in mj.jobSpec.keys():
+                        if type(mj.jobSpec[k]) not in [type(''),type(1)]:
+                            mj.jobSpec[k]=str(mj.jobSpec[k])
 
                     if mj.status != status.jobStatus:
                         logger.debug('Mergejob %s has changed status from %s to %s',job.getFQID('.'), mj.status, status.jobStatus)
 
                         mj.status = status.jobStatus
 
-                        # update the status of the master job based on what all merge jobs are doing
-                        mjstats = [mj2.status for mj2 in job.backend.mergejobs]
+                    # check for Panda resubmission
+                    if mj.status == 'failed':
+                        if mj.jobSpec.has_key('taskBufferErrorDiag') and mj.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                            logger.info("Merge job failed for job %s. Panda has resubmitted" % job.fqid)
 
-                        merge_finished = True
-
-                        for s in mjstats:
-                            if s not in ['failed','finished','cancelled']:
-                                merge_finished = False
-
-                        if merge_finished:
-                            ## merge jobs finished, update the master job status respecting the status of subjobs
-                            job.updateMasterJobStatus()
-                            jlist_merge_finished.append(job)
-
-                        elif job.status != 'running':
-                            ## merge jobs are still running, master job status kept running
-                            job.updateStatus('running')
+                            # clear the merge jobs and force it to grab them again
+                            clear_merge_jobs.append(job)
+                        
+                    update_merge_master_status.append(job)
 
                 else:
                     logger.warning('Unexpected Panda ID %s',status.PandaID)
 
+        ## clear merge jobs as required
+        for j in clear_merge_jobs:
+            j.backend.mergejobs = []
+            j.backend.domergeretrieve = True
+            job._commit()
+
+        # update merge status's
+        for job in update_merge_master_status:
+
+            if job.backend.domergeretrieve:
+                continue
+            
+            mjstats = [mj2.status for mj2 in job.backend.mergejobs]
+
+            merge_finished = True
+
+            for s in mjstats:
+                if s not in ['failed','finished','cancelled']:
+                    merge_finished = False
+
+            if merge_finished:
+                ## merge jobs finished, update the master job status respecting the status of subjobs
+                job.updateMasterJobStatus()
+                jlist_merge_finished.append(job)
+
+            elif job.status != 'running':
+                ## merge jobs are still running, master job status kept running
+                job.updateStatus('running')
+                        
         ## going through all jobs to find those with merging jobs to be retrieved
         jlist_for_masterjob_update = []
         for job in jobs:
@@ -1258,8 +1342,9 @@ class Panda(IBackend):
             if job.backend.requirements.enableMerge:
 
                 ## check if there is a necessary to retrieve merging jobs
-                if not job.backend.mergejobs:
+                if job.backend.domergeretrieve:
 
+                    # check subjobs
                     do_merge_retrieve = True
 
                     for sj in job.subjobs:
@@ -1274,26 +1359,43 @@ class Panda(IBackend):
 
                         jdefids = list( set( [bj.backend.jobSpec['jobDefinitionID'] for bj in job.subjobs] ))
 
+                        # first check all merge jobs are generated
+                        retrieve_merge_jobs = True
                         do_master_update = False
                         for jdefid in jdefids:
-                            ick,status,num_mjobs = retrieveMergeJobs(job, jdefid)
-
-                            logger.debug('retrieveMergeJobs returns: %s %s' % (repr(ick),status))
-
+                            ick,status = checkMergeJobStatus(job, jdefid)
                             if not ick:
-                                logger.warning('merging job retrival failure')
+                                logger.warning('merging job check failure')
 
                             if status not in ['standby','generating','generated']:
                                 ## no merging jobs are expected in this case
                                 ## skip merging jobs checking by updating the master job status
                                 do_master_update = True
 
-                            tot_num_mjobs += num_mjobs
+                            if status != "generated":
+                                retrieve_merge_jobs = False
+
+                        if retrieve_merge_jobs:
+
+                            for jdefid in jdefids:
+
+                                ick,status,num_mjobs = retrieveMergeJobs(job, jdefid)
+
+                                logger.debug('retrieveMergeJobs returns: %s %s' % (repr(ick),status))
+
+                                if not ick:
+                                    logger.warning('merging job retrival failure')
+
+                                tot_num_mjobs += num_mjobs
 
                         ## for some reason, one should call job._commit() to store merging jobs into the repository
                         job._commit()
-                        
-                        logger.info('job %s retrieved %d merging jobs' % (job.getFQID('.'),tot_num_mjobs) )
+                                                
+                        # set the flag to prevent further retrievals unless a resub is called
+                        if tot_num_mjobs > 0:
+                            job.backend.domergeretrieve = False
+                            logger.info('job %s retrieved %d merging jobs' % (job.getFQID('.'),tot_num_mjobs) )
+
                         
                         if do_master_update:
                             jlist_for_masterjob_update.append(job)
@@ -1307,7 +1409,8 @@ class Panda(IBackend):
 
         ## doing master job status update only on those without merging jobs
         for job in jlist_for_masterjob_update:
-            if job.subjobs and job.status <> 'failed': job.updateMasterJobStatus()
+            if job.subjobs and job.status <> 'failed':
+                job.updateMasterJobStatus()
 
         ## ensure the master job status to be "running" if merging jobs are running or about to be generated
         ## (i.e. those jobs not included for master job status update
@@ -1322,7 +1425,7 @@ class Panda(IBackend):
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def list_sites(self):
-        from pandatools import Client
+        #from pandatools import Client
         refreshPandaSpecs()
 
         sites=Client.PandaSites.keys()
@@ -1332,7 +1435,7 @@ class Panda(IBackend):
         return spacetokens
 
     def list_ddm_sites(self,allowTape=False):
-        from pandatools import Client
+        #from pandatools import Client
         refreshPandaSpecs()
 
         spacetokens = []

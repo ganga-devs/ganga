@@ -253,10 +253,10 @@ def create_tarball( userarea, runDir, currentDir, archiveDir, extFile, excludeFi
     # use 'jobO' for libDS/noBuild
     # and 'sources' for build job
     if not compile_flag:
-        archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen')
+        archiveName     = 'jobO.%s.tar' % commands.getoutput('uuidgen 2> /dev/null')
         archiveFullName = "%s/%s" % (archiveDir,archiveName)
     else:
-        archiveName     = 'sources.%s.tar' % commands.getoutput('uuidgen')
+        archiveName     = 'sources.%s.tar' % commands.getoutput('uuidgen 2> /dev/null')
         archiveFullName = "%s/%s" % (archiveDir,archiveName)
 
     # collect files
@@ -370,7 +370,7 @@ class Athena(IPrepareApp):
                  'useRootCoreNoBuild'     : SimpleItem(defvalue = False, doc='Use RootCore with NoBuild'),
                  'useMana'            : SimpleItem(defvalue = False, doc='Use Mana'),
                  'useNoDebugLogs'         : SimpleItem(defvalue = False, doc='Use debug print-out in logfiles of Local/Batch/CREAM/LCG backend'),
-                 'useNewTRF'              : SimpleItem(defvalue = False, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
+                 'useNewTRF'              : SimpleItem(defvalue = True, doc='Use the original filename with the attempt number for input in --trf when there is only one input, which follows the globbing scheme of new transformation framework'),
                  'useNoAthenaSetup'       : SimpleItem(defvalue = False, doc='Use No Athena setup to allow e.g. free ROOT setup'),
                  })
                      
@@ -511,6 +511,11 @@ class Athena(IPrepareApp):
 
         if job.backend._name in [ 'Panda' ]:
             self.stats = job.backend.get_stats()
+            return
+
+        if job.backend._name in [ 'Jedi' ]:
+            if job.backend.pandajobs:
+                self.stats = [ pj.get_stats() for pj in job.backend.pandajobs ]
             return
 
         # Collect stats from LCG backend stats.pickle file
@@ -770,7 +775,7 @@ class Athena(IPrepareApp):
         from Ganga.GPIDev.Lib.Job import Job
         job = self.getJobObject()
         
-        if not job.backend._name in [ 'NG', 'Panda' ]:
+        if not job.backend._name in [ 'NG', 'Panda', 'Jedi' ]:
             if job.outputdata:
                 try:
                     job.outputdata.fill()
@@ -783,10 +788,10 @@ class Athena(IPrepareApp):
                     job.updateStatus('failed')
                 
         # collect athena job statistics
-        if self.collect_stats and job.backend._name in [ 'LCG', 'CREAM', 'NG', 'Panda', 'Local', 'SGE', 'LSF', 'PBS' ]:
+        if self.collect_stats and job.backend._name in [ 'LCG', 'CREAM', 'NG', 'Panda', 'Jedi', 'Local', 'SGE', 'LSF', 'PBS' ]:
             self.collectStats()
         # collect statistics for master job   
-        if not job.master and job.subjobs:
+        if not job.master and job.subjobs and not job.backend._name in [ 'Jedi' ]:
             numfiles = 0
             numfiles2 = 0
             numfiles3 = 0
@@ -1350,7 +1355,7 @@ class Athena(IPrepareApp):
                     cn = os.path.basename( os.path.expanduser( "~" ) )
                     tmp = os.path.realpath('/tmp/' + cn )
             
-                tmpDir = '%s/%s' % (tmp,commands.getoutput('uuidgen'))    
+                tmpDir = '%s/%s' % (tmp,commands.getoutput('uuidgen 2> /dev/null'))    
                 os.makedirs(tmpDir)
                 os.chdir(tmpDir)       
 
@@ -1449,6 +1454,11 @@ class Athena(IPrepareApp):
             #    raise ApplicationConfigurationError(None,"Cannot use dataset type '%s' with %s backend" % (job.outputdata._name, job.backend._name))
         elif (job.backend._name in ['SGE' ] and config['ENABLE_SGE_DQ2JOBSPLITTER']):
             if job.splitter and not job.splitter._name in ['DQ2JobSplitter', 'AthenaSplitterJob']:
+                raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
+
+        elif job.backend._name in [ 'Jedi']: 
+            # check splitter
+            if job.splitter and not job.splitter._name in [ 'GenericSplitter']:
                 raise ApplicationConfigurationError(None,"Cannot use splitter type '%s' with %s backend" % (job.splitter._name, job.backend._name) )
  
         else:

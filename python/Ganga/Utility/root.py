@@ -7,9 +7,10 @@
 from Ganga.Utility.Config import getConfig, ConfigError
 from commands import getstatusoutput    
 import Ganga.Utility.logging
+import os
 
 #
-#	MOVED to Ganga/Lib/Root/Root.py
+#       MOVED to Ganga/Lib/Root/Root.py
 #
 #config.setDefaultOptions({'location':'/afs/cern.ch/sw/lcg/external/root',
 #                          'version':'5.14.00d',
@@ -33,7 +34,9 @@ def getrootsys(version = None, arch = None):
         if configroot['path']!="":
             rootsys = configroot['path']+"/"
         else:
-            rootsys = configroot['location']+"/"+rootver+"/"+rootarch+"/root/"
+            rootsys = configroot['location']+"/"+rootver+"/"+rootarch
+            if os.path.exists( rootsys+"/root/" ):
+                rootsys = rootsys+"/root/"
     except ConfigError:
         pass
     logger.debug("ROOTSYS: %s", rootsys)

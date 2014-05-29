@@ -280,27 +280,6 @@ class Job(GangaObject):
                 assert(not s.state in self)
                 self[s.state] = s
     
-    from Ganga.Utility.Config import getConfig, ConfigError
-
-    backend_output_postprocess = {}
-                
-    keys = getConfig('Output').options.keys()
-    keys.remove('PostProcessLocationsFileName')      
-    keys.remove('ForbidLegacyInput')                   
-    keys.remove('ForbidLegacyOutput')                
-    keys.remove('AutoRemoveFilesWithJob')
-    keys.remove('AutoRemoveFileTypes')
-
-    for key in keys:
-        try:
-            for configEntry in getConfig('Output')[key]['backendPostprocess']:
-                if configEntry not in backend_output_postprocess.keys():
-                    backend_output_postprocess[configEntry] = {}
-
-                backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
-        except ConfigError:
-            pass
-
     status_graph = {'new' : Transitions(State('submitting','j.submit()',hook='monitorSubmitting_hook'),
                                         State('removed','j.remove()')),
                     'submitting' : Transitions(State('new','submission failed',hook='rollbackToNewState'),
@@ -346,7 +325,7 @@ class Job(GangaObject):
     transient_states = ['incomplete','removed','unknown']
     initial_states = ['new','incomplete','template']
 
-    def updateStatus(self,newstatus, transition_update = True):
+    def updateStatus(self,newstatus, transition_update = True, update_master = True):
         """ Move job to the new status. according to the state transition graph (Job.status_graph).
         If transition is allowed:
           - call the specific transition hook (if exists)
@@ -403,7 +382,7 @@ class Job(GangaObject):
             raise JobStatusError(x)
 
         logger.info('job %s status changed to "%s"',fqid,self.status)
-        if self.master is not None:
+        if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
     def transition_update(self,new_status):
@@ -418,6 +397,34 @@ class Job(GangaObject):
         if self.application:
             self.application.transition_update(new_status)
         return new_status
+
+    def getBackendOutputPostprocessDict(self):
+        """Return a 'live' version of the output post processing map.
+        Can't be done at load/global namespace because then user modules are ignored."""
+        
+        from Ganga.Utility.Config import getConfig, ConfigError
+        
+        backend_output_postprocess = {}
+                
+        keys = getConfig('Output').options.keys()
+        keys.remove('PostProcessLocationsFileName')      
+        keys.remove('ForbidLegacyInput')                   
+        keys.remove('ForbidLegacyOutput')                
+        keys.remove('AutoRemoveFilesWithJob')
+        keys.remove('AutoRemoveFileTypes')
+
+        for key in keys:
+            try:
+                for configEntry in getConfig('Output')[key]['backendPostprocess']:
+                    if configEntry not in backend_output_postprocess.keys():
+                        backend_output_postprocess[configEntry] = {}
+
+                    backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
+            except ConfigError:
+                pass
+
+        return backend_output_postprocess
+        
 
     def postprocessoutput(self, outputfiles, outputdir):        
         
@@ -440,9 +447,10 @@ class Job(GangaObject):
                     for currentFile in glob.glob(os.path.join(outputdir, outputfile.namePattern)):
                         os.system("gzip %s" % currentFile)
 
-            if self.backend_output_postprocess.has_key(backendClass):
-                if self.backend_output_postprocess[backendClass].has_key(outputfileClass):
-                    if self.backend_output_postprocess[backendClass][outputfileClass] == 'client':
+            backend_output_postprocess = self.getBackendOutputPostprocessDict()
+            if backend_output_postprocess.has_key(backendClass):
+                if backend_output_postprocess[backendClass].has_key(outputfileClass):
+                    if backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir,
                                                         outputfile.namePattern)):
@@ -450,7 +458,7 @@ class Job(GangaObject):
                                 os.remove(f)
                             except:
                                 logger.error('failed to remove temporary/intermediary file: %s'%f)
-                    elif self.backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
+                    elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':        
 
                         outputfile.setLocation()
 

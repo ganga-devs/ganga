@@ -1159,7 +1159,7 @@ sys.exit(0)
 
                 job = jobdict[id]
 
-                if job.backend.status != info['Current Status']:
+                if job.backend.status != info['Current Status'] and (not info.has_key('ExitCode') or (info.has_key('ExitCode') and info['ExitCode'].isdigit())):
 
                     if info.has_key('Worker Node'):
                         job.backend.workernode = info['Worker Node']
@@ -1199,7 +1199,7 @@ sys.exit(0)
 
                     if doStatusUpdate:
                         job.backend.status = info['Current Status']
-                        if info.has_key('ExitCode'):
+                        if info.has_key('ExitCode') and info['ExitCode'] != "W":
                             try:
                                 job.backend.exitcode_cream = int( info['ExitCode'] )
                             except:

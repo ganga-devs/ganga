@@ -30,7 +30,7 @@ config.addOption('location','/afs/cern.ch/sw/lcg/external/root','Location of ROO
 config.addOption('path','','Set to a specific ROOT version. Will override other options.')
 config.addOption('pythonhome','${location}/../Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion','',"Version number of python used for execution python ROOT script")
-config.addOption('version','5.18.00','Version of ROOT')
+config.addOption('version','5.34.10','Version of ROOT')
     
 import os
 from Ganga.Utility.files import expandfilename
@@ -445,6 +445,8 @@ allHandlers.add('Root','PBS', RootLocalRTHandler)
 allHandlers.add('Root','SGE', RootLocalRTHandler)
 allHandlers.add('Root','Condor', RootRTHandler)
 allHandlers.add('Root','LCG', RootLCGRTHandler)
+allHandlers.add('Root','CREAM', RootLCGRTHandler)
+allHandlers.add('Root','ARC', RootLCGRTHandler)
 allHandlers.add('Root','TestSubmitter', RootRTHandler)
 allHandlers.add('Root','Remote', RootLCGRTHandler)
 

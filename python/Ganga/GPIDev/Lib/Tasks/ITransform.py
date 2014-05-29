@@ -28,6 +28,9 @@ class ITransform(GangaObject):
         'units'          : ComponentItem('units',defvalue=[],sequence=1,copyable=1,doc='list of units'),
         'inputdata'      : ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False,doc='Input datasets to run over'),
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset template'),
+        'inputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
+        'outputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of \
+OutputFile objects to be copied to all jobs"),
         'metadata'       : ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
         'rebroker_on_job_fail'     : SimpleItem(defvalue=True, doc='Rebroker if too many minor resubs'),
         'abort_loop_on_submit'     : SimpleItem(defvalue=True, doc='Break out of the Task Loop after submissions'),
@@ -358,5 +361,83 @@ class ITransform(GangaObject):
       # create copies of the Copy Output DS and add Unit name to path
       self.units[unit_id].copy_output = self.unit_copy_output.clone()
       self.units[unit_id].copy_output.local_location = os.path.join( self.unit_copy_output.local_location, self.units[unit_id].name.replace(":", "_").replace(" ", "").replace(",","_") )
+    
+                    
+   def __setattr__(self, attr, value):
+
+      if attr == 'outputfiles':
+
+         if value != []:     
+            if self.outputdata is not None:
+               logger.error('ITransform.outputdata is set, you can\'t set ITransform.outputfiles')
+               return
+            elif self.outputsandbox != []:
+               logger.error('ITransform.outputsandbox is set, you can\'t set ITransform.outputfiles')
+               return      
                         
-      
+         #reduce duplicate values here, leave only duplicates for LCG, where we can have replicas    
+         uniqueValuesDict = []
+         uniqueValues = []
+        
+         for val in value:
+            key = '%s%s' % (val.__class__.__name__, val.namePattern)               
+            if key not in uniqueValuesDict:
+               uniqueValuesDict.append(key)
+               uniqueValues.append(val) 
+            elif val.__class__.__name__ == 'LCGSEFile':   
+               uniqueValues.append(val) 
+        
+         super(ITransform,self).__setattr__(attr, uniqueValues) 
+
+      elif attr == 'inputfiles':
+
+         if value != []:     
+            if self.inputsandbox != []:
+               logger.error('ITransform.inputsandbox is set, you can\'t set ITransform.inputfiles')
+               return      
+                                
+         super(ITransform,self).__setattr__(attr, value) 
+
+      elif attr == 'outputsandbox':
+
+         if value != []:     
+            
+            if getConfig('Output')['ForbidLegacyOutput']:
+               logger.error('Use of ITransform.outputsandbox is forbidden, please use ITransform.outputfiles')
+               return
+
+            if self.outputfiles != []:
+               logger.error('ITransform.outputfiles is set, you can\'t set ITransform.outputsandbox')
+               return
+
+         super(ITransform,self).__setattr__(attr, value)
+
+      elif attr == 'inputsandbox':
+
+         if value != []:     
+
+            if getConfig('Output')['ForbidLegacyInput']:
+               logger.error('Use of ITransform.inputsandbox is forbidden, please use ITransform.inputfiles')
+               return
+
+            if self.inputfiles != []:
+               logger.error('ITransform.inputfiles is set, you can\'t set ITransform.inputsandbox')
+               return
+                
+         super(ITransform,self).__setattr__(attr, value)
+
+      elif attr == 'outputdata':
+
+         if value != None:   
+
+            if getConfig('Output')['ForbidLegacyOutput']:
+               logger.error('Use of ITransform.outputdata is forbidden, please use ITransform.outputfiles')
+               return
+
+            if self.outputfiles != []:
+               logger.error('ITransform.outputfiles is set, you can\'t set ITransform.outputdata')
+               return
+         super(ITransform,self).__setattr__(attr, value)
+                
+      else:   
+         super(ITransform,self).__setattr__(attr, value)
