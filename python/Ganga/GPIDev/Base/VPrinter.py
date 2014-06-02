@@ -279,4 +279,46 @@ def full_print(obj, out = None):
     else:
         print >>out, str(obj),
 
+
+
+def summary_print(obj, out = None):
+    """Print the summary contents of a GPI object with abbreviation."""
+    import sys
+    if out == None:
+        out = sys.stdout
+        
+    from Ganga.GPIDev.Lib.GangaList import GangaList
+    if isType(obj,GangaList):
+        obj_len = len(obj)
+        if obj_len == 0:
+            print >>out, '[]',
+        else:
+            import StringIO
+            outString = '['
+            count = 0
+            for x in obj:
+                if isinstance(x, GangaObject):
+                    sio = StringIO.StringIO()
+                    x.printSummaryTree(0,0,'',out = sio)
+                    result = sio.getvalue()
+                    #remove trailing whitespace and newlines
+                    outString += result.rstrip()
+                else:
+                    result = str(x)
+                    #remove trailing whitespace and newlines
+                    outString += result.rstrip()
+                count += 1
+                if count != obj_len: outString += ', '
+            outString += ']'
+            print >>out, outString, 
+        return
+
+    if isProxy(obj):
+        import StringIO
+        sio = StringIO.StringIO()
+        runProxyMethod(obj,'printSummaryTree',0,0,'',sio)
+        print >>out, sio.getvalue(),
+    else:
+        print >>out, str(obj),
+
     
