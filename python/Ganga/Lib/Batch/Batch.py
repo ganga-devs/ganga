@@ -166,7 +166,11 @@ class Batch(IBackend):
             queue_option = queue_option + " " + self.extraopts
                 
         if jobnameopt and job.name != '':
-            queue_option = queue_option + " " + jobnameopt + " " + "'%s'"%(job.name) 
+            # PBS doesn't like names with spaces
+            tmp_name = job.name
+            if self._name == "PBS":
+                tmp_name = tmp_name.replace(" ", "_")
+            queue_option = queue_option + " " + jobnameopt + " " + "'%s'"%(tmp_name) 
         
         # bugfix #16646 
         if self.config['shared_python_executable']:
