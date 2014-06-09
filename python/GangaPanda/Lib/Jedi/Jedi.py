@@ -5,7 +5,7 @@
 ################################################################################
                                                                                                               
 
-import os, sys, time, commands, re, tempfile, exceptions, urllib
+import os, sys, time, commands, re, tempfile, exceptions, urllib, datetime
 import cPickle as pickle
 
 from Ganga.GPIDev.Base import GangaObject
@@ -366,7 +366,8 @@ class Jedi(IBackend):
         # Find jobs to be monitored
         jobdict = {}
         for job in jobs:
-            if job.backend.id and job.backend.status in active_status:
+            # add a delay as Panda can be a little slow in sorting out a new Task
+            if job.backend.id and job.backend.status in active_status and ( (datetime.datetime.utcnow() - job.time.timestamps["submitted"]).seconds > 120):
                 jobdict[job.backend.id] = job 
 
         logger.debug("jobdict = %s" %jobdict)
@@ -376,6 +377,7 @@ class Jedi(IBackend):
         pandaJobIDs = {}
         for jID in allJobIDs:
             status, jediTaskDict = Client.getJediTaskDetails({'jediTaskID': jID},False,True,verbose=False)
+
             if status != 0:
                 logger.error("Failed to get task details for %s" % jID)
                 #raise BackendError('Jedi','Return code %d retrieving job status information.' % status)
@@ -466,6 +468,12 @@ class Jedi(IBackend):
                                     pjob.status = None
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
+
+            # Fill the output data dataset list
+            if jediTaskDict.has_key('outDS') and jediTaskDict['outDS'] != '':
+                for ds in jediTaskDict['outDS'].split(','):
+                    if not ds in job.outputdata.datasetList:
+                        job.outputdata.datasetList.append(ds)
 
             # Jedi job status has changed
             if job.backend.status != jediTaskDict['status']:

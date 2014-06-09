@@ -726,8 +726,9 @@ class AthenaJediRTHandler(IRuntimeHandler):
                 'jobParameters':jobParameters,
                 }
 
-        if not app.atlas_exetype in ['PYARA','ROOT','EXE']:
-            taskParamMap['transPath'] = 'http://atlpan.web.cern.ch/atlpan/runAthena-00-00-12'
+        # Selected by Jedi
+        #if not app.atlas_exetype in ['PYARA','ROOT','EXE']:
+        #    taskParamMap['transPath'] = 'http://atlpan.web.cern.ch/atlpan/runAthena-00-00-12'
 
         logger.debug(taskParamMap)
 
