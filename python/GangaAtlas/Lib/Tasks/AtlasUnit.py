@@ -193,7 +193,12 @@ class AtlasUnit(IUnit):
       """Return a list of the output containers assocaited with this unit"""
       job = GPI.jobs(self.active_job_ids[0])
       cont_list = []
-      if job.backend.individualOutDS:
+      if job.backend._impl._name == "Jedi":
+         # Jedi jobs have their datasets stored in datasetList
+         for ds in job.outputdata.datasetList:
+            cont_list.append(ds)
+
+      elif job.backend.individualOutDS:
          # find all the individual out ds's
          for ds in job.subjobs(0).outputdata.output:
 
@@ -243,7 +248,7 @@ class AtlasUnit(IUnit):
             if j.backend.requirements.enableMerge:
                max_length -= 12
 
-            if j.backend.individualOutDS:
+            if j.backend.individualOutDS or j.backend._impl._name == "Jedi":
                max_length -= 8
             
          if j.outputdata.datasetname != "":
