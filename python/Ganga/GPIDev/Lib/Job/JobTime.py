@@ -103,7 +103,7 @@ class JobTime(GangaObject):
         backend_final = ['failed', 'completed']
         ganga_master = ['new', 'submitting', 'killed']
 
-        logger.debug("Job %d called timenow('%s')", j.id, status)
+        logger.debug("Job %s called timenow('%s')", j.id, status)
                 
         #standard method:
         if not j.subjobs: 
