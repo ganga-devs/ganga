@@ -6,7 +6,7 @@ ganga/doc                                                              Ganga-doc
 ganga/python/Ganga                                                     Ganga-Base-30-211
 
 #johannes/mark
-ganga/python/GangaAtlas                                                GangaAtlas-26-11
+ganga/python/GangaAtlas                                                GangaAtlas-26-12
 
 #alex/patrick/ulrik
 ganga/python/GangaDirac                                                GangaDirac-01-47
@@ -16,7 +16,7 @@ ganga/python/GangaGaudi                                                GangaGaud
 ganga/python/GangaLHCb                                                 GangaLHCb-24-63
 
 #johannes
-ganga/python/GangaPanda                                                GangaPanda-26-09
+ganga/python/GangaPanda                                                GangaPanda-26-10
 
 #ulrik
 ganga/python/GangaPlotter                                              GangaPlotter-21-2
