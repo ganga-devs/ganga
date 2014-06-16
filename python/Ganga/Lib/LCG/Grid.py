@@ -15,6 +15,7 @@ from Ganga.Utility.GridShell import getShell
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpFileIndex, GridftpSandboxCache
 
 from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.Root import randomString
 
 # global variables
 logger = getLogger()
@@ -1166,7 +1167,7 @@ class Grid(object):
     expandjdl=staticmethod(expandjdl)
     expandxrsl=staticmethod(expandxrsl)
 
-    def arc_submit(self, jdlpath, ce, verbose=False):
+    def arc_submit(self, jdlpath, ce, verbose):
         '''ARC CE direct job submission'''
 
         # use the CREAM UI check as it's the same
@@ -1177,7 +1178,10 @@ class Grid(object):
             logger.warning('No CREAM CE endpoint specified')
             return
 
-        cmd = 'arcsub'
+        tmpstr='/tmp/'+randomString()+'.arcsub.xml'
+        
+        cmd = 'arcsub -S org.nordugrid.gridftpjob -j '+tmpstr
+        #cmd = 'arcsub'
         exec_bin = True
 
         if verbose:
@@ -1193,11 +1197,16 @@ class Grid(object):
                                                   allowed_exit=[0,255],
                                                   timeout=self.config['SubmissionTimeout'])
 
-        if output: output = "%s" % output.strip()
+        if output: output = "%s" % output.strip()     
+        rc = self.shell.system('rm '+tmpstr)
 
         #Job submitted with jobid: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
         match = re.search('(gsiftp:\/\/\S+:2811\/jobs\/[0-9A-Za-z_\.\-]+)$',output)
 
+        #Job submitted with jobid: https://ce2.dur.scotgrid.ac.uk:8443/arex/......
+        if not match:
+            match = re.search('(https:\/\/\S+:8443\/arex\/[0-9A-Za-z_\.\-]+)$',output)
+            
         if match:
             logger.debug('job id: %s' % match.group(1))
             return match.group(1)
@@ -1205,7 +1214,7 @@ class Grid(object):
             logger.warning('Job submission failed.')
             return
 
-    def arc_status(self,jobids):
+    def arc_status(self,jobids,cedict):
         '''ARC CE job status query'''
         
         if not self.__cream_ui_check__():
@@ -1227,6 +1236,10 @@ class Grid(object):
                                         timeout=self.config['StatusPollingTimeout'])
         jobInfoDict = {}
 
+        if rc != 0:
+            logger.warning('No jobs: arcsync will be executed to update the job information')
+            self.__arc_sync__(cedict)
+
         if rc == 0 and output:
             jobInfoDict = self.__arc_parse_job_status__(output)
 
@@ -1237,6 +1250,10 @@ class Grid(object):
 
         #Job: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/FowMDmswEljnvnizHq7yZUKmABFKDmABFKDmxbGKDmABFKDmlw9pKo
         #State: Finished (FINISHED)
+        #Exit Code: 0
+
+        #Job: https://ce2.dur.scotgrid.ac.uk:8443/arex/jNxMDmXTj7jnVDJaVq17x81mABFKDmABFKDmhfRKDmjBFKDmLaCRVn
+        #State: Finished (terminal:client-stageout-possible)
         #Exit Code: 0
 
         jobInfoDict = {}        
@@ -1254,6 +1271,10 @@ class Grid(object):
                 # new job info block
                 jid = ln[ ln.find("gsiftp") :].strip()
                 jobInfoDict[jid] = {}
+            elif ln.find("Job:") != -1 and ln.find("https") != -1:
+                # new job info block
+                jid = ln[ ln.find("https") :].strip()
+                jobInfoDict[jid] = {}
 
             # get info
             if ln.find("State:") != -1:
@@ -1263,6 +1284,23 @@ class Grid(object):
                 jobInfoDict[jid]['Exit Code'] = ln[ ln.find("Exit Code:") + len("Exit Code:"): ].strip()
 
         return jobInfoDict
+
+    def __arc_sync__(self,cedict):
+        '''Collect jobs to jobs.xml'''
+        
+        cmd = 'arcsync -f -c '+' -c '.join(cedict)
+        
+        if not self.active:
+            logger.warning('LCG plugin is not active.')
+            return False
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
+            return False
+
+
+        logger.debug('sync ARC jobs lst with: %s' % cmd)
+
+        self.shell.system(cmd)
 
     def arc_get_output(self, jid, directory):
         '''ARC CE job output retrieval'''
@@ -1323,4 +1361,68 @@ class Grid(object):
         if rc == 0:
             return True
         else:
+            return False
+
+    def arc_cancel(self,jobid):
+        '''Cancel a job'''
+
+        cmd = 'arckill'
+        exec_bin = True
+
+        if not self.active:
+            logger.warning('LCG plugin is not active.')
+            return False
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
+            return False
+
+        cmd = '%s %s' % (cmd,str(jobid)[1:-1])
+
+        logger.debug('job cancel command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
+
+        if rc == 0:
+            # job cancelling succeeded, try to remove the glite command logfile if it exists
+            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)',output)
+            return True
+        else:
+            logger.warning( "Failed to cancel job %s.\n%s" % ( jobid, output ) )
+            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
+            return False
+
+
+    def arc_cancelMultiple(self, jobids):
+        '''Cancel multiple jobs in one LCG job cancellation call'''
+
+        # compose a temporary file with job ids in it
+        if not jobids: return True
+        
+        idsfile = tempfile.mktemp('.jids')
+        file(idsfile,'w').write('\n'.join(jobids)+'\n')
+
+        cmd = 'arckill'
+        exec_bin = True
+
+        if not self.active:
+            logger.warning('LCG plugin is not active.')
+            return False
+        if not self.credential.isValid('01:00'):
+            logger.warning('GRID proxy lifetime shorter than 1 hour')
+            return False
+
+        # compose the cancel command
+        cmd = '%s -i %s' % (cmd,idsfile)
+
+        logger.debug('job cancel command: %s' % cmd)
+
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),allowed_exit=[0,255])
+
+        if rc == 0:
+            # job cancelling succeeded, try to remove the glite command logfile if it exists
+            self.__clean_gridcmd_log__('(.*-job-cancel.*\.log)',output)
+            return True
+        else:
+            logger.warning( "Failed to cancel jobs.\n%s" % output )
+            self.__print_gridcmd_log__('(.*-job-cancel.*\.log)',output)
             return False
