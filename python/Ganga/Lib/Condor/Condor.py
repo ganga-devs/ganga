@@ -529,7 +529,7 @@ class Condor( IBackend ):
                 if exitCode.isdigit():
                   jobStatus = "completed"
                 else:
-                  logger.error( "Problem extracting exit code from job %s" %  jobDict[ id ].fqid )
+                  logger.error( "Problem extracting exit code from job %s. Line found was '%s'." %  (jobDict[ id ].fqid, exitLine))
 
 
               jobDict[ id ].updateStatus( jobStatus )
