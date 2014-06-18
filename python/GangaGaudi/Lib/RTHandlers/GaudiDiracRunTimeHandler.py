@@ -54,7 +54,7 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
                                         PARAMETRIC_INPUTDATA = parametricinput_data,
                                         OUTPUT_SANDBOX       = outputsandbox,
                                         OUTPUTDATA           = list(outputfiles),
-                                        OUTPUT_PATH          = job.fqid,
+                                        OUTPUT_PATH          = "", # job.fqid,
                                         OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS             = diracAPI_script_settings(app),
                                         DIRAC_OPTS           = job.backend.diracOpts,
