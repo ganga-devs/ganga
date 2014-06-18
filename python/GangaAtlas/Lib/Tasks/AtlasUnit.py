@@ -335,12 +335,9 @@ class AtlasUnit(IUnit):
 
       super(AtlasUnit,self).reset()
 
-   def updateStatus(self, status):
-      """Update status hook"""
-
-      # register the dataset if applicable
-      if status == "completed":
-         job = GPI.jobs(self.active_job_ids[0])
+   def checkCompleted(self, job):
+      """Check if this unit is complete"""
+      if job.status == "completed":
          if job.outputdata and job.outputdata._impl._name == "DQ2OutputDataset":
 
             # make sure all datasets are complete
@@ -354,17 +351,26 @@ class AtlasUnit(IUnit):
                      # merge jobs failed - reset the unit for the moment
                      logger.error("Merge jobs failed. Resetting unit...")
                      self._getParent().resetUnit(self.getID())
-                     return
+                     return False
 
                dq2_list = dq2.listFilesInDataset(job.outputdata.datasetname)
                for guid in dq2_list[0].keys():                  
                   if dq2_list[0][guid]['lfn'].find("merge") == -1:
                      logger.warning("Merged files not transferred to out DS by Panda yet. Waiting...")
-                     return
+                     return False
 
-            if not self.registerDataset():
-               return
+         return True
+      else:
+         return False
 
+   def updateStatus(self, status):
+      """Update status hook"""
+
+      # register the dataset if applicable
+      if status == "completed":
+         if not self.registerDataset():
+            return
+         
       super(AtlasUnit,self).updateStatus(status)
 
    def checkForSubmission(self):
