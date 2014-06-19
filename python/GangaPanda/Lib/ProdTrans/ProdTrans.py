@@ -31,7 +31,7 @@ class ProdTrans(IApplication):
                                          doc='Generate output file names with random suffix'),
             'max_events': SimpleItem(defvalue=0,
                                      docs='Max events'),
-            'output_type': SimpleItem(defvalue=['NTUP_TOP'], typelist=['str'],sequence=1, strict_sequence=0,
+            'output_type': SimpleItem(defvalue='NTUP_TOP',
                                       doc='Type of the output file'),
             'input_type': SimpleItem(defvalue='',
                                      doc='Type of the input file'),
