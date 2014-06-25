@@ -5,7 +5,7 @@
 ################################################################################
                                                                                                               
 
-import os, sys, time, commands, re, tempfile, exceptions, urllib
+import os, sys, time, commands, re, tempfile, exceptions, urllib, fnmatch
 import cPickle as pickle
 
 from Ganga.GPIDev.Base import GangaObject
@@ -251,13 +251,36 @@ def selectPandaSite(job,sites):
 
     pandaSites = []
     if job.backend.site == 'AUTO':
-        pandaSites = [Client.convertDQ2toPandaID(x) for x in sites.split(':')]
+        
+        # exclude any DDM sites
+        ddmSites =  [ x for x in sites.split(':') ]
+        for s in job.backend.requirements.excluded_sites:
+            if s in ddmSites:
+                ddmSites.remove(s)
 
-        # ensure these aren't excluded
+            if s.find("*") != -1:
+                rem_sites = []
+                for s2 in ddmSites:
+                    if fnmatch.fnmatch(s2, s):
+                        rem_sites.append(s2)
+
+                for s2 in rem_sites:
+                    ddmSites.remove(s2)
+        pandaSites = [Client.convertDQ2toPandaID(x) for x in ddmSites]
+
+        # exclude any Panda sites
         for s in job.backend.requirements.excluded_sites:
             if s in pandaSites:
                 pandaSites.remove(s)
-                                        
+
+            if s.find("*") != -1:
+                rem_sites = []
+                for s2 in pandaSites:
+                    if fnmatch.fnmatch(s2, s):
+                        rem_sites.append(s2)
+
+                for s2 in rem_sites:
+                    pandaSites.remove(s2)
     else:
         return job.backend.site
     tag = ''
