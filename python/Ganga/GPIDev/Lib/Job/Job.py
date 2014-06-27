@@ -607,14 +607,29 @@ class Job(GangaObject):
         """
 
         import Ganga.Core.Sandbox as Sandbox
+
         name = '_input_sandbox_'+self.getFQID('_')+'%s.tgz'
+
         if master:
+            if self.master is not None:
+                name = '_input_sandbox_'+self.master.getFQID('_')+'%s.tgz'
             name = name % "_master"
         else:
             name = name % ""
+
         files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]
         if not files:
             return []
+
+        # if the the master job of this subjob exists and the master sandbox is requested
+        # the master sandbox has already been created so just look for it
+        # else if it has not been prepared we need to construct it as usual
+        if self.master:
+            if self.master.application.is_prepared is True:
+                return [ self.master.getInputWorkspace().getPath(name) ]
+            else:
+                return Sandbox.createPackedInputSandbox(files,self.master.getInputWorkspace(),name)
+
         return Sandbox.createPackedInputSandbox(files,self.getInputWorkspace(),name)
 
     def createInputSandbox(self, files, master=False):
@@ -624,7 +639,11 @@ class Job(GangaObject):
 
         import Ganga.Core.Sandbox as Sandbox
         files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]    
-        return Sandbox.createInputSandbox(files,self.getInputWorkspace())
+
+        if self.master is not None and master :
+            return Sandbox.createInputSandbox(files,self.master.getInputWorkspace())
+        else:
+            return Sandbox.createInputSandbox(files,self.getInputWorkspace())
 
     def getStringFQID(self):
         return self.getFQID('.')
@@ -907,6 +926,7 @@ class Job(GangaObject):
             raise JobError(msg)
 
         try:
+
             logger.info("submitting job %d",self.id)
             # prevent other sessions from submitting this job concurrently. Also calls _getWriteAccess
             self.updateStatus('submitting')
@@ -938,65 +958,82 @@ class Job(GangaObject):
                         self.unprepare()
                         raise JobError(msg)
 
+            ### Splitting
 
-
-            appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
             # split into subjobs
-#            try:
-            if 1:
-                if self.splitter:
-                    subjobs = self.splitter.validatedSplit(self)
-                    if subjobs:
-                        #print "*"*80
-                        #import sys
-                        #subjobs[0].printTree(sys.stdout)
+            if self.splitter:
+                subjobs = self.splitter.validatedSplit(self)
+                if subjobs:
+                    #print "*"*80
+                    #import sys
+                    #subjobs[0].printTree(sys.stdout)
 
-                        # EBKE changes
-                        i = 0
-                        # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
-                        #self.subjobs = subjobs
-                        #for j in self.subjobs:
-                        for j in subjobs:
-                            j.info.uuid = Ganga.Utility.guid.uuid()
-                            j.status='new'
-                            j.time.timenow('new')
-                            j.id = i
-                            i += 1
-                            self.subjobs.append(j)
+                    # EBKE changes
+                    i = 0
+                    # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
+                    #self.subjobs = subjobs
+                    #for j in self.subjobs:
+                    for j in subjobs:
+                        j.info.uuid = Ganga.Utility.guid.uuid()
+                        j.status='new'
+                        j.time.timenow('new')
+                        j.id = i
+                        i += 1
+                        self.subjobs.append(j)
 
-                        for j in self.subjobs:
-                            cfg = Ganga.Utility.Config.getConfig('Configuration')
-                            if cfg['autoGenerateJobWorkspace']:
-                                j._init_workspace()
+                    for j in self.subjobs:
+                        cfg = Ganga.Utility.Config.getConfig('Configuration')
+                        if cfg['autoGenerateJobWorkspace']:
+                            j._init_workspace()
 
-                        rjobs = self.subjobs
-                        logger.info('submitting %d subjobs', len(rjobs))
-                        self._commit()
-                    else:
-                        rjobs = [self]
+                    rjobs = self.subjobs
+                    logger.info('submitting %d subjobs', len(rjobs))
+                    self._commit()
                 else:
                     rjobs = [self]
+            else:
+                rjobs = [self]
 
+            ### Output Files
+
+            # validate the output files
             (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-        
+
             if not validOutputFiles:
                 raise JobError(errorMsg)
+
+            ###  App Configuration
+
+            if self.master is None:
+                appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
+            else:
+                appmasterconfig = self.master.application.master_configure()[1] # FIXME: obsoleted "modified" flag
 
             # configure the application of each subjob
             appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
             appconfig = (appmasterconfig,appsubconfig)
-            
-            # prepare the master job with the runtime handler
-            jobmasterconfig = rtHandler.master_prepare(self.application,appmasterconfig)
+
+            ### Job Configuration
+
+            # prepare the master job with the correct runtime handler
+            if self.master is None:
+                jobmasterconfig = rtHandler.master_prepare(self.application,appmasterconfig)
+            else:
+                # this is likely overkill but the masterRTHandler is the most correct thing to do
+                masterRTHandler = allHandlers.get(self.master.application._name,self.master.backend._name)()
+                jobmasterconfig = masterRTHandler.master_prepare(self.master.application,appmasterconfig)
 
             # prepare the subjobs with the runtime handler
             jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
 
+            ### Submission
+
             # notify monitoring-services
-            self.monitorPrepare_hook(jobsubconfig) 
+            self.monitorPrepare_hook(jobsubconfig)
 
             # submit the job
             try:
+
                 if supports_keep_going:
                     r = self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig,keep_going)
                 else:
@@ -1031,6 +1068,7 @@ class Job(GangaObject):
                 ganga_job_submitted(self.application.__class__.__name__, self.backend.__class__.__name__, "0", "1", str(submitted_count))           
 
             return 1
+
         except Exception,x:
             if isinstance(x,GangaException):
                 log_user_exception(logger,debug = True)
@@ -1045,7 +1083,6 @@ class Job(GangaObject):
                 logger.error('%s ... reverting job %s to the new status', str(x), self.getFQID('.') )
                 self.updateStatus('new')
                 raise JobError(x)
-
 
     def rollbackToNewState(self):
         ''' 

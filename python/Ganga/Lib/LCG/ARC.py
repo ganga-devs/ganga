@@ -265,17 +265,19 @@ class ARC(IBackend):
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
-            def __init__(self, gridObj, masterInputWorkspace, ce):
+            def __init__(self, gridObj, masterInputWorkspace, ce, arcverbose):
                 Algorithm.__init__(self)
                 self.inpw    = masterInputWorkspace
                 self.gridObj = gridObj
                 self.ce      = ce
+                self.arcverbose = arcverbose
 
             def process(self, jdl_info):
                 my_sj_id  = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
-                my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce, self.verbose)
+                #my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce, self.verbose)
+                my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce, self.arcverbose)
 
                 if not my_sj_jid:
                     return False
@@ -287,7 +289,7 @@ class ARC(IBackend):
         for id, jdl in node_jdls.items():
             mt_data.append( (id, jdl) )
             
-        myAlg  = MyAlgorithm(gridObj=grids['GLITE'],masterInputWorkspace=job.getInputWorkspace(), ce=self.CE)
+        myAlg  = MyAlgorithm(gridObj=grids['GLITE'],masterInputWorkspace=job.getInputWorkspace(), ce=self.CE, arcverbose=self.verbose)
         myData = Data(collection=mt_data)
 
         runner = MTRunner(name='arc_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
@@ -297,7 +299,7 @@ class ARC(IBackend):
         if len(runner.getDoneList()) < len(mt_data):
             ## not all bulk jobs are successfully submitted. canceling the submitted jobs on WMS immediately
             logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            grids['GLITE'].cancelMultiple( runner.getResults().values() )
+            grids['GLITE'].arc_cancelMultiple( runner.getResults().values() )
             return None
         else:
             return runner.getResults()
@@ -852,7 +854,7 @@ sys.exit(0)
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return grids['GLITE'].arc_cancelMultiple([self.id])
+        return grids['GLITE'].arc_cancel([self.id])
 
     def master_kill(self):
         '''kill the master job to the grid'''
@@ -1109,15 +1111,17 @@ sys.exit(0)
 
         import datetime
 
+        backenddict = {}
         jobdict = {}
         for j in jobs:            
             if j.backend.id and ( (datetime.datetime.utcnow() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
                 jobdict[ j.backend.id ] = j
+                backenddict[ j.backend.actualCE ] = j
 
         if len(jobdict.keys()) == 0:
             return
 
-        jobInfoDict = grids['GLITE'].arc_status(jobdict.keys())
+        jobInfoDict = grids['GLITE'].arc_status(jobdict.keys(),backenddict.keys())
         jidListForPurge = []
 
         ## update job information for those available in jobInfoDict

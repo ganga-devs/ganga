@@ -76,7 +76,7 @@ class DiracFile(IGangaFile):
     def _attribute_filter__set__(self,name, value):
         if name == 'lfn':
             self.namePattern = os.path.basename(value)
-        if name == 'localDir':
+        if name == 'localDir' and type(value) != type(None):
             return expandfilename(value)
         return value
 

@@ -1,7 +1,7 @@
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import addProxy,isType,getProxyAttr,stripProxy, TypeMismatchError
-from Ganga.GPIDev.Base.VPrinter import full_print
+from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem,Schema,SimpleItem,Version
 from Ganga.Utility.Plugin.GangaPlugin import allPlugins
 from Ganga.Utility.util import containsGangaObjects,isNestedList
@@ -418,7 +418,7 @@ class GangaList(GangaObject):
         if parent is None:
             full_print(self,out)
             return
-        
+
         if schema_entry:
             self_len = len(self)
             print_summary = schema_entry['summary_print']
@@ -434,7 +434,7 @@ class GangaList(GangaObject):
                 print >>out, decorateListEntries(self_len, type(self[0]).__name__),
                 return
             else:
-                full_print(self,out)
+                summary_print(self,out)
                 return
 
         print >>out, str(self._list),

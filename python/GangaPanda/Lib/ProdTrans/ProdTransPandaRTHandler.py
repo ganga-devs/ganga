@@ -137,27 +137,38 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         jspec.jobParameters = app.job_parameters
 
         if self.dbrelease:
-            jspec.jobParameters += ' DBRelease=DBRelease-%s.tar.gz' % (self.dbrelease,)
-            dbspec = FileSpec()
-            dbspec.lfn = 'DBRelease-%s.tar.gz' % self.dbrelease
-            dbspec.dataset = self.dbrelease_dataset
-            dbspec.prodDBlock = jspec.prodDBlock
-            dbspec.type = 'input'
-            jspec.addFile(dbspec)
+            if self.dbrelease == 'current':
+                jspec.jobParameters += ' --DBRelease=current' 
+            else:
+                if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+                    jspec.jobParameters += ' --DBRelease=DBRelease-%s.tar.gz' % (self.dbrelease,)
+                else:
+                    jspec.jobParameters += ' DBRelease=DBRelease-%s.tar.gz' % (self.dbrelease,)
+                dbspec = FileSpec()
+                dbspec.lfn = 'DBRelease-%s.tar.gz' % self.dbrelease
+                dbspec.dataset = self.dbrelease_dataset
+                dbspec.prodDBlock = jspec.prodDBlock
+                dbspec.type = 'input'
+                jspec.addFile(dbspec)
 
         if job.inputdata:
             m = re.search('(.*)\.(.*)\.(.*)\.(.*)\.(.*)\.(.*)',
                           job.inputdata.dataset[0])
             if not m:
-                raise ApplicationConfigurationError(None, "Error retrieving run number from dataset name")
-            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-                jspec.jobParameters += ' --runNumber %d' % int(m.group(2))
+                logger.error("Error retrieving run number from dataset name")
+                #raise ApplicationConfigurationError(None, "Error retrieving run number from dataset name")
+                runnumber = 105200
             else:
-                jspec.jobParameters += ' RunNumber=%d' % int(m.group(2))
+                runnumber = int(m.group(2))
+            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --runNumber %d' % runnumber
+            else:
+                jspec.jobParameters += ' RunNumber=%d' % runnumber
         
         # Output files.
         randomized_lfns = []
-        for lfn in app.output_files:
+        ilfn = 0
+        for lfn, lfntype in zip(app.output_files,app.output_type):
             ofspec = FileSpec()
             if app.randomize_lfns:
                 randomized_lfn = lfn + ('.%s.%d.%s' % (job.backend.site, int(time.time()), commands.getoutput('uuidgen 2> /dev/null')[:4] ) )
@@ -170,10 +181,11 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
             ofspec.dataset = jspec.destinationDBlock
             ofspec.type = 'output'
             jspec.addFile(ofspec)
-        if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
-            jspec.jobParameters += ' --output%sFile %s' % (app.output_type, ','.join(randomized_lfns))
-        else:
-            jspec.jobParameters += ' output%sFile=%s' % (app.output_type, ','.join(randomized_lfns))
+            if jspec.transformation.endswith("_tf.py") or jspec.transformation.endswith("_tf"):
+                jspec.jobParameters += ' --output%sFile %s' % (lfntype, randomized_lfns[ilfn])
+            else:
+                jspec.jobParameters += ' output%sFile=%s' % (lfntype, randomized_lfns[ilfn])
+            ilfn=ilfn+1
 
         # Input files.
         if job.inputdata:

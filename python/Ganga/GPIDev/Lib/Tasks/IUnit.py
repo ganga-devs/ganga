@@ -143,7 +143,8 @@ class IUnit(GangaObject):
 
          # create job and submit
          j = self.createNewJob()
-         j.name = "T%i:%i U%i" % (task.id, trf.getID(), self.getID())
+         if j.name == '':
+            j.name = "T%i:%i U%i" % (task.id, trf.getID(), self.getID())
 
          try:
             j.submit()
