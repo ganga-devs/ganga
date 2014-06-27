@@ -25,31 +25,35 @@ from Ganga.Utility.Config import getConfig, ConfigError
 
 import fnmatch 
 
-outputfilesConfig = {}
+def decodeExtensionKeys():
 
-keys = getConfig('Output').options.keys()
-keys.remove('PostProcessLocationsFileName')
-keys.remove('ForbidLegacyInput')                     
-keys.remove('ForbidLegacyOutput')                     
-keys.remove('AutoRemoveFilesWithJob')
-keys.remove('AutoRemoveFileTypes')
+    outputfilesConfig = {}
+    keys = getConfig('Output').options.keys()
+    keys.remove('PostProcessLocationsFileName')
+    keys.remove('ForbidLegacyInput')                     
+    keys.remove('ForbidLegacyOutput')                     
+    keys.remove('AutoRemoveFilesWithJob')
+    keys.remove('AutoRemoveFileTypes')
 
-for key in keys:
-    try:
-        outputFilePatterns = []
+    for key in keys:
+        try:
+            outputFilePatterns = []
 
-        for configEntry in getConfig('Output')[key]['fileExtensions']:
-            outputFilePatterns.append(configEntry)
-                
-        outputfilesConfig[key] = outputFilePatterns
+            for configEntry in getConfig('Output')[key]['fileExtensions']:
+                outputFilePatterns.append(configEntry)
 
-    except ConfigError:
-        pass    
+            outputfilesConfig[key] = outputFilePatterns
+
+        except ConfigError:
+            pass    
+
+    return outputfilesConfig
 
 def findOutputFileTypeByFileName(filename):      
 
     matchKeys = []
 
+    outputfilesConfig = decodeExtensionKeys()
     for key in outputfilesConfig.keys():
         for filePattern in outputfilesConfig[key]:
             if fnmatch.fnmatch(filename, filePattern):
