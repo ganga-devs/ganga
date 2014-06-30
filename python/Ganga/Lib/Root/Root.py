@@ -30,7 +30,7 @@ config.addOption('location','/afs/cern.ch/sw/lcg/external/root','Location of ROO
 config.addOption('path','','Set to a specific ROOT version. Will override other options.')
 config.addOption('pythonhome','${location}/../Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion','',"Version number of python used for execution python ROOT script")
-config.addOption('version','5.34.10','Version of ROOT')
+config.addOption('version','5.34.18','Version of ROOT')
     
 import os
 from Ganga.Utility.files import expandfilename
@@ -61,7 +61,7 @@ class Root(IPrepareApp):
     and 10, you would do the following:
 
     r = Root()
-    r.version = '5.14.00b'
+    r.version = '5.34.18'
     r.script = '~/abc/analysis.C'
     r.args = ['Minbias', 10]
 
@@ -307,6 +307,8 @@ class RootRTHandler(IRuntimeHandler):
             except ConfigError, e:
                 logger.debug('There was a problem trying to get [ROOT]pythonversion: %s.', e)
 
+            logger.debug( 'Found version of python: %s', str(python_version) )
+
             #now try grepping files
             if not python_version:    
                 python_version = findPythonVersion(rootsys)
@@ -331,7 +333,8 @@ class RootRTHandler(IRuntimeHandler):
                 import os.path
                 if not os.path.exists(python_bin) or not os.path.exists(python_lib):
                     logger.error('The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
-            
+                    logger.error('PYTHONPATH is: ' + str( os.path ) )            
+
                 setEnvironment('LD_LIBRARY_PATH',python_lib,update=True,environment=rootenv)
                 setEnvironment('PYTHONHOME',python_home,update=False,environment=rootenv)
                 setEnvironment('PYTHONPATH',python_lib,update=True,environment=rootenv)

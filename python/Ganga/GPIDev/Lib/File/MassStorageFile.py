@@ -380,7 +380,7 @@ class MassStorageFile(IGangaFile):
             if outputFile.outputfilenameformat != None and outputFile.outputfilenameformat != '':
                 outputfilenameformat = outputFile.outputfilenameformat
 
-            massStorageCommands.append('massstorage %s %s %s %s %s %s' % (outputFile.namePattern , outputfilenameformat, massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path'])) 
+            massStorageCommands.append(['massstorage',outputFile.namePattern , outputfilenameformat, massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
                 
         script = """\n
@@ -401,8 +401,7 @@ class MassStorageFile(IGangaFile):
 
 ###INDENT###    return (exitcode, mystdout, mystderr)
         
-###INDENT###for massStorageLine in ###MASSSTORAGECOMMANDS###:
-###INDENT###    massStorageList = massStorageLine.split(' ')
+###INDENT###for massStorageList in ###MASSSTORAGECOMMANDS###:
 
 ###INDENT###    filenameWildChar = massStorageList[1]
 ###INDENT###    outputfilenameformat = massStorageList[2]
@@ -483,7 +482,7 @@ class MassStorageFile(IGangaFile):
 ###INDENT###            os.system('rm %s' % currentFile)
 """
 
-        script = script.replace('###MASSSTORAGECOMMANDS###', str(massStorageCommands))
+        script = script.replace('###MASSSTORAGECOMMANDS###', repr(massStorageCommands))
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
         script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)

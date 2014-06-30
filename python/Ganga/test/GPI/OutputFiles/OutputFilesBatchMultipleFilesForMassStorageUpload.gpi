@@ -2,8 +2,7 @@ from GangaTest.Framework.utils import sleep_until_completed
 import os
 
 dictConfig = config.Output.MassStorageFile
-dictConfig['uploadOptions']['path'] = dictConfig['uploadOptions']['path'].replace('$user', '%s/%s' % (os.environ['USER'][0], os.environ['USER']))
-
+dictConfig['fileExtensions']= '*.root'
 config.Output.MassStorageFile = dictConfig
 
 j = Job(application=Root(),backend=LSF())

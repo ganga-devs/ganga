@@ -611,17 +611,26 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         outputconfig.addOption('DiracFile',{'fileExtensions':['*.dst'], 'backendPostprocess':{'Dirac':'WN', 'LSF':'WN', 'LCG':'WN', 'CREAM':'WN', 'ARC':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
         outputconfig.addOption('GoogleFile',{'fileExtensions':[], 'backendPostprocess':{'Dirac':'client', 'LSF':'client', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'client', 'Interactive':'client'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
 
+        import pwd,grp
+        groupid=grp.getgrgid(pwd.getpwnam('uegede').pw_gid).gr_name
+        groupnames={'z5':'lhcb','zp':'atlas','zh':'cms','vl':'na62'}
+        groupname='undefined'
+        try:
+            groupname = groupnames[groupid]
+        except:
+            pass
         massStoragePath = ''
         try:
-            massStoragePath = os.path.join(os.environ['CASTOR_HOME'], 'ganga')
+            massStoragePath = os.path.join(os.environ['EOS_HOME'], 'ganga')
         except: 
             from Ganga.Utility.Config import getConfig
             user = getConfig('Configuration')['user']   
-            massStoragePath = "/castor/cern.ch/user/%s/%s/ganga" % (user[0], user)      
+            massStoragePath = "/eos/%s/user/%s/%s/ganga" % (groupname,user[0], user)      
 
-        massStorageUploadOptions = {'mkdir_cmd':'nsmkdir', 'cp_cmd':'rfcp', 'ls_cmd':'nsls', 'path':massStoragePath}
+        prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname
+        massStorageUploadOptions = {'mkdir_cmd':prefix+'mkdir', 'cp_cmd':prefix+'cp', 'ls_cmd':prefix+'ls', 'path':massStoragePath}
 
-        outputconfig.addOption('MassStorageFile', {'fileExtensions':['*.dummy'], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
+        outputconfig.addOption('MassStorageFile', {'fileExtensions':[''], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'WN', 'Interactive':'client', 'Dirac':'client'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
 
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B

@@ -460,8 +460,9 @@ except ImportError,x:
     sys.path.insert(0,###SUBPROCESS_PYTHONPATH###)
     import subprocess
 
+fullenvironment = os.environ.copy()
 for key,value in environment.iteritems():
-    os.environ[key] = value
+    fullenvironment[key] = value
 
 sysout2 = os.dup(sys.stdout.fileno())
 syserr2 = os.dup(sys.stderr.fileno())
@@ -483,7 +484,7 @@ result = 255
 
 
 try:
-  child = subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2)
+  child = subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2, env=fullenvironment)
 
   while 1:
     result = child.poll()

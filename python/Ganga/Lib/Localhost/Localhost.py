@@ -52,7 +52,7 @@ class Localhost(IBackend):
       super(Localhost,self).__init__()
 
     def submit(self,jobconfig,master_input_sandbox):
-      self.run(self.preparejob(jobconfig,master_input_sandbox), jobconfig.env)
+      self.run(self.preparejob(jobconfig,master_input_sandbox))
       return 1
 
     def resubmit(self):
@@ -73,9 +73,9 @@ class Localhost(IBackend):
         return 0
       return self.run(job.getInputWorkspace().getPath('__jobscript__'))
       
-    def run(self,scriptpath, env = copy.deepcopy(os.environ)):
+    def run(self,scriptpath):
       try:
-          process=subprocess.Popen(["python",scriptpath,'subprocess'], env=env)
+          process=subprocess.Popen(["python",scriptpath,'subprocess'])
       except OSError,x:
           logger.error('cannot start a job process: %s',str(x))
           return 0
@@ -263,8 +263,9 @@ except ImportError,x:
     import tarfile
 
 
+fullenvironment = os.environ.copy()
 for key,value in environment.iteritems():
-    os.environ[key] = value
+    fullenvironment[key] = value
 
 outfile=file('stdout','w')
 errorfile=file('stderr','w')
@@ -281,7 +282,7 @@ import subprocess
 import time #datetime #disabled for python2.2 compatiblity
 
 try:
- child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile)
+ child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
 except OSError,x:
  file('tt','w').close()
  print >> statusfile, 'EXITCODE: %d'%-9999
