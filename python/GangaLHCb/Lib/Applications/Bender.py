@@ -18,9 +18,14 @@ from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
+#
 import CMTscript
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 logger = Ganga.Utility.logging.getLogger()
+
+# Added for XML PostProcessing
+from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
+from GangaLHCb.Lib.Applications import XMLPostProcessor
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -177,7 +182,6 @@ class Bender(GaudiBase):
         self.checkPreparedHasParent(self)
         self.post_prepare()
 
-
     def master_configure(self):
         #self._master_configure()
         #self._check_inputs()
@@ -202,10 +206,14 @@ class Bender(GaudiBase):
           script += \
                  "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs)\n"
         script += "USERMODULE.run(%d)\n" % self.events
+        script += ""
+        script += getXMLSummaryScript()
         #self.extra.input_buffers['gaudipython-wrapper.py'] = script
         #outsb = self.getJobObject().outputsandbox
-        outputsandbox = unique(self.getJobObject().outputsandbox)
-
+        # add summary.xml
+        outputsandbox_temp = XMLPostProcessor._XMLJobFiles()
+        outputsandbox_temp += unique(self.getJobObject().outputsandbox)
+        outputsandbox = unique(outputsandbox_temp)
 
         #input_dir = self.getJobObject().getInputWorkspace().getPath()
         input_files=[]
@@ -218,11 +226,16 @@ class Bender(GaudiBase):
 
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
+        if self.module.name == None:
+            raise ApplicationConfigurationError(None,"Application Module not requested")
         self.module.name = fullpath(self.module.name)
         if not os.path.exists(self.module.name):
             msg = 'Module file %s not found.' % self.module.name
             raise ApplicationConfigurationError(None,msg)
         #self._check_gaudi_inputs([self.module],self.project)
+
+    def postprocess(self):
+        XMLPostProcessor.postprocess(self)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 # Associate the correct run-time handlers to GaudiPython for various backends.
