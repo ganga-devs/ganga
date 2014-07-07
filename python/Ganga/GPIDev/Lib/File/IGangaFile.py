@@ -1,19 +1,13 @@
-################################################################################
-# Ganga Project. http://cern.ch/ganga
-#
-# $Id: IOutputFile.py,v 0.1 2012-09-28 15:40:00 idzhunov Exp $
-################################################################################
-
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from fnmatch import fnmatch
 
-class IOutputFile(GangaObject):
-    """IOutputFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, SandboxFile, etc 
+class IGangaFile(GangaObject):
+    """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
     """
     _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name')})
-    _category = 'outputfiles'
-    _name = 'IOutputFile'
+    _category = 'gangafiles'
+    _name = 'IGangaFile'
     _hidden = 1
         
     def setLocation(self):
@@ -49,6 +43,12 @@ class IOutputFile(GangaObject):
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
+        """
+        raise NotImplementedError
+    
+    def processWildcardMatches(self):
+        """
+        If namePattern contains a wildcard, populate the subfiles property
         """
         raise NotImplementedError
 

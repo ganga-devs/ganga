@@ -36,6 +36,13 @@ class Dirac(DiracBase):
                     logger.error(msg)
                     raise BackendError('Dirac',msg)            
                input_sandbox.append('LFN:'+lfn.name)
+          j = self.getJobObject()
+          from GangaDirac.Lib.Files.DiracFile import DiracFile
+          for f in j.inputfiles.get(DiracFile):
+                   if f.lfn == '':
+                         raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as this property has not been set.' % f.namePattern)
+                   else:
+                         input_sandbox.append('LFN:' + f.lfn)
           return input_sandbox
 
      def _setup_subjob_dataset(self, dataset):

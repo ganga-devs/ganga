@@ -18,7 +18,7 @@ j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
 
 assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
 assert(j.outputfiles[1].__class__.__name__ == 'LCGSEFile')
-assert(j.outputfiles[2].__class__.__name__ == 'SandboxFile')
+assert(j.outputfiles[2].__class__.__name__ == 'LocalFile')
 
 j.submit()
 

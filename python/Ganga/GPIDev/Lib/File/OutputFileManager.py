@@ -1,5 +1,7 @@
 from Ganga.Utility.Config import getConfig   
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
+import re
 import os
 import glob 
 import tempfile  
@@ -50,7 +52,7 @@ def getOutputSandboxPatterns(job):
 
             outputFileClassName = outputFile.__class__.__name__
 
-            if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'SandboxFile': 
+            if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'LocalFile': 
                 if outputFile.namePattern not in outputPatterns:
                     if outputFile.compressed:
                         outputPatterns.append('%s.gz' % outputFile.namePattern)
@@ -72,7 +74,7 @@ def getInputFilesPatterns(job):
 
         inputFileClassName = inputFile.__class__.__name__
 
-        if inputFileClassName == 'SandboxFile':
+        if inputFileClassName == 'LocalFile':
             for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
                 if currentFile not in inputPatterns:
                     inputPatterns.append(currentFile)
@@ -102,7 +104,7 @@ def getOutputSandboxPatternsForInteractive(job):
 
         outputFileClassName = outputFile.__class__.__name__
 
-        if outputFileClassName == 'SandboxFile' or (outputFileClassName != 'SandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
+        if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
             if outputFile.compressed:
                 patternsToSandbox.append('%s.gz' % outputFile.namePattern)
                 patternsToZip.append(outputFile.namePattern)
@@ -129,7 +131,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
             
             outputFileClassName = outputFile.__class__.__name__
         
-            if outputFileClassName == 'SandboxFile' or (outputFileClassName != 'SandboxFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
+            if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
                 patternsToSandbox.append(outputFile.namePattern)
 
                 if outputFile.compressed:
@@ -175,6 +177,9 @@ for fn in final_list_to_copy:
 
 
 def getWNCodeForDownloadingInputFiles(job, indent):
+    """
+    Generate the code to be run on the WN to download input files
+    """
 
     if len(job.inputfiles) == 0:
         return ""
@@ -187,7 +192,12 @@ def getWNCodeForDownloadingInputFiles(job, indent):
         inputfileClassName = inputFile.__class__.__name__
 
         if outputFilePostProcessingOnWN(job, inputfileClassName):
-            insertScript += inputFile.getWNScriptDownloadCommand(indent)
+            inputFile.processWildcardMatches()
+            if inputFile.subfiles:
+                for subfile in inputFile.subfiles:
+                    insertScript += subfile.getWNScriptDownloadCommand(indent)
+            else:
+                insertScript += inputFile.getWNScriptDownloadCommand(indent)
 
     insertScript = insertScript.replace('###INDENT###', indent)
 
@@ -208,11 +218,11 @@ def getWNCodeForOutputPostprocessing(job, indent):
             backendClassName = job.backend.__class__.__name__
 
             if outputFile.compressed:   
-                if outputfileClassName == 'SandboxFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
+                if outputfileClassName == 'LocalFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
                     patternsToZip.append(outputFile.namePattern)  
-                elif outputfileClassName != 'SandboxFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
+                elif outputfileClassName != 'LocalFile' and outputFilePostProcessingOnWN(job, outputfileClassName):
                     patternsToZip.append(outputFile.namePattern)  
-                elif outputfileClassName != 'SandboxFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
+                elif outputfileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputfileClassName) and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
                     patternsToZip.append(outputFile.namePattern)  
     
             if outputfileClassName not in outputFilesProcessedOnWN.keys():
@@ -245,7 +255,23 @@ def getWNCodeForOutputPostprocessing(job, indent):
     insertScript = insertScript.replace('###INDENT###', indent)
 
     return insertScript
+
+wildcardregex = re.compile('[*?\[\]]')
+def iexpandWildCards(filelist):
+    for f in filelist:
+        if wildcardregex.search(f.namePattern):
+            f.processWildcardMatches()
+            for subfile in f.subfiles:
+                yield subfile
+        else:
+            yield f
+
+def expandWildCards(filelist):
+    """
     
-        
+    """
+    l = GangaList()
+    l.extend(iexpandWildCards(filelist))
+    return l
 
         

@@ -1,7 +1,7 @@
 j = Job()
 j.application.exe='cp'
 j.application.args=[File('input.dat'),'output.out']
-j.outputfiles = [SandboxFile('*.out')]
+j.outputfiles = [LocalFile('*.out')]
 j.submit()
 
 from GangaTest.Framework.utils import sleep_until_state
