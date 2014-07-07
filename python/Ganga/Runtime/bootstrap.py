@@ -612,7 +612,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         outputconfig.addOption('GoogleFile',{'fileExtensions':[], 'backendPostprocess':{'Dirac':'client', 'LSF':'client', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'client', 'Interactive':'client'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
 
         import pwd,grp
-        groupid=grp.getgrgid(pwd.getpwnam('uegede').pw_gid).gr_name
+        from Ganga.Utility.Config import getConfig
+        user = getConfig('Configuration')['user']   
+        groupid=grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
         groupnames={'z5':'lhcb','zp':'atlas','zh':'cms','vl':'na62'}
         groupname='undefined'
         try:
@@ -623,8 +625,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         try:
             massStoragePath = os.path.join(os.environ['EOS_HOME'], 'ganga')
         except: 
-            from Ganga.Utility.Config import getConfig
-            user = getConfig('Configuration')['user']   
             massStoragePath = "/eos/%s/user/%s/%s/ganga" % (groupname,user[0], user)      
 
         prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname

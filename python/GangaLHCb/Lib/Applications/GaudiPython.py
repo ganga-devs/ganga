@@ -23,6 +23,10 @@ import CMTscript
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import shutil, tempfile
 
+# Added for XML PostProcessing
+from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript
+from GangaLHCb.Lib.Applications import XMLPostProcessor
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 class GaudiPython(GaudiBase):
@@ -129,6 +133,8 @@ class GaudiPython(GaudiBase):
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
         script += '%s \n' % cmd
+        script += ''
+        script += getXMLSummaryScript()
         fd.write(script)
         fd.flush()
         logger.debug(script)
@@ -222,8 +228,12 @@ class GaudiPython(GaudiBase):
 
         
         #outsb = self.getJobObject().outputsandbox
-        outputsandbox = unique(self.getJobObject().outputsandbox)
-        
+        #outputsandbox = unique(self.getJobObject().outputsandbox)
+        # add summary.xml
+        outputsandbox_temp = XMLPostProcessor._XMLJobFiles()
+        outputsandbox_temp += unique(self.getJobObject().outputsandbox)
+        outputsandbox = unique(outputsandbox_temp)
+
         #input_dir = self.getJobObject().getInputWorkspace().getPath()
         input_files=[]
         #input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
@@ -246,6 +256,9 @@ class GaudiPython(GaudiBase):
             for f in self.script: f.name = fullpath(f.name)
 
         return
+
+    def postprocess(self):
+        XMLPostProcessor.postprocess(self)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

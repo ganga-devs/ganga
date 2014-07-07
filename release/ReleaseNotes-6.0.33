@@ -1,0 +1,45 @@
+**************************************************************************************************************
+6.0.33 (2014/7/4)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+fixes
+-----
+
+* fix for rogue environment when using the Executable application on the Local, Batch or Interactive
+Backends.
+* MassStorageFile works with EOS now
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+fixes
+-----
+
+* fix for rogue environment when using the Executable application on the Local, Batch or Interactive
+Backends.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+fixes
+-----
+
+* fix for rogue environment when using the Executable application on the Local, Batch or Interactive
+Backends.
+
+* fix allowing for multiple applications (Bender and GaudiPython) to use the XML post processing
+from AppsBase.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added the ability to exclude DDM sites, not just Panda sites
+* Added wildcards (*) to exclusion
+
+**************************************************************************************************************
