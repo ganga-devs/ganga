@@ -79,6 +79,7 @@ class SessionLockRefresher(GangaThread):
             while not self.should_stop():
                 ## TODO: Check for services active/inactive
                 try:
+                    logger.debug( "Updating: %s" % str(self.fn) )
                     try:
                         oldnow = self.delayread( self.fn ) # os.stat(self.fn).st_ctime
                         os.utime(self.fn,None)
@@ -130,15 +131,18 @@ class SessionLockRefresher(GangaThread):
                     logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
                 time.sleep(1+random.random())
         finally:
-            # On shutdown remove session file
-            try:
-                logger.debug("Removing file %s" % (self.fn))
-                os.unlink(self.fn)
-            except OSError, x:
-                logger.debug("Session file was deleted already or removal failed: %s" % (x))
-            self.unregister()
+#            This appears to be doubbly removing session files ahead of when we want this to happen...
+#
+#            # On shutdown remove session file
+#            try:
+#                logger.debug("Removing file %s" % (self.fn) )
+#                os.unlink(self.fn)
+#            except OSError, x:
+#                logger.debug("Session file was deleted already or removal failed: %s" % (x))
+#            self.unregister()
             global session_lock_refresher
             session_lock_refresher = None
+
 
     def addRepo(self,repo):
         self.repos.append(repo)
@@ -219,7 +223,7 @@ class SessionLockManager(object):
             self.cnt_write()
             # Setup session file
             try:
-                fd = os.open(self.fn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
+                fd = os.open(self.fn , os.O_EXCL | os.O_CREAT | os.O_WRONLY)
                 os.write(fd,pickle.dumps(Set()))
                 os.close(fd)
             except OSError, x:
@@ -300,6 +304,7 @@ class SessionLockManager(object):
             The global lock MUST be held for this function to work, although on NFS additional
             locking is done
             Raises RepositoryError if session file is inaccessible """
+        logger.debug("Openining Session File: %s " % self.fn )
         try:
             # If this fails, we want to shutdown the repository (corruption possible)
             fd = os.open(self.fn,os.O_WRONLY)
