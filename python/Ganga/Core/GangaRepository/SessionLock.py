@@ -51,7 +51,27 @@ class SessionLockRefresher(GangaThread):
         self.sdir = sdir
         self.fn = fn
         self.repos = [repo]
-        
+
+    ## This function attempts to grab the ctime from a file which should exist
+    ## As we don't want this to fail outright it attempts to re-read every 1s
+    ## for 30sec before failing 
+    def delayread(self,filename):
+        value = None
+        i=0
+        while value is None:
+            try:
+                value = os.stat(filename).st_ctime
+            except OSError, x:
+                print "fail"
+                value = None
+                i=i+1
+                time.sleep(1)
+                if i>= 30: #3000:
+                    raise x
+                else:
+                    continue
+
+        return value
 
     def run(self):
 
@@ -60,9 +80,10 @@ class SessionLockRefresher(GangaThread):
                 ## TODO: Check for services active/inactive
                 try:
                     try:
-                        oldnow = os.stat(self.fn).st_ctime
+                        oldnow = self.delayread( self.fn ) # os.stat(self.fn).st_ctime
                         os.utime(self.fn,None)
-                        now = os.stat(self.fn).st_ctime
+                        now = self.delayread( self.fn ) # os.stat(self.fn).st_ctime
+                        #print str(now-oldnow)
                         #if now - oldnow  > session_expiration_timeout/2:
                         #    logger.warning("%s: This session can only update its session file every %s seconds - this can cause problems with other sessions!" % (time.time(), now - oldnow))
                         #print "%s: Delta is %i seconds" % (time.time(), now - oldnow)
