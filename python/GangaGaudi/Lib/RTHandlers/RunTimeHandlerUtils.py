@@ -122,7 +122,7 @@ def script_generator( script_template,
 
     ## Take out the unreplaced lines
     if remove_unreplaced is True:
-        lines  = script.strip().split('\n')
+        lines  = script.rstrip().split('\n')
         lines  = [line for line in lines if not line.find('###') >=0]
         script = '\n'.join(lines)
 

@@ -80,6 +80,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         SETTINGS             = diracAPI_script_settings(app),
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         REPLICATE            = getConfig('DIRAC')['ReplicateOutputData'],
+                                        LHCB_DIRAC_TEST      = 'False',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
@@ -98,14 +99,20 @@ def exe_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
 
+print 'init'
+
 from os import system, environ, pathsep, getcwd
 import sys
+
+print 'Start'
 
 # Main
 if __name__ == '__main__':
 
-    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])        
-    rc = (system('''###COMMAND###''')/256)
+    print 'Hello'
+
+    environ['PATH'] = getcwd() + (':' + environ['PATH'])        
+    rc = (os.system('###COMMAND###')/256)
 
     ###OUTPUTFILESINJECTEDCODE###
     sys.exit(rc)

@@ -49,6 +49,7 @@ parseCommandLine()
 ###DIRAC_JOB_IMPORT###
 dirac = ###DIRAC_OBJECT###
 j = ###JOB_OBJECT###
+usingLHCbDirac = ###LHCB_DIRAC_TEST###
 
 # default commands added by ganga
 j.setName('###NAME###')
@@ -72,7 +73,9 @@ j.setSystemConfig('###PLATFORM###')
 ###DIRAC_OPTS###
 
 # submit the job to dirac
+if usingLHCbDirac: j.setDIRACPlatform()
 result = dirac.submit(j)
+
 output(result)
 """
         

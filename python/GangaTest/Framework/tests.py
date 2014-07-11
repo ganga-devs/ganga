@@ -87,7 +87,14 @@ class GangaGPIPTestCase(unittest.TestCase):
         #print 'test cmd : %s' % self.testCmd
 
         output = open(self.output_path,'w')
-        pytf_runner = os.path.join(os.getenv('PYTF_TOP_DIR',''),'cmd_run.sh')
+        pytf_paths = str.split(os.getenv('PYTF_TOP_DIR',''))
+        if type(pytf_paths) is str:
+            pytf_runner = os.path.join( pytf_paths, 'cmd_run.sh' )
+        else:
+            for i in pytf_paths:
+                if os.path.isfile( os.path.join( i, 'cmd_run.sh') ):
+                    pytf_runner = os.path.join( i, 'cmd_run.sh')
+                    break;
         script_runner = [pytf_runner,'{ ' + self.testCmd + '; }']
         process = Popen(script_runner, shell=False, bufsize=0,
             stdin=PIPE, stdout=output, stderr=STDOUT, close_fds=True)
