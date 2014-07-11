@@ -235,7 +235,7 @@ class Bender(GaudiBase):
         #self._check_gaudi_inputs([self.module],self.project)
 
     def postprocess(self):
-        XMLPostProcessor.postprocess(self)
+        XMLPostProcessor.postprocess(self,logger)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 # Associate the correct run-time handlers to GaudiPython for various backends.

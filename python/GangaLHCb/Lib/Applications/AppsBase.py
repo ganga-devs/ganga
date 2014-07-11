@@ -146,7 +146,7 @@ class AppName(Gaudi):
         if self.appname is 'Vetra': self.lhcb_release_area = os.path.expandvars("$Vetra_release_area")
 
     def postprocess(self):
-        XMLPostProcessor.postprocess(self)
+        XMLPostProcessor.postprocess(self,logger)
 
     def readInputData(self,optsfiles,extraopts=False):
         '''Returns a LHCbDataSet object from a list of options files. The

@@ -13,7 +13,7 @@ def _XMLJobFiles():
     return ['summary.xml','__parsedxmlsummary__']
 
 #Post-Processing script taken from AppBase to be shared among multiple Job types
-def postprocess(self):
+def postprocess(self,logger):
     j = self.getJobObject()
     parsedXML = os.path.join(j.outputdir,'__parsedxmlsummary__')
     metadataItems={} # use to avoid replacing 'lumi' etc as return value and not the method pointer

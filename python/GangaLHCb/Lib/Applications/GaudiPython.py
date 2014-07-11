@@ -258,7 +258,7 @@ class GaudiPython(GaudiBase):
         return
 
     def postprocess(self):
-        XMLPostProcessor.postprocess(self)
+        XMLPostProcessor.postprocess(self,logger)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
