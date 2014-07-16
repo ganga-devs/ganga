@@ -400,16 +400,7 @@ def %(method_name)s(self):
         finally: f.close()
    
     process = None # used as handler to the test process    
-    pytf_paths = str.split(os.getenv('PYTF_TOP_DIR',':'))
-    pytf_runner = str()
-    if type(pytf_paths) is str:
-        pytf_runner = os.path.join( pytf_paths, 'cmd_run.sh' )
-    else:
-        for i in pytf_paths:
-            if os.path.isfile( os.path.join( i, 'cmd_run.sh') ):
-                pytf_runner = os.path.join( i, 'cmd_run.sh')
-                break;
-    #pytf_runner = os.path.join(os.getenv('PYTF_TOP_DIR',''),'cmd_run.sh')    
+    pytf_runner = os.path.join(os.getenv('PYTF_TOP_DIR',''),'cmd_run.sh')    
                         
     def getstatusouterr(cmd,output_path="%(output_path)s",out_mode='a',setTimeout=False):
         import os
@@ -652,7 +643,7 @@ def %(method_name)s(self):
         test_ini = '%s:'+ test_ini
 
         #testCmdPrefix = "cd %s ; PYTHONUNBUFFERED=1 PYTHONPATH=%s %s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s"%(
-        testCmdPrefix = "cd %s ; env PYTHONUNBUFFERED=1 OUTPUT_PATH=%s "\
+        testCmdPrefix = "cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC PYTHONUNBUFFERED=1 OUTPUT_PATH=%s "\
                       "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s" % \
                         (os.path.join(self.testsTopDir,test_dir), 
                          fullpath(output_path),
@@ -770,7 +761,7 @@ def %(method_name)s(self):
                     except ValueError:
                         descr = os.path.join(test_dir,test_filename,attrname)+" [PY]"
                     if test is not None and attrname==test:
-                        testCmd = "cd %s ; env OUTPUT_PATH=%s "\
+                        testCmd = "cd %s ; env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s "\
                                 "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s %s %s --test-type=py --coverage-report=%s %s" % (
                             os.path.join(self.testsTopDir,test_dir),
                             fullpath(output_path%attrname),                            
@@ -791,7 +782,7 @@ def %(method_name)s(self):
                         if testcase is not None: return [testcase]
                     elif attrname.startswith("test") and test is None:
                         #syspath = [p for p in sys.path if p.find("/usr/lib")==-1]                        
-                        testCmd = "cd %s ;env OUTPUT_PATH=%s "\
+                        testCmd = "cd %s ;env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s "\
                                 "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s %s %s --test-type=py --coverage-report=%s %s setUp tearDown"%(
                             os.path.join(self.testsTopDir,test_dir),
                             fullpath(output_path%attrname),
@@ -878,7 +869,7 @@ def %(method_name)s(self):
                         descr = os.path.join(test_dir[test_dir.index(self.testsTopDir)+len(self.testsTopDir)+1:],test_filename,'ALL')+" [GPIP]"
                     except ValueError:
                         descr = os.path.join(test_dir,test_filename,'ALL')+" [GPIP]"
-                    testCmd = "cd %s ;env OUTPUT_PATH=%s "\
+                    testCmd = "cd %s ;env --unset=GANGA_INTERNAL_PROCREEXEC OUTPUT_PATH=%s "\
                               "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s %s %s --test-type=gpip --output_base=%s --coverage-report=%s --timeout=%s %s setUp tearDown"%(
                               os.path.join(self.testsTopDir,test_dir),
                               fullpath(output_path),

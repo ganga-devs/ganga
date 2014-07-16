@@ -513,13 +513,13 @@ class FileItem(ComponentItem):
         return "'files' object,"+ Item._describe(self)
 
 
-class GangaFileItem(ComponentItem):
+class OutputFileItem(ComponentItem):
     def __init__(self,**kwds):
-        ComponentItem.__init__(self,'gangafiles')
+        ComponentItem.__init__(self,'outputfiles')
         self._update(kwds)
 
     def _describe(self):
-        return "'gangafiles' object,"+ Item._describe(self)
+        return "'outputfiles' object,"+ Item._describe(self)
 
 
 

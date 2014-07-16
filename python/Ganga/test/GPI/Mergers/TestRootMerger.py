@@ -110,7 +110,7 @@ finally:
 
             #TODO
             j.application.script = File(fileName)
-            j.outputfiles = [LocalFile(self.output_name)]
+            j.outputfiles = [SandboxFile(self.output_name)]
             self.jobslice.append(j)
 
     def runJobSlice(self):
@@ -250,7 +250,7 @@ if __name__ == '__main__':
     def testSmartMerge(self):
 
         for j in self.jobslice:
-            j.outputfiles = [LocalFile(self.output_name),LocalFile('fillrandom.foo')]
+            j.outputfiles = [SandboxFile(self.output_name),SandboxFile('fillrandom.foo')]
         self.runJobSlice()
 
         sm = SmartMerger()# foo files are defined in the ini file (as root)
@@ -272,7 +272,7 @@ if __name__ == '__main__':
     def testSmartMergeFileNameInConfig(self):
 
         for j in self.jobslice:
-            j.outputfiles = [LocalFile(self.output_name),LocalFile('outfile.abc')]
+            j.outputfiles = [SandboxFile(self.output_name),SandboxFile('outfile.abc')]
         self.runJobSlice()
 
         sm = SmartMerger()# foo files are defined in the ini file (as root)

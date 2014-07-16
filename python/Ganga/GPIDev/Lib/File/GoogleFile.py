@@ -1,6 +1,6 @@
 from Ganga.GPIDev.Schema import *
 from fnmatch import fnmatch
-from IGangaFile import IGangaFile
+from IOutputFile import IOutputFile
 import logging
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -19,7 +19,7 @@ cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata
 badlogger=logging.getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
-class GoogleFile(IGangaFile):
+class GoogleFile(IOutputFile):
     """
     The GoogleFile outputfile type allows for files to be directly uploaded, downloaded, removed and restored from the GoogleDrive service.
     It can be used as part of a job to output data directly to GoogleDrive, or standalone through the Ganga interface.
@@ -45,7 +45,7 @@ class GoogleFile(IGangaFile):
                      {'namePattern'   : SimpleItem( defvalue="", doc='pattern of the file name'),
                       'localDir'      : SimpleItem( defvalue="",copyable=1,
                                                     doc='local dir where the file is stored, used from get and put methods'),
-                      'subfiles'   : ComponentItem( category='gangafiles',defvalue=[], hidden=1,
+                      'subfiles'   : ComponentItem( category='outputfiles',defvalue=[], hidden=1,
                                                     typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0,
                                                     doc="collected files from the wildcard namePattern"),
                       'failureReason' : SimpleItem( defvalue="",copyable=1,
@@ -61,7 +61,7 @@ class GoogleFile(IGangaFile):
                       'GangaFolderId' : SimpleItem( defvalue="",copyable=1, hidden=1, protected=1,
                                                     doc='GoogleDrive Ganga folder  ID')
                       })
-    _category = 'gangafiles'
+    _category = 'outputfiles'
     _name = 'GoogleFile'
     _exportmethods = [ "get" , "put", "remove", "restore","deleteCredentials"]
 
@@ -222,9 +222,6 @@ class GoogleFile(IGangaFile):
         """
         Gets the command used to download already uploaded file
         """
-        raise NotImplementedError
-    
-    def processWildcardMatches(self):
         raise NotImplementedError
 
     def __repr__(self):

@@ -8,7 +8,6 @@ import Ganga.Utility.Config
 config = Ganga.Utility.Config.makeConfig('Local','parameters of the local backend (jobs in the background on localhost)')
 
 config.addOption('remove_workdir', True, 'remove automatically the local working directory when the job completed')
-config.addOption('location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
 
 import Ganga.Utility.logic, Ganga.Utility.util
 
@@ -185,7 +184,7 @@ class Localhost(IBackend):
       environment=jobconfig.env
 
       from Ganga.Utility import tempfile
-      workdir = tempfile.mkdtemp(dir=config['location'])
+      workdir = tempfile.mkdtemp()
       
       script= """#!/usr/bin/env python
 

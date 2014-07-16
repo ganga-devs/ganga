@@ -572,7 +572,7 @@ class JobRegistry_Monitor( GangaThread ):
             return False
         
         self.__mainLoopCond.acquire()
-        if self.enabled: log.info( 'Stopping the monitoring component...' )
+        log.info( 'Stopping the monitoring component...' )
         try: 
             #signal the main thread to finish
             self.alive = False

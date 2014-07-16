@@ -51,27 +51,7 @@ class SessionLockRefresher(GangaThread):
         self.sdir = sdir
         self.fn = fn
         self.repos = [repo]
-
-    ## This function attempts to grab the ctime from a file which should exist
-    ## As we don't want this to fail outright it attempts to re-read every 1s
-    ## for 30sec before failing 
-    def delayread(self,filename):
-        value = None
-        i=0
-        while value is None:
-            try:
-                value = os.stat(filename).st_ctime
-            except OSError, x:
-                print "fail"
-                value = None
-                i=i+1
-                time.sleep(1)
-                if i>= 30: #3000:
-                    raise x
-                else:
-                    continue
-
-        return value
+        
 
     def run(self):
 
@@ -79,12 +59,10 @@ class SessionLockRefresher(GangaThread):
             while not self.should_stop():
                 ## TODO: Check for services active/inactive
                 try:
-                    logger.debug( "Updating: %s" % str(self.fn) )
                     try:
-                        oldnow = self.delayread( self.fn ) # os.stat(self.fn).st_ctime
+                        oldnow = os.stat(self.fn).st_ctime
                         os.utime(self.fn,None)
-                        now = self.delayread( self.fn ) # os.stat(self.fn).st_ctime
-                        #print str(now-oldnow)
+                        now = os.stat(self.fn).st_ctime
                         #if now - oldnow  > session_expiration_timeout/2:
                         #    logger.warning("%s: This session can only update its session file every %s seconds - this can cause problems with other sessions!" % (time.time(), now - oldnow))
                         #print "%s: Delta is %i seconds" % (time.time(), now - oldnow)
@@ -131,18 +109,15 @@ class SessionLockRefresher(GangaThread):
                     logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
                 time.sleep(1+random.random())
         finally:
-#            This appears to be doubbly removing session files ahead of when we want this to happen...
-#
-#            # On shutdown remove session file
-#            try:
-#                logger.debug("Removing file %s" % (self.fn) )
-#                os.unlink(self.fn)
-#            except OSError, x:
-#                logger.debug("Session file was deleted already or removal failed: %s" % (x))
-#            self.unregister()
+            # On shutdown remove session file
+            try:
+                logger.debug("Removing file %s" % (self.fn))
+                os.unlink(self.fn)
+            except OSError, x:
+                logger.debug("Session file was deleted already or removal failed: %s" % (x))
+            self.unregister()
             global session_lock_refresher
             session_lock_refresher = None
-
 
     def addRepo(self,repo):
         self.repos.append(repo)
@@ -223,7 +198,7 @@ class SessionLockManager(object):
             self.cnt_write()
             # Setup session file
             try:
-                fd = os.open(self.fn , os.O_EXCL | os.O_CREAT | os.O_WRONLY)
+                fd = os.open(self.fn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
                 os.write(fd,pickle.dumps(Set()))
                 os.close(fd)
             except OSError, x:
@@ -304,7 +279,6 @@ class SessionLockManager(object):
             The global lock MUST be held for this function to work, although on NFS additional
             locking is done
             Raises RepositoryError if session file is inaccessible """
-        logger.debug("Openining Session File: %s " % self.fn )
         try:
             # If this fails, we want to shutdown the repository (corruption possible)
             fd = os.open(self.fn,os.O_WRONLY)

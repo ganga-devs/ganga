@@ -97,8 +97,6 @@ parseCommandLine()
 dirac = ###DIRAC_OBJECT###
 j = ###JOB_OBJECT###
 
-usingLHCbDirac = ###LHCB_DIRAC_TEST###
-
 # default commands added by ganga
 j.setName('###NAME###')
 j.setApplicationScript('###APP_NAME###','###APP_VERSION###','###APP_SCRIPT###',logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
@@ -110,9 +108,7 @@ j.setInputSandbox(###INPUT_SANDBOX###)
 j.setOutputSandbox(###OUTPUT_SANDBOX###)
 j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
-
-if usingLHCbDirac: j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###, replicate='###REPLICATE###')
-if not usingLHCbDirac: j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
+j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###, replicate='###REPLICATE###')
 
 # <-- user settings
 ###SETTINGS###
@@ -122,7 +118,7 @@ if not usingLHCbDirac: j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PA
 ###DIRAC_OPTS###
 
 # submit the job to dirac
-if usingLHCbDirac: j.setDIRACPlatform()
+j.setDIRACPlatform() 
 result = dirac.submit(j)
 output(result)
 """

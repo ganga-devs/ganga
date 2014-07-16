@@ -2,11 +2,10 @@ from File import File
 from File import ShareDir
 from FileBuffer import FileBuffer
 
-from IGangaFile import IGangaFile
-from LocalFile import LocalFile
+from IOutputFile import IOutputFile
+from SandboxFile import SandboxFile
 from MassStorageFile import MassStorageFile
 from LCGSEFile import LCGSEFile
-from SandboxFile import SandboxFile
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -87,8 +86,8 @@ def string_file_shortcut(v,item):
                 except:
                     pass
 
-        return LocalFile._proxyClass(v)._impl
+        return SandboxFile._proxyClass(v)._impl
 
     return None 
         
-allComponentFilters['gangafiles'] = string_file_shortcut
+allComponentFilters['outputfiles'] = string_file_shortcut

@@ -11,9 +11,8 @@ from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
-from Ganga.Utility import GridShell
 
-from IGangaFile import IGangaFile
+from IOutputFile import IOutputFile
 
 import re
 import os
@@ -21,7 +20,7 @@ import copy
 
 regex = re.compile('[*?\[\]]')
 
-class LCGSEFile(IGangaFile):
+class LCGSEFile(IOutputFile):
     """LCGSEFile represents a class marking an output file to be written into LCG SE
     """
     lcgSEConfig = getConfig('Output')['LCGSEFile']['uploadOptions']
@@ -32,16 +31,16 @@ class LCGSEFile(IGangaFile):
         'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
         'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
-        'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the file from the VO directory on the SE'),
+        'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the VO directory on the SE'),
         'lfc_host'    : SimpleItem(defvalue=lcgSEConfig['LFC_HOST'], copyable=1, doc='the LCG LFC hostname'),
         'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
-        'locations'   : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles were uploaded"),
-        'subfiles'      : ComponentItem(category='gangafiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+        'locations'   : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles are uploaded"),
+        'subfiles'      : ComponentItem(category='outputfiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason' : SimpleItem(defvalue="",protected=1,copyable=0,doc='reason for the upload failure'),
         'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
-    _category = 'gangafiles'
+    _category = 'outputfiles'
     _name = "LCGSEFile"
     _exportmethods = [ "location" , "setLocation" , "get" , "put" , "getUploadCmd"]
 
@@ -53,8 +52,6 @@ class LCGSEFile(IGangaFile):
         self.localDir = localDir
 
         self.locations = []
-        
-        self.shell = GridShell.getShell()
 
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
@@ -194,7 +191,7 @@ class LCGSEFile(IGangaFile):
                 cmd = cmd.replace('filename', currentFile)
                 cmd = cmd + ' file:%s' % currentFile
 
-                (exitcode,output,m) = self.shell.cmd1(cmd, capture_stderr=True)
+                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
 
                 d=LCGSEFile(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
@@ -204,9 +201,9 @@ class LCGSEFile(IGangaFile):
 
                 if exitcode == 0:
                 
-                    match = re.search('(guid:\S+)',output)
+                    match = re.search('(guid:\S+)',mystdout)
                     if match:
-                        d.locations = output.strip()
+                        d.locations = mystdout.strip()
 
                     ## Alex removed this as more general approach in job.py after put() is called
                     #remove file from output dir if this object is attached to a job
@@ -214,7 +211,7 @@ class LCGSEFile(IGangaFile):
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
                 else:
-                    d.failureReason = output
+                    d.failureReason = mystderr
                     if self._parent != None:
                         logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
                     else:
@@ -228,13 +225,13 @@ class LCGSEFile(IGangaFile):
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
 
-            (exitcode,output,m) = self.shell.cmd1(cmd, capture_stderr=True)
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(cmd)
 
             if exitcode == 0:
                 
-                match = re.search('(guid:\S+)',output)
+                match = re.search('(guid:\S+)',mystdout)
                 if match:       
-                    self.locations = output.strip()
+                    self.locations = mystdout.strip()
                 
                 ## Alex removed this as more general approach in job.py after put() is called
                 #remove file from output dir if this object is attached to a job
@@ -242,7 +239,7 @@ class LCGSEFile(IGangaFile):
                 #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
             else:
-                self.failureReason = output
+                self.failureReason = mystderr
                 if self._parent != None:
                     logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
                 else:
@@ -342,6 +339,22 @@ class LCGSEFile(IGangaFile):
         Retrieves locally all files matching this LCGSEFile object pattern
         """
         import subprocess
+        
+        # system command executor with subprocess
+        def execSyscmdSubprocess(cmd):
+
+            exitcode = -999
+            mystdout = ''
+            mystderr = ''
+
+            try:
+                child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+                (mystdout, mystderr) = child.communicate()
+                exitcode = child.returncode
+            finally:
+                pass
+
+            return (exitcode, mystdout, mystderr)
 
         to_location = self.localDir
 
@@ -360,46 +373,29 @@ class LCGSEFile(IGangaFile):
         for location in self.locations:
             destFileName = os.path.join(to_location, self.namePattern)
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
-            (exitcode,output,m) = self.shell.cmd1(cmd, capture_stderr=True)
+            (exitcode, mystdout, mystderr) = execSyscmdSubprocess(cmd)
 
             if exitcode != 0:
-                print 'command %s failed to execute , reason for failure is %s' % (cmd, output)
+                print 'command %s failed to execute , reason for failure is %s' % (cmd, mystderr)
+                print 'most probably you need to source the grid environment , set environment variable LFC_HOST to %s and try again to download the job output' % self.lfc_host
 
     def getWNScriptDownloadCommand(self, indent):
 
         script = """\n
 
-###INDENT###os.environ['LFC_HOST'] = '###LFC_HOST###'
+###INDENT###os.environ['LFC_HOST'] = \'###LFC_HOST###\'
 ###INDENT###cwDir = os.getcwd()
-###INDENT###dwnCmd = 'lcg-cp --vo ###VO### lfn:/grid/###VO###/###LOCATION###/###NAMEPATTERN### file:%s' % os.path.join(cwDir, '###NAMEPATTERN###')
+###INDENT###dwnCmd = 'lcg-cp --vo ###VO### ###LOCATION### file:%s' % os.path.join(cwDir, \'###NAMEPATTERN###\')
 ###INDENT###os.system(dwnCmd)
 """     
         
         script = script.replace('###INDENT###', indent)
         script = script.replace('###LFC_HOST###', self.lfc_host)
         script = script.replace('###VO###', getConfig('LCG')['VirtualOrganisation'])
-        script = script.replace('###LOCATION###', self.se_rpath)
+        script = script.replace('###LOCATION###', self.locations[0])
         script = script.replace('###NAMEPATTERN###', self.namePattern)
 
         return script
-    
-    def processWildcardMatches(self):
-        if self.subfiles:
-            return self.subfiles
-        
-        from fnmatch import fnmatch
-        
-        if regex.search(self.namePattern):
-            #TODO namePattern shouldn't contain slashes and se_rpath should not contain wildcards
-            exitcode,output,m = self.shell.cmd1('lcg-ls lfn:/grid/'+getConfig('LCG')['VirtualOrganisation']+'/'+self.se_rpath, capture_stderr=True)
-
-            for filename in output.split('\n'):
-                if fnmatch(filename, self.namePattern):
-                    subfile = LCGSEFile(namePattern=filename)
-                    subfile.se_rpath = self.se_rpath
-                    subfile.lfc_host = self.lfc_host
-                    
-                    self.subfiles.append(GPIProxyObjectFactory(subfile))
 
 # add LCGSEFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGSEFile() objects via config file)
 import Ganga.Utility.Config

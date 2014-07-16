@@ -29,8 +29,8 @@ class ITransform(GangaObject):
         'units'          : ComponentItem('units',defvalue=[],sequence=1,copyable=1,doc='list of units'),
         'inputdata'      : ComponentItem('datasets', defvalue=[], sequence=1, protected=1, optional=1, load_default=False,doc='Input datasets to run over'),
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset template'),
-        'inputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
-        'outputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of \
+        'inputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
+        'outputfiles' : OutputFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of \
 OutputFile objects to be copied to all jobs"),
         'metadata'       : ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1),
         'rebroker_on_job_fail'     : SimpleItem(defvalue=True, doc='Rebroker if too many minor resubs'),

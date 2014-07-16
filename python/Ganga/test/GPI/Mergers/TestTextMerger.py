@@ -39,7 +39,7 @@ class TestTextMerger(GangaGPITestCase):
 
             j.application.exe = 'sh'
             j.application.args = [File(fileName), str(j.id),str(j.id*10)]
-            j.outputfiles = [LocalFile('out.txt'), LocalFile('out2.txt')]
+            j.outputfiles = [SandboxFile('out.txt'), SandboxFile('out2.txt')]
             self.jobslice.append(j)
 
     def runJobSlice(self):
