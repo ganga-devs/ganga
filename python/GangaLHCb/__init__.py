@@ -34,6 +34,7 @@ dscrpt = 'If a file matches one of these patterns, then the string here '\
          'overrides the datatype_string_default value.'
 defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
+configLHCb.addOption('UserAddedApplications',"","List of user added LHCb applications split by ':'")
 ## dscrpt = 'Automatically download sandbox for failed jobs?'
 ## configLHCb.addOption('failed_sandbox_download',True,dscrpt)
 ## dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\

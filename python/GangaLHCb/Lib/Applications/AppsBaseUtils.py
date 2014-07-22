@@ -8,6 +8,12 @@ from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler      import LHCbGaudiRunTi
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 import Ganga.Utility.Config
 
+from GangaGaudi.Lib.Applications.Gaudi import Gaudi
+from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
+from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
+
+from Ganga.GPIDev.Schema import SimpleItem
+
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -24,23 +30,39 @@ def backend_handlers():
             }
   return backends
 
+available_lhcb_apps = ["Gauss", "Boole", "Brunel",
+                       "DaVinci", "Moore", "Vetra",
+                       "Panoptes", "Erasmus", "Alignment",
+                       "Noether" ]
+
 def available_apps():
-  return ["Gauss", "Boole", "Brunel", "DaVinci", "Moore", "Vetra",
-          "Panoptes", "Erasmus","Alignment"]
+    return available_lhcb_apps
+
+available_lhcb_packs={
+     'Gauss'     : 'Sim',
+     'Boole'     : 'Digi',
+     'Brunel'    : 'Rec',
+     'DaVinci'   : 'Phys',
+     'Moore'     : 'Hlt',
+     'Vetra'     : 'Tell1',
+     'Panoptes'  : 'Rich',
+     'Bender'    : 'Phys',
+     'Erasmus'   : '',
+     'Noether'   : '',
+     'Alignment' : 'Alignment/Escher'
+     }
 
 def available_packs(appname):
-  packs={'Gauss'     : 'Sim',
-         'Boole'     : 'Digi',
-         'Brunel'    : 'Rec',
-         'DaVinci'   : 'Phys',
-         'Moore'     : 'Hlt',
-         'Vetra'     : 'Tell1',
-         'Panoptes'  : 'Rich',
-         'Bender'    : 'Phys',
-         'Erasmus'   : '',
-         'Alignment' : 'Alignment/Escher'
-         }
-  return packs[appname]
+    return available_lhcb_packs[appname]
+
+def addNewLHCbapp( appname, use='' ):
+    assert isinstance( appname, str )
+    if any(str(appname).lower() == val.lower() for val in available_lhcb_apps ):
+        logger.warning( "Error: %s is already in the list of supported apps, not adding" % appname )
+        return
+    available_lhcb_apps.append( str(appname) )
+    available_lhcb_packs[ str(appname)] = use
+    return
 
 def available_versions(appname):
   """Provide a list of the available Gaudi application versions"""
