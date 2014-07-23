@@ -22,12 +22,12 @@ class TestExeDiracRTHandler(GangaGPITestCase):
         self.job_list=[]
 
         ## setup test app jobs
-        j_command = Job(application   = Executable(exe='ls'),
+        self.j_command = Job(application   = Executable(exe='ls'),
                         backend       = Dirac(),
                         inputsandbox  = self.inputsandbox,
                         outputfiles   = self.outputsandbox)
-        j_command.prepare()
-        self.job_list.append(j_command)
+        self.j_command.prepare()
+        self.job_list.append(self.j_command)
         ##
         j_app_qualified = Job(application   = Executable(exe='/bin/echo', args=['Hello','World']),
                               backend       = Dirac(),
@@ -180,19 +180,19 @@ output(result)"""
     def test_exe_script_template(self):
         script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
-
 from os import system, environ, pathsep, getcwd
 import sys
 
 # Main
 if __name__ == '__main__':
 
-    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])        
-    rc = (system('''###COMMAND###''')/256)
+    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])
+    rc = (system('###COMMAND###')/256)
 
     ###OUTPUTFILESINJECTEDCODE###
     sys.exit(rc)
 """
+
         # check that exe_script_template matches above
-        self.assertEqual(script_template, exe_script_template(), 'Returned template doesn\'t match expectation.')
-        
+        self.assertEqual(script_template.replace(" ",""), exe_script_template().replace(" ",""), 'Returned template doesn\'t match expectation.')
+

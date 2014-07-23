@@ -98,21 +98,14 @@ class ExeDiracRTHandler(IRuntimeHandler):
 def exe_script_template():
     script_template = """#!/usr/bin/env python
 '''Script to run Executable application'''
-
-print 'init'
-
 from os import system, environ, pathsep, getcwd
 import sys
-
-print 'Start'
 
 # Main
 if __name__ == '__main__':
 
-    print 'Hello'
-
-    environ['PATH'] = getcwd() + (':' + environ['PATH'])        
-    rc = (os.system('###COMMAND###')/256)
+    environ['PATH'] = getcwd() + (pathsep + environ['PATH'])        
+    rc = (system('###COMMAND###')/256)
 
     ###OUTPUTFILESINJECTEDCODE###
     sys.exit(rc)

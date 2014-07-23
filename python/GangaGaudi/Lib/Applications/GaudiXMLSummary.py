@@ -144,7 +144,7 @@ class GaudiXMLSummaryMerger(IMerger):
         script_name = tempfile.mktemp('.py')
         script = open(script_name,'w')
         dummy = GaudiXMLSummary()
-        dummy.env_var = self.env_var        
+        dummy.env_var = self.env_var
 
         # write py script
         script.write('import sys\n')

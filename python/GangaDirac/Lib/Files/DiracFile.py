@@ -32,6 +32,7 @@ class DiracFile(IGangaFile):
     _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
                                      'localDir'      : SimpleItem(defvalue=None,copyable=1,typelist=['str','type(None)'],
                                                                   doc='local dir where the file is stored, used from get and put methods'),
+                                     'remoteDir'     : SimpleItem(defvalue="",doc='remote directory where the LFN is to be placed in the dirac base directory by the put method.'),
                                      'locations'     : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,
                                                                   doc="list of SE locations where the outputfiles are uploaded"),
                                      'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,
@@ -53,11 +54,12 @@ class DiracFile(IGangaFile):
     _name = "DiracFile"
     _exportmethods = [  "get", "getMetadata", 'remove', "replicate", 'put']
         
-    def __init__(self, namePattern='', localDir=None, lfn='', **kwds):
+    def __init__(self, namePattern='', localDir=None, lfn='', remoteDir='', **kwds):
         """ name is the name of the output file that has to be written ...
         """
         super(DiracFile, self).__init__()
         self.namePattern = namePattern
+        self.remoteDir   = remoteDir
         self.localDir    = localDir
         self.lfn         = lfn
         self.locations   = []
@@ -302,9 +304,10 @@ class DiracFile(IGangaFile):
 #                self.guid=""
  
         import glob, uuid
-        lfn_base =  os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()))
+        if self.remoteDir == '': self.remoteDir = str(uuid.uuid4())
+        lfn_base =  os.path.join(configDirac['DiracLFNBase'], self.remoteDir )
         storage_elements=configDirac['DiracSpaceTokens']
-       
+
         outputFiles=GangaList()
         for file in glob.glob(os.path.join(sourceDir, self.namePattern)):
             name = file
