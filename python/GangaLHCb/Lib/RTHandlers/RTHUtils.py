@@ -13,17 +13,31 @@ logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 def jobid_as_string(job):
-  jstr=''
-  if job.master: jstr=str(job.master.id)+os.sep+str(job.id)
-  else: jstr=str(job.id)
-  return jstr
+    jstr=''
+    if job.master: jstr=str(job.master.id)+os.sep+str(job.id)
+    else: jstr=str(job.id)
+    return jstr
 
 
 def lhcbdiracAPI_script_template():
+
     DiracScript = diracAPI_script_template()
-    DiracScript.replace('outputPath','OutputPath').replace('outputSE','OutputSE')
-    DiracScript.replace('"\'###EXE_LOG_FILE###\'"','"\'###EXE_LOG_FILE###\'", systemConfig=\'###PLATFORM###\'')
-    DiracScript.replace('result = dirac.submit(j)','j.setDIRACPlatform()\nresult = dirac.submit(j)' )
+    DiracScript = DiracScript.replace('outputPath','OutputPath').replace('outputSE','OutputSE')
+
+    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
+                  'j.setName(\'###NAME###\')\nj.setRootMacro(\'###ROOT_VERSION###\', \'###ROOT_MACRO###\', ###ROOT_ARGS###, \'###ROOT_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
+
+    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
+                  'j.setName(\'###NAME###\')\nj.setRootPythonScript(\'###ROOTPY_VERSION###\', \'###ROOTPY_SCRIPT###\', ###ROOTPY_ARGS###, \'###ROOTPY_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
+
+    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
+                  'j.setName(\'###NAME###\')\nj.setApplicationScript(\'###APP_NAME###\',\'###APP_VERSION###\',\'###APP_SCRIPT###\',logFile=\'###APP_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
+
+    DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'','\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
+    DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()' )
+    DiracScript = DiracScript.replace('###OUTPUT_SE###','###OUTPUT_SE###,replicate=\'###REPLICATE###\'' )
+
+    #print DiracScript
     return DiracScript
 
 

@@ -99,18 +99,14 @@ j = ###JOB_OBJECT###
 
 # default commands added by ganga
 j.setName('###NAME###')
-j.setApplicationScript('###APP_NAME###','###APP_VERSION###','###APP_SCRIPT###',logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
-j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###', systemConfig='###PLATFORM###')
-j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###', systemConfig='###PLATFORM###')
-j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###' )
+j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###')
 j.setExecutionEnv(###ENVIRONMENT###)
 j.setInputSandbox(###INPUT_SANDBOX###)
 j.setOutputSandbox(###OUTPUT_SANDBOX###)
 j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 
-if usingLHCbDirac: j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###, replicate='###REPLICATE###')
-if not usingLHCbDirac: j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
+j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
 
 # <-- user settings
 ###SETTINGS###
@@ -120,6 +116,7 @@ if not usingLHCbDirac: j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PA
 ###DIRAC_OPTS###
 
 # submit the job to dirac
+j.setPlatform( 'ANY' )
 result = dirac.submit(j)
 output(result)
 """
