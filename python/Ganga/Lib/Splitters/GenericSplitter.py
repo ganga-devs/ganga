@@ -6,6 +6,7 @@
 
 import inspect
 
+from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from Ganga.GPIDev.Schema import *
@@ -37,6 +38,15 @@ class GenericSplitter(ISplitter):
       j = Job(backend=LCG(),splitter=s)
       j.submit()
 
+    to split over mulitple attributes, use the multi_args option:
+
+      j = Job()
+      j.splitter = GenericSplitter()
+      j.splitter.multi_args = { "application.args":["hello1", "hello2"], "application.env":[{"MYENV":"test1"}, {"MYENV":"test2"}] }
+
+    this will result in two subjobs, one with args set to 'hello1' and the MYENV set to 'test1', the other with
+    args set to 'hello2' and the MYENV set to 'test2'.
+
     Known issues of this generic splitter:
       - it will not work if specifying different backends for the subjobs
 
@@ -44,7 +54,8 @@ class GenericSplitter(ISplitter):
     _name = "GenericSplitter"
     _schema = Schema(Version(1,0), {
         'attribute' : SimpleItem(defvalue='',doc='The attribute on which the job is splitted'),
-        'values' : SimpleItem(defvalue=[],typelist=None,checkset="_checkset_values",sequence=1,doc='A list of the values corresponding to the attribute of the subjobs')
+        'values' : SimpleItem(defvalue=[],typelist=None,checkset="_checkset_values",sequence=1,doc='A list of the values corresponding to the attribute of the subjobs'),
+        'multi_args' : SimpleItem(defvalue={},doc='Dictionary to specify multiple arguments to split over'),
         } )
 
     def _checkset_values(self, value):
@@ -55,20 +66,57 @@ class GenericSplitter(ISplitter):
     def split(self,job):
         
         subjobs = []
+        
+        # sort out multiple arg splitting
+        if (self.attribute != '' or len(self.values) > 0) and len(self.multi_args) > 0:
+            raise ApplicationConfigurationError(None,"Setting both 'attribute'/'values' and 'multi_args' is unsupported")
 
-        for value in self.values:
+        if self.attribute != '':
+            attrlist = [ self.attribute ]
+            values = []
+            for v in self.values:
+                values.append([v])
+        else:
+            # check we have enough values in the dictionary
+            numjobs = -1
+            attrlist = []
+            for attr in self.multi_args:
+                if numjobs == -1:
+                    numjobs = len(self.multi_args[attr])
+                else:
+                    if len(self.multi_args[attr]) != numjobs:
+                        raise ApplicationConfigurationError(None,"Number of values for '%s' doesn't equal others '%d'" % (attr, num))
 
+                attrlist.append(attr)
+
+            # now get everything organised
+            values = []
+            for i in range(0, numjobs):
+                valtmp = []
+                for attr in attrlist:
+                    valtmp.append(self.multi_args[attr][i])
+                values.append( valtmp )
+
+        # check we have enough values to cover the attributes
+        for vallist in values:
+            if len(attrlist) != len(vallist):
+                raise ApplicationConfigurationError(None,"Number of attributes to split over doesn't equal number of values in list '%s'" % vallist)
+
+        # now perform the split
+        for vallist in values:
+
+            # for each list of values, set the attributes
             j = addProxy(self.createSubjob(job))
 
-            attrs = self.attribute.split('.')
-            obj = j
-            for attr in attrs[:-1]:
-                obj = getattr(obj,attr)
-            attr = attrs[-1]
+            for i in range(0, len(attrlist)):
+                attrs = attrlist[i].split('.')
+                obj = j
+                for attr in attrs[:-1]:
+                    obj = getattr(obj,attr)
+                attr = attrs[-1]
+                setattr(obj,attr,vallist[i])
+                logger.warning('set %s = %s to subjob.' % (attrlist[i],getattr(obj,attr)))
 
-            setattr(obj,attr,value)
-
-            logger.debug('set %s = %s to subjob.' % (self.attribute,getattr(obj,attr)))
             subjobs.append(stripProxy(j))
 
         return subjobs
