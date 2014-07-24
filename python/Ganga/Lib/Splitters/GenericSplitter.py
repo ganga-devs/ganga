@@ -55,7 +55,7 @@ class GenericSplitter(ISplitter):
     _schema = Schema(Version(1,0), {
         'attribute' : SimpleItem(defvalue='',doc='The attribute on which the job is splitted'),
         'values' : SimpleItem(defvalue=[],typelist=None,checkset="_checkset_values",sequence=1,doc='A list of the values corresponding to the attribute of the subjobs'),
-        'multi_args' : SimpleItem(defvalue={},doc='Dictionary to specify multiple arguments to split over'),
+        'multi_attrs' : SimpleItem(defvalue={},doc='Dictionary to specify multiple attributes to split over'),
         } )
 
     def _checkset_values(self, value):
@@ -68,8 +68,8 @@ class GenericSplitter(ISplitter):
         subjobs = []
         
         # sort out multiple arg splitting
-        if (self.attribute != '' or len(self.values) > 0) and len(self.multi_args) > 0:
-            raise ApplicationConfigurationError(None,"Setting both 'attribute'/'values' and 'multi_args' is unsupported")
+        if (self.attribute != '' or len(self.values) > 0) and len(self.multi_attrs) > 0:
+            raise ApplicationConfigurationError(None,"Setting both 'attribute'/'values' and 'multi_attrs' is unsupported")
 
         if self.attribute != '':
             attrlist = [ self.attribute ]
@@ -80,11 +80,11 @@ class GenericSplitter(ISplitter):
             # check we have enough values in the dictionary
             numjobs = -1
             attrlist = []
-            for attr in self.multi_args:
+            for attr in self.multi_attrs:
                 if numjobs == -1:
-                    numjobs = len(self.multi_args[attr])
+                    numjobs = len(self.multi_attrs[attr])
                 else:
-                    if len(self.multi_args[attr]) != numjobs:
+                    if len(self.multi_attrs[attr]) != numjobs:
                         raise ApplicationConfigurationError(None,"Number of values for '%s' doesn't equal others '%d'" % (attr, num))
 
                 attrlist.append(attr)
@@ -94,7 +94,7 @@ class GenericSplitter(ISplitter):
             for i in range(0, numjobs):
                 valtmp = []
                 for attr in attrlist:
-                    valtmp.append(self.multi_args[attr][i])
+                    valtmp.append(self.multi_attrs[attr][i])
                 values.append( valtmp )
 
         # check we have enough values to cover the attributes
