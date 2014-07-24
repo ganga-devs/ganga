@@ -20,7 +20,11 @@ def jobid_as_string(job):
 
 
 def lhcbdiracAPI_script_template():
-  return diracAPI_script_template().replace('outputPath','OutputPath').replace('outputSE','OutputSE')
+    DiracScript = diracAPI_script_template()
+    DiracScript.replace('outputPath','OutputPath').replace('outputSE','OutputSE')
+    DiracScript.replace('"\'###EXE_LOG_FILE###\'"','"\'###EXE_LOG_FILE###\'", systemConfig=\'###PLATFORM###\'')
+    DiracScript.replace('result = dirac.submit(j)','j.setDIRACPlatform()\nresult = dirac.submit(j)' )
+    return DiracScript
 
 
 ## def get_master_input_sandbox(job,extra):

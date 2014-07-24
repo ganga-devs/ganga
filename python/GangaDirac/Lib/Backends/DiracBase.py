@@ -166,11 +166,9 @@ class DiracBase(IBackend):
         #why send this?
         #input_sandbox  += [dirac_script_filename]
 
-        print str(input_sandbox)
-        print str(_addition_sandbox_content(subjobconfig))
-
+        
         input_sandbox  += self._addition_sandbox_content(subjobconfig)
-
+        
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##',str(input_sandbox))
 
         dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(),'dirac-script.py')

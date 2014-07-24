@@ -97,15 +97,12 @@ parseCommandLine()
 dirac = ###DIRAC_OBJECT###
 j = ###JOB_OBJECT###
 
-usingLHCbDirac = ###LHCB_DIRAC_TEST###
-
 # default commands added by ganga
 j.setName('###NAME###')
 j.setApplicationScript('###APP_NAME###','###APP_VERSION###','###APP_SCRIPT###',logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
 j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###', systemConfig='###PLATFORM###')
 j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###', systemConfig='###PLATFORM###')
-if usingLHCbDirac: j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###', systemConfig='###PLATFORM###')
-if not usingLHCbDirac: j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###' )
+j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###' )
 j.setExecutionEnv(###ENVIRONMENT###)
 j.setInputSandbox(###INPUT_SANDBOX###)
 j.setOutputSandbox(###OUTPUT_SANDBOX###)
@@ -123,7 +120,6 @@ if not usingLHCbDirac: j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PA
 ###DIRAC_OPTS###
 
 # submit the job to dirac
-if usingLHCbDirac: j.setDIRACPlatform()
 result = dirac.submit(j)
 output(result)
 """
