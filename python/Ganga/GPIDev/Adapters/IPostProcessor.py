@@ -112,12 +112,13 @@ class MultiPostProcessor(IPostProcessor):
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 def postprocessor_filter(value,item):
     from Ganga.GPIDev.Lib.Job.Job  import Job
+    from Ganga.GPIDev.Lib.Tasks.ITransform  import ITransform
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
     
     valid_jobtypes = [i._impl._schema.datadict['postprocessors'] for i in Ganga.GPI.__dict__.values()\
                           if hasattr(i, '_impl')\
                           and isinstance(i._impl, ObjectMetaclass)\
-                          and issubclass(i._impl, Job)\
+                          and (issubclass(i._impl, Job) or issubclass(i._impl, ITransform) )\
                           and 'postprocessors' in i._impl._schema.datadict]
 
  ##Alex modified this line to that from above to allow for arbitrary dynamic LHCbJobTemplate etc types    
