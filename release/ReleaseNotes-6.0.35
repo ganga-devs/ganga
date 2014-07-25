@@ -1,0 +1,41 @@
+**************************************************************************************************************
+6.0.35 (2014/7/25)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Added the ability for GenericSplitter to split on multiple attributes
+* Made the directory where Local jobs execute configurable with a new "location" attribute in the 
+[Local] section of the configuration
+* Fixing bug where we attempt to remove lock files twice
+* Fixing the Stopping info string for the monitoring component not being enabled
+* Fixing the prep.metadata session file bug, this might be something to do with python/AFS interaction 
+but this appears to make it go away
+* merging the inputfiles branch with the trunk
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Updating Dirac job template to DIRAC-v6r11p5 release API
+* Fixing some minor bugs in the ExeDiracRTHandler. Adding ability to change path of DiracFile put() 
+command.
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGaudi
+--------------------------------------------------------------------------------------------------------------
+* Adding ability of users to add an additional Gaudi LHCb app from config file
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+Fixed problems with prep.metadata
+
+Added knowledge of the Noether project to ganga
+
+Users can now add their own GaudiBase LHCb apps using .gangarc
+
+**************************************************************************************************************
