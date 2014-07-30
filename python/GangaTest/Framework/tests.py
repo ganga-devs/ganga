@@ -87,7 +87,7 @@ class GangaGPIPTestCase(unittest.TestCase):
         #print 'test cmd : %s' % self.testCmd
 
         output = open(self.output_path,'w')
-        pytf_paths = str.split(os.getenv('PYTF_TOP_DIR',':'))
+        pytf_paths = str.split(os.getenv('PYTF_TOP_DIR'),':')
         pytf_runner = str()
         if type(pytf_paths) is str:
             pytf_runner = os.path.join( pytf_paths, 'cmd_run.sh' )

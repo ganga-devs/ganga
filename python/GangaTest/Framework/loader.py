@@ -400,7 +400,7 @@ def %(method_name)s(self):
         finally: f.close()
    
     process = None # used as handler to the test process    
-    pytf_paths = str.split(os.getenv('PYTF_TOP_DIR',':'))
+    pytf_paths = str.split(os.getenv('PYTF_TOP_DIR'),':')
     pytf_runner = str()
     if type(pytf_paths) is str:
         pytf_runner = os.path.join( pytf_paths, 'cmd_run.sh' )
