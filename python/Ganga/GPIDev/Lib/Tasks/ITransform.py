@@ -42,7 +42,7 @@ OutputFile objects to be copied to all jobs"),
 
    _category = 'transforms'
    _name = 'ITransform'
-   _exportmethods = [ 'addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit', 'setMajorRunLimit', 'getID', 'overview' ]
+   _exportmethods = [ 'addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit', 'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus' ]
    _hidden = 0
 
    def getJobs(self):
@@ -442,3 +442,11 @@ OutputFile objects to be copied to all jobs"),
                 
       else:   
          super(ITransform,self).__setattr__(attr, value)
+
+
+   def resetUnitsByStatus( self, status = 'bad' ):
+      """Reset all units of a given status"""
+      for unit in self.units:
+         if unit.status == status:
+            print "Resetting Unit %d, Transform %d..." % (unit.getID(), self.getID() )
+            self.resetUnit( unit.getID() )

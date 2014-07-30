@@ -21,7 +21,7 @@ class ITask(GangaObject):
     _category = 'tasks'
     _name = 'ITask'
     _exportmethods = [ 'run', 'appendTransform', 'overview', 'getJobs', 'remove', 'clone', 'pause', 'check', 'setBackend', 'setParameter',
-                       'insertTransform', 'removeTransform', 'table']
+                       'insertTransform', 'removeTransform', 'table', 'resetUnitsByStatus']
 
     _tasktype = "ITask"
     
@@ -291,3 +291,9 @@ class ITask(GangaObject):
 
     def help(self):
         print "This is a Task without special properties"
+
+    def resetUnitsByStatus( self, status = 'bad' ):
+        """Reset all units of the given status"""
+        for trf in self.transforms:
+            trf.resetUnitsByStatus( status )
+
