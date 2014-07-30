@@ -21,7 +21,7 @@ class AtlasTask(ITask):
     
     _category = 'tasks'
     _name = 'AtlasTask'
-    _exportmethods = ITask._exportmethods + [ 'getContainerName', 'initializeFromDictionary', 'checkOutputContainers' ]
+    _exportmethods = ITask._exportmethods + [ 'getContainerName', 'initializeFromDictionary', 'checkOutputContainers', 'checkInputDatasets' ]
 
     _tasktype = "ITask"
     
@@ -89,3 +89,8 @@ class AtlasTask(ITask):
             trf.application = application._impl.clone()
             trf.backend = backend._impl.clone()
             trf.initializeFromContainer(physics_container, template)
+
+    def checkInputDatasets(self):
+        """Check the distribution of the input datasets"""
+        for trf in self.transforms:
+            trf.checkInputDatasets()

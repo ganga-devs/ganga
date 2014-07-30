@@ -34,7 +34,7 @@ class AtlasTransform(ITransform):
 
    _category = 'transforms'
    _name = 'AtlasTransform'
-   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers', 'setNumDQ2Threads' ]
+   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers', 'setNumDQ2Threads', 'checkInputDatasets' ]
 
    def __init__(self):
       super(AtlasTransform,self).__init__()
@@ -237,3 +237,47 @@ class AtlasTransform(ITransform):
          else:
             self.addUnit('.'.join( ds.split(".")[1:-1] ), ds, template)
             
+   def checkInputDatasets(self):
+      """Check the distribution of the input datasets"""
+      if self.backend._name != "Panda" and self.backend._name != "Jedi":
+         return
+
+      for unit in self.units:
+         print "Checking %s..." % ','.join( unit.inputdata.dataset )
+         loc = unit.inputdata.get_locations()
+         non_tape = []
+         ok_sites = []
+         for s in loc:
+            if s.find("TAPE") != -1:
+               continue
+            non_tape.append(s)
+
+            if s in self.backend.requirements.excluded_sites:
+               continue               
+            ok_sites.append(s)
+
+         # non tape sites
+         if len(non_tape) == 0:
+            print "ERROR: No non-tape site available for DS '%s'" % unit.inputdata.dataset
+         elif len(non_tape) == 1:
+            print "WARNING: Only one non-tape site available for DS '%s'" % unit.inputdata.dataset
+
+         # excluded sites
+         if len(ok_sites) == 0:
+            print "ERROR: No non-excluded sites available for DS '%s'" % unit.inputdata.dataset
+         elif len(ok_sites) == 1:
+            print "WARNING: Only one non-excluded site available for DS '%s'" % unit.inputdata.dataset
+
+         # finally check panda brokerage
+         from GangaPanda.Lib.Panda import selectPandaSite
+         site = "NONE"
+         #try:
+         site = selectPandaSite( self, ':'.join( ok_sites ) )
+         #except:
+         #   pass
+
+         if site == "NONE":
+            print "ERROR: No non-blcklisted, non-Tape, non-excluded sites available for DS '%s'" % unit.inputdata.dataset
+              
+         
+         
