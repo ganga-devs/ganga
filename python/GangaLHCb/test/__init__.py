@@ -14,7 +14,7 @@ import os.path
 DAVINCI_VERSION=None
 
 def getDiracAppPlatform():
-    return 'x86_64-slc5-gcc43-opt'
+    return 'x86_64-slc6-gcc48-opt'
 
 # Add Local runtimehandler for Testsubmitter
 def addLocalTestSubmitter():

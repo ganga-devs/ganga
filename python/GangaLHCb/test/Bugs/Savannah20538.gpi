@@ -1,6 +1,7 @@
 from Ganga.Utility.tempfile_compatibility import *
 from GangaLHCb.test import *
 from os.path import join,basename
+from os import remove
 
 j = Job ( application = DaVinci(), backend = Dirac())
 j.application.platform = getDiracAppPlatform()
@@ -17,3 +18,6 @@ j.submit()
 
 assert(checkFileInSandbox(j,basename(fname)))
 j.kill()
+
+remove(join(tmpdir,fname))
+

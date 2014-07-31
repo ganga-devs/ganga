@@ -8,7 +8,7 @@ class TestPythonOptionsParser(GangaGPITestCase):
 
     def setUp(self):
         job = Job(application=Gauss())
-        job.application.platform = 'x86_64-slc5-gcc43-opt' 
+        job.application.platform = 'x86_64-slc6-gcc48-opt' 
         gauss = job.application._impl
         gauss._getshell()
         optsfiles = ['./TestGaudi/Gauss-Job.py']

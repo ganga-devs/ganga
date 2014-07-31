@@ -38,7 +38,7 @@ class TestGaudi(GangaGPITestCase):
         #assert j.application._impl.prep_inputbox, 'inputbox empty'
 
         job = Job(application=Gauss(optsfile='./Gauss-Job.py'))
-        job.application.platform = 'x86_64-slc5-gcc43-opt'
+        job.application.platform = 'x86_64-slc6-gcc48-opt'
         gauss = job.application
         job.inputdata = ['pfn:dummy1.in','pfn:dummy2.in']
         job.outputfiles = ['Gauss.sim','GaussHistos.root','GaussMonitor.root']

@@ -44,7 +44,7 @@ class TestRootDirac(GangaGPITestCase):
         
     def testProperSubmit(self):
         
-        config.ROOT.arch = 'x86_64-slc5-gcc43-opt'
+        config.ROOT.arch = 'x86_64-slc6-gcc48-opt'
         
         j = Job(application=Root(script=script_file), backend=Dirac())
         j.submit()

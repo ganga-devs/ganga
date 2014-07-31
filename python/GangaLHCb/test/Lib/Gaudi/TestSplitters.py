@@ -123,7 +123,7 @@ class TestSplitters(GangaGPITestCase):
 
     def test_GaussSplitter_split(self):
         job = Job(application=Gauss())
-        job.application.platform = 'x86_64-slc5-gcc43-opt'
+        job.application.platform = 'x86_64-slc6-gcc48-opt'
         f=open('this-is-not-a-file.opts','w')
         f.write('')
         f.close()
