@@ -102,6 +102,7 @@ def detectPlatform():
     # assume INTEL processors (i386, i686,x64), ignore IA64 architecture
     platf4 = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
     platf5 = { 32: 'i686-slc5-gcc43-opt', 64: 'x86_64-slc5-gcc43-opt'}
+    platf6 = { 32: 'i686-slc6-gcc48-opt', 64: 'x86_64-slc6-gcc48-opt'}
 
     # for older python versions use some tricks
     import sys
@@ -120,6 +121,8 @@ def detectPlatform():
         r = c.match(platform.platform())
         if r and r.group('ver').split('.')[0] == '5':
             platfstring = platf5
+        if r and r.group('ver').split('.')[0] == '6':
+            platfstring = platf6
     except ImportError:
         pass
 
