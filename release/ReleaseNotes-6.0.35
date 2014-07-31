@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.35 (2014/7/25)
+6.0.35 (2014/7/31)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -13,6 +13,17 @@ ganga/python/Ganga
 * Fixing the prep.metadata session file bug, this might be something to do with python/AFS interaction 
 but this appears to make it go away
 * merging the inputfiles branch with the trunk
+* Added a 'resetUnitsByStatus' helper function to reset all units in Task/Transform of a given
+status (default is 'bad')
+* Allowed PostProcessor objects to be assigned to Transforms
+* Adding custom exit() script to allow for it to work as expected on the interactive prompt
+* Adding slc6-gcc48 knowledge to the code which automatically determines the current system
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Added helper function 'checkInputDatasets' that will check dataset distribution and warn of problems
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -32,10 +43,10 @@ ganga/python/GangaGaudi
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
-Fixed problems with prep.metadata
-
-Added knowledge of the Noether project to ganga
-
-Users can now add their own GaudiBase LHCb apps using .gangarc
+* Fixed problems with prep.metadata not being accessible
+* Added knowledge of the Noether project to ganga
+* Users can now add their own GaudiBase LHCb apps using .gangarc using UserAddedApplications=myProject
+* Updating tests and defaults to use slc6-gcc48 which should be available for testing
+* Moving LHCbDirac specific commands out of Dirac job template
 
 **************************************************************************************************************
