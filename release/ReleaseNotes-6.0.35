@@ -49,4 +49,10 @@ ganga/python/GangaLHCb
 * Updating tests and defaults to use slc6-gcc48 which should be available for testing
 * Moving LHCbDirac specific commands out of Dirac job template
 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaTest
+--------------------------------------------------------------------------------------------------------------
+* Fixing behaviour of some GangaTest with some environmental variables which are badly defined
+
 **************************************************************************************************************
