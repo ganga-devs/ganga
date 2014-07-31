@@ -38,6 +38,7 @@ _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 
 from Ganga.Utility.files import fullpath
 
+import exceptions
 import sys,time
 
 #import atexit, traceback
@@ -93,7 +94,6 @@ under certain conditions; type license() for details.
        for m in msg:
           print >> sys.stderr,'ganga:',m
        sys.exit(1)
-
 
     # parse the options
     
@@ -1265,7 +1265,15 @@ default_backends = LCG
                
                return credentialsWarningPrompt
             
-            from IPython.Shell import IPShellEmbed          
+            try:
+                from IPython.Shell import IPShellEmbed          
+            except ImportError:
+                print "Error Loading the IPython modules required for ganga..."
+                print "Please check your system configuration or try running:\n"
+                print "   ''SetupProject ganga''\n\n"
+                print "before re-launching ganga. Now Exiting! Gooybye!\n"
+                sys.exit(0)
+
             #override ipothonrc configuration  
             ipopts = {'prompt_in1':'${ganga_prompt()}In [\#]:',
                       'readline_omit__names':2 # disable automatic tab completion for attributes starting with _ or __
@@ -1273,6 +1281,10 @@ default_backends = LCG
             ipshell = IPShellEmbed(argv=args,rc_override=ipopts)
             # setting displayhook like this is definitely undocumented sort of a hack
             ipshell.IP.outputcache.display = _display
+
+            ### Initializing the user_ns in a way that runlines will not cause it to be regenerated
+            for i in local_ns.keys():    ipshell.IP.user_ns[i] = local_ns[i]
+
             ipshell.IP.user_ns['ganga_prompt'] = ganga_prompt
 
             # attach magic functions
@@ -1292,15 +1304,29 @@ default_backends = LCG
                #readline.parse_and_bind('set convert-meta off')
                readline.set_completion_display_matches_hook(t.displayer)
 
+            system_exit_script = """\
+def exit( value=None ):
+  import IPython
+  if __IP.rc.confirm_exit:
+    if IPython.genutils.ask_yes_no('Do you really want to exit ([y]/n)?','y'):
+      __IP.exit_now = True
+  else:
+    __IP.exit_now = True
+"""
+
+            ipshell.IP.runlines( system_exit_script )
+
             #set a custom exception handler wich disables printing of errors' traceback for 
             #all exceptions inheriting from GangaException
             def ganga_exc_handler(self,etype,value,tb):
                 #print str(etype).split('.')[-1],':', # FIXME: sys.stderr ?
                 print '\n',value, # FIXME: sys.stderr ?
+
             from Ganga.Core import GangaException
             ipshell.IP.set_custom_exc((GangaException,),ganga_exc_handler)
+
             override_credits()
-            ret = ipshell(local_ns=local_ns,global_ns=local_ns) #global_ns: FIX required by ipython 0.8.4+
+            ret = ipshell( local_ns=local_ns, global_ns=local_ns ) #global_ns: FIX required by ipython 0.8.4+
         elif shell == 'GUI':
            override_credits()
            import GangaGUI.Ganga_GUI
