@@ -5,7 +5,7 @@ from fnmatch import fnmatch
 class IGangaFile(GangaObject):
     """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
     """
-    _schema = Schema(Version(1,1), {'namePattern': SimpleItem(defvalue="",doc='pattern of the file name')})
+    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name')})
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
@@ -70,7 +70,7 @@ class IGangaFile(GangaObject):
         ## hence checking against a class type not an instance
         if type(type(to_match)) == type:
              return issubclass(self.__class__, to_match)
-        return to_match==self
+        return to_match == self
 
     def execSyscmdSubprocess(self, cmd):
 
@@ -88,3 +88,9 @@ class IGangaFile(GangaObject):
             pass
 
         return (exitcode, mystdout, mystderr)
+
+    def remove(self):
+        """
+        Objects should implement something to overload this!
+        """
+        raise NotImplementedError
