@@ -439,7 +439,11 @@ class AtlasUnit(IUnit):
       if len(self.output_file_list) == 0:
          for ds in self.getOutputDatasetList():
             dq2_list = dq2.listFilesInDataset(ds)
-                 
+            
+            # merge job DSs leave empty non-merged DSs around
+            if job.backend.__class__.__name__ == "Panda" and job.backend.requirements.enableMerge and not ds.endswith("merge") and len(dq2_list) == 0:
+               continue
+
             for guid in dq2_list[0].keys():
                self.output_file_list[ dq2_list[0][guid]['lfn'] ] = ds
          
