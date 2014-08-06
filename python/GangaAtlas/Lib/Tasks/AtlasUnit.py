@@ -338,7 +338,7 @@ class AtlasUnit(IUnit):
    def checkCompleted(self, job):
       """Check if this unit is complete"""
       if job.status == "completed":
-         if job.outputdata and job.outputdata._impl._name == "DQ2OutputDataset":
+         if job.outputdata and job.outputdata._impl._name == "DQ2OutputDataset" and job.backend.__class__.__name__ != "Jedi":
 
             # make sure all datasets are complete
             if job.backend.requirements.enableMerge:
@@ -353,11 +353,12 @@ class AtlasUnit(IUnit):
                      self._getParent().resetUnit(self.getID())
                      return False
 
-               dq2_list = dq2.listFilesInDataset(job.outputdata.datasetname)
-               for guid in dq2_list[0].keys():                  
-                  if dq2_list[0][guid]['lfn'].find("merge") == -1:
-                     logger.warning("Merged files not transferred to out DS by Panda yet. Waiting...")
-                     return False
+               for cont in cont_list:
+                  dq2_list = dq2.listFilesInDataset(cont)
+                  for guid in dq2_list[0].keys():                  
+                     if dq2_list[0][guid]['lfn'].find("merge") == -1:
+                        logger.warning("Merged files not transferred to out DS by Panda yet. Waiting...")
+                        return False
 
          return True
       else:
@@ -434,11 +435,13 @@ class AtlasUnit(IUnit):
          return False
 
       # get list of output files
+      dq2_list = []
       if len(self.output_file_list) == 0:
-         dq2_list = dq2.listFilesInDataset(job.outputdata.datasetname)
+         for ds in self.getOutputDatasetList():
+            dq2_list = dq2.listFilesInDataset(ds)
                  
-         for guid in dq2_list[0].keys():
-            self.output_file_list[ dq2_list[0][guid]['lfn'] ] = job.outputdata.datasetname
+            for guid in dq2_list[0].keys():
+               self.output_file_list[ dq2_list[0][guid]['lfn'] ] = ds
          
       # check which ones still need downloading
       to_download = {}
