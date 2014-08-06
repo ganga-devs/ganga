@@ -961,7 +961,12 @@ class Job(GangaObject):
             ### Splitting
 
             # split into subjobs
-            if self.splitter:
+            # Temporary polution of Atlas stuff to (almost) transparently switch from Panda to Jedi
+            if self.backend.__class__.__name__ == "Jedi" and self.splitter:
+                logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
+                self.splitter = None
+                rjobs = [self]
+            elif self.splitter:
                 subjobs = self.splitter.validatedSplit(self)
                 if subjobs:
                     #print "*"*80
@@ -1619,6 +1624,33 @@ class Job(GangaObject):
             #if a comment is added mark the job as dirty       
             if value != '':
                 self._setDirty()
+
+        elif attr == 'backend':
+            
+            # Temporary polution of Atlas stuff to (almost) transparently switch from Panda to Jedi
+            configPanda = None
+            if value != None and value.__class__.__name__ == "Panda":
+                configPanda = Ganga.Utility.Config.getConfig('Panda')
+
+            if configPanda and not configPanda['AllowDirectSubmission']:
+                logger.error("Direct Panda submission now deprecated - Please switch to Jedi() backend and remove any splitter.")
+                from GangaPanda.Lib.Jedi import Jedi
+                from copy import deepcopy
+
+                new_value = Jedi()
+                
+                # copy over attributes where possible
+                for attr in ['site', 'extOutFile', 'libds', 'accessmode', 'forcestaged', 'individualOutDS', 'bexec', 'nobuild']:
+                    setattr( new_value, attr, deepcopy(getattr(value, attr) ) )
+
+                for attr in ['long', 'cloud', 'anyCloud', 'memory', 'cputime', 'corCheck', 'notSkipMissing', 'excluded_sites', 
+                             'excluded_clouds', 'express', 'enableJEM', 'configJEM', 'enableMerge', 'configMerge', 'usecommainputtxt', 
+                             'rootver', 'overwriteQueuedata', 'overwriteQueuedataConfig']:
+                    setattr( new_value.requirements, attr, deepcopy(getattr(value.requirements, attr) ) )
+                                
+                super(Job,self).__setattr__(attr, new_value)
+            else:
+                super(Job,self).__setattr__(attr, value)
         else:   
             super(Job,self).__setattr__(attr, value)
     
