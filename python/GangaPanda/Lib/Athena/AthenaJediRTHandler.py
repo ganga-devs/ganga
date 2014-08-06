@@ -726,6 +726,23 @@ class AthenaJediRTHandler(IRuntimeHandler):
                 'jobParameters':jobParameters,
                 }
 
+
+        # enable merging
+        if job.backend.requirements.enableMerge:
+            jobParameters = '-r {0} '.format(self.rundirectory)
+            if job.backend.requirements.configMerge.has_key('exec') and job.backend.requirements.configMerge['exec'] != '':
+                jobParameters += '-j "{0}" '.format(options.mergeScript)
+            if not job.backend.nobuild:
+                jobParameters += '-l ${LIB} '
+            else:
+                jobParameters += '-a {0} '.format(os.path.basename(self.inputsandbox))
+                jobParameters += "--sourceURL ${SURL} "
+            jobParameters += '${TRN_OUTPUT:OUTPUT} ${TRN_LOG:LOG}'
+            taskParamMap['mergeSpec'] = {}
+            taskParamMap['mergeSpec']['useLocalIO'] = 1
+            taskParamMap['mergeSpec']['jobParameters'] = jobParameters
+            taskParamMap['mergeOutput'] = True    
+            
         # Selected by Jedi
         #if not app.atlas_exetype in ['PYARA','ROOT','EXE']:
         #    taskParamMap['transPath'] = 'http://atlpan.web.cern.ch/atlpan/runAthena-00-00-12'

@@ -361,7 +361,7 @@ class Jedi(IBackend):
         submitting_status = [ ]
         active_status = [ None, 'registered', 'waiting', 'defined', 'pending', 'assigning', 'ready', 'scouting', 'running', 'holding', 'merging', 'prepared', 'aborting', 'finishing' ]
  
-        inactive_status = [ 'finished', 'aborted', 'broken', 'failed' ]
+        inactive_status = [ 'finished', 'aborted', 'broken', 'failed', 'done' ]
 
         # Find jobs to be monitored
         jobdict = {}
@@ -486,14 +486,14 @@ class Jedi(IBackend):
                     job.updateStatus('submitted')
                 elif jediTaskDict['status'] in ['scouting', 'running', 'holding', 'merging', 'prepared' ]:
                     job.updateStatus('running')
-                elif jediTaskDict['status'] in ['finished', 'done']:
+                elif jediTaskDict['status'] in ['done']:
                     job.updateStatus('completed')
-                elif jediTaskDict['status'] == 'failed':
+                elif jediTaskDict['status'] in ['failed', 'finished']:
                     job.updateStatus('failed')
                 elif jediTaskDict['status'] in [ 'aborted', 'broken', 'cancelled' ] and job.status not in ['completed','failed']:
                     job.updateStatus('killed')
                 else:
-                    logger.warning('Unexpected job status %s', jediTaskDict['status'])
+                    logger.warning('Unexpected Jedi task status %s', jediTaskDict['status'])
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
@@ -520,11 +520,11 @@ class Jedi(IBackend):
             retryJobs = [] # jspecs
             resubmittedJobs = [] # ganga jobs
 
-            if jediTaskDict['status'] in ['failed', 'killed', 'cancelled', 'aborted', 'broken' ]:
+            if jediTaskDict['status'] in ['failed', 'killed', 'cancelled', 'aborted', 'broken', 'finished' ]:
                 retryJobs.append(job)
                 resubmittedJobs.append(jID)
-            elif jediTaskDict['status'] == 'finished':
-                pass
+            #elif jediTaskDict['status'] == 'finished':
+            #    pass
             else:
                 logger.warning("Cannot resubmit. Jedi task %s is status %s." %(jID, jediTaskDict['status'] ))
                 return False
