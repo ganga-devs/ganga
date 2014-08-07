@@ -18,6 +18,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename
 
+from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -785,7 +786,7 @@ class Athena(IPrepareApp):
 
                 if not job.outputdata.output:
                     logger.error('Could not stat output data. Marking job as failed.')
-                    job.updateStatus('failed')
+                    raise PostprocessStatusUpdate('failed')
                 
         # collect athena job statistics
         if self.collect_stats and job.backend._name in [ 'LCG', 'CREAM', 'NG', 'Panda', 'Jedi', 'Local', 'SGE', 'LSF', 'PBS' ]:
