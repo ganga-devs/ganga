@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.35 (2014/8/6)
+6.0.35 (2014/8/7)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -10,18 +10,13 @@ ganga/python/Ganga
 [Local] section of the configuration
 * Fixing bug where we attempt to remove lock files twice
 * Fixing the Stopping info string for the monitoring component not being enabled
-* Fixing the prep.metadata session file bug, this might be something to do with python/AFS 
-interaction 
-but this appears to make it go away
 * merging the inputfiles branch with the trunk
 * Added a 'resetUnitsByStatus' helper function to reset all units in Task/Transform of a given
 status (default is 'bad')
 * Allowed PostProcessor objects to be assigned to Transforms
 * Adding custom exit() script to allow for it to work as expected on the interactive prompt
-* Adding slc6-gcc48 knowledge to the code which automatically determines the current system
 * Added code to transparently switch Panda backend with Jedi and ignore splitter
 * Adding NotImplemented remove method
-* Fixing bug to do with leaked session files
 
 
 --------------------------------------------------------------------------------------------------------------
