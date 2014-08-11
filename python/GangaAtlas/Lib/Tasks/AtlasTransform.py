@@ -201,39 +201,45 @@ class AtlasTransform(ITransform):
          
       return unit
    
-   def initializeFromContainer(self, dset, template = None):
+   def initializeFromContainer(self, dset, template = None, using_jedi = True):
       """Initialise the trf with given container, creating a unit for each DS"""
       if dset[-1] != "/":
          logger.error("Please supply a container!")
          return
       
-      try:
-         tid_datasets = dq2.listDatasetsInContainer(dset)
-      except DQUnknownDatasetException:
-         logger.error("dataset container %s not found" % dset)
-         return
+      if not using_jedi:
+         try:
+            tid_datasets = dq2.listDatasetsInContainer(dset)
+         except DQUnknownDatasetException:
+            logger.error("dataset container %s not found" % dset)
+            return
          
-      logger.info("Found %i datasets matching %s..." % (len(tid_datasets), dset))
+         logger.info("Found %i datasets matching %s..." % (len(tid_datasets), dset))
          
-      for ds in tid_datasets:
-         self.addUnit('.'.join( ds.split(".")[1:-1] ), ds, template)
+         for ds in tid_datasets:
+            self.addUnit('.'.join( ds.split(".")[1:-1] ), ds, template)
+      else:
+         self.addUnit('.'.join( dset[:-1].split(".")[1:] ), dset, template)
 
 
-   def initializeFromDatasets(self, dset_list, template = None):
+   def initializeFromDatasets(self, dset_list, template = None, using_jedi = True):
       """Initialise the trf with the given dataset list, creating a unit for each DS"""
 
       for ds in dset_list:
          
          if ds[-1] == "/":
-            try:
-               tid_datasets = dq2.listDatasetsInContainer(ds)
-            except DQUnknownDatasetException:
-               logger.error("dataset container %s not found" % ds)
+            if not using_jedi:
+               try:
+                  tid_datasets = dq2.listDatasetsInContainer(ds)
+               except DQUnknownDatasetException:
+                  logger.error("dataset container %s not found" % ds)
          
-            logger.info("Found %i datasets matching %s..." % (len(tid_datasets), ds))
+               logger.info("Found %i datasets matching %s..." % (len(tid_datasets), ds))
          
-            for ds2 in tid_datasets:
-               self.addUnit('.'.join( ds.split(".")[1:-1] ), ds2, template)
+               for ds2 in tid_datasets:
+                  self.addUnit('.'.join( ds.split(".")[1:-1] ), ds2, template)
+            else:
+               self.addUnit('.'.join( ds[:-1].split(".")[1:] ), ds, template)
          else:
             self.addUnit('.'.join( ds.split(".")[1:-1] ), ds, template)
             
@@ -271,10 +277,10 @@ class AtlasTransform(ITransform):
          # finally check panda brokerage
          from GangaPanda.Lib.Panda import selectPandaSite
          site = "NONE"
-         #try:
-         site = selectPandaSite( self, ':'.join( ok_sites ) )
-         #except:
-         #   pass
+         try:
+            site = selectPandaSite( self, ':'.join( ok_sites ) )
+         except:
+            pass
 
          if site == "NONE":
             print "ERROR: No non-blcklisted, non-Tape, non-excluded sites available for DS '%s'" % unit.inputdata.dataset
