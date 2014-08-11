@@ -1638,7 +1638,7 @@ class Job(GangaObject):
                 from copy import deepcopy
 
                 new_value = Jedi()
-                
+
                 # copy over attributes where possible
                 for attr in ['site', 'extOutFile', 'libds', 'accessmode', 'forcestaged', 'individualOutDS', 'bexec', 'nobuild']:
                     setattr( new_value, attr, deepcopy(getattr(value, attr) ) )
@@ -1648,9 +1648,9 @@ class Job(GangaObject):
                              'rootver', 'overwriteQueuedata', 'overwriteQueuedataConfig']:
                     setattr( new_value.requirements, attr, deepcopy(getattr(value.requirements, attr) ) )
                                 
-                super(Job,self).__setattr__(attr, new_value)
+                super(Job,self).__setattr__('backend', new_value)
             else:
-                super(Job,self).__setattr__(attr, value)
+                super(Job,self).__setattr__('backend', value)
         else:   
             super(Job,self).__setattr__(attr, value)
     
