@@ -17,7 +17,7 @@ config.addOption( 'chirpserver', '' , 'Configuration string for the chirp server
 config.addOption( 'siteType', 'analysis' , 'Expert only.' )  
 config.addOption( 'baseURL', '' , 'Expert only.' )  
 config.addOption( 'baseURLSSL', '' , 'Expert only.' )
-config.addOption( 'AllowDirectSubmission', True, 'Deprecated. Please use the Jedi backend' )
+config.addOption( 'AllowDirectSubmission', False, 'Deprecated. Please use the Jedi backend' )
 
 # -------------------------------------------------
 # Jedi Options
