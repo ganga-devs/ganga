@@ -540,7 +540,7 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         config.addOption('SMTPHost', 'localhost' , 'The SMTP server for notification emails to be sent, default is localhost')
         config.addOption('deleteUnusedShareDir', 'always' , 'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
 
-        config.addOption('autoGenerateJobWorkspace',True,'Autogenerate workspace dirs for new jobs')
+        config.addOption('autoGenerateJobWorkspace',False,'Autogenerate workspace dirs for new jobs')
 
         # add named template options
         config.addOption('namedTemplates_ext','tpl','The default file extension for the named template system. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option')
