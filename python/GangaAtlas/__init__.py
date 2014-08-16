@@ -87,7 +87,7 @@ config.addOption('OUTPUTDATASET_NAMELENGTH', 131, 'Maximum characters of a DQ2Ou
 config.addOption('OUTPUTFILE_NAMELENGTH', 150, 'Maximum characters of a filename in DQ2OutputDataset.')
 config.addOption('NumberOfDQ2DownloadThreads', 5, 'Number of simultaneous DQ2 downloads when calling "retrieve"')
 
-config.addOption('setupScript', '/afs/cern.ch/atlas/offline/external/GRID/ddm/DQ2Clients/setup.sh', 'Script to setup DQ2Clients software')
+config.addOption('setupScript', '/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase/user/gangaDDMSetup.sh', 'Script to setup DQ2Clients software')
 
 # -------------------------------------------------
 # AMI Dataset Options
