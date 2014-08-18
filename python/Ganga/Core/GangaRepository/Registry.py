@@ -466,6 +466,7 @@ class Registry(object):
         
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
+        logger.debug( "Shutting Down Registry" )
         self._lock.acquire()
         try:
             try:
