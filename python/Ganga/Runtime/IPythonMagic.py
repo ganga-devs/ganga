@@ -19,39 +19,40 @@ import sys
 logger = getLogger( modulename = 1 )
 
 def magic_ganga( self, parameter_s = '' ):
-   """
-   IPython magic function for executing Python scripts in Ganga namespace
+    """
+    IPython magic function for executing Python scripts in Ganga namespace
 
-   Usage:
-      ganga <script> <arguments>
+    Usage:
+       ganga <script> <arguments>
 
-      <script>    - Python script in Ganga search path
-      <arguments> - Arguments to be passed to <script>
-   """
+       <script>    - Python script in Ganga search path
+       <arguments> - Arguments to be passed to <script>
+    """
 
- # Obtain list of arguments from input parameter string
-   argList = parameter_s.split()
+    # Obtain list of arguments from input parameter string
+    argList = parameter_s.split()
 
- # Determine path to script, using Ganga search rules
-   if argList:
-      path = getSearchPath()
-      script = getScriptPath( argList[ 0 ], path )
+    # Determine path to script, using Ganga search rules
+    if argList:
+        path = getSearchPath()
+        script = getScriptPath( argList[ 0 ], path )
 
     # Use mechanism based on that used in magic_run function of IPython
     # for executing script
-      if script:
-         save_argv = sys.argv
-         sys.argv = [ script ] + argList[ 1 : ]
-         prog_ns = self.shell.user_ns
-         runner = self.shell.safe_execfile
-         runner( script, prog_ns, prog_ns )
-         sys.argv = save_argv
-      else:
-         logger.warning( "Script '%s' not found in search path '%s'" %\
+        if script:
+            save_argv = sys.argv
+            sys.argv = [ script ] + argList[ 1 : ]
+            prog_ns = self.shell.user_ns
+            runner = self.shell.safe_execfile
+            runner( script, prog_ns, prog_ns )
+            sys.argv = save_argv
+        else:
+            logger.warning( "Script '%s' not found in search path '%s'" %\
             ( argList[ 0 ], path ) )
-   else:
-      print magic_ganga.__doc__
+    else:
+        print magic_ganga.__doc__
 
-   return None
+    return None
 
 InteractiveShell.magic_ganga = magic_ganga
+

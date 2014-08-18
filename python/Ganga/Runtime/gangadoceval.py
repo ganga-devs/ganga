@@ -8,6 +8,6 @@ from Ganga.GPI import *
 def evaluate(v):
     try:
         return eval(v)
-    except Exception,x:
+    except Exception, x:
         return v
-    
+
