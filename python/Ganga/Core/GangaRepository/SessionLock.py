@@ -230,7 +230,7 @@ class SessionLockManager(object):
                     fd = os.open(self.cntfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
                     os.write(fd, "0")
                     os.close(fd)
-                    registerGlobalSessionFile( self.cntfn )
+                    #registerGlobalSessionFile( self.cntfn )
                 except OSError, x:
                     if x.errno != errno.EEXIST:
                         raise RepositoryError(self.repo, "OSError on count file create: %s" % x)
