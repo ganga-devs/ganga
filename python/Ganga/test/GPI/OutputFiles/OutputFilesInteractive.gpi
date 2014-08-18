@@ -13,9 +13,7 @@ j = Job(application=Root(),backend=Interactive())
 
 j.application.script = File('fillrandom2.py')
 
-j.outputfiles = [MassStorageFile('fillrandom.root'),
-                LCGSEFile('fillrandom1.root'),
-                SandboxFile('fillrandom2.root') ]
+j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
 
 assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
 assert(j.outputfiles[1].__class__.__name__ == 'LCGSEFile')

@@ -1,20 +1,20 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 '''Application handler for Gaudi applications in LHCb.'''
 import os
-#import tempfile
+import tempfile
 import gzip
-#import pickle
+import pickle
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
-#from GaudiUtils import *
+from GaudiUtils import *
 #from GaudiRunTimeHandler import * 
 #from PythonOptionsParser import PythonOptionsParser
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
 #from Francesc import *
-#from Ganga.Utility.util import unique
+from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 #from GaudiJobConfig import *
 #from GangaLHCb.Lib.LHCbDataset import LHCbDataset,OutputData
@@ -29,7 +29,7 @@ logger = Ganga.Utility.logging.getLogger()
 def GaudiDocString(appname):
     "Provide the documentation string for each of the Gaudi based applications"
     
-    doc = """The Gaudi Application handler
+    doc="""The Gaudi Application handler
 
     The Gaudi application handler is for running LHCb GAUDI framework
     jobs. For its configuration it needs to know the version of the application
@@ -70,32 +70,32 @@ class Gaudi(GaudiBase):
     _category = 'applications'
     _exportmethods = GaudiBase._exportmethods[:]
     #_exportmethods.append['readInputData','prepare','unprepare']
-    _exportmethods += ['prepare','unprepare']
+    _exportmethods +=['prepare','unprepare']
     _hidden = 1
     _schema = GaudiBase._schema.inherit_copy()
 
     docstr = 'The gaudirun.py cli args that will be passed at run-time'
-    _schema.datadict['args'] =  SimpleItem(defvalue = ['-T'], sequence=1, strict_sequence=0,
-                                            typelist = ['str','type(None)'],doc=docstr)
+    _schema.datadict['args'] =  SimpleItem(defvalue=['-T'], sequence=1,strict_sequence=0,
+                                 typelist=['str','type(None)'],doc=docstr)
     docstr = 'The name of the optionsfile. Import statements in the file ' \
              'will be expanded at submission time and a full copy made'
-    _schema.datadict['optsfile'] =  FileItem(preparable=1, sequence=1, strict_sequence=0, defvalue = [],
+    _schema.datadict['optsfile'] =  FileItem(preparable=1,sequence=1,strict_sequence=0,defvalue=[],
                                    doc=docstr)
     docstr = 'A python configurable string that will be appended to the '  \
              'end of the options file. Can be multiline by using a '  \
              'notation like \nHistogramPersistencySvc().OutputFile = '  \
              '\"myPlots.root"\\nEventSelector().PrintFreq = 100\n or by '  \
              'using triple quotes around a multiline string.'
-    _schema.datadict['extraopts'] = SimpleItem(preparable=1, defvalue=None,
-                                     typelist = ['str', 'type(None)'], doc=docstr)
+    _schema.datadict['extraopts'] = SimpleItem(preparable=1,defvalue=None,
+                                     typelist=['str','type(None)'],doc=docstr)
 
     _schema.version.major += 0
     _schema.version.minor += 0
 ##     docstr = 'Data/sandbox items defined in prepare'
-##     schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue = [],hidden=1,doc=docstr)
-##     _schema.datadict['prep_outputbox']  = SimpleItem(preparable=1,defvalue = [],hidden=1,doc=docstr)
-##     _schema.datadict['prep_inputdata']  = ComponentItem(category='datasets', preparable=1,defvalue=GaudiInputDataset(),typelist= ['GangaLHCb.Lib.LHCbDataset.LHCbDataset'],hidden=1,doc=docstr)
-##     _schema.datadict['prep_outputdata'] = ComponentItem(category='datasets', preparable=1,defvalue=GaudiData(),typelist = ['GangaLHCb.Lib.LHCbDataset.OutputData'],hidden=1,doc=docstr)
+##     schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
+##     _schema.datadict['prep_outputbox']  = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
+##     _schema.datadict['prep_inputdata']  = ComponentItem(category='datasets', preparable=1,defvalue=GaudiInputDataset(),typelist=['GangaLHCb.Lib.LHCbDataset.LHCbDataset'],hidden=1,doc=docstr)
+##     _schema.datadict['prep_outputdata'] = ComponentItem(category='datasets', preparable=1,defvalue=GaudiData(),typelist=['GangaLHCb.Lib.LHCbDataset.OutputData'],hidden=1,doc=docstr)
  
 
     def _auto__init__(self):
@@ -106,8 +106,8 @@ class Gaudi(GaudiBase):
     def _parse_options(self):
         raise NotImplementedError
 
-    def prepare(self, force=False):
-        super(Gaudi, self).prepare(force)
+    def prepare(self,force=False):
+        super(Gaudi,self).prepare(force)
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                  'shared',
@@ -131,10 +131,9 @@ class Gaudi(GaudiBase):
             raise
    
         ## write env into input dir and share dir
-        share_path = os.path.join(share_dir, 'debug')
-        if not os.path.isdir(share_path):
-            os.makedirs(share_path) 
-        file = gzip.GzipFile(os.path.join(share_path,'gaudi-env.py.gz'), 'wb')
+        share_path = os.path.join(share_dir,'debug')
+        if not os.path.isdir(share_path): os.makedirs(share_path) 
+        file = gzip.GzipFile(os.path.join(share_path,'gaudi-env.py.gz'),'wb')
         file.write('gaudi_env = %s' % str(self.getenv(True)))
         file.close()
         #self.prep_inputbox.append(File(os.path.join(share_dir,'gaudi-env.py.gz')))
@@ -146,8 +145,8 @@ class Gaudi(GaudiBase):
             self.unprepare()
             raise
 
-        gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
+        gzipFile(os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tar' % self.is_prepared.name),
+                 os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tgz' % self.is_prepared.name),
                  True)
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
@@ -164,15 +163,14 @@ class Gaudi(GaudiBase):
             nonexistentOptFiles = []
             for f in self.optsfile:
                 f.name = fullpath(f.name)    
-                if not os.path.isfile(f.name):
-                    nonexistentOptFiles.append(f)
+                if not os.path.isfile(f.name): nonexistentOptFiles.append(f)
         
             if len(nonexistentOptFiles):
                 tmpmsg = "The 'optsfile' attribute contains non-existent file/s: ["
                 for f in nonexistentOptFiles:
-                    tmpmsg += "'%s', " % f.name
-                msg = tmpmsg[:-2]+']'
-                raise ApplicationConfigurationError(None, msg)
+                    tmpmsg+="'%s', " % f.name
+                msg=tmpmsg[:-2]+']'
+                raise ApplicationConfigurationError(None,msg)
 
 
     def master_configure(self):

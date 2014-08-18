@@ -97,13 +97,13 @@ def get_job_JSON(job):
             #if it is string -> just the path to the link       
             if isinstance(mon_link, str):       
                 mon_links_html = mon_links_html + '<div>&nbsp;&nbsp;&nbsp;<a href=\'%s\'>mon_link_%s</a></div>' % (mon_link, number)                    
-                number += 1   
+                number+=1   
             elif isinstance(mon_link, tuple):
                 if len(mon_link) == 2:  
                     mon_links_html = mon_links_html + '<div>&nbsp;&nbsp;&nbsp;<a href=\'%s\'>%s</a></div>' % (mon_link[0], mon_link[1])        
                 else:
                     mon_links_html = mon_links_html + '<div>&nbsp;&nbsp;&nbsp;<a href=\'%s\'>mon_link_%s</a></div>' % (mon_link[0], number)                    
-                    number += 1   
+                    number+=1   
                 
     result.append("\"link\": %s," % addQuotes(mon_links_html))        
 
@@ -221,8 +221,8 @@ def get_job_infos_in_time_range(fromDate=None, toDate=None):
     return job_infos    
 
 #increment dictionary value method
-def increment(d, k):
-    d.setdefault(k, 0)
+def increment(d,k):
+    d.setdefault(k,0)
     d[k] += 1
 
 def get_accumulated_subjobs_JSON(subjobs):
@@ -299,23 +299,23 @@ def create_subjobs_graphics(jobid, subjob_attribute, fromDate, toDate):
     for subjob in subjobs_in_time_range:
         
         if subjob_attribute == 'status':
-                increment(subjobs_attributes, subjob.status)       
+                increment(subjobs_attributes,subjob.status)       
         
         elif subjob_attribute == 'application':
-                increment(subjobs_attributes, subjob.application.__class__.__name__)   
+                increment(subjobs_attributes,subjob.application.__class__.__name__)   
 
         elif subjob_attribute == 'backend':
-                increment(subjobs_attributes, subjob.backend.__class__.__name__)  
+                increment(subjobs_attributes,subjob.backend.__class__.__name__)  
         
         elif subjob_attribute == 'actualCE':
-                increment(subjobs_attributes, subjob.backend.actualCE)    
+                increment(subjobs_attributes,subjob.backend.actualCE)    
 
     if subjob_attribute == 'status':
         return get_pie_chart_json(subjobs_attributes, colors=True, jobs=False)
-    else:
+    else:       
         return get_pie_chart_json(subjobs_attributes)
 
-def get_pie_chart_json(d, colors=False, jobs=False):
+def get_pie_chart_json(d,colors=False, jobs=False):
 
     #template = "{\"chd\":\"t:50,50\",\"chl\":\"Hello|World\"}"
         
@@ -325,7 +325,7 @@ def get_pie_chart_json(d, colors=False, jobs=False):
     keys = []
     values = []
 
-    for k, v in d.iteritems():
+    for k,v in d.iteritems():
         keys.append(k)
         values.append(v)
 
@@ -360,12 +360,12 @@ def create_jobs_graphics(job_attribute, fromDate=None, toDate=None):
 
     for jobInfo in job_infos_in_time_range:
         
-        if job_attribute == 'status':
-                increment(jobs_attribute, jobInfo.getJobStatus()) 
-        elif job_attribute == 'application':
-                increment(jobs_attribute, jobInfo.getJobApplication())        
-        elif job_attribute == 'backend':
-                increment(jobs_attribute, jobInfo.getJobBackend())    
+        if job_attribute == 'status':   
+                increment(jobs_attribute,jobInfo.getJobStatus()) 
+        elif job_attribute == 'application':    
+                increment(jobs_attribute,jobInfo.getJobApplication())        
+        elif job_attribute == 'backend':        
+                increment(jobs_attribute,jobInfo.getJobBackend())    
 
     if job_attribute == 'status':
         return get_pie_chart_json(jobs_attribute, colors=True, jobs=True)
@@ -387,13 +387,13 @@ def get_jobs_JSON(fromDate=None, toDate=None):
     if json_jobs_strings[-1] == ",":
         json_jobs_strings = json_jobs_strings[:-1]
         
-    json_jobs_strings.append("]}")
+    json_jobs_strings.append("]}")      
 
     return "".join(json_jobs_strings)
 
 def update_jobs_dictionary():
 
-    reg = getRegistry("jobs")
+    reg = getRegistry("jobs") 
     #get the changed jobs
     changed_ids = reg.pollChangedJobs("WebGUI")
 
@@ -680,7 +680,7 @@ class GetHandler(BaseHTTPRequestHandler):
 
         return
 
-jobs_dictionary = {}
+jobs_dictionary={}
 httpServerHost = 'localhost'
 httpServerStartTryPort = 8080   
 

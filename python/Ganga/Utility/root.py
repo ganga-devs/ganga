@@ -70,9 +70,9 @@ def getpythonhome(arch = None, pythonversion=None):
     except ConfigError:
         pass
     import os
-    if not os.path.exists( pythonhome ):
+    if not os.direxists( pythonhome ):
         pythonhome2 = pythonhome.replace('../../external', '../external')
-        if os.path.exists( pythonhome2 ):
+        if os.direxists( pythonhome2 ):
             pythonhome = pythonhome2
     logger.debug('PYTHONHOME: %s', pythonhome)
     return pythonhome

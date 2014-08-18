@@ -10,7 +10,6 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         self.j = j
         self.app = j.application._impl
         self.rth = LHCbRootDiracRunTimeHandler()
-        print "inputsandbox in setup is = ", j.inputsandbox
 
     def test_RootDiracRTHandler_master_prepare(self):
         os.system('touch /tmp/testrdrth_mp.C')

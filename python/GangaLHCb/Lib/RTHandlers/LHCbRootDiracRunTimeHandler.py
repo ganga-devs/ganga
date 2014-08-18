@@ -52,8 +52,6 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
     def master_prepare(self,app,appmasterconfig):
         #self.__check_versions_against_dirac(app)
         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig)
-        print "input: ", inputsandbox
-        print "output: ", outputsandbox
         # check file is set OK
         if not app.script.name:
             msg = 'Root.script.name must be set.'

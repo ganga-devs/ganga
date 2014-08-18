@@ -38,7 +38,6 @@ import sys
 
 #pattern used to get savannah bugID:
 BUGID_PATTERN = re.compile('^[a-zA-Z0-9_./]*bugs[a-zA-Z0-9_./]*savannah([0-9]*).*$', re.IGNORECASE)
-JIRA_BUGID_PATTERN = re.compile('^[a-zA-Z0-9_./]*bugs[a-zA-Z0-9_./]*jira([0-9]*).*$', re.IGNORECASE)
 
 #global vars used in reporting 
 stdouts_dir = ''
@@ -161,8 +160,8 @@ def appendLinesToDetailedReport(out,group,tests):
             # same result, is this a bug item?
             t1_name = t1.getAttribute('name')
             t2_name = t2.getAttribute('name')
-            matcher1 = re.match(BUGID_PATTERN, t1_name)
-            matcher2 = re.match(BUGID_PATTERN, t2_name)
+            matcher1 = re.match(BUGID_PATTERN,t1_name)
+            matcher2 = re.match(BUGID_PATTERN,t2_name)
             if matcher1 is not None and matcher2 is not None:
                 try:
                     mat1 = int(matcher1.group(1))
@@ -173,21 +172,7 @@ def appendLinesToDetailedReport(out,group,tests):
                 except:
                     mat2 = 0
                 return mat1-mat2
-                # else, natural order of name attributes    
-
-            JiraMatcher1 = re.match(JIRA_BUGID_PATTERN, t1_name)
-            JiraMatcher2 = re.match(JIRA_BUGID_PATTERN, t2_name)
-            if JiraMatcher1 is not None and JiraMatcher2 is not None:
-                try:
-                    mat1 = int(JiraMatcher1.group(1))
-                except:
-                    mat1 = 0
-                try:
-                    mat2 = int(JiraMatcher2.group(1))
-                except:
-                    mat2 = 0
-                return mat1-mat2
-
+            # else, natural order of name attributes    
             return cmp(t1_name,t2_name)
             
         testcases.sort(cmp_testcases)    
@@ -233,7 +218,7 @@ def printTestCase(out,testcase,config=None):
             info = getText(failureNode.childNodes)
         else:
             result = '<font color="green">%s</font>'%result
-        #link to standard output
+        #link to standard output    
         if gpip_type:
             # if the test type is "gpip", the link of standard output will be indicated to the same standard output file.
             stdout = name.split()[0].replace("/",".").split(":")[0] + ".ALL__"+config
@@ -246,31 +231,24 @@ def printTestCase(out,testcase,config=None):
         info = info.strip()
         if info: #wrap in <pre>
             info = '<pre>%s</pre>' % info
-        info = '%s<a class="small" href="../output/%s">View full output</a>' %(info, stdout+".out")
+        info = '%s<a class="small" href="../output/%s">View full output</a>' %(info,stdout+".out")
         if name.lower().find('stats')>=0:
-            info = '%s &nbsp; <a class="small" href="../output/%s">Statistics</a>' %(info, stdout+".stats")
+            info = '%s &nbsp; <a class="small" href="../output/%s">Statistics</a>' %(info,stdout+".stats")
         #link to code:
         
         if config != 'Schema':
-            name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (name, code_repository_prefix+testcase_src+ext+code_repository_suffix)
+            name = '<strong>%s</strong><br><a class="small" href="%s">[Source Code]</a>' % (name,code_repository_prefix+testcase_src+ext+code_repository_suffix)
         else:
-            name = '<strong>%s: %s</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'), testcase.getAttribute('ganga_schema_userid'), code_repository_prefix+testcase_src+ext+code_repository_suffix)
+            name = '<strong>%s: %s</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'), testcase.getAttribute('ganga_schema_userid'),code_repository_prefix+testcase_src+ext+code_repository_suffix)
         #XXX - uncomment this if you want to get a link to individual coverage reports for each testcase
         #name = '%s <a class="small" href="coverage/%s/index.htm">[Coverage Report]</a>' % (name,stdout )
         #if bug, link to savannah page
-
-        matcher = re.match(BUGID_PATTERN, testcase_name)
+        matcher = re.match(BUGID_PATTERN,testcase_name)
         if matcher is not None:
-            #savannah_page = 'http://savannah.cern.ch/bugs/?func=detailitem&item_id=%s' % matcher.group(1)
-            savannah_page = 'https://its.cern.ch/jira/issues/?jql="External\ issue ID" ~ "bugs%s"' % matcher.group(1)
-            name = '%s <a class="small" href="%s">[Savannah Report]</a>' % (name, savannah_page)
-
-        JiraMatcher = re.match(JIRA_BUGID_PATTERN, testcase_name)
-        if JiraMatcher is not None:
-            jira_page = 'https://its.cern.ch/jira/browse/GANGA-%s' % matcher.group(1)
-            name = '%s <a class="small" href="%s">[Jira Report]</a>' % (name, jira_page)
-
-    print >>out, '<tr>\n<td><nowrap>%s</nowrap></td> <td>%s</td> <td>%s</td> <td>%s</td>\n</tr>\n'%(name, time, result, info)               
+            savannah_page = 'http://savannah.cern.ch/bugs/?func=detailitem&item_id=%s' % matcher.group(1)
+            name = '%s <a class="small" href="%s">[Savannah Report]</a>' % (name,savannah_page)
+        
+    print >>out, '<tr>\n<td><nowrap>%s</nowrap></td> <td>%s</td> <td>%s</td> <td>%s</td>\n</tr>\n'%(name,time,result,info)               
 
 # main methods
 def generate1stLevelReports(reports,categories=[]):

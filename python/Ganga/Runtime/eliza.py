@@ -12,67 +12,67 @@ import re
 import random
 
 class eliza:
-    def __init__(self):
-        self.keys = map(lambda x:re.compile(x[0], re.IGNORECASE), gPats)
-        self.values = map(lambda x:x[1], gPats)
+  def __init__(self):
+    self.keys = map(lambda x:re.compile(x[0], re.IGNORECASE),gPats)
+    self.values = map(lambda x:x[1],gPats)
 
-    #----------------------------------------------------------------------
-    # translate: take a string, replace any words found in dict.keys()
-    #  with the corresponding dict.values()
-    #----------------------------------------------------------------------
-    def translate(self, str, dict):
-        words = string.split(string.lower(str))
-        keys = dict.keys();
-        for i in range(0, len(words)):
-            if words[i] in keys:
-                words[i] = dict[words[i]]
-        return string.join(words)
+  #----------------------------------------------------------------------
+  # translate: take a string, replace any words found in dict.keys()
+  #  with the corresponding dict.values()
+  #----------------------------------------------------------------------
+  def translate(self,str,dict):
+    words = string.split(string.lower(str))
+    keys = dict.keys();
+    for i in range(0,len(words)):
+      if words[i] in keys:
+        words[i] = dict[words[i]]
+    return string.join(words)
 
-    #----------------------------------------------------------------------
-    #  respond: take a string, a set of regexps, and a corresponding
-    #    set of response lists; find a match, and return a randomly
-    #    chosen response from the corresponding list.
-    #----------------------------------------------------------------------
-    def respond(self, str):
-        # find a match among keys
-        for i in range(0, len(self.keys)):
-            match = self.keys[i].match(str)
-            if match:
-                # found a match ... stuff with corresponding value
-                # chosen randomly from among the available options
-                resp = random.choice(self.values[i])
-                # we've got a response... stuff in reflected text where indicated
-                pos = string.find(resp, '%')
-                while pos > -1:
-                    num = string.atoi(resp[pos+1:pos+2])
-                    resp = resp[:pos] + \
-                        self.translate(match.group(num), gReflections) + \
-                        resp[pos+2:]
-                    pos = string.find(resp, '%')
-                # fix munged punctuation at the end
-                if resp[-2:] == '?.': resp = resp[:-2] + '.'
-                if resp[-2:] == '??': resp = resp[:-2] + '?'
-                return resp
+  #----------------------------------------------------------------------
+  #  respond: take a string, a set of regexps, and a corresponding
+  #    set of response lists; find a match, and return a randomly
+  #    chosen response from the corresponding list.
+  #----------------------------------------------------------------------
+  def respond(self,str):
+    # find a match among keys
+    for i in range(0,len(self.keys)):
+      match = self.keys[i].match(str)
+      if match:
+        # found a match ... stuff with corresponding value
+        # chosen randomly from among the available options
+        resp = random.choice(self.values[i])
+        # we've got a response... stuff in reflected text where indicated
+        pos = string.find(resp,'%')
+        while pos > -1:
+          num = string.atoi(resp[pos+1:pos+2])
+          resp = resp[:pos] + \
+            self.translate(match.group(num),gReflections) + \
+            resp[pos+2:]
+          pos = string.find(resp,'%')
+        # fix munged punctuation at the end
+        if resp[-2:] == '?.': resp = resp[:-2] + '.'
+        if resp[-2:] == '??': resp = resp[:-2] + '?'
+        return resp
 
 #----------------------------------------------------------------------
 # gReflections, a translation table used to convert things you say
 #    into things the computer says back, e.g. "I am" --> "you are"
 #----------------------------------------------------------------------
 gReflections = {
-    "am"   : "are",
-    "was"  : "were",
-    "i"    : "you",
-    "i'd"  : "you would",
-    "i've"  : "you have",
-    "i'll"  : "you will",
-    "my"  : "your",
-    "are"  : "am",
-    "you've": "I have",
-    "you'll": "I will",
-    "your"  : "my",
-    "yours"  : "mine",
-    "you"  : "me",
-    "me"  : "you"
+  "am"   : "are",
+  "was"  : "were",
+  "i"    : "you",
+  "i'd"  : "you would",
+  "i've"  : "you have",
+  "i'll"  : "you will",
+  "my"  : "your",
+  "are"  : "am",
+  "you've": "I have",
+  "you'll": "I will",
+  "your"  : "my",
+  "yours"  : "mine",
+  "you"  : "me",
+  "me"  : "you"
 }
 
 #----------------------------------------------------------------------
@@ -331,24 +331,24 @@ gPats = [
 #  command_interface
 #----------------------------------------------------------------------
 def command_interface():
-    print "Ganga Interactive Help\n\n"
-    print "Ask your questions by typing them in plain English, using normal upper-"
-    print 'and lower-case letters and punctuation.  Enter "quit" when done.'
-    print '='*72
-    print "Hello.  What is your problem?\n"
-    s = ""
-    therapist = eliza();
-    while s != "quit":
-        try: s = raw_input(">")
-        except EOFError:
-            s = "quit"
-            print s
-        while s[-1] in "!.": s = s[:-1]
-        print therapist.respond(s)
+  print "Ganga Interactive Help\n\n"
+  print "Ask your questions by typing them in plain English, using normal upper-"
+  print 'and lower-case letters and punctuation.  Enter "quit" when done.'
+  print '='*72
+  print "Hello.  What is your problem?\n"
+  s = ""
+  therapist = eliza();
+  while s != "quit":
+    try: s = raw_input(">")
+    except EOFError:
+      s = "quit"
+      print s
+    while s[-1] in "!.": s = s[:-1]
+    print therapist.respond(s)
 
 
 if __name__ == "__main__":
-    command_interface()
+  command_interface()
 
 
 #

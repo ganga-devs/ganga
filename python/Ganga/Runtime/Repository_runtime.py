@@ -5,7 +5,7 @@ Internal initialization of the repositories.
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('Configuration')
 
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logging import getLogger,log_user_exception
 logger = getLogger()
 
 import os.path
@@ -24,45 +24,45 @@ def requiresGridProxy():
     return False
 
 def getLocalRoot():
-    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
-        return os.path.join(expandfilename(config['gangadir']), 'repository', config['user'], config['repositorytype'])
+    if config['repositorytype'] in ['LocalXML','LocalAMGA','LocalPickle','SQLite']:
+        return os.path.join(expandfilename(config['gangadir']),'repository',config['user'],config['repositorytype'])
     else:
         return ''
 
 def getOldJobs():
-    salvaged_jobs = {'jobs':[], 'templates':[]}
-    basepath = os.path.join(expandfilename(config['gangadir']), 'repository', config['user'])
-    names = ['jobs', 'templates']
+    salvaged_jobs = {'jobs':[],'templates':[]}
+    basepath = os.path.join(expandfilename(config['gangadir']),'repository',config['user'])
+    names = ['jobs','templates']
 
     path = os.path.join(basepath,"LocalAMGA")
-    if os.path.exists(path) and not os.path.exists(os.path.join(path, "converted.to.XML.6.0")):
+    if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
         from Ganga.Core.JobRepository.ARDA import repositoryFactory
         for name in names:
             try:
                 rep = repositoryFactory(subpath = name)
                 co_jobs = rep.checkoutJobs({})
                 salvaged_jobs[name].extend(co_jobs)
-                file(os.path.join(path,"converted.to.XML.6.0"), "w").close()
+                file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
                 rep.releaseAllLocks()
                 if len(co_jobs) > 0:
                     logger.warning("Converted %i jobs from old AMGA repository" % len(co_jobs))
-            except Exception, x:
+            except Exception,x:
                 logger.error("Could not load old AMGA repository: %s" % x)
                 raise
 
     from Ganga.Core.JobRepositoryXML import factory, version
     for name in names:
-        path = os.path.join(basepath, "LocalXML", version, name)
-        if os.path.exists(path) and not os.path.exists(os.path.join(path, "converted.to.XML.6.0")):
+        path = os.path.join(basepath,"LocalXML",version,name)
+        if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
             try:
                 rep = factory(dir = path)
                 co_jobs = rep.checkoutJobs({})
                 salvaged_jobs[name].extend(co_jobs)
-                file(os.path.join(path, "converted.to.XML.6.0"), "w").close()
+                file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
                 rep.releaseAllLocks()
                 if len(co_jobs) > 0:
                     logger.warning("Converted %i jobs from old XML repository" % len(co_jobs))
-            except Exception, x:
+            except Exception,x:
                 logger.error("Could not load old XML repository: %s" % x)
                 raise
 
@@ -77,12 +77,12 @@ def bootstrap():
     ## or even named templated registries as the _auto__init from job will require the prep registry to
     ## already be ready. This showed up when adding the named templates.
     def prep_filter(x, y):
-        if x.name == 'prep': return -1
+        if x.name=='prep': return -1
         return 1
 
-    for registry in sorted(getRegistries(), prep_filter):
+    for registry in sorted(getRegistries(),prep_filter):
         if registry.name in started_registries: continue
-        if not hasattr(registry, 'type'):
+        if not hasattr(registry,'type'):
             registry.type = config["repositorytype"]
         if not hasattr(registry, 'location'):
             registry.location = getLocalRoot()
@@ -106,7 +106,7 @@ def bootstrap():
     return retval
 
 def shutdown():
-    logger.debug('Registry shutdown')
+    logger.debug('registry shutdown')
     #shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     #method to perform actions on the box and/or job registries.
     logger.debug(started_registries)
@@ -119,6 +119,3 @@ def shutdown():
         if not registry.name in started_registries: continue
         started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
         registry.shutdown() # flush and release locks
-
-    from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles
-    removeGlobalSessionFiles()
