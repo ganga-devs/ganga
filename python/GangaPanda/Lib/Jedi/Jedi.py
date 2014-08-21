@@ -158,7 +158,6 @@ def checkForRebrokerage(string):
         newJobsetID = long(matchObj.group(2))
         newJobID = long(matchObj.group(3))
         return newPandaID
-        print newPandaID
     raise BackendError('Jedi','Error getting new PandaID for rebrokered job. Report to DA Help')
 
 class JediPandaMergeJob(GangaObject):
@@ -377,7 +376,6 @@ class Jedi(IBackend):
         pandaJobIDs = {}
         for jID in allJobIDs:
             status, jediTaskDict = Client.getJediTaskDetails({'jediTaskID': jID},False,True,verbose=False)
-
             if status != 0:
                 logger.error("Failed to get task details for %s" % jID)
                 #raise BackendError('Jedi','Return code %d retrieving job status information.' % status)
@@ -390,6 +388,32 @@ class Jedi(IBackend):
             else:
                 pandaJobIDs[jediTaskDict['jediTaskID']] = jediTaskDict['PandaID']
             logger.debug("jID = %s, pandaJobIDs = %s" % (jID, pandaJobIDs))
+
+            # Fill the output data dataset list
+            if jediTaskDict.has_key('outDS') and jediTaskDict['outDS'] != '':
+                for ds in jediTaskDict['outDS'].split(','):
+                    if not ds in job.outputdata.datasetList:
+                        job.outputdata.datasetList.append(ds)
+
+            # Jedi job status has changed
+            if job.backend.status != jediTaskDict['status']:
+                logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status, jediTaskDict['status'])
+                job.backend.status = jediTaskDict['status']
+                job.backend.reason = jediTaskDict['statistics']
+
+                # Now update Jedi job status
+                if jediTaskDict['status'] in ['registered', 'waiting', 'defined', 'pending', 'assigning', 'ready']:
+                    job.updateStatus('submitted')
+                elif jediTaskDict['status'] in ['scouting', 'running', 'holding', 'merging', 'prepared' ]:
+                    job.updateStatus('running')
+                elif jediTaskDict['status'] in ['done']:
+                    job.updateStatus('completed')
+                elif jediTaskDict['status'] in ['failed', 'finished']:
+                    job.updateStatus('failed')
+                elif jediTaskDict['status'] in [ 'aborted', 'broken', 'cancelled' ] and job.status not in ['completed','failed']:
+                    job.updateStatus('killed')
+                else:
+                    logger.warning('Unexpected Jedi task status %s', jediTaskDict['status'])
 
             # Check if associated Panda job exist and monitor them
             if not job.backend.pandajobs:
@@ -468,32 +492,6 @@ class Jedi(IBackend):
                                     pjob.status = None
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
-
-            # Fill the output data dataset list
-            if jediTaskDict.has_key('outDS') and jediTaskDict['outDS'] != '':
-                for ds in jediTaskDict['outDS'].split(','):
-                    if not ds in job.outputdata.datasetList:
-                        job.outputdata.datasetList.append(ds)
-
-            # Jedi job status has changed
-            if job.backend.status != jediTaskDict['status']:
-                logger.debug('Job %s has changed status from %s to %s',job.getFQID('.'),job.backend.status, jediTaskDict['status'])
-                job.backend.status = jediTaskDict['status']
-                job.backend.reason = jediTaskDict['statistics']
-
-                # Now update Jedi job status
-                if jediTaskDict['status'] in ['registered', 'waiting', 'defined', 'pending', 'assigning', 'ready']:
-                    job.updateStatus('submitted')
-                elif jediTaskDict['status'] in ['scouting', 'running', 'holding', 'merging', 'prepared' ]:
-                    job.updateStatus('running')
-                elif jediTaskDict['status'] in ['done']:
-                    job.updateStatus('completed')
-                elif jediTaskDict['status'] in ['failed', 'finished']:
-                    job.updateStatus('failed')
-                elif jediTaskDict['status'] in [ 'aborted', 'broken', 'cancelled' ] and job.status not in ['completed','failed']:
-                    job.updateStatus('killed')
-                else:
-                    logger.warning('Unexpected Jedi task status %s', jediTaskDict['status'])
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
