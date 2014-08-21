@@ -248,9 +248,18 @@ class AtlasUnit(IUnit):
             if j.backend.requirements.enableMerge:
                max_length -= 12
 
-            if j.backend.individualOutDS or j.backend._impl._name == "Jedi":
+            if j.backend._impl._name == "Jedi":
+               # go over the outputdata and check for output names that Jedi appends to the outDS name
+               tmp_len_chg = 8
+               for o in j.outputdata.outputdata:
+                  if (len(o)+1) > tmp_len_chg:
+                     tmp_len_chg = len(o)+1
+
+               max_length -= tmp_len_chg
+
+            elif j.backend.individualOutDS:
                max_length -= 8
-            
+
          if j.outputdata.datasetname != "":
             dsn = [j.outputdata.datasetname, "j%i.t%i.trf%i.u%i" %
                    (j.id, task.id, trf.getID(), self.getID())]
