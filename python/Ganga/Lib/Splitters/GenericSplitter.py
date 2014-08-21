@@ -85,7 +85,7 @@ class GenericSplitter(ISplitter):
                     numjobs = len(self.multi_attrs[attr])
                 else:
                     if len(self.multi_attrs[attr]) != numjobs:
-                        raise ApplicationConfigurationError(None,"Number of values for '%s' doesn't equal others '%d'" % (attr, num))
+                        raise ApplicationConfigurationError(None,"Number of values for '%s' doesn't equal others '%d'" % (attr, numjobs))
 
                 attrlist.append(attr)
 
@@ -115,7 +115,7 @@ class GenericSplitter(ISplitter):
                     obj = getattr(obj,attr)
                 attr = attrs[-1]
                 setattr(obj,attr,vallist[i])
-                logger.warning('set %s = %s to subjob.' % (attrlist[i],getattr(obj,attr)))
+                logger.debug('set %s = %s to subjob.' % (attrlist[i],getattr(obj,attr)))
 
             subjobs.append(stripProxy(j))
 
