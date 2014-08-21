@@ -146,7 +146,6 @@ def disableInternalServices():
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()  
     #flush the registries
-    log.debug( "Coordinator Shutting Down Repository_runtime" )
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
     #this will disable any interactions with the registries (implicitly with the GPI)
