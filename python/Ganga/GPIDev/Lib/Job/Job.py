@@ -1361,6 +1361,11 @@ class Job(GangaObject):
         if not validOutputFiles:
             raise JobError(errorMsg)
 
+        if self.status in ['new']:
+            msg = "cannot resubmit a new job %s, please use submit()" % (fqid)
+            logger.error(msg)
+            raise JobError(msg)
+
         #the status check is disabled when auto_resubmit
         if not self.status in ['completed','failed','killed'] and not auto_resubmit:
             msg = "cannot resubmit job %s which is in '%s' state"%(fqid,self.status)
