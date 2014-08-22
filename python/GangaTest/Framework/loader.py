@@ -434,7 +434,7 @@ def %(method_name)s(self):
                         stdin=PIPE, stdout=output, stderr=STDOUT, close_fds=True)        
         process.wait()
         output.write('########## Test finished: ' + time.ctime() + ' ##########')
-        output.write('')
+        output.write("\\n")
         output.close()
         sts = process.returncode
         if sts is None:
