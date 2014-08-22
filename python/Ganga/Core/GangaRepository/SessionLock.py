@@ -63,12 +63,13 @@ def getGlobalSessionFiles():
     return sessionFiles
 
 class SessionLockRefresher(GangaThread):
-    def __init__(self, session_name, sdir, fn, repo):
+    def __init__(self, session_name, sdir, fn, repo, afs):
         GangaThread.__init__(self, name='SessionLockRefresher', critical=False)
         self.session_name = session_name
         self.sdir = sdir
         self.fn = fn
         self.repos = [repo]
+        self.afs = afs
 
     ## This function attempts to grab the ctime from a file which should exist
     ## As we don't want this to fail outright it attempts to re-read every 1s
@@ -150,7 +151,12 @@ class SessionLockRefresher(GangaThread):
                     break
                 except Exception, x:
                     logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
-                time.sleep(1+random.random())
+
+                # attempt to reduce amount of I/O on afs
+                if self.afs:
+                    time.sleep(5+random.random())
+                else:
+                    time.sleep(1+random.random())
         finally:
             logger.debug("Finishing Monitoring Loop")
 #            # FIXME: This appears to be doubbly removing session files sometimes...
@@ -215,6 +221,21 @@ class SessionLockManager(object):
         self.realpath = realpath
         logger.debug( "Initializing SessionLockManager: " + self.fn )
 
+    def delay_init_open(self,filename):
+        value = None
+        i=0
+        while value is None:
+            try:
+                value = os.open( filename, os.O_EXCL | os.O_CREAT | os.O_WRONLY )
+            except OSError, x:
+                time.sleep(1)
+                if i >= 30:
+                    raise x
+                else:
+                    continue
+            i=i+1
+        return value
+
     def startup(self):
         # Ensure directories exist
         self.mkdir(os.path.join(self.realpath, "sessions"))
@@ -227,7 +248,7 @@ class SessionLockManager(object):
             # setup counter file if it does not exist, read it if it does
             if not os.path.exists(self.cntfn):
                 try:
-                    fd = os.open(self.cntfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
+                    fd = self.delay_init_open( self.cntfn )
                     os.write(fd, "0")
                     os.close(fd)
                     #registerGlobalSessionFile( self.cntfn )
@@ -243,7 +264,7 @@ class SessionLockManager(object):
             self.cnt_write()
             # Setup session file
             try:
-                fd = os.open(self.fn, os.O_EXCL | os.O_CREAT | os.O_WRONLY)
+                fd = self.delay_init_open( self.fn )
                 os.write(fd,pickle.dumps(Set()))
                 os.close(fd)
                 registerGlobalSessionFile( self.fn )
@@ -252,11 +273,11 @@ class SessionLockManager(object):
             global session_lock_refresher
             if session_lock_refresher is None:
                 try:
-                    os.close(os.open( self.gfn, os.O_EXCL | os.O_CREAT | os.O_WRONLY ) )    
+                    os.close( self.delay_init_open( self.gfn ) )
                     registerGlobalSessionFile( self.gfn )
                 except OSError, x:
                     raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, x))
-                session_lock_refresher = SessionLockRefresher(self.session_name, self.sdir, self.gfn, self.repo)
+                session_lock_refresher = SessionLockRefresher(self.session_name, self.sdir, self.gfn, self.repo, self.afs)
                 session_lock_refresher.start()
             else:
                 session_lock_refresher.addRepo(self.repo)
@@ -278,28 +299,76 @@ class SessionLockManager(object):
         global session_lock_refresher
         session_lock_refresher = None
 
+    def delayopen_global(self):
+        value = None
+        i = 0
+        while value is None:
+            try:
+                value = os.open(self.lockfn, os.O_RDWR)
+            except OSError, x:
+                 #print "fail"
+                value = None
+                i = i+1
+                time.sleep(1)
+                if i >= 30: #3000:
+                    raise x
+                else:
+                    continue
+        return value
+
     # Global lock function
     def global_lock_setup(self):
         self.lockfn = os.path.join(self.sdir, "global_lock")
         try:
-            file(self.lockfn, "w").close() # create file (does not interfere with existing sessions)
-            self.lockfd = os.open(self.lockfn, os.O_RDWR)
+            if not os.path.isfile( self.lockfn ):
+                file(self.lockfn, "w").close() # create file (does not interfere with existing sessions)
+            self.lockfd = self.delayopen_global()
         except IOError, x:
             raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
         except OSError, x:
             raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
+    def delay_lock_mod(self, lock_mod):
+        i = 0
+        while i < 35:
+            try:
+                fcntl.lockf( self.lockfd, lock_mod )
+                break
+            except IOError, x:
+                time.sleep(1)
+                i=i+1
+                if i >= 30:
+                    raise x
+                else:
+                    continue
+        return
+
     def global_lock_acquire(self):
         try:
-            fcntl.lockf(self.lockfd, fcntl.LOCK_EX)
+            self.delay_lock_mod( fcntl.LOCK_EX )
         except IOError, x:
             raise RepositoryError(self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
             
     def global_lock_release(self):
         try:
-            fcntl.lockf(self.lockfd, fcntl.LOCK_UN)
+            self.delay_lock_mod( fcntl.LOCK_UN )
         except IOError, x:
             raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
+
+    def delay_session_open(self,filename):
+        value = None
+        i = 0
+        while value is None:
+            try:
+                value = os.open(filename, os.O_RDONLY)
+            except OSError, x:
+                time.sleep(1)
+                i=i+1
+                if i >= 30:
+                    raise x
+                else:
+                    continue
+        return value
 
     # Session read-write functions
     def session_read(self, fn):
@@ -308,7 +377,7 @@ class SessionLockManager(object):
             locking is done
             Raises RepositoryError if severe access problems occur (corruption otherwise!) """
         try:
-            fd = os.open(fn, os.O_RDONLY) # This can fail (thats OK, file deleted in the meantime)
+            fd = self.delay_session_open( fn ) # This can fail (thats OK, file deleted in the meantime)
             try:
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
