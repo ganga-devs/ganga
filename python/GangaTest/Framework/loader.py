@@ -433,7 +433,8 @@ def %(method_name)s(self):
         process = Popen(script_runner, shell=False, bufsize=0, 
                         stdin=PIPE, stdout=output, stderr=STDOUT, close_fds=True)        
         process.wait()
-        output.write('########## Test finished: ' + time.ctime() + ' ##########\n')
+        output.write('########## Test finished: ' + time.ctime() + ' ##########')
+        output.write('')
         output.close()
         sts = process.returncode
         if sts is None:
