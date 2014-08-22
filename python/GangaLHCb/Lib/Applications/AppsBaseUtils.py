@@ -33,7 +33,7 @@ def backend_handlers():
 available_lhcb_apps = ["Gauss", "Boole", "Brunel",
                        "DaVinci", "Moore", "Vetra",
                        "Panoptes", "Erasmus", "Alignment",
-                       "Noether" ]
+                       "Noether", "Urania" ]
 
 def available_apps():
     return available_lhcb_apps
@@ -49,6 +49,7 @@ available_lhcb_packs={
      'Bender'    : 'Phys',
      'Erasmus'   : '',
      'Noether'   : '',
+     'Urania'    : 'PID',
      'Alignment' : 'Alignment/Escher'
      }
 
