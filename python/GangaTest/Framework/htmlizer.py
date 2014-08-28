@@ -262,7 +262,7 @@ def printTestCase(out,testcase,config=None):
         matcher = re.match(BUGID_PATTERN, testcase_name)
         if matcher is not None:
             #savannah_page = 'http://savannah.cern.ch/bugs/?func=detailitem&item_id=%s' % matcher.group(1)
-            savannah_page = 'https://its.cern.ch/jira/issues/?jql="External\ issue ID" ~ "bugs%s"' % matcher.group(1)
+            savannah_page = 'https://its.cern.ch/jira/issues/?jql=\'External\ issue ID\' ~ \'bugs%s\'' % matcher.group(1)
             name = '%s <a class="small" href="%s">[Savannah Report]</a>' % (name, savannah_page)
 
         JiraMatcher = re.match(JIRA_BUGID_PATTERN, testcase_name)
