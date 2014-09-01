@@ -26,15 +26,25 @@ class PluginManager(object):
         If plugin not found raise PluginManagerError.
         """
         try:
-            if name is None:
+            if (name is None) and (category in self.first):
                 return self.first[category]
+            elif not category in self.first:
+                for category_i in self.all_dict:
+                    if name in self.all_dict[category_i]:
+                        message1 = "Category of %s, has likely changed between ganga versions!" % name
+                        message2 = "Category Requested: %s,   Category in which plugin was found: %s" % ( category, category_i )
+                        message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
+                        logger.warning( message1 )
+                        logger.warning( message2 )
+                        logger.warning( message3 )
+                        return self.all_dict[category_i][name]
             else:
                 return self.all_dict[category][name]
         except KeyError:
             if name is None:
                 s = "cannot find default plugin for category "+category
             else:
-                s = "cannot find '%s' in a category '%s'" %(name,category)
+                s = "cannot find '%s' in a category '%s', or elsewhere" %(name,category)
 
             logger.debug(s)
             raise PluginManagerError(s)
