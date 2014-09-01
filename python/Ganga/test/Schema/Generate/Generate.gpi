@@ -27,7 +27,10 @@ logger.error('#################### Exclude: ' + str(excludelist))
 
 totnumobs = 0
 numerrors = 0
-box.clean(confirm=True)
+
+box.clean(confirm=True,force=True)
+
+numleft = len(box)
 
 #for all objects not on the exclusion list, add one of them to the box
 for category in allPlugins.all_dict:
@@ -35,7 +38,7 @@ for category in allPlugins.all_dict:
         logger.warn(category + " not found in excludelist")
         for clsname in allPlugins.all_dict[category]:
             if clsname not in excludelist:
-                logger.warn(clsname + " not found in excludelist")
+                logger.debug(clsname + " not found in excludelist")
                 logger.info('##########################################')
                 cls = allPlugins.find(category, clsname)
                 logger.info("Class: " +str(cls))
@@ -55,7 +58,7 @@ for category in allPlugins.all_dict:
                         totnumobs += 1
                     except Exception, e:
                         logger.error("We got some sort of error: " + str(sys.exc_info()[0]))
-                        #logger.error(str(e))
+                        logger.error(str(e))
                         logger.error(traceback.print_exc())
                         numerrors += 1
                         
@@ -68,14 +71,12 @@ logger.info('Total number of objects added to Box: ' + str(totnumobs))
 logger.info('##########################################')
 
 if totnumobs > 0:
-    assert totnumobs == len(box), 'We failed to create the correct number of test objects. %i created' % (totnumobs)
+    assert totnumobs == len(box), 'We failed to create the correct number of test objects. %i created, %i expected' % ( totnumobs, len(box) )
 else:
     logger.warning("We didn't create any test objects; perhaps they all existed already?")
     logger.warning("There are %i objects in the box repository" % (len(box)))
-    
+
 assert numerrors == 0, '%i errors were raised when trying to generate Ganga objects.' % (numerrors)
-
-
 
 
 

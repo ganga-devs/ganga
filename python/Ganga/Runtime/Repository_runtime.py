@@ -24,15 +24,15 @@ def requiresGridProxy():
     return False
 
 def getLocalRoot():
-    if config['repositorytype'] in ['LocalXML','LocalAMGA','LocalPickle','SQLite']:
-        return os.path.join(expandfilename(config['gangadir']),'repository',config['user'],config['repositorytype'])
+    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
+        return os.path.join(expandfilename(config['gangadir']), 'repository', config['user'], config['repositorytype'])
     else:
         return ''
 
 def getOldJobs():
-    salvaged_jobs = {'jobs':[],'templates':[]}
-    basepath = os.path.join(expandfilename(config['gangadir']),'repository',config['user'])
-    names = ['jobs','templates']
+    salvaged_jobs = {'jobs':[], 'templates':[]}
+    basepath = os.path.join(expandfilename(config['gangadir']), 'repository', config['user'])
+    names = ['jobs', 'templates']
 
     path = os.path.join(basepath,"LocalAMGA")
     if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
@@ -42,7 +42,7 @@ def getOldJobs():
                 rep = repositoryFactory(subpath = name)
                 co_jobs = rep.checkoutJobs({})
                 salvaged_jobs[name].extend(co_jobs)
-                file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
+                file(os.path.join(path, "converted.to.XML.6.0"), "w").close()
                 rep.releaseAllLocks()
                 if len(co_jobs) > 0:
                     logger.warning("Converted %i jobs from old AMGA repository" % len(co_jobs))
@@ -52,13 +52,13 @@ def getOldJobs():
 
     from Ganga.Core.JobRepositoryXML import factory, version
     for name in names:
-        path = os.path.join(basepath,"LocalXML",version,name)
-        if os.path.exists(path) and not os.path.exists(os.path.join(path,"converted.to.XML.6.0")):
+        path = os.path.join(basepath, "LocalXML", version, name)
+        if os.path.exists(path) and not os.path.exists(os.path.join(path, "converted.to.XML.6.0")):
             try:
                 rep = factory(dir = path)
                 co_jobs = rep.checkoutJobs({})
                 salvaged_jobs[name].extend(co_jobs)
-                file(os.path.join(path,"converted.to.XML.6.0"),"w").close()
+                file(os.path.join(path, "converted.to.XML.6.0"), "w").close()
                 rep.releaseAllLocks()
                 if len(co_jobs) > 0:
                     logger.warning("Converted %i jobs from old XML repository" % len(co_jobs))
@@ -80,7 +80,7 @@ def bootstrap():
         if x.name=='prep': return -1
         return 1
 
-    for registry in sorted(getRegistries(),prep_filter):
+    for registry in sorted(getRegistries(), prep_filter):
         if registry.name in started_registries: continue
         if not hasattr(registry,'type'):
             registry.type = config["repositorytype"]
@@ -119,3 +119,6 @@ def shutdown():
         if not registry.name in started_registries: continue
         started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
         registry.shutdown() # flush and release locks
+
+    from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles
+    removeGlobalSessionFiles()

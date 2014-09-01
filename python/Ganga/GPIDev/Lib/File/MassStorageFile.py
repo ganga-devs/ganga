@@ -35,15 +35,15 @@ class MassStorageFile(IGangaFile):
     _name = "MassStorageFile"
     _exportmethods = [ "location" , "get" , "put" , "setLocation" ]
         
-    def __init__(self,namePattern='', localDir='', **kwds):
+    def __init__(self, namePattern='', localDir='', **kwds ):
         """ namePattern is the pattern of the output file that has to be written into mass storage
         """
         super(MassStorageFile, self).__init__()
         self.namePattern = namePattern
         self.localDir = localDir
         self.locations = []
-        
-        self.shell = Shell()
+
+        self.shell = Shell.Shell()
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
