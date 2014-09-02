@@ -68,6 +68,11 @@ class GoogleFile(IGangaFile):
     def __init__(self, namePattern=''):
         super(GoogleFile, self).__init__()
         self.namePattern = namePattern
+        self.__initialized = False
+
+
+    def __initializeCred( self ):
+
         while os.path.isfile(cred_path) == False :
             from oauth2client.client import OAuth2WebServerFlow
 
@@ -117,6 +122,8 @@ class GoogleFile(IGangaFile):
                             'Permission can be revoked by going to "Manage Apps" in your GoogleDrive ' \
                             'or by deleting the credentials through the deleteCredentials GoogleFile method.' % cred_path)
         self._check_Ganga_folder()
+
+        self.__initialized = True
         
     def __construct__(self, args):
         if (len(args) != 1) or (type(args[0]) is not type('')):
@@ -154,10 +161,11 @@ class GoogleFile(IGangaFile):
 
             example use: GoogleFile().deleteCredentials()
         """
-        if os.path.isfile(cred_path) == True :
-            os.remove(cred_path)
-            logger.info('GoogleDrive credentials deleted')
-            return None
+        if self.__initilized == True:
+            if os.path.isfile(cred_path) == True :
+                os.remove(cred_path)
+                logger.info('GoogleDrive credentials deleted')
+                return None
         else:
             logger.info('There are no credentials to delete')
 
@@ -443,6 +451,8 @@ class GoogleFile(IGangaFile):
         Sets up the GoogleDrive service for other methods
         """
         http = httplib2.Http()
+        if self.__initialized == False:
+            self.__initializeCred()
         nput = open(cred_path,"rb")
         credentials = pickle.load(nput)
         nput.close()
