@@ -516,6 +516,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec.prodSourceLabel   = configPanda['prodSourceLabelBuild']
                 jspec.processingType    = configPanda['processingType']
                 jspec.assignedPriority  = configPanda['assignedPriorityBuild']
+                jspec.specialHandling   = configPanda['specialHandling']
                 jspec.computingSite     = bjsite
                 jspec.cloud             = Client.PandaSites[bjsite]['cloud']
                 jspec.jobParameters     = '-o %s' % (self.libraries[bjsite])
