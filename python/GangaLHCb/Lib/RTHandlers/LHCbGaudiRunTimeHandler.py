@@ -26,7 +26,8 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         outputsandbox += ['summary.xml','__parsedxmlsummary__']
 
         return StandardJobConfig( inputbox  = unique(inputsandbox),
-                                  outputbox = unique(outputsandbox))
+                                  outputbox = unique(outputsandbox), 
+                                  env=None)
 
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
@@ -111,7 +112,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         return StandardJobConfig( FileBuffer('gaudi-script.py', script, executable=1),
                                   inputbox  = unique(inputsandbox ),
                                   outputbox = unique(outputsandbox),
-                                  env = app.getenv(True))
+                                  env=None)
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

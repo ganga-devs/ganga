@@ -38,8 +38,10 @@ class StandardJobConfig:
         self.inputbox = inputbox[:]
         self.args = args
         self.outputbox = outputbox[:]
-        self.env = env
-        
+        if not env:
+            self.env={}
+        else:
+            self.env = env
         self.__all_inputbox = []
         self.__args_strings = []
         self.__exe_string = ""
