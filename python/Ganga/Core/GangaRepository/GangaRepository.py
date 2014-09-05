@@ -175,7 +175,7 @@ class GangaRepository(object):
         Returns True on success, False on error."""
         return False
 
-# Internal helper functions for derived classed
+# Internal helper functions for derived classes
     def _make_empty_object_(self, id, category, classname):
         """Internal helper: adds an empty GangaObject of the given class to the repository.
         Raise RepositoryError
@@ -185,7 +185,7 @@ class GangaRepository(object):
         obj._proxyObject = None
         obj._data = None
 
-        self._internal_setitem__(id,obj)
+        self._internal_setitem__(id, obj)
         return obj
 
     def _internal_setitem__(self, id, obj):

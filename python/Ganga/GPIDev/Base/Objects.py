@@ -336,13 +336,13 @@ class ObjectMetaclass(type):
         if name == 'GangaObject':
             return 
 
-        logger.debug("Metaclass.__init__: class %s name %s bases %s",cls,name,bases)
+        logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
         
         # all Ganga classes must have (even empty) schema
         assert(not cls._schema is None)
         
         # produce a GPI class (proxy)
-        proxyClass = GPIProxyClassFactory(name,cls)
+        proxyClass = GPIProxyClassFactory(name, cls)
         
         # export public methods of this class and also of all the bases
         # this class is scanned last to extract the most up-to-date docstring
@@ -359,7 +359,7 @@ class ObjectMetaclass(type):
                          method = d[k]
                     if not (type(method) == types.FunctionType):
                        continue
-                    f = ProxyMethodDescriptor(k,internal_name)
+                    f = ProxyMethodDescriptor(k, internal_name)
                     f.__doc__ = method.__doc__
                     setattr(proxyClass, k, f)
 
@@ -382,7 +382,7 @@ class ObjectMetaclass(type):
         # bugfix #40220: Ensure that default values satisfy the declared types in the schema
         for attr, item in cls._schema.simpleItems():
             if not item['getter']:
-                item._check_type(item['defvalue'],'.'.join([name,attr]),enableGangaList=False)
+                item._check_type(item['defvalue'], '.'.join([name, attr]), enableGangaList=False)
 
         # create reference in schema to the pluginclass
         cls._schema._pluginclass = cls
@@ -392,7 +392,7 @@ class ObjectMetaclass(type):
         
         # register plugin class
         if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
-            allPlugins.add(cls,cls._category,cls._name)
+            allPlugins.add(cls, cls._category, cls._name)
 
         # create a configuration unit for default values of object properties
         if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
@@ -600,16 +600,16 @@ class GangaObject(Node):
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
  
-def string_type_shortcut_filter(val,item):
+def string_type_shortcut_filter(val, item):
     if type(val) is type(''):
         if item is None:
             raise ValueError('cannot apply default string conversion, probably you are trying to use it in the constructor')
         from Ganga.Utility.Plugin import allPlugins, PluginManagerError
         try:
-            obj = allPlugins.find(item['category'],val)()
+            obj = allPlugins.find(item['category'], val)()
             obj._auto__init__()
             return obj
-        except PluginManagerError,x:
+        except PluginManagerError, x:
             raise ValueError(x)
     return None
 

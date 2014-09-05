@@ -4,7 +4,13 @@
 # $Id: FileBuffer.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
 ################################################################################
 
+
+from IGangaFile import IGangaFile
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
+
 import os
+
 class FileBuffer:
     """ FileBuffer represents a file in memory which has not been yet created.
         This is a handy way of creating small wrapper scripts to be generated on the fly.
@@ -28,6 +34,7 @@ class FileBuffer:
     
     def getContents(self):
         """return a string with the contents of the file buffer"""
+        logger.debug( "Reading FileBuffer: %s" % self.name )
         if type(self._contents) is type(''):
             return self._contents
         else:
@@ -35,14 +42,18 @@ class FileBuffer:
 
     def create(self,outname=None):
         """create a file in a local filesystem as 'outname' """
-        if outname is not None:    
-            file(outname,'w').write(self.getContents())
-        else:   
-            file(self.name,'w').write(self.getContents())
+        filename = self.name
+        if outname is not None:
+            filename = outname
+
+        file(filename,'w').write(self.getContents())
 
         if self.executable:
             from Ganga.Utility.files import chmod_executable
-            chmod_executable(outname)
+            chmod_executable(filename)
+
+        logger.debug( "Created %s in: %s" % filename, os.path.realpath(filename) )
+
         return self
 
 

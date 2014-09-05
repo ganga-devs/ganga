@@ -12,7 +12,6 @@ class PluginManagerError(ValueError):
 # If you do not use category all plugins are registered in a flat list. Otherwise
 # there is a list of names for each category seaprately.
 
-
 class PluginManager(object):
     def __init__(self):
         self.all_dict = {}
@@ -25,6 +24,7 @@ class PluginManager(object):
         Typically the default plugin is the first added.
         If plugin not found raise PluginManagerError.
         """
+        logger.debug( "Attempting to Find Plugin: %s" % name )
         try:
             if (name is None) and (category in self.first):
                 return self.first[category]
@@ -34,9 +34,9 @@ class PluginManager(object):
                         message1 = "Category of %s, has likely changed between ganga versions!" % name
                         message2 = "Category Requested: %s,   Category in which plugin was found: %s" % ( category, category_i )
                         message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
-                        logger.warning( message1 )
-                        logger.warning( message2 )
-                        logger.warning( message3 )
+                        logger.debug( message1 )
+                        logger.debug( message2 )
+                        logger.debug( message3 )
                         return self.all_dict[category_i][name]
             else:
                 return self.all_dict[category][name]

@@ -42,7 +42,7 @@ class JobRegistry(Registry):
         return JobRegistrySliceProxy(slice)
 
     def getIndexCache(self,obj):
-        cached_values = ['status','id','name']
+        cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
             if cv in obj._data:
@@ -69,14 +69,14 @@ class JobRegistry(Registry):
         
     def getJobTree(self):
         return self.jobtree
-    
+
 from RegistrySlice import RegistrySlice
 
 
 
 class JobRegistrySlice(RegistrySlice):
     def __init__(self,name):
-        super(JobRegistrySlice,self).__init__(name,display_prefix="jobs")
+        super(JobRegistrySlice,self).__init__(name, display_prefix="jobs")
         from Ganga.Utility.ColourText import Foreground, Background, Effects
         fg = Foreground()
         fx = Effects()
@@ -234,14 +234,14 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(self._impl.__call__(x))
     
-    def __getslice__(self, i1,i2):
+    def __getslice__(self, i1, i2):
         """ Get a slice. Examples:
         jobs[2:] : get first two jobs,
         jobs[-10:] : get last 10 jobs.
         """
-        return _wrap(self._impl.__getslice__(i1,i2))
+        return _wrap(self._impl.__getslice__(i1, i2))
     
-    def __getitem__(self,x):
+    def __getitem__(self, x):
         """ Get a job by positional index. Examples:
         jobs[-1] : get last job,
         jobs[0] : get first job,

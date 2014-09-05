@@ -462,7 +462,7 @@ valueTypeAllowed = lambda val,valTypeList: _valueTypeAllowed(val,valTypeList,log
 
 
 class SimpleItem(Item):
-    def __init__(self,defvalue,typelist=[],**kwds):
+    def __init__(self, defvalue, typelist=[], **kwds):
         Item.__init__(self)
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist

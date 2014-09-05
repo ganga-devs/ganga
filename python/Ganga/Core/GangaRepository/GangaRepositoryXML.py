@@ -130,7 +130,7 @@ class GangaRepositoryLocal(GangaRepository):
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary of errors
         self.update_index(verbose = True)
-
+        logger.debug("GangaRepositoryLocal Finished Startup")
 
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry

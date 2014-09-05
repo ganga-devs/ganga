@@ -78,7 +78,7 @@ class JobAction( object ):
 
 class MonitoringWorkerThread(GangaThread):
    def __init__(self,name):
-      GangaThread.__init__(self,name)
+      GangaThread.__init__(self, name)
 
    def run(self):
       self._execUpdateAction()
@@ -338,7 +338,7 @@ class JobRegistry_Monitor( GangaThread ):
             
         # Add low disk-space checking to monitoring loop
         log.debug( "Setting callback hook for disk space checking")
-        self.setCallbackHook( self.diskSpaceCheckJobInsertor, {}, True,timeout=config[ 'diskspace_poll_rate'] )
+        self.setCallbackHook( self.diskSpaceCheckJobInsertor, {}, True, timeout=config[ 'diskspace_poll_rate'] )
         
         #synch objects
         #main loop mutex
@@ -480,7 +480,7 @@ class JobRegistry_Monitor( GangaThread ):
                # additional check if m_jobs is really a registry slice
                # the underlying code is not prepared to handle correctly the situation if it is not
                from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
-               if not isinstance(m_jobs,RegistrySlice):
+               if not isinstance(m_jobs, RegistrySlice):
                    log.warning('runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
                    return False
 

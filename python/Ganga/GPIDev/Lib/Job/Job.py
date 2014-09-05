@@ -216,6 +216,17 @@ class Job(GangaObject):
 
     def _attribute_filter__get__(self, name):
 
+        # Attempt to spend too long loading un-needed objects into memory in order to read job status
+        if name is 'status':
+            return object.__getattribute__(self, 'status')
+
+        list = self.metadata.data.keys()
+        list.append( 'outputfiles' )
+        list.append( 'inputfiles' )
+        list.append( 'subjobs' )
+        if name not in list:
+            return object.__getattribute__(self, name)
+
         if name == 'outputfiles':
             import re
             regex = re.compile('[*?\[\]]')
@@ -241,11 +252,12 @@ class Job(GangaObject):
                 else:
                     files.append(f)
             return addProxy(files)
-        
+
         if name in self.metadata.data.keys():
             return self.metadata[name]
         if name == 'subjobs':
             return self._subjobs_proxy()
+
         return object.__getattribute__(self, name)
 
     # status may only be set directly using updateStatus() method
@@ -606,6 +618,7 @@ class Job(GangaObject):
         if the job is not split (subjob and masterjob are the same object)
         """
 
+        logger.debug( "Creating Packed InputSandbox" )
         import Ganga.Core.Sandbox as Sandbox
 
         name = '_input_sandbox_'+self.getFQID('_')+'%s.tgz'
@@ -637,6 +650,7 @@ class Job(GangaObject):
         'master' flag is not used in this case, and it provided only for uniformity with createPackedInputSandbox() method
         """
 
+        logger.debug( "Creating InputSandbox" )
         import Ganga.Core.Sandbox as Sandbox
         files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]    
 
@@ -1015,7 +1029,10 @@ class Job(GangaObject):
                 appmasterconfig = self.master.application.master_configure()[1] # FIXME: obsoleted "modified" flag
 
             # configure the application of each subjob
-            appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+            if self.master is None:
+                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+            else:
+                appsubconfig = [ j.master.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
             appconfig = (appmasterconfig,appsubconfig)
 
             ### Job Configuration

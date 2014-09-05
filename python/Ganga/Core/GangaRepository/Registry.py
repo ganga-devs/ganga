@@ -453,8 +453,10 @@ class Registry(object):
                     self.metadata.type = self.type
                     self.metadata.location = self.location
                     self.metadata._parent = self
+                logger.debug( "metadata startup" )
                 self.metadata.startup()
 
+            logger.debug( "repo startup" )
             self.repository.startup()
             # All Ids could have changed
             self.changed_ids = {}

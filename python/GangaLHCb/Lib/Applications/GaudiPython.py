@@ -183,7 +183,7 @@ class GaudiPython(GaudiBase):
 
 
     def prepare(self,force=False):
-        super(GaudiPython,self).prepare(force)
+        super(GaudiPython, self).prepare(force)
         self._check_inputs()
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
@@ -198,8 +198,8 @@ class GaudiPython(GaudiBase):
                           os.path.join(share_dir,
                                        'inputsandbox',
                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
-        gzipFile(os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(share_dir,'inputsandbox','_input_sandbox_%s.tgz' % self.is_prepared.name),
+        gzipFile(os.path.join(share_dir, 'inputsandbox','_input_sandbox_%s.tar' % self.is_prepared.name),
+                 os.path.join(share_dir, 'inputsandbox','_input_sandbox_%s.tgz' % self.is_prepared.name),
                  True)
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
@@ -237,10 +237,11 @@ class GaudiPython(GaudiBase):
         #input_dir = self.getJobObject().getInputWorkspace().getPath()
         input_files=[]
         #input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
-        input_files += [FileBuffer('gaudipython-wrapper.py',script)]
+        input_files += [FileBuffer('gaudipython-wrapper.py', script)]
         #self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
         #return (None,self.extra)
-        return (None,StandardJobConfig(inputbox=input_files,
+        logger.debug( "Returning Job Configuration" )
+        return (None, StandardJobConfig(inputbox=input_files,
                                        outputbox=outputsandbox))
             
     def _check_inputs(self):
@@ -258,7 +259,7 @@ class GaudiPython(GaudiBase):
         return
 
     def postprocess(self):
-        XMLPostProcessor.postprocess(self,logger)
+        XMLPostProcessor.postprocess(self, logger)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
