@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.37 (2014/9/4)
+6.0.37 (2014/9/5)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -8,6 +8,8 @@ ganga/python/Ganga
 * Fixed .session file leaks
 * Fixed accessing eos from Gaudi apps
 * Fixed loading compatible objects from disk with different stored category
+* Changing subjobs to look at master job application for configuration
+* Fixed bug where all jobs were loaded into memory when they should be lazy loaded
 
 
 --------------------------------------------------------------------------------------------------------------
