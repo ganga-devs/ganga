@@ -53,7 +53,11 @@ def isCredentialRequired (credObj):
         if Repository_runtime.requiresGridProxy() or Workspace_runtime.requiresGridProxy():
            return True 
         from Ganga.GPI import jobs,typename
-        return bool([j for j in jobs if typename(j.backend)=='LCG' and j.status in ['submitted','running','completing']])
+        for j in jobs:
+            ji = j._impl
+            if ji.status in ['submitted','running','completing'] and typename(ji.backend)=='LCG':
+                return True
+        return False
     
     log.warning("Unknown credential object : %s" % credObj)
     

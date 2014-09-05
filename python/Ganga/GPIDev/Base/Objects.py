@@ -501,10 +501,12 @@ class GangaObject(Node):
         reg = root._getRegistry()
         if reg is not None:
             reg._read_access(root,self)
-            #print "excepting because of access to ", self._name
-            #import traceback
-            #traceback.print_stack()
-            #raise Exception(self._name)
+#            Uncomment to debug the lazy loading
+#            print "excepting because of access to ", self._name
+#            import traceback
+#            for line in traceback.format_stack():
+#                print line.strip()
+#                print
 
     # define when the object is read-only (for example a job is read-only in the states other than new)
     def _readonly(self):
