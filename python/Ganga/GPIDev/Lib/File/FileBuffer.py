@@ -52,7 +52,7 @@ class FileBuffer:
             from Ganga.Utility.files import chmod_executable
             chmod_executable(filename)
 
-        logger.debug( "Created %s in: %s" % filename, os.path.realpath(filename) )
+        logger.debug( "Created %s in: %s" % ( filename, os.path.realpath(filename) ) )
 
         return self
 
