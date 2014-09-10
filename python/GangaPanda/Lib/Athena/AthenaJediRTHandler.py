@@ -7,7 +7,7 @@
 #
 # ATLAS/ARDA
 
-import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, random
+import os, sys, pwd, commands, re, shutil, urllib, time, string, exceptions, random, fnmatch
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base import GangaObject
@@ -79,6 +79,74 @@ def getDBDatasets(jobO,trf,dbrelease):
                     raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
     return dbrFiles,dbrDsList
 
+def expandExcludedSiteList( job ):
+    '''Expand a site list taking wildcards into account'''
+                
+    # first, check if there's anything to be done
+    check_ddm = False
+    wildcard = False
+    excl_sites = []
+    for s in job.backend.requirements.excluded_sites:
+        if s.find("ANALY_") == -1:
+            check_ddm = True
+
+        if s.find("*") != -1:
+            wildcard = True
+            
+        if s.find("ANALY_") != -1 and s.find("*") == -1:
+            excl_sites.append(s)
+
+    if not check_ddm and not wildcard:
+        return excl_sites
+
+    # we have either wildcards or DDM sites listed
+    # First, find the allowed sites for this job and ensure no duplicates anywhere
+    from pandatools import Client
+    logger.info("Excluding DDM and wildcarded sites from Jedi job. Please wait....")
+    orig_ddm_list = []
+    new_ddm_list = []
+    for s in job.inputdata.get_locations():
+        if not s in orig_ddm_list:
+            orig_ddm_list.append(s)
+            new_ddm_list.append(s)
+
+    orig_panda_list = []
+    for s in [Client.convertDQ2toPandaID(x) for x in new_ddm_list]:        
+        for s2 in Client.PandaSites.keys():
+            if s2.find(s) != -1 and not s2 in orig_panda_list:
+                orig_panda_list.append(s2)
+
+    if check_ddm:
+        # remove any DDM sites that are referenced, including wildcards
+        for s in job.backend.requirements.excluded_sites:
+            if s in orig_ddm_list:
+                new_ddm_list.remove(s)
+
+            if s.find("*") != -1:
+                for s2 in orig_ddm_list:
+                    if fnmatch.fnmatch(s2, s):
+                        new_ddm_list.remove(s2)
+                        
+        # now recreate the panda list and see if any have been dropped
+        new_panda_list = []
+        for s in [Client.convertDQ2toPandaID(x) for x in new_ddm_list]:        
+            for s2 in Client.PandaSites.keys():
+                if s2.find(s) != -1 and not s2 in new_panda_list:
+                    new_panda_list.append(s)
+
+        for s in orig_panda_list:
+            if not s in new_panda_list and not s in excl_sites:
+                excl_sites.append(s)
+                
+    if wildcard:
+        # find wilcarded ANALY_* sites and exclude any that match good sites
+        for s in job.backend.requirements.excluded_sites:
+            if s.find("*") != -1:
+                for s2 in orig_panda_list:
+                    if fnmatch.fnmatch(s2, s) and not s2 in excl_sites:
+                        excl_sites.append(s2)
+                        
+    return excl_sites
 
 class AthenaJediRTHandler(IRuntimeHandler):
     '''Athena Jedi Runtime Handler'''
@@ -366,7 +434,8 @@ class AthenaJediRTHandler(IRuntimeHandler):
         elif job.backend.requirements.cloud != None and not job.backend.requirements.anyCloud:
             taskParamMap['cloud'] = job.backend.requirements.cloud
         if job.backend.requirements.excluded_sites != []:
-            taskParamMap['excludedSite'] = job.backend.requirements.excluded_sites
+            taskParamMap['excludedSite'] = expandExcludedSiteList( job )
+
         # if only a single site specifed, don't set includedSite
         #if job.backend.site != 'AUTO':
         #    taskParamMap['includedSite'] = job.backend.site
