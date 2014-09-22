@@ -1,5 +1,6 @@
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
+#from GangaTest.Lib.TestSubmitter import TestSubmitter
 try:
 ##    from GangaLHCb.Lib.DIRAC.GaudiDiracRTHandler import GaudiDiracRTHandler
 ##    from GangaLHCb.Lib.DIRAC.RootDiracRTHandler import RootDiracRTHandler
@@ -55,15 +56,55 @@ def getTestDaVinciApplication():
                               'solutions','DaVinci2','DVTutorial_2.opts')]
     return app
 
+def checkFileExists(file):
+    import os.path
+    return os.path.isfile( file )
+
+def checkFolderExists(folder):
+    import os.path
+    return os.path.isdir( folder )
+
 # check for a file in a tar file
 def checkFileInTar(tf,file):
     import tarfile
     tar1=tarfile.open(tf,"r")
-    return (file in tar1.getnames())
+    print "%s files in %s" % ( str(len(tar1.getnames())), tf )
+    for fileName in tar1.getnames():
+        if str(fileName[:2]) == str('./'):
+            print "found file: %s" % str(fileName[2:])
+            testFileName = str(fileName[2:])
+        else:
+            print "found file: %s" % fileName
+            testFileName = fileName
+        if file == testFileName:
+            return True
+        else:
+            continue
+
+    #return (file in tar1.getnames())
+    return False
 
 # check for a file in the inputsandbox
 def checkFileInSandbox(job,file):
     import os.path
+    masterTest = False
+    subJobTest = False
     tarFile2=os.path.join(job.inputdir,'_input_sandbox_%d_master.tgz'%job.id)
     tarFile1=os.path.join(job.inputdir,'_input_sandbox_%d.tgz'%job.id)
-    return (checkFileInTar(tarFile1,file) or checkFileInTar(tarFile2,file))
+
+    print "Checking: %s and %s" %( tarFile1, tarFile2 )
+
+    if checkFileExists(tarFile2):
+        masterTest = checkFileInTar(tarFile2,file)
+    elif checkFileExists(tarFile1):
+        subJobTest = checkFileInTar(tarFile1,file) 
+    else:
+        pass
+            
+    if masterTest is True:
+        return True
+    elif subJobTest is True:
+        return True
+    else:
+        return False
+

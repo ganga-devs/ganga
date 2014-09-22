@@ -129,7 +129,7 @@ class IBackend(GangaObject):
             try:
                 b = sj.backend
                 sj.updateStatus('submitting')
-                if b.submit(sc,master_input_sandbox):
+                if b.submit(sc, master_input_sandbox):
                     sj.updateStatus('submitted')
                     #sj._commit() # PENDING: TEMPORARY DISABLED
                     incomplete = 1

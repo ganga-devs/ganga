@@ -103,15 +103,21 @@ class Interactive( IBackend ):
    def resubmit( self ):
       return self._submit(self.getJobObject().getInputWorkspace().getPath("__jobscript__"))
 
-   def _submit( self, scriptpath, env=copy.deepcopy(os.environ)):
+   def _submit( self, scriptpath, env=dict(os.environ)):
       job = self.getJobObject()
       self.actualCE = util.hostname()
       logger.info('Starting job %d', job.id)
 
+      #print "\n\n\n"
+      #print "Submit!"
+      #print env
+      #print "\n\n\n"
+
       try:
          job.updateStatus( "submitted" )
          self.status = "submitted"
-         os.spawnve( os.P_WAIT, scriptpath, ( scriptpath, ), env )
+         import subprocess
+         subprocess.call( scriptpath, env=env )
          self.status = "completed"
       except KeyboardInterrupt:
          self.status = "killed"

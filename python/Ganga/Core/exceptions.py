@@ -19,6 +19,8 @@ class GangaException(Exception):
         """
          String representation of this class
         """
+        #import traceback
+        #traceback.print_stack()
         _str = "%s: " % self.__class__.__name__
         if hasattr(self,'args') and self.args:
             _str +=" %s" % str(self.args)

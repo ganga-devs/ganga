@@ -127,9 +127,10 @@ class AppName(Gaudi):
         return guess_version(gaudi_app)
     
    
-##     def master_configure(self):
-##         # pick up the outputbox
-##         return (None, StandardJobConfig(outputbox = self.prep_outputbox))
+#    def master_configure(self):
+#        # pick up the outputbox
+#        import copy
+#        return (None, StandardJobConfig( env = copy.deepcopy( self._getshell() ) ) )
     
 ##     def unprepare(self):
 ##         super(type(self), self).unprepare()
@@ -281,7 +282,6 @@ class AppName(Gaudi):
         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
 
         execute(cmd,env=env,shell=True,update_env=True)
-
 
 ##         cmd += ' > /dev/null 2>&1; python -c "import os; print os.environ"'
 ##         pipe=subprocess.Popen(cmd,

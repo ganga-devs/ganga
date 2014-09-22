@@ -618,12 +618,11 @@ class Job(GangaObject):
         if the job is not split (subjob and masterjob are the same object)
         """
 
-        logger.debug( "Creating Packed InputSandbox" )
         import Ganga.Core.Sandbox as Sandbox
 
         name = '_input_sandbox_'+self.getFQID('_')+'%s.tgz'
 
-        if master:
+        if (self.master is not None) or (master is True):
             if self.master is not None:
                 name = '_input_sandbox_'+self.master.getFQID('_')+'%s.tgz'
             name = name % "_master"
@@ -632,11 +631,17 @@ class Job(GangaObject):
 
         files = [ f for f in files if hasattr(f,'name') and not f.name.startswith('.nfs')]
         if not files:
-            return []
+           return []
+
+        logger.debug( "Creating Packed InputSandbox %s" % name )
+        logger.debug( "With:\n" )
+        for f in files:
+            logger.debug(str(f))
 
         # if the the master job of this subjob exists and the master sandbox is requested
         # the master sandbox has already been created so just look for it
         # else if it has not been prepared we need to construct it as usual
+
         if self.master:
             if self.master.application.is_prepared is True:
                 return [ self.master.getInputWorkspace().getPath(name) ]
@@ -1024,16 +1029,18 @@ class Job(GangaObject):
             ###  App Configuration
 
             if self.master is None:
-                appmasterconfig = self.application.master_configure()[1] # FIXME: obsoleted "modified" flag
+                appmasterconfig = self.application.master_configure()[1]
             else:
-                appmasterconfig = self.master.application.master_configure()[1] # FIXME: obsoleted "modified" flag
+                appmasterconfig = self.master.application.master_configure()[1]
 
             # configure the application of each subjob
             if self.master is None:
-                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ]
             else:
-                appsubconfig = [ j.master.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+                appsubconfig = [ j.master.application.configure(appmasterconfig)[1] for j in rjobs ]
             appconfig = (appmasterconfig,appsubconfig)
+
+            print appconfig
 
             ### Job Configuration
 
@@ -1046,7 +1053,10 @@ class Job(GangaObject):
                 jobmasterconfig = masterRTHandler.master_prepare(self.master.application,appmasterconfig)
 
             # prepare the subjobs with the runtime handler
-            jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+            if self.master is None:
+                jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,[appmasterconfig]) ]
+            else:
+                jobsubconfig = [ rtHandler.prepare(j.master.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
 
             ### Submission
 
@@ -1614,6 +1624,8 @@ class Job(GangaObject):
             super(Job,self).__setattr__(attr, value)
 
         elif attr == 'inputsandbox':
+
+            #print "Setting inputsandbox to be: %s" % str( value )
 
             if value != []:     
 
