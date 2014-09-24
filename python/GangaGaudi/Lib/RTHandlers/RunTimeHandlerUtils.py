@@ -58,9 +58,13 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
     job = app.getJobObject()
     
     ## user added items from the interactive GPI
-    if len(job.inputsandbox) != 0:
+    from Ganga.Utility.Config import getConfig
+    if getConfig('Output')['ForbidLegacyOutput']:
         inputsandbox = job.inputsandbox[:]
     else:
+        if len( job.inputsandbox ) > 0:
+            from Ganga.GPIDev.Lib.Job import JobError
+            raise JobError( "InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!" )
         inputsandbox = []
         for filepattern in getInputFilesPatterns(job)[0]:
             inputsandbox.append(File(filepattern))
