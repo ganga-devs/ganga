@@ -43,7 +43,7 @@ class Shell:
 
    exceptions=getConfig('Shell')['IgnoredVars']
 
-   def __init__(self,setup=None, setup_args=[]):
+   def __init__(self, setup=None, setup_args=[]):
       
       """The setup script is sourced (with possible arguments) and the
       environment is captured. The environment variables are expanded
@@ -82,13 +82,25 @@ class Shell:
          env=dict( os.environ )
          env = expand_vars( env )
 
-         pipe=subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)), env=env)
-         output=pipe.stdout
-         rc=pipe.stdin.close()
+         logger.debug( "Initializing Shell" )
+         logger.debug( "%s" % setup )
+         logger.debug( "%s" % " ".join(setup_args) )
+
+         this_cwd = os.path.abspath( os.getcwd() )
+         if not os.path.exists( this_cwd ):
+             this_cwd = os.path.abspath( tempfile.gettempdir() )
+         logger.debug( "Using CWD: %s" % this_cwd )
+         logger.debug( 'Running:   source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)) )
+         pipe=subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)),
+                                env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
+         output=pipe.communicate()
+         rc=pipe.poll()
          if rc:
             logger.warning('Unexpected rc %d from setup command %s', rc, setup)
 
-         env = expand_vars(eval(output))
+         #print output
+         #print eval(str(output)[0])
+         env = expand_vars( eval(eval(str(output))[0]) )
 
          #print "Setup: %s " % setup
          #print output
@@ -129,7 +141,11 @@ class Shell:
          command = launcher
          for i in args:
              command.append( i )
-         pid = subprocess.Popen( command, env=self.env ).pid 
+         this_cwd = os.path.abspath( os.getcwd() )
+         if not os.path.exists( this_cwd ):
+             this_cwd = os.path.abspath( tempfile.gettempdir() )
+         logger.debug( "Using CWD: %s" % this_cwd )
+         pid = subprocess.Popen( command, env=self.env, cwd=this_cwd ).pid 
          while 1:
             wpid, sts = os.waitpid(pid, os.WNOHANG)
             if wpid!=0:
