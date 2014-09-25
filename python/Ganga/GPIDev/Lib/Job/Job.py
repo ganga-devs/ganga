@@ -271,7 +271,7 @@ class Job(GangaObject):
             oldstat = self.status
         except KeyError:
             oldstat = None
-        logger.debug('job %s "%s" setting raw status to "%s"',str(id),str(oldstat),value)
+        logger.debug('job %s "%s" setting raw status to "%s"', str(self.getFQID('.')), str(oldstat), value)
         #import inspect,os
         #frame = inspect.stack()[2]
         ##if not frame[0].f_code.co_name == 'updateStatus' and
@@ -946,7 +946,7 @@ class Job(GangaObject):
 
         try:
 
-            logger.info("submitting job %d",self.id)
+            logger.info("submitting job %s",str(self.getFQID('.')))
             # prevent other sessions from submitting this job concurrently. Also calls _getWriteAccess
             self.updateStatus('submitting')
 
@@ -954,7 +954,7 @@ class Job(GangaObject):
                 #NOTE: this commit is redundant if updateStatus() is used on the line above
                 self._commit()
             except Exception,x:
-                msg = 'cannot commit the job %s, submission aborted'%self.id
+                msg = 'cannot commit the job %s, submission aborted'%str(self.getFQID('.'))
                 logger.error(msg)
                 self.status = 'new'
                 raise JobError(msg)
@@ -965,10 +965,10 @@ class Job(GangaObject):
                 if (self.application.is_prepared is None) or (prepare == True):
                     self.prepare(force=True)
                 elif self.application.is_prepared is True:
-                    msg = "Job %d's application has is_prepared=True. This prevents any automatic (internal) call to the application's prepare() method." % (self.id)
+                    msg = "Job %s's application has is_prepared=True. This prevents any automatic (internal) call to the application's prepare() method." % str(self.getFQID('.'))
                     logger.info(msg)
                 else:
-                    msg = "Job %d's application has already been prepared." % (self.id)
+                    msg = "Job %s's application has already been prepared." % str(self.getFQID('.'))
                     logger.info(msg)
 
                 if self.application.is_prepared is not True and self.application.is_prepared is not None:
@@ -979,13 +979,19 @@ class Job(GangaObject):
 
             ### Splitting
 
+            logger.debug( "Checking Job: %s for splitting" % self.getFQID('.') )
+
             # split into subjobs
             # Temporary polution of Atlas stuff to (almost) transparently switch from Panda to Jedi
-            if self.backend.__class__.__name__ == "Jedi" and self.splitter:
+            if self.backend.__class__.__name__ == "Jedi" and self.splitter and not self.master:
                 logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
                 self.splitter = None
                 rjobs = [self]
-            elif self.splitter:
+            elif self.splitter and not self.master:
+
+                fqid = self.getFQID('.')
+                logger.debug( "Splitting Job: %s" % fqid )
+
                 subjobs = self.splitter.validatedSplit(self)
                 if subjobs:
                     #print "*"*80
@@ -1000,9 +1006,13 @@ class Job(GangaObject):
                     for j in subjobs:
                         j.info.uuid = Ganga.Utility.guid.uuid()
                         j.status='new'
+                        #j.splitter = None
                         j.time.timenow('new')
                         j.id = i
                         i += 1
+
+                        # Lets be 110% explicit that these subjobs are subjobs of self
+                        j.master = self
                         self.subjobs.append(j)
 
                     for j in self.subjobs:
@@ -1018,6 +1028,9 @@ class Job(GangaObject):
             else:
                 rjobs = [self]
 
+            logger.debug( "Now have %s subjobs" % len( self.subjobs ) )
+            logger.debug( "Also have %s rjobs" % len( rjobs ) )
+
             ### Output Files
 
             # validate the output files
@@ -1028,6 +1041,8 @@ class Job(GangaObject):
 
             ###  App Configuration
 
+            logger.debug( "App Configuration, Job %s:" % str(self.getFQID('.')) )
+
             if self.master is None:
                 appmasterconfig = self.application.master_configure()[1]
             else:
@@ -1037,28 +1052,43 @@ class Job(GangaObject):
             if self.master is None:
                 appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ]
             else:
-                appsubconfig = [ j.master.application.configure(appmasterconfig)[1] for j in rjobs ]
-            appconfig = (appmasterconfig,appsubconfig)
+                appsubconfig = [ rjobs[0].master.application.configure(appmasterconfig)[1] ]
+            appconfig = (appmasterconfig, appsubconfig)
 
-            print appconfig
+            logger.debug( "# appsubconfig: %s" % len(appsubconfig) )
 
             ### Job Configuration
+
+            logger.debug( "Job Configuration, Job %s:" % str(self.getFQID('.')) )
 
             # prepare the master job with the correct runtime handler
             if self.master is None:
                 jobmasterconfig = rtHandler.master_prepare(self.application,appmasterconfig)
             else:
                 # this is likely overkill but the masterRTHandler is the most correct thing to do
-                masterRTHandler = allHandlers.get(self.master.application._name,self.master.backend._name)()
-                jobmasterconfig = masterRTHandler.master_prepare(self.master.application,appmasterconfig)
+                masterRTHandler = allHandlers.get(self.master.application._name, self.master.backend._name)()
+                jobmasterconfig = masterRTHandler.master_prepare(self.master.application, appmasterconfig)
+
+            logger.debug( "Preparing with: %s" % rtHandler.__class__.__name__ )
 
             # prepare the subjobs with the runtime handler
             if self.master is None:
-                jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,[appmasterconfig]) ]
+                jobsubconfig = [ rtHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig) for (j, s) in zip(rjobs, appsubconfig) ]
             else:
-                jobsubconfig = [ rtHandler.prepare(j.master.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+                #rtHandler = allHandlers.get(self.master.application._name, self.master.backend._name)()
+                # this is likely overkill but the masterRTHandler is the most correct thing to do
+                masterRTHandler = allHandlers.get(self.master.application._name, self.master.backend._name)()
+
+                ## Careful! This tries to make use of existing pre-packed information for this job and the master job
+                ## You Should NOT use prepare( j.master.application, s,.... ) as this will cause the subjob to become split again based on the master job
+                ## You have been warned
+                jobsubconfig = [ masterRTHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig ) for( j, s ) in zip(rjobs, appsubconfig) ]
+
+            logger.debug( "# jobsubconfig: %s" % len(jobsubconfig) )
 
             ### Submission
+
+            logger.debug( "Submitting to a backend, Job %s:" % str(self.getFQID('.')) )
 
             # notify monitoring-services
             self.monitorPrepare_hook(jobsubconfig)
@@ -1066,19 +1096,22 @@ class Job(GangaObject):
             # submit the job
             try:
 
+                # master_submit has been written as the interface which ganga should call, not submit directly
+
                 if supports_keep_going:
-                    r = self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig,keep_going)
+                    r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig, keep_going)
                 else:
-                    r = self.backend.master_submit(rjobs,jobsubconfig,jobmasterconfig)
+                    r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig)
                     
                 if not r:
                     raise JobManagerError('error during submit')
 
                 #FIXME: possibly should go to the default implementation of IBackend.master_submit
-                if self.subjobs:
-                    for jobs in self.subjobs:
-                        jobs.info.increment()
-                        
+#                if self.subjobs:
+#                    for jobs in self.subjobs:
+#                        jobs.info.increment()
+                # This should now be done on a per subjob submit in IBackend
+
 
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)

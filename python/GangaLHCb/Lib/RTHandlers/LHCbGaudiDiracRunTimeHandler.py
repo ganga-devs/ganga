@@ -54,6 +54,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         # add summary.xml
         outputsandbox += ['summary.xml','__parsedxmlsummary__']
 
+        logger.debug( "Master Prepare LHCbGaudiDiracRunTimeHandler" )
         return StandardJobConfig( inputbox  = unique(inputsandbox),
                                   outputbox = unique(outputsandbox) )
 
@@ -168,7 +169,10 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         # Note only using 2 #s as auto-remove 3
                                         INPUT_SANDBOX        = '##INPUT_SANDBOX##'
                                         )
-        
+        logger.debug( "prepare: LHCbGaudiDiracRunTimeHandler" )
+
+        #print inputsandbox
+
         return StandardJobConfig( dirac_script,
                                   inputbox  = unique(inputsandbox ),
                                   outputbox = unique(outputsandbox) )

@@ -25,9 +25,14 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         # add summary.xml
         outputsandbox += ['summary.xml','__parsedxmlsummary__']
 
+        thisenv = None
+        if appmasterconfig:
+            if hasattr( appmasterconfig, 'env' ):
+                thisenv = appmasterconfig.env
+
         return StandardJobConfig( inputbox  = unique(inputsandbox),
                                   outputbox = unique(outputsandbox), 
-                                  env=appmasterconfig.env)
+                                  env = thisenv )
 
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
@@ -108,11 +113,15 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                                   CMDLINE           = cmd,
                                   XMLSUMMARYPARSING = getXMLSummaryScript())#,
 #                                  OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
-        
+       
+        thisenv = None
+        if appmasterconfig:
+            if hasattr( appmasterconfig, 'env' ):
+                thisenv = appmasterconfig.env
         return StandardJobConfig( FileBuffer('gaudi-script.py', script, executable=1),
                                   inputbox  = unique(inputsandbox ),
                                   outputbox = unique(outputsandbox),
-                                  env=appmasterconfig.env)
+                                  env = thisenv )
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

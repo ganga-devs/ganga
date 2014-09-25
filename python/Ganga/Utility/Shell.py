@@ -145,7 +145,8 @@ class Shell:
          if not os.path.exists( this_cwd ):
              this_cwd = os.path.abspath( tempfile.gettempdir() )
          logger.debug( "Using CWD: %s" % this_cwd )
-         pid = subprocess.Popen( command, env=self.env, cwd=this_cwd ).pid 
+         process = subprocess.Popen( command, env=self.env, cwd=this_cwd )
+         pid = process.pid 
          while 1:
             wpid, sts = os.waitpid(pid, os.WNOHANG)
             if wpid!=0:
@@ -169,8 +170,13 @@ class Shell:
             time.sleep(0.1)            
 
       except OSError, (num, text):
-         logger.warning( 'Problem with shell command: %s, %s', num, text)
-         rc = 255
+         if num == 10:
+            rc = process.returncode
+            logger.debug( "Process has already exitted which will throw a 10" ) 
+            logger.debug( "Exit status is: %s" % rc )
+         else:
+            logger.warning( 'Problem with shell command: %s, %s', num, text)
+            rc = 255
       
       BYTES = 4096
       if rc not in allowed_exit:
