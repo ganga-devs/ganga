@@ -214,7 +214,7 @@ def normCPUTime(id):
 def status(job_ids):
     # Translate between the many statuses in DIRAC and the few in Ganga
     statusmapping = {'Checking'  : 'submitted',
-                     'Completed' : 'running',
+                     'Completed' : 'completed',
                      'Deleted'   : 'failed',
                      'Done'      : 'completed',
                      'Failed'    : 'failed',
@@ -241,6 +241,8 @@ def status(job_ids):
         if ganga_status is None:
             ganga_status = 'failed'
             dirac_status = 'Unknown: No status for Job'
+        if dirac_status=='Completed' and (minor_status not in ['Pending Requests']):
+            ganga_status = 'running'
         status_list.append([minor_status,dirac_status,dirac_site,
                             ganga_status])
             
