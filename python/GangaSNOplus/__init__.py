@@ -1,9 +1,11 @@
-# File: GangaSNO/__init__.py                                                                                                                    
+# File: GangaSNOplus/__init__.py
 
 def loadPlugins( config = {} ):
 
-    import Lib.RATProd
-    import Lib.RATUser
+    # import any modules that need to be visible to the user
+
+    import Lib.Applications
+    import Lib.Backends
 
     return None
 
