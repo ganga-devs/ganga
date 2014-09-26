@@ -201,7 +201,7 @@ class Shell:
                                 timeout, mention_outputfile_on_errors=False, python=python )
 
        output=file(outfile).read()
-       os.unlink(outfile)
+       #os.unlink(outfile)
        
        return rc, output, m
        
