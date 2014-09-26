@@ -264,14 +264,17 @@ class Job(GangaObject):
     # only modules comming from Ganga.GPIDev package may change it directly
     def _checkset_status(self,value):
         try:
-            id = self.id
+            id = self.getFQID('.')
         except KeyError:
-            id = None
+            try:
+                id = self.id
+            except KeyError:
+                id = None
         try:
             oldstat = self.status
         except KeyError:
             oldstat = None
-        logger.debug('job %s "%s" setting raw status to "%s"', str(self.getFQID('.')), str(oldstat), value)
+        logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
         #import inspect,os
         #frame = inspect.stack()[2]
         ##if not frame[0].f_code.co_name == 'updateStatus' and
