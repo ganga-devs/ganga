@@ -1,5 +1,6 @@
 j = Job(outputfiles = [ LocalFile('stdin'), LocalFile('stdout')])
 
-
 j.backend = LCG()
-assert(j.submit())
+cnf = cfg = Ganga.Utility.Config.getConfig('LCG')
+if cnf['GLITE_ENABLE']:
+    assert(j.submit())

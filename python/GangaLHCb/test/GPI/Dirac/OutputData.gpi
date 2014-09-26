@@ -25,7 +25,7 @@ jscript.outputfiles=[DiracFile('outputs.txt')]
 jscript.submit()
 
 sleep_until_completed(jscript)
-assert jscript.status == 'completed', 'job must complete'
+assert jscript.status == 'completed', 'job must complete. it is: %s' % jscript.status
 
 output_file = join(jscript.outputdir,'outputs.txt')
 if os.path.exists(output_file):

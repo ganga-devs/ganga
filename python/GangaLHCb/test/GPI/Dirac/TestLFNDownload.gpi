@@ -20,7 +20,7 @@ jscript.outputfiles = [DiracFile(namePattern='outputs.txt')]
 jscript.submit()
 
 sleep_until_completed(jscript)
-assert jscript.status == 'completed', 'job must complete'
+assert jscript.status == 'completed', 'job must complete. it is %s' % jscript.status
 
 print 'j = ', jscript
 

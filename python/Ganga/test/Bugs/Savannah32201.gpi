@@ -12,12 +12,15 @@ for i in range(2):
 j.splitter.values = args
 
 j.backend = LCG(middleware='GLITE')
-j.submit()
 
-# run monitoring loop once after the submisison
-runMonitoring(steps=1, timeout=60)
+cnf = cfg = Ganga.Utility.Config.getConfig('LCG')
+if cnf['GLITE_ENABLE']:
+    j.submit()
 
-# after the first monitoring loop after submission,
-# the master job's status shouldn't be 'submitting' 
-# otherwise the job is not being monitored.
-assert not j.status is 'submitting'
+    # run monitoring loop once after the submisison
+    runMonitoring(steps=1, timeout=60)
+
+    # after the first monitoring loop after submission,
+    # the master job's status shouldn't be 'submitting' 
+    # otherwise the job is not being monitored.
+    assert not j.status is 'submitting'
