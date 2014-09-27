@@ -559,8 +559,29 @@ stage_inputs () {
             # Remove lib64/python from PYTHONPATH
 	    dum=`echo $PYTHONPATH | tr ':' '\n' | egrep -v 'lib64/python' | tr '\n' ':' `
 	    export PYTHONPATH=$dum
+	    
+	    if [ ! -z $DQ2_SETUP_SCRIPT ]; then
+		# setup using the DQ2 setup script (prob. cvmfs)
+		
+		# shift the old dq2 version out of the way
+		mv dq2 dq2_old
 
-	    if [ ! -z $python32bin ]; then
+		# clear out the environemnt first, inc. GLITE UI stuff to make sure the DQ2 setup works OK
+		export LD_LIBRARY_PATH=
+		export PATH=/usr/local/bin:/bin:/usr/bin
+		export PYTHONPATH=
+		export GLITE_LOCATION=
+		export GLOBUS_LOCATION=
+		export LCG_LOCATION=
+
+		# run the staging script
+		source $DQ2_SETUP_SCRIPT
+		./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
+
+		# replace dq2 old
+		mv dq2_old dq2
+
+	    elif [ ! -z $python32bin ]; then
 		$python32bin ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 	    else
 		if [ -e /usr/bin32/python ]; then
@@ -569,6 +590,7 @@ stage_inputs () {
 		    ./ganga-stage-in-out-dq2.py; echo $? > retcode.tmp
 		fi
 	    fi
+
 	    retcode=`cat retcode.tmp`
 	    rm -f retcode.tmp
             # Fail over

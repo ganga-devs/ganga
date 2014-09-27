@@ -354,7 +354,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations())
             environment['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
             environment['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
-            environment['DATASETTYPE']=job.inputdata.type
+            #environment['DATASETTYPE']=job.inputdata.type
+            # At present, DQ2 download is the only thing that works
+            environment['DATASETTYPE']="DQ2_DOWNLOAD"
             if job.inputdata.accessprotocol:
                  environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol
             if job.inputsandbox: inputbox += job.inputsandbox   
@@ -492,7 +494,6 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 _append_files(inputbox,'ganga-stage-in-out-dq2.py')
                 _append_files(inputbox,'dq2info.tar.gz')
                 _append_files(inputbox,'libdcap.so')
-
             _append_files(inputbox,'ganga-joboption-parse.py')
 
         if job.inputsandbox:
@@ -526,7 +527,8 @@ class AthenaLocalRTHandler(IRuntimeHandler):
             'ATHENA_USERSETUPFILE' : athena_usersetupfile,
             'ATLAS_PROJECT' : app.atlas_project,
             'ATLAS_EXETYPE' : app.atlas_exetype,
-            'GANGA_VERSION' : configSystem['GANGA_VERSION']
+            'GANGA_VERSION' : configSystem['GANGA_VERSION'],
+            'DQ2_SETUP_SCRIPT': configDQ2['setupScript']
         }
 
         # Set athena architecture: 32 or 64 bit    
@@ -588,7 +590,9 @@ class AthenaLocalRTHandler(IRuntimeHandler):
                 environment['DATASETLOCATION'] = ':'.join(job.inputdata.get_locations())
                 environment['DQ2_URL_SERVER']=configDQ2['DQ2_URL_SERVER']
                 environment['DQ2_URL_SERVER_SSL']=configDQ2['DQ2_URL_SERVER_SSL']
-                environment['DATASETTYPE']=job.inputdata.type
+                #environment['DATASETTYPE']=job.inputdata.type
+                # At present, DQ2 download is the only thing that works
+                environment['DATASETTYPE']="DQ2_DOWNLOAD"
                 if job.inputdata.accessprotocol:
                     environment['DQ2_LOCAL_PROTOCOL'] = job.inputdata.accessprotocol                
 
