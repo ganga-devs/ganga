@@ -73,8 +73,7 @@ def execute(command,
             shell         = True,
             python_setup  = '',
             eval_includes = None,
-            update_env    = False,
-            return_code   = None):
+            update_env    = False):
     """
     Execute an external command.
     """
@@ -90,10 +89,7 @@ def execute(command,
         # note the exec gets around the problem of indent and base64 gets around the \n
         command_update, envread, envwrite = env_update_script()
         command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
-
-    if env is None and not update_env:
-        env = dict(os.environ)
-
+           
     p=subprocess.Popen(stream_command,
                        shell      = True,
                        env        = env,
@@ -103,6 +99,7 @@ def execute(command,
                        stdout     = subprocess.PIPE,
                        stderr     = subprocess.PIPE)
                 
+
     timed_out = threading.Event()
     timer     = threading.Timer(timeout, __timeout_func,
                                 args=(p, timed_out))
@@ -158,7 +155,4 @@ def execute(command,
         try:
             stdout = eval(stdout, {}, local_ns)
         except: pass
-
-    return_code = p.returncode
     return stdout
-

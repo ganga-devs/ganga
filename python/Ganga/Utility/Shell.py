@@ -33,7 +33,7 @@
 #     fullpath=shell.wrapper('lcg-cp')
 
 import os, re, tempfile, time, signal
-import subprocess
+
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility.Config import getConfig
@@ -43,7 +43,7 @@ class Shell:
 
    exceptions=getConfig('Shell')['IgnoredVars']
 
-   def __init__(self, setup=None, setup_args=[]):
+   def __init__(self,setup=None, setup_args=[]):
       
       """The setup script is sourced (with possible arguments) and the
       environment is captured. The environment variables are expanded
@@ -69,86 +69,43 @@ class Shell:
 
       def expand_vars(env):
          tmp_dict = {}
-         for k, v in env.iteritems():
-             if not str(v).startswith('() {'):
-                tmp_dict[k] = os.path.expandvars(v)
-             # Be careful with exported bash functions!
-             else:
-                tmp_dict[k] = str(v).replace('\n','; ').strip()
+         for k,v in env.iteritems():
+            tmp_dict[k] = os.path.expandvars(v)
          return tmp_dict
 
       if setup:
+         pipe=os.popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)))
+         output=pipe.read()
+         rc=pipe.close()
+         if rc: logger.warning('Unexpected rc %d from setup command %s',rc,setup)
 
-         env=dict( os.environ )
-         env = expand_vars( env )
+         env = expand_vars(eval(output))
 
-         logger.debug( "Initializing Shell" )
-         logger.debug( "%s" % setup )
-         logger.debug( "%s" % " ".join(setup_args) )
-
-         this_cwd = os.path.abspath( os.getcwd() )
-         if not os.path.exists( this_cwd ):
-             this_cwd = os.path.abspath( tempfile.gettempdir() )
-         logger.debug( "Using CWD: %s" % this_cwd )
-         logger.debug( 'Running:   source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)) )
-         pipe=subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)),
-                                env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
-         output=pipe.communicate()
-         rc=pipe.poll()
-         if rc:
-            logger.warning('Unexpected rc %d from setup command %s', rc, setup)
-
-         #print output
-         #print eval(str(output)[0])
-         env = expand_vars( eval(eval(str(output))[0]) )
-
-         #print "Setup: %s " % setup
-         #print output
-         #print env
-
-         #for key in Shell.exceptions:
-         #   try:
-         #      del env[key]
-         #   except KeyError:
-         #      pass
+         for key in Shell.exceptions:
+            try:
+               del env[key]
+            except KeyError:
+               pass
          self.env = env
       else:
          env=dict(os.environ) #bug #44334: Ganga/Utility/Shell.py does not save environ
-         self.env = expand_vars( env )
+         self.env = expand_vars(env)
 
       self.dirname=None
 
-   def pythonCmd(self, cmd, soutfile=None, allowed_exit=[0],
-                  capture_stderr=False, timeout=None, mention_outputfile_on_errors=True ):
-       "Execute a python command and captures the stderr and stdout which are returned in a file"
-       
-       return self.cmd( cmd, soutfile, allowed_exit, capture_stderr, timeout, mention_outputfile_on_errors, python=True )
-
-   def cmd(self, cmd, soutfile=None, allowed_exit=[0],
-           capture_stderr=False, timeout=None, mention_outputfile_on_errors=True, python=False ):
+   def cmd(self,cmd,soutfile=None,allowed_exit=[0], capture_stderr=False,timeout=None, mention_outputfile_on_errors=True):
       "Execute an OS command and captures the stderr and stdout which are returned in a file"
  
-      if not soutfile:
-          soutfile = tempfile.NamedTemporaryFile( mode='w+t', suffix='.out' ).name
-
+      if not soutfile: soutfile=tempfile.mktemp('.out')
+         
       logger.debug('Running shell command: %s' % cmd)
       try:
          t0 = time.time()
          already_killed = False
          timeout0 = timeout
-         launcher = [ '/bin/sh', '-c' ]
-         args = [ '%s > %s 2>&1' % (cmd, soutfile) ]
-         command = launcher
-         for i in args:
-             command.append( i )
-         this_cwd = os.path.abspath( os.getcwd() )
-         if not os.path.exists( this_cwd ):
-             this_cwd = os.path.abspath( tempfile.gettempdir() )
-         logger.debug( "Using CWD: %s" % this_cwd )
-         process = subprocess.Popen( command, env=self.env, cwd=this_cwd )
-         pid = process.pid 
+         pid = os.spawnve(os.P_NOWAIT,'/bin/sh',['/bin/sh','-c','%s > %s 2>&1' % (cmd,soutfile)],self.env)         
          while 1:
-            wpid, sts = os.waitpid(pid, os.WNOHANG)
+            wpid,sts = os.waitpid(pid,os.WNOHANG)
             if wpid!=0:
                if os.WIFSIGNALED(sts):
                   rc = -os.WTERMSIG(sts)
@@ -157,68 +114,61 @@ class Shell:
                   rc = os.WEXITSTATUS(sts)
                   break
             if timeout and time.time()-t0>timeout:
-               logger.warning('Command interrupted - timeout %ss reached: %s', timeout0, cmd)
+               logger.warning('Command interrupted - timeout %ss reached: %s', timeout0,cmd)
                if already_killed:
                   sig = signal.SIGKILL
                else:
                   sig = signal.SIGTERM
-               logger.debug('killing process %d with signal %d', pid, sig)
-               os.kill(pid, sig)
+               logger.debug('killing process %d with signal %d',pid,sig)
+               os.kill(pid,sig)
                t0=time.time()
                timeout = 5 # wait just 5 seconds before killing with SIGKILL
                already_killed = True
             time.sleep(0.1)            
 
-      except OSError, (num, text):
-         if num == 10:
-            rc = process.returncode
-            logger.debug( "Process has already exitted which will throw a 10" ) 
-            logger.debug( "Exit status is: %s" % rc )
-         else:
-            logger.warning( 'Problem with shell command: %s, %s', num, text)
-            rc = 255
+      except OSError, (num,text):
+         logger.warning( 'Problem with shell command: %s, %s', num,text)
+         rc = 255
       
       BYTES = 4096
       if rc not in allowed_exit:
-         logger.warning('exit status [%d] of command %s', rc, cmd)
+         logger.warning('exit status [%d] of command %s',rc,cmd)
          if mention_outputfile_on_errors:
-            logger.warning('full output is in file: %s', soutfile)
-         logger.warning('<first %d bytes of output>\n%s', BYTES, file(soutfile).read(BYTES))
-         logger.warning('<end of first %d bytes of output>', BYTES)
-
-      #FIXME /bin/sh might have also other error messages                                                                                            
+            logger.warning('full output is in file: %s',soutfile)
+         logger.warning('<first %d bytes of output>\n%s',BYTES,file(soutfile).read(BYTES))
+         logger.warning('<end of first %d bytes of output>',BYTES)
+         
+#FIXME /bin/sh might have also other error messages                                                                                            
       m = None
       if rc != 0:
          m = re.search('command not found\n',file(soutfile).read())
          if m: logger.warning('command %s not found',cmd)
                                                                                                        
-      return rc, soutfile, m is None
+      return rc,soutfile,m is None
 
-   def cmd1(self, cmd, allowed_exit=[0], capture_stderr=False, timeout=None, python=False ):
+   def cmd1(self,cmd,allowed_exit=[0],capture_stderr=False,timeout=None):
        "Executes an OS command and captures the stderr and stdout which are returned as a string"
        
-       rc, outfile, m = self.cmd( cmd, None, allowed_exit, capture_stderr,
-                                timeout, mention_outputfile_on_errors=False, python=python )
-
+       rc,outfile,m = self.cmd(cmd,None,allowed_exit,capture_stderr,timeout,mention_outputfile_on_errors=False)
        output=file(outfile).read()
-       #os.unlink(outfile)
+       os.unlink(outfile)
        
-       return rc, output, m
+       return rc,output, m
        
-   def system(self, cmd, allowed_exit=[0], stderr_file=None):
+   def system(self,cmd,allowed_exit=[0], stderr_file=None):
       """Execute on OS command. Useful for interactive commands. Stdout and Stderr are not
       caputured and are passed on the caller.
 
       stderr_capture may specify a name of a file to which stderr is redirected.
       """
 
-      logger.debug('Calling shell command: %s' % cmd)
+      logger.debug('Running shell command: %s' % cmd)
 
       if stderr_file:
-         cmd += " 2> %s" % stderr_file
+         cmd += " 2> %s"%stderr_file
          
       try:
-         rc = subprocess.call( [ '/bin/sh', '-c', cmd ], env=self.env )
+         rc = os.spawnve(os.P_WAIT,'/bin/sh',['/bin/sh','-c',cmd],self.env)
       except OSError, (num,text):
          logger.warning( 'Problem with shell command: %s, %s', num,text)
          rc = 255

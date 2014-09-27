@@ -480,16 +480,11 @@ class DiracBase(IBackend):
             job.updateStatus('completing')
             if job.master: job.master.updateMasterJobStatus()
 
-            import time
-            start = time.time()
             ## contact dirac for information
             job.backend.normCPUTime = execute('normCPUTime(%d)' % job.backend.id)
             getSandboxResult        = execute("getOutputSandbox(%d,'%s')" % (job.backend.id, job.getOutputWorkspace().getPath()))
             file_info_dict          = execute('getOutputDataInfo(%d)'% job.backend.id)
-            now = time.time()
-            logger.debug('Job '+job.fqid+' Time for Dirac metadata : '+str(now-start))
 
-            
             ## Set DiracFile metadata
             wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
 
@@ -521,8 +516,6 @@ class DiracBase(IBackend):
             if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): return #user changed it under us
             job.updateStatus('completed')
             if job.master: job.master.updateMasterJobStatus()
-            now = time.time()
-            logger.debug('Job '+job.fqid+' Time for complete update : '+str(now-start))
 
         elif updated_dirac_status == 'failed':
             ## firstly update status to failed
@@ -566,8 +559,7 @@ class DiracBase(IBackend):
         interesting_jobs = [ j for j in jobs if not j.been_queued ]
         ## status that correspond to a ganga 'completed' or 'failed' (see DiracCommands.status(id))
         ## if backend status is these then the job should be on the queue
-        requeue_dirac_status = { 'Completed'                  : 'completed',
-                                 'Done'                       : 'completed',
+        requeue_dirac_status = { 'Done'                       : 'completed',
                                  'Failed'                     : 'failed',
                                  'Deleted'                    : 'failed',
                                  'Unknown: No status for Job' : 'failed' }
@@ -583,8 +575,7 @@ class DiracBase(IBackend):
         for j in requeue_jobs:
 #            if j.backend.status in requeue_dirac_status:
             monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                               args = (j, 
-                                               requeue_dirac_status[j.backend.status]),
+                                               args = (j, requeue_dirac_status[j.backend.status]),
                                                priority     = 5)           
             j.been_queued=True
 
@@ -599,7 +590,7 @@ class DiracBase(IBackend):
             d.updateStatus('failed')
             if job.master: job.master.updateMasterJobStatus()
 
-        ganga_job_status = [ j.status     for j in monitor_jobs if j.backend.id is not None ]
+        ganga_job_status = [ j.status     for j in monitor_jobs ]
         dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
  
         result = execute( 'status(%s)' % str(dirac_job_ids) )
@@ -617,11 +608,10 @@ class DiracBase(IBackend):
             job.backend.status     = state[1]
             job.backend.actualCE   = state[2]
             updated_dirac_status   = state[3]
-            logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
-
+            
             ## Is this really catching a real problem?
             if job.status != old_state:
-                logger.warning('User changed Ganga job status from %s -> %s' % (str(old_state),job.status))
+                logger.warning('User changed Ganga job status from %s -> %s' % (str(old_state),j.status))
                 continue
             ####################
 

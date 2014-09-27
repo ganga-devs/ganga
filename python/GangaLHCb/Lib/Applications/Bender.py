@@ -1,8 +1,8 @@
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#                                                                       
 '''Application handler for Bender applications in LHCb.'''
-import os, tempfile, pprint, shutil
-from os.path import split, join
+import os, tempfile,pprint, shutil
+from os.path import split,join
 from Ganga.GPIDev.Schema import *
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import  File
@@ -44,19 +44,19 @@ class Bender(GaudiBase):
     _name = 'Bender'
     _category = 'applications'
     _exportmethods = GaudiBase._exportmethods[:]
-    _exportmethods += ['prepare', 'unprepare']
+    _exportmethods += ['prepare','unprepare']
 
     _schema = GaudiBase._schema.inherit_copy()
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
     _schema.datadict['package'] = SimpleItem(defvalue=None,
-                                             typelist=['str', 'type(None)'],
+                                             typelist=['str','type(None)'],
                                              doc=docstr)
     docstr = 'The package where your top level requirements file is read '  \
              'from. Can be written either as a path '  \
              '\"Tutorial/Analysis/v6r0\" or in a CMT style notation '  \
              '\"Analysis v6r0 Tutorial\"'
     _schema.datadict['masterpackage'] = SimpleItem(defvalue=None,
-                                                   typelist=['str', 'type(None)'],
+                                                   typelist=['str','type(None)'],
                                                    doc=docstr)
     docstr = 'Extra options to be passed onto the SetupProject command '\
              'used for configuring the environment. As an example '\
@@ -64,18 +64,18 @@ class Bender(GaudiBase):
              'For full documentation of the available options see '\
              'https://twiki.cern.ch/twiki/bin/view/LHCb/SetupProject'
     _schema.datadict['setupProjectOptions'] = SimpleItem(defvalue='',
-                                                         typelist=['str', 'type(None)'],
+                                                         typelist=['str','type(None)'],
                                                          doc=docstr)
     docstr = 'The name of the module to import. A copy will be made ' \
              'at submission time'
     _schema.datadict['module'] = FileItem(preparable=1,doc=docstr)
     docstr = 'The name of the Gaudi application (Bender)'
-    _schema.datadict['project'] = SimpleItem(preparable=1, defvalue='Bender', hidden=1, protected=1,
-                                   typelist=['str'], doc=docstr)
+    _schema.datadict['project'] = SimpleItem(preparable=1,defvalue='Bender',hidden=1,protected=1,
+                                   typelist=['str'],doc=docstr)
     docstr = 'The number of events '
-    _schema.datadict['events'] = SimpleItem(defvalue=-1, typelist=['int'], doc=docstr)
+    _schema.datadict['events'] = SimpleItem(defvalue=-1,typelist=['int'],doc=docstr)
     docstr = 'Parameres for module '
-    _schema.datadict['params'] = SimpleItem(defvalue={}, typelist=['dict', 'str', 'int', 'bool', 'float'], doc=docstr)
+    _schema.datadict['params'] = SimpleItem(defvalue={},typelist=['dict','str','int','bool','float'],doc=docstr)
     _schema.version.major += 2
     _schema.version.minor += 0
 ##     _schema.datadict['is_prepared'] = SimpleItem(defvalue=None,
@@ -113,7 +113,7 @@ class Bender(GaudiBase):
         if self.masterpackage:
             (mpack, malg, mver) = CMTscript.parse_master_package(self.masterpackage)
             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-        cmd = '. SetupProject.sh %s %s %s %s' % (useflag, opts, self.appname, self.version) 
+        cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
         script += '%s \n' % cmd
         fd.write(script)
         fd.flush()
@@ -181,7 +181,6 @@ class Bender(GaudiBase):
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         self.checkPreparedHasParent(self)
         self.post_prepare()
-        logger.debug( "Finished Preparing Application in %s" % share_dir )
 
     def master_configure(self):
         #self._master_configure()
@@ -190,8 +189,6 @@ class Bender(GaudiBase):
 ##         master_input_files += [self.module]
         #self.extra.master_input_files += [self.module]
         #return (None,self.extra)
-        #print "Bender:"
-        #print self._getshell()
         return (None,StandardJobConfig())
 
     def configure(self,master_appconfig):
@@ -224,7 +221,6 @@ class Bender(GaudiBase):
         input_files += [FileBuffer('gaudipython-wrapper.py',script)]
         #self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
         #return (None,self.extra)
-        logger.debug( "Returning StandardJobConfig" )
         return (None,StandardJobConfig(inputbox=input_files,
                                        outputbox=outputsandbox))
 

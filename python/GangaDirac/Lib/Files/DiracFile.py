@@ -75,26 +75,12 @@ class DiracFile(IGangaFile):
             self.localDir    = args[1]
             self.lfn         = args[2]
 
-    def _attribute_filter__set__(self, name, value):
+    def _attribute_filter__set__(self,name, value):
         if name == 'lfn':
             self.namePattern = os.path.basename(value)
         if name == 'localDir' and type(value) != type(None):
             return expandfilename(value)
         return value
-
-    def _attribute_filter__get__(self, name ):
-
-        # Attempt to spend too long loading un-needed objects into memory in order to read job status
-        if name is 'lfn':
-            #j = self.getJobObject()
-            #if j:
-            #    j.backend.getOutputDataLFNs()
-            if self.namePattern:
-                logger.warning( "Do NOT have an LFN, for file: %s" % self.namePattern )
-                logger.warning( "If file exists try using the method pu()" )
-            return object.__getattribute__(self, 'lfn')
-
-        else: return object.__getattribute__(self, name )
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)

@@ -33,46 +33,39 @@ def sharedir_handler(app, root_dir_names, output):
         for root, dirs, files in os.walk(share_dir):
             subdir = root.replace(share_dir,'')[1:] ## [1:] removes the preceeding /
             if ( type(output) is type([]) ) or ( type(output) is type(GangaList()) ):
-                output += [File(name=os.path.join(root, f), subdir=subdir) for f in files]
+                output += [File(name=os.path.join(root,f),subdir=subdir) for f in files]
 ##             for f in files:
 ##                 output += [File(name=os.path.join(root,f),subdir=subdir)]
             elif type(output) is type(''):
                 for d in dirs:
                     if not os.path.isdir(d): os.makedirs(d) 
                     for f in files:
-                        shutil.copy(os.path.join(root, f),
-                                    os.path.join(output,subdir, f))
+                        shutil.copy(os.path.join(root,f),
+                                    os.path.join(output,subdir,f))
             else:
                 raise GangaException('output must be either a list to append to or a path string to copy to')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
+def master_sandbox_prepare(app,appmasterconfig, sharedir_roots=['']):
     ## catch errors from not preparing properly
     if not hasattr(app,'is_prepared') or app.is_prepared is None:
         logger.warning('Application is not prepared properly')
-        raise GangaException(None, 'Application not prepared properly')
+        raise GangaException(None,'Application not prepared properly')
 
     ## Note EITHER the master inputsandbox OR the job.inputsandbox is added to
     ## the subjob inputsandbox depending if the jobmasterconfig object is present
     ## or not... Therefore combine the job.inputsandbox with appmasterconfig.
-    job = app.getJobObject()
+    job=app.getJobObject()
     
     ## user added items from the interactive GPI
-    from Ganga.Utility.Config import getConfig
-    if getConfig('Output')['ForbidLegacyOutput']:
-        inputsandbox = job.inputsandbox[:]
-    else:
-        if len( job.inputsandbox ) > 0:
-            from Ganga.GPIDev.Lib.Job import JobError
-            raise JobError( "InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!" )
-        inputsandbox = []
-        for filepattern in getInputFilesPatterns(job)[0]:
-            inputsandbox.append(File(filepattern))
-
+    #inputsandbox=job.inputsandbox[:]
+    inputsandbox = []
+    for filepattern in getInputFilesPatterns(job)[0]:
+        inputsandbox.append(File(filepattern))
     if len(inputsandbox) > 100:
         logger.warning('InputSandbox exceeds maximum size (100) supported by the Dirac backend')
-        raise GangaException(None, 'InputSandbox exceed maximum size')
-    outputsandbox = getOutputSandboxPatterns(job)#job.outputsandbox[:]
+        raise GangaException(None,'InputSandbox exceed maximum size')
+    outputsandbox=getOutputSandboxPatterns(job)#job.outputsandbox[:]
     
     ## inputsandbox files stored in share_dir from prepare method
     sharedir_handler(app, sharedir_roots, inputsandbox)
@@ -86,7 +79,7 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig):
-    job = app.getJobObject()
+    job=app.getJobObject()
         
     ## Add the job.in/outputsandbox as splitters create subjobs that are
     ## seperate Job objects and therefore have their own job.in/outputsandbox
@@ -116,7 +109,7 @@ def script_generator( script_template,
                       extra_manipulation = None,
                       **kwords ):
     ## Remove those keywords that have None value if necessary
-    removeNone_generator = ((k, v) for (k, v) in kwords.iteritems() if v is not None or not remove_None)
+    removeNone_generator = ((k,v) for (k,v) in kwords.iteritems() if v is not None or not remove_None)
 
     ## Do replacement for non-None keys
     script = script_template

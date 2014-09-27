@@ -13,45 +13,28 @@ argv = sys.argv[2:]
 commands = {'init':'lhcb-proxy-init','info':'dirac-proxy-info',
             'destroy':'grid-proxy-destroy'}
 
-global global_env
-global_env = None
-
-def get_env():
-    global global_env
-    if global_env is None:
-        global_env = {}
-        for k, v in os.environ.iteritems():
-            if not str(v).startswith('() {' ):
-                global_env[k] = v
-
-    return global_env
-
-if not get_env().has_key("GANGADIRACENVIRONMENT"):
+if not os.environ.has_key("GANGADIRACENVIRONMENT"):
     raise 'DIRAC env cache file does not exist.'
-temp_env = get_env()
-dirac_env_cache_file = temp_env["GANGADIRACENVIRONMENT"]
+dirac_env_cache_file = os.environ["GANGADIRACENVIRONMENT"]
 if not os.path.exists(dirac_env_cache_file):
     raise 'DIRAC env cache file does not exist.'
 env_file = open(dirac_env_cache_file)
 for line in env_file.readlines():
     varval = line.strip().split('=')
-    global_env[varval[0]] = ''.join(varval[1:])
+    os.environ[varval[0]] = ''.join(varval[1:])
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 def get_stdout(cmd):
-    proc = subprocess.Popen(cmd, stdout=subprocess.PIPE,
-                            stderr=open('/dev/null'), env=get_env() )
+    proc = subprocess.Popen(cmd,stdout=subprocess.PIPE,
+                            stderr=open('/dev/null'))
     proc.wait()
     if proc.poll() == 0: return proc.communicate()[0]
     else: return None
 
 def exec_command(cmd,argv):
-    #for arg in argv: cmd += ' %s' % arg
-    command_list = [ cmd ]
-    for arg in argv: command_list.append( arg )
-    rc = subprocess.call( command_list, env=get_env() )
-    return rc/256
+    for arg in argv: cmd += ' %s' % arg
+    return os.system(cmd)/256
 
 def get_proxy_file():
     stdout = get_stdout(['grid-proxy-info','-path'])
@@ -119,7 +102,7 @@ if option == 'init':
     rc = exec_command(commands[option],argv) 
     if rc == 0: create_proxy_cache()    
 elif option == 'info':
-    rc = exec_command('grid-proxy-info',['-exists'])
+    rc = exec_command('grid-proxy-info',[' -exists'])
     if rc != 0: destroy_proxy_cache()
     else:
         display = True

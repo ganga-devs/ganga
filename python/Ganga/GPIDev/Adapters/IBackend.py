@@ -106,8 +106,6 @@ class IBackend(GangaObject):
         from Ganga.Utility.logging import log_user_exception
         
         job = self.getJobObject()
-        logger.debug( "SubJobConfigs: %s" % len(subjobconfigs) )
-        logger.debug( "rjobs: %s" % len(rjobs) )
         assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
 
         incomplete = 0
@@ -131,11 +129,10 @@ class IBackend(GangaObject):
             try:
                 b = sj.backend
                 sj.updateStatus('submitting')
-                if b.submit(sc, master_input_sandbox):
+                if b.submit(sc,master_input_sandbox):
                     sj.updateStatus('submitted')
                     #sj._commit() # PENDING: TEMPORARY DISABLED
                     incomplete = 1
-                    sj.info.increment()
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid,'submission failed')):
                         return 0
