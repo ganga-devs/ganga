@@ -47,6 +47,9 @@ def sharedir_handler(app, root_dir_names, output):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
+
+    logger.debug( "RTUTils master_sandbox_prepare" )
+
     ## catch errors from not preparing properly
     if not hasattr(app,'is_prepared') or app.is_prepared is None:
         logger.warning('Application is not prepared properly')
@@ -86,6 +89,8 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig):
+
+    logger.debug( "RTUTils sandbox_prepare" )
     job = app.getJobObject()
         
     ## Add the job.in/outputsandbox as splitters create subjobs that are
