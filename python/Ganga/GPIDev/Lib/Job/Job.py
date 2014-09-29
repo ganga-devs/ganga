@@ -212,6 +212,26 @@ class Job(GangaObject):
                 c.outputfiles.append(f._on_attribute__set__(self, 'outputfiles'))
                 continue
             c.outputfiles.append(f)
+        if self.master is not None:
+            if getConfig('Output')['ForbidLegacyOutput'] and len(self.master.inputfiles) == 0:
+                if self.inputsandbox == []:
+                    logger.debug( "Copying Master inputSandbox" )
+                    c.inputsandbox = self.master.inputsandbox
+                else:
+                    logger.debug( "Keeping own inputsandbox" )
+            elif (not getConfig('Output')['ForbidLegacyOutput']) and (len(self.master.inputsandbox) == 0):
+                if self.inputfiles == []:
+                    logger.debug( "Copying Master inputfiles" )
+                    c.inputfiles = self.master.inputfiles
+                else:
+                    logger.debug( "Keeping own inputsandbox" )
+            else:
+                logger.warning( "There was an error copying the input data for this job" )
+                logger.warning( "Please Check the inputsandbox and/or inputfiles are consistent" )
+                c.inputfiles = []
+                c.inputsandbox = []
+
+        logger.debug( "Intercepted __deepcopy__" )
         return c
 
     def _attribute_filter__get__(self, name):
@@ -599,6 +619,7 @@ class Job(GangaObject):
             self._init_workspace()       
             
         self._setDirty()
+        logger.debug( "Intercepting the _auto__init__ function" )
 
         
     def _init_workspace(self):
@@ -625,7 +646,7 @@ class Job(GangaObject):
 
         name = '_input_sandbox_'+self.getFQID('_')+'%s.tgz'
 
-        if (self.master is not None) or (master is True):
+        if (self.master is None) or (master is True):
             if self.master is not None:
                 name = '_input_sandbox_'+self.master.getFQID('_')+'%s.tgz'
             name = name % "_master"
@@ -636,22 +657,28 @@ class Job(GangaObject):
         if not files:
            return []
 
+        logger.debug( "\n" )
         logger.debug( "Creating Packed InputSandbox %s" % name )
         logger.debug( "With:\n" )
         for f in files:
             logger.debug(str(f))
+        logger.debug( "\n" )
 
         # if the the master job of this subjob exists and the master sandbox is requested
         # the master sandbox has already been created so just look for it
         # else if it has not been prepared we need to construct it as usual
 
-        if self.master:
-            if self.master.application.is_prepared is True:
-                return [ self.master.getInputWorkspace().getPath(name) ]
+        if (self.master is None) or (master is True):
+            logger.debug( "Returning Master InputSandbox" )
+            if self.application.is_prepared is True:
+                logger.debug( "Master Application is Prepared!" )
+                return [ self.getInputWorkspace().getPath(name) ]
             else:
-                return Sandbox.createPackedInputSandbox(files,self.master.getInputWorkspace(),name)
+                logger.debug( "Master Application is NOT Prepared!" )
+                return Sandbox.createPackedInputSandbox(files, self.getInputWorkspace(), name)
 
-        return Sandbox.createPackedInputSandbox(files,self.getInputWorkspace(),name)
+        logger.debug( "Returning new InputSandbox" )
+        return Sandbox.createPackedInputSandbox(files, self.getInputWorkspace(), name)
 
     def createInputSandbox(self, files, master=False):
         """ Create an unpacked input sandbox which contains files (a list of File or FileBuffer objects).

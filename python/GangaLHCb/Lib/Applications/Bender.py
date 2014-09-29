@@ -195,6 +195,7 @@ class Bender(GaudiBase):
         return (None,StandardJobConfig())
 
     def configure(self,master_appconfig):
+
         #self._configure()
         modulename = split(self.module.name)[-1].split('.')[0]
         script =  "from Gaudi.Configuration import *\n"
