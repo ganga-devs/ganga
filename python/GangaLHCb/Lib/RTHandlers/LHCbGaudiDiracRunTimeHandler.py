@@ -55,11 +55,18 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         outputsandbox += ['summary.xml','__parsedxmlsummary__']
 
         logger.debug( "Master Prepare LHCbGaudiDiracRunTimeHandler" )
+
+        thisenv = None
+        if appmasterconfig:
+            if hasattr( appmasterconfig, 'env' ):
+                thisenv = appmasterconfig.env
+
         return StandardJobConfig( inputbox  = unique(inputsandbox),
-                                  outputbox = unique(outputsandbox) )
+                                  outputbox = unique(outputsandbox),
+                                  env = thisenv )
 
 
-    def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
+    def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
@@ -173,9 +180,15 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         #print inputsandbox
 
+        thisenv = None
+        if appmasterconfig:
+            if hasattr( appmasterconfig, 'env' ):
+                thisenv = appmasterconfig.env
+
         return StandardJobConfig( dirac_script,
                                   inputbox  = unique(inputsandbox ),
-                                  outputbox = unique(outputsandbox) )
+                                  outputbox = unique(outputsandbox),
+                                  env = thisenv )
 
 
 
