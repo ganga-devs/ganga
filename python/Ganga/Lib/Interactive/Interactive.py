@@ -30,6 +30,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility import logging, tempfile, util
 from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Shell import expand_vars
 
 import inspect
 import os
@@ -103,7 +104,7 @@ class Interactive( IBackend ):
    def resubmit( self ):
       return self._submit(self.getJobObject().getInputWorkspace().getPath("__jobscript__"))
 
-   def _submit( self, scriptpath, env=dict(os.environ)):
+   def _submit( self, scriptpath, env=expand_vars(dict(os.environ)) ):
       job = self.getJobObject()
       self.actualCE = util.hostname()
       logger.info('Starting job %d', job.id)
