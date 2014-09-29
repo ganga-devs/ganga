@@ -38,6 +38,15 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility.Config import getConfig
 
+def expand_vars(env):
+    tmp_dict = {}
+    for k, v in env.iteritems():
+        if not str(v).startswith('() {'):
+            tmp_dict[k] = os.path.expandvars(v)
+        # Be careful with exported bash functions!
+        else:
+            tmp_dict[k] = str(v).replace('\n','; ').strip()
+    return tmp_dict 
 
 class Shell:
 
@@ -66,16 +75,6 @@ class Shell:
          assert s.env['FOO'] == '$NO_BAR'
          
       """
-
-      def expand_vars(env):
-         tmp_dict = {}
-         for k, v in env.iteritems():
-             if not str(v).startswith('() {'):
-                tmp_dict[k] = os.path.expandvars(v)
-             # Be careful with exported bash functions!
-             else:
-                tmp_dict[k] = str(v).replace('\n','; ').strip()
-         return tmp_dict
 
       if setup:
 
@@ -201,7 +200,7 @@ class Shell:
                                 timeout, mention_outputfile_on_errors=False, python=python )
 
        output=file(outfile).read()
-       #os.unlink(outfile)
+       os.unlink(outfile)
        
        return rc, output, m
        
