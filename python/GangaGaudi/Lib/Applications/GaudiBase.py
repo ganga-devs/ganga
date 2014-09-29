@@ -237,6 +237,7 @@ class GaudiBase(IPrepareApp):
 ##             if not os.path.isdir(os.path.join(share_dir,'inputsandbox','lib')): os.makedirs(os.path.join(share_dir,'inputsandbox','lib')) 
 ##             share_path = os.path.join(share_dir,'inputsandbox','lib',f.split('/')[-1])
 ##             shutil.copy(expandfilename(f),share_path)
+            logger.debug( "UserDLLs DLLs: %s" % expandfilename(f) )
             InstallArea.append(File(name=expandfilename(f),subdir='lib'))
         for f in pys:
             tmp = f.split('InstallArea')[-1]
@@ -249,7 +250,9 @@ class GaudiBase(IPrepareApp):
             #share_file.subdir = subdir
             #self.prep_inputbox.append(share_file)
             #self.prep_inputbox.append(File(name=share_path,subdir=subdir))
+            logger.debug( "UserDLLs PYS: %s" % expandfilename(f) )
             InstallArea.append(File(name=expandfilename(f),subdir=subdir))
+
         for dir, files in subpys.iteritems():
             for f in files:
                 tmp = f.split('InstallArea')[-1]
@@ -262,6 +265,7 @@ class GaudiBase(IPrepareApp):
                 #share_file.subdir = subdir
                 #self.prep_inputbox.append(share_file)
                 #self.prep_inputbox.append(File(name=share_path,subdir=subdir))
+                logger.debug( "UserDLLs SUBPYS: %s" % expandfilename(f) )
                 InstallArea.append(File(name=expandfilename(f),subdir=subdir))
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         # also call post_prepare for hashing
