@@ -239,17 +239,22 @@ class Descriptor(object):
             return cls._schema[self._name]
         else:
             result = None
-            g = self._bind_method(obj,self._getter_name)
+            g = self._bind_method(obj, self._getter_name)
             if g:
                 result = g()
             else:
                 #LAZYLOADING
-                if obj._data is None and not obj._index_cache is None and self._name in obj._index_cache:
-                    result = obj._index_cache[self._name]
+                lookup_result = None
+                try:
+                    lookup_result = obj._index_cache[self._name]
+                except:
+                    pass
+                if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
+                    result = lookup_result
                 else:
                     obj._getReadAccess()
                     result = obj._data[self._name]
-            
+
             return result
 
     def __set__(self, obj, val):
