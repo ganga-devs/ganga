@@ -1,0 +1,63 @@
+**************************************************************************************************************
+6.0.38 (2014/10/1)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fixed potential issue with filebuffer objects
+* Fixed occurrences where Sandboxes are overwritten
+* Fixed issues in how we handle exported bash functions
+* Some minor performance improvements
+* Fixed unittests failing due to changed behind the scenes defaults, Modified some others to exit with 
+better failures
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+Bumped panda-client version
+Fixed DQ2Dataset with local jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Added new completed states for jobs on the grid
+* Fixed some unittests failing due to GUID collisions
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGaudi
+--------------------------------------------------------------------------------------------------------------
+* Fixed some issues with sandbox not picking up inputsandbox parameter from job object
+* Improved way that environment is passed to the backend
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Fixed handling of exported bash environmental variables in multiple places
+* Added new unittest to check that the inputsandbox is propagated by Gaudi applications
+* Fixed some unittests due to minor bugs
+* InputSandbox is now picked up over inputFiles by default and a JobError is raised if both fields are 
+populated
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Added DDM and wildcard exclusion to Jedi backend
+* Bumped pandaclient version
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaSNOplus
+--------------------------------------------------------------------------------------------------------------
+* Restructured GangaSNOplus plugin directory
+* Added unit tests
+* Added Dirac RTHandler
+* Added output file checks in post processing
+* Dirac & LCG backends use CVMFS software by default
+
+**************************************************************************************************************
