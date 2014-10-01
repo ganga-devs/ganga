@@ -646,7 +646,7 @@ class Job(GangaObject):
 
         name = '_input_sandbox_'+self.getFQID('_')+'%s.tgz'
 
-        if (self.master is None) or (master is True):
+        if master is True:
             if self.master is not None:
                 name = '_input_sandbox_'+self.master.getFQID('_')+'%s.tgz'
             name = name % "_master"
@@ -668,7 +668,7 @@ class Job(GangaObject):
         # the master sandbox has already been created so just look for it
         # else if it has not been prepared we need to construct it as usual
 
-        if (self.master is None) or (master is True):
+        if master is True:
             logger.debug( "Returning Master InputSandbox" )
             if self.application.is_prepared is True:
                 logger.debug( "Master Application is Prepared!" )
