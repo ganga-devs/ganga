@@ -23,3 +23,5 @@ if cnf['GLITE_ENABLE']:
     import gzip
     output = gzip.open('%s/stdout.gz' % j.outputdir, 'r').readline()
     assert(output.strip() == 'Hello')
+else:
+    raise failureException("Current Configuration CANNOT test GLITE backend!")
