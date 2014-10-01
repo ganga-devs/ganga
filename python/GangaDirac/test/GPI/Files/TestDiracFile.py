@@ -9,12 +9,21 @@ from Ganga.GPI                                     import *
 from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
 import unittest, tempfile, os
 
+import string, random
+
+def rand_str():
+    return ''.join( random.choice( string.ascii_uppercase + string.digits ) for _ in range(8) )
+
 class TestDiracFile(GangaGPITestCase):
     def setUp(self):
         script='''#!/bin/bash
-echo HelloWorld > a.root
-echo WorldHello > b.root
+echo %s > a.root
+echo %s > b.root
 '''
+        #   Having a fixed string leaves us open to GUID conflicts
+        str1 = "HelloWorld_" + rand_str()
+        str2 = "WorldHello_" + rand_str()
+        script = script % ( str1, str2 )
         tmpf = tempfile.NamedTemporaryFile(delete=False)
         tmpf.write(script)
         self.root, self.filename = os.path.split(tmpf.name)
