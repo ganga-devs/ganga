@@ -25,7 +25,8 @@ def get_env():
                 global_env[k] = v
             else:
                 global_env[k] = str(v).replace('\n','; ').strip()
-                global_env[k] += ';'
+                if str(global_env[k][-1:]) != str(';'):
+                    global_env[k] += ';'
 
     return global_env
 
