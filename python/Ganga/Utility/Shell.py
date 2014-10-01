@@ -46,7 +46,8 @@ def expand_vars(env):
         # Be careful with exported bash functions!
         else:
             tmp_dict[k] = str(v).replace('\n','; ').strip()
-            tmp_dict[k] += ';'
+            if not str(tmp_dict[k][-1:]) == str(';'):
+                tmp_dict[k] += ';'
     #print tmp_dict['BASH_FUNC_module()']
     return tmp_dict 
 
