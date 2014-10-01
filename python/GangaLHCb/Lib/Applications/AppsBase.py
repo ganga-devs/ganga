@@ -266,8 +266,8 @@ class AppName(Gaudi):
         return CMTscript.CMTscript(self,command)
 
     def _getshell(self):
-        import copy
-        env = copy.deepcopy(os.environ)
+        from Ganga.Utility.Shell import expand_vars
+        env = expand_vars( os.environ )
 
         execute('. `which LbLogin.sh` -c %s' % self.platform,env=env,shell=True,update_env=True)
         env['User_release_area'] = self.user_release_area
@@ -282,6 +282,8 @@ class AppName(Gaudi):
         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
 
         execute(cmd,env=env,shell=True,update_env=True)
+
+        #print env
 
 ##         cmd += ' > /dev/null 2>&1; python -c "import os; print os.environ"'
 ##         pipe=subprocess.Popen(cmd,

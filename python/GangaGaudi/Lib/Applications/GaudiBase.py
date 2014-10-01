@@ -99,7 +99,8 @@ class GaudiBase(IPrepareApp):
             
     def _getshell(self):
 
-        env = copy.deepcopy(os.environ)
+        from Ganga.Utility.Shell import expand_vars
+        env = expand_vars( os.environ )
 
         env['User_release_area'] = self.user_release_area
         env['CMTCONFIG'] = self.platform
