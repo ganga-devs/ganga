@@ -65,9 +65,9 @@ def checkFolderExists(folder):
     return os.path.isdir( folder )
 
 # check for a file in a tar file
-def checkFileInTar(tf,file):
+def checkFileInTar(tf, file):
     import tarfile
-    tar1=tarfile.open(tf,"r")
+    tar1=tarfile.open(tf, "r")
     print "%s files in %s" % ( str(len(tar1.getnames())), tf )
     for fileName in tar1.getnames():
         if str(fileName[:2]) == str('./'):
@@ -85,12 +85,12 @@ def checkFileInTar(tf,file):
     return False
 
 # check for a file in the inputsandbox
-def checkFileInSandbox(job,file):
+def checkFileInSandbox(job, file):
     import os.path
     masterTest = False
     subJobTest = False
-    tarFile2=os.path.join(job.inputdir,'_input_sandbox_%d_master.tgz'%job.id)
-    tarFile1=os.path.join(job.inputdir,'_input_sandbox_%d.tgz'%job.id)
+    tarFile2=os.path.join(job.inputdir, '_input_sandbox_%d_master.tgz' % job.id)
+    tarFile1=os.path.join(job.inputdir, '_input_sandbox_%d.tgz' % job.id)
 
     print "Checking: %s and %s" %( tarFile1, tarFile2 )
 

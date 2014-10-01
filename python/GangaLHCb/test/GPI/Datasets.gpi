@@ -17,7 +17,8 @@ j = Job()
 j.inputdata = ['lfn:a','pfn:b']
 assert isinstance(j.inputdata,LHCbDataset)
 j.outputfiles = ['a',DiracFile('b')]
-assert isinstance(j.outputfiles[0],SandboxFile)
+#assert isinstance(j.outputfiles[0],SandboxFile)
+assert isinstance(j.outputfiles[0],LocalFile)
 assert isinstance(j.outputfiles[1],DiracFile)
 #
 LFN_DATA = ['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000005_1.dimuon.dst',
