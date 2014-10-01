@@ -2,6 +2,7 @@ import os, base64, subprocess, threading, pickle, signal
 from Ganga.Utility.Config  import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
+from Ganga.Utility.Shell   import expand_vars
 logger = getLogger()
 
 
@@ -92,7 +93,13 @@ def execute(command,
         command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
 
     if env is None and not update_env:
-        env = dict(os.environ)
+        pipe=subprocess.Popen('python -c "import os; print os.environ"',
+                               env=None, cwd=None, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
+        output=pipe.communicate()
+        env = eval(eval(str(output))[0])
+
+    if env:
+        env = expand_vars( env )
 
     p=subprocess.Popen(stream_command,
                        shell      = True,
