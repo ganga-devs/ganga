@@ -23,6 +23,9 @@ def get_env():
         for k, v in os.environ.iteritems():
             if not str(v).startswith('() {' ):
                 global_env[k] = v
+            else:
+                global_env[k] = str(v).replace('\n','; ').strip()
+                global_env[k] += ';'
 
     return global_env
 
@@ -35,7 +38,9 @@ if not os.path.exists(dirac_env_cache_file):
 env_file = open(dirac_env_cache_file)
 for line in env_file.readlines():
     varval = line.strip().split('=')
-    global_env[varval[0]] = ''.join(varval[1:])
+    contents = ''.join(varval[1:])
+    if not contents.startswith('() {' ):
+        global_env[varval[0]] = contents
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
