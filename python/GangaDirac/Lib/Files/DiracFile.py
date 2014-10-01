@@ -89,9 +89,9 @@ class DiracFile(IGangaFile):
             #j = self.getJobObject()
             #if j:
             #    j.backend.getOutputDataLFNs()
-            if self.namePattern:
+            if not self.namePattern:
                 logger.warning( "Do NOT have an LFN, for file: %s" % self.namePattern )
-                logger.warning( "If file exists try using the method pu()" )
+                logger.warning( "If file exists try using the method put()" )
             return object.__getattribute__(self, 'lfn')
 
         else: return object.__getattribute__(self, name )
