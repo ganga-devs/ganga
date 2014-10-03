@@ -308,6 +308,9 @@ class AppName(Gaudi):
             msg = 'Command "%s" failed to properly setup environment.' % cmd
             logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
+
+        import copy
+        self.env = copy.deepcopy( env )
         return env
 
 

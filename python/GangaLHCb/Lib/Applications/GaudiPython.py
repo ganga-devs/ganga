@@ -155,6 +155,9 @@ class GaudiPython(GaudiBase):
             logger.error(msg)
             raise ApplicationConfigurationError(None,msg)
 
+        import copy
+        self.env = copy.deepcopy( self.shell.env )
+
         return self.shell.env
 
 ##         super(type(self), self)._getshell()
