@@ -267,7 +267,7 @@ def printTestCase(out,testcase,config=None):
 
         JiraMatcher = re.match(JIRA_BUGID_PATTERN, testcase_name)
         if JiraMatcher is not None:
-            jira_page = 'https://its.cern.ch/jira/browse/GANGA-%s' % matcher.group(1)
+            jira_page = 'https://its.cern.ch/jira/browse/GANGA-%s' % JiraMatcher.group(1)
             name = '%s <a class="small" href="%s">[Jira Report]</a>' % (name, jira_page)
 
     print >>out, '<tr>\n<td><nowrap>%s</nowrap></td> <td>%s</td> <td>%s</td> <td>%s</td>\n</tr>\n'%(name, time, result, info)               
