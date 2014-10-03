@@ -247,6 +247,9 @@ class Job(GangaObject):
         if name not in list:
             return object.__getattribute__(self, name)
 
+        if name in self.metadata.data.keys():
+            return self.metadata[name]
+
         if name == 'outputfiles':
             import re
             regex = re.compile('[*?\[\]]')
@@ -273,8 +276,6 @@ class Job(GangaObject):
                     files.append(f)
             return addProxy(files)
 
-        if name in self.metadata.data.keys():
-            return self.metadata[name]
         if name == 'subjobs':
             return self._subjobs_proxy()
 
