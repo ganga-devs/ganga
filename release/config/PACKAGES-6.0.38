@@ -3,7 +3,7 @@
 #ulrik
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-30-225
+ganga/python/Ganga                                                     Ganga-Base-30-226
 
 #johannes/mark
 ganga/python/GangaAtlas                                                GangaAtlas-26-21
@@ -12,8 +12,8 @@ ganga/python/GangaAtlas                                                GangaAtla
 ganga/python/GangaDirac                                                GangaDirac-01-53
 
 #alex/ulrik
-ganga/python/GangaGaudi                                                GangaGaudi-01-35
-ganga/python/GangaLHCb                                                 GangaLHCb-24-76
+ganga/python/GangaGaudi                                                GangaGaudi-01-36
+ganga/python/GangaLHCb                                                 GangaLHCb-24-77
 
 #johannes
 ganga/python/GangaPanda                                                GangaPanda-26-17
@@ -30,6 +30,6 @@ ganga/python/GangaSNOplus                                              GangaSNOp
 ganga/python/GangaService                                              GangaService-1-8
 
 #ulrik
-ganga/python/GangaTest                                                 GangaTest-30-40
+ganga/python/GangaTest                                                 GangaTest-30-41
 ganga/python/GangaTutorial                                             GangaTutorial-20-5
 
