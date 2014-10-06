@@ -1084,7 +1084,9 @@ class Job(GangaObject):
                 appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ]
             else:
                 appsubconfig = [ rjobs[0].master.application.configure(appmasterconfig)[1] ]
-            appconfig = (appmasterconfig, appsubconfig)
+
+            # Appears usued elesewhere in the codebase
+            #appconfig = (appmasterconfig, appsubconfig)
 
             logger.debug( "# appsubconfig: %s" % len(appsubconfig) )
 

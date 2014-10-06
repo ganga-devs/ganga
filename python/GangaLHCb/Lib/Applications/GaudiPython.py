@@ -219,7 +219,7 @@ class GaudiPython(GaudiBase):
         #return (None,GaudiJobConfig(inputbox=master_input_files))
         #print "CONFIGURE ENV:"
         #print self._getshell()
-        return (None, StandardJobConfig(env = self._getshell() ))
+        return (None, StandardJobConfig(env = None )) #self._getshell() ))
 
     def configure(self,master_appconfig):
         #self._configure()
@@ -250,7 +250,7 @@ class GaudiPython(GaudiBase):
         #print self._getshell()
         return (None, StandardJobConfig(inputbox=input_files,
                                        outputbox=outputsandbox,
-                                       env = self._getshell()))
+                                       env = None )) #self._getshell()))
             
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""

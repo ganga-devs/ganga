@@ -132,7 +132,8 @@ class GaudiBase(IPrepareApp):
             if cache_env:
                 self.env = copy.deepcopy(shell)
             return shell
-        return copy.deepcopy(self.env)
+
+        return self.env
 
     def _export_getenv(self):
         return self.getenv(False)
