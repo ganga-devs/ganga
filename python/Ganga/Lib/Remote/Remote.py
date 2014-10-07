@@ -243,12 +243,27 @@ print "***_FINISHED_***"
                   
                self._transport.connect(username = self.username, pkey = Remote._key[self.ssh_key])
             else:
-               password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host)) 
-               self._transport.connect(username=self.username, password=password)
+               logger.debug( "SSH key: %s" % self.ssh_key )
+               if os.path.exists(os.path.expanduser( os.path.expandvars( self.ssh_key ) ) ):
+                   logger.debug( "PATH: %s Exists" % os.path.expanduser( os.path.expandvars( self.ssh_key ) ) )
+               else:
+                   logger.debug( "PATH: %s Does NOT Exist" % os.path.expanduser( os.path.expandvars( self.ssh_key ) ) )
 
-                        
+               password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host)) 
+               
+               if self.username != "" and self.host != "":
+                   self._transport.connect(username=self.username, password=password)
+               elif self.username == "":
+                   logger.error( "ERROR: USERNAME NOT DEFINED!!!" )
+                   return False
+               elif self.host == "":
+                   logger.error( "ERROR: HOSTNAME NOT DEFINED!!!" )
+                   return False
+               else:
+                   pass
+
             # blank the password just in case
-            password = "                 "
+            password = "                                                "
             
             channel = self._transport.open_session()
             channel.exec_command( 'mkdir -p ' + self.ganga_dir )
