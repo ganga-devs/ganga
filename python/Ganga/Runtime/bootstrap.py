@@ -872,8 +872,8 @@ default_backends = LCG
 
 
         def license():
-           'Print the full license (GPL)'
-           print file(os.path.join(_gangaPythonPath,'..','LICENSE_GPL')).read()
+            'Print the full license (GPL)'
+            print file(os.path.join(_gangaPythonPath,'..','LICENSE_GPL')).read()
            
         exportToGPI('license',license,'Functions')
         # bootstrap credentials
@@ -901,11 +901,47 @@ default_backends = LCG
         
         def typename(obj):
             'Return a name of Ganga object as a string, example: typename(j.application) -> "DaVinci"'
-            return obj._impl._name
+            if hasattr( obj, '_impl' ):
+                if hasattr( obj._impl, '_name' ):
+                    return obj._impl._name
+                else:
+                    logger = Ganga.Utility.logging.getLogger()
+                    logger.error( "Object %s DOES NOT have the _name parameter set" % (str(obj)) )
+                    import traceback
+                    traceback.print_stack()
+                    return ""
+            else:
+                logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
+                if hasattr( obj, '_name' ):
+                    return obj._name
+                else:
+                    logger = Ganga.Utility.logging.getLogger()
+                    logger.error( "Object %s DOES NOT have the _impl or _name parameter set" % (str(obj)) )
+                    import traceback
+                    traceback.print_stack()
+                    return ""
         
         def categoryname(obj):
             'Return a category of Ganga object as a string, example: categoryname(j.application) -> "applications"'
-            return obj._impl._category
+            if hasattr( obj, '_impl' ):
+                if hasattr( obj._impl, '_category' ):
+                    return obj._impl._category
+                else:
+                    logger = Ganga.Utility.logging.getLogger()
+                    logger.error( "Object %s DOES NOT have the _category parameter set" % (str(obj)) )
+                    import traceback
+                    traceback.print_stack()
+                    return ""
+            else:
+                logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
+                if hasattr( obj, '_category' ):
+                    return obj._category
+                else:
+                    logger = Ganga.Utility.logging.getLogger()
+                    logger.error( "Object %s DOES NOT have the _impl or _category parameter set" % (str(obj)) )
+                    import traceback
+                    traceback.print_stack()
+                    return ""
 
         def plugins(category=None):
            """List loaded plugins.
