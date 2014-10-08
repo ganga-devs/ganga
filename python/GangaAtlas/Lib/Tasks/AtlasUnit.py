@@ -282,9 +282,17 @@ class AtlasUnit(IUnit):
       j.outputsandbox = self._getParent().outputsandbox
 
       # check for splitter - TagPrepare and Jedi don't user splitters
-      if j.application._impl._name == "TagPrepare" or j.backend._impl._name == "Jedi":
+      if j.application._impl._name == "TagPrepare":
          return j
       
+      if j.backend._impl._name == "Jedi":
+         if trf.files_per_job > 0:
+            j.backend.requirements.nFilesPerJob = trf.files_per_job
+         elif trf.MB_per_job > 0:
+            j.backend.requirements.nGBPerJob = trf.MB_per_job / 1000
+
+         return j
+
       if not trf.splitter:
          if j.inputdata._impl._name == "ATLASLocalDataset":
             j.splitter = AthenaSplitterJob()
