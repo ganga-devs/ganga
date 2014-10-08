@@ -249,9 +249,8 @@ print "***_FINISHED_***"
                else:
                    logger.debug( "PATH: %s Does NOT Exist" % os.path.expanduser( os.path.expandvars( self.ssh_key ) ) )
 
-               password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host)) 
-               
                if self.username != "" and self.host != "":
+                   password = getpass.getpass('Password for %s@%s: ' % (self.username, self.host))
                    self._transport.connect(username=self.username, password=password)
                elif self.username == "":
                    logger.error( "ERROR: USERNAME NOT DEFINED!!!" )
