@@ -57,7 +57,7 @@ def exec_command(cmd,argv):
     command_list = [ cmd ]
     for arg in argv: command_list.append( arg )
     rc = subprocess.call( command_list, env=get_env() )
-    return rc/256
+    return rc
 
 def get_proxy_file():
     stdout = get_stdout(['grid-proxy-info','-path'])
@@ -123,7 +123,7 @@ rc = 0
 if option == 'init':
     destroy_proxy_cache()
     rc = exec_command(commands[option],argv) 
-    if rc == 0: create_proxy_cache()    
+    if rc == 0: create_proxy_cache()
 elif option == 'info':
     rc = exec_command('grid-proxy-info',['-exists'])
     if rc != 0: destroy_proxy_cache()
