@@ -911,6 +911,7 @@ default_backends = LCG
                     traceback.print_stack()
                     return ""
             else:
+                logger = Ganga.Utility.logging.getLogger()
                 logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
                 if hasattr( obj, '_name' ):
                     return obj._name
@@ -933,6 +934,7 @@ default_backends = LCG
                     traceback.print_stack()
                     return ""
             else:
+                logger = Ganga.Utility.logging.getLogger()
                 logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
                 if hasattr( obj, '_category' ):
                     return obj._category
