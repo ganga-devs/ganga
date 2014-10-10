@@ -3,15 +3,11 @@
 import re
 import inspect
 import GangaPlotHelper
-
 ## require matplotlib to produce statistic plots
 from pylab import *
 
-import sys
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
+## require sets module supported from python 2.3 
+from sets import Set
 
 from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.logging import getLogger
@@ -268,89 +264,6 @@ class GangaPlotter:
 
         return value
 
-    def __makeScatter__(self,dataTable,pltXColId=0,pltYColId=1,pltTitle='Scatter Plot',pltXLabel=None,pltYLabel=None,pltColorMap=None,pltOutput=None,pltXDataProc=None,pltYDataProc=None,pltCDataProc=None):
-
-        """backend scatter plot generator """
-
-        ## the last marker is a ntuple for "star"
-        markerList = ['o','s','^','d','+','v','x', (5,1,0)]
-
-        pltAlpha=0.7
-
-        dataHeader = dataTable[0]
-        dataTable  = dataTable[1:]
-
-        if len(dataTable) < 1:
-            logger.warning('Scatter plot requires at least 2 columns in the data Table, the given contains only %d.') % len(dataTable)
-            return
-
-        xdata = {} 
-        ydata = {} 
-
-        i = 0
-        for data in dataTable:
-
-            print 'processing data row %d' % i
-
-            i+=1
-
-            xval = self.__procPltData__(data[pltXColId],pltXDataProc)
-            yval = self.__procPltData__(data[pltYColId],pltYDataProc)
-            
-            if len(data) >= 3:
-                cval = self.__procPltData__(data[2],pltCDataProc)
-            else:
-                cval = pltTitle
-
-            if cval not in xdata.keys():
-               xdata[cval] = []
-               ydata[cval] = []
-
-            xdata[cval].append(xval)
-            ydata[cval].append(yval)       
-
-        if not pltXLabel:
-            pltXLabel = dataHeader[pltXColId]
-
-        if not pltYLabel:
-            pltYLabel = dataHeader[pltYColId]
-
-        ##-----
-        ## Generating marker and color array
-        ##-----
-        legend_labels = xdata.keys()
-        mycmap = self.__setColormap__( pltColorMap, len(legend_labels) )
-
-        ##-----
-        ## Generating the scatter plot
-        ##-----
-        self.output = pltOutput
-        self.__setFigureId__()
-
-        figure(self.figId)
-        rc('font',size=8.0)
-
-        i = 0
-
-        charts = []
-        for key in legend_labels:
-
-            marker = markerList[ i % len(markerList) ]
-            chart = scatter(xdata[key], ydata[key], c=[ mycmap[i] ]*len(xdata[key]), cmap=mycmap, marker=marker, alpha=pltAlpha, label=key)
-            charts.append(chart)
-
-            i += 1
-
-        grid(True)
-        title(pltTitle)
-        ylabel(pltYLabel)
-        xlabel(pltXLabel)
-        #legend(shadow=True, loc='best')
-        legend(charts, legend_labels, shadow=True, loc='best')
-        axis('on')
-
-        self.__doPlot__()
-
     def __makeBarChart__(self,dataTable,pltXColId=0,pltYColIds=[1],pltTitle='Bar Chart',pltXLabel=None,pltYLabel='#',pltColorMap=None,pltOutput=None,pltXDataProc=None,pltYDataProcs=None,stackedBar=True):
 
         """ backend bar chart generator """
@@ -488,7 +401,7 @@ class GangaPlotter:
         self.__doPlot__()
 
     def __makeMultiHistograms__(self, dataTable, pltColIdList, pltDataProcList, pltLabelList, pltTitle='Histogram',\
-                                pltNumBins=50,pltRange=(-1,-1),pltXLabel=None,pltColorMap=None,pltNormalize=False,\
+                                pltNumBins=50,pltXLabel=None,pltColorMap=None,pltNormalize=False,\
                                 pltOutput=None):
 
         """ backend generator for multiple histograms """
@@ -513,7 +426,7 @@ class GangaPlotter:
             pltDataProc  = pltDataProcList[id]
             pltLabel     = pltLabelList[id]
 
-            self.__makeHistogram__(dataTable, pltColId=id, pltNumBins=pltNumBins, pltRange=pltRange, \
+            self.__makeHistogram__(dataTable, pltColId=id, pltNumBins=pltNumBins, \
                                    pltFaceColor=pltFaceColor, pltNormalize=pltNormalize, \
                                    pltLabel=pltLabel, pltOutput=pltOutput, pltDataProc=pltDataProc)
 
@@ -531,7 +444,7 @@ class GangaPlotter:
         grid(True)
         self.__doPlot__()
 
-    def __makeHistogram__(self,dataTable,pltColId=0,pltNumBins=50, pltRange=(-1,-1), \
+    def __makeHistogram__(self,dataTable,pltColId=0,pltNumBins=50,\
                           pltFaceColor='green',pltNormalize=False,\
                           pltLabel=None,pltOutput=None,pltDataProc=None):
 
@@ -560,11 +473,7 @@ class GangaPlotter:
                 pltData[dataHeader[pltColId]].append(value)
         
         #a = axes([0.05,0.1,0.5,0.7])
-        ## disable plot range if -1 is given to the range specification
-        if -1 in pltRange:
-            pltRange = None
-
-        n, bins, patches = hist(pltData[dataHeader[pltColId]], bins=pltNumBins, range=pltRange, normed=pltNormalize, facecolor=pltFaceColor, label=pltLabel, alpha=pltAlpha)
+        n, bins, patches = hist(pltData[dataHeader[pltColId]], bins=pltNumBins, normed=pltNormalize, facecolor=pltFaceColor, label=pltLabel, alpha=pltAlpha)
 
         ## a trick for remove the dummy labels from the legend
         for p in patches[1:]:
@@ -760,117 +669,6 @@ class GangaPlotter:
         # make the plot
         self.__makeBarChart__(dataTable,pltXColId=0,pltYColIds=[1],pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltColorMap=colormap,pltOutput=output,pltXDataProc=xdataproc,pltYDataProcs=[ydataproc],stackedBar=stacked)
 
-    def scatter(self,jobs,xattr,yattr,**keywords):
-
-        """
-        The plotter's interface for generating scatter plot.
-
-        usage:
-            >>> plotter.scatter(jobs,xattr,yattr,**keywords)
-
-            Generate a scatter chart presenting the distribution of yattr along xattr.
-
-        required arguments:
-             jobs: A GANGA's job table
-
-            xattr: A string or a user defined function, the corresponding value of which
-                   will be extracted as the x value of the scatter plot.
-
-            yattr: A string or a user defined function, the corresponding value of which
-                   will be extracted as the y value of the scatter plot.
-
-        optional arguments:
-
-               cattr: A String or a user defined function to catagorize the data points into group.
-                      Each group will be plotted with the same marker filled with the same color.
-
-            colormap: A list of values representing the colors that will be picked to
-                      distinguish different data group categorized by cattr. The supported description of color can be found
-                      at http://matplotlib.sourceforge.net/matplotlib.pylab.html#-colors
-
-               title: A string specifying the title.
-
-              xlabel: A string specifying the xlabel.
-
-              ylabel: A string specifying the ylabel.
-
-              output: A name of file where the chart will be exported. The format
-                      is auto-determinated by the extension of the given name.
-
-           xdataproc: An user-defined function which will be applied to process the value
-                      of xattr before plotting chart.
-
-           ydataproc: The same as xdataproc; but apply on the value of yattr.
-
-           cdataproc: The same as xdataproc; but apply on the value of cattr.
-
-            xattrext: Trigger the build-in data pre-processor on the value of xattr.
-                      It will be override if "xdataproc" argument is also specified.
-                      ** Supported attrext for "backend.actualCE" and "backend.CE":
-                         - "by_ce": Catagorize CE queues into CE
-                         - "by_country": Catagorize CE queues into country
-
-            yattrext: The same as xattrext; but apply on the value of yattr.
-
-            cattrext: The same as xattrext; but apply on the value of cattr.
-
-                deep: Sets if looping over all the subjob levels. Default is "True"
-        """
-
-        # default keyword arguments
-        subtitle  = self.__defaultSubtitle__(yattr)      # default subtitle
-        cattr     = None        # catagory attribute
-        xlabel    = None        # xlabel
-        ylabel    = None        # ylabel
-        colormap  = None        # colormap
-        output    = None        # the output file of the picture
-        xattrext  = None        # trigger the build-in data processing function on xattr
-        yattrext  = None        # trigger the build-in data processing function on yattr
-        cattrext  = None        # trigger the build-in data processing function on cattr
-        xdataproc = None        # function for xdata processing (cannot work together with 'attrext')
-        ydataproc = None        # function for ydata processing (cannot work together with 'attrext')
-        cdataproc = None        # function for cdata processing (cannot work together with 'attrext')
-        deep      = True        # deep looping over all the subjob levels
-
-        # update keyword arguments with the given values
-        if keywords.has_key('cattr'):     cattr     = keywords['cattr']
-        if keywords.has_key('title'):    subtitle   = keywords['title']
-        if keywords.has_key('xlabel'):   xlabel     = keywords['xlabel']
-        if keywords.has_key('ylabel'):   ylabel     = keywords['ylabel']
-        if keywords.has_key('colormap'): colormap   = keywords['colormap']
-        if keywords.has_key('output'):   output     = keywords['output']
-        if keywords.has_key('xattrext'): xattrext   = keywords['xattrext']
-        if keywords.has_key('yattrext'): yattrext   = keywords['yattrext']
-        if keywords.has_key('cattrext'): cattrext   = keywords['cattrext']
-        if keywords.has_key('xdataproc'): xdataproc = keywords['xdataproc']
-        if keywords.has_key('ydataproc'): ydataproc = keywords['ydataproc']
-        if keywords.has_key('cdataproc'): cdataproc = keywords['cdataproc']
-        if keywords.has_key('deep'):       deep     = keywords['deep']
-
-        jlist = []
-        for j in jobs:
-            jlist.append(j)
-
-        xattr_spec = self.__makeList__(xattr)
-        yattr_spec = self.__makeList__(yattr)
-        cattr_spec = self.__makeList__(cattr)
-
-        # special build-in dataprocs for the CE-based bar chart
-        xdataproc = self.__setDataProcessor__(xattr_spec[0],xattrext,xdataproc)
-        ydataproc = self.__setDataProcessor__(yattr_spec[0],yattrext,ydataproc)
-        cdataproc = self.__setDataProcessor__(cattr_spec[0],cattrext,cdataproc)
-
-        if cattr_spec[0]:
-            dataTable = getJobInfoTable(jlist,[xattr_spec[0],yattr_spec[0],cattr_spec[0]],deep)
-        else:
-            dataTable = getJobInfoTable(jlist,[xattr_spec[0],yattr_spec[0]],deep)
-            
-        # make the plot title
-        title = __makePlotTitle__(len(dataTable[1:]),deep,subtitle)
-
-        # make the plot
-        self.__makeScatter__(dataTable,pltXColId=0,pltYColId=1,pltTitle=title,pltXLabel=xlabel,pltYLabel=ylabel,pltColorMap=colormap,pltOutput=output,pltXDataProc=xdataproc,pltYDataProc=ydataproc,pltCDataProc=cdataproc)
-
     def piechart(self,jobs,attr,**keywords):
         
         """
@@ -973,10 +771,6 @@ class GangaPlotter:
 
                label: A string specifying the lable of the histogram displayed on the legend.
 
-                xmin: A number specifying the lower bound of the histogram range.
-    
-                xmax: A number specifying the upper bound of the histogram range.
-
               output: A name of file where the pie chart plot will be exported. The format
                       is auto-determinated by the extension of the given name.
 
@@ -997,8 +791,6 @@ class GangaPlotter:
         deep      = True        # deep looping over all the subjob levels
         normalize = False       # histogram normalization
         numbins   = 50          # number of bins in the histogram
-        xmin      = -1          # lower bound of the histogram 
-        xmax      = -1          # upper bound of the histogram
 
         # update keyword arguments with the given values
         if keywords.has_key('title'):    subtitle  = keywords['title']
@@ -1010,8 +802,6 @@ class GangaPlotter:
         if keywords.has_key('deep'):       deep    = keywords['deep']
         if keywords.has_key('normalize'): normalize= keywords['normalize']
         if keywords.has_key('numbins'):   numbins  = keywords['numbins']
-        if keywords.has_key('xmin'):      xmin     = keywords['xmin']
-        if keywords.has_key('xmax'):      xmax     = keywords['xmax']
 
         jlist = []
         for j in jobs:
@@ -1046,7 +836,7 @@ class GangaPlotter:
 
         # make the plot
         self.__makeMultiHistograms__(dataTable,pltColIdList=pltColIdList,pltDataProcList=dataproc,pltLabelList=label, \
-                                     pltTitle=title,pltNumBins=numbins,pltRange=(xmin,xmax), pltXLabel=xlabel, \
+                                     pltTitle=title,pltNumBins=numbins,pltXLabel=xlabel, \
                                      pltColorMap=colormap,pltNormalize=normalize, \
                                      pltOutput=output)
 
