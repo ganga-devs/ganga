@@ -676,7 +676,10 @@ class Job(GangaObject):
                 return [ self.getInputWorkspace().getPath(name) ]
             else:
                 logger.debug( "Master Application is NOT Prepared!" )
-                return Sandbox.createPackedInputSandbox(files, self.getInputWorkspace(), name)
+                if self.master is None:
+                    return Sandbox.createPackedInputSandbox(files, self.getInputWorkspace(), name)
+                else:
+                    return Sandbox.createPackedInputSandbox(files, self.master.getInputWorkspace(), name)
 
         logger.debug( "Returning new InputSandbox" )
         return Sandbox.createPackedInputSandbox(files, self.getInputWorkspace(), name)
@@ -894,7 +897,7 @@ class Job(GangaObject):
             
 
 
-    def unprepare(self,force=False):
+    def unprepare(self, force=False):
         '''Revert the application associated with a job to the unprepared state
         Returns True on success.
         '''
@@ -907,8 +910,185 @@ class Job(GangaObject):
             self.application.unprepare()
         else:
             logger.error("Cannot unprepare a job in the %s state" % self.status)
-            
 
+    def _getMasterAppConfig(self):
+
+        appmasterconfig = None
+        if self.master is None:
+            if hasattr( self, "_storedAppMasterConfig" ):
+                appmasterconfig = self._storedAppMasterConfig
+
+            if appmasterconfig is None:
+                # I am going to generate the appmasterconfig now
+                appmasterconfig = self.application.master_configure()[1]
+                self._storedAppMasterConfig = appmasterconfig
+        else:
+            # I am a sub-job, lets ask the master job what to do
+            appmasterconfig = self.master._getMasterAppConfig()
+
+        return appmasterconfig
+
+    def _getAppSubConfig(self, subjobs = []):
+
+        appsubconfig = []
+        if self.master is None:
+            #   I am the master Job
+            if hasattr( self, "_storedSubJobConfig" ):
+                appsubconfig = self._storedSubJobConfig
+
+            if len( appsubconfig ) == 0:
+                appmasterconfig = self._getMasterAppConfig()
+                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in subjobs ]
+
+        else:
+            #   I am a sub-job, lets just generate our own config
+            if hasattr( self, "_storedSubJobConfig" ):
+                appsubconfig = self._storedSubJobConfig
+
+            if len(appsubconfig) == 0:
+                appmasterconfig = self._getMasterAppConfig()
+                appsubconfig = [ self.application.configure(appmasterconfig)[1] ]
+
+        return appsubconfig
+
+    def _getJobMasterConfig(self):
+
+        jobmasterconfig = None
+        if self.master is None:
+            #   I am the master Job
+            if hasattr( self, "_storedJobMasterConfig" ):
+                #   I have saved the config previously as a transient
+                jobmasterconfig = self._storedJobMasterConfig
+
+            if jobmasterconfig is None:
+                #   I am going to generate the config now
+                appmasterconfig = self._getMasterAppConfig()
+                rtHandler = self._getRuntimHandler()
+                jobmasterconfig = rtHandler.master_prepare(self.application, appmasterconfig)
+                self._storedJobMasterConfig = jobmasterconfig
+        else:
+            #   I am a sub-job, lets ask the master job what to do
+            jobmasterconfig = self.master._getJobMasterConfig()
+
+        return jobmasterconfig
+
+    def _getJobSubConfig(self, subjobs):
+
+        jobsubconfig = None
+        if self.master is None:
+            #   I am the master Job
+            if hasattr( self, "_storedJobSubConfig" ):
+                jobsubconfig = self._storedJobSubConfig
+
+            if jobsubconfig is None:
+                rtHandler = self._getRuntimHandler()
+                appmasterconfig = self._getMasterAppConfig()
+                jobmasterconfig = self._getJobMasterConfig()
+                appsubconfig = self._getAppSubConfig( subjobs )
+                jobsubconfig = [ rtHandler.prepare( j.application, s, appmasterconfig, jobmasterconfig) for (j, s) in zip( subjobs, appsubconfig ) ]
+                self._storedJobSubConfig = jobsubconfig
+        else:
+            #   I am a sub-job, lets calculate my config
+            rtHandler = self._getRuntimHandler()
+            appmasterconfig = self._getMasterAppConfig()
+            jobmasterconfig = self._getJobMasterConfig()
+            appsubconfig = self._getAppSubConfig( self )
+            jobsubconfig = [ rtHandler.prepare( self.application, appsubconfig[0], appmasterconfig, jobmasterconfig) ]
+
+        return jobsubconfig
+
+    def _getRuntimHandler(self):
+
+        rtHandler = None
+        if self.master is None:
+            #   I am the master Job
+            if hasattr( self, "_storedRTHandler" ):
+                rtHandler = self._storedRTHandler
+
+            if rtHandler is None:
+                # select the runtime handler
+                from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+                try:
+                    rtHandler = allHandlers.get(self.application._name,self.backend._name)()
+                except KeyError,x:
+                    msg = 'runtime handler not found for application=%s and backend=%s'%(self.application._name,self.backend._name)
+                    logger.error(msg)
+                    raise JobError(msg)
+                self._storedRTHandler = rtHandler
+
+        else:
+            rtHandler = self.master._getRuntimHandler()
+        
+        return rtHandler
+
+    def _selfAppPrepare(self, prepare):
+
+        if hasattr(self.application,'is_prepared'):
+            if (self.application.is_prepared is None) or (prepare == True):
+                self.prepare(force=True)
+            elif self.application.is_prepared is True:
+                msg = "Job %s's application has is_prepared=True. This prevents any automatic (internal) call to the application's prepare() method." % str(self.getFQID('.'))
+                logger.info(msg)
+            else:
+                msg = "Job %s's application has already been prepared." % str(self.getFQID('.'))
+                logger.info(msg)
+
+
+            if self.application.is_prepared is not True and self.application.is_prepared is not None:
+                if not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
+                    msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
+                    self.unprepare()
+                    raise JobError(msg)
+        return
+
+
+    def _doSplitting(self):
+        # Temporary polution of Atlas stuff to (almost) transparently switch from Panda to Jedi
+        if self.backend.__class__.__name__ == "Jedi" and self.splitter and not self.master:
+            logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
+            self.splitter = None
+            rjobs = [self]
+        elif self.splitter and not self.master:
+            
+            fqid = self.getFQID('.')
+            logger.info( "Splitting Job: %s" % fqid )
+
+            subjobs = self.splitter.validatedSplit(self)
+            if subjobs:
+                #print "*"*80
+                #import sys
+                #subjobs[0].printTree(sys.stdout)
+
+                # EBKE changes
+                i = 0
+                # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
+                #self.subjobs = subjobs
+                #for j in self.subjobs:
+                for j in subjobs:
+                    j.info.uuid = Ganga.Utility.guid.uuid()
+                    j.status='new'
+                                                                                                                                                                                                                     #j.splitter = None
+                    j.time.timenow('new')
+                    j.id = i
+                    i += 1
+                    # Lets be 110% explicit that these subjobs are subjobs of self
+                    j.master = self
+                    self.subjobs.append(j)
+
+                cfg = Ganga.Utility.Config.getConfig('Configuration')
+                for j in self.subjobs:
+                    if cfg['autoGenerateJobWorkspace']:
+                        j._init_workspace()
+
+                rjobs = self.subjobs
+                logger.info('submitting %d subjobs', len(rjobs))
+                self._commit()
+            else:
+                rjobs = [self]
+        else:
+            rjobs = [self]
+
+        return rjobs
 
     def submit(self,keep_going=None,keep_on_fail=None,prepare=False):
         '''Submits a job. Return true on success.
@@ -966,14 +1146,7 @@ class Job(GangaObject):
         #    logger.error(msg)
         #    raise JobError(msg)
 
-        # select the runtime handler
-        from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-        try:
-            rtHandler = allHandlers.get(self.application._name,self.backend._name)()
-        except KeyError,x:
-            msg = 'runtime handler not found for application=%s and backend=%s'%(self.application._name,self.backend._name)
-            logger.error(msg)
-            raise JobError(msg)
+        rtHandler = self._getRuntimHandler()
 
         try:
 
@@ -992,135 +1165,48 @@ class Job(GangaObject):
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
 
-            if hasattr(self.application,'is_prepared'):
-                if (self.application.is_prepared is None) or (prepare == True):
-                    self.prepare(force=True)
-                elif self.application.is_prepared is True:
-                    msg = "Job %s's application has is_prepared=True. This prevents any automatic (internal) call to the application's prepare() method." % str(self.getFQID('.'))
-                    logger.info(msg)
-                else:
-                    msg = "Job %s's application has already been prepared." % str(self.getFQID('.'))
-                    logger.info(msg)
+            ###  App Configuration
+            logger.debug( "App Configuration, Job %s:" % str(self.getFQID('.')) )
 
-                if self.application.is_prepared is not True and self.application.is_prepared is not None:
-                    if not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
-                        msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
-                        self.unprepare()
-                        raise JobError(msg)
+
+            #   The App is configured first as information in the App may be needed by the Job Splitter
+            appmasterconfig = self._getMasterAppConfig()
+
+            logger.debug( "Preparing Application" )
+            self._selfAppPrepare( prepare )
 
             ### Splitting
-
             logger.debug( "Checking Job: %s for splitting" % self.getFQID('.') )
-
             # split into subjobs
-            # Temporary polution of Atlas stuff to (almost) transparently switch from Panda to Jedi
-            if self.backend.__class__.__name__ == "Jedi" and self.splitter and not self.master:
-                logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
-                self.splitter = None
-                rjobs = [self]
-            elif self.splitter and not self.master:
-
-                fqid = self.getFQID('.')
-                logger.debug( "Splitting Job: %s" % fqid )
-
-                subjobs = self.splitter.validatedSplit(self)
-                if subjobs:
-                    #print "*"*80
-                    #import sys
-                    #subjobs[0].printTree(sys.stdout)
-
-                    # EBKE changes
-                    i = 0
-                    # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
-                    #self.subjobs = subjobs
-                    #for j in self.subjobs:
-                    for j in subjobs:
-                        j.info.uuid = Ganga.Utility.guid.uuid()
-                        j.status='new'
-                        #j.splitter = None
-                        j.time.timenow('new')
-                        j.id = i
-                        i += 1
-
-                        # Lets be 110% explicit that these subjobs are subjobs of self
-                        j.master = self
-                        self.subjobs.append(j)
-
-                    for j in self.subjobs:
-                        cfg = Ganga.Utility.Config.getConfig('Configuration')
-                        if cfg['autoGenerateJobWorkspace']:
-                            j._init_workspace()
-
-                    rjobs = self.subjobs
-                    logger.info('submitting %d subjobs', len(rjobs))
-                    self._commit()
-                else:
-                    rjobs = [self]
-            else:
-                rjobs = [self]
-
+            rjobs = self._doSplitting()
+            #
             logger.debug( "Now have %s subjobs" % len( self.subjobs ) )
             logger.debug( "Also have %s rjobs" % len( rjobs ) )
 
-            ### Output Files
 
+            ### Output Files
             # validate the output files
             (validOutputFiles, errorMsg) = self.validateOutputfilesOnSubmit()
-
             if not validOutputFiles:
                 raise JobError(errorMsg)
 
-            ###  App Configuration
-
-            logger.debug( "App Configuration, Job %s:" % str(self.getFQID('.')) )
-
-            if self.master is None:
-                appmasterconfig = self.application.master_configure()[1]
-            else:
-                appmasterconfig = self.master.application.master_configure()[1]
-
             # configure the application of each subjob
-            if self.master is None:
-                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ]
-            else:
-                appsubconfig = [ rjobs[0].master.application.configure(appmasterconfig)[1] ]
+            #appsubconfig = self._getAppSubConfig( rjobs )
+            #logger.debug( "# appsubconfig: %s" % len(appsubconfig) )
 
-            # Appears usued elesewhere in the codebase
-            #appconfig = (appmasterconfig, appsubconfig)
-
-            logger.debug( "# appsubconfig: %s" % len(appsubconfig) )
 
             ### Job Configuration
-
             logger.debug( "Job Configuration, Job %s:" % str(self.getFQID('.')) )
 
             # prepare the master job with the correct runtime handler
-            if self.master is None:
-                jobmasterconfig = rtHandler.master_prepare(self.application,appmasterconfig)
-            else:
-                # this is likely overkill but the masterRTHandler is the most correct thing to do
-                masterRTHandler = allHandlers.get(self.master.application._name, self.master.backend._name)()
-                jobmasterconfig = masterRTHandler.master_prepare(self.master.application, appmasterconfig)
-
+            jobmasterconfig = self._getJobMasterConfig()
             logger.debug( "Preparing with: %s" % rtHandler.__class__.__name__ )
 
             # prepare the subjobs with the runtime handler
-            if self.master is None:
-                jobsubconfig = [ rtHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig) for (j, s) in zip(rjobs, appsubconfig) ]
-            else:
-                #rtHandler = allHandlers.get(self.master.application._name, self.master.backend._name)()
-                # this is likely overkill but the masterRTHandler is the most correct thing to do
-                masterRTHandler = allHandlers.get(self.master.application._name, self.master.backend._name)()
-
-                ## Careful! This tries to make use of existing pre-packed information for this job and the master job
-                ## You Should NOT use prepare( j.master.application, s,.... ) as this will cause the subjob to become split again based on the master job
-                ## You have been warned
-                jobsubconfig = [ masterRTHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig ) for( j, s ) in zip(rjobs, appsubconfig) ]
-
+            jobsubconfig = self._getJobSubConfig( rjobs )
             logger.debug( "# jobsubconfig: %s" % len(jobsubconfig) )
 
             ### Submission
-
             logger.debug( "Submitting to a backend, Job %s:" % str(self.getFQID('.')) )
 
             # notify monitoring-services
@@ -1138,13 +1224,6 @@ class Job(GangaObject):
                     
                 if not r:
                     raise JobManagerError('error during submit')
-
-                #FIXME: possibly should go to the default implementation of IBackend.master_submit
-#                if self.subjobs:
-#                    for jobs in self.subjobs:
-#                        jobs.info.increment()
-                # This should now be done on a per subjob submit in IBackend
-
 
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
