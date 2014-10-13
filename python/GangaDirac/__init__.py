@@ -16,8 +16,11 @@ configDirac.addOption('splitFilesChunks', 5000,
 #configDirac.addOption('NumWorkerThreads', cpu_count(),
 configDirac.addOption('NumWorkerThreads', 5,
                       'Number of worker threads that the local DIRAC server and client should establish')
+diracenv = ""
+if os.environ.has_key("GANGADIRACENVIRONMENT"):
+   diracenv = os.environ["GANGADIRACENVIRONMENT"]
 
-configDirac.addOption('DiracEnvFile', os.environ["GANGADIRACENVIRONMENT"],
+configDirac.addOption('DiracEnvFile', diracenv,
                       'Ganga environment file for DIRAC environment (do not change unless you are sure you know what you are doing).')
 
 configDirac.addOption('DiracCommandFiles', [os.path.join(os.path.dirname(__file__), 'Lib/Server/DiracCommands.py')],
