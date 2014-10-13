@@ -18,7 +18,7 @@ def _initconfig():
         # create configuration
         config = Config.makeConfig('DashboardMS', 'Settings for Dashboard Messaging Service.')
         config.addOption('server', 'dashb-mb.cern.ch', 'The MSG server name.')
-        config.addOption('port', 6163, 'The MSG server port.')
+        config.addOption('port', 61113, 'The MSG server port.')
         config.addOption('user', 'ganga-atlas', '')
         config.addOption('password', 'analysis', '')
         config.addOption('destination_job_status', '/topic/dashboard.atlas.jobStatus', 'The MSG destination (topic or queue) for job status messages.')

@@ -14,8 +14,8 @@ if __name__ == '__main__':
                       help = 'The id of the job to be collected the output. Defaults to number 0 if not specified.')
     parser.add_option('-H', '--host', type = 'string', dest = 'host', default = 'dashb-mb.cern.ch',
                       help = 'Hostname or IP to connect to. Defaults to dashb-mb.cern.ch if not specified.')
-    parser.add_option('-P', '--port', type = 'int', dest = 'port', default = 6163,
-                      help = 'Port providing stomp protocol connections. Defaults to 6163 if not specified.')
+    parser.add_option('-P', '--port', type = 'int', dest = 'port', default = 61113,
+                      help = 'Port providing stomp protocol connections. Defaults to 61113 if not specified.')
     parser.add_option('-U', '--user', type = 'string', dest = 'user', default = 'ganga',
                       help = 'Username for the connection')
     parser.add_option('-W', '--password', type = 'string', dest = 'password', default = 'analysis',

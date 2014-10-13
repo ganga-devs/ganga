@@ -1,7 +1,7 @@
 import sys, time, stomp
 
 SERVER = 'dashb-mb.cern.ch'
-PORT = 6163
+PORT = 61113
 USERNAME = 'ganga'
 PASSWD = 'analysis'
 
