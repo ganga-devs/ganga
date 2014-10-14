@@ -62,7 +62,7 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
     
     ## user added items from the interactive GPI
     from Ganga.Utility.Config import getConfig
-    if getConfig('Output')['ForbidLegacyOutput']:
+    if not getConfig('Output')['ForbidLegacyInput']:
         inputsandbox = job.inputsandbox[:]
     else:
         if len( job.inputsandbox ) > 0:
