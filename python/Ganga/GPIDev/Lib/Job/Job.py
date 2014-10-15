@@ -200,6 +200,33 @@ class Job(GangaObject):
         super(Job, self).__init__()
         self.time.newjob() #<-----------NEW: timestamp method
 
+    def __construct__(self, args):
+
+        if len(args) == 1:
+            if isinstance( args[0], Job ):
+
+                super(Job, self).__construct__( args )
+
+                original_job = args[0]
+
+                if original_job.master is not None:
+
+                    if getConfig('Output')['ForbidLegacyInput']:
+
+                        if original_job.inputfiles == []:
+                            self.inputfiles = copy.deepcopy(original_job.master.inputfiles)
+                        else:
+                            self.inputfiles = copy.deepcopy(original_job.inputfiles)
+                        self.inputsandbox = []
+                    else:
+
+                        if original_job.inputsandbox == []:
+                            self.inputsandbox = original_job.master.inputsandbox
+                        else:
+                            self.inputsandbox = original_job.inputsandbox
+                        self.inputfiles = []
+
+
     def _readonly(self):
         return self.status != 'new'
 
@@ -1049,13 +1076,22 @@ class Job(GangaObject):
 
     def _doSplitting(self):
         # Temporary polution of Atlas stuff to (almost) transparently switch from Panda to Jedi
-        if self.backend.__class__.__name__ == "Jedi" and self.splitter and not self.master:
+        rjobs = None
+
+        if self.backend.__class__.__name__ == "Jedi" and self.splitter:
             logger.error("You should not use a splitter with the Jedi backend. The splitter will be ignored.")
             self.splitter = None
             rjobs = [self]
         elif self.splitter and not self.master:
-            
+
             fqid = self.getFQID('.')
+
+            ###  App Configuration
+            logger.debug( "App Configuration, Job %s:" % fqid )
+
+            #   The App is configured first as information in the App may be needed by the Job Splitter
+            appmasterconfig = self._getMasterAppConfig()
+
             logger.info( "Splitting Job: %s" % fqid )
 
             subjobs = self.splitter.validatedSplit(self)
@@ -1170,13 +1206,6 @@ class Job(GangaObject):
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
 
-            ###  App Configuration
-            logger.debug( "App Configuration, Job %s:" % str(self.getFQID('.')) )
-
-
-            #   The App is configured first as information in the App may be needed by the Job Splitter
-            appmasterconfig = self._getMasterAppConfig()
-
             logger.debug( "Preparing Application" )
             self._selfAppPrepare( prepare )
 
@@ -1184,6 +1213,7 @@ class Job(GangaObject):
             logger.debug( "Checking Job: %s for splitting" % self.getFQID('.') )
             # split into subjobs
             rjobs = self._doSplitting()
+
             #
             logger.debug( "Now have %s subjobs" % len( self.subjobs ) )
             logger.debug( "Also have %s rjobs" % len( rjobs ) )
