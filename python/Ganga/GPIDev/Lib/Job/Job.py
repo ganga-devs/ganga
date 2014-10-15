@@ -213,23 +213,28 @@ class Job(GangaObject):
                 continue
             c.outputfiles.append(f)
         if self.master is not None:
-            if getConfig('Output')['ForbidLegacyOutput'] and len(self.master.inputfiles) == 0:
-                if self.inputsandbox == []:
-                    logger.debug( "Copying Master inputSandbox" )
-                    c.inputsandbox = self.master.inputsandbox
-                else:
-                    logger.debug( "Keeping own inputsandbox" )
-            elif (not getConfig('Output')['ForbidLegacyOutput']) and (len(self.master.inputsandbox) == 0):
+            if getConfig('Output')['ForbidLegacyInput']:
                 if self.inputfiles == []:
                     logger.debug( "Copying Master inputfiles" )
-                    c.inputfiles = self.master.inputfiles
+                    c.inputsandbox = []
+                    import copy
+                    c.inputfiles = copy.deepcopy(self.master.inputfiles)
+                else:
+                    logger.debug( "Keeping own inputfiles" )
+
+            else:
+            #elif (not getConfig('Output')['ForbidLegacyInput']):
+                if self.inputsandbox == []:
+                    logger.debug( "Copying Master inputfiles" )
+                    c.inputsandbox = self.master.inputsandbox
+                    c.inputfiles = []
                 else:
                     logger.debug( "Keeping own inputsandbox" )
-            else:
-                logger.warning( "There was an error copying the input data for this job" )
-                logger.warning( "Please Check the inputsandbox and/or inputfiles are consistent" )
-                c.inputfiles = []
-                c.inputsandbox = []
+            #else:
+            #    logger.debug( "There was an error copying the input data for this job" )
+            #    logger.debug( "Please Check the inputsandbox and/or inputfiles are consistent" )
+            #    c.inputfiles = []
+            #    c.inputsandbox = []
 
         logger.debug( "Intercepted __deepcopy__" )
         return c
