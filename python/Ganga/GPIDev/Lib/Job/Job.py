@@ -1112,8 +1112,6 @@ class Job(GangaObject):
                     j.time.timenow('new')
                     j.id = i
                     i += 1
-                    # Lets be 110% explicit that these subjobs are subjobs of self
-                    j.master = self
                     self.subjobs.append(j)
 
                 cfg = Ganga.Utility.Config.getConfig('Configuration')
