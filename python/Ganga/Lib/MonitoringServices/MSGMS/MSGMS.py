@@ -9,8 +9,8 @@ def _initconfig():
         from Ganga.Utility import Config
         # create configuration
         config = Config.makeConfig('MSGMS','Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
-        config.addOption('server', 'bogus.cern.ch', 'The server to connect to')
-        config.addOption('port', 666, 'The port to connect to')
+        config.addOption('server', 'dashb-mb.cern.ch', 'The server to connect to')
+        config.addOption('port', 61113, 'The port to connect to')
         config.addOption('username', 'ganga', '') 
         config.addOption('password', 'analysis', '') 
         config.addOption('message_destination', '/queue/ganga.status', '')
