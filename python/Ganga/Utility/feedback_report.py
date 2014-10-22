@@ -1,8 +1,27 @@
 
+import Ganga.Utility.logging
+
+logger = Ganga.Utility.logging.getLogger()
+
+def _initconfigFeed():
+    """Initialize Feedback configuration."""
+    try:
+        from Ganga.Utility import Config
+        #create configuration
+        config = Config.makeConfig('Feedback','Settings for the Feedback plugin. Cannot be changed ruding the interactive Ganga session.')
+        config.addOption('uploadServer', 'http://gangamon.cern.ch/django/errorreports', 'The server to connect to')
+        def deny_modification(name,x):
+            raise Config.ConfigError('Cannot modify [Feedback] settings (attempted %s=%s)' % (name, x))
+        config.attachUserHandler(deny_modification, None)
+    except ImportError:
+        # on worker node so Config is not needed since it is copied to Feedback constructor
+        pass
+_initconfigFeed()
+
 def report(job=None):
         """ Upload error reports (snapshot of configuration,job parameters, input/output files, command history etc.). Job argument is optional. """
         import mimetypes
-        import urllib2
+        import urllib, urllib2
         import httplib
         import string
         import random
@@ -28,30 +47,35 @@ def report(job=None):
         def random_string (length):
                 return ''.join ([random.choice (string.letters) for ii in range (length + 1)])
 
-        def encode_multipart_data (files):
-                boundary = random_string (30)
+        def encode_multipart_formdata( files ):
+            boundary = random_string (30)
+            retnl = '\r\n'
+            lines = []
 
-                def get_content_type (filename):
-                        return mimetypes.guess_type (filename)[0] or 'application/octet-stream'
+            def get_content_type( filename ):
+                return mimetypes.guess_type(filename)[0] or 'application/octet-stream'
 
-                def encode_file (field_name):
-                        filename = files [field_name]
-                        return ('--' + boundary,
-                                'Content-Disposition: form-data; name="%s"; filename="%s"' % (field_name, filename),
-                                'Content-Type: %s' % get_content_type(filename),
-                                '', open (filename, 'rb').read ())
+            fields = { 'title' : 'Ganga Error Report' }
+
+            for (key, value) in fields.iteritems():
+                lines.append('--' + boundary)
+                lines.append('Content-Disposition: form-data; name="%s"' % key)
+                lines.append('')
+                lines.append(value)
+            for field_name, file in files.iteritems():
+                lines.append('--' + boundary)
+                lines.append('Content-Disposition: form-data; name="file"; filename="%s"' % ( file ))
+                lines.append('Content-Type: %s' % get_content_type(file) )
+                lines.append('')
+                lines.append( open(file, 'rb').read() )
+            lines.append('--' + boundary + '--')
+            lines.append('')
+            body = retnl.join(lines)
         
-                lines = []
-                for name in files:
-                        lines.extend (encode_file (name))
-                lines.extend (('--%s--' % boundary, ''))
-                body = '\r\n'.join (lines)
+            headers = {  'content-type': 'multipart/form-data; boundary=%s' % boundary, 'content-length': str (len (body)) }
 
-                headers = {'content-type': 'multipart/form-data; boundary=' + boundary,
-                        'content-length': str (len (body))}
+            return body, headers
 
-                return body, headers
-   
 
         def make_upload_file (server):
 
@@ -69,17 +93,36 @@ def report(job=None):
                 return upload_file
 
         def send_post (url, files):
-                req = urllib2.Request (url)
+                logger.debug( "Sending Post to %s ,  containing %s" % ( url, files ) )
+
+                encoded_data = encode_multipart_formdata( files )
+
+                data = urllib.urlencode( encoded_data[1] )
+                req = urllib2.Request( url , data = data )
+                if req.has_data():
+                    logger.debug( "urllib2: Success!" )
+                else:
+                    logger.debug( "urllib2: Fail!!!" )
+
                 connection = httplib.HTTPConnection (req.get_host ())
-                connection.request ('POST', req.get_selector (),
-                        *encode_multipart_data (files))
-                response = connection.getresponse ()
+                #connection.set_debuglevel(1)
+                logger.debug( "Requesting: 'POST', %s, %s " % (  url, encoded_data[1] ) )
+#                connection.request( method='POST', url=req.get_selector(), body=encoded_data[0], headers=encoded_data[1] )
+                connection.request( method='POST', url=url, body=encoded_data[0], headers=encoded_data[1] )
+                response = connection.getresponse()
+
+                logger.debug( "httplib POST request response was: %s , because: %s" % ( response.status, response.reason ) )
 
                 responseResult = response.read()
+
+                #logger.debug("Responce.read(): --%s--" % responseResult )
 
                 responseResult = responseResult[responseResult.find("<span id=\"download_path\""):]
                 startIndex = responseResult.find("path:") + 5
                 endIndex = responseResult.find("</span>")
+
+                logger.debug("Responce.read(): --%s--" % responseResult[startIndex:endIndex] )
+
 
                 print 'Your error report was uploaded to ganga developers with the following URL. '
                 print 'You may include this URL and the following summary information in your bug report or in the support email to the developers.'
@@ -130,7 +173,10 @@ def report(job=None):
                 gangaLogFileName = "gangalog.txt"
                 jobsListFileName = "jobslist.txt"
                 tasksListFileName = "taskslist.txt"
-                uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
+                from Ganga.Utility import Config
+                uploadFileServer =Config.getConfig('Feedback')['uploadServer'] 
+                #uploadFileServer= "http://gangamon.cern.ch/django/errorreports/"
+                #uploadFileServer= "http://ganga-ai-02.cern.ch/django/errorreports/"
                 #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
                 def printDictionary(dictionary):
@@ -612,7 +658,7 @@ def report(job=None):
                 resultArchive, uploadFileServer, tempDir = report_inner(job, isJob, isTask)
 
                 report_bytes = os.path.getsize(resultArchive)
-                
+
                 if report_bytes > 1024*1024*100: #if bigger than 100MB
                         print 'The report is bigger than 100MB and can not be uploaded'
                 else:
@@ -624,4 +670,5 @@ def report(job=None):
                 raise #pass
                 #raise  
 
-        removeTempFiles(tempDir)
+        #removeTempFiles(tempDir)
+
