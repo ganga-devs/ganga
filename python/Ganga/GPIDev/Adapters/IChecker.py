@@ -18,7 +18,8 @@ class IChecker(IPostProcessor):
     Abstract class which all checkers inherit from.
     """
     _schema = Schema(Version(1,0), {
-        'checkSubjobs' : SimpleItem(defvalue = True, doc='Run on subjobs')
+        'checkSubjobs' : SimpleItem(defvalue = True, doc='Run on subjobs'),
+        'checkMaster' : SimpleItem(defvalue = True, doc='Run on master')
         } )
     _category = 'postprocessor'
     _name = 'IChecker'
@@ -30,7 +31,7 @@ class IChecker(IPostProcessor):
         Execute the check method, if check fails pass the check and issue an ERROR message. Message is also added to the debug folder.
         """
         if newstatus == 'completed':
-            if len(job.subjobs) or self.checkSubjobs == True:
+            if (len(job.subjobs) and self.checkMaster) or self.checkSubjobs == True:
                 try:
                     return self.check(job)
                 except Exception, e:
@@ -78,7 +79,7 @@ class IFileChecker(IChecker):
                     logger.info('The files %s does not exist, %s will fail job(%s) (to ignore missing files set filesMustExist to False)',filepath,self._name,job.fqid)
                     self.result = False
                 else:
-                    logger.warning('Ignoring file %s as it does not exist.',expanded_file)
+                    logger.warning('Ignoring file %s as it does not exist.',filepath)
         return filepaths
 
         

@@ -15,6 +15,7 @@ import commands
 import copy
 import os
 import string
+import re
 
 
 logger = getLogger()
@@ -108,11 +109,14 @@ class FileChecker(IFileChecker):
             raise PostProcessException('None of the files to check exist, FileChecker will do nothing!') 
         for filepath in filepaths:
             for searchString in self.searchStrings:
-                grepoutput = commands.getoutput('grep "%s" %s' % (searchString,filepath))
-                if len(grepoutput) and self.failIfFound is True:            
-                    logger.info('The string %s has been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
-                    return self.failure
-                if not len(grepoutput) and self.failIfFound is False:            
+                stringFound = False
+                for line in filepath:
+                    if re.search(searchString,line):
+                        if self.failIfFound is True:            
+                            logger.info('The string %s has been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
+                            return self.failure
+                        stringFound = True
+                if not stringFound and self.failIfFound is False:            
                     logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
         return self.result 
@@ -179,6 +183,8 @@ class RootFileChecker(IFileChecker):
         import ROOT
         self.result = True
         filepaths = self.findFiles(job)
+        if self.result is False:
+            return self.failure
         if not len(filepaths):
             raise PostProcessException('None of the files to check exist, RootFileChecker will do nothing!') 
         for f in filepaths:
