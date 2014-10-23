@@ -20,7 +20,7 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         isbox = stdjobconfig.getSandboxFiles()
         print "inputsandbox = ",isbox
         assert len(isbox) == 2, 'incorrect number of files in sandbox'
-        assert isbox[0].name == 'dummy.in', 'incorrect file name'
+        assert (isbox[0].name == 'dummy.in') or (isbox[1].name == 'dummy.in'), 'incorrect file name'
         
     def test_RootDiracRTHandler_prepare(self):
         os.system('touch /tmp/testrdrth_mp.C')

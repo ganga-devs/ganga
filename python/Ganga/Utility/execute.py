@@ -98,15 +98,15 @@ def execute(command,
         output=pipe.communicate()
         env = eval(eval(str(output))[0])
         
-    if env:
-        for k, v in env.iteritems():
-            if not str(v).startswith('() {'):
-                env[k] = os.path.expandvars(v)
-            # Be careful with exported bash functions!
-            else:
-                env[k] = str(v).replace('\n','; ').strip()
-                if not str(env[k][-1:]) == str(';'):
-                    env[k] += ';'
+        if env:
+            for k, v in env.iteritems():
+                if not str(v).startswith('() {'):
+                    env[k] = os.path.expandvars(v)
+                # Be careful with exported bash functions!
+                else:
+                    env[k] = str(v).replace('\n','; ').strip()
+                    if not str(env[k][-1:]) == str(';'):
+                        env[k] += ';'
 
     p=subprocess.Popen(stream_command,
                        shell      = True,

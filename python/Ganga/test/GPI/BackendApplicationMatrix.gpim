@@ -11,7 +11,7 @@ class BackendApplicationMatrix(MultipassTest):
         MultipassTest.__init__(self,2)
         
     def pass1(self):
-        app_backends = [ b for b in plugins('backends') if b in allHandlers.getAllBackends() and b not in ['PBS','Condor','SGE','LSF']]
+        app_backends = [ b for b in plugins('backends') if b in allHandlers.getAllBackends() and b not in ['PBS', 'Condor', 'SGE', 'LSF']]
         print '*'*30,'Submitting jobs','*'*30
         jobs = []
         for backend in app_backends:
@@ -26,13 +26,13 @@ class BackendApplicationMatrix(MultipassTest):
         success=[]
         for j in jobs:
             try:
-                (backend,app) = (j.backend._impl._name,j.application._impl._name)
+                (backend, app) = (j.backend._impl._name, j.application._impl._name)
                 print "*"*80
-                print "Submitting job (%s,%s)" % (backend,app)
+                print "Submitting job (%s,%s)" % (backend, app)
                 if j.submit():
                     success.append(j.id)  
                 else:
-                    failed.append((backend,app))
+                    failed.append((backend, app))
                     print " [WARNING] Job (%s,%s) cannot be submited" % (backend,app)
                 print "*"*80
             except Exception,e:
@@ -43,7 +43,7 @@ class BackendApplicationMatrix(MultipassTest):
     def pass2(self):
             print '*'*30,'Checking jobs','*'*30
             
-            submission_failed=self.data[1]['submission_failed']
+            submission_failed = self.data[1]['submission_failed']
             submitted = self.data[1]['submitted']
             
             success = []
@@ -57,26 +57,27 @@ class BackendApplicationMatrix(MultipassTest):
                         backend = j.backend._impl._name
                         app = j.application._impl._name
                         
-                        status = sleep_until_state(j,timeout=3,sleep_period=1,break_states=['new','killed','failed','unknown','removed'])
+                        status = sleep_until_state(j, timeout=3, sleep_period=1, break_states=['new', 'killed', 'failed', 'unknown', 'removed'])
                         
                         if status < 0: #break state (failed)
-                            failed.append ((backend,app))
-                            print " [FAILED] Job (%s,%s) failed [state=%s]" % (backend,app,j.status)
+                            failed.append ((backend, app))
+                            print " [FAILED] Job (%s,%s) failed [state=%s]" % (backend, app, j.status)
                             to_remove.append(jid)
                         elif status is True: #completed
                             success.append((backend,app))
-                            print " [SUCCESS] Job (%s,%s) completed" % (backend,app)
+                            print " [SUCCESS] Job (%s,%s) completed" % (backend, app)
                             to_remove.append(jid)
                 for jid in to_remove:           
-                    submitted.remove(jid)    
+                    print " [Removing] Job %s of %s" % (jid, len(submitted))
+                    submitted.remove(jid)
 
             print "*"*35, "RESULTS", "*"*35            
             if len(success)>0:
-                print "COMPLETED: ",success
+                print "COMPLETED: ", success
 
             failure = None
             if len(submission_failed)>0:
-                failure = "FAILED to submit: %s " %submission_failed
+                failure = "FAILED to submit: %s " % submission_failed
                 print failure
             if len(failed)>0:
                 print "FAILED: ",failed
@@ -85,4 +86,6 @@ class BackendApplicationMatrix(MultipassTest):
                 
             if failure is not None:    
                 raise failureException( failure )
+
+            return
 

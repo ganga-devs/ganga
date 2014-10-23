@@ -213,7 +213,17 @@ class GaudiBase(IPrepareApp):
         self.env = None
 
     def prepare(self, force=False):
+        # Define the ShareDir
         self._register(force)
+        try:
+            # Try to prepare the application fully
+            _really_prepare( force )
+        except :
+            # Cleanup after self on fail as self.is_prepared is used as test to see if I'm prepared
+            self._unregister()
+            raise
+
+    def _really_prepare(self, force=Force):
         if (not self.is_prepared): raise ApplicationConfigurationError(None,"Could not establish sharedir")
 
         #self.extra = GaudiExtras()

@@ -30,7 +30,7 @@ config.addOption('location','/afs/cern.ch/sw/lcg/external/root','Location of ROO
 config.addOption('path','','Set to a specific ROOT version. Will override other options.')
 config.addOption('pythonhome','${location}/../Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion','',"Version number of python used for execution python ROOT script")
-config.addOption('version','5.34.18','Version of ROOT')
+config.addOption('version','6.02.00','Version of ROOT')
     
 import os
 from Ganga.Utility.files import expandfilename
@@ -61,7 +61,7 @@ class Root(IPrepareApp):
     and 10, you would do the following:
 
     r = Root()
-    r.version = '5.34.18'
+    r.version = '6.02.00'
     r.script = '~/abc/analysis.C'
     r.args = ['Minbias', 10]
 
@@ -252,16 +252,21 @@ class Root(IPrepareApp):
             raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s'%(self.is_prepared.name))
-        copy_worked = self.copyPreparables()
-        if copy_worked == 0:
-            logger.error('Failed during prepare() phase. Unpreparing application.')
+
+        try:
+            copy_worked = self.copyPreparables()
+            if copy_worked == 0:
+                logger.error('Failed during prepare() phase. Unpreparing application.')
+                self.unprepare()
+                return 0
+            else:
+                #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+                self.checkPreparedHasParent(self)
+                self.post_prepare()
+                return 1
+        except:
             self.unprepare()
-            return 0
-        else:
-            #add the newly created shared directory into the metadata system if the app is associated with a persisted object
-            self.checkPreparedHasParent(self)
-            self.post_prepare()
-            return 1
+            raise
 
     def _checkset_script(self,value):
         """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention.""" 

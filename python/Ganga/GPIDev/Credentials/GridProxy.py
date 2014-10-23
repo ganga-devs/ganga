@@ -106,6 +106,8 @@ from Ganga.Utility.GridShell import getShell
 
 logger = getLogger()
 
+allowed_exit_range = range( 1000 )
+
 class GridCommand( ICommandSet ):
    """
    Class used to define shell commands and options for working with Grid proxy
@@ -363,7 +365,7 @@ class GridProxy ( ICredential ):
          self.chooseCommandSet()
          infoCommand = " ".join( [ self.command.info, opt ] )
          status, output, message = self.shell.cmd1\
-            ( cmd = infoCommand, allowed_exit = range( 1000 ) )
+            ( cmd = infoCommand, allowed_exit = allowed_exit_range )
 
          self.addToProxyCache( status, output, opt )
          
@@ -396,7 +398,7 @@ class GridProxy ( ICredential ):
          for optName, optVal in self.command.infoOpts.iteritems():
             infoList.append( "%s %s" % ( optName, optVal ) )
          status, output, message = self.shell.cmd1\
-         ( cmd = " ".join( infoList ), allowed_exit = range( 1000 ) )
+         ( cmd = " ".join( infoList ), allowed_exit = allowed_exit_range )
 
          self.addToProxyCache( status, output, "timeleftInHMS" )
       
@@ -451,7 +453,7 @@ class GridProxy ( ICredential ):
 
          if infoCommand:
             status, output, message = self.shell.cmd1( cmd = infoCommand, \
-               allowed_exit = range( 1000 ), capture_stderr = True )
+               allowed_exit = allowed_exit_range, capture_stderr = True )
 
             self.addToProxyCache( status, output, "voname" )
 
@@ -497,7 +499,7 @@ class GridProxy ( ICredential ):
          self.chooseCommandSet()
          infoCommand = " ".join( [ self.command.info, '-path' ] )
          status, output, message = self.shell.cmd1\
-                                   ( cmd = infoCommand, allowed_exit = range( 1000 ) )
+                                   ( cmd = infoCommand, allowed_exit = allowed_exit_range )
 
          if not status:
             path = output

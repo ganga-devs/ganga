@@ -926,7 +926,7 @@ class Job(GangaObject):
         elif (self.application.is_prepared is not None) and (force == True):
             self.application.unprepare(force=True)
             self.application.prepare(force=True)
-            
+
 
 
     def unprepare(self, force=False):
@@ -1055,7 +1055,7 @@ class Job(GangaObject):
 
     def _selfAppPrepare(self, prepare):
 
-        if hasattr(self.application,'is_prepared'):
+        if hasattr(self.application, 'is_prepared'):
             if (self.application.is_prepared is None) or (prepare == True):
                 self.prepare(force=True)
             elif self.application.is_prepared is True:
@@ -1204,6 +1204,7 @@ class Job(GangaObject):
 
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
 
+            # Calls the self.prepare method ALWAY
             logger.debug( "Preparing Application" )
             self._selfAppPrepare( prepare )
 
@@ -1215,7 +1216,6 @@ class Job(GangaObject):
             #
             logger.debug( "Now have %s subjobs" % len( self.subjobs ) )
             logger.debug( "Also have %s rjobs" % len( rjobs ) )
-
 
             ### Output Files
             # validate the output files
@@ -1232,10 +1232,14 @@ class Job(GangaObject):
             logger.debug( "Job Configuration, Job %s:" % str(self.getFQID('.')) )
 
             # prepare the master job with the correct runtime handler
+            # Calls rtHandler.master_prepare if it hasn't already been called by the master job or by self
+            # Only stored as transient if the master_prepare successfully completes
             jobmasterconfig = self._getJobMasterConfig()
             logger.debug( "Preparing with: %s" % rtHandler.__class__.__name__ )
 
             # prepare the subjobs with the runtime handler
+            # Calls the rtHandler.prepare if it hasn't already been called by the master job or by self
+            # Only stored as a transient if the prepare successfully completes
             jobsubconfig = self._getJobSubConfig( rjobs )
             logger.debug( "# jobsubconfig: %s" % len(jobsubconfig) )
 
