@@ -223,7 +223,7 @@ class GaudiBase(IPrepareApp):
             self._unregister()
             raise
 
-    def _really_prepare(self, force=Force):
+    def _really_prepare(self, force=False):
         if (not self.is_prepared): raise ApplicationConfigurationError(None,"Could not establish sharedir")
 
         #self.extra = GaudiExtras()
