@@ -334,7 +334,8 @@ def GPIProxyClassFactory(name, pluginclass):
     helptext(_eq,"Equality operator (==), compare the %(classname)s properties which are declared as [comparable].")
 
     def _ne(self,x):
-        return self._impl.__ne__(x._impl)
+        if isinstance(x, GPIProxyObject): return self._impl.__ne__(x._impl)
+        else: return self._impl.__ne__(x)
     helptext(_ne,"Non-equality operator (!=).")
 
     def _copy(self, unprepare=None):
