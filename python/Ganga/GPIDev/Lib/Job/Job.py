@@ -1185,7 +1185,7 @@ class Job(GangaObject):
         #    logger.error(msg)
         #    raise JobError(msg)
 
-        rtHandler = self._getRuntimHandler()
+        rtHandler = self._getRuntimeHandler()
 
         try:
 
