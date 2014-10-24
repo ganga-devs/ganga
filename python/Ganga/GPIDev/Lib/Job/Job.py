@@ -225,7 +225,8 @@ class Job(GangaObject):
                         else:
                             self.inputsandbox = original_job.inputsandbox
                         self.inputfiles = []
-
+                if getConfig('Preparable')['unprepare_on_copy'] is True:
+                    self.unprepare()
 
     def _readonly(self):
         return self.status != 'new'
