@@ -995,7 +995,7 @@ class Job(GangaObject):
             if jobmasterconfig is None:
                 #   I am going to generate the config now
                 appmasterconfig = self._getMasterAppConfig()
-                rtHandler = self._getRuntimHandler()
+                rtHandler = self._getRuntimeHandler()
                 jobmasterconfig = rtHandler.master_prepare(self.application, appmasterconfig)
                 self._storedJobMasterConfig = jobmasterconfig
         else:
@@ -1013,7 +1013,7 @@ class Job(GangaObject):
                 jobsubconfig = self._storedJobSubConfig
 
             if jobsubconfig is None:
-                rtHandler = self._getRuntimHandler()
+                rtHandler = self._getRuntimeHandler()
                 appmasterconfig = self._getMasterAppConfig()
                 jobmasterconfig = self._getJobMasterConfig()
                 appsubconfig = self._getAppSubConfig( subjobs )
@@ -1021,7 +1021,7 @@ class Job(GangaObject):
                 self._storedJobSubConfig = jobsubconfig
         else:
             #   I am a sub-job, lets calculate my config
-            rtHandler = self._getRuntimHandler()
+            rtHandler = self._getRuntimeHandler()
             appmasterconfig = self._getMasterAppConfig()
             jobmasterconfig = self._getJobMasterConfig()
             appsubconfig = self._getAppSubConfig( self )
@@ -1029,7 +1029,7 @@ class Job(GangaObject):
 
         return jobsubconfig
 
-    def _getRuntimHandler(self):
+    def _getRuntimeHandler(self):
 
         rtHandler = None
         if self.master is None:
@@ -1049,7 +1049,7 @@ class Job(GangaObject):
                 self._storedRTHandler = rtHandler
 
         else:
-            rtHandler = self.master._getRuntimHandler()
+            rtHandler = self.master._getRuntimeHandler()
         
         return rtHandler
 
