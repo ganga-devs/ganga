@@ -228,6 +228,9 @@ class Job(GangaObject):
                 if getConfig('Preparable')['unprepare_on_copy'] is True:
                     self.unprepare()
 
+                self._unsetSubmitTransients()
+
+
     def _readonly(self):
         return self.status != 'new'
 
@@ -263,6 +266,8 @@ class Job(GangaObject):
             #    logger.debug( "Please Check the inputsandbox and/or inputfiles are consistent" )
             #    c.inputfiles = []
             #    c.inputsandbox = []
+
+        c._unsetSubmitTransients()
 
         logger.debug( "Intercepted __deepcopy__" )
         return c
@@ -1073,6 +1078,12 @@ class Job(GangaObject):
                     self.unprepare()
                     raise JobError(msg)
         return
+
+    def _unsetSubmitTransients(self):
+        self._storedRTHandler = None
+        self._storedJobSubConfig = None
+        self._storedJobMasterConfig = None
+        self._storedAppMasterConfig = None
 
 
     def _doSplitting(self):
