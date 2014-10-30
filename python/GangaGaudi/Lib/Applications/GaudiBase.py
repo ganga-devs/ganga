@@ -217,7 +217,7 @@ class GaudiBase(IPrepareApp):
         self._register(force)
         try:
             # Try to prepare the application fully
-            _really_prepare( force )
+            self._really_prepare( force )
         except :
             # Cleanup after self on fail as self.is_prepared is used as test to see if I'm prepared
             self._unregister()
