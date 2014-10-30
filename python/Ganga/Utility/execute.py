@@ -104,9 +104,15 @@ def execute(command,
                     env[k] = os.path.expandvars(v)
                 # Be careful with exported bash functions!
                 else:
-                    env[k] = str(v).replace('\n','; ').strip()
-                    if not str(env[k][-1:]) == str(';'):
-                        env[k] += ';'
+                    this_string = str(v).split('\n')
+                    final_str = ""
+                    for line in this_string:
+                        final_str += str( os.path.expandvars(line) ).strip()
+                    if not final_str.endswith( ';' ):
+                        final_str += " ;"
+                    final_str += " "
+                tmp_dict[k] = final_str
+
 
     p=subprocess.Popen(stream_command,
                        shell      = True,

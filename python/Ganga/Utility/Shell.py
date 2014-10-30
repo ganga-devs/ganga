@@ -45,10 +45,15 @@ def expand_vars(env):
             tmp_dict[k] = os.path.expandvars(v)
         # Be careful with exported bash functions!
         else:
-            tmp_dict[k] = str(v).replace('\n','; ').strip()
-            if not str(tmp_dict[k][-1:]) == str(';'):
-                tmp_dict[k] += ';'
-    #print tmp_dict['BASH_FUNC_module()']
+            this_string = str(v).split('\n')
+            final_str = ""
+            for line in this_string:
+                final_str += str( os.path.expandvars(line) ).strip()
+                if not final_str.endswith( ';' ):
+                    final_str += " ;"
+                final_str += " "
+            tmp_dict[k] = final_str
+            #print tmp_dict[k]
     return tmp_dict 
 
 class Shell:
@@ -81,7 +86,7 @@ class Shell:
 
       if setup:
 
-         env=dict( os.environ )
+         env = dict( os.environ )
          env = expand_vars( env )
 
          logger.debug( "Initializing Shell" )
@@ -93,10 +98,10 @@ class Shell:
              this_cwd = os.path.abspath( tempfile.gettempdir() )
          logger.debug( "Using CWD: %s" % this_cwd )
          logger.debug( 'Running:   source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)) )
-         pipe=subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)),
+         pipe = subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)),
                                 env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
-         output=pipe.communicate()
-         rc=pipe.poll()
+         output = pipe.communicate()
+         rc = pipe.poll()
          if rc:
             logger.warning('Unexpected rc %d from setup command %s', rc, setup)
 
@@ -147,6 +152,10 @@ class Shell:
          if not os.path.exists( this_cwd ):
              this_cwd = os.path.abspath( tempfile.gettempdir() )
          logger.debug( "Using CWD: %s" % this_cwd )
+
+         #import traceback
+         #traceback.print_stack()
+
          process = subprocess.Popen( command, env=self.env, cwd=this_cwd )
          pid = process.pid 
          while 1:
