@@ -17,7 +17,7 @@ class PluginManager(object):
         self.all_dict = {}
         self.first = {}
 
-    def find(self,category,name):
+    def find(self, category, name):
         """
         Return a plugin added with 'name' in the given 'category'.
         If 'name' is None then the default plugin in the category is returned.
@@ -26,7 +26,13 @@ class PluginManager(object):
         """
         logger.debug( "Attempting to Find Plugin: %s" % name )
         try:
+            if name is not None:
+                if category in self.first:
+                    logger.debug( "Returning based upon Category and Name" )
+                    return self.all_dict[category][name]
+
             if (name is None) and (category in self.first):
+                logger.debug( "Returning based upon Category ONLY" )
                 return self.first[category]
             elif not category in self.first:
                 for category_i in self.all_dict:
@@ -40,31 +46,32 @@ class PluginManager(object):
                         return self.all_dict[category_i][name]
             else:
                 return self.all_dict[category][name]
+
         except KeyError:
             if name is None:
                 s = "cannot find default plugin for category "+category
             else:
-                s = "cannot find '%s' in a category '%s', or elsewhere" %(name,category)
+                s = "cannot find '%s' in a category '%s', or elsewhere" %(name, category)
 
             logger.debug(s)
             raise PluginManagerError(s)
 
-    def add(self,pluginobj,category,name):
+    def add(self, pluginobj, category, name):
         """ Add a pluginobj to the plugin manager with the name and the category labels.
         The first plugin is default unless changed explicitly.
         """
-        cat = self.all_dict.setdefault(category,{})
-        self.first.setdefault(category,pluginobj)
+        cat = self.all_dict.setdefault(category, {})
+        self.first.setdefault(category, pluginobj)
         cat[name] = pluginobj
-        logger.debug('adding plugin %s (category "%s") ' % (name,category))
+        logger.debug('adding plugin %s (category "%s") ' % (name, category))
 
-    def setDefault(self,category,name):
+    def setDefault(self, category, name):
         """ Make the plugin 'name' be default in a given 'category'.
         You must first add() the plugin object before calling this method. Otherwise
         PluginManagerError is raised.
         """
         assert(not name is None)
-        pluginobj = self.find(category,name)
+        pluginobj = self.find(category, name)
         self.first[category] = pluginobj
             
     
@@ -79,3 +86,4 @@ class PluginManager(object):
             return {}
     
 allPlugins = PluginManager()
+
