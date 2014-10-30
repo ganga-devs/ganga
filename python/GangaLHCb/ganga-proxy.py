@@ -8,10 +8,19 @@ import string
 import shutil
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-option = sys.argv[1]
-argv = sys.argv[2:]
 commands = {'init':'lhcb-proxy-init','info':'dirac-proxy-info',
-            'destroy':'grid-proxy-destroy'}
+                    'destroy':'grid-proxy-destroy'}
+
+try:
+  option = sys.argv[1]
+  argv = sys.argv[2:]
+except:
+  print "No options passed, options are:"
+  for k in commands:
+      print k
+  print ""
+  e=Exception()
+  raise e
 
 global global_env
 global_env = None
@@ -24,18 +33,27 @@ def get_env():
             if not str(v).startswith('() {' ):
                 global_env[k] = v
             else:
-                global_env[k] = str(v).replace('\n','; ').strip()
-                if str(global_env[k][-1:]) != str(';'):
-                    global_env[k] += ';'
+                this_string = str(v).split('\n')
+                final_str = ""
+                for line in this_string:
+                    final_str += str( os.path.expandvars(line) ).strip()
+                    if not final_str.endswith( ';' ):
+                        final_str += " ;"
+                    final_str += " "
+                global_env[k] = final_str
 
     return global_env
 
 if not get_env().has_key("GANGADIRACENVIRONMENT"):
-    raise 'DIRAC env cache file does not exist.'
+    e = Exception()
+    e.args = ('DIRAC env cache file does not exist.',)
+    raise e
 temp_env = get_env()
 dirac_env_cache_file = temp_env["GANGADIRACENVIRONMENT"]
 if not os.path.exists(dirac_env_cache_file):
-    raise 'DIRAC env cache file does not exist.'
+    e = Exception()
+    e.args = ('DIRAC env cache file does not exist.',)
+    raise e
 env_file = open(dirac_env_cache_file)
 for line in env_file.readlines():
     varval = line.strip().split('=')
@@ -139,7 +157,9 @@ elif option == 'destroy':
     destroy_proxy_cache()
     rc = exec_command(commands[option],argv)
 else:
-    raise 'Error! Option "%s" no recognized.' % option
+    e=Exception()
+    e.args = ('Error! Option "%s" no recognized.' % option,)
+    raise e
 #
 sys.exit(rc)
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
