@@ -364,6 +364,7 @@ class GridProxy ( ICredential ):
       if ( force_check ) or ( output == "" ):
          self.chooseCommandSet()
          infoCommand = " ".join( [ self.command.info, opt ] )
+         logger.debug( "Executing info Command: %s" % infoCommand )
          status, output, message = self.shell.cmd1\
             ( cmd = infoCommand, allowed_exit = allowed_exit_range )
 
@@ -397,6 +398,7 @@ class GridProxy ( ICredential ):
          # Append option value pairs
          for optName, optVal in self.command.infoOpts.iteritems():
             infoList.append( "%s %s" % ( optName, optVal ) )
+         logger.debug( "Executing timeHMS Command: %s" % " ".join( infoList ) )
          status, output, message = self.shell.cmd1\
          ( cmd = " ".join( infoList ), allowed_exit = allowed_exit_range )
 
@@ -452,6 +454,7 @@ class GridProxy ( ICredential ):
             infoCommand = self.command.info
 
          if infoCommand:
+            logger.debug( "Executing voname Command: %s" % infoCommand )
             status, output, message = self.shell.cmd1( cmd = infoCommand, \
                allowed_exit = allowed_exit_range, capture_stderr = True )
 
@@ -498,6 +501,7 @@ class GridProxy ( ICredential ):
       if not _infoCache.has_key( '-path' ) or ( _infoCache[ '-path' ][ 1 ] < ( time.time() - info_refresh ) ):
          self.chooseCommandSet()
          infoCommand = " ".join( [ self.command.info, '-path' ] )
+         logger.debug( "Executing cache Command: %s" % infoCommand )
          status, output, message = self.shell.cmd1\
                                    ( cmd = infoCommand, allowed_exit = allowed_exit_range )
 
@@ -515,8 +519,11 @@ class GridProxy ( ICredential ):
          return ''
 
       # we're OK to use the cache
-      if _infoCache.has_key( opt ) and ( _infoCache[ opt ][ 1 ] > ( time.time() - info_refresh ) ) and ( _infoCache[ opt ][ 1 ] > os.path.getmtime(path) ):
-         output = _infoCache[ opt ][ 0 ]
+      if _infoCache.has_key( opt ) and\
+          ( _infoCache[ opt ][ 1 ] > ( time.time() - info_refresh ) ) and\
+              ( _infoCache[ opt ][ 1 ] > os.path.getmtime(path) ):
+                 logger.debug( "Returning Cached Value %s" % opt )
+                 output = _infoCache[ opt ][ 0 ]
       else:
          output = ""
 

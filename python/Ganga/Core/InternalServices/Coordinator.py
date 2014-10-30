@@ -146,13 +146,50 @@ def disableInternalServices():
     
     global servicesEnabled
     log.debug("Disabling the internal services")
+
+    #print "DISABLE MONITORING"
+
+    #from Ganga.Core.GangaThread import GangaThreadPool
+    #thread_pool = GangaThreadPool.getInstance()
+
+    #print ""
+    #print "Critical:"
+    #for i in thread_pool._GangaThreadPool__alive_critical_thread_ids():
+    #    print i
+    #print "nonCritical:"
+    #for i in thread_pool._GangaThreadPool__alive_non_critical_thread_ids():
+    #    print i
+    #print ""
+
     #disable the mon loop
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()  
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue
+    _purge_actions_queue()
+
+    #print "Critical:"
+    #for i in thread_pool._GangaThreadPool__alive_critical_thread_ids():
+    #    print i
+    #print "nonCritical:"
+    #for i in thread_pool._GangaThreadPool__alive_non_critical_thread_ids():
+    #    print i
+    #print ""
+
+    #print "SHUTDOWN REPO"
+
     #flush the registries
     log.debug( "Coordinator Shutting Down Repository_runtime" )
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
+
+    #print "Critical:"
+    #for i in thread_pool._GangaThreadPool__alive_critical_thread_ids():
+    #    print i
+    #print "nonCritical:"
+    #for i in thread_pool._GangaThreadPool__alive_non_critical_thread_ids():
+    #    print i
+    #print ""
+
     #this will disable any interactions with the registries (implicitly with the GPI)
     servicesEnabled = False    
     

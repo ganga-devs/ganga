@@ -153,47 +153,60 @@ class ProxyDataDescriptor(object):
         item = obj._impl._schema[self._name]
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified'%(self._name,))
-        if obj._impl._readonly() and not (self._name == 'comment' and obj._impl._name == 'Job'):
-            raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj),self._name))
+        if obj._impl._readonly():
+            if not (self._name == 'comment' and obj._impl._name == 'Job'):
+                raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now'%(repr(obj), self._name))
 
         #mechanism for locking of preparable attributes
-        if item['preparable'] and obj.is_prepared is not None and obj.is_prepared is not True:
+        if item['preparable']:
+            if obj.is_prepared is not None:
+                if obj.is_prepared is not True:
                     raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.'%(self._name,))
 
         #if we set is_prepared to None in the GPI, that should effectively unprepare the application
-        if self._name == 'is_prepared' and val is None and obj.is_prepared is not None:
-            logger.info('Unpreparing application.')
-            obj.unprepare()
+        if self._name == 'is_prepared':
+            if val is None:
+                if obj.is_prepared is not None:
+                    logger.info('Unpreparing application.')
+                    obj.unprepare()
 
         #Replace is_prepared on an application for another ShareDir object
         from Ganga.GPIDev.Lib.File import ShareDir
-        if self._name == 'is_prepared' and isType(val, ShareDir) and hasattr(obj._impl,'_getRegistry'):
-            if obj._impl._getRegistry() is not None:
-                logger.debug('Overwriting is_prepared attribute with a ShareDir object')
-                obj.unprepare() #it's safe to unprepare 'not-prepared' applications.
-                from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                shareref.increase(val.name)
+        if self._name == 'is_prepared' and isType(val, ShareDir):
+            if hasattr(obj._impl,'_getRegistry'):
+                if obj._impl._getRegistry() is not None:
+                    logger.debug('Overwriting is_prepared attribute with a ShareDir object')
+                    obj.unprepare() #it's safe to unprepare 'not-prepared' applications.
+                    from Ganga.Core.GangaRepository import getRegistry
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                    shareref.increase(val.name)
 
         #catch assignment of 'something'  to a preparable application    
-        if self._name == 'application' and hasattr(obj.application,'is_prepared'):
-            #a=Job(); a.prepare(); a.application=Executable()
-            if obj.application.is_prepared is not None and obj.application.is_prepared is not True and val.is_prepared is None:
-                logger.debug('Overwriting a prepared application with one that is unprepared')
-                obj.application.unprepare()
-            #a=Job(); b=Executable(); b.prepare(); a.application=b
-            elif obj.application.is_prepared is not True and hasattr(val,'is_prepared') and val.is_prepared is not None and val.is_prepared is not True:
-                from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                logger.debug('Overwriting application with a prepared one')
-                obj.application.unprepare()
-                shareref.increase(val.is_prepared.name)
+        if self._name == 'application':
+            if hasattr(obj.application,'is_prepared'):
+                #a=Job(); a.prepare(); a.application=Executable()
+                if obj.application.is_prepared is not None and\
+                    obj.application.is_prepared is not True and\
+                        val.is_prepared is None:
+                            logger.debug('Overwriting a prepared application with one that is unprepared')
+                            obj.application.unprepare()
+                #a=Job(); b=Executable(); b.prepare(); a.application=b
+                elif obj.application.is_prepared is not True:
+                    if hasattr(val,'is_prepared'):
+                        if val.is_prepared is not None:
+                            if val.is_prepared is not True:
+                                from Ganga.Core.GangaRepository import getRegistry
+                                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                                logger.debug('Overwriting application with a prepared one')
+                                obj.application.unprepare()
+                                shareref.increase(val.is_prepared.name)
 
         #check that the shared directory actually exists before assigning the (prepared) application to a job
         if hasattr(val, 'is_prepared'):
-            if val.is_prepared is not None and val.is_prepared is not True:
-                if not os.path.isdir(os.path.join(shared_path,val.is_prepared.name)):
-                    logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
+            if val.is_prepared is not None:
+                if val.is_prepared is not True:
+                    if not os.path.isdir(os.path.join(shared_path,val.is_prepared.name)):
+                        logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
 
 
         # apply attribute conversion
@@ -347,29 +360,32 @@ def GPIProxyClassFactory(name, pluginclass):
 
         if hasattr(self,'application'):
             if hasattr(self.application,'is_prepared'):
-                if self.application.is_prepared is not None and self.application.is_prepared \
-                           is not True and os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
-                    from Ganga.Core.GangaRepository import getRegistry
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                    logger.debug('increasing counter from proxy.py')
-                    shareref.increase(self.application.is_prepared.name)
-                    logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
-                elif self.application.is_prepared is not None and self.application.is_prepared \
-                           is not True and not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
-                    logger.error('ShareDir directory not found: %s' % self.application.is_prepared.name)
-                    logger.error('Unpreparing Job #%s' % self.id)
-                    from Ganga.Core.GangaRepository import getRegistry
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                    shareref.increase(self.application.is_prepared.name)
-                    self.unprepare()
+                if self.application.is_prepared is not None and\
+                    self.application.is_prepared is not True and\
+                        os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
+                            from Ganga.Core.GangaRepository import getRegistry
+                            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                            logger.debug('increasing counter from proxy.py')
+                            shareref.increase(self.application.is_prepared.name)
+                            logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
+                elif self.application.is_prepared is not None:
+                    if self.application.is_prepared is not True:
+                        if not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
+                            logger.error('ShareDir directory not found: %s' % self.application.is_prepared.name)
+                            logger.error('Unpreparing Job #%s' % self.id)
+                            from Ganga.Core.GangaRepository import getRegistry
+                            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                            shareref.increase(self.application.is_prepared.name)
+                            self.unprepare()
     
-        if hasattr(self,'is_prepared') and self.is_prepared is not None and self.is_prepared \
-                           is not True and not os.path.isdir(os.path.join(shared_path,self.is_prepared.name)):
-            logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
-            logger.error('Unpreparing %s application' % self._impl._name)
-            self.unprepare()
+        if hasattr(self,'is_prepared'):
+            if self.is_prepared is not None:
+                if self.is_prepared is not True:
+                    if not os.path.isdir(os.path.join(shared_path,self.is_prepared.name)):
+                        logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
+                        logger.error('Unpreparing %s application' % self._impl._name)
+                        self.unprepare()
 
-            
         if unprepare is True:
             c = self._impl.clone()
             if hasattr(c,'is_prepared') and c._getRegistry() is None:
@@ -396,11 +412,12 @@ def GPIProxyClassFactory(name, pluginclass):
             raise AttributeError("Internal implementation object '_impl' cannot be reassigned")
 
         if not self._impl._schema.hasAttribute(x):
-            if True in [isType(self,t) for t in metadata_objects] and x in self._impl.metadata.data.keys():
-                raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)       
-            raise GangaAttributeError("'%s' has no attribute '%s'" % (self._impl._name,x))
+            if True in [isType(self,t) for t in metadata_objects] and\
+                x in self._impl.metadata.data.keys():
+                    raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)       
+            raise GangaAttributeError("'%s' has no attribute '%s'" % (self._impl._name, x) )
 
-        object.__setattr__(self,x,v)
+        object.__setattr__(self, x, v)
     helptext(_setattr,"""Set a property of %(classname)s with consistency and safety checks.
 Setting a [protected] or a unexisting property raises AttributeError.""")
 
@@ -427,11 +444,11 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
         if name.startswith('__') or name in d.keys(): return object.__getattribute__(self, name)
 
         pluginclass = object.__getattribute__(self, '_impl')
-        if '_attribute_filter__get__' in dir(pluginclass)\
-               and pluginclass.__class__.__name__ != 'ObjectMetaclass'\
-               and name in dict(pluginclass._schema.allItems()).keys()\
-               and not dict(pluginclass._schema.allItems())[name]['hidden']:
-            return addProxy(pluginclass._attribute_filter__get__(name)) 
+        if '_attribute_filter__get__' in dir(pluginclass):
+            if pluginclass.__class__.__name__ != 'ObjectMetaclass':
+                if name in dict(pluginclass._schema.allItems()).keys():
+                    if not dict(pluginclass._schema.allItems())[name]['hidden']:
+                        return addProxy(pluginclass._attribute_filter__get__(name)) 
 
         return object.__getattribute__(self, name)
 

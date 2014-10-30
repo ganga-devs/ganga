@@ -472,7 +472,7 @@ sys.exit()
                   ##print 'logger problem', logger.name
                   ##print 'logger',logger.getEffectiveLevel()
                   logger.critical('wrapper script for job %s exit with code %d',str(j.id),ws[1])
-                  logger.critical('report this as a bug at http://savannah.cern.ch/bugs/?group=ganga')
+                  logger.critical('report this as a bug at https://its.cern.ch/jira/browse/GANGA')
                   j.updateStatus('failed')
           except OSError,x:
               if x.errno != errno.ECHILD:

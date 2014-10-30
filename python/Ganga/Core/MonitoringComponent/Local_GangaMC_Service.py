@@ -557,6 +557,7 @@ class JobRegistry_Monitor( GangaThread ):
         finally:
             self.__mainLoopCond.release()
         #wait for cleanup        
+        self.__cleanUp()
         self.__cleanUpEvent.wait()
         self.__cleanUpEvent.clear()        
         return True
