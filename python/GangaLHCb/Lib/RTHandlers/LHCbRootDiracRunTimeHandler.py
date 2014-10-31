@@ -92,7 +92,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                    'SETTINGS'             : diracAPI_script_settings(app),
                    'DIRAC_OPTS'           : job.backend.diracOpts,
                    'PLATFORM'             : getConfig('ROOT')['arch'],
-                   'REPLICATE'            : getConfig('DIRAC')['ReplicateOutputData'],
+                   'REPLICATE'            : str(getConfig('DIRAC')['ReplicateOutputData']),
                    # leave the sandbox for altering later as needs
                    # to be done in backend.submit to combine master.
                    # Note only using 2 #s as auto-remove 3

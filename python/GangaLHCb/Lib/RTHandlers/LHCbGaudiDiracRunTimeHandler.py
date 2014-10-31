@@ -170,7 +170,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         SETTINGS             = diracAPI_script_settings(new_job.application),
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         PLATFORM             = app.platform,
-                                        REPLICATE            = getConfig('DIRAC')['ReplicateOutputData'],
+                                        REPLICATE            = str(getConfig('DIRAC')['ReplicateOutputData']),
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
