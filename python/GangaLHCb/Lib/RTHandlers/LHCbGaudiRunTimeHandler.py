@@ -26,9 +26,9 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         outputsandbox += ['summary.xml','__parsedxmlsummary__']
 
         thisenv = None
-        if appmasterconfig:
-            if hasattr( appmasterconfig, 'env' ):
-                thisenv = appmasterconfig.env
+        #if appmasterconfig:
+        #    if hasattr( appmasterconfig, 'env' ):
+        #        thisenv = appmasterconfig.env
 
         return StandardJobConfig( inputbox  = unique(inputsandbox),
                                   outputbox = unique(outputsandbox), 
@@ -115,9 +115,9 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
 #                                  OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
        
         thisenv = None
-        if appmasterconfig:
-            if hasattr( appmasterconfig, 'env' ):
-                thisenv = appmasterconfig.env
+        #if appmasterconfig:
+        #    if hasattr( appmasterconfig, 'env' ):
+        #        thisenv = appmasterconfig.env
         return StandardJobConfig( FileBuffer('gaudi-script.py', script, executable=1),
                                   inputbox  = unique(inputsandbox ),
                                   outputbox = unique(outputsandbox),

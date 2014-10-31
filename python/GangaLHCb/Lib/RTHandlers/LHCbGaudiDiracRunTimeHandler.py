@@ -57,9 +57,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         logger.debug( "Master Prepare LHCbGaudiDiracRunTimeHandler" )
 
         thisenv = None
-        if appmasterconfig:
-            if hasattr( appmasterconfig, 'env' ):
-                thisenv = appmasterconfig.env
+        #if appmasterconfig:
+        #    if hasattr( appmasterconfig, 'env' ):
+        #        thisenv = appmasterconfig.env
 
         return StandardJobConfig( inputbox  = unique(inputsandbox),
                                   outputbox = unique(outputsandbox),
@@ -181,9 +181,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         #print inputsandbox
 
         thisenv = None
-        if appmasterconfig:
-            if hasattr( appmasterconfig, 'env' ):
-                thisenv = appmasterconfig.env
+        #if appmasterconfig:
+        #    if hasattr( appmasterconfig, 'env' ):
+        #        thisenv = appmasterconfig.env
 
         return StandardJobConfig( dirac_script,
                                   inputbox  = unique(inputsandbox ),
