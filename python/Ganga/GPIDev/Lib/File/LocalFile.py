@@ -9,7 +9,6 @@ from Ganga.GPIDev.Schema import *
 
 from IGangaFile import IGangaFile   
 
-
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 import re
@@ -37,12 +36,15 @@ class LocalFile(IGangaFile):
         self.localDir = localDir
     
     def __construct__(self,args):
+        from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
         if len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
             self.localDir = args[1]     
-        
+        elif len(args) == 1 and isinstance( args[0], SandboxFile ):
+            super( LocalFile, self ).__construct__( args )
+
     def __repr__(self):
         """Get the representation of the file."""
 
