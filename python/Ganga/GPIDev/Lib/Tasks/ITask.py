@@ -80,6 +80,13 @@ class ITask(GangaObject):
             if trf.update():
                 break
 
+        # make sure all changes to unit info has been stored
+        for trf in self.transforms:
+            for i in range(0, 100):
+                if not trf._dirty:
+                    break
+                time.sleep(0.1)
+
         # update status and check
         self.updateStatus()
             

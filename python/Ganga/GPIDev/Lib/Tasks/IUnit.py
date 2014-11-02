@@ -10,6 +10,7 @@ class IUnit(GangaObject):
    _schema = Schema(Version(1,0), {
         'status'         : SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
         'name'           : SimpleItem(defvalue='Simple Unit', doc='Name of the unit (cosmetic)', typelist=["str"]),
+        'application'    : ComponentItem('applications', defvalue=None, optional=1, load_default=False, doc='Application of the Transform.'),
         'inputdata'      : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Input dataset'),
         'outputdata'     : ComponentItem('datasets', defvalue=None, optional=1, load_default=False,doc='Output dataset'),
         'active'         : SimpleItem(defvalue=False, hidden=1,doc='Is this unit active'),
@@ -74,10 +75,14 @@ class IUnit(GangaObject):
          return False
 
       # check if we already have a job
-      if len(self.active_job_ids) == 0:
-         return True
-      else:
+      if len(self.active_job_ids) != 0:
          return False
+
+      # if we're using threads, check the max number
+      if GPI.queues.totalNumUserThreads() > self._getParent().max_active_threads:
+         return False
+
+      return True
 
    def checkForResubmission(self):
       """check if this unit should be resubmitted"""
@@ -147,31 +152,25 @@ class IUnit(GangaObject):
             j.name = "T%i:%i U%i" % (task.id, trf.getID(), self.getID())
 
          try:
-            j.submit()
+            if trf.submit_with_threads:
+               GPI.queues.add( j.submit )
+            else:
+               j.submit()
+
          except:
             logger.error("Couldn't submit the job. Deactivating unit.")
             self.prev_job_ids.append(j.id)
             self.active = False
             trf._setDirty()  # ensure everything's saved
-
-            # add a delay in to make sure the trf repo is updated
-            for i in range(0, 100):
-               if not trf._dirty:
-                  break
-               time.sleep(0.1)
-               
             return 1
 
          self.active_job_ids.append(j.id)
          self.updateStatus("running")
          trf._setDirty()  # ensure everything's saved
-
-         # add a delay in to make sure the trf repo is updated
-         for i in range(0, 100):
-            if not trf._dirty:
-               break
-            time.sleep(0.1)
             
+         if trf.submit_with_threads:
+            return 0
+
          return 1
 
       # update any active jobs

@@ -15,9 +15,14 @@ from ITransform import ITransform
 from TaskChainInput import TaskChainInput
 from TaskLocalCopy import TaskLocalCopy
 
+from CoreTask import CoreTask
+from CoreTransform import CoreTransform
+from CoreUnit import CoreUnit
+
 # Start Logger
 #import Ganga.Utility.logging
 #logger = Ganga.Utility.logging.getLogger()
 from common import logger
 
 from TaskApplication import ExecutableTask, ArgSplitterTask 
+

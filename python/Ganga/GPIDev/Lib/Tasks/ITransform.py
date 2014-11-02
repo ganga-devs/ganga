@@ -1,6 +1,6 @@
 from common import *
 from TaskApplication import ExecutableTask, taskApp
-from Ganga.GPIDev.Lib.Job.Job import JobError
+from Ganga.GPIDev.Lib.Job.Job import JobError, Job
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job.MetadataDict import *
@@ -37,6 +37,8 @@ OutputFile objects to be copied to all jobs"),
         'abort_loop_on_submit'     : SimpleItem(defvalue=True, doc='Break out of the Task Loop after submissions'),
         'required_trfs'  : SimpleItem(defvalue=[],typelist=['int'],sequence=1,doc="IDs of transforms that must complete before this unit will start. NOTE DOESN'T COPY OUTPUT DATA TO INPUT DATA. Use TaskChainInput Dataset for that."),
         'chain_delay'    : SimpleItem(defvalue=0, doc='Minutes delay between a required/chained unit completing and starting this one', protected=1, typelist=["int"]),
+        'submit_with_threads': SimpleItem(defvalue=False, doc='Use Ganga Threads for submission'),
+        'max_active_threads': SimpleItem(defvalue=10, doc='Maximum number of Ganga Threads to use. Note that the number of simultaneous threads is controlled by the queue system (default is 5)'),
         #'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
     })
 
