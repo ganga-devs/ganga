@@ -16,14 +16,18 @@ DIRAC_INCLUDE=''
 def getDiracEnv(force=False):
     global DIRAC_ENV
     if DIRAC_ENV == {} or force:
-        with open(getConfig('DIRAC')['DiracEnvFile'],'r') as env_file:
-            DIRAC_ENV = dict((tuple(line.strip().split('=',1)) for line in env_file.readlines() if len(line.strip().split('=',1)) == 2))
-        keys_to_remove = []
-        for k, v in DIRAC_ENV.iteritems():
-            if str(v).startswith('() {'):
-                keys_to_remove.append( k )
-        for key in keys_to_remove:
-            del DIRAC_ENV[ key ]
+        if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(getConfig('DIRAC')['DiracEnvFile']):
+            with open(getConfig('DIRAC')['DiracEnvFile'],'r') as env_file:
+                DIRAC_ENV = dict((tuple(line.strip().split('=',1)) for line in env_file.readlines() if len(line.strip().split('=',1)) == 2))
+                keys_to_remove = []
+                for k, v in DIRAC_ENV.iteritems():
+                    if str(v).startswith('() {'):
+                        keys_to_remove.append( k )
+                for key in keys_to_remove:
+                    del DIRAC_ENV[ key ]
+
+        else:
+            logger.error("'DiracEnvFile' config variable empty or file not present")
 
     #print DIRAC_ENV
     return DIRAC_ENV

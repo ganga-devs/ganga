@@ -210,3 +210,11 @@ class ThreadPoolQueueMonitor(object):
                                             fallback_func    = fallback_func,
                                             fallback_args    = fallback_args,
                                             fallback_kwargs  = fallback_kwargs )
+    def totalNumUserThreads(self):
+        """Return the total number of user threads, both running and queued"""
+        num = 0
+        for t in self.__user_threadpool.worker_status():
+            if t[1] != "idle":
+                num += 1
+
+        return num + len(self.__user_threadpool.get_queue())
