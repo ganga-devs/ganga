@@ -1,0 +1,33 @@
+**************************************************************************************************************
+6.0.40 (2014/11/2)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Added queue submission option to Tasks
+* Added CoreTask for non-Experimentally specific VOs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Added a helper function to the thread pool to return the total number of threads (both active and in 
+queue)
+* Added protection for no DiracEnvFile being specified
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGaudi
+--------------------------------------------------------------------------------------------------------------
+* Fixed some minor bugs in the way that the environment shouldn't be passed to Local jobs
+* Fixed bug where some jobs weren't unprepared upon failing to prepare
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Fixed some minor bugs in the way that the environment shouldn't be passed to Local jobs
+* Fixed bug where some jobs weren't unprepared upon failing to prepare
+
+**************************************************************************************************************
