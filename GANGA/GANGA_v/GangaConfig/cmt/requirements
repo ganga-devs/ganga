@@ -1,0 +1,22 @@
+#============================================================================
+# Created    : 2009-08-10
+# Maintainer : Ulrik Egede
+#============================================================================
+package           GangaConfig
+
+#At CERN, define the location of the site configuration
+set GANGA_SITE_CONFIG_AREA "$(GANGA_SITE_CONFIG_AREA)"  CERN "/afs/cern.ch/sw/ganga/install/config/LHCb"
+
+set GANGA_NEVER_REEXEC 1
+
+# use pyqt     v* LCG_Interfaces
+# use pyxml    v* LCG_Interfaces
+
+# Revert to IPython from Ganga external area
+# use ipython  v* LCG_Interfaces
+
+use ROOT v* LCG_Interfaces
+macro ROOT_config_version  "6.02.00"
+
+# macro        pyqt_config_version                 3.17.3
+# macro        Qt_config_version                   3.3.8

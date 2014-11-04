@@ -1,0 +1,203 @@
+#============================================================================
+# Created    : 2009-08-10
+# Maintainer : Ulrik Egede
+#============================================================================
+package           GangaPolicy
+
+cmtpath_pattern \
+   macro <project>_install_python "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_python} ; \
+    path_prepend PYTHONPATH ${GANGA_install_python}
+
+cmtpath_pattern \
+   macro <project>_install_scripts "" \
+         GANGA_without_installarea "<path>/scripts" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/scripts"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\scripts" ; \
+   path_remove  PATH ${GANGA_install_scripts} ; \
+   path_prepend PATH ${GANGA_install_scripts}
+
+#########################################################################
+# PYTHONPATH numpy
+
+cmtpath_pattern \
+   macro <project>_install_numpy "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/numpy/$(numpy)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\numpy\$(numpy)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_numpy} ; \
+    path_prepend PYTHONPATH ${GANGA_install_numpy}
+
+#########################################################################
+# PYTHONPATH matplotlib
+
+cmtpath_pattern \
+   macro <project>_install_matplotlib "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/matplotlib/$(matplotlib)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\matplotlib\$(matplotlib)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_matplotlib} ; \
+    path_prepend PYTHONPATH ${GANGA_install_matplotlib}
+
+#########################################################################
+# PYTHONPATH pycrypto
+
+cmtpath_pattern \
+   macro <project>_install_pycrypto "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/pycrypto/$(pycrypto)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\pycrypto\$(pycrypto)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_pycrypto} ; \
+    path_prepend PYTHONPATH ${GANGA_install_pycrypto}
+
+#########################################################################
+# PYTHONPATH pyqt
+
+cmtpath_pattern \
+   macro <project>_install_pyqt "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/pyqt/$(pyqt)/$(CMTCONFIG)/lib/python$(Python_config_version_twodigit)/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\pyqt\$(pyqt)\$(CMTCONFIG)\lib\python$(Python_config_version_twodigit)\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_pyqt} ; \
+    path_prepend PYTHONPATH ${GANGA_install_pyqt}
+
+cmtpath_pattern \
+   macro <project>_so_pyqt "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/pyqt/$(pyqt)/$(CMTCONFIG)/lib"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\pyqt\$(pyqt)\$(CMTCONFIG)\lib" ; \
+    path_remove  LD_LIBRARY_PATH ${GANGA_so_pyqt} ; \
+    path_prepend LD_LIBRARY_PATH ${GANGA_so_pyqt}
+
+#########################################################################
+# PYTHONPATH figleaf
+
+cmtpath_pattern \
+   macro <project>_install_figleaf "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/figleaf/$(figleaf)/noarch"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\figleaf\$(figleaf)\noarch" ; \
+    path_remove  PYTHONPATH ${GANGA_install_figleaf} ; \
+    path_prepend PYTHONPATH ${GANGA_install_figleaf}
+
+#########################################################################
+# PYTHONPATH ApMon
+
+cmtpath_pattern \
+   macro <project>_install_ApMon "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/ApMon/$(ApMon)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\ApMon\$(ApMon)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_ApMon} ; \
+    path_prepend PYTHONPATH ${GANGA_install_ApMon}
+
+#########################################################################
+# PYTHONPATH PYTF
+
+cmtpath_pattern \
+   macro <project>_install_PYTF "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/PYTF/$(PYTF)/noarch"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\PYTF\$(PYTF)\noarch" ; \
+    path_remove  PYTHONPATH ${GANGA_install_PYTF} ; \
+    path_prepend PYTHONPATH ${GANGA_install_PYTF} ; \
+    path_remove  PYTF_TOP_DIR ${GANGA_install_PYTF} ; \
+    path_prepend PYTF_TOP_DIR ${GANGA_install_PYTF}
+
+
+
+#########################################################################
+# PYTHONPATH stomputil
+
+cmtpath_pattern \
+   macro <project>_install_stomputil "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/stomputil/$(stomputil)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\stomputil\$(stomputil)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_stomputil} ; \
+    path_prepend PYTHONPATH ${GANGA_install_stomputil}
+
+#########################################################################
+# PYTHONPATH paramiko
+
+cmtpath_pattern \
+   macro <project>_install_paramiko "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/paramiko/$(paramiko)/noarch/lib/python2.5/site-packages"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\paramiko\$(paramiko)\noarch\python\lib\python2.5\site-packages" ; \
+    path_remove  PYTHONPATH ${GANGA_install_paramiko} ; \
+    path_prepend PYTHONPATH ${GANGA_install_paramiko}
+
+#########################################################################
+# PYTHONPATH ipython
+
+cmtpath_pattern \
+   macro <project>_install_ipython "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/ipython/$(ipython)/noarch/lib/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\ipython\$(ipython)\noarch\lib\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_ipython} ; \
+    path_prepend PYTHONPATH ${GANGA_install_ipython}
+
+#########################################################################
+# PYTHONPATH googleapipythonclient
+
+cmtpath_pattern \
+   macro <project>_install_googleapipythonclient "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/google-api-python-client/$(googleapipythonclient)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\google-api-python-client\$(googleapipythonclient)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_googleapipythonclient} ; \
+    path_prepend PYTHONPATH ${GANGA_install_googleapipythonclient}
+
+#########################################################################
+# PYTHONPATH pythongflags
+
+cmtpath_pattern \
+   macro <project>_install_pythongflags "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/python-gflags/$(pythongflags)/noarch/python"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\python-gflags\$(pythongflags)\noarch\python" ; \
+    path_remove  PYTHONPATH ${GANGA_install_pythongflags} ; \
+    path_prepend PYTHONPATH ${GANGA_install_pythongflags}
+
+#########################################################################
+# PYTHONPATH httplib2
+
+cmtpath_pattern \
+   macro <project>_install_httplib2 "" \
+         GANGA_without_installarea "<path>" \
+         <project>_without_installarea "" \
+         <project>_with_installarea&Unix "<path>/$(<project>_installarea_prefix)/python/external/httplib2/$(httplib2)/noarch/python2"\
+         <project>_with_installarea&WIN32 "<path>\$(<project>_installarea_prefix)\python\external\httplib2\$(httplib2)\noarch\python2" ; \
+    path_remove  PYTHONPATH ${GANGA_install_httplib2} ; \
+    path_prepend PYTHONPATH ${GANGA_install_httplib2}
+
+
+
+
+########################################################################
+# Path cleaner
+macro strip_script_gangapolicy "$(GANGAPOLICYROOT)/scripts/StripPath" WIN32 "$(GANGAPOLICYROOT)\scripts\StripPath"
+
+cmtpath_pattern \
+    setup_script $(strip_script_gangapolicy) ;
+
