@@ -171,7 +171,13 @@ if os.path.exists(setup_script):
 env.tmp' ''' % (platform, setup_script,project_opts,app,version))
     for line in open('env.tmp').readlines():
         varval = line.strip().split('=')
-        os.environ[varval[0]] = ''.join(varval[1:])
+        if len(varval) < 2:
+            pass
+        else:
+            content = ''.join(varval[1:])
+            # Lets drop bash functions
+            if not str(content).startswith('() {'):
+                os.environ[varval[0]] = content
     os.system('rm -f env.tmp')
 else:
     print 'Could not find %s. Your job will probably fail.' % setup_script

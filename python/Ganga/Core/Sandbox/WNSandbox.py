@@ -61,8 +61,24 @@ def createOutputSandbox(output_patterns,filter,dest_dir):
       'dest_dir': destination directory for output files
     """
 
-    from Ganga.Utility.files import multi_glob,recursive_copy
-    
+    try:
+        from Ganga.Utility.files import multi_glob,recursive_copy
+    except IOError as e:
+        import sys
+
+        print "Failed to import files"
+        print sys.path
+
+        print "Trying fix"
+        sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
+
+        try:
+            from Ganga.Utility.files import multi_glob,recursive_copy
+            print "Success!"
+        except IOError as e:
+            print "Fail!"
+            raise e
+
     for f in multi_glob(output_patterns,filter):
         try:
             recursive_copy(f,dest_dir)
@@ -82,7 +98,24 @@ def createPackedOutputSandbox(output_patterns,filter,dest_dir):
 
     tgzfile = os.path.join(dest_dir,OUTPUT_TARBALL_NAME)
 
-    from Ganga.Utility.files import multi_glob,recursive_copy
+    try:
+        from Ganga.Utility.files import multi_glob,recursive_copy
+    except IOError as e:
+        import sys
+
+        print "Failed to import files"
+        print sys.path
+
+        print "Trying fix"
+        sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
+
+        try:
+            from Ganga.Utility.files import multi_glob,recursive_copy
+            print "Success!"
+        except IOError as e:
+            print "Fail!"
+            raise e
+
     outputlist = multi_glob(output_patterns,filter)
 
 #
