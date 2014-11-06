@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.0.40 (2014/11/2)
+6.0.40 (2014/11/6)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -7,6 +7,8 @@ ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * Added queue submission option to Tasks
 * Added CoreTask for non-Experimentally specific VOs
+* Fixed duplicating some transient objects when copying jobs
+* Added debugging to Sandbox scripts for failing collection of sandboxes
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -29,5 +31,6 @@ ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 * Fixed some minor bugs in the way that the environment shouldn't be passed to Local jobs
 * Fixed bug where some jobs weren't unprepared upon failing to prepare
+* Stopped bash functions being passed to Gaudi environments
 
 **************************************************************************************************************
