@@ -2,7 +2,7 @@ import os
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed
 from GangaLHCb.test import *
-
+logger = Ganga.Utility.logging.getLogger()
 
 class TestDaVinci(GangaGPITestCase):
 
@@ -13,8 +13,9 @@ class TestDaVinci(GangaGPITestCase):
         
 
     def test_current_opts(self):
-        dv = DaVinci()
+        dv = DaVinci( version = 'v35r1' )
         # until this is updated, just use the default options
+        logger.info( "Checking Options: %s" % (self.path + 'opts.current.py') )
         dv.optsfile = [self.path + 'opts.current.py']
         #dv.extraopts = 'from Configurables import DaVinci\nDaVinci.HistFile="DVHistos_1.root"\nDaVinci().EvtMax = 100\nDaVinci().DataType =\'2010\''
         j = Job(application=dv)

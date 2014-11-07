@@ -67,7 +67,22 @@ def createOutputSandbox(output_patterns,filter,dest_dir):
         import sys
 
         print "Failed to import files"
+        print "sys:"
         print sys.path
+        print "env:"
+        print os.environ
+        print "ls:"
+        print os.listdir(".")
+        print "pattern:"
+        print output_patterns
+        print "destdir:"
+        print dest_dir
+
+        try:
+            import traceback
+            traceback.print_stack()
+        except:
+            pass
 
         print "Trying fix"
         sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
@@ -84,7 +99,7 @@ def createOutputSandbox(output_patterns,filter,dest_dir):
             recursive_copy(f,dest_dir)
         except Exception,x:
             print "ERROR: (job ###JOBID### createOutput )",x
-        
+
     
 def createPackedOutputSandbox(output_patterns,filter,dest_dir):
     """Get all files matching output patterns except filtered with filter and
@@ -104,7 +119,22 @@ def createPackedOutputSandbox(output_patterns,filter,dest_dir):
         import sys
 
         print "Failed to import files"
+        print "sys:"
         print sys.path
+        print "env:"
+        print os.environ
+        print "ls:"
+        print os.listdir(".")
+        print "pattern:"
+        print output_patterns
+        print "destdir:"
+        print dest_dir
+
+        try:
+            import traceback
+            traceback.print_stack()
+        except:
+            pass
 
         print "Trying fix"
         sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
