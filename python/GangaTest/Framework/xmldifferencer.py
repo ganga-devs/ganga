@@ -212,7 +212,7 @@ def start(cmd_args=None):
         dirs.sort(lambda x,y: cmp(os.path.getmtime(x),os.path.getmtime(y)))
 
         newversion = os.path.basename(dirs[-1])
-        if len(oldversion) > 1:
+        if len(dirs) > 1:
             oldversion = os.path.basename(dirs[-2])
         else:
             oldversion = newversion
