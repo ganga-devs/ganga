@@ -1,0 +1,273 @@
+import os, getpass
+from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
+from GangaTest.Framework.utils import is_job_finished, is_job_state
+from datetime import date
+today = date.today()
+
+import commands
+outputdatasetname_panda = commands.getoutput('uuidgen')
+
+srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/"
+srcdirana = srcdir + "ATLAS_Panda_16.6.7"
+release = "16.6.7"
+archive_file = "sources.5d888f17-c8c7-4253-b435-d359ff31f6f2.tar.gz"
+archive_ara_file = "sources.15e9aeeb-f29f-4d02-944b-4d26d716c7bf.tar.gz"
+archive_picking = "sources.26f5142b-adf5-4ecd-896b-8c8edaf4cebf.tar.gz"
+
+datasetana = "data11_7TeV.00184066.physics_Muons.merge.AOD.f386_m892"
+dataset_multisite =  "data11_7TeV.periodJ.physics_Muons.PhysCont.DAOD_ONIAMUMU.t0pro08_v01/"
+
+class TestPanda(GangaGPITestCase):
+    def testAthenaPanda(self):
+        return TestAthenaPanda(srcdirana)
+
+    def testAthenaPandaNoSplit(self):
+        return TestAthenaPandaNoSplit(srcdirana)
+
+    def testAthenaPandaMultiSite(self):
+        return TestAthenaPandaMultiSite(srcdirana)
+
+    def testAthenaPandaIndOutDS(self):
+        return TestAthenaPandaIndOutDS(srcdirana)
+
+    def testARAPanda(self):
+        return TestARAPanda(srcdirana)
+
+    def testAthenaPandaLibDS(self):
+        return TestAthenaPandaLibDS(srcdirana)
+
+    def testExecutablePanda(self):
+        return TestExecutablePanda(None)
+
+    def testEventPickingPanda(self):
+        return TestEventPickingPanda(srcdirana)
+
+class PandaTest(ICheckTest):
+    def __init__(self,srcdir=None,j = None):
+        if srcdir is None:
+            self.setup()
+            self.tmpdir = None
+            return
+        self.tmpdir = '/tmp/ganga_%s_testing_data-%s' % (self.__class__.__name__, getpass.getuser())
+        print 'PandaTest %s: copying testing data from %s to %s' % (self.__class__.__name__, srcdir, self.tmpdir)
+        os.system('rm -rf %s' % self.tmpdir)
+        os.system('cp -r %s %s' % (srcdir, self.tmpdir))
+        self.j = j
+        self.setup()
+
+    def isReadyForCheck(self):
+        return is_job_state(self.j, ['submitted','running','completed'])
+
+    def checkTest(self):
+        assert(self.j.status == 'submitted' or self.j.status == 'running' or self.j.status == 'completed'), 'Job status is not \'submitted\''
+        print "Test %s succeeded!" % (self.__class__.__name__)
+
+    def cleanup(self):
+        if self.tmpdir is None:
+            return
+        print 'PandaTest %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir)
+        os.system('rm -rf %s' % self.tmpdir)
+
+class TestAthenaPanda(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+        self.archivefile = '%s/%s' % (self.tmpdir, archive_file)
+        userareapath = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.is_prepared=True
+        j.application.atlas_release=release
+        j.application.option_file=[ joboption ]
+        j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
+        j.application.max_events=10
+        j.application.atlas_dbrelease=''
+        j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.atlas_run_dir = './' 
+        j.application.user_area = self.archivefile
+        j.application.user_area_path = userareapath
+        j.inputdata=DQ2Dataset()
+        j.inputdata.dataset=datasetana
+        j.inputdata.number_of_files=2
+        j.outputdata=DQ2OutputDataset()
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=2
+        j.backend=Panda()
+        assert (j.submit()==True)
+        self.j = j
+
+
+# same as above but uses no splitting
+class TestAthenaPandaNoSplit(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+        archivefile = '%s/%s' % (self.tmpdir, archive_file)
+        userareapath = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.is_prepared=True
+        j.application.atlas_release=release
+        j.application.option_file=[ joboption ]
+        j.application.user_area=archivefile
+        j.application.atlas_cmtconfig = 'i686-slc5-gcc43-opt'
+        j.application.max_events=10
+        j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.atlas_run_dir = './'
+        j.application.user_area_path = userareapath
+        j.inputdata=DQ2Dataset()
+        j.inputdata.dataset=datasetana
+        j.inputdata.number_of_files=1
+        j.outputdata=DQ2OutputDataset()
+        j.backend=Panda()
+        assert(j.submit()==True)
+        self.j = j
+
+class TestAthenaPandaMultiSite(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+        archivefile = '%s/%s' % (self.tmpdir, archive_file)
+        userareapath = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.is_prepared=True
+        j.application.atlas_release=release
+        j.application.option_file=[ joboption ]
+        j.application.user_area=archivefile
+        j.application.max_events=10
+        j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.atlas_run_dir = './'
+        j.application.user_area_path = userareapath
+        j.inputdata=DQ2Dataset()
+        j.inputdata.dataset=dataset_multisite
+        j.outputdata=DQ2OutputDataset()
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=2
+        j.backend=Panda()
+        self.j = j
+        assert(self.j.submit()==True)
+
+class TestAthenaPandaIndOutDS(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+        archivefile = '%s/%s' % (self.tmpdir, archive_file)
+        userareapath = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.is_prepared=True
+        j.application.atlas_release=release
+        j.application.option_file=[ joboption ]
+        j.application.user_area=archivefile
+        j.application.max_events=10
+        j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.atlas_run_dir = './'
+        j.application.user_area_path = userareapath
+        j.inputdata=DQ2Dataset()
+        j.inputdata.dataset=datasetana
+        j.outputdata=DQ2OutputDataset()
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=2
+        j.backend=Panda()
+        j.backend.individualOutDS=True
+        self.j = j
+        assert(self.j.submit()==True)
+
+class TestEventPickingPanda(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+        pick_event_file = '%s/RunEvent.txt' % self.tmpdir
+        archivefile = '%s/%s' % (self.tmpdir, archive_picking)
+        userareapath = self.tmpdir
+        os.environ['TestArea'] = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.is_prepared=True
+        j.application.atlas_release=release
+        j.application.option_file=[ joboption ]
+        j.application.user_area=archivefile
+        j.application.atlas_run_dir = './'
+        j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.user_area_path = userareapath
+
+
+        run_dir = "%s/%s" %(os.environ['TestArea'], j.application.atlas_run_dir)
+        if not os.path.exists(run_dir):
+            import commands 
+            cmd = 'mkdir %s ' % run_dir
+            commands.getoutput(cmd)
+
+        j.inputdata = EventPicking()
+        j.inputdata.pick_event_list = pick_event_file
+        j.inputdata.pick_data_type = 'AOD'
+        j.inputdata.pick_stream_name = 'physics_Muons'
+        j.inputdata.pick_dataset_pattern = '*physics_Muons*'
+        
+        j.outputdata=DQ2OutputDataset()
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=2
+        j.backend=Panda()
+        self.j = j
+        assert(self.j.submit()==True)
+
+class TestARAPanda(PandaTest):
+    def setup(self):
+        joboption = '%s/gangaARAExample_502.py' % self.tmpdir
+        archivefile = '%s/%s' % (self.tmpdir, archive_ara_file)
+        userareapath = self.tmpdir
+
+        j = Job()
+        j.application=Athena()
+        j.application.is_prepared=True
+        j.application.option_file=[ joboption ]
+        j.application.atlas_release=release
+        j.application.atlas_exetype='PYARA'
+        j.application.user_area=archivefile
+        j.application.user_area_path = userareapath
+        j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.atlas_run_dir = './'
+        j.inputdata=DQ2Dataset()
+        j.inputdata.dataset= datasetana
+        j.inputdata.number_of_files=1
+        j.outputdata=DQ2OutputDataset()
+        j.outputdata.outputdata=['histos.root']
+        j.splitter=DQ2JobSplitter()
+        j.splitter.numsubjobs=1
+        j.splitter.filesize=8000
+        j.backend=Panda()
+        self.j = j
+        assert(self.j.submit()==True)
+
+class TestAthenaPandaLibDS(PandaTest):
+    def setup(self):
+        joboption = '%s/AnalysisSkeleton_topOptions.py' % self.tmpdir
+
+        j=Job()
+        j.application=Athena()
+        j.application.is_prepared=True
+        j.application.atlas_run_dir = './'
+        j.application.atlas_run_config = {'input': {'noInput': True}, 'other': {}, 'output': {'alloutputs': []}} 
+        j.application.atlas_release = release
+        j.application.option_file = [joboption]
+        j.inputdata = DQ2Dataset()
+        j.inputdata.dataset = datasetana
+        j.inputdata.number_of_files = 1
+        j.outputdata = DQ2OutputDataset()
+        j.splitter = DQ2JobSplitter()
+        j.splitter.filesize = 4000
+        j.splitter.numsubjobs = 1
+        j.backend = Panda()
+        #j.backend.libds = 'user.jha.20110825192303.2.7143.ANALY_FREIBURG.lib'
+        j.backend.libds = 'user.elmsheus.0806092306.622561.4903.lib'
+        self.j = j
+        assert(self.j.submit()==True)
+
+class TestExecutablePanda(PandaTest):
+    def setup(self):
+        j = Job()
+        j.outputdata=DQ2OutputDataset()
+        j.backend=Panda()
+        self.j = j
+        assert(self.j.submit()==True)
