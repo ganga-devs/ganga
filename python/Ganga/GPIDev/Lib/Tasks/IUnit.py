@@ -79,7 +79,7 @@ class IUnit(GangaObject):
          return False
 
       # if we're using threads, check the max number
-      if GPI.queues.totalNumUserThreads() > self._getParent().max_active_threads:
+      if trf.submit_with_threads and GPI.queues.totalNumUserThreads() > self._getParent().max_active_threads:
          return False
 
       return True
