@@ -30,7 +30,7 @@ from GangaPanda.Lib.Panda.Panda import setChirpVariables
 def createContainer(name):
     from pandatools import Client
     # don't create containers for HC datasets
-    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
         try:
             Client.createContainer(name,False)
             logger.info('Created output container %s' %name)
@@ -40,7 +40,7 @@ def createContainer(name):
 def addDatasetsToContainer(container,datasets):
     from pandatools import Client
     # HC datasets don't use containers
-    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+    if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
         Client.addDatasetsToContainer(container,datasets,False)
 
 
@@ -336,15 +336,16 @@ class AthenaPandaRTHandler(IRuntimeHandler):
             self.outDsLocation = Client.PandaSites[site]['ddm']
 
             tmpDSName = job.outputdata.datasetname[0:-1]
-            if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+            if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                 tmpDSName += ".%d.%s"% (self.rndSubNum, site)
 
             try:
                 tmpDsExist = False
-                if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud')) and Client.getDatasets(tmpDSName):
+                if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud') or configPanda['processingType'].startswith('rucio_test')) and Client.getDatasets(tmpDSName):
                     tmpDsExist = True
                     logger.info('Re-using output dataset %s'%tmpDSName)
-                Client.addDataset(tmpDSName,False,location=self.outDsLocation,dsExist=tmpDsExist)
+                if not configPanda['processingType'].startswith('rucio_test'):
+                    Client.addDataset(tmpDSName,False,location=self.outDsLocation,dsExist=tmpDsExist)
                 logger.info('Output dataset %s registered at %s'%(tmpDSName,self.outDsLocation))
                 dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
                 self.indivOutDsList.append(tmpDSName)
@@ -369,7 +370,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.libraries[site] = '%s.tgz' % self.libDatasets[site]
                 if not job.backend.nobuild:
                     try:
-                        Client.addDataset(self.libDatasets[site],False,location=self.outDsLocation)
+                        if not configPanda['processingType'].startswith('rucio_test'):
+                            Client.addDataset(self.libDatasets[site],False,location=self.outDsLocation)
                         dq2_set_dataset_lifetime(self.libDatasets[site], self.outDsLocation)
                         logger.info('Lib dataset %s registered at %s'%(self.libDatasets[site],self.outDsLocation))
                     except exceptions.SystemExit:
@@ -610,7 +612,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
         job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]
-        if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud'):
+        if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
             job.outputdata.datasetname += '.%d.%s'% ( self.rndSubNum, job.backend.site )
 
         if job.inputdata and self.inputdatatype=='DQ2':
@@ -778,7 +780,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     if not f.destinationDBlock in self.indivOutDsList:
                         try:
                             logger.info('Creating dataset %s and adding to %s'%(f.destinationDBlock,f.dataset))
-                            Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
+                            if not configPanda['processingType'].startswith('rucio_test'):
+                                Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
                             dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
                             self.indivOutDsList.append(f.destinationDBlock)
                             addDatasetsToContainer(f.dataset,[f.destinationDBlock])
