@@ -28,6 +28,14 @@ class WorkerThreadPool(object):
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
 
+        import copy
+        saved_num_worker = copy.deepcopy(num_worker_threads)
+        saved_thread_prefix = copy.deepcopy(worker_thread_prefix)
+
+        self.__init_worker_threads( saved_num_worker, saved_thread_prefix )
+
+    def __init_worker_threads(self, num_worker_threads, worker_thread_prefix ):
+
         for i in range(num_worker_threads):
             t = GangaThread(name = worker_thread_prefix + str(i),
                             auto_register = False,
@@ -226,4 +234,15 @@ class WorkerThreadPool(object):
         Returns a informatative tuple containing the threads name, current command it's working on and the timeout for that command.
         """
         return [(w._name, w._command, w._timeout) for w in self.__worker_threads]
+
+    def __stop_worker_threads(self):
+        for w in self.__worker_threadss:
+            w.stop()
+        self.__worker_threads = []
+        return
+
+    def __start_worker_threads(self):
+        self.__init_worker_threads( self.saved_num_worker, self.saved_thread_prefix )
+        return
+
 ###################################################################

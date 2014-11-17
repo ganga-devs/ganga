@@ -197,6 +197,8 @@ class Registry(object):
         except AttributeError:
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj)
         except AssertionError:
+            #import traceback
+            #traceback.print_stack()
             raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % obj)
         except KeyError:
             raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj)

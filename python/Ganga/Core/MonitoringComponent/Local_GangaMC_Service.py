@@ -183,7 +183,7 @@ def _purge_actions_queue():
                Qin.put( action )
        except Empty:
            break
-        
+ 
 _makeThreadPool()
 
 
@@ -835,6 +835,8 @@ class JobRegistry_Monitor( GangaThread ):
     def _handleError( self, x, backend_name, show_traceback ):
         def log_error():
             log.error( 'Problem in the monitoring loop: %s', str( x ) )
+            #import traceback
+            #traceback.print_stack()
             if show_traceback:
                 Ganga.Utility.logging.log_user_exception( log )
         bn = backend_name
@@ -862,11 +864,12 @@ def getStackTrace():
         for worker in ThreadPool:
             status = status + "  " + worker.getName() + ":\n"
 
-            frame = worker._frame
-            if frame:
-                status = status + "    stack:\n"
-                for frame, filename, line, function_name, context, index in inspect.getouterframes(frame):
-                    status = status + "      " + function_name + " @ " + filename + " # " + str(line) + "\n"
+            if hasattr( worker, '_frame' ):
+                frame = worker._frame
+                if frame:
+                    status = status + "    stack:\n"
+                    for frame, filename, line, function_name, context, index in inspect.getouterframes(frame):
+                        status = status + "      " + function_name + " @ " + filename + " # " + str(line) + "\n"
 
             status = status + "\n"
         print "Queue",Qin.queue     

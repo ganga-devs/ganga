@@ -143,52 +143,51 @@ def disableInternalServices():
           * one of the managed credentials (AFS token or Grid Proxy) is detected as beeing *invalid* by the monitoring component
           * the user is running out of space
     """
-    
+
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+
+    logger.info( "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner" )
+    logger.info( " ... Please be patient! " )
+
     global servicesEnabled
     log.debug("Disabling the internal services")
 
-    #print "DISABLE MONITORING"
-
-    #from Ganga.Core.GangaThread import GangaThreadPool
-    #thread_pool = GangaThreadPool.getInstance()
-
-    #print ""
-    #print "Critical:"
-    #for i in thread_pool._GangaThreadPool__alive_critical_thread_ids():
-    #    print i
-    #print "nonCritical:"
-    #for i in thread_pool._GangaThreadPool__alive_non_critical_thread_ids():
-    #    print i
-    #print ""
-
     #disable the mon loop
-    from Ganga.Core import monitoring_component
-    monitoring_component.disableMonitoring()  
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue
+    logger.debug( "Shutting down the main monitoring loop" )
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
+    stop_and_free_thread_pool()
+    logger.debug( "Disabling the central Monitoring" )
+    from Ganga.Core import monitoring_component
+    monitoring_component.disableMonitoring()
 
-    #print "Critical:"
-    #for i in thread_pool._GangaThreadPool__alive_critical_thread_ids():
-    #    print i
-    #print "nonCritical:"
-    #for i in thread_pool._GangaThreadPool__alive_non_critical_thread_ids():
-    #    print i
-    #print ""
+    try:
+       logger.debug( "Attempting to import GangaDirac thread monitor" )
+       from GangaDirac.BOOT import queues_threadpoolMonitor
+       while queues_threadpoolMonitor.totalNumAllThreads() != 0:
+          logger.debug( "Ensuring that all Dirac tasks are purged from the todo!" )
+          queues_threadpoolMonitor._purge_all()
+          import time
+          time.sleep(2)
+       queues_threadpoolMonitor.__stop_all_threads()
+    except:
+       #TODO replace this with a nicer check to see if GangaDirac is loaded at all
+       pass
 
-    #print "SHUTDOWN REPO"
+    # For debugging what services are still alive after being requested to stop before we close the repository
+    #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
+    #getStackTrace()
+    #print queues_threadpoolMonitor._display(0)
+
+    logger.debug( "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services" )
+
+    logger.info( "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt" )
 
     #flush the registries
     log.debug( "Coordinator Shutting Down Repository_runtime" )
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
-
-    #print "Critical:"
-    #for i in thread_pool._GangaThreadPool__alive_critical_thread_ids():
-    #    print i
-    #print "nonCritical:"
-    #for i in thread_pool._GangaThreadPool__alive_non_critical_thread_ids():
-    #    print i
-    #print ""
 
     #this will disable any interactions with the registries (implicitly with the GPI)
     servicesEnabled = False    
@@ -207,16 +206,22 @@ def enableInternalServices():
     #startup the registries
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.bootstrap()
-                    
+
     log.debug("Enabling the internal services")
     # reenable the monitoring loop if *autostart* is set
     from Ganga.Core import monitoring_component
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
     if config['autostart']:
         monitoring_component.enableMonitoring()
-    
+
     servicesEnabled = True
     log.info('Internal services reactivated successfuly')
+
+    try:
+        from GangaDirac.BOOT import queues_threadpoolMonitor
+        queues_threadpoolMonitor.__start_all_threads()
+    except:
+        pass
 
 def checkInternalServices(errMsg='Internal services disabled. Job registry is read-only.'):
     """
@@ -248,7 +253,7 @@ def bootstrap():
     #export to GPI 
     from Ganga.Runtime.GPIexport import exportToGPI
     exportToGPI('reactivate',enableInternalServices,'Functions') 
-
+    exportToGPI('disableServices',disableInternalServices,'Functions')
 
 
 #
