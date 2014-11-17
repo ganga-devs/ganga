@@ -147,7 +147,8 @@ class SessionLockRefresher(GangaThread):
                                     if not f.endswith(".session"):
                                         asf = f.split(".session")[0] + ".session"
                                         if not asf in session_files:
-                                            logger.warning("Removing dead file %s" % (f) )
+                                            if f.endswith(".session"):
+                                                logger.warning("Removing dead file %s" % (f) )
                                             logger.debug("Found, %s session files" % (session_files) )
                                             logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
                                             logger.debug( "%s, %s" % ( self.sdir, f ) )
@@ -674,6 +675,9 @@ class SessionLockManager(object):
         try:
             #sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir, s) == self.gfn]
             sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and int(str(s).split('.')[-2]) != int(os.getpid()) ]
+            locks = [s for s in os.listdir(self.sdir) if s.endswith(".lock") and int(str(s).split('.')[-2]) != int(os.getpid()) ]
+            for i in locks:
+                sessions.append( i )
 
 #            for s in os.listdir(self.sdir):
 #                if s.endswith(".session"):
@@ -683,8 +687,14 @@ class SessionLockManager(object):
             for session in sessions:
                 try:
                     sf = os.path.join(self.sdir, session)
-                    logger.debug("Reaping LockFile: %s" % (sf) )
-                    os.unlink(sf)
+                    logger.debug( "Modified %s" % os.stat(sf).st_ctime )
+                    logger.debug( "Time %s" % time.time() )
+                    logger.debug( "Diff_allowed %s" % session_expiration_timeout )
+                    logger.debug( "Diff %s" % (time.time() - os.stat(sf).st_ctime ) )
+                    if( (time.time() - os.stat(sf).st_ctime ) > session_expiration_timeout ):
+                        if( sf.endswith(".session") ):
+                            logger.debug("Reaping LockFile: %s" % (sf) )
+                        os.unlink(sf)
                 except OSError, x:
                     failed = True
             return not failed
