@@ -119,6 +119,7 @@ class SessionLockRefresher(GangaThread):
                                             Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
                                             On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" %( self.fns[index], x ) )
                                 else:
+                                    from Ganga.Core import GangaException
                                     raise GangaException( "Error Opening global .session file for this session: %s" % self.fns[index] )
 
                         # Clear expired session files if monitoring is active
