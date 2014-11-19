@@ -48,8 +48,23 @@ class BackendApplicationMatrix(MultipassTest):
             
             success = []
             failed=[]
+            while_counter=0
             #iterate over submitted jobs until either all jobs are completed (success/failure) or the Testing framework signal the timeout
             while len(submitted)>0:
+                while_counter+=1
+                print "While Loop entry num %s" % while_counter
+                if not while_counter % 10:
+                    print "Waiting on jobs: %s" % str(submitted)
+                    for i in range( len(submitted) ):
+                        jid=submitted[i]
+                        print "%s:  %s Application running on %s Backend" % (jid, jobs(jid).application._impl._name, jobs(jid).backend._impl._name)
+                        print "Status: %s" % jobs(jid).status
+
+                if while_counter == 50:
+                    for i in range( len(submitted) ):
+                        jid=submitted[i]
+                        jobs(jid).force_status('failed')
+
                 to_remove=[]
                 for i in range( len(submitted) ):
                         jid = submitted[i]
@@ -59,7 +74,7 @@ class BackendApplicationMatrix(MultipassTest):
                         
                         status = sleep_until_state(j, timeout=3, sleep_period=1, break_states=['new', 'killed', 'failed', 'unknown', 'removed'])
                         
-                        if status < 0: #break state (failed)
+                        if status is False: #break state (failed)
                             failed.append ((backend, app))
                             print " [FAILED] Job (%s,%s) failed [state=%s]" % (backend, app, j.status)
                             to_remove.append(jid)
@@ -67,9 +82,12 @@ class BackendApplicationMatrix(MultipassTest):
                             success.append((backend,app))
                             print " [SUCCESS] Job (%s,%s) completed" % (backend, app)
                             to_remove.append(jid)
-                for jid in to_remove:           
-                    print " [Removing] Job %s of %s" % (jid, len(submitted))
+                total_submitted = len(submitted)
+                i=1
+                for jid in to_remove:
+                    print " [Removing] Job %s of %s" % (i, total_submitted)
                     submitted.remove(jid)
+                    i+=1
 
             print "*"*35, "RESULTS", "*"*35            
             if len(success)>0:

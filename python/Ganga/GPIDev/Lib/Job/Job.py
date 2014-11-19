@@ -1278,7 +1278,11 @@ class Job(GangaObject):
 
             except IncompleteJobSubmissionError,x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
-            self.info.increment()
+
+            # This appears to be done by the backend now in a way that handles sub-jobs,
+            # in the case of a master job however we need to still perform this
+            if len(rjobs) != 1:
+                self.info.increment()
             self.updateStatus('submitted') # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
             self._commit() # make sure that the status change goes to the repository, NOTE: this commit is redundant if updateStatus() is used on the line above
 
