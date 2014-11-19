@@ -35,6 +35,42 @@ def cmpfun(a,b):
     """helper function for sorting tuples"""
     return cmp(a[1],b[1])
 
+def convertDQ2ToClient(dataset):
+
+    try:
+        dq2_lock.acquire()
+        tmpListdq2 = dq2.listFilesInDataset(dataset)[0]
+    finally:
+        dq2_lock.release()
+
+    tmpListPanda = {}
+
+    for key, value in tmpListdq2.iteritems():
+        tmpvalue = {}
+        tmpvalue['scope'] = value['scope']
+        tmpvalue['md5sum'] = value['checksum']
+        lfn = value['lfn']
+        tmpvalue['fsize'] = value['filesize']
+        tmpvalue['guid'] = srt(key)
+        tmpListPanda[lfn] = tmpvalue
+
+    return tmpListPanda
+
+
+def getLocations(dataset):
+    
+    try:
+        dq2_lock.acquire()
+        try:
+            locations = dq2.listDatasetReplicas(dataset)
+        except:
+            logger.error('Dataset %s not found !', dataset)
+            return []
+    finally:
+        dq2_lock.release()
+
+    return locations
+
 def listDatasets(name,filter=True):
     '''helper function to filter out temporary datasets'''
 
