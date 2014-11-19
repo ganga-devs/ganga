@@ -344,7 +344,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud') or configPanda['processingType'].startswith('rucio_test')) and Client.getDatasets(tmpDSName):
                     tmpDsExist = True
                     logger.info('Re-using output dataset %s'%tmpDSName)
-                if not configPanda['processingType'].startswith('rucio_test'):
+                if not configPanda['prodSourceLabelBuild'].startswith('rucio_test'):
                     Client.addDataset(tmpDSName,False,location=self.outDsLocation,dsExist=tmpDsExist)
                 logger.info('Output dataset %s registered at %s'%(tmpDSName,self.outDsLocation))
                 dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
@@ -370,7 +370,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.libraries[site] = '%s.tgz' % self.libDatasets[site]
                 if not job.backend.nobuild:
                     try:
-                        if not configPanda['processingType'].startswith('rucio_test'):
+                        if not configPanda['prodSourceLabelBuild'].startswith('rucio_test'):
                             Client.addDataset(self.libDatasets[site],False,location=self.outDsLocation)
                         dq2_set_dataset_lifetime(self.libDatasets[site], self.outDsLocation)
                         logger.info('Lib dataset %s registered at %s'%(self.libDatasets[site],self.outDsLocation))
@@ -780,7 +780,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     if not f.destinationDBlock in self.indivOutDsList:
                         try:
                             logger.info('Creating dataset %s and adding to %s'%(f.destinationDBlock,f.dataset))
-                            if not configPanda['processingType'].startswith('rucio_test'):
+                            if not configPanda['prodSourceLabelBuild'].startswith('rucio_test'):
                                 Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
                             dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
                             self.indivOutDsList.append(f.destinationDBlock)

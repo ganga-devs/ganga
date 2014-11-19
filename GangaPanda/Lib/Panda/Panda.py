@@ -23,6 +23,8 @@ from Ganga.Utility.logging import getLogger
 
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import ToACache
 from GangaAtlas.Lib.ATLASDataset.ATLASDataset import Download
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import convertDQ2ToClient
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getLocations
 
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname 
 
@@ -64,6 +66,22 @@ def refreshPandaSpecs():
 #        Client.refreshSpecs()
         Client.PandaSites = Client.getSiteSpecs(config['siteType'])[1]
         pandaSpecsTS = time.time()
+
+def convertDQ2NamesToQueueName(locations):
+    #from pandatools import Client
+    refreshPandaSpecs()
+
+    info = {}
+    for location in locations:
+        sites = []
+        for queue, queueinfo in Client.PandaSites.iteritems():
+            queuelocations = queueinfo['setokens'].values()
+            for queuelocation in queuelocations:
+                if Client.convSrmV2ID(location) == Client.convSrmV2ID(queuelocation) and not queue in sites:
+                    sites.append(queue)
+        info[location] = sites
+
+    return info
 
 def convertQueueNameToDQ2Names(queue):
     #from pandatools import Client
@@ -143,7 +161,11 @@ def runPandaBrokerage(job):
         libdslocation = []
         if job.backend.libds:
             try:
-                libdslocation = Client.getLocations(job.backend.libds,[],job.backend.requirements.cloud,False,False)
+                # RUCIO patch
+                #libdslocation = Client.getLocations(job.backend.libds,[],job.backend.requirements.cloud,False,False)
+                info = getLocations(job.backend.libds)
+                location = info.values()[0][1]
+                libdslocation = convertDQ2NamesToQueueName(location)
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.getLocations for libDS')
             if not libdslocation:
@@ -169,7 +191,9 @@ def runPandaBrokerage(job):
 
             fileList = []
             try:
-                fileList  = Client.queryFilesInDataset(dataset,False)
+                # RUCIO patch
+                #fileList  = Client.queryFilesInDataset(dataset,False)
+                fileList = convertDQ2ToClient(dataset)
             except exceptions.SystemExit:
                 raise BackendError('Panda','Error in Client.queryFilesInDataset')
             try:
@@ -334,13 +358,17 @@ def uploadSources(path,sources):
     except:
         raise BackendError('Panda','Exception while uploading archive: %s %s'%(sys.exc_info()[0],sys.exc_info()[1]))
 
+
 def getLibFileSpecFromLibDS(libDS):
     #from pandatools import Client
     from taskbuffer.FileSpec import FileSpec
 
     # query files in lib dataset to reuse libraries
     logger.info("query files in %s" % libDS)
-    tmpList = Client.queryFilesInDataset(libDS,False)
+    # RUCIO patch
+    #tmpList = Client.queryFilesInDataset(libDS,False)
+    tmpList = convertDQ2ToClient(libDS)
+
     tmpFileList = []
     tmpGUIDmap = {}
     tmpMD5Sum  = None
