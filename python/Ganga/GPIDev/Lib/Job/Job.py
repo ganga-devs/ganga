@@ -229,6 +229,8 @@ class Job(GangaObject):
                     self.unprepare()
 
                 self._unsetSubmitTransients()
+            else:
+                super( Job, self ).__construct__( args )
         else:
             super( Job, self ).__construct__( args )
 
