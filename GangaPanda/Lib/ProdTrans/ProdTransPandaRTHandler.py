@@ -4,6 +4,8 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.Core import BackendError
 
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import getDatasets
+
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
@@ -84,10 +86,12 @@ class ProdTransPandaRTHandler(IRuntimeHandler):
         try:
             outDsLocation = Client.PandaSites[job.backend.site]['ddm']
             tmpDsExist = False
-            if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud')) and Client.getDatasets(job.outputdata.datasetname):
-                tmpDsExist = True
-                logger.info('Re-using output dataset %s'%job.outputdata.datasetname)
-            if not configPanda['specialHandling']=='ddm:rucio':
+            if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud')):
+                #if Client.getDatasets(job.outputdata.datasetname):
+                if getDatasets(job.outputdata.datasetname):
+                    tmpDsExist = True
+                    logger.info('Re-using output dataset %s'%job.outputdata.datasetname)
+            if not configPanda['specialHandling']=='ddm:rucio' and not  configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                 Client.addDataset(job.outputdata.datasetname,False,location=outDsLocation,allowProdDisk=True,dsExist=tmpDsExist)
             logger.info('Output dataset %s registered at %s'%(job.outputdata.datasetname,outDsLocation))
             dq2_set_dataset_lifetime(job.outputdata.datasetname, outDsLocation)

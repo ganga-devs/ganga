@@ -22,7 +22,7 @@ from Ganga.Core import BackendError
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_set_dataset_lifetime
 from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
-from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
+from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2, getDatasets
 
 from Ganga.Utility.GridShell import getShell
 from GangaPanda.Lib.Panda.Panda import setChirpVariables
@@ -317,7 +317,9 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # check if this container exists
         try:
-            res = Client.getDatasets(job.outputdata.datasetname)
+            # RUCIO patch
+            #res = Client.getDatasets(job.outputdata.datasetname)
+            res = getDatasets(job.outputdata.datasetname)
         except exceptions.SystemExit:
             raise BackendError('Panda','Exception in Client.getDatasets %s: %s %s'%(job.outputdata.datasetname,sys.exc_info()[0],sys.exc_info()[1]))
         if not job.outputdata.datasetname in res.keys():
@@ -341,12 +343,15 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
             try:
                 tmpDsExist = False
-                if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud') or configPanda['processingType'].startswith('rucio_test')) and Client.getDatasets(tmpDSName):
-                    tmpDsExist = True
-                    logger.info('Re-using output dataset %s'%tmpDSName)
-                if not configPanda['prodSourceLabelBuild'].startswith('rucio_test'):
+                if (configPanda['processingType'].startswith('gangarobot') or configPanda['processingType'].startswith('hammercloud') or configPanda['processingType'].startswith('rucio_test')):
+                    # RUCIO patch
+                    #if Client.getDatasets(tmpDSName):
+                    if getDatasets(tmpDSName):
+                        tmpDsExist = True
+                        logger.info('Re-using output dataset %s'%tmpDSName)
+                if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                     Client.addDataset(tmpDSName,False,location=self.outDsLocation,dsExist=tmpDsExist)
-                logger.info('Output dataset %s registered at %s'%(tmpDSName,self.outDsLocation))
+                    logger.info('Output dataset %s registered at %s'%(tmpDSName,self.outDsLocation))
                 dq2_set_dataset_lifetime(tmpDSName, self.outDsLocation)
                 self.indivOutDsList.append(tmpDSName)
                 # add the DS to the container
@@ -370,10 +375,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.libraries[site] = '%s.tgz' % self.libDatasets[site]
                 if not job.backend.nobuild:
                     try:
-                        if not configPanda['prodSourceLabelBuild'].startswith('rucio_test'):
+                        if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                             Client.addDataset(self.libDatasets[site],False,location=self.outDsLocation)
+                            logger.info('Lib dataset %s registered at %s'%(self.libDatasets[site],self.outDsLocation))
                         dq2_set_dataset_lifetime(self.libDatasets[site], self.outDsLocation)
-                        logger.info('Lib dataset %s registered at %s'%(self.libDatasets[site],self.outDsLocation))
                     except exceptions.SystemExit:
                         raise BackendError('Panda','Exception in Client.addDataset %s: %s %s'%(self.libDatasets[site],sys.exc_info()[0],sys.exc_info()[1]))
 
@@ -780,7 +785,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                     if not f.destinationDBlock in self.indivOutDsList:
                         try:
                             logger.info('Creating dataset %s and adding to %s'%(f.destinationDBlock,f.dataset))
-                            if not configPanda['prodSourceLabelBuild'].startswith('rucio_test'):
+                            if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                                 Client.addDataset(f.destinationDBlock,False,location=subjobOutputLocation)
                             dq2_set_dataset_lifetime(f.destinationDBlock, subjobOutputLocation)
                             self.indivOutDsList.append(f.destinationDBlock)
