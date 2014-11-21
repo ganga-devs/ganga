@@ -51,7 +51,7 @@ def convertDQ2ToClient(dataset):
         tmpvalue['md5sum'] = value['checksum']
         lfn = value['lfn']
         tmpvalue['fsize'] = value['filesize']
-        tmpvalue['guid'] = srt(key)
+        tmpvalue['guid'] = str(key)
         tmpListPanda[lfn] = tmpvalue
 
     return tmpListPanda
