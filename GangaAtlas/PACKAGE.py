@@ -13,7 +13,7 @@ from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '2.6.0',
+    'DQ2Clients' : { 'version' : '2.6.1_rc6',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
@@ -22,10 +22,11 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'rucio-clients' : { 'version' : '0.1.35',
+    'rucio-clients' : { 'version' : '0.2.5',
                      'PATH' : ['bin/'],
-                     'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages'],
-                     'RUCIO_HOME' : '.',
+                     'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
+                     #'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ],
+                     'RUCIO_HOME' : '/afs/cern.ch/sw/ganga/external/rucio-clients/0.2.5/noarch/',
                      'RUCIO_AUTH_TYPE' : 'x509_proxy',
                      'RUCIO_ACCOUNT' : 'ganga',
                      'noarch':True ,
@@ -93,4 +94,7 @@ def standardSetup(setup=setup):
             os.environ['DQ2_ENDUSER_SETUP'] = setup.packages[p]['DQ2_ENDUSER_SETUP']
         setup.setPath(p,'PANDA_SYS')
         setup.setPath(p,'RUCIO_HOME')
+        if setup.packages[p].has_key('RUCIO_AUTH_TYPE'):
+            os.environ['RUCIO_AUTH_TYPE'] = setup.packages[p]['RUCIO_AUTH_TYPE']
+
     

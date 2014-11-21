@@ -131,7 +131,7 @@ def getEnvironment(c):
     gshell = getShell()
     if gshell:
        try:
-          return { 'X509_CERT_DIR' : gshell.env['X509_CERT_DIR'] }
+          return { 'X509_CERT_DIR' : gshell.env['X509_CERT_DIR'], 'X509_USER_PROXY' : gshell.env['X509_USER_PROXY']  }
        except KeyError:
           return { 'X509_CERT_DIR' : '/etc/grid-security/certificates' }
 

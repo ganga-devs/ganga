@@ -71,6 +71,29 @@ def getLocations(dataset):
 
     return locations
 
+
+def getDatasets(name):
+    '''helper function for data dict'''
+
+    try:
+        dq2_lock.acquire()
+        datasets = dq2.listDatasets(name)
+    finally:
+        dq2_lock.release()
+
+    return datasets
+
+def getElementsFromContainer(name):
+    '''helper function for container content'''
+
+    try:
+        dq2_lock.acquire()
+        datasets = dq2.listDatasetsInContainer(name)
+    finally:
+        dq2_lock.release()
+
+    return datasets
+
 def listDatasets(name,filter=True):
     '''helper function to filter out temporary datasets'''
 
@@ -168,14 +191,14 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             dq2_lock.release()
 
         # Rucio patch
-        if dataset.find(":")>0:
-            try:
-                datasettemp = dataset.split(":",1)[1]
-            except:
-                pass
-            newdatasetinfo = {}
-            newdatasetinfo[dataset] = datasetinfo[datasettemp]
-            datasetinfo = newdatasetinfo
+        #if dataset.find(":")>0:
+        #    try:
+        #        datasettemp = dataset.split(":",1)[1]
+        #    except:
+        #        pass
+        #    newdatasetinfo = {}
+        #    newdatasetinfo[dataset] = datasetinfo[datasettemp]
+        #    datasetinfo = newdatasetinfo
 
         try:
             datasetvuid = datasetinfo[dataset]['vuids'][0]
@@ -810,14 +833,14 @@ class DQ2Dataset(Dataset):
                 dq2_lock.release()
 
             # Rucio patch
-            if dataset.find(":")>0:
-                try:
-                    datasettemp = dataset.split(":",1)[1]
-                except:
-                    pass
-                newdatasetinfo = {}
-                newdatasetinfo[dataset] = datasetinfo[datasettemp]
-                datasetinfo = newdatasetinfo
+            #if dataset.find(":")>0:
+            #    try:
+            #        datasettemp = dataset.split(":",1)[1]
+            #    except:
+            #        pass
+            #    newdatasetinfo = {}
+            #    newdatasetinfo[dataset] = datasetinfo[datasettemp]
+            #    datasetinfo = newdatasetinfo
 
             try:
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
