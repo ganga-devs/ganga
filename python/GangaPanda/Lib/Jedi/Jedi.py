@@ -125,7 +125,7 @@ def retrievePandaJobs(job, jIDs):
             logger.warning('No panda jobs expected')
             job.backend.pandajobs = []
 
-        elif status.jobStatus in [ "defined", "activated", "running", "failed", "finished", "holding"]:
+        elif status.jobStatus in [ "defined", "activated", "running", "failed", "finished", "holding", "assigned"]:
             logger.debug('Panda jobs are running')
             logger.debug("PandaID: %d" % status.PandaID)
 

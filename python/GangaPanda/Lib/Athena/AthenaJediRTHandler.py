@@ -484,6 +484,36 @@ class AthenaJediRTHandler(IRuntimeHandler):
             ]
 
 
+        # output
+        # output files
+        outMap = {}
+        if app.atlas_exetype in ["ATHENA", "TRF"]:
+            outMap, tmpParamList = AthenaUtils.convertConfToOutput(self.runConfig, self.extOutFile, job.outputdata.datasetname)
+            taskParamMap['jobParameters'] += [
+                {'type':'constant',
+                 'value': '-o "%s" ' % outMap
+                 },
+                ]
+            taskParamMap['jobParameters'] += tmpParamList 
+
+        else: 
+            if job.outputdata.outputdata:
+                for tmpLFN in job.outputdata.outputdata:
+                    if len(job.outputdata.datasetname.split('.')) > 2:
+                        lfn = '{0}.{1}'.format(*job.outputdata.datasetname.split('.')[:2])
+                    else:
+                        lfn = job.outputdata.datasetname[:-1]
+                    lfn += '.$JOBSETID._${{SN/P}}.{0}'.format(tmpLFN)
+                    dataset = '{0}_{1}/'.format(job.outputdata.datasetname[:-1],tmpLFN)
+                    taskParamMap['jobParameters'] += MiscUtils.makeJediJobParam(lfn,dataset,'output',hidden=True)
+                    outMap[tmpLFN] = lfn
+
+                taskParamMap['jobParameters'] += [ 
+                    {'type':'constant',
+                     'value': '-o "{0}"'.format(str(outMap)),
+                     },
+                    ]
+
         if app.atlas_exetype in ["ATHENA"]:
             # jobO parameter
             tmpJobO = self.job_options
@@ -532,35 +562,6 @@ class AthenaJediRTHandler(IRuntimeHandler):
                  },
                 ]
 
-        # output
-        # output files
-        outMap = {}
-        if app.atlas_exetype in ["ATHENA", "TRF"]:
-            outMap, tmpParamList = AthenaUtils.convertConfToOutput(self.runConfig, self.extOutFile, job.outputdata.datasetname)
-            taskParamMap['jobParameters'] += [
-                {'type':'constant',
-                 'value': '-o "%s" ' % outMap
-                 },
-                ]
-            taskParamMap['jobParameters'] += tmpParamList 
-
-        else: 
-            if job.outputdata.outputdata:
-                for tmpLFN in job.outputdata.outputdata:
-                    if len(job.outputdata.datasetname.split('.')) > 2:
-                        lfn = '{0}.{1}'.format(*job.outputdata.datasetname.split('.')[:2])
-                    else:
-                        lfn = job.outputdata.datasetname[:-1]
-                    lfn += '.$JOBSETID._${{SN/P}}.{0}'.format(tmpLFN)
-                    dataset = '{0}_{1}/'.format(job.outputdata.datasetname[:-1],tmpLFN)
-                    taskParamMap['jobParameters'] += MiscUtils.makeJediJobParam(lfn,dataset,'output',hidden=True)
-                    outMap[tmpLFN] = lfn
-
-                taskParamMap['jobParameters'] += [ 
-                    {'type':'constant',
-                     'value': '-o "{0}"'.format(str(outMap)),
-                     },
-                    ]
         #
         # input
         if job.inputdata and job.inputdata._name == 'DQ2Dataset':
