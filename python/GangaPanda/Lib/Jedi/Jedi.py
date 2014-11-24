@@ -125,7 +125,7 @@ def retrievePandaJobs(job, jIDs):
             logger.warning('No panda jobs expected')
             job.backend.pandajobs = []
 
-        elif status.jobStatus in [ "defined", "activated", "running", "failed", "finished", "holding", "assigned", "merging"]:
+        elif status.jobStatus in [ "defined", "activated", "running", "failed", "finished", "holding", "assigned"]:
             logger.debug('Panda jobs are running')
             logger.debug("PandaID: %d" % status.PandaID)
 
@@ -470,7 +470,7 @@ class Jedi(IBackend):
 
                             if status.jobStatus in ['defined','unknown','assigned','waiting','activated','sent']:
                                 logger.debug('Panda job %s %s' % (pjob.id, status.jobStatus))
-                            elif status.jobStatus in ['starting','running','holding','transferring']:
+                            elif status.jobStatus in ['starting','running','holding','transferring', 'merging']:
                                 logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
                             elif status.jobStatus in ['finished']:
                                 logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
