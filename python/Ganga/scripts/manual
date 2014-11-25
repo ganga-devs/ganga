@@ -67,7 +67,10 @@ class Manual:
             String in html format with index information"""
 
       lineList = [ "<table>" ]
-      categoryDict = self.helpDict[ category ]
+      try:
+          categoryDict = self.helpDict[ category ]
+      except:
+          categoryDict = {}
       itemList = categoryDict.keys()
       itemList.sort()
       for name in itemList:
@@ -136,7 +139,10 @@ class Manual:
       file.write( page )
       file.close()
       for category in self.categoryList:
-         categoryDict = self.helpDict[ category ]
+         try:
+             categoryDict = self.helpDict[ category ]
+         except:
+             categoryDict = {}
          itemList = categoryDict.keys()
          for name in itemList:
             object, docstring = categoryDict[ name ]
@@ -195,7 +201,10 @@ class Manual:
             len( subtitle ) * "=",
             ""
             ] )
-         categoryDict = self.helpDict[ category ]
+         try:
+             categoryDict = self.helpDict[ category ]
+         except:
+             categoryDict = {}
 
          itemList = categoryDict.keys()
          itemList.sort()
