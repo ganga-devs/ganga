@@ -1,0 +1,22 @@
+**************************************************************************************************************
+6.0.41 (2014/11/25)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Fixed checking for number of queues when not submitting to queues
+* Fixed disableInternalServices to call for all GangaDirac threads to be shutdown before repository is 
+locked
+* Fixed some bugs with Session/Lock files getting confused
+* Added workaround to allow manual to be generated for LHCb
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fixed a problem with submitting TRF Jedi jobs
+* Added the 'assigned' state to the list of known Panda job states
+* Added the Panda job status 'merging' to the known states
+
+**************************************************************************************************************
