@@ -9,7 +9,7 @@
 #Change this is you want to use external packages for different platform
 
 import sys, os
-from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
+from Ganga.Utility.Setup import PackageSetup, checkPythonVersion, getExternalHome
 
 
 _external_packages = { 
@@ -26,7 +26,7 @@ _external_packages = {
                      'PATH' : ['bin/'],
                      'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
                      #'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ],
-                     'RUCIO_HOME' : '/afs/cern.ch/sw/ganga/external/rucio-clients/0.2.5/noarch/',
+                     'RUCIO_HOME' : '/afs/cern.ch/sw/ganga/external/rucio-clients/0.2.5/noarch/', # done properly below
                      'RUCIO_AUTH_TYPE' : 'x509_proxy',
                      'RUCIO_ACCOUNT' : 'ganga',
                      'noarch':True ,
@@ -58,6 +58,11 @@ _external_packages = {
 import sys
 if sys.hexversion < 0x2050000:
     _external_packages['DQ2Clients']['version'] = '2.3.0'
+
+# use appropriate RUCIO Client version
+_external_packages['rucio-clients']['RUCIO_HOME'] = os.path.join(getExternalHome(), 'rucio-clients', _external_packages['rucio-clients']['version'], 'noarch')
+if os.environ.has_key("CMTCONFIG") and os.environ['CMTCONFIG'].find("slc5") > -1:
+    _external_packages['rucio-clients']['PYTHONPATH'] = [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ]
 
 setup = PackageSetup(_external_packages)
 
