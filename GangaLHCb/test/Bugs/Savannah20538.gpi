@@ -1,0 +1,23 @@
+from Ganga.Utility.tempfile_compatibility import *
+from GangaLHCb.test import *
+from os.path import join,basename
+from os import remove
+
+j = Job ( application = DaVinci(), backend = Dirac())
+j.application.platform = getDiracAppPlatform()
+tmpdir = mkdtemp()
+
+fname = 'test'
+f = open(join(tmpdir,fname),'w')
+
+f.write('Hello World\n')
+f.close()
+
+j.inputsandbox=[join(tmpdir,fname)]
+j.submit()
+
+assert(checkFileInSandbox(j,basename(fname)))
+j.kill()
+
+remove(join(tmpdir,fname))
+

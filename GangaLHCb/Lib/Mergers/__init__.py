@@ -1,0 +1,1 @@
+from LHCbFileMerger import *

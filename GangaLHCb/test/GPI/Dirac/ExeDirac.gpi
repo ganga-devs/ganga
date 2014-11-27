@@ -1,0 +1,49 @@
+from GangaTest.Framework.utils import sleep_until_completed, write_file, file_contains
+from os import mkdir
+from os.path import join,basename
+import tempfile
+
+testdir=tempfile.mktemp()
+mkdir(testdir)
+testname=join(testdir,'input.txt')
+write_file(testname,"This is a test\n")
+
+# Job with a Unix command in
+jcommand=Job(application=Executable(),backend=Dirac())
+jcommand.backend.settings['CPUTime'] = 300
+jcommand.application.args=['input.txt','output.txt']
+jcommand.application.exe='cp'
+jcommand.inputsandbox=[testname]
+jcommand.outputfiles=['output.txt']
+assert(jcommand.submit())
+
+# Job with a script
+scriptname=tempfile.mktemp()
+write_file(scriptname,"""#!/bin/bash
+ls -l
+cp input.txt output.txt
+ls -l
+""")
+#os.system('chmod +x %s' % scriptname)
+jscript=Job(application=Executable(),backend=Dirac(CPUTime=300))
+jscript.application.args=['input.txt','output.txt']
+jscript.application.exe=File(scriptname)
+jscript.inputsandbox=[testname]
+jscript.outputfiles=['output.txt']
+jscript.submit()
+
+assert(sleep_until_completed(jcommand,1800))
+assert(sleep_until_completed(jscript,1800))
+assert jcommand.status == 'completed', 'Command job should complete'
+assert jscript.status == 'completed', 'Script job should complete'
+
+#file = open(join(jcommand.outputdir,'std.out'))
+#print 'std.out =', file.read()
+#file.close()
+#file = open(join(jcommand.outputdir,'stdout'))
+#print 'stdout =', file.read()
+#file.close()
+
+
+assert(file_contains(join(jcommand.outputdir,'output.txt'),'This is a test'))
+assert(file_contains(join(jscript.outputdir,'output.txt'),'This is a test'))

@@ -1,0 +1,17 @@
+from GangaLHCb.test import *
+
+ap = DaVinci()
+j = Job(application=ap, backend=DiracTestSubmitter())
+print j
+
+# Test that submission fails before adding runtime handler
+try:
+  j.submit()
+except JobError:
+  pass
+else:
+  assert('Failed to throw JobError when runtime handler not in place')
+
+# Test that submission succeeds after adding it.
+addDiracTestSubmitter()
+assert(j.submit())

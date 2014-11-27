@@ -1,0 +1,28 @@
+import tempfile
+ura = tempfile.mkdtemp()
+# Write blank optsfile...needed now since default removed
+path = os.path.join(ura,'test.opts')
+file=open(path,'w')
+file.write('import os')
+file.close()
+
+from Ganga.Core import ApplicationConfigurationError
+j1=Job(name='testing',application=DaVinci(),backend=Local())
+j2=Job(name='testing',application=DaVinci(optsfile=[path]),backend=Local())
+j3=Job(name='testing',application=DaVinci(optsfile=['~/deadparrot.opts']),backend=Local())
+
+try:
+    j1.submit()
+except JobError:
+    assert False
+
+try:
+    j2.submit()
+except JobError:
+    assert False
+    
+try:
+    j3.submit()
+    assert False ## file doesnt exist
+except JobError:
+    pass
