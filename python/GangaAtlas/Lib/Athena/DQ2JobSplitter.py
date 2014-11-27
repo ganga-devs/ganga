@@ -532,7 +532,7 @@ class DQ2JobSplitter(ISplitter):
                         raise ApplicationConfigurationError(None,'Problem in DQ2JobSplitter - j.application.atlas_dbrelease is wrongly configured ! ')
                     from dq2.clientapi.DQ2 import DQ2
                     from dq2.info import TiersOfATLAS
-                    dq2=DQ2()
+                    dq2=DQ2(force_backend='rucio')
                     try:
                         db_locations = dq2.listDatasetReplicas(db_dataset).values()[0][1]
                     except:
@@ -568,7 +568,7 @@ class DQ2JobSplitter(ISplitter):
                 if len(additional_datasets) > 0:
                     from dq2.clientapi.DQ2 import DQ2
                     from dq2.info import TiersOfATLAS
-                    dq2=DQ2()
+                    dq2=DQ2(force_backend='rucio')
                     add_locations_all = []
 
                     additional_datasets_all = []
@@ -622,7 +622,12 @@ class DQ2JobSplitter(ISplitter):
             
         if not allowed_sites:
             raise ApplicationConfigurationError(None,'DQ2JobSplitter found no allowed_sites for dataset')
-        
+
+        if 'LRZ-LMU_DATADISK' in allowed_sites:
+            allowed_sites.append('LRZ-LMU-RUCIOTEST_DATADISK')
+        if 'PRAGUELCG2_DATADISK' in allowed_sites:
+            allowed_sites.append('PRAGUELCG2-RUCIOTEST_DATADISK')
+
         logger.debug('allowed_sites = %s ', allowed_sites)
 
         cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, indata_buf.getvalue().replace('\n', ''))
@@ -632,6 +637,8 @@ class DQ2JobSplitter(ISplitter):
             contents_temp = cache_get_contents(overlap=False, event=True)
         else:
             contents_temp = cache_get_contents(overlap=False, size=True)
+
+        logger.debug(contents_temp)
 
         contents = {}
         datasetLength = {}
@@ -784,7 +791,7 @@ class DQ2JobSplitter(ISplitter):
                 if len(tag_dataset_map) > 0:
                     from dq2.clientapi.DQ2 import DQ2
                     from dq2.info import TiersOfATLAS
-                    dq2=DQ2()
+                    dq2=DQ2(force_backend='rucio')
 
                     logger.warning("Parent dataset %s being used with TAG dataset(s) %s. Brokering now..." % (dataset, tag_dataset_map[dataset] ))
 

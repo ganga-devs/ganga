@@ -35,6 +35,65 @@ def cmpfun(a,b):
     """helper function for sorting tuples"""
     return cmp(a[1],b[1])
 
+def convertDQ2ToClient(dataset):
+
+    try:
+        dq2_lock.acquire()
+        tmpListdq2 = dq2.listFilesInDataset(dataset)[0]
+    finally:
+        dq2_lock.release()
+
+    tmpListPanda = {}
+
+    for key, value in tmpListdq2.iteritems():
+        tmpvalue = {}
+        tmpvalue['scope'] = value['scope']
+        tmpvalue['md5sum'] = value['checksum']
+        lfn = value['lfn']
+        tmpvalue['fsize'] = value['filesize']
+        tmpvalue['guid'] = str(key)
+        tmpListPanda[lfn] = tmpvalue
+
+    return tmpListPanda
+
+
+def getLocations(dataset):
+    
+    try:
+        dq2_lock.acquire()
+        try:
+            locations = dq2.listDatasetReplicas(dataset)
+        except:
+            logger.error('Dataset %s not found !', dataset)
+            return []
+    finally:
+        dq2_lock.release()
+
+    return locations
+
+
+def getDatasets(name):
+    '''helper function for data dict'''
+
+    try:
+        dq2_lock.acquire()
+        datasets = dq2.listDatasets(name)
+    finally:
+        dq2_lock.release()
+
+    return datasets
+
+def getElementsFromContainer(name):
+    '''helper function for container content'''
+
+    try:
+        dq2_lock.acquire()
+        datasets = dq2.listDatasetsInContainer(name)
+    finally:
+        dq2_lock.release()
+
+    return datasets
+
 def listDatasets(name,filter=True):
     '''helper function to filter out temporary datasets'''
 
@@ -121,6 +180,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 return []
         finally:
             dq2_lock.release()
+
         try:
             dq2_lock.acquire()
             try:
@@ -129,6 +189,16 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 datasetinfo = {}
         finally:
             dq2_lock.release()
+
+        # Rucio patch
+        #if dataset.find(":")>0:
+        #    try:
+        #        datasettemp = dataset.split(":",1)[1]
+        #    except:
+        #        pass
+        #    newdatasetinfo = {}
+        #    newdatasetinfo[dataset] = datasetinfo[datasettemp]
+        #    datasetinfo = newdatasetinfo
 
         try:
             datasetvuid = datasetinfo[dataset]['vuids'][0]
@@ -157,7 +227,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         guidsDataset = []
 
         for guid, keys in contents.iteritems():
-            guidsDataset.append(guid)
+            guidsDataset.append(str(guid))
             guidLocation[guid] = []
             
 
@@ -178,6 +248,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                     dq2_lock.acquire()
                     try:
                         datasetinfo = dq2.listMetaDataReplica(location, dataset)
+                        logger.debug(datasetinfo)
                     except:
                         continue
                 finally:
@@ -189,6 +260,10 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                         checktime = time.mktime(time.strptime(checkdate,'%Y-%m-%d %H:%M:%S'))
                     except ValueError:    
                         checktime = -time.time()
+                    except TypeError:
+                        # RUCIO fix
+                        import datetime
+                        checktime = time.mktime(checkdate.timetuple()) + checkdate.microsecond / 1E6
                 else:
                     checktime = -time.time()
                     continue
@@ -224,19 +299,32 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         for location in alllocations:
             try:
                 dq2_lock.acquire()
-                datasetsiteinfo = dq2.listFileReplicas(location, dataset)
+                datasetsiteinfo = dq2.listFileReplicas(location, dataset)                
             finally:
                 dq2_lock.release()
 
-            if datasetsiteinfo[0]['found'] != None: 
-                numberoffiles = datasetsiteinfo[0]['found']
-                locations_num[location]=int(numberoffiles)
+            # Rucio patch
+            try:
+                isfound = datasetsiteinfo[0]['found'] 
+            except:
+                isfound = datasetsiteinfo['found'] 
+
+            if isfound != None: 
+                try:
+                    numberoffiles = datasetsiteinfo[0]['found']
+                except:
+                    numberoffiles = datasetsiteinfo['found']
+                locations_num[str(location)]=int(numberoffiles)
              
-                guidsSite = datasetsiteinfo[0]['content']
+                try:
+                    guidsSite = datasetsiteinfo[0]['content']
+                except:
+                    guidsSite = datasetsiteinfo['content']
+
                 for guid in guidsDataset:
                     if guid in guidsSite:
                         temp = guidLocation[guid]
-                        temp.append(location)
+                        temp.append(str(location))
                         if fax_sites:
                             for faxsite in fax_sites:
                                 if not faxsite in temp:
@@ -546,7 +634,8 @@ class DQ2Dataset(Dataset):
             contents = contents[0]
             contents_new = []
             for guid, info in contents.iteritems():
-                contents_new.append( (guid, info['lfn']) )
+                # Rucio patch
+                contents_new.append( (str(guid), info['lfn']) )
                 contents_size[guid] = info['filesize']
                 contents_checksum[guid] = info['checksum']
                 contents_scope[guid] = info['scope'] 
@@ -743,6 +832,16 @@ class DQ2Dataset(Dataset):
             finally:
                 dq2_lock.release()
 
+            # Rucio patch
+            #if dataset.find(":")>0:
+            #    try:
+            #        datasettemp = dataset.split(":",1)[1]
+            #    except:
+            #        pass
+            #    newdatasetinfo = {}
+            #    newdatasetinfo[dataset] = datasetinfo[datasettemp]
+            #    datasetinfo = newdatasetinfo
+
             try:
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
             except KeyError:
@@ -844,6 +943,12 @@ class DQ2Dataset(Dataset):
                 datasetinfo = dq2.listDatasets(dataset)
             finally:
                 dq2_lock.release()
+
+            # RUCIO fix
+            #try:
+            #    dataset = dataset.split(":",1)[1]
+            #except:
+            #    pass
 
             datasetvuid = datasetinfo[dataset]['vuids'][0]
 
@@ -1915,7 +2020,7 @@ os.environ['RUCIO_ACCOUNT'] = username
 logger.debug("Using RUCIO_ACCOUNT = %s " %(os.environ['RUCIO_ACCOUNT'])) 
 
 from dq2.clientapi.DQ2 import DQ2
-dq2=DQ2()
+dq2=DQ2(force_backend='rucio')
 
 from threading import Lock
 dq2_lock = Lock()

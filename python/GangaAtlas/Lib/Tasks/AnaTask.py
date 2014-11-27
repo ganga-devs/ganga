@@ -39,7 +39,7 @@ task_help = "\n".join(o)
 task_help_nocolor = task_help.replace(fgcol("blue"),"").replace(fx.normal, "").replace(fgcol("red"),"")
 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException
-dq2=DQ2()
+dq2=DQ2(force_backend='rucio')
 
 
 class AnaTask(Task):

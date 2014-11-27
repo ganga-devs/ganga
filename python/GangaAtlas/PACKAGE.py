@@ -9,12 +9,11 @@
 #Change this is you want to use external packages for different platform
 
 import sys, os
-from Ganga.Utility.Setup import PackageSetup, checkPythonVersion
+from Ganga.Utility.Setup import PackageSetup, checkPythonVersion, getExternalHome
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '2.5.0',
-                     'allversions' : ['2.5.0', '2.4.1', '2.4.0', '2.3.0'],
+    'DQ2Clients' : { 'version' : '2.6.1_rc6',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
@@ -23,6 +22,17 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
+    'rucio-clients' : { 'version' : '0.2.5',
+                     'PATH' : ['bin/'],
+                     'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
+                     #'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ],
+                     'RUCIO_HOME' : '/afs/cern.ch/sw/ganga/external/rucio-clients/0.2.5/noarch/', # done properly below
+                     'RUCIO_AUTH_TYPE' : 'x509_proxy',
+                     'RUCIO_ACCOUNT' : 'ganga',
+                     'noarch':True ,
+                     'RUCIO_APPID' : 'ganga',
+                     },
+
     'panda-client' : { 'version' : '0.5.26', 
                        'PYTHONPATH':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
@@ -48,6 +58,11 @@ _external_packages = {
 import sys
 if sys.hexversion < 0x2050000:
     _external_packages['DQ2Clients']['version'] = '2.3.0'
+
+# use appropriate RUCIO Client version
+_external_packages['rucio-clients']['RUCIO_HOME'] = os.path.join(getExternalHome(), 'rucio-clients', _external_packages['rucio-clients']['version'], 'noarch')
+if os.environ.has_key("CMTCONFIG") and os.environ['CMTCONFIG'].find("slc5") > -1:
+    _external_packages['rucio-clients']['PYTHONPATH'] = [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ]
 
 setup = PackageSetup(_external_packages)
 
@@ -83,5 +98,8 @@ def standardSetup(setup=setup):
         if setup.packages[p].has_key('DQ2_ENDUSER_SETUP'):
             os.environ['DQ2_ENDUSER_SETUP'] = setup.packages[p]['DQ2_ENDUSER_SETUP']
         setup.setPath(p,'PANDA_SYS')
+        setup.setPath(p,'RUCIO_HOME')
+        if setup.packages[p].has_key('RUCIO_AUTH_TYPE'):
+            os.environ['RUCIO_AUTH_TYPE'] = setup.packages[p]['RUCIO_AUTH_TYPE']
 
     
