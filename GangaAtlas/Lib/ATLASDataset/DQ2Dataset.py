@@ -203,8 +203,11 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         try:
             datasetvuid = datasetinfo[dataset]['vuids'][0]
         except KeyError:
-            logger.warning('Dataset %s not found',dataset)
-            return []
+            try:
+                datasetvuid = datasetinfo.values()[0]['vuids'][0]
+            except:
+                logger.warning('Dataset %s not found',dataset)
+                return []
 
         if not locations.has_key(datasetvuid):
             logger.warning('Dataset %s not found',dataset)
@@ -845,8 +848,11 @@ class DQ2Dataset(Dataset):
             try:
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
             except KeyError:
-                logger.warning('Dataset %s not found',dataset)
-                continue
+                try:
+                    datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                except:
+                    logger.warning('Dataset %s not found',dataset)
+                    continue
                 #return []
 
             if not locations.has_key(datasetvuid):
@@ -950,7 +956,13 @@ class DQ2Dataset(Dataset):
             #except:
             #    pass
 
-            datasetvuid = datasetinfo[dataset]['vuids'][0]
+            try:
+                datasetvuid = datasetinfo[dataset]['vuids'][0]
+            except:
+                try:
+                    datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                except:
+                    datasetvuid = ''
 
             if not locations.has_key(datasetvuid):
                 print 'Dataset %s not found' % dataset
@@ -989,7 +1001,14 @@ class DQ2Dataset(Dataset):
             finally:
                 dq2_lock.release()
 
-            datasetvuid = datasetinfo[dataset]['vuids'][0]
+            try:
+                datasetvuid = datasetinfo[dataset]['vuids'][0]
+            except:
+                try:
+                    datasetvuid = datasetinfo.values()[0]['vuids'][0]
+                except:
+                    logger.warning('Dataset %s not found',dataset)
+                    return
 
             if not locations.has_key(datasetvuid):
                 print 'Dataset %s not found' % dataset
@@ -1370,8 +1389,14 @@ class DQ2OutputDataset(Dataset):
         finally:
             dq2_lock.release()
 
-        datasetvuid = datasetinfo[datasetname]['vuids'][0]
-            
+        try:
+            datasetvuid = datasetinfo[datasetname]['vuids'][0]
+        except:
+            try:
+                datasetvuid = datasetinfo.values()[0]['vuids'][0]
+            except:
+                logger.warning('Dataset %s not found',datasetname)
+
         if not locations.has_key(datasetvuid):
             logger.warning('Dataset %s not found',datasetname)
             return []
