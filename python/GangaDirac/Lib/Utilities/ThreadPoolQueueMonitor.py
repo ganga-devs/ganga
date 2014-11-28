@@ -61,13 +61,6 @@ class ThreadPoolQueueMonitor(object):
         """
         self.__user_threadpool.clear_queue()
 
-    def _purge_all(self):
-        """
-        Purge ALL of the Ganga user AND Worker thread queues!
-        """
-        self.__user_threadpool.clear_queue()
-        self.__monitoring_threadpool.clear_queue()
-
     def add(self, worker_code, args=(), kwargs={}, priority = 5):
         """
         Run any python callable object asynchronously through the user thread pool
@@ -225,26 +218,3 @@ class ThreadPoolQueueMonitor(object):
                 num += 1
 
         return num + len(self.__user_threadpool.get_queue())
-
-    def totalNumAllThreads(self):
-        """Return the total number of ALL user and worker threads currently running and queued"""
-        num=0
-        for t in self.__user_threadpool.worker_status():
-            if t[1] != "idle":
-                num += 1
-        for t in self.__monitoring_threadpool.worker_status():
-            if t[1] != "idle":
-                num += 1
-
-        return num + len( self.__user_threadpool.get_queue() ) + len( self.__monitoring_threadpool.get_queue() )
-
-    def __stop_all_threads(self):
-        self.__user_threadpool.__stop_worker_threads()
-        self.__monitoring_threadpool.__start_worker_threads()
-        return
-
-    def __start_all_threads(self):
-        self.__user_threadpool.__start_worker_threads()
-        self.__monitoring_threadpool.__start_worker_threads()
-        return
-

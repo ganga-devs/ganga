@@ -597,8 +597,7 @@ class DiracBase(IBackend):
         dead_jobs = ( j for j in monitor_jobs if j.backend.id is None )
         for d in dead_jobs:
             d.updateStatus('failed')
-            if d.master is not None:
-                d.master.updateMasterJobStatus()
+            if job.master: job.master.updateMasterJobStatus()
 
         ganga_job_status = [ j.status     for j in monitor_jobs if j.backend.id is not None ]
         dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
