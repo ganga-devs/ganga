@@ -260,7 +260,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 if datasetinfo.has_key('checkdate'):
                     checkdate = datasetinfo['checkdate']
                     try:
-                        checktime = time.mktime(time.strptime(checkdate,'%Y-%m-%d %H:%M:%S'))
+                        checktime = time.mktime(time.strptime(checkdate.split(".")[0],'%Y-%m-%d %H:%M:%S'))
                     except ValueError:    
                         checktime = -time.time()
                     except TypeError:
