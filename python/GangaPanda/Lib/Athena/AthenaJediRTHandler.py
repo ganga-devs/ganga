@@ -197,8 +197,8 @@ class AthenaJediRTHandler(IRuntimeHandler):
             raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
 
         self.dbrelease = app.atlas_dbrelease
-        if self.dbrelease != '' and self.dbrelease.find(':') == -1:
-            raise ApplicationConfigurationError(None,"ERROR : invalid argument for DB Release. Must be 'DatasetName:FileName'")
+        if self.dbrelease != '' and self.dbrelease != 'LATEST' and self.dbrelease.find(':') == -1:
+            raise ApplicationConfigurationError(None,"ERROR : invalid argument for DB Release. Must be 'LATEST' or 'DatasetName:FileName'")
 
         self.runConfig = AthenaUtils.ConfigAttr(app.atlas_run_config)
         for k in self.runConfig.keys():
@@ -282,7 +282,8 @@ class AthenaJediRTHandler(IRuntimeHandler):
         logger.info('Running job options: %s'%self.job_options)
 
         # validate dbrelease
-        self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
+        if self.dbrelease != "LATEST":
+            self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
 
         # handle the output dataset
         if job.outputdata:
