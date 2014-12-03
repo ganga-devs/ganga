@@ -1493,15 +1493,16 @@ class Athena(IPrepareApp):
         if not self.recex_type in ['', 'RDO', 'ESD', 'AOD']:
             raise ApplicationConfigurationError(None, 'RecEx type %s not supported. Try RDO, ESD or AOD.' % self.recex_type)
 
-        try:
-            if self.atlas_dbrelease == 'LATEST':
-                try:
-                    self.getLatestDBRelease()
-                except:
-                    from pandatools import Client
-                    self.atlas_dbrelease = Client.getLatestDBRelease(False)
-        except:
-            raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.atlas_dbrelease manually.")
+        # Switch to RUCIO - no longer need to find the LATEST DB
+        #try:
+        #    if self.atlas_dbrelease == 'LATEST':
+        #        try:
+        #            self.getLatestDBRelease()
+        #        except:
+        #            from pandatools import Client
+        #            self.atlas_dbrelease = Client.getLatestDBRelease(False)
+        #except:
+        #    raise ApplicationConfigurationError(None, "Error retrieving LATEST DBRelease. Try setting application.atlas_dbrelease manually.")
             
 
         if self.atlas_dbrelease: 
