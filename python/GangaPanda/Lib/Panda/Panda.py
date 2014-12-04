@@ -602,8 +602,8 @@ class Panda(IBackend):
     def master_submit(self,rjobs,subjobspecs,buildjobspec):
         '''Submit jobs'''
        
-        logger.debug("Using Panda server baseURL=", Client.baseURL)
-        logger.debug("Using Panda server baseURLSSL=", Client.baseURLSSL)
+        logger.debug("Using Panda server baseURL=%s" %Client.baseURL)
+        logger.debug("Using Panda server baseURLSSL=%s" %Client.baseURLSSL)
 
         #from pandatools import Client
         from Ganga.Core import IncompleteJobSubmissionError
