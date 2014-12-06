@@ -392,7 +392,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 self.extOutFile.append(tmpName)
 
         # validate dbrelease
-        self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
+        if self.dbrelease != '':
+            self.dbrFiles,self.dbrDsList = getDBDatasets(self.job_options,'',self.dbrelease)
 
         # Add inputsandbox to user_area
         if job.inputsandbox:
