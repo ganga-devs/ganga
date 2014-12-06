@@ -1170,6 +1170,13 @@ class Panda(IBackend):
 
                 if not status: continue
 
+                try:
+                    import taskbuffer
+                    if not isinstance(status, taskbuffer.JobSpec.JobSpec):
+                        continue
+                except:
+                    continue
+
                 job = jobdict[status.PandaID]
                 if job.backend.id == status.PandaID:
 
