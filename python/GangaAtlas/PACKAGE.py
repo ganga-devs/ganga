@@ -13,7 +13,7 @@ from Ganga.Utility.Setup import PackageSetup, checkPythonVersion, getExternalHom
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '2.6.1_rc6',
+    'DQ2Clients' : { 'version' : '2.6.1_rc9',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
@@ -22,7 +22,7 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'rucio-clients' : { 'version' : '0.2.5',
+    'rucio-clients' : { 'version' : '0.2.7',
                      'PATH' : ['bin/'],
                      'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
                      #'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ],
@@ -33,7 +33,7 @@ _external_packages = {
                      'RUCIO_APPID' : 'ganga',
                      },
 
-    'panda-client' : { 'version' : '0.5.26', 
+    'panda-client' : { 'version' : '0.5.39', 
                        'PYTHONPATH':['lib/python2.4/site-packages'],
                        'CONFIGEXTRACTOR_PATH':'etc/panda/share',
                        'PANDA_SYS':'.',
