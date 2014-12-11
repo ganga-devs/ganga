@@ -13,7 +13,7 @@ from Ganga.Utility.Setup import PackageSetup, checkPythonVersion, getExternalHom
 
 
 _external_packages = { 
-    'DQ2Clients' : { 'version' : '2.6.1_rc9',
+    'DQ2Clients' : { 'version' : '2.6.1_rc11',
                      'DQ2_HOME' : 'opt/dq2',
                      'PATH' : ['opt/dq2/bin','nordugrid/bin'],
                      'PYTHONPATH' : ['opt/dq2/lib/','external/mysqldb32/'],
@@ -22,7 +22,7 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'rucio-clients' : { 'version' : '0.2.7',
+    'rucio-clients' : { 'version' : '0.2.8',
                      'PATH' : ['bin/'],
                      'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
                      #'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ],

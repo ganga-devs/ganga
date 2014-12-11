@@ -206,8 +206,13 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             try:
                 datasetvuid = datasetinfo.values()[0]['vuids'][0]
             except:
-                logger.warning('Dataset %s not found',dataset)
-                return []
+                try:
+                    datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
+                    import uuid
+                    datasetvuid = str(uuid.UUID(datasetvuid))
+                except:
+                    logger.warning('Dataset %s not found',dataset)
+                    return []
 
         if not locations.has_key(datasetvuid):
             logger.warning('Dataset %s not found',dataset)
@@ -851,8 +856,13 @@ class DQ2Dataset(Dataset):
                 try:
                     datasetvuid = datasetinfo.values()[0]['vuids'][0]
                 except:
-                    logger.warning('Dataset %s not found',dataset)
-                    continue
+                    try:
+                        datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
+                        import uuid
+                        datasetvuid = str(uuid.UUID(datasetvuid))
+                    except:
+                        logger.warning('Dataset %s not found',dataset)
+                        continue
                 #return []
 
             if not locations.has_key(datasetvuid):
@@ -962,7 +972,12 @@ class DQ2Dataset(Dataset):
                 try:
                     datasetvuid = datasetinfo.values()[0]['vuids'][0]
                 except:
-                    datasetvuid = ''
+                    try:
+                        datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
+                        import uuid
+                        datasetvuid = str(uuid.UUID(datasetvuid))
+                    except:
+                        datasetvuid = ''
 
             if not locations.has_key(datasetvuid):
                 print 'Dataset %s not found' % dataset
@@ -1007,8 +1022,13 @@ class DQ2Dataset(Dataset):
                 try:
                     datasetvuid = datasetinfo.values()[0]['vuids'][0]
                 except:
-                    logger.warning('Dataset %s not found',dataset)
-                    return
+                    try:
+                        datasetvuid = dq2.getMetaDataAttribute(dataset,['latestvuid'])['latestvuid']
+                        import uuid
+                        datasetvuid = str(uuid.UUID(datasetvuid))
+                    except:
+                        logger.warning('Dataset %s not found',dataset)
+                        return
 
             if not locations.has_key(datasetvuid):
                 print 'Dataset %s not found' % dataset
@@ -1395,7 +1415,12 @@ class DQ2OutputDataset(Dataset):
             try:
                 datasetvuid = datasetinfo.values()[0]['vuids'][0]
             except:
-                logger.warning('Dataset %s not found',datasetname)
+                try:
+                    datasetvuid = dq2.getMetaDataAttribute(datasetname,['latestvuid'])['latestvuid']
+                    import uuid
+                    datasetvuid = str(uuid.UUID(datasetvuid))
+                except:
+                    logger.warning('Dataset %s not found',datasetname)
 
         if not locations.has_key(datasetvuid):
             logger.warning('Dataset %s not found',datasetname)
