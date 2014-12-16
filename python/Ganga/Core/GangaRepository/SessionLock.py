@@ -99,7 +99,7 @@ class SessionLockRefresher(GangaThread):
                 ## TODO: Check for services active/inactive
                 try:
                     for index in range(len(self.fns)):
-                        logger.debug( "Updating: %s" % str(self.fns[index]) )
+                        #logger.debug( "Updating: %s" % str(self.fns[index]) )
                         try:
                             oldnow = self.delayread( self.fns[index] ) # os.stat(self.fn).st_ctime
                             os.utime(self.fns[index], None)

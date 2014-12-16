@@ -199,13 +199,18 @@ class Job(GangaObject):
     def __init__(self):
         super(Job, self).__init__()
         self.time.newjob() #<-----------NEW: timestamp method
+        logger.debug( "__init__" )
 
     def __construct__(self, args):
+
+        logger.debug( "Intercepting __construct__" )
 
         if len(args) == 1:
             if isinstance( args[0], Job ):
 
                 super(Job, self).__construct__( args )
+
+                self._unsetSubmitTransients()
 
                 original_job = args[0]
 
@@ -228,19 +233,19 @@ class Job(GangaObject):
                 if getConfig('Preparable')['unprepare_on_copy'] is True:
                     self.unprepare()
 
-                self._unsetSubmitTransients()
             else:
                 super( Job, self ).__construct__( args )
         else:
             super( Job, self ).__construct__( args )
-
 
     def _readonly(self):
         return self.status != 'new'
 
     # on the deepcopy reattach the outputfiles to call their _on_attribute__set__
     def __deepcopy__(self, memo = None):
+
         c = super(Job,self).__deepcopy__(memo)
+        c._unsetSubmitTransients()
         c.outputfiles = []
         for f in self.outputfiles:
             if hasattr(f, '_on_attribute__set__'):
@@ -271,12 +276,12 @@ class Job(GangaObject):
             #    c.inputfiles = []
             #    c.inputsandbox = []
 
-        c._unsetSubmitTransients()
-
         logger.debug( "Intercepted __deepcopy__" )
         return c
 
     def _attribute_filter__get__(self, name):
+
+        #logger.debug( "Intercepting _attribute_filter__get__" )
 
         # Attempt to spend too long loading un-needed objects into memory in order to read job status
         if name is 'status':
@@ -337,7 +342,7 @@ class Job(GangaObject):
             oldstat = self.status
         except KeyError:
             oldstat = None
-        logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
+        logger.debug('job %s "%s" setting raw status to "%s"', str(self.getFQID('.')), str(oldstat), value)
         #import inspect,os
         #frame = inspect.stack()[2]
         ##if not frame[0].f_code.co_name == 'updateStatus' and
@@ -666,8 +671,8 @@ class Job(GangaObject):
 
         
     def _init_workspace(self):
+        logger.debug( "Job %s Calling _init_workspace", str(self.getFQID('.')) )
         self.getDebugWorkspace(create=True)
-
 
     def getWorkspace(self,what,create=True):
         import Ganga.Core.FileWorkspace
@@ -700,12 +705,15 @@ class Job(GangaObject):
         if not files:
            return []
 
-        logger.debug( "\n" )
+        #logger.debug( "\n" )
         logger.debug( "Creating Packed InputSandbox %s" % name )
-        logger.debug( "With:\n" )
+        logger.debug( "With:" )
         for f in files:
-            logger.debug(str(f))
-        logger.debug( "\n" )
+            try:
+                logger.debug(str("\t")+str(f.name))
+            except:
+                logger.debug(str("\t")+str(f))
+        #logger.debug( "\n" )
 
         # if the the master job of this subjob exists and the master sandbox is requested
         # the master sandbox has already been created so just look for it
@@ -957,11 +965,16 @@ class Job(GangaObject):
 
         appmasterconfig = None
         if self.master is None:
-            if hasattr( self, "_storedAppMasterConfig" ):
+            try:
                 appmasterconfig = self._storedAppMasterConfig
+            except AttributeError:
+                pass
 
             if appmasterconfig is None:
                 # I am going to generate the appmasterconfig now
+                logger.debug( "Job %s Calling application.master_configure" % str(self.getFQID('.')) )
+                #import traceback
+                #traceback.print_stack()
                 appmasterconfig = self.application.master_configure()[1]
                 self._storedAppMasterConfig = appmasterconfig
         else:
@@ -975,21 +988,29 @@ class Job(GangaObject):
         appsubconfig = []
         if self.master is None:
             #   I am the master Job
-            if hasattr( self, "_storedSubJobConfig" ):
-                appsubconfig = self._storedSubJobConfig
+            try:
+                appsubconfig = self._storedAppSubConfig
+            except:
+                pass
 
-            if len( appsubconfig ) == 0:
+            if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
+                logger.debug( "Job %s Calling application.configure %s times" % ( str(self.getFQID('.')), str(len(subjobs)) ) )
                 appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in subjobs ]
-
+                
         else:
             #   I am a sub-job, lets just generate our own config
-            if hasattr( self, "_storedSubJobConfig" ):
-                appsubconfig = self._storedSubJobConfig
+            try:
+                appsubconfig = self._storedAppSubConfig
+            except AttributeError:
+                pass
 
-            if len(appsubconfig) == 0:
+            if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
+                logger.debug( "Job %s Calling application.configure 1 times" % str(self.getFQID('.')) )
                 appsubconfig = [ self.application.configure(appmasterconfig)[1] ]
+
+        self._storedAppSubConfig = appsubconfig
 
         return appsubconfig
 
@@ -998,14 +1019,17 @@ class Job(GangaObject):
         jobmasterconfig = None
         if self.master is None:
             #   I am the master Job
-            if hasattr( self, "_storedJobMasterConfig" ):
-                #   I have saved the config previously as a transient
+            #   I have saved the config previously as a transient
+            try:
                 jobmasterconfig = self._storedJobMasterConfig
+            except AttributeError:
+                pass
 
             if jobmasterconfig is None:
                 #   I am going to generate the config now
                 appmasterconfig = self._getMasterAppConfig()
                 rtHandler = self._getRuntimeHandler()
+                logger.debug( "Job %s Calling rtHandler.master_prepare" % str(self.getFQID('.')) )
                 jobmasterconfig = rtHandler.master_prepare(self.application, appmasterconfig)
                 self._storedJobMasterConfig = jobmasterconfig
         else:
@@ -1019,23 +1043,28 @@ class Job(GangaObject):
         jobsubconfig = None
         if self.master is None:
             #   I am the master Job
-            if hasattr( self, "_storedJobSubConfig" ):
+            try:
                 jobsubconfig = self._storedJobSubConfig
+            except AttributeError:
+                pass
 
             if jobsubconfig is None:
                 rtHandler = self._getRuntimeHandler()
                 appmasterconfig = self._getMasterAppConfig()
                 jobmasterconfig = self._getJobMasterConfig()
                 appsubconfig = self._getAppSubConfig( subjobs )
+                logger.debug( "Job %s Calling rtHandler.prepare %s times" % (str(self.getFQID('.')), str(len(subjobs))) )
                 jobsubconfig = [ rtHandler.prepare( j.application, s, appmasterconfig, jobmasterconfig) for (j, s) in zip( subjobs, appsubconfig ) ]
-                self._storedJobSubConfig = jobsubconfig
         else:
             #   I am a sub-job, lets calculate my config
             rtHandler = self._getRuntimeHandler()
             appmasterconfig = self._getMasterAppConfig()
             jobmasterconfig = self._getJobMasterConfig()
             appsubconfig = self._getAppSubConfig( self )
+            logger.debug( "Job %s Calling rtHandler.prepare once for self" % str(self.getFQID('.')) )
             jobsubconfig = [ rtHandler.prepare( self.application, appsubconfig[0], appmasterconfig, jobmasterconfig) ]
+
+        self._storedJobSubConfig = jobsubconfig
 
         return jobsubconfig
 
@@ -1044,13 +1073,16 @@ class Job(GangaObject):
         rtHandler = None
         if self.master is None:
             #   I am the master Job
-            if hasattr( self, "_storedRTHandler" ):
+            try:
                 rtHandler = self._storedRTHandler
+            except AttributeError:
+                pass
 
             if rtHandler is None:
                 # select the runtime handler
                 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
                 try:
+                    logger.debug( "Job %s Calling allHandlers.get" % str(self.getFQID('.')) )
                     rtHandler = allHandlers.get(self.application._name,self.backend._name)()
                 except KeyError,x:
                     msg = 'runtime handler not found for application=%s and backend=%s'%(self.application._name,self.backend._name)
@@ -1067,6 +1099,7 @@ class Job(GangaObject):
 
         if hasattr(self.application, 'is_prepared'):
             if (self.application.is_prepared is None) or (prepare == True):
+                logger.debug( "Job %s Calling self.prepare(force=%s)" % ( str(self.getFQID('.')), str(prepare) ) )
                 self.prepare(force=True)
             elif self.application.is_prepared is True:
                 msg = "Job %s's application has is_prepared=True. This prevents any automatic (internal) call to the application's prepare() method." % str(self.getFQID('.'))
@@ -1081,14 +1114,17 @@ class Job(GangaObject):
                     msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
                     self.unprepare()
                     raise JobError(msg)
+        else:
+            logger.debug( "Not calling prepare" )
+
         return
 
     def _unsetSubmitTransients(self):
         self._storedRTHandler = None
         self._storedJobSubConfig = None
+        self._storedAppSubConfig = None
         self._storedJobMasterConfig = None
         self._storedAppMasterConfig = None
-
 
     def _doSplitting(self):
         # Temporary polution of Atlas stuff to (almost) transparently switch from Panda to Jedi
@@ -1124,7 +1160,7 @@ class Job(GangaObject):
                 for j in subjobs:
                     j.info.uuid = Ganga.Utility.guid.uuid()
                     j.status='new'
-                                                                                                                                                                                                                     #j.splitter = None
+                    #j.splitter = None
                     j.time.timenow('new')
                     j.id = i
                     i += 1
@@ -1164,6 +1200,9 @@ class Job(GangaObject):
 
         For split jobs: consult https://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaSplitters#Subjob_submission
         '''
+
+        logger.debug( "Submitting Job %s" % str( self.getFQID('.') ) )
+
         from Ganga.Utility.Config import ConfigError, getConfig 
         gpiconfig = getConfig('GPI_Semantics')
 
@@ -1240,9 +1279,9 @@ class Job(GangaObject):
                 raise JobError(errorMsg)
 
             # configure the application of each subjob
-            #appsubconfig = self._getAppSubConfig( rjobs )
-            #logger.debug( "# appsubconfig: %s" % len(appsubconfig) )
-
+            appsubconfig = self._getAppSubConfig( rjobs )
+            if appsubconfig is not None:
+                logger.debug( "# appsubconfig: %s" % len(appsubconfig) )
 
             ### Job Configuration
             logger.debug( "Job Configuration, Job %s:" % str(self.getFQID('.')) )

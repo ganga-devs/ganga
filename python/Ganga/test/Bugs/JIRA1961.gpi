@@ -1,4 +1,6 @@
 
+setConfigOption( 'Preparable', 'unprepare_on_copy', 'True' )
+
 j = Job( application=Executable(exe='/bin/echo',args=['hello']) )
 j.submit()
 
