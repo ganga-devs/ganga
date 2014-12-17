@@ -312,8 +312,8 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 
         # validate the output dataset name (and make it a container)
         job.outputdata.datasetname,outlfn = dq2outputdatasetname(job.outputdata.datasetname, job.id, job.outputdata.isGroupDS, job.outputdata.groupname)
-        if not job.outputdata.datasetname.endswith('/'):
-            job.outputdata.datasetname+='/'
+        #if not job.outputdata.datasetname.endswith('/'):
+        #    job.outputdata.datasetname+='/'
 
         # check if this container exists
         try:
