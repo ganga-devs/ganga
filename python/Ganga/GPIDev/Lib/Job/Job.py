@@ -342,7 +342,7 @@ class Job(GangaObject):
             oldstat = self.status
         except KeyError:
             oldstat = None
-        logger.debug('job %s "%s" setting raw status to "%s"', str(self.getFQID('.')), str(oldstat), value)
+        logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
         #import inspect,os
         #frame = inspect.stack()[2]
         ##if not frame[0].f_code.co_name == 'updateStatus' and
