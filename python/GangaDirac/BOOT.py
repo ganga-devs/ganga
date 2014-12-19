@@ -8,8 +8,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities         import execute
 logger = getLogger()
 user_threadpool       = WorkerThreadPool()
 monitoring_threadpool = WorkerThreadPool()
-queues_threadpoolMonitor = ThreadPoolQueueMonitor(user_threadpool, monitoring_threadpool)
-exportToGPI('queues', queues_threadpoolMonitor, 'Objects')
+exportToGPI('queues', ThreadPoolQueueMonitor(user_threadpool, monitoring_threadpool), 'Objects')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI(cmd, timeout = 60):

@@ -100,10 +100,8 @@ class MonitoringWorkerThread(GangaThread):
              try:
                action = Qin.get(block=True,timeout=0.5)
                break
-             except Queue.Empty:
-                 continue
-             except Empty:
-                 continue
+             except ( Queue.Empty, Empty ) as e:
+                 continue 
 
          if self.should_stop():
             break
