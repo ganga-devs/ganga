@@ -1,11 +1,10 @@
 import types
 #from GangaDirac.Lib.Backends.DiracBase       import dirac_ganga_server, dirac_monitoring_server
 #from GangaDirac.BOOT                         import dirac_ganga_server, dirac_monitoring_server
-from GangaDirac.Lib.Server.WorkerThreadPool  import WorkerThreadPool
-from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
-from Ganga.Utility.Config                    import getConfig
-from Ganga.Utility.logging                   import getLogger
-from Ganga.Utility.ColourText                import getColour
+from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool  import WorkerThreadPool
+from Ganga.Utility.Config                                   import getConfig
+from Ganga.Utility.logging                                  import getLogger
+from Ganga.Utility.ColourText                               import getColour
 logger = getLogger()
 
 
@@ -14,14 +13,14 @@ class ThreadPoolQueueMonitor(object):
     This class displays the user and monitor thread pools and associated queues
 
     The number of worker threads in the pool is controlled by
-    the getConfig('DIRAC')['NumWorkerThreads'] config option.
+    the getConfig('Queues')['NumWorkerThreads'] config option.
     '''
 
     def __init__(self,
                  user_threadpool       = WorkerThreadPool(),
                  monitoring_threadpool = WorkerThreadPool()):
-        self.__user_threadpool       = user_threadpool
-        self.__monitoring_threadpool = monitoring_threadpool
+        self._user_threadpool       = user_threadpool
+        self._monitoring_threadpool = monitoring_threadpool
 
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
@@ -30,8 +29,8 @@ class ThreadPoolQueueMonitor(object):
         output+= '{0:^55} | {1:^50}\n'.format('------------------', '------------------------')
         output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('Name', 'Command', 'Timeout')
         output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('----', '-------', '-------')
-        for u, m in zip( self.__user_threadpool.worker_status(),
-                         self.__monitoring_threadpool.worker_status() ):
+        for u, m in zip( self._user_threadpool.worker_status(),
+                         self._monitoring_threadpool.worker_status() ):
             # name has extra spaces as colour characters are invisible but still count
             name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
             name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
@@ -48,25 +47,25 @@ class ThreadPoolQueueMonitor(object):
         output+= '\n'
         output+= "Ganga user queue:\n"
         output+= "----------------\n"
-        output+= str([display_element(i) for i in self.__user_threadpool.get_queue()])
+        output+= str([display_element(i) for i in self._user_threadpool.get_queue()])
         output+= '\n'
         output+= "Ganga monitoring queue:\n"
         output+= "----------------------\n"
-        output+= str([display_element(i) for i in self.__monitoring_threadpool.get_queue()])
+        output+= str([display_element(i) for i in self._monitoring_threadpool.get_queue()])
         return output
 
     def purge(self):
         """
         Purge the Ganga user thread pool's queue
         """
-        self.__user_threadpool.clear_queue()
+        self._user_threadpool.clear_queue()
 
     def _purge_all(self):
         """
         Purge ALL of the Ganga user AND Worker thread queues!
         """
-        self.__user_threadpool.clear_queue()
-        self.__monitoring_threadpool.clear_queue()
+        self._user_threadpool.clear_queue()
+        self._monitoring_threadpool.clear_queue()
 
     def add(self, worker_code, args=(), kwargs={}, priority = 5):
         """
@@ -107,14 +106,14 @@ class ThreadPoolQueueMonitor(object):
             logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
             logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
-        self.__user_threadpool.add_function(worker_code,
+        self._user_threadpool.add_function(worker_code,
                                             args           = args,
                                             kwargs         = kwargs,
                                             priority       = priority)
 
     def addProcess(self, 
                    command, 
-                   timeout         = getConfig('DIRAC')['Timeout'],
+                   timeout         = getConfig('Queues')['Timeout'],
                    env             = None,
                    cwd             = None,
                    shell           = False,
@@ -129,21 +128,6 @@ class ThreadPoolQueueMonitor(object):
                    fallback_kwargs = {}):
         """
         Run a command asynchronously in a new process monitored by the user thread pool.
-
-        Python code or shell code can be used based on the shell switch. 
-        If shell=False then all code defined in getConfig('DIRAC')['DiracCommandFiles']
-        is prepended before the execution. This means that unless this config
-        variable has been altered, the DIRAC API is available and a Dirac() object
-        is already set up and called dirac. ( see help(diracAPI) )
-        This makes it trivial to replace the diracAPI command using:
-        
-        In[0]: queues.addProcess('print dirac.status([123])')
-
-        By default the command is executed within the DIRAC environment 
-        meaning that one can use all the DIRAC command line tools easily as
-        well
-
-        In[1]: queues.addProcess('dirac-dms-user-lfns --help', shell=True)
 
         Note:
         ----
@@ -201,9 +185,7 @@ class ThreadPoolQueueMonitor(object):
             logger.error("Input command must be of type 'string'")
             return
 
-        if env is None: # rather than have getDiracEnv() as default in arg list as looks messy in help ;-)
-            env = getDiracEnv()
-        self.__user_threadpool.add_process( command,
+        self._user_threadpool.add_process( command,
                                             timeout          = timeout,
                                             env              = env,
                                             cwd              = cwd,
@@ -220,31 +202,31 @@ class ThreadPoolQueueMonitor(object):
     def totalNumUserThreads(self):
         """Return the total number of user threads, both running and queued"""
         num = 0
-        for t in self.__user_threadpool.worker_status():
+        for t in self._user_threadpool.worker_status():
             if t[1] != "idle":
                 num += 1
 
-        return num + len(self.__user_threadpool.get_queue())
+        return num + len(self._user_threadpool.get_queue())
 
     def totalNumAllThreads(self):
         """Return the total number of ALL user and worker threads currently running and queued"""
         num=0
-        for t in self.__user_threadpool.worker_status():
+        for t in self._user_threadpool.worker_status():
             if t[1] != "idle":
                 num += 1
-        for t in self.__monitoring_threadpool.worker_status():
+        for t in self._monitoring_threadpool.worker_status():
             if t[1] != "idle":
                 num += 1
 
-        return num + len( self.__user_threadpool.get_queue() ) + len( self.__monitoring_threadpool.get_queue() )
+        return num + len( self._user_threadpool.get_queue() ) + len( self._monitoring_threadpool.get_queue() )
 
-    def __stop_all_threads(self):
-        self.__user_threadpool.__stop_worker_threads()
-        self.__monitoring_threadpool.__start_worker_threads()
+    def _stop_all_threads(self):
+        self._user_threadpool._stop_worker_threads()
+        self._monitoring_threadpool._stop_worker_threads()
         return
 
-    def __start_all_threads(self):
-        self.__user_threadpool.__start_worker_threads()
-        self.__monitoring_threadpool.__start_worker_threads()
+    def _start_all_threads(self):
+        self._user_threadpool._start_worker_threads()
+        self._monitoring_threadpool._start_worker_threads()
         return
 

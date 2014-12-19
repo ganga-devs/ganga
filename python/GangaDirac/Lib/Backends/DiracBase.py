@@ -10,7 +10,7 @@ from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
 from GangaDirac.Lib.Files.DiracFile          import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from GangaDirac.BOOT                         import monitoring_threadpool
+from Ganga.GPI                               import queues
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
@@ -582,10 +582,9 @@ class DiracBase(IBackend):
         ## requeue existing completed job
         for j in requeue_jobs:
 #            if j.backend.status in requeue_dirac_status:
-            monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                               args = (j, 
-                                               requeue_dirac_status[j.backend.status]),
-                                               priority     = 5)           
+            queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                                                       args = (j, requeue_dirac_status[j.backend.status]),
+                                                       priority     = 5)           
             j.been_queued=True
 
         # now that can submit in non_blocking mode, can see jobs in submitting
@@ -635,9 +634,9 @@ class DiracBase(IBackend):
                     job.updateStatus('running')
                     if job.master: job.master.updateMasterJobStatus()                   
 
-                monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                                   args = (job, updated_dirac_status),
-                                                   priority     = 5)
+                queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                                                           args = (job, updated_dirac_status),
+                                                           priority     = 5)
                 job.been_queued=True
 
             else:

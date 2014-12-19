@@ -6,10 +6,10 @@ from Ganga.GPIDev.Lib.File.IGangaFile         import IGangaFile
 from Ganga.GPIDev.Lib.Job.Job                 import Job
 from Ganga.Core.exceptions                    import GangaException
 from Ganga.Utility.files                      import expandfilename
-from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv, execute
-from GangaDirac.BOOT                          import user_threadpool
+from GangaDirac.Lib.Utilities.DiracUtilities  import execute
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
+from Ganga.GPI                                import queues
 configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
@@ -169,17 +169,13 @@ class DiracFile(IGangaFile):
                         
         postprocesslocations.close()
 
-#    def _getEnv(self):
-#        if not self._env:
-#            self._env=getDiracEnv()
-#        return self._env
 
     def _auto_remove(self):
         """
         Remove called when job is removed as long as config option allows
         """
         if self.lfn!='':
-            user_threadpool.add_process('removeFile("%s")' % self.lfn, priority = 7)
+            queues.add(self.remove)
 
     def remove(self):
         """

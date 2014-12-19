@@ -163,14 +163,14 @@ def disableInternalServices():
     monitoring_component.disableMonitoring()
 
     try:
-       logger.debug( "Attempting to import GangaDirac thread monitor" )
-       from GangaDirac.BOOT import queues_threadpoolMonitor
-       while queues_threadpoolMonitor.totalNumAllThreads() != 0:
-          logger.debug( "Ensuring that all Dirac tasks are purged from the todo!" )
-          queues_threadpoolMonitor._purge_all()
+       logger.debug( "Attempting to import GPI queues" )
+       from Ganga.GPI import queues
+       while queues.totalNumAllThreads() != 0:
+          logger.debug( "Ensuring that all tasks are purged from the todo!" )
+          queues._purge_all()
           import time
           time.sleep(2)
-       queues_threadpoolMonitor.__stop_all_threads()
+       queues._stop_all_threads()
     except:
        #TODO replace this with a nicer check to see if GangaDirac is loaded at all
        pass
@@ -218,8 +218,8 @@ def enableInternalServices():
     log.info('Internal services reactivated successfuly')
 
     try:
-        from GangaDirac.BOOT import queues_threadpoolMonitor
-        queues_threadpoolMonitor.__start_all_threads()
+        from Ganga.GPI import queues
+        queues._start_all_threads()
     except:
         pass
 

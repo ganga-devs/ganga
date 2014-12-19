@@ -1,16 +1,14 @@
 #!/usr/bin/env python
 import collections, Queue, threading, traceback, signal
 import os, pickle, subprocess, types, time, threading
-from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, getDiracCommandIncludes, execute
 from Ganga.Core.GangaThread                  import GangaThread
 from Ganga.Core                              import GangaException
 from Ganga.GPIDev.Credentials                import getCredential
+from Ganga.Utility.execute                   import execute
 from Ganga.Utility.logging                   import getLogger
 from Ganga.Utility.Config                    import getConfig
 
 logger = getLogger()
-default_env      = getDiracEnv()
-default_includes = getDiracCommandIncludes()
 QueueElement   = collections.namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func'])
 CommandInput   = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
 FunctionInput  = collections.namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
@@ -23,7 +21,7 @@ class WorkerThreadPool(object):
     __slots__ = ['__queue', '__worker_threads']
 
     def __init__( self,
-                  num_worker_threads   = getConfig('DIRAC')['NumWorkerThreads'],
+                  num_worker_threads   = getConfig('Queues')['NumWorkerThreads'],
                   worker_thread_prefix = 'Worker_' ):
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
@@ -35,6 +33,9 @@ class WorkerThreadPool(object):
         self.__init_worker_threads( saved_num_worker, saved_thread_prefix )
 
     def __init_worker_threads(self, num_worker_threads, worker_thread_prefix ):
+        if self.__worker_threads:
+            logger.info("Threads already started!")
+            return
 
         for i in range(num_worker_threads):
             t = GangaThread(name = worker_thread_prefix + str(i),
@@ -140,8 +141,8 @@ class WorkerThreadPool(object):
                                        ) )
 
     def add_process(self,
-                    command, timeout=None, env=default_env, cwd=None, shell=False,
-                    python_setup=default_includes, eval_includes=None, update_env=False, priority=5,
+                    command, timeout=None, env=None, cwd=None, shell=False,
+                    python_setup='', eval_includes=None, update_env=False, priority=5,
                     callback_func=None, callback_args=(), callback_kwargs={},
                     fallback_func=None, fallback_args=(), fallback_kwargs={}):
 
@@ -235,13 +236,13 @@ class WorkerThreadPool(object):
         """
         return [(w._name, w._command, w._timeout) for w in self.__worker_threads]
 
-    def __stop_worker_threads(self):
-        for w in self.__worker_threadss:
+    def _stop_worker_threads(self):
+        for w in self.__worker_threads:
             w.stop()
         self.__worker_threads = []
         return
 
-    def __start_worker_threads(self):
+    def _start_worker_threads(self):
         self.__init_worker_threads( self.saved_num_worker, self.saved_thread_prefix )
         return
 

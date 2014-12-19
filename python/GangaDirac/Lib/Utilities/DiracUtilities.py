@@ -68,10 +68,10 @@ def getValidDiracFiles(job, names=None):
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def execute(command,
             timeout       = getConfig('DIRAC')['Timeout'],
-            env           = getDiracEnv(),
+            env           = None,
             cwd           = None,
             shell         = False,
-            python_setup  = getDiracCommandIncludes(),
+            python_setup  = '',
             eval_includes = None,
             update_env    = False):
     """
@@ -79,6 +79,11 @@ def execute(command,
     
     This function blocks until the server returns.
     """
+
+    if env is None:
+        env = getDiracEnv()
+    if python_setup == '':
+        python_setup = getDiracCommandIncludes()
 
     ## This will move/change when new credential system in place
     ############################
