@@ -24,15 +24,15 @@ class PluginManager(object):
         Typically the default plugin is the first added.
         If plugin not found raise PluginManagerError.
         """
-        logger.debug( "Attempting to Find Plugin: %s" % name )
+        #logger.debug( "Attempting to Find Plugin: %s" % name )
         try:
             if name is not None:
                 if category in self.first:
-                    logger.debug( "Returning based upon Category and Name" )
+                    #logger.debug( "Returning based upon Category and Name" )
                     return self.all_dict[category][name]
 
             if (name is None) and (category in self.first):
-                logger.debug( "Returning based upon Category ONLY" )
+                #logger.debug( "Returning based upon Category ONLY" )
                 return self.first[category]
             elif not category in self.first:
                 for category_i in self.all_dict:
@@ -40,9 +40,9 @@ class PluginManager(object):
                         message1 = "Category of %s, has likely changed between ganga versions!" % name
                         message2 = "Category Requested: %s,   Category in which plugin was found: %s" % ( category, category_i )
                         message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
-                        logger.debug( message1 )
-                        logger.debug( message2 )
-                        logger.debug( message3 )
+                        #logger.debug( message1 )
+                        #logger.debug( message2 )
+                        #logger.debug( message3 )
                         return self.all_dict[category_i][name]
             else:
                 return self.all_dict[category][name]
@@ -53,7 +53,7 @@ class PluginManager(object):
             else:
                 s = "cannot find '%s' in a category '%s', or elsewhere" %(name, category)
 
-            logger.debug(s)
+            #logger.debug(s)
             raise PluginManagerError(s)
 
     def add(self, pluginobj, category, name):

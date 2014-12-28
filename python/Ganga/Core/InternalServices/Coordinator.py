@@ -162,18 +162,18 @@ def disableInternalServices():
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()
 
-    try:
-       logger.debug( "Attempting to import GPI queues" )
-       from Ganga.GPI import queues
-       while queues.totalNumAllThreads() != 0:
-          logger.debug( "Ensuring that all tasks are purged from the todo!" )
-          queues._purge_all()
-          import time
-          time.sleep(2)
-       queues._stop_all_threads()
-    except:
+    #try:
+    logger.debug( "Attempting to import GPI queues" )
+    from Ganga.GPI import queues
+    while queues.totalNumAllThreads() != 0:
+       logger.debug( "Ensuring that all tasks are purged from the todo!" )
+       queues._purge_all()
+       import time
+       time.sleep(2)
+    queues._stop_all_threads()
+    #except:
        #TODO replace this with a nicer check to see if GangaDirac is loaded at all
-       pass
+    #   pass
 
     # For debugging what services are still alive after being requested to stop before we close the repository
     #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace

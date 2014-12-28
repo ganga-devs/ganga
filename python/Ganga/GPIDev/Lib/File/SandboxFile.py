@@ -17,6 +17,6 @@ class SandboxFile(LocalFile):
         """ name is the name of the output file that is going to be processed
            in some way defined by the derived class
         """
-        logger.debug( "SandboxFile is now deprecated please change your configuration to use LocalFile instead!" )
+        logger.warning( "SandboxFile is now deprecated please change your configuration to use LocalFile instead!" )
         super(SandboxFile, self).__init__(namePattern, localDir, **kwds)
 

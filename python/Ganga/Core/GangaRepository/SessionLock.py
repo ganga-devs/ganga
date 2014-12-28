@@ -55,7 +55,7 @@ def removeGlobalSessionFiles():
     global sessionFiles
     for i in sessionFiles:
         if os.path.isfile( i ):
-            logger.debug( "Removing: " + str(i) )
+            #logger.debug( "Removing: " + str(i) )
             os.unlink( i )
 
 def getGlobalSessionFiles():
@@ -149,9 +149,9 @@ class SessionLockRefresher(GangaThread):
                                         if not asf in session_files:
                                             if f.endswith(".session"):
                                                 logger.warning("Removing dead file %s" % (f) )
-                                            logger.debug("Found, %s session files" % (session_files) )
-                                            logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
-                                            logger.debug( "%s, %s" % ( self.sdir, f ) )
+                                            #logger.debug("Found, %s session files" % (session_files) )
+                                            #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
+                                            #logger.debug( "%s, %s" % ( self.sdir, f ) )
                                             os.unlink(os.path.join(self.sdir, f))
                         except OSError, x:
                             # nothing really important, another process deleted the session before we did.
@@ -167,7 +167,7 @@ class SessionLockRefresher(GangaThread):
                 else:
                     time.sleep(1+random.random())
         finally:
-            logger.debug("Finishing Monitoring Loop")
+            #logger.debug("Finishing Monitoring Loop")
             self.unregister()
 
     def numberRepos( self ):
@@ -175,15 +175,15 @@ class SessionLockRefresher(GangaThread):
         return len( self.fns )
 
     def addRepo(self, fn, repo):
-        logger.debug("Adding Repo: %s" % repo )
+        #logger.debug("Adding Repo: %s" % repo )
         self.repos.append(repo)
-        logger.debug("Adding fn: %s" % fn )
+        #logger.debug("Adding fn: %s" % fn )
         self.fns.append(fn)
 
     def removeRepo(self, fn, repo ):
-        logger.debug("Removing fn: %s" % fn )
+        #logger.debug("Removing fn: %s" % fn )
         self.fns.remove( fn )
-        logger.debug("Removing fn: %s" % fn )
+        #logger.debug("Removing fn: %s" % fn )
         self.repos.remove( repo )
 
         assert( len(self.fns) == len(self.repos) )
@@ -235,7 +235,7 @@ class SessionLockManager(object):
         self.session_name = session_name
         self.name = name
         self.realpath = realpath
-        logger.debug( "Initializing SessionLockManager: " + self.fn )
+        #logger.debug( "Initializing SessionLockManager: " + self.fn )
 
     def delay_init_open(self,filename):
         value = None
@@ -304,7 +304,7 @@ class SessionLockManager(object):
 
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
-        logger.debug( "Shutting Down SessionLockManager, self.fn = %s" % (self.fn) )
+        #logger.debug( "Shutting Down SessionLockManager, self.fn = %s" % (self.fn) )
         self.locked = Set()
         try:
             global session_lock_refresher
@@ -317,7 +317,7 @@ class SessionLockManager(object):
                 #session_lock_refresher.removeRepo( self.fn, self.repo )
                 if session_lock_refresher.numberRepos() <= 1:
                     session_lock_refresher = None
-            logger.debug("Session file '%s' deleted " % (self.fn))
+            #logger.debug("Session file '%s' deleted " % (self.fn))
             os.unlink(self.fn)
             #os.unlink(self.gfn)
         except OSError, x:
@@ -465,7 +465,7 @@ class SessionLockManager(object):
             The global lock MUST be held for this function to work, although on NFS additional
             locking is done
             Raises RepositoryError if session file is inaccessible """
-        logger.debug("Openining Session File: %s " % self.fn )
+        #logger.debug("Openining Session File: %s " % self.fn )
         try:
             # If this fails, we want to shutdown the repository (corruption possible)
             fd = self.delayopen( self.fn )
@@ -479,7 +479,7 @@ class SessionLockManager(object):
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "Error on session file access '%s': %s" % (self.fn, x))
             else:
-                logger.debug( "File NOT found %s" %self.fn )
+                #logger.debug( "File NOT found %s" %self.fn )
                 raise RepositoryError(self.repo, "SessionWrite: Own session file not found! Possibly deleted by another ganga session.\n\
                                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
                                     On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (self.fn, x) )
@@ -687,10 +687,10 @@ class SessionLockManager(object):
             for session in sessions:
                 try:
                     sf = os.path.join(self.sdir, session)
-                    logger.debug( "Modified %s" % os.stat(sf).st_ctime )
-                    logger.debug( "Time %s" % time.time() )
-                    logger.debug( "Diff_allowed %s" % session_expiration_timeout )
-                    logger.debug( "Diff %s" % (time.time() - os.stat(sf).st_ctime ) )
+                    #logger.debug( "Modified %s" % os.stat(sf).st_ctime )
+                    #logger.debug( "Time %s" % time.time() )
+                    #logger.debug( "Diff_allowed %s" % session_expiration_timeout )
+                    #logger.debug( "Diff %s" % (time.time() - os.stat(sf).st_ctime ) )
                     if( (time.time() - os.stat(sf).st_ctime ) > session_expiration_timeout ):
                         if( sf.endswith(".session") ):
                             logger.debug("Reaping LockFile: %s" % (sf) )

@@ -175,6 +175,8 @@ def makeConfig(name,docstring,**kwds):
     """
 
     if _after_bootstrap:
+        #import traceback
+        #traceback.print_stack()
         raise ConfigError('attempt to create a configuration section [%s] after bootstrap'%name)
     
     name = _migrate_name(name)
@@ -481,6 +483,8 @@ class PackageConfig:
 
         if option.check_defined() and not override:
             logger = getLogger()
+            #import traceback
+            #traceback.print_stack()
             logger.warning('attempt to add again the option [%s]%s (ignored)',self.name,name)
             return
 

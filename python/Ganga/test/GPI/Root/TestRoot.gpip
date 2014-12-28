@@ -1,3 +1,4 @@
+#!/bin/env python
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 
 #only define backends if not already defined.
@@ -102,7 +103,7 @@ class _TestRootBase(object):
                 assert(self.j.status != 'failed')
             def configJob(self):
                 super(JobTest,self).configJob()
-                self.j.outputfiles = [SandboxFile('output.txt')]
+                self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))
         
@@ -143,7 +144,7 @@ class _TestRootBase(object):
                 assert(self.j.status != 'failed')
             def configJob(self):
                 super(JobTest,self).configJob()
-                self.j.outputfiles = [SandboxFile('output.txt')]
+                self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))
     
@@ -184,7 +185,7 @@ class _TestRootBase(object):
                 assert(self.j.status != 'failed')
             def configJob(self):
                 super(JobTest,self).configJob()
-                self.j.outputfiles = [SandboxFile('output.txt')]
+                self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))
     
@@ -281,7 +282,7 @@ class _TestRootBase(object):
                 makeFile = join(testDir,'Makefile')
                 
                 self.j.inputsandbox = [mainCpp,mainH,makeFile]
-                self.j.outputfiles = [SandboxFile('output.txt')]
+                self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))
     
@@ -323,7 +324,7 @@ if __name__ == '__main__':
                 assert(self.j.status != 'failed')
             def configJob(self):
                 super(JobTest,self).configJob()
-                self.j.outputfiles = [SandboxFile('output.txt')]
+                self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))
         
@@ -357,7 +358,7 @@ finally:
                 assert(self.j.status != 'failed')
             def configJob(self):
                 super(JobTest,self).configJob()
-                self.j.outputfiles = [SandboxFile('output.txt')]
+                self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))
     
@@ -384,7 +385,7 @@ finally:
                 assert(self.j.status != 'failed')
             def configJob(self):
                 super(JobTest,self).configJob()
-                self.j.outputfiles = [SandboxFile('output.txt')]
+                self.j.outputfiles = [LocalFile('output.txt')]
         return self._submitJob(r,JobTest(self))
 
 class _DefaultJobTest(ICheckTest):
@@ -432,3 +433,4 @@ def addTests(test_container, testinstance, testname):
 for b in backends_to_test:
     testcase = _TestRootBase(b)
     addTests(TestRoot, testcase, b)
+

@@ -42,7 +42,7 @@ class GenericSplitter(ISplitter):
 
       j = Job()
       j.splitter = GenericSplitter()
-      j.splitter.multi_args = { "application.args":["hello1", "hello2"], "application.env":[{"MYENV":"test1"}, {"MYENV":"test2"}] }
+      j.splitter.multi_attrs = { "application.args":["hello1", "hello2"], "application.env":[{"MYENV":"test1"}, {"MYENV":"test2"}] }
 
     this will result in two subjobs, one with args set to 'hello1' and the MYENV set to 'test1', the other with
     args set to 'hello2' and the MYENV set to 'test2'.
