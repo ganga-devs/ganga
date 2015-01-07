@@ -17,8 +17,7 @@ class WorkerThreadPool(object):
     """
     Client class through which Ganga objects interact with the local DIRAC server.
     """
-    
-    __slots__ = ['__queue', '__worker_threads']
+    __slots__ = ['__queue', '__worker_threads', '_saved_num_worker', '_saved_thread_prefix' ]
 
     def __init__( self,
                   num_worker_threads   = getConfig('Queues')['NumWorkerThreads'],
@@ -26,11 +25,10 @@ class WorkerThreadPool(object):
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
 
-        import copy
-        saved_num_worker = copy.deepcopy(num_worker_threads)
-        saved_thread_prefix = copy.deepcopy(worker_thread_prefix)
+        self._saved_num_worker = num_worker_threads
+        self._saved_thread_prefix = worker_thread_prefix
 
-        self.__init_worker_threads( saved_num_worker, saved_thread_prefix )
+        self.__init_worker_threads( self._saved_num_worker, self._saved_thread_prefix )
 
     def __init_worker_threads(self, num_worker_threads, worker_thread_prefix ):
         if self.__worker_threads:
@@ -239,11 +237,11 @@ class WorkerThreadPool(object):
     def _stop_worker_threads(self):
         for w in self.__worker_threads:
             w.stop()
-        self.__worker_threads = []
+        del self.__worker_threads[:]
         return
 
     def _start_worker_threads(self):
-        self.__init_worker_threads( self.saved_num_worker, self.saved_thread_prefix )
+        self.__init_worker_threads( self._saved_num_worker, self._saved_thread_prefix )
         return
 
 ###################################################################

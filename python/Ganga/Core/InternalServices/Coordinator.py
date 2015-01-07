@@ -210,9 +210,11 @@ def enableInternalServices():
     log.debug("Enabling the internal services")
     # reenable the monitoring loop if *autostart* is set
     from Ganga.Core import monitoring_component
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
-    if config['autostart']:
-        monitoring_component.enableMonitoring()
+    #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
+    #if config['autostart']:
+    monitoring_component.enableMonitoring()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
+    _makeThreadPool()
 
     servicesEnabled = True
     log.info('Internal services reactivated successfuly')
@@ -222,6 +224,7 @@ def enableInternalServices():
         queues._start_all_threads()
     except:
         pass
+    
 
 def checkInternalServices(errMsg='Internal services disabled. Job registry is read-only.'):
     """
