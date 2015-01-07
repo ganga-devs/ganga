@@ -3,7 +3,7 @@ from GangaDirac.Lib.Backends.DiracUtils    import result_ok
 from Ganga.GPIDev.Schema                   import Schema, Version, ComponentItem
 from Ganga.Core                            import BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from GangaLHCb.Lib.LHCbDataset.LogicalFile import LogicalFile
+from GangaDirac.Lib.Files.DiracFile        import DiracFile
 from Ganga.GPIDev.Base.Proxy               import GPIProxyObjectFactory
 #from GangaDirac.Lib.Backends.DiracBase     import dirac_ganga_server
 #from GangaDirac.BOOT                       import dirac_ganga_server
@@ -12,7 +12,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 class Dirac(DiracBase):
      _schema = DiracBase._schema.inherit_copy()
      _schema.datadict['inputSandboxLFNs'] = ComponentItem(category='datafiles', defvalue=[], sequence=1,
-                                                          typelist=['GangaLHCb.Lib.LHCbDataset.LogicalFile.LogicalFile'],
+                                                          typelist=['GangaDirac.Lib.Files.DiracFile.DiracFile'],
                                                           doc='LFNs to be downloaded into the work dir on the grid node. Site '\
                                                           'matching is *not* performed on these files; they are downloaded.'\
                                                           'I.e., do not put prod data here')
@@ -34,7 +34,7 @@ class Dirac(DiracBase):
                if type(lfn) is PhysicalFile:
                     msg = 'Dirac.inputSandboxLFNs cannot contain a PhysicalFile.'
                     logger.error(msg)
-                    raise BackendError('Dirac',msg)            
+                    raise BackendError('Dirac',msg)
                input_sandbox.append('LFN:'+lfn.name)
           j = self.getJobObject()
           from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -46,7 +46,7 @@ class Dirac(DiracBase):
           return input_sandbox
 
      def _setup_subjob_dataset(self, dataset):
-          return LHCbDataset(files=[LogicalFile(f) for f in dataset])
+          return LHCbDataset(files=[DiracFile( lfn=f ) for f in dataset])
         
 
      def checkSites(self):
@@ -73,9 +73,8 @@ class Dirac(DiracBase):
           the outputsandbox if it is there."""        
           lfns = super(Dirac,self).getOutputDataLFNs()
           ds = LHCbDataset()
-          for f in lfns: ds.files.append(LogicalFile(f))
+          for f in lfns: ds.files.append( DiracFile(lfn=f) )
           return GPIProxyObjectFactory(ds)
-
 
      def getOutputData(self,dir=None,names=None, force=False):
           """Retrieve data stored on SE to dir (default=job output workspace).
@@ -84,6 +83,6 @@ class Dirac(DiracBase):
           even if data already exists."""
           downloaded_files = super(Dirac,self).getOutputData(dir, names, force)
           ds = LHCbDataset()
-          for f in downloaded_files: ds.files.append(LogicalFile(f))
+          for f in downloaded_files: ds.files.append( DiracFile( lfn=f ) )
           return GPIProxyObjectFactory(ds)
         
