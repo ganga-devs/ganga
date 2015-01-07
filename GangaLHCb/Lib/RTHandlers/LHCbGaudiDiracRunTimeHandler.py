@@ -72,7 +72,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
-        outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
+        outputfiles=[file.namePattern for file.lfn in job.outputfiles if isinstance(file,DiracFile)]
 
         data_str  = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
@@ -148,7 +148,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                          XMLSUMMARYPARSING = getXMLSummaryScript()#,
                          #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
                          )
-        
+
+        logger.debug( "input_data %s" % str( input_data ) )
+
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
         dirac_script = script_generator(lhcbdiracAPI_script_template(),
