@@ -43,7 +43,7 @@ class ProdTrans(IApplication):
             })
     _category = 'applications'
     _name = 'ProdTrans'
-    _exportmethods = ['postprocess']
+    _exportmethods = ['postprocess', 'unprepare']
 
     def __init__(self):
         super(ProdTrans, self).__init__()
