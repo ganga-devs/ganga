@@ -10,11 +10,11 @@ from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
 from GangaDirac.Lib.Files.DiracFile          import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from GangaDirac.BOOT                         import monitoring_threadpool
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 from Ganga.GPIDev.Credentials                import getCredential
+from Ganga.GPI                               import queues
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
 
@@ -84,7 +84,7 @@ class DiracBase(IBackend):
     _packed_input_sandbox = True
     _category = "backends"
     _name = 'DiracBase'
-    _hidden = True
+    _hidden = 1
     
     def _setup_subjob_dataset(self, dataset):
         return None
@@ -135,7 +135,11 @@ class DiracBase(IBackend):
 #                return job._setup_bulk_subjobs(idlist, script)
 #            job.id = idlist
 #        server.execute_nonblocking(dirac_cmd, callback_func=submit_checker, args=(self, dirac_script))
-#        return True
+#        return True   
+
+        import Ganga.Core.exceptions
+        #import traceback
+        #traceback.print_stack()
 
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
         if not result_ok(result) or not result.has_key('Value'):
@@ -158,6 +162,8 @@ class DiracBase(IBackend):
         """Submit a DIRAC job"""
         j = self.getJobObject()
 
+        logger.debug( "inputdata: %s" % str(j.inputdata) )
+
         sboxname = j.createPackedInputSandbox(subjobconfig.getSandboxFiles())
         
         input_sandbox   = master_input_sandbox[:]
@@ -168,14 +174,20 @@ class DiracBase(IBackend):
 
         
         input_sandbox  += self._addition_sandbox_content(subjobconfig)
-        
-        dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##',str(input_sandbox))
 
-        dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(),'dirac-script.py')
-        f=open(dirac_script_filename,'w')
+        logger.debug( "input_sandbox: %s" % str( input_sandbox ) )
+
+        str( subjobconfig )
+
+        dirac_script = subjobconfig.getExeString().replace( '##INPUT_SANDBOX##', str(input_sandbox) )
+
+        dirac_script_filename = os.path.join( j.getInputWorkspace().getPath(), 'dirac-script.py' )
+        f=open( dirac_script_filename, 'w' )
         f.write(dirac_script)
         f.close()
-        return self._common_submit(dirac_script_filename)
+
+        logger.debug( "%s" % dirac_script )
+        return self._common_submit( dirac_script_filename )
  
     def master_auto_resubmit(self,rjobs):
         '''Duplicate of the IBackend.master_resubmit but hooked into auto resubmission
@@ -371,7 +383,7 @@ class DiracBase(IBackend):
             for sj in j.subjobs:
 #                suceeded.extend(outputfiles_foreach(sj, DiracFile, download,
 #                                                    fargs=(sj, True)))
-                suceeded.extend([download(f, sj, True) for f in outputfiles_iterator(sj, DiracFile) if f.lfn !='' and (names is None or f.namePattern in names)])
+                suceeded.extend([download(f, sj, True) for f.lfn in outputfiles_iterator(sj, DiracFile) if f.lfn !='' and (names is None or f.namePattern in names)])
         else:
 #            suceeded.extend(outputfiles_foreach(j, DiracFile, download,
 #                                                fargs(j,False)))
@@ -582,7 +594,7 @@ class DiracBase(IBackend):
         ## requeue existing completed job
         for j in requeue_jobs:
 #            if j.backend.status in requeue_dirac_status:
-            monitoring_threadpool.add_function(DiracBase.job_finalisation,
+            queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                args = (j, 
                                                requeue_dirac_status[j.backend.status]),
                                                priority     = 5)           
@@ -635,7 +647,7 @@ class DiracBase(IBackend):
                     job.updateStatus('running')
                     if job.master: job.master.updateMasterJobStatus()                   
 
-                monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                    args = (job, updated_dirac_status),
                                                    priority     = 5)
                 job.been_queued=True
