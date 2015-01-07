@@ -95,7 +95,8 @@ class ConfigError(GangaException):
  """ ConfigError indicates that an option does not exist or it cannot be set.
  """
  def __init__(self,what):
-     GangaException.__init__(self)
+     #GangaException.__init__(self)
+     super(ConfigError, self).__init__()
      self.what = what
 
  def __str__(self):
@@ -583,11 +584,16 @@ class PackageConfig:
             eff[name] = self.options[name].value
         return eff
 
-    def getEffectiveOption(self,name):
+    def getEffectiveOption(self, name):
         try:
             return self.options[name].value
         except KeyError:
-            raise ConfigError('option "%s" does not exist in "%s"'%(name,self.name))
+            logger = getLogger()
+            logger.debug( "Effective Option %s NOT FOUND, Effective Options are:" % ( name ) )
+            opts = self.getEffectiveOptions()
+            for i in opts:
+                logger.debug( "\t%s" % ( i ) )
+            raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name) )
 
     def getEffectiveLevel(self,name):
         """ Return 0 if option is effectively set at the user level, 1

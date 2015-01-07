@@ -179,7 +179,7 @@ def post_config_handler(opt,value):
         return
 
     # set the logger level
-    private_logger.debug('setting loglevel: %s %s',opt,value)
+    private_logger.debug('setting loglevel: %s %s', opt, value)
     _set_log_level(getLogger(opt),value)
 
 config.attachUserHandler(None,post_config_handler)
@@ -325,15 +325,21 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
         #print 'creating logger: ',name
         logger = logging.getLogger(name)
         _allLoggers[name] = logger
+        #logger.setLevel( logging.CRITICAL )
+
+        if name in config:
+            thisConfig = config[name]
+        else:
+            thisConfig = config['Ganga']
 
         try:
-            _set_log_level(logger,config[name])
+            _set_log_level( logger, thisConfig )
         except Ganga.Utility.Config.ConfigError:
             pass 
 
         if private_logger:
-            private_logger.debug('created logger %s in %s mode',name,logging.getLevelName(logger.getEffectiveLevel()))
-            private_logger.debug('applied %s format string to %s', config['_format'], name)
+            private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()) )
+            private_logger.debug('applied %s format string to %s', config['_format'], name )
 
         #print '------------>',logger
         #logger.critical('initialization of logger for module %s',name)
@@ -350,7 +356,7 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
 
 def bootstrap(internal=0,handler=None):
 
-    global private_logger,main_logger
+    global private_logger, main_logger
     private_logger = getLogger('Ganga.Utility.logging')
     #main_logger = _getLogger('Ganga',_roothandler=1,handler=handler)
     
