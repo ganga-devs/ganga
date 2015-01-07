@@ -1,8 +1,8 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import datetime
 from Ganga.GPIDev.Base import GangaObject
-from LogicalFile import *
 from LHCbDataset import *
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -163,7 +163,8 @@ RecoToDST-07/90000000/DST" ,
             files = files.keys()
         
         ds = LHCbDataset()
-        for f in files: ds.files.append(LogicalFile(f))
+        for f in files:
+            ds.files.append(DiracFile(lfn = f))
         
         return GPIProxyObjectFactory(ds)
 
@@ -171,7 +172,7 @@ RecoToDST-07/90000000/DST" ,
 
 class BKQueryDict(GangaObject):
     """Class for handling LHCb bookkeeping queries using dictionaries.
-    
+
     Use BKQuery if you do not know how to use BK dictionaries!
     
     Example Usage:
@@ -246,7 +247,8 @@ class BKQueryDict(GangaObject):
                 files = files['LFNs'].keys()
         
         ds = LHCbDataset()
-        for f in files: ds.files.append(LogicalFile(f))
+        for f in files:
+            ds.files.append(DiracFile(lfn = f))
          
         return GPIProxyObjectFactory(ds)
 
