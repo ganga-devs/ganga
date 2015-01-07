@@ -3,6 +3,7 @@ from Ganga.GPIDev.Lib.Job import Job
 from SplitterUtils import DatasetSplitter
 from Ganga.GPIDev.Schema import *
 #import copy
+logger = Ganga.Utility.logging.getLogger()
 
 class GaudiInputDataSplitter(ISplitter):
     """Splits a job into sub-jobs by partitioning the input data
@@ -33,6 +34,7 @@ class GaudiInputDataSplitter(ISplitter):
     # returns a subjob based on the master and the reduced dataset can be overridden
     # for modified behaviour
     def _create_subjob(self, job, dataset):
+        logger.debug( "_create_subjob" )
         j=Job()
         j.copyFrom(job)
         j.splitter = None
@@ -44,6 +46,7 @@ class GaudiInputDataSplitter(ISplitter):
         return j
   
     def split(self, job):
+        logger.debug( "split" )
         if self.filesPerJob < 1:
             logger.error('filesPerJob must be greater than 0.')
             raise SplittingError('filesPerJob < 1 : %d' % self.filesPerJob)
@@ -53,7 +56,10 @@ class GaudiInputDataSplitter(ISplitter):
            
         subjobs=[]
 
-        for dataset in self._splitter(job, job.inputdata):
-            subjobs.append(self._create_subjob(job, dataset))
+        all_jobs = self._splitter(job, job.inputdata)
+
+        for dataset in all_jobs:
+            subjobs.append( self._create_subjob(job, dataset) )
         
         return subjobs
+
