@@ -4,6 +4,7 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 
 class LHCbUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
@@ -12,7 +13,6 @@ class LHCbUnit(IUnit):
    _category = 'units'
    _name = 'LHCbUnit'
    _exportmethods = IUnit._exportmethods + [ ]
-   _hidden = 1
    
    def createNewJob(self):
       """Create any jobs required for this unit"""      
@@ -23,16 +23,15 @@ class LHCbUnit(IUnit):
 
       trf = self._getParent()
       task = trf._getParent()
-      if trf.outputdata:
-         j.outputdata = trf.outputdata.clone()
-                           
       j.inputsandbox = self._getParent().inputsandbox
-      j.outputsandbox = self._getParent().outputsandbox
+
+      import copy
+      j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
 
       if trf.splitter:
          j.splitter = trf.splitter.clone()
       else:
-         j.splitter = SplitByFiles(bulksubmit = True)
+         j.splitter = SplitByFiles()
          
       return j
 

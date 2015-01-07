@@ -9,10 +9,12 @@ from GangaLHCb.Lib.Tasks.LHCbUnit import LHCbUnit
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+from GangaLHCb.Lib.LHCbDataset.LogicalFile import LogicalFile
 
 class LHCbTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
-      'splitter'      : ComponentItem('splitters', defvalue=None, optional=1, load_default=False,doc='Splitter to be used for units'),
+      'files_per_unit'  : SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
+      'splitter'        : ComponentItem('splitters', defvalue=None, optional=1, load_default=False,doc='Splitter to be used for units'),
       'queries'         : ComponentItem('query', defvalue=[], sequence=1, protected=1, optional=1, load_default=False,doc='Queries managed by this Transform'),
     }.items()))
 
@@ -62,36 +64,85 @@ class LHCbTransform(ITransform):
          return
       
       # loop over input data and see if we need to create any more units
+      if len(self.units) > 0:
+         return
+
+      import copy
       for inds in self.inputdata:
 
          if inds._name != "LHCbDataset":
-            continue
+            continue         
 
-         ok = False
-         for unit in self.units:
-            if len(unit.inputdata.files) == len(inds.files):
-               # has this DS been associated with this unit?
-               ok = True
-               for f in unit.inputdata.files:
-                  if not f in inds.files:
-                     ok = False
+         # split this dataset depending on files_per_unit
+         if self.files_per_unit > 0:
 
-         if not ok:
+            # loop over the file array and create units for each set
+            num = 0
+            while num < len( inds.files ):
+               unit = LHCbUnit()
+               unit.name = "Unit %d" % len(self.units)
+               self.addUnitToTRF( unit )
+               unit.inputdata = copy.deepcopy(inds)
+               unit.inputdata.files = inds.files[num:num + self.files_per_unit]
+               num += self.files_per_unit
+               
+         else:
             # new unit required for this dataset
             unit = LHCbUnit()
             unit.name = "Unit %d" % len(self.units)
             self.addUnitToTRF( unit )
-            unit.inputdata = inds
-
-   def createChainUnit( self, parent ):
+            unit.inputdata = copy.deepcopy(inds)
+            
+   def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create an output unit given this output data"""
-      
-      if len(parent.active_job_ids) == 0 or GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == "":
-         return None
-      
+
+      # we need a parent job that has completed to get the output files
+      incl_pat_list = []
+      excl_pat_list = []
+      for parent in parent_units:
+         if len(parent.active_job_ids) == 0 or parent.status != "completed":
+            return None
+
+         for inds in self.inputdata:
+            if inds._name == "TaskChainInput" and inds.input_trf_id == parent._getParent().getID():
+               incl_pat_list += inds.include_file_mask
+               excl_pat_list += inds.exclude_file_mask
+
+      print incl_pat_list
+      # go over the output files and copy the appropriates over as input files
+      flist = []
+      import re
+      for parent in parent_units:
+         job = GPI.jobs(parent.active_job_ids[0])
+         if job.subjobs:
+            job_list = job.subjobs
+         else:
+            job_list = [ job ]
+
+         for sj in job_list:
+            for f in sj.outputfiles:
+
+               # match any dirac files that are allowed in the file mask
+               if f._impl._name == "DiracFile":
+                  if len(incl_pat_list) > 0:
+                     for pat in incl_pat_list:
+                        if re.search( pat, f.lfn ):                     
+                           flist.append("LFN:" + f.lfn)
+                  else:
+                     flist.append("LFN:" + f.lfn)
+
+                  if len(excl_pat_list) > 0:
+                     for pat in excl_pat_list:
+                        if re.search( pat, f.lfn ) and "LFN:" + f.lfn in flist:
+                           flist.remove("LFN:" + f.lfn)
+                           
+                     
+
+      # just do one unit that uses all data
       unit = LHCbUnit()
-      unit.inputdata = LHCbDataset()
-      unit.inputdata.dataset = GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname
+      unit.name = "Unit %d" % len(self.units)
+      unit.inputdata = LHCbDataset(files=[LogicalFile(f) for f in flist])
+      
       return unit
    
    def _getJobsWithRemovedData(self,lost_dataset):
