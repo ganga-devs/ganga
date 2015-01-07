@@ -18,7 +18,7 @@ class GaudiDataset(Dataset):
     '''Class for handling Gaudi data sets.
     '''
     schema = {}
-    docstr = 'List of PhysicalFile and LogicalFile objects'
+    docstr = 'List of PhysicalFile and DiracFile objects'
     schema['files'] = SimpleItem(defvalue=[],typelist=['str','type(None)'],
                                  sequence=1,doc=docstr)
   
