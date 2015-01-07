@@ -28,7 +28,7 @@ from Ganga.Core import GangaException
 
 # some defaults
 config.addOption( 'repeat_messages',False,'if 0 then log only once the errors for a given backend and do not repeat them anymore')
-config.addOption( 'autostart',None,'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True)) # enable monitoring on startup
+config.addOption( 'autostart',True,'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True)) # enable monitoring on startup
 config.addOption( 'base_poll_rate', 2,'internal supervising thread',hidden=1)
 config.addOption( 'MaxNumResubmits', 5,'Maximum number of automatic job resubmits to do before giving')
 config.addOption( 'MaxFracForResubmit', 0.25,'Maximum fraction of failed jobs before stopping automatic resubmission')
@@ -186,8 +186,9 @@ def _purge_actions_queue():
                Qin.put( action )
        except Empty:
            break
- 
-_makeThreadPool()
+
+if config['autostart']:
+    _makeThreadPool()
 
 
 # Each entry for the updateDict_ts object (based on the UpdateDict class) is a _DictEntry object.
