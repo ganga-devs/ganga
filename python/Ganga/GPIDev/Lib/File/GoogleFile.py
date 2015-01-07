@@ -4,7 +4,7 @@ from IGangaFile import IGangaFile
 import logging
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Lib.Job.Job import Job
+#from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Utility.Config import getConfig
 import re, copy, glob
 logger = logging.getLogger('Ganga.GPIDev.Lib.File.GoogleFile')
