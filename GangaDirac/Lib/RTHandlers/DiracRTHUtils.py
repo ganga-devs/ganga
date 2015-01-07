@@ -3,6 +3,7 @@ from Ganga.Utility.logging                  import getLogger
 from Ganga.Utility.Config                   import getConfig
 from Ganga.Utility.util                     import unique
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
+from GangaDirac.Lib.Files.DiracFile         import DiracFile
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -45,13 +46,25 @@ def dirac_inputdata(app):
     job = app.getJobObject()
     input_data           = None
     parametricinput_data = None
+
+    inputLFNs = []
+
     if job.inputdata:
+        inputLFNs = job.inputdata.getLFNs()
+
+    if job.master:
+        logger.debug( "job.master.inputdata: %s " % str(job.master.inputdata) )
+    logger.debug( "job.inputdata: %s" % str(job.inputdata) )
+    logger.debug( "getLFNs(): %s"  % job.inputdata.getLFNs() )
+
+    if len(inputLFNs) > 0:
         if not job.master and job.splitter: # master job with a splitter reaching prepare, hence bulk submit
             parametricinput_data = dirac_parametric_split(app)
             if parametricinput_data is not None and len(parametricinput_data) > getConfig('DIRAC')['MaxDiracBulkJobs']:
                 raise BackendError('Dirac','Number of bulk submission jobs \'%s\' exceeds the maximum allowed \'%s\' if more are needed please modify your config. Note there is a hard limit in Dirac of currently 1000.' % (len(parametricinput_data),getConfig('DIRAC')['MaxDiracBulkJobs'] ))
         else: # master job with no splitter or subjob already split proceed as normal
             input_data = job.inputdata.getLFNs()
+
     elif not job.backend.settings.has_key('Destination'):
         t1_sites = getConfig('DIRAC')['noInputDataBannedSites']
         logger.info('Job has no inputdata (T1 sites will be banned to help avoid overloading them).')
@@ -60,7 +73,11 @@ def dirac_inputdata(app):
             job.backend.settings['BannedSites'] = unique(job.backend.settings['BannedSites'])
         else:
             job.backend.settings['BannedSites'] = t1_sites[:]
-            
+
+    #import traceback
+    #traceback.print_stack()
+    #print "input_data:\n%s" % input_data
+
     return input_data, parametricinput_data
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -68,11 +85,16 @@ def dirac_parametric_split(app):
     data = app.getJobObject().inputdata
     splitter = app.getJobObject().splitter
 
+    #print "Split: %s" + str(data)
+    
     split_data=[ dataset for dataset in DiracSplitter(data, splitter.filesPerJob, splitter.maxFiles, splitter.ignoremissing)]
 ##     for dataset in DiracSplitter(data, splitter.filesPerJob, splitter.maxFiles, splitter.ignoremissing):
 ##         split_data.append([f.name for f in dataset])
     if len(split_data) > 0:
         return split_data
+
+    #print  "dirac_parametric_split: %s" % str( split_data )
+
     return None
 
 

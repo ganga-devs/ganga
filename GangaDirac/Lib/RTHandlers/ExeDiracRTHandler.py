@@ -61,6 +61,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                                                      ),
                                        executable = True))
 
+        #print "input_data: %s" % str( input_data )
+
         dirac_script = script_generator(diracAPI_script_template(),
                                         DIRAC_IMPORT         = 'from DIRAC.Interfaces.API.Dirac import Dirac',
                                         DIRAC_JOB_IMPORT     = 'from DIRAC.Interfaces.API.Job import Job',
