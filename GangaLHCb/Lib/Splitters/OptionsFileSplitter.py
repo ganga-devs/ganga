@@ -27,6 +27,7 @@ class OptionsFileSplitter(ISplitter):
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
+        j.inputfiles = []
         j.inputdata = inputdata
         
         return j
