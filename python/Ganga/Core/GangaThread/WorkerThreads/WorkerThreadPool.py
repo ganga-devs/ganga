@@ -237,6 +237,7 @@ class WorkerThreadPool(object):
     def _stop_worker_threads(self):
         for w in self.__worker_threads:
             w.stop()
+            w.unregister()
         del self.__worker_threads[:]
         return
 
