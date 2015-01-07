@@ -177,6 +177,8 @@ class GridProxy ( ICredential ):
       "String of options to be passed to command for proxy creation" )
    _schema.datadict[ "info_refresh_time" ] = SimpleItem( defvalue = "00:15", \
       doc = "Refresh time of proxy info cache" )
+   _schema.datadict[ "maxTry" ] =  SimpleItem( defvalue = 5, doc = \
+                    "Number of password attempts allowed when creating credential" )
    _name = "GridProxy"
    _hidden = 1
    _enable_config = 1
