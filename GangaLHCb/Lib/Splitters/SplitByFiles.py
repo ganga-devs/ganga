@@ -2,7 +2,7 @@ from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitt
 #from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 #from SplitterUtils import DiracSplitter
-from GangaLHCb.Lib.LHCbDataset import LogicalFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -46,14 +46,33 @@ class SplitByFiles(GaudiInputDataSplitter):
         return value
 
     def _create_subjob(self, job, dataset):
-        if True in (isinstance(i,str) for i in dataset):
-            dataset = [LogicalFile(file) for file in dataset]
+        logger.debug( "_create_subjob" )
+        logger.debug( "input dataset: %s" % dataset )
+        logger.debug( "dataset type: %s" % type(dataset) )
+        datatmp = []
+        if isinstance( dataset, LHCbDataset ):
+            for i in dataset:
+                if isinstance( i, DiracFile ):
+                    datatmp.append( i )
+                else:
+                    logger.error( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
+                    from Ganga.Core.exceptions import GangaException
+                    raise GangaException( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
+        elif isinstance( dataset, list ):
+            for i in dataset:
+                datatmp.append( DiracFile( lfn=i ) )
+        else:
+            logger.error( "Unkown dataset type, cannot perform split here" )
+            from Ganga.Core.exceptions import GangaException
+            raise GangaException( "Unkown dataset type, cannot perform split here" )
+
         j=Job()
         j.copyFrom(stripProxy(job))
         j.splitter = None
         j.merger = None
         j.inputsandbox = [] ## master added automatically
-        j.inputdata = LHCbDataset( files             = dataset[:],
+        j.inputfiles = []
+        j.inputdata = LHCbDataset( files             = datatmp[:],
                                    persistency       = self.persistency,
                                    depth             = self.depth )
         j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
@@ -63,6 +82,8 @@ class SplitByFiles(GaudiInputDataSplitter):
 
     # returns splitter generator 
     def _splitter(self, job, inputdata):
+
+        logger.debug( "_splitter" )
 
         indata = stripProxy(copy.deepcopy(job.inputdata))
         if not job.inputdata:
@@ -87,16 +108,21 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
             if self.filesPerJob > 100: self.filesPerJob = 100 # see above warning
-            return DiracSplitter(indata,
+            outdata = DiracSplitter(indata,
                                  self.filesPerJob,
                                  self.maxFiles,
                                  self.ignoremissing)
+            logger.debug( "outdata: %s " % str( outdata ) )
+            return outdata
         else:
             return super(SplitByFiles,self)._splitter(job, indata)
 
 
     def split(self, job):
+        logger.debug( "split" )
         if self.maxFiles == -1: self.maxFiles = None
         if self.bulksubmit and stripProxy(job.backend).__module__.find('Dirac') > 0:
             return []
-        return super(SplitByFiles,self).split(job)
+        split_return = super(SplitByFiles,self).split(job)
+        logger.debug( "%s" % split_return )
+        return split_return                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      
