@@ -39,6 +39,18 @@ try:
 except:
     logger.error("Failed to correctly configure Client.baseURL or Client.baseURLSSL ")
 
+import urllib2
+try:
+    import simplejson
+except:
+    import json as simplejson
+
+try:
+    agisinfos = simplejson.load(urllib2.urlopen("http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTIVE&rc_site_state=ACTIVE"))
+except:
+    agisinfos = []
+    logger.error("Failed to load AGIS info from http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTI\
+VE&rc_site_state=ACTIVE")
 
 def setChirpVariables():
     """Helper function to fill chirp config variables"""
@@ -49,6 +61,20 @@ def setChirpVariables():
         tempchirpconfig = 'chirp^%s^/%s^-d chirp' %(configPanda['chirpserver'],nickname)
         Ganga.Utility.Config.setConfigOption('Panda','chirpconfig', tempchirpconfig)
     return 
+
+AGISSpecTS = time.time()
+def refreshAGISSpecs():
+    global AGISSpecsTS
+    global agisinfos
+    try:
+        if time.time() - AGISSpecsTS > 3600:
+            agisinfosLocal = simplejson.load(urllib2.urlopen("http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTIVE&rc_site_state=ACTIVE"))
+            if agisinfosLocal:
+                agisinfos = agisinfosLocal
+            AGISSpecsTS = time.time()
+    except:
+        AGISSpecsTS = time.time()
+    return
 
 pandaSpecTS = time.time()
 def refreshPandaSpecs():
@@ -67,34 +93,74 @@ def refreshPandaSpecs():
         pandaSpecsTS = time.time()
 
 def convertDQ2NamesToQueueName(locations):
-    #from pandatools import Client
-    refreshPandaSpecs()
-
+    refreshAGISSpecs()
     info = {}
-    for location in locations:
-        sites = []
-        for queue, queueinfo in Client.PandaSites.iteritems():
-            queuelocations = queueinfo['setokens'].values()
-            for queuelocation in queuelocations:
-                if Client.convSrmV2ID(location) == Client.convSrmV2ID(queuelocation) and not queue in sites:
-                    sites.append(queue)
-        info[location] = sites
+    for entry in agisinfos:
+        try:
+            queuename = entry['presources'].values()[0].keys()
+        except:
+            queuename = []
+            pass
+        try:
+            tokens = entry['ddmendpoints'].keys()
+        except:
+            tokens = []
+            pass
 
-    return info
+        for location in locations:
+            if location in tokens:
+                queuename = [ i for i in queuename if i.startswith("ANALY") ]
+                if not info.has_key(location):
+                    info[location] = queuename
+                else:
+                    info[location] = append(queuename)
+
+    if info:
+        return info
+    else: # fall back to old code
+        for location in locations:
+            sites = []
+            for queue, queueinfo in Client.PandaSites.iteritems():
+                queuelocations = queueinfo['setokens'].values()
+                for queuelocation in queuelocations:
+                    if Client.convSrmV2ID(location) == Client.convSrmV2ID(queuelocation) and not queue in sites:
+                        sites.append(queue)
+            info[location] = sites
+        return info
 
 def convertQueueNameToDQ2Names(queue):
-    #from pandatools import Client
-    refreshPandaSpecs()
+    refreshAGISSpecs()
+    tokens = []
 
-    sites = []
-    for site in Client.PandaSites[queue]['setokens'].values():
-        sites.append(Client.convSrmV2ID(site))
+    for entry in agisinfos:
+        try:
+            queuename = entry['presources'].values()[0].keys()
+        except:
+            queuename = []
+            pass
+        try:
+            tokens = entry['ddmendpoints'].keys()
+        except:
+            tokens = []
+        if queue in queuename:
+            tokens = [ i for i in tokens if not i in "TAPE" ]
+            return tokens
 
-    allowed_sites = []
-    for site in ToACache.sites:
-        if site not in allowed_sites and Client.convSrmV2ID(site) in sites:
-            allowed_sites.append(site)
-    return allowed_sites
+    if tokens:
+        return tokens
+    else: # fallback to old code
+        refreshPandaSpecs()
+
+        sites = []
+        for site in Client.PandaSites[queue]['setokens'].values():
+            sites.append(Client.convSrmV2ID(site))
+
+        allowed_sites = []
+        for site in ToACache.sites:
+            if site not in allowed_sites and Client.convSrmV2ID(site) in sites:
+                allowed_sites.append(site)
+
+        return allowed_sites
 
 def queueToAllowedSites(queue):
     #from pandatools import Client
