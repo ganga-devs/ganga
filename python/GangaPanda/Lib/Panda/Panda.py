@@ -144,7 +144,8 @@ def convertQueueNameToDQ2Names(queue):
             tokens = []
         if queue in queuename:
             tokens = [ i for i in tokens if not i in "TAPE" ]
-            return tokens
+            if tokens:
+                return tokens
 
     if tokens:
         return tokens
