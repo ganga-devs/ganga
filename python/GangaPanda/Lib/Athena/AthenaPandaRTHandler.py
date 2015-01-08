@@ -337,7 +337,10 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         for site in bjsites:
             self.outDsLocation = Client.PandaSites[site]['ddm']
 
-            tmpDSName = job.outputdata.datasetname[0:-1]
+            if job.outputdata.datasetname.endswith('/'):
+                tmpDSName = job.outputdata.datasetname[0:-1]
+            else:
+                tmpDSName = job.outputdata.datasetname
             if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
                 tmpDSName += ".%d.%s"% (self.rndSubNum, site)
 
@@ -617,7 +620,11 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       if no outputdata are given
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
-        job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]
+        if job.outputdata.datasetname.endwith('/'):
+            job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]
+        else:
+            job.outputdata.datasetname = masterjob.outputdata.datasetname
+
         if not configPanda['processingType'].startswith('gangarobot') and not configPanda['processingType'].startswith('hammercloud') and not configPanda['processingType'].startswith('rucio_test'):
             job.outputdata.datasetname += '.%d.%s'% ( self.rndSubNum, job.backend.site )
 
