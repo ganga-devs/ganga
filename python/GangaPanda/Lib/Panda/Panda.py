@@ -93,40 +93,44 @@ def refreshPandaSpecs():
         pandaSpecsTS = time.time()
 
 def convertDQ2NamesToQueueName(locations):
-    refreshAGISSpecs()
     info = {}
-    for entry in agisinfos:
-        try:
-            queuename = entry['presources'].values()[0].keys()
-        except:
-            queuename = []
-            pass
-        try:
-            tokens = entry['ddmendpoints'].keys()
-        except:
-            tokens = []
-            pass
 
-        for location in locations:
-            if location in tokens:
-                queuename = [ i for i in queuename if i.startswith("ANALY") ]
-                if not info.has_key(location):
-                    info[location] = queuename
-                else:
-                    info[location] = append(queuename)
+    # refreshAGISSpecs()
+    # 
+    # for entry in agisinfos:
+    #     try:
+    #         temp_queuename = [i.keys() for i in entry['presources'].values() ]
+    #         queuename = [item for sublist in temp_queuename for item in sublist]
+    #     except:
+    #         queuename = []
+    #         pass
+    #     try:
+    #         tokens = entry['ddmendpoints'].keys()
+    #     except:
+    #         tokens = []
+    #         pass
 
-    if info:
-        return info
-    else: # fall back to old code
-        for location in locations:
-            sites = []
-            for queue, queueinfo in Client.PandaSites.iteritems():
-                queuelocations = queueinfo['setokens'].values()
-                for queuelocation in queuelocations:
-                    if Client.convSrmV2ID(location) == Client.convSrmV2ID(queuelocation) and not queue in sites:
-                        sites.append(queue)
-            info[location] = sites
-        return info
+    #     for location in locations:
+    #         if location in tokens:
+    #             #queuename = [ i for i in queuename if i.startswith("ANALY") ]
+    #             if not info.has_key(location):
+    #                 info[location] = queuename
+    #             else:
+    #                 info[location] = append(queuename)
+
+    # if info:
+    #     return info
+    
+    # fall back to old code
+    for location in locations:
+        sites = []
+        for queue, queueinfo in Client.PandaSites.iteritems():
+            queuelocations = queueinfo['setokens'].values()
+            for queuelocation in queuelocations:
+                if Client.convSrmV2ID(location) == Client.convSrmV2ID(queuelocation) and not queue in sites:
+                    sites.append(queue)
+        info[location] = sites
+    return info
 
 def convertQueueNameToDQ2Names(queue):
     refreshAGISSpecs()
@@ -134,7 +138,8 @@ def convertQueueNameToDQ2Names(queue):
 
     for entry in agisinfos:
         try:
-            queuename = entry['presources'].values()[0].keys()
+            temp_queuename = [i.keys() for i in entry['presources'].values() ]
+            queuename = [item for sublist in temp_queuename for item in sublist]
         except:
             queuename = []
             pass
@@ -147,21 +152,20 @@ def convertQueueNameToDQ2Names(queue):
             if tokens:
                 return tokens
 
-    if tokens:
-        return tokens
-    else: # fallback to old code
-        refreshPandaSpecs()
+    # fallback to old code
+    logger.debug("convertQueueNameToDQ2Names fall back")
+    refreshPandaSpecs()
+    sites = []
+    for site in Client.PandaSites[queue]['setokens'].values():
+        sites.append(Client.convSrmV2ID(site))
 
-        sites = []
-        for site in Client.PandaSites[queue]['setokens'].values():
-            sites.append(Client.convSrmV2ID(site))
+    logger.debug(sites)
+    allowed_sites = []
+    for site in ToACache.sites:
+        if site not in allowed_sites and Client.convSrmV2ID(site) in sites:
+            allowed_sites.append(site)
 
-        allowed_sites = []
-        for site in ToACache.sites:
-            if site not in allowed_sites and Client.convSrmV2ID(site) in sites:
-                allowed_sites.append(site)
-
-        return allowed_sites
+    return allowed_sites
 
 def queueToAllowedSites(queue):
     #from pandatools import Client
