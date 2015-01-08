@@ -620,7 +620,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
 #       if no outputdata are given
         if not job.outputdata:
             job.outputdata = DQ2OutputDataset()
-        if job.outputdata.datasetname.endwith('/'):
+        if job.outputdata.datasetname.endswith('/'):
             job.outputdata.datasetname = masterjob.outputdata.datasetname[0:-1]
         else:
             job.outputdata.datasetname = masterjob.outputdata.datasetname
