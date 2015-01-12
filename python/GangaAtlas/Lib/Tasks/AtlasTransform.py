@@ -25,7 +25,7 @@ class AtlasTransform(ITransform):
       'local_location'     : SimpleItem(defvalue='', doc='Local location to copy output to', typelist=["str"]),
       'include_file_mask'       : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc = 'List of Regular expressions of which files to include in copy'),
       'exclude_file_mask'       : SimpleItem(defvalue = [], typelist=['str'], sequence=1, doc = 'List of Regular expressions of which files to exclude from copy'),
-      'files_per_job'     : SimpleItem(defvalue=5, doc='files per job (cf DQ2JobSplitter.numfiles)', modelist=["int"]),
+      'files_per_job'     : SimpleItem(defvalue=-1, doc='files per job (cf DQ2JobSplitter.numfiles)', modelist=["int"]),
       'MB_per_job'     : SimpleItem(defvalue=0, doc='Split by total input filesize (cf DQ2JobSplitter.filesize)', modelist=["int"]),
       'subjobs_per_unit'     : SimpleItem(defvalue=0, doc='split into this many subjobs per unit master job (cf DQ2JobSplitter.numsubjobs)', modelist=["int"]),
       'rebroker_fraction'    : SimpleItem(defvalue=0.6, doc='Fraction of failed subjobs to complete subjobs above which the job will be rebrokered', modelist=["float"]),

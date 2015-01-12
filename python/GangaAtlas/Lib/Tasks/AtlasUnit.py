@@ -294,13 +294,19 @@ class AtlasUnit(IUnit):
          return j
 
       if not trf.splitter:
+         # provide a default number of files if there's nothing else given
+         nfiles = trf.files_per_job
+         if nfiles < 1:
+            nfiles = 5
+
          if j.inputdata._impl._name == "ATLASLocalDataset":
             j.splitter = AthenaSplitterJob()
             if trf.subjobs_per_unit > 0:
                j.splitter.numsubjobs = trf.subjobs_per_unit
             else:
                import math
-               j.splitter.numsubjobs = math.ceil(len(j.inputdata.names) / trf.files_per_job)
+                  
+               j.splitter.numsubjobs = math.ceil(len(j.inputdata.names) / nfiles)
          else:
             j.splitter = DQ2JobSplitter()
             if trf.MB_per_job > 0:
@@ -308,7 +314,7 @@ class AtlasUnit(IUnit):
             elif trf.subjobs_per_unit > 0:
                j.splitter.numsubjobs = trf.subjobs_per_unit
             else:
-               j.splitter.numfiles = trf.files_per_job
+               j.splitter.numfiles = nfiles
       else:
          j.splitter = trf.splitter.clone()
          
