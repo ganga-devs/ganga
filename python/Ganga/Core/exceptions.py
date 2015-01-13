@@ -117,7 +117,23 @@ class JobManagerError(GangaException):
         return "JobManagerError: %s" % str(self.msg)
 
 class GangaAttributeError(AttributeError,GangaException):
-    def __init__(self,*a,**k): AttributeError.__init__(self,*a,**k)
+    logger = None
+    def __init__(self,*a,**k):
+        AttributeError.__init__(self,*a,**k)
+
+        # This code will give a stack trace from a GangaException only when debugging is enabled
+        # This makes debugging what's going on much easier whilst hiding mess from users
+        if self.logger is None:
+            import Ganga.Utility.logging
+            self.logger = Ganga.Utility.logging.getLogger()
+            try:
+                import logging
+            except ImportError:
+                import Ganga.Utility.external.logging as logging
+
+            if self.logger.isEnabledFor(logging.DEBUG):
+                import traceback
+                traceback.print_stack()
 
 class GangaValueError(ValueError,GangaException):
     def __init__(self,*a,**k): ValueError.__init__(self,*a,**k)
