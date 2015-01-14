@@ -9,7 +9,10 @@ class IGangaFile(GangaObject):
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
-        
+
+    def __init__(self):
+        super(IGangaFile, self).__init__()
+
     def setLocation(self):
         """
         Sets the location of output files that were uploaded from the WN

@@ -27,7 +27,7 @@ class LocalFile(IGangaFile):
     _category = 'gangafiles'
     _name = "LocalFile"
 
-    def __init__(self,namePattern='', localDir='', **kwds):
+    def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
             in some way defined by the derived class
         """
