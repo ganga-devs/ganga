@@ -53,14 +53,15 @@ class LHCbDataset(Dataset):
                       'symmetricDifference', 'union', 'bkMetadata']#,'pop']
 
     def __init__(self, files=[], persistency=None, depth=0):
-        logger.debug( "__init__" )
         super(LHCbDataset, self).__init__()
         logger.debug( "Creating dataset with:\n%s" % files )
         self.files = files
         self.persistency=persistency
         self.depth = depth
+        logger.debug( "Dataset Created" )
 
     def __construct__(self, args):
+        logger.debug( "__construct__" )
         if (len(args) != 1) or (type(args[0]) is not type([])):
             super(LHCbDataset,self).__construct__(args)
         else:

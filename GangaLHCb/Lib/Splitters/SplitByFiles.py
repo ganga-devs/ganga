@@ -47,8 +47,6 @@ class SplitByFiles(GaudiInputDataSplitter):
 
     def _create_subjob(self, job, dataset):
         logger.debug( "_create_subjob" )
-        logger.debug( "input dataset: %s" % dataset )
-        logger.debug( "dataset type: %s" % type(dataset) )
         datatmp = []
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
@@ -66,6 +64,7 @@ class SplitByFiles(GaudiInputDataSplitter):
             from Ganga.Core.exceptions import GangaException
             raise GangaException( "Unkown dataset type, cannot perform split here" )
 
+        logger.debug( "Creating new Job in Splitter" )
         j=Job()
         j.copyFrom(stripProxy(job))
         j.splitter = None
@@ -86,6 +85,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug( "_splitter" )
 
         indata = stripProxy(copy.deepcopy(job.inputdata))
+
         if not job.inputdata:
             share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                       'shared',
@@ -108,6 +108,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
             if self.filesPerJob > 100: self.filesPerJob = 100 # see above warning
+            logger.debug( "indata: %s " % str( indata ) )
             outdata = DiracSplitter(indata,
                                  self.filesPerJob,
                                  self.maxFiles,
@@ -121,8 +122,10 @@ class SplitByFiles(GaudiInputDataSplitter):
     def split(self, job):
         logger.debug( "split" )
         if self.maxFiles == -1: self.maxFiles = None
-        if self.bulksubmit and stripProxy(job.backend).__module__.find('Dirac') > 0:
-            return []
+        if self.bulksubmit:
+            if stripProxy(job.backend).__module__.find('Dirac') > 0:
+                logger.debug( "Returning []" )
+                return []
         split_return = super(SplitByFiles,self).split(job)
-        logger.debug( "%s" % split_return )
+        logger.debug( "split_return: %s" % split_return )
         return split_return                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                      

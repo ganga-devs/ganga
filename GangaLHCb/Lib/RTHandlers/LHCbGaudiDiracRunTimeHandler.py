@@ -72,7 +72,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
-        outputfiles=[file.namePattern for file.lfn in job.outputfiles if isinstance(file,DiracFile)]
+        outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
 
         data_str  = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
