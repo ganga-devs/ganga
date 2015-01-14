@@ -59,11 +59,14 @@ class DiracFile(IGangaFile):
         name is the name of the output file that has to be written ...
         """
         super(DiracFile, self).__init__()
-        self.namePattern = namePattern
-        self.remoteDir   = remoteDir
-        self.localDir    = localDir
-        self.lfn         = lfn
         self.locations   = []
+
+        self.namePattern = namePattern
+        self.localDir = localDir
+        self.remoteDir = remoteDir
+        self.lfn = lfn
+
+        self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
 
     def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
@@ -94,21 +97,26 @@ class DiracFile(IGangaFile):
 
     def _setLFNnamePattern( self, _lfn = "", _namePattern = "" ):
 
-        if _lfn != "" and _namePattern == "":
-
+        if _lfn != "":            
             if _lfn[0:4] == "LFN:":
-                self.lfn = _lfn[4:]
-            else:
-                self.lfn = _lfn
+                _lfn = _lfn[4:]
 
-            import ntpath
-            self.namePattern = ntpath.basename( self.lfn )
-        if _namePattern != "" and _lfn == "":
-            self.lfn = ""
-            self.namePattern = _namPattern
         if _lfn != "" and _namePattern != "":
             self.lfn = _lfn
-            self.namePattern = _namePattern
+            self.remoteDir = os.path.dirname( _lfn )
+            self.namePattern = os.path.basename( _namePattern )
+            self.localDir = os.path.dirname( _namePattern )
+
+        import os.path
+
+        if _lfn != "" and _namePattern == "":
+            self.lfn = self.lfn
+            self.remoteDir = os.path.dirname( self.lfn )
+            self.namePattern = os.path.basename( self.lfn )
+
+        if _namePattern != "" and _lfn == "":
+            self.namePattern = os.path.basename( _namePattern )
+            self.localDir = os.path.dirname( _namePattern )
 
     def _attribute_filter__get__(self, name ):
 
@@ -201,7 +209,7 @@ class DiracFile(IGangaFile):
             if line.startswith('DiracFile'):
                  if dirac_line_processor(line, self) and regex.search(self.namePattern) is None:
                      break
-                        
+
         postprocesslocations.close()
 
 #    def _getEnv(self):
@@ -239,7 +247,6 @@ class DiracFile(IGangaFile):
         """
 
         if self.lfn == "":
-
             self._optionallyUploadLocalFile()
 
         # eval again here as datatime not included in dirac_ganga_server
@@ -352,7 +359,7 @@ class DiracFile(IGangaFile):
             raise Exception("No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
 
-    def put(self):
+    def put(self, force=False ):
         """
         Try to upload file sequentially to storage elements defined in configDirac['DiracSpaceTokens'].
 
@@ -365,9 +372,16 @@ class DiracFile(IGangaFile):
         upload failed.
         """
 
-        if self.lfn != "":
-            logger.warning( "Unable to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (  self.namePattern, self.lfn ) )
-            return
+        if self.lfn != "" and force == False:
+            logger.warning( "Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (  self.namePattern, self.lfn ) )
+            decision = raw_input( 'y / [n]:' )
+            while not ( decision == 'y' or decision == '' ):
+                decision = raw_input( 'y / [n]:' )
+
+            if decision == 'y' or decision == '':
+                pass
+            else:
+                return
 
         ## looks like will only need this for the interactive uploading of jobs.
         ## Also if any backend need dirac upload on client then when downloaded
@@ -375,7 +389,7 @@ class DiracFile(IGangaFile):
         
         if self.namePattern == "":
             if self.lfn != '':
-                logger.warning( "Putting a file with an existing LFN only makes no sense!" )
+                logger.warning( "'Put'-ing a file with ONLY an existing LFN makes no sense!" )
             raise GangaException('Can\'t upload a file without a local file name.')
 
         sourceDir = self.localDir
@@ -400,7 +414,10 @@ class DiracFile(IGangaFile):
         import glob, uuid
         if self.remoteDir == '':
             self.remoteDir = str(uuid.uuid4())
-        lfn_base =  os.path.join(configDirac['DiracLFNBase'], self.remoteDir )
+        if self.remoteDir[:4] == 'LFN:':
+            lfn_base = self.remoteDir
+        else:
+            lfn_base = os.path.join(configDirac['DiracLFNBase'], self.remoteDir )
         storage_elements=configDirac['DiracSpaceTokens']
 
         outputFiles=GangaList()
@@ -415,7 +432,7 @@ class DiracFile(IGangaFile):
                     raise GangaException('File "%s" must exist!'% name)
             else:
                 if self.compressed:
-                    os.system('gzip -c %s > %s.gz' % (name,name))
+                    os.system('gzip -c %s > %s.gz' % (name, name))
                     name+='.gz'
                     if not os.path.exists(name):
                         raise GangaException('File "%s" must exist!'% name)
@@ -424,9 +441,9 @@ class DiracFile(IGangaFile):
 #            guid = self.guid
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
- #           if guid == "":
- #               md5 = hashlib.md5(open(name,'rb').read()).hexdigest()
- #               guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
+#           if guid == "":
+#               md5 = hashlib.md5(open(name,'rb').read()).hexdigest()
+#               guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
             
             d=DiracFile()
             d.namePattern = os.path.basename(file)
@@ -567,7 +584,14 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
 """
 
         import uuid
-        lfn_base = os.path.join(configDirac['DiracLFNBase'], str(uuid.uuid4()))
+
+        if self.remoteDir == '':
+            self.remoteDir = str(uuid.uuid4())
+        if self.remoteDir[:4] == 'LFN:':
+            lfn_base = self.remoteDir
+        else:
+            lfn_base = os.path.join(configDirac['DiracLFNBase'], self.remoteDir )
+
         for file in outputFiles:
             if regex.search(file.namePattern) is not None:
                 script+= wildcard_script(file.namePattern, lfn_base, str(file.namePattern in patternsToZip))
