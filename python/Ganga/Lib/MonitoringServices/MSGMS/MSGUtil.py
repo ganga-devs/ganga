@@ -10,10 +10,10 @@ try:
     import logging
     import Ganga.Utility.Config as Config
     config = Config.getConfig('Logging')
-    # test if stomp.py logging is already set
-    if 'stomp.py' in config:
-        pass #config['stomp.py']
-    else:
+    try:
+        # test if stomp.py logging is already set
+        config['stomp.py']
+    except Config.ConfigError:
         # set stomp.py logger to CRITICAL
         logging.getLogger('stomp.py').setLevel(logging.CRITICAL)
         # add stomp.py option to Logging configuration

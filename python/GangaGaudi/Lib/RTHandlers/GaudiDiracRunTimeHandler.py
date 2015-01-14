@@ -30,7 +30,7 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
 
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
-        outputfiles=[file.lfn for file in job.outputfiles if isinstance(file,DiracFile)]
+        outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
 
         gaudi_script_path = os.path.join(job.getInputWorkspace().getPath(), "gaudi-script.py")
         script_generator(gaudi_script_template(),

@@ -8,7 +8,6 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.logic import implies
-from Ganga.Core.exceptions import GangaException
 
 #
 # Ganga Public Interface Schema
@@ -66,17 +65,13 @@ class Schema:
     #
     # datadict: dictionary of properties (schema items)
     # version: the version information
-    def __init__(self, version, datadict):
+    def __init__(self,version,datadict):
         self.datadict = datadict
         self.version = version
         self._pluginclass = None
 
-    def __getitem__(self, name):
-        try:
-            return self.datadict[name]
-        except Exception, x:
-            logger.error( "Ganga Cannot find: %s in Object: %s" % ( name, self.name ) )
-            raise GangaException( x )
+    def __getitem__(self,name):
+        return self.datadict[name]
     
     category = property(lambda self: self._pluginclass._category)
     name = property(lambda self: self._pluginclass._name)
@@ -199,11 +194,8 @@ class Schema:
         
         # hidden, protected and sequence values are not represented in config
         try:
-            if attr in config:
-                defvalue = config[attr]
-            else:
-                defvalue = item['defvalue']
-        except Ganga.Utility.Config.ConfigError, x:
+            defvalue = config[attr]
+        except Ganga.Utility.Config.ConfigError,x:
             defvalue = item['defvalue']
 
         # in the checking mode, use the provided value instead

@@ -36,7 +36,6 @@ class ISplitter(GangaObject):
         j.splitter=None
         #FIXME:
         j.inputsandbox = []
-        j.inputfiles = []
         return j
         
         

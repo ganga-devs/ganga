@@ -28,12 +28,6 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
-    def getSubFiles(self):
-        """
-        Returns the name of a file object throgh a common interface
-        """
-        raise NotImplementedError
-
     def getWNScriptDownloadCommand(self, indent):
         """
         Gets the command used to download already uploaded file
@@ -100,4 +94,3 @@ class IGangaFile(GangaObject):
         Objects should implement something to overload this!
         """
         raise NotImplementedError
-

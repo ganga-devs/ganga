@@ -611,7 +611,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         outputconfig.addOption('DiracFile',{'fileExtensions':['*.dst'], 'backendPostprocess':{'Dirac':'WN', 'LSF':'WN', 'LCG':'WN', 'CREAM':'WN', 'ARC':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
         outputconfig.addOption('GoogleFile',{'fileExtensions':[], 'backendPostprocess':{'Dirac':'client', 'LSF':'client', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'client', 'Interactive':'client'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
 
-
         import pwd,grp
         from Ganga.Utility.Config import getConfig
         user = getConfig('Configuration')['user']   
@@ -632,12 +631,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         massStorageUploadOptions = {'mkdir_cmd':prefix+'mkdir', 'cp_cmd':prefix+'cp', 'ls_cmd':prefix+'ls', 'path':massStoragePath}
 
         outputconfig.addOption('MassStorageFile', {'fileExtensions':[''], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'WN', 'Interactive':'client', 'Dirac':'client'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
-
-        #[Queues] section
-        queuesconfig = makeConfig( "Queues", "configuration section for the queues" )
-        queuesconfig.addOption('Timeout', None, 'default timeout for queue generated processes')
-        queuesconfig.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
-
 
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
@@ -803,10 +796,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         if os.environ.has_key('GANGA_INTERNAL_PROCREEXEC'):
            del os.environ['GANGA_INTERNAL_PROCREEXEC']
 
-        ## start queues
-        from GPIexport import exportToGPI
-        from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
-        exportToGPI('queues', ThreadPoolQueueMonitor(), 'Objects')
 
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):

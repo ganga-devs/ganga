@@ -1,16 +1,14 @@
-from Ganga.Runtime.GPIexport                               import exportToGPI
-from Ganga.GPIDev.Base.Proxy                               import addProxy, stripProxy
-from Ganga.Utility.Config                                  import getConfig
-from Ganga.Utility.logging                                 import getLogger
-#from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
-#from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
+from Ganga.Runtime.GPIexport                         import exportToGPI
+from Ganga.GPIDev.Base.Proxy                         import addProxy, stripProxy
+from Ganga.Utility.Config                            import getConfig
+from Ganga.Utility.logging                           import getLogger
+from GangaDirac.Lib.Server.WorkerThreadPool          import WorkerThreadPool
+from GangaDirac.Lib.Utilities.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
 from GangaDirac.Lib.Utilities.DiracUtilities         import execute
-from Ganga.GPI import queues
 logger = getLogger()
-#user_threadpool       = WorkerThreadPool()
-#monitoring_threadpool = WorkerThreadPool()
-#queues_threadpoolMonitor = ThreadPoolQueueMonitor(user_threadpool, monitoring_threadpool)
-#exportToGPI('queues', queues_threadpoolMonitor, 'Objects')
+user_threadpool       = WorkerThreadPool()
+monitoring_threadpool = WorkerThreadPool()
+exportToGPI('queues', ThreadPoolQueueMonitor(user_threadpool, monitoring_threadpool), 'Objects')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/#
 def diracAPI(cmd, timeout = 60):
@@ -43,7 +41,7 @@ def diracAPI_interactive(connection_attempts = 5):
     import os, time,inspect,traceback
     from GangaDirac.Lib.Server.InspectionClient import runClient
     serverpath = os.path.join(os.path.dirname(inspect.getsourcefile(runClient)),'InspectionServer.py')
-    queues.add(execute("execfile('%s')"%serverpath, timeout=None, shell=False))
+    user_threadpool.add_process("execfile('%s')"%serverpath, timeout=None, shell=False, priority = 1)
     
     time.sleep(1)
     print "\nType 'q' or 'Q' or 'exit' or 'exit()' to quit but NOT ctrl-D"
@@ -66,7 +64,7 @@ def diracAPI_async(cmd, timeout = 120):
     '''
     Execute DIRAC API commands from w/in Ganga.
     '''
-    return queues.add(execute(cmd, timeout=timeout))
+    return user_threadpool.add_process(cmd, timeout=timeout, priority = 2)
 
 exportToGPI('diracAPI_async', diracAPI_async, 'Functions')
 

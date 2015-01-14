@@ -2,7 +2,6 @@ from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError, Job
-import copy
 
 class CoreTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
@@ -44,24 +43,8 @@ class CoreTransform(ITransform):
          raise ApplicationConfigurationError(None, "Unit splitter gave no subjobs after split for CoreTransform unit creation, Transform %d (%s)" % 
                                              (self.getID(), self.name))
 
-      # only copy the appropriate elements    
-      fields = []
-      if len( self.fields_to_copy ) > 0:
-         fields = self.fields_to_copy
-      elif self.unit_splitter._name == "GenericSplitter":
-         if self.unit_splitter.attribute != "":
-            fields = [ self.unit_splitter.attribute.split(".")[0] ]
-         else:
-            for attr in self.unit_splitter.multi_attrs.keys():
-               fields.append( attr.split(".")[0] )
-
-         
-
       # now create the units from these jobs
       for sj in subjobs:
          unit = CoreUnit()
-         
-         for attr in fields:
-            setattr( unit, attr, copy.deepcopy( getattr(sj, attr) ) )
-
+         unit.application = sj.application.clone()
          self.addUnitToTRF( unit )

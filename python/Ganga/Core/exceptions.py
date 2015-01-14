@@ -4,35 +4,23 @@
 # $Id: exceptions.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
+
 class GangaException(Exception):
     """ Markup base class for well-behaved exception that should not print the whole traceback to user's prompt
         Any subclass of this exception is handled by a custom IPython exception handler
         and is printed out in an usable format to iPython prompt
     """
-    logger = None
 
     def __init__(self,*args,**kwds):
         Exception.__init__(self,*args)
         self.kwds = kwds
 
-        # This code will give a stack trace from a GangaException only when debugging is enabled
-        # This makes debugging what's going on much easier whilst hiding mess from users
-        if self.logger is None:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
-        try:
-            import logging
-        except ImportError:
-            import Ganga.Utility.external.logging as logging
-
-        if self.logger.isEnabledFor(logging.DEBUG):
-            import traceback
-            traceback.print_stack()
-
     def __str__(self):
         """
          String representation of this class
         """
+        #import traceback
+        #traceback.print_stack()
         _str = "%s: " % self.__class__.__name__
         if hasattr(self,'args') and self.args:
             _str +=" %s" % str(self.args)
@@ -117,23 +105,7 @@ class JobManagerError(GangaException):
         return "JobManagerError: %s" % str(self.msg)
 
 class GangaAttributeError(AttributeError,GangaException):
-    logger = None
-    def __init__(self,*a,**k):
-        AttributeError.__init__(self,*a,**k)
-
-        # This code will give a stack trace from a GangaException only when debugging is enabled
-        # This makes debugging what's going on much easier whilst hiding mess from users
-        if self.logger is None:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
-            try:
-                import logging
-            except ImportError:
-                import Ganga.Utility.external.logging as logging
-
-            if self.logger.isEnabledFor(logging.DEBUG):
-                import traceback
-                traceback.print_stack()
+    def __init__(self,*a,**k): AttributeError.__init__(self,*a,**k)
 
 class GangaValueError(ValueError,GangaException):
     def __init__(self,*a,**k): ValueError.__init__(self,*a,**k)
