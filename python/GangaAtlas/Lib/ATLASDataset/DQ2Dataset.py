@@ -38,10 +38,11 @@ def cmpfun(a,b):
 def convertDQ2ToClient(dataset):
 
     try:
-        dq2_lock.acquire()
+        #dq2_lock.acquire()
         tmpListdq2 = dq2.listFilesInDataset(dataset)[0]
     finally:
-        dq2_lock.release()
+        #dq2_lock.release()
+        pass
 
     tmpListPanda = {}
 
@@ -60,14 +61,15 @@ def convertDQ2ToClient(dataset):
 def getLocations(dataset):
     
     try:
-        dq2_lock.acquire()
+        #dq2_lock.acquire()
         try:
             locations = dq2.listDatasetReplicas(dataset)
         except:
             logger.error('Dataset %s not found !', dataset)
             return []
     finally:
-        dq2_lock.release()
+        #dq2_lock.release()
+        pass
 
     return locations
 
@@ -76,10 +78,11 @@ def getDatasets(name):
     '''helper function for data dict'''
 
     try:
-        dq2_lock.acquire()
+        #dq2_lock.acquire()
         datasets = dq2.listDatasets(name)
     finally:
-        dq2_lock.release()
+        #dq2_lock.release()
+        pass
 
     return datasets
 
@@ -87,10 +90,11 @@ def getElementsFromContainer(name):
     '''helper function for container content'''
 
     try:
-        dq2_lock.acquire()
+        #dq2_lock.acquire()
         datasets = dq2.listDatasetsInContainer(name)
     finally:
-        dq2_lock.release()
+        #dq2_lock.release()
+        pass
 
     return datasets
 
@@ -98,11 +102,11 @@ def listDatasets(name,filter=True):
     '''helper function to filter out temporary datasets'''
 
     try:
-        dq2_lock.acquire()
+        #dq2_lock.acquire()
         datasets = [ (lfn,ids['vuids'][0]) for lfn, ids in dq2.listDatasets(name).iteritems() ]
     finally:
-        dq2_lock.release()
-        
+        #dq2_lock.release()
+        pass
 
     if filter:
         re_tmp = re.compile('bnl$|bnlcoll$|sub\d+$|dis\d+$')
@@ -172,23 +176,25 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         
     for dataset in datasets:
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 locations = dq2.listDatasetReplicas(dataset)
             except:
                 logger.error('Dataset %s not found !', dataset)
                 return []
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 datasetinfo = dq2.listDatasets(dataset)
             except:
                 datasetinfo = {}
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         # Rucio patch
         #if dataset.find(":")>0:
@@ -222,10 +228,11 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         logger.info('Dataset %s has %s locations', dataset, len(alllocations))
 
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             contents = dq2.listFilesInDataset(dataset)
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         if not contents:
             logger.error('Dataset %s is empty.', dataset)
@@ -253,15 +260,16 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         while not allchecked and retry<4: 
             for location in alllocations:
                 try:
-                    dq2_lock.acquire()
+                    #dq2_lock.acquire()
                     try:
                         datasetinfo = dq2.listMetaDataReplica(location, dataset)
                         logger.debug(datasetinfo)
                     except:
                         continue
                 finally:
-                    dq2_lock.release()
-                    
+                    #dq2_lock.release()
+                    pass
+
                 if datasetinfo.has_key('checkdate'):
                     checkdate = datasetinfo['checkdate']
                     try:
@@ -278,14 +286,15 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
 
                 if (time.time()-checktime > days*86000): 
                     try:
-                        dq2_lock.acquire()
+                        #dq2_lock.acquire()
                         try:
                             dq2.checkDatasetConsistency(location, dataset)
                         except:
                             logger.warning("Dataset consistency check failed - continuing but may encounter other problems.")                        
                     finally:
-                        dq2_lock.release()
-                        
+                        #dq2_lock.release()
+                        pass
+
                     logger.warning('Please be patient - waiting for site-index update at site %s ...', location)
                     locations_checktime[location] = False
                 else:
@@ -306,10 +315,11 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
 
         for location in alllocations:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 datasetsiteinfo = dq2.listFileReplicas(location, dataset)                
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             # Rucio patch
             try:
@@ -355,14 +365,15 @@ def resolve_container(datasets):
     for dataset in datasets:
         if dataset.endswith("/"):
             try:
-                dq2_lock.acquire() 
+                #dq2_lock.acquire() 
                 try:
                     contents = dq2.listDatasetsInContainer(dataset)
                 except:
                     contents = []
             finally:
-                dq2_lock.release()
-                    
+                #dq2_lock.release()
+                pass
+   
             if not contents:
                 contents = []
             container_datasets = container_datasets + contents
@@ -404,13 +415,14 @@ def dq2datasetstate(dataset):
     if not dataset: return -1
 
     try:
-        dq2_lock.acquire()
+        #dq2_lock.acquire()
         try:
             state = dq2.getState(dataset)
         except:
             state = -1
     finally:
-        dq2_lock.release()
+        #dq2_lock.release()
+        pass
 
     return state 
 
@@ -497,13 +509,14 @@ def dq2_set_dataset_lifetime(datasetname, location):
         mylifetime = config['OUTPUTDATASET_LIFETIME']
         mylifetime = mylifetime.replace('_',' ')
         try:
-            dq2_lock.acquire() 
+            #dq2_lock.acquire() 
             try:
                 rc = dq2.setReplicaMetaDataAttribute(datasetname, location, 'lifetime', mylifetime)
             except:
                 rc = 0
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
     else:
         pass
 
@@ -569,13 +582,14 @@ class DQ2Dataset(Dataset):
 
         for dataset in self.dataset:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     state = dq2.getState(dataset)
                 except:
                     state = None
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
             if not state:
                 break
 
@@ -587,13 +601,14 @@ class DQ2Dataset(Dataset):
 
         for tagdataset in self.tagdataset:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     state = dq2.getState(tagdataset)
                 except DQUnknownDatasetException:
                     state = None
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
             if not state:
                 break
 
@@ -622,14 +637,15 @@ class DQ2Dataset(Dataset):
                 dataset = re.sub('AOD','ESD',dataset)
 
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     contents = dq2.listFilesInDataset(dataset)
                 except:
                     contents = []
                     pass
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             if not contents:
                 contents = []
@@ -785,10 +801,11 @@ class DQ2Dataset(Dataset):
                 continue
             
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 contents=dq2.listFilesInDataset(tagdataset)
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             if not contents:
                 return [] # protects against crash in next line if contents is empty
@@ -823,22 +840,24 @@ class DQ2Dataset(Dataset):
                 dataset = re.sub('AOD','ESD',dataset)
 
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     locations = dq2.listDatasetReplicas(dataset)
                 except:
                     logger.error('Dataset %s not found !', dataset)
                     return []
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     datasetinfo = dq2.listDatasets(dataset)
                 except:
                     datasetinfo = {}
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             # Rucio patch
             #if dataset.find(":")>0:
@@ -911,10 +930,11 @@ class DQ2Dataset(Dataset):
 
         for dataset in datasets:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 contents = dq2.listFilesInDataset(dataset)
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             if not contents:
                 print 'Dataset %s is empty.' % dataset
@@ -938,7 +958,7 @@ class DQ2Dataset(Dataset):
 
         for dataset in datasets:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     locations = dq2.listDatasetReplicas(dataset,complete)
                 except DQUnknownDatasetException:
@@ -952,13 +972,15 @@ class DQ2Dataset(Dataset):
                     return
 
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 datasetinfo = dq2.listDatasets(dataset)
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             # RUCIO fix
             #try:
@@ -1001,20 +1023,22 @@ class DQ2Dataset(Dataset):
 
         for dataset in datasets:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     locations = dq2.listDatasetReplicas(dataset,complete)
                 except DQUnknownDatasetException:
                     logger.error('Dataset %s not found !', dataset)
                     return
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 datasetinfo = dq2.listDatasets(dataset)
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             try:
                 datasetvuid = datasetinfo[dataset]['vuids'][0]
@@ -1269,14 +1293,15 @@ class DQ2OutputDataset(Dataset):
         # Get filenames from dataset
         contents = []
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 contents = dq2.listFilesInDataset(datasetname)
             except:
                 contents = ({},'')
                 pass
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         if contents:
             contents = contents[0]
@@ -1293,14 +1318,15 @@ class DQ2OutputDataset(Dataset):
 
         # Determine dataset location
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 location = dq2.listDatasetReplicas(datasetname).values()[0][1][0]
             except:
                 location = datasetname.split('.')[-1]
                 pass
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         if not isDQ2SRMSite(location):
             logger.error('clean_duplicates_in_dataset failed since %s in no proper DQ2 location', location) 
@@ -1327,26 +1353,28 @@ class DQ2OutputDataset(Dataset):
             logger.warning('Duplicate files are now in dataset: %s', trashDatasetname)
             # Delete duplicate files from original dataset
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     dq2.deleteFilesFromDataset(datasetname, trashFilesGuids)
                 except:
                     logger.error('Failure during removal of duplicates from dataset %s', datasetname)
                     pass
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             # Delete trash dataset
             if config['DELETE_DUPLICATES_DATASET']:
                 try:
-                    dq2_lock.acquire()
+                    #dq2_lock.acquire()
                     try:
                         dq2.deleteDatasetReplicas(trashDatasetname, location)                    
                     except:
                         logger.error('Failure during removal of duplicates dataset %s', trashDatasetname)
                         pass
                 finally:                                                        
-                    dq2_lock.release()
+                    #dq2_lock.release()
+                    pass
 
         return
 
@@ -1377,13 +1405,14 @@ class DQ2OutputDataset(Dataset):
         exist = False
         if not datasetname: datasetname=self.datasetname
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 content = dq2.listDatasets(datasetname)
             except:
                 content = []
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
         if len(content)>0:
             exist = True
             
@@ -1395,19 +1424,21 @@ class DQ2OutputDataset(Dataset):
         if not datasetname: datasetname=self.datasetname
 
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 locations = dq2.listDatasetReplicas(datasetname)
             except:
                 logger.error('Dataset %s not found !', datasetname)
                 return
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             datasetinfo = dq2.listDatasets(datasetname)
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         try:
             datasetvuid = datasetinfo[datasetname]['vuids'][0]
@@ -1435,10 +1466,11 @@ class DQ2OutputDataset(Dataset):
 
         if datasetname:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 dq2.registerNewDataset(datasetname)
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             self.datasetname = datasetname
 
@@ -1449,10 +1481,12 @@ class DQ2OutputDataset(Dataset):
                 self.datasetList.append(dataset)
         for dataset in self.datasetList:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 content = dq2.listDatasets(dataset)
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
+
             if len(content)>0:
                 logger.warning("dataset %s already exists: skipping", dataset)
                 continue
@@ -1468,11 +1502,12 @@ class DQ2OutputDataset(Dataset):
             if isDQ2SRMSite(location) and \
                    (location.find('LOCALGROUPDISK')>0 or location.find('SCRATCHDISK')>0):
                 try:
-                    dq2_lock.acquire()
+                    #dq2_lock.acquire()
                     dq2.registerDatasetSubscription(datasetname, location)
                     logger.warning('Dataset %s has been subscribed to %s.', datasetname, location)
                 finally:
-                    dq2_lock.release()
+                    #dq2_lock.release()
+                    pass
                     
         return
 
@@ -1481,26 +1516,28 @@ class DQ2OutputDataset(Dataset):
         alllocations = []
 
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 datasetinfo = dq2.listDatasets(datasetname)
             except:
                 datasetinfo = {}
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         if datasetinfo=={}:
             logger.error('Dataset %s is not defined in DQ2 database !' , datasetname )
             return -1
         
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 locations = dq2.listDatasetReplicas(datasetname)
             except:
                 locations = {}
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         if locations != {}: 
             try:
@@ -1514,24 +1551,26 @@ class DQ2OutputDataset(Dataset):
             alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
 
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             if not siteID in alllocations:
                 try:
                     dq2.registerDatasetLocation(datasetname, siteID)
                 except DQInvalidRequestException, Value:
                     logger.error('Error registering location %s of dataset %s: %s', datasetname, siteID, Value) 
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         # Verify registration
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 locations = dq2.listDatasetReplicas(datasetname)
             except:
                 locations = {}
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         if locations != {}: 
             datasetvuid = datasetinfo[datasetname]['vuids'][0]
@@ -1547,10 +1586,11 @@ class DQ2OutputDataset(Dataset):
         # Check if dataset really exists
 
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             content = dq2.listDatasets(datasetname)
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         if content=={}:
             logger.error('Dataset %s is not defined in DQ2 database !',datasetname)
@@ -1564,14 +1604,15 @@ class DQ2OutputDataset(Dataset):
         #    checksums.append(None)
         
         try:
-            dq2_lock.acquire()
+            #dq2_lock.acquire()
             try:
                 ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
             except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFrozenDatasetException), Value:
                 logger.warning('Warning, some files already in dataset or dataset is frozen: %s', Value)
                 pass
         finally:
-            dq2_lock.release()
+            #dq2_lock.release()
+            pass
 
         return 
 
@@ -1599,24 +1640,26 @@ class DQ2OutputDataset(Dataset):
                 logger.info("Registering dataset %s in %s" % (dataset,siteID))
                 # use another version of register_dataset_location, as the "secure" one does not allow to keep track of datafiles saved in the fall-back site (CERNCAF)
                 try:
-                    dq2_lock.acquire()
+                    #dq2_lock.acquire()
                     content = dq2.listDatasets(dataset)
                 finally:
-                    dq2_lock.release()
+                    #dq2_lock.release()
+                    pass
 
                 if content=={}:
                     logger.error('Dataset %s is not defined in DQ2 database !',dataset)
                 else: 
                     try:
-                        dq2_lock.acquire()
+                        #dq2_lock.acquire()
                         try:
                             dq2.registerDatasetLocation(dataset, siteID)
                         except DQLocationExistsException, DQInternalServerException:
                             logger.debug("Dataset %s is already registered at location %s", dataset, siteID )
                         
                     finally:
-                        dq2_lock.release()
-                        
+                        #dq2_lock.release()
+                        pass
+
             self.register_file_in_dataset(dataset,[lfn],[guid],[size],[adler32])
 
     def check_content_consistency(self, numsubjobs, **options ):
@@ -1627,14 +1670,15 @@ class DQ2OutputDataset(Dataset):
 
         for dataset in datasets:
             try:
-                dq2_lock.acquire()
+                #dq2_lock.acquire()
                 try:
                     contents = dq2.listFilesInDataset(dataset)
                 except:
                     contents = []
                     pass
             finally:
-                dq2_lock.release()
+                #dq2_lock.release()
+                pass
 
             if not contents:
                 contents = []
@@ -1817,14 +1861,16 @@ class DQ2OutputDataset(Dataset):
                 #finally:
                 #    dq2_lock.release()
                 try:
-                    dq2_lock.acquire()
+                    #dq2_lock.acquire()
                     for dataset in self.allDatasets:
                         try:
                             dq2.freezeDataset(dataset)
                         except DQFrozenDatasetException:
                             pass
                 finally:
-                    dq2_lock.release()
+                    #dq2_lock.release()
+                    pass
+
                 #try:
                 #    dq2_lock.acquire()
                 #    try:
@@ -1848,13 +1894,14 @@ class DQ2OutputDataset(Dataset):
                         self.allDatasets.append(datasetnameTemp)
                 for datasetnameFreeze in self.allDatasets:
                     try:
-                        dq2_lock.acquire()
+                        #dq2_lock.acquire()
                         try:
                             dq2.freezeDataset(datasetnameFreeze)
                         except DQFrozenDatasetException:
                             pass
                     finally:
-                        dq2_lock.release()
+                        #dq2_lock.release()
+                        pass
                 
 
     def retrieve(self, type=None, name=None, **options ):
