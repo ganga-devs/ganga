@@ -62,19 +62,19 @@ def setChirpVariables():
         Ganga.Utility.Config.setConfigOption('Panda','chirpconfig', tempchirpconfig)
     return 
 
-AGISSpecTS = time.time()
-def refreshAGISSpecs():
-    global AGISSpecsTS
-    global agisinfos
-    try:
-        if time.time() - AGISSpecsTS > 3600:
-            agisinfosLocal = simplejson.load(urllib2.urlopen("http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTIVE&rc_site_state=ACTIVE"))
-            if agisinfosLocal:
-                agisinfos = agisinfosLocal
-            AGISSpecsTS = time.time()
-    except:
-        AGISSpecsTS = time.time()
-    return
+# AGISSpecTS = time.time()
+# def refreshAGISSpecs():
+#     global AGISSpecsTS
+#     global agisinfos
+#     try:
+#         if time.time() - AGISSpecsTS > 3600:
+#             agisinfosLocal = simplejson.load(urllib2.urlopen("http://atlas-agis-api.cern.ch/request/site/query/list/?json&state=ACTIVE&rc_site_state=ACTIVE"))
+#             if agisinfosLocal:
+#                 agisinfos = agisinfosLocal
+#             AGISSpecsTS = time.time()
+#     except:
+#         AGISSpecsTS = time.time()
+#     return
 
 pandaSpecTS = time.time()
 def refreshPandaSpecs():
@@ -133,24 +133,25 @@ def convertDQ2NamesToQueueName(locations):
     return info
 
 def convertQueueNameToDQ2Names(queue):
-    refreshAGISSpecs()
-    tokens = []
 
-    for entry in agisinfos:
-        try:
-            temp_queuename = [i.keys() for i in entry['presources'].values() ]
-            queuename = [item for sublist in temp_queuename for item in sublist]
-        except:
-            queuename = []
-            pass
-        try:
-            tokens = entry['ddmendpoints'].keys()
-        except:
-            tokens = []
-        if queue in queuename:
-            tokens = [ i for i in tokens if not i in "TAPE" ]
-            if tokens:
-                return tokens
+    # refreshAGISSpecs()
+    # tokens = []
+
+    # for entry in agisinfos:
+    #     try:
+    #         temp_queuename = [i.keys() for i in entry['presources'].values() ]
+    #         queuename = [item for sublist in temp_queuename for item in sublist]
+    #     except:
+    #         queuename = []
+    #         pass
+    #     try:
+    #         tokens = entry['ddmendpoints'].keys()
+    #     except:
+    #         tokens = []
+    #     if queue in queuename:
+    #         tokens = [ i for i in tokens if not i in "TAPE" ]
+    #         if tokens:
+    #             return tokens
 
     # fallback to old code
     logger.debug("convertQueueNameToDQ2Names fall back")
