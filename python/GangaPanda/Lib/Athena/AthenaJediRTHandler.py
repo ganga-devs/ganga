@@ -192,6 +192,11 @@ class AthenaJediRTHandler(IRuntimeHandler):
                 sj.application.athena_compile = False
             logger.info('"job.backend.nobuild=True" or "--nobuild" chosen - Panda build job is switched off.')
 
+        # check for auto datri
+        if job.outputdata.location != '':
+            if not PsubUtils.checkDestSE(job.outputdata.location,job.outputdata.datasetname,False):
+                raise ApplicationConfigurationError(None,"Problems with outputdata.location setting '%s'" % job.outputdata.location)
+
         # validate application
         if not app.atlas_release and not job.backend.requirements.rootver and not app.atlas_exetype in [ 'EXE' ]:
             raise ApplicationConfigurationError(None,"application.atlas_release is not set. Did you run application.prepare()")
@@ -489,7 +494,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
         # output files
         outMap = {}
         if app.atlas_exetype in ["ATHENA", "TRF"]:
-            outMap, tmpParamList = AthenaUtils.convertConfToOutput(self.runConfig, self.extOutFile, job.outputdata.datasetname)
+            outMap, tmpParamList = AthenaUtils.convertConfToOutput(self.runConfig, self.extOutFile, job.outputdata.datasetname, destination=job.outputdata.location)
             taskParamMap['jobParameters'] += [
                 {'type':'constant',
                  'value': '-o "%s" ' % outMap
@@ -506,7 +511,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
                         lfn = job.outputdata.datasetname[:-1]
                     lfn += '.$JOBSETID._${{SN/P}}.{0}'.format(tmpLFN)
                     dataset = '{0}_{1}/'.format(job.outputdata.datasetname[:-1],tmpLFN)
-                    taskParamMap['jobParameters'] += MiscUtils.makeJediJobParam(lfn,dataset,'output',hidden=True)
+                    taskParamMap['jobParameters'] += MiscUtils.makeJediJobParam(lfn,dataset,'output',hidden=True, destination=job.outputdata.location)
                     outMap[tmpLFN] = lfn
 
                 taskParamMap['jobParameters'] += [ 
