@@ -24,8 +24,8 @@ def getDiracEnv(force=False):
                     if str(v).startswith('() {'):
                         keys_to_remove.append( k )
                 for key in keys_to_remove:
-                    del DIRAC_ENV[ key ]
-
+                    if key in DIRAC_ENV:
+                        del DIRAC_ENV[ key ]
         else:
             logger.error("'DiracEnvFile' config variable empty or file not present")
 

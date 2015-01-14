@@ -21,14 +21,17 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
     Generator that yields a datasets for dirac split jobs
     """
+    #logger.debug( "DiracSplitter" )
+    #logger.debug( "inputs: %s" % str( inputs ) )
     split_files = []
     i=inputs.__class__()
 
     all_files = igroup( inputs.files[:maxFiles], getConfig('DIRAC')['splitFilesChunks'],
                         leftovers=True )
 
-    #import traceback
-    #traceback.print_stack()
+    #logger.debug( "Looping over all_files" )
+    #logger.debug( "%s" % str( all_files ) )
+
 
     for files in all_files:
 
@@ -36,11 +39,7 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
         LFNsToSplit = i.getLFNs()
 
-        #print "LFNsToSplit: " + str(LFNsToSplit)
-
         if( len( LFNsToSplit ) ) > 1:
-
-            logger.debug( "Splitting inputData" )
 
             result = execute('splitInputData(%s,%d)'\
                              % ( i.getLFNs(), filesPerJob ) )
@@ -53,8 +52,6 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
         else:
 
-            logger.debug( "Don't try to split a single file" )
-
             split_files = [ LFNsToSplit ]
 
     if len(split_files) == 0:
@@ -65,7 +62,7 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     big_list = []
     for l in split_files: big_list.extend(l)
     diff = set(inputs.getFileNames()[:maxFiles]).difference(big_list)
-    if len(diff) > 0:            
+    if len(diff) > 0:
         for f in diff: logger.warning('Ignored file: %s' % f)
         if not ignoremissing:
             raise SplittingError('Some files not found!')

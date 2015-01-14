@@ -85,7 +85,7 @@ def dirac_parametric_split(app):
     data = app.getJobObject().inputdata
     splitter = app.getJobObject().splitter
 
-    #print "Split: %s" + str(data)
+    #logger.debug( "Split %s" % str( data ) )
     
     split_data=[ dataset for dataset in DiracSplitter(data, splitter.filesPerJob, splitter.maxFiles, splitter.ignoremissing)]
 ##     for dataset in DiracSplitter(data, splitter.filesPerJob, splitter.maxFiles, splitter.ignoremissing):
