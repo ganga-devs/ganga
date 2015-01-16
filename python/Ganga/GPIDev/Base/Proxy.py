@@ -205,8 +205,9 @@ class ProxyDataDescriptor(object):
         if hasattr(val, 'is_prepared'):
             if val.is_prepared is not None:
                 if val.is_prepared is not True:
-                    if not os.path.isdir(os.path.join(shared_path,val.is_prepared.name)):
-                        logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
+                    if hasattr( val.is_prepared, 'name' ):
+                        if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
+                            logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
 
 
         # apply attribute conversion
@@ -290,15 +291,19 @@ def GPIProxyClassFactory(name, pluginclass):
 
         # at the object level _impl is a ganga plugin object
         self.__dict__['_impl'] = pluginclass()
-        self._impl.__construct__(map(stripProxy,args))
+        try:
+            self._impl.__construct__(map(stripProxy,args))
+        except:
+            pass
 
         # initialize all properties from keywords of the constructor
         for k in kwds:
+            print k
             if self._impl._schema.hasAttribute(k):
                 setattr(self,k,kwds[k])
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)',name,k,kwds[k])
-        
+
         self._impl._proxyObject = self
         self._impl._auto__init__()
 
@@ -361,13 +366,14 @@ def GPIProxyClassFactory(name, pluginclass):
         if hasattr(self,'application'):
             if hasattr(self.application,'is_prepared'):
                 if self.application.is_prepared is not None and\
-                    self.application.is_prepared is not True and\
-                        os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
-                            from Ganga.Core.GangaRepository import getRegistry
-                            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
-                            logger.debug('increasing counter from proxy.py')
-                            shareref.increase(self.application.is_prepared.name)
-                            logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
+                    self.application.is_prepared is not True:
+                        if hasattr( self.application.is_prepared, 'name' ):
+                            if os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
+                                from Ganga.Core.GangaRepository import getRegistry
+                                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
+                                logger.debug('increasing counter from proxy.py')
+                                shareref.increase(self.application.is_prepared.name)
+                                logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
                 elif self.application.is_prepared is not None:
                     if self.application.is_prepared is not True:
                         if not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
@@ -381,10 +387,11 @@ def GPIProxyClassFactory(name, pluginclass):
         if hasattr(self,'is_prepared'):
             if self.is_prepared is not None:
                 if self.is_prepared is not True:
-                    if not os.path.isdir(os.path.join(shared_path,self.is_prepared.name)):
-                        logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
-                        logger.error('Unpreparing %s application' % self._impl._name)
-                        self.unprepare()
+                    if hasattr( self.application.is_prepared, 'name' ):
+                        if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
+                            logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
+                            logger.error('Unpreparing %s application' % self._impl._name)
+                            self.unprepare()
 
         if unprepare is True:
             c = self._impl.clone()

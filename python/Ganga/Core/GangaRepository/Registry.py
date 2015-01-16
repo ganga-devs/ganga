@@ -15,7 +15,7 @@ else:
 
 class RegistryError(GangaException):
     def __init__(self,what):
-        GangaException.__init__(self,what)
+        super( RegistryError, self ).__init__(self,what)
         self.what=what
     def __str__(self):
         return "RegistryError: %s"%self.what

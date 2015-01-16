@@ -195,6 +195,12 @@ class Job(GangaObject):
                   { 'attribute' : 'inputdata' },
                   { 'attribute' : 'outputsandbox' } ]
 
+    _storedRTHandler = None
+    _storedJobSubConfig = None
+    _storedAppSubConfig = None
+    _storedJobMasterConfig = None
+    _storedAppMasterConfig = None
+
     # TODO: usage of **kwds may be envisaged at this level to optimize the overriding of values, this must be reviewed
     def __init__(self):
         super(Job, self).__init__()
@@ -244,8 +250,24 @@ class Job(GangaObject):
     # on the deepcopy reattach the outputfiles to call their _on_attribute__set__
     def __deepcopy__(self, memo = None):
 
+        # Due to problems on Hammercloud due to uncopyable object lets explicitly stop these objects going anywhere near the __deepcopy__
+
+        temp_RTH = self._storedRTHandler
+        temp_SJC = self._storedJobSubConfig
+        temp_SAC = self._storedAppSubConfig
+        temp_JMC = self._storedJobMasterConfig
+        temp_AMC = self._storedAppMasterConfig
+
+        self._unsetSubmitTransients()
         c = super(Job,self).__deepcopy__(memo)
         c._unsetSubmitTransients()
+
+        self._storedRTHandler = temp_RTH
+        self._storedJobSubConfig = temp_SJC
+        self._storedAppSubConfig = temp_SAC
+        self._storedJobMasterConfig = temp_JMC
+        self._storedAppMasterConfig = temp_AMC
+
         c.outputfiles = []
         for f in self.outputfiles:
             if hasattr(f, '_on_attribute__set__'):
@@ -266,7 +288,8 @@ class Job(GangaObject):
             #elif (not getConfig('Output')['ForbidLegacyInput']):
                 if self.inputsandbox == []:
                     logger.debug( "Copying Master inputfiles" )
-                    c.inputsandbox = self.master.inputsandbox
+                    import copy
+                    c.inputsandbox = copy.deepcopy( self.master.inputsandbox )
                     c.inputfiles = []
                 else:
                     logger.debug( "Keeping own inputsandbox" )
@@ -278,6 +301,9 @@ class Job(GangaObject):
 
         logger.debug( "Intercepted __deepcopy__" )
         return c
+
+    def clone(self):
+        return self.__deepcopy__()
 
     def _attribute_filter__get__(self, name):
 
@@ -340,7 +366,7 @@ class Job(GangaObject):
                 id = None
         try:
             oldstat = self.status
-        except KeyError:
+        except:
             oldstat = None
         logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
         #import inspect,os

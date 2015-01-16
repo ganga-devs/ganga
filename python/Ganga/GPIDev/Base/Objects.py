@@ -253,7 +253,20 @@ class Descriptor(object):
                     result = lookup_result
                 else:
                     obj._getReadAccess()
-                    result = obj._data[self._name]
+                    if self._name in obj._data:
+                        result = obj._data[self._name]
+                    else:
+                        if '_impl' in obj._data:
+                            if self._name in self._data._impl:
+                                result = obj._data._impl[self._name]
+                            else:
+                                logger.debug( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
+                                GangaException( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
+                                result = obj._data[self._name]
+                        else:
+                            logger.debug( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
+                            GangaException( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
+                            result = obj._data[self._name]
 
             return result
 
