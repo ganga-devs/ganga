@@ -13,9 +13,10 @@ from GangaLHCb.Lib.LHCbDataset.LogicalFile import LogicalFile
 
 class LHCbTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {
-      'files_per_unit'  : SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
-      'splitter'        : ComponentItem('splitters', defvalue=None, optional=1, load_default=False,doc='Splitter to be used for units'),
-      'queries'         : ComponentItem('query', defvalue=[], sequence=1, protected=1, optional=1, load_default=False,doc='Queries managed by this Transform'),
+      'files_per_unit'     : SimpleItem(defvalue=-1, doc='Maximum number of files to assign to each unit from a given input dataset. If < 1, use all files.', typelist=["int"]),
+      'splitter'           : ComponentItem('splitters', defvalue=None, optional=1, load_default=False,doc='Splitter to be used for units'),
+      'queries'            : ComponentItem('query', defvalue=[], sequence=1, protected=1, optional=1, load_default=False,doc='Queries managed by this Transform'),
+      'delete_chain_input' : SimpleItem(defvalue=False, doc='Delete the Dirac input files/data after completion of each unit', typelist=["bool"]),
     }.items()))
 
    _category = 'transforms'
@@ -108,7 +109,6 @@ class LHCbTransform(ITransform):
                incl_pat_list += inds.include_file_mask
                excl_pat_list += inds.exclude_file_mask
 
-      print incl_pat_list
       # go over the output files and copy the appropriates over as input files
       flist = []
       import re

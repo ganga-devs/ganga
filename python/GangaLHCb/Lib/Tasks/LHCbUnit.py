@@ -49,6 +49,17 @@ class LHCbUnit(IUnit):
 
    def updateStatus(self, status):
       """Update status hook"""
+
+      # check for input data deletion of chain data
+      if status == "completed" and self._getParent().delete_chain_input and len(self.req_units) > 0:
+
+         # the inputdata field *must* be filled from the parent task
+         # NOTE: When changing to inputfiles, will probably need to check for any specified in trf.inputfiles
+         job = GPI.jobs(self.active_job_ids[0])
+         for f in job.inputdata.files:
+            logger.warning("Removing chain inputdata file '%s'..." % f.name)
+            f.remove()
+            
       super(LHCbUnit,self).updateStatus(status)
 
    def checkForSubmission(self):
