@@ -1,7 +1,8 @@
 import Ganga.Utility.logging
+from Ganga.Core.exceptions import *
 logger = Ganga.Utility.logging.getLogger()
 
-class PluginManagerError(ValueError):
+class PluginManagerError(GangaValueError):
     def __init__(self,x): ValueError.__init__(self,x)
     
 # Simple Ganga Plugin Mechanism
@@ -28,33 +29,41 @@ class PluginManager(object):
         try:
             if name is not None:
                 if category in self.first:
-                    #logger.debug( "Returning based upon Category and Name" )
-                    return self.all_dict[category][name]
+                    logger.debug( "Returning based upon Category and Name" )
+                    if name in self.all_dict[category]:
+                        return self.all_dict[category][name]
 
-            if (name is None) and (category in self.first):
-                #logger.debug( "Returning based upon Category ONLY" )
-                return self.first[category]
-            elif not category in self.first:
+            if (name is None) and category is not None:
+                if (category in self.first):
+                    logger.debug( "Returning based upon Category ONLY" )
+                    return self.first[category]
+            elif (name is not None) and (category is not None):
                 for category_i in self.all_dict:
-                    if name in self.all_dict[category_i]:
-                        message1 = "Category of %s, has likely changed between ganga versions!" % name
-                        message2 = "Category Requested: %s,   Category in which plugin was found: %s" % ( category, category_i )
-                        message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
-                        #logger.debug( message1 )
-                        #logger.debug( message2 )
-                        #logger.debug( message3 )
-                        return self.all_dict[category_i][name]
-            else:
-                return self.all_dict[category][name]
-
+                    for this_name in self.all_dict[category_i]:
+                        if name == this_name:
+                            message1 = "Category of %s, has likely changed between ganga versions!" % name
+                            message2 = "Category Requested: %s,   Category in which plugin was found: %s" % ( category, category_i )
+                            message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
+                            logger.debug( message1 )
+                            logger.debug( message2 )
+                            logger.debug( message3 )
+                            return self.all_dict[category_i][name]
+            
         except KeyError:
-            if name is None:
-                s = "cannot find default plugin for category "+category
-            else:
-                s = "cannot find '%s' in a category '%s', or elsewhere" %(name, category)
+            pass
+        except:
+            logger.error( "Some Other unexpected ERROR!" )
 
-            #logger.debug(s)
-            raise PluginManagerError(s)
+        if name is None:
+            s = "cannot find default plugin for category " + category
+        else:
+            s = "cannot find '%s' in a category '%s', or elsewhere" % (name, category)
+
+        if name is None and Category is None:
+            s = "Serious Plugin Error has occured"
+
+        logger.debug(s)
+        raise PluginManagerError(s)
 
     def add(self, pluginobj, category, name):
         """ Add a pluginobj to the plugin manager with the name and the category labels.

@@ -298,7 +298,6 @@ def GPIProxyClassFactory(name, pluginclass):
 
         # initialize all properties from keywords of the constructor
         for k in kwds:
-            print k
             if self._impl._schema.hasAttribute(k):
                 setattr(self,k,kwds[k])
             else:

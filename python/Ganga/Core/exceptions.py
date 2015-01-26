@@ -136,7 +136,9 @@ class GangaAttributeError(AttributeError,GangaException):
                 traceback.print_stack()
 
 class GangaValueError(ValueError,GangaException):
-    def __init__(self,*a,**k): ValueError.__init__(self,*a,**k)
+    def __init__(self,*a,**k):
+        super( GangaValueError, self ).__int__(1, a, k )
+        ValueError.__init__(self,*a,**k)
     
 class ProtectedAttributeError(GangaAttributeError):
     'Attribute is read-only and may not be modified by the user (for example job.id)'
