@@ -60,13 +60,15 @@ def findOutputFileTypeByFileName(filename):
             if fnmatch.fnmatch(filename, filePattern):
                 matchKeys.append(key)
 
-    if len(matchKeys) == 1:     
+    if len(matchKeys) == 1:
+        logger.debug("File name pattern %s matched %s, assigning to %s" % ( filename, str(matchKeys), matchKeys[-1] ) )
         return matchKeys[-1]
     elif len(matchKeys) > 1:
-        logger.warning("file name pattern %s matched %s, assigning to %s" % (filename, str(matchKeys), matchKeys[-1]))
+        logger.warning("file name pattern %s matched %s, assigning to %s" % (filename, str(matchKeys), matchKeys[-1] ) )
         return matchKeys[-1]
     else:
-        return None     
+        logger.debug( "File name pattern %s is not matched" % filename )
+        return None
 
 def string_file_shortcut(v,item):
     if type(v) is type(''):

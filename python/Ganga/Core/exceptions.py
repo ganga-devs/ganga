@@ -119,6 +119,7 @@ class JobManagerError(GangaException):
 class GangaAttributeError(AttributeError,GangaException):
     logger = None
     def __init__(self,*a,**k):
+        GangaException.__init__(self,*a,**k)
         AttributeError.__init__(self,*a,**k)
 
         # This code will give a stack trace from a GangaException only when debugging is enabled
@@ -137,25 +138,26 @@ class GangaAttributeError(AttributeError,GangaException):
 
 class GangaValueError(ValueError,GangaException):
     def __init__(self,*a,**k):
-        super( GangaValueError, self ).__int__(1, a, k )
         ValueError.__init__(self,*a,**k)
     
 class ProtectedAttributeError(GangaAttributeError):
     'Attribute is read-only and may not be modified by the user (for example job.id)'
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
-
+    def __init__(self,*a,**k):
+        GangaAttributeError.__init__(self,*a,**k)
 
 class ReadOnlyObjectError(GangaAttributeError):
     'Object cannot be modified (for example job in a submitted state)'
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
-
+    def __init__(self,*a,**k):
+        GangaAttributeError.__init__(self,*a,**k)
 
 class TypeMismatchError(GangaAttributeError):
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
+    def __init__(self,*a,**k):
+        GangaAttributeError.__init__(self,*a,**k)
 
 
 class SchemaError(GangaAttributeError):
-    def __init__(self,*a,**k): GangaAttributeError.__init__(self,*a,**k)
+    def __init__(self,*a,**k):
+        GangaAttributeError.__init__(self,*a,**k)
 
 #
 #

@@ -798,8 +798,10 @@ class Job(GangaObject):
         If optional sep is specified FQID string is returned, ids are separated by sep.
         For example: getFQID('.') will return 'masterjob_id.subjob_id....'
         """
-
-        fqid = [self.id]
+        if hasattr( self, 'id' ):
+            fqid = [self.id]
+        else:
+            return None
         cur = self._getParent() # FIXME: or use master attribute?
         while cur:
             fqid.append(cur.id)

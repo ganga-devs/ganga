@@ -223,19 +223,29 @@ class LCGSEFile(IGangaFile):
                 self.subfiles.append(GPIProxyObjectFactory(d))
                 
         else:
+            logger.debug( "sourceDir: %s" % sourceDir )
+            logger.debug( "fileName: %s" % fileName )
             currentFile = os.path.join(sourceDir, fileName)
+            import os.path
+            if os.path.isfile( currentFile ):
+                logger.debug( "currentFile: %s exists!" % currentFile )
+            else:
+                logger.debug( "currentFile: %s DOES NOT exist!" % currentFile )
+
             cmd = self.getUploadCmd()
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
 
-            (exitcode,output,m) = self.shell.cmd1(cmd, capture_stderr=True)
+            logger.debug( "cmd is: %s" % cmd )
+
+            (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
 
             if exitcode == 0:
                 
                 match = re.search('(guid:\S+)',output)
-                if match:       
+                if match:
                     self.locations = output.strip()
-                
+
                 ## Alex removed this as more general approach in job.py after put() is called
                 #remove file from output dir if this object is attached to a job
                 #if self._parent != None:
@@ -246,7 +256,7 @@ class LCGSEFile(IGangaFile):
                 if self._parent != None:
                     logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
                 else:
-                    logger.error("The file can't be uploaded because of %s" % (self.failureReason))
+                    logger.error("The file can't be uploaded because of %s" % (self.failureReason) )
             
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
@@ -256,7 +266,8 @@ class LCGSEFile(IGangaFile):
 
         for outputFile in outputFiles:
             lcgCommands.append('lcgse %s %s %s' % (outputFile.namePattern , outputFile.lfc_host,  outputFile.getUploadCmd()))
-                
+            logger.debug( "OutputFile (%s) cmd for WN script is: %s" % ( outputfile.namePattern, outputFile.getUploadCmd() ) )
+
         script = """\n
 
 ###INDENT####system command executor with subprocess

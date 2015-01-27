@@ -193,8 +193,12 @@ class RuntimePackage:
     def loadTemplates( self, globals ):
         try:
             import os.path
-            execfile( os.path.join( self.modpath, 'TEMPLATES.py' ), globals )
-        except IOError, x:
+            if os.path.isfile( os.path.join( self.modpath, 'TEMPLATES.py' ) ):
+                execfile( os.path.join( self.modpath, 'TEMPLATES.py' ), globals )
+            else:
+                logger.debug( "Problems adding templates for runtime package %s",
+                        self.name)
+        except Exception, x:
             logger.debug\
                ( "Problems adding templates for runtime package %s", self.name)
             logger.debug(x)

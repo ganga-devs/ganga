@@ -76,7 +76,7 @@ class Schema:
             return self.datadict[name]
         except Exception, x:
             logger.error( "Ganga Cannot find: %s in Object: %s" % ( name, self.name ) )
-            raise GangaException( x )
+            raise GangaAttributeError( x )
     
     category = property(lambda self: self._pluginclass._category)
     name = property(lambda self: self._pluginclass._name)
@@ -349,7 +349,7 @@ class Item:
         # unless 'copyable' explicitly set (or forced), protected==1 => copyable==0
         if not kwds.has_key('copyable') and (not forced or not forced.has_key('copyable')):
             if self._meta['protected']:
-                logger.debug('applied implicit conditional rule: protected==1 => copyable==0')
+                #logger.debug('applied implicit conditional rule: protected==1 => copyable==0')
                 self._meta['copyable'] = 0
 
     # return a description of the property including a docstring

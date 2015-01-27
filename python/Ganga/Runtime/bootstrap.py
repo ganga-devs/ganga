@@ -1142,6 +1142,10 @@ default_backends = LCG
     # if namespace is not specified then run in __main__
     def run(self,local_ns=None):
 
+        from Ganga.Utility.logging          import getLogger
+        logger = getLogger()
+        logger.debug( "Entering run" )
+
         if self.options.webgui == True:
             from Ganga.Runtime.http_server import start_server
             start_server()
@@ -1180,7 +1184,8 @@ default_backends = LCG
            # using explicitly '\n' and '\t' chars
            code = config['StartupGPI'].replace('\\t','\t').replace('\\n','\n')
            exec code in local_ns
-          
+
+        logger.debug( "loaded .ganga.py" )
 
 
         #Find out if ganga version has been used before by writing to a hidden file in the gangadir

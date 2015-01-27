@@ -386,7 +386,7 @@ def GPIProxyClassFactory(name, pluginclass):
         if hasattr(self,'is_prepared'):
             if self.is_prepared is not None:
                 if self.is_prepared is not True:
-                    if hasattr( self.application.is_prepared, 'name' ):
+                    if hasattr( self.is_prepared, 'name' ):
                         if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
                             logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
                             logger.error('Unpreparing %s application' % self._impl._name)
@@ -455,8 +455,11 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
                 if name in dict(pluginclass._schema.allItems()).keys():
                     if not dict(pluginclass._schema.allItems())[name]['hidden']:
                         return addProxy(pluginclass._attribute_filter__get__(name)) 
-
-        return object.__getattribute__(self, name)
+        try:
+            return object.__getattribute__(self, name)
+        except AttributeError, x:
+            logger.debug( "Attribute: %s NOT found" % name )
+            raise GangaAttributeError( "%s" % str(x) )
 
     # but at the class level _impl is a ganga plugin class
     d = { '_impl' : pluginclass,

@@ -23,28 +23,43 @@ class RegistryError(GangaException):
 class RegistryAccessError(RegistryError):
     """ This error is raised if the request is valid in principle, 
         but the Registry cannot be accessed at the moment."""        
+    def __init__(self):
+        super(ObjectNotInRegistryError,self).__init__()
+
     def __str__(self):
         return "RegistryAccessError: %s"%self.what
 
 class RegistryLockError(RegistryError):
     """ This error is raised if the request is valid in principle,
         but the object is locked by another Ganga session"""
+    def __init__(self):
+        super(ObjectNotInRegistryError,self).__init__()
+
     def __str__(self):
         return "RegistryLockError: %s"%self.what
 
 class ObjectNotInRegistryError(RegistryError):
     """ This error is raised if an object has been associated to this registry,
         but is not actually in the registry. This most probably indicates an internal Ganga error."""
+    def __init__(self):
+        super(ObjectNotInRegistryError,self).__init__()
+
     def __str__(self):
         return "ObjectNotInRegistryError: %s"%self.what
 
-class RegistryKeyError(RegistryError,KeyError):
+class RegistryKeyError(RegistryError, KeyError):
     """ This error is raised if the given id is not found in the registry """
+    def __init__(self):
+        super(ObjectNotInRegistryError, self).__init__()
+
     def __str__(self):
         return "RegistryKeyError: %s"%self.what
 
 class RegistryIndexError(RegistryError,IndexError):
     """ This error is raised if the given id is not found in the registry """
+    def __init__(self):
+        super(ObjectNotInRegistryError,self).__init__()
+
     def __str__(self):
         return "RegistryIndexError: %s"%self.what
 
@@ -192,8 +207,11 @@ class Registry(object):
         """Returns the id of the given object in this registry, or 
         Raise ObjectNotInRegistryError if the Object is not found"""
         try:
-            assert obj == self._objects[obj._registry_id]
-            return obj._registry_id
+            if hasattr( obj, '_registry_id' ):
+                assert obj == self._objects[obj._registry_id]
+                return obj._registry_id
+            else:
+                raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj)
         except AttributeError:
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj)
         except AssertionError:
