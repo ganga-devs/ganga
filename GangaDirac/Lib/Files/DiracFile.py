@@ -32,7 +32,6 @@ class DiracFile(IGangaFile):
     _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
                                      'localDir'      : SimpleItem(defvalue=None,copyable=1,typelist=['str','type(None)'],
                                                                   doc='local dir where the file is stored, used from get and put methods'),
-                                     'remoteDir'     : SimpleItem(defvalue="",doc='remote directory where the LFN is to be placed in the dirac base directory by the put method.'),
                                      'locations'     : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,
                                                                   doc="list of SE locations where the outputfiles are uploaded"),
                                      'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,
@@ -40,6 +39,7 @@ class DiracFile(IGangaFile):
                                      'lfn'           : SimpleItem(defvalue='',copyable=1,typelist=['str'],
                                                                   doc='return the logical file name/set the logical file name to use if not '\
                                                                       'using wildcards in namePattern'),
+                                     'remoteDir'     : SimpleItem(defvalue="",doc='remote directory where the LFN is to be placed in the dirac base directory by the put method.'),
                                      'guid'          : SimpleItem(defvalue='',copyable=1,typelist=['str'],
                                                                   doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
                                      'subfiles'      : ComponentItem(category='gangafiles',defvalue=[], hidden=1, sequence=1, copyable=0,
@@ -68,18 +68,29 @@ class DiracFile(IGangaFile):
 
         self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
 
-    def __construct__(self,args):
+    def __construct__( self, args ):
         if len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
+            self._setLFNnamePattern( _lfn = '', _namePattern = self.namePattern )
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
+            self._setLFNnamePattern( _lfn = '', _namePattern = self.namePattern )
             self.localDir    = args[1]
         elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
             self.namePattern = args[0]
-            self.localDir    = args[1]
             self.lfn         = args[2]
+            self._setLFNnamePattern( _lfn = self.lfn, _namePattern = self.namePattern )
+            self.localDir    = args[1]
+        elif len(args) == 4 and type(args[0]) == type('') and type(args[1]) == type('')\
+                and type(args[2]) == type('') and type(args[3]) == type(''):
+            self.namePattern = args[0]
+            self.lfn         = args[2]
+            self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
+            self.localDir    = args[1]
+            self.remoteDir   = args[3]
         else:
              super( DiracFile, self ).__construct__( args )
+        return
 
     def _attribute_filter__set__(self, name, value):
 
@@ -91,8 +102,8 @@ class DiracFile(IGangaFile):
             self._setLFNnamePattern( _lfn = '', _namePattern = value )
             return self.namePattern
 
-        if name == 'localDir' and type(value) != type(None):
-            return expandfilename(value)
+#        if name == 'localDir' and type(value) != type(None):
+#            return expandfilename(value)
         return value
 
     def _setLFNnamePattern( self, _lfn = "", _namePattern = "" ):
@@ -101,22 +112,24 @@ class DiracFile(IGangaFile):
             if _lfn[0:4] == "LFN:":
                 _lfn = _lfn[4:]
 
+        import os.path
+
         if _lfn != "" and _namePattern != "":
             self.lfn = _lfn
             self.remoteDir = os.path.dirname( _lfn )
             self.namePattern = os.path.basename( _namePattern )
             self.localDir = os.path.dirname( _namePattern )
 
-        import os.path
-
         if _lfn != "" and _namePattern == "":
-            self.lfn = self.lfn
+            self.lfn = _lfn
             self.remoteDir = os.path.dirname( self.lfn )
-            self.namePattern = os.path.basename( self.lfn )
+            if self.namePattern == "":
+                self.namePattern = os.path.basename( self.lfn )
 
         if _namePattern != "" and _lfn == "":
             self.namePattern = os.path.basename( _namePattern )
-            self.localDir = os.path.dirname( _namePattern )
+            if os.path.dirname( _namePattern ) != "":
+                self.localDir = os.path.dirname( _namePattern )
 
     def _attribute_filter__get__(self, name ):
 
@@ -129,7 +142,7 @@ class DiracFile(IGangaFile):
                 logger.warning( "Do NOT have an LFN, for file: %s" % self.namePattern )
                 logger.warning( "If file exists try first using the method put()" )
             return object.__getattribute__(self, 'lfn')
-
+    
         else: return object.__getattribute__(self, name )
 
     def _on_attribute__set__(self, obj_type, attrib_name):
