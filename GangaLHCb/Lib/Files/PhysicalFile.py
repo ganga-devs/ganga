@@ -5,10 +5,10 @@
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 import os
 import re
 from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File.IGangaFile         import IGangaFile
 from Ganga.Utility.files import expandfilename
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -39,36 +39,44 @@ class PhysicalFile(LocalFile):
     pfn.upload("/some/lfn.file","CERN-USER") # upload the PFN to LFC
     [...etc...]
     '''
-    _schema = Schema(Version(1,1),{'name':SimpleItem(defvalue='',doc='PFN')})
-    _category='gangafiles'
-    _name='PhysicalFile'
+    _schema = Schema(Version(1,0), {'name' : SimpleItem( defvalue='',doc='PFN'),
+                                    'namePattern': SimpleItem(defvalue="",doc='pattern of the file name',transient=1),
+                                    'localDir': SimpleItem(defvalue="",doc='local dir where the file is stored, used from get and put methods',transient=1),
+                                    'subfiles'      : ComponentItem(category='gangafiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LocalFile'],
+                                                        sequence=1, copyable=0, doc="collected files from the wildcard namePattern",transient=1),
+                                    'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere',transient=1)})
+    _category = 'gangafiles'
+    _name = 'PhysicalFile'
     _exportmethods = ['upload']
 
     def __init__(self, name=''):
-        super(PhysicalFile,self).__init__()
-        self.namePattern = full_expand_filename(name)
-        self.name = self.namePattern
+        val = full_expand_filename(name)
+        super(PhysicalFile, self).__init__( namePattern = val )
+        self.name = val
+        self.namePattern = val
 
     def __construct__(self, args):
         if (len(args) != 1) or (type(args[0]) is not type('')):
-            super(PhysicalFile,self).__construct__(args)
+            super(PhysicalFile, self).__construct__(args)
         else:    
             self.name = full_expand_filename(args[0])
-         
-    def _attribute_filter__set__(self,n,v):
-        return full_expand_filename(v)
         
-    def upload(self,lfn,diracSE,guid=None):
-        'Upload PFN to LFC on SE "diracSE" w/ LFN "lfn".' 
-        from GangaDirac.Lib.Backends.DiracUtils import get_result
-        if guid is None:
-            cmd = 'addFile("%s","%s","%s",None)' % \
-                  (lfn,self.name,diracSE)
-        else:
-            cmd = 'addFile("%s","%s","%s","%s")' % \
-                  (lfn,self.name,diracSE,guid)
-        result = get_result(cmd,'Problem w/ upload','Error uploading file.')
+    def _attribute_filter__set__( self, n, v ):
+        val = full_expand_filename(v)
+        if n == 'name' and self.namePattern != val:
+            self.namePattern = val
+        if n == 'namePattern' and self.name != val:
+            self.name = val
+        return val
+
+    def upload( self, lfn, diracSE, guid = None ):
+
         from GangaDirac.Lib.Files.DiracFile import DiracFile
-        return GPIProxyObjectFactory(DiracFile(name=lfn))
+        diracFile = DiracFile( namePattern = self.name, lfn = lfn )
+
+        diracFile.put( force = True )
+
+        return diracFile
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+

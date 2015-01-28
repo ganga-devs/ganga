@@ -5,8 +5,6 @@ import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.Core import GangaException
 from GangaDirac.Lib.Files.DiracFile import DiracFile
-from GangaLHCb.Lib.Files.LogicalFile import LogicalFile
-from GangaLHCb.Lib.Files.PhysicalFile import PhysicalFile
 
 logger = Ganga.Utility.logging.getLogger()
 

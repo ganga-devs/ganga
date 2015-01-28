@@ -84,8 +84,8 @@ def loadPlugins( config = {} ):
     import Lib.Mergers
     import Lib.RTHandlers
     import Lib.Splitters
-#    import Lib.DIRAC
     import Lib.Tasks
+    import Lib.Files
 
 #from Ganga.GPIDev.Credentials import getCredential
 #proxy = getCredential('GridProxy', '')

@@ -8,8 +8,6 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import *
-from GangaLHCb.Lib.Files.PhysicalFile import PhysicalFile
-from GangaLHCb.Lib.Files.LogicalFile import LogicalFile
 from OutputData import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job,JobTemplate
@@ -365,6 +363,15 @@ class LHCbDataset(Dataset):
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut(name,item):
+
+    # Overload the LHCb instance if the Core beet us to it
+    mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut( name, item )
+
+    if mainFileOutput is None:
+        pass
+    else:
+        return mainFileOutput
+
     from GangaLHCb.Lib.Backends.Dirac import Dirac
     if type(name) is not type(''): return None
     if item is None: return None # used to be c'tor, but shouldn't happen now
