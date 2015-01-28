@@ -14,8 +14,8 @@ else:
     from sets import Set
 
 class RegistryError(GangaException):
-    def __init__(self,what):
-        super( RegistryError, self ).__init__(self,what)
+    def __init__(self, what):
+        super( RegistryError, self ).__init__(self, what)
         self.what=what
     def __str__(self):
         return "RegistryError: %s"%self.what
@@ -23,45 +23,45 @@ class RegistryError(GangaException):
 class RegistryAccessError(RegistryError):
     """ This error is raised if the request is valid in principle, 
         but the Registry cannot be accessed at the moment."""        
-    def __init__(self):
-        super(ObjectNotInRegistryError,self).__init__()
+    def __init__(self, what):
+        super(RegistryAccessError, self).__init__(what)
 
     def __str__(self):
-        return "RegistryAccessError: %s"%self.what
+        return "RegistryAccessError: %s" % self.what
 
 class RegistryLockError(RegistryError):
     """ This error is raised if the request is valid in principle,
         but the object is locked by another Ganga session"""
-    def __init__(self):
-        super(ObjectNotInRegistryError,self).__init__()
+    def __init__(self, what):
+        super(RegistryLockError, self).__init__(what)
 
     def __str__(self):
-        return "RegistryLockError: %s"%self.what
+        return "RegistryLockError: %s" % self.what
 
 class ObjectNotInRegistryError(RegistryError):
     """ This error is raised if an object has been associated to this registry,
         but is not actually in the registry. This most probably indicates an internal Ganga error."""
-    def __init__(self):
-        super(ObjectNotInRegistryError,self).__init__()
+    def __init__(self, what):
+        super(ObjectNotInRegistryError, self).__init__(what)
 
     def __str__(self):
-        return "ObjectNotInRegistryError: %s"%self.what
+        return "ObjectNotInRegistryError: %s" % self.what
 
 class RegistryKeyError(RegistryError, KeyError):
     """ This error is raised if the given id is not found in the registry """
-    def __init__(self):
-        super(ObjectNotInRegistryError, self).__init__()
+    def __init__(self, what):
+        super(RegistryKeyError, self).__init__(what)
 
     def __str__(self):
         return "RegistryKeyError: %s"%self.what
 
 class RegistryIndexError(RegistryError,IndexError):
     """ This error is raised if the given id is not found in the registry """
-    def __init__(self):
-        super(ObjectNotInRegistryError,self).__init__()
+    def __init__(self, what):
+        super(RegistryIndexError,self).__init__(what)
 
     def __str__(self):
-        return "RegistryIndexError: %s"%self.what
+        return "RegistryIndexError: %s" % self.what
 
 def makeRepository(registry):
     """Factory that selects, imports and instantiates the correct GangaRepository"""
