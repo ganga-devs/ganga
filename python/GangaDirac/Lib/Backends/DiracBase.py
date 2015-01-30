@@ -10,7 +10,7 @@ from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
 from GangaDirac.Lib.Files.DiracFile          import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from Ganga.GPI                               import queues
+from GangaDirac.BOOT                         import monitoring_threadpool
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
@@ -582,9 +582,10 @@ class DiracBase(IBackend):
         ## requeue existing completed job
         for j in requeue_jobs:
 #            if j.backend.status in requeue_dirac_status:
-            queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                                       args = (j, requeue_dirac_status[j.backend.status]),
-                                                       priority     = 5)           
+            monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                                               args = (j, 
+                                               requeue_dirac_status[j.backend.status]),
+                                               priority     = 5)           
             j.been_queued=True
 
         # now that can submit in non_blocking mode, can see jobs in submitting
@@ -596,8 +597,7 @@ class DiracBase(IBackend):
         dead_jobs = ( j for j in monitor_jobs if j.backend.id is None )
         for d in dead_jobs:
             d.updateStatus('failed')
-            if d.master is not None:
-                d.master.updateMasterJobStatus()
+            if job.master: job.master.updateMasterJobStatus()
 
         ganga_job_status = [ j.status     for j in monitor_jobs if j.backend.id is not None ]
         dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
@@ -634,9 +634,9 @@ class DiracBase(IBackend):
                     job.updateStatus('running')
                     if job.master: job.master.updateMasterJobStatus()                   
 
-                queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
-                                                           args = (job, updated_dirac_status),
-                                                           priority     = 5)
+                monitoring_threadpool.add_function(DiracBase.job_finalisation,
+                                                   args = (job, updated_dirac_status),
+                                                   priority     = 5)
                 job.been_queued=True
 
             else:
