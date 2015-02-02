@@ -291,7 +291,16 @@ def start(cmd_args=None):
                 logger.warning("attempted to parse directory in "+newreportdir)
             newfiles[str(newfile)] = newdoc
             filelist += [newfile]
-    #go through old fir        
+    #go through old fir
+
+    # Correct for looking for -pre-pre folders
+    import os.path
+    if not os.path.exists( oldreportdir ):
+        if os.path.exists( oldreportdir[:-3] ):
+            oldreportdir = oldreportdir[:-3]
+        elif os.path.exists( oldreportdir[:-6] ):
+            oldreportdir = oldreportdir[:-6]
+
     for oldfile in os.listdir(oldreportdir):
         reportfile = os.path.join(oldreportdir,oldfile)
         ind = oldfile.find("__")
