@@ -1109,6 +1109,10 @@ default_backends = LCG
        """
        
        try:
+          from Ganga.Core.InternalServices.Coordinator import disableMonitoringService
+
+          disableMonitoringService()
+
           from GangaTest.Framework import runner
           from GangaTest.Framework import htmlizer
           from GangaTest.Framework import xmldifferencer
@@ -1222,7 +1226,7 @@ default_backends = LCG
               session_type += 'startup_script'
               
         spyware.ganga_started(session_type,interactive=self.interactive,GUI=self.options.GUI,webgui=self.options.webgui,script_file=runs_script, text_shell=config['TextShell'],test_framework=self.options.TEST)
-        
+
         if self.options.TEST:
             sys.argv = self.args
             try:

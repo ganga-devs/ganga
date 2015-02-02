@@ -133,6 +133,32 @@ def _diskSpaceChecker():
         return False
     return True
 
+def disableMonitoringService():
+
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+
+    #disable the mon loop
+    logger.debug( "Shutting down the main monitoring loop" )
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
+    _purge_actions_queue()
+    stop_and_free_thread_pool()
+    logger.debug( "Disabling the central Monitoring" )
+    from Ganga.Core import monitoring_component
+    monitoring_component.disableMonitoring()
+
+    from Ganga.GPI import queues
+    queues._purge_all()
+    while queues.totalNumAllThreads() != 0:
+        logger.debug( "Ensuring that all tasks are purged from the todo!" )
+        import time
+        time.sleep(2)
+        queues._purge_all()
+        queues._stop_all_threads()
+        from Ganga.Core.GangaThread.GangaThreadPool import GangaThreadPool
+        pool = GangaThreadPool.getInstance()
+        pool.shutdown()
+        pool.__do_shutdown__()
 
 def disableInternalServices():
     """
@@ -160,26 +186,7 @@ def disableInternalServices():
     log.debug("Disabling the internal services")
 
     #disable the mon loop
-    logger.debug( "Shutting down the main monitoring loop" )
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
-    _purge_actions_queue()
-    stop_and_free_thread_pool()
-    logger.debug( "Disabling the central Monitoring" )
-    from Ganga.Core import monitoring_component
-    monitoring_component.disableMonitoring()
-
-    from Ganga.GPI import queues
-    queues._purge_all()
-    while queues.totalNumAllThreads() != 0:
-       logger.debug( "Ensuring that all tasks are purged from the todo!" )
-       import time
-       time.sleep(2)
-       queues._purge_all()
-    queues._stop_all_threads()
-    from Ganga.Core.GangaThread.GangaThreadPool import GangaThreadPool
-    pool = GangaThreadPool.getInstance()
-    pool.shutdown()
-    pool.__do_shutdown__()
+    disableMonitoringService()
 
     # For debugging what services are still alive after being requested to stop before we close the repository
     #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
@@ -265,8 +272,9 @@ def bootstrap():
     
     #export to GPI 
     from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI('reactivate',enableInternalServices,'Functions') 
-    exportToGPI('disableServices',disableInternalServices,'Functions')
+    exportToGPI('reactivate', enableInternalServices, 'Functions' ) 
+    exportToGPI('disableMonitoring', disableMonitoringService, 'Functions' )
+    exportToGPI('disableServices', disableInternalServices ,'Functions' )
 
 
 #
