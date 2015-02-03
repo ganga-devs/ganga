@@ -313,29 +313,21 @@ def _getLogger(name=None,modulename=None,_roothandler=0, handler=None,frame=None
     if name.split('.')[0] != 'Ganga' and name != 'Ganga':
         name = 'Ganga.'+name
 
-    #if private_logger:
-    #    private_logger.debug('getLogger: effective_name=%s original_name=%s',name,requested_name)            
-    
-    try:
-        logger= _allLoggers[name]
-        #print 'reusing existing logger: ',name
-        return logger
-    except KeyError:
+    if private_logger:
+        private_logger.debug('getLogger: effective_name=%s original_name=%s',name,requested_name)            
 
-        #print 'creating logger: ',name
+    if name in _allLoggers:
+        return _allLoggers[name]
+        #print 'reusing existing logger: ',name
+    else:
+
         logger = logging.getLogger(name)
         _allLoggers[name] = logger
         #logger.setLevel( logging.CRITICAL )
 
         if name in config:
             thisConfig = config[name]
-        else:
-            thisConfig = config['Ganga']
-
-        try:
             _set_log_level( logger, thisConfig )
-        except Ganga.Utility.Config.ConfigError:
-            pass 
 
         if private_logger:
             private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()) )
