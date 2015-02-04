@@ -622,7 +622,9 @@ class SessionLockManager(object):
                 if not len(names & prevnames) == 0:
                     print "Double-locked stuff:", names & prevnames
                     assert False
-                prevnames.union_update(names)
+                #   As of Python 2.3 there have been changes we're now on python 2.6 so I fear this backwards compatability has been dropped
+                #prevnames.union_update(names)
+                prevnames.update(names)
 
         finally:
             self.global_lock_release()
