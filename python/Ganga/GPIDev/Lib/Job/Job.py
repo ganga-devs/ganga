@@ -1871,10 +1871,10 @@ class Job(GangaObject):
 
         elif attr == 'inputfiles':
 
-            if value != []:     
-                if self.inputsandbox != []:
-                    logger.error('job.inputsandbox is set, you can\'t set job.inputfiles')
-                    return      
+            if value != []:
+                if not getConfig('Output')['ForbidLegacyInput']:
+                    logger.error('Use of job.inputfiles is forbidden, please use job.inputsandbox')
+                    raise GangaException( 'Use of job.inputfiles is forbidden, please use job.inputsandbox' )
                                 
             super(Job,self).__setattr__(attr, value) 
 
@@ -1900,12 +1900,8 @@ class Job(GangaObject):
 
                 if getConfig('Output')['ForbidLegacyInput']:
                     logger.error('Use of job.inputsandbox is forbidden, please use job.inputfiles')
-                    return
+                    raise GangaException( 'Use of job.inputsandbox is forbidden, please use job.inputfiles' )
 
-                if self.inputfiles != []:
-                    logger.error('job.inputfiles is set, you can\'t set job.inputsandbox')
-                    return
-                
             super(Job,self).__setattr__(attr, value)
 
         elif attr == 'outputdata':
