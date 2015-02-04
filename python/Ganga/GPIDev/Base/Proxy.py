@@ -202,13 +202,15 @@ class ProxyDataDescriptor(object):
                                 shareref.increase(val.is_prepared.name)
 
         #check that the shared directory actually exists before assigning the (prepared) application to a job
-        if hasattr(val, 'is_prepared'):
-            if val.is_prepared is not None:
-                if val.is_prepared is not True:
-                    if hasattr( val.is_prepared, 'name' ):
-                        if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
-                            logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
-
+        try:
+            if hasattr(val, 'is_prepared'):
+                if val.is_prepared is not None:
+                    if val.is_prepared is not True:
+                        if hasattr( val.is_prepared, 'name' ):
+                            if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
+                                logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
+        except:
+            pass
 
         # apply attribute conversion
         def stripAttribute(v):
@@ -447,19 +449,21 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #        return object.__getattribute__(self,name)
  
     def _getattribute(self, name):
-        if name.startswith('__') or name in d.keys(): return object.__getattribute__(self, name)
+        if name.startswith('__') or name in d.keys():
+            return object.__getattribute__(self, name)
 
         pluginclass = object.__getattribute__(self, '_impl')
-        if '_attribute_filter__get__' in dir(pluginclass):
-            if pluginclass.__class__.__name__ != 'ObjectMetaclass':
-                if name in dict(pluginclass._schema.allItems()).keys():
-                    if not dict(pluginclass._schema.allItems())[name]['hidden']:
-                        return addProxy(pluginclass._attribute_filter__get__(name)) 
-        try:
-            return object.__getattribute__(self, name)
-        except AttributeError, x:
-            logger.debug( "Attribute: %s NOT found" % name )
-            raise GangaAttributeError( "%s" % str(x) )
+        if '_attribute_filter__get__' in dir(pluginclass) and \
+            pluginclass.__class__.__name__ != 'ObjectMetaclass' and \
+                name in dict(pluginclass._schema.allItems()).keys() and \
+                    not dict(pluginclass._schema.allItems())[name]['hidden']:
+                        return addProxy(pluginclass._attribute_filter__get__(name))
+        else:
+            try:
+                return object.__getattribute__(self, name)
+            except AttributeError, x:
+                logger.debug( "Attribute: %s NOT found" % name )
+                raise GangaAttributeError( "%s" % str(x) )
 
     # but at the class level _impl is a ganga plugin class
     d = { '_impl' : pluginclass,
