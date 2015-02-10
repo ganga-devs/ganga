@@ -465,18 +465,19 @@ under certain conditions; type license() for details.
            first_line = cf.readline()
            import re
            r = re.compile(r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
+           this_logger = Ganga.Utility.logging.getLogger( "Configure" )
            if not r:
-              Ganga.Utility.logging.getLogger().error('file %s does not seem to be a Ganga config file',self.options.config_file)
-              Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
+              this_logger.error('file %s does not seem to be a Ganga config file',self.options.config_file)
+              this_logger.error('try -g option to create valid ~/.gangarc')
            else:
                cv = r.group('version').split('-')
                if cv[1] == '4':
-                   Ganga.Utility.logging.getLogger().error('file %s is old an Ganga 4 configuration file (%s)',self.options.config_file,r.group('version'))
-                   Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
+                   this_logger.error('file %s is old an Ganga 4 configuration file (%s)',self.options.config_file,r.group('version'))
+                   this_logger.error('try -g option to create valid ~/.gangarc')
                else:
                    if cv[1] != '5' and cv[1] != '6':
-                       Ganga.Utility.logging.getLogger().error('file %s was created by a development release (%s)',self.options.config_file, r.group('version'))
-                       Ganga.Utility.logging.getLogger().error('try -g option to create valid ~/.gangarc')
+                       this_logger.error('file %s was created by a development release (%s)',self.options.config_file, r.group('version'))
+                       this_logger.error('try -g option to create valid ~/.gangarc')
         except IOError,x:
            pass # ignore all I/O errors (e.g. file does not exist), this is just an advisory check
               
@@ -922,8 +923,8 @@ default_backends = LCG
                     traceback.print_stack()
                     return ""
             else:
-                logger = Ganga.Utility.logging.getLogger()
-                logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
+                #logger = Ganga.Utility.logging.getLogger()
+                #logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
                 if hasattr( obj, '_name' ):
                     return obj._name
                 else:
@@ -945,8 +946,8 @@ default_backends = LCG
                     traceback.print_stack()
                     return ""
             else:
-                logger = Ganga.Utility.logging.getLogger()
-                logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
+                #logger = Ganga.Utility.logging.getLogger()
+                #logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
                 if hasattr( obj, '_category' ):
                     return obj._category
                 else:
@@ -1109,8 +1110,9 @@ default_backends = LCG
        """
        
        try:
+          # Important to avoid a lot of arguments over who has locked what object,
+          # the tests are quite intensive and often trip on the background monitoring thread(s)
           from Ganga.Core.InternalServices.Coordinator import disableMonitoringService
-
           disableMonitoringService()
 
           from GangaTest.Framework import runner
@@ -1147,7 +1149,7 @@ default_backends = LCG
     def run(self,local_ns=None):
 
         from Ganga.Utility.logging          import getLogger
-        logger = getLogger()
+        logger = getLogger( "run" )
         logger.debug( "Entering run" )
 
         if self.options.webgui == True:
@@ -1190,7 +1192,6 @@ default_backends = LCG
            exec code in local_ns
 
         logger.debug( "loaded .ganga.py" )
-
 
         #Find out if ganga version has been used before by writing to a hidden file in the gangadir
         ## Now using Alex's new version above as it avoids an extra call to the shell and is more
@@ -1265,15 +1266,20 @@ default_backends = LCG
               print
               print obj
               return
-           if hasattr(obj,'_display'):
+           #if hasattr(obj,'_display'):
+           #   print
+           #   print obj._display(1)
+           #   return
+           elif hasattr(obj,'_impl') and hasattr(obj._impl,'_display'):
               print
               print obj._display(1)
               return
-           if hasattr(obj,'_impl') and hasattr(obj._impl,'_display'):
+           elif hasattr(obj,'_display'):
               print
               print obj._display(1)
               return
-           print obj
+           else:
+              print obj
 
         shell = config['TextShell']
 
@@ -1329,7 +1335,7 @@ default_backends = LCG
                 print "Error Loading the IPython modules required for ganga..."
                 print "Please check your system configuration or try running:\n"
                 print "   ''SetupProject ganga''\n\n"
-                print "before re-launching ganga. Now Exiting! Gooybye!\n"
+                print "before re-launching ganga. Now Exiting! Goodybye!\n"
                 sys.exit(0)
 
             #override ipothonrc configuration  
