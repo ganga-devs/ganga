@@ -41,7 +41,7 @@ class TestDiracFile(GangaGPITestCase):
         self.df = DiracFile('np', 'ld', 'lfn')
         self.df.locations = ['location']
         self.df.guid      = 'guid'
-        from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
+        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
         setattr(sys.modules[self.df.__module__], 'execute'    , execute    )
         setattr(WorkerThreadPool               , 'add_process', add_process)
 
@@ -142,7 +142,7 @@ class TestDiracFile(GangaGPITestCase):
         
     def test_get(self):
         import os
-        from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
+        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
         
         self.assertRaises(Exception, self.df.get)
         self.df.localDir = os.getcwd()
