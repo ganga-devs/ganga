@@ -11,7 +11,7 @@ from Ganga.GPI                                import queues
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
 configDirac = getConfig('DIRAC')
-logger      = getLogger( 'GangaDIRAC.Lib.DiracFile' )
+logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
 
 #def upload_ok(lfn):
@@ -59,10 +59,16 @@ class DiracFile(IGangaFile):
         """
         name is the name of the output file that has to be written ...
         """
+
+        logger.debug( "DiracFile" )
+
         super(DiracFile, self).__init__( **kwds )
         self.locations   = []
 
-        self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
+        if str(namePattern).upper()[0:3] == "LFN:" and lfn=='':
+            self._setLFNnamePattern( _lfn = namePattern[4:], _namePattern = '' )
+        else:
+            self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
 
         if localDir is not None:
             self.localDir = expandfilename( localDir )
@@ -70,9 +76,12 @@ class DiracFile(IGangaFile):
             self.remoteDir = remoteDir
 
     def __construct__( self, args ):
+        logger.debug( "__construct__" )
         if len(args) == 1 and type(args[0]) == type(''):
-            self.namePattern = args[0]
-            self._setLFNnamePattern( _lfn = '', _namePattern = self.namePattern )
+            if str(str(args[0]).upper()[0:4]) == str("LFN:"):
+                self._setLFNnamePattern( _lfn = args[0][4:] )
+            else:
+                self._setLFNnamePattern( _namePattern = args[0] )
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
             self._setLFNnamePattern( _lfn = '', _namePattern = self.namePattern )
@@ -236,15 +245,18 @@ class DiracFile(IGangaFile):
         #    #logger.warning("Couldn\'t locate the output locations file so couldn't determine the lfn info") ##seems to be called twice (only on Dirac backend... must check) so misleading when second one works??
         #    return
 
-        postprocesslocations = open(postprocessLocationsPath, 'r')
-        self.subfiles = []
-        for line in postprocesslocations.readlines():
-            if line.startswith('DiracFile'):
-                 if dirac_line_processor(line, self, postprocessLocationsPath) and regex.search(self.namePattern) is None:
-                     logger.error( "Error processing line:\n%\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern) ) )
-                     break
+        try:
+            postprocesslocations = open(postprocessLocationsPath, 'r')
+            self.subfiles = []
+            for line in postprocesslocations.readlines():
+                if line.startswith('DiracFile'):
+                    if dirac_line_processor(line, self, postprocessLocationsPath) and regex.search(self.namePattern) is None:
+                        logger.error( "Error processing line:\n%\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern) ) )
+                        break
 
-        postprocesslocations.close()
+            postprocesslocations.close()
+        except:
+            pass
 
 #    def _getEnv(self):
 #        if not self._env:
@@ -449,9 +461,11 @@ class DiracFile(IGangaFile):
         if self.remoteDir == '':
             self.remoteDir = str(uuid.uuid4())
         if self.remoteDir[:4] == 'LFN:':
+            lfn_base = self.remoteDir[4:]
+        elif self.remoteDir[:5] == "/lhcb":
             lfn_base = self.remoteDir
         else:
-            lfn_base = os.path.join(configDirac['DiracLFNBase'], self.remoteDir )
+            lfn_base = os.path.join( configDirac['DiracLFNBase'], self.remoteDir )
         storage_elements=configDirac['DiracSpaceTokens']
 
         outputFiles=GangaList()
