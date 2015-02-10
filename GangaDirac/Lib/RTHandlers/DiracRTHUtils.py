@@ -49,13 +49,14 @@ def dirac_inputdata(app):
 
     inputLFNs = []
 
-    if job.inputdata:
+    if hasattr( job.inputdata, 'getLFNs' ):
         inputLFNs = job.inputdata.getLFNs()
 
     if job.master:
         logger.debug( "job.master.inputdata: %s " % str(job.master.inputdata) )
     logger.debug( "job.inputdata: %s" % str(job.inputdata) )
-    logger.debug( "getLFNs(): %s"  % job.inputdata.getLFNs() )
+    if hasattr( job.inputdata, 'getLFNs' ):
+        logger.debug( "getLFNs(): %s"  % job.inputdata.getLFNs() )
 
     if len(inputLFNs) > 0:
         if not job.master and job.splitter: # master job with a splitter reaching prepare, hence bulk submit
