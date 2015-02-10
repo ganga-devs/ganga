@@ -1,7 +1,7 @@
 import sys
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+logger = Ganga.Utility.logging.getLogger( "GPIDev.Lib.Registry.RegistrySlice" )
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryIndexError, RegistryAccessError
@@ -295,9 +295,9 @@ class RegistrySlice(object):
         def getatr(obj,members):
             val = getattr(obj,members[0])
             if len(members)>1:
-                return getatr(val,members[1:])
+                return str(getatr(val,members[1:]))
             else:
-                return val
+                return str(val)
         try:
             try:
                 f = self._display_columns_functions[item]
