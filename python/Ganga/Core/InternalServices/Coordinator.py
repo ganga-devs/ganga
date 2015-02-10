@@ -135,30 +135,30 @@ def _diskSpaceChecker():
 
 def disableMonitoringService():
 
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
-
     #disable the mon loop
-    logger.debug( "Shutting down the main monitoring loop" )
+    log.debug( "Shutting down the main monitoring loop" )
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
     stop_and_free_thread_pool()
-    logger.debug( "Disabling the central Monitoring" )
+    log.debug( "Disabling the central Monitoring" )
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()
 
     from Ganga.GPI import queues
     queues._purge_all()
+    first = 0
     while queues.totalNumAllThreads() != 0:
-        logger.debug( "Ensuring that all tasks are purged from the todo!" )
-        import time
-        time.sleep(2)
+        log.debug( "Ensuring that all tasks are purged from the todo!" )
+        if first is not 0:
+            import time
+            time.sleep(1)
         queues._purge_all()
         queues._stop_all_threads()
         from Ganga.Core.GangaThread.GangaThreadPool import GangaThreadPool
         pool = GangaThreadPool.getInstance()
         pool.shutdown()
         pool.__do_shutdown__()
+        first = 1
 
 def disableInternalServices():
     """
@@ -170,16 +170,13 @@ def disableInternalServices():
           * the user is running out of space
     """
 
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
-
-    logger.info( "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner" )
-    logger.info( " ... Please be patient! " )
+    log.info( "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner" )
+    log.info( " ... Please be patient! " )
 
     global servicesEnabled
 
     if not servicesEnabled:
-        logger.error( "Cannot disable services, they've already been disabled" )
+        log.error( "Cannot disable services, they've already been disabled" )
         from Ganga.Core.exceptions import GangaException
         raise GangaException( "Cannot disable services" )
 
@@ -193,9 +190,9 @@ def disableInternalServices():
     #getStackTrace()
     #print queues_threadpoolMonitor._display(0)
 
-    logger.debug( "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services" )
+    log.debug( "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services" )
 
-    logger.info( "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt" )
+    log.info( "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt" )
 
     #flush the registries
     log.debug( "Coordinator Shutting Down Repository_runtime" )
@@ -204,18 +201,24 @@ def disableInternalServices():
 
     #this will disable any interactions with the registries (implicitly with the GPI)
     servicesEnabled = False    
-    
+
+def enableMonitoringService():
+    from Ganga.Core import monitoring_component
+    monitoring_component.alive = True
+    monitoring_component.enableMonitoring()
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
+    _makeThreadPool()
+    from Ganga.GPI import queues
+    queues._start_all_threads()
+
 def enableInternalServices():
     """
     activates the internal services previously disabled due to expired credentials
     """
-    from Ganga.Utility.logging import getLogger
-    logger = getLogger()
-
     global servicesEnabled
 
     if servicesEnabled:
-        logger.error( "Cannot (re)enable services, they're already running" )
+        log.error( "Cannot (re)enable services, they're already running" )
         from Ganga.Core.exceptions import GangaException
         raise GangaException( "Cannot (re)enable services" )
 
@@ -231,17 +234,10 @@ def enableInternalServices():
 
     log.debug("Enabling the internal services")
     # re-enable the monitoring loop as it's been explicityly requested here
-    from Ganga.Core import monitoring_component
-    monitoring_component.alive = True
-    monitoring_component.enableMonitoring()
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _makeThreadPool
-    _makeThreadPool()
+    enableMonitoringService()
 
     servicesEnabled = True
     log.info('Internal services reactivated successfuly')
-
-    from Ganga.GPI import queues
-    queues._start_all_threads()
 
 def checkInternalServices(errMsg='Internal services disabled. Job registry is read-only.'):
     """
