@@ -38,7 +38,7 @@ class TestDiracBase(GangaGPITestCase):
             return self.returnObject
 
         self.db = DiracBase()
-        from GangaDirac.Lib.Server.WorkerThreadPool import WorkerThreadPool
+        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
         setattr(sys.modules[self.db.__module__], 'execute'    , execute    )
         setattr(WorkerThreadPool               , "add_process", add_process)
         self.script="""
