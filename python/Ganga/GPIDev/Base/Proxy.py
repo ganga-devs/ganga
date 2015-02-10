@@ -265,6 +265,8 @@ class ProxyMethodDescriptor(object):
 
 # helper to create a wrapper for an existing ganga object
 def GPIProxyObjectFactory(obj):
+    if not hasattr( obj, '_proxyObject' ):
+        raise GangaAttributeError( "Object does not have attribute _proxyObject" )
     if obj._proxyObject is None:
         cls = obj._proxyClass
         proxy = super(cls, cls).__new__(cls)
