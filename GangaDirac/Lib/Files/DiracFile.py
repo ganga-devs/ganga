@@ -11,7 +11,7 @@ from Ganga.GPI                                import queues
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
 configDirac = getConfig('DIRAC')
-logger      = getLogger()
+logger      = getLogger( 'GangaDIRAC.Lib.DiracFile' )
 regex       = re.compile('[*?\[\]]')
 
 #def upload_ok(lfn):
@@ -29,20 +29,21 @@ class DiracFile(IGangaFile):
     """
     File stored on a DIRAC storage element
     """
-    _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="",doc='pattern of the file name'),
-                                     'localDir'      : SimpleItem(defvalue=None,copyable=1,typelist=['str','type(None)'],
+    _schema = Schema(Version(1,1), { 'namePattern'   : SimpleItem(defvalue="", doc='pattern of the file name'),
+                                     'localDir'      : SimpleItem(defvalue=None, copyable=1, typelist=['str','type(None)'],
                                                                   doc='local dir where the file is stored, used from get and put methods'),
-                                     'locations'     : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,
+                                     'locations'     : SimpleItem(defvalue=[], copyable=1, typelist=['str'], sequence=1,
                                                                   doc="list of SE locations where the outputfiles are uploaded"),
-                                     'compressed'    : SimpleItem(defvalue=False,typelist=['bool'],protected=0,
+                                     'compressed'    : SimpleItem(defvalue=False, typelist=['bool'], protected=0,
                                                                   doc='wheather the output file should be compressed before sending somewhere'),
-                                     'lfn'           : SimpleItem(defvalue='',copyable=1,typelist=['str'],
+                                     'lfn'           : SimpleItem(defvalue='', copyable=1, typelist=['str'],
                                                                   doc='return the logical file name/set the logical file name to use if not '\
                                                                       'using wildcards in namePattern'),
-                                     'remoteDir'     : SimpleItem(defvalue="",doc='remote directory where the LFN is to be placed in the dirac base directory by the put method.'),
-                                     'guid'          : SimpleItem(defvalue='',copyable=1,typelist=['str'],
+                                     'remoteDir'     : SimpleItem(defvalue="", doc='remote directory where the LFN is to be placed within '\
+                                                                      'the dirac base directory by the put method.'),
+                                     'guid'          : SimpleItem(defvalue='', copyable=1, typelist=['str'],
                                                                   doc='return the GUID/set the GUID to use if not using wildcards in the namePattern.'),
-                                     'subfiles'      : ComponentItem(category='gangafiles',defvalue=[], hidden=1, sequence=1, copyable=0,
+                                     'subfiles'      : ComponentItem(category='gangafiles', defvalue=[], sequence=1, copyable=0,# hidden=1,
                                                                      typelist=['GangaDirac.Lib.Files.DiracFile'],
                                                                      doc="collected files from the wildcard namePattern"),
                                      'failureReason' : SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure')
@@ -54,19 +55,19 @@ class DiracFile(IGangaFile):
     _name = "DiracFile"
     _exportmethods = [  "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put']
         
-    def __init__(self, namePattern='', localDir=None, lfn='', remoteDir='', **kwds):
+    def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
         name is the name of the output file that has to be written ...
         """
-        super(DiracFile, self).__init__()
+        super(DiracFile, self).__init__( **kwds )
         self.locations   = []
 
-        self.namePattern = namePattern
-        self.localDir = localDir
-        self.remoteDir = remoteDir
-        self.lfn = lfn
-
         self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
+
+        if localDir is not None:
+            self.localDir = expandfilename( localDir )
+        if remoteDir is not None:
+            self.remoteDir = remoteDir
 
     def __construct__( self, args ):
         if len(args) == 1 and type(args[0]) == type(''):
@@ -75,18 +76,18 @@ class DiracFile(IGangaFile):
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
             self._setLFNnamePattern( _lfn = '', _namePattern = self.namePattern )
-            self.localDir    = args[1]
+            self.localDir    = expandfilename(args[1])
         elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
             self.namePattern = args[0]
             self.lfn         = args[2]
             self._setLFNnamePattern( _lfn = self.lfn, _namePattern = self.namePattern )
-            self.localDir    = args[1]
+            self.localDir    = expandfilename(args[1])
         elif len(args) == 4 and type(args[0]) == type('') and type(args[1]) == type('')\
                 and type(args[2]) == type('') and type(args[3]) == type(''):
             self.namePattern = args[0]
             self.lfn         = args[2]
             self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
-            self.localDir    = args[1]
+            self.localDir    = expandfilename(args[1])
             self.remoteDir   = args[3]
         else:
              super( DiracFile, self ).__construct__( args )
@@ -102,8 +103,8 @@ class DiracFile(IGangaFile):
             self._setLFNnamePattern( _lfn = '', _namePattern = value )
             return self.namePattern
 
-#        if name == 'localDir' and type(value) != type(None):
-#            return expandfilename(value)
+        if name == 'localDir' and type(value) != type(None):
+            return expandfilename(value)
         return value
 
     def _setLFNnamePattern( self, _lfn = "", _namePattern = "" ):
@@ -118,18 +119,19 @@ class DiracFile(IGangaFile):
             self.lfn = _lfn
             self.remoteDir = os.path.dirname( _lfn )
             self.namePattern = os.path.basename( _namePattern )
-            self.localDir = os.path.dirname( _namePattern )
+            self.localDir = os.path.dirname( expandfilename(_namePattern) )
 
         if _lfn != "" and _namePattern == "":
             self.lfn = _lfn
             self.remoteDir = os.path.dirname( self.lfn )
-            if self.namePattern == "":
-                self.namePattern = os.path.basename( self.lfn )
+            self.namePattern = os.path.basename( self.lfn )
+            self.localDir = ""
 
         if _namePattern != "" and _lfn == "":
             self.namePattern = os.path.basename( _namePattern )
-            if os.path.dirname( _namePattern ) != "":
-                self.localDir = os.path.dirname( _namePattern )
+            self.localDir = os.path.dirname( expandfilename(_namePattern) )
+            self.remoteDir = ""
+            self.lfn = ""
 
     def _attribute_filter__get__(self, name ):
 
@@ -145,15 +147,15 @@ class DiracFile(IGangaFile):
     
         else: return object.__getattribute__(self, name )
 
-    def _on_attribute__set__(self, obj_type, attrib_name):
-        r = copy.deepcopy(self)
-        if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
-            r.lfn=''
-            r.guid=''
-            r.locations=[]
-            r.localDir=None
-            r.failureReason=''
-        return r
+#    def _on_attribute__set__(self, obj_type, attrib_name):
+#        r = copy.deepcopy(self)
+        #if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
+        #    r.lfn=''
+        #    r.guid=''
+        #    r.locations=[]
+#        #    r.localDir=None
+#        #    r.failureReason=''
+#        return r
 
     def __repr__(self):
         """Get the representation of the file."""
@@ -171,8 +173,15 @@ class DiracFile(IGangaFile):
     def setLocation(self):
         """
         """
-        def dirac_line_processor(line, dirac_file):
+
+        def dirac_line_processor(line, dirac_file, localPath):
+            """
+                Function to interperate the post processor lines.
+                This returns False when everything went OK and True on an ERROR
+            """
+            logger.debug( "Calling dirac_line_processor" )
             tokens = line.strip().split(':::')
+            logger.debug( "dirac_line_processor: %s" % tokens )
             pattern   = tokens[1].split('->')[0].split('&&')[0]
             name      = tokens[1].split('->')[0].split('&&')[1]
             lfn       = tokens[1].split('->')[1]
@@ -180,21 +189,28 @@ class DiracFile(IGangaFile):
             try:
                 locations = eval(tokens[2])
             except:
-                loactions = tokens[2]
-#            pattern   = ''
-#            if '&&' in name:
-#                pattern = name.split('&&')[0]
-#                name    = name.split('&&')[1]
+                locations = tokens[2]
 
             if pattern == name:
+                logger.debug( "pattern == name" )
                 logger.error("Failed to parse outputfile data for file '%s'" % name)
                 return True
+
+            #   This is the case that multiple files were requested
             if pattern == dirac_file.namePattern:
-                d=DiracFile(namePattern=name)
+                logger.debug( "pattern == dirac_file.namePattern" )
+                d =DiracFile( namePattern=name, lfn=lfn )
                 d.compressed = dirac_file.compressed
-                dirac_file.subfiles.append(GPIProxyObjectFactory(d.lfn))
-                dirac_line_processor(line, d)
+                d.guid = guid
+                d.locations = locations
+                d.localDir = localPath
+                dirac_file.subfiles.append( d )
+                #dirac_line_processor(line, d)
+                return False
+
+            #   This is the case that an individual file was requested
             elif name == dirac_file.namePattern:
+                logger.debug( "name == dirac_file.namePattern" )
                 if lfn == '###FAILED###':
                     dirac_file.failureReason = tokens[2]
                     logger.error("Failed to upload file '%s' to Dirac: %s" % (name, dirac_file.failureReason))
@@ -202,25 +218,30 @@ class DiracFile(IGangaFile):
                 dirac_file.lfn       = lfn
                 dirac_file.locations = locations
                 dirac_file.guid      = guid
+                dirac_file.localDir  = localPath
+                return False
+
             else:
                 return False
-#                logger.error("Could't decipher the outputfiles location entry! %s" % line.strip())
-#                logger.error("Neither '%s' nor '%s' match the namePattern attribute of '%s'" % (pattern, name, dirac_file.namePattern))
-#                dirac_file.failureReason = "Could't decipher the outputfiles location entry!"
-            return True
+
+            #logger.error("Could't decipher the outputfiles location entry! %s" % line.strip())
+            #logger.error("Neither '%s' nor '%s' match the namePattern attribute of '%s'" % (pattern, name, dirac_file.namePattern))
+            #dirac_file.failureReason = "Could't decipher the outputfiles location entry!"
+            #return True
   
-            
+             
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
-        if not os.path.exists(postprocessLocationsPath):
-            #logger.warning("Couldn\'t locate the output locations file so couldn't determine the lfn info") ##seems to be called twice (only on Dirac backend... must check) so misleading when second one works??
-            return
+        #if not os.path.exists(postprocessLocationsPath):
+        #    #logger.warning("Couldn\'t locate the output locations file so couldn't determine the lfn info") ##seems to be called twice (only on Dirac backend... must check) so misleading when second one works??
+        #    return
 
         postprocesslocations = open(postprocessLocationsPath, 'r')
         self.subfiles = []
         for line in postprocesslocations.readlines():
             if line.startswith('DiracFile'):
-                 if dirac_line_processor(line, self) and regex.search(self.namePattern) is None:
+                 if dirac_line_processor(line, self, postprocessLocationsPath) and regex.search(self.namePattern) is None:
+                     logger.error( "Error processing line:\n%\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern) ) )
                      break
 
         postprocesslocations.close()
@@ -235,7 +256,7 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn!='':
-            queues.add_process('removeFile("%s")' % self.lfn, priority = 7)
+            queues.add('removeFile("%s")' % self.lfn, priority = 7)
 
     def remove(self):
         """
