@@ -77,8 +77,11 @@ class DiracBase(IBackend):
                                    doc='DIRAC API commands to add the job definition script. Only edit ' \
                                        'if you *really* know what you are doing'),
         'settings'    : SimpleItem(defvalue={'CPUTime':2*86400},
-                                   doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)')
+                                   doc='Settings for DIRAC job (e.g. CPUTime, BannedSites, etc.)'),
+        'extraInfo'   : SimpleItem(defvalue=None,protected=1,copyable=0,typelist=['str','type(None)'],
+                                   doc='Verbose ApplicationStatus information from Dirac')
         })
+
     _exportmethods = ['getOutputData','getOutputSandbox','removeOutputData',
                       'getOutputDataLFNs','peek','reset','debug']
     _packed_input_sandbox = True
@@ -118,6 +121,7 @@ class DiracBase(IBackend):
         self.actualCE   = None
         self.status     = None
         self.statusInfo = ''
+        self.extraInfo  = ''
         j.been_queued   = False
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
         result = execute(dirac_cmd)
@@ -229,55 +233,57 @@ class DiracBase(IBackend):
 
     def _resubmit(self):
         """Resubmit a DIRAC job"""
-        j=self.getJobObject()
-        parametric = False
-        script_path = os.path.join(j.getInputWorkspace().getPath(),
+        try:
+            j=self.getJobObject()
+            parametric = False
+            script_path = os.path.join(j.getInputWorkspace().getPath(),
                                        'dirac-script.py')
-        ## Check old script
-        if j.master is None and not os.path.exists(script_path):
-             raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir')
-        if j.master is not None and not os.path.exists(script_path):
-             script_path = os.path.join(j.master.getInputWorkspace().getPath(),
+            ## Check old script
+            if j.master is None and not os.path.exists(script_path):
+                raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir')
+            if j.master is not None and not os.path.exists(script_path):
+                script_path = os.path.join(j.master.getInputWorkspace().getPath(),
                                         'dirac-script.py')
-             if not os.path.exists(script_path):
-                  raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir or j.master.inputdir')
-             parametric = True
+                if not os.path.exists(script_path):
+                    raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir or j.master.inputdir')
+                parametric = True
 
-        ## Read old script
-        f=open(script_path,'r')
-        script = f.read()
-        f.close()
+            ## Read old script
+            f=open(script_path,'r')
+            script = f.read()
+            f.close()
 
-        ## Create new script - ##note instead of using get_parametric_dataset could just use j.inputdata.
-        if parametric is True:
-            parametric_datasets = get_parametric_datasets(script.split('\n'))
-            if len(parametric_datasets) != len(j.master.subjobs):
-                raise BackendError('Dirac','number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
-            if set(parametric_datasets[j.id]).symmetric_difference(set([f.name for f in j.inputdata.files])):
-                raise BackendError('Dirac','Mismatch between dirac-script and job attributes.')
-            script = script.replace('.setParametricInputData(%s)' % str(parametric_datasets),
+            ## Create new script - ##note instead of using get_parametric_dataset could just use j.inputdata.
+            if parametric is True:
+                parametric_datasets = get_parametric_datasets(script.split('\n'))
+                if len(parametric_datasets) != len(j.master.subjobs):
+                    raise BackendError('Dirac','number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
+                if set(parametric_datasets[j.id]).symmetric_difference(set([f.name for f in j.inputdata.files])):
+                    raise BackendError('Dirac','Mismatch between dirac-script and job attributes.')
+                script = script.replace('.setParametricInputData(%s)' % str(parametric_datasets),
                                     '.setInputData(%s)' % str(parametric_datasets[j.id]))
-            script = script.replace('%n',str(j.id)) #name
+                script = script.replace('%n',str(j.id)) #name
 
-        start_user_settings = '# <-- user settings\n'
-        new_script = script[:script.find(start_user_settings) + len(start_user_settings)]
+            start_user_settings = '# <-- user settings\n'
+            new_script = script[:script.find(start_user_settings) + len(start_user_settings)]
 
-        job_ident = get_job_ident(script.split('\n'))
-        for key, value in self.settings.iteritems():
-             if type(value)is type(''):
-                  new_script += '%s.set%s("%s")\n' % (job_ident, key, value)
-             else:
-                  new_script += '%s.set%s(%s)\n' % (job_ident, key, str(value))
-        new_script += script[script.find('# user settings -->'):]
-             
+            job_ident = get_job_ident(script.split('\n'))
+            for key, value in self.settings.iteritems():
+                if type(value)is type(''):
+                    new_script += '%s.set%s("%s")\n' % (job_ident, key, value)
+                else:
+                    new_script += '%s.set%s(%s)\n' % (job_ident, key, str(value))
+            new_script += script[script.find('# user settings -->'):]
 
-        ## Save new script
-        new_script_filename = os.path.join(j.getInputWorkspace().getPath(),
-                              'dirac-script.py')
-        f = open(new_script_filename, 'w')
-        f.write(new_script)
-        f.close()
-        return self._common_submit(new_script_filename)
+            ## Save new script
+            new_script_filename = os.path.join(j.getInputWorkspace().getPath(),
+                                  'dirac-script.py')
+            f = open(new_script_filename, 'w')
+            f.write(new_script)
+            f.close()
+            return self._common_submit(new_script_filename)
+        except x:
+            raise BackendError( x )
 
     def reset(self, doSubjobs =False):
         """Resets the state of a job back to 'submitted' so that the
@@ -290,6 +296,7 @@ class DiracBase(IBackend):
         else:
             j.getOutputWorkspace().remove(preserve_top=True)
             self.statusInfo = ''
+            self.extraInfo  = ''
             self.status     = None
             self.actualCE   = None
             j.been_queued   = False
@@ -383,7 +390,7 @@ class DiracBase(IBackend):
             for sj in j.subjobs:
 #                suceeded.extend(outputfiles_foreach(sj, DiracFile, download,
 #                                                    fargs=(sj, True)))
-                suceeded.extend([download(f, sj, True) for f.lfn in outputfiles_iterator(sj, DiracFile) if f.lfn !='' and (names is None or f.namePattern in names)])
+                suceeded.extend([download(f, sj, True) for f in outputfiles_iterator(sj, DiracFile) if (f.lfn !='') and (names is None or f.namePattern in names)])
         else:
 #            suceeded.extend(outputfiles_foreach(j, DiracFile, download,
 #                                                fargs(j,False)))
@@ -619,8 +626,7 @@ class DiracBase(IBackend):
         if type(result) != type([]):
             logger.warning('DIRAC monitoring failed: %s' % str(result))
             return
-                
-
+        
         thread_handled_states = ['completed', 'failed']
         for job, state, old_state in zip(monitor_jobs, result, ganga_job_status):
             if monitoring_component:
@@ -630,6 +636,10 @@ class DiracBase(IBackend):
             job.backend.status     = state[1]
             job.backend.actualCE   = state[2]
             updated_dirac_status   = state[3]
+            try:
+                job.backend.extraInfo  = state[4]
+            except:
+                pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 
             ## Is this really catching a real problem?
@@ -649,7 +659,7 @@ class DiracBase(IBackend):
 
                 queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                    args = (job, updated_dirac_status),
-                                                   priority     = 5)
+                                                   priority     = 1)
                 job.been_queued=True
 
             else:
