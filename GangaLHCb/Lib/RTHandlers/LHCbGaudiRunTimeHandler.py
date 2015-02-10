@@ -4,7 +4,7 @@ from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
 from RTHUtils                                      import *
 from GangaLHCb.Lib.LHCbDataset.OutputData          import OutputData
 from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
-from Ganga.GPIDev.Lib.File                         import FileBuffer, SandboxFile, MassStorageFile
+from Ganga.GPIDev.Lib.File                         import FileBuffer, LocalFile, MassStorageFile
 from Ganga.GPIDev.Base.Proxy                       import addProxy
 from Ganga.Utility.Config                          import getConfig
 from Ganga.Utility.logging                         import getLogger
@@ -79,7 +79,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
            #outputfiles.update(set(outdata[:]))
            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            job.non_copyable_outputfiles.extend([addProxy(MassStorageFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-           job.non_copyable_outputfiles.extend([addProxy(SandboxFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
+           job.non_copyable_outputfiles.extend([addProxy(LocalFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
 

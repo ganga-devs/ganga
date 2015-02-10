@@ -5,8 +5,6 @@ from Ganga.Core                            import BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from GangaDirac.Lib.Files.DiracFile        import DiracFile
 from Ganga.GPIDev.Base.Proxy               import GPIProxyObjectFactory
-#from GangaDirac.Lib.Backends.DiracBase     import dirac_ganga_server
-#from GangaDirac.BOOT                       import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
 class Dirac(DiracBase):

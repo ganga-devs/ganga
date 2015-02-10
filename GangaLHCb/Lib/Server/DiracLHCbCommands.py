@@ -234,17 +234,22 @@ def status(job_ids):
     bulk_status = result['Value']
     for id in job_ids:
         job_status = bulk_status.get(id,{})
-        minor_status = job_status.get('MinorStatus',None)
-        dirac_status = job_status.get('Status',None)
-        dirac_site = job_status.get('Site',None)
-        ganga_status = statusmapping.get(dirac_status,None)
+        minor_status = job_status.get('MinorStatus', None)
+        dirac_status = job_status.get('Status', None)
+        dirac_site = job_status.get('Site', None)
+        ganga_status = statusmapping.get(dirac_status, None)
         if ganga_status is None:
             ganga_status = 'failed'
             dirac_status = 'Unknown: No status for Job'
         if dirac_status=='Completed' and (minor_status not in ['Pending Requests']):
             ganga_status = 'running'
-        status_list.append([minor_status,dirac_status,dirac_site,
-                            ganga_status])
+
+        from DIRAC.Core.DISET.RPCClient  import RPCClient
+        monitoring = RPCClient( 'WorkloadManagement/JobMonitoring' )
+        app_status = monitoring.getJobAttributes( id )[ 'Value' ]['ApplicationStatus']
+
+        status_list.append([minor_status, dirac_status, dirac_site,
+                            ganga_status, app_status ])
             
     output( status_list )
 
