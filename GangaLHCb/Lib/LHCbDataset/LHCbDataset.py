@@ -367,21 +367,27 @@ def string_datafile_shortcut(name,item):
     # Overload the LHCb instance if the Core beet us to it
     mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut( name, item )
 
-    if mainFileOutput is None:
-        pass
-    else:
+    #   We can do some 'magic' with strings so lets do that here
+    if (mainFileOutput is not None) and (type(name) is not type('')):
         return mainFileOutput
 
     from GangaLHCb.Lib.Backends.Dirac import Dirac
     if type(name) is not type(''): return None
     if item is None: return None # used to be c'tor, but shouldn't happen now
     else: # something else...require pfn: or lfn:
-        file = strToDataFile(name,False)
-        if item is Dirac._schema['inputSandboxLFNs']:
-            if type(file) is PhysicalFile:
-                msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
-                raise GangaException(msg)
-        return file
+        try:
+            file = strToDataFile(name,False)
+            if item is Dirac._schema['inputSandboxLFNs']:
+                if type(file) is PhysicalFile:
+                    msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
+                    raise GangaException(msg)
+            return file
+        except:
+            # if the Core can make a file object from a string then use that, else raise an error
+            if mainFileOutput is not None:
+                return mainFileOutput
+            else:
+                raise
     return None
 
 allComponentFilters['gangafiles'] = string_datafile_shortcut
