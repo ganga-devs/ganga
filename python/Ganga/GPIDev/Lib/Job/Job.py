@@ -364,9 +364,11 @@ class Job(GangaObject):
                 id = self.id
             except KeyError:
                 id = None
-        try:
+        #try:
+        if hasattr( self, 'status' ):
             oldstat = self.status
-        except:
+        #except:
+        else:
             oldstat = None
         logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
         #import inspect,os
@@ -899,6 +901,12 @@ class Job(GangaObject):
         from Ganga.Utility.Config import ConfigError, getConfig
         from exceptions import IndexError
         config = getConfig( "File_Associations" )
+
+        if not os.path.exists( path ):
+            import glob
+            if len(glob.glob( path )) is 1:
+                path = glob.glob( path )[0]
+
         if os.path.exists( path ):
            if os.path.islink( path ):
               path = os.readlink( path )
