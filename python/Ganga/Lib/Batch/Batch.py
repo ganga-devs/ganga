@@ -373,7 +373,7 @@ class Batch(IBackend):
         subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
             + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
             + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
-        
+
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath=job.getOutputWorkspace().getPath()
         outputpatterns = jobconfig.outputbox

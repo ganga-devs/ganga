@@ -211,10 +211,10 @@ class Job(GangaObject):
 
         logger.debug( "Intercepting __construct__" )
 
+        super(Job, self).__construct__( args )
+
         if len(args) == 1:
             if isinstance( args[0], Job ):
-
-                super(Job, self).__construct__( args )
 
                 self._unsetSubmitTransients()
 
@@ -239,10 +239,6 @@ class Job(GangaObject):
                 if getConfig('Preparable')['unprepare_on_copy'] is True:
                     self.unprepare()
 
-            else:
-                super( Job, self ).__construct__( args )
-        else:
-            super( Job, self ).__construct__( args )
 
     def _readonly(self):
         return self.status != 'new'
