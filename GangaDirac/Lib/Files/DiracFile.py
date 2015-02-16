@@ -60,12 +60,12 @@ class DiracFile(IGangaFile):
         name is the name of the output file that has to be written ...
         """
 
-        logger.debug( "DiracFile" )
+        #logger.debug( "DiracFile" )
 
         super(DiracFile, self).__init__( **kwds )
         self.locations   = []
 
-        if str(namePattern).upper()[0:3] == "LFN:" and lfn=='':
+        if str(namePattern).upper()[0:4] == "LFN:" and lfn=='':
             self._setLFNnamePattern( _lfn = namePattern[4:], _namePattern = '' )
         else:
             self._setLFNnamePattern( _lfn = lfn, _namePattern = namePattern )
@@ -79,9 +79,9 @@ class DiracFile(IGangaFile):
         logger.debug( "__construct__" )
         if len(args) == 1 and type(args[0]) == type(''):
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
-                self._setLFNnamePattern( _lfn = args[0][4:] )
+                self._setLFNnamePattern( _lfn = args[0][4:], _namePattern="" )
             else:
-                self._setLFNnamePattern( _namePattern = args[0] )
+                self._setLFNnamePattern( _lfn="", _namePattern = args[0] )
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
             self._setLFNnamePattern( _lfn = '', _namePattern = self.namePattern )
@@ -118,9 +118,12 @@ class DiracFile(IGangaFile):
 
     def _setLFNnamePattern( self, _lfn = "", _namePattern = "" ):
 
-        if _lfn != "":            
-            if _lfn[0:4] == "LFN:":
-                _lfn = _lfn[4:]
+        logger.debug( "_lfn: %s" % _lfn )
+
+        if _lfn != "" and _lfn is not None:
+            if len(_lfn) > 3:
+                if _lfn[0:4] == "LFN:":
+                    _lfn = _lfn[4:]
 
         import os.path
 
@@ -268,7 +271,7 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn!='':
-            queues.add('removeFile("%s")' % self.lfn, priority = 7)
+            queues.add( self.remove )
 
     def remove(self):
         """

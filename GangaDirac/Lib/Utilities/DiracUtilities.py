@@ -24,8 +24,8 @@ def getDiracEnv(force=False):
                     if str(v).startswith('() {'):
                         keys_to_remove.append( k )
                 for key in keys_to_remove:
-                    if key in DIRAC_ENV:
-                        del DIRAC_ENV[ key ]
+                    del DIRAC_ENV[ key ]
+
         else:
             logger.error("'DiracEnvFile' config variable empty or file not present")
 
@@ -68,7 +68,7 @@ def getValidDiracFiles(job, names=None):
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def execute(command,
             timeout       = getConfig('DIRAC')['Timeout'],
-            env           = '',
+            env           = None,
             cwd           = None,
             shell         = False,
             python_setup  = '',
@@ -80,7 +80,7 @@ def execute(command,
     This function blocks until the server returns.
     """
 
-    if env == '':
+    if env is None:
         env = getDiracEnv()
     if python_setup == '':
         python_setup = getDiracCommandIncludes()

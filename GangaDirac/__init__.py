@@ -13,9 +13,6 @@ configDirac.addOption('Timeout', 1000,
 
 configDirac.addOption('splitFilesChunks', 5000,
                       'when splitting datasets, pre split into chunks of this int')
-#configDirac.addOption('NumWorkerThreads', cpu_count(),
-configDirac.addOption('NumWorkerThreads', 5,
-                      'Number of worker threads that the local DIRAC server and client should establish')
 diracenv = ""
 if os.environ.has_key("GANGADIRACENVIRONMENT"):
    diracenv = os.environ["GANGADIRACENVIRONMENT"]
