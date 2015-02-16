@@ -60,6 +60,7 @@ class LHCbDataset(Dataset):
 
     def __construct__(self, args):
         logger.debug( "__construct__" )
+        self.files = []
         if (len(args) != 1) or (type(args[0]) is not type([])):
             super(LHCbDataset,self).__construct__(args)
         else:
@@ -70,6 +71,7 @@ class LHCbDataset(Dataset):
                     self.files.append(file)
                 else:
                     self.files.append(f)
+        logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
 
     def __len__(self):
         """The number of files in the dataset."""
@@ -136,6 +138,7 @@ class LHCbDataset(Dataset):
     def extend(self,files,unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
+        logger.debug( "extending Dataset" )
         from Ganga.GPIDev.Base import ReadOnlyObjectError
         if not hasattr(files,"__getitem__"):
             raise GangaException('Argument "files" must be a iterable.')
@@ -249,7 +252,7 @@ class LHCbDataset(Dataset):
             for str in dtype_str_patterns:
                 matched = False
                 for pat in dtype_str_patterns[str]:
-                    if fnmatch.fnmatch(f.name, pat):
+                    if fnmatch.fnmatch(f.namePattern, pat):
                         dtype_str = str
                         matched = True
                         break

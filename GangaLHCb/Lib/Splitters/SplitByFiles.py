@@ -58,7 +58,13 @@ class SplitByFiles(GaudiInputDataSplitter):
                     raise GangaException( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
         elif isinstance( dataset, list ):
             for i in dataset:
-                datatmp.append( DiracFile( lfn=i ) )
+                if type(i) == type(''):
+                    datatmp.append( DiracFile( lfn=i ) )
+                elif type(i) == type( DiracFile() ):
+                    datatmp.append( i )
+                else:
+                    x = GangaException( "Unknown(unexpected) file object: %s" % i )
+                    raise x
         else:
             logger.error( "Unkown dataset type, cannot perform split here" )
             from Ganga.Core.exceptions import GangaException

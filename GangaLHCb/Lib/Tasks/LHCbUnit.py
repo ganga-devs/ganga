@@ -4,6 +4,7 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 
 class LHCbUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
@@ -12,7 +13,6 @@ class LHCbUnit(IUnit):
    _category = 'units'
    _name = 'LHCbUnit'
    _exportmethods = IUnit._exportmethods + [ ]
-   _hidden = 1
    
    def createNewJob(self):
       """Create any jobs required for this unit"""      
@@ -23,16 +23,15 @@ class LHCbUnit(IUnit):
 
       trf = self._getParent()
       task = trf._getParent()
-      if trf.outputdata:
-         j.outputdata = trf.outputdata.clone()
-                           
       j.inputsandbox = self._getParent().inputsandbox
-      j.outputsandbox = self._getParent().outputsandbox
+
+      import copy
+      j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
 
       if trf.splitter:
          j.splitter = trf.splitter.clone()
       else:
-         j.splitter = SplitByFiles(bulksubmit = True)
+         j.splitter = SplitByFiles()
          
       return j
 
@@ -50,6 +49,17 @@ class LHCbUnit(IUnit):
 
    def updateStatus(self, status):
       """Update status hook"""
+
+      # check for input data deletion of chain data
+      if status == "completed" and self._getParent().delete_chain_input and len(self.req_units) > 0:
+
+         # the inputdata field *must* be filled from the parent task
+         # NOTE: When changing to inputfiles, will probably need to check for any specified in trf.inputfiles
+         job = GPI.jobs(self.active_job_ids[0])
+         for f in job.inputdata.files:
+            logger.warning("Removing chain inputdata file '%s'..." % f.name)
+            f.remove()
+            
       super(LHCbUnit,self).updateStatus(status)
 
    def checkForSubmission(self):

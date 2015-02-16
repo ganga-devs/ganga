@@ -42,7 +42,7 @@ class LogicalFile(DiracFile):
 
         logger.warning( "LogicalFile has been deprecated. Please switch to using DiracFile instead!" )
 
-        self._setLFNnamePattern( lfn=self.name, namePattern='' )
+        self._setLFNnamePattern( _lfn=self.name, _namePattern='' )
 
 
     def __setstate__(self, dict ):
