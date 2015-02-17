@@ -26,6 +26,9 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     split_files = []
     i=inputs.__class__()
 
+    if inputs.getLFNs() != len( inputs.files ):
+        raise SplittingError( "Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata" )
+
     all_files = igroup( inputs.files[:maxFiles], getConfig('DIRAC')['splitFilesChunks'],
                         leftovers=True )
 
@@ -69,7 +72,6 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     ###
 
     logger.debug( "Split Files: %s" % str(split_files) )
-    #print split_files
 
     for dataset in split_files:
         yield dataset

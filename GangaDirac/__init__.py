@@ -49,6 +49,7 @@ configDirac.addOption('DiracSpaceTokens',
                       ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','SARA-USER',
                        'PIC-USER','RAL-USER'],
                       'Space tokens allowed for replication, etc.')
+configDirac.addOption('DiracFileAutoGet', True, 'Should the DiracFile object automatically poll the Dirac backend for missing information on an lfn?' )
 
 def getEnvironment( config = {} ):
    import sys

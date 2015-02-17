@@ -152,12 +152,18 @@ class DiracFile(IGangaFile):
             #j = self.getJobObject()
             #if j:
             #    j.backend.getOutputDataLFNs()
-            if not self.namePattern:
+            if not self.lfn:
                 logger.warning( "Do NOT have an LFN, for file: %s" % self.namePattern )
                 logger.warning( "If file exists try first using the method put()" )
             return object.__getattribute__(self, 'lfn')
-    
-        else: return object.__getattribute__(self, name )
+        elif name is 'guid' or name is 'locations':
+            if configDirac[ 'DiracFileAutoGet' ]:
+                if self.guid is None or self.guid == '' or self.locations == []:
+                    if self.lfn:
+                        self.getMetadata()
+                        return object.__getattribute__(self, 'guid')
+
+        return object.__getattribute__(self, name )
 
 #    def _on_attribute__set__(self, obj_type, attrib_name):
 #        r = copy.deepcopy(self)
