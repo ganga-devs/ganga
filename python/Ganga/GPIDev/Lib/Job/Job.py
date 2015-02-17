@@ -488,7 +488,8 @@ class Job(GangaObject):
             log_user_exception()
             raise JobStatusError(x)
 
-        logger.info('job %s status changed to "%s"',fqid,self.status)
+        if self.status != saved_status:
+            logger.info('job %s status changed to "%s"',fqid,self.status)
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
