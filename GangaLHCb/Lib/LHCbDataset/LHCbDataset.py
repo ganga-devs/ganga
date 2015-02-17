@@ -264,7 +264,7 @@ class LHCbDataset(Dataset):
                 sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
                 sdatasetsnew += """ \"PFN:%s\",""" % f.name
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.name, dtype_str)
+                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency=='ROOT': sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""
             else: sdatasetsnew = sdatasetsnew[:-1] + """\n    ], clear=True)"""

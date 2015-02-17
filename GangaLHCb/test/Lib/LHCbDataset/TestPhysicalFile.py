@@ -1,5 +1,5 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.LHCbDataset.PhysicalFile import *
+from GangaLHCb.Lib.Files.PhysicalFile import *
 
 class TestPhysicalFile(GangaGPITestCase):
 

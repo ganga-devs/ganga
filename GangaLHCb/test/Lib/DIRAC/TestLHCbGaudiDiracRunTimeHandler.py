@@ -14,7 +14,11 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
     def setUp(self):
         j = Job(application=DaVinci(),backend=Dirac())
         j.prepare()
-        j.inputsandbox = [File(name='dummy.in')]
+        from Ganga.Utility.Config import getConfig
+        if getConfig('Output')['ForbidLegacyInput']: 
+            j.inputfiles = [LocalFile(name='dummy.in')]
+        else:
+            j.inputsandbox = [File(name='dummy.in')]
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl

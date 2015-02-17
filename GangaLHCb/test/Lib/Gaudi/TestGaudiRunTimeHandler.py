@@ -11,7 +11,11 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
     def setUp(self):
         j = Job(application=DaVinci())
         j.prepare()
-        j.inputsandbox = [File(name='dummy.in')]
+        from Ganga.Utility.Config import getConfig
+        if getConfig('Output')['ForbidLegacyInput']:
+            j.inputfiles = [LocalFile(name='dummy.in')]
+        else:
+            j.inputsandbox = [File(name='dummy.in')]
         self.app = j.application._impl
         #self.extra = GaudiExtras()
         #self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'

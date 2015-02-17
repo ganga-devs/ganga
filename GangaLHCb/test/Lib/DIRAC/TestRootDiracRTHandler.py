@@ -5,7 +5,12 @@ class TestRootDiracRTHandler(GangaGPITestCase):
 
     def setUp(self):
         j = Job(application=Root(),backend=Dirac())
-        j.inputsandbox = [File(name='dummy.in')]
+        import Ganga.Utility.Config
+        if not getConfig('Output')['ForbidLegacyInput']:
+            j.inputsandbox=[ File(name='dummy.in') ]
+        else:
+            j.inputfiles = [ LocalFile( 'dummy.in' ) ]
+        #j.inputsandbox = [File(name='dummy.in')]
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl

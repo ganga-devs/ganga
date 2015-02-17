@@ -6,6 +6,4 @@ DaVinci().TupleFile = "DVHistos_1.root"
 DaVinci().Lumi = True 
 DaVinci().Simulation   = False
 #DaVinci().MainOptions  = "$DAVINCIROOT/options/DVDC06TestStripping.opts"
-
-
  
