@@ -1,11 +1,17 @@
 **************************************************************************************************************
-6.1.0-beta (2014/3/12)
+6.1.0-beta (2015/2/17)
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * Beta test for inputfiles branch
+* This release includes queues being merged into core
+* - It is now possible to register tasks with queues to run in the background
+*   e.g. queues.add( job.submit )
+* Many bugs to do with file-locking have been fixed between 6.0 and 6.1
+* Some improvements of Job class for readability
+* Improvements to Tasks in ganga for chaining large amount of jobs
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -19,6 +25,8 @@ ganga/python/GangaAtlas
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
 * Beta test for inputfiles branch
+* Added more configurability to the DiracFile class
+* Adding support for reading Application status from Dirac
 
 
 --------------------------------------------------------------------------------------------------------------
