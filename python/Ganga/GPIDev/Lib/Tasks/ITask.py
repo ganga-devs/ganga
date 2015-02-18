@@ -21,7 +21,7 @@ class ITask(GangaObject):
     _category = 'tasks'
     _name = 'ITask'
     _exportmethods = [ 'run', 'appendTransform', 'overview', 'getJobs', 'remove', 'clone', 'pause', 'check', 'setBackend', 'setParameter',
-                       'insertTransform', 'removeTransform', 'table', 'resetUnitsByStatus']
+                       'insertTransform', 'removeTransform', 'table', 'resetUnitsByStatus', 'removeUnusedJobs']
 
     _tasktype = "ITask"
     
@@ -304,3 +304,8 @@ class ITask(GangaObject):
         for trf in self.transforms:
             trf.resetUnitsByStatus( status )
 
+    def removeUnusedJobs( self ):
+        """Remove any unused jobs"""
+        for trf in self.transforms:
+            trf.removeUnusedJobs()
+                                        

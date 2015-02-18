@@ -44,7 +44,7 @@ OutputFile objects to be copied to all jobs"),
 
    _category = 'transforms'
    _name = 'ITransform'
-   _exportmethods = [ 'addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit', 'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus' ]
+   _exportmethods = [ 'addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit', 'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus', 'removeUnusedJobs' ]
    _hidden = 0
 
    def getJobs(self):
@@ -93,6 +93,8 @@ OutputFile objects to be copied to all jobs"),
                o = markup(o,overview_colours["completed"])
            elif not unit.active:
                o = markup(o,overview_colours["bad"])
+           elif unit.status == "recreating":
+               o = markup(o,overview_colours["attempted"])
            elif len(unit.active_job_ids) == 0:
                o = markup(o,overview_colours["hold"])
            else:
@@ -141,7 +143,15 @@ OutputFile objects to be copied to all jobs"),
       for u in self.units:
          if u.getID() == uid:
             u.reset()
-            
+            break
+
+      # find any chained units and mark for recreation
+      for trf in self._getParent().transforms:
+         for u2 in trf.units:
+            for req in u2.req_units:
+               if req == "%d:%d" % (self.getID(), u.getID()) or req == "%d:ALL" % (self.getID()):
+                  trf.resetUnit(u2.getID())
+
       self.updateStatus("running")
       
       
@@ -239,15 +249,20 @@ OutputFile objects to be copied to all jobs"),
                
                # is there a unit already linked?
                done = False
+               rec_unit = None
                for out_unit in self.units:
-                  if '%d:ALL' % (ds.input_trf_id) in out_unit.req_units:
+                  if '%d:ALL' % (ds.input_trf_id) in out_unit.req_units:                     
                      done = True
-                     
-               if not done:
+                     # check if the unit is being recreated
+                     if out_unit.status == "recreating":
+                        rec_unit = out_unit
+                     break
+
+               if not done or rec_unit:
                   new_unit = self.createChainUnit( self._getParent().transforms[ds.input_trf_id].units, ds.use_copy_output )
                   if new_unit:
-                     self.addChainUnitToTRF( new_unit, ds, -1 )
-                           
+                     self.addChainUnitToTRF( new_unit, ds, -1, prev_unit = rec_unit )
+
             else:
                   
                # loop over units in parent trf and create units as required
@@ -255,20 +270,27 @@ OutputFile objects to be copied to all jobs"),
 
                   # is there a unit already linked?
                   done = False
+                  rec_unit = None
                   for out_unit in self.units:
                      if '%d:%d' % (ds.input_trf_id, in_unit.getID() ) in out_unit.req_units:
                         done = True
+                        # check if the unit is being recreated
+                        if out_unit.status == "recreating":
+                           rec_unit = out_unit
+                        break
+                                                                  
 
-                  if not done:
+                  if not done or rec_unit:
                      new_unit = self.createChainUnit( [ in_unit ], ds.use_copy_output )
                      if new_unit:
-                        self.addChainUnitToTRF( new_unit, ds, in_unit.getID() )
+                        self.addChainUnitToTRF( new_unit, ds, in_unit.getID(), prev_unit = rec_unit )
+                        
 
    def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create a chained unit given the parent outputdata"""
       return IUnit()
       
-   def addChainUnitToTRF( self, unit, inDS, unit_id = -1 ):
+   def addChainUnitToTRF( self, unit, inDS, unit_id = -1, prev_unit = None ):
       """Add a chained unit to this TRF. Override for more control"""
       if unit_id == -1:
          unit.req_units.append('%d:ALL' % (inDS.input_trf_id ) )
@@ -277,7 +299,7 @@ OutputFile objects to be copied to all jobs"),
          unit.req_units.append('%d:%d' % (inDS.input_trf_id, unit_id ) )
          unit.name = "Parent: TRF %d, Unit %d" % (inDS.input_trf_id, unit_id )
 
-      self.addUnitToTRF(unit)
+      self.addUnitToTRF(unit, prev_unit)
    
    def addInputData(self, inDS):
       """Add the given input dataset to the list"""
@@ -317,7 +339,7 @@ OutputFile objects to be copied to all jobs"),
       # this is a generic trf so assume the application and splitter will do all the work
       return True
 
-   def addUnitToTRF(self, unit):
+   def addUnitToTRF(self, unit, prev_unit = None):
       """Add a unit to this Transform given the input and output data"""
       if not unit:
          raise ApplicationConfigurationError(None, "addUnitTOTRF failed for Transform %d (%s): No unit specified" %
@@ -325,7 +347,11 @@ OutputFile objects to be copied to all jobs"),
 
       unit.updateStatus("hold")
       unit.active = True
-      self.units.append(unit)
+      if prev_unit:
+         unit.prev_job_ids += prev_unit.prev_job_ids
+         self.units[ prev_unit.getID() ] = unit
+      else:
+         self.units.append(unit)
 
 ## Information methods
    def fqn(self):
@@ -452,3 +478,14 @@ OutputFile objects to be copied to all jobs"),
          if unit.status == status:
             print "Resetting Unit %d, Transform %d..." % (unit.getID(), self.getID() )
             self.resetUnit( unit.getID() )
+
+   def removeUnusedJobs( self ):
+      """Remove all jobs that aren't being used, e.g. failed jobs"""
+      for unit in self.units:
+         for jid in unit.prev_job_ids:
+            try:
+               logger.warning("Removing job '%d'..." % jid)
+               job = GPI.jobs(jid)
+               job.remove()
+            except:
+               logger.error ("Problem removing job '%d'" % jid)

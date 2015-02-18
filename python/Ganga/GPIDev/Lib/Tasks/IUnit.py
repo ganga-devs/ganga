@@ -115,7 +115,7 @@ class IUnit(GangaObject):
       #logger.warning("Entered Unit %d update function..." % self.getID())
 
       # if we're complete, then just return
-      if self.status == "completed" or not self.active:
+      if self.status in ["completed", "recreating"] or not self.active:
          return 0
 
       # check if submission is needed
@@ -265,7 +265,12 @@ class IUnit(GangaObject):
       self.active_job_ids = []
 
       self.active = True
-      self.updateStatus("running")
+
+      # if has parents, set to recreate
+      if len(self.req_units) > 0:
+         self.updateStatus("recreating")
+      else:
+         self.updateStatus("running")
       
    # Info routines
    def n_active(self):
