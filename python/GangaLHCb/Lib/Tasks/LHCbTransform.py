@@ -21,7 +21,7 @@ class LHCbTransform(ITransform):
 
    _category = 'transforms'
    _name = 'LHCbTransform'
-   _exportmethods = ITransform._exportmethods + [ 'updateQuery', 'addQuery' ]
+   _exportmethods = ITransform._exportmethods + [ 'updateQuery', 'addQuery', 'removeUnusedData', 'cleanTransform' ]
    
    def __init__(self):
       super(LHCbTransform,self).__init__()
@@ -34,8 +34,50 @@ class LHCbTransform(ITransform):
       ## Check if the BKQuery input is correct and append/update
       if not isType(bk,BKQuery):
          raise GangaAttributeError(None,'LHCbTransform expects a BKQuery object passed to the addQuery method')
+
+      # check we don't already have inputdata
+      if len(self.queries) == 0 and len(self.inputdata) > 0:
+         logger.error("Cannot add both input data and BK queries. Input Data already present.")
+         return
+
+      # add the query and update the input data
       self.queries.append(bk)
       self.updateQuery()
+
+   def addInputQuery( self, inDS ):
+      """Add the given input dataset to the list but only if BK queries aren't given"""
+      if len(self.queries) > 0:
+         logger.error("Cannot add both input data and BK queries. Query already given")
+         return
+
+      super(LHCbTransform,self).addInputQuery( inDS )
+
+   def cleanTransform( self ):
+      """Remove unused data and then unused jobs"""
+      self.removeUnusedData()
+      self.removeUnusedJobs()
+      
+   def removeUnusedData( self ):
+      """Remove any output data from orphaned jobs"""
+      for unit in self.units:
+         for jid in unit.prev_job_ids:
+            try:
+               logger.warning("Removing data from job '%d'..." % jid)
+               job = GPI.jobs(jid)
+
+               jlist = []
+               if len(job.subjobs) > 0:
+                  jlist = job.subjobs
+               else:
+                  jlist = [job]
+
+               for sj in jlist:
+                  for f in sj.outputfiles:
+                     if f._impl._name == "DiracFile" and f.lfn:
+                        f.remove()                              
+            except:
+               logger.error ("Problem deleting data for job '%d'" % jid)
+               pass
       
    def createUnits(self):
       """Create new units if required given the inputdata"""
@@ -43,48 +85,41 @@ class LHCbTransform(ITransform):
       # call parent for chaining
       super(LHCbTransform,self).createUnits()
 
-      # create units for queries if required
-      if len(self.queries) != 0:
-         new_files = []
-         for f in self.inputdata[0].files:
-            file_ok = False
-            for u in self.units:
-               if f in u.inputdata.files:
-                  file_ok = True
-                  break
-
-            if not file_ok:
-               new_files.append(f)
-
-         if len(new_files) > 0:
-            unit = LHCbUnit()
-            unit.name = "Unit %d" % len(self.units)
-            self.addUnitToTRF( unit )
-            unit.inputdata = LHCbDataset(files = new_files)
-                                                
-         return
-      
       # loop over input data and see if we need to create any more units
-      if len(self.units) > 0:
-         return
-
       import copy
-      for inds in self.inputdata:
+      for id, inds in enumerate( self.inputdata ):
 
          if inds._name != "LHCbDataset":
             continue         
 
-         # split this dataset depending on files_per_unit
+         # go over the units and see what files have been assigned
+         assigned_data = LHCbDataset()
+         for unit in self.units:
+            
+            if unit.input_datset_index != id:
+               continue
+                              
+            assigned_data.files += unit.inputdata.files
+
+         # any new files
+         new_data = LHCbDataset( files = self.inputdata[id].difference(assigned_data).files )
+
+         if len(new_data.files) == 0:
+            continue
+         
+         # create units for these files
          if self.files_per_unit > 0:
 
             # loop over the file array and create units for each set
             num = 0
-            while num < len( inds.files ):
+            while num < len( new_data.files ):
                unit = LHCbUnit()
                unit.name = "Unit %d" % len(self.units)
+               unit.input_datset_index = id
                self.addUnitToTRF( unit )
-               unit.inputdata = copy.deepcopy(inds)
-               unit.inputdata.files = inds.files[num:num + self.files_per_unit]
+               unit.inputdata = copy.deepcopy(self.inputdata[id])
+               unit.inputdata.files = []
+               unit.inputdata.files += new_data.files[num:num + self.files_per_unit]
                num += self.files_per_unit
                
          else:
@@ -92,8 +127,11 @@ class LHCbTransform(ITransform):
             unit = LHCbUnit()
             unit.name = "Unit %d" % len(self.units)
             self.addUnitToTRF( unit )
-            unit.inputdata = copy.deepcopy(inds)
-            
+            unit.inputdata = copy.deepcopy(self.inputdata[id])
+            unit.inputdata.files = []
+            unit.inputdata.files += new_data.files
+
+
    def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create an output unit given this output data"""
 
@@ -145,21 +183,6 @@ class LHCbTransform(ITransform):
       
       return unit
    
-   def _getJobsWithRemovedData(self,lost_dataset):
-      redo_jobs = []
-      redo_jobs_ids = []
-      for f in lost_dataset.files:
-         for unit in self.units:
-            job = GPI.jobs(unit.active_job_ids[0])
-            for sj in job.subjobs:
-
-               if not sj.fqid in redo_jobs_ids and f in job.inputdata.files:
-                  del job.inputdata.files[ job.inputdata.files.index(f) ]
-                  redo_jobs.append(sj)
-                  redo_jobs_ids.append(sj.fqid)
-                  
-      return redo_jobs
-   
    def updateQuery(self, resubmit=False):
       """Update the dataset information of the transforms. This will
       include any new data in the processing or re-run jobs that have data which
@@ -172,63 +195,57 @@ class LHCbTransform(ITransform):
       else:
          logger.info('Retrieving latest bookkeeping information for transform, please wait...')
 
-
-      all_files = []
-      if not len(self.inputdata):
-         self.inputdata.append( LHCbDataset() )
-         
-      for query in self.queries:
+      # check we have an input DS per BK Query
+      while len(self.queries) > len(self.inputdata):
+         self.inputdata.append(LHCbDataset())
+      
+      # loop over the queries and add fill file lists
+      for id, query in enumerate(self.queries):
 
          ## Get the latest dataset
-         latest_dataset=query.getDataset()
-         all_files += query.getDataset().files
+         latest_dataset = query.getDataset()
          
          ## Compare to previous inputdata, get new and removed
          logger.info('Checking for new and removed data for query %d, please wait...' % self.queries.index(query))
          dead_data = LHCbDataset()
          new_data = LHCbDataset()
-         if self.inputdata is not None:
-            ## Get new files
-            new_data.files += latest_dataset.difference(self.inputdata[0]).files
-            ## Get removed files
-            dead_data.files += self.inputdata[0].difference(latest_dataset).files
-            ## If nothing to be updated then exit
 
-         ## Carry out actions as needed
-         redo_jobs = self._getJobsWithRemovedData(dead_data)
+         # loop over the old data and compare
+         new_data.files += latest_dataset.difference(self.inputdata[id]).files
+         dead_data.files += self.inputdata[id].difference(latest_dataset).files
          
-         if len(new_data.files) == 0 and len(redo_jobs) == 0:
-            logger.info('Query %i from Transform %i:%i is already up to date'%(self.queries.index(query), self._getParent().id,self.getID()))
-            continue
-        
-         if len(redo_jobs) != 0 and not resubmit:
-            logger.info('There are jobs with out-of-date datasets, some datafiles must '\
-                        'be removed. Updating will mean loss of existing output and mean that merged data '\
-                        'will change respectively. Due to the permenant nature of this request please recall '\
-                        'update with the True argument as updateQuery(True)')
-            return
+         # for dead data, find then kill/remove any associated jobs
+         # loop over units and check any associated with this DS
+         # TODO: Follow through chained tasks
+         for unit in self.units:
+            # associted unit
+            if unit.input_datset_index != id:
+               continue
 
-         if len(redo_jobs) != 0:
-            # resubmit these removed data jobs
-            for j in redo_jobs:
-               if j.status in ['submitting','submitted','running','completing']:
-                  logger.warning('Job \'%s\' as it is still running but is marked for resubmission due to removed data. It will be killed first'%j.fqid)
-                  j.kill()
+            # find the job
+            if len(unit.active_job_ids) == 0:
+               continue
 
-               logger.info('Resubmitting job \'%s\' as it\'s dataset is out of date.'%j.fqid)
-               j.resubmit()
-               if self.status == "completed":               
-                  self.updateStatus("running")
+            #check the data
+            for f in dead_data.files:
+               if f in unit.inputdata.files:
 
-         if len(new_data) != 0:
-            if self.status == "completed":
-               self.updateStatus("running")
-            if self._getParent() != None:
-               logger.info('Transform %i:%i updated, unit %i will be added containing %i more file(s) for processing'%(self._getParent().id,self.getID(),len(self.units),len(new_data)))
-            else:
-               logger.info('Transform data updated, unit %i will be added containing %i more file(s) for processing'%(len(self.units),len(new_data)))
+                  # kill the job
+                  job = GPI.jobs(unit.active_job_ids[0])
+                  if job.status in ['submitted','running']:
+                     job.kill()
 
-      self.inputdata[0].files += all_files
+                  # forget the job
+                  unit.prev_job_ids.append(unit.active_job_ids[0])
+                  unit.active_job_ids = []
+                  break
+
+               
+
+         # in any case, now just set the DS files to the new set
+         self.inputdata[id].files = []
+         self.inputdata[id].files = latest_dataset.files
+         
 
    
        

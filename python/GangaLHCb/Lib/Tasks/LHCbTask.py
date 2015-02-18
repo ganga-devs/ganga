@@ -14,11 +14,22 @@ class LHCbTask(ITask):
     
     _category = 'tasks'
     _name = 'LHCbTask'
-    _exportmethods = ITask._exportmethods + ['addQuery', 'updateQuery']
+    _exportmethods = ITask._exportmethods + ['addQuery', 'updateQuery', 'removeUnusedData', 'cleanTask']
 
     _tasktype = "ITask"
     
     default_registry = "tasks"
+
+    def cleanTask( self ):
+        """Delete unused data and then remove all unused jobs"""
+        self.removeUnusedData()
+        self.removeUnusedJobs()
+                
+    def removeUnusedData( self ):
+        """Remove any output data from orphaned jobs"""
+        for trf in self.transforms:
+            if hasattr(trf, "removeUnusedData"):
+                trf.removeUnusedData()
     
     def addQuery(self, transform, bkQuery,associate=True):
         """Allows the user to add multiple transforms corresponding to the list of
