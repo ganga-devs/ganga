@@ -107,7 +107,22 @@ class Shell:
 
          #print output
          #print eval(str(output)[0])
-         env = expand_vars( eval(eval(str(output))[0]) )
+         try:
+            env2 = expand_vars( eval(eval(str(output))[0]) )
+         except:
+            env2 = None
+            logger.error( "Cannot construct environ:\n%s" % str(output)[0] )
+            try:
+                logger.error( "eval: %s" % str(eval(str(output)[0])) )
+            except:
+                pass
+            try:
+                logger.error( "eval(eval): %s" %  eval(eval(str(output))[0]) )
+            except:
+                pass
+
+         if env2:
+            env = env2
 
          #print "Setup: %s " % setup
          #print output

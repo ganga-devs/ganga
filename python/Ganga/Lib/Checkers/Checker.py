@@ -110,12 +110,14 @@ class FileChecker(IFileChecker):
         for filepath in filepaths:
             for searchString in self.searchStrings:
                 stringFound = False
-                for line in filepath:
-                    if re.search(searchString,line):
-                        if self.failIfFound is True:            
-                            logger.info('The string %s has been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
-                            return self.failure
-                        stringFound = True
+                # self.findFiles() guarantees that file at filepath exists, hence no exception handling
+                with open(filepath) as file:
+                    for line in file:
+                        if re.search(searchString,line):
+                            if self.failIfFound is True:            
+                                logger.info('The string %s has been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
+                                return self.failure
+                            stringFound = True
                 if not stringFound and self.failIfFound is False:            
                     logger.info('The string %s has not been found in file %s, FileChecker will fail job(%s)',searchString,filepath,job.fqid)
                     return self.failure
