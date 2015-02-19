@@ -16,7 +16,7 @@ ganga/python/GangaGaudi                                                GangaGaud
 ganga/python/GangaLHCb                                                 GangaLHCb-inputfilesbeta-1-2
 
 #johannes
-ganga/python/GangaPanda                                                GangaPanda-26-27
+ganga/python/GangaPanda                                                GangaPanda-26-23
 
 #ulrik
 ganga/python/GangaPlotter                                              GangaPlotter-21-2
