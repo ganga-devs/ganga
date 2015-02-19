@@ -498,6 +498,7 @@ class Job(GangaObject):
 
         if new_status == 'completed' or new_status == 'failed' or new_status == 'killed':
             if self.postprocessors:
+                logger.info( "Running postprocessor for Job %s" % self.getFQID('.') )
                 passed = self.postprocessors.execute(self,new_status)
                 if passed is not True:
                     new_status = 'failed'        

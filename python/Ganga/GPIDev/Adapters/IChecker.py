@@ -26,12 +26,15 @@ class IChecker(IPostProcessor):
     _hidden = 1
     order = 2
 
-    def execute(self, job,newstatus):
+    def execute(self, job, newstatus):
         """
         Execute the check method, if check fails pass the check and issue an ERROR message. Message is also added to the debug folder.
         """
         if newstatus == 'completed':
-            if (len(job.subjobs) and self.checkMaster) or self.checkSubjobs == True:
+            #   If we're master job and check master check.
+            #   If not master job and check subjobs check
+            if (job.master is None and self.checkMaster) or\
+                    ( (job.master is not None) and self.checkSubjobs) :
                 try:
                     return self.check(job)
                 except Exception, e:
@@ -85,4 +88,4 @@ class IFileChecker(IChecker):
         
 
 
-    
+
