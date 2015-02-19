@@ -1,4 +1,52 @@
 **************************************************************************************************************
 6.0.99 (2015/2/19)
 
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Beta test for inputfiles branch
+* This release includes queues being merged into core
+* - It is now possible to register tasks with queues to run in the background
+*   e.g. queues.add( job.submit )
+* Many bugs to do with file-locking have been fixed between 6.0 and 6.1
+* Some improvements of Job class for readability
+* Improvements to Tasks in ganga for chaining large amount of jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Removed more obsolete code from Tag
+* Fixed minor bug in outputdata settings
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Beta test for inputfiles branch
+* Added more configurability to the DiracFile class
+* Adding support for reading Application status from Dirac
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaGaudi
+--------------------------------------------------------------------------------------------------------------
+* Beta test for inputfiles branch
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Beta test for inputfiles branch
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Force non-Athena jobs to use BuildGen to ensure --cmtConfig option is available
+* Add scopes for libDS
+* Add rucio scopes for DBRelease and libDS datasets
+* Update jobParameters to use new tf parameter convention
+
 **************************************************************************************************************
