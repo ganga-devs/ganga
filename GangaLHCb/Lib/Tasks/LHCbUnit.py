@@ -5,9 +5,11 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
+from Ganga.GPIDev.Base.Proxy import addProxy
 
 class LHCbUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
+      'input_datset_index'     : SimpleItem(defvalue=-1, protected=1, hidden=1, doc='Index of input dataset from parent Transform', typelist=["int"]),
     }.items()))
 
    _category = 'units'
@@ -27,7 +29,9 @@ class LHCbUnit(IUnit):
 
       import copy
       j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
-
+      if len(self._getParent().postprocessors.process_objects) > 0:
+         j.postprocessors = copy.deepcopy( addProxy(self._getParent()).postprocessors )
+      
       if trf.splitter:
          j.splitter = trf.splitter.clone()
       else:
