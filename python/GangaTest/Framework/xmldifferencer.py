@@ -205,6 +205,7 @@ def start(cmd_args=None):
         def isPre(x):
             return (x.endswith('-pre') and (x.find('hotfix') == -1) and (x.find('beta') == -1))
 
+        import os
         os.chdir(search_dir)
         dirs = filter(os.path.isdir, os.listdir(search_dir))
         dirs = filter(isPre, os.listdir(search_dir))
