@@ -226,13 +226,21 @@ def printTestCase(out,testcase,config=None):
             time = avalue
     resultNode = testcase.getElementsByTagName("result")[0]
     if resultNode:
-        result = getText(resultNode.childNodes)
-        if "failure" == result.strip():
+        result = getText(resultNode.childNodes).strip()
+        result2 = "failure"
+        try:
+            resultNode2 = testcase.getElementsByTagName("result")[1]
+            result2 = getText(resultNode2.childNodes).strip()
+        except:
+            pass
+
+        if ("failure" == result) and ("failure" == result2):
             failureNode = testcase.getElementsByTagName("failure")[0]
-            result = '<font color="red">%s</font>'%result
+            result = '<font color="red">%s</font>' % result
             info = getText(failureNode.childNodes)
         else:
-            result = '<font color="green">%s</font>'%result
+            result = "success"
+            result = '<font color="green">%s</font>' % result
         #link to standard output
         if gpip_type:
             # if the test type is "gpip", the link of standard output will be indicated to the same standard output file.
@@ -246,6 +254,9 @@ def printTestCase(out,testcase,config=None):
         info = info.strip()
         if info: #wrap in <pre>
             info = '<pre>%s</pre>' % info
+        if str("__Diff") in str(stdout):
+            index = str(stdout).find("__Diff")
+            stdout = str(stdout)[:index] + "__localxml"
         info = '%s<a class="small" href="../output/%s">View full output</a>' %(info, stdout+".out")
         if name.lower().find('stats')>=0:
             info = '%s &nbsp; <a class="small" href="../output/%s">Statistics</a>' %(info, stdout+".stats")
@@ -370,9 +381,17 @@ def generateSlowestTestsReport(out, group_testcases):
 
     def cmp_testcases(t1,t2):   
 
-        t1_time = float(t1.getAttribute('time'))        
-        t2_time = float(t2.getAttribute('time'))        
-  
+        try:
+            t1_time = eval( t1.getAttribute('time') )
+            t2_time = eval( t2.getAttribute('time') )
+        except:
+            try:
+                t1_time = float(t1.getAttribute('time'))        
+                t2_time = float(t2.getAttribute('time'))        
+            except:
+                t1_time = 0.
+                t2_time = 0.
+
         if t1_time > t2_time:
             return -1
         elif t1_time < t2_time:

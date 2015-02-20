@@ -19,7 +19,7 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
     ind = filename.find("__")
     filename = filename[:ind].strip()
     #write new difference file
-    differencefile = os.path.join(newreportdir,filename+"__Diff_"+newversion+"-"+oldversion+"_"+newconfig+"_"+oldconfig+".xml")
+    differencefile = os.path.join(newreportdir, filename+"__Diff_"+newversion+"-"+oldversion+"_"+newconfig+"_"+oldconfig+".xml")
     logger.info("writing:"+differencefile)
     #differencefile = "/home/alex/differencefile.xml"
     f = open(differencefile, 'w')
@@ -99,6 +99,14 @@ def comparetestfiles(newfiledict, oldfiledict):
     #print filelist
     #go through list of tests
     for filename in newfiledict:
+
+        logger.info( "Looking at: %s" % filename )
+
+        if filename not in oldfiledict:
+            continue
+
+        logger.info( "Comparing: %s" % filename )
+
         newtests = {}
         oldtests = {}
         #go through new report
@@ -137,6 +145,7 @@ def comparetestfiles(newfiledict, oldfiledict):
 
 #======================================================================
 def decide_new(datalist):
+    global newreportdir, newversion, oldversion, newconfig, oldconfig
     version_one = datalist[0]
     version_two = datalist[2]
     config_one = datalist[1]
@@ -196,7 +205,9 @@ def start(cmd_args=None):
     else:
         logger.error("no args passed")
         return
-    
+
+    logger.info( "Starting postprocessing" )
+
     #process args
     if ( len(cmd_args) == 1 ):
         
@@ -284,14 +295,28 @@ def start(cmd_args=None):
         #if fileconfig.find("Diff_"):
         #    pass
         if fileconfig == newconfig:
-            reportfile = os.path.join(newreportdir,newfile)    
+            reportfile = os.path.join(newreportdir, newfile)    
             #print reportfile
             try:
                 newdoc = xml.dom.minidom.parse(reportfile)
             except IOError:
+                newdoc = ""
                 logger.warning("attempted to parse directory in "+newreportdir)
             newfiles[str(newfile)] = newdoc
             filelist += [newfile]
+        #    print newfiles
+        #    print newdoc
+        elif str(newfile).endswith( ".xml" ):
+            reportfile = os.path.join(newreportdir, newfile)
+            try:
+                newdoc = xml.dom.minidom.parse(reportfile)
+            except:
+                newdoc = ""
+                pass
+            newfiles[str(newfile)] = newdoc
+            filelist += [newfile]
+        #    print newfile
+        #    print newfiles
     #go through old fir
 
     # Correct for looking for -pre-pre folders
@@ -313,8 +338,16 @@ def start(cmd_args=None):
             except IOError:
                 logger.warning("attempted to parse directory in "+oldreportdir)     
             oldfiles[str(oldfile)] = olddoc      
-    print newfiles
-    print oldfiles
+        elif str(oldfile).endswith( ".xml" ):
+            try:
+                olddoc = xml.dom.minidom.parse(reportfile)
+            except IOError:
+                olddoc = ""
+            oldfiles[str(oldfile)] = olddoc
+
+    #print newfiles
+    #print oldfiles
+
     #go through dictionaries and compare files and then compare tests
     comparetestfiles(newfiles, oldfiles)
 
