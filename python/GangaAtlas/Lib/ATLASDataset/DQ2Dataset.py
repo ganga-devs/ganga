@@ -39,7 +39,7 @@ def convertDQ2ToClient(dataset):
 
     try:
         #dq2_lock.acquire()
-        tmpListdq2 = dq2.listFilesInDataset(dataset)[0]
+        tmpListdq2 = dq2.listFilesInDataset(dataset, long=False)[0]
     finally:
         #dq2_lock.release()
         pass
@@ -229,7 +229,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
 
         try:
             #dq2_lock.acquire()
-            contents = dq2.listFilesInDataset(dataset)
+            contents = dq2.listFilesInDataset(dataset, long=False)
         finally:
             #dq2_lock.release()
             pass
@@ -639,7 +639,7 @@ class DQ2Dataset(Dataset):
             try:
                 #dq2_lock.acquire()
                 try:
-                    contents = dq2.listFilesInDataset(dataset)
+                    contents = dq2.listFilesInDataset(dataset, long=False)
                 except:
                     contents = []
                     pass
@@ -802,7 +802,7 @@ class DQ2Dataset(Dataset):
             
             try:
                 #dq2_lock.acquire()
-                contents=dq2.listFilesInDataset(tagdataset)
+                contents=dq2.listFilesInDataset(tagdataset, long=False)
             finally:
                 #dq2_lock.release()
                 pass
@@ -931,7 +931,7 @@ class DQ2Dataset(Dataset):
         for dataset in datasets:
             try:
                 #dq2_lock.acquire()
-                contents = dq2.listFilesInDataset(dataset)
+                contents = dq2.listFilesInDataset(dataset, long=False)
             finally:
                 #dq2_lock.release()
                 pass
@@ -1295,7 +1295,7 @@ class DQ2OutputDataset(Dataset):
         try:
             #dq2_lock.acquire()
             try:
-                contents = dq2.listFilesInDataset(datasetname)
+                contents = dq2.listFilesInDataset(datasetname, long=False)
             except:
                 contents = ({},'')
                 pass
@@ -1672,7 +1672,7 @@ class DQ2OutputDataset(Dataset):
             try:
                 #dq2_lock.acquire()
                 try:
-                    contents = dq2.listFilesInDataset(dataset)
+                    contents = dq2.listFilesInDataset(dataset, long=False)
                 except:
                     contents = []
                     pass
