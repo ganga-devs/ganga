@@ -22,6 +22,11 @@ class IUnit(GangaObject):
         'start_time' : SimpleItem(defvalue=0, hidden=1,doc='Start time for this unit. Allows a delay to be put in'),
         'copy_output' : ComponentItem('datasets', defvalue=None, load_default=0,optional=1, doc='The dataset to copy the output of this unit to, e.g. Grid dataset -> Local Dataset'),
         'merger'    : ComponentItem('mergers', defvalue=None, load_default=0,optional=1, doc='Merger to be run after this unit completes.'),
+        'splitter'       : ComponentItem('splitters', defvalue=None, optional=1,load_default=False, doc='Splitter used on each unit of the Transform.'),
+        'postprocessors':ComponentItem('postprocessor',defvalue=None,doc='list of postprocessors to run after job has finished'),
+        'inputsandbox'   : FileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.File.File'],sequence=1,doc="list of File objects shipped to the worker node "),
+        'inputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
+        'outputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects to be copied to all jobs"),
     })
 
    _category = 'units'
