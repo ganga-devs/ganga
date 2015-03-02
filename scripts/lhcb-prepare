@@ -125,6 +125,7 @@ class InstallLHCb:
         tagdir = self.options.source + '/tags/private/LHCbSetupProject'
         if self.options.version == 'head':
             tagdir = self.options.source + '/trunk/external/LHCbSetupProject'
+            taglocation = tagdir
         fh, fname = mkstemp()
         command = "svn list " + tagdir
         retcode = call(command,shell=True,stdout=fh)
@@ -137,7 +138,7 @@ class InstallLHCb:
             if vsort and vsort <= gangaver:
                 taglocation = join(tagdir,d.rstrip())
                 break
-        
+         
         if not taglocation:
             raise InstallLHCbError(
                 "Failed to find correct tag for LHCbSetupProject. " + \
