@@ -35,7 +35,7 @@ class InstallLHCb:
     def _locations(self):
         """Identify exact locations for source and destanation"""
 
-        ver = self.options.version
+        ver = self.options.version.lower()
         source = self.options.source
         if ver != 'head':
             pTag     = re.compile(r'.+/(\S+)$')
@@ -46,7 +46,7 @@ class InstallLHCb:
             mRelease = pRelease.match(ver)
 
         if ver == 'head':
-            self.versionLHCb = 'head'
+            self.versionLHCb = 'HEAD'
             self.versionGanga = 'head'
             self.sourcelocation = join(source,"trunk","ganga")
         elif mTag:
@@ -312,18 +312,12 @@ class InstallLHCb:
         self._getGanga()
         self._getExternals()
 
-
-    def process(self):
-        symlink('../../external', 
-                join(self.destination, "InstallArea", "python", "external"))
-
     def cleanup(self):
         pass
 
     def install(self):
         self.prepare()
         self.checkout()
-        self.process()
         self.cleanup()
 
 if __name__ == '__main__':
