@@ -165,7 +165,7 @@ def isDQ2SRMSite(location):
         return False
 
 
-def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=False, allowed_sites = [], fax_sites = [] ):
+def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=False, allowed_sites = [], fax_sites = [], skipReplicaLookup=False ):
 
     if datasets.__class__.__name__=='str':
         datasets = [ datasets ]
@@ -241,10 +241,17 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         contents = contents[0]
         guidsDataset = []
 
+        completeLocations = [ str(i) for i in locations[datasetvuid][1]]
+
         for guid, keys in contents.iteritems():
             guidsDataset.append(str(guid))
-            guidLocation[guid] = []
+            if skipReplicaLookup:
+                guidLocation[guid] = completeLocations
+            else:
+                guidLocation[guid] = []
             
+        if replicaList and skipReplicaLookup:
+            return guidLocation
 
         locations_checktime = {}
         locations_num = {}
@@ -622,6 +629,8 @@ class DQ2Dataset(Dataset):
         contents_size = {}
         contents_checksum = {}
         contents_scope = {}
+        contents = []
+        contents_new = []
 
         datasets = resolve_container(self.dataset)
 
@@ -641,7 +650,9 @@ class DQ2Dataset(Dataset):
                 try:
                     contents = dq2.listFilesInDataset(dataset, long=False)
                 except:
+        
                     contents = []
+                    raise ApplicationConfigurationError(None,'DQ2Dataset.get_contents(): problem in call dq2.listFilesInDataset(%s, long=False)' %dataset )
                     pass
             finally:
                 #dq2_lock.release()
@@ -721,8 +732,8 @@ class DQ2Dataset(Dataset):
 
             allcontents = allcontents + contents
             diffcontents[dataset] = contents
-            
-        self.number_of_files = len(allcontents)
+            self.number_of_files = len(allcontents)
+
         diffcontentsNew = {}
         allcontentsSize = []
         diffcontentsSize = {}
@@ -1213,7 +1224,7 @@ class DQ2Dataset(Dataset):
         else:
             return dataset_locations_list
 
-    def list_locations_siteindex(self,dataset=None, timeout=15, days=2, replicaList=False, faxSites=[]):
+    def list_locations_siteindex(self,dataset=None, timeout=15, days=2, replicaList=False, faxSites=[], skipReplicaLookup=False):
 
         if not dataset:
             datasets = self.dataset
@@ -1222,7 +1233,7 @@ class DQ2Dataset(Dataset):
 
         datasets = resolve_container(datasets)
 
-        return dq2_list_locations_siteindex(datasets, timeout, days, replicaList, fax_sites=faxSites)
+        return dq2_list_locations_siteindex(datasets, timeout, days, replicaList, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
 
 class DQ2OutputDataset(Dataset):
     """DQ2 Dataset class for a dataset of output files"""
