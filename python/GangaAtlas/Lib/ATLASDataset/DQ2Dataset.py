@@ -40,6 +40,8 @@ def convertDQ2ToClient(dataset):
     try:
         #dq2_lock.acquire()
         tmpListdq2 = dq2.listFilesInDataset(dataset, long=False)[0]
+    except:
+        tmpListdq2 = {}
     finally:
         #dq2_lock.release()
         pass
@@ -181,7 +183,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                 locations = dq2.listDatasetReplicas(dataset)
             except:
                 logger.error('Dataset %s not found !', dataset)
-                return []
+                return {}
         finally:
             #dq2_lock.release()
             pass
@@ -218,11 +220,11 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                     datasetvuid = str(uuid.UUID(datasetvuid))
                 except:
                     logger.warning('Dataset %s not found',dataset)
-                    return []
+                    return {}
 
         if not locations.has_key(datasetvuid):
             logger.warning('Dataset %s not found',dataset)
-            return []
+            return {}
 
         alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
         logger.info('Dataset %s has %s locations', dataset, len(alllocations))
@@ -230,13 +232,15 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
         try:
             #dq2_lock.acquire()
             contents = dq2.listFilesInDataset(dataset, long=False)
+        except:
+            contents = {}
         finally:
             #dq2_lock.release()
             pass
 
         if not contents:
             logger.error('Dataset %s is empty.', dataset)
-            return
+            return {}
 
         contents = contents[0]
         guidsDataset = []
@@ -324,6 +328,9 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
             try:
                 #dq2_lock.acquire()
                 datasetsiteinfo = dq2.listFileReplicas(location, dataset)                
+            except:
+                datasetsiteinfo = {}
+                return {}
             finally:
                 #dq2_lock.release()
                 pass
@@ -653,7 +660,7 @@ class DQ2Dataset(Dataset):
         
                     contents = []
                     raise ApplicationConfigurationError(None,'DQ2Dataset.get_contents(): problem in call dq2.listFilesInDataset(%s, long=False)' %dataset )
-                    pass
+                    
             finally:
                 #dq2_lock.release()
                 pass
@@ -814,6 +821,8 @@ class DQ2Dataset(Dataset):
             try:
                 #dq2_lock.acquire()
                 contents=dq2.listFilesInDataset(tagdataset, long=False)
+            except:
+                contents = {}
             finally:
                 #dq2_lock.release()
                 pass
@@ -943,6 +952,8 @@ class DQ2Dataset(Dataset):
             try:
                 #dq2_lock.acquire()
                 contents = dq2.listFilesInDataset(dataset, long=False)
+            except:
+                contents = {}
             finally:
                 #dq2_lock.release()
                 pass

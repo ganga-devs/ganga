@@ -60,12 +60,12 @@ def appendFile(file_path, archive_path):
     #print "Delete cmd %s " %cmd
     out = commands.getoutput(cmd)
 
-def dq2_siteinfo(dataset, allowed_sites, locations, udays, faxSites):
+def dq2_siteinfo(dataset, allowed_sites, locations, udays, faxSites, skipReplicaLookup):
 
     if faxSites:
-        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites=allowed_sites+locations, fax_sites=faxSites)
+        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites=allowed_sites+locations, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
     else:
-        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites= allowed_sites, fax_sites=faxSites)
+        result = dq2_list_locations_siteindex(datasets=dataset, days=udays, replicaList=True, allowed_sites= allowed_sites, fax_sites=faxSites, skipReplicaLookup=skipReplicaLookup)
         
     siteinfo = {}
     for guid, sites in result.iteritems():
@@ -479,8 +479,9 @@ class DQ2JobSplitter(ISplitter):
         # use a key of the whole inDS structure for cache
         indata_buf = StringIO.StringIO()
         job.inputdata.printTree(indata_buf)
-        cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, indata_buf.getvalue().replace('\n', ''))
-        locations = cache_get_locations(overlap=False)
+        #cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, indata_buf.getvalue().replace('\n', ''))
+        #locations = cache_get_locations(overlap=False)
+        locations = job.inputdata.get_locations(overlap=False)
 
         allowed_sites = []
         if job.backend._name in [ 'LCG', 'CREAM' ]:
@@ -630,13 +631,14 @@ class DQ2JobSplitter(ISplitter):
 
         logger.debug('allowed_sites = %s ', allowed_sites)
 
-        cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, indata_buf.getvalue().replace('\n', ''))
-        contents_temp = cache_get_contents(overlap=False, size=True)
+        #cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, indata_buf.getvalue().replace('\n', ''))
+        #contents_temp = cache_get_contents(overlap=False, size=True)
+        contents_temp = job.inputdata.get_contents(overlap=False, size=True)
 
         if self.numevtsperjob > 0:
-            contents_temp = cache_get_contents(overlap=False, event=True)
+            contents_temp = job.inputdata.get_contents(overlap=False, event=True)
         else:
-            contents_temp = cache_get_contents(overlap=False, size=True)
+            contents_temp = job.inputdata.get_contents(overlap=False, size=True)
 
         logger.debug(contents_temp)
 
@@ -756,12 +758,14 @@ class DQ2JobSplitter(ISplitter):
             else:
                 if self.update_siteindex:
                     udays = 2
+                    skipReplicaLookup = False
                 else:
                     udays = 10000
+                    skipReplicaLookup = True
                 if locations and locations.has_key(dataset):
-                    cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, indata_buf.getvalue().replace('\n', '') + dataset)
-                    siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites)
-                    #siteinfo = dq2_siteinfo(dataset, allowed_sites, locations[dataset]+faxSites, udays, faxSites)
+                    #cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, indata_buf.getvalue().replace('\n', '') + dataset)
+                    #siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites)
+                    siteinfo = dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites, skipReplicaLookup)
                 else:
                     siteinfo = {}
 
