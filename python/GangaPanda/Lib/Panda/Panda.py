@@ -1279,6 +1279,8 @@ class Panda(IBackend):
                         if job.status != 'running':
                             job.updateStatus('running')
                     elif status.jobStatus == 'finished':
+                        if job.status == 'submitting': # Fix for HammerCloud in case jobs are left in submitting state
+                            job.updateStatus('submitted')
                         if job.status != 'completed':
                             if not job.backend._name=='PandaBuildJob' and job.status != "completed":
                                 job.backend.fillOutputData(job, status)
