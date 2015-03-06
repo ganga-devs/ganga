@@ -21,7 +21,8 @@ class LHCbUnit(IUnit):
       j = GPI.Job()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
-      j.inputdata = self.inputdata.clone()
+      if self.inputdata:
+         j.inputdata = self.inputdata.clone()
 
       trf = self._getParent()
       task = trf._getParent()
@@ -34,9 +35,15 @@ class LHCbUnit(IUnit):
       
       if trf.splitter:
          j.splitter = trf.splitter.clone()
+         
+         # change the first event for GaussSplitter
+         if trf.splitter._name == "GaussSplitter":
+            events_per_unit = j.splitter.eventsPerJob * j.splitter.numberOfJobs
+            j.splitter.firstEventNumber = self.getID() * events_per_unit
+            
       else:
          j.splitter = SplitByFiles()
-         
+
       return j
 
    def checkMajorResubmit(self, job):
