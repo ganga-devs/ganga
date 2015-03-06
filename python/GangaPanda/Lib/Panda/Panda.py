@@ -1276,6 +1276,8 @@ class Panda(IBackend):
                         if job.status != 'submitted':
                             job.updateStatus('submitted')
                     elif status.jobStatus in ['starting','running','holding','transferring']:
+                        if job.status == 'submitting': # Fix for HammerCloud in case jobs are left in submitting state
+                            job.updateStatus('submitted')
                         if job.status != 'running':
                             job.updateStatus('running')
                     elif status.jobStatus == 'finished':
