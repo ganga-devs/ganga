@@ -11,11 +11,13 @@ proxy = getCredential('GridProxy', '')
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 DIRAC_ENV={}
 DIRAC_INCLUDE=''
+Dirac_Env_Lock = threading.Lock()
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def getDiracEnv(force=False):
     global DIRAC_ENV
-    lock = threading.Lock()
+    global Dirac_Env_Lock
+    lock = Dirac_Env_Lock
     lock.acquire()
     if DIRAC_ENV == {} or force:
         if getConfig('DIRAC')['DiracEnvFile'] != "" and os.path.exists(getConfig('DIRAC')['DiracEnvFile']):
