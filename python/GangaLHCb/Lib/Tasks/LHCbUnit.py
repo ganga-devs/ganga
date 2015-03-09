@@ -66,6 +66,29 @@ class LHCbUnit(IUnit):
 
          # the inputdata field *must* be filled from the parent task
          # NOTE: When changing to inputfiles, will probably need to check for any specified in trf.inputfiles
+
+         # check that the parent replicas have been copied by checking backend status == Done
+         job_list = []
+         for req_unit in self.req_units:
+            trf = self._getParent()._getParent().transforms[ int( req_unit.split(":")[0] ) ]
+            req_unit_id = req_unit.split(":")[1]
+
+            if req_unit_id != "ALL":
+               unit = trf.units[ int( req_unit_id ) ]
+               job_list.append( GPI.jobs( unit.active_job_ids[0] ) )
+            else:
+               for unit in trf.units:
+                  job_list.append( GPI.jobs( unit.active_job_ids[0] ) )
+
+         for j in job_list:
+            if j.subjobs:
+               for sj in j.subjobs:
+                  if sj.backend.status != "Done":
+                     return
+            else:
+               if j.backend.status != "Done":
+                  return
+               
          job = GPI.jobs(self.active_job_ids[0])
          for f in job.inputdata.files:
             logger.warning("Removing chain inputdata file '%s'..." % f.name)
