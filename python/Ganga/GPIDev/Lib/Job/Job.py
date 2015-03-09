@@ -203,12 +203,15 @@ class Job(GangaObject):
 
     # TODO: usage of **kwds may be envisaged at this level to optimize the overriding of values, this must be reviewed
     def __init__(self):
+        self._Job_constructed = False
         super(Job, self).__init__()
         self.time.newjob() #<-----------NEW: timestamp method
         logger.debug( "__init__" )
+        self._Job_constructed = True
 
     def __construct__(self, args):
 
+        self.status = "new"
         logger.debug( "Intercepting __construct__" )
 
         super(Job, self).__construct__( args )
@@ -238,7 +241,6 @@ class Job(GangaObject):
                         self.inputfiles = []
                 if getConfig('Preparable')['unprepare_on_copy'] is True:
                     self.unprepare()
-
 
     def _readonly(self):
         return self.status != 'new'
@@ -306,13 +308,14 @@ class Job(GangaObject):
         #logger.debug( "Intercepting _attribute_filter__get__" )
 
         # Attempt to spend too long loading un-needed objects into memory in order to read job status
-        if name is 'status':
+        if name == 'status':
             return object.__getattribute__(self, 'status')
 
         list = self.metadata.data.keys()
         list.append( 'outputfiles' )
         list.append( 'inputfiles' )
         list.append( 'subjobs' )
+
         if name not in list:
             return object.__getattribute__(self, name)
 
@@ -352,7 +355,8 @@ class Job(GangaObject):
 
     # status may only be set directly using updateStatus() method
     # only modules comming from Ganga.GPIDev package may change it directly
-    def _checkset_status(self,value):
+    def _checkset_status(self, value):
+
         try:
             id = self.getFQID('.')
         except KeyError:
@@ -361,11 +365,16 @@ class Job(GangaObject):
             except KeyError:
                 id = None
         #try:
-        if hasattr( self, 'status' ):
-            oldstat = self.status
-        #except:
+        if hasattr( self, '_Job_constructed' ) and self._Job_constructed == True:
+            if hasattr( self, 'status' ):
+                oldstat = self.status
+            #except:
+            else:
+                oldstat = None
         else:
-            oldstat = None
+            oldstat = value
+            #raise JobError( "Job Not constructed: %s, %s " % (str(self), str(value) ) )
+
         logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
         #import inspect,os
         #frame = inspect.stack()[2]
@@ -1358,7 +1367,8 @@ class Job(GangaObject):
             # in the case of a master job however we need to still perform this
             if len(rjobs) != 1:
                 self.info.increment()
-            self.updateStatus('submitted') # FIXME: if job is not split, then default implementation of backend.master_submit already have set status to "submitted"
+            if self.master != None:
+                self.updateStatus('submitted')
             self._commit() # make sure that the status change goes to the repository, NOTE: this commit is redundant if updateStatus() is used on the line above
 
             #send job submission message

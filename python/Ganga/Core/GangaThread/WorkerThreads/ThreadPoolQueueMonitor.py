@@ -7,28 +7,53 @@ from Ganga.Utility.logging                                  import getLogger
 from Ganga.Utility.ColourText                               import getColour
 logger = getLogger()
 
+_user_threadpool = None
+_monitoring_threadpool = None
+
 
 class ThreadPoolQueueMonitor(object):
     '''
     This class displays the user and monitor thread pools and associated queues
 
-    The number of worker threads in the pool is controlled by
+    The number of worker threads in the pool is initialized by
     the getConfig('Queues')['NumWorkerThreads'] config option.
     '''
 
     def __init__(self,
-                 user_threadpool       = WorkerThreadPool(),
-                 monitoring_threadpool = WorkerThreadPool()):
-        self._user_threadpool       = user_threadpool
-        self._monitoring_threadpool = monitoring_threadpool
+                 user_threadpool       = WorkerThreadPool( worker_thread_prefix = "User_Worker_" ),
+                 monitoring_threadpool = WorkerThreadPool( worker_thread_prefix = "Monitor_Worker_" ) ):
+
+        global _user_threadpool
+        global _monitoring_threadpool
+        self._user_threadpool = _user_threadpool
+        self._monitoring_threadpool = _monitoring_threadpool
+
+        if user_threadpool != None:
+            if self._user_threadpool is not None:
+                self._user_threadpool.clear_queue()
+                self._user_threadpool._stop_worker_threads()
+                del self._user_threadpool
+                del _user_threadpool
+            self._user_threadpool = user_threadpool
+        if monitoring_threadpool != None:
+            if self._monitoring_threadpool is not None:
+                self._monitoring_threadpool.clear_queue()
+                self._monitoring_threadpool._stop_worker_threads()
+                del self._monitoring_threadpool
+                del _monitoring_threadpool
+            self._monitoring_threadpool = monitoring_threadpool
+
+        _user_threadpool = self._user_threadpool
+        _monitoring_threadpool = self._monitoring_threadpool
+
 
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
         output=''
-        output+= '{0:^55} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
-        output+= '{0:^55} | {1:^50}\n'.format('------------------', '------------------------')
-        output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('Name', 'Command', 'Timeout')
-        output+= '{0:<10} {1:<33} {2:<10} | {0:<10} {1:<33} {2:<10}\n'.format('----', '-------', '-------')
+        output+= '{0:^58} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
+        output+= '{0:^58} | {1:^50}\n'.format('------------------', '------------------------')
+        output+= '{0:<10} {1:<31} {2:<15} | {0:<10} {1:<33} {2:<10}\n'.format('Name', 'Command', 'Timeout')
+        output+= '{0:<10} {1:<31} {2:<15} | {0:<10} {1:<33} {2:<10}\n'.format('----', '-------', '-------')
         for u, m in zip( self._user_threadpool.worker_status(),
                          self._monitoring_threadpool.worker_status() ):
             # name has extra spaces as colour characters are invisible but still count
@@ -199,6 +224,17 @@ class ThreadPoolQueueMonitor(object):
                                             fallback_func    = fallback_func,
                                             fallback_args    = fallback_args,
                                             fallback_kwargs  = fallback_kwargs )
+
+    def threadStatus(self):
+        statuses = []
+        for t in self._user_threadpool.worker_status():
+            if t[1] != "idle":
+                statuses.append( t[0] )
+        for t in self._monitoring_threadpool.worker_status():
+            if t[1] != "idle":
+                statuses.append( t[0] )
+        return statuses
+
     def totalNumUserThreads(self):
         """Return the total number of user threads, both running and queued"""
         num = 0

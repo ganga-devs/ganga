@@ -386,15 +386,16 @@ def GPIProxyClassFactory(name, pluginclass):
                             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef()) 
                             shareref.increase(self.application.is_prepared.name)
                             self.unprepare()
-    
-        if hasattr(self,'is_prepared'):
-            if self.is_prepared is not None:
-                if self.is_prepared is not True:
-                    if hasattr( self.is_prepared, 'name' ):
-                        if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
-                            logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
-                            logger.error('Unpreparing %s application' % self._impl._name)
-                            self.unprepare()
+
+        if unprepare is True:
+            if hasattr(self,'is_prepared'):
+                if self.is_prepared is not None:
+                    if self.is_prepared is not True:
+                        if hasattr( self.is_prepared, 'name' ):
+                            if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
+                                logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
+                                logger.error('Unpreparing %s application' % self._impl._name)
+                                self.unprepare()
 
         if unprepare is True:
             c = self._impl.clone()
@@ -464,7 +465,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             try:
                 return object.__getattribute__(self, name)
             except AttributeError, x:
-                logger.debug( "Attribute: %s NOT found" % name )
+                logger.debug( "Attribute: %s NOT found for object %s" % ( name, str(self) ) )
                 raise GangaAttributeError( "%s" % str(x) )
 
     # but at the class level _impl is a ganga plugin class

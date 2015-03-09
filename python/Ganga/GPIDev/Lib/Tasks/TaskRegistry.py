@@ -36,8 +36,11 @@ Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_show_help',True,
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 
 # add monitoring loop option
-config.addOption('TaskLoopFrequency', 60, "Frequency of Task Monitoring loop in seconds")
+config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
 config.addOption('ForceTaskMonitoring', False, "Monitor tasks even if the monitoring loop isn't enabled")
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger( "GangaThread" )
 
 class TaskRegistry(Registry):
     def getProxy(self):
@@ -57,6 +60,7 @@ class TaskRegistry(Registry):
         return c
 
     def _thread_main(self):
+
         """ This is an internal function; the main loop of the background thread """
         ## Add runtime handlers for all the taskified applications, since now all the backends are loaded
         from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
@@ -89,11 +93,17 @@ class TaskRegistry(Registry):
             except RegistryError:
                 continue
 
+        logger.debug( "Entering main loop" )
+
         ## Main loop
         while not self._main_thread.should_stop():
+
             ## For each task try to run it
             if config['ForceTaskMonitoring'] or monitoring_component.enabled:
                 for tid in self.ids():
+
+                    logger.debug( "Running over tid: %s" % str(tid) )
+
                     try:
                         if hasattr(self[tid], "_tasktype") and self[tid]._tasktype == "ITask":
                             # for new ITasks, always need write access
@@ -111,8 +121,10 @@ class TaskRegistry(Registry):
                     except RegistryError:
                         # could not acquire lock
                         continue
+
                     if self._main_thread.should_stop():
                         break
+
                     try:
                         if hasattr(self[tid], "_tasktype") and self[tid]._tasktype == "ITask":
                             # for new ITasks, always call update()
@@ -140,12 +152,16 @@ class TaskRegistry(Registry):
                         
                     if self._main_thread.should_stop():
                         break
-                    
-            # Sleep interruptible for 10 seconds
-            for i in range(0,config['TaskLoopFrequency'] * 10):
                 if self._main_thread.should_stop():
                     break
-                time.sleep(0.1)
+
+            logger.debug( "TaskRegistry Sleeping for: %s seconds" % str( config['TaskLoopFrequency'] ) )
+
+            # Sleep interruptible for 10 seconds
+            for i in range(0, int(config['TaskLoopFrequency'] * 100) ):
+                if self._main_thread.should_stop():
+                    break
+                time.sleep(0.01)
 
     def startup(self):
         """ Start a background thread that periodically run()s"""

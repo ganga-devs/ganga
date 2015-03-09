@@ -160,6 +160,8 @@ def disableMonitoringService():
         pool.__do_shutdown__()
         first = 1
 
+    log.debug( "Queues Threads should now be gone" )
+
 def disableInternalServices():
     """
     Deactivates all the internal services :
@@ -222,15 +224,16 @@ def enableInternalServices():
         from Ganga.Core.exceptions import GangaException
         raise GangaException( "Cannot (re)enable services" )
 
+    #startup the registries
+    from Ganga.Runtime import Repository_runtime
+    Repository_runtime.bootstrap()
+
     #make sure all required credentials are valid
     missing_cred = getMissingCredentials()
     if missing_cred:
         log.error("The following credentials are still required: %s."
                   "Make sure you renew them before reactivating this session" % ','.join(missing_cred))
         return
-    #startup the registries
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.bootstrap()
 
     log.debug("Enabling the internal services")
     # re-enable the monitoring loop as it's been explicityly requested here
@@ -263,15 +266,16 @@ def getMissingCredentials():
 
 def bootstrap():
 
-    global servicesEnabled
-    servicesEnabled = True
-    
+    #global servicesEnabled
+    #servicesEnabled = True
+
     #export to GPI 
     from Ganga.Runtime.GPIexport import exportToGPI
     exportToGPI('reactivate', enableInternalServices, 'Functions' ) 
     exportToGPI('disableMonitoring', disableMonitoringService, 'Functions' )
     exportToGPI('disableServices', disableInternalServices ,'Functions' )
 
+    servicesEnabled = True
 
 #
 #$Log: not supported by cvs2svn $

@@ -9,7 +9,7 @@ from Ganga.Utility.logging                   import getLogger
 from Ganga.Utility.Config                    import getConfig
 
 logger = getLogger()
-QueueElement   = collections.namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func'])
+QueueElement   = collections.namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
 CommandInput   = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
 FunctionInput  = collections.namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
 
@@ -31,8 +31,10 @@ class WorkerThreadPool(object):
         self.__init_worker_threads( self._saved_num_worker, self._saved_thread_prefix )
 
     def __init_worker_threads(self, num_worker_threads, worker_thread_prefix ):
-        if self.__worker_threads:
-            logger.info("Threads already started!")
+        if len(self.__worker_threads) > 0:
+            logger.warning("Threads already started!")
+            for i in self.__worker_threads:
+                logger.info( "Worker Thread: %s is already running!" % i.name )
             return
 
         for i in range(num_worker_threads):
@@ -58,6 +60,8 @@ class WorkerThreadPool(object):
         # im hoping that importing within the thread will avoid this.
         import Queue
 
+        oldname = thread.name
+
         ## Note can use threading.current_thread to get the thread rather than passing it as an arg
         ## easier to unit test this way though with a dummy thread.
         while not thread.should_stop():
@@ -66,6 +70,9 @@ class WorkerThreadPool(object):
             except Queue.Empty: continue #wait 0.05 sec then loop again to give shutdown a chance
 
             #regster as a working thread
+            if isinstance(item, QueueElement):
+                thread.name = item.name
+
             thread.register()
 
             if not isinstance(item, QueueElement):
@@ -124,10 +131,13 @@ class WorkerThreadPool(object):
                 self.__queue.task_done()
                 thread.unregister()
 
+        thread.name = oldname
+
     def add_function(self,
                      function, args=(), kwargs={}, priority=5,
                      callback_func=None, callback_args=(), callback_kwargs={},
-                     fallback_func=None, fallback_args=(), fallback_kwargs={}):
+                     fallback_func=None, fallback_args=(), fallback_kwargs={},
+                     name = None):
 
         if not isinstance(function, types.FunctionType) and not isinstance(function, types.MethodType):
             logger.error('Only a python callable object may be added to the queue using the add_function() method')
@@ -135,14 +145,15 @@ class WorkerThreadPool(object):
         self.__queue.put( QueueElement(priority      = priority,
                                        command_input = FunctionInput(function, args, kwargs),
                                        callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
-                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
+                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs), name = name
                                        ) )
 
     def add_process(self,
                     command, timeout=None, env=None, cwd=None, shell=False,
                     python_setup='', eval_includes=None, update_env=False, priority=5,
                     callback_func=None, callback_args=(), callback_kwargs={},
-                    fallback_func=None, fallback_args=(), fallback_kwargs={}):
+                    fallback_func=None, fallback_args=(), fallback_kwargs={},
+                    name = None):
 
         if type(command) != str:
             logger.error("Input command must be of type 'string'")
@@ -150,7 +161,7 @@ class WorkerThreadPool(object):
         self.__queue.put( QueueElement(priority      = priority,
                                        command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
                                        callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
-                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs)
+                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs), name = name
                                        ) )
     #simple no need for callback
 #    def add(self, function, *args, **kwargs):
@@ -237,11 +248,17 @@ class WorkerThreadPool(object):
     def _stop_worker_threads(self):
         for w in self.__worker_threads:
             w.stop()
-            w.unregister()
-        del self.__worker_threads[:]
+            # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
+            #w.unregister()
+            #del w
+        #del self.__worker_threads[:]
+        self.__worker_threads = []
         return
 
     def _start_worker_threads(self):
+        if len(self.__worker_threads) > 0:
+            self._stop_worker_threads()
+
         self.__init_worker_threads( self._saved_num_worker, self._saved_thread_prefix )
         return
 

@@ -408,11 +408,13 @@ under certain conditions; type license() for details.
        for o in cmdline_options:
           rpat = mpat.match(o)
           if rpat is None:
+             from Ganga.Utility.Config import ConfigError
              raise ConfigError('syntax error: "%s"'%o)
           else:
              if rpat.group('section'):
                 section = rpat.group('section')
              if section is None:
+                from Ganga.Utility.Config import ConfigError
                 raise ConfigError('section not specified: %s' % o)
              else:
                 opts.append((section,rpat.group('option'),rpat.group('value')))
@@ -1279,7 +1281,9 @@ default_backends = LCG
               print obj._display(1)
               return
            else:
+              print
               print obj
+           return
 
         shell = config['TextShell']
 

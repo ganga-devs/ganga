@@ -41,9 +41,6 @@ def bootstrap(reg, interactive_session):
 
     from Ganga.Core.GangaThread import GangaThreadPool
 
-    # create generic Ganga thread pool
-    thread_pool = GangaThreadPool.getInstance()
-
     #start the internal services coordinator    
     from Ganga.Core.InternalServices import Coordinator,ShutdownManager
     Coordinator.bootstrap()
@@ -65,69 +62,7 @@ def bootstrap(reg, interactive_session):
     #register the MC shutdown hook
     import atexit
 
-    def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-        global t_last
-        if t_last is None:
-            t_last = -time.time()
-        # if there are critical threads then prompt user or wait depending on configuration 
-        if critical_thread_ids:
-            if ((t_last<0 and time.time()+t_last > config['forced_shutdown_first_prompt_time']) or 
-               (t_last>0 and time.time()-t_last > config['forced_shutdown_prompt_time'])):
-                msg = """Job status update or output download still in progress (shutdown not completed after %d seconds).
-%d background thread(s) still running: %s.
-Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids), critical_thread_ids) 
-                resp = raw_input(msg) 
-                t_last = time.time()
-                return resp.lower() != 'y'
-            else:
-                return True
-        # if there are non-critical threads then wait or shutdown depending on configuration
-        elif non_critical_thread_ids:
-            if t_total < config['forced_shutdown_first_prompt_time']:
-                return True
-            else:
-                return False
-        # if there are no threads then shutdown
-        else:
-            return False
-
-    def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-        # if there are critical threads then wait or shutdown depending on configuration
-        if critical_thread_ids:
-            if t_total < config['forced_shutdown_timeout']:
-                return True
-            else:
-                logger.warning('Shutdown was forced after waiting for %d seconds for background activities to finish (monitoring, output download, etc). This may result in some jobs being corrupted.',t_total)
-                return False
-        # if there are non-critical threads then wait or shutdown depending on configuration
-        elif non_critical_thread_ids:
-            if t_total < config['forced_shutdown_first_prompt_time']:
-                return True
-            else:
-                return False
-        # if there are no threads then shutdown
-        else:
-            return False
-
-    #register the exit function with the highest priority (==0)    
-    #atexit.register((0,monitoring_component.stop), fail_cb=mc_fail_cb,max_retries=config['max_shutdown_retries'])
-
-
-    #select the shutdown method based on configuration and/or session type
-    forced_shutdown_policy = config['forced_shutdown_policy']
-
-    if forced_shutdown_policy == 'interactive':
-        should_wait_cb = should_wait_interactive_cb
-    else:
-        if forced_shutdown_policy == 'batch':
-            should_wait_cb = should_wait_batch_cb
-        else:
-            if interactive_session:
-                should_wait_cb = should_wait_interactive_cb
-            else:
-                should_wait_cb = should_wait_batch_cb
-
-    atexit.register((0,thread_pool.shutdown), should_wait_cb=should_wait_cb)
+    change_atexitPolicy( interactive_session )
 
     #export to GPI
     from Ganga.Runtime.GPIexport import exportToGPI
@@ -162,3 +97,88 @@ Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids),
     #DISABLED
     #s = Stuck()
     #s.start()
+
+def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
+    import time
+    global t_last
+    if t_last is None:
+        t_last = -time.time()
+    # if there are critical threads then prompt user or wait depending on configuration
+    if critical_thread_ids:
+        if ((t_last<0 and time.time()+t_last > config['forced_shutdown_first_prompt_time']) or
+           (t_last>0 and time.time()-t_last > config['forced_shutdown_prompt_time'])):
+            msg = """Job status update or output download still in progress (shutdown not completed after %d seconds).
+%d background thread(s) still running: %s.
+Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids), critical_thread_ids)
+            resp = raw_input(msg)
+            t_last = time.time()
+            return resp.lower() != 'y'
+        else:
+            return True
+    # if there are non-critical threads then wait or shutdown depending on configuration
+    elif non_critical_thread_ids:
+        if t_total < config['forced_shutdown_first_prompt_time']:
+            return True
+        else:
+            return False
+    # if there are no threads then shutdown
+    else:
+        return False
+
+def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
+    # if there are critical threads then wait or shutdown depending on configuration
+    return True
+    if critical_thread_ids:
+        if t_total < config['forced_shutdown_timeout']:
+            return True
+        else:
+            logger.warning('Shutdown was forced after waiting for %d seconds for background activities to finish\
+(monitoring, output download, etc). This may result in some jobs being corrupted.',t_total)
+            return False
+    # if there are non-critical threads then wait or shutdown depending on configuration
+    elif non_critical_thread_ids:
+        if t_total < config['forced_shutdown_first_prompt_time']:
+            return True
+        else:
+            return False
+    # if there are no threads then shutdown
+    else:
+        return False
+
+global at_exit_should_wait_cb
+at_exit_should_wait_cb = None
+
+def change_atexitPolicy( interactive_session = True, new_policy = None ):
+
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
+
+    if new_policy is None:
+        #select the shutdown method based on configuration and/or session type
+        forced_shutdown_policy = config['forced_shutdown_policy']
+    else:
+        forced_shutdown_policy = new_policy
+
+    if forced_shutdown_policy == 'interactive':
+        should_wait_cb = should_wait_interactive_cb
+    else:
+        if forced_shutdown_policy == 'batch':
+            should_wait_cb = should_wait_batch_cb
+        else:
+            if interactive_session:
+                should_wait_cb = should_wait_interactive_cb
+            else:
+                should_wait_cb = should_wait_batch_cb
+
+    global at_exit_should_wait_cb
+    if at_exit_should_wait_cb is None:
+        at_exit_should_wait_cb = should_wait_cb
+        import atexit
+        from Ganga.Core.GangaThread import GangaThreadPool
+        # create generic Ganga thread pool
+        thread_pool = GangaThreadPool.getInstance()
+        atexit.register( thread_pool.shutdown, should_wait_cb=at_exit_should_wait_cb )
+    else:
+        at_exit_should_wait_cb = should_wait_cb
+
