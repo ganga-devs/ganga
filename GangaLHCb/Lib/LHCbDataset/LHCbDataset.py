@@ -51,6 +51,9 @@ class LHCbDataset(Dataset):
                       'symmetricDifference', 'union', 'bkMetadata']#,'pop']
 
     def __init__(self, files=[], persistency=None, depth=0):
+        for f in files:
+            if type(f) == type(''):
+                f = strToDataFile( f )
         super(LHCbDataset, self).__init__()
         logger.debug( "Creating dataset with:\n%s" % files )
         self.files = files
@@ -108,6 +111,12 @@ class LHCbDataset(Dataset):
             if isDiracFile(f): return True
         return False
 
+    def hasPFNs(self):
+        'Returns True is the dataset has PFNs and False otherwise.'
+        for f in self.files:
+            if not isDiracFile(f): return True
+        return False
+
     def replicate(self,destSE='',srcSE='',locCache=''):
         '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
         ds.replicate().'''
@@ -141,7 +150,9 @@ class LHCbDataset(Dataset):
         logger.debug( "extending Dataset" )
         from Ganga.GPIDev.Base import ReadOnlyObjectError
         if not hasattr(files,"__getitem__"):
-            raise GangaException('Argument "files" must be a iterable.')
+            files = [ files ]
+            #raise GangaException('Argument "files" must be a iterable.')
+
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now'%(self._parent.id, self._name))
         names = self.getFileNames()
@@ -149,7 +160,7 @@ class LHCbDataset(Dataset):
         for f in files:
             file = getDataFile(f)
             if file is None: file = f
-            if unique and file.name in names: continue
+            if unique and file.namePattern in names: continue
             self.files.append(file)
 
     def removeFile(self,file):
@@ -180,7 +191,7 @@ class LHCbDataset(Dataset):
         pfns = []
         if not self: return pfns
         for f in self.files:
-            if isPFN(f): pfns.append(f.name)
+            if isPFN(f): pfns.append(f.namePattern)
         return pfns
 
     def getFileNames(self):
@@ -189,20 +200,26 @@ class LHCbDataset(Dataset):
         for i in self.files:
             if isinstance( i, DiracFile ):
                 names.append( i.lfn )
-            elif isinstance( i, PhysicalFile ):
-                names.append( i.name )
             else:
-                logger.warning( "Cannot determine filename for: %s " % i )
-                raise GangaException( "Cannot Get File Name" )
+                try:
+                    names.append( i.namePattern )
+                except:
+                    logger.warning( "Cannot determine filename for: %s " % i )
+                    raise GangaException( "Cannot Get File Name" )
 
-        return  names
+        return names
 
     def getFullFileNames(self):
         'Returns all file names w/ PFN or LFN prepended.'
         names = []
         for f in self.files:
             if type(f) is DiracFile: names.append('LFN:%s' % f.lfn)
-            else: names.append('PFN:%s' % f.name)
+            else:
+                try:
+                    names.append('PFN:%s' % f.namePattern)
+                except:
+                    logger.warning( "Cannot determine filename for: %s " % i )
+                    raise GangaException( "Cannot Get File Name" )
         return names
 
     def getCatalog(self,site=''):
@@ -375,8 +392,10 @@ def string_datafile_shortcut(name,item):
         return mainFileOutput
 
     from GangaLHCb.Lib.Backends.Dirac import Dirac
-    if type(name) is not type(''): return None
-    if item is None: return None # used to be c'tor, but shouldn't happen now
+    if type(name) is not type(''):
+        return None
+    if item is None:
+        return None # used to be c'tor, but shouldn't happen now
     else: # something else...require pfn: or lfn:
         try:
             file = strToDataFile(name,False)
@@ -386,11 +405,14 @@ def string_datafile_shortcut(name,item):
                     raise GangaException(msg)
             return file
         except:
-            # if the Core can make a file object from a string then use that, else raise an error
-            if mainFileOutput is not None:
-                return mainFileOutput
-            else:
-                raise
+            try:
+                strToDataFile( name )
+            except:
+                # if the Core can make a file object from a string then use that, else raise an error
+                if mainFileOutput is not None:
+                    return mainFileOutput
+                else:
+                    raise
     return None
 
 allComponentFilters['gangafiles'] = string_datafile_shortcut

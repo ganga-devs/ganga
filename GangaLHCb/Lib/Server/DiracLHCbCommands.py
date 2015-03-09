@@ -105,7 +105,10 @@ def getOutputData(id, outputFiles='', destinationDir=''):
     output( diraclhcb.getJobOutputData(id, outputFiles, destinationDir) )
 
 def splitInputData(files,files_per_job):
-    output( diraclhcb.splitInputData(files,files_per_job) )
+    output( diraclhcb.splitInputData(files,files_per_job,printOutput=False) )
+
+def splitInputDataBySize(files,size_per_job):
+    output( diraclhcb.splitInputDataBySize(files,size_per_job) )
 
 def getInputDataCatalog(lfns,site,xml_file):
     output( diraclhcb.getInputDataCatalog(lfns,site,xml_file) )

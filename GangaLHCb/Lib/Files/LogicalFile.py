@@ -34,13 +34,14 @@ class LogicalFile(DiracFile):
 #TODO:  Add warning to User NOT to create these objects themselves and that they should
 #       only be used for backwards compatability to load old jobs
 
-    def __init__( self, name ):
+    def __init__( self, name="" ):
 
-        super( LogicalFile, self ).__init__()
+        super( LogicalFile, self ).__init__( lfn=name )
 
-        name = name
+        self.name = name
 
-        logger.warning( "LogicalFile has been deprecated. Please switch to using DiracFile instead!" )
+        logger.warning( "!!! LogicalFile has been deprecated, this is now just a wrapper to the DiracFile object" )
+        logger.warning( "!!! Please update your scripts before LogicalFile is removed" )
 
         self._setLFNnamePattern( _lfn=self.name, _namePattern='' )
 

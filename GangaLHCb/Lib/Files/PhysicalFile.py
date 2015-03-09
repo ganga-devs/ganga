@@ -54,6 +54,8 @@ class PhysicalFile(LocalFile):
         super(PhysicalFile, self).__init__( namePattern = val )
         self.name = val
         self.namePattern = val
+        logger.warning( "!!! PhysicalFile has been deprecated, this is now just a wrapper to the LocalFile object" )
+        logger.warning( "!!! Please update your scripts before PhysicalFile is removed" )
 
     def __construct__(self, args):
         if (len(args) != 1) or (type(args[0]) is not type('')):

@@ -3,9 +3,16 @@ from GangaTest.Framework.tests import GangaGPITestCase
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 
+from Ganga.Utility.Config import getConfig
+
 def make_dataset(files):
     ds = LHCbDataset()
     for f in files: ds.files.append(strToDataFile(f))
+    return ds
+
+def make_new_dataset(files):
+    ds = LHCbDataset()
+    for f in files: ds.files.append( f )
     return ds
 
 class TestLHCbDataset(GangaGPITestCase):
@@ -13,32 +20,56 @@ class TestLHCbDataset(GangaGPITestCase):
     def test_LHCbDataset___len__(self):
         ds = LHCbDataset()
         assert len(ds) == 0
-        ds = make_dataset(['pfn:a'])
+        if not getConfig('Output')['ForbidLegacyInput']:
+            ds = make_dataset(['pfn:a'])
+        else:
+            ds = make_new_dataset([LocalFile('/file/path/someFile')])
         assert len(ds) == 1
 
     def test_LHCbDataset_isEmpty(self):
         ds = LHCbDataset()
         assert ds.isEmpty(), 'dataset is empty'
-        ds = make_dataset(['pfn:a'])
+        if not getConfig('Output')['ForbidLegacyInput']:
+            ds = make_dataset(['pfn:a'])
+        else:
+            ds = make_new_dataset([LocalFile('/file/path/someFile')])
         assert not ds.isEmpty(), 'dataset is not empty'
 
     def test_hasLFNs(self):
-        ds = make_dataset(['lfn:a'])
-        assert ds.hasLFNs()
-        ds = make_dataset(['pfn:a'])
-        assert not ds.hasLFNs()
+        if not getConfig('Output')['ForbidLegacyInput']:
+            ds = make_dataset(['lfn:a'])
+            assert ds.hasLFNs()
+            ds = make_dataset(['pfn:a'])
+            assert not ds.hasLFNs()
+        else:
+            ds = make_new_dataset([DiracFile(lfn='a')])
+            assert ds.hasLFNs()
+            ds = make_new_dataset([LocalFile('/some/local/file')])
+            assert ds.hasPFNs()
 
     def test_extend(self):
-        ds = make_dataset(['lfn:a'])
-        ds.extend(['lfn:b'])
-        assert len(ds) == 2
-        ds.extend(['lfn:b'])
-        assert len(ds) == 3
-        ds.extend(['lfn:b'],True)
-        assert len(ds) == 3
+        if not getConfig('Output')['ForbidLegacyInput']:
+            ds = make_dataset(['lfn:a'])
+            ds.extend(['lfn:b'])
+            assert len(ds) == 2
+            ds.extend(['lfn:b'])
+            assert len(ds) == 3
+            ds.extend(['lfn:b'],True)
+            assert len(ds) == 3
+        else:
+            ds = make_new_dataset([DiracFile(lfn='a')])
+            ds.extend( DiracFile(lfn='b') )
+            assert len(ds) == 2
+            ds.extend( DiracFile(lfn='c') )
+            assert len(ds) == 3
+            ds.extend( DiracFile(lfn='c'), True )
+            assert len(ds) == 3
 
     def test_getLFNs(self):
-        ds = make_dataset(['lfn:a','lfn:b','pfn:c'])
+        if getConfig('Output')['ForbidLegacyInput']:
+            ds = make_new_dataset( [ DiracFile( lfn='a' ), DiracFile( lfn='b' ), LocalFile( 'c' ) ] )
+        else:
+            ds = make_dataset(['lfn:a','lfn:b','pfn:c'])
         assert len(ds.getLFNs()) == 2
 
     def test_getLFNs(self):

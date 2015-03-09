@@ -5,19 +5,28 @@ import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.Core import GangaException
 from GangaDirac.Lib.Files.DiracFile import DiracFile
+from Ganga.GPIDev.Lib.File import *
 
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-def isDiracFile(file): return isinstance(file,DiracFile) or isinstance(file,LogicalFile)
+def isLFN(file):
+    return isDiracFile(file)
 
-def isPFN(file): return isinstance(file,PhysicalFile)
+def isDiracFile(file):
+    from GangaLHCb.Lib.Files import LogicalFile
+    return isinstance(file,DiracFile) or isinstance(file,LogicalFile)
+
+def isPFN(file):
+    from GangaLHCb.Lib.Files import PhysicalFile
+    return isinstance(file,PhysicalFile) or isinstance(file,LocalFile) or isinstance(file,MassStorageFile)
 
 def strToDataFile(name,allowNone=True):
     if len(name) >= 4 and name[0:4].upper() == 'LFN:':
         return DiracFile(lfn = name)
     elif len(name) >= 4 and name[0:4].upper() == 'PFN:':
+        from GangaLHCb.Lib.Files import PhysicalFile
         return PhysicalFile(name)
     else:
         if not allowNone:

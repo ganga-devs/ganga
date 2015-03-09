@@ -5,6 +5,8 @@ from Ganga.Utility.Config import getConfig, ConfigError
 class TestLHCbDatasetUtils(GangaGPITestCase):
 
     def test_isLFN(self):
+        LogicalFile('test')
+        isLFN(LogicalFile('test'))
         assert isLFN(LogicalFile('test')), 'should be true'
         assert not isLFN(PhysicalFile('test')), 'should be false'
 

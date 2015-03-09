@@ -1,6 +1,5 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 #from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
-from GangaDirac.Lib.Splitters.GangaSplitterUtils import GangaDiracSplitter
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
 #from SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
@@ -17,13 +16,13 @@ import os
 import copy
 import pickle
 
-class SplitByFiles(GaudiInputDataSplitter):
+class SplitFilesBySize(GaudiInputDataSplitter):
     """Splits a job into sub-jobs by partitioning the input data
 
     SplitByFiles can be used to split a job into multiple subjobs, where
     each subjob gets an unique subset of the inputdata files.
     """
-    _name = 'SplitByFiles'
+    _name = 'SplitFilesBySize'
     _schema = GaudiInputDataSplitter._schema.inherit_copy()
     _schema.datadict['bulksubmit']    = SimpleItem(defvalue=False,
                                                    doc='determines if subjobs are split '\
@@ -34,13 +33,9 @@ class SplitByFiles(GaudiInputDataSplitter):
                                                    'in the LFC. This option is only used if' \
                                                    'jobs backend is Dirac')
 
-        
-
-
-
     def _attribute_filter__set__(self, name, value):
-        if name is 'filesPerJob':
-            if value >100:
+        if name is 'sizePerJob':
+            if value > 100:
                 logger.warning('filesPerJob exceeded DIRAC maximum')
                 logger.warning('DIRAC has a maximum dataset limit of 100.')
                 logger.warning('BE AWARE!... will set it to this maximum value at submit time if backend is Dirac')
@@ -116,26 +111,16 @@ class SplitByFiles(GaudiInputDataSplitter):
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
             if self.filesPerJob > 100: self.filesPerJob = 100 # see above warning
             logger.debug( "indata: %s " % str( indata ) )
-
-            from Ganga.Utility.Config import getConfig
-            if not getConfig('LHCb')['useGangaDiracSplitter']:
-                outdata = DiracSplitter(indata,
-                                     self.filesPerJob,
-                                     self.maxFiles,
-                                     self.ignoremissing)
-            else:
-                outdata = GangaDiracSplitter(indata,
-                                            self.filesPerJob,
-                                            self.maxFiles,
-                                            self.ignoremissing)
-
-            #print outdata
-            #exit(0)
-
+            outdata = DiracSplitter(indata,
+                                 self.filesPerJob,
+                                 self.maxFiles,
+                                 self.ignoremissing)
             logger.debug( "outdata: %s " % str( outdata ) )
             return outdata
         else:
-            return super(SplitByFiles,self)._splitter(job, indata)
+            logger.error( "This Splitter HAS NOT, yet been implemented for all IGangaFile objects" )
+            raise NotImplementedError
+            #return super(SplitFilesBySize,self)._splitter(job, indata)
 
 
     def split(self, job):
