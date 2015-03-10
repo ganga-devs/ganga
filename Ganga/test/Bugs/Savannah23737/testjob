@@ -1,0 +1,25 @@
+#Ganga# File created by Ganga - Fri Feb 16 15:56:08 2007
+#Ganga#
+#Ganga# Object properties may be freely edited before reloading into Ganga
+#Ganga#
+#Ganga# Lines beginning #Ganga# are used to divide object definitions,
+#Ganga# and must not be deleted
+
+#Ganga# Job object (category: jobs)
+Job (
+ name = '' ,
+ outputfiles = [] ,
+ inputdata = None ,
+ merger = None ,
+ inputsandbox = [ ] ,
+ application = Executable (
+    exe = 'sleep' ,
+    env = {} ,
+    args = ['Hello World'] 
+    ) ,
+ splitter = ArgSplitter (
+    args = [['10'],['20']] 
+    ) ,
+ backend = Local (
+    )  ) 
+

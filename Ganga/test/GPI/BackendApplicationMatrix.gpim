@@ -1,0 +1,109 @@
+#submit jobs with all (permited) combinations of (backend,application) pair
+
+from GangaTest.Framework.utils import sleep_until_state,failureException
+from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
+
+
+from GangaTest.Framework.tests import MultipassTest
+
+class BackendApplicationMatrix(MultipassTest):
+    def __init__(self): 
+        MultipassTest.__init__(self,2)
+        
+    def pass1(self):
+        app_backends = [ b for b in plugins('backends') if b in allHandlers.getAllBackends() and b not in ['PBS', 'Condor', 'SGE', 'LSF']]
+        print '*'*30,'Submitting jobs','*'*30
+        jobs = []
+        for backend in app_backends:
+            for app in [a for a in allHandlers.handlers.get(backend) if a in plugins('applications') and a not in ['Gaudi']]: # removed Gaudi from the testmatrix
+                    j = Job()
+                    j.application = app
+                    j.backend = backend
+                    jobs.append(j)
+        
+        print "submitting %s jobs" % jobs
+        failed=[]
+        success=[]
+        for j in jobs:
+            try:
+                (backend, app) = (j.backend._impl._name, j.application._impl._name)
+                print "*"*80
+                print "Submitting job (%s,%s)" % (backend, app)
+                if j.submit():
+                    success.append(j.id)  
+                else:
+                    failed.append((backend, app))
+                    print " [WARNING] Job (%s,%s) cannot be submited" % (backend,app)
+                print "*"*80
+            except Exception,e:
+                print e
+
+        return {'submitted':success,'submission_failed':failed}                     
+                        
+    def pass2(self):
+            print '*'*30,'Checking jobs','*'*30
+            
+            submission_failed = self.data[1]['submission_failed']
+            submitted = self.data[1]['submitted']
+            
+            success = []
+            failed=[]
+            while_counter=0
+            #iterate over submitted jobs until either all jobs are completed (success/failure) or the Testing framework signal the timeout
+            while len(submitted)>0:
+                while_counter+=1
+                print "While Loop entry num %s" % while_counter
+                if not while_counter % 10:
+                    print "Waiting on jobs: %s" % str(submitted)
+                    for i in range( len(submitted) ):
+                        jid=submitted[i]
+                        print "%s:  %s Application running on %s Backend" % (jid, jobs(jid).application._impl._name, jobs(jid).backend._impl._name)
+                        print "Status: %s" % jobs(jid).status
+
+                if while_counter == 50:
+                    for i in range( len(submitted) ):
+                        jid=submitted[i]
+                        jobs(jid).force_status('failed')
+
+                to_remove=[]
+                for i in range( len(submitted) ):
+                        jid = submitted[i]
+                        j = jobs(jid)
+                        backend = j.backend._impl._name
+                        app = j.application._impl._name
+                        
+                        status = sleep_until_state(j, timeout=3, sleep_period=1, break_states=['new', 'killed', 'failed', 'unknown', 'removed'])
+                        
+                        if status is False: #break state (failed)
+                            failed.append ((backend, app))
+                            print " [FAILED] Job (%s,%s) failed [state=%s]" % (backend, app, j.status)
+                            to_remove.append(jid)
+                        elif status is True: #completed
+                            success.append((backend,app))
+                            print " [SUCCESS] Job (%s,%s) completed" % (backend, app)
+                            to_remove.append(jid)
+                total_submitted = len(submitted)
+                i=1
+                for jid in to_remove:
+                    print " [Removing] Job %s of %s" % (i, total_submitted)
+                    submitted.remove(jid)
+                    i+=1
+
+            print "*"*35, "RESULTS", "*"*35            
+            if len(success)>0:
+                print "COMPLETED: ", success
+
+            failure = None
+            if len(submission_failed)>0:
+                failure = "FAILED to submit: %s " % submission_failed
+                print failure
+            if len(failed)>0:
+                print "FAILED: ",failed
+                failure = "%s\nFAILED: %s" % (failure,failed)
+            print "*"*80
+                
+            if failure is not None:    
+                raise failureException( failure )
+
+            return
+

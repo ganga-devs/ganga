@@ -1,0 +1,29 @@
+from GangaTest.Framework.utils import failureException
+# this test should be run with the monitoring loop disabled
+
+j = Job()
+
+j.splitter = GenericSplitter()
+j.splitter.attribute = 'application.args'
+args = []
+for i in range(2):
+    argv = []
+    argv.append('%s' % str(i))
+    args.append(argv)
+j.splitter.values = args
+
+j.backend = LCG(middleware='GLITE')
+
+cnf = Ganga.Utility.Config.getConfig('LCG')
+if cnf['GLITE_ENABLE']:
+    j.submit()
+
+    # run monitoring loop once after the submisison
+    runMonitoring(steps=1, timeout=60)
+
+    # after the first monitoring loop after submission,
+    # the master job's status shouldn't be 'submitting' 
+    # otherwise the job is not being monitored.
+    assert not j.status is 'submitting'
+else:
+    raise failureException("Current Configuration CANNOT test GLITE backend!")
