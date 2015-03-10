@@ -52,7 +52,7 @@ class TestDaVinci(GangaGPITestCase):
     def test_outputfiles_submit(self):
         j = Job(application=DaVinci(),backend=Dirac())
         j.application.platform = getDiracAppPlatform()
-        j.outputfiles = ['Something.root']
+        j.outputfiles = [LocalFile('Something.root')]
         j.submit()
         j.kill()
 

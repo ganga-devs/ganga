@@ -65,7 +65,7 @@ class LogicalFile(DiracFile):
     def __setattr__( self, name, value ):
 
         if name == "name":
-            self.name = value
+            #elf.name = value
             self.lfn = value
             import os.path
             self.namePattern = os.path.basename( value )

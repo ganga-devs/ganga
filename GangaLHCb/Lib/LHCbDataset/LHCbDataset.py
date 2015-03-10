@@ -53,7 +53,7 @@ class LHCbDataset(Dataset):
     def __init__(self, files=[], persistency=None, depth=0):
         for f in files:
             if type(f) == type(''):
-                f = strToDataFile( f )
+                f = strToDataFile( f,False )
         super(LHCbDataset, self).__init__()
         logger.debug( "Creating dataset with:\n%s" % files )
         self.files = files
@@ -406,7 +406,7 @@ def string_datafile_shortcut(name,item):
             return file
         except:
             try:
-                strToDataFile( name )
+                strToDataFile( name,False )
             except:
                 # if the Core can make a file object from a string then use that, else raise an error
                 if mainFileOutput is not None:

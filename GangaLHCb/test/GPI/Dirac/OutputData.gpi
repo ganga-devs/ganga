@@ -10,6 +10,11 @@ from random import choice
 import string
 f=open('outputs.txt','w')
 f.write('This is a test\\n')
+import time
+f.write('Time:%s' % time.strftime('%X %x %Z') )
+import random
+str=''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(1024) )
+f.write(str)
 chars = string.letters + string.digits
 kbyte=1024
 text=''.join([choice(chars) for i in range(kbyte)])

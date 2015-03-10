@@ -15,7 +15,11 @@ f.close()
 j = Job(application=DaVinci(), backend=Dirac())
 j.application.optsfile=[optsfile]
 j.application.platform = getDiracAppPlatform()
-j.inputsandbox=[fname]
+import Ganga.Utility.Config
+if not getConfig('Output')['ForbidLegacyInput']:
+    j.inputsandbox=[fname]
+else:
+    j.inputsandbox=[LocalFile(fname)]
 try:
     j.submit()
 except:

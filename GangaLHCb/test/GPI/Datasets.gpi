@@ -1,14 +1,14 @@
 # test constructors/setters
 ds = LHCbDataset(['lfn:a','pfn:b'])
 assert len(ds) == 2
-assert isinstance(ds[0],LogicalFile)
+assert isinstance(ds[0],DiracFile)
 assert isinstance(ds[1],PhysicalFile)
 ds = LHCbDataset()
 ds.files = ['lfn:a','pfn:b']
-assert isinstance(ds[0],LogicalFile)
+assert isinstance(ds[0],DiracFile)
 assert isinstance(ds[1],PhysicalFile)
 ds.files.append('lfn:c')
-assert isinstance(ds[-1],LogicalFile)
+assert isinstance(ds[-1],DiracFile)
 d = OutputData(['a','b'])
 assert isinstance(d.files[0],str)
 assert isinstance(d.files[1],str)

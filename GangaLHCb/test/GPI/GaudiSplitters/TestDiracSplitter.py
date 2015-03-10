@@ -12,13 +12,13 @@ from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 addDiracTestSubmitter()
 
-LFNs = [ 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000915_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000920_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
-          ]
+#LFNs = [ 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000915_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000920_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
+#          ]
 
 class TestDiracSplitter(GangaGPITestCase):
 
@@ -33,7 +33,9 @@ class TestDiracSplitter(GangaGPITestCase):
         #    'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000620_1.dimuon.dst',
         #    'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012533/0000/00012533_00000074_1.dimuon.dst'
         #    ]
-        j.inputdata = LFNs
+        #j.inputdata = LFNs
+
+        j.inputdata = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
 
         #len_files = len(inputdata.files)
         ds = SplitByFiles()
@@ -56,7 +58,8 @@ class TestDiracSplitter(GangaGPITestCase):
         #    'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
         #    ]
         import copy
-        myLFNs = copy.deepcopy(LFNs)
+        #myLFNs = copy.deepcopy(LFNs)
+        myLFNs = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
         myLFNs.append( 'LFN:/not/a/file.dst' )
 
         j.inputdata = myLFNs

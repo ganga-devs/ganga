@@ -13,7 +13,11 @@ jcommand=Job(application=Executable(),backend=Dirac())
 jcommand.backend.settings['CPUTime'] = 300
 jcommand.application.args=['input.txt','output.txt']
 jcommand.application.exe='cp'
-jcommand.inputsandbox=[testname]
+import Ganga.Utility.Config
+if not getConfig('Output')['ForbidLegacyInput']:
+    jcommand.inputsandbox=[testname]
+else:
+    jcommand.inputfiles=[LocalFile(testname)]
 jcommand.outputfiles=['output.txt']
 assert(jcommand.submit())
 
@@ -28,7 +32,10 @@ ls -l
 jscript=Job(application=Executable(),backend=Dirac(CPUTime=300))
 jscript.application.args=['input.txt','output.txt']
 jscript.application.exe=File(scriptname)
-jscript.inputsandbox=[testname]
+if not getConfig('Output')['ForbidLegacyInput']:
+    jscript.inputsandbox=[testname]
+else:
+    jscript.inputfiles=[LocalFile(testname)]
 jscript.outputfiles=['output.txt']
 jscript.submit()
 
