@@ -2,24 +2,48 @@
 
 j = Job()
 
-# component items (no typelist)
-try:
-    j.inputsandbox = ['a',File('x'),0]
-    assert False, 'should raise GangaAttributeError'
-except GangaAttributeError:
-    pass
+import Ganga.Utility.Config
+if not getConfig('Output')['ForbidLegacyInput']:
 
-try:
-    j.inputsandbox=[Executable()]
-    assert False, 'should raise GangaAttributeError'
-except GangaAttributeError:
-    pass
 
-try:
-    j.inputsandbox = [['a'],'b']
-    assert False, 'should raise GangaAttributeError'
-except GangaAttributeError:
-    pass
+    # component items (no typelist)
+    try:
+        j.inputsandbox = ['a',File('x'),0]
+        assert False, 'should raise GangaAttributeError'
+    except GangaAttributeError:
+        pass
+
+    try:
+        j.inputsandbox=[Executable()]
+        assert False, 'should raise GangaAttributeError'
+    except GangaAttributeError:
+        pass
+
+    try:
+        j.inputsandbox = [['a'],'b']
+        assert False, 'should raise GangaAttributeError'
+    except GangaAttributeError:
+        pass
+
+else:
+
+    try:
+        j.inputfiles = ['a',LocalFile('x'),0]
+        assert False, 'Should raise GangaAttributeError'
+    except GangaAttributeError:
+        pass
+
+    try:
+        j.inpputfiles=[Executable()]
+        assert False, 'Should raise Ganga AttributeError'
+    except GangaAttributeError:
+        pass
+
+    try:
+        j.injputfiles = [['a'],'b']
+        assert False, 'Should raise Ganga AttributeError'
+    except GangaAttributeError:
+        pass
 
 # simple items (using typelist)
 

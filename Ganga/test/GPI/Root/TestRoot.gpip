@@ -280,8 +280,12 @@ class _TestRootBase(object):
                 mainCpp = join(testDir,'Main.cpp')
                 mainH = join(testDir,'Main.h')
                 makeFile = join(testDir,'Makefile')
-                
-                self.j.inputsandbox = [mainCpp,mainH,makeFile]
+    
+                import Ganga.Utility.Config
+                if not getConfig('Output')['ForbidLegacyInput']:
+                    self.j.inputsandbox = [mainCpp,mainH,makeFile]
+                else:
+                    self.j.inputfiles = [ LocalFile(mainCPP), LocalFile(mainH), LocalFile(makeFile) ]
                 self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))
