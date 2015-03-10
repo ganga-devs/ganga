@@ -1316,7 +1316,7 @@ class Panda(IBackend):
                                 job.backend.id = newPandaID
                                 job.backend.status = None
                             else:
-                                job.updateStatus('killed')
+                                job.updateStatus('failed')
                     else:
                         logger.warning('Unexpected job status %s',status.jobStatus)
 
@@ -1359,7 +1359,7 @@ class Panda(IBackend):
                                 job.backend.id = newPandaID
                                 job.backend.status = None
                             else:
-                                job.updateStatus('killed')
+                                job.updateStatus('failed')
                         else:
                             logger.warning('Unexpected job status %s',status.jobStatus)
 
@@ -1416,7 +1416,7 @@ class Panda(IBackend):
                                     job.backend.id = newPandaID
                                     job.backend.status = None
                                 else:
-                                    job.updateStatus('killed')
+                                    job.updateStatus('failed')
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
 
