@@ -1997,6 +1997,10 @@ class JobTemplate(Job):
         super(JobTemplate, self).__init__()
         self.status = "template"
 
+    def __construct__(self, args):
+        super(JobTemplate, self).__construct__( args )
+        self.status = "template"
+
     def _readonly(self):
         return 0
     
