@@ -82,27 +82,6 @@ def startGanga():
 
     logger.info( "Passing to Unittest" )
 
-    #global ganga_configured
-    #ganga_configured = True
-    #global ganga_monitoring
-    #ganga_monitoring = True
-
-    #global ganga_monitoring
-
-    #if ganga_monitoring is False:
-    #from Ganga.Core.InternalServices import Coordinator
-    #Coordinator.enableInternalServices()
-    #from Ganga.Utility.Config import setConfigOption
-    #setConfigOption( 'PollThread', 'forced_shutdown_policy', 'batch' )
-    #import Ganga.Core
-    #Ganga.Core.change_atexitPolicy( 'batch' )
-    #Ganga.GPI.reactivate()
-    #Coordinator.enableInternalServices()
-    #ganga_monitoring = True
-
-    # Import GPI and run Ganga
-    #from Ganga.GPI import *
-    #Ganga.Runtime._prog.run()
 
 def stopGanga():
 
@@ -130,14 +109,9 @@ def stopGanga():
 
     logger.info( "Shutting Down Internal Services" )
 
-    #global ganga_monitoring
-    #if ganga_monitoring is True:
     from Ganga.Core.InternalServices import Coordinator
     if Coordinator.servicesEnabled:
         Coordinator.disableInternalServices()
-    #ganga_monitoring = False
-    #lobal ganga_configured
-    #f ganga_configured:
 
     logger.info( "Mimicking ganga exit" )
     import Ganga.Core
@@ -147,8 +121,6 @@ def stopGanga():
     from Ganga.Core.GangaThread import GangaThreadPool
     thread_pool = GangaThreadPool.getInstance()
     thread_pool.shutdown( should_wait_cb=testing_cb )
-    #ganga_configured = False
-    #pass
 
     logger.info( "Test Finished" )
 
