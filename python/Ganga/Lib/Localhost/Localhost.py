@@ -248,6 +248,9 @@ for f in input_sandbox:
 #get input files
 ###DOWNLOADINPUTFILES###
 
+# create inputdata list
+###CREATEINPUTDATALIST###
+
 import sys
 sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
@@ -344,14 +347,16 @@ sys.exit()
       import inspect
       script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
 
-      from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
+      from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
       from Ganga.Utility.Config import getConfig
       jobidRepr = repr(job.getFQID('.'))
       script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###',getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
 
       script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, ''))
-
+      
       script = script.replace('###DOWNLOADINPUTFILES###',getWNCodeForDownloadingInputFiles(job, ''))
+
+      script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, '') )
 
       script = script.replace('###APPLICATION_NAME###',repr(job.application._name))
       script = script.replace('###INPUT_SANDBOX###',repr(subjob_input_sandbox+master_input_sandbox))

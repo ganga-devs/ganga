@@ -37,6 +37,12 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
+    def getFilenameList(self):
+        """
+        Returns the filenames of all associated files through a common interface
+        """
+        raise NotImplementedError
+
     def getWNScriptDownloadCommand(self, indent):
         """
         Gets the command used to download already uploaded file
