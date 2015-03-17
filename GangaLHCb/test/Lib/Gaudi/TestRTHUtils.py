@@ -1,9 +1,18 @@
 import inspect
 from GangaTest.Framework.tests import GangaGPITestCase
 from Ganga.Core import ApplicationConfigurationError
-from GangaLHCb.Lib.RTHandlers.RTHUtils import *
 #from GangaLHCb.Lib.Gaudi.Francesc import GaudiExtras
 import Ganga.Utility.Config 
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.RTHandlers.RTHUtils import *
 
 class TestRTHUtils(GangaGPITestCase):
 

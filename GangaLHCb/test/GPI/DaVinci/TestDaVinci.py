@@ -1,7 +1,17 @@
 import os
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed
-from GangaLHCb.test import *
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.test import *
+
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 

@@ -5,12 +5,21 @@
 ################################################################################
 from __future__ import division
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from GangaLHCb.test import addDiracTestSubmitter
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
-from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-addDiracTestSubmitter()
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
+    from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
+    from GangaLHCb.test import addDiracTestSubmitter
+    GangaLHCb.test.addDiracTestSubmitter()
 
 #LFNs = [ 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
 #         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',

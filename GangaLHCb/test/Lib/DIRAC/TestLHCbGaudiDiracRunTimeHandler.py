@@ -1,13 +1,22 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 #from GangaLHCb.Lib.Gaudi.Francesc import GaudiExtras
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from GangaLHCb.test import *
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 #from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
+    from GangaLHCb.test import *
 
 class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
 

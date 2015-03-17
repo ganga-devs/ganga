@@ -3,13 +3,22 @@ import shutil
 import tempfile
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaGaudi.Lib.Applications.GaudiBase import Francesc
-from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps
-from GangaLHCb.Lib.Applications.GaudiPython import GaudiPython
-from GangaLHCb.Lib.Applications.Bender import Bender
 from GangaTest.Framework.utils import read_file,failureException
 import Ganga.Utility.logging
 
 logger = Ganga.Utility.logging.getLogger()
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps
+    from GangaLHCb.Lib.Applications.GaudiPython import GaudiPython
+    from GangaLHCb.Lib.Applications.Bender import Bender
 
 class TestFrancesc(GangaGPITestCase):
 

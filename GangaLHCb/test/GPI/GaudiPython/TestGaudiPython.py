@@ -6,7 +6,7 @@ import shutil
 import tempfile
 from os.path import join
 
-from GangaLHCb.test import *
+#from GangaLHCb.test import *
 
 import Ganga.Utility.Config
 configDaVinci = Ganga.Utility.Config.getConfig('defaults_DaVinci')

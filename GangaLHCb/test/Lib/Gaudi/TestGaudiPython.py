@@ -1,9 +1,19 @@
 import os
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
-from GangaLHCb.Lib.Applications.GaudiPython import GaudiPython
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.Applications.GaudiPython import GaudiPython
+
 class TestGaudiPython(GangaGPITestCase):
 
     def setUp(self):

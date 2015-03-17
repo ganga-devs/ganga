@@ -19,7 +19,7 @@ import Ganga.Utility.Config
 if not getConfig('Output')['ForbidLegacyInput']:
     j.inputsandbox=[fname]
 else:
-    j.inputsandbox=[LocalFile(fname)]
+    j.inputfiles=[LocalFile(fname)]
 try:
     j.submit()
 except:

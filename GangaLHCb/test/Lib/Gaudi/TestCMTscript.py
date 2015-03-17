@@ -1,5 +1,14 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.Applications.CMTscript import *
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.Applications.CMTscript import *
 
 class TestCMTscript(GangaGPITestCase):
     """Tests methods defined in GangaLHCb/Lib/Gaudi/CMTscript.py"""

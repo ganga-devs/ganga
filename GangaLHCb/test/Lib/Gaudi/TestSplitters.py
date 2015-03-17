@@ -1,12 +1,21 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
 #from GangaLHCb.Lib.Gaudi.Splitters import copy_app
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
-from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from GangaLHCb.Lib.Splitters.OptionsFileSplitter import OptionsFileSplitter
-from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
 from Ganga import GPI
 from tempfile import mkdtemp
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
+    from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
+    from GangaLHCb.Lib.Splitters.OptionsFileSplitter import OptionsFileSplitter
+    from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
 
 class TestSplitters(GangaGPITestCase):
 

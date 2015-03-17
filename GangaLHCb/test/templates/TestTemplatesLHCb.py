@@ -1,9 +1,9 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed
 from Ganga.Utility.logging     import getLogger
-from Ganga.GPI                 import templatesLHCb, Job
 logger = getLogger()
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
+from Ganga.GPI                 import templatesLHCb, Job
 
 class TestTemplatesLHCb(GangaGPITestCase):
     def _check(self, template):

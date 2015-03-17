@@ -5,7 +5,7 @@ import tempfile
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import is_job_finished, write_file
 
-from GangaLHCb.test import *
+#from GangaLHCb.test import *
 
 
 import Ganga.Utility.Config

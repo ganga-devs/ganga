@@ -1,13 +1,22 @@
+
 from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga import GPI
-#import unittest
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
 
 #Setup bookeeping
 stripping15up = '/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco11/Stripping15/90000000/DIMUON.DST'
 stripping15down = '/LHCb/Collision11/Beam3500GeV-VeloClosed-MagDown/Real Data/Reco11/Stripping15/90000000/DIMUON.DST'
 stripping16up = '/LHCb/Collision11/Beam3500GeV-VeloClosed-MagUp/Real Data/Reco11a/Stripping16/90000000/DIMUON.DST'
 stripping16down = '/LHCb/Collision11/Beam3500GeV-VeloClosed-MagDown/Real Data/Reco11a/Stripping16/90000000/DIMUON.DST'
-bkQueryList = [GPI.BKTestQuery(stripping15down), GPI.BKTestQuery(stripping16up), GPI.BKTestQuery(stripping16down)]
+
+if doConfig:
+    from Ganga import GPI
+    bkQueryList = [GPI.BKTestQuery(stripping15down), GPI.BKTestQuery(stripping16up), GPI.BKTestQuery(stripping16down)]
 
 
 class TestLHCbTask(GangaGPITestCase):

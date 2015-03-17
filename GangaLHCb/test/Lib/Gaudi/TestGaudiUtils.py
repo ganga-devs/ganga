@@ -1,7 +1,16 @@
 import inspect
 from GangaTest.Framework.tests import GangaGPITestCase
 from Ganga.Core import ApplicationConfigurationError
-from GangaLHCb.Lib.Applications.AppsBaseUtils import *
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.Applications.AppsBaseUtils import *
 
 class TestGaudiUtils(GangaGPITestCase):
     """Tests methods defined in GangaLHCb/Lib/Gaudi/GaudiUtils.py"""
