@@ -21,7 +21,8 @@ class GaussSplitter(ISplitter):
     _schema =Schema(Version(1,0),{
             'eventsPerJob': SimpleItem(defvalue=5,doc='Number of '  \
                                        'generated events per job'),
-            'numberOfJobs': SimpleItem(defvalue=2,doc="No. of jobs to create")
+            'numberOfJobs': SimpleItem(defvalue=2,doc="No. of jobs to create"),
+            'firstEventNumber': SimpleItem(defvalue=0,doc="First event number for first subjob")
             })
 
     def _create_subjob(self, job, inputdata):
@@ -57,7 +58,7 @@ class GaussSplitter(ISplitter):
 
         for i in range(self.numberOfJobs):
             j = self._create_subjob(job, inputdata)
-            first = i*self.eventsPerJob + 1
+            first = self.firstEventNumber + i*self.eventsPerJob + 1
             opts = 'from Gaudi.Configuration import * \n'
             opts += 'from Configurables import GenInit \n'
             opts += 'ApplicationMgr().EvtMax = %d\n' % self.eventsPerJob

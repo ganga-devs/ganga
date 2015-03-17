@@ -17,6 +17,8 @@ class LHCbTransform(ITransform):
       'splitter'           : ComponentItem('splitters', defvalue=None, optional=1, load_default=False,doc='Splitter to be used for units'),
       'queries'            : ComponentItem('query', defvalue=[], sequence=1, protected=1, optional=1, load_default=False,doc='Queries managed by this Transform'),
       'delete_chain_input' : SimpleItem(defvalue=False, doc='Delete the Dirac input files/data after completion of each unit', typelist=["bool"]),
+      'mc_num_units'       : SimpleItem(defvalue=0,doc="No. of units to create for MC generation"),
+      
     }.items()))
 
    _category = 'transforms'
@@ -85,52 +87,73 @@ class LHCbTransform(ITransform):
       # call parent for chaining
       super(LHCbTransform,self).createUnits()
 
-      # loop over input data and see if we need to create any more units
-      import copy
-      for id, inds in enumerate( self.inputdata ):
+      if len( self.inputdata ) > 0:
 
-         if inds._name != "LHCbDataset":
-            continue         
-
-         # go over the units and see what files have been assigned
-         assigned_data = LHCbDataset()
-         for unit in self.units:
+         # check for conflicting input
+         if self.mc_num_units > 0:
+            logger.warning("Inputdata specified - MC Event info ignored")
             
-            if unit.input_datset_index != id:
-               continue
+         # loop over input data and see if we need to create any more units
+         import copy
+         for id, inds in enumerate( self.inputdata ):
+
+            if inds._name != "LHCbDataset":
+               continue         
+
+            # go over the units and see what files have been assigned
+            assigned_data = LHCbDataset()
+            for unit in self.units:
+            
+               if unit.input_datset_index != id:
+                  continue
                               
-            assigned_data.files += unit.inputdata.files
+               assigned_data.files += unit.inputdata.files
 
-         # any new files
-         new_data = LHCbDataset( files = self.inputdata[id].difference(assigned_data).files )
+            # any new files
+            new_data = LHCbDataset( files = self.inputdata[id].difference(assigned_data).files )
 
-         if len(new_data.files) == 0:
-            continue
+            if len(new_data.files) == 0:
+               continue
          
-         # create units for these files
-         if self.files_per_unit > 0:
+            # create units for these files
+            if self.files_per_unit > 0:
 
-            # loop over the file array and create units for each set
-            num = 0
-            while num < len( new_data.files ):
+               # loop over the file array and create units for each set
+               num = 0
+               while num < len( new_data.files ):
+                  unit = LHCbUnit()
+                  unit.name = "Unit %d" % len(self.units)
+                  unit.input_datset_index = id
+                  self.addUnitToTRF( unit )
+                  unit.inputdata = copy.deepcopy(self.inputdata[id])
+                  unit.inputdata.files = []
+                  unit.inputdata.files += new_data.files[num:num + self.files_per_unit]
+                  num += self.files_per_unit
+               
+            else:
+               # new unit required for this dataset
                unit = LHCbUnit()
                unit.name = "Unit %d" % len(self.units)
-               unit.input_datset_index = id
                self.addUnitToTRF( unit )
                unit.inputdata = copy.deepcopy(self.inputdata[id])
                unit.inputdata.files = []
-               unit.inputdata.files += new_data.files[num:num + self.files_per_unit]
-               num += self.files_per_unit
+               unit.inputdata.files += new_data.files
                
-         else:
-            # new unit required for this dataset
-            unit = LHCbUnit()
-            unit.name = "Unit %d" % len(self.units)
-            self.addUnitToTRF( unit )
-            unit.inputdata = copy.deepcopy(self.inputdata[id])
-            unit.inputdata.files = []
-            unit.inputdata.files += new_data.files
+      elif self.mc_num_units > 0:
 
+         if len(self.units) == 0:
+            # check for appropriate splitter
+            if not self.splitter or self.splitter._name != "GaussSplitter":
+               logger.warning("No GaussSplitter specified - first event info ignored")
+            
+            # create units for MC generation
+            for i in range(0, self.mc_num_units):
+               unit = LHCbUnit()
+               unit.name = "Unit %d" % len(self.units)
+               self.addUnitToTRF( unit )
+      else:
+         logger.error("Please specify either inputdata or MC info for unit generation")
+         
 
    def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create an output unit given this output data"""
