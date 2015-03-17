@@ -25,14 +25,18 @@ class Savannah9779(MultipassTest):
         try:
             jobid = int(file(self.name).read())
         except IOError:
-            print 'failed to open file:',self.name
+            print 'failed to open file:', self.name
         except ValueError:
-            print 'failed to read file:',self.name
+            print 'failed to read file:', self.name
 
         print 'PASS 2: modify the job'
         j = jobs(-jobid)
+        print j
         file(self.name,'w').write(str(j.id))
+        print "written"
+        print j.backend
         j.backend = Batch()
+        print j.backend
         j.application.exe = 'myexecutable'
         print j
         self.check_job(j)
@@ -41,9 +45,9 @@ class Savannah9779(MultipassTest):
         try:
             jobid = int(file(self.name).read())
         except IOError:
-            print 'failed to open file:',self.name
+            print 'failed to open file:', self.name
         except ValueError:
-            print 'failed to read file:',self.name
+            print 'failed to read file:', self.name
 
         print 'PASS 3: checkout job and compare'
         os.remove(self.name)

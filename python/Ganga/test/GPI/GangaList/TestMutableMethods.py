@@ -3,12 +3,14 @@ from Ganga.GPIDev.Base.Proxy import isProxy, isType, TypeMismatchError
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList as gangaList
 from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
+from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 GangaList = GangaList._proxyClass
 
 import random
 import string
+import time
 
 def completeJob(job):
     
@@ -25,6 +27,7 @@ class TestMutableMethods(GangaGPITestCase):
         self.test_job = Job()
     
     def _makeRandomString(self):
+        random.seed( time.time() )
         str_len = random.randint(3,10)
         s = ''
         for _ in range(str_len):
@@ -220,31 +223,58 @@ class TestMutableMethods(GangaGPITestCase):
         j = Job()
         
         from Ganga.GPIDev.Lib.File import File as gFile
+
+        import Ganga.Utility.Config
+        if not getConfig('Output')['ForbidLegacyInput']:
+
+            def testList(_list):
+                for l in _list:
+                    assert isType(l,gFile), 'All entries must be Files'
+
+            j.inputsandbox = [File(self._makeRandomString()) for _ in range(10)]
+            assert len(j.inputsandbox) == 10, 'Must be added correctly'
+            testList(j.inputsandbox)
         
-        def testList(_list):
-            for l in _list:
-                assert isType(l,gFile), 'All entries must be Files'
-                
-        j.inputsandbox = [File(self._makeRandomString()) for _ in range(10)]
-        assert len(j.inputsandbox) == 10, 'Must be added correctly'
-        testList(j.inputsandbox)
+            #now create with shortcuts - must still work
+            j.inputsandbox = [self._makeRandomString() for _ in range(10)]
+            assert len(j.inputsandbox) == 10, 'Must be added correctly'
+            testList(j.inputsandbox)
         
-        #now create with shortcuts - must still work
-        j.inputsandbox = [self._makeRandomString() for _ in range(10)]
-        assert len(j.inputsandbox) == 10, 'Must be added correctly'
-        testList(j.inputsandbox)
-        
-        #now use mutable methods instead
-        j.inputsandbox.extend([self._makeRandomString() for _ in range(10)])
-        assert len(j.inputsandbox) == 20, 'Must be added correctly'
-        testList(j.inputsandbox)
-        
-        try:
-            #no shortcut for this
-            j.inputsandbox.append(666)
-            assert False, 'Must get an Error here'
-        except TypeMismatchError:
-            pass
+            #now use mutable methods instead
+            j.inputsandbox.extend([self._makeRandomString() for _ in range(10)])
+            assert len(j.inputsandbox) == 20, 'Must be added correctly'
+            testList(j.inputsandbox)
+
+            try:
+                #no shortcut for this
+                j.inputsandbox.append(666)
+                assert False, 'Must get an Error here'
+            except TypeMismatchError:
+                pass
+        else:
+            def testList(_list):
+                for l in _list:
+                    assert isType(l,IGangaFile), "All entries must be of type IGangaFile"
+
+            j.inputfiles = [LocalFile(self._makeRandomString()) for _ in range(10) ]
+            assert len(j.inputfiles) == 10, "Must add correctly"
+            testList(j.inputfiles)
+
+            j.inputfiles = [LocalFile(self._makeRandomString()) for _ in range(10) ]
+            assert len(j.inputfiles) == 10, "Must still be added correctly"
+            testList(j.inputfiles)
+
+            #print str(len(j.inputfiles))
+            #print type( j.inputfiles )
+            j.inputfiles.extend([LocalFile(self._makeRandomString()) for _ in range(10) ])
+            assert len(j.inputfiles) == 20, "Must be added correctly finally got length %s" % str(len(j.inputfiles))
+            testList(j.inputfiles)
+
+            try:
+                j.inputfiles.append(666)
+                assert False, "Must get an Error Here!"
+            except:
+                pass
         
     def testPrintingPlainList(self):
         
