@@ -9,7 +9,6 @@ from Ganga.Utility.files                      import expandfilename
 from GangaDirac.Lib.Utilities.DiracUtilities  import execute
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
-from Ganga.GPI                                import queues
 configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
@@ -175,6 +174,7 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn!='':
+            from Ganga.GPI import queues
             queues.add(self.remove)
 
     def remove(self):
