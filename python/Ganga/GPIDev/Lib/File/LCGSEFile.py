@@ -266,7 +266,7 @@ class LCGSEFile(IGangaFile):
 
         for outputFile in outputFiles:
             lcgCommands.append('lcgse %s %s %s' % (outputFile.namePattern , outputFile.lfc_host,  outputFile.getUploadCmd()))
-            logger.debug( "OutputFile (%s) cmd for WN script is: %s" % ( outputfile.namePattern, outputFile.getUploadCmd() ) )
+            logger.debug( "OutputFile (%s) cmd for WN script is: %s" % ( outputFile.namePattern, outputFile.getUploadCmd() ) )
 
         script = """\n
 

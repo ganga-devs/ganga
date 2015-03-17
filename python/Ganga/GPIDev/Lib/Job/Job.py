@@ -160,8 +160,8 @@ class Job(GangaObject):
                                     'application' : ComponentItem('applications',doc='specification of the application to be executed'),
                                     'backend': ComponentItem('backends',doc='specification of the resources to be used (e.g. batch system)'),
                                     'inputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'],sequence=1,doc="list of file objects that will act as input files for a job"),
-                                    'outputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects decorating what have to be done with the output files after job is completed "),
-                                    'non_copyable_outputfiles' : GangaFileItem(defvalue=[], hidden=1, typelist=['str','Ganga.GPIDev.Lib.File.OutputFile.OutputFile'],sequence=1,doc="list of OutputFile objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
+                                    'outputfiles' : GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'],sequence=1,doc="list of file objects decorating what have to be done with the output files after job is completed "),
+                                    'non_copyable_outputfiles' : GangaFileItem(defvalue=[], hidden=1, typelist=['str','Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'],sequence=1,doc="list of file objects that are not to be copied accessed via proxy through outputfiles", copyable=0),
                                     'id' : SimpleItem('',protected=1,comparable=0,doc='unique Ganga job identifier generated automatically'),
                                     'status': SimpleItem('new',protected=1,checkset='_checkset_status',doc='current state of the job, one of "new", "submitted", "running", "completed", "killed", "unknown", "incomplete"'),
                                     'name':SimpleItem('',doc='optional label which may be any combination of ASCII characters',typelist=['str']),
@@ -214,11 +214,17 @@ class Job(GangaObject):
         self.status = "new"
         logger.debug( "Intercepting __construct__" )
 
-        super(Job, self).__construct__( args )
+        # Not correctly calling Copy Constructor as in
+        # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
+        #super(Job, self).__construct__( args )
+
+        logger.debug( "Job args: %s" % str(args) )
 
         if len(args) == 1:
+
             if isinstance( args[0], Job ):
 
+                super(Job, self).__construct__( args )
                 self._unsetSubmitTransients()
 
                 original_job = args[0]
@@ -241,6 +247,13 @@ class Job(GangaObject):
                         self.inputfiles = []
                 if getConfig('Preparable')['unprepare_on_copy'] is True:
                     self.unprepare()
+            else:
+                # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
+                #super(Job, self).__construct__( args )
+                raise ValueError( "Object %s is NOT of type Job" % str( args[0] ) )
+        else:
+            # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
+            super(Job, self).__construct__( args )
 
     def _readonly(self):
         return self.status != 'new'
@@ -704,6 +717,7 @@ class Job(GangaObject):
         self._setDirty()
         logger.debug( "Intercepting the _auto__init__ function" )
 
+        super( Job, self )._auto__init__()
         
     def _init_workspace(self):
         logger.debug( "Job %s Calling _init_workspace", str(self.getFQID('.')) )
@@ -1598,10 +1612,14 @@ class Job(GangaObject):
 
             fqid = self.getFQID('.')
             logger.info('killing job %s',fqid)
-            if not self.status in ['submitted','running']:
-                msg = "cannot kill job which is in '%s' state. "%self.status
-                logger.error(msg)
-                raise JobError(msg)
+            if not self.status in ['submitted', 'running']:
+                if self.status in ['completed', 'failed']:
+                    logger.warning( "Job %s has already reached it's final state: %s and cannot be killed" % (fqid, self.status) )
+                    return True
+                else:
+                    msg = "cannot kill job which is in '%s' state. "%self.status
+                    logger.error(msg)
+                    raise JobError(msg)
             try:
                 if self.backend.master_kill():
                     self.updateStatus('killed',transition_update=transition_update)
@@ -1721,7 +1739,7 @@ class Job(GangaObject):
                     check_changability(v1,v2)
 
         if backend:
-            check_changability(self.backend,backend)
+            check_changability(self.backend, backend)
 
         oldstatus = self.status
 
@@ -1781,8 +1799,7 @@ class Job(GangaObject):
             self._commit() # make sure that the status change goes to the repository
 
             #send job submission message
-            from Ganga.Runtime.spyware import ganga_job_submitted       
-
+            from Ganga.Runtime.spyware import ganga_job_submitted
             #if resubmit on subjob
             if fqid.find('.') > 0:
                 ganga_job_submitted(self.application.__class__.__name__, self.backend.__class__.__name__, "0", "0", "1")
