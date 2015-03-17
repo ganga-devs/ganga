@@ -43,7 +43,7 @@ configDirac.addOption('DiracLFNBase','/lhcb/user/%s/%s'%(config['user'][0],
                                                          config['user']),
                       "Base dir appended to create LFN name from DiracFile('name')")
 
-configDirac.addOption('ReplicateOutputData',True, 'Determines whether outputdata stored on Dirac is replicated')
+configDirac.addOption('ReplicateOutputData',False, 'Determines whether outputdata stored on Dirac is replicated')
 
 configDirac.addOption('DiracSpaceTokens',
                       ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','SARA-USER',
