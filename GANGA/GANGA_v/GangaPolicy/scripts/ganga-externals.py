@@ -8,7 +8,7 @@ externals_noarch = [['ApMon','2.2.11'],
                     ['google-api-python-client', '1.1'],
                     ['figleaf', '0.6'],
                     ['paramiko', '1.7.3'],
-                    ['PYTF','1.5'],
+                    ['PYTF','1.6'],
                     ['stomputil','2.3'],
                     ['ipython', '0.6.13_ganga_patch1']]
 
