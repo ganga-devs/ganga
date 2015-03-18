@@ -3,7 +3,7 @@
 
 external_packages = {
         #TestOOB testing tool
-        'PYTF' : {'version' : '1.5', 'noarch':True, 'PYTHONPATH':'.', 'PYTF_TOP_DIR':'.'},
+        'PYTF' : {'version' : '1.6', 'noarch':True, 'PYTHONPATH':'.', 'PYTF_TOP_DIR':'.'},
         #coverage reporting tool
         'figleaf' : {'version' : '0.6', 'noarch':True, 'PYTHONPATH':'.'},
         #test externals

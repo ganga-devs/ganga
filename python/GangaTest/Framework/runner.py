@@ -92,6 +92,7 @@ myLogger=getLogger()
 def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
     """
     """    
+    import os
     #rtconfig = getConfig('TestingFramework')
     #print rtconfig['Config']
     my_full_path =  os.path.abspath(os.path.dirname(__file__))
@@ -131,6 +132,9 @@ def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
     pytf_loader_args.append( '--loader-args=%s' % config['SchemaTesting'])
     
     #print("PYTF path %s config: %s" % (pytf_loader_path, pytf_loader_args))
+    import sys
+    sys.path.append(os.getenv('PYTF_TOP_DIR','').split(':')[0])
+    sys.path.append(os.path.join(os.getenv('PYTF_TOP_DIR','').split(':')[0],'pytf'))
     import runTests
     runner_args = []
     

@@ -69,8 +69,8 @@ def appendLinesToSummaryReport(out,columns,data,render_links=True, append_total=
         for column in columns:
             if data[line].has_key(column):
                 total = totals.get(column,[0,0])
-                print >>out,"""<td align=center><font color="green">%s</font></td>\n"""%data[line][column][0]
-                print >>out,"""<td align=center><font color="red">%s</font></td>\n"""%data[line][column][1]
+                print >>out, """<td align=center><font color="green">%s</font></td>\n""" % data[line][column][0]
+                print >>out, """<td align=center><font color="red">%s</font></td>\n""" % data[line][column][1]
                 total[0]+=data[line][column][0];
                 total[1]+=data[line][column][1];
                 totals[column]=total
@@ -82,8 +82,8 @@ def appendLinesToSummaryReport(out,columns,data,render_links=True, append_total=
         print >>out,"""<tr>\n<td>ALL</td>\n"""
         for column in columns:
             if totals.has_key(column):
-                print >>out,"""<td align=center><font color="green">%s</font></td>\n"""%totals[column][0]
-                print >>out,"""<td align=center><font color="red">%s</font></td>\n"""%totals[column][1]
+                print >>out, """<td align=center><font color="green">%s</font></td>\n""" % totals[column][0]
+                print >>out, """<td align=center><font color="red">%s</font></td>\n""" % totals[column][1]
             else:
                 print >>out,'<td align=center>-</td><td align=center>-</td>\n'
         print >>out,'</tr>'
@@ -137,15 +137,16 @@ def appendDetailedHeader(out,title):
 def appendDetailedFooter(out):
     print >>out,'\n</table>\n'
 
-def appendLinesToDetailedReport(out,group,tests):
+def appendLinesToDetailedReport(out, group, tests):
 
     global code_repository_prefix, code_repository_suffix, stdouts_dir
 
     for column in tests:
         print >>out,'<tr>\n<th colspan= 4 bgcolor="FFFFCC">[ %s ]</th>\n'%column
         testcases = tests[column]
+
         #sort test-cases
-        def cmp_testcases(t1,t2):           
+        def cmp_testcases(t1, t2):           
             resultNode = t1.getElementsByTagName("result")[0]
             if resultNode:
                 r1 = getText(resultNode.childNodes).strip()
@@ -161,6 +162,7 @@ def appendLinesToDetailedReport(out,group,tests):
             # same result, is this a bug item?
             t1_name = t1.getAttribute('name')
             t2_name = t2.getAttribute('name')
+
             matcher1 = re.match(BUGID_PATTERN, t1_name)
             matcher2 = re.match(BUGID_PATTERN, t2_name)
             if matcher1 is not None and matcher2 is not None:
@@ -188,14 +190,14 @@ def appendLinesToDetailedReport(out,group,tests):
                     mat2 = 0
                 return mat1-mat2
 
-            return cmp(t1_name,t2_name)
-            
-        testcases.sort(cmp_testcases)    
-        for testcase in testcases:
-            printTestCase(out,testcase,column)
-            
+            return cmp(t1_name, t2_name)
 
-def printTestCase(out,testcase,config=None):
+        testcases.sort(cmp_testcases)
+        for testcase in testcases:
+            printTestCase(out, testcase, column)
+
+
+def printTestCase(out, testcase, config=None):
     
     global code_repository_prefix, code_repository_suffix, stdouts_dir, html_dir
     
@@ -224,22 +226,18 @@ def printTestCase(out,testcase,config=None):
             testcase_src=name.split()[0].split(":")[0]  
         elif aname=='time':
             time = avalue
+
     resultNode = testcase.getElementsByTagName("result")[0]
     if resultNode:
         result = getText(resultNode.childNodes).strip()
-        result2 = "failure"
-        try:
-            resultNode2 = testcase.getElementsByTagName("result")[1]
-            result2 = getText(resultNode2.childNodes).strip()
-        except:
-            pass
-
-        if ("failure" == result) and ("failure" == result2):
-            failureNode = testcase.getElementsByTagName("failure")[0]
+        if "failure" == result:
+            try:
+                failureNode = testcase.getElementsByTagName("failure")[0]
+                info = getText(failureNode.childNodes)
+            except:
+                info = "unknown"
             result = '<font color="red">%s</font>' % result
-            info = getText(failureNode.childNodes)
         else:
-            result = "success"
             result = '<font color="green">%s</font>' % result
         #link to standard output
         if gpip_type:
@@ -267,7 +265,7 @@ def printTestCase(out,testcase,config=None):
         else:
             name = '<strong>%s: %s</strong><br><a class="small" href="%s">[Source Code]</a>' % (testcase.getAttribute('ganga_schema_version'), testcase.getAttribute('ganga_schema_userid'), code_repository_prefix+testcase_src+ext+code_repository_suffix)
         #XXX - uncomment this if you want to get a link to individual coverage reports for each testcase
-        #name = '%s <a class="small" href="coverage/%s/index.htm">[Coverage Report]</a>' % (name,stdout )
+        #name = '%s <a class="small" href="coverage/%s/index.htm">[Coverage Report]</a>' % (name, stdout )
         #if bug, link to savannah page
 
         matcher = re.match(BUGID_PATTERN, testcase_name)
@@ -284,15 +282,15 @@ def printTestCase(out,testcase,config=None):
     print >>out, '<tr>\n<td><nowrap>%s</nowrap></td> <td>%s</td> <td>%s</td> <td>%s</td>\n</tr>\n'%(name, time, result, info)               
 
 # main methods
-def generate1stLevelReports(reports,categories=[]):
+def generate1stLevelReports(reports, categories=[]):
     
     global html_dir
-    
+
     columns = {}
     lines_packages={}
     lines_categories={}
     totals={}
-    all_testcases = []  
+    all_testcases = []
     for report_line in reports:
         for column in reports[report_line]:
             columns[column]=None
@@ -311,10 +309,13 @@ def generate1stLevelReports(reports,categories=[]):
                             break
                     if package is None:
                         continue
+
                     resultNode = testcase.getElementsByTagName("result")[0]
+
                     if resultNode:
                         result = getText(resultNode.childNodes)
                         package_line=lines_packages.get(package,{})
+                        print result
                         package_line[column]=package_line.get(column,[0,0])
                         if category in categories:
                             category_line=lines_categories.get(category,{})
@@ -324,12 +325,15 @@ def generate1stLevelReports(reports,categories=[]):
                                 
                         totals[column] = totals.get(column,[0,0])
                         if result == "failure":
-                            failureNode = testcase.getElementsByTagName("failure")[0]
-                            failure = getText(failureNode.childNodes)    
+                            try:
+                                failureNode = testcase.getElementsByTagName("failure")[0]
+                                failure = getText(failureNode.childNodes)    
+                            except:
+                                failure = "unknown"
                             package_line[column][1]+=1
                             totals[column][1]+=1
                             if category:
-                                 category_line[column][1]+=1
+                                category_line[column][1]+=1
                         else: 
                             package_line[column][0]+=1
                             totals[column][0]+=1
@@ -347,7 +351,7 @@ def generate1stLevelReports(reports,categories=[]):
     now=time.strftime("%d/%m/%Y",time.gmtime(time.time()))
     appendSummaryHeader(out,title='Summarized results of tests performed on %s'%now,header='Package',columns=columns)
     appendLinesToSummaryReport(out,columns,lines_packages,append_coverage_report=True)
-    
+
     appendSummaryFooter(out)
 
     appendSummaryHeader(out,title='Categories:',header='Category',columns=columns)
@@ -402,7 +406,7 @@ def generateSlowestTestsReport(out, group_testcases):
     testcases.sort(cmp_testcases)
     
     for testcase in testcases[:25]:
-        printTestCase(file,testcase, 'localxml')
+        printTestCase(file, testcase, 'localxml')
 
     appendDetailedFooter(file)
     file.close()    
@@ -449,7 +453,7 @@ def generateSchemaTestsReport(schema_reports):
     all_testcases.reverse()
     for testcase in all_testcases:
          #print testcase.getAttribute('ganga_schema_version').split('-')[0].split('.')
-         printTestCase(file,testcase, 'Schema')
+         printTestCase(file, testcase, 'Schema')
 
     appendDetailedFooter(file)
     file.close()    
@@ -483,7 +487,7 @@ def generate2ndLevelReports(reports,categories=[]):
                     tt.append(testcase)
                     t[column]=tt                    
                     tests[group]=t
-                        
+
                     resultNode = testcase.getElementsByTagName("result")[0]
                     
                     if resultNode:
@@ -492,8 +496,11 @@ def generate2ndLevelReports(reports,categories=[]):
                         test_line=lines_tests.get(group,{})
                         test_line[column]=test_line.get(column,[0,0])
                         if result == "failure":
-                            failureNode = testcase.getElementsByTagName("failure")[0]
-                            failure = getText(failureNode.childNodes)    
+                            try:
+                                failureNode = testcase.getElementsByTagName("failure")[0]
+                                failure = getText(failureNode.childNodes)
+                            except:
+                                failure = "unknown"
                             test_line[column][1]+=1
                         else: 
                             test_line[column][0]+=1

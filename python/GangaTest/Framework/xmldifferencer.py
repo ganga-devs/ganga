@@ -50,13 +50,15 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
             #write XML element
             w.start('testcase', { 'name':test_name , 'time':test_time } )
             w.element('result',test_result)
-            w.start('success', { 'message':'Both tests failed' , 'type': 'F->F'} )
+            w.start('failure', { 'message':'Both tests failed' , 'type': 'F->F'} )
+            #w.start('success', { 'message':'Both tests failed' , 'type': 'F->F'} )
             #failureNode = testcase_new.getElementsByTagName("failure")
             #new_data = "Latest test: \n "+failureNode[0].childNodes[0].data+"\n"
             #failureNode = testcase_old.getElementsByTagName("failure")
             #old_data = "Previous test: \n "+failureNode[0].childNodes[0].data+"\n"                         
             #w.data(new_data+" "+"\n"+old_data)
-            w.end('success')
+            #w.end('success')
+            w.end('failure')
             w.end('testcase')
         elif ( result_new == 'failure' and result_old == 'success' ): 
             test_result = 'failure'
@@ -73,9 +75,11 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
             old_data = "Changed from failure to success in new release"+" - "+"correct"
             w.start('testcase', { 'name':test_name , 'time':test_time } )
             w.element('result',test_result)
-            w.start('failure', { 'message':'Old test failed, new one passed' , 'type': 'F->S'} )
+            w.start( 'success', { 'message':'Old test failed, new one passed' , 'type': 'F->S'} )
+            #w.start('failure', { 'message':'Old test failed, new one passed' , 'type': 'F->S'} )
             w.data(old_data)
-            w.end('failure')
+            #w.end('failure')
+            w.end('success')
             w.end('testcase')
         elif ( result_new == 'success' and result_old == 'success' ):
             test_result = 'success'
@@ -103,8 +107,8 @@ def comparetestfiles(newfiledict, oldfiledict):
         logger.info( "Looking at: %s" % filename )
 
         if filename not in oldfiledict:
+            logger.info( "NOT Comparing: %s" % filename )
             continue
-
         logger.info( "Comparing: %s" % filename )
 
         newtests = {}
@@ -287,7 +291,9 @@ def start(cmd_args=None):
     oldfiles = {}
     filelist = []
     #Parse xml files
-    for newfile in os.listdir(newreportdir): 
+    for newfile in os.listdir(newreportdir):
+        if newfile.find("Schema"):
+            continue
         #print newfile
         ind = newfile.find("__")
         fileconfig = newfile[ind+2:-4].strip()
@@ -300,10 +306,8 @@ def start(cmd_args=None):
             try:
                 newdoc = xml.dom.minidom.parse(reportfile)
             except IOError:
-                newdoc = ""
+                newdoc = None
                 logger.warning("attempted to parse directory in "+newreportdir)
-            newfiles[str(newfile)] = newdoc
-            filelist += [newfile]
         #    print newfiles
         #    print newdoc
         elif str(newfile).endswith( ".xml" ):
@@ -311,8 +315,10 @@ def start(cmd_args=None):
             try:
                 newdoc = xml.dom.minidom.parse(reportfile)
             except:
-                newdoc = ""
+                newdoc = None
                 pass
+
+        if newdoc:
             newfiles[str(newfile)] = newdoc
             filelist += [newfile]
         #    print newfile
@@ -328,25 +334,31 @@ def start(cmd_args=None):
             oldreportdir = oldreportdir[:-6]
 
     for oldfile in os.listdir(oldreportdir):
+        if oldfile.find("Schema"):
+            continue
+        #print oldfile
         reportfile = os.path.join(oldreportdir,oldfile)
         ind = oldfile.find("__")
         fileconfig = oldfile[ind+2:-4].strip()
         #print fileconfig
+        #print fileconfig + "   " + oldconfig
         if fileconfig == oldconfig:
             try:
                 olddoc = xml.dom.minidom.parse(reportfile)
             except IOError:
+                olddoc = None
                 logger.warning("attempted to parse directory in "+oldreportdir)     
-            oldfiles[str(oldfile)] = olddoc      
         elif str(oldfile).endswith( ".xml" ):
             try:
                 olddoc = xml.dom.minidom.parse(reportfile)
             except IOError:
-                olddoc = ""
+                olddoc = None
+
+        if olddoc is not None:
             oldfiles[str(oldfile)] = olddoc
 
-    #print newfiles
-    #print oldfiles
+    print "newfiles: " + str(newfiles)
+    print "oldfiles: " + str(oldfiles)
 
     #go through dictionaries and compare files and then compare tests
     comparetestfiles(newfiles, oldfiles)

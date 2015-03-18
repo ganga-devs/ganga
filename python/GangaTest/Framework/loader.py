@@ -114,6 +114,7 @@ class GangaTestLoader:
             pattern = _patterns[0]
             _log(self.logger,'info',"Searching release tests matching [%s] in %s " % (pattern,self.testsTopDir))
             atoms = pattern.split(".")
+            print str( patterns ) + " : " + str(atoms)
             if len(atoms) > 2:
                 top_level_package = atoms[0]
                 tests_type = atoms[1]
@@ -410,7 +411,8 @@ def %(method_name)s(self):
                 pytf_runner = os.path.join( i, 'cmd_run.sh')
                 break;
     #pytf_runner = os.path.join(os.getenv('PYTF_TOP_DIR',''),'cmd_run.sh')    
-                        
+    pytf_runner = os.path.join(os.getenv('PYTF_TOP_DIR','').split(':')[0],'cmd_run.sh')
+
     def getstatusouterr(cmd,output_path="%(output_path)s",out_mode='a',setTimeout=False):
         import os
         import os.path
@@ -425,11 +427,27 @@ def %(method_name)s(self):
         else:
            #hard value for timeout (1h)
            script_runner.extend(['-t','3600'])
-           
+
+        try:
+            from Ganga.GPI import disableServices, reactivate
+            disableServices()
+            reactivate()
+
+            from Ganga.GPI import jobs, templates
+            for j in jobs: j.remove()
+            for t in templates: t.remove()
+            if hasattr(jobs,'clean'):
+                jobs.clean(confirm=True, force=True)
+            if hasattr(templates,'clean'):
+                templates.clean(confirm=True, force=True)
+        except:
+            pass
+
         script_runner.append('{ ' + cmd + '; }')
         output = open(output_path,out_mode)
         output.write('########## Test started: ' + time.ctime() + ' ##########')
         output.flush()
+        print "Running: \\n" + str(script_runner) + "\\n"
         process = Popen(script_runner, shell=False, bufsize=0, 
                         stdin=PIPE, stdout=output, stderr=STDOUT, close_fds=True)        
         process.wait()
