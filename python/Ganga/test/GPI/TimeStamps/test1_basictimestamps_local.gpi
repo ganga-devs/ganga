@@ -12,7 +12,7 @@ assert type(j.time.new()) == datetime.datetime
 
 j.submit()
 
-assert sleep_until_completed(j,300)
+assert sleep_until_completed(j,30)
 
 assert 'submitting' in j.time.timestamps
 assert type(j.time.submitting()) == datetime.datetime
@@ -38,7 +38,7 @@ j.splitter.args=[[],[],[]]
 
 j.submit()
 
-assert sleep_until_completed(j,300)
+assert sleep_until_completed(j,30)
 
 assert 'submitting' in j.time.timestamps
 assert type(j.time.submitting()) == datetime.datetime
