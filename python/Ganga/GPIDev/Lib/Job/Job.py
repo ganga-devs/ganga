@@ -270,8 +270,9 @@ class Job(GangaObject):
         temp_AMC = self._storedAppMasterConfig
 
         self._unsetSubmitTransients()
-        c = super(Job,self).__deepcopy__(memo)
+        c = super(Job, self).__deepcopy__(memo)
         c._unsetSubmitTransients()
+        c.time.newjob()
 
         self._storedRTHandler = temp_RTH
         self._storedJobSubConfig = temp_SJC
@@ -336,30 +337,54 @@ class Job(GangaObject):
             return self.metadata[name]
 
         if name == 'outputfiles':
+
+            currentOutputFiles = object.__getattribute__(self, name) 
+            currenUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
+
             import re
             regex = re.compile('[*?\[\]]')
             files = GangaList()
+            files2 = GangaList()
 
-            for f in object.__getattribute__(self, name) + object.__getattribute__(self, 'non_copyable_outputfiles'):
-
+            for f in currentOutputFiles:
                 if regex.search(f.namePattern) is not None and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
                     files.extend(makeGangaListByRef(stripProxy(f).subfiles))
                 else:
                     files.append(f)
-            return addProxy(files)
+
+            for f in currenUnCopyableOutputFiles:
+                if regex.search(f.namePattern) is not None and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
+                    files2.extend(makeGangaListByRef(stripProxy(f).subfiles))
+                else:
+                    files2.append(f)
+
+            currentOutputFiles = files
+            currenUnCopyableOutputFiles = files2
+
+            files3 = GangaList()
+            for f in files: files3.append( f )
+            for f in files2: files3.append( f )
+
+            return addProxy(files3)
         
         if name == 'inputfiles': #If we ask for 'inputfiles', return the expanded list of subfiles
+
+            currentInputFiles = object.__getattribute__(self, name)
+            
             import re
             regex = re.compile('[*?\[\]]')
             files = GangaList()
 
-            for f in object.__getattribute__(self, name):
+            for f in currentInputFiles:
                 f.processWildcardMatches() #Expand out subfiles
                 if regex.search(f.namePattern) and hasattr(stripProxy(f),'subfiles') and stripProxy(f).subfiles:
                     files.extend(makeGangaListByRef(stripProxy(f).subfiles))
                 else:
                     files.append(f)
-            return addProxy(files)
+
+            currentInputFiles = files
+
+            return addProxy( currentInputFiles )
 
         if name == 'subjobs':
             return self._subjobs_proxy()

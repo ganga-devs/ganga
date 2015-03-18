@@ -93,6 +93,7 @@ class JobTime(GangaObject):
         """
         t = datetime.datetime.utcnow()
         self.timestamps['new'] = t 
+        self.sj_statlist = [] #this makes sure the contents of the list don't get copied when the Job does.
 
     def timenow(self, status):
         """Updates timestamps as job status changes.
