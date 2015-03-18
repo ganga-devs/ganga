@@ -1,3 +1,4 @@
+from common import *
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
@@ -111,6 +112,11 @@ class CoreTransform(ITransform):
          else:
             # just produce one unit per dataset
             for ds in self.inputdata:
+
+               # avoid splitting over chain inputs
+               if ds._name == "TaskChainInput":
+                  continue
+
                unit = CoreUnit()
                unit.name = "Unit %d" % len(self.units)
                unit.inputdata = copy.deepcopy( ds )
@@ -128,9 +134,10 @@ class CoreTransform(ITransform):
       incl_pat_list, excl_pat_list = self.getChainInclExclMasks( parent_units )
 
       # go over the output files and transfer to input data
+      flist = []
       for sj in self.getParentUnitJobs( parent_units ):
          for f in sj.outputfiles:
-            for f2 in f.getSubFiles():
+            for f2 in stripProxy(f).getSubFiles():
                if len(incl_pat_list) > 0:
                   for pat in incl_pat_list:
                      if re.search( pat, f2.namePattern ):

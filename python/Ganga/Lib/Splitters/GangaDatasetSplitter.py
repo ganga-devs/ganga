@@ -26,7 +26,6 @@ class GangaDatasetSplitter(ISplitter):
         # find the full file list
         full_list = []
         for f in job.inputdata.files:
-            print f.namePattern, f.localDir
             try:
                 for sf in f.getSubFiles():
                     full_list.append(sf)
