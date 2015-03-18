@@ -429,8 +429,12 @@ def %(method_name)s(self):
            script_runner.extend(['-t','3600'])
 
         try:
-            from Ganga.GPI import disableServices, reactivate
-            disableServices()
+            import Ganga.Core.InternalServices.Coordinator
+            if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
+                from Ganga.GPI import disableServices
+                disableServices()
+
+            from Ganga.GPI import  reactivate
             reactivate()
 
             from Ganga.GPI import jobs, templates
@@ -440,6 +444,10 @@ def %(method_name)s(self):
                 jobs.clean(confirm=True, force=True)
             if hasattr(templates,'clean'):
                 templates.clean(confirm=True, force=True)
+
+            from Ganga.GPI import disableServices
+            disableServices()
+
         except:
             pass
 
@@ -466,6 +474,30 @@ def %(method_name)s(self):
         tb_index = text.rfind('Traceback')
         out=text[:tb_index]
         err=text[tb_index:]
+
+        try:
+            import Ganga.Core.InternalServices.Coordinator
+            if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
+                from Ganga.GPI import disableServices
+                disableServices()
+
+            from Ganga.GPI import reactivate
+            reactivate()
+
+            from Ganga.GPI import jobs, templates
+            for j in jobs: j.remove()
+            for t in templates: t.remove()
+            if hasattr(jobs,'clean'):
+                jobs.clean(confirm=True, force=True)
+            if hasattr(templates,'clean'):
+                templates.clean(confirm=True, force=True)
+
+            from Ganga.GPI import disableServices
+            disableServices()
+
+        except:
+            pass
+
         return sts,out,err
         
     #delete the output file if it already exists
