@@ -17,7 +17,7 @@ class FileBuffer:
     """
     
     # Added a subdir (see File.py for comments) - AM
-    def __init__(self,name,contents,subdir=os.curdir,executable=0):
+    def __init__(self, name, contents, subdir=os.curdir, executable=0):
         """ name is the name of the file to be created
             contents is the text with file contents or a file-object which will be read()
             executable indicates if a file is create()'ed with executable permissions

@@ -104,7 +104,13 @@ def createPackedInputSandbox(sandbox_files, inws, name):
             fileobj = StringIO(contents)
                    
             tinfo = tarfile.TarInfo()
-            tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
+            # FIX for Ganga/test/Internals/FileBuffer_Sandbox
+            # Don't keep the './' on files as looking for an exact filename
+            # afterwards won't work
+            if f.subdir == os.curdir:
+                tinfo.name = os.path.basename(f.name)
+            else:
+                tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
             import time
             tinfo.mtime = time.time()
             tinfo.size = fileobj.len
