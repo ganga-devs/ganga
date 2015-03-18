@@ -482,7 +482,14 @@ under certain conditions; type license() for details.
                        this_logger.error('try -g option to create valid ~/.gangarc')
         except IOError,x:
            pass # ignore all I/O errors (e.g. file does not exist), this is just an advisory check
-              
+
+        #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
+        #cf = file(self.options.config_file)
+        #first_line = cf.readline()
+        #import re
+        #r = re.compile(r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
+        #this_logger.info( str( r.group('version').split('-') ) )
+
         if self.options.config_path is None:
            try:
               self.options.config_path = os.environ['GANGA_CONFIG_PATH']
@@ -1236,6 +1243,10 @@ default_backends = LCG
                rc = self.startTestRunner()             
             except (KeyboardInterrupt, SystemExit):
                self.logger.warning('Test Runner interrupted!')
+               import Ganga.Core.InternalServices.Coordinator
+               if not Ganga.Core.InternalServices.Coordinator.servicesEnabled:
+                  from Ganga.GPI import reactivate
+                  reactivate()
                sys.exit(1)
             sys.exit(rc)
 
