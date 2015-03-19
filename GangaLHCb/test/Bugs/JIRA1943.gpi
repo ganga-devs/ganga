@@ -27,7 +27,7 @@ for app in Applications:
         f.close()
         import Ganga.Utility.Config
         if not getConfig('Output')['ForbidLegacyInput']:
-            j.inputsandbox=[join(tmpdir,fname)]
+            j.inputsandbox=[ File(join(tmpdir,fname)) ]
         else:
             j.inputfiles = [ LocalFile( join(tmpdir,fname) ) ]
 
