@@ -41,6 +41,44 @@ from Ganga.Utility.files import fullpath
 import exceptions
 import sys,time
 
+
+### This code can help debugging when files aren't closed correctly and managing I/O
+
+DEBUGFILES = False
+import __builtin__
+openfiles = {}
+oldfile = __builtin__.file
+class newfile(oldfile):
+    def __init__(self, *args):
+        self.x = args[0]
+        global DEBUGFILES
+        if DEBUGFILES == True:
+            print "### OPENING %s ###" % str(self.x)
+        oldfile.__init__(self, *args)
+        openfiles[self.x] = self
+
+    def close(self):
+        global DEBUGFILES
+        if DEBUGFILES == True:
+            print "### CLOSING %s ###" % str(self.x)
+        oldfile.close(self)
+        del openfiles[ self.x ]
+
+oldopen = __builtin__.open
+def newopen(*args):
+    return newfile(*args)
+__builtin__.file = newfile
+__builtin__.open = newopen
+
+def printOpenFiles():
+    logger.info( "### %d OPEN FILES: [%s]" % (len(openfiles), ", ".join(f.x for f in openfiles)) )
+
+safeFiles = ['.ganga.log', '.gangarc', 'ipythonrc', 'history', 'persist']
+def safeCloseOpenFiles():
+    for f in openfiles.keys():
+        if f not in safeFiles:
+            openfiles[f].close()
+
 #import atexit, traceback
 #def register(f):
 #   print '*'*10
@@ -232,18 +270,35 @@ under certain conditions; type license() for details.
        if os.path.exists(config_file):
           i = 0
           for i in range(100):
-             bn = "%s.%.2d"%(config_file,i)
+             bn = "%s.%.2d"%(config_file, i)
              if not os.path.exists(bn):
                 try:
-                   os.rename(config_file,bn)
+                   os.rename(config_file, bn)
                 except:
-                   logger.error('Failed to create config backup file %s'%bn)
+                   logger.error('Failed to create config backup file %s' % bn)
                    logger.error('Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
                    return
                 logger.info('Copied current config file to %s' % bn)
                 break
           else:
-             raise ValueError('too many backup files')
+             config_directory = os.path.dirname(os.path.abspath(config_file) )
+             config_backupdir = os.path.join( config_directory, '.gangarc_backups' )
+             if not os.path.exists(config_backupdir):
+                os.makedirs(config_backupdir)
+             import time
+             datestr = "_" + time.strftime("%d.%m.%y")
+             i=0
+             logging.info('Copying backup config files to %s' % config_backupdir )
+             for i in range(100):
+                 old_bn = "%s.%.2d"%(config_file, i)
+                 bn = os.path.basename(old_bn)
+                 new_bn = bn + datestr
+                 new_bn_file = os.path.join( config_backupdir, new_bn )
+                 os.rename( old_bn, new_bn_file )
+             bn = "%s.%.2d"%(config_file, 0)
+             os.rename(config_file, bn)
+             logger.info('Copied current config file to %s' % bn)
+             #raise ValueError('too many bckup files')
 
        logger.info('Creating ganga config file %s' % config_file)
        new_config = ''

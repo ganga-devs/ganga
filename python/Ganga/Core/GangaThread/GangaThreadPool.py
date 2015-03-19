@@ -113,6 +113,10 @@ class GangaThreadPool:
             del i
         self.__threads = []
 
+        # Potentailly DANGEROUS only use if certain it's safe
+        #from Ganga.Runtime import bootstrap
+        #bootstrap.safeCloseOpenFiles()
+
     def __alive_critical_thread_ids(self):
         """Return a list of alive critical thread names."""
         return [t.name for t in self.__threads if t.isAlive() and t.isCritical()]
