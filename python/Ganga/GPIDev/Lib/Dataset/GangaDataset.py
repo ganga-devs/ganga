@@ -9,7 +9,6 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job,JobTemplate
-from GangaDirac.Lib.Backends.DiracUtils import get_result
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

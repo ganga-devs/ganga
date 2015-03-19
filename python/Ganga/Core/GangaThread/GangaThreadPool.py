@@ -67,6 +67,10 @@ class GangaThreadPool:
         
         """
 
+        from Ganga.GPI import tasks, queues
+        tasks.pause()
+        queues._stop_all_threads()
+
         logger.debug('shutting down GangaThreadPool with timeout %d sec' % self.SHUTDOWN_TIMEOUT)
 
         ## run shutdown thread in background
@@ -116,6 +120,11 @@ class GangaThreadPool:
         # Potentailly DANGEROUS only use if certain it's safe
         #from Ganga.Runtime import bootstrap
         #bootstrap.safeCloseOpenFiles()
+
+        import threading
+        for i in  threading.enumerate():
+            del i
+
 
     def __alive_critical_thread_ids(self):
         """Return a list of alive critical thread names."""
