@@ -457,6 +457,7 @@ def generateSchemaTestsReport(schema_reports):
 
     appendDetailedFooter(file)
     file.close()    
+    out.close()
 
 def generate2ndLevelReports(reports,categories=[]):
     

@@ -179,6 +179,7 @@ class Checker(IAction):
         self.VersionNumber = self._getversioninfo(self.VersionData)[0]
         self.VersionTime = self._getversioninfo(self.VersionData)[1]
         logger.info("Installing release %s created on %s" % (self.VersionNumber,self.VersionTime ))
+        f.close()
         return True
 
     def _getversioninfo(self, VersionData):

@@ -448,6 +448,10 @@ def %(method_name)s(self):
             from Ganga.GPI import disableServices
             disableServices()
 
+            # DANGEROUS only use as a last resort to files being kept open
+            #from Ganga.Runtime import bootstrap
+            #bootstrap.safeCloseOpenFiles()
+
         except:
             pass
 
