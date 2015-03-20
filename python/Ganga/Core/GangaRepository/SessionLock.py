@@ -289,7 +289,8 @@ class SessionLockManager(object):
             global session_lock_refresher
             if session_lock_refresher is None:
                 try:
-                    os.close( self.delay_init_open( self.gfn ) )
+                    this_lock = self.delay_init_open( self.gfn )
+                    os.close( this_lock )
                     registerGlobalSessionFile( self.gfn )
                 except OSError, x:
                     raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, x))
@@ -320,6 +321,7 @@ class SessionLockManager(object):
             #logger.debug("Session file '%s' deleted " % (self.fn))
             os.unlink(self.fn)
             #os.unlink(self.gfn)
+            os.close( self.lockfd )
         except OSError, x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, x))
 
@@ -523,7 +525,6 @@ class SessionLockManager(object):
             os.write(fd, str(self.count)+"\n")
             if not self.afs:
                 fcntl.lockf(fd, fcntl.LOCK_UN)
-            os.close(fd)
         except OSError, x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' write: %s" % (self.cntfn, x))
@@ -531,6 +532,8 @@ class SessionLockManager(object):
                 raise RepositoryError(self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
         except IOError, x:
             raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
+        finally:
+            os.close(fd)
 
     # "User" functions
     def make_new_ids(self, n):
