@@ -45,39 +45,39 @@ import sys,time
 ### This code can help debugging when files aren't closed correctly and managing I/O
 
 DEBUGFILES = False
-import __builtin__
-openfiles = {}
-oldfile = __builtin__.file
-class newfile(oldfile):
-    def __init__(self, *args):
-        self.x = args[0]
-        global DEBUGFILES
-        if DEBUGFILES == True:
+
+if DEBUGFILES:
+    import __builtin__
+    openfiles = {}
+    oldfile = __builtin__.file
+    class newfile(oldfile):
+        def __init__(self, *args):
+            self.x = args[0]
+            print "init"
             print "### OPENING %s ###" % str(self.x)
-        oldfile.__init__(self, *args)
-        openfiles[self.x] = self
+            oldfile.__init__(self, *args)
+            openfiles[self.x] = self
 
-    def close(self):
-        global DEBUGFILES
-        if DEBUGFILES == True:
+        def close(self):
             print "### CLOSING %s ###" % str(self.x)
-        oldfile.close(self)
-        del openfiles[ self.x ]
+            oldfile.close(self)
+            openfiles[ self.x ] = None
 
-oldopen = __builtin__.open
-def newopen(*args):
-    return newfile(*args)
-__builtin__.file = newfile
-__builtin__.open = newopen
+    oldopen = __builtin__.open
+    def newopen(*args):
+        print "NewOpen"
+        return newfile(*args)
+    __builtin__.file = newfile
+    __builtin__.open = newopen
 
-def printOpenFiles():
-    logger.info( "### %d OPEN FILES: [%s]" % (len(openfiles), ", ".join(f.x for f in openfiles)) )
+    def printOpenFiles():
+        print "### %d OPEN FILES: [%s]" % (len(openfiles), ", ".join( str(f) for f in openfiles.keys() if openfiles[f] is not None) )
 
-safeFiles = ['.ganga.log', '.gangarc', 'ipythonrc', 'history', 'persist']
-def safeCloseOpenFiles():
-    for f in openfiles.keys():
-        if f not in safeFiles:
-            openfiles[f].close()
+    safeFiles = ['.ganga.log', '.gangarc', 'ipythonrc', 'history', 'persist']
+    def safeCloseOpenFiles():
+        for f in openfiles.keys():
+            if f not in safeFiles:
+                openfiles[f].close()
 
 #import atexit, traceback
 #def register(f):
