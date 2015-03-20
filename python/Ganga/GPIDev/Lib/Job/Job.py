@@ -1929,11 +1929,11 @@ class Job(GangaObject):
 
         elif attr == 'inputfiles':
 
-            if value != []:
-                if not getConfig('Output')['ForbidLegacyInput']:
-                    logger.error('Use of job.inputfiles is forbidden, please use job.inputsandbox')
-                    raise GangaException( 'Use of job.inputfiles is forbidden, please use job.inputsandbox' )
-                                
+            #if value != []:
+            #    if not getConfig('Output')['ForbidLegacyInput']:
+            #        logger.error('Use of job.inputfiles is forbidden, please use job.inputsandbox')
+            #        raise GangaException( 'Use of job.inputfiles is forbidden, please use job.inputsandbox' )
+                    
             super(Job,self).__setattr__(attr, value) 
 
         elif attr == 'outputsandbox':
