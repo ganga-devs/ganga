@@ -151,6 +151,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
+        # NOTE special case for replicas: replicate string must be empty for no replication
         dirac_script = script_generator(lhcbdiracAPI_script_template(),
                                         DIRAC_IMPORT         = 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                                         DIRAC_JOB_IMPORT     = 'from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
@@ -170,7 +171,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         SETTINGS             = diracAPI_script_settings(new_job.application),
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         PLATFORM             = app.platform,
-                                        REPLICATE            = str(getConfig('DIRAC')['ReplicateOutputData']),
+                                        REPLICATE            = 'True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3

@@ -77,7 +77,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
         outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
 
-
+        # NOTE special case for replicas: replicate string must be empty for no replication
         params = { 'DIRAC_IMPORT'         : 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                    'DIRAC_JOB_IMPORT'     : 'from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
                    'DIRAC_OBJECT'         : 'DiracLHCb()',
@@ -92,7 +92,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                    'SETTINGS'             : diracAPI_script_settings(app),
                    'DIRAC_OPTS'           : job.backend.diracOpts,
                    'PLATFORM'             : getConfig('ROOT')['arch'],
-                   'REPLICATE'            : str(getConfig('DIRAC')['ReplicateOutputData']),
+                   'REPLICATE'            : 'True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                    # leave the sandbox for altering later as needs
                    # to be done in backend.submit to combine master.
                    # Note only using 2 #s as auto-remove 3
