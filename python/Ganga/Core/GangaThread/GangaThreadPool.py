@@ -67,8 +67,7 @@ class GangaThreadPool:
         
         """
 
-        from Ganga.GPI import tasks, queues
-        tasks.pause()
+        from Ganga.GPI import queues
         queues._stop_all_threads()
 
         logger.debug('shutting down GangaThreadPool with timeout %d sec' % self.SHUTDOWN_TIMEOUT)
@@ -120,6 +119,10 @@ class GangaThreadPool:
         # Potentailly DANGEROUS only use if certain it's safe
         #from Ganga.Runtime import bootstrap
         #bootstrap.safeCloseOpenFiles()
+
+        from Ganga.Runtime import bootstrap
+        if bootstrap.DEBUGFILES:
+            bootstrap.printOpenFiles()
 
         import threading
         for i in  threading.enumerate():
