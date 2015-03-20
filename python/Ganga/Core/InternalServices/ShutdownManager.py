@@ -55,6 +55,11 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
+    from Ganga.Core.InternalServices import Coordinator
+
+    if Coordinator.servicesEnabled:
+        Coordinator.disableInternalServices( shutdown = True )
+
     def priority_cmp(f1,f2):
         """
         Sort the exit functions based on priority in reversed order
@@ -86,13 +91,14 @@ def _ganga_run_exitfuncs():
         (priority, func), targs, kargs = atexit._exithandlers.pop()
         try:
             func(*targs, **kargs)
-        except Exception,x:
+        except Exception, x:
+            #print 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
             s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
             logger.warning(s)
 
 def install():
     """
-    Install a new shutdown manager, by overriding metods from atexit module
+    Install a new shutdown manager, by overriding methods from atexit module
     """    
     #override the atexit exit function
     atexit._run_exitfuncs = _ganga_run_exitfuncs
