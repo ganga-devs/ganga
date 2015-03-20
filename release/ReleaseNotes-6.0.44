@@ -7,6 +7,8 @@ ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
 * Fixing a handful of errors found in unittests
 * Fixing bug where potentially too many files remain open
+* Adding a 5min check to remove dead locks/session files
+* Improving shutdown so services should always stop before repo disconnects
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -23,6 +25,13 @@ ganga/python/GangaAtlas
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
 * Changing default behaviour to request only 1 replica of an outputfile object with (LHCb)DIRAC
+* Fixed multiple replicas being requested, whatever the flag setting is
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Fixed multiple replicas being requested, whatever the flag setting is
 
 
 --------------------------------------------------------------------------------------------------------------
