@@ -288,7 +288,7 @@ under certain conditions; type license() for details.
              import time
              datestr = "_" + time.strftime("%d.%m.%y")
              i=0
-             logging.info('Copying backup config files to %s' % config_backupdir )
+             logger.info('Copying backup config files to %s' % config_backupdir )
              for i in range(100):
                  old_bn = "%s.%.2d"%(config_file, i)
                  bn = os.path.basename(old_bn)
