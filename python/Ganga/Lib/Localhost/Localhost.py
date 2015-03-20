@@ -52,8 +52,9 @@ class Localhost(IBackend):
     def __init__(self):
       super(Localhost,self).__init__()
 
-    def submit(self,jobconfig,master_input_sandbox):
-      self.run(self.preparejob(jobconfig,master_input_sandbox))
+    def submit(self, jobconfig, master_input_sandbox):
+      prepared = self.preparejob(jobconfig, master_input_sandbox)
+      self.run( prepared )
       return 1
 
     def resubmit(self):
@@ -164,16 +165,16 @@ class Localhost(IBackend):
 
         return d
 
-    def preparejob(self,jobconfig,master_input_sandbox):
+    def preparejob(self, jobconfig, master_input_sandbox):
 
       job = self.getJobObject()
       #print str(job.backend_output_postprocess)        
       mon = job.getMonitoringService()
       import Ganga.Core.Sandbox as Sandbox
-      subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
+      subjob_input_sandbox = job.createPackedInputSandbox( jobconfig.getSandboxFiles()
         + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
-        + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
-      
+        + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()) )
+
       appscriptpath = [jobconfig.getExeString()]+jobconfig.getArgStrings()
       if self.nice:
           appscriptpath = ['nice','-n %d'%self.nice] + appscriptpath
@@ -378,7 +379,10 @@ sys.exit()
       script = script.replace('###SUBPROCESS_PYTHONPATH###',repr(Ganga.PACKAGE.setup.getPackagePath2('subprocess','syspath',force=True)))
       script = script.replace('###TARFILE_PYTHONPATH###',repr(Ganga.PACKAGE.setup.getPackagePath2('tarfile','syspath',force=True)))             
 
-      return job.getInputWorkspace().writefile(FileBuffer('__jobscript__',script),executable=1)
+      wrkspace = job.getInputWorkspace()
+      scriptPath = wrkspace.writefile( FileBuffer('__jobscript__',script), executable=1)
+
+      return scriptPath
 
     def kill(self):
         import os,signal
