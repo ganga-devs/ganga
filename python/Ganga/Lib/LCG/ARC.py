@@ -1140,7 +1140,7 @@ sys.exit(0)
                         doStatusUpdate = False
 
                     ## download output sandboxes if final status is reached
-                    elif info['State'] in ['Finished (FINISHED)']:
+                    elif info['State'] in ['Finished', '(FINISHED)','Finished (FINISHED)']:
 
                         ## grab output sandbox
                         if grids['GLITE'].arc_get_output( job.backend.id, job.getOutputWorkspace( create = True ) ):
