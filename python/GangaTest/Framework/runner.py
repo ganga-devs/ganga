@@ -143,7 +143,12 @@ def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
     runner_args.extend(pytf_loader_args)
     runner_args.extend([test_selection])
     #print runner_args
-    return runTests.main(logger,runner_args)
+
+    try:
+        rc = runTests.main(logger,runner_args)
+    except:
+        rc = -9999
+    return rc
                 
 
 def __getExternalLibPath( current_path ):
