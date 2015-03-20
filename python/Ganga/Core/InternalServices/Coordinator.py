@@ -162,7 +162,7 @@ def disableMonitoringService():
 
     log.debug( "Queues Threads should now be gone" )
 
-def disableInternalServices():
+def disableInternalServices( shutdown = False ):
     """
     Deactivates all the internal services :
           * monitoring loop
@@ -172,8 +172,9 @@ def disableInternalServices():
           * the user is running out of space
     """
 
-    log.info( "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner" )
-    log.info( " ... Please be patient! " )
+    if shutdown is not True:
+        log.info( "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner" )
+        log.info( " ... Please be patient! " )
 
     global servicesEnabled
 
@@ -194,7 +195,8 @@ def disableInternalServices():
 
     log.debug( "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services" )
 
-    log.info( "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt" )
+    if shutdown is not True:
+        log.info( "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt" )
 
     #flush the registries
     log.debug( "Coordinator Shutting Down Repository_runtime" )
