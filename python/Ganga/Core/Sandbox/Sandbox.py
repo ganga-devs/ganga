@@ -94,7 +94,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
             #print "Getting File %s" % f.name
             #tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
             try:
-                fileobj = file(f.name)
+                fileobj = open(f.name)
             except:
                 raise SandboxError("File %s does not exist." % f.name) 
             tinfo = tf.gettarinfo(f.name, os.path.join(f.subdir, os.path.basename(f.name)))
@@ -118,6 +118,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
         if f.isExecutable():
             tinfo.mode = tinfo.mode|stat.S_IXUSR
         tf.addfile(tinfo, fileobj)
+        fileobj.close()
 
     tf.close()
 

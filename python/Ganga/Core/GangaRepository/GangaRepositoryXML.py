@@ -64,7 +64,9 @@ def safe_save(fn,obj,to_file,ignore_subs=''):
     if not os.path.exists(fn):
         # file does not exist, so make it fast!
         try:
-            to_file(obj, file(fn,"w"), ignore_subs)
+            this_file = open( fn,"w" )
+            to_file(obj, this_file, ignore_subs)
+            this_file.close()
             return
         except IOError, e:
             raise IOError("Could not write file '%s' (%s)" % (fn,e))
@@ -186,7 +188,9 @@ class GangaRepositoryLocal(GangaRepository):
             new_idx_cache = self.registry.getIndexCache(obj)
             if new_idx_cache != obj._index_cache or not os.path.exists(ifn):
                 obj._index_cache = new_idx_cache
-                pickle_to_file((obj._category,obj._name,obj._index_cache),file(ifn,"w"))
+                this_file = open( ifn,"w" )
+                pickle_to_file((obj._category,obj._name,obj._index_cache),this_file)
+                this_file.close()
         except IOError, x:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn,x.__class__.__name__,x))
 
@@ -406,6 +410,7 @@ class GangaRepositoryLocal(GangaRepository):
                             l.append(ff[0])
                             errs.extend(ff[1])
                             i += 1
+                            sfobj.close()
                         tmpobj._data[self.sub_split] = makeGangaListByRef(l)
                     if len(errs) > 0:
                         raise errs[0]
@@ -471,6 +476,8 @@ class GangaRepositoryLocal(GangaRepository):
                     pass
                 #self._internal_setitem__(id, EmptyGangaObject()) // NO NO NO! BREAKS EVERYTHING HORRIBLY!
                 raise InaccessibleObjectError(self,id,x)
+            finally:
+                fobj.close()
 
     def delete(self, ids):
         for id in ids:
