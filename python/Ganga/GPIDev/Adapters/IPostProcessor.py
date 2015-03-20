@@ -96,6 +96,9 @@ class MultiPostProcessor(IPostProcessor):
         """Adds a process object to the list of processes to be done."""
         self.process_objects.append(process_object)
 
+    def __len__(self):
+        return len(self.process_objects)
+
     def printSummaryTree(self,level = 0, verbosity_level = 0, whitespace_marker = '', out = None, selection = ''):
         """If this method is overridden, the following should be noted:
 

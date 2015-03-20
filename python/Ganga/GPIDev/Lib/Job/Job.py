@@ -544,7 +544,7 @@ class Job(GangaObject):
         """Propagate status transitions""" 
 
         if new_status == 'completed' or new_status == 'failed' or new_status == 'killed':
-            if self.postprocessors:
+            if len(self.postprocessors) > 0:
                 logger.info( "Running postprocessor for Job %s" % self.getFQID('.') )
                 passed = self.postprocessors.execute(self,new_status)
                 if passed is not True:
