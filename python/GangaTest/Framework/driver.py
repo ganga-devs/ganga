@@ -242,6 +242,8 @@ class GPIPRunner:
                 print "[%d failed tests]" % len(failedTests)
                 if len(failedTests) > 0:
                     failedTestsException = FailedTestsException(failedTests)
+                    import traceback
+                    traceback.print_exc()
                     raise failedTestsException
 
 
@@ -436,9 +438,38 @@ if __name__=="__main__":
                         try:
                                 figleaf.stop()
                                 figleaf.write_coverage(coverage_report)
-                        except NameError:
+                        except:
                                 pass
+
+        try:
+                ## Do we want to empty the repository on shutdown?
+                from Ganga.Utility.Config import getConfig
+                if 'AutoCleanup' in getConfig( 'TestingFramework' ):
+                        wholeCleanup = getConfig( 'TestingFramework' )[ 'AutoCleanup' ]
+                else:
+                        wholeCleanup = True
+
+                if wholeCleanup:
+                        from Ganga.GPI import jobs, templates
+                        for j in jobs: j.remove()
+                        for t in templates: t.remove()
+                        if hasattr(jobs,'clean'):
+                                jobs.clean(confirm=True, force=True)
+                        if hasattr(templates,'clean'):
+                                templates.clean(confirm=True, force=True)
+
+                ## Disable internal services such as monitoring and other tasks
+                from Ganga.Core.InternalServices import Coordinator
+                if Coordinator.servicesEnabled:
+                        Coordinator.disableInternalServices()
+
+        except:
+                pass
+
         sys.exit(not success)
+
+        # If this crops up again that this stalls on exit the ONLY reliable soluition
+        # I found was to call os._exit( not sucess ) which is horrible and potentially dangerous
 
 #$Log: not supported by cvs2svn $
 #Revision 1.2  2008/11/26 08:30:35  moscicki
