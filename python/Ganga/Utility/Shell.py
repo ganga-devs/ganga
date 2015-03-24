@@ -229,6 +229,8 @@ class Shell:
        out_file = open(outfile)
        output = out_file.read()
        out_file.close()
+       import os
+       os.unlink(outfile)
 
        return rc, output, m
        
