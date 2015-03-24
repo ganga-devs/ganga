@@ -29,6 +29,7 @@ def startGanga():
 
     ## Start ganga by passing some options for unittesting
 
+    print "\n"
     logger.info( "Starting ganga" )
 
     logger.info( "Parsing Command Line options" )
@@ -95,8 +96,10 @@ def startGanga():
     ## FIXME This is probably excessive but I'm having problems with the exit that I'm debugging
     Ganga.Core.change_atexitPolicy( interactive_session=False, new_policy='batch' )
 
-    logger.info( "Passing to Unittest" )
+    from Ganga.Core.GangaRepository import SessionLock
+    SessionLock.session_lock_refresher.removeDeadLocks()
 
+    logger.info( "Passing to Unittest" )
 
 def stopGanga():
 
@@ -136,11 +139,11 @@ def stopGanga():
 
     ## This shutting down of the thread pool is registered in normal ganga on exit.
     ## Is this dangerous to do if the internal services and repository have been shutdown?
-    def testing_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-        return True
-    from Ganga.Core.GangaThread import GangaThreadPool
-    thread_pool = GangaThreadPool.getInstance()
-    thread_pool.shutdown( should_wait_cb=testing_cb )
+#    def testing_cb(t_total, critical_thread_ids, non_critical_thread_ids):
+#        return True
+#    from Ganga.Core.GangaThread import GangaThreadPool
+#    thread_pool = GangaThreadPool.getInstance()
+#    thread_pool.shutdown( should_wait_cb=testing_cb )
 
     ## Finished
     logger.info( "Test Finished" )

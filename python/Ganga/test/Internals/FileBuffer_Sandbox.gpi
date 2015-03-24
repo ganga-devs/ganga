@@ -10,6 +10,9 @@ contents = 'test file \n is test file \n and nothing else'
 import os
 tmpdir = os.getenv( 'TEMPDIR' )
 
+if tmpdir is None:
+    tmpdir = '/tmp'
+
 fb = FileBuffer( os.path.join(tmpdir, 'test.file'), contents)
 fb_exe = FileBuffer( os.path.join(tmpdir, 'test_exe.file'), contents, '.', True)
 
