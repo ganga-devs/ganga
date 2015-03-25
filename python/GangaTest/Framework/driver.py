@@ -442,31 +442,20 @@ if __name__=="__main__":
                                 pass
 
         try:
-                ## Do we want to empty the repository on shutdown?
-                from Ganga.Utility.Config import getConfig
-                if 'AutoCleanup' in getConfig( 'TestingFramework' ):
-                        wholeCleanup = getConfig( 'TestingFramework' )[ 'AutoCleanup' ]
-                else:
-                        wholeCleanup = True
-
-                if wholeCleanup:
-                        from Ganga.GPI import jobs, templates
-                        for j in jobs: j.remove()
-                        for t in templates: t.remove()
-                        if hasattr(jobs,'clean'):
-                                jobs.clean(confirm=True, force=True)
-                        if hasattr(templates,'clean'):
-                                templates.clean(confirm=True, force=True)
-
                 ## Disable internal services such as monitoring and other tasks
                 from Ganga.Core.InternalServices import Coordinator
-                if Coordinator.servicesEnabled:
-                        Coordinator.disableInternalServices()
+        #        if Coordinator.servicesEnabled:
+        #                Coordinator.disableInternalServices()
+
+                from Ganga.Core.InternalServices import ShutdownManager
+        #        ShutdownManager._ganga_run_exitfuncs()
 
         except:
                 pass
 
-        sys.exit(not success)
+        #sys.exit(not success)
+        import os
+        os._exit(not success)
 
         # If this crops up again that this stalls on exit the ONLY reliable soluition
         # I found was to call os._exit( not sucess ) which is horrible and potentially dangerous
