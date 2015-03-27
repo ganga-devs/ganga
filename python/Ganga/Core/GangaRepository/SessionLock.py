@@ -44,8 +44,6 @@ except ImportError:
 session_expiration_timeout = 40 # seconds
 session_lock_refresher = None
 
-deadLockLastCheck = None
-
 sessionFiles = []
 
 def registerGlobalSessionFile( thisSessionFile ):
@@ -126,8 +124,38 @@ class SessionLockRefresher(GangaThread):
 
                         # Clear expired session files if monitoring is active
 
-                        self.removeDeadLocks()
-
+                        try:
+                            from Ganga.Core import monitoring_component
+                            if not monitoring_component is None and monitoring_component.enabled:
+                                # Make list of sessions that are "alive"
+                                ls_sdir = os.listdir(self.sdir)
+                                session_files = [f for f in ls_sdir if f.endswith(".session")]
+                                lock_files = [f for f in ls_sdir if f.endswith(".locks")]
+                                for sf in session_files:
+                                    if os.path.join(self.sdir, sf) in self.fns:
+                                        continue
+                                    mtm = os.stat(os.path.join(self.sdir, sf)).st_ctime
+                                    #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
+                                    if now - mtm  > session_expiration_timeout:
+                                        logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
+                                        os.unlink(os.path.join(self.sdir ,sf))
+                                        session_files.remove(sf)
+                                    #elif now - mtm  > session_expiration_timeout/2:
+                                    #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
+                                # remove all lock files that do not belong to sessions that are alive
+                                for f in lock_files:
+                                    if not f.endswith(".session"):
+                                        asf = f.split(".session")[0] + ".session"
+                                        if not asf in session_files:
+                                            if f.endswith(".session"):
+                                                logger.warning("Removing dead file %s" % (f) )
+                                            #logger.debug("Found, %s session files" % (session_files) )
+                                            #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
+                                            #logger.debug( "%s, %s" % ( self.sdir, f ) )
+                                            os.unlink(os.path.join(self.sdir, f))
+                        except OSError, x:
+                            # nothing really important, another process deleted the session before we did.
+                            logger.debug("Unimportant OSError in loop: %s" % x)
                 except RepositoryError:
                     break
                 except Exception, x:
@@ -160,49 +188,6 @@ class SessionLockRefresher(GangaThread):
 
         assert( len(self.fns) == len(self.repos) )
 
-    def removeDeadLocks(self):
-        import time
-        global deadLockLastCheck
-        if deadLockLastCheck is None:
-            deadLockLastCheck = time.time()
-        else:
-            if ( time.time() - deadLockLastCheck ) < 300:
-                return
-            else:
-                deadLockLastCheck = time.time()
-
-        try:
-            # Make list of sessions that are "alive"
-            ls_sdir = os.listdir(self.sdir)
-            session_files = [f for f in ls_sdir if f.endswith(".session")]
-            lock_files = [f for f in ls_sdir if f.endswith(".locks")]
-            for sf in session_files:
-                #logger.info( "Looking at: %s" % sf )
-                if os.path.join(self.sdir, sf) in self.fns:
-                    continue
-                now = self.delayread( self.fns[0] )
-                mtm = os.stat(os.path.join(self.sdir, sf)).st_ctime
-                #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
-                if now - mtm  > session_expiration_timeout:
-                    logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
-                    os.unlink(os.path.join(self.sdir ,sf))
-                    session_files.remove(sf)
-                    #elif now - mtm  > session_expiration_timeout/2:
-                    #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
-            # remove all lock files that do not belong to sessions that are alive
-            for f in lock_files:
-                asf = f.split(".session")[0] + ".session"
-                #logger.info( "Looking at: %s" % asf )
-                if not asf in session_files:
-                    #logger.debug("Found, %s session files" % (session_files) )
-                    #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
-                    #logger.debug( "%s, %s" % ( self.sdir, f ) )
-                    os.unlink(os.path.join(self.sdir, f))
-
-        except:
-            # nothing really important, another process deleted the session before we did.
-            logger.debug("Error in removing DeadLocks and Session files")
-            raise
 
 class SessionLockManager(object):
     """ Class with thread that keeps a global lock file that synchronizes
@@ -250,7 +235,7 @@ class SessionLockManager(object):
         self.session_name = session_name
         self.name = name
         self.realpath = realpath
-        logger.debug( "Initializing SessionLockManager: " + self.fn )
+        #logger.debug( "Initializing SessionLockManager: " + self.fn )
 
     def delay_init_open(self,filename):
         value = None
@@ -304,8 +289,7 @@ class SessionLockManager(object):
             global session_lock_refresher
             if session_lock_refresher is None:
                 try:
-                    this_lock = self.delay_init_open( self.gfn )
-                    os.close( this_lock )
+                    os.close( self.delay_init_open( self.gfn ) )
                     registerGlobalSessionFile( self.gfn )
                 except OSError, x:
                     raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, x))
@@ -334,10 +318,8 @@ class SessionLockManager(object):
                 if session_lock_refresher.numberRepos() <= 1:
                     session_lock_refresher = None
             #logger.debug("Session file '%s' deleted " % (self.fn))
-            #os.close(self.fn)
             os.unlink(self.fn)
             #os.unlink(self.gfn)
-            os.close( self.lockfd )
         except OSError, x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, x))
 
@@ -484,7 +466,6 @@ class SessionLockManager(object):
             locking is done
             Raises RepositoryError if session file is inaccessible """
         #logger.debug("Openining Session File: %s " % self.fn )
-        fd = None
         try:
             # If this fails, we want to shutdown the repository (corruption possible)
             fd = self.delayopen( self.fn )
@@ -493,6 +474,7 @@ class SessionLockManager(object):
             self.delaywrite( fd, pickle.dumps(self.locked))
             if not self.afs:
                 fcntl.lockf( fd, fcntl.LOCK_UN )
+            os.close(fd)
         except OSError, x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "Error on session file access '%s': %s" % (self.fn, x))
@@ -503,9 +485,6 @@ class SessionLockManager(object):
                                     On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (self.fn, x) )
         except IOError, x:
             raise RepositoryError(self.repo, "Error on session file locking '%s': %s" % (self.fn, x))
-        finally:
-            if fd is not None:
-                os.close(fd)
 
     # counter read-write functions
     def cnt_read(self):
@@ -514,7 +493,6 @@ class SessionLockManager(object):
             Raises OSError (no access/does not exist)
             Raises RepositoryError (fatal)
             """
-        fd = None
         try:
             fd = os.open(self.cntfn, os.O_RDONLY)
             try:
@@ -524,6 +502,7 @@ class SessionLockManager(object):
             finally:
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_UN)
+                os.close(fd)
         except OSError, x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' read: %s" % (self.cntfn, x))
@@ -531,15 +510,11 @@ class SessionLockManager(object):
                 raise # This can be a recoverable error, depending on where it occurs
         except IOError, x:
             raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
-        finally:
-            if fd is not None:
-                os.close( fd )
 
     def cnt_write(self):
         """ Writes the counter to the counter file. 
             The global lock MUST be held for this function to work correctly
             Raises OSError if count file is inaccessible """
-        fd = None
         try:
             # If this fails, we want to shutdown the repository (corruption possible)
             fd = os.open(self.cntfn, os.O_WRONLY)
@@ -548,6 +523,7 @@ class SessionLockManager(object):
             os.write(fd, str(self.count)+"\n")
             if not self.afs:
                 fcntl.lockf(fd, fcntl.LOCK_UN)
+            os.close(fd)
         except OSError, x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' write: %s" % (self.cntfn, x))
@@ -555,9 +531,6 @@ class SessionLockManager(object):
                 raise RepositoryError(self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
         except IOError, x:
             raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
-        finally:
-            if fd is not None:
-                os.close(fd)
 
     # "User" functions
     def make_new_ids(self, n):
@@ -590,8 +563,6 @@ class SessionLockManager(object):
 
     def lock_ids(self, ids):
         ids = Set(ids)
-        global session_lock_refresher
-        session_lock_refresher.removeDeadLocks()
         self.global_lock_acquire()
         try:
             try:
@@ -651,9 +622,7 @@ class SessionLockManager(object):
                 if not len(names & prevnames) == 0:
                     print "Double-locked stuff:", names & prevnames
                     assert False
-                #   As of Python 2.3 there have been changes we're now on python 2.6 so I fear this backwards compatability has been dropped
-                #prevnames.union_update(names)
-                prevnames.update(names)
+                prevnames.union_update(names)
 
         finally:
             self.global_lock_release()
