@@ -17,7 +17,7 @@
 # but WITHOUT ANY WARRANTY; without even the implied warranty of
 # MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
 # GNU General Public License for more details.
-
+#
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
@@ -55,6 +55,18 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
+    #from Ganga.Core.InternalServices import Coordinator
+    #if Coordinator.servicesEnabled:
+    #    Coordinator.disableInternalServices( shutdown = True )
+
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
+    _purge_actions_queue()
+    stop_and_free_thread_pool()
+
+    from Ganga.GPI import queues
+    queues._purge_all()
+
+
     def priority_cmp(f1,f2):
         """
         Sort the exit functions based on priority in reversed order
@@ -82,17 +94,38 @@ def _ganga_run_exitfuncs():
     atexit._exithandlers = map(add_priority,atexit._exithandlers)
     atexit._exithandlers.sort(priority_cmp)
     
+    import time
+    import inspect
     while atexit._exithandlers:
+
         (priority, func), targs, kargs = atexit._exithandlers.pop()
         try:
+            if hasattr(func,'im_class'):
+                for cls in inspect.getmro(func.im_class):
+                    if func.__name__ in cls.__dict__: 
+                        logger.debug( cls.__name__ + " : " + func.__name__ )
+            else:
+                logger.debug( "noclass : " + func.__name__ )
             func(*targs, **kargs)
-        except Exception,x:
+        except Exception, x:
+            #print 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
             s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
             logger.warning(s)
 
+    import Ganga.Utility.logging
+    if Ganga.Utility.logging.requires_shutdown is True:
+        Ganga.Utility.logging.shutdown()
+
+    from Ganga.Core.InternalServices import Coordinator
+    Coordinator.servicesEnabled = False
+
+    from Ganga.Runtime import bootstrap
+    if bootstrap.DEBUGFILES:
+        bootstrap.printOpenFiles()
+
 def install():
     """
-    Install a new shutdown manager, by overriding metods from atexit module
+    Install a new shutdown manager, by overriding methods from atexit module
     """    
     #override the atexit exit function
     atexit._run_exitfuncs = _ganga_run_exitfuncs
