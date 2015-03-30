@@ -163,9 +163,13 @@ class SessionLockRefresher(GangaThread):
 
                 # attempt to reduce amount of I/O on afs
                 if self.afs:
-                    time.sleep(5+random.random())
+                    sleeptime = 5#+random.random()
                 else:
-                    time.sleep(1+random.random())
+                    sleeptime = 1#+random.random()
+
+                for i in range( int(sleeptime*20) ):
+                    if not self.should_stop():
+                        time.sleep(0.05+random.random()*0.05)
         finally:
             #logger.debug("Finishing Monitoring Loop")
             self.unregister()
@@ -305,6 +309,7 @@ class SessionLockManager(object):
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         #logger.debug( "Shutting Down SessionLockManager, self.fn = %s" % (self.fn) )
+        #print "Shutting Down SessionLock"
         self.locked = Set()
         try:
             global session_lock_refresher
