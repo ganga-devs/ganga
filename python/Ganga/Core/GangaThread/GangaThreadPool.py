@@ -116,18 +116,6 @@ class GangaThreadPool:
             del i
         self.__threads = []
 
-        # Potentailly DANGEROUS only use if certain it's safe
-        #from Ganga.Runtime import bootstrap
-        #bootstrap.safeCloseOpenFiles()
-
-        from Ganga.Runtime import bootstrap
-        if bootstrap.DEBUGFILES:
-            bootstrap.printOpenFiles()
-
-        import threading
-        for i in  threading.enumerate():
-            del i
-
 
     def __alive_critical_thread_ids(self):
         """Return a list of alive critical thread names."""
@@ -154,6 +142,8 @@ class GangaThreadPool:
 
         logger.debug('Service threads to shutdown: %s' % list(self.__threads))
 
+        logger.debug('Service threads to shutdown: %s' % list(self.__threads))
+
         ## shutdown each individual threads in the pool
         nonCritThreads = []
         critThreads = []
@@ -166,15 +156,14 @@ class GangaThreadPool:
 
         #while len( self.__threads ) != 0:
         ## Shutdown NON critical threads first as these can cause some critical threads to hang
-        for t in nonCritThreads:
-            if not t.isCritical():
-                logger.debug('shutting down Thread: %s' % t.getName())
-                t.stop()
-                logger.debug('shutdown Thread: %s' % t.getName())
-                #t.unregister()
+        for t in reversed(nonCritThreads):
+            logger.debug('shutting down Thread: %s' % t.getName())
+            t.stop()
+            logger.debug('shutdown Thread: %s' % t.getName())
+            #t.unregister()
 
         ## Shutdown critical threads now assuming that the non-critical ones have disappeared
-        for t in critThreads:
+        for t in reversed(critThreads):
             logger.debug('shutting down Thread: %s' % t.getName())
             t.stop()
             logger.debug('shutdown Thread: %s' % t.getName())
