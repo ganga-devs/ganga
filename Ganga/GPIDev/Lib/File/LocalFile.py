@@ -60,8 +60,8 @@ class LocalFile(IGangaFile):
             fileName = '%s.gz' % self.namePattern  
  
         sourceDir = self.getJobObject().outputdir      
- 
         if regex.search(fileName) is not None:
+
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
  
                 d=LocalFile(namePattern=os.path.basename(currentFile))
@@ -70,6 +70,7 @@ class LocalFile(IGangaFile):
                 self.subfiles.append(GPIProxyObjectFactory(d))
 
     def processWildcardMatches(self):
+
         if self.subfiles:
             return self.subfiles
 
@@ -84,8 +85,28 @@ class LocalFile(IGangaFile):
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-
-                d=LocalFile(namePattern=os.path.basename(currentFile))
+                d=LocalFile(namePattern=os.path.basename(currentFile), localDir=os.path.dirname(currentFile))
                 d.compressed = self.compressed
 
                 self.subfiles.append(GPIProxyObjectFactory(d))
+
+    def getSubFiles(self):
+        """Returns the name of a file object throgh a common interface"""
+        self.processWildcardMatches()
+        if self.subfiles:
+            return self.subfiles
+        else:
+            return [self]
+        
+
+    def getFilenameList(self):
+        """Return the files referenced by this LocalFile"""
+        filelist = []
+        self.processWildcardMatches()
+        if self.subfiles:
+            for f in self.subfiles:
+                filelist.append( os.path.join( f.localDir, f.namePattern ) )
+        else:
+            filelist.append( os.path.join( self.localDir, self.namePattern ) )
+
+        return filelist

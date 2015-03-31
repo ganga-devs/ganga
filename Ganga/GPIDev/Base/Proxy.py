@@ -298,7 +298,7 @@ def GPIProxyClassFactory(name, pluginclass):
         try:
             self._impl.__construct__(map(stripProxy,args))
         except:
-            pass
+            raise
 
         # initialize all properties from keywords of the constructor
         for k in kwds:

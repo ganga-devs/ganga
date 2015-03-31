@@ -262,7 +262,7 @@ OutputFile objects to be copied to all jobs"),
                   new_unit = self.createChainUnit( self._getParent().transforms[ds.input_trf_id].units, ds.use_copy_output )
                   if new_unit:
                      self.addChainUnitToTRF( new_unit, ds, -1, prev_unit = rec_unit )
-
+                           
             else:
                   
                # loop over units in parent trf and create units as required
@@ -284,7 +284,6 @@ OutputFile objects to be copied to all jobs"),
                      new_unit = self.createChainUnit( [ in_unit ], ds.use_copy_output )
                      if new_unit:
                         self.addChainUnitToTRF( new_unit, ds, in_unit.getID(), prev_unit = rec_unit )
-                        
 
    def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create a chained unit given the parent outputdata"""
@@ -478,6 +477,38 @@ OutputFile objects to be copied to all jobs"),
          if unit.status == status:
             print "Resetting Unit %d, Transform %d..." % (unit.getID(), self.getID() )
             self.resetUnit( unit.getID() )
+
+   def checkUnitsAreCompleted( self, parent_units ):
+      """Check the given parent units are complete"""
+      for parent in parent_units:
+         if len(parent.active_job_ids) == 0 or parent.status != "completed":
+            return False
+
+      return True
+
+   def getChainInclExclMasks( self, parent_units ):
+      """return the include/exclude masks from the TaskChainInput"""
+      incl_pat_list = []
+      excl_pat_list = []
+      for parent in parent_units:
+         for inds in self.inputdata:
+            if inds._name == "TaskChainInput" and inds.input_trf_id == parent._getParent().getID():
+               incl_pat_list += inds.include_file_mask
+               excl_pat_list += inds.exclude_file_mask
+
+      return incl_pat_list, excl_pat_list
+
+   def getParentUnitJobs(self, parent_units, include_subjobs = True):
+      """Return the list of parent jobs"""
+      job_list = []
+      for parent in parent_units:
+         job = GPI.jobs(parent.active_job_ids[0])
+         if job.subjobs:
+            job_list += job.subjobs
+         else:
+            job_list += [ job ]
+            
+      return job_list
 
    def removeUnusedJobs( self ):
       """Remove all jobs that aren't being used, e.g. failed jobs"""

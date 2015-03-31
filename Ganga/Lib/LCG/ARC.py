@@ -1140,11 +1140,11 @@ sys.exit(0)
                         doStatusUpdate = False
 
                     ## download output sandboxes if final status is reached
-                    elif info['State'] in ['Finished (FINISHED)']:
+                    elif info['State'] in ['Finished', '(FINISHED)','Finished (FINISHED)']:
 
                         ## grab output sandbox
-                        if grids['GLITE'].arc_get_output( job.backend.id, job.outputdir ):
-                            (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.outputdir)
+                        if grids['GLITE'].arc_get_output( job.backend.id, job.getOutputWorkspace( create = True ) ):
+                            (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.getOutputWorkspace( create = True ))
                             job.backend.exitcode = app_exitcode
 
                             jidListForPurge.append( job.backend.id )

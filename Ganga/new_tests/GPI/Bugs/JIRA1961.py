@@ -5,7 +5,7 @@ class JIRA1961(GangaUnitTest):
 
     def test_unprepareTrue(self):
 
-        from Ganga.GPI import *
+        from Ganga.GPI import Job, Executable
         from Ganga.Utility.Config import setConfigOption
         setConfigOption( 'Preparable', 'unprepare_on_copy', 'True' )
         j = Job( application=Executable(exe='/bin/echo',args=['hello']) )
@@ -23,7 +23,7 @@ class JIRA1961(GangaUnitTest):
 
     def test_unprepareFalse(self):
 
-        from Ganga.GPI import *
+        from Ganga.GPI import Job, Executable
         from Ganga.Utility.Config import setConfigOption
         setConfigOption( 'Preparable', 'unprepare_on_copy', 'False' )
         k = Job( application=Executable(exe='/bin/echo',args=['hello']) )

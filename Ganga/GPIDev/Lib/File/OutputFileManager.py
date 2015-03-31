@@ -5,7 +5,7 @@ import re
 import os
 import glob 
 import tempfile  
-
+import copy
 """
 Checks if the output files of a given job(we are interested in the backend) 
 should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
@@ -69,8 +69,13 @@ def getInputFilesPatterns(job):
     tmpDir = tempfile.mkdtemp()
 
     inputPatterns = []
-
-    for inputFile in job.inputfiles:   
+    
+    # if GangaDataset is used, check if they want the inputfiles transferred
+    inputfiles_list = copy.deepcopy( job.inputfiles )
+    if not job.subjobs and job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
+        inputfiles_list += job.inputdata.files
+        
+    for inputFile in inputfiles_list:   
 
         inputFileClassName = inputFile.__class__.__name__
 
@@ -180,14 +185,37 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     """
     Generate the code to be run on the WN to download input files
     """
-
-    if len(job.inputfiles) == 0:
+    if len(job.inputfiles) == 0 and (not job.inputdata or job.inputdata._name != "GangaDataset" or not job.inputdata.treat_as_inputfiles):
         return ""
 
     insertScript = """\n
 """
+    
+    # first, go over any LocalFiles in GangaDatasets to be transferred
+    # The LocalFiles in inputfiles have already been dealt with
+    if job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
+        for inputFile in job.inputdata.files:
+            inputfileClassName = inputFile.__class__.__name__
+            
+            if inputfileClassName == "LocalFile":
 
-    for inputFile in job.inputfiles:  
+                # special case for LocalFile
+                if job.backend.__class__.__name__ in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
+                    # create symlink
+                    insertScript += """
+###INDENT#### create symbolic links for LocalFiles
+###INDENT###for f in ###FILELIST###:
+###INDENT###   os.symlink(f, os.path.basename(f)) 
+"""
+                    insertScript = insertScript.replace('###FILELIST###', "%s" % inputFile.getFilenameList())
+
+
+    # if GangaDataset is used, check if they want the inputfiles transferred
+    inputfiles_list = copy.deepcopy( job.inputfiles )
+    if job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
+        inputfiles_list += job.inputdata.files
+
+    for inputFile in inputfiles_list:  
 
         inputfileClassName = inputFile.__class__.__name__
 
@@ -274,4 +302,19 @@ def expandWildCards(filelist):
     l.extend(iexpandWildCards(filelist))
     return l
 
+        
+def getWNCodeForInputdataListCreation(job, indent):
+    """generate the code to create ths inputdata list on the worker node"""
+    insertScript = """\n
+###INDENT###open("__GangaInputData.txt__", "w").write( "\\n".join( ###FILELIST### ) )
+"""
+
+    insertScript = insertScript.replace('###INDENT###', indent)
+
+    if job.inputdata and hasattr(job.inputdata, "getFilenameList"):
+        insertScript = insertScript.replace('###FILELIST###', "%s" % job.inputdata.getFilenameList() )
+    else:
+        insertScript = insertScript.replace('###FILELIST###', "[]")
+
+    return insertScript
         

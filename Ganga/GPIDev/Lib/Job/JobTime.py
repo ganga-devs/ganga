@@ -84,7 +84,8 @@ class JobTime(GangaObject):
 
     def __deepcopy__(self,memo):
         obj = super(JobTime, self).__deepcopy__(memo)
-        obj.newjob()
+        # Lets not re-initialize the object as we lose history from previous submissions
+        #obj.newjob()
         return obj    
 
     def newjob(self):
@@ -92,6 +93,7 @@ class JobTime(GangaObject):
         """
         t = datetime.datetime.utcnow()
         self.timestamps['new'] = t 
+        self.sj_statlist = [] #this makes sure the contents of the list don't get copied when the Job does.
 
     def timenow(self, status):
         """Updates timestamps as job status changes.

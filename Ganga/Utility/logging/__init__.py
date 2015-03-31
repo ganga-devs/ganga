@@ -37,6 +37,8 @@ _formats = {
     'TERSE' : 'Ganga: %(levelname)-8s %(message)s'
     }
 
+requires_shutdown = False
+
 private_logger = None # private logger of this module
 
 main_logger = logging.Logger.root # main logger corresponds to the root of the hierarchy
@@ -381,9 +383,12 @@ def bootstrap(internal=0,handler=None):
 
         _set_log_level(getLogger(opt),config[opt])
 
-    if internal:
-        import atexit
-        atexit.register(shutdown)
+    #if internal:
+    #    import atexit
+    #    atexit.register(shutdown)
+
+    global requires_shutdown
+    requires_shutdown = True
 
     private_logger.debug('end of bootstrap')
 

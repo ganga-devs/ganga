@@ -94,7 +94,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
             #print "Getting File %s" % f.name
             #tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
             try:
-                fileobj = file(f.name)
+                fileobj = open(f.name)
             except:
                 raise SandboxError("File %s does not exist." % f.name) 
             tinfo = tf.gettarinfo(f.name, os.path.join(f.subdir, os.path.basename(f.name)))
@@ -104,7 +104,13 @@ def createPackedInputSandbox(sandbox_files, inws, name):
             fileobj = StringIO(contents)
                    
             tinfo = tarfile.TarInfo()
-            tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
+            # FIX for Ganga/test/Internals/FileBuffer_Sandbox
+            # Don't keep the './' on files as looking for an exact filename
+            # afterwards won't work
+            if f.subdir == os.curdir:
+                tinfo.name = os.path.basename(f.name)
+            else:
+                tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
             import time
             tinfo.mtime = time.time()
             tinfo.size = fileobj.len
@@ -112,6 +118,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
         if f.isExecutable():
             tinfo.mode = tinfo.mode|stat.S_IXUSR
         tf.addfile(tinfo, fileobj)
+        fileobj.close()
 
     tf.close()
 

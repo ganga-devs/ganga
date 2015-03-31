@@ -1,6 +1,4 @@
 import types
-#from GangaDirac.Lib.Backends.DiracBase       import dirac_ganga_server, dirac_monitoring_server
-#from GangaDirac.BOOT                         import dirac_ganga_server, dirac_monitoring_server
 from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool  import WorkerThreadPool
 from Ganga.Utility.Config                                   import getConfig
 from Ganga.Utility.logging                                  import getLogger

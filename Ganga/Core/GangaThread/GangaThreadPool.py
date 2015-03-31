@@ -67,6 +67,9 @@ class GangaThreadPool:
         
         """
 
+        from Ganga.GPI import queues
+        queues._stop_all_threads()
+
         logger.debug('shutting down GangaThreadPool with timeout %d sec' % self.SHUTDOWN_TIMEOUT)
 
         ## run shutdown thread in background
@@ -113,6 +116,7 @@ class GangaThreadPool:
             del i
         self.__threads = []
 
+
     def __alive_critical_thread_ids(self):
         """Return a list of alive critical thread names."""
         return [t.name for t in self.__threads if t.isAlive() and t.isCritical()]
@@ -138,6 +142,8 @@ class GangaThreadPool:
 
         logger.debug('Service threads to shutdown: %s' % list(self.__threads))
 
+        logger.debug('Service threads to shutdown: %s' % list(self.__threads))
+
         ## shutdown each individual threads in the pool
         nonCritThreads = []
         critThreads = []
@@ -150,15 +156,14 @@ class GangaThreadPool:
 
         #while len( self.__threads ) != 0:
         ## Shutdown NON critical threads first as these can cause some critical threads to hang
-        for t in nonCritThreads:
-            if not t.isCritical():
-                logger.debug('shutting down Thread: %s' % t.getName())
-                t.stop()
-                logger.debug('shutdown Thread: %s' % t.getName())
-                #t.unregister()
+        for t in reversed(nonCritThreads):
+            logger.debug('shutting down Thread: %s' % t.getName())
+            t.stop()
+            logger.debug('shutdown Thread: %s' % t.getName())
+            #t.unregister()
 
         ## Shutdown critical threads now assuming that the non-critical ones have disappeared
-        for t in critThreads:
+        for t in reversed(critThreads):
             logger.debug('shutting down Thread: %s' % t.getName())
             t.stop()
             logger.debug('shutdown Thread: %s' % t.getName())

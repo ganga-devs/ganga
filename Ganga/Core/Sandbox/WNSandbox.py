@@ -21,9 +21,11 @@ def getPackedInputSandbox(tarpath,dest_dir='.'):
 
 #
 ##      Curent release with os module 
-#               
-    if os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile)) != 0:
-        raise Exception('cannot upack tarball %s with InputSandbox'%tgzfile)
+#
+    extract = os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile))
+    if extract != 0:
+        print "error: " + str(extract)
+        raise Exception('cannot upack tarball %s with InputSandbox to %s' % ( tgzfile, dest_dir ) )
 
 #
 ##      Future release with tarfile module      
