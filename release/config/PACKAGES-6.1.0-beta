@@ -3,20 +3,20 @@
 #ulrik
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     /Ganga-inputfilesbeta-1-4
+ganga/python/Ganga                                                     /Ganga-inputfilesbeta-1-5
 
 #johannes/mark
-ganga/python/GangaAtlas                                                GangaAtlas-26-28
+ganga/python/GangaAtlas                                                GangaAtlas-26-29
 
 #alex/patrick/ulrik
-ganga/python/GangaDirac                                                GangaDirac-inputfilesbeta-1-4
+ganga/python/GangaDirac                                                GangaDirac-inputfilesbeta-1-5
 
 #alex/ulrik
 ganga/python/GangaGaudi                                                GangaGaudi-inputfilesbeta-1-1
-ganga/python/GangaLHCb                                                 GangaLHCb-inputfilesbeta-1-4
+ganga/python/GangaLHCb                                                 GangaLHCb-inputfilesbeta-1-5
 
 #johannes
-ganga/python/GangaPanda                                                GangaPanda-26-24
+ganga/python/GangaPanda                                                GangaPanda-26-25
 
 #ulrik
 ganga/python/GangaPlotter                                              GangaPlotter-21-2
