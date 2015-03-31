@@ -1,11 +1,18 @@
 from GangaTest.Framework.utils import sleep_until_state
 
+from Ganga.GPI import *
+
+disableServices()
+reactivate()
+
 j = Job(application=Executable(exe=File('abort_exe.py')))
+import time
+time.sleep(1)
 j.submit()
 
-sleep_until_state(j,state='failed',timeout=30)
+sleep_until_state(j, state='failed', timeout=30)
 
-print 'manual removing, j.status=',j.status
+print 'manual removing, j.status=', j.status
 j.remove()
 print 'finished manual removing'
 try:

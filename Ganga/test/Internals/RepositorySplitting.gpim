@@ -6,18 +6,27 @@ class RepositorySplitting(MultipassTest):
         self.id = -1
 
     def pass1(self):
+        from Ganga.GPI import disableServices, reactivate
+        disableServices()
+        reactivate()
         t = TestReg1()
         while not t.isReadyForCheck():
             pass
         self.id = t.checkTest()
 
     def pass2(self):
+        from Ganga.GPI import disableServices, reactivate
+        disableServices()
+        reactivate()
         t = TestReg2(self.id)
         while not t.isReadyForCheck():
             pass
         return t.checkTest()
 
     def pass3(self):
+        from Ganga.GPI import disableServices, reactivate
+        disableServices()
+        reactivate()
         t = TestReg3(self.id)
         while not t.isReadyForCheck():
             pass
@@ -40,10 +49,14 @@ class TestReg1(ICheckTest):
     def isReadyForCheck(self):
         return True
 
+    def cleanup(self):
+        pass
+
     def checkTest(self):
         j = self.j
         assert(not j.subjobs)
         assert(len(j.subjobs) == 0)
+        print j
         j.submit()
         assert(len(j.subjobs) == LEN)
         for s in j.subjobs:
@@ -62,10 +75,12 @@ class TestReg2(ICheckTest):
     def checkTest(self):
         j = jobs[self.id]
         assert(len(j.subjobs) == LEN)
-        print 'j.application.exe',j.application.exe
+        print 'j.application.exe', j.application.exe
         assert(j.application.exe == '/bin/echo')
         # another ci/co check
+        print 'j.subjobs[1]._impl.application.exe', j.subjobs[1]._impl.application.exe
         j.subjobs[1]._impl.application.exe = '/bin/ls'
+        
         j.application._impl.exe = '/bin/pwd'
 
     def cleanup(self):

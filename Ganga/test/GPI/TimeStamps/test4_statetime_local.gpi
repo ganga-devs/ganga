@@ -7,7 +7,7 @@ j = Job()
 
 j.submit()
 
-assert sleep_until_state(j, 180, 'completed')
+assert sleep_until_state(j, 30, 'completed')
 
 assert j.time.submitted() == j.time.timestamps['submitted']
 assert type(j.time.submitted()) == datetime.datetime
@@ -16,16 +16,16 @@ print "Job 1/6 done."
 
 j_comp = Job()
 j_comp.application.exe='sleep'
-j_comp.application.args=[30]
+j_comp.application.args=[10]
 
 j_comp.submit()
 
-assert sleep_until_state(j_comp, 180, 'running')
+assert sleep_until_state(j_comp, 30, 'running')
 j_comp.kill()
-assert sleep_until_state(j_comp, 180, 'killed')
+assert sleep_until_state(j_comp, 30, 'killed')
 j_comp.resubmit()
 
-assert sleep_until_state(j_comp, 180, 'completed')
+assert sleep_until_state(j_comp, 30, 'completed')
 
 assert type(j_comp.time.new()) == datetime.datetime
 assert type(j_comp.time.submitting()) == datetime.datetime
@@ -46,11 +46,11 @@ j_fail.application.args='60'
 
 j_fail.submit()
 
-assert sleep_until_state(j_fail, 180, 'running')
+assert sleep_until_state(j_fail, 30, 'running')
 
 j_fail.force_status('failed')
 
-assert sleep_until_state(j_fail, 180, 'failed')
+assert sleep_until_state(j_fail, 30, 'failed')
 
 assert type(j_fail.time.new()) == datetime.datetime
 assert type(j_fail.time.submitting()) == datetime.datetime
@@ -65,11 +65,11 @@ print "Job 3/6 done"
 j = Job()
 j.application.exe='sleep'
 j.splitter='ArgSplitter'
-j.splitter.args=[[30],[30],[30]]
+j.splitter.args=[[10],[10],[10]]
 
 j.submit()
 
-assert sleep_until_state(j, 180, 'completed')
+assert sleep_until_state(j, 120, 'completed')
 
 assert j.time.submitted() == j.time.timestamps['submitted']
 assert type(j.time.submitted()) == datetime.datetime
@@ -80,13 +80,13 @@ j_comp = Job()
 
 j_comp.application.exe='sleep'
 j_comp.splitter='ArgSplitter'
-j_comp.splitter.args=[[30],[30],[30]]
+j_comp.splitter.args=[[10],[10],[10]]
 
 j_comp.submit()
-assert sleep_until_state(j_comp, 180, 'running')
+assert sleep_until_state(j_comp, 120, 'running')
 j_comp.subjobs.kill()
 #j_comp.kill() #was causing test to fail
-assert sleep_until_state(j_comp, 180, 'killed')
+assert sleep_until_state(j_comp, 120, 'killed')
 j_comp.resubmit()
 
 assert sleep_until_state(j_comp, 120, 'completed')
@@ -114,7 +114,7 @@ j_fail.submit()
 
 j_fail.force_status('failed')
 
-assert sleep_until_state(j_fail, 180, 'failed')
+assert sleep_until_state(j_fail, 120, 'failed')
 
 assert type(j_fail.time.new()) == datetime.datetime
 assert type(j_fail.time.submitting()) == datetime.datetime

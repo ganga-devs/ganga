@@ -6,7 +6,7 @@ a=Job()
 a.prepare()
 config['Preparable']['unprepare_on_copy']=False
 b=a.copy()
-assert(a==b), "#88651 Test 1 failed"
+assert(b.application.is_prepared is not None), "#88651 Test 1 failed"
 
 
 config['Preparable']['unprepare_on_copy']=True

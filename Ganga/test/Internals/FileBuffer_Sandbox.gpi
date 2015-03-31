@@ -7,14 +7,19 @@ from Ganga.Core.Sandbox import *
 
 contents = 'test file \n is test file \n and nothing else'
 
-fb = FileBuffer('test.file',contents)
-fb_exe = FileBuffer('test_exe.file',contents,'.',True)
+import os
+tmpdir = os.getenv( 'TEMPDIR' )
 
-tgz_name = createPackedInputSandbox([fb,fb_exe],iws,'testtarfile.tgz')[0]
+if tmpdir is None:
+    tmpdir = '/tmp'
+
+fb = FileBuffer( os.path.join(tmpdir, 'test.file'), contents)
+fb_exe = FileBuffer( os.path.join(tmpdir, 'test_exe.file'), contents, '.', True)
+
+tgz_name = createPackedInputSandbox([fb, fb_exe], iws, os.path.join(tmpdir, 'testtarfile.tgz') )[0]
 
 import tarfile
 tf = tarfile.open(tgz_name,"r:gz")
-
 
 assert tf.extractfile('test.file').read()==contents, 'Contents of FuleBuffer is not correct'
 assert tf.extractfile('test_exe.file').read()==contents, 'Contents of FuleBuffer is not correct'

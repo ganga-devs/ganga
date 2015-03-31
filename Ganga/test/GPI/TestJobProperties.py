@@ -154,4 +154,9 @@ class TestJobProperties(GangaGPITestCase):
         except ValueError:
             pass
         else:
+            try:
+                Job(File())
+            except e:
+                raise e
             assert 0, 'schema violation in copy constructor not raising exception'
+
