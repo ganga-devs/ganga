@@ -19,7 +19,7 @@ import pickle
 class SplitFilesBySize(GaudiInputDataSplitter):
     """Splits a job into sub-jobs by partitioning the input data
 
-    SplitByFiles can be used to split a job into multiple subjobs, where
+    SplitFilesBySize can be used to split a job into multiple subjobs, where
     each subjob gets an unique subset of the inputdata files.
     """
     _name = 'SplitFilesBySize'
@@ -130,7 +130,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
             if stripProxy(job.backend).__module__.find('Dirac') > 0:
                 logger.debug( "Returning []" )
                 return []
-        split_return = super(SplitByFiles,self).split(job)
+        split_return = super(SplitFilesBySize,self).split(job)
         logger.debug( "split_return: %s" % split_return )
         return split_return
 

@@ -247,9 +247,12 @@ def status(job_ids):
         if dirac_status=='Completed' and (minor_status not in ['Pending Requests']):
             ganga_status = 'running'
 
-        from DIRAC.Core.DISET.RPCClient  import RPCClient
-        monitoring = RPCClient( 'WorkloadManagement/JobMonitoring' )
-        app_status = monitoring.getJobAttributes( id )[ 'Value' ]['ApplicationStatus']
+        try:
+            from DIRAC.Core.DISET.RPCClient  import RPCClient
+            monitoring = RPCClient( 'WorkloadManagement/JobMonitoring' )
+            app_status = monitoring.getJobAttributes( id )[ 'Value' ]['ApplicationStatus']
+        except:
+            app_status = "unknown ApplicationStatus"
 
         status_list.append([minor_status, dirac_status, dirac_site,
                             ganga_status, app_status ])
