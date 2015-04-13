@@ -10,7 +10,6 @@ from Ganga.Core                              import BackendError, GangaException
 from GangaDirac.Lib.Backends.DiracUtils      import *
 from GangaDirac.Lib.Files.DiracFile          import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from Ganga.GPI                               import queues
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
@@ -600,7 +599,9 @@ class DiracBase(IBackend):
         logger.debug('Interesting jobs: ' + repr([j.fqid for j in interesting_jobs]))
         logger.debug('Monitor jobs    : ' + repr([j.fqid for j in monitor_jobs    ]))
         logger.debug('Requeue jobs    : ' + repr([j.fqid for j in requeue_jobs    ]))
-        
+
+        from Ganga.GPI import queues
+
         ## requeue existing completed job
         for j in requeue_jobs:
 #            if j.backend.status in requeue_dirac_status:

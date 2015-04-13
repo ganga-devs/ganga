@@ -61,8 +61,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                                                      ),
                                        executable = True))
 
-        #print "input_data: %s" % str( input_data )
-
+        # NOTE special case for replicas: replicate string must be empty for no replication 
         dirac_script = script_generator(diracAPI_script_template(),
                                         DIRAC_IMPORT         = 'from DIRAC.Interfaces.API.Dirac import Dirac',
                                         DIRAC_JOB_IMPORT     = 'from DIRAC.Interfaces.API.Job import Job',
@@ -81,7 +80,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS             = diracAPI_script_settings(app),
                                         DIRAC_OPTS           = job.backend.diracOpts,
-                                        REPLICATE            = getConfig('DIRAC')['ReplicateOutputData'],
+                                        REPLICATE            = 'True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3
