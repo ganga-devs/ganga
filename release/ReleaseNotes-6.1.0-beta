@@ -40,6 +40,8 @@ ganga/python/GangaGaudi
 ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 * Beta test for inputfiles branch
+* Added ApplicationStatus to the monitoring and job status tracking on LHCbDirac backend
+* Adding SplitFilesBySize to the available splitters
 
 
 --------------------------------------------------------------------------------------------------------------
