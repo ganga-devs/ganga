@@ -1178,9 +1178,7 @@ class Grid(object):
             logger.warning('No CREAM CE endpoint specified')
             return
 
-        tmpstr='/tmp/'+randomString()+'.arcsub.xml'
-        
-        cmd = 'arcsub -S org.nordugrid.gridftpjob -j '+tmpstr
+        cmd = 'arcsub -S org.nordugrid.gridftpjob -j '+self.config["ArcJobListFile"]
         #cmd = 'arcsub'
         exec_bin = True
 
@@ -1198,7 +1196,6 @@ class Grid(object):
                                                   timeout=self.config['SubmissionTimeout'])
 
         if output: output = "%s" % output.strip()     
-        rc = self.shell.system('rm '+tmpstr)
 
         #Job submitted with jobid: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
         match = re.search('(gsiftp:\/\/\S+:2811\/jobs\/[0-9A-Za-z_\.\-]+)$',output)
@@ -1216,7 +1213,7 @@ class Grid(object):
 
     def arc_status(self,jobids,cedict):
         '''ARC CE job status query'''
-        
+
         if not self.__cream_ui_check__():
             return ([],[])
 
@@ -1228,7 +1225,7 @@ class Grid(object):
         cmd = 'arcstat'
         exec_bin = True        
 
-        cmd = '%s -i %s' % (cmd,idsfile)
+        cmd = '%s -i %s -j %s' % (cmd,idsfile,self.config["ArcJobListFile"])
         logger.debug('job status command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
@@ -1262,7 +1259,7 @@ class Grid(object):
         for ln in log.split('\n'):
 
             ln.strip()
-                
+
             # do we have a failed retrieval?
             if ln.find("Job not found") != -1:
                 logger.warning("Could not find info for job id '%s'" % jid)
@@ -1288,7 +1285,7 @@ class Grid(object):
     def __arc_sync__(self,cedict):
         '''Collect jobs to jobs.xml'''
         
-        cmd = 'arcsync -f -c '+' -c '.join(cedict)
+        cmd = 'arcsync -j %s -f -c %s' % (self.config["ArcJobListFile"], ' -c '.join(cedict))
         
         if not self.active:
             logger.warning('LCG plugin is not active.')
@@ -1298,9 +1295,12 @@ class Grid(object):
             return False
 
 
-        logger.debug('sync ARC jobs lst with: %s' % cmd)
-
-        self.shell.system(cmd)
+        logger.debug('sync ARC jobs list with: %s' % cmd)
+        rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=True),cmd),
+                                        allowed_exit=[0,255],
+                                        timeout=self.config['StatusPollingTimeout'])
+        if rc != 0:
+            logger.error('Unable to sync ARC jobs. Error: %s' % output)        
 
     def arc_get_output(self, jid, directory):
         '''ARC CE job output retrieval'''
@@ -1311,12 +1311,10 @@ class Grid(object):
         # construct URI list from ID and output from arcls
         cmd = 'arcls %s' % jid
         exec_bin = True
-
         logger.debug('arcls command: %s' % cmd)
         rc, output, m = self.shell.cmd1('%s%s' % (self.__get_cmd_prefix_hack__(binary=exec_bin),cmd),
                                                   allowed_exit=[0,255],
                                                   timeout=self.config['SubmissionTimeout'])
-        
         if rc:
             logger.error("Could not find directory associated with ARC job ID '%s'" % jid)
             return False
@@ -1335,7 +1333,6 @@ class Grid(object):
         cache.middleware = 'GLITE'
         cache.vo = self.config['VirtualOrganisation']
         cache.uploaded_files = gfiles
-
         return cache.download( files=map(lambda x:x.id, gfiles), dest_dir=directory )
 
     def arc_purgeMultiple(self, jobids):
@@ -1350,7 +1347,7 @@ class Grid(object):
         cmd = 'arcclean'
         exec_bin = True
 
-        cmd = '%s -i %s' % (cmd,idsfile)
+        cmd = '%s -i %s -j %s' % (cmd,idsfile, self.config["ArcJobListFile"])
 
         logger.debug('job purge command: %s' % cmd)
 
