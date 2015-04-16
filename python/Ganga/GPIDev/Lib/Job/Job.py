@@ -36,7 +36,7 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, addProxy, stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
-import os, shutil, sys
+import os, shutil, sys, copy
 from Ganga.Utility.Config import getConfig
 shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 
@@ -285,13 +285,12 @@ class Job(GangaObject):
             if hasattr(f, '_on_attribute__set__'):
                 c.outputfiles.append(f._on_attribute__set__(self, 'outputfiles'))
                 continue
-            c.outputfiles.append(f)
+            c.outputfiles.append(copy.deepcopy(f))
         if self.master is not None:
             if getConfig('Output')['ForbidLegacyInput']:
                 if self.inputfiles == []:
                     logger.debug( "Copying Master inputfiles" )
                     c.inputsandbox = []
-                    import copy
                     c.inputfiles = copy.deepcopy(self.master.inputfiles)
                 else:
                     logger.debug( "Keeping own inputfiles" )
@@ -300,7 +299,6 @@ class Job(GangaObject):
             #elif (not getConfig('Output')['ForbidLegacyInput']):
                 if self.inputsandbox == []:
                     logger.debug( "Copying Master inputfiles" )
-                    import copy
                     c.inputsandbox = copy.deepcopy( self.master.inputsandbox )
                     c.inputfiles = []
                 else:
