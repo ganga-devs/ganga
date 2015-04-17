@@ -93,12 +93,6 @@ def startGanga():
     if missing_cred:
         raise Exception( "Failed due to missing credentials %s" % str(missing_cred) )
 
-    ## FIXME This is probably excessive but I'm having problems with the exit that I'm debugging
-    Ganga.Core.change_atexitPolicy( interactive_session=False, new_policy='batch' )
-
-    from Ganga.Core.GangaRepository import SessionLock
-    SessionLock.session_lock_refresher.removeDeadLocks()
-
     logger.info( "Passing to Unittest" )
 
 def stopGanga():
@@ -135,15 +129,12 @@ def stopGanga():
         Coordinator.disableInternalServices()
 
     logger.info( "Mimicking ganga exit" )
-    import Ganga.Core
+    from Ganga.Core.InternalServices import ShutdownManager
 
-    ## This shutting down of the thread pool is registered in normal ganga on exit.
-    ## Is this dangerous to do if the internal services and repository have been shutdown?
-#    def testing_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-#        return True
-#    from Ganga.Core.GangaThread import GangaThreadPool
-#    thread_pool = GangaThreadPool.getInstance()
-#    thread_pool.shutdown( should_wait_cb=testing_cb )
+    import Ganga.Core
+    Ganga.Core.change_atexitPolicy( 'batch' )
+    ## This should now be safe
+    ShutdownManager._ganga_run_exitfuncs()
 
     ## Finished
     logger.info( "Test Finished" )

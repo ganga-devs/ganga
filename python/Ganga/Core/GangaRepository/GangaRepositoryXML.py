@@ -163,7 +163,7 @@ class GangaRepositoryLocal(GangaRepository):
             fobj = file(fn)
             try:
                 try:
-                    cat,cls,cache = pickle_from_file(fobj)[0]
+                    cat, cls, cache = pickle_from_file(fobj)[0]
                 except Exception, x:
                     raise IOError("Error on unpickling: %s %s" % (x.__class__.__name__, x))
                 if id in self.objects:
@@ -437,7 +437,16 @@ class GangaRepositoryLocal(GangaRepository):
                                 if len(self.lock([id])) != 0:
                                     self.index_write(id)
                                     self.unlock([id])
-                                    logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, id))
+                                    old_idx_subset = all((k in new_idx_cache and new_idx_cache[k]==v) for k,v in obj._index_cache.iteritems())
+                                    if not old_idx_subset:
+                                        ## Old index cache isn't subset of new index cache
+                                        new_idx_subset = all((k in obj._index_cache and obj._index_cache[k]==v) for k,v in new_idx_cache.iteritems())
+                                    else:
+                                        ## Old index cache is subset of new index cache so no need to check
+                                        new_idx_subset
+                                    if not old_idx_subset and not new_idx_subset:
+                                        logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, id))
+                                        logger.debug("old cache: %s\t\tnew cache: %s" % ( str(obj._index_cache), str(new_idx_cache) ) )
                                 # if we cannot lock this, the inconsistency is most likely the result of another ganga process modifying the repo
                         obj._index_cache = None
                     else:

@@ -356,6 +356,8 @@ class IBackend(GangaObject):
         """
 
         simple_jobs = []
+
+        ## FIXME Add some check for (sub)jobs which are in a transient state but are not locked by an active session of ganga
         
         for j in jobs:
             if len(j.subjobs):

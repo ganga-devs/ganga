@@ -55,6 +55,10 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
+    #import Ganga.Core
+    #if Ganga.Core.monitoring_component:
+    #    Ganga.Core.monitoring_component.disableMonitoring()
+
     #from Ganga.Core.InternalServices import Coordinator
     #if Coordinator.servicesEnabled:
     #    Coordinator.disableInternalServices( shutdown = True )
