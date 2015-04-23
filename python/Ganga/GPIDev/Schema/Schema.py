@@ -195,13 +195,15 @@ class Schema:
         import Ganga.Utility.Config
         config = Ganga.Utility.Config.getConfig( defaultConfigSectionName(self.name) )
 
-        item = self.getItem(attr)
-        
+        #item = self.getItem(attr)
+        item = None
+
         # hidden, protected and sequence values are not represented in config
         try:
             if attr in config:
                 defvalue = config[attr]
             else:
+                item = self.getItem(attr)
                 defvalue = item['defvalue']
         except Ganga.Utility.Config.ConfigError, x:
             defvalue = item['defvalue']
@@ -210,6 +212,8 @@ class Schema:
         if check:
             defvalue = val
 
+        if item is None:
+            item = self.getItem(attr)
         if item.isA(ComponentItem):
 
             # FIXME: limited support for initializing non-empty sequences (i.e. apps => ['DaVinci','Executable'] is NOT correctly initialized)
@@ -315,21 +319,28 @@ class Item:
     # item.isA('SimpleItem')
     # item.isA(SimpleItem)
     # item.isA(SimpleItem())
-    def isA(self,what):
+    def isA(self, what):
+
+        #import types
+        #if type(what) is types.InstanceType:
+        #    what = what.__class__
+
+        this_type = type(what)
+
         # for backwards compatibility with Ganga3 CLIP: if a string -- first convert to the class name
-        if type(what) is type(''):
+        if this_type is type(''):
             import Schema # get access to all Item classes defined in this module (schema)
             try:
-                what = getattr(Schema,what)
+                what = getattr(Schema, what)
             except AttributeError:
                 # class not found
                 return 0
 
         import types
-        if type(what) is types.InstanceType:
+        if this_type is types.InstanceType:
             what = what.__class__
-        
-        return issubclass(self.__class__,what)
+
+        return issubclass(self.__class__, what)
 
     def _update(self,kwds,forced=None):
         """ Add new metaproperties/override old values. To be used by derived contructors only.
@@ -370,12 +381,14 @@ class Item:
         #txt = ' ['
         txt = ''
         for m in ['transient','protected','comparable','optional']:
-            try:
-                if self[m]:
-                    txt += '%s%s'%(first,m)
-                    first = ','
-            except KeyError:
-                pass
+            if m in self._meta:
+                txt += '%s%s' % ( first, m )
+            #try:
+            #    if self[m]:
+            #        txt += '%s%s'%(first,m)
+            #        first = ','
+            #except KeyError:
+            #    pass
         #txt += ']'
         txt = " default="+repr(self['defvalue'])+txt
         if self['sequence']: txt = " list," + txt
