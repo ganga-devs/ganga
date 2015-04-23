@@ -17,6 +17,7 @@ class PluginManager(object):
     def __init__(self):
         self.all_dict = {}
         self.first = {}
+        self._prev_found = {}
 
     def find(self, category, name):
         """
@@ -26,17 +27,30 @@ class PluginManager(object):
         If plugin not found raise PluginManagerError.
         """
         #logger.debug( "Attempting to Find Plugin: %s" % name )
+        #import traceback
+        #traceback.print_stack()
+
+        ##  Simple attempt to pre-load and cache Plugin lookups
+        key = str(category)+"_"+str(name)
+        if key in self._prev_found:
+            return self._prev_found[ key ]
+
         try:
             if name is not None:
                 if category in self.first:
                     logger.debug( "Returning based upon Category and Name" )
+                    logger.debug( "name: %s cat: %s" % (str(name), str(category)) )
                     if name in self.all_dict[category]:
+                        self._prev_found[key] = self.all_dict[category][name]
                         return self.all_dict[category][name]
 
             if (name is None) and category is not None:
                 if (category in self.first):
                     logger.debug( "Returning based upon Category ONLY" )
+                    logger.debug( "name: %s cat: %s" % (str(name), str(category)) )
+                    self._prev_found[key] = self.first[category]
                     return self.first[category]
+
             elif (name is not None) and (category is not None):
                 for category_i in self.all_dict:
                     for this_name in self.all_dict[category_i]:
@@ -47,19 +61,21 @@ class PluginManager(object):
                             logger.debug( message1 )
                             logger.debug( message2 )
                             logger.debug( message3 )
+                            self._prev_found[ key] = self.all_dict[category_i][name]
                             return self.all_dict[category_i][name]
-            
+ 
         except KeyError:
             pass
         except:
             logger.error( "Some Other unexpected ERROR!" )
+            raise
 
         if name is None:
             s = "cannot find default plugin for category " + category
         else:
             s = "cannot find '%s' in a category '%s', or elsewhere" % (name, category)
 
-        if name is None and Category is None:
+        if name is None and category is None:
             s = "Serious Plugin Error has occured"
 
         logger.debug(s)
