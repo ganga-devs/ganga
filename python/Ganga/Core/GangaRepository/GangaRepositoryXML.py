@@ -115,6 +115,8 @@ class GangaRepositoryLocal(GangaRepository):
         self.sub_split = "subjobs"
         self.root = os.path.join(self.registry.location,"6.0",self.registry.name)
         self.lockroot = os.path.join(self.registry.location,"6.0")
+        self.saved_paths = {}
+        self.saved_idxpaths = {}
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -133,7 +135,7 @@ class GangaRepositoryLocal(GangaRepository):
         self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary of errors
-        self.update_index(verbose = True)
+        self.update_index(verbose = True,firstRun=True)
         logger.debug("GangaRepositoryLocal Finished Startup")
 
     def shutdown(self):
@@ -144,38 +146,48 @@ class GangaRepositoryLocal(GangaRepository):
 
     def get_fn(self,id):
         """ Returns the file name where the data for this object id is saved"""
+        if id not in self.saved_paths:
+            self.saved_paths[id] = os.path.join(self.root, "%ixxx"% int(id*0.001), "%i"%id, "data")
+        return self.saved_paths[id]
+
+    def get_idxfn(self,id):
+        """ Returns the file name where the data for this object id is saved"""
+        if id not in self.saved_idxpaths:
+            self.saved_idxpaths[id] = os.path.join(self.root, "%ixxx"% int(id*0.001), "%i.index"%id)
+        return self.saved_idxpaths[id]
+
+    def get_fn(self,id):
+        """ Returns the file name where the data for this object id is saved"""
         return os.path.join(self.root,"%ixxx"%(id/1000), "%i"%id, "data")
 
     def get_idxfn(self,id):
         """ Returns the file name where the data for this object id is saved"""
         return os.path.join(self.root,"%ixxx"%(id/1000), "%i.index"%id)
 
-    def index_load(self,id): 
+    def index_load(self, id, firstRun=False): 
         """ load the index file for this object if necessary
             Loads if never loaded or timestamp changed. Creates object if necessary
             Returns True if this object has been changed, False if not
             Raise IOError on access or unpickling error 
             Raise OSError on stat error
             Raise PluginManagerError if the class name is not found"""
-        logger.debug("Loading index %s" % id)
+        #logger.debug("Loading index %s" % id)
         fn = self.get_idxfn(id)
-        if self._cache_load_timestamp.get(id,0) != os.stat(fn).st_ctime: # index timestamp changed
-            fobj = file(fn)
+        if firstRun or self._cache_load_timestamp.get(id,0) != os.stat(fn).st_ctime: # index timestamp changed
             try:
-                try:
-                    cat, cls, cache = pickle_from_file(fobj)[0]
-                except Exception, x:
-                    raise IOError("Error on unpickling: %s %s" % (x.__class__.__name__, x))
-                if id in self.objects:
-                    obj = self.objects[id]
-                    if obj._data:
-                        obj.__dict__["_registry_refresh"] = True
-                else:
-                    obj = self._make_empty_object_(id,cat,cls)
-                obj._index_cache = cache
-            finally:
+                fobj = open(fn,'r')
+                cat, cls, cache = pickle_from_file(fobj)[0]
                 fobj.close()
-                self._cache_load_timestamp[id] = os.stat(fn).st_ctime
+            except Exception, x:
+                raise IOError("Error on unpickling: %s %s" % (x.__class__.__name__, x))
+            if id in self.objects:
+                obj = self.objects[id]
+                if obj._data:
+                    obj.__dict__["_registry_refresh"] = True
+            else:
+                obj = self._make_empty_object_(id,cat,cls)
+            obj._index_cache = cache
+            self._cache_load_timestamp[id] = os.stat(fn).st_ctime
             return True
         return False
 
@@ -222,7 +234,7 @@ class GangaRepositoryLocal(GangaRepository):
                             pass
         return objs
 
-    def update_index(self,id = None,verbose=False):
+    def update_index(self,id = None,verbose=False,firstRun=True):
         """ Update the list of available objects
         Raise RepositoryError"""
         # First locate and load the index files
@@ -241,7 +253,7 @@ class GangaRepositoryLocal(GangaRepository):
                 continue
             # Now we treat unlocked IDs
             try:
-                if self.index_load(id): # if this succeeds, all is well and we are done
+                if self.index_load(id,firstRun): # if this succeeds, all is well and we are done
                     changed_ids.append(id)
                 continue
             except IOError, x:
@@ -268,6 +280,7 @@ class GangaRepositoryLocal(GangaRepository):
                 except InaccessibleObjectError, x:
                     logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
                     summary.append((id,x.orig))
+
         # Check deleted files:
         for id in deleted_ids:
             self._internal_del__(id)
