@@ -53,7 +53,7 @@ def bootstrap(reg, interactive_session):
             if hasattr(j,'backend'): # protect: EmptyGangaObject does not have backend either
                 if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
                     j.backend.setup()
-            
+
     #start the monitoring loop
     global monitoring_component
     monitoring_component = JobRegistry_Monitor( reg )
