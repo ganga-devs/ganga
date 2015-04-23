@@ -9,11 +9,11 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
 class Dirac(DiracBase):
      _schema = DiracBase._schema.inherit_copy()
-     _schema.datadict['inputSandboxLFNs'] = ComponentItem(category='datafiles', defvalue=[], sequence=1,
-                                                          typelist=['GangaDirac.Lib.Files.DiracFile.DiracFile'],
-                                                          doc='LFNs to be downloaded into the work dir on the grid node. Site '\
-                                                          'matching is *not* performed on these files; they are downloaded.'\
-                                                          'I.e., do not put prod data here')
+#     _schema.datadict['inputSandboxLFNs'] = ComponentItem(category='datafiles', defvalue=[], sequence=1,
+#                                                          typelist=['GangaDirac.Lib.Files.DiracFile.DiracFile'],
+#                                                          doc='LFNs to be downloaded into the work dir on the grid node. Site '\
+#                                                          'matching is *not* performed on these files; they are downloaded.'\
+#                                                          'I.e., do not put prod data here')
      
      _schema.version.major += 0
      _schema.version.minor += 0
@@ -27,18 +27,18 @@ class Dirac(DiracBase):
 
      def _addition_sandbox_content(self,subjobconfig):
           input_sandbox = []
-          for lfn in self.inputSandboxLFNs:
-               from GangaLHCb.Lib.LHCbDataset.PhysicalFile import PhysicalFile
-               if type(lfn) is PhysicalFile:
-                    msg = 'Dirac.inputSandboxLFNs cannot contain a PhysicalFile.'
-                    logger.error(msg)
-                    raise BackendError('Dirac',msg)
-               input_sandbox.append('LFN:'+lfn.name)
+#         for lfn in self.inputSandboxLFNs:
+#               from GangaLHCb.Lib.LHCbDataset.PhysicalFile import PhysicalFile
+#               if type(lfn) is PhysicalFile:
+#                    msg = 'Dirac.inputSandboxLFNs cannot contain a PhysicalFile.'
+#                    logger.error(msg)
+#                    raise BackendError('Dirac',msg)
+#               input_sandbox.append('LFN:'+lfn.name)
           j = self.getJobObject()
           from GangaDirac.Lib.Files.DiracFile import DiracFile
           for f in j.inputfiles.get(DiracFile):
                    if f.lfn == '':
-                         raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as this property has not been set.' % f.namePattern)
+                         raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
                    else:
                          input_sandbox.append('LFN:' + f.lfn)
           return input_sandbox
@@ -83,4 +83,4 @@ class Dirac(DiracBase):
           ds = LHCbDataset()
           for f in downloaded_files: ds.files.append( DiracFile( lfn=f ) )
           return GPIProxyObjectFactory(ds)
-        
+
