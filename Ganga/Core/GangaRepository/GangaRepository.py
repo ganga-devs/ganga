@@ -71,6 +71,7 @@ class GangaRepository(object):
         self.registry = registry
         self.objects = {}
         self.incomplete_objects = []
+        self._found_classes = {}
 
 ## Functions that should be overridden and implemented by derived classes.
     def startup(self):
@@ -182,7 +183,10 @@ class GangaRepository(object):
         """Internal helper: adds an empty GangaObject of the given class to the repository.
         Raise RepositoryError
         Raise PluginManagerError if the class name is not found"""
-        cls = allPlugins.find(category, classname)
+        if (category, classname) not in self._found_classes:
+            cls = allPlugins.find(category, classname)
+            self._found_classes[ (category, classname) ] = cls
+        cls = self._found_classes[ (category, classname) ]
         obj  = super(cls, cls).__new__(cls)
         obj._proxyObject = None
         obj._data = None

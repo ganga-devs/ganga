@@ -134,7 +134,6 @@ def _makeThreadPool( threadPoolSize = THREAD_POOL_SIZE, daemonic = True ):
       ThreadPool.append( t )
       t.start()
 
-
 def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
    """
     Clean shutdown of the thread pool. 
@@ -148,7 +147,8 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
    
    def join_worker_threads(threads,timeout=3):
       for t in threads:
-         t.join(timeout)
+         if t.isAlive():
+            t.join(timeout)
    
    for i in range( len( ThreadPool ) ):
       Qin.put( JobAction( 'stop' ) )
@@ -161,7 +161,7 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
          break
       stalled = [t for t in ThreadPool if t.isAlive()]
       if not stalled:
-         break       
+         break 
       if fail_cb(): #continue?
          join_worker_threads(stalled,timeout=3)
          max_retries-=1
@@ -374,14 +374,19 @@ class JobRegistry_Monitor( GangaThread ):
                     if not self.alive: #stopped?
                        return
                     #disabled,but still alive, so we keep waiting 
-                    self.__mainLoopCond.wait()
+                    for i in range( int(self.uPollRate*20) ):
+                        if not self.alive:
+                            return
+                        self.__mainLoopCond.wait( self.uPollRate*0.05 )
 
                 self.__monStep()
 
                 #delay here the monitoring steps according to the configuration                
                 while self.__sleepCounter > 0.0:
                     self.progressCallback( self.__sleepCounter )
-                    self.__mainLoopCond.wait( self.uPollRate )
+                    for i in range( int(self.uPollRate*20) ):
+                        if self.enabled:
+                            self.__mainLoopCond.wait( self.uPollRate*0.05 )
                     if not self.enabled:
                         if not self.alive: #stopped?
                             self.__cleanUp()
@@ -561,9 +566,9 @@ class JobRegistry_Monitor( GangaThread ):
         finally:
             self.__mainLoopCond.release()
         #wait for cleanup        
-        self.__cleanUp()
-        self.__cleanUpEvent.wait()
-        self.__cleanUpEvent.clear()        
+        #self.__cleanUp()
+        #self.__cleanUpEvent.wait()
+        #self.__cleanUpEvent.clear()        
         return True
             
     def stop( self, fail_cb=None, max_retries=5 ):
@@ -706,7 +711,7 @@ class JobRegistry_Monitor( GangaThread ):
             lock.acquire() # timeout mechanism may have acquired the lock to impose delay.
             try:
                 log.debug( "[Update Thread %s] Lock acquired for %s" % ( currentThread, backendObj._name ) )
-                jobList_fromset = IList(filter( lambda x:x.status in [ 'submitted', 'running' ], jobListSet ),self.stopIter)                
+                jobList_fromset = IList(filter( lambda x:x.status in [ 'submitted', 'running', 'submitting' ], jobListSet ),self.stopIter)                
                 updateDict_ts.clearEntry( backendObj._name )
                 try:
                     log.debug( "[Update Thread %s] Updating %s with %s." % ( currentThread, backendObj._name, [x.id for x in jobList_fromset ] ) )

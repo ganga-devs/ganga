@@ -421,10 +421,12 @@ under certain conditions; type license() for details.
            sys.exit(0)    
         if not os.path.exists(specified_config) \
                and not os.path.exists(default_config):
-           yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?')   
+           import time
+           time.sleep(3.) # Sleep for 1 sec to allow for most of the bootstrap to finish so the user actually sees this message last
+           yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')   
            if yes == '' or yes[0:1].upper() == 'Y':
               self.generate_config_file(default_config)
-              raw_input('Press <Enter> to continue.')    
+              raw_input('Press <Enter> to continue.\n')    
         elif self.new_version(not self.options.config_file_set_explicitly):
            self.print_release_notes()
            # if config explicitly set we dont want to update the versions file

@@ -42,9 +42,10 @@ def expand_vars(env):
     tmp_dict = {}
     for k, v in env.iteritems():
         if not str(v).startswith('() {'):
-            tmp_dict[k] = os.path.expandvars(v)
+            if not str(k).endswith('()'):
+                tmp_dict[k] = os.path.expandvars(v)
         # Be careful with exported bash functions!
-        else:
+        elif not str(k).endswith('()'):
             this_string = str(v).split('\n')
             final_str = ""
             for line in this_string:

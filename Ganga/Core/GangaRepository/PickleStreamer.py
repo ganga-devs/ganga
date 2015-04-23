@@ -1,7 +1,7 @@
 try:
-         import cPickle as pickle
+    import cPickle as pickle
 except:
-         import pickle
+    import pickle
 
 def from_file(fobj):
     return (pickle.load(fobj),[])

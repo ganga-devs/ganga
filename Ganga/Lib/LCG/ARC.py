@@ -1143,8 +1143,8 @@ sys.exit(0)
                     elif info['State'] in ['Finished', '(FINISHED)','Finished (FINISHED)']:
 
                         ## grab output sandbox
-                        if grids['GLITE'].arc_get_output( job.backend.id, job.getOutputWorkspace( create = True ) ):
-                            (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.getOutputWorkspace( create = True ))
+                        if grids['GLITE'].arc_get_output( job.backend.id, job.getOutputWorkspace( create = True ).getPath() ):
+                            (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.getOutputWorkspace( create = True ).getPath())
                             job.backend.exitcode = app_exitcode
 
                             jidListForPurge.append( job.backend.id )
@@ -1209,5 +1209,6 @@ config = getConfig('LCG')
 #config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
 #config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
 config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240, 'Time in seconds to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
+config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml", 'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
 #config.addOption('ArcPrologue','','sets the prologue script')
 #config.addOption('ArcEpilogue','','sets the epilogue script')

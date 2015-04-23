@@ -124,24 +124,17 @@ def stopGanga():
     logger.info( "Shutting Down Internal Services" )
 
     ## Disable internal services such as monitoring and other tasks
-    #from Ganga.Core.InternalServices import Coordinator
-    #if Coordinator.servicesEnabled:
-    #    Coordinator.disableInternalServices()
+    from Ganga.Core.InternalServices import Coordinator
+    if Coordinator.servicesEnabled:
+        Coordinator.disableInternalServices()
 
     logger.info( "Mimicking ganga exit" )
     from Ganga.Core.InternalServices import ShutdownManager
 
     import Ganga.Core
     Ganga.Core.change_atexitPolicy( 'batch' )
+    ## This should now be safe
     ShutdownManager._ganga_run_exitfuncs()
-
-    ## This shutting down of the thread pool is registered in normal ganga on exit.
-    ## Is this dangerous to do if the internal services and repository have been shutdown?
-#    def testing_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-#        return True
-#    from Ganga.Core.GangaThread import GangaThreadPool
-#    thread_pool = GangaThreadPool.getInstance()
-#    thread_pool.shutdown( should_wait_cb=testing_cb )
 
     ## Finished
     logger.info( "Test Finished" )
