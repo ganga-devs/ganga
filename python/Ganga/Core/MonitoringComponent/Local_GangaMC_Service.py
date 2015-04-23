@@ -374,7 +374,10 @@ class JobRegistry_Monitor( GangaThread ):
                     if not self.alive: #stopped?
                        return
                     #disabled,but still alive, so we keep waiting 
-                    self.__mainLoopCond.wait()
+                    for i in range( int(self.uPollRate*20) ):
+                        if not self.alive:
+                            return
+                        self.__mainLoopCond.wait( self.uPollRate*0.05 )
 
                 self.__monStep()
 
