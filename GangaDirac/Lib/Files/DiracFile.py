@@ -76,7 +76,7 @@ class DiracFile(IGangaFile):
             self.remoteDir = remoteDir
 
     def __construct__( self, args ):
-        logger.debug( "__construct__" )
+        #logger.debug( "__construct__" )
         if len(args) == 1 and type(args[0]) == type(''):
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
                 self._setLFNnamePattern( _lfn = args[0][4:], _namePattern="" )
@@ -118,7 +118,7 @@ class DiracFile(IGangaFile):
 
     def _setLFNnamePattern( self, _lfn = "", _namePattern = "" ):
 
-        logger.debug( "_lfn: %s" % _lfn )
+        #logger.debug( "_lfn: %s" % _lfn )
 
         if _lfn != "" and _lfn is not None:
             if len(_lfn) > 3:
@@ -149,17 +149,20 @@ class DiracFile(IGangaFile):
 
         # Attempt to spend too long loading un-needed objects into memory in order to read job status
         if name is 'lfn':
+            #if object.__getattribute__(self, 'lfn') == "":
+            #    self._optionallyUploadLocalFile()
+            #return object.__getattribute__(self, 'lfn')
             #j = self.getJobObject()
             #if j:
             #    j.backend.getOutputDataLFNs()
-            if not self.lfn:
+            if self.lfn == "":
                 logger.warning( "Do NOT have an LFN, for file: %s" % self.namePattern )
-                logger.warning( "If file exists try first using the method put()" )
+                logger.warning( "If file exists locally try first using the method put()" )
             return object.__getattribute__(self, 'lfn')
         elif name is 'guid' or name is 'locations':
             if configDirac[ 'DiracFileAutoGet' ]:
                 if self.guid is None or self.guid == '' or self.locations == []:
-                    if self.lfn:
+                    if self.lfn != "":
                         self.getMetadata()
                         return object.__getattribute__(self, 'guid')
 
