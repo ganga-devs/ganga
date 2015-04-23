@@ -399,10 +399,10 @@ def string_datafile_shortcut(name,item):
     else: # something else...require pfn: or lfn:
         try:
             file = strToDataFile(name,False)
-            if item is Dirac._schema['inputSandboxLFNs']:
-                if type(file) is PhysicalFile:
-                    msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
-                    raise GangaException(msg)
+#            if item is Dirac._schema['inputSandboxLFNs']:
+            if type(file) is PhysicalFile:
+                msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
+                raise GangaException(msg)
             return file
         except:
             try:
