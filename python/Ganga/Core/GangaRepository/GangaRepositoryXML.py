@@ -456,7 +456,7 @@ class GangaRepositoryLocal(GangaRepository):
                                         new_idx_subset = all((k in obj._index_cache and obj._index_cache[k]==v) for k,v in new_idx_cache.iteritems())
                                     else:
                                         ## Old index cache is subset of new index cache so no need to check
-                                        new_idx_subset
+                                        new_idx_subset = True
                                     if not old_idx_subset and not new_idx_subset:
                                         logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, id))
                                         logger.debug("old cache: %s\t\tnew cache: %s" % ( str(obj._index_cache), str(new_idx_cache) ) )
