@@ -11,6 +11,10 @@ from IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
+from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import FileBuffer
+logger = Ganga.Utility.logging.getLogger()
+
 import re
 import os
 
@@ -32,16 +36,35 @@ class LocalFile(IGangaFile):
             in some way defined by the derived class
         """
         super(LocalFile, self).__init__()
-        self.namePattern = namePattern
-        self.localDir = localDir
-    
+
+        if type( namePattern ) == type(''):
+            self.namePattern = namePattern
+        elif isinstance( namePattern, File ):
+            import os.path
+            self.namePattern = os.path.basename( namePattern.name )
+            self.localDir = os.path.dirname( namePattern.name )
+        elif isinstance( namePattern, FileBuffer ):
+            namePattern.create()
+            import os.path
+            self.namePattern = os.path.basename( namePattern.name )
+            self.localDir = os.path.dirname( namePattern.name )
+        else:
+            logger.error( "Unkown type: %s . Cannot Create LocalFile from this!" % str( type( namePattern ) ) )
+
+        if type(localDir) == type(''):
+            if localDir != '':
+                self.localDir = localDir
+        else:
+            logger.error( "Unkown type: %s . Cannot set LocalFile localDir using this!" % str( type( localDir ) ) )
+
     def __construct__(self,args):
+
         from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
         if len(args) == 1 and type(args[0]) == type(''):
             self.namePattern = args[0]
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
-            self.localDir = args[1]     
+            self.localDir = args[1]
         elif len(args) == 1 and isinstance( args[0], SandboxFile ):
             super( LocalFile, self ).__construct__( args )
 
