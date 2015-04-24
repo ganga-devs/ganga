@@ -261,7 +261,7 @@ class Job(GangaObject):
     # on the deepcopy reattach the outputfiles to call their _on_attribute__set__
     def __deepcopy__(self, memo = None):
 
-        # Due to problems on Hammercloud due to uncopyable object lets explicitly stop these objects going anywhere near the __deepcopy__
+        ## Due to problems on Hammercloud due to uncopyable object lets explicitly stop these objects going anywhere near the __deepcopy__
 
         temp_RTH = self._storedRTHandler
         temp_SJC = self._storedJobSubConfig
@@ -280,12 +280,55 @@ class Job(GangaObject):
         self._storedJobMasterConfig = temp_JMC
         self._storedAppMasterConfig = temp_AMC
 
+        ## Continue as before
+
         c.outputfiles = []
         for f in self.outputfiles:
             if hasattr(f, '_on_attribute__set__'):
                 c.outputfiles.append(f._on_attribute__set__(self, 'outputfiles'))
                 continue
             c.outputfiles.append(copy.deepcopy(f))
+
+
+        if getConfig('Output')['ForbidLegacyInput']:
+            ## Want to move EVERYTHING into the inputfiles and leave the inputsandbox empty
+            c.inputfiles = []
+
+            if self.inputfiles != []:
+                for i in self.inputfiles:
+                    c.inputfiles.append( copy.deepcopy( i ) )
+            else:
+                if self.master and self.master.inputfiles != []:
+                    for i in self.master.inputfiles:
+                        c.inputfiles.append( copy.deepcopy( i ) )
+
+            ## Apply needed transform to move Sandbox item to the 
+            import Ganga.GPIDev.Lib.File.FileUtils 
+            if self.inputsandbox != []:
+                for i in self.inputsandbox:
+                    c.inputfiles.append( Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile( i ) )
+            else:
+                if self.master and self.master.inputsandbox != []:
+                    for i in self.master.inputsandbox:
+                        c.inputfiles.append( Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile( i ) )
+
+            c.inputsandbox = []
+
+        else:
+            if self.inputsandbox != []:
+                c.inputsandbox = copy.deepcopy( self.inputsandbox )
+            elif self.master and self.master.inputsandbox != []:
+                c.inputsandbox = copy.deepcopy( self.master.inputsandbox )
+            else:
+                c.inputsandbox = []
+
+            if self.inputfiles != []:
+                c.inputfiles = copy.deepcopy( self.inputfiles )
+            elif self.master and self.master.inputfiles != []:
+                c.inputfiles = copy.deepcopy( self.inputfiles )
+            else:
+                c.inputfiles = []
+
         if self.master is not None:
             if getConfig('Output')['ForbidLegacyInput']:
                 if self.inputfiles == []:
@@ -2400,4 +2443,4 @@ class JobTemplate(Job):
 # minor changes
 #
 #
-#
+#nga.GPIDev.Lib.File.FileUtils

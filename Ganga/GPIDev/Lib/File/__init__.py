@@ -8,6 +8,8 @@ from MassStorageFile import MassStorageFile
 from LCGSEFile import LCGSEFile
 from SandboxFile import SandboxFile
 
+import FileUtils
+
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
