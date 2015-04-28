@@ -1,7 +1,7 @@
 import sys
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger( "GPIDev.Lib.Registry.RegistrySlice" )
+logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryIndexError, RegistryAccessError

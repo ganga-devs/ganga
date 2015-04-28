@@ -132,13 +132,14 @@ class SessionLockRefresher(GangaThread):
                                 session_files = [f for f in ls_sdir if f.endswith(".session")]
                                 lock_files = [f for f in ls_sdir if f.endswith(".locks")]
                                 for sf in session_files:
-                                    if os.path.join(self.sdir, sf) in self.fns:
+                                    joined_path = os.path.join(self.sdir, sf)
+                                    if joined_path in self.fns:
                                         continue
-                                    mtm = os.stat(os.path.join(self.sdir, sf)).st_ctime
+                                    mtm = os.stat( joined_path ).st_ctime
                                     #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
                                     if now - mtm  > session_expiration_timeout:
                                         logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
-                                        os.unlink(os.path.join(self.sdir ,sf))
+                                        os.unlink( joined_path )
                                         session_files.remove(sf)
                                     #elif now - mtm  > session_expiration_timeout/2:
                                     #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))

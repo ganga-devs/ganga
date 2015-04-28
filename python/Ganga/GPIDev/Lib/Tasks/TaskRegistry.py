@@ -40,7 +40,7 @@ config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in
 config.addOption('ForceTaskMonitoring', False, "Monitor tasks even if the monitoring loop isn't enabled")
 
 from Ganga.Utility.logging import getLogger
-logger = getLogger( "GangaThread" )
+logger = getLogger()
 
 class TaskRegistry(Registry):
     def getProxy(self):

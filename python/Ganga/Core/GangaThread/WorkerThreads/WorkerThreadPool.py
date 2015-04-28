@@ -34,7 +34,7 @@ class WorkerThreadPool(object):
         if len(self.__worker_threads) > 0:
             logger.warning("Threads already started!")
             for i in self.__worker_threads:
-                logger.info( "Worker Thread: %s is already running!" % i.name )
+                logger.info( "Worker Thread: %s is already running!" % i.gangaName )
             return
 
         for i in range(num_worker_threads):
@@ -60,7 +60,7 @@ class WorkerThreadPool(object):
         # im hoping that importing within the thread will avoid this.
         import Queue
 
-        oldname = thread.name
+        oldname = thread.gangaName
 
         ## Note can use threading.current_thread to get the thread rather than passing it as an arg
         ## easier to unit test this way though with a dummy thread.
@@ -71,7 +71,7 @@ class WorkerThreadPool(object):
 
             #regster as a working thread
             if isinstance(item, QueueElement):
-                thread.name = item.name
+                thread.gangaName = item.name
 
             thread.register()
 
@@ -100,7 +100,7 @@ class WorkerThreadPool(object):
                 else:
                     result = execute(*item.command_input)
             except Exception, e:
-                logger.error("Exception raised executing '%s' in Thread '%s':\n%s"%(thread._command, thread.name, traceback.format_exc()))
+                logger.error("Exception raised executing '%s' in Thread '%s':\n%s"%(thread._command, thread.gangaName, traceback.format_exc()))
                 if item.fallback_func.function is not None:
                     if isinstance(item.fallback_func, FunctionInput):
                         thread._command = item.fallback_func.function.__name__
@@ -108,7 +108,7 @@ class WorkerThreadPool(object):
                         try:
                             item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
                         except Exception, x:
-                            logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s"%(thread._command, thread.name, traceback.format_exc()))
+                            logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s"%(thread._command, thread.gangaName, traceback.format_exc()))
                     else:
                         logger.error("Unrecognised fallback_func type: '%s'" % repr(item.fallback_func))
                         logger.error("                       expected: 'FunctionInput'")
@@ -120,7 +120,7 @@ class WorkerThreadPool(object):
                         try:
                             item.callback_func.function(result, *item.callback_func.args, **item.callback_func.kwargs)
                         except Exception, e:
-                            logger.error("Exception raised in callback_func '%s' of Thread '%s': %s"%(thread._command, thread.name, traceback.format_exc()))
+                            logger.error("Exception raised in callback_func '%s' of Thread '%s': %s"%(thread._command, thread.gangaName, traceback.format_exc()))
                     else:
                         logger.error("Unrecognised callback_func type: '%s'" % repr(item.callback_func))
                         logger.error("                       expected: 'FunctionInput'") 
@@ -131,7 +131,7 @@ class WorkerThreadPool(object):
                 self.__queue.task_done()
                 thread.unregister()
 
-        thread.name = oldname
+        thread.gangaName = oldname
 
     def add_function(self,
                      function, args=(), kwargs={}, priority=5,

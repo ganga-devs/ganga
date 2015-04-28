@@ -24,7 +24,7 @@ class GangaWorkAgent(GangaThread):
 
     def run(self):
 
-        logger = getLogger('Ganga.Core.GangaThread.MTRunner')
+        logger = getLogger()
 
         while not self.should_stop():
 
@@ -112,7 +112,7 @@ class MTRunner:
         self.name      = name
         self.keepAlive = keepAlive
         self._agents   = []
-        self.logger    = getLogger('GangaThread')
+        self.logger    = getLogger()
 
     def getDoneList(self):
         """
