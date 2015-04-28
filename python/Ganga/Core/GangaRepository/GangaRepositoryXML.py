@@ -381,6 +381,11 @@ class GangaRepositoryLocal(GangaRepository):
                 raise RepositoryError(self,"IOError on flushing id '%i': %s" % (id,str(x)))
 
     def load(self, ids, load_backup=False):
+
+        #print "load: %s " % str(ids)
+        #import traceback
+        #traceback.print_stack()
+
         for id in ids:
             fn = self.get_fn(id)
             if load_backup:
@@ -396,8 +401,13 @@ class GangaRepositoryLocal(GangaRepository):
                     except OSError:
                         pass
                     raise KeyError(id)
-                else: 
+                else:
                     raise RepositoryError(self,"IOError: " + str(x))
+            finally:
+                ld = os.listdir(os.path.dirname(fn))
+                if len(ld) == 0:
+                    os.rmdir( os.path.dirname(fn) )
+                    logger.debug( "No job index or data found, removing empty directory: %s" % os.path.dirname(fn) )
             try:
                 must_load = (not id in self.objects) or (self.objects[id]._data is None)
                 tmpobj = None
@@ -407,6 +417,9 @@ class GangaRepositoryLocal(GangaRepository):
                     if do_sub_split:
                         i = 0
                         ld = os.listdir(os.path.dirname(fn))
+                        if len(ld) == 0:
+                            os.rmdir( os.path.dirname(fn) )
+                            raise IOError( "No job index or data found, removing empty directory: %s" % os.path.dirname(fn) )
                         l = []
                         while str(i) in ld:
                             sfn = os.path.join(os.path.dirname(fn),str(i),"data")
