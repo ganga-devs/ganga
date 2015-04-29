@@ -11,6 +11,13 @@ f.name = 'a'
 assert(f.name == 'a')
 
 j = Job()
-j.inputsandbox = ['a','b']
-assert(j.inputsandbox[0] == File('a'))
-assert(j.inputsandbox[1] == File('b'))
+import Ganga.Utility.Config
+if not getConfig('Output')['ForbidLegacyInput']:
+    j.inputsandbox = ['a','b']
+    assert(j.inputsandbox[0] == File('a'))
+    assert(j.inputsandbox[1] == File('b'))
+else:
+    j.inputfiles = ['a','b']
+    assert(j.inputfiles[0] == LocalFile('a'))
+    assert(j.inputfiles[1] == LocalFile('b'))
+

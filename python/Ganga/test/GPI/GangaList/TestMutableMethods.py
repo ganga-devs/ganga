@@ -10,7 +10,6 @@ GangaList = GangaList._proxyClass
 
 import random
 import string
-import time
 
 def completeJob(job):
     
@@ -27,7 +26,6 @@ class TestMutableMethods(GangaGPITestCase):
         self.test_job = Job()
     
     def _makeRandomString(self):
-        random.seed( time.time() )
         str_len = random.randint(3,10)
         s = ''
         for _ in range(str_len):
@@ -261,13 +259,11 @@ class TestMutableMethods(GangaGPITestCase):
             testList(j.inputfiles)
 
             j.inputfiles = [LocalFile(self._makeRandomString()) for _ in range(10) ]
-            assert len(j.inputfiles) == 10, "Must still be added correctly"
+            assert len(j.inputfiles) == 10 "Must still be added correctly"
             testList(j.inputfiles)
 
-            #print str(len(j.inputfiles))
-            #print type( j.inputfiles )
             j.inputfiles.extend([LocalFile(self._makeRandomString()) for _ in range(10) ])
-            assert len(j.inputfiles) == 20, "Must be added correctly finally got length %s" % str(len(j.inputfiles))
+            assert len(j.inputfiles) == 20, "Must be added correctly finally"
             testList(j.inputfiles)
 
             try:

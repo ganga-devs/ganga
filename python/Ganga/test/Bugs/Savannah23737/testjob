@@ -11,7 +11,7 @@ Job (
  outputfiles = [] ,
  inputdata = None ,
  merger = None ,
- inputsandbox = [ ] ,
+# inputsandbox = [ ] ,
  application = Executable (
     exe = 'sleep' ,
     env = {} ,

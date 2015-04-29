@@ -8,7 +8,11 @@ tfile.write("Hello")
 tfile.close()
 
 j = Job(backend=LCG())
-j.inputsandbox = [File(tfname,subdir='subdir')]
+import Ganga.Utility.Config
+if not getConfig('Output')['ForbidLegacyInput']:
+    j.inputsandbox = [File(tfname,subdir='subdir')]
+else:
+    j.inputfiles = [LocalFile(tfname,subdir='subdir')]
 j.application.exe  = '/bin/cat'
 j.application.args = ['subdir/%s' % os.path.basename(tfname)]
 
