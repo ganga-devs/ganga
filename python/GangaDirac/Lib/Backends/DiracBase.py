@@ -72,6 +72,9 @@ class DiracBase(IBackend):
         'statusInfo'  : SimpleItem(defvalue='', protected=1, copyable=0,
                                    typelist=['str','type(None)'],
                                    doc='Minor status information from Dirac'),
+        'extraInfo'  : SimpleItem(defvalue='', protected=1, copyable=0,
+                                   typelist=['str','type(None)'],
+                                   doc='Application status information from Dirac'),
         'diracOpts'   : SimpleItem(defvalue='',
                                    doc='DIRAC API commands to add the job definition script. Only edit ' \
                                        'if you *really* know what you are doing'),
@@ -116,6 +119,7 @@ class DiracBase(IBackend):
         self.id         = None
         self.actualCE   = None
         self.status     = None
+        self.extraInfo  = None
         self.statusInfo = ''
         j.been_queued   = False
         dirac_cmd = """execfile(\'%s\')""" % dirac_script
@@ -238,8 +242,9 @@ class DiracBase(IBackend):
         ## Create new script - ##note instead of using get_parametric_dataset could just use j.inputdata.
         if parametric is True:
             parametric_datasets = get_parametric_datasets(script.split('\n'))
-            if len(parametric_datasets) != len(j.master.subjobs):
-                raise BackendError('Dirac','number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
+            if j.master:
+                if len(parametric_datasets) != len(j.master.subjobs):
+                    raise BackendError('Dirac','number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
             if set(parametric_datasets[j.id]).symmetric_difference(set([f.name for f in j.inputdata.files])):
                 raise BackendError('Dirac','Mismatch between dirac-script and job attributes.')
             script = script.replace('.setParametricInputData(%s)' % str(parametric_datasets),
@@ -276,6 +281,7 @@ class DiracBase(IBackend):
             logger.warning("Can not reset a job in status '%s'." % j.status)
         else:
             j.getOutputWorkspace().remove(preserve_top=True)
+            self.extraInfo  = None
             self.statusInfo = ''
             self.status     = None
             self.actualCE   = None
@@ -469,13 +475,26 @@ class DiracBase(IBackend):
         logger.debug("Accessing timedetails() in diracAPI")
         dirac_cmd = 'timedetails(%d)' % self.id
         return execute(dirac_cmd)
-    
+
+    def job_finalisation_cleanup(job, updated_dirac_status):
+
+        logger = getLogger()
+
+        #   Revert job back to running state if we exit uncleanly
+        if job.status == "completing":
+            job.updateStatus('running')
+            if job.master: job.master.updateMasterJobStatus()
+        ##FIXME should I add something here to cleanup on sandboxes pulled from malformed job output?
+
     def job_finalisation(job, updated_dirac_status):
+
+        logger = getLogger()
 
         if updated_dirac_status == 'completed':
             ## firstly update job to completing
             DiracBase._getStateTime(job,'completing')
-            if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+            if job.status in ['removed', 'killed']: return
+            if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
             job.updateStatus('completing')
             if job.master: job.master.updateMasterJobStatus()
 
@@ -510,14 +529,16 @@ class DiracBase(IBackend):
             if not result_ok(getSandboxResult):
                 logger.warning('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
                 DiracBase._getStateTime(job,'failed')
-                if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+                if job.status in ['removed', 'killed']: retyrn
+                if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
                 job.updateStatus('failed')
                 if job.master: job.master.updateMasterJobStatus()
                 return
 
             ## finally update job to completed
             DiracBase._getStateTime(job,'completed')
-            if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+            if job.status in ['removed', 'killed']: return
+            if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
             job.updateStatus('completed')
             if job.master: job.master.updateMasterJobStatus()
             now = time.time()
@@ -526,7 +547,8 @@ class DiracBase(IBackend):
         elif updated_dirac_status == 'failed':
             ## firstly update status to failed
             DiracBase._getStateTime(job,'failed')
-            if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+            if job.status in ['removed', 'killed']: return
+            if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
             job.updateStatus('failed')
             if job.master: job.master.updateMasterJobStatus()
             
@@ -545,6 +567,9 @@ class DiracBase(IBackend):
         ## for processing from last time. These should be put back on queue without 
         ## querying dirac again. Their signature is status = running and job.backend.status
         ## already set to Done or Failed etc.
+
+        logger = getLogger()
+
         from Ganga.Core import monitoring_component
 
         ## make sure proxy is valid
@@ -585,7 +610,7 @@ class DiracBase(IBackend):
 #            if j.backend.status in requeue_dirac_status:
             queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                        args = (j, requeue_dirac_status[j.backend.status]),
-                                                       priority     = 5)           
+                                                       priority     = 5, name = "Job %s Finalizing" % j.fqid )           
             j.been_queued=True
 
         # now that can submit in non_blocking mode, can see jobs in submitting
@@ -618,6 +643,10 @@ class DiracBase(IBackend):
             job.backend.status     = state[1]
             job.backend.actualCE   = state[2]
             updated_dirac_status   = state[3]
+            try:
+                job.backend.extraInfo  = state[4]
+            except:
+                pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 
             ## Is this really catching a real problem?
@@ -631,18 +660,20 @@ class DiracBase(IBackend):
             if updated_dirac_status in thread_handled_states:
                 if job.status != 'running':
                     DiracBase._getStateTime(job,'running')
-                    if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
+                    if job.status in ['removed', 'killed']: continue
+                    if (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
                     job.updateStatus('running')
-                    if job.master: job.master.updateMasterJobStatus()                   
+                    if job.master: job.master.updateMasterJobStatus()
 
                 queues._monitoring_threadpool.add_function(DiracBase.job_finalisation,
                                                            args = (job, updated_dirac_status),
-                                                           priority     = 5)
+                                                           priority = 5, name = "Job %s Finalizing" % job.fqid )
                 job.been_queued=True
 
             else:
                 DiracBase._getStateTime(job,updated_dirac_status)
-                if job.status in ['removed', 'killed'] or (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
+                if job.status in ['removed', 'killed']: continue
+                if (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
                 job.updateStatus(updated_dirac_status)
                 if job.master: job.master.updateMasterJobStatus()
   

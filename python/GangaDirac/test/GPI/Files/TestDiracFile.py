@@ -12,13 +12,18 @@ import unittest, tempfile, os
 import string, random
 
 def rand_str():
-    return ''.join( random.choice( string.ascii_uppercase + string.digits ) for _ in range(8) )
+    import datetime, time
+    t = datetime.datetime.now()
+    unix_t = time.mktime(t.timetuple())
+    returnable = ''.join( random.choice( string.ascii_uppercase + string.digits ) for _ in range(8) )
+    returnable = returnable + "_" + str(unix_t)
+    return returnable
 
 class TestDiracFile(GangaGPITestCase):
     def setUp(self):
         script='''#!/bin/bash
-echo %s > a.root
-echo %s > b.root
+echo "%s" > a.root
+echo "%s" > b.root
 '''
         #   Having a fixed string leaves us open to GUID conflicts
         str1 = "HelloWorld_" + rand_str()
@@ -29,7 +34,9 @@ echo %s > b.root
         self.root, self.filename = os.path.split(tmpf.name)
         tmpf.close()
         self.filepath = os.path.join(self.root, self.filename)
-             
+        import Ganga.Core.InternalServices.Coordinator
+        Ganga.Core.InternalServices.Coordinator.enableMonitoringService()
+
     def tearDown(self):
         os.remove(self.filepath)
 
@@ -128,6 +135,7 @@ echo %s > b.root
         sleep_until_completed(j)
 
         self.assertEqual(len(j.outputfiles),2)
+
         for df in j.outputfiles:
             self.assertIn(df.namePattern,['a.root','b.root'])
             self.assertNotEqual(df.lfn,'')
@@ -146,3 +154,4 @@ echo %s > b.root
         for df in j._impl.outputfiles[0].subfiles:
             self.assertIn(df.namePattern, ['a.root','b.root'])
             df.remove()
+

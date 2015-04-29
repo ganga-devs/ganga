@@ -1,5 +1,5 @@
 from GangaTest.Framework.tests                     import GangaGPITestCase
-from GangaDirac.Lib.Server.WorkerThreadPool        import WorkerThreadPool
+from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool        import WorkerThreadPool
 from Ganga.GPI                                     import *
 #GangaTest.Framework.utils defines some utility methods
 #from GangaTest.Framework.utils import file_contains#, sleep_until_completed,sleep_until_state
@@ -14,7 +14,7 @@ class TestWorkerThreadPool(GangaGPITestCase):
         from Queue import PriorityQueue
 
         def constructor_test( w,
-                              num_worker_threads = getConfig('DIRAC')['NumWorkerThreads'],
+                              num_worker_threads = getConfig('Queues')['NumWorkerThreads'],
                               worker_thread_prefix = 'Worker_' ):
             self.assertTrue(isinstance(w._WorkerThreadPool__queue, PriorityQueue))
             self.assertTrue(w._WorkerThreadPool__queue.empty())
@@ -41,7 +41,7 @@ class TestWorkerThreadPool(GangaGPITestCase):
         constructor_test(w2, 2, 'World_')
 
     def test__worker_thread(self):
-        from GangaDirac.Lib.Server.WorkerThreadPool import QueueElement, CommandInput, FunctionInput
+        from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import QueueElement, CommandInput, FunctionInput
         from Ganga.Utility.logging import getLogger
         import datetime, difflib
         ###################################################
@@ -112,12 +112,15 @@ class TestWorkerThreadPool(GangaGPITestCase):
             self.assertEqual(arg2, 42)
             self.assertEqual(arg1._command, 'test_func')
             raise Exception('help!')
-            
 
         d = dummythread()
         import sys,os
-        #error_chk.append("Exception raised executing 'test_func' in Thread 'test_thread':\n%s" % 'l')
-        error_chk.append('Exception raised executing \'test_func\' in Thread \'test_thread\':\nTraceback (most recent call last):\n  File "%s", line 85, in __worker_thread\n    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)\n  File "TestWorkerThreadPool.py", line 114, in test_func\n    raise Exception(\'help!\')\nException: help!\n' % os.path.join(os.getcwd(),sys.modules['GangaDirac.Lib.Server.WorkerThreadPool'].__file__).replace('WorkerThreadPool.pyc','WorkerThreadPool.py'))
+        #try:
+            #error_chk.append("Exception raised executing 'test_func' in Thread 'test_thread':\n%s" % 'l')
+        error_chk.append('Exception raised executing \'test_func\' in Thread \'test_thread\':\nTraceback (most recent call last):\n  File "%s", line 92, in __worker_thread\n    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)\n  File "TestWorkerThreadPool.py", line 114, in test_func\n    raise Exception(\'help!\')\nException: help!\n' % os.path.join(os.getcwd(),sys.modules['Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool'].__file__).replace('WorkerThreadPool.pyc','WorkerThreadPool.py'))
+        #except:
+        #    pass
+
         q=QueueElement(5,
                        FunctionInput(test_func, (12,d), {'arg2': 42}),
                        FunctionInput(None, None, None),
@@ -130,3 +133,4 @@ class TestWorkerThreadPool(GangaGPITestCase):
         self.assertTrue(w._WorkerThreadPool__queue.empty())
         self.assertEqual(d._command, 'idle')
         self.assertTrue(len(error_chk)==0)
+

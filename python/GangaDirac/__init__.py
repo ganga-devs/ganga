@@ -13,9 +13,6 @@ configDirac.addOption('Timeout', 1000,
 
 configDirac.addOption('splitFilesChunks', 5000,
                       'when splitting datasets, pre split into chunks of this int')
-#configDirac.addOption('NumWorkerThreads', cpu_count(),
-configDirac.addOption('NumWorkerThreads', 5,
-                      'Number of worker threads that the local DIRAC server and client should establish')
 diracenv = ""
 if os.environ.has_key("GANGADIRACENVIRONMENT"):
    diracenv = os.environ["GANGADIRACENVIRONMENT"]
@@ -52,6 +49,7 @@ configDirac.addOption('DiracSpaceTokens',
                       ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','SARA-USER',
                        'PIC-USER','RAL-USER'],
                       'Space tokens allowed for replication, etc.')
+configDirac.addOption('DiracFileAutoGet', True, 'Should the DiracFile object automatically poll the Dirac backend for missing information on an lfn?' )
 
 def getEnvironment( config = {} ):
    import sys

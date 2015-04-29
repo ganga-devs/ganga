@@ -183,7 +183,7 @@ def status(job_ids):
                      'Staging'   : 'submitted',
                      'Stalled'   : 'running',
                      'Waiting'   : 'submitted'}
-        
+
     result = dirac.status(job_ids)
     if not result['OK']: 
         output( result )
@@ -201,9 +201,19 @@ def status(job_ids):
             dirac_status = 'Unknown: No status for Job'
         if dirac_status=='Completed' and (minor_status not in ['Pending Requests']):
             ganga_status = 'running'
-        status_list.append([minor_status,dirac_status,dirac_site,
-                            ganga_status])
-            
+        if minor_status in ['Uploading Output Data']:
+            ganga_status = 'running'
+
+        try:
+            from DIRAC.Core.DISET.RPCClient  import RPCClient
+            monitoring = RPCClient( 'WorkloadManagement/JobMonitoring' )
+            app_status = monitoring.getJobAttributes( id )[ 'Value' ]['ApplicationStatus']
+        except:
+            app_status = "unknown ApplicationStatus"
+
+        status_list.append( [minor_status, dirac_status, dirac_site,
+                             ganga_status, str( app_status ) ] )
+
     output( status_list )
 
 #def getFile(lfn,dir):
