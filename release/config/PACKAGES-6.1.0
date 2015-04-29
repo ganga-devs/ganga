@@ -3,17 +3,17 @@
 #ulrik
 ganga/bin                                                              Ganga-bin-20-0
 ganga/doc                                                              Ganga-doc-20-0
-ganga/python/Ganga                                                     Ganga-Base-30-258
+ganga/python/Ganga                                                     Ganga-Base-30-260
 
 #johannes/mark
 ganga/python/GangaAtlas                                                GangaAtlas-26-29
 
 #alex/patrick/ulrik
-ganga/python/GangaDirac                                                GangaDirac-01-58
+ganga/python/GangaDirac                                                GangaDirac-01-59
 
 #alex/ulrik
-ganga/python/GangaGaudi                                                GangaGaudi-01-39
-ganga/python/GangaLHCb                                                 GangaLHCb-24-85
+ganga/python/GangaGaudi                                                GangaGaudi-01-40
+ganga/python/GangaLHCb                                                 GangaLHCb-24-86
 
 #johannes
 ganga/python/GangaPanda                                                GangaPanda-26-25
