@@ -478,6 +478,8 @@ class DiracBase(IBackend):
 
     def job_finalisation_cleanup(job, updated_dirac_status):
 
+        logger = getLogger()
+
         #   Revert job back to running state if we exit uncleanly
         if job.status == "completing":
             job.updateStatus('running')
@@ -486,12 +488,13 @@ class DiracBase(IBackend):
 
     def job_finalisation(job, updated_dirac_status):
 
+        logger = getLogger()
+
         if updated_dirac_status == 'completed':
             ## firstly update job to completing
             DiracBase._getStateTime(job,'completing')
             if job.status in ['removed', 'killed']: return
-            if job.master:
-                if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+            if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
             job.updateStatus('completing')
             if job.master: job.master.updateMasterJobStatus()
 
@@ -527,8 +530,7 @@ class DiracBase(IBackend):
                 logger.warning('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
                 DiracBase._getStateTime(job,'failed')
                 if job.status in ['removed', 'killed']: retyrn
-                if job.master:
-                    if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+                if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
                 job.updateStatus('failed')
                 if job.master: job.master.updateMasterJobStatus()
                 return
@@ -536,8 +538,7 @@ class DiracBase(IBackend):
             ## finally update job to completed
             DiracBase._getStateTime(job,'completed')
             if job.status in ['removed', 'killed']: return
-            if job.master:
-                if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+            if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
             job.updateStatus('completed')
             if job.master: job.master.updateMasterJobStatus()
             now = time.time()
@@ -547,8 +548,7 @@ class DiracBase(IBackend):
             ## firstly update status to failed
             DiracBase._getStateTime(job,'failed')
             if job.status in ['removed', 'killed']: return
-            if job.master:
-                if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
+            if (job.master and job.master.status in ['removed','killed']): return #user changed it under us
             job.updateStatus('failed')
             if job.master: job.master.updateMasterJobStatus()
             
@@ -567,6 +567,9 @@ class DiracBase(IBackend):
         ## for processing from last time. These should be put back on queue without 
         ## querying dirac again. Their signature is status = running and job.backend.status
         ## already set to Done or Failed etc.
+
+        logger = getLogger()
+
         from Ganga.Core import monitoring_component
 
         ## make sure proxy is valid
@@ -658,8 +661,7 @@ class DiracBase(IBackend):
                 if job.status != 'running':
                     DiracBase._getStateTime(job,'running')
                     if job.status in ['removed', 'killed']: continue
-                    if job.master:
-                        if (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
+                    if (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
                     job.updateStatus('running')
                     if job.master: job.master.updateMasterJobStatus()
 
@@ -671,8 +673,7 @@ class DiracBase(IBackend):
             else:
                 DiracBase._getStateTime(job,updated_dirac_status)
                 if job.status in ['removed', 'killed']: continue
-                if job.master:
-                    if (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
+                if (job.master and job.master.status in ['removed','killed']): continue #user changed it under us
                 job.updateStatus(updated_dirac_status)
                 if job.master: job.master.updateMasterJobStatus()
   

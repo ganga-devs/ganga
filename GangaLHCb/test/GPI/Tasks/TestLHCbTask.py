@@ -21,6 +21,7 @@ if doConfig:
 
 class TestLHCbTask(GangaGPITestCase):
      def test_addQuery(self):
+          from Ganga import GPI
           tr = GPI.LHCbTransform(application=DaVinci(),backend=Local())
           t = GPI.LHCbTask()
           
@@ -37,6 +38,7 @@ class TestLHCbTask(GangaGPITestCase):
                assert tran.queries[0].path in tmpList, 'Query attribute not setup properly for all transforms'
          
      def test_appendTransform(self):
+          from Ganga import GPI
           tr1 = GPI.LHCbTransform(application=DaVinci(),backend=Local())
           t = GPI.LHCbTask()
           
@@ -51,10 +53,12 @@ class TestLHCbTask(GangaGPITestCase):
           assert len(t.transforms[-1]._impl.toProcess_dataset.files),'Transform not updated properly after appending'
          
      def test_overview(self):
+          from Ganga import GPI
           t = GPI.LHCbTask()
           t.overview()  
 
      def test_update(self):
+          from Ganga import GPI
           t = GPI.LHCbTask()
           tr1 = GPI.LHCbTransform(application=DaVinci(),backend=Local())
           tr2 = GPI.LHCbTransform(application=DaVinci(),backend=Local())
@@ -67,3 +71,4 @@ class TestLHCbTask(GangaGPITestCase):
           t.update()
           assert len(t.transforms[0]._impl.toProcess_dataset.files),'Update did not produce any datafiles to process in transform 0'
           assert len(t.transforms[1]._impl.toProcess_dataset.files),'Update did not produce any datafiles to process in transform 1'
+

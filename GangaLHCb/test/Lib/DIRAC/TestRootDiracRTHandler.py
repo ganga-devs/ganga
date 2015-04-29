@@ -23,6 +23,7 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
+        from GangaLHCb.Lib.RTHandlers.LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
         self.rth = LHCbRootDiracRunTimeHandler()
 
     def test_RootDiracRTHandler_master_prepare(self):
@@ -45,3 +46,4 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         l = len(stdjobconfig.getOutputSandboxFiles())
         print "outputsandbox = ",stdjobconfig.getOutputSandboxFiles()
         assert  l == 4, 'outputsandbox error'
+

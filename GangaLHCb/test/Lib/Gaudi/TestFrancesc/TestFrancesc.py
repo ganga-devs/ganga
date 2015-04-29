@@ -43,6 +43,7 @@ class TestFrancesc(GangaGPITestCase):
 
     def test_Francesc__getshell(self):
         # just check coverage...hard to check if the env is set properly
+        from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps
         apps = available_apps()
         #apps.remove('Gaudi')
         for app in apps:

@@ -16,7 +16,8 @@ except x:
     doConfig = True
 
 if doConfig:
-    from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
+    #from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
+    #from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
     from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
     from GangaLHCb.test import addDiracTestSubmitter
     GangaLHCb.test.addDiracTestSubmitter()
@@ -32,6 +33,7 @@ if doConfig:
 class TestDiracSplitter(GangaGPITestCase):
 
     def testSplit(self):
+        from Ganga.GPI import *
         j=Job(backend=Dirac())
         j.inputdata = LHCbDataset()
         #j.inputdata.files+=[
@@ -44,7 +46,13 @@ class TestDiracSplitter(GangaGPITestCase):
         #    ]
         #j.inputdata = LFNs
 
-        j.inputdata = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
+        #print "try1"
+        #somedata = BKQuery('LFN:/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()#[0:5]
+        #j.inputdata = somedata[0:5]
+        #print "try2"
+        j.inputdata = BKQuery('/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()[0:5]
+        #j.inputdata = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
+        #j.inputdata = BKQuery('/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
 
         #len_files = len(inputdata.files)
         ds = SplitByFiles()
@@ -68,8 +76,9 @@ class TestDiracSplitter(GangaGPITestCase):
         #    ]
         import copy
         #myLFNs = copy.deepcopy(LFNs)
-        myLFNs = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
-        myLFNs.append( 'LFN:/not/a/file.dst' )
+        #myLFNs = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
+        myLFNs = BKQuery('/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()[0:5]
+        myLFNs.extend( 'LFN:/not/a/file.dst' )
 
         j.inputdata = myLFNs
 
@@ -89,5 +98,4 @@ class TestDiracSplitter(GangaGPITestCase):
             threw = True
         assert threw, 'should have thrown exception'
 
-    
-        
+

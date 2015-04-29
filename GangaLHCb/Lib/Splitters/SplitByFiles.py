@@ -49,6 +49,16 @@ class SplitByFiles(GaudiInputDataSplitter):
     def _create_subjob(self, job, dataset):
         logger.debug( "_create_subjob" )
         datatmp = []
+        #print dataset
+        #print type(dataset)
+        #print type([])
+        #try:
+        #    logger.debug( "dataset len: %s" % str(len(dataset)) )
+        #except:
+        #    pass
+        #from Ganga.GPI import GangaList
+        from Ganga.GPIDev.Lib.GangaList import GangaList
+
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
                 if isinstance( i, DiracFile ):
@@ -57,7 +67,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                     logger.error( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
-        elif isinstance( dataset, list ):
+        elif type(dataset) == type( [] ) or type(dataset) == type(GangaList()):
             for i in dataset:
                 if type(i) == type(''):
                     datatmp.append( DiracFile( lfn=i ) )
@@ -66,9 +76,12 @@ class SplitByFiles(GaudiInputDataSplitter):
                 else:
                     x = GangaException( "Unknown(unexpected) file object: %s" % i )
                     raise x
+        elif type(dataset) == type( '' ):
+            datatmp.append( DiracFile( lfn=dataset ) )
         else:
             logger.error( "Unkown dataset type, cannot perform split here" )
             from Ganga.Core.exceptions import GangaException
+            logger.error( "Dataset found: " + str(dataset) )
             raise GangaException( "Unkown dataset type, cannot perform split here" )
 
         logger.debug( "Creating new Job in Splitter" )
@@ -93,7 +106,11 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         indata = stripProxy(copy.deepcopy(job.inputdata))
 
+        #logger.debug( indata )
+        logger.debug( "indata length: %s" % str( indata ) )
+
         if not job.inputdata:
+            logger.debug( "no job.inputdata" )
             share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                       'shared',
                                       getConfig('Configuration')['user'],
@@ -114,6 +131,9 @@ class SplitByFiles(GaudiInputDataSplitter):
         self.XMLCatalogueSlice = indata.XMLCatalogueSlice
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
+
+            logger.debug( "found Dirac backend" )
+
             if self.filesPerJob > 100: self.filesPerJob = 100 # see above warning
             logger.debug( "indata: %s " % str( indata ) )
 
@@ -135,13 +155,15 @@ class SplitByFiles(GaudiInputDataSplitter):
             logger.debug( "outdata: %s " % str( outdata ) )
             return outdata
         else:
+            logger.debug( "Calling Parent Splitter as not on Dirac" )
             return super(SplitByFiles,self)._splitter(job, indata)
 
 
     def split(self, job):
         logger.debug( "split" )
-        if self.maxFiles == -1: self.maxFiles = None
-        if self.bulksubmit:
+        if self.maxFiles == -1:
+            self.maxFiles = None
+        if self.bulksubmit == True:
             if stripProxy(job.backend).__module__.find('Dirac') > 0:
                 logger.debug( "Returning []" )
                 return []

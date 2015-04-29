@@ -16,6 +16,7 @@ class TestGaudiUtils(GangaGPITestCase):
     """Tests methods defined in GangaLHCb/Lib/Gaudi/GaudiUtils.py"""
 
     def setUp(self):
+        from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps
         self.apps = available_apps()
         #self.apps.remove('Gaudi')
         srcdir = os.path.dirname(inspect.getsourcefile(GaudiPython))
@@ -29,17 +30,20 @@ class TestGaudiUtils(GangaGPITestCase):
     def test_available_packs(self):
         for app in self.apps:
             try:
+                from GangaLHCb.Lib.Applications.AppsBaseUtils import available_packs
                 available_packs(app)
             except KeyError, err:                
                 assert False, 'application %s has no packages' % app
 
     def test_available_versions(self):
         for app in self.apps:
+            from GangaLHCb.Lib.Applications.AppsBaseUtils import available_versions
             versions = available_versions(app)
             assert len(versions) > 0, 'application %s has no versions' % app
 
     def test_guess_version(self):
         for app in self.apps:
+            from GangaLHCb.Lib.Applications.AppsBaseUtils import guess_version
             version = guess_version(app)
             assert len(version) > 0, 'couldn''t guess version for %s' % app
             
