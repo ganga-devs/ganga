@@ -48,11 +48,11 @@ def bootstrap(reg, interactive_session):
     #ShutdownManager.install()
 
     # backend-specific setup (e.g. Remote: setup any remote ssh pipes)
-    for j in reg:
-        if hasattr(j,'status') and j.status in ['submitted','running']:
-            if hasattr(j,'backend'): # protect: EmptyGangaObject does not have backend either
-                if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
-                    j.backend.setup()
+    #for j in reg:
+    #    if hasattr(j,'status') and j.status in ['submitted','running']:
+    #        if hasattr(j,'backend'): # protect: EmptyGangaObject does not have backend either
+    #            if hasattr(j.backend,'setup'): # protect: EmptyGangaObject does not have setup() method
+    #                j.backend.setup()
 
     #start the monitoring loop
     global monitoring_component

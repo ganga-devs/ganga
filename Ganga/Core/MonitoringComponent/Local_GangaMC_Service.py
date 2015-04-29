@@ -98,15 +98,15 @@ class MonitoringWorkerThread(GangaThread):
          from Queue import Empty
          while not self.should_stop():
              try:
-               action = Qin.get(block=True,timeout=0.5)
-               break
+                 action = Qin.get(block=True,timeout=0.5)
+                 break
              except Queue.Empty:
                  continue
              except Empty:
                  continue
 
          if self.should_stop():
-            break
+             break
 
          tpFreeThreads-=1      
          #setattr(threading.currentThread(), 'action', action)  
@@ -689,10 +689,11 @@ class JobRegistry_Monitor( GangaThread ):
     def __defaultActiveBackendsFunc( self ):
         active_backends = {}
         # FIXME: this is not thread safe: if the new jobs are added then iteration exception is raised
-        for i in self.registry.ids():
+        fixed_ids = self.registry.ids()
+        for i in fixed_ids:
             try:
                 j = self.registry(i)
-                if j.status in [ 'submitted', 'running' ]: #, 'completing' ]:
+                if j.status in [ 'submitted', 'running', 'submitting' ]:
                     j._getWriteAccess()
                     bn = j.backend._name
                     active_backends.setdefault( bn, [] )
@@ -716,8 +717,12 @@ class JobRegistry_Monitor( GangaThread ):
                 updateDict_ts.clearEntry( backendObj._name )
                 try:
                     log.debug( "[Update Thread %s] Updating %s with %s." % ( currentThread, backendObj._name, [x.id for x in jobList_fromset ] ) )
+                    for j in jobList_fromset:
+                        if hasattr(j, 'backend'):
+                            if hasattr(j.backend,'setup'):
+                                j.backend.setup()
                     backendObj.master_updateMonitoringInformation( jobList_fromset )
-                    
+
                     # resubmit if required
                     for j in jobList_fromset:
 

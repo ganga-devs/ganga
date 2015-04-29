@@ -119,11 +119,11 @@ class GangaThreadPool:
 
     def __alive_critical_thread_ids(self):
         """Return a list of alive critical thread names."""
-        return [t.name for t in self.__threads if t.isAlive() and t.isCritical()]
+        return [t.gangaName for t in self.__threads if t.isAlive() and t.isCritical()]
 
     def __alive_non_critical_thread_ids(self):
         """Return a list of alive non-critical thread names."""
-        return [t.name for t in self.__threads if t.isAlive() and not t.isCritical()]
+        return [t.gangaName for t in self.__threads if t.isAlive() and not t.isCritical()]
 
     def __do_shutdown__(self):
 

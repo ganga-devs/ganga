@@ -110,15 +110,26 @@ def shutdown():
     #shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     #method to perform actions on the box and/or job registries.
     logger.debug(started_registries)
-    if 'prep' in started_registries: 
-        registry = getRegistry('prep')
-        registry.shutdown()
-        started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
-        
+    try:
+        if 'prep' in started_registries: 
+            registry = getRegistry('prep')
+            registry.shutdown()
+            started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
+    except:
+        logger.error( "Failed to Shutdown prep Repository!!! please check for stale lock files" )
+        logger.error( "Trying to shutdown cleanly regardless" )
+        pass
+
     for registry in getRegistries():
-        if not registry.name in started_registries: continue
-        started_registries.remove(registry.name) # in case this is called repeatedly, only call shutdown once
-        registry.shutdown() # flush and release locks
+        thisName = registry.name
+        try:
+            if not thisName in started_registries: continue
+            started_registries.remove(thisName) # in case this is called repeatedly, only call shutdown once
+            registry.shutdown() # flush and release locks
+        except:
+            logger.error( "Failes to Shutdown Repository: %s !!! please check for stale lock files" % thisName )
+            logger.error( "Trying to Shutdown cleanly regardless" )
+            pass
 
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles
     removeGlobalSessionFiles()
