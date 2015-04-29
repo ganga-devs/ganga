@@ -163,8 +163,8 @@ class Bender(GaudiBase):
 ##             logger.error(msg)
 ##             raise ApplicationConfigurationError(None,msg)
        
-    def prepare(self,force=False):
-        super(Bender,self).prepare(force)
+    def prepare(self, force=False):
+        super(Bender, self).prepare(force)
         self._check_inputs()
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
@@ -234,13 +234,19 @@ class Bender(GaudiBase):
 
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
+        # Always check for None OR empty
         if self.module.name == None:
             raise ApplicationConfigurationError(None,"Application Module not requested")
-        self.module.name = fullpath(self.module.name)
-        if not os.path.exists(self.module.name):
-            msg = 'Module file %s not found.' % self.module.name
-            raise ApplicationConfigurationError(None,msg)
+        elif self.module.name == "":
+            raise ApplicationConfigurationError(None,"Application Module not requested")
+        else:
+            # Always check we've been given a FILE!
+            self.module.name = fullpath(self.module.name)
+            if not os.path.isfile(self.module.name):
+                msg = 'Module file %s not found.' % self.module.name
+                raise ApplicationConfigurationError(None,msg)
         #self._check_gaudi_inputs([self.module],self.project)
+
 
     def postprocess(self):
         XMLPostProcessor.postprocess(self,logger)

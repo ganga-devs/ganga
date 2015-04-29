@@ -1,23 +1,37 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 #from GangaLHCb.Lib.Gaudi.Francesc import GaudiExtras
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from GangaLHCb.test import *
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 #from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
+    from GangaLHCb.test import *
 
 class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
 
     def setUp(self):
         j = Job(application=DaVinci(),backend=Dirac())
         j.prepare()
-        j.inputsandbox = [File(name='dummy.in')]
+        from Ganga.Utility.Config import getConfig
+        if getConfig('Output')['ForbidLegacyInput']: 
+            j.inputfiles = [LocalFile(name='dummy.in')]
+        else:
+            j.inputsandbox = [File(name='dummy.in')]
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
+        from GangaLHCb.test import *
         self.app.platform = getDiracAppPlatform()
         #self.extra = GaudiExtras()
         #self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'

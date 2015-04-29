@@ -8,8 +8,6 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import *
-from PhysicalFile import *
-from LogicalFile import *
 from OutputData import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job,JobTemplate
@@ -23,7 +21,7 @@ class LHCbDataset(Dataset):
 
     Example Usage:
     ds = LHCbDataset(["lfn:/some/lfn.file","pfn:/some/pfn.file"])
-    ds[0] # LogicalFile("/some/lfn.file") - see LogicalFile docs for usage
+    ds[0] # DiracFile("/some/lfn.file") - see DiracFile docs for usage
     ds[1] # PhysicalFile("/some/pfn.file")- see PhysicalFile docs for usage
     len(ds) # 2 (number of files)
     ds.getReplicas() # returns replicas for *all* files in the data set
@@ -33,8 +31,8 @@ class LHCbDataset(Dataset):
     [...etc...]
     '''
     schema = {}
-    docstr = 'List of PhysicalFile and LogicalFile objects'
-    schema['files'] = ComponentItem(category='datafiles',defvalue=[],
+    docstr = 'List of PhysicalFile and DiracFile objects'
+    schema['files'] = ComponentItem(category='gangafiles',defvalue=[],
                                     sequence=1,doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0 ,doc=docstr)
@@ -46,19 +44,27 @@ class LHCbDataset(Dataset):
     _schema = Schema(Version(3,0), schema)
     _category = 'datasets'
     _name = "LHCbDataset"
-    _exportmethods = ['getReplicas','__len__','__getitem__','replicate',
-                      'hasLFNs','extend','getCatalog','optionsString',
-                      'getFileNames','getFullFileNames',
-                      'difference','isSubset','isSuperset','intersection',
-                      'symmetricDifference','union','bkMetadata']#,'pop']
+    _exportmethods = ['getReplicas', '__len__', '__getitem__', 'replicate',
+                      'hasLFNs', 'extend', 'getCatalog', 'optionsString',
+                      'getLFNs', 'getFileNames', 'getFullFileNames',
+                      'difference', 'isSubset', 'isSuperset', 'intersection',
+                      'symmetricDifference', 'union', 'bkMetadata',
+                      'isEmpty', 'hasPFNs', 'getPFNs' ]#,'pop']
 
     def __init__(self, files=[], persistency=None, depth=0):
+        for f in files:
+            if type(f) == type(''):
+                f = strToDataFile( f,False )
         super(LHCbDataset, self).__init__()
+        logger.debug( "Creating dataset with:\n%s" % files )
         self.files = files
         self.persistency=persistency
         self.depth = depth
+        logger.debug( "Dataset Created" )
 
     def __construct__(self, args):
+        logger.debug( "__construct__" )
+        self.files = []
         if (len(args) != 1) or (type(args[0]) is not type([])):
             super(LHCbDataset,self).__construct__(args)
         else:
@@ -69,6 +75,7 @@ class LHCbDataset(Dataset):
                     self.files.append(file)
                 else:
                     self.files.append(f)
+        logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
 
     def __len__(self):
         """The number of files in the dataset."""
@@ -102,25 +109,31 @@ class LHCbDataset(Dataset):
     def hasLFNs(self):
         'Returns True is the dataset has LFNs and False otherwise.'
         for f in self.files:
-            if isLFN(f): return True
+            if isDiracFile(f): return True
+        return False
+
+    def hasPFNs(self):
+        'Returns True is the dataset has PFNs and False otherwise.'
+        for f in self.files:
+            if not isDiracFile(f): return True
         return False
 
     def replicate(self,destSE='',srcSE='',locCache=''):
         '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
         ds.replicate().'''
         if not destSE:
-            LogicalFile().replicate('')
+            DiracFile().replicate('')
             return
         if not self.hasLFNs():
             raise GangaException('Cannot replicate dataset w/ no LFNs.')
         retry_files = []
         for f in self.files:
-            if not isLFN(f): continue
+            if not isDiracFile(f): continue
             try:
                 result = f.replicate(destSE,srcSE,locCache)
             except:
                 msg = 'Replication error for file %s (will retry in a bit).'\
-                      % f.name
+                      % f.lfn
                 logger.warning(msg)
                 retry_files.append(f)
         for f in retry_files:
@@ -128,16 +141,19 @@ class LHCbDataset(Dataset):
                 result = f.replicate(destSE,srcSE,locCache)
             except:
                 msg = '2nd replication attempt failed for file %s.' \
-                      ' (will not retry)' % f.name
+                      ' (will not retry)' % f.lfn
                 logger.warning(msg)
                 logger.warning(str(result))
 
     def extend(self,files,unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
+        logger.debug( "extending Dataset" )
         from Ganga.GPIDev.Base import ReadOnlyObjectError
         if not hasattr(files,"__getitem__"):
-            raise GangaException('Argument "files" must be a iterable.')
+            files = [ files ]
+            #raise GangaException('Argument "files" must be a iterable.')
+
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now'%(self._parent.id, self._name))
         names = self.getFileNames()
@@ -145,7 +161,7 @@ class LHCbDataset(Dataset):
         for f in files:
             file = getDataFile(f)
             if file is None: file = f
-            if unique and file.name in names: continue
+            if unique and file.namePattern in names: continue
             self.files.append(file)
 
     def removeFile(self,file):
@@ -160,7 +176,15 @@ class LHCbDataset(Dataset):
         lfns = []
         if not self: return lfns
         for f in self.files:
-            if isLFN(f): lfns.append(f.name)
+            if isDiracFile(f):
+                subfiles = f.getSubFiles()
+                if len(subfiles) == 0:
+                    lfns.append( f.lfn )
+                else:
+                    for file in subfiles:
+                        lfns.append( file.lfn )
+
+        logger.debug( "Returning LFNS:\n%s" % str(lfns) )
         return lfns
 
     def getPFNs(self): 
@@ -168,19 +192,35 @@ class LHCbDataset(Dataset):
         pfns = []
         if not self: return pfns
         for f in self.files:
-            if isPFN(f): pfns.append(f.name)
+            if isPFN(f): pfns.append(f.namePattern)
         return pfns
 
     def getFileNames(self):
         'Returns a list of the names of all files stored in the dataset.'
-        return [f.name for f in self.files]
+        names = []
+        for i in self.files:
+            if isinstance( i, DiracFile ):
+                names.append( i.lfn )
+            else:
+                try:
+                    names.append( i.namePattern )
+                except:
+                    logger.warning( "Cannot determine filename for: %s " % i )
+                    raise GangaException( "Cannot Get File Name" )
+
+        return names
 
     def getFullFileNames(self):
         'Returns all file names w/ PFN or LFN prepended.'
         names = []
         for f in self.files:
-            if type(f) is LogicalFile: names.append('LFN:%s' % f.name)
-            else: names.append('PFN:%s' % f.name)
+            if type(f) is DiracFile: names.append('LFN:%s' % f.lfn)
+            else:
+                try:
+                    names.append('PFN:%s' % f.namePattern)
+                except:
+                    logger.warning( "Cannot determine filename for: %s " % i )
+                    raise GangaException( "Cannot Get File Name" )
         return names
 
     def getCatalog(self,site=''):
@@ -230,19 +270,19 @@ class LHCbDataset(Dataset):
             for str in dtype_str_patterns:
                 matched = False
                 for pat in dtype_str_patterns[str]:
-                    if fnmatch.fnmatch(f.name,pat):
+                    if fnmatch.fnmatch(f.namePattern, pat):
                         dtype_str = str
                         matched = True
                         break
                 if matched: break
             sdatasetsnew += '\n        '
             sdatasetsold += '\n        '
-            if isLFN(f):
-                sdatasetsnew += """ \"LFN:%s\",""" % f.name
-                sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.name, dtype_str)
+            if isDiracFile(f):
+                sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
+                sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
                 sdatasetsnew += """ \"PFN:%s\",""" % f.name
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.name, dtype_str)
+                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency=='ROOT': sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""
             else: sdatasetsnew = sdatasetsnew[:-1] + """\n    ], clear=True)"""
@@ -344,19 +384,39 @@ class LHCbDataset(Dataset):
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 def string_datafile_shortcut(name,item):
+
+    # Overload the LHCb instance if the Core beet us to it
+    mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut( name, item )
+
+    #   We can do some 'magic' with strings so lets do that here
+    if (mainFileOutput is not None) and (type(name) is not type('')):
+        return mainFileOutput
+
     from GangaLHCb.Lib.Backends.Dirac import Dirac
-    if type(name) is not type(''): return None
-    if item is None: return None # used to be c'tor, but shouldn't happen now
+    if type(name) is not type(''):
+        return None
+    if item is None:
+        return None # used to be c'tor, but shouldn't happen now
     else: # something else...require pfn: or lfn:
-        file = strToDataFile(name,False)
-        if item is Dirac._schema['inputSandboxLFNs']:
+        try:
+            file = strToDataFile(name,False)
+#            if item is Dirac._schema['inputSandboxLFNs']:
             if type(file) is PhysicalFile:
                 msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
                 raise GangaException(msg)
-        return file
+            return file
+        except:
+            try:
+                strToDataFile( name,False )
+            except:
+                # if the Core can make a file object from a string then use that, else raise an error
+                if mainFileOutput is not None:
+                    return mainFileOutput
+                else:
+                    raise
     return None
 
-allComponentFilters['datafiles'] = string_datafile_shortcut
+allComponentFilters['gangafiles'] = string_datafile_shortcut
 
 def string_dataset_shortcut(files,item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform

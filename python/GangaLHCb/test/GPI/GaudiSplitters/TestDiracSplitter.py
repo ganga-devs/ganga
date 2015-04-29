@@ -5,24 +5,35 @@
 ################################################################################
 from __future__ import division
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from GangaLHCb.test import addDiracTestSubmitter
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
-from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-addDiracTestSubmitter()
 
-LFNs = [ 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000915_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000920_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
-         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
-          ]
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    #from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
+    #from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
+    from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
+    from GangaLHCb.test import addDiracTestSubmitter
+    GangaLHCb.test.addDiracTestSubmitter()
+
+#LFNs = [ 'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000919_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000922_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000915_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000920_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000916_1.dimuon.dst',
+#         'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
+#          ]
 
 class TestDiracSplitter(GangaGPITestCase):
 
     def testSplit(self):
+        from Ganga.GPI import *
         j=Job(backend=Dirac())
         j.inputdata = LHCbDataset()
         #j.inputdata.files+=[
@@ -33,7 +44,15 @@ class TestDiracSplitter(GangaGPITestCase):
         #    'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012368/0000/00012368_00000620_1.dimuon.dst',
         #    'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00012533/0000/00012533_00000074_1.dimuon.dst'
         #    ]
-        j.inputdata = LFNs
+        #j.inputdata = LFNs
+
+        #print "try1"
+        #somedata = BKQuery('LFN:/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()#[0:5]
+        #j.inputdata = somedata[0:5]
+        #print "try2"
+        j.inputdata = BKQuery('/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()[0:5]
+        #j.inputdata = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
+        #j.inputdata = BKQuery('/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
 
         #len_files = len(inputdata.files)
         ds = SplitByFiles()
@@ -56,8 +75,10 @@ class TestDiracSplitter(GangaGPITestCase):
         #    'LFN:/lhcb/data/2010/DIMUON.DST/00008395/0000/00008395_00000914_1.dimuon.dst'
         #    ]
         import copy
-        myLFNs = copy.deepcopy(LFNs)
-        myLFNs.append( 'LFN:/not/a/file.dst' )
+        #myLFNs = copy.deepcopy(LFNs)
+        #myLFNs = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
+        myLFNs = BKQuery('/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()[0:5]
+        myLFNs.extend( 'LFN:/not/a/file.dst' )
 
         j.inputdata = myLFNs
 
@@ -77,5 +98,4 @@ class TestDiracSplitter(GangaGPITestCase):
             threw = True
         assert threw, 'should have thrown exception'
 
-    
-        
+

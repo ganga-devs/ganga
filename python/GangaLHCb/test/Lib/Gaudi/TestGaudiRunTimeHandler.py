@@ -1,17 +1,30 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Gaudi.Francesc import GaudiExtras
-from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 #from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 
 class TestGaudiRunTimeHandler(GangaGPITestCase):
 
     def setUp(self):
         j = Job(application=DaVinci())
         j.prepare()
-        j.inputsandbox = [File(name='dummy.in')]
+        from Ganga.Utility.Config import getConfig
+        if getConfig('Output')['ForbidLegacyInput']:
+            j.inputfiles = [LocalFile(name='dummy.in')]
+        else:
+            j.inputsandbox = [File(name='dummy.in')]
         self.app = j.application._impl
         #self.extra = GaudiExtras()
         #self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'

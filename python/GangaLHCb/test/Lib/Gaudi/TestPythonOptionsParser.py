@@ -1,12 +1,22 @@
 import os
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Applications.AppsBase import *
-from GangaLHCb.Lib.Applications.PythonOptionsParser import PythonOptionsParser
-import Ganga.Utility.Config 
+import Ganga.Utility.Config
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.Applications.PythonOptionsParser import PythonOptionsParser
 
 class TestPythonOptionsParser(GangaGPITestCase):
 
     def setUp(self):
+        from GangaLHCb.Lib.Applications.PythonOptionsParser import PythonOptionsParser
         job = Job(application=Gauss())
         job.application.platform = 'x86_64-slc6-gcc48-opt' 
         gauss = job.application._impl
@@ -69,10 +79,11 @@ class TestPythonOptionsParser(GangaGPITestCase):
         ok = sandbox.count('GaussHistos.root') == 1  and \
              data.count('Gauss.sim') == 1
         assert ok, 'collecting/sorting of output files failed (default)'
+        j.outputfiles = []
         j.outputfiles = ['Gauss.sim']
         sandbox, data = self.parser.get_output(j)
         ok = sandbox.count('Gauss.sim') == 1 and len(data) == 0
-        assert ok, 'collecting/sorting of output files failed (.sim->sandbox)'
+        assert ok, 'collecting/sorting of output files failed (.sim->sandbox) %s -> %s' % ( str(sandbox.count('Gauss.sim')), str(len(data)) )
         j.outputfiles = []
         j.outputfiles = [DiracFile('*.root')]
         sandbox, data = self.parser.get_output(j)

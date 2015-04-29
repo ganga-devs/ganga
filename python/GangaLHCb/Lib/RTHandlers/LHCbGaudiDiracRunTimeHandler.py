@@ -9,7 +9,7 @@ from GangaDirac.Lib.Files.DiracFile                     import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities            import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
-from Ganga.GPIDev.Lib.File                              import FileBuffer, SandboxFile
+from Ganga.GPIDev.Lib.File                              import FileBuffer, LocalFile
 from Ganga.GPIDev.Base.Proxy                            import addProxy
 from Ganga.Utility.Config                               import getConfig
 from Ganga.Utility.logging                              import getLogger
@@ -122,7 +122,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
            #outputfiles.update(set(outdata[:]))
            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            job.non_copyable_outputfiles.extend([addProxy(DiracFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-           job.non_copyable_outputfiles.extend([addProxy(SandboxFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
+           job.non_copyable_outputfiles.extend([addProxy(LocalFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
            outputfiles = unique(outputfiles + [f.namePattern for f in job.non_copyable_outputfiles if isinstance(f, DiracFile)])
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
@@ -148,7 +148,9 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                          XMLSUMMARYPARSING = getXMLSummaryScript()#,
                          #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
                          )
-        
+
+        logger.debug( "input_data %s" % str( input_data ) )
+
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
         # NOTE special case for replicas: replicate string must be empty for no replication

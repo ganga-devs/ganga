@@ -19,4 +19,4 @@ def standardSetup(setup=setup):
         setup.prependPath(p,'PYTHONPATH')
         setup.prependPath(p,'PATH')
         setup.prependPath(p,'LD_LIBRARY_PATH')
- 
+

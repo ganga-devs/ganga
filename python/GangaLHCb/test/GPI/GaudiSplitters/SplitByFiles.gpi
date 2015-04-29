@@ -8,17 +8,18 @@ ap = DaVinci()
 j = Job(application=ap, backend=TestSubmitter(time=1))
 
 j.splitter=SplitByFiles(filesPerJob=1)
-j.inputdata = LHCbDataset(['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000006_1.dimuon.dst','LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000007_1.dimuon.dst'])
+j.inputdata = LHCbDataset([DiracFile(lfn='/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000006_1.dimuon.dst'),DiracFile(lfn='/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000007_1.dimuon.dst')])
 j.submit()
 
 assert(len(j.subjobs)==2)
-assert(j.inputdata.files[0].name==j.subjobs[0].inputdata.files[0].name)
-assert(j.inputdata.files[-1].name==j.subjobs[1].inputdata.files[-1].name)
+assert(j.inputdata.files[0].lfn==j.subjobs[0].inputdata.files[0].lfn)
+assert(j.inputdata.files[-1].lfn==j.subjobs[1].inputdata.files[-1].lfn)
 
 
-j = j.copy()
-j.splitter.maxFiles=1
-j.submit()
-assert(len(j.subjobs)==1)
-assert(len(j.subjobs[0].inputdata.files)==1)
+k = j.copy()
+k.splitter.maxFiles=1
+print k
+k.submit()
+assert(len(k.subjobs)==1)
+assert(len(k.subjobs[0].inputdata.files)==1)
 

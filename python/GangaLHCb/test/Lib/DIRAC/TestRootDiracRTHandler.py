@@ -1,14 +1,29 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaLHCb.Lib.RTHandlers.LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaLHCb.Lib.RTHandlers.LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
 
 class TestRootDiracRTHandler(GangaGPITestCase):
 
     def setUp(self):
         j = Job(application=Root(),backend=Dirac())
-        j.inputsandbox = [File(name='dummy.in')]
+        import Ganga.Utility.Config
+        if not getConfig('Output')['ForbidLegacyInput']:
+            j.inputsandbox=[ File(name='dummy.in') ]
+        else:
+            j.inputfiles = [ LocalFile( 'dummy.in' ) ]
+        #j.inputsandbox = [File(name='dummy.in')]
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
+        from GangaLHCb.Lib.RTHandlers.LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
         self.rth = LHCbRootDiracRunTimeHandler()
 
     def test_RootDiracRTHandler_master_prepare(self):
@@ -31,3 +46,4 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         l = len(stdjobconfig.getOutputSandboxFiles())
         print "outputsandbox = ",stdjobconfig.getOutputSandboxFiles()
         assert  l == 4, 'outputsandbox error'
+

@@ -10,6 +10,13 @@ class TestSavannah(GangaGPITestCase):
         j = Job(application="DaVinci", backend="LSF")
 	j.backend.queue='8nm'
         j.submit()
+        #FIXME: Need some better way to test for LSF queue being full
+        #import time
+        #time.sleep(60)
+        #if j.status not in ['completed', 'failed']:
+        #    j.kill()
+        from GangaTest.Framework.utils import sleep_until_completed
+        sleep_until_completed( j )
         return Savannah8937(j)
 
     def testSavannah18126(self):
@@ -51,7 +58,7 @@ class Savannah8937(ICheckTest):
         return is_job_finished(self.j)
 
     def checkTest(self):
-        assert(self.j.status == 'completed'), 'Job status is not \'completed\''
+        assert(self.j.status == 'completed'), 'Job status is not \'completed\' %s' % self.j.status
 
 
 class Savannah18126(ICheckTest):
@@ -99,6 +106,4 @@ class Savannah33992(ICheckTest):
             for line in std_out.readlines():
                 print line
         assert file_contains(f, 'Status after script_wrapper.py execution is 0'), 'Incorrect exit code'
-
-
 

@@ -1,10 +1,19 @@
+
 from GangaTest.Framework.tests import GangaGPITestCase
-
 from GangaTest.Framework.utils import sleep_until_completed,file_contains,write_file,sleep_until_state
-from Ganga.Utility.Config      import setConfigOption
-from GangaLHCb.test import *
-addDiracTestSubmitter()
 
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from Ganga.Utility.Config      import setConfigOption
+    addDiracTestSubmitter()
+
+import os
 ganga_path = os.path.abspath(os.path.dirname(__file__))
 script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.C'
 

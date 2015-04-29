@@ -1,8 +1,4 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-#from Ganga.GPIDev.Base import GangaObject
-#from LogicalFile import *
-#from LHCbDataset import *
-#from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaLHCb.Lib.LHCbDataset.BKQuery import *
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

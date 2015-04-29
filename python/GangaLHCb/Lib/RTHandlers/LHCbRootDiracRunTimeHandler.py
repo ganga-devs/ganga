@@ -72,6 +72,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         inputsandbox, outputsandbox        = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
+        logger.debug( "input_data: " + str( input_data ) )
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))

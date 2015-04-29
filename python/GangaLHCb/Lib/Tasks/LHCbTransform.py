@@ -9,7 +9,7 @@ from GangaLHCb.Lib.Tasks.LHCbUnit import LHCbUnit
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from GangaLHCb.Lib.LHCbDataset.LogicalFile import LogicalFile
+from GangaLHCb.Lib.Files.LogicalFile import LogicalFile
 
 class LHCbTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {

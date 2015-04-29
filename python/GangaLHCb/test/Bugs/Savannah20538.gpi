@@ -13,7 +13,11 @@ f = open(join(tmpdir,fname),'w')
 f.write('Hello World\n')
 f.close()
 
-j.inputsandbox=[join(tmpdir,fname)]
+import Ganga.Utility.Config
+if not getConfig('Output')['ForbidLegacyInput']:
+    j.inputsandbox=[join(tmpdir,fname)]
+else:
+    j.inputfiles=[ LocalFile(join(tmpdir,fname)) ]
 j.submit()
 
 assert(checkFileInSandbox(j,basename(fname)))

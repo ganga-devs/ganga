@@ -1,12 +1,21 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_state
-from Ganga import GPI
-#import unittest
 
 #Setup bookeeping
 stripping20up = '/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST'
 stripping20down = '/LHCb/Collision12/Beam4000GeV-VeloClosed-MagDown/Real Data/Reco14/Stripping20/90000000/DIMUON.DST'
-bkQueryList = [GPI.BKTestQuery(stripping20up)]
+
+try:
+    import Ganga.Utility.Config.Config
+    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
+except x:
+    print x
+    doConfig = True
+
+if doConfig:
+    from GangaTest.Framework.tests import GangaGPITestCase
+    from Ganga import GPI
+    bkQueryList = [GPI.BKTestQuery(stripping20up)]
 
 
 class TestLHCbTransform(GangaGPITestCase):
