@@ -7,6 +7,15 @@ from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.Utility.logging                    import getLogger
 logger      = getLogger()
 
+def strip_filename(name):
+    if len(name) >= 4 and name[0:4].upper() == 'PFN:':
+        msg = 'Can not create LogicalFile from string that begins w/ "PFN:".'\
+              ' You probably want to create a MassStorageFile.'
+        raise GangaException(msg)
+    if len(name) >= 4 and name[0:4].upper() == 'LFN:':
+        name = name[4:]
+    return name
+
 class LogicalFile(DiracFile):
     #  Logical File schema
     #  Observing the 'old' 1.0 schema whilst preserving backwards compatability with the fact that we're translating the object into a DiracFile in this case
@@ -54,8 +63,7 @@ class LogicalFile(DiracFile):
 
         if len(args) >= 1:
             self.name = args[0]
-
-        self._setLFNnamePattern( lfn=self.name, namePattern='' )
+            self._setLFNnamePattern( _lfn=self.name, _namePattern='' )
 
         if (len(args) != 1) or (type(args[0]) is not type('')):
             super( LogicalFile, self ).__construct__(args)

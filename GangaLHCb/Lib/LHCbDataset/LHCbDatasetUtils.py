@@ -38,6 +38,7 @@ def strToDataFile(name,allowNone=True):
 
 def getDataFile(file):
     if isinstance(file,DiracFile): return file
+    from GangaLHCb.Lib.Files import PhysicalFile
     if isinstance(file,PhysicalFile): return file
     if type(file) == type(''): return strToDataFile(file)
     return None

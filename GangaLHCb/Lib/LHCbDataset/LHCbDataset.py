@@ -48,7 +48,8 @@ class LHCbDataset(Dataset):
                       'hasLFNs', 'extend', 'getCatalog', 'optionsString',
                       'getLFNs', 'getFileNames', 'getFullFileNames',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
-                      'symmetricDifference', 'union', 'bkMetadata']#,'pop']
+                      'symmetricDifference', 'union', 'bkMetadata',
+                      'isEmpty', 'hasPFNs', 'getPFNs' ]#,'pop']
 
     def __init__(self, files=[], persistency=None, depth=0):
         for f in files:

@@ -15,6 +15,8 @@ if doConfig:
     from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 
 def make_dataset(files):
+    from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+    from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
     ds = LHCbDataset()
     for f in files: ds.files.append(strToDataFile(f))
     return ds

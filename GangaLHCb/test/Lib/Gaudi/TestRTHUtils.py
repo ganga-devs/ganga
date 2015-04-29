@@ -20,6 +20,7 @@ class TestRTHUtils(GangaGPITestCase):
         pass
 
     def test_jobid_as_string(self):
+        from GangaLHCb.Lib.RTHandlers.RTHUtils import *
         j = Job(application=DaVinci())
         print 'version =', j.application.version
         ok = jobid_as_string(j).rfind(str(j.id)) >= 0
@@ -67,12 +68,14 @@ class TestRTHUtils(GangaGPITestCase):
 ##         assert found_file, 'file not added to input sandbox'        
         
     def test_is_gaudi_child(self):
+        from GangaLHCb.Lib.RTHandlers.RTHUtils import *
         assert is_gaudi_child(DaVinci()._impl)
         #assert is_gaudi_child(Gaudi()._impl)
         assert not is_gaudi_child(GaudiPython()._impl)
         assert not is_gaudi_child(Bender()._impl)
 
     def test_create_runscript(self):
+        from GangaLHCb.Lib.RTHandlers.RTHUtils import *
         # just check that it properly resolves Gaudi vs GaudiPython jobs
         script = """#!/usr/bin/env python
 

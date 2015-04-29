@@ -24,11 +24,13 @@ class TestLHCbDatasetUtils(GangaGPITestCase):
         assert not isPFN(LogicalFile('test')), 'should be false'
 
     def test_strToDataFile(self):
+        from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
         assert isinstance(strToDataFile('pfn:a'),PhysicalFile)
         assert isinstance(strToDataFile('lfn:a'),LogicalFile)
         assert strToDataFile('a') is None
 
     def test_getDataFile(self):
+        from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
         lfn = LogicalFile('a')
         pfn = LogicalFile('a')
         assert getDataFile(lfn) == lfn
