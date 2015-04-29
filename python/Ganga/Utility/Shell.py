@@ -210,13 +210,17 @@ class Shell:
          logger.warning('exit status [%d] of command %s', rc, cmd)
          if mention_outputfile_on_errors:
             logger.warning('full output is in file: %s', soutfile)
-         logger.warning('<first %d bytes of output>\n%s', BYTES, file(soutfile).read(BYTES))
+         sout_file = file(soutfile)
+         logger.warning('<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
+         sout_file.close()
          logger.warning('<end of first %d bytes of output>', BYTES)
 
       #FIXME /bin/sh might have also other error messages                                                                                            
       m = None
       if rc != 0:
-         m = re.search('command not found\n',file(soutfile).read())
+         sout_file = file(soutfile)
+         m = re.search('command not found\n', sout_file.read())
+         sout_file.close()
          if m: logger.warning('command %s not found',cmd)
                                                                                                        
       return rc, soutfile, m is None

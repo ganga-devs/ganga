@@ -462,7 +462,9 @@ sys.exit()
                     #logger.info('Local job %d status changed to running, pid=%d',j.id,pid)
                     j.updateStatus('running') # bugfix: 12194
             exitcode = get_exit_code(statusfile)
-            logger.debug('status file: %s %s',statusfile,file(statusfile).read())
+            status_file = file(statusfile)
+            logger.debug('status file: %s %s',statusfile, status_file.read())
+            status_file.close()
           except IOError,x:
             logger.debug('problem reading status file: %s (%s)',statusfile,str(x))
             exitcode=None

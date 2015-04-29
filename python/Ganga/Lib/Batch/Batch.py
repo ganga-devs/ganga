@@ -48,7 +48,9 @@ def shell_cmd(cmd,soutfile=None,allowed_exit=[0]):
     if not rc in allowed_exit:
         logger.debug('exit status [%d] of command %s',rc,cmd)
         logger.debug('full output is in file: %s',soutfile)
-        logger.debug('<first 255 bytes of output>\n%s',file(soutfile).read(255))
+        sout_file =  file(soutfile)
+        logger.debug('<first 255 bytes of output>\n%s',sout_file.read(255))
+        sout_file.close()
         logger.debug('<end of first 255 bytes of output>')
 
     m = None
@@ -56,7 +58,9 @@ def shell_cmd(cmd,soutfile=None,allowed_exit=[0]):
     if rc != 0:
         logger.debug('non-zero [%d] exit status of command %s ',rc,cmd)
         import re
-        m = re.compile(r"command not found$", re.M).search(file(soutfile).read())
+        sout_file = file(soutfile)
+        m = re.compile(r"command not found$", re.M).search(sout_file.read())
+        sout_file.close()
 
     return rc,soutfile,m is None
 
@@ -118,8 +122,10 @@ class Batch(IBackend):
         rc,soutfile,ef = shell_cmd(cmd,soutfile,allowed_exit)
         if not ef:
             logger.warning('Problem submitting batch job. Maybe your chosen batch system is not available or you have configured it wrongly')
-            logger.warning(file(soutfile).read())
-            raise BackendError(klass._name,'It seems that %s commands are not installed properly:%s'%(klass._name,file(soutfile).readline()))
+            sout_file = file(soutfile)
+            logger.warning( sout_file.read())
+            raiseable = BackendError(klass._name,'It seems that %s commands are not installed properly:%s'%(klass._name, sout_file.readline()))
+            sout_file.close()
         return rc,soutfile
 
     command = classmethod(command)
@@ -264,7 +270,9 @@ class Batch(IBackend):
         rc,soutfile = self.command(command_str)
         logger.debug('from command get rc: "%d"',rc)
         if rc == 0:
-            sout = file(soutfile).read()
+            sout_file = file(soutfile)
+            sout = sout_file.read()
+            sout_file.close()
             import re
             m = re.compile(self.config['submit_res_pattern'], re.M).search(sout)
             if m is None:
@@ -284,15 +292,19 @@ class Batch(IBackend):
                 except IndexError:
                     logger.info('could not match the output and extract the Batch queue name')
         else:
-            logger.warning(file(soutfile).read())
-                        
+            sout_file = file(soutfile)
+            logger.warning(sout_file.read())
+            sout_file.close()
+
         return rc == 0
 
 
     def kill(self):
         rc,soutfile = self.command(self.config['kill_str'] % (self.id))
 
-        sout = file(soutfile).read()
+        sout_file = file(soutfile)
+        sout = sout_file.read()
+        sout_file.close()
         logger.debug('while killing job %s: rc = %d',self.getJobObject().getFQID('.'),rc)
         if rc == 0:
             return True

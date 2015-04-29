@@ -351,7 +351,8 @@ class SessionLockManager(object):
         self.lockfn = os.path.join(self.sdir, "global_lock")
         try:
             if not os.path.isfile( self.lockfn ):
-                file(self.lockfn, "w").close() # create file (does not interfere with existing sessions)
+                lock = open(self.lockfn, "w")
+                lock.close() # create file (does not interfere with existing sessions)
             self.lockfd = self.delayopen_global()
         except IOError, x:
             raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
@@ -618,7 +619,9 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH) # ONLY NFS
-                    names = pickle.load(file(sf))
+                    sf_file = file(sf)
+                    names = pickle.load(sf_file)
+                    sf_file.close()
                     if not self.afs and fd > 0:
                         fcntl.lockf(fd, fcntl.LOCK_UN) # ONLY NFS
                         os.close(fd)
@@ -649,7 +652,9 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH) # ONLY NFS
-                    names = pickle.load(file(sf))
+                    sf_file = file(sf)
+                    names = pickle.load(sf_file)
+                    sf_file.close()
                     if not self.afs and fd > 0:
                         fcntl.lockf(fd, fcntl.LOCK_UN) # ONLY NFS
                         os.close(fd)

@@ -717,7 +717,9 @@ def read_ini_files(filenames,system_vars):
         cc =  make_config_parser(system_vars)
         logger.info('reading config file %s',f)
         try:
-            cc.readfp(file(f))
+            file_f = file(f)
+            cc.readfp(file_f)
+            file_f.close()
         except IOError,x:
             logger.warning('%s',str(x))
 
