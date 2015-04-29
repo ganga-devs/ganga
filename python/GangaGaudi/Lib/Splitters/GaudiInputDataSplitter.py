@@ -29,6 +29,7 @@ class GaudiInputDataSplitter(ISplitter):
         if (inputdata is None) or (len(inputdata.files) == 0):
             logger.error('Cannot split if no inputdata given!')
             raise SplittingError('inputdata is None')
+        logger.debug( "Found %s files inputdata" % str(len(inputdata.files)) )
         return DatasetSplitter(inputdata, self.filesPerJob, self.maxFiles)
 
     # returns a subjob based on the master and the reduced dataset can be overridden
