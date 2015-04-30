@@ -404,10 +404,14 @@ class GangaRepositoryLocal(GangaRepository):
                 else:
                     raise RepositoryError(self,"IOError: " + str(x))
             finally:
-                ld = os.listdir(os.path.dirname(fn))
-                if len(ld) == 0:
-                    os.rmdir( os.path.dirname(fn) )
-                    logger.debug( "No job index or data found, removing empty directory: %s" % os.path.dirname(fn) )
+                try:
+                    if os.path.isdir( os.path.dirname(fn) ):
+                        ld = os.listdir(os.path.dirname(fn))
+                        if len(ld) == 0:
+                            os.rmdir( os.path.dirname(fn) )
+                            logger.debug( "No job index or data found, removing empty directory: %s" % os.path.dirname(fn) )
+                except:
+                    pass
             try:
                 must_load = (not id in self.objects) or (self.objects[id]._data is None)
                 tmpobj = None

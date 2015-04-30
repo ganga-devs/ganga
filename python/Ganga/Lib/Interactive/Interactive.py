@@ -227,8 +227,6 @@ class Interactive( IBackend ):
          "   print 'ERROR: Unable to write status file: %s' % statfileName",
          "   print 'ERROR: ',x",
          "   raise",
-         "finally:",
-         "   statfile.close()",
          "",
          "idfileName = os.path.join( '%s', '__id__' )" % outDir,
          "try:",
