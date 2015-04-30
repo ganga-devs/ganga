@@ -13,7 +13,7 @@ def findPythonVersion(rootsys):
         and picks out the python version'''
         version = None
         if os.path.exists(config):
-            configFile = file(config)
+            configFile = open(config)
             for line in configFile:#loop through the file looking for #define
                 if line.startswith('#define R__CONFIGUREOPTION'):
                     for arg in line.split(' '):#look at value of #define
@@ -21,7 +21,8 @@ def findPythonVersion(rootsys):
                             arglist = arg.split('/')
                             #TODO: Would like some kind of check for arch here
                             if len(arglist) > 1:#prevent index out of range
-                                version = arglist[-2] 
+                                version = arglist[-2]
+            configFile.close()
         return version
     
     def useRootConfig(rootsys):

@@ -54,7 +54,7 @@ def runTest(NTEST, LEN, rootDir, output_dir):
         print 'from runTest: rootDir %s, output_dir %s'%(rootDir, output_dir)
     nn = tempfile.mktemp(suffix = '.test')
     nn = os.path.join(output_dir, os.path.basename(nn))
-    ff = file(nn, 'w')
+    ff = open(nn, 'w')
     lock = RLock()
     try:
         jj = []

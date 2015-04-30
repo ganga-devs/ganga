@@ -121,13 +121,13 @@ class TextMerger(IMerger):
                 output_file += '.gz'
             out_file = gzip.GzipFile(output_file,'w')
         else:
-            out_file = file(output_file,'w')
+            out_file = open(output_file,'w')
 
         out_file.write('# Ganga TextMergeTool - %s #\n' % time.asctime())
         for f in file_list:
 
             if not f.lower().endswith('.gz'):
-                in_file = file(f)
+                in_file = open(f)
             else:
                 import gzip
                 in_file = gzip.GzipFile(f)
@@ -227,7 +227,7 @@ class RootMerger(IMerger):
         rc, out = commands.getstatusoutput(merge_cmd)
 
         log_file = '%s.hadd_output' % output_file
-        log = file(log_file,'w')
+        log = open(log_file,'w')
         try:
             log.write('# -- Hadd output -- #\n')
             log.write('%s\n' % out)

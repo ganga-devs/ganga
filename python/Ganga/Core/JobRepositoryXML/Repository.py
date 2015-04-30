@@ -78,7 +78,7 @@ class Repository:
         
         for j in jobs:
             dir = os.path.join(self.dir,j.getFQID(os.sep))
-            data_file = file(os.path.join(dir,'data'),'w')
+            data_file = open(os.path.join(dir,'data'),'w')
             to_file(j, data_file)
             data_file.close()
 
@@ -143,7 +143,7 @@ class Repository:
                     return '.'.join([str(masterid),str(id)])
             try:
                 # read job data and reconstruct the object
-                data_file = file(os.path.join(dir,str(id),'data'))
+                data_file = open(os.path.join(dir,str(id),'data'))
                 j,errors = from_file(data_file)
                 data_file.close()
                 if errors: # data errors

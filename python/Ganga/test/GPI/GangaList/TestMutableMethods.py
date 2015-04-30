@@ -259,7 +259,7 @@ class TestMutableMethods(GangaGPITestCase):
             testList(j.inputfiles)
 
             j.inputfiles = [LocalFile(self._makeRandomString()) for _ in range(10) ]
-            assert len(j.inputfiles) == 10 "Must still be added correctly"
+            assert len(j.inputfiles) == 10, "Must still be added correctly"
             testList(j.inputfiles)
 
             j.inputfiles.extend([LocalFile(self._makeRandomString()) for _ in range(10) ])

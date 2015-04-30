@@ -104,7 +104,7 @@ class RLock(object):
     def remove(self):
         if self.counter == 0:
             try:
-                f = file(self.lockfile, 'r')
+                f = open(self.lockfile, 'r')
                 try:
                     f_guid = f.read()
                 finally:

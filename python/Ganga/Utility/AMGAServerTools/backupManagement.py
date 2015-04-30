@@ -67,7 +67,7 @@ class BackUp:
     def dumpToFile(self, dir, filename):
         """Dumps directory dir to a file filename"""
         res = self.dump(dir)
-        ff = file(filename, 'w')
+        ff = open(filename, 'w')
         try:
             for cmd in res:
                 cmd = cmd + "\n"
@@ -76,7 +76,7 @@ class BackUp:
             ff.close()
             
         if DEBUG:
-            ff = file(filename, 'r')
+            ff = open(filename, 'r')
             try:
                 cmds = ff.readlines()
             finally:
@@ -87,7 +87,7 @@ class BackUp:
     #-----------------------------------------------------------------------
     def restoreFromFile(self, dir, filename):
         """Restores content of a directory dir from a file"""
-        ff = file(filename, 'r')
+        ff = open(filename, 'r')
         try:
             cmds = ff.readlines()
         finally:

@@ -80,12 +80,12 @@ def createPackedInputSandbox(sandbox_files, inws, name):
 
 #
 ##   Future release with tarball module 
-                
-    tf = tarfile.open(tgzfile, "w:gz")
+    this_tarfile = open( tgzfile, 'w' )
+    tf = tarfile.open( name=tgzfile, fileobj=this_tarfile, mode="w:gz")
     tf.dereference = True  #  --not needed in Windows
 
     for f in sandbox_files:
-
+        fileobj = None
         try:
             contents = f.getContents()   # is it FileBuffer?
             #print "Getting FileBuffer Contents"   
@@ -96,7 +96,7 @@ def createPackedInputSandbox(sandbox_files, inws, name):
             try:
                 fileobj = open(f.name)
             except:
-                raise SandboxError("File %s does not exist." % f.name) 
+                raise SandboxError("File %s does not exist." % f.name)
             tinfo = tf.gettarinfo(f.name, os.path.join(f.subdir, os.path.basename(f.name)))
 
         else:                          # FileBuffer
@@ -120,7 +120,13 @@ def createPackedInputSandbox(sandbox_files, inws, name):
         tf.addfile(tinfo, fileobj)
         fileobj.close()
 
+    #tf.list()
     tf.close()
+    this_tarfile.close()
+
+    #this_tarfile_test = tarfile.open( tgzfile, 'r' )
+    #this_tarfile_test.list()
+    #this_tarfile_test.close()
 
     return [tgzfile]
 

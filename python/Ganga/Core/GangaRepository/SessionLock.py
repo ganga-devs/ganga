@@ -604,7 +604,7 @@ class SessionLockManager(object):
     def check(self):
         self.global_lock_acquire()
         try:
-            f = file(self.cntfn)
+            f = open(self.cntfn)
             newcount = int(f.readline())
             f.close()
             assert newcount >= self.count
@@ -619,7 +619,7 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH) # ONLY NFS
-                    sf_file = file(sf)
+                    sf_file = open(sf)
                     names = pickle.load(sf_file)
                     sf_file.close()
                     if not self.afs and fd > 0:
@@ -652,7 +652,7 @@ class SessionLockManager(object):
                     if not self.afs:
                         fd = os.open(sf, os.O_RDONLY)
                         fcntl.lockf(fd, fcntl.LOCK_SH) # ONLY NFS
-                    sf_file = file(sf)
+                    sf_file = open(sf)
                     names = pickle.load(sf_file)
                     sf_file.close()
                     if not self.afs and fd > 0:

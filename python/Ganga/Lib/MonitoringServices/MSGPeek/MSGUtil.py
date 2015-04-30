@@ -12,7 +12,7 @@ log = getLogger('MSGErrorLog')
 class LoggerListener(object):
     def __init__(self):
         self.logger = getLogger( '~/MSGLoggerListener')
-        self.f = file( 'Control.log','w')
+        self.f = open( 'Control.log','w')
         self.streaming = {}
         
     def on_error(self, headers, message):

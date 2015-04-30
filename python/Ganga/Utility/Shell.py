@@ -210,7 +210,7 @@ class Shell:
          logger.warning('exit status [%d] of command %s', rc, cmd)
          if mention_outputfile_on_errors:
             logger.warning('full output is in file: %s', soutfile)
-         sout_file = file(soutfile)
+         sout_file = open(soutfile)
          logger.warning('<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
          sout_file.close()
          logger.warning('<end of first %d bytes of output>', BYTES)
@@ -218,7 +218,7 @@ class Shell:
       #FIXME /bin/sh might have also other error messages                                                                                            
       m = None
       if rc != 0:
-         sout_file = file(soutfile)
+         sout_file = open(soutfile)
          m = re.search('command not found\n', sout_file.read())
          sout_file.close()
          if m: logger.warning('command %s not found',cmd)
@@ -253,8 +253,8 @@ class Shell:
          
       try:
          rc = subprocess.call( [ '/bin/sh', '-c', cmd ], env=self.env )
-      except OSError, (num,text):
-         logger.warning( 'Problem with shell command: %s, %s', num,text)
+      except OSError, (num, text):
+         logger.warning( 'Problem with shell command: %s, %s', num, text)
          rc = 255
       return rc
 

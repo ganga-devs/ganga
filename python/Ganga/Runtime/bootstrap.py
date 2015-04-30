@@ -45,27 +45,32 @@ import sys,time
 ### This code can help debugging when files aren't closed correctly and managing I/O
 
 DEBUGFILES = False
+MONITOR_FILES = False
 
-if DEBUGFILES:
+if DEBUGFILES or MONITOR_FILES:
     import __builtin__
     openfiles = {}
     oldfile = __builtin__.file
     class newfile(oldfile):
         def __init__(self, *args):
             self.x = args[0]
-            print "init"
-            print "### OPENING %s ###" % str(self.x)
+            if DEBUGFILES:
+                print "init"
+                print "### OPENING %s ###" % str(self.x)
             oldfile.__init__(self, *args)
             openfiles[self.x] = self
 
         def close(self):
-            print "### CLOSING %s ###" % str(self.x)
+            if DEBUGFILES:
+                print "### CLOSING %s ###" % str(self.x)
             oldfile.close(self)
-            openfiles[ self.x ] = None
+            #openfiles[ self.x ] = None
+            del openfiles[ self.x ]
 
     oldopen = __builtin__.open
     def newopen(*args):
-        print "NewOpen"
+        if DEBUGFILES:
+            print "NewOpen"
         return newfile(*args)
     __builtin__.file = newfile
     __builtin__.open = newopen
@@ -198,7 +203,7 @@ under certain conditions; type license() for details.
 
         def file_opens(f,message):
             try:
-                return file(f)
+                return open(f)
             except IOError,x:
                self.exit(message,x)
 
@@ -213,7 +218,8 @@ under certain conditions; type license() for details.
         if self.options.config_file:
            import Ganga.Utility.files
            self.options.config_file = Ganga.Utility.files.expandfilename(self.options.config_file)
-           file_opens(self.options.config_file,'reading configuration file')
+           open_file = file_opens(self.options.config_file,'reading configuration file')
+           open_file.close()
 
         # we run in the batch mode if a script has been specified and other options (such as -i) do not force it
         if len(self.args) > 0:
@@ -520,7 +526,7 @@ under certain conditions; type license() for details.
         Ganga.Utility.logging.force_global_level(self.options.force_loglevel)
 
         try:
-           cf = file(self.options.config_file)
+           cf = open(self.options.config_file)
            first_line = cf.readline()
            import re
            r = re.compile(r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
@@ -539,6 +545,8 @@ under certain conditions; type license() for details.
                        this_logger.error('try -g option to create valid ~/.gangarc')
         except IOError,x:
            pass # ignore all I/O errors (e.g. file does not exist), this is just an advisory check
+        finally:
+           cf.close()
 
         #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
         #cf = file(self.options.config_file)
@@ -951,7 +959,9 @@ default_backends = LCG
 
         def license():
             'Print the full license (GPL)'
-            print file(os.path.join(_gangaPythonPath,'..','LICENSE_GPL')).read()
+            printable = open(os.path.join(_gangaPythonPath,'..','LICENSE_GPL'))
+            print printable.read()
+            printable.close()
            
         exportToGPI('license',license,'Functions')
         # bootstrap credentials

@@ -124,7 +124,7 @@ def _ganga_run_exitfuncs():
     Coordinator.servicesEnabled = False
 
     from Ganga.Runtime import bootstrap
-    if bootstrap.DEBUGFILES:
+    if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
         bootstrap.printOpenFiles()
 
 def install():

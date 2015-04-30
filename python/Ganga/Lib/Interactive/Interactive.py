@@ -82,9 +82,10 @@ class Interactive( IBackend ):
             match = regexp.search( statString )
             if match:
                value = int( match.group( "value" ) )
-            statfile.close()
          except IOError:
             pass
+         finally:
+             statfile.close()
       return value
 
    def submit( self, jobconfig, master_input_sandbox ):
@@ -226,6 +227,8 @@ class Interactive( IBackend ):
          "   print 'ERROR: Unable to write status file: %s' % statfileName",
          "   print 'ERROR: ',x",
          "   raise",
+         "finally:",
+         "   statfile.close()",
          "",
          "idfileName = os.path.join( '%s', '__id__' )" % outDir,
          "try:",
@@ -234,7 +237,8 @@ class Interactive( IBackend ):
          "   print 'ERROR: Unable to write id file: %s' % idfileName",
          "   print 'ERROR: ',x",
          "   raise",
-         "idfile.close()",
+         "finally:",
+         "   idfile.close()",
          "",
          "timeString = time.strftime"\
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",

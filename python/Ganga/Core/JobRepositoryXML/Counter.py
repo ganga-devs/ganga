@@ -10,7 +10,7 @@ class Counter:
         #self.lockfn = os.path.join(self.dir,'lock') #FIXME: locking support
 
         try:
-            pickle_file = file(self.cntfn)
+            pickle_file = open(self.cntfn)
             self.cnt = pickle.load(pickle_file)
             pickle_file.close()
         except IOError,x:
@@ -24,13 +24,13 @@ class Counter:
         """Generate n new job ids"""
         ids = range(self.cnt,self.cnt+n)
         self.cnt += n
-        count_file = file(self.cntfn,'w')
+        count_file = open(self.cntfn,'w')
         pickle.dump(self.cnt, count_file)
         count_file.close()
         return ids
 
     def subtract(self):
         self.cnt -= 1
-        count_file = file(self.cntfn,'w')
+        count_file = open(self.cntfn,'w')
         pickle.dump(self.cnt, count_file)
         count_file.close()

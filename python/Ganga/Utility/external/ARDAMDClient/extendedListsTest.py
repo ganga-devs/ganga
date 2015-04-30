@@ -69,7 +69,7 @@ def runTest(NTEST, LEN, CACHE, rootDir, output_dir):
             pass
     nn = tempfile.mktemp(suffix = '.test')
     nn = os.path.join(output_dir, os.path.basename(nn))
-    ff = file(nn, 'w')
+    ff = open(nn, 'w')
     lock = RLock(os.path.join(rootDir, 'Lock'))
     try:           
         t1, m1 = _startText(ff, 'registering %d jobs...' % NTEST)

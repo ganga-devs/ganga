@@ -391,7 +391,7 @@ class GangaRepositoryLocal(GangaRepository):
             if load_backup:
                 fn = fn+"~"
             try:
-                fobj = file(fn,"r")
+                fobj = open(fn,"r")
             except IOError, x:
                 if x.errno == errno.ENOENT: 
                     # remove index so we do not continue working with wrong information
@@ -426,7 +426,7 @@ class GangaRepositoryLocal(GangaRepository):
                             if load_backup:
                                 sfn = sfn+"~"
                             try:
-                                sfobj = file(sfn,"r")
+                                sfobj = open(sfn,"r")
                             except IOError, x:
                                 if x.errno == errno.ENOENT: 
                                     raise IOError("Subobject %i.%i not found: %s" % (id,i,x))

@@ -9,7 +9,7 @@ def hostname():
   try:
     return socket.gethostbyaddr(socket.gethostname())[0]
     # [bugfix #20333]: 
-    # while working offline and with an improper /etc/hosts configuration	
+    # while working offline and with an improper /etc/hosts configuration
     # the localhost cannot be resolved 
   except:
     return 'localhost'
@@ -45,7 +45,7 @@ def main():
     makedirs(jobdir)
     fn = os.path.join(jobdir,name)
     print 'job %s received %s saved in %s'%(id,name,fn)
-    f = file(fn,'w')
+    f = open(fn,'w')
     f.write(x)
     f.close()
     return 1

@@ -40,7 +40,7 @@ def shell_cmd(cmd,soutfile=None,allowed_exit=[0]):
         soutfile = tempfile.mktemp()
         
     # FIXME: garbbing stdout is done by shell magic and probably should be implemented in python directly
-    cmd = "%s > %s 2>&1" % (cmd,soutfile)
+    cmd = "%s > %s 2>&1" % (cmd, soutfile)
 
     logger.debug("running shell command: %s",cmd)
     rc = os.system(cmd)  
@@ -48,7 +48,7 @@ def shell_cmd(cmd,soutfile=None,allowed_exit=[0]):
     if not rc in allowed_exit:
         logger.debug('exit status [%d] of command %s',rc,cmd)
         logger.debug('full output is in file: %s',soutfile)
-        sout_file =  file(soutfile)
+        sout_file =  open(soutfile)
         logger.debug('<first 255 bytes of output>\n%s',sout_file.read(255))
         sout_file.close()
         logger.debug('<end of first 255 bytes of output>')
@@ -58,7 +58,7 @@ def shell_cmd(cmd,soutfile=None,allowed_exit=[0]):
     if rc != 0:
         logger.debug('non-zero [%d] exit status of command %s ',rc,cmd)
         import re
-        sout_file = file(soutfile)
+        sout_file = open(soutfile)
         m = re.compile(r"command not found$", re.M).search(sout_file.read())
         sout_file.close()
 
@@ -122,7 +122,7 @@ class Batch(IBackend):
         rc,soutfile,ef = shell_cmd(cmd,soutfile,allowed_exit)
         if not ef:
             logger.warning('Problem submitting batch job. Maybe your chosen batch system is not available or you have configured it wrongly')
-            sout_file = file(soutfile)
+            sout_file = open(soutfile)
             logger.warning( sout_file.read())
             raiseable = BackendError(klass._name,'It seems that %s commands are not installed properly:%s'%(klass._name, sout_file.readline()))
             sout_file.close()
@@ -188,7 +188,9 @@ class Batch(IBackend):
         command_str=self.config['submit_str'] % (inw.getPath(),queue_option,stderr_option,stdout_option,script_cmd)
         self.command_string = command_str
         rc,soutfile = self.command(command_str)
-        sout = file(soutfile).read()
+        sout_file = open(soutfile)
+        sout = sout_file.read()
+        sout_file.close()
         import re
         m = re.compile(self.config['submit_res_pattern'], re.M).search(sout)
         if m is None:
@@ -270,7 +272,7 @@ class Batch(IBackend):
         rc,soutfile = self.command(command_str)
         logger.debug('from command get rc: "%d"',rc)
         if rc == 0:
-            sout_file = file(soutfile)
+            sout_file = open(soutfile)
             sout = sout_file.read()
             sout_file.close()
             import re
@@ -292,7 +294,7 @@ class Batch(IBackend):
                 except IndexError:
                     logger.info('could not match the output and extract the Batch queue name')
         else:
-            sout_file = file(soutfile)
+            sout_file = open(soutfile)
             logger.warning(sout_file.read())
             sout_file.close()
 
@@ -302,7 +304,7 @@ class Batch(IBackend):
     def kill(self):
         rc,soutfile = self.command(self.config['kill_str'] % (self.id))
 
-        sout_file = file(soutfile)
+        sout_file = open(soutfile)
         sout = sout_file.read()
         sout_file.close()
         logger.debug('while killing job %s: rc = %d',self.getJobObject().getFQID('.'),rc)
@@ -355,6 +357,7 @@ class Batch(IBackend):
                     return None
                 return t
 
+        f.close()
         logger.debug("Reached the end of getStateTime('%s'). Returning None.", status)
         return None
 
@@ -422,7 +425,7 @@ def flush_file(f):
 
 def open_file(fname):
   try:
-    filehandle=file(fname,'w')
+    filehandle=open(fname,'w')
   except IOError,x:
     print 'ERROR: not able to write a status file: ', fname
     print 'ERROR: ',x
@@ -484,7 +487,7 @@ print >>sys.stderr,"--- GANGA APPLICATION ERROR BEGIN ---"
 flush_file(sys.stdout)
 flush_file(sys.stderr)
 
-sys.stdout=file('./__syslog__','w')
+sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
 ###MONITORING_SERVICE###
@@ -624,11 +627,13 @@ sys.exit(result)
 
             import re
             try:
-                statusfile=file(f)
+                statusfile=open(f)
                 stat = statusfile.read()
             except IOError,x:
                 logger.debug('Problem reading status file: %s (%s)',f,str(x))
                 return pid,queue,actualCE,exitcode
+            finally:
+                statusfile.close()
 
             mpid = repid.search(stat)
             if mpid:

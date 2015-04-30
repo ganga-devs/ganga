@@ -143,6 +143,7 @@ class Localhost(IBackend):
                     return None 
                 return t
 
+        f.close()
         logger.debug("Reached the end of getStateTime('%s'). Returning None.", status)
         return None 
 
@@ -226,7 +227,7 @@ workdir = ###WORKDIR###
 statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
 try:
-  statusfile=file(statusfilename,'w')
+  statusfile=open(statusfilename,'w')
 except IOError,x:
   print 'ERROR: not able to write a status file: ', statusfilename
   print 'ERROR: ',x
@@ -272,10 +273,10 @@ fullenvironment = os.environ.copy()
 for key,value in environment.iteritems():
     fullenvironment[key] = value
 
-outfile=file('stdout','w')
-errorfile=file('stderr','w')
+outfile=open('stdout','w')
+errorfile=open('stderr','w')
 
-sys.stdout=file('./__syslog__','w')
+sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
 ###MONITORING_SERVICE###
@@ -289,7 +290,8 @@ import time #datetime #disabled for python2.2 compatiblity
 try:
  child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
 except OSError,x:
- file('tt','w').close()
+ errfile = open( 'tt', 'w' )
+ errfile.close()
  print >> statusfile, 'EXITCODE: %d'%-9999
  print >> statusfile, 'FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y') #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
  print >> statusfile, 'PROBLEM STARTING THE APPLICATION SCRIPT: %s %s'%(appscriptpath,str(x))
@@ -341,6 +343,7 @@ errorfile.close()
 line="EXITCODE: " + repr(result) + os.linesep
 line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
 statusfile.writelines(line)
+statusfile.close()
 sys.exit()
 
 """
@@ -427,8 +430,9 @@ sys.exit()
 
       def get_exit_code(f):
           import re
-          statusfile=file(f)
+          statusfile=open(f)
           stat = statusfile.read()
+          statusfile.close()
           m = re.compile(r'^EXITCODE: (?P<exitcode>-?\d*)',re.M).search(stat)
 
           if m is None:
@@ -438,8 +442,9 @@ sys.exit()
 
       def get_pid(f):
           import re
-          statusfile=file(f)
+          statusfile=open(f)
           stat = statusfile.read()
+          statusfile.close()
           m = re.compile(r'^PID: (?P<pid>\d*)',re.M).search(stat)
 
           if m is None:
@@ -462,7 +467,7 @@ sys.exit()
                     #logger.info('Local job %d status changed to running, pid=%d',j.id,pid)
                     j.updateStatus('running') # bugfix: 12194
             exitcode = get_exit_code(statusfile)
-            status_file = file(statusfile)
+            status_file = open(statusfile)
             logger.debug('status file: %s %s',statusfile, status_file.read())
             status_file.close()
           except IOError,x:

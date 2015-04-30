@@ -6,7 +6,7 @@ from time import sleep
 class PeekListener(stomp.ConnectionListener) :
     def __init__(self, fn):
 #        self.f = file(fn, 'a')
-        self.f = file(fn, 'a')
+        self.f = open(fn, 'a')
         self.name = fn
         self.finished = False
 

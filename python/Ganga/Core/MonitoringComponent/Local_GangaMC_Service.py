@@ -693,7 +693,7 @@ class JobRegistry_Monitor( GangaThread ):
         for i in fixed_ids:
             try:
                 j = self.registry(i)
-                if j.status in [ 'submitted', 'running', 'submitting' ]:
+                if j.status in [ 'submitted', 'running' ] or j.master and j.status in [ 'submitting' ]:
                     j._getWriteAccess()
                     bn = j.backend._name
                     active_backends.setdefault( bn, [] )
@@ -713,7 +713,11 @@ class JobRegistry_Monitor( GangaThread ):
             lock.acquire() # timeout mechanism may have acquired the lock to impose delay.
             try:
                 log.debug( "[Update Thread %s] Lock acquired for %s" % ( currentThread, backendObj._name ) )
-                jobList_fromset = IList(filter( lambda x:x.status in [ 'submitted', 'running', 'submitting' ], jobListSet ),self.stopIter)                
+                alljobList_fromset = IList(filter( lambda x:x.status in [ 'submitted', 'running' ], jobListSet ),self.stopIter)
+                masterJobList_fromset = IList(filter( lambda x:x.master and x.status in [ 'submitting' ], jobListSet ),self.stopIter)
+                jobList_fromset = IList()
+                for i in alljobList_fromset: jobList_fromset.append( i )
+                for i in masterJobList_fromset: jobList_fromset.append( i )
                 updateDict_ts.clearEntry( backendObj._name )
                 try:
                     log.debug( "[Update Thread %s] Updating %s with %s." % ( currentThread, backendObj._name, [x.id for x in jobList_fromset ] ) )

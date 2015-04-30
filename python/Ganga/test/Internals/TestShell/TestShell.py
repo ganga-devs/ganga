@@ -7,14 +7,14 @@ s = Ganga.Utility.Shell.Shell()
 
 config.Logging['Ganga.Utility.Shell'] = "DEBUG"
 
-def command(cmd,timeout=None):
+def command(cmd, timeout=None):
     print 
     print '*'*30
     print 'running command',cmd
     print 'timeout',timeout
 
     t0 = time.time()
-    r = s.cmd(cmd,capture_stderr=True,timeout=timeout)
+    r = s.cmd(cmd, capture_stderr=True, timeout=timeout)
     t1 = time.time()
 
     print 'command execution results'
@@ -22,7 +22,9 @@ def command(cmd,timeout=None):
     print 'duration:',t1-t0
     print 'exit status:',r[0]
     print 'output file:',r[1]
-    print 'output:',file(r[1]).read()
+    output_file = open(r[1])
+    print 'output:',output_file.read()
+    output_file.close()
     print 'm',r[2]
 
 
