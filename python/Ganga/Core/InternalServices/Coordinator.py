@@ -176,6 +176,11 @@ def disableInternalServices( shutdown = False ):
         log.info( "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner" )
         log.info( " ... Please be patient! " )
 
+    #flush the registries
+    log.debug( "Coordinator Shutting Down Repository_runtime" )
+    from Ganga.Runtime import Repository_runtime
+    Repository_runtime.shutdown()
+
     global servicesEnabled
 
     if not servicesEnabled:
@@ -199,9 +204,9 @@ def disableInternalServices( shutdown = False ):
         log.info( "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt" )
 
     #flush the registries
-    log.debug( "Coordinator Shutting Down Repository_runtime" )
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.shutdown()
+    #log.debug( "Coordinator Shutting Down Repository_runtime" )
+    #from Ganga.Runtime import Repository_runtime
+    #Repository_runtime.shutdown()
 
     #this will disable any interactions with the registries (implicitly with the GPI)
     servicesEnabled = False    

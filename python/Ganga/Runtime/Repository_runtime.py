@@ -131,5 +131,7 @@ def shutdown():
             logger.error( "Trying to Shutdown cleanly regardless" )
             pass
 
-    from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles
+    from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
+    removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
+

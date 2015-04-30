@@ -123,6 +123,10 @@ def _ganga_run_exitfuncs():
     from Ganga.Core.InternalServices import Coordinator
     Coordinator.servicesEnabled = False
 
+    from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
+    removeGlobalSessionFileHandlers()
+    removeGlobalSessionFiles()
+
     from Ganga.Runtime import bootstrap
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
         bootstrap.printOpenFiles()

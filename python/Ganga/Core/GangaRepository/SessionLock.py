@@ -45,18 +45,32 @@ session_expiration_timeout = 20 # seconds
 session_lock_refresher = None
 
 sessionFiles = []
+sessionFileHandlers = []
 
 def registerGlobalSessionFile( thisSessionFile ):
     global sessionFiles
     if thisSessionFile not in sessionFiles:
         sessionFiles.append( thisSessionFile )
 
+def registerGlobalSessionFileHandler( thisFileHandler ):
+    global sessionFileHandlers
+    if thisFileHandler not in sessionFileHandlers:
+        sessionFileHandlers.append( thisFileHandler )
+
 def removeGlobalSessionFiles():
     global sessionFiles
     for i in sessionFiles:
         if os.path.isfile( i ):
-            #logger.debug( "Removing: " + str(i) )
+            logger.debug( "Removing: " + str(i) )
             os.unlink( i )
+
+def removeGlobalSessionFileHandlers():
+    global sessionFileHandlers
+    for i in sessionFileHandlers:
+        try:
+            i.close()
+        except:
+            pass
 
 def getGlobalSessionFiles():
     global sessionFiles
@@ -354,6 +368,8 @@ class SessionLockManager(object):
                 lock = open(self.lockfn, "w")
                 lock.close() # create file (does not interfere with existing sessions)
             self.lockfd = self.delayopen_global()
+            registerGlobalSessionFile( self.lockfn )
+            registerGlobalSessionFileHandler( self.lockfd )
         except IOError, x:
             raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
         except OSError, x:
