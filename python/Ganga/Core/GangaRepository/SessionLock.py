@@ -68,6 +68,7 @@ def removeGlobalSessionFileHandlers():
     global sessionFileHandlers
     for i in sessionFileHandlers:
         try:
+            fcntl.lockf( i, lock_mod )
             i.close()
         except:
             pass
@@ -379,7 +380,8 @@ class SessionLockManager(object):
         i = 0
         while i < 35:
             try:
-                fcntl.lockf( self.lockfd, lock_mod )
+                if not self.afs:
+                    fcntl.lockf( self.lockfd, lock_mod )
                 break
             except IOError, x:
                 time.sleep(1)
