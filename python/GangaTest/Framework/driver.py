@@ -331,6 +331,29 @@ def cleanup():
         if hasattr(templates,'clean'):
                 templates.clean(confirm=True, force=True)
 
+        try:
+            lock_files = Ganga.Core.GangaRepository.SessionLock.getGlobalSessionFiles()
+
+            for i in lock_files:
+                if i.endswith('global_lock'):
+                    import os.path
+                    lockfile_path = os.path.dirname( i )
+                    break
+
+            sessions = os.listdir(lockfile_path)
+
+            for i in sessions:
+                j = os.path.join( lockfile_path, i )
+                if j not in lock_files:
+                    try:
+                        os.unlink( j )
+                    except:
+                        pass
+
+        except:
+            pass
+
+
 def read_file(filename):
         f = open(filename)
         try: return "%s\n"%f.read()

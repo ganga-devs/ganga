@@ -431,7 +431,7 @@ class SessionLockManager(object):
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 try:
-                    return pickle.loads(os.read(fd, 104857600)) # read up to 100 MB (that is more than enough...)
+                    return pickle.loads(os.read(fd, 1048576))#00)) # read up to 1 MB (that is more than enough...)
                 except Exception, x:
                     logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)."% (fn, x.__class__.__name__, x))
             finally:

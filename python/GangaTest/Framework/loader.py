@@ -428,32 +428,32 @@ def %(method_name)s(self):
            #hard value for timeout (1h)
            script_runner.extend(['-t','3600'])
 
-        try:
-            import Ganga.Core.InternalServices.Coordinator
-            if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                from Ganga.GPI import disableServices
-                disableServices()
-
-            from Ganga.GPI import  reactivate
-            reactivate()
-
-            from Ganga.GPI import jobs, templates
-            for j in jobs: j.remove()
-            for t in templates: t.remove()
-            if hasattr(jobs,'clean'):
-                jobs.clean(confirm=True, force=True)
-            if hasattr(templates,'clean'):
-                templates.clean(confirm=True, force=True)
-
-            from Ganga.GPI import disableServices
-            disableServices()
-
-            # DANGEROUS only use as a last resort to files being kept open
-            #from Ganga.Runtime import bootstrap
-            #bootstrap.safeCloseOpenFiles()
-
-        except:
-            pass
+        #try:
+        #    import Ganga.Core.InternalServices.Coordinator
+        #    if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
+        #        from Ganga.GPI import disableServices
+        #        disableServices()
+        #
+        #    from Ganga.GPI import  reactivate
+        #    reactivate()
+        #
+        #    from Ganga.GPI import jobs, templates
+        #    for j in jobs: j.remove()
+        #    for t in templates: t.remove()
+        #    if hasattr(jobs,'clean'):
+        #        jobs.clean(confirm=True, force=True)
+        #    if hasattr(templates,'clean'):
+        #        templates.clean(confirm=True, force=True)
+        #
+        #    from Ganga.GPI import disableServices
+        #    disableServices()
+        #
+        #    # DANGEROUS only use as a last resort to files being kept open
+        #    #from Ganga.Runtime import bootstrap
+        #    #bootstrap.safeCloseOpenFiles()
+        #
+        #except:
+        #    pass
 
         script_runner.append('{ ' + cmd + '; }')
         output = open(output_path,out_mode)
@@ -479,28 +479,28 @@ def %(method_name)s(self):
         out=text[:tb_index]
         err=text[tb_index:]
 
-        try:
-            import Ganga.Core.InternalServices.Coordinator
-            if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
-                from Ganga.GPI import disableServices
-                disableServices()
-
-            from Ganga.GPI import reactivate
-            reactivate()
-
-            from Ganga.GPI import jobs, templates
-            for j in jobs: j.remove()
-            for t in templates: t.remove()
-            if hasattr(jobs,'clean'):
-                jobs.clean(confirm=True, force=True)
-            if hasattr(templates,'clean'):
-                templates.clean(confirm=True, force=True)
-
-            from Ganga.GPI import disableServices
-            disableServices()
-
-        except:
-            pass
+        #try:
+        #    import Ganga.Core.InternalServices.Coordinator
+        #    if Ganga.Core.InternalServices.Coordinator.servicesEnabled:
+        #        from Ganga.GPI import disableServices
+        #        disableServices()
+        #
+        #    from Ganga.GPI import reactivate
+        #    reactivate()
+        #
+        #    from Ganga.GPI import jobs, templates
+        #    for j in jobs: j.remove()
+        #    for t in templates: t.remove()
+        #    if hasattr(jobs,'clean'):
+        #        jobs.clean(confirm=True, force=True)
+        #    if hasattr(templates,'clean'):
+        #        templates.clean(confirm=True, force=True)
+        #
+        #    from Ganga.GPI import disableServices
+        #    disableServices()
+        #
+        #except:
+        #    pass
 
         return sts,out,err
         
