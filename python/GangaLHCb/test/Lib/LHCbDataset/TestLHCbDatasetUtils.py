@@ -14,12 +14,14 @@ if doConfig:
 class TestLHCbDatasetUtils(GangaGPITestCase):
 
     def test_isLFN(self):
+        from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
         LogicalFile('test')
         isLFN(LogicalFile('test'))
         assert isLFN(LogicalFile('test')), 'should be true'
         assert not isLFN(PhysicalFile('test')), 'should be false'
 
-    def test_isPFN(self):        
+    def test_isPFN(self):
+        from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
         assert isPFN(PhysicalFile('test')), 'should be true'
         assert not isPFN(LogicalFile('test')), 'should be false'
 

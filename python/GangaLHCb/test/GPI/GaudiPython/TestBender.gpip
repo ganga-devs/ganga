@@ -33,6 +33,7 @@ class TestBender(GangaGPITestCase):
         return LocalJob(j)
 
     def testDirac(self):
+        from GangaLHCb.test import *
         global module
         j = Job(application=Bender(), backend=Dirac())
         j.application.module = module

@@ -32,6 +32,7 @@ class TestGaudiPython(GangaGPITestCase):
                'stdout should contain string: ' + executionstring
 
     def testDirac(self):
+        from GangaLHCb.test import *
         gp = GaudiPython(platform=getDiracAppPlatform())
         gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Dirac())
@@ -106,3 +107,4 @@ class TestGaudiPython(GangaGPITestCase):
             print 'file =', open(fname).read()
             assert file_contains(fname,executionstring),\
                    'stdout should contain string: ' + executionstring
+

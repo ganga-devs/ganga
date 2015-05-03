@@ -13,7 +13,8 @@ if doConfig:
 class TestPhysicalFile(GangaGPITestCase):
 
     def test_full_expand_filename(self):
-        import os
+        from GangaLHCb.Lib.Files.PhysicalFile import *
+        import os.path
         pwd = os.path.abspath('.')
         name = 'test.txt'
         full_name = pwd + '/' + name

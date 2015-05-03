@@ -60,6 +60,7 @@ class TestDaVinci(GangaGPITestCase):
         #assert(os.path.exists(os.path.join(j.outputdir,'DVHistos.root')))
 
     def test_outputfiles_submit(self):
+        from GangaLHCb.test import *
         j = Job(application=DaVinci(),backend=Dirac())
         j.application.platform = getDiracAppPlatform()
         j.outputfiles = [LocalFile('Something.root')]
@@ -70,3 +71,4 @@ class TestDaVinci(GangaGPITestCase):
         dv = DaVinci()
         assert dv.cmt('version')==0, 'CMT command that should succeed, report non-zero exit code.'
         assert dv.cmt('ThisIsNotValid')!=0, 'CMT command that should fail, report zero exit code.'
+
