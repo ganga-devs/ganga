@@ -346,6 +346,10 @@ def cleanup():
                 j = os.path.join( lockfile_path, i )
                 if j not in lock_files:
                     try:
+                        os.close( j )
+                    except:
+                        pass
+                    try:
                         os.unlink( j )
                     except:
                         pass
