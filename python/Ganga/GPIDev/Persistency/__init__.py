@@ -81,8 +81,6 @@ def stripped_export( item = None, filename = "", mode = "w" ):
       logger.error( "Unable to open file '%s' for writing" % filename )
       logger.error( "No object saved" )
       return returnValue
-   finally:
-      outFile.close()
 
    from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
    if ( type( item ) is types.ListType ):

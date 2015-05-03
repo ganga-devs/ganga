@@ -31,6 +31,8 @@ class TestSplitterRepository(MultipassTest):
             args.append(j.application.args[:])
         j.splitter = ArgSplitter(args = args)
         pickle.dump(str(j.id),open(self.fileName,'w'))
+        disableServices()
+        reactivate()
 
     def pass2(self):
         """ Second pass of this multipass test"""
@@ -47,8 +49,9 @@ class TestSplitterRepository(MultipassTest):
             args.append(j.application.args[:])
         j2.splitter = GenericSplitter(values = args)
         pickle.dump(str(j2.id),open(self.fileName,'w'))
+        disableServices()
+        reactivate()
 
-        
     def pass3(self):
         
         id = int(pickle.load(open(self.fileName)))

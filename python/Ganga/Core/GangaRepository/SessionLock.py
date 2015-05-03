@@ -649,7 +649,8 @@ class SessionLockManager(object):
                 if not len(names & prevnames) == 0:
                     print "Double-locked stuff:", names & prevnames
                     assert False
-                prevnames.union_update(names)
+                #prevnames.union_update(names) Should be alias to update but not in some versions of python
+                prevnames.update(names)
 
         finally:
             self.global_lock_release()

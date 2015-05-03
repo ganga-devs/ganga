@@ -32,7 +32,7 @@ class CopySplitter(ISplitter):
             j.application = job.application
             j.backend = job.backend
 
-            import Ganga.Utility.Config
+            from Ganga.Utility.Config import getConfig
             if not getConfig('Output')['ForbidLegacyInput']:
                 j.inputsandbox = job.inputsandbox[:]
             else:

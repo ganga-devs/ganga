@@ -39,7 +39,7 @@ class TestStructure(GangaGPITestCase):
 
             j.application.exe = 'sh'
             j.application.args = [File(fileName), str(j.id),str(j.id*10)]
-            j.outputfiles = [LocalFIle('out.txt'),LocalFIle('subdir/out.txt')]
+            j.outputfiles = [LocalFile('out.txt'),LocalFile('subdir/out.txt')]
             self.jobslice.append(j)
 
     def runJobSlice(self):

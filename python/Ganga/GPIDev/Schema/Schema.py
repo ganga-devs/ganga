@@ -76,6 +76,7 @@ class Schema:
             return self.datadict[name]
         except Exception, x:
             logger.error( "Ganga Cannot find: %s in Object: %s" % ( name, self.name ) )
+            from Ganga.Core.exceptions import GangaAttributeError
             raise GangaAttributeError( x )
     
     category = property(lambda self: self._pluginclass._category)

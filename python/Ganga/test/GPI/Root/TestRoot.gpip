@@ -285,7 +285,7 @@ class _TestRootBase(object):
                 if not getConfig('Output')['ForbidLegacyInput']:
                     self.j.inputsandbox = [mainCpp,mainH,makeFile]
                 else:
-                    self.j.inputfiles = [ LocalFile(mainCPP), LocalFile(mainH), LocalFile(makeFile) ]
+                    self.j.inputfiles = [ LocalFile(mainCpp), LocalFile(mainH), LocalFile(makeFile) ]
                 self.j.outputfiles = [LocalFile('output.txt')]
 
         return self._submitJob(r,JobTest(self))

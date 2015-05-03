@@ -53,6 +53,8 @@ class TestRepository(MultipassTest):
             
         assert job_seen, 'Job must be in the repository'
         pickle.dump(str(j.id),open(self.fileName,'w'))
+        disableServices()
+        reactivate()
 
     def pass2(self):
         """ Second pass of this multipass test"""
@@ -72,7 +74,9 @@ class TestRepository(MultipassTest):
         print "extended!"
         
         pickle.dump(((j.id),len(j.application.gList)),open(self.fileName,'w'))
-        
+        disableServices()
+        reactivate()
+
     def pass3(self):
         
         (id,list_len) = pickle.load(open(self.fileName))
@@ -84,7 +88,9 @@ class TestRepository(MultipassTest):
         #make sure mutable methods are committed
         j.application.gList.append(self._makeRandomString())
         pickle.dump(((j.id),len(j.application.gList)),open(self.fileName,'w'))
-        
+        disableServices()
+        reactivate()
+
     def pass4(self):
         
         (id,list_len) = pickle.load(open(self.fileName))

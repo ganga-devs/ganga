@@ -157,13 +157,19 @@ class TestRepo(MultipassTest):
         t = TestRepository(1)
         while not t.isReadyForCheck():
             pass
-        return t.checkTest()
+        returnable = t.checkTest()
+        disableServices()
+        reactivate()
+        return returnable
 
     def pass2(self):
         t = TestRepository(1)
         while not t.isReadyForCheck():
             pass
-        return t.checkTest()
+        returnable = t.checkTest()
+        disableServices()
+        reactivate()
+        return returnable
 
 class TestRepository(ICheckTest):
 
@@ -194,3 +200,4 @@ class TestRepository(ICheckTest):
 
     def cleanup(self):
         pass
+

@@ -13,6 +13,8 @@ class RepositorySplitting(MultipassTest):
         while not t.isReadyForCheck():
             pass
         self.id = t.checkTest()
+        disableServices()
+        reactivate()
 
     def pass2(self):
         from Ganga.GPI import disableServices, reactivate
@@ -21,7 +23,10 @@ class RepositorySplitting(MultipassTest):
         t = TestReg2(self.id)
         while not t.isReadyForCheck():
             pass
-        return t.checkTest()
+        returnable = t.checkTest()
+        disableServices()
+        reactivate()
+        return returnable
 
     def pass3(self):
         from Ganga.GPI import disableServices, reactivate
@@ -30,7 +35,10 @@ class RepositorySplitting(MultipassTest):
         t = TestReg3(self.id)
         while not t.isReadyForCheck():
             pass
-        return t.checkTest()
+        returnable = t.checkTest()
+        disableServices()
+        reactivate()
+        return returnable
 
 LEN = 10
 

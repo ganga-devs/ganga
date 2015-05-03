@@ -38,6 +38,9 @@ class BackendApplicationMatrix(MultipassTest):
             except Exception,e:
                 print e
 
+        disableServices()
+        reactivate()
+
         return {'submitted':success,'submission_failed':failed}                     
                         
     def pass2(self):
