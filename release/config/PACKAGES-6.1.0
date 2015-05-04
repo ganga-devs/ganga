@@ -13,7 +13,7 @@ ganga/python/GangaDirac                                                GangaDira
 
 #alex/ulrik
 ganga/python/GangaGaudi                                                GangaGaudi-01-40
-ganga/python/GangaLHCb                                                 GangaLHCb-24-87
+ganga/python/GangaLHCb                                                 GangaLHCb-24-88
 
 #johannes
 ganga/python/GangaPanda                                                GangaPanda-26-25
@@ -30,6 +30,6 @@ ganga/python/GangaSNOplus                                              GangaSNOp
 ganga/python/GangaService                                              GangaService-1-8
 
 #ulrik
-ganga/python/GangaTest                                                 GangaTest-30-54
+ganga/python/GangaTest                                                 GangaTest-30-55
 ganga/python/GangaTutorial                                             GangaTutorial-20-5
 
