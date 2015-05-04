@@ -1,4 +1,45 @@
 **************************************************************************************************************
-6.1.0 (2015/5/3)
+6.1.0 (2015/5/4)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* Ganga 6.1
+* This is the first release of Ganga to make use of the inputfiles Job attribute in Core
+*   This replaces the inputsandbox field for jobs
+* There is a new dataset object for handling inputdata and splitting
+* Queues and Tasks have now been merged into Core and bring several improvements to job management
+* Ganga 6.0 jobs are forwards compatible with 6.1. 6.1 jobs may only be readable with 6.0
+* New improvements with IGangaFile objects
+* Improvements and optimizations behind the scenes
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* GangaAtlas still uses inputsandbox and does not make use of inputfiles in jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* DiracFile has received a lot of reworking
+*  This now autocompletes the directory, namePattern and LFN fields based upon how it was constructed.
+* Dirac splitter is now compatible with IGangaFile objects
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* This release is the first release to make use of inputfiles
+*   6.0 jobs can be loaded and copied/resubmitted with 6.1
+*   6.1 jobs may not be fully compatible with 6.0
+* This release is using LHCbDirac v8 as a Dirac backend
+* LogicalFile and PhysicalFile have been deprecated and only remain for backwards compatibility
+*   Please avoid using these to construct new jobs
+* The LHCbDataset and Bookkeeping are now compatible with IGangaFile objects
+* There is a new LHCbDirac splitter exposed in the API SplitFilesBySize
+* This release is not cmake compatible
 
 **************************************************************************************************************
