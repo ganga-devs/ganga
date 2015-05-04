@@ -20,14 +20,17 @@ if doConfig:
 
 class TestLHCbTransform(GangaGPITestCase):
      def test_overview(self):
+          from Ganga import GPI
           tr = GPI.LHCbTransform(application=DaVinci(),backend=Local())
           tr.overview()
 
      def test_update(self):
+          from Ganga import GPI
           t = GPI.LHCbTask()
           tr = GPI.LHCbTransform(application=DaVinci(),backend=Dirac())
           t.appendTransform(tr)
           try:
+               bkQueryList = [GPI.BKTestQuery(stripping20up)]
                tr.updateQuery()
                assert false, 'Should have thrown exception if updated with no query'
           except:
