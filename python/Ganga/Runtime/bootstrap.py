@@ -525,6 +525,7 @@ under certain conditions; type license() for details.
 
         Ganga.Utility.logging.force_global_level(self.options.force_loglevel)
 
+        cf = None
         try:
            cf = open(self.options.config_file)
            first_line = cf.readline()
@@ -546,7 +547,8 @@ under certain conditions; type license() for details.
         except IOError,x:
            pass # ignore all I/O errors (e.g. file does not exist), this is just an advisory check
         finally:
-           cf.close()
+           if cf:
+              cf.close()
 
         #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
         #cf = file(self.options.config_file)
