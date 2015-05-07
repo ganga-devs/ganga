@@ -325,7 +325,7 @@ class ATLASLocalDataset(Dataset):
     def __init__(self):
         super(ATLASLocalDataset, self).__init__()
         
-    def get_dataset_from_list(self,list_file):
+    def get_dataset_from_list(self,list_file,no_dir_check = False):
        """Get the dataset files as listed in a text file"""
 
        logger.info('Reading list file %s ...',list_file)
@@ -336,6 +336,11 @@ class ATLASLocalDataset(Dataset):
 
        f = open( list_file )
        for ln in f.readlines():
+
+           # if no_dir_check then just copy the list of files
+           if no_dir_check:
+               self.names.append(ln.strip())
+               continue
 
            # split the directory from the file and call get_dataset
            if os.path.isdir(ln.strip()):

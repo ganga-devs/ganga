@@ -30,6 +30,7 @@ class AtlasTransform(ITransform):
       'subjobs_per_unit'     : SimpleItem(defvalue=0, doc='split into this many subjobs per unit master job (cf DQ2JobSplitter.numsubjobs)', modelist=["int"]),
       'rebroker_fraction'    : SimpleItem(defvalue=0.6, doc='Fraction of failed subjobs to complete subjobs above which the job will be rebrokered', modelist=["float"]),
       'num_dq2_threads'     : SimpleItem(defvalue=1, copyable=1, doc='Number of DQ2 download threads to run simultaneously (use setNumDQ2Threads to modify after submission)', typelist=["int"]),
+      'files_per_unit' : SimpleItem(defvalue=-1, copyable=1, doc='Maximum number of files to assign to each unit from the given local files (i.e. AtlasLocalDataset). If < 1, use all files. At present, does not apply to DQ2Datasets', typelist=["int"]),
     }.items()))
 
    _category = 'transforms'
@@ -113,21 +114,42 @@ class AtlasTransform(ITransform):
 
          elif inds._name == "ATLASLocalDataset":
 
-            # check if this data is being run over
-            ok = False
-            for unit in self.units:
-               if set(unit.inputdata.names) == set(inds.names):
+            # different behaviour depending on files_per_unit
+            if self.files_per_unit < 0:
+               # check if this data is being run over
+               ok = False
+               for unit in self.units:
+                  if set(unit.inputdata.names) == set(inds.names):
+                     ok = True
+                     
+               if not ok:
+                  # new unit required for this dataset
+                  unit = AtlasUnit()
+                  unit.name = "Unit %d" % len(self.units)
+                  self.addUnitToTRF( unit )
+                  unit.inputdata = inds
+            
+            else:
+
+               ok = False
+               curr_data = []
+               for unit in self.units:
+                  curr_data.extend( unit.inputdata.names )
+
+               if set(inds.names) in set( curr_data ) or set(inds.names) == set( curr_data ):
                   ok = True
 
-         if not ok:
-            # new unit required for this dataset
-            unit = AtlasUnit()
-            unit.name = "Unit %d" % len(self.units)
-            self.addUnitToTRF( unit )
-            unit.inputdata = inds
-                                                                           
-            
-               
+               if not ok:
+                  # new unit(s) required for this dataset
+                  num = 0
+                  while num < len( inds.names ):
+                     unit = AtlasUnit()
+                     unit.name = "Unit %d" % len(self.units)
+                     self.addUnitToTRF( unit )
+                     unit.inputdata = inds.clone()
+                     unit.inputdata.names = inds.names[num:num + self.files_per_unit]
+                     num += self.files_per_unit
+
 
    def addUnit(self, outname, dsname, template = None):
       """Create a new unit based on this ds and output"""
