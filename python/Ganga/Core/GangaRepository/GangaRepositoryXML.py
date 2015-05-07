@@ -263,36 +263,48 @@ class GangaRepositoryLocal(GangaRepository):
         return
 
     def _write_master_cache( self ):
-        try:
-            import os.path
-            _master_idx = os.path.join(self.root, 'master.idx')
-            this_master_cache = []
-            for k, v in self.objects.iteritems():
-                cached_list = []
+        import os.path
+        _master_idx = os.path.join(self.root, 'master.idx')
+        this_master_cache = []
+        for k, v in self.objects.iteritems():
+            try:
                 ## Check and write index first
                 obj = self.objects[k]
-                new_index = self.registry.getIndexCache(obj)
-                if new_index != obj._index_cache:
+                new_index = None
+                if obj:
+                    new_index = self.registry.getIndexCache(obj)
+                if new_index and new_index != obj._index_cache:
                     if len(self.lock([k])) != 0:
                         self.index_write(k)
                         self.unlock([k])
-            for k, v in self._cache_load_timestamp.iteritems():
-                cached_list = []
-                cached_list.append( k )
+            except Exception, x:
+                logger.error( "Failed to update index: %s on shutdown" % str(k) )
+                logger.error( "%s" % str(x) )
+                pass
+        for k, v in self._cache_load_timestamp.iteritems():
+            cached_list = []
+            cached_list.append( k )
+            try:
                 fn = self.get_idxfn(k)
                 time = os.stat(fn).st_ctime
-                cached_list.append( time )
-                cached_list.append( self._cached_cat[k] )
-                cached_list.append( self._cached_cls[k] )
-                cached_list.append( self._cached_obj[k] )
-                this_master_cache.append( cached_list )
+            except:
+                time = 0
+            cached_list.append( time )
+            cached_list.append( self._cached_cat[k] )
+            cached_list.append( self._cached_cls[k] )
+            cached_list.append( self._cached_obj[k] )
+            this_master_cache.append( cached_list )
 
+        try:
             of = open( _master_idx, 'w' )
             pickle_to_file( this_master_cache, of )
             of.close()
         except:
-            import os
-            os.unlink( os.path.join(self.root, 'master.idx') )
+            try:
+                import os
+                os.unlink( os.path.join(self.root, 'master.idx') )
+            except:
+                pass
 
         return
 

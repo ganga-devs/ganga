@@ -42,6 +42,8 @@ class JobRegistry(Registry):
         return JobRegistrySliceProxy(slice)
 
     def getIndexCache(self,obj):
+        if not obj._data:
+            return None
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:

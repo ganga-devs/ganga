@@ -61,8 +61,9 @@ def removeGlobalSessionFiles():
     global sessionFiles
     for i in sessionFiles:
         if os.path.isfile( i ):
-            logger.debug( "Removing: " + str(i) )
-            os.unlink( i )
+            if not i.endswith( 'global_lock' ):
+                logger.debug( "Removing: " + str(i) )
+                os.unlink( i )
 
 def removeGlobalSessionFileHandlers():
     global sessionFileHandlers
