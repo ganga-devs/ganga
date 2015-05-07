@@ -70,13 +70,11 @@ class MassStorageFile(IGangaFile):
         """
         Sets the location of output files that were uploaded to mass storage from the WN
         """
-        
         job = self.getJobObject()
 
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
-
         postprocesslocations = open(postprocessLocationsPath, 'r')
 
         def mass_line_processor(line, mass_file):
@@ -84,7 +82,6 @@ class MassStorageFile(IGangaFile):
             pattern = lineParts[1]
             outputPath = lineParts[2]   
             name = os.path.basename(outputPath).strip('.gz')
-
             if regex.search(mass_file.namePattern) is not None:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
@@ -99,7 +96,7 @@ class MassStorageFile(IGangaFile):
                     d.outputfilenameformat = mass_file.outputfilenameformat
                     mass_file.subfiles.append(GPIProxyObjectFactory(d))
                     mass_line_processor(line, d)
-            elif pattern == mass_file.namePattern:
+            elif name == mass_file.namePattern:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
                     logger.error(line[line.find('ERROR')+5:])
