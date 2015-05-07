@@ -123,6 +123,9 @@ class GangaRepositoryLocal(GangaRepository):
         Raise RepositoryError"""
         self._load_timestamp = {}
         self._cache_load_timestamp = {}
+        self._cached_cat = {}
+        self._cached_cls = {}
+        self._cached_obj = {}
         self.known_bad_ids = []
         if "XML" in self.registry.type:
             self.to_file = xml_to_file
@@ -135,13 +138,14 @@ class GangaRepositoryLocal(GangaRepository):
         self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary of errors
-        self.update_index(verbose = True,firstRun=True)
+        self.update_index(verbose = True, firstRun=True)
         logger.debug("GangaRepositoryLocal Finished Startup")
 
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError"""
         logger.debug( "Shutting Down GangaRepositoryLocal" )
+        self._write_master_cache()
         self.sessionlock.shutdown()
 
     def get_fn(self,id):
@@ -156,15 +160,7 @@ class GangaRepositoryLocal(GangaRepository):
             self.saved_idxpaths[id] = os.path.join(self.root, "%ixxx"% int(id*0.001), "%i.index"%id)
         return self.saved_idxpaths[id]
 
-    def get_fn(self,id):
-        """ Returns the file name where the data for this object id is saved"""
-        return os.path.join(self.root,"%ixxx"%(id/1000), "%i"%id, "data")
-
-    def get_idxfn(self,id):
-        """ Returns the file name where the data for this object id is saved"""
-        return os.path.join(self.root,"%ixxx"%(id/1000), "%i.index"%id)
-
-    def index_load(self, id, firstRun=False): 
+    def index_load(self, id ): 
         """ load the index file for this object if necessary
             Loads if never loaded or timestamp changed. Creates object if necessary
             Returns True if this object has been changed, False if not
@@ -173,7 +169,7 @@ class GangaRepositoryLocal(GangaRepository):
             Raise PluginManagerError if the class name is not found"""
         #logger.debug("Loading index %s" % id)
         fn = self.get_idxfn(id)
-        if firstRun or self._cache_load_timestamp.get(id,0) != os.stat(fn).st_ctime: # index timestamp changed
+        if self._cache_load_timestamp.get(id,0) != os.stat(fn).st_ctime: # index timestamp changed
             try:
                 fobj = open(fn,'r')
                 cat, cls, cache = pickle_from_file(fobj)[0]
@@ -185,9 +181,16 @@ class GangaRepositoryLocal(GangaRepository):
                 if obj._data:
                     obj.__dict__["_registry_refresh"] = True
             else:
-                obj = self._make_empty_object_(id,cat,cls)
+                obj = self._make_empty_object_(id, cat, cls)
             obj._index_cache = cache
             self._cache_load_timestamp[id] = os.stat(fn).st_ctime
+            self._cached_cat[id] = cat
+            self._cached_cls[id] = cls
+            self._cached_obj[id] = cache
+            return True
+        elif id not in self.objects:
+            self.objects[id] = self._make_empty_object_(id, self._cached_cat[id], self._cached_cls[id])
+            self.objects[id]._index_cache = self._cached_obj[id]
             return True
         return False
 
@@ -220,7 +223,7 @@ class GangaRepositoryLocal(GangaRepository):
                 listing = os.listdir(os.path.join(self.root,c))
             except OSError:
                 raise RepositoryError(self, "Could not list repository '%s'!" % (os.path.join(self.root,c)))
-            objs.update(dict([(int(l),False) for l in listing if l.isdigit()]))
+            objs.update(dict([(int(l), False) for l in listing if l.isdigit()]))
             for l in listing:
                 if l.endswith(".index") and l[:-6].isdigit():
                     id = int(l[:-6])
@@ -234,6 +237,65 @@ class GangaRepositoryLocal(GangaRepository):
                             pass
         return objs
 
+    def _read_master_cache( self ):
+        try:
+            import os.path
+            _master_idx = os.path.join(self.root, 'master.idx')
+            if os.path.isfile( _master_idx ):
+                input_f = open( _master_idx, 'r' )
+                this_master_cache = pickle_from_file( input_f )[0]
+                input_f.close()
+                for this_cache in this_master_cache:
+                    this_id = this_cache[0]
+                    self._cache_load_timestamp[this_id] = this_cache[1]
+                    self._cached_cat[this_id] = this_cache[2]
+                    self._cached_cls[this_id] = this_cache[3]
+                    self._cached_obj[this_id] = this_cache[4]
+        except:
+            for k, v in self._cache_load_timestamp.iteritems():
+                self._cache_load_timestamp.pop(k)
+            for k, v in self._cached_cat.iteritems():
+                self._cached_cat.pop(k)
+            for k, v in self._cached_cls.iteritems():
+                self._cached_cls.pop(k)
+            for k, v in self._cached_obj.iteritems:
+                self._cached_obj.pop(k)
+        return
+
+    def _write_master_cache( self ):
+        try:
+            import os.path
+            _master_idx = os.path.join(self.root, 'master.idx')
+            this_master_cache = []
+            for k, v in self.objects.iteritems():
+                cached_list = []
+                ## Check and write index first
+                obj = self.objects[k]
+                new_index = self.registry.getIndexCache(obj)
+                if new_index != obj._index_cache:
+                    if len(self.lock([k])) != 0:
+                        self.index_write(k)
+                        self.unlock([k])
+            for k, v in self._cache_load_timestamp.iteritems():
+                cached_list = []
+                cached_list.append( k )
+                fn = self.get_idxfn(k)
+                time = os.stat(fn).st_ctime
+                cached_list.append( time )
+                cached_list.append( self._cached_cat[k] )
+                cached_list.append( self._cached_cls[k] )
+                cached_list.append( self._cached_obj[k] )
+                this_master_cache.append( cached_list )
+
+            of = open( _master_idx, 'w' )
+            pickle_to_file( this_master_cache, of )
+            of.close()
+        except:
+            import os
+            os.unlink( os.path.join(self.root, 'master.idx') )
+
+        return
+
     def update_index(self,id = None,verbose=False,firstRun=True):
         """ Update the list of available objects
         Raise RepositoryError"""
@@ -243,6 +305,8 @@ class GangaRepositoryLocal(GangaRepository):
         changed_ids = []
         deleted_ids = Set(self.objects.keys())
         summary = []
+        if firstRun:
+            self._read_master_cache()
         for id, idx in objs.iteritems():
             deleted_ids.discard(id)
             # Make sure we do not overwrite older jobs if someone deleted the count file
@@ -253,7 +317,7 @@ class GangaRepositoryLocal(GangaRepository):
                 continue
             # Now we treat unlocked IDs
             try:
-                if self.index_load(id,firstRun): # if this succeeds, all is well and we are done
+                if self.index_load(id): # if this succeeds, all is well and we are done
                     changed_ids.append(id)
                 continue
             except IOError, x:
