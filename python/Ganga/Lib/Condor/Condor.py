@@ -70,6 +70,7 @@ from Ganga.Utility.ColourText import Foreground, Effects
 
 import Ganga.Utility.Config 
 import Ganga.Utility.logging
+from Ganga.Utility.Config import getConfig
 
 import commands
 import inspect
@@ -424,7 +425,7 @@ class Condor( IBackend ):
 
       queryCommand = " ".join\
          ( [
-         "condor_q -global",
+         "condor_q -global" if getConfig("Condor")["query_global_queues"] else "condor_q",
          "-format \"%s \" GlobalJobId",
          "-format \"%s \" RemoteHost",
          "-format \"%d \" JobStatus",
@@ -472,10 +473,10 @@ class Condor( IBackend ):
          if globalId == localId: 
              queryCommand = " ".join\
                 ( [
-                "condor_q -global",
-                "-format \"%s\" GlobalJobId",
-                id
-                ] )
+                   "condor_q -global" if getConfig("Condor")["query_global_queues"] else "condor_q",
+                   "-format \"%s\" GlobalJobId",
+                   id
+                   ] )
              status, output = commands.getstatusoutput( queryCommand )
              if 0 == status:
                 globalId = output
@@ -563,3 +564,10 @@ class Condor( IBackend ):
 
    updateMonitoringInformation = \
       staticmethod( updateMonitoringInformation )
+
+#____________________________________________________________________________________
+
+from Ganga.Utility.Config import makeConfig
+config = makeConfig('Condor','Settings for Condor Batch system')
+
+config.addOption('query_global_queues', True, "Query global condor queues, i.e. use '-global' flag")
