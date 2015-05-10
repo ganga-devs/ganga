@@ -318,13 +318,15 @@ def GPIProxyClassFactory(name, pluginclass):
         if not item['hidden']:
             itbuf.addLine(n,item.describe())
 
-    if not pluginclass.__doc__:
-        pluginclass.__doc__ = 'Documentation missing.'
+    #if not pluginclass.__doc__:
+    #    pluginclass.__doc__ = 'Documentation missing.'
+    #
+    #pluginclass.__doc__.strip()
+    #pluginclass.__doc__ +=  "\n\n" 
+    #    
+    #publicdoc = pluginclass.__doc__ + itbuf.getString()
+    publicdoc = ''
 
-    pluginclass.__doc__.strip()
-    pluginclass.__doc__ +=  "\n\n" 
-        
-    publicdoc = pluginclass.__doc__ + itbuf.getString()
     helptext(pluginclass,'This is a Ganga.GPI.%(classname)s implementation class. Refer to Ganga.GPI.%(classname)s.__doc__ for documentation.')
     
     helptext(_init, """GPI %(classname)s object constructor:
@@ -452,6 +454,17 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #        return object.__getattribute__(self,name)
  
     def _getattribute(self, name):
+
+        if name == "__doc__":
+            if self.publicdoc == '':
+                if not pluginclass.__doc__:
+                    pluginclass.__doc__ = 'Documentation missing.'
+
+                pluginclass.__doc__.strip()
+                pluginclass.__doc__ +=  "\n\n"
+
+                self.publicdoc = pluginclass.__doc__ + itbuf.getString()
+
         if name.startswith('__') or name in d.keys():
             return object.__getattribute__(self, name)
 
