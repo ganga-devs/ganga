@@ -34,7 +34,8 @@ def _get_publisher(server, port, username, password):
     global _publisher
     if _publisher is None:
         _publisher = MSGUtil.createPublisher(server,port,username,password)
-        _publisher.start()
+        from Ganga.GPI import queues
+        queues.add(_publisher.start)
     return _publisher
 
 
@@ -115,7 +116,9 @@ class MSGMS(IMonitoringService):
             )
         # send message
         headers = {'persistent':'true'}
-        p.send(self.config_info['message_destination'], repr(message), headers)
+        from Ganga.GPI import queues
+        queues.add( p.send, (self.config_info['message_destination'], repr(message), headers) )
+        #p.send(self.config_info['message_destination'], repr(message), headers)
 
     def submit(self, **opts): # called on client, so job_info is Job object
         """Log submit event on client."""
@@ -136,12 +139,16 @@ class MSGMS(IMonitoringService):
 
         # send submitted for this job
         msg = self.getMessage('submitted')
-        self.send(msg)
+        from Ganga.GPI import queues
+        queues.add( self.send, (msg) )
+        #self.send(msg)
 
     def start(self, **opts): # called on worker node, so job_info is dictionary
         """Log start event on worker node."""
         message = self.getMessage('running')
-        self.send(message)
+        from Ganga.GPI import queues
+        queues.add( self.send, (message) )
+        #self.send(message)
 
     def progress(self, **opts): # called on worker node, so job_info is dictionary
         """Log progress event on worker node. NOP."""
@@ -154,7 +161,9 @@ class MSGMS(IMonitoringService):
         else:
             event = 'failed'
         message = self.getMessage(event)
-        self.send(message)
+        from Ganga.GPI import queues
+        queues.add( self.send, (message) )
+        #self.send(message)
 
 
 # utility method copied from Ganga.Utility.util
