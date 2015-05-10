@@ -126,8 +126,9 @@ def shutdown():
             if not thisName in started_registries: continue
             started_registries.remove(thisName) # in case this is called repeatedly, only call shutdown once
             registry.shutdown() # flush and release locks
-        except:
-            logger.error( "Failes to Shutdown Repository: %s !!! please check for stale lock files" % thisName )
+        except Exception, x:
+            logger.error( "Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName )
+            logger.error( "%s" % str(x) )
             logger.error( "Trying to Shutdown cleanly regardless" )
             pass
 
