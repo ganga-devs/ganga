@@ -122,10 +122,14 @@ class GangaRepositoryLocal(GangaRepository):
         """ Starts a repository and reads in a directory structure.
         Raise RepositoryError"""
         self._load_timestamp = {}
+
+        ##  New Master index to speed up loading of many, MANY files
         self._cache_load_timestamp = {}
         self._cached_cat = {}
         self._cached_cls = {}
         self._cached_obj = {}
+        self._master_index_timestamp = 0
+
         self.known_bad_ids = []
         if "XML" in self.registry.type:
             self.to_file = xml_to_file
@@ -242,6 +246,8 @@ class GangaRepositoryLocal(GangaRepository):
             import os.path
             _master_idx = os.path.join(self.root, 'master.idx')
             if os.path.isfile( _master_idx ):
+                import os
+                self._master_index_timestamp = os.stat(_master_idx).st_ctime
                 input_f = open( _master_idx, 'r' )
                 this_master_cache = pickle_from_file( input_f )[0]
                 input_f.close()
@@ -262,10 +268,14 @@ class GangaRepositoryLocal(GangaRepository):
                 self._cached_obj.pop(k)
         return
 
-    def _write_master_cache( self ):
+    def _write_master_cache( self, shutdown = False ):
         import os.path
         _master_idx = os.path.join(self.root, 'master.idx')
         this_master_cache = []
+        if os.path.isfile( _master_idx ) and not shutdown:
+            import os
+            if abs( self._master_index_timestamp - os.stat(_master_idx).st_ctime ) < 300:
+                return
         for k, v in self.objects.iteritems():
             try:
                 ## Check and write index first
@@ -387,8 +397,13 @@ class GangaRepositoryLocal(GangaRepository):
                     logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
             if not printed_explanation:
                 logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
+                logger.error("WARNING!!! This will result in corrupt jobs being completely deleted!!!")
                 printed_explanation = True
         logger.debug("updated index done")
+
+        if len(changed_ids) != 0:
+            self._write_master_cache( shutdown = True )
+
         return changed_ids
 
     def add(self, objs, force_ids = None):
@@ -461,6 +476,8 @@ class GangaRepositoryLocal(GangaRepository):
         #print "load: %s " % str(ids)
         #import traceback
         #traceback.print_stack()
+
+        logger.debug( "Loading Repo object(s): %s" % str(ids) )
 
         for id in ids:
             fn = self.get_fn(id)

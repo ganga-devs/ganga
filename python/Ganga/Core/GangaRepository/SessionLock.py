@@ -140,39 +140,8 @@ class SessionLockRefresher(GangaThread):
 
                         # Clear expired session files if monitoring is active
 
-                        try:
-                            from Ganga.Core import monitoring_component
-                            if not monitoring_component is None and monitoring_component.enabled:
-                                # Make list of sessions that are "alive"
-                                ls_sdir = os.listdir(self.sdir)
-                                session_files = [f for f in ls_sdir if f.endswith(".session")]
-                                lock_files = [f for f in ls_sdir if f.endswith(".locks")]
-                                for sf in session_files:
-                                    joined_path = os.path.join(self.sdir, sf)
-                                    if joined_path in self.fns:
-                                        continue
-                                    mtm = os.stat( joined_path ).st_ctime
-                                    #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
-                                    if now - mtm  > session_expiration_timeout:
-                                        logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
-                                        os.unlink( joined_path )
-                                        session_files.remove(sf)
-                                    #elif now - mtm  > session_expiration_timeout/2:
-                                    #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
-                                # remove all lock files that do not belong to sessions that are alive
-                                for f in lock_files:
-                                    if not f.endswith(".session"):
-                                        asf = f.split(".session")[0] + ".session"
-                                        if not asf in session_files:
-                                            if f.endswith(".session"):
-                                                logger.warning("Removing dead file %s" % (f) )
-                                            #logger.debug("Found, %s session files" % (session_files) )
-                                            #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
-                                            #logger.debug( "%s, %s" % ( self.sdir, f ) )
-                                            os.unlink(os.path.join(self.sdir, f))
-                        except OSError, x:
-                            # nothing really important, another process deleted the session before we did.
-                            logger.debug("Unimportant OSError in loop: %s" % x)
+                        self.clearDeadLocks( now )
+
                 except RepositoryError:
                     break
                 except Exception, x:
@@ -190,6 +159,41 @@ class SessionLockRefresher(GangaThread):
         finally:
             #logger.debug("Finishing Monitoring Loop")
             self.unregister()
+
+    def clearDeadLocks( self, now ):
+        try:
+            from Ganga.Core import monitoring_component
+            if not monitoring_component is None and monitoring_component.enabled:
+                # Make list of sessions that are "alive"
+                ls_sdir = os.listdir(self.sdir)
+                session_files = [f for f in ls_sdir if f.endswith(".session")]
+                lock_files = [f for f in ls_sdir if f.endswith(".locks")]
+                for sf in session_files:
+                    joined_path = os.path.join(self.sdir, sf)#
+                    if joined_path in self.fns:
+                        continue
+                    mtm = os.stat( joined_path ).st_ctime
+                    #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
+                    if (now - mtm)  > session_expiration_timeout:
+                        logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
+                        os.unlink( joined_path )
+                        session_files.remove(sf)
+                    #elif now - mtm  > session_expiration_timeout/2:
+                    #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
+                # remove all lock files that do not belong to sessions that are alive
+                for f in lock_files:
+                    asf = f.split(".session")[0] + ".session" # Determine the session file which controls this lock file
+                    if not asf in session_files:
+                        logger.warning("Removing dead file %s" % (f) )
+                        #logger.debug("Found, %s session files" % (session_files) )
+                        #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
+                        #logger.debug( "%s, %s" % ( self.sdir, f ) )
+                        os.unlink(os.path.join(self.sdir, f))
+        except OSError, x:
+             # nothing really important, another process deleted the session before we did.
+             logger.debug("Unimportant OSError in cleaning locks: %s" % x)
+
+        return
 
     def numberRepos( self ):
         assert( len(self.fns) == len(self.repos) )
