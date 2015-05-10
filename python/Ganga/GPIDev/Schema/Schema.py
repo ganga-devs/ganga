@@ -137,12 +137,13 @@ class Schema:
 
         for name,item in self.allItems():
             if not item['protected'] and not item['hidden']: #and not item['sequence']: #FIXME: do we need it or not??
-                try:
+                if 'typelist' in item._meta:
                     types = item['typelist']
                     if types == []:
                         types = None
-                except:
+                else:
                     types = None
+
                 if item['sequence']:
                     if not types is None:
                         types.append('list') # bugfix 36398: allow to assign a list in the configuration
@@ -312,8 +313,11 @@ class Item:
     def __init__(self):
         self._meta = Item._metaproperties.copy()
         
-    def __getitem__(self,key):
+    def __getitem__(self, key):
         return self._meta[key]
+
+    def __len__(self):
+        return len(self._meta)
 
     # compare the kind of item:
     # all calls are equivalent:
