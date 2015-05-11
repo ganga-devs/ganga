@@ -16,7 +16,6 @@ from Ganga.GPIDev.Lib.File import  File
 from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger, log_user_exception
-import CMTVersion
 
 logger = getLogger()
 
@@ -102,26 +101,11 @@ LHCbApp().EvtMax = -1
             msg = "Failed to write temporary options file '%s' during merge"
             raise PostProcessException(msg % opts_file_name)
         print output_opts
-        #now run gaudirun via a script
-        shell_script = """#!/bin/sh
-SP=`which SetupProject.sh`
-if [ -n $SP ]; then 
-  . SetupProject.sh  --force DaVinci %s
-else
-  echo "Could not find the SetupProject.sh script. Your job will probably fail"
-fi
-gaudirun.py %s
-exit $?
-""" % (self.version, opts_file_name)
 
-        script_file_name = tempfile.mktemp('.sh')
-        try:
-            script_file = file(script_file_name,'w')
-            script_file.write(shell_script)
-            script_file.close()
-        except:
-            raise PostProcessException('Problem writing merge script')
- 
+        import EnvironFunctions
+        script_file_name = EnvironFunctions.construct_merge_script( self.version,
+                                                                    opts_file_name )
+
         return_code = subprocess.call(['/bin/sh',script_file_name])
         if return_code != 0:
             msg = 'The LHCbFileMerger returned %i when calling gaudirun'

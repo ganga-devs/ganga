@@ -36,7 +36,6 @@ defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
 configLHCb.addOption('UserAddedApplications',"","List of user added LHCb applications split by ':'")
 
-configLHCb.addOption('useGangaDiracSplitter',False,"Use new Ganga/Dirac Splitter")
 ## dscrpt = 'Automatically download sandbox for failed jobs?'
 ## configLHCb.addOption('failed_sandbox_download',True,dscrpt)
 ## dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\
@@ -91,7 +90,6 @@ def loadPlugins( config = {} ):
 
 #from Ganga.GPIDev.Credentials import getCredential
 #proxy = getCredential('GridProxy', '')
-
 
 ## This is being dropped from 6.1.0 due to causing some bus in loading large numbers of jobs
 #

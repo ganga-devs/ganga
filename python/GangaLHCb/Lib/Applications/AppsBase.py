@@ -16,7 +16,6 @@ from Ganga.Utility.files import expandfilename
 from Ganga.Utility.execute import execute
 import Ganga.Utility.logging
 import subprocess
-import CMTscript
 import pickle
 logger = Ganga.Utility.logging.getLogger()
 
@@ -199,120 +198,36 @@ class AppName(Gaudi):
 
         return GPIProxyObjectFactory(parser.get_input_data())
 
-##     def _getshell(self):
-##         opts = ''
-##         if self.setupProjectOptions: opts = self.setupProjectOptions
-
-##         fd = tempfile.NamedTemporaryFile()
-##         script = '#!/bin/sh\n'
-##         if self.user_release_area:
-##             script += 'User_release_area=%s; export User_release_area\n' % \
-##                       expandfilename(self.user_release_area)
-##         if self.platform:    
-##             script += 'export CMTCONFIG=%s\n' % self.platform
-##         useflag = ''
-##         if self.masterpackage:
-##             (mpack, malg, mver) = parse_master_package(self.masterpackage)
-##             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-##         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
-##         script += '%s \n' % cmd
-##         fd.write(script)
-##         fd.flush()
-##         logger.debug(script)
-
-##         self.shell = Shell(setup=fd.name)
-##         if (not self.shell): raise ApplicationConfigurationError(None,'Shell not created.')
-        
-##         logger.debug(pprint.pformat(self.shell.env))
-        
-##         fd.close()
-##         app_ok = False
-##         ver_ok = False
-##         for var in self.shell.env:
-##             if var.find(self.appname) >= 0: app_ok = True
-##             if self.shell.env[var].find(self.version) >= 0: ver_ok = True
-##         if not app_ok or not ver_ok:
-##             msg = 'Command "%s" failed to properly setup environment.' % cmd
-##             logger.error(msg)
-##             raise ApplicationConfigurationError(None,msg)
-
-
     def getpack(self, options=''):
         """Performs a getpack on the package given within the environment
            of the application. The unix exit code is returned
         """
-        command = 'getpack ' + options + '\n'
-        if options == '':
-            command = 'getpack -i'
-        return CMTscript.CMTscript(self,command)
-        
+        import FileFunction
+        return FileFunction.getpack( self, options )
+
     def make(self, argument=None):
-        """Performs a CMT make on the application. The unix exit code is 
-           returned. Any arguments given are passed onto CMT as in
+        """Performs a make on the application. The unix exit code is 
+           returned. Any arguments given are passed onto as in
            dv.make('clean').
         """
-        config = Ganga.Utility.Config.getConfig('GAUDI')
-        command = config['make_cmd']
-        if argument:
-            command+=' '+argument
-        return CMTscript.CMTscript(self,command)
+        import FileFunctions
+        return FileFunctions.make( self, argument )
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself. The 
         unix exit code is returned."""
+        if configGaudi['useCMakeApplications']:
+            logger.error( "Cannot use this with cmake enabled!" )
+            return -1
         command = '###CMT### ' + command
         return CMTscript.CMTscript(self,command)
 
     def _getshell(self):
-        from Ganga.Utility.Shell import expand_vars
-        env = expand_vars( os.environ )
-
-        execute('. `which LbLogin.sh` -c %s' % self.platform,env=env,shell=True,update_env=True)
-        env['User_release_area'] = self.user_release_area
-
-        opts = ''
-        if self.setupProjectOptions: opts = self.setupProjectOptions
-        
-        useflag = ''
-        if self.masterpackage:
-            (mpack, malg, mver) = CMTscript.parse_master_package(self.masterpackage)
-            useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-        cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
-
-        execute(cmd,env=env,shell=True,update_env=True)
-
-        #print env
-
-##         cmd += ' > /dev/null 2>&1; python -c "import os; print os.environ"'
-##         pipe=subprocess.Popen(cmd,
-##                               shell=True,
-##                               env=self.env,
-##                               stdout=subprocess.PIPE,
-##                               stderr=subprocess.PIPE)
-##         pipe.wait()
-##         result = pipe.communicate()
-
-##         if not result[1] == '':
-##             logger.error('Couldn\'t update environment')
-##             raise ApplicationConfigurationError(None,'Couldn\'t update environment')
-##         self.env = eval(result[0])
-        
-        app_ok = False
-        ver_ok = False
-        for var in env:
-            if var.find(self.appname) >= 0: app_ok = True
-            if env[var].find(self.version) >= 0: ver_ok = True
-        if not app_ok or not ver_ok:
-            msg = 'Command "%s" failed to properly setup environment.' % cmd
-            logger.error(msg)
-            raise ApplicationConfigurationError(None,msg)
-
-        import copy
-        self.env = copy.deepcopy( env )
+        import EnvironFunctions
+        env = EnvironFunctions._getshell(self)
         return env
-
 
     def _get_parser(self):
         optsfiles = [fileitem.name for fileitem in self.optsfile]
