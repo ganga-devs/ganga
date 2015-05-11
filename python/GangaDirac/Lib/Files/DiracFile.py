@@ -54,7 +54,7 @@ class DiracFile(IGangaFile):
     _category = 'gangafiles'
     _name = "DiracFile"
     _exportmethods = [  "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put']
-        
+
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
         name is the name of the output file that has to be written ...
@@ -74,6 +74,9 @@ class DiracFile(IGangaFile):
             self.localDir = expandfilename( localDir )
         if remoteDir is not None:
             self.remoteDir = remoteDir
+
+        self._remoteURLs = {}
+
 
     def __construct__( self, args ):
         #logger.debug( "__construct__" )
@@ -115,6 +118,10 @@ class DiracFile(IGangaFile):
         if name == 'localDir' and type(value) != type(None):
             return expandfilename(value)
         return value
+
+    def location( self ):
+
+        return self.locations
 
     def _setLFNnamePattern( self, _lfn = "", _namePattern = "" ):
 
@@ -313,22 +320,25 @@ class DiracFile(IGangaFile):
             ret  =  eval(r)
         except:
             ret = r
-        reps =  self.getReplicas()
         if isinstance(ret,dict) and ret.get('OK', False) and self.lfn in ret.get('Value', {'Successful': {}})['Successful']:
             try:
                 if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
                     self.guid = ret['Value']['Successful'][self.lfn]['GUID']
             except: pass
+
+        reps =  self.getReplicas()
+
         if isinstance(reps,dict) and reps.get('OK', False) and self.lfn in reps.get('Value', {'Successful': {}})['Successful']:
             try:
-                if self.locations != reps['Value']['Successful'][self.lfn].keys():
-                    self.locations = reps['Value']['Successful'][self.lfn].keys()
-                    ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
-            except: pass
+                ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
+            except:
+                pass
 
         return ret
 
     def _optionallyUploadLocalFile(self):
+        """
+        """
 
         if self.lfn != "":
             return
@@ -358,10 +368,28 @@ class DiracFile(IGangaFile):
         return
 
     def getReplicas(self):
+        """
+        """
 
         reps =  execute('getReplicas("%s")' % self.lfn)
 
+        if isinstance(reps,dict) and reps.get('OK', False) and self.lfn in reps.get('Value', {'Successful': {}})['Successful']:
+            try:
+                if self.locations != reps['Value']['Successful'][self.lfn].keys():
+                    self.locations = reps['Value']['Successful'][self.lfn].keys()
+                    for k in reps['Value']['Successful'][self.lfn].keys():
+                        self._remoteURLs[k] = reps['Value']['Successful'][self.lfn][k]
+            except: pass
+
         return reps
+
+    def accessURL(self):
+        """
+        """
+        if len(self._remoteURLs) == 0:
+            self.getReplicas()
+
+        return self._remoteURLs
 
     def get(self):
         """
@@ -691,8 +719,6 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
 ##            if 'LHCBPROJECTPATH' in os.environ:
 ##                extra_setup+='export LHCBPROJECTPATH=%s && ' % os.environ['LHCBPROJECTPATH']
 ##            if 'CMTCONFIG' in os.environ:
-##                 extra_setup+='export CMTCONFIG=%s && ' % os.environ['CMTCONFIG']
-#            if 'PYTHONPATH' in os.environ:
 #                 extra_setup+='export PYTHONPATH=%s && ' % os.environ['PYTHONPATH']
 #            script = script.replace('###SETUP###', extra_setup + '. SetupProject.sh LHCbDirac &&')#&>/dev/null && ')          
 #        else:
