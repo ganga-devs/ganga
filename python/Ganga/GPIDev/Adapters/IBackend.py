@@ -18,6 +18,9 @@ import itertools
 import datetime
 import time
 
+import threading
+pSubmitLock = threading.Lock()
+
 class IBackend(GangaObject):
     """
     Base class for all backend objects.
@@ -65,7 +68,31 @@ class IBackend(GangaObject):
         """
         pass
 
-    def master_submit(self,rjobs,subjobconfigs,masterjobconfig,keep_going=False):
+    def _parallel_submit( self, b, sj, sc, master_input_sandbox, fqid, logger ):
+
+        global pSubmitLok
+        lock = pSubmitLock
+        try:
+            sj.updateStatus('submitting')
+            if b.submit(sc, master_input_sandbox):
+                sj.updateStatus('submitted')
+                sj.info.increment()
+            else:
+                raise IncompleteJobSubmissionError(fqid,'submission failed')
+        except Exception, x:
+            sj.updateStatus('new')
+            if isinstance(x, GangaException):
+                logger.error(str(x))
+                log_user_exception(logger, debug = True)
+            else:
+                log_user_exception(logger, debug = False)
+        finally:
+            try:
+                lock.release()
+            except:
+                pass
+
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
 
         """  Submit   the  master  job  and  all   its  subjobs.   The
         masterjobconfig  is  shared,  individual  subjob  configs  are
@@ -125,9 +152,31 @@ class IBackend(GangaObject):
 
         master_input_sandbox=self.master_prepare(masterjobconfig)
 
+        if parallel_submit:
+
+            from Ganga.GPI import queues
+
+            threads_before = queues.totalNumUserThreads()
+
+            for sc, sj in zip(subjobconfigs, rjobs):
+
+                fqid = sj.getFQID('.')
+                b = sj.backend
+                queues.add( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
+
+            while queues.totalNumUserThreads() != 0:
+                import time
+                time.sleep( 1. )
+
+            for i in rjobs:
+                if i.status in [ "new", "failed" ]:
+                    return 0
+            return 1
+
         for sc,sj in zip(subjobconfigs,rjobs):
+
             fqid = sj.getFQID('.')
-            logger.info("submitting job %s to %s backend",fqid,sj.backend._name)
+            logger.info("submitting job %s to %s backend", fqid, sj.backend._name)
             try:
                 b = sj.backend
                 sj.updateStatus('submitting')
@@ -137,16 +186,16 @@ class IBackend(GangaObject):
                     incomplete = 1
                     sj.info.increment()
                 else:
-                    if handleError(IncompleteJobSubmissionError(fqid,'submission failed')):
+                    if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
                         return 0
             except Exception,x:
                 sj.updateStatus('new')
                 if isinstance(x,GangaException):
                     logger.error(str(x))
-                    log_user_exception(logger,debug = True)
+                    log_user_exception(logger, debug = True)
                 else:
-                    log_user_exception(logger,debug = False)
-                if handleError(IncompleteJobSubmissionError(fqid,str(x))):
+                    log_user_exception(logger, debug = False)
+                if handleError(IncompleteJobSubmissionError(fqid, str(x))):
                     return 0
                 
         if incomplete_subjobs:

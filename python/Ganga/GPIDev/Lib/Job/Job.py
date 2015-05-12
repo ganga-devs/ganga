@@ -179,7 +179,8 @@ class Job(GangaObject):
                                     'do_auto_resubmit':SimpleItem(defvalue = False, doc='Automatically resubmit failed subjobs'),
                                     'metadata':ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1, copyable=0),
                                     'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0),
-                                    'been_queued':SimpleItem(transient=1,hidden=1,defvalue=False,optional=0,copyable=0,comparable=0,typelist=['bool'],doc='flag to show job has been queued for postprocessing',visitable=0)
+                                    'been_queued':SimpleItem(transient=1,hidden=1,defvalue=False,optional=0,copyable=0,comparable=0,typelist=['bool'],doc='flag to show job has been queued for postprocessing',visitable=0),
+                                    'parallel_submit':SimpleItem(transient=1,defvalue=False,doc="Enable Submission of subjobs in parallel")
                                     })
 
     _category = 'jobs'
@@ -1433,7 +1434,10 @@ class Job(GangaObject):
                 # master_submit has been written as the interface which ganga should call, not submit directly
 
                 if supports_keep_going:
-                    r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig, keep_going)
+                    if 'parallel_submit' in inspect.getargspec(self.backend.master_submit)[0]:
+                        r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit )
+                    else:
+                        r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig, keep_going )
                 else:
                     r = self.backend.master_submit(rjobs, jobsubconfig, jobmasterconfig)
                     
