@@ -53,7 +53,7 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = [  "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put']
+    _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'accessURL' ]
 
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
@@ -76,7 +76,7 @@ class DiracFile(IGangaFile):
             self.remoteDir = remoteDir
 
         self._remoteURLs = {}
-
+        self._storedReplicas = {}
 
     def __construct__( self, args ):
         #logger.debug( "__construct__" )
@@ -367,29 +367,58 @@ class DiracFile(IGangaFile):
 
         return
 
-    def getReplicas(self):
+    def getReplicas(self, forceRefresh = False ):
         """
         """
 
-        reps =  execute('getReplicas("%s")' % self.lfn)
+        these_replicas = None
 
-        if isinstance(reps,dict) and reps.get('OK', False) and self.lfn in reps.get('Value', {'Successful': {}})['Successful']:
-            try:
-                if self.locations != reps['Value']['Successful'][self.lfn].keys():
-                    self.locations = reps['Value']['Successful'][self.lfn].keys()
-                    for k in reps['Value']['Successful'][self.lfn].keys():
-                        self._remoteURLs[k] = reps['Value']['Successful'][self.lfn][k]
-            except: pass
+        if (self._storedReplicas == {} and len(self.subfiles) == 0 )or forceRefresh:
 
-        return reps
+            self._storedReplicas =  execute('getReplicas("%s")' % self.lfn)['Value']['Successful']
+            self._updateRemoteURLs( self._storedReplicas )
+
+            these_replicas = self._storedReplicas
+
+
+        if len(self.subfiles) != 0:
+
+            allReplicas = []
+
+            for i in self.subfiles:
+
+                allReplicas.append( i.getReplicas() )
+
+            these_replicas = allReplicas
+
+        return these_replicas
+
+    def _updateRemoteURLs( self, reps ):
+
+        if self.subfiles:
+            for i in self.subfiles:
+                i._updateRemoteURLs( reps )
+
+        if self.locations != reps[self.lfn].keys():
+            self.locations = reps[self.lfn].keys()
+            for k in reps[self.lfn].keys():
+                self._remoteURLs[k] = reps[self.lfn][k]
 
     def accessURL(self):
         """
         """
-        if len(self._remoteURLs) == 0:
+        if len(self._remoteURLs) == 0 and len(self.subfiles) == 0:
             self.getReplicas()
 
-        return self._remoteURLs
+        if len(self.subfiles) == 0:
+            return [ self._remoteURLs ]
+        else:
+            _accessURLs = []
+            for i in self.subfiles:
+                for j in i.accessURL():
+                    _accessURLs.append( j )
+
+            return _accessURLs
 
     def get(self):
         """

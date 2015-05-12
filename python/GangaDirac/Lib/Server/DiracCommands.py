@@ -282,3 +282,9 @@ def getJobPilotOutput(id,dir):
     output( result )
 
 def getServicePorts(): output( DiracAdmin().getServicePorts() )
+
+def getSitesForSE( se ):
+    from DIRAC.Core.Utilities.SiteSEMapping import getSitesForSE
+    result = getSitesForSE(se)
+    output( result )
+

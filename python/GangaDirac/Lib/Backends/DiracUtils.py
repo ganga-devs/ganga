@@ -16,16 +16,28 @@ def result_ok( result ):
 def get_result( command,
                 logger_message    = None,
                 exception_message = None,
-                eval_includes     = None ):
-    result = execute(command, eval_includes = eval_includes)
+                eval_includes     = None,
+                retry_limit       = 5 ):
 
-    if not result_ok(result):
-        if logger_message is not None:
-            logger.warning('%s: %s' % (logger_message, str(result)))
-        if exception_message is not None:
-            raise GangaException(exception_message)          
-        raise GangaException("Failed to return result of '%s': %s"% (command, result))
-    return result    
+    retries = 0
+    while retries < retry_limit:
+
+        try:
+            result = execute(command, eval_includes = eval_includes)
+
+            if not result_ok(result):
+                if logger_message is not None:
+                    logger.warning('%s: %s' % (logger_message, str(result)))
+                if exception_message is not None:
+                    raise GangaException(exception_message)          
+                raise GangaException("Failed to return result of '%s': %s"% (command, result))
+            return result
+        except Exception, x:
+            if retries == retry_limit-1:
+                raise x
+            retries = retries+1
+            logger.error( "An Error Occured: %s" % str(x) )
+            logger.error( "Retrying: %s / %s " % ( str(retries), str(retry_limit) ) )
 
 
 def get_job_ident(dirac_script_lines):
