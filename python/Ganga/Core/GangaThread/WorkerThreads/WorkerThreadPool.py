@@ -96,7 +96,10 @@ class WorkerThreadPool(object):
 
             try:
                 if isinstance(item.command_input, FunctionInput):
-                    result = item.command_input.function(*item.command_input.args, **item.command_input.kwargs)
+                    these_args = item.command_input.args
+                    if type( these_args ) == type(''):
+                        these_args = ( these_args, )
+                    result = item.command_input.function( *these_args, **item.command_input.kwargs)
                 else:
                     result = execute(*item.command_input)
             except Exception, e:
