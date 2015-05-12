@@ -110,3 +110,9 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
+    def accessURL(self):
+        """
+        Return the URL including the protocol used to access a file on a certain storage element
+        """
+        raise NotImplementedError
+
