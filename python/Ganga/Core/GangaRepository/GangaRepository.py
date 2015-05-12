@@ -57,7 +57,7 @@ class RepositoryError(GangaException):
         logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
         logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
         import Ganga.Runtime.bootstrap
-        bootstrap.printOpenFiles()
+        #bootstrap.printOpenFiles()
         disableInternalServices()
         GangaException.__init__(self,what)
 
