@@ -22,7 +22,14 @@ class SplitByFiles(GaudiInputDataSplitter):
     each subjob gets an unique subset of the inputdata files.
     """
     _name = 'SplitByFiles'
-    _schema = GaudiInputDataSplitter._schema.inherit_copy()
+    _schema = Schema(Version(1,0),{
+                'filesPerJob' : SimpleItem(defvalue=10,
+                                           doc='Number of files per subjob',
+                                           typelist=['int']),
+                'maxFiles'    : SimpleItem(defvalue=None,
+                                           doc='Maximum number of files to use in a masterjob (None = all files)',
+                                           typelist=['int','type(None)'])
+             })
     _schema.datadict['bulksubmit']    = SimpleItem(defvalue=False,
                                                    doc='determines if subjobs are split '\
                                                    'server side in a "bulk" submission or '\
