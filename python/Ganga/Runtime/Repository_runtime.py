@@ -105,6 +105,13 @@ def bootstrap():
     logger.debug(started_registries)
     return retval
 
+def updateLocksNow():
+
+    logger.debug( "Updating timestamp of Lock files" )
+    for registry in getRegistries():
+        registry.updateNow()
+    return
+
 def shutdown():
     logger.debug('registry shutdown')
     #shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
