@@ -49,8 +49,9 @@ config.addOption( 'creds_poll_rate', 30, "The frequency in seconds for credentia
 config.addOption( 'diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
 config.addOption( 'DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 
+config.addOption( 'MaxNumberParallelMonitor', 50, "Maximum number of (sub)jobs to be passed to the backend for monitoring at once" )
 
-config.addOption( 'max_shutdown_retries',5,'OBSOLETE: this option has no effect anymore')
+#config.addOption( 'max_shutdown_retries',5,'OBSOLETE: this option has no effect anymore')
 
 
 THREAD_POOL_SIZE = config[ 'update_thread_pool_size' ]
@@ -693,11 +694,17 @@ class JobRegistry_Monitor( GangaThread ):
         for i in fixed_ids:
             try:
                 j = self.registry(i)
-                if j.status in [ 'submitted', 'running' ] or ( j.master and (j.status in [ 'submitting' ]) ):
-                    j._getWriteAccess()
+                if j.status in [ 'submitted', 'running' ]:
+                    #j._getWriteAccess()
                     bn = j.backend._name
                     active_backends.setdefault( bn, [] )
                     active_backends[ bn ].append( j )
+                elif j.status in [ 'submitting' ]:
+                    if len(j.subjobs) > 0:
+                        #j._getWriteAccess()
+                        bn = j.backend._name
+                        active_backends.setdefault( bn, [] )
+                        active_backends[ bn ].append( j )
             except RegistryKeyError, x:
                 pass # the job was removed
             except RegistryLockError, x:
@@ -708,18 +715,90 @@ class JobRegistry_Monitor( GangaThread ):
         if makeActiveBackendsFunc is None:
             makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
 
+        def _returnMonitorableJobs( jobList ):
+
+            log.info( "%s" % str( jobList ) )
+
+            returnableSet = Set([])#IList()
+
+            for job in jobList:
+                if job.status in [ 'submitted', 'running' ]:
+
+                    returnableSet.add( job )
+
+                    size = 0
+                    for i in returnableSet:
+                        if len(i.subjobs) > 0:
+                            size = size + len(i.subjobs)
+                        else:
+                            size = size + 1
+
+                    if size > config['MaxNumberParallelMonitor']:
+                        break
+
+            return returnableSet, size
+            ## Function to replace this simpler IList description
+            #IList(filter( lambda x: x.status in [ 'submitted', 'running' ], jobListSet ), self.stopIter)
+
+        def _returnMonitorableSubJobs( jobList, found ):
+
+            returnableSet = Set([])#IList()
+
+            for job in jobList:
+
+                if job.status in [ 'submitting' ] and len(job.subjobs) > 0:
+
+                    returnableSet.add( job )
+
+                    size = 0
+                    for i in returnableSet:
+                        size = size + len(job.subjobs)
+
+                    if size > (config['MaxNumberParallelMonitor'] - found):
+                        break
+
+            return returnableSet
+
+            ## Function to replace the simpler IList description
+            #IList(filter( lambda x: ( (x.status in [ 'submitting' ]) and (len(x.subjobs) > 0) ), jobListSet ), self.stopIter)
+
         def checkBackend( backendObj, jobListSet, lock ): # This function will be run by update threads
             currentThread = threading.currentThread()
             lock.acquire() # timeout mechanism may have acquired the lock to impose delay.
             try:
                 log.debug( "[Update Thread %s] Lock acquired for %s" % ( currentThread, backendObj._name ) )
-                alljobList_fromset = IList(filter( lambda x:x.status in [ 'submitted', 'running' ], jobListSet ),self.stopIter)
-                #print alljobList_fromset
-                masterJobList_fromset = IList(filter( lambda x:(x.master is not None) and (x.status in [ 'submitting' ]), jobListSet ),self.stopIter)
-                #print masterJobList_fromset
-                jobList_fromset = alljobList_fromset
-                jobList_fromset.extend( masterJobList_fromset )
-                #print jobList_fromset
+
+
+                ##  I expect this to be an expensive function as it can trigger loading from disk several large jobs from disk
+                ##  Can we optimise this a little perhaps as this can lead to a slowdown in monitoring startup
+                ##  Can python islice fix this? rcurrie
+
+                log.info( "hello" )
+
+                log.info( "type: %s" % str( type(jobListSet) ) )
+
+                ##  All standard jobs to be monitored
+                alljobList_fromset, found = _returnMonitorableJobs( jobListSet )
+
+                log.info( "hello2" )
+
+                max_parallel = config['MaxNumberParallelMonitor'] - found
+
+                if len(alljobList_fromset) < max_parallel:
+                    ##  All jobs which may have subjobs to be monitored
+                    masterJobList_fromset = _returnMonitorableSubJobs( jobListSet, found )
+                else:
+                    masterJobList_fromset = Set([])
+
+                log.info( "hello3" )
+
+                ## Combine both lists
+                jobList_fromset = list( alljobList_fromset.union( masterJobList_fromset ) )
+
+                #log.info( "%s" % str(jobList_fromset) )
+
+                log.info( "hello4" )
+
                 updateDict_ts.clearEntry( backendObj._name )
                 try:
                     log.debug( "[Update Thread %s] Updating %s with %s." % ( currentThread, backendObj._name, [x.id for x in jobList_fromset ] ) )
@@ -727,7 +806,18 @@ class JobRegistry_Monitor( GangaThread ):
                         if hasattr(j, 'backend'):
                             if hasattr(j.backend,'setup'):
                                 j.backend.setup()
-                    backendObj.master_updateMonitoringInformation( jobList_fromset )
+
+
+                    ##  It was observed we were saturating some methods in the backend by requesting to
+                    ##  update several hundred subjobs when a job is submitted
+                    ##  In order to fix this add configurable to only pass n many jobs to the backend
+                    import math
+                    if max_parallel > 0:
+                        for batch_num in range(int( math.ceil( float(len(jobList_fromset)) * (1./float(max_parallel)) ) )):
+                            backendObj.master_updateMonitoringInformation( jobList_fromset[ batch_num* max_parallel : (batch_num+1) * max_parallel ] )
+                    else:
+                        backendObj.master_updateMonitoringInformation( jobList_fromset )
+
 
                     # resubmit if required
                     for j in jobList_fromset:
@@ -765,6 +855,8 @@ class JobRegistry_Monitor( GangaThread ):
                     self._handleError( x, backendObj._name, 1 )
                 log.debug( "[Update Thread %s] Flushing registry %s." % ( currentThread, [x.id for x in jobList_fromset ] ) )
                 self.registry._flush( jobList_fromset ) # Optimisation required! 
+            except Exception, x:
+                log.info( "Monitoring Exception: %s" % str(x) )
             finally:
                 lock.release()
                 log.debug( "[Update Thread %s] Lock released for %s." % ( currentThread, backendObj._name ) )
