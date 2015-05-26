@@ -7,8 +7,9 @@ logger = getLogger()
 import random
 global_random = random
 
-def find_random_CE( original_SE_list, banned_SE ):
-
+##  Find a random element from a python list that isn't in a given banned list
+##  This is used for selecting a site element but it doesn't matter which is used
+def find_random_site( original_SE_list, banned_SE ):
     import copy
     input_list = copy.deepcopy( original_SE_list )
     chosen_element = ""
@@ -25,56 +26,82 @@ def find_random_CE( original_SE_list, banned_SE ):
 
     return chosen_element
 
-CE_to_SE_mapping = {}
-SE_to_CE_mapping = {}
+##  These are global and used to Store the site which use a given SE or vice versa
+site_to_SE_mapping = {}
+SE_to_site_mapping = {}
 
+##  This function is used for adding all of the known site for a given SE
+##  The output is stored in th global dictionary site_to_SE_mapping
 def addToMapping( SE ):
 
     from GangaDirac.Lib.Utilities.DiracUtilities import execute
     result = execute('getSitesForSE( "%s" )' % str( SE ) )
     if result.get( 'OK' ) != True:
-        logger.error( "Error getting SE's for CE: %s" % str( SE ) )
-        CE_to_SE_mapping[ SE ] = []
+        logger.error( "Error getting SE's for site: %s" % str( SE ) )
+        site_to_SE_mapping[ SE ] = []
     else:
-        usable_CE = result.get('Value')
-        CE_to_SE_mapping[ SE ] = usable_CE
+        usable_site = result.get('Value')
+        site_to_SE_mapping[ SE ] = usable_site
 
-def generate_CE_selection( input_CE, wanted_common_CE, uniqueSE=False ):
+allLFNData = {}
+
+def getLFNReplicas( allLFNs, index ):
+
+    i = index
+
+    from GangaDirac.Lib.Utilities.DiracUtilities import execute
+
+    output = execute( 'getReplicas(%s)' % str( allLFNs[(i*500):((i+1)*500)] ) )
+
+    min = i*500
+
+    if (i+1)*500 > len(allLFNs):
+        max = len(allLFNs)
+    else:
+        max = (i+1)*500
+
+    import Ganga.Runtime.Repository_runtime
+    Ganga.Runtime.Repository_runtime.updateLocksNow()
+
+    allLFNData[i] = output
+
+    logger.info( "Got Replica Info: [%s:%s] of %s" % ( str(min), str(max), len(allLFNs) ) )
+
+##  For a given site select 'wanted_common_site' many site from a given Set
+##  If uniqueSE is requestd the site selected will NOT share a common SE
+def generate_site_selection( input_site, wanted_common_site, uniqueSE=False ):
     from sets import Set
     req_sitez = Set([])
-    if len(input_CE) > wanted_common_CE:
-        used_CE = Set([])
-        for se in range( wanted_common_CE ):
-            this_CE = find_random_CE( input_CE, used_CE )
-            req_sitez.add( this_CE )
+    if len(input_site) > wanted_common_site:
+        used_site = Set([])
+        for se in range( wanted_common_site ):
+            this_site = find_random_site( input_site, used_site )
+            req_sitez.add( this_site )
             if uniqueSE:
-                #print "this_CE: " + str( this_CE )
-                global SE_to_CE_mapping
-                these_SE = SE_to_CE_mapping[this_CE]
-                #print "these_SE: " + str( these_SE )
+
+                global SE_to_site_mapping
+                these_SE = SE_to_site_mapping[this_site]
                 for this_SE in these_SE:
-                    #print "  this_SE: " + str( this_SE )
-                    global CE_to_SE_mapping
-                    #print "  CE_to_SE_mapping[this_SE]: " + str( CE_to_SE_mapping[this_SE] )
-                    for CE in CE_to_SE_mapping[this_SE]:
-                        used_CE.add( CE )
-                    #print "used_CE: " + str( used_CE )
+
+                    global site_to_SE_mapping
+                    for site in site_to_SE_mapping[this_SE]:
+                        used_site.add( site )
             else:
-                used_CE.add( this_CE )
+                used_site.add( this_site )
     else:
-        for s in input_CE:
+        for s in input_site:
             req_sitez.add( s )
     return req_sitez
 
+##  Actually Do the work of the splitting
 def OfflineLHCbDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
     Generator that yields a datasets for dirac split jobs
     """
 
-    wanted_common_CE = 2
-    iterative_limit = 25
+    wanted_common_site = 3
+    iterative_limit = 50
     good_fraction = 0.75
-    good_fraction_cleanup = 0.25
     uniqueSE = True
 
     split_files = []
@@ -86,18 +113,35 @@ def OfflineLHCbDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.info( "Requesting LFN replica info" )
 
+    ##  Build a useful dictionary and list
     allLFNs = []
     LFNdict = {}
     for i in inputs:
-        allLFNs.append( i.lfn ) 
+        allLFNs.append( i.lfn )
         LFNdict[i.lfn] = i
 
+    ##  Request the replicas for all LFN 500 at a time to not overload the
+    ##  server and give some feedback as this is going on
     from GangaDirac.Lib.Utilities.DiracUtilities import execute
-
     import math
     for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
 
-        output = execute( 'getReplicas(%s)' % str( allLFNs[(i*500):((i+1)*500)] ) )
+        from Ganga.GPI import queues
+
+        queues.add( getLFNReplicas, ( allLFNs, i ) )
+
+    global allLFNData
+
+    while len(allLFNData) != int(math.ceil( float(len(allLFNs))*0.002 )):
+        import time
+        time.sleep(1.)
+        ## This can take a while so lets protect any repo locks
+        import Ganga.Runtime.Repository_runtime
+        Ganga.Runtime.Repository_runtime.updateLocksNow()
+
+    for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
+
+        output = allLFNData[i]
 
         try:
             values = output.get('Value')['Successful']
@@ -109,11 +153,8 @@ def OfflineLHCbDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
             this_dict[k] = values.get(k)
             LFNdict[k]._updateRemoteURLs( this_dict )
 
-        if (i+1)*500 > len(allLFNs):
-            max = len(allLFNs)
-        else:
-            max = (i+1)*500
-        logger.info( "Got Replica Info: %s of %s" % ( str(max), len(allLFNs) ) )
+        logger.info( "Updating URLs: %s" % i )
+
 
     ## This finds all replicas for all LFNs...
     ## This will probably struggle for LFNs which don't exist
@@ -135,15 +176,15 @@ def OfflineLHCbDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     logger.debug( "found all replicas" )
 
 
-    logger.info( "Calculating CE<->SE Mapping" )
-    global CE_to_SE_mapping
-    global SE_to_CE_mapping
+    logger.info( "Calculating site<->SE Mapping" )
+    global site_to_SE_mapping
+    global SE_to_site_mapping
 
     from sets import Set
     SE_dict = dict()
     maps_size = 0
     found = []
-    ## First find the SE for each CE
+    ## First find the SE for each site
     for lfn, repz in file_replicas.iteritems():
         sitez=Set([])
         for i in repz:
@@ -160,148 +201,107 @@ def OfflineLHCbDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
         SE_dict[ lfn ] = sitez
 
     ## Doing this in parallel so wait for it to finish
-    while len( CE_to_SE_mapping ) != maps_size:
+    while len( site_to_SE_mapping ) != maps_size:
         import time
         time.sleep( 0.5 )
 
-    ## Not calculate the inverse dictionary of CE for each SE
-    for k, v in CE_to_SE_mapping.iteritems():
+    ## Now calculate the inverse dictionary of site for each SE
+    for k, v in site_to_SE_mapping.iteritems():
         for i in v:
-            if i not in SE_to_CE_mapping:
-                SE_to_CE_mapping[i] = Set([])
-            SE_to_CE_mapping[i].add(k)
+            if i not in SE_to_site_mapping:
+                SE_to_site_mapping[i] = Set([])
+            SE_to_site_mapping[i].add(k)
+
+    ## These can be used to select the site which know of a given SE
+    ## Or vice versa
 
 
-    ## Now lets generate a dictionary of some chosen CE vs LFN to use in constructing subsets
+    ## Now lets generate a dictionary of some chosen site vs LFN to use in constructing subsets
     allSubSets = []
     allChosenSets = {}
 
-    CE_dict = {}
+    site_dict = {}
     for k, v in SE_dict.iteritems():
-        CE_dict[k] = Set([])
+        site_dict[k] = Set([])
         for i in v:
-            for j in CE_to_SE_mapping[i]:
-                CE_dict[k].add( j )
+            for j in site_to_SE_mapping[i]:
+                site_dict[k].add( j )
 
-    for lfn in CE_dict.keys():
-        #print "Calculating CE selection: " + str(lfn)
-        allChosenSets[ lfn ] = generate_CE_selection( CE_dict[lfn], wanted_common_CE, uniqueSE )
-        #print allChosenSets[ lfn ]
+    ##  Now select a set of site to use as a seed for constructing a subset of LFN
+    for lfn in site_dict.keys():
+        allChosenSets[ lfn ] = generate_site_selection( site_dict[lfn], wanted_common_site, uniqueSE )
 
     logger.debug( "Found all SE in use" )
 
     logger.info( "Calculating best data subsets" )
 
     iterations = 0
-    while len( CE_dict.keys() ) > 0 and iterations < iterative_limit:
+    while len( site_dict.keys() ) > 0:# and iterations < iterative_limit:
 
-        #print "Iteration: " + str(iterations)
-        ce_instances = CE_dict.keys()
-
+        ## LFN left to be used
+        ## NB: Can't modify this list and iterate over it directly in python
+        ce_instances = site_dict.keys()
+        ## Already used LFN
         chosen_lfns = []
 
         for i in ce_instances:
 
+            ## If this has previously been selected lets ignore it and move on
             if i in chosen_lfns:
                 continue
 
+            ##  Use this seed to try and construct a subset
             req_sitez = allChosenSets[i]
             _this_subset = []
 
+            logger.debug( "find common LFN for: " + str( allChosenSets[ i ]) )
+
+            ## Construct subset
             ## Starting with i, populate subset with LFNs which have an
             ## overlap of at least 2 SE
-
             for k in ce_instances:
                 if k in chosen_lfns:
                     continue
-                if req_sitez.issubset( CE_dict[k] ):
+                if req_sitez.issubset( site_dict[k] ):
                     if len(_this_subset) >= filesPerJob:
                         break
                     #print str(k)
                     _this_subset.append( str(k) )
 
+            limit = int(math.floor( float(filesPerJob) * good_fraction ))
 
-            if len( _this_subset ) < math.ceil( float(filesPerJob) * good_fraction ):
-                #print i
-                a = allChosenSets[ i ]
-                d = CE_dict[i]
-                allChosenSets[ i ] = generate_CE_selection( CE_dict[i], wanted_common_CE )
+            ##  If subset is too small throw it away
+            if len( _this_subset ) < limit:
+                allChosenSets[ i ] = generate_site_selection( site_dict[i], wanted_common_site )
                 continue
             else:
+                ##  else Dataset was large enough to be considered useful
                 logger.info( "Generating Dataset of size: %s" % str(len(_this_subset)) )
                 allSubSets.append( _this_subset )
+
                 for lfn in _this_subset:
-                    #print "remove: " + str(lfn)
-                    CE_dict.pop( lfn )
+                    site_dict.pop( lfn )
                     allChosenSets.pop( lfn )
                     chosen_lfns.append( lfn )
 
-        #print "subsets: " + str(split_files)
-        #print "left: " + str( CE_dict.keys() )
+        ##  Lets keep track of how many times we've tried this
         iterations = iterations + 1
 
-        left_size = len( CE_dict.keys() )
+        ##  Can take a while so lets not let threads become un-locked
+        import Ganga.Runtime.Repository_runtime
+        Ganga.Runtime.Repository_runtime.updateLocksNow()
 
-        if iterations == iterative_limit:
+        ##  If on final run, will exit loop after this so lets try and cleanup
+        if iterations >= iterative_limit:
 
-            cleanup_limit = 0
-            chosen_lfns = []
-            while cleanup_limit < 5:
-                cleanup_limit = cleanup_limit + 1
-
-                for i in CE_dict.keys():
-                    a = allChosenSets[ i ]
-                    d = CE_dict[i]
-                    allChosenSets[ i ] = generate_CE_selection( CE_dict[i], 1 )
-
-                ce_instances = CE_dict.keys()
-
-                for i in ce_instances:
-
-                    if i in chosen_lfns:
-                        continue
-
-                    req_sitez = allChosenSets[i]
-                    _this_subset = []
-
-                    ## Starting with i, populate subset with LFNs which have an
-                    ## overlap of at least 2 SE
-                    for k in ce_instances:
-                        if k in chosen_lfns:
-                            continue
-                        if req_sitez.issubset( CE_dict[k] ):
-                            if len(_this_subset) >= filesPerJob:
-                                break
-                            _this_subset.append( str(k) )
-
-                    ##  We're desperate now!
-                    if len( _this_subset ) < math.ceil(good_fraction_cleanup * left_size):
-                        #print i
-                        a = allChosenSets[ i ]
-                        d = CE_dict[i]
-                        allChosenSets[ i ] = generate_CE_selection( CE_dict[i], 1 )
-                        continue
-                    else:
-                        logger.info( "Generating Dataset of size: %s" % str(len(_this_subset)) )
-                        allSubSets.append( _this_subset )
-                        for lfn in _this_subset:
-                            #print "remove: " + str(lfn)
-                            CE_dict.pop( lfn )
-                            allChosenSets.pop( lfn )
-                            chosen_lfns.append( lfn )
+            if wanted_common_site > 1:
+                wanted_common_site = wanted_common_site - 1
+                iterations = 0
+                good_fraction = 0.75
+            else:
+                good_fraction = good_fraction * 0.75
 
     split_files = allSubSets
-
-    left_after = CE_dict.keys()
-
-    if len(left_after) > 0:
-        for f in left_after:
-            logger.debug( "Had diffifculty with: %s Possibly just random effect of matching" % str( f ) )
-
-    #print "left: " + str( left_after )
-    for i in left_after:
-        logger.info( "Generating Dataset of size: 1" )
-        split_files.append( [i] )
 
     check_count = 0
     for i in split_files:
