@@ -91,7 +91,7 @@ class ShareRef(GangaObject):
         finally:
             self._releaseWriteAccess()
         
-    def increase(self,shareddir, force=False):
+    def increase(self, shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
         doesn't currently have a reference counter, one is initialised with a value of 1.
         The shareddir must exist for a reference counter to be initialised (unless Force=True).
@@ -122,7 +122,7 @@ class ShareRef(GangaObject):
         self._releaseWriteAccess()
 
 
-    def decrease(self,shareddir, remove=0):
+    def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
         of the counter is 0, the shared object will be removed from the metadata, and the files within
         the shared object directory deleted when Ganga exits. If the optional remove parameter is specified
@@ -467,6 +467,9 @@ class ShareRef(GangaObject):
     
         return disp_string
 
+    ##  rcurrie Adding this due to strange bug but assuming it should be false due to setRegistry(None)
+    def _registry_locked( self ):
+        return False
 
     def _proxy_display(self, interactive = 1):
         return self._display(interactive = interactive)
