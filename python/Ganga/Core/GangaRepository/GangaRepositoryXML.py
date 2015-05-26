@@ -264,7 +264,7 @@ class GangaRepositoryLocal(GangaRepository):
                 self._cached_cat.pop(k)
             for k, v in self._cached_cls.iteritems():
                 self._cached_cls.pop(k)
-            for k, v in self._cached_obj.iteritems:
+            for k, v in self._cached_obj.iteritems():
                 self._cached_obj.pop(k)
         return
 
@@ -318,6 +318,9 @@ class GangaRepositoryLocal(GangaRepository):
 
         return
 
+    def updateNow(self):
+        self.sessionlock.updateNow()
+
     def update_index(self,id = None,verbose=False,firstRun=True):
         """ Update the list of available objects
         Raise RepositoryError"""
@@ -350,6 +353,10 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("PluginManagerError: Failed to load index %i: %s" % (id,x)) # Probably should be DEBUG
                 summary.append((id,x)) # This is a FATAL error - do not try to load the main file, it will fail as well
                 continue
+
+            #print id
+            #print self.objects
+
             if not id in self.objects: # this is bad - no or corrupted index but object not loaded yet! Try to load it!
                 try:
                     self.load([id])
@@ -433,6 +440,7 @@ class GangaRepositoryLocal(GangaRepository):
         return ids
 
     def flush(self, ids):
+        logger.debug( "Flushing: %s" % ids )
         for id in ids:
             try:
                 fn = self.get_fn(id)
@@ -470,6 +478,10 @@ class GangaRepositoryLocal(GangaRepository):
                 raise RepositoryError(self,"OSError on flushing id '%i': %s" % (id,str(x)))
             except IOError, x:
                 raise RepositoryError(self,"IOError on flushing id '%i': %s" % (id,str(x)))
+
+    def is_loaded( self, id ):
+
+        return (id in self.objects) and (self.objects[id]._data is not None)
 
     def load(self, ids, load_backup=False):
 
@@ -518,11 +530,13 @@ class GangaRepositoryLocal(GangaRepository):
                             os.rmdir( os.path.dirname(fn) )
                             raise IOError( "No job index or data found, removing empty directory: %s" % os.path.dirname(fn) )
                         l = []
+                        logger.debug( "About to load about %s subjobs" % str(len(ld) ) )
                         while str(i) in ld:
                             sfn = os.path.join(os.path.dirname(fn),str(i),"data")
                             if load_backup:
                                 sfn = sfn+"~"
                             try:
+                                #logger.debug( "Loading subjob at: %s" % sfn )
                                 sfobj = open(sfn,"r")
                             except IOError, x:
                                 if x.errno == errno.ENOENT: 
@@ -552,6 +566,7 @@ class GangaRepositoryLocal(GangaRepository):
                                 for i in v:
                                     if isinstance(i,Node):
                                         i._setParent(obj)
+
                         # Check if index cache; if loaded; was valid:
                         if obj._index_cache:
                             new_idx_cache = self.registry.getIndexCache(obj)
@@ -559,7 +574,8 @@ class GangaRepositoryLocal(GangaRepository):
                                 # index is wrong! Try to get read access - then we can fix this 
                                 if len(self.lock([id])) != 0:
                                     self.index_write(id)
-                                    self.unlock([id])
+                                    #self.unlock([id])
+
                                     old_idx_subset = all((k in new_idx_cache and new_idx_cache[k]==v) for k,v in obj._index_cache.iteritems())
                                     if not old_idx_subset:
                                         ## Old index cache isn't subset of new index cache
@@ -567,11 +583,13 @@ class GangaRepositoryLocal(GangaRepository):
                                     else:
                                         ## Old index cache is subset of new index cache so no need to check
                                         new_idx_subset = True
+
                                     if not old_idx_subset and not new_idx_subset:
                                         logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, id))
                                         logger.debug("old cache: %s\t\tnew cache: %s" % ( str(obj._index_cache), str(new_idx_cache) ) )
+                                        self.unlock([id])
                                 # if we cannot lock this, the inconsistency is most likely the result of another ganga process modifying the repo
-                        obj._index_cache = None
+                                obj._index_cache = None
                     else:
                         self._internal_setitem__(id, tmpobj)
                     if do_sub_split:

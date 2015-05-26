@@ -41,7 +41,8 @@ except ImportError:
         pass
     logger = Logger() 
 
-session_expiration_timeout = 20 # seconds
+session_lock_last = 0
+session_expiration_timeout = 60*60 # in sec
 session_lock_refresher = None
 
 sessionFiles = []
@@ -141,6 +142,13 @@ class SessionLockRefresher(GangaThread):
         except Exception, x:
             logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
 
+    def updateNow( self ):
+        try:
+            for index in range(len(self.fns)):
+                now = self.updateLocks( index )
+        except Exception, x:
+            logger.warning("Internal exception in Updating session lock thread: %s %s" % (x.__class__.__name__, x))
+
     def updateLocks( self, index ):
         try:
             oldnow = self.delayread( self.fns[index] ) # os.stat(self.fn).st_ctime
@@ -179,6 +187,7 @@ class SessionLockRefresher(GangaThread):
                         continue
                     mtm = os.stat( joined_path ).st_ctime
                     #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
+                    global session_expiration_timeout
                     if (now - mtm)  > session_expiration_timeout:
                         logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
                         os.unlink( joined_path )
@@ -335,6 +344,9 @@ class SessionLockManager(object):
         finally:
             self.global_lock_release()
 
+    def updateNow(self):
+        global session_lock_refresher
+        session_lock_refresher.updateNow()
 
     def shutdown(self):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
@@ -601,6 +613,19 @@ class SessionLockManager(object):
             self.global_lock_release()
 
     def lock_ids(self, ids):
+
+        global session_lock_last
+        import time
+        this_time = time.time()
+        if session_lock_last == 0:
+            session_lock_last = this_time
+        global session_expiration_timeout
+        if abs( session_lock_last - this_time ) > session_expiration_timeout:
+            session_expiration_timeout = this_time
+            global session_lock_refresher
+            if session_lock_refresher is not None:
+                session_lock_refresher.checkAndReap()
+
         ids = Set(ids)
         self.global_lock_acquire()
         try:
@@ -630,8 +655,6 @@ class SessionLockManager(object):
             return list(ids)
         finally:
             self.global_lock_release()
-
-
 
     def check(self):
         self.global_lock_acquire()
@@ -675,6 +698,19 @@ class SessionLockManager(object):
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
         Returns None on failure
         """
+
+        global session_lock_last
+        import time
+        this_time = time.time()
+        if session_lock_last == 0:
+            session_lock_last = this_time
+        global session_expiration_timeout
+        if abs( session_lock_last - this_time ) > session_expiration_timeout:
+            session_expiration_timeout = this_time
+            global session_lock_refresher
+            if session_lock_refresher is not None:
+                session_lock_refresher.checkAndReap()
+
         self.global_lock_acquire()
         try:
             sessions = [s for s in os.listdir(self.sdir) if s.endswith(self.name+".locks")]
@@ -735,6 +771,7 @@ class SessionLockManager(object):
                     #logger.debug( "Time %s" % time.time() )
                     #logger.debug( "Diff_allowed %s" % session_expiration_timeout )
                     #logger.debug( "Diff %s" % (time.time() - os.stat(sf).st_ctime ) )
+                    global session_expiration_timeout
                     if( (time.time() - os.stat(sf).st_ctime ) > session_expiration_timeout ):
                         if( sf.endswith(".session") ):
                             logger.debug("Reaping LockFile: %s" % (sf) )
