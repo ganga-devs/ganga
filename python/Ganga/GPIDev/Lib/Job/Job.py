@@ -694,8 +694,10 @@ class Job(GangaObject):
         postprocessFailure = False
 
         # check if any output was matched - be careful about master jobs
-        if not self.subjobs and not outputfile.hasMatchedFiles():
-            postprocessFailure = True
+        if not self.subjobs:
+            for outputfile in self.outputfiles:
+                if outputfile.hasMatchedFiles():
+                    postprocessFailure = True
 
         # check for failure reasons
         for outputfile in self.outputfiles:
@@ -1257,6 +1259,8 @@ class Job(GangaObject):
 
             if self.application.is_prepared is not True and self.application.is_prepared is not None:
                 if not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
+                    logger.warning( "prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared )
+                    logger.warning( "tested: %s" % os.path.join(shared_path,self.application.is_prepared.name) )
                     msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
                     self.unprepare()
                     raise JobError(msg)

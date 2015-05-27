@@ -246,6 +246,7 @@ class GangaRepositoryLocal(GangaRepository):
             import os.path
             _master_idx = os.path.join(self.root, 'master.idx')
             if os.path.isfile( _master_idx ):
+                logger.debug( "Reading Master index" )
                 import os
                 self._master_index_timestamp = os.stat(_master_idx).st_ctime
                 input_f = open( _master_idx, 'r' )
@@ -257,7 +258,10 @@ class GangaRepositoryLocal(GangaRepository):
                     self._cached_cat[this_id] = this_cache[2]
                     self._cached_cls[this_id] = this_cache[3]
                     self._cached_obj[this_id] = this_cache[4]
+            else:
+                logger.debug( "Not Reading Master Index" )
         except:
+            logger.debug( "Master Index corrupt, ignoring it" )
             for k, v in self._cache_load_timestamp.iteritems():
                 self._cache_load_timestamp.pop(k)
             for k, v in self._cached_cat.iteritems():
@@ -269,6 +273,7 @@ class GangaRepositoryLocal(GangaRepository):
         return
 
     def _write_master_cache( self, shutdown = False ):
+        logger.debug( "Updating master index" )
         import os.path
         _master_idx = os.path.join(self.root, 'master.idx')
         this_master_cache = []

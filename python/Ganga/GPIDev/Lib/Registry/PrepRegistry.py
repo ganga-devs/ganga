@@ -101,7 +101,11 @@ class ShareRef(GangaObject):
         logger.debug("running increase() in prepregistry")
         self._getWriteAccess()
         
-        shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
+        #shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
+        from Ganga.Utility.files import expandfilename
+        config = Ganga.Utility.Config.getConfig('Configuration')
+        gangadir = config['gangadir']
+        shareddir = os.path.join(expandfilename(gangadir),'shared',config['user'])
         basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir) and force is False:
             if basedir not in self.name:
@@ -130,7 +134,11 @@ class ShareRef(GangaObject):
         """
         self._getWriteAccess()
         
-        shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
+        #shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
+        from Ganga.Utility.files import expandfilename
+        config = Ganga.Utility.Config.getConfig('Configuration')
+        gangadir = config['gangadir']
+        shareddir = os.path.join(expandfilename(gangadir),'shared',config['user'])
         basedir = os.path.basename(shareddir)
         #if remove==1, we force the shareref counter to 0
         try:

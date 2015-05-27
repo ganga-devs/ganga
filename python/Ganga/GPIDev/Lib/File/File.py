@@ -13,8 +13,7 @@ from Ganga.GPIDev.Lib.GangaList import GangaList
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-import os,shutil
-
+import os, shutil
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
 shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
@@ -139,7 +138,7 @@ class ShareDir(GangaObject):
 #    def _readonly(self):
 #        return True
 
-    def __init__(self,name=None,subdir=os.curdir):
+    def __init__(self, name=None, subdir=os.curdir):
         super(ShareDir, self).__init__()
         self._setRegistry(None)
 
@@ -152,8 +151,14 @@ class ShareDir(GangaObject):
                 shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
                 if not os.path.isdir(os.path.join(shared_path,name)):
                     os.makedirs(os.path.join(shared_path, name))
+
+                if not os.path.isdir(os.path.join(shared_path,name)):
+                    logger.error( "ERROR creating path: %s" % os.path.join(shared_path,name) )
+                    raise GangaException( "ShareDir ERROR" )
+                else:
                     break
             self.name=str(name)
+
             #incrementing then decrementing the shareref counter has the effect of putting the newly 
             #created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
             #filled with files, then assigned to an application.
