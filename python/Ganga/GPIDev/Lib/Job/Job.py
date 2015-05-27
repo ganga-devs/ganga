@@ -681,6 +681,11 @@ class Job(GangaObject):
         
         postprocessFailure = False
 
+        # check if any output was matched - be careful about master jobs
+        if not self.subjobs and not outputfile.hasMatchedFiles():
+            postprocessFailure = True
+
+        # check for failure reasons
         for outputfile in self.outputfiles:
             if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''): 
                 postprocessFailure = True

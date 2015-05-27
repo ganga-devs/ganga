@@ -112,16 +112,7 @@ class LocalFile(IGangaFile):
                 d.compressed = self.compressed
 
                 self.subfiles.append(GPIProxyObjectFactory(d))
-
-    def getSubFiles(self):
-        """Returns the name of a file object throgh a common interface"""
-        self.processWildcardMatches()
-        if self.subfiles:
-            return self.subfiles
-        else:
-            return [self]
-        
-
+       
     def getFilenameList(self):
         """Return the files referenced by this LocalFile"""
         filelist = []
@@ -133,3 +124,28 @@ class LocalFile(IGangaFile):
             filelist.append( os.path.join( self.localDir, self.namePattern ) )
 
         return filelist
+        
+    def hasMatchedFiles(self):
+        """
+        OK for checking subfiles but of no wildcards, need to actually check file exists
+        """
+        
+        # check for subfiles
+        if len(self.subfiles) > 0: 
+            # we have subfiles so we must have actual files associated
+            return True
+        else:
+            if self.containsWildcards():
+                return False
+                
+        # check if single file exists (no locations field to try)
+        job = self._getParent()
+        if job:
+            fname = self.namePattern
+            if self.compressed:
+                fname += ".gz"
+
+            if os.path.exists( os.path.join( job.getOutputWorkspace().getPath(), fname) ): 
+                return True
+            
+        return False

@@ -87,13 +87,13 @@ class CoreTransform(ITransform):
             
                if ds._name == "GangaDataset":
                   for f in ds.files:
-                     try:
-                        for sf in f.getSubFiles():
-                           filelist.append( sf )
-                        
-                     except NotImplementedError:
-                        logger.warning("getSubFiles not implemented for File '%s'" % f._name)
-
+                     if f.containsWildcards():
+                        # we have a wildcard so grab the subfiles
+                        for sf in f.getSubFiles(process_wildcards = True):
+                           filelist.append(sf)
+                     else:
+                        # no wildcards so just add the file
+                        filelist.append(f)
                else:
                   logger.warning("Dataset '%s' doesn't support files" % ds._name)
                
