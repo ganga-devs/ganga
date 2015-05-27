@@ -715,7 +715,7 @@ class JobRegistry_Monitor( GangaThread ):
 
         def _returnMonitorableJobs( jobList ):
 
-            log.info( "%s" % str( jobList ) )
+            #log.info( "%s" % str( jobList ) )
 
             returnableSet = Set([])#IList()
 
