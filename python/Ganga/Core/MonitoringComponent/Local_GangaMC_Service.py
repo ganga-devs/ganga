@@ -852,17 +852,20 @@ class JobRegistry_Monitor( GangaThread ):
         def f( activeBackendsFunc ):
             activeBackends = activeBackendsFunc()
             for jList in activeBackends.values():
-                backendObj = jList[0].backend
-                try:
-                   pRate = config[ backendObj._name ]
-                except:
-                   pRate = config[ 'default_backend_poll_rate' ]
-                # TODO: To include an if statement before adding entry to
-                #       updateDict. Entry is added only if credential requirements
-                #       of the particular backend is satisfied.
-                #       This requires backends to hold relevant information on its
-                #       credential requirements.
-                updateDict_ts.addEntry( backendObj, checkBackend, jList, pRate )
+                if not self.should_stop():
+                   backendObj = jList[0].backend
+                   try:
+                      pRate = config[ backendObj._name ]
+                   except:
+                      pRate = config[ 'default_backend_poll_rate' ]
+                   # TODO: To include an if statement before adding entry to
+                   #       updateDict. Entry is added only if credential requirements
+                   #       of the particular backend is satisfied.
+                   #       This requires backends to hold relevant information on its
+                   #       credential requirements.
+                   updateDict_ts.addEntry( backendObj, checkBackend, jList, pRate )
+                else:
+                   break
 
         if makeActiveBackendsFunc is None:
             makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
