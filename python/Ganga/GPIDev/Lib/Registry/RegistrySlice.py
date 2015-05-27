@@ -301,7 +301,7 @@ class RegistrySlice(object):
         try:
             try:
                 f = self._display_columns_functions[item]
-                val = self._display_columns_functions[item](obj)
+                val = f(obj)
             except KeyError:
                 val = getatr(obj,item.split('.'))
             if not val and not item in self._display_columns_show_empty:

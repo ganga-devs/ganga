@@ -483,6 +483,21 @@ class GangaRepositoryLocal(GangaRepository):
 
         return (id in self.objects) and (self.objects[id]._data is not None)
 
+    def count_nodes( self, id ):
+
+        node_count = 0
+        fn = self.get_fn(id)
+
+        ld = os.listdir(os.path.dirname(fn))
+        i=0
+        while str(i) in ld:
+            sfn = os.path.join(os.path.dirname(fn),str(i),"data")
+            if os.path.exists( sfn ):
+                node_count = node_count + 1
+            i += 1
+
+        return node_count
+
     def load(self, ids, load_backup=False):
 
         #print "load: %s " % str(ids)

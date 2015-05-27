@@ -39,7 +39,8 @@ def Configure():
     outputconfig.addOption( 'DiracFile',
                             {'fileExtensions' : ['*.dst'],
                              'backendPostprocess' : diracBackPost,
-                             'uploadOptions':{}},
+                             'uploadOptions' : {},
+                             'defaultSite' : 'CERN.CH' },
                             diracFileExts )
 
     ### GoogleFile

@@ -7,7 +7,6 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from MetadataDict import *
-from MetadataDict import *
 
 import Ganga.Utility.logging
 from Ganga.Lib.Notifier import Notifier
@@ -180,12 +179,12 @@ class Job(GangaObject):
                                     'metadata':ComponentItem('metadata',defvalue = MetadataDict(), doc='the metadata', protected =1, copyable=0),
                                     'fqid':SimpleItem(getter="getStringFQID",transient=1,protected=1,load_default=0,defvalue=None,optional=1,copyable=0,comparable=0,typelist=['str'],doc='fully qualified job identifier',visitable=0),
                                     'been_queued':SimpleItem(transient=1,hidden=1,defvalue=False,optional=0,copyable=0,comparable=0,typelist=['bool'],doc='flag to show job has been queued for postprocessing',visitable=0),
-                                    'parallel_submit':SimpleItem(transient=1,defvalue=False,doc="Enable Submission of subjobs in parallel")
+                                    'parallel_submit':SimpleItem(transient=1,defvalue=False,doc="Enable Submission of subjobs in parallel"),
                                     })
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['prepare','unprepare','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status' ]
+    _exportmethods = ['prepare','unprepare','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status', 'count_subjobs' ]
 
     default_registry = 'jobs'
 
@@ -359,6 +358,19 @@ class Job(GangaObject):
     def clone(self):
         return self.__deepcopy__()
 
+    def count_subjobs( self ):
+        """ It has been determined that this process is responsible for loading large jobs and cannot easily be overcome
+        
+            This function here will be intended to replace len(self.subjobs) once a solution has been found to speed up this process
+            This will likely involve some communication back up to the registry and repositoryto reduce the amount of disk I/O
+        """
+
+        myRepo = self._getRegistry().repository
+
+        subjob_num = myRepo.count_nodes( self.id )
+
+        return subjob_num
+
     def _attribute_filter__get__(self, name):
 
         #logger.debug( "Intercepting _attribute_filter__get__" )
@@ -367,16 +379,16 @@ class Job(GangaObject):
         if name == 'status':
             return object.__getattribute__(self, 'status')
 
-        list = self.metadata.data.keys()
-        list.append( 'outputfiles' )
-        list.append( 'inputfiles' )
-        list.append( 'subjobs' )
+        ## FIXME Add some method of checking what objects are known in advance of calling the __getattribute__ method
+        ## Pref one that doesn't involve loading the job object if not needed
 
-        if name not in list:
+        special_list = []
+        special_list.append( 'outputfiles' )
+        special_list.append( 'inputfiles' )
+        special_list.append( 'subjobs' )
+
+        if not name in special_list:
             return object.__getattribute__(self, name)
-
-        if name in self.metadata.data.keys():
-            return self.metadata[name]
 
         if name == 'outputfiles':
 
@@ -967,7 +979,12 @@ class Job(GangaObject):
         import os
         pathStart = filename.split( os.sep )[ 0 ]
         if ( ( "running" == self.status ) and ( pathStart != ".." ) ):
-            self.backend.peek( filename = filename, command = command )
+            if self.count_subjobs() == 0:
+                self.backend.peek( filename = filename, command = command )
+            elif self.count_subjobs() > 0:
+                for sj in self.subjobs:
+                    print "\n  subjob ID: %s" % ( str(sj.fqid('.')) )
+                    sj.backend.peek( filename = filename, command = command )
         else:
            topdir = os.path.dirname( self.inputdir.rstrip( os.sep ) )
            path = os.path.join( topdir, "output", filename ).rstrip( os.sep )
@@ -1124,7 +1141,7 @@ class Job(GangaObject):
 
             if appsubconfig is None or len(appsubconfig) == 0:
                 appmasterconfig = self._getMasterAppConfig()
-                logger.debug( "Job %s Calling application.configure %s times" % ( str(self.getFQID('.')), str(len(subjobs)) ) )
+                logger.debug( "Job %s Calling application.configure %s times" % ( str(self.getFQID('.')), str(self.count_subjobs()) ) )
                 appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in subjobs ]
                 
         else:
@@ -1182,7 +1199,7 @@ class Job(GangaObject):
                 appmasterconfig = self._getMasterAppConfig()
                 jobmasterconfig = self._getJobMasterConfig()
                 appsubconfig = self._getAppSubConfig( subjobs )
-                logger.debug( "Job %s Calling rtHandler.prepare %s times" % (str(self.getFQID('.')), str(len(subjobs))) )
+                logger.debug( "Job %s Calling rtHandler.prepare %s times" % (str(self.getFQID('.')), str(self.count_subjobs())) )
                 jobsubconfig = [ rtHandler.prepare( j.application, s, appmasterconfig, jobmasterconfig) for (j, s) in zip( subjobs, appsubconfig ) ]
         else:
             #   I am a sub-job, lets calculate my config
@@ -1301,7 +1318,7 @@ class Job(GangaObject):
                         j._init_workspace()
 
                 rjobs = self.subjobs
-                logger.info('submitting %d subjobs', len(rjobs))
+                logger.info('submitting %s subjobs', str(self.count_subjobs()) )
                 self._commit()
             else:
                 rjobs = [self]
@@ -1398,8 +1415,8 @@ class Job(GangaObject):
             rjobs = self._doSplitting()
 
             #
-            logger.debug( "Now have %s subjobs" % len( self.subjobs ) )
-            logger.debug( "Also have %s rjobs" % len( rjobs ) )
+            logger.debug( "Now have %s subjobs" % str( self.count_subjobs() ) ) 
+            logger.debug( "Also have %s rjobs" % str( len(rjobs) ) )
 
             ### Output Files
             # validate the output files
@@ -1463,7 +1480,7 @@ class Job(GangaObject):
             #send job submission message
             from Ganga.Runtime.spyware import ganga_job_submitted       
 
-            if len(self.subjobs) == 0:  
+            if self.count_subjobs() == 0:  
                 ganga_job_submitted(self.application.__class__.__name__, self.backend.__class__.__name__, "1", "0", "0")
             else:
                 submitted_count = 0
@@ -1879,7 +1896,7 @@ class Job(GangaObject):
             if fqid.find('.') > 0:
                 ganga_job_submitted(self.application.__class__.__name__, self.backend.__class__.__name__, "0", "0", "1")
             #if resubmit on plain job
-            elif len(self.subjobs) == 0:        
+            elif self.count_subjobs() == 0:        
                 ganga_job_submitted(self.application.__class__.__name__, self.backend.__class__.__name__, "1", "0", "0")
             #else resubmit on master job -> increment the counter of the subjobs with the succesfull resubmited subjobs
             else:
@@ -1941,7 +1958,7 @@ class Job(GangaObject):
             
     def _subjobs_proxy(self):
         from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
-        subjobs = JobRegistrySlice('jobs(%d).subjobs'%self.id)
+        subjobs = JobRegistrySlice('jobs(%d).subjobs' % self.id)
         for j in self.subjobs:
             subjobs.objects[j.id] = j
         #print 'return slice',subjobs

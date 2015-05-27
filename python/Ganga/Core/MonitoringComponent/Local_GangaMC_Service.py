@@ -700,7 +700,7 @@ class JobRegistry_Monitor( GangaThread ):
                     active_backends.setdefault( bn, [] )
                     active_backends[ bn ].append( j )
                 elif j.status in [ 'submitting' ]:
-                    if len(j.subjobs) > 0:
+                    if j.count_subjobs() > 0:
                         #j._getWriteAccess()
                         bn = j.backend._name
                         active_backends.setdefault( bn, [] )
@@ -712,8 +712,6 @@ class JobRegistry_Monitor( GangaThread ):
         return active_backends
 
     def makeUpdateJobStatusFunction( self, makeActiveBackendsFunc = None ):
-        if makeActiveBackendsFunc is None:
-            makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
 
         def _returnMonitorableJobs( jobList ):
 
@@ -728,8 +726,8 @@ class JobRegistry_Monitor( GangaThread ):
 
                     size = 0
                     for i in returnableSet:
-                        if len(i.subjobs) > 0:
-                            size = size + len(i.subjobs)
+                        if i.count_subjobs() > 0:
+                            size = size + i.count_subjobs()
                         else:
                             size = size + 1
 
@@ -746,13 +744,13 @@ class JobRegistry_Monitor( GangaThread ):
 
             for job in jobList:
 
-                if job.status in [ 'submitting' ] and len(job.subjobs) > 0:
+                if job.status in [ 'submitting' ] and job.count_subjobs() > 0:
 
                     returnableSet.add( job )
 
                     size = 0
                     for i in returnableSet:
-                        size = size + len(job.subjobs)
+                        size = size + job.count_subjobs()
 
                     if size > (config['MaxNumberParallelMonitor'] - found):
                         break
@@ -773,14 +771,8 @@ class JobRegistry_Monitor( GangaThread ):
                 ##  Can we optimise this a little perhaps as this can lead to a slowdown in monitoring startup
                 ##  Can python islice fix this? rcurrie
 
-                log.info( "hello" )
-
-                log.info( "type: %s" % str( type(jobListSet) ) )
-
                 ##  All standard jobs to be monitored
                 alljobList_fromset, found = _returnMonitorableJobs( jobListSet )
-
-                log.info( "hello2" )
 
                 max_parallel = config['MaxNumberParallelMonitor'] - found
 
@@ -790,14 +782,10 @@ class JobRegistry_Monitor( GangaThread ):
                 else:
                     masterJobList_fromset = Set([])
 
-                log.info( "hello3" )
-
                 ## Combine both lists
                 jobList_fromset = list( alljobList_fromset.union( masterJobList_fromset ) )
 
                 #log.info( "%s" % str(jobList_fromset) )
-
-                log.info( "hello4" )
 
                 updateDict_ts.clearEntry( backendObj._name )
                 try:
@@ -825,7 +813,7 @@ class JobRegistry_Monitor( GangaThread ):
                         if not j.do_auto_resubmit:
                             continue
 
-                        if len(j.subjobs) == 0:
+                        if j.count_subjobs() == 0:
                             try_resubmit = j.info.submit_counter <= config['MaxNumResubmits']
                         else:
                             # Check for max number of resubmissions
@@ -856,7 +844,7 @@ class JobRegistry_Monitor( GangaThread ):
                 log.debug( "[Update Thread %s] Flushing registry %s." % ( currentThread, [x.id for x in jobList_fromset ] ) )
                 self.registry._flush( jobList_fromset ) # Optimisation required! 
             except Exception, x:
-                log.info( "Monitoring Exception: %s" % str(x) )
+                log.debug( "Monitoring Exception: %s" % str(x) )
             finally:
                 lock.release()
                 log.debug( "[Update Thread %s] Lock released for %s." % ( currentThread, backendObj._name ) )
@@ -875,6 +863,9 @@ class JobRegistry_Monitor( GangaThread ):
                 #       This requires backends to hold relevant information on its
                 #       credential requirements.
                 updateDict_ts.addEntry( backendObj, checkBackend, jList, pRate )
+
+        if makeActiveBackendsFunc is None:
+            makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
 
         if makeActiveBackendsFunc == self.__defaultActiveBackendsFunc:
             self.defaultUpdateJobStatus = f
