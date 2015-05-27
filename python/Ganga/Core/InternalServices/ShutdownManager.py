@@ -55,9 +55,9 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
-    #import Ganga.Core
-    #if Ganga.Core.monitoring_component:
-    #    Ganga.Core.monitoring_component.disableMonitoring()
+    #from Ganga.Core import monitoring_component
+    #if monitoring_component is not None:
+    #    monitoring_component.disableMonitoring()
 
     #from Ganga.Core.InternalServices import Coordinator
     #if Coordinator.servicesEnabled:
@@ -66,6 +66,7 @@ def _ganga_run_exitfuncs():
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
     stop_and_free_thread_pool()
+    
 
     from Ganga.GPI import queues
     queues._purge_all()

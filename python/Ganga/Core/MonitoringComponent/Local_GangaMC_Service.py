@@ -551,20 +551,31 @@ class JobRegistry_Monitor( GangaThread ):
         """
         Disable the monitoring loop
         """
-        
+
         if not self.alive:
             log.error("Cannot disable monitoring loop. It has already been stopped")
             return False
-        
+
+        try:
+            if self.enabled:
+                log.info( "Disabling Monitoring Service" )
+
+            ##  THIS NEEDS TO BE HERE FOR A CLEAN DISABLE OF THE MONITORING LOOP!!!!!
+            self.enabled = False
+            ## CANNOT DETERMINE IF WE SHOULD CONTINUE WITH EXPENSIVE OUT OF THREAD TASKS OTHERWISE!!!!!
+        except:
+            logger.error("ERROR STOPPING MONITORING THREAD, feel free to force exit")
+
         self.__mainLoopCond.acquire() 
         log.debug( 'Monitoring loop lock acquired. Disabling mon loop' )
         try:  
             self.enabled = False
             self.steps=-1
             self.stopIter.set()
+
             log.debug( 'Monitoring loop disabled' )
             #wake up the monitoring loop            
-            self.__mainLoopCond.notifyAll()                
+            self.__mainLoopCond.notifyAll()
         finally:
             self.__mainLoopCond.release()
         #wait for cleanup        
@@ -582,13 +593,17 @@ class JobRegistry_Monitor( GangaThread ):
         if not self.alive:
             log.warning("Monitoring loop has already been stopped")
             return False
-        
-        self.__mainLoopCond.acquire()
-        if self.enabled: log.info( 'Stopping the monitoring component...' )
-        try: 
-            #signal the main thread to finish
+
+        if self.enabled:
+            log.info( 'Stopping the monitoring component...' )
             self.alive = False
             self.enabled = False
+
+        self.__mainLoopCond.acquire()
+        if self.enabled:
+            log.info( 'Stopping the monitoring component...' )
+        try: 
+            #signal the main thread to finish
             self.steps=-1        
             self.stopIter.set()
             #wake up the monitoring loop            
@@ -692,26 +707,32 @@ class JobRegistry_Monitor( GangaThread ):
         # FIXME: this is not thread safe: if the new jobs are added then iteration exception is raised
         fixed_ids = self.registry.ids()
         for i in fixed_ids:
-            try:
-                j = self.registry(i)
-                if j.status in [ 'submitted', 'running' ]:
-                    #j._getWriteAccess()
-                    bn = j.backend._name
-                    active_backends.setdefault( bn, [] )
-                    active_backends[ bn ].append( j )
-                elif j.status in [ 'submitting' ]:
-                    if j.count_subjobs() > 0:
+            if (self.enabled) and (not self.should_stop()):
+                try:
+                    j = self.registry(i)
+                    if j.status in [ 'submitted', 'running' ]:
                         #j._getWriteAccess()
                         bn = j.backend._name
                         active_backends.setdefault( bn, [] )
                         active_backends[ bn ].append( j )
-            except RegistryKeyError, x:
-                pass # the job was removed
-            except RegistryLockError, x:
-                pass # the job was removed
+                    elif j.status in [ 'submitting' ]:
+                        if j.count_subjobs() > 0:
+                            #j._getWriteAccess()
+                            bn = j.backend._name
+                            active_backends.setdefault( bn, [] )
+                            active_backends[ bn ].append( j )
+                except RegistryKeyError, x:
+                    pass # the job was removed
+                except RegistryLockError, x:
+                    pass # the job was removed
+            else:
+                return {}
         return active_backends
 
     def makeUpdateJobStatusFunction( self, makeActiveBackendsFunc = None ):
+
+        if makeActiveBackendsFunc is None:
+            makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
 
         def _returnMonitorableJobs( jobList ):
 
@@ -720,19 +741,21 @@ class JobRegistry_Monitor( GangaThread ):
             returnableSet = Set([])#IList()
 
             for job in jobList:
-                if job.status in [ 'submitted', 'running' ]:
 
-                    returnableSet.add( job )
-
-                    size = 0
-                    for i in returnableSet:
-                        if i.count_subjobs() > 0:
-                            size = size + i.count_subjobs()
-                        else:
-                            size = size + 1
-
-                    if size > config['MaxNumberParallelMonitor']:
-                        break
+                if (not self.should_stop()) or (self.enabled):
+                    
+                    if job.status in [ 'submitted', 'running' ]:
+                        returnableSet.add( job )
+                        size = 0
+                        for i in returnableSet:
+                            if i.count_subjobs() > 0:
+                                size = size + i.count_subjobs()
+                            else:
+                                size = size + 1
+                        if size > config['MaxNumberParallelMonitor']:
+                            break
+                else:
+                    return Set([]), 999
 
             return returnableSet, size
             ## Function to replace this simpler IList description
@@ -744,16 +767,17 @@ class JobRegistry_Monitor( GangaThread ):
 
             for job in jobList:
 
-                if job.status in [ 'submitting' ] and job.count_subjobs() > 0:
+                if (not self.should_stop()) and (self.enabled):
 
-                    returnableSet.add( job )
-
-                    size = 0
-                    for i in returnableSet:
-                        size = size + job.count_subjobs()
-
-                    if size > (config['MaxNumberParallelMonitor'] - found):
-                        break
+                    if job.status in [ 'submitting' ] and job.count_subjobs() > 0:
+                        returnableSet.add( job )
+                        size = 0
+                        for i in returnableSet:
+                            size = size + job.count_subjobs()
+                        if size > (config['MaxNumberParallelMonitor'] - found):
+                            break
+                    else:
+                        return Set([])
 
             return returnableSet
 
@@ -852,7 +876,8 @@ class JobRegistry_Monitor( GangaThread ):
         def f( activeBackendsFunc ):
             activeBackends = activeBackendsFunc()
             for jList in activeBackends.values():
-                if not self.should_stop():
+                currentThread = threading.currentThread()
+                if (not currentThread.should_stop()) and self.enabled:
                    backendObj = jList[0].backend
                    try:
                       pRate = config[ backendObj._name ]
@@ -866,9 +891,6 @@ class JobRegistry_Monitor( GangaThread ):
                    updateDict_ts.addEntry( backendObj, checkBackend, jList, pRate )
                 else:
                    break
-
-        if makeActiveBackendsFunc is None:
-            makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
 
         if makeActiveBackendsFunc == self.__defaultActiveBackendsFunc:
             self.defaultUpdateJobStatus = f
