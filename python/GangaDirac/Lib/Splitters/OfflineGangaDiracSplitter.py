@@ -94,7 +94,7 @@ def generate_site_selection( input_site, wanted_common_site, uniqueSE=False ):
     return req_sitez
 
 ##  Actually Do the work of the splitting
-def OfflineLHCbDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
+def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
     Generator that yields a datasets for dirac split jobs
     """

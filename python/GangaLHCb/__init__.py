@@ -36,6 +36,8 @@ defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
 configLHCb.addOption('UserAddedApplications',"","List of user added LHCb applications split by ':'")
 
+configLHCb.addOption('SplitByFilesBackend','OfflineGangaDiracSplitter','Possible SplitByFiles backend algorithms to use to split jobs into subjobs, options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData' )
+
 ## dscrpt = 'Automatically download sandbox for failed jobs?'
 ## configLHCb.addOption('failed_sandbox_download',True,dscrpt)
 ## dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\

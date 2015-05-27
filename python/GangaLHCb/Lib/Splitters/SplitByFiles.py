@@ -15,6 +15,9 @@ import os
 import copy
 import pickle
 
+from Ganga.Utility.Config import getConfig
+lhcbConfig = getConfig('LHCb')
+
 class SplitByFiles(GaudiInputDataSplitter):
     """Splits a job into sub-jobs by partitioning the input data
 
@@ -38,9 +41,9 @@ class SplitByFiles(GaudiInputDataSplitter):
                                                    doc='Skip LFNs if they are not found ' \
                                                    'in the LFC. This option is only used if' \
                                                    'jobs backend is Dirac')
-
-    _schema.datadict['splitterBackend'] = SimpleItem('',doc='name of the backend algorithm to use for splitting',typelist=['str'])
-
+    _schema.datadict['splitterBackend'] = SimpleItem(defvalue=lhcbConfig['SplitByFilesBackend'],
+                                                     doc='name of the backend algorithm to use for splitting',
+                                                     typelist=['str'], protected =1, visitable=0)
 
 
     def _attribute_filter__set__(self, name, value):
@@ -147,9 +150,9 @@ class SplitByFiles(GaudiInputDataSplitter):
                                              self.filesPerJob,
                                              self.maxFiles,
                                              self.ignoremissing)
-            elif self.splitterBackend == "GangaLHCbSplitter":
-                from GangaLHCb.Lib.Splitters.OfflineLHCbDiracSplitter import OfflineLHCbDiracSplitter
-                outdata = OfflineLHCbDiracSplitter( indata,
+            elif self.splitterBackend == "OfflineGangaDiracSplitter":
+                from GangaDirac.Lib.Splitters.OfflineGangaDiracSplitter import OfflineGangaDiracSplitter
+                outdata = OfflineGangaDiracSplitter( indata,
                                             self.filesPerJob,
                                             self.maxFiles,
                                             self.ignoremissing)
@@ -159,13 +162,15 @@ class SplitByFiles(GaudiInputDataSplitter):
                                         self.filesPerJob,
                                         self.maxFiles,
                                         self.ignoremissing)
-            else:
+            elif self.splitterBackend == "splitInputData":
                 indata = stripProxy(copy.deepcopy(inputdata))
                 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
                 outdata = DiracSplitter(indata,
                                      self.filesPerJob,
                                      self.maxFiles,
                                      self.ignoremissing)
+            else:
+                raise SplitterError( "Backend algorithm not selected!" )
 
             #print outdata
             #exit(0)

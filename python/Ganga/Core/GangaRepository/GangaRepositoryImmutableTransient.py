@@ -62,7 +62,7 @@ class GangaRepositoryImmutableTransient(GangaRepository):
 
         setattr(sys.modules['Ganga.Core.GangaRepository'], 'getRegistry', old)
 
-    def updateNow(self):
+    def updateLocksNow(self):
         pass
 
     def update_index(self, id = None):

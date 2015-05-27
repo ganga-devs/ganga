@@ -30,6 +30,7 @@ class LocalFile(IGangaFile):
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'gangafiles'
     _name = "LocalFile"
+    _exportmethods = [ "location" , "remove", "accessURL" ]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -72,6 +73,15 @@ class LocalFile(IGangaFile):
         """Get the representation of the file."""
 
         return "LocalFile(namePattern='%s')"% self.namePattern
+
+    def location( self ):
+        return self.getFilenameList()
+
+    def accessURL( self ):
+        URLs = []
+        for file in self.location():
+            URLs.append( os.path.join( 'file://', file ) )
+        return URLs
 
     def processOutputWildcardMatches(self):
         """This collects the subfiles for wildcarded output LocalFile"""
@@ -149,3 +159,27 @@ class LocalFile(IGangaFile):
                 return True
             
         return False
+
+    def remove( self ):
+
+        for file in self.getFilenameList():
+            _actual_delete = False
+            keyin = None
+            while keyin == None:
+                keyin = raw_input( "Do you want to remove the LocalFile: %s ? [y/n] " % str(file) )
+                if keyin == 'y':
+                    _actual_delete = True
+                elif keyin == 'n':
+                    _actual_delete = False
+                else:
+                    print "y/n please!"
+                    keyin = None
+            if _actual_delete:
+                if not os.path.exists( file ):
+                    logger.warning( "File %s did not exist, can't delete" % file )
+                else:
+                    logger.info( "Deleting: %s" % file )
+                    os.unlink( file )
+
+        return
+

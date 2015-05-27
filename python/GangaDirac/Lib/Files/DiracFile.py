@@ -53,7 +53,7 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'accessURL' ]
+    _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'locations', 'location', 'accessURL' ]
 
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
@@ -119,7 +119,7 @@ class DiracFile(IGangaFile):
             return expandfilename(value)
         return value
 
-    def location( self ):
+    def locations( self ):
 
         return self.locations
 
@@ -399,10 +399,15 @@ class DiracFile(IGangaFile):
             for i in self.subfiles:
                 i._updateRemoteURLs( reps )
 
-        if self.locations != reps[self.lfn].keys():
-            self.locations = reps[self.lfn].keys()
-            for k in reps[self.lfn].keys():
-                self._remoteURLs[k] = reps[self.lfn][k]
+        #if self.locations != reps[self.lfn].keys():
+        #    self.locations = reps[self.lfn].keys()
+        #    for k in reps[self.lfn].keys():
+        #        self._remoteURLs[k] = reps[self.lfn][k]
+
+    def location(self):
+        """
+        """
+        return [""]
 
     def accessURL(self):
         """

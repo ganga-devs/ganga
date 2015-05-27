@@ -318,7 +318,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         return
 
-    def updateNow(self):
+    def updateLocksNow(self):
         self.sessionlock.updateNow()
 
     def update_index(self,id = None,verbose=False,firstRun=True):

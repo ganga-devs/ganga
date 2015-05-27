@@ -109,7 +109,7 @@ def updateLocksNow():
 
     logger.debug( "Updating timestamp of Lock files" )
     for registry in getRegistries():
-        registry.updateNow()
+        registry.updateLocksNow()
     return
 
 def shutdown():
