@@ -399,10 +399,10 @@ class DiracFile(IGangaFile):
             for i in self.subfiles:
                 i._updateRemoteURLs( reps )
 
-        #if self.locations != reps[self.lfn].keys():
-        #    self.locations = reps[self.lfn].keys()
-        #    for k in reps[self.lfn].keys():
-        #        self._remoteURLs[k] = reps[self.lfn][k]
+        if self.locations != reps[self.lfn].keys():
+            self.locations = reps[self.lfn].keys()
+            for k in reps[self.lfn].keys():
+                self._remoteURLs[k] = reps[self.lfn][k]
 
     def location(self):
         """
