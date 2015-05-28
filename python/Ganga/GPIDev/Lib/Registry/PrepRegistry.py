@@ -100,12 +100,8 @@ class ShareRef(GangaObject):
         """
         logger.debug("running increase() in prepregistry")
         self._getWriteAccess()
-        
-        #shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
-        from Ganga.Utility.files import expandfilename
-        config = Ganga.Utility.Config.getConfig('Configuration')
-        gangadir = config['gangadir']
-        shareddir = os.path.join(expandfilename(gangadir),'shared',config['user'])
+ 
+        shareddir = os.path.join(ShareDir._root_shared_path, os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir) and force is False:
             if basedir not in self.name:
@@ -134,11 +130,7 @@ class ShareRef(GangaObject):
         """
         self._getWriteAccess()
         
-        #shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
-        from Ganga.Utility.files import expandfilename
-        config = Ganga.Utility.Config.getConfig('Configuration')
-        gangadir = config['gangadir']
-        shareddir = os.path.join(expandfilename(gangadir),'shared',config['user'])
+        shareddir =  os.path.join(ShareDir._root_shared_path,os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
         #if remove==1, we force the shareref counter to 0
         try:
@@ -207,8 +199,7 @@ class ShareRef(GangaObject):
                 run_unp = None
 
         if unprepare is not True:
-            logger.info('%s item(s) found referencing ShareDir %s', master_index, sharedir)            
-
+            logger.info('%s item(s) found referencing ShareDir %s', master_index, sharedir)
 
     def rebuild(self, unprepare=True, rmdir=False):
         """Rebuild the shareref table. 
@@ -340,7 +331,6 @@ class ShareRef(GangaObject):
                 else:
                     logger.warn("Please respond with 'Yes/y', 'No/n', 'All' or 'None'")
 
-
         delete_share_config = Ganga.Utility.Config.getConfig('Configuration')['deleteUnusedShareDir']
         if delete_share_config == 'ask':
             ask_delete = 'Ask'
@@ -356,7 +346,7 @@ class ShareRef(GangaObject):
         #list of keys to be removed from the shareref table
         cleanup_list = []
         for shareddir in self.name.keys():
-            full_shareddir_path = os.path.join(ShareDir._root_shared_path,shareddir)
+            full_shareddir_path = os.path.join(ShareDir._root_shared_path, shareddir)
             #for each sharedir in the shareref table that also exists in the filesystem
             if self.name[shareddir] == 0 and os.path.isdir(full_shareddir_path):
                 if ask_delete == 'Ask':
@@ -387,7 +377,14 @@ class ShareRef(GangaObject):
             #if the sharedir in the table doesn't exist on the filesytem, and the reference counter is > 0, 
             #we need to unprepare any associated jobs
             if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
-                logger.debug('%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' %shareddir)
+                #print full_shareddir_path
+                #print shareddir
+                #print cleanup_list
+                #print self.name.keys()
+                #print self.name
+                #import sys
+                #sys.exit(-1)
+                logger.info('%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' % shareddir)
                 self.lookup(sharedir=shareddir, unprepare=True)
                 cleanup_list.append(shareddir)
                 

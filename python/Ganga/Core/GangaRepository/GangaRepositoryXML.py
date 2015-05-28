@@ -274,59 +274,64 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _write_master_cache( self, shutdown = False ):
         logger.debug( "Updating master index" )
-        import os.path
-        _master_idx = os.path.join(self.root, 'master.idx')
-        this_master_cache = []
-        if os.path.isfile( _master_idx ) and not shutdown:
-            import os
-            if abs( self._master_index_timestamp - os.stat(_master_idx).st_ctime ) < 300:
-                return
-        for k, v in self.objects.iteritems():
-            try:
-                ## Check and write index first
-                obj = self.objects[k]
-                new_index = None
-                if obj:
-                    new_index = self.registry.getIndexCache(obj)
-                if new_index and new_index != obj._index_cache:
-                    if len(self.lock([k])) != 0:
-                        self.index_write(k)
-                        self.unlock([k])
-            except Exception, x:
-                logger.error( "Failed to update index: %s on shutdown" % str(k) )
-                logger.error( "%s" % str(x) )
-                pass
-        for k, v in self._cache_load_timestamp.iteritems():
-            cached_list = []
-            cached_list.append( k )
-            try:
-                fn = self.get_idxfn(k)
-                time = os.stat(fn).st_ctime
-            except:
-                time = 0
-            cached_list.append( time )
-            cached_list.append( self._cached_cat[k] )
-            cached_list.append( self._cached_cls[k] )
-            cached_list.append( self._cached_obj[k] )
-            this_master_cache.append( cached_list )
-
         try:
-            of = open( _master_idx, 'w' )
-            pickle_to_file( this_master_cache, of )
-            of.close()
-        except:
-            try:
+            import os.path
+            _master_idx = os.path.join(self.root, 'master.idx')
+            this_master_cache = []
+            if os.path.isfile( _master_idx ) and not shutdown:
                 import os
-                os.unlink( os.path.join(self.root, 'master.idx') )
+                if abs( self._master_index_timestamp - os.stat(_master_idx).st_ctime ) < 300:
+                    return
+            items_to_save = self.objects.iteritems()
+            for k, v in items_to_save:
+                try:
+                    ## Check and write index first
+                    obj = self.objects[k]
+                    new_index = None
+                    if obj:
+                        new_index = self.registry.getIndexCache(obj)
+                    if new_index and new_index != obj._index_cache:
+                        if len(self.lock([k])) != 0:
+                            self.index_write(k)
+                            self.unlock([k])
+                except Exception, x:
+                    logger.error( "Failed to update index: %s on shutdown" % str(k) )
+                    logger.error( "%s" % str(x) )
+                    pass
+            cached_list = []
+            iterables = self._cache_load_timestamp.iteritems()
+            for k, v in iterables:
+                cached_list.append( k )
+                try:
+                    fn = self.get_idxfn(k)
+                    time = os.stat(fn).st_ctime
+                except:
+                    time = 0
+                cached_list.append( time )
+                cached_list.append( self._cached_cat[k] )
+                cached_list.append( self._cached_cls[k] )
+                cached_list.append( self._cached_obj[k] )
+                this_master_cache.append( cached_list )
+
+            try:
+                of = open( _master_idx, 'w' )
+                pickle_to_file( this_master_cache, of )
+                of.close()
             except:
-                pass
+                try:
+                    import os
+                    os.unlink( os.path.join(self.root, 'master.idx') )
+                except:
+                    pass
+        except:
+            pass
 
         return
 
     def updateLocksNow(self):
         self.sessionlock.updateNow()
 
-    def update_index(self,id = None,verbose=False,firstRun=True):
+    def update_index(self,id = None,verbose=False, firstRun=False):
         """ Update the list of available objects
         Raise RepositoryError"""
         # First locate and load the index files

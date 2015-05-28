@@ -593,19 +593,25 @@ class JobRegistry_Monitor( GangaThread ):
         if not self.alive:
             log.warning("Monitoring loop has already been stopped")
             return False
+        else:
+            self.alive = False
 
         if self.enabled:
             log.info( 'Stopping the monitoring component...' )
             self.alive = False
             self.enabled = False
 
+        try:
+            #signal the main thread to finish
+            self.steps=-1
+            self.stopIter.set()
+        except:
+            pass
+
         self.__mainLoopCond.acquire()
         if self.enabled:
             log.info( 'Stopping the monitoring component...' )
         try: 
-            #signal the main thread to finish
-            self.steps=-1        
-            self.stopIter.set()
             #wake up the monitoring loop            
             self.__mainLoopCond.notifyAll()
         finally:
