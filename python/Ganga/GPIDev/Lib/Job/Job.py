@@ -367,7 +367,10 @@ class Job(GangaObject):
 
         myRepo = self._getRegistry().repository
 
-        subjob_num = myRepo.count_nodes( self.id )
+        if self.master is None:
+            subjob_num = myRepo.count_nodes( self.id )
+        else:
+            subjob_num = myRepo.count_nodes( self.master.id )
 
         return subjob_num
 
