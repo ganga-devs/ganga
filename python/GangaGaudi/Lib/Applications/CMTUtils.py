@@ -21,10 +21,11 @@ def update_project_path(user_release_area,env=os.environ):
                 cmtpp = [user_release_area] + cmtpp
                 env['CMTPROJECTPATH']=':'.join(cmtpp)
 
-def get_user_dlls(appname, version, user_release_area, platform, env, project):
+def get_user_dlls(appname, version, user_release_area, platform, env):
 
     user_ra = user_release_area
     update_project_path(user_release_area)
+    from Ganga.Utility.files import fullpath
     full_user_ra = fullpath(user_ra) # expand any symbolic links
 
     # Work our way through the CMTPROJECTPATH until we find a cmt directory
@@ -45,6 +46,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env, project):
     logger.debug('Using the CMT directory %s for identifying projects' % dir)
     ##   rc, showProj, m = shell.cmd1('cd ' + dir +';cmt show projects',
     ##                                capture_stderr=True)
+    from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
     rc, showProj, m = shellEnv_cmd('cmt show projects', env, dir)
 
     logger.debug(showProj)
@@ -71,6 +73,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env, project):
 
 
     # savannah 47793 (remove multiple copies of the same areas)
+    from Ganga.Utility.util import unique
     project_areas = unique(project_areas)
     py_project_areas = unique(py_project_areas)
 
@@ -83,7 +86,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env, project):
              project_areas_dict[area] = ld_lib_path.index(area)
         else:
              project_areas_dict[area] = 666
-    from operator import itemetter
+    from operator import itemgetter
     sorted_project_areas = []
     for item in sorted(project_areas_dict.items(), key = itemgetter(1)):
            sorted_project_areas.append(item[0])
@@ -105,6 +108,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env, project):
         if os.path.exists( pypath):
             pyFileCollector(pypath, merged_pys, subdir_pys, configGaudi['pyFileCollectionDepth'])
 
+    import pprint
     logger.debug("%s",pprint.pformat( libs ))
     logger.debug("%s",pprint.pformat( merged_pys ))
     logger.debug("%s",pprint.pformat( subdir_pys ))

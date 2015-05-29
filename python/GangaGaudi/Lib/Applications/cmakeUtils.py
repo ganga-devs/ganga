@@ -12,7 +12,7 @@ def update_project_path(user_release_area, env = os.environ):
     '''
     return NotImplementedError
 
-def get_user_dlls(appname, version, user_release_area, platform, env, project):
+def get_user_dlls(appname, version, user_release_area, platform, env):
     '''
     '''
     return NotImplementedError

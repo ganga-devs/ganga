@@ -217,7 +217,7 @@ class GaudiBase(IPrepareApp):
                                  self.is_prepared.name)
 
         dlls, pys, subpys = get_user_dlls(self.appname, self.version,
-                                          self.user_release_area,self.platform,
+                                          self.user_release_area, self.platform,
                                           self.getenv(True))
         InstallArea=[]
 

@@ -51,14 +51,14 @@ def pyFileCollector(dir, file_list, subdir_dict, depth_cut, depth=0,zerodepth_pa
     subdir_dict[dir[zerodepth_pathlength:]] = sub_pys
 
 
-def get_user_dlls(appname, version, user_release_area, platform, env, project):
+def get_user_dlls(appname, version, user_release_area, platform, env):
 
     if not configGaudi['useCMakeApplications']:
-        import CMTutils
-        return CMTutils.get_user_dlls( appname, version, user_release_area, platform, env, project )
+        import CMTUtils
+        return CMTUtils.get_user_dlls( appname, version, user_release_area, platform, env )
     else:
         import cmakeUtils
-        return cmakeUtile.get_user_dlls( appname, version, user_release_area, platform, env, project )
+        return cmakeUtils.get_user_dlls( appname, version, user_release_area, platform, env )
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
