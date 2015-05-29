@@ -84,6 +84,11 @@ path_prepend PYTHONPATH "$(ext_root)/python-gflags/$(pythongflags)/noarch/python
 
 path_prepend PYTHONPATH "$(ext_root)/httplib2/$(httplib2)/noarch/python2"
 
+#########################################################################
+# Set config files
+
+set GANGA_SITE_CONFIG_AREA "/afs/cern.ch/sw/ganga/install/config/LHCb"
+set GANGA_CONFIG_PATH "GangaLHCb/LHCb.ini"
 
 ########################################################################
 # Path cleaner
