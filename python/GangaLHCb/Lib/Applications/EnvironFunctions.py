@@ -189,6 +189,7 @@ def _getshell_SP(self):
     fd = tempfile.NamedTemporaryFile()
     script = '#!/bin/sh\n'
     if self.user_release_area:
+        from Ganga.Utility.files import expandfilename
         script += 'User_release_area=%s; export User_release_area\n' % \
         expandfilename(self.user_release_area)
     if self.platform:
