@@ -80,7 +80,8 @@ class LocalFile(IGangaFile):
     def accessURL( self ):
         URLs = []
         for file in self.location():
-            URLs.append( os.path.join( 'file://', file ) )
+            import os
+            URLs.append( 'file://' + os.path.join( os.sep, file ) )
         return URLs
 
     def processOutputWildcardMatches(self):

@@ -40,7 +40,7 @@ def Configure():
                             {'fileExtensions' : ['*.dst'],
                              'backendPostprocess' : diracBackPost,
                              'uploadOptions' : {},
-                             'defaultSite' : 'CERN.CH' },
+                             'defaultSite' : { 'upload' : 'CERN-USER', 'download' : 'CERN-USER' } },
                             diracFileExts )
 
     ### GoogleFile

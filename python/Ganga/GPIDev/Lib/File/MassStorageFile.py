@@ -619,16 +619,13 @@ class MassStorageFile(IGangaFile):
 
         protoPath = getConfig('Output')['MassStorageFile']['defaultProtocol']
 
-        print protoPath
-
         myLocations = self.location()
 
         accessURLs = []
 
         for file in myLocations:
-            print file
-            print os.path.join( protoPath, file )
-            accessURLs.append( os.path.join( protoPath, file ) )
+            import os
+            accessURLs.append( protoPath + os.path.join( os.sep, file ) )
         
         return accessURLs
 

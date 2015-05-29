@@ -330,4 +330,9 @@ def getSitesForSE( se ):
     from DIRAC.Core.Utilities.SiteSEMapping import getSitesForSE
     result = getSitesForSE( storageElement=se )
     output( result )
+def getSEsForSite( site ):
+    from DIRAC.Core.Utilities.SiteSEMapping import getSEsForSite
+    result = getSEsForSite(site)
+    output( result )
+
 

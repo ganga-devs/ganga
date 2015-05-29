@@ -14,6 +14,41 @@ configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
 
+global stored_list_of_sites
+stored_list_of_sites = []
+
+def all_SE_list():
+
+    global stored_list_of_sites
+    if stored_list_of_sites != []:
+        return stored_list_of_sites
+
+    all_storage_elements = configDirac['DiracSpaceTokens']
+    default_site = configDirac['DiracDefaultStorageSite']
+
+    default_SE_for_Site = None
+
+    all_SE_for_Site_output = execute('getSEsForSite("%s")' % str( default_site ) )
+
+    if all_SE_for_Site_output.get('OK', False):
+        all_SE_for_Site = all_SE_for_Site_output.get('Value')
+    else:
+        logger.warning( "Couldn't find SEs for Site: %s, resorting to default list of DiracSpaceTokens" % str( default_site ) )
+        all_SE_for_Site = []
+
+    for this_SE in all_SE_for_Site:
+        if this_SE in all_storage_elements:
+            defalt_SE_for_Site = this_SE
+            break
+
+    if default_SE_for_Site != None:
+        all_storage_elements.pop( default_SE_for_Site )
+        all_storage_elements.insert( 0, default_SE_for_Site )
+    
+    stored_list_of_sites = all_storage_elements
+
+    return all_storage_elements
+
 #def upload_ok(lfn):
 #    import datetime
 #    retcode, stdout, stderr = dirac_ganga_server.execute('dirac-dms-lfn-metadata %s' % lfn, shell=True)
@@ -326,13 +361,11 @@ class DiracFile(IGangaFile):
                     self.guid = ret['Value']['Successful'][self.lfn]['GUID']
             except: pass
 
-        reps =  self.getReplicas()
-
-        if isinstance(reps,dict) and reps.get('OK', False) and self.lfn in reps.get('Value', {'Successful': {}})['Successful']:
-            try:
-                ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
-            except:
-                pass
+        try:
+            reps =  self.getReplicas()
+            ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
+        except:
+            pass
 
         return ret
 
@@ -373,14 +406,6 @@ class DiracFile(IGangaFile):
 
         these_replicas = None
 
-        if (self._storedReplicas == {} and len(self.subfiles) == 0 )or forceRefresh:
-
-            self._storedReplicas =  execute('getReplicas("%s")' % self.lfn)['Value']['Successful']
-            self._updateRemoteURLs( self._storedReplicas )
-
-            these_replicas = self._storedReplicas
-
-
         if len(self.subfiles) != 0:
 
             allReplicas = []
@@ -391,23 +416,53 @@ class DiracFile(IGangaFile):
 
             these_replicas = allReplicas
 
+        else:
+            if (self._storedReplicas == {} and len(self.subfiles) == 0 ) or forceRefresh:
+
+                self._storedReplicas =  execute('getReplicas("%s")' % self.lfn)
+                if self._storedReplicas.get( 'OK', False ):
+                    self._storedReplicas = self._storedReplicas['Value']['Successful']
+                else:
+                    logger.error( "Couldn't find replicas for: %s" % str( self.lfn ) )
+                    raise GangaError( "Couldn't find replicas for: %s" % str( self.lfn ) )
+                logger.debug( "getReplicas: %s" % str(self._storedReplicas) )
+                self._updateRemoteURLs( self._storedReplicas )
+
+                these_replicas = [ self._storedReplicas[self.lfn] ]
+            elif self._storedReplicas != {}:
+                these_replicas = [ self._storedReplicas[self.lfn] ]
+
         return these_replicas
 
     def _updateRemoteURLs( self, reps ):
 
-        if self.subfiles:
+        if len(self.subfiles) != 0:
             for i in self.subfiles:
                 i._updateRemoteURLs( reps )
-
-        if self.locations != reps[self.lfn].keys():
-            self.locations = reps[self.lfn].keys()
-            for k in reps[self.lfn].keys():
-                self._remoteURLs[k] = reps[self.lfn][k]
+        else:
+            if self.locations != reps[self.lfn].keys():
+                self.locations = reps[self.lfn].keys()
+            #logger.debug( "locations: %s" % str( self.locations ) )
+            for site in self.locations:
+                #logger.debug( "site: %s" % str( site ) )
+                self._remoteURLs[site] = reps[self.lfn][site]
+                #logger.debug( "_remoteURLs[site]: %s" % str(self._remoteURLs[site] ) )
 
     def location(self):
         """
         """
-        return [""]
+        if len(self.subfiles) == 0:
+            if self.lfn == "":
+                self._optionallyUploadLocalFile()
+            else:
+                return [ self.lfn ]
+        else:
+            URLS = []
+            for file in self.subfiles:
+                these_LFNs = file.location()
+                for this_url in these_LFNs:
+                    URLs.append( this_url )
+            return URLs
 
     def accessURL(self):
         """
@@ -416,7 +471,28 @@ class DiracFile(IGangaFile):
             self.getReplicas()
 
         if len(self.subfiles) == 0:
-            return [ self._remoteURLs ]
+            files_URLs = self._remoteURLs
+
+            this_accessURL = ''
+
+            for this_SE in files_URLs.keys():
+
+                this_URL = files_URLs.get(this_SE)
+
+                these_sites_output = execute('getSitesForSE("%s")' % str( this_SE ) )
+
+                default_site = configDirac['DiracDefaultStorageSite']
+
+                if these_sites_output.get('OK', False):
+                    these_sites = these_sites_output.get('Value')
+                    for this_site in these_sites:
+                        if this_site == default_site:
+                            this_accessURL = this_URL
+                            break
+                if this_accessURL != '':
+                    break
+
+            return [ this_accessURL ]
         else:
             _accessURLs = []
             for i in self.subfiles:
@@ -540,7 +616,8 @@ class DiracFile(IGangaFile):
             lfn_base = self.remoteDir
         else:
             lfn_base = os.path.join( configDirac['DiracLFNBase'], self.remoteDir )
-        storage_elements=configDirac['DiracSpaceTokens']
+
+        storage_elements = all_SE_list()
 
         outputFiles=GangaList()
         for file in glob.glob(os.path.join(sourceDir, self.namePattern)):
