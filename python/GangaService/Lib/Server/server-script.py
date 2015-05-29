@@ -21,6 +21,11 @@ class WatchdogThread ( threading.Thread ):
     def run ( self ):
         # update the server file every 10s
         while self.running:
+
+            # check if we're running on afs
+            if os.getcwd().startswith("/afs/cern.ch"):
+                os.system("/usr/sue/bin/kinit -R")
+
             open( os.path.join(config["Configuration"]["gangadir"], "server", "server.info"), "w").write("%s:%d" % (os.uname()[1], port))
             time.sleep(10)
 
