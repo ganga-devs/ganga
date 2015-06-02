@@ -986,28 +986,21 @@ sys.exit(0)
         job = self.getJobObject()
 
         ## finding ARC CE endpoint for job submission
-        #allowed_celist = []
-        #try:
-        #    allowed_celist = self.requirements.getce()
-        #    if not self.CE and allowed_celist:
-        #        self.CE = allowed_celist[0]
-        #except:
-        #    logger.warning('ARC CE assigment from ARCRequirements failed.')
+        allowed_celist = []
+        try:
+            allowed_celist = self.requirements.getce()
+            if not self.CE and allowed_celist:
+                self.CE = allowed_celist[0]
+        except:
+            logger.warning('ARC CE assigment from ARCRequirements failed.')
 
-        #if self.CE and allowed_celist:
-        #    if self.CE not in allowed_celist:
-        #        logger.warning('submission to CE not allowed: %s, use %s instead' % ( self.CE, allowed_celist[0] ) )
-        #        self.CE = allowed_celist[0]
-        
-        # use arc info to check for any endpoints recorded in the config file
-        rc, output = grids['GLITE'].arc_info()
+        if self.CE and allowed_celist:
+            if self.CE not in allowed_celist:
+                logger.warning('submission to CE not allowed: %s, use %s instead' % ( self.CE, allowed_celist[0] ) )
+                self.CE = allowed_celist[0]
 
-        if not self.CE and rc != 0:
-            raise GangaException("ARC CE endpoint not set and no default settings in '%s'. " % config['ArcConfigFile'])
-        elif self.CE:
-            logger.info('ARC CE endpoint set to: '+str(self.CE))
-        else:
-            logger.info("Using ARC CE endpoints defined in '%s'" % config['ArcConfigFile'])
+        if not self.CE:
+            raise GangaException('ARC CE endpoint not set')
 
         ## delegate proxy to ARC CE
         #if not grids['GLITE'].arc_proxy_delegation(self.CE):
@@ -1138,9 +1131,6 @@ sys.exit(0)
 
                 job = jobdict[id]
                 
-                if job.backend.actualCE != urlparse(id)[1].split(":")[0]:
-                    job.backend.actualCE = urlparse(id)[1].split(":")[0]
-                
                 if job.backend.status != info['State']:
                     
                     doStatusUpdate = True
@@ -1169,13 +1159,6 @@ sys.exit(0)
                                 job.backend.exitcode_arc = int( info['Exit Code'] )
                             except:
                                 job.backend.exitcode_arc = 1
-                                
-                        if info.has_key('Job Error'):
-                            try:        
-                                job.backend.reason = info['Job Error']
-                            except:
-                                pass    
-
 
                         job.backend.updateGangaJobStatus()
             else:
@@ -1206,7 +1189,7 @@ sys.exit(0)
             else:
                 job.updateStatus('completed')
 
-        elif self.status in ['DONE-FAILED','ABORTED','UNKNOWN','Failed']:
+        elif self.status in ['DONE-FAILED','ABORTED','UNKNOWN']:
             job.updateStatus('failed')
 
         elif self.status in ['CANCELLED']:
@@ -1227,6 +1210,5 @@ config = getConfig('LCG')
 #config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
 config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240, 'Time in seconds to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
 config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml", 'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
-config.addOption('ArcConfigFile', "", 'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
 #config.addOption('ArcPrologue','','sets the prologue script')
 #config.addOption('ArcEpilogue','','sets the epilogue script')

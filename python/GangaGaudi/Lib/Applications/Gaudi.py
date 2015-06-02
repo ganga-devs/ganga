@@ -8,11 +8,16 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
 from GaudiUtils import *
+#from GaudiRunTimeHandler import * 
+#from PythonOptionsParser import PythonOptionsParser
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
+#from Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+#from GaudiJobConfig import *
+#from GangaLHCb.Lib.LHCbDataset import LHCbDataset,OutputData
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
@@ -64,6 +69,7 @@ class Gaudi(GaudiBase):
     __doc__ = GaudiDocString(_name)
     _category = 'applications'
     _exportmethods = GaudiBase._exportmethods[:]
+    #_exportmethods.append['readInputData','prepare','unprepare']
     _exportmethods +=['prepare','unprepare']
     _hidden = 1
     _schema = GaudiBase._schema.inherit_copy()
@@ -85,6 +91,11 @@ class Gaudi(GaudiBase):
 
     _schema.version.major += 0
     _schema.version.minor += 0
+##     docstr = 'Data/sandbox items defined in prepare'
+##     schema['prep_inputbox']   = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
+##     _schema.datadict['prep_outputbox']  = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
+##     _schema.datadict['prep_inputdata']  = ComponentItem(category='datasets', preparable=1,defvalue=GaudiInputDataset(),typelist=['GangaLHCb.Lib.LHCbDataset.LHCbDataset'],hidden=1,doc=docstr)
+##     _schema.datadict['prep_outputdata'] = ComponentItem(category='datasets', preparable=1,defvalue=GaudiData(),typelist=['GangaLHCb.Lib.LHCbDataset.OutputData'],hidden=1,doc=docstr)
  
 
     def _auto__init__(self):
@@ -125,6 +136,8 @@ class Gaudi(GaudiBase):
         file = gzip.GzipFile(os.path.join(share_path,'gaudi-env.py.gz'),'wb')
         file.write('gaudi_env = %s' % str(self.getenv(True)))
         file.close()
+        #self.prep_inputbox.append(File(os.path.join(share_dir,'gaudi-env.py.gz')))
+        #self.post_prepare()
 
         try:
             self._parse_options()

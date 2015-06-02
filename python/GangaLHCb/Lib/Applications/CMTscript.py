@@ -51,7 +51,8 @@ def CMTscript(app,command=''):
    """
    cmtcmd  = 'cmt'
    warnings.filterwarnings('ignore', 'tempnam', RuntimeWarning)
-
+   #appname = app.appname
+   #packname = app.package
    use = ''
    if app.masterpackage:
       (pack, alg, ver) = parse_master_package(app.masterpackage)
@@ -63,11 +64,14 @@ def CMTscript(app,command=''):
       if expanded == "$User_release_area": ura = ""
       else: ura = expanded.split(os.pathsep)[0]
       
+   #cmtoption = '-pack=%s/%s' % (packname,appname)
    cmtoption = ''
 
    # generate shell script
    script='#!/bin/sh\n'
    script+='unalias -a\n'
+#   script+='export CMTCONFIG='+str(app.platform)+'\n' 
+#   script+='LbLogin.sh -c '+str(app.platform)+'\n' 
    script+='. `which LbLogin.sh` -c '+str(app.platform)+'\n' 
    script+='export User_release_area='+str(ura)+'\n'
    script+='unset CMTPROJECTPATH\n'

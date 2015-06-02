@@ -1,5 +1,5 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
-import os, sys
+import tempfile,os, sys
 #from PythonOptionsParser import PythonOptionsParser
 #from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.Shell                                   import Shell
@@ -67,13 +67,27 @@ def addNewLHCbapp( appname, use='' ):
 
 def available_versions(appname):
   """Provide a list of the available Gaudi application versions"""
-  import EnvironFunctions
-  return EnvironFunctions.available_versions( appname )
+  
+  s = Shell()
+  tmp = tempfile.NamedTemporaryFile(suffix='.log')
+  command = 'SetupProject.sh --ask %s' % appname
+  rc,output,m=s.cmd1("echo 'q\n' | %s >& %s; echo" % (command,tmp.name))
+  output = tmp.read()
+  tmp.close()
+  versions = output[output.rfind('(')+1:output.rfind('q[uit]')].split()
+  return versions
 
 def guess_version(appname):
   """Guess the default Gaudi application version"""
-  import EnvironFunctions
-  return EnvironFunctions.guess_version( appname )
+  s = Shell()
+  tmp = tempfile.NamedTemporaryFile(suffix='.log')
+  command = 'SetupProject.sh --ask %s' % appname
+  rc,output,m=s.cmd1("echo 'q\n' | %s >& %s; echo" % (command,tmp.name))
+  output = tmp.read()
+  tmp.close()
+  version = output[output.rfind('[')+1:output.rfind(']')]
+  return version
+
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

@@ -30,7 +30,6 @@ class LocalFile(IGangaFile):
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = [ "location" , "remove", "accessURL" ]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -74,16 +73,6 @@ class LocalFile(IGangaFile):
 
         return "LocalFile(namePattern='%s')"% self.namePattern
 
-    def location( self ):
-        return self.getFilenameList()
-
-    def accessURL( self ):
-        URLs = []
-        for file in self.location():
-            import os
-            URLs.append( 'file://' + os.path.join( os.sep, file ) )
-        return URLs
-
     def processOutputWildcardMatches(self):
         """This collects the subfiles for wildcarded output LocalFile"""
         import glob
@@ -123,7 +112,16 @@ class LocalFile(IGangaFile):
                 d.compressed = self.compressed
 
                 self.subfiles.append(GPIProxyObjectFactory(d))
-       
+
+    def getSubFiles(self):
+        """Returns the name of a file object throgh a common interface"""
+        self.processWildcardMatches()
+        if self.subfiles:
+            return self.subfiles
+        else:
+            return [self]
+        
+
     def getFilenameList(self):
         """Return the files referenced by this LocalFile"""
         filelist = []
@@ -135,52 +133,3 @@ class LocalFile(IGangaFile):
             filelist.append( os.path.join( self.localDir, self.namePattern ) )
 
         return filelist
-        
-    def hasMatchedFiles(self):
-        """
-        OK for checking subfiles but of no wildcards, need to actually check file exists
-        """
-        
-        # check for subfiles
-        if len(self.subfiles) > 0: 
-            # we have subfiles so we must have actual files associated
-            return True
-        else:
-            if self.containsWildcards():
-                return False
-                
-        # check if single file exists (no locations field to try)
-        job = self._getParent()
-        if job:
-            fname = self.namePattern
-            if self.compressed:
-                fname += ".gz"
-
-            if os.path.exists( os.path.join( job.getOutputWorkspace().getPath(), fname) ): 
-                return True
-            
-        return False
-
-    def remove( self ):
-
-        for file in self.getFilenameList():
-            _actual_delete = False
-            keyin = None
-            while keyin == None:
-                keyin = raw_input( "Do you want to remove the LocalFile: %s ? [y/n] " % str(file) )
-                if keyin == 'y':
-                    _actual_delete = True
-                elif keyin == 'n':
-                    _actual_delete = False
-                else:
-                    print "y/n please!"
-                    keyin = None
-            if _actual_delete:
-                if not os.path.exists( file ):
-                    logger.warning( "File %s did not exist, can't delete" % file )
-                else:
-                    logger.info( "Deleting: %s" % file )
-                    os.unlink( file )
-
-        return
-

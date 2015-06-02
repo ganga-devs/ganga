@@ -1,9 +1,6 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from fnmatch import fnmatch
-import re
-
-regex = re.compile('[*?\[\]]')
 
 class IGangaFile(GangaObject):
     """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
@@ -34,19 +31,11 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
-    def getSubFiles(self, process_wildcards = False):
+    def getSubFiles(self):
         """
-        Returns the sub files if wildcards are used
-        """        
-        # should we process wildcards? Used for inputfiles
-        if process_wildcards:
-            self.processWildcardMatches()
-        
-        # if we have subfiles, return that
-        if hasattr(self, 'subfiles'): 
-            return self.subfiles
-            
-        return []
+        Returns the name of a file object throgh a common interface
+        """
+        raise NotImplementedError
 
     def getFilenameList(self):
         """
@@ -121,34 +110,3 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
-    def accessURL(self):
-        """
-        Return the URL including the protocol used to access a file on a certain storage element
-        """
-        raise NotImplementedError
-
-    def hasMatchedFiles(self):
-        """
-        Return if this file has got valid matched files. Default implementation checks for
-        subfiles and locations
-        """
-        
-        # check for subfiles
-        if (hasattr(self, 'subfiles') and len(self.subfiles) > 0): 
-            # we have subfiles so we must have actual files associated
-            return True
-            
-        # check for locations
-        if (hasattr(self, 'locations') and len(self.locations) > 0): 
-            return True
-            
-        return False
-
-    def containsWildcards(self):
-        """
-        Return if the name has got wildcard characters
-        """
-        if regex.search(self.namePattern) != None:
-            return True
-        
-        return False

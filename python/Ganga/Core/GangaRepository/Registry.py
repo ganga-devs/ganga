@@ -154,10 +154,6 @@ class Registry(object):
         """ Returns True if the given ID is in the registry """
         return id in self._objects
 
-    def updateLocksNow(self):
-        self.repository.updateLocksNow()
-        return
-
     def ids(self):
         """ Returns the list of ids of this registry """
         if self._started and time.time() > self._update_index_timer + self.update_index_time:

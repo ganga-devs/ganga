@@ -1,12 +1,6 @@
 import os
-import os.path
-import re
-import datetime
-from os.path import exists, isdir, realpath, isfile, islink
-from os import pathsep, listdir, environ, fdopen
 import Ganga.Utility.logging
 import Ganga.Utility.Config
-from optparse import OptionParser, OptionValueError
 configLHCb=Ganga.Utility.Config.makeConfig('LHCb','Parameters for LHCb')
 #configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
 logger=Ganga.Utility.logging.getLogger()
@@ -42,8 +36,7 @@ defval = {"SVC='LHCb::MDFSelector'" : ['*.raw','*.RAW','*.mdf','*.MDF']}
 configLHCb.addOption('datatype_string_patterns',defval,dscrpt)
 configLHCb.addOption('UserAddedApplications',"","List of user added LHCb applications split by ':'")
 
-configLHCb.addOption('SplitByFilesBackend','OfflineGangaDiracSplitter','Possible SplitByFiles backend algorithms to use to split jobs into subjobs, options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData' )
-
+configLHCb.addOption('useGangaDiracSplitter',False,"Use new Ganga/Dirac Splitter")
 ## dscrpt = 'Automatically download sandbox for failed jobs?'
 ## configLHCb.addOption('failed_sandbox_download',True,dscrpt)
 ## dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\
@@ -77,68 +70,7 @@ configLHCb.addOption('SplitByFilesBackend','OfflineGangaDiracSplitter','Possible
 #but leave here to remind how to set up another registry if needed.
 #from Ganga.GPIDev.Lib.Registry.RegistryUtils import establishNamedTemplates
 #establishNamedTemplates('templatesLHCb', os.path.join(os.path.dirname(__file__),'templates'), file_ext='tpl', pickle_files=True)
-def _guess_version(name):
-    import subprocess,os,tempfile
-    try:
-        gangasys = os.environ['GANGASYSROOT']
-    except KeyError:
-        raise OptionValueError("Can't guess %s version if GANGASYSROOT is not defined" % name)
-    tmp = tempfile.NamedTemporaryFile(suffix='.txt')
-    cmd = 'cd %s && cmt show projects > %s' %(gangasys,tmp.name)
-    rc = subprocess.Popen([cmd],shell=True).wait()
-    if rc != 0:
-        msg = "Fail to get list of projects that Ganga depends on"
-        raise OptionValueError(msg)
-    p = re.compile(r'^\s*%s\s+%s_(\S+)\s+' % (name,name) )
-    for line in tmp:
-        m = p.match(line)
-        if m:
-            version = m.group(1)
-            return version
-    msg = 'Failed to identify %s version that Ganga depends on' % name
-    raise OptionValueError(msg)
 
-def _store_root_version():
-    if 'ROOTSYS' in os.environ:
-        vstart=os.environ['ROOTSYS'].find('ROOT/')+5
-        vend=os.environ['ROOTSYS'][vstart:].find('/')
-        rootversion=os.environ['ROOTSYS'][vstart:vstart+vend]
-        os.environ['ROOTVERSION']=rootversion
-    else:
-        msg = 'Tried to setup ROOTVERSION environment variable but no ROOTSYS variable found.'
-        raise OptionValueError(msg)
-
-def _store_dirac_environment():
-    diracversion = _guess_version('LHCBDIRAC')
-    import tempfile,subprocess,os
-    platform = os.environ['CMTOPT']
-    setup_script = 'SetupProject.sh'
-    env = {}
-    fdir = os.path.join(os.path.expanduser("~/.cache/LHCbDIRAC_ENV"),platform)
-    if not os.path.exists(fdir):
-        os.makedirs(fdir)
-    fname = os.path.join(fdir,diracversion)
-    if not os.path.exists(fname):
-        file = open(fname,'w+')
-        cmd = '/usr/bin/env bash -c \"source %s LHCBDIRAC %s ROOT>& /dev/null && '\
-            'printenv > %s\"' % (setup_script,diracversion,fname)
-        rc = subprocess.Popen([cmd],shell=True).wait()
-        if rc != 0 or not os.path.exists(fname):
-            msg = '--dirac: Failed to setup Dirac version %s as obtained from project dependency.' % value
-            raise OptionValueError(msg)
-        count = 0
-        for line in file.readlines():
-            if line.find('DIRAC') >= 0: count += 1
-            varval = line.strip().split('=')
-            env[varval[0]] = ''.join(varval[1:])
-        file.close()
-        if count == 0:
-            msg = 'Tried to setup Dirac version %s. For some reason this did not setup the DIRAC environment.' % value
-            raise OptionValueError(msg)
-    os.environ['GANGADIRACENVIRONMENT'] = fname
-
-_store_dirac_environment()
-_store_root_version()
 def getEnvironment( config = {} ):
    import sys
    import os.path
@@ -159,6 +91,7 @@ def loadPlugins( config = {} ):
 
 #from Ganga.GPIDev.Credentials import getCredential
 #proxy = getCredential('GridProxy', '')
+
 
 ## This is being dropped from 6.1.0 due to causing some bus in loading large numbers of jobs
 #

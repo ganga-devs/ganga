@@ -136,28 +136,24 @@ allConfigs = {}
 # not yet been defined
 allConfigFileValues = {}
 
-translated_names = {}
 # helper function which helps migrating the names from old naming convention
 # to the stricter new one: spaces are removed, colons replaced by underscored
 # returns a valid name or raises a ValueError
 def _migrate_name(name):
-    import Ganga.Utility.strings as strings
+        import Ganga.Utility.strings as strings
 
-    if (name not in translated_names.keys()) and (not strings.is_identifier(name)):
-        name2 = strings.drop_spaces(name)
-        name2 = name2.replace(':','_')
+        if not strings.is_identifier(name):
+            name2 = strings.drop_spaces(name)
+            name2 = name2.replace(':','_')
 
-        if not strings.is_identifier(name2):
-            raise ValueError('config name %s is not a valid python identifier' % name)
-        else:
-            logger = getLogger()
-            logger.warning('obsolete config name found: replaced "%s" -> "%s"'%(name,name2))
-            logger.warning('config names must be python identifiers, please correct your usage in the future ')
-            translated_names[name] = name2
-    else:
-        translated_names[name] = name
-
-    return translated_names[name]
+            if not strings.is_identifier(name2):
+                raise ValueError('config name %s is not a valid python identifier' % name)
+            else:
+                logger = getLogger()
+                logger.warning('obsolete config name found: replaced "%s" -> "%s"'%(name,name2))
+                logger.warning('config names must be python identifiers, please correct your usage in the future ')
+                name = name2
+        return name
 
 
 def getConfig(name):

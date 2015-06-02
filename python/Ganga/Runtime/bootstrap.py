@@ -103,6 +103,7 @@ class GangaProgram:
         use sys.argv as arguments if not specified"""
 
         self.argv = argv[:]
+        
         #record the start time.Currently we are using this in performance measurements 
         # see Ganga/test/Performance tests
         self.start_time = time.time()
@@ -130,6 +131,7 @@ under certain conditions; type license() for details.
         # this is a TEMPORARY hack to enable some GUI-specific parts of the core such as monitoring
         # replaced by self.options.GUI
         #self.gui_enabled_hack = False
+
     def exit(self,*msg):
        print >> sys.stderr, self.hello_string
        for m in msg:
@@ -218,6 +220,7 @@ under certain conditions; type license() for details.
            self.options.config_file = Ganga.Utility.files.expandfilename(self.options.config_file)
            open_file = file_opens(self.options.config_file,'reading configuration file')
            open_file.close()
+
         # we run in the batch mode if a script has been specified and other options (such as -i) do not force it
         if len(self.args) > 0:
             if not self.options.force_interactive:
@@ -522,7 +525,6 @@ under certain conditions; type license() for details.
 
         Ganga.Utility.logging.force_global_level(self.options.force_loglevel)
 
-        cf = None
         try:
            cf = open(self.options.config_file)
            first_line = cf.readline()
@@ -544,8 +546,7 @@ under certain conditions; type license() for details.
         except IOError,x:
            pass # ignore all I/O errors (e.g. file does not exist), this is just an advisory check
         finally:
-           if cf:
-              cf.close()
+           cf.close()
 
         #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
         #cf = file(self.options.config_file)
@@ -582,6 +583,7 @@ under certain conditions; type license() for details.
            raise Ganga.Utility.Config.ConfigError('Cannot modify [System] settings (attempted %s=%s)'%(name,x))
         syscfg.attachUserHandler(deny_modification,None)
         syscfg.attachSessionHandler(deny_modification,None)        
+       
         import Ganga.Utility.Config
 
         # the SCRIPTS_PATH must be initialized before the config files are loaded
@@ -668,8 +670,43 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         shellconfig.addOption('IgnoredVars',['_','SHVL','PWD'],'list of env variables not inherited in Shell environment')
 
         #[Output] section
-        ## Trigger loading of the Configure elements from within the File directory, having lots of options for these files here feels wrong
-        import Ganga.GPIDev.Lib.File.Configure
+        outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
+        outputconfig.addOption('AutoRemoveFilesWithJob', False, 'if True, each outputfile of type in list AutoRemoveFileTypes will be removed when the job is')
+        outputconfig.addOption('AutoRemoveFileTypes', ['DiracFile'], 'List of outputfile types that will be auto removed when job is removed if AutoRemoveFilesWithJob is True')
+
+        outputconfig.addOption('PostProcessLocationsFileName', '__postprocesslocations__', 'name of the file that will contain the locations of the uploaded from the WN files')
+
+        outputconfig.addOption('ForbidLegacyOutput', True, 'if True, writing to the job outputdata and outputsandbox fields will be forbidden')
+
+        outputconfig.addOption('ForbidLegacyInput', True, 'if True, writing to the job inputsandbox field will be forbidden')
+
+        outputconfig.addOption('LCGSEFile',{'fileExtensions':['*.root', '*.asd'], 'backendPostprocess':{'LSF':'client', 'LCG':'WN', 'CREAM':'WN', 'ARC':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{'LFC_HOST':'lfc-dteam.cern.ch', 
+'dest_SRM':'srm-public.cern.ch'}},'fileExtensions:list of output files that will be written to LCG SE, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual LCG upload')
+
+        outputconfig.addOption('DiracFile',{'fileExtensions':['*.dst'], 'backendPostprocess':{'Dirac':'WN', 'LSF':'WN', 'LCG':'WN', 'CREAM':'WN', 'ARC':'WN', 'Localhost':'WN', 'Interactive':'WN'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
+        outputconfig.addOption('GoogleFile',{'fileExtensions':[], 'backendPostprocess':{'Dirac':'client', 'LSF':'client', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'client', 'Interactive':'client'}, 'uploadOptions':{}},'fileExtensions:list of output files that will be written to ..., backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload')
+
+
+        import pwd,grp
+        from Ganga.Utility.Config import getConfig
+        user = getConfig('Configuration')['user']   
+        groupid=grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
+        groupnames={'z5':'lhcb','zp':'atlas','zh':'cms','vl':'na62'}
+        groupname='undefined'
+        try:
+            groupname = groupnames[groupid]
+        except:
+            pass
+        massStoragePath = ''
+        try:
+            massStoragePath = os.path.join(os.environ['EOS_HOME'], 'ganga')
+        except: 
+            massStoragePath = "/eos/%s/user/%s/%s/ganga" % (groupname,user[0], user)      
+
+        prefix = '/afs/cern.ch/project/eos/installation/%s/bin/eos.select ' % groupname
+        massStorageUploadOptions = {'mkdir_cmd':prefix+'mkdir', 'cp_cmd':prefix+'cp', 'ls_cmd':prefix+'ls', 'path':massStoragePath}
+
+        outputconfig.addOption('MassStorageFile', {'fileExtensions':[''], 'backendPostprocess':{'LSF':'WN', 'LCG':'client', 'CREAM':'client', 'ARC':'client', 'Localhost':'WN', 'Interactive':'client', 'Dirac':'client'}, 'uploadOptions':massStorageUploadOptions},'fileExtensions:list of output files that will be written to mass storage after job is completed, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual upload to mass storage')
 
         #[Queues] section
         queuesconfig = makeConfig( "Queues", "configuration section for the queues" )
@@ -690,44 +727,10 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         system_vars = {}
         for opt in syscfg:
            system_vars[opt]=syscfg[opt]
-
-        def _createpath(dir):
-            import string
-            def _accept(fname,p = re.compile('.*\.ini$')):
-                return (os.path.isfile(fname) or os.path.islink(fname)) and p.match(fname)
-            files = []
-            if dir and os.path.exists(dir) and os.path.isdir(dir):
-                files = [os.path.join(dir,f) for f in os.listdir(dir) if
-                     _accept(os.path.join(dir,f))]
-            return string.join(files,os.pathsep)
-
-        def _versionsort(s,p = re.compile(r'^v(\d+)r(\d+)p*(\d*)')):
-            m = p.match(s)
-            if m:
-                if m.group(3)=='':
-                    return (int(m.group(1)),int(m.group(2)),0)
-                else:
-                    return (int(m.group(1)),int(m.group(2)),int(m.group(3)))
-            if s == 'SVN':
-                return 'SVN'
-            return None
-
-        if os.environ.has_key("GANGA_SITE_CONFIG_AREA"):
-            dir = os.environ['GANGA_SITE_CONFIG_AREA']
-            if os.path.exists(dir) and os.path.isdir(dir):
-                dirlist=sorted(os.listdir(dir),key=_versionsort)
-                dirlist.reverse()
-                gangaver = _versionsort(_gangaVersion.lstrip('Ganga-'))
-                for d in dirlist:
-                    vsort=_versionsort(d)
-                    if vsort and ((vsort <= gangaver) or (gangaver is 'SVN')):
-                        select = os.path.join(dir,d)
-                        config_files.append(_createpath(select))
-                        break
+  
         if os.path.exists(self.options.config_file):
            config_files.append(self.options.config_file)
         Ganga.Utility.Config.configure(config_files,system_vars)       
-        #print config["RUNTIME_PATH"] 
 
         #self.new_user_wizard()
 
@@ -748,7 +751,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         # in the second case last specified section from previous options is used
 
         set_cmdline_config_options()
-
 
 
         if self.options.GUI:
@@ -890,22 +892,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         from Ganga.Utility.Runtime import allRuntimes
         import Ganga.Utility.logging
 
-        for n,r in zip(allRuntimes.keys(),allRuntimes.values()):
-            try:
-                r.bootstrap(Ganga.GPI.__dict__)
-            except Exception,x:
-                Ganga.Utility.logging.log_user_exception()
-                self.logger.error('problems with bootstrapping %s -- ignored',n)
-            try:
-                r.loadNamedTemplates(Ganga.GPI.__dict__,
-                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
-                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
-            except Exception,x:
-                Ganga.Utility.logging.log_user_exception()
-                self.logger.error('problems with loading Named Templates for %s',n)
         # load user-defined plugins...
-
-
         for r in allRuntimes.values():
             try:
                r.loadPlugins()
@@ -916,6 +903,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         from GPIexport import exportToGPI
         
         from Ganga.Utility.Plugin import allPlugins
+
         # make all plugins visible in GPI
         for k in allPlugins.allCategories():
             for n in allPlugins.allClasses(k):
@@ -967,6 +955,7 @@ default_backends = LCG
 
         # initialize external monitoring services subsystem
         import Ganga.GPIDev.MonitoringServices
+
 
         def license():
             'Print the full license (GPL)'
@@ -1115,6 +1104,19 @@ default_backends = LCG
         import associations
 
         # bootstrap user-defined runtime modules and enable transient named template registries
+        for n,r in zip(allRuntimes.keys(),allRuntimes.values()):
+            try:
+                r.bootstrap(Ganga.GPI.__dict__)
+            except Exception,x:
+                Ganga.Utility.logging.log_user_exception()
+                self.logger.error('problems with bootstrapping %s -- ignored',n)
+            try:
+                r.loadNamedTemplates(Ganga.GPI.__dict__,
+                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
+                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
+            except Exception,x:
+                Ganga.Utility.logging.log_user_exception()
+                self.logger.error('problems with loading Named Templates for %s',n)
         
         # bootstrap runtime modules
         import Ganga.GPIDev.Lib.Registry

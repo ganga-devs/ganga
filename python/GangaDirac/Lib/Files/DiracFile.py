@@ -14,41 +14,6 @@ configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
 
-global stored_list_of_sites
-stored_list_of_sites = []
-
-def all_SE_list():
-
-    global stored_list_of_sites
-    if stored_list_of_sites != []:
-        return stored_list_of_sites
-
-    all_storage_elements = configDirac['DiracSpaceTokens']
-    default_site = configDirac['DiracDefaultStorageSite']
-
-    default_SE_for_Site = None
-
-    all_SE_for_Site_output = execute('getSEsForSite("%s")' % str( default_site ) )
-
-    if all_SE_for_Site_output.get('OK', False):
-        all_SE_for_Site = all_SE_for_Site_output.get('Value')
-    else:
-        logger.warning( "Couldn't find SEs for Site: %s, resorting to default list of DiracSpaceTokens" % str( default_site ) )
-        all_SE_for_Site = []
-
-    for this_SE in all_SE_for_Site:
-        if this_SE in all_storage_elements:
-            defalt_SE_for_Site = this_SE
-            break
-
-    if default_SE_for_Site != None:
-        all_storage_elements.pop( default_SE_for_Site )
-        all_storage_elements.insert( 0, default_SE_for_Site )
-    
-    stored_list_of_sites = all_storage_elements
-
-    return all_storage_elements
-
 #def upload_ok(lfn):
 #    import datetime
 #    retcode, stdout, stderr = dirac_ganga_server.execute('dirac-dms-lfn-metadata %s' % lfn, shell=True)
@@ -88,8 +53,8 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'locations', 'location', 'accessURL' ]
-
+    _exportmethods = [  "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put']
+        
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
         name is the name of the output file that has to be written ...
@@ -109,9 +74,6 @@ class DiracFile(IGangaFile):
             self.localDir = expandfilename( localDir )
         if remoteDir is not None:
             self.remoteDir = remoteDir
-
-        self._remoteURLs = {}
-        self._storedReplicas = {}
 
     def __construct__( self, args ):
         #logger.debug( "__construct__" )
@@ -153,10 +115,6 @@ class DiracFile(IGangaFile):
         if name == 'localDir' and type(value) != type(None):
             return expandfilename(value)
         return value
-
-    def locations( self ):
-
-        return self.locations
 
     def _setLFNnamePattern( self, _lfn = "", _namePattern = "" ):
 
@@ -355,23 +313,22 @@ class DiracFile(IGangaFile):
             ret  =  eval(r)
         except:
             ret = r
+        reps =  self.getReplicas()
         if isinstance(ret,dict) and ret.get('OK', False) and self.lfn in ret.get('Value', {'Successful': {}})['Successful']:
             try:
                 if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
                     self.guid = ret['Value']['Successful'][self.lfn]['GUID']
             except: pass
-
-        try:
-            reps =  self.getReplicas()
-            ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
-        except:
-            pass
+        if isinstance(reps,dict) and reps.get('OK', False) and self.lfn in reps.get('Value', {'Successful': {}})['Successful']:
+            try:
+                if self.locations != reps['Value']['Successful'][self.lfn].keys():
+                    self.locations = reps['Value']['Successful'][self.lfn].keys()
+                    ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
+            except: pass
 
         return ret
 
     def _optionallyUploadLocalFile(self):
-        """
-        """
 
         if self.lfn != "":
             return
@@ -400,106 +357,11 @@ class DiracFile(IGangaFile):
 
         return
 
-    def getReplicas(self, forceRefresh = False ):
-        """
-        """
+    def getReplicas(self):
 
-        these_replicas = None
+        reps =  execute('getReplicas("%s")' % self.lfn)
 
-        if len(self.subfiles) != 0:
-
-            allReplicas = []
-
-            for i in self.subfiles:
-
-                allReplicas.append( i.getReplicas() )
-
-            these_replicas = allReplicas
-
-        else:
-            if (self._storedReplicas == {} and len(self.subfiles) == 0 ) or forceRefresh:
-
-                self._storedReplicas =  execute('getReplicas("%s")' % self.lfn)
-                if self._storedReplicas.get( 'OK', False ):
-                    self._storedReplicas = self._storedReplicas['Value']['Successful']
-                else:
-                    logger.error( "Couldn't find replicas for: %s" % str( self.lfn ) )
-                    raise GangaError( "Couldn't find replicas for: %s" % str( self.lfn ) )
-                logger.debug( "getReplicas: %s" % str(self._storedReplicas) )
-                self._updateRemoteURLs( self._storedReplicas )
-
-                these_replicas = [ self._storedReplicas[self.lfn] ]
-            elif self._storedReplicas != {}:
-                these_replicas = [ self._storedReplicas[self.lfn] ]
-
-        return these_replicas
-
-    def _updateRemoteURLs( self, reps ):
-
-        if len(self.subfiles) != 0:
-            for i in self.subfiles:
-                i._updateRemoteURLs( reps )
-        else:
-            if self.locations != reps[self.lfn].keys():
-                self.locations = reps[self.lfn].keys()
-            #logger.debug( "locations: %s" % str( self.locations ) )
-            for site in self.locations:
-                #logger.debug( "site: %s" % str( site ) )
-                self._remoteURLs[site] = reps[self.lfn][site]
-                #logger.debug( "_remoteURLs[site]: %s" % str(self._remoteURLs[site] ) )
-
-    def location(self):
-        """
-        """
-        if len(self.subfiles) == 0:
-            if self.lfn == "":
-                self._optionallyUploadLocalFile()
-            else:
-                return [ self.lfn ]
-        else:
-            URLS = []
-            for file in self.subfiles:
-                these_LFNs = file.location()
-                for this_url in these_LFNs:
-                    URLs.append( this_url )
-            return URLs
-
-    def accessURL(self):
-        """
-        """
-        if len(self._remoteURLs) == 0 and len(self.subfiles) == 0:
-            self.getReplicas()
-
-        if len(self.subfiles) == 0:
-            files_URLs = self._remoteURLs
-
-            this_accessURL = ''
-
-            for this_SE in files_URLs.keys():
-
-                this_URL = files_URLs.get(this_SE)
-
-                these_sites_output = execute('getSitesForSE("%s")' % str( this_SE ) )
-
-                default_site = configDirac['DiracDefaultStorageSite']
-
-                if these_sites_output.get('OK', False):
-                    these_sites = these_sites_output.get('Value')
-                    for this_site in these_sites:
-                        if this_site == default_site:
-                            this_accessURL = this_URL
-                            break
-                if this_accessURL != '':
-                    break
-
-            return [ this_accessURL ]
-        else:
-            _accessURLs = []
-            for i in self.subfiles:
-                for j in i.accessURL():
-                    _accessURLs.append( j )
-
-            return _accessURLs
+        return reps
 
     def get(self):
         """
@@ -616,8 +478,7 @@ class DiracFile(IGangaFile):
             lfn_base = self.remoteDir
         else:
             lfn_base = os.path.join( configDirac['DiracLFNBase'], self.remoteDir )
-
-        storage_elements = all_SE_list()
+        storage_elements=configDirac['DiracSpaceTokens']
 
         outputFiles=GangaList()
         for file in glob.glob(os.path.join(sourceDir, self.namePattern)):
@@ -830,6 +691,8 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
 ##            if 'LHCBPROJECTPATH' in os.environ:
 ##                extra_setup+='export LHCBPROJECTPATH=%s && ' % os.environ['LHCBPROJECTPATH']
 ##            if 'CMTCONFIG' in os.environ:
+##                 extra_setup+='export CMTCONFIG=%s && ' % os.environ['CMTCONFIG']
+#            if 'PYTHONPATH' in os.environ:
 #                 extra_setup+='export PYTHONPATH=%s && ' % os.environ['PYTHONPATH']
 #            script = script.replace('###SETUP###', extra_setup + '. SetupProject.sh LHCbDirac &&')#&>/dev/null && ')          
 #        else:

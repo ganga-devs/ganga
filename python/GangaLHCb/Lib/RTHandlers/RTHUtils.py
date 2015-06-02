@@ -130,10 +130,7 @@ def getXMLSummaryScript(indent=''):
 
 def create_runscript():
 
-  import EnvironFunctions
-  environ_script = EnvironFunctions.construct_run_environ()
-
-  script = str("""#!/usr/bin/env python
+  script = """#!/usr/bin/env python
 
 import os,sys
 opts = '###OPTS###'
@@ -161,11 +158,31 @@ else:
                                             'job.opts')
     print 'Using the master optionsfile:', opts
     sys.stdout.flush()
+    
 
-# # # # # Code to Setup Environment # # # # #
-###CONSTRUCT_ENVIRON###
-# # # # # Code to Setup Environment # # # # #
-
+# check that SetupProject.sh script exists, then execute it
+os.environ['User_release_area'] = ''  
+#os.environ['CMTCONFIG'] = platform  
+f=os.popen('which SetupProject.sh')
+setup_script=f.read()[:-1]
+f.close()
+if os.path.exists(setup_script):
+    os.system('''/usr/bin/env bash -c '. `which LbLogin.sh` -c %s && source %s %s %s %s && printenv > \
+env.tmp' ''' % (platform, setup_script,project_opts,app,version))
+    for line in open('env.tmp').readlines():
+        varval = line.strip().split('=')
+        if len(varval) < 2:
+            pass
+        else:
+            content = ''.join(varval[1:])
+            # Lets drop bash functions
+            if not str(content).startswith('() {'):
+                os.environ[varval[0]] = content
+    os.system('rm -f env.tmp')
+else:
+    print 'Could not find %s. Your job will probably fail.' % setup_script
+    sys.stdout.flush()
+        
 # add lib subdir in case user supplied shared libs where copied to pwd/lib
 os.environ['LD_LIBRARY_PATH'] = '.:%s/lib:%s\' %(os.getcwd(),
                                                  os.environ['LD_LIBRARY_PATH'])
@@ -183,8 +200,7 @@ cmdline = '''###CMDLINE###'''
 os.system(cmdline)
 
 ###XMLSUMMARYPARSING###
-""").replace( '###CONSTRUCT_ENVIRON###', environ_script )
-
+"""
   return script
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

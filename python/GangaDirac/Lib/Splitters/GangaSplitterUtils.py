@@ -1,10 +1,11 @@
 from Ganga.GPIDev.Adapters.ISplitter    import SplittingError
+#from GangaDirac.BOOT                    import dirac_ganga_server
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging              import getLogger
-from Ganga.Utility.logging import getLogger
 logger = getLogger()
+
 
 def igroup(iterable, num, leftovers=False):
     '''
@@ -27,90 +28,53 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     if len(inputs.getLFNs()) != len( inputs.files ):
         raise SplittingError( "Error trying to split dataset using DIRAC backend with non-DiracFile in the inputdata" )
 
-    file_replicas = {}
-
-    from Ganga.GPI import queues
-
     for i in inputs:
-        #logging.debug( "getting metadata: %s" % str(i.lfn) )
-        queues.add( i.getReplicas )
-
-    logger.info( "Requesting LFN replica info" )
-
-    ## This finds all replicas for all LFNs...
-    ## This will probably struggle for LFNs which don't exist
-    all_lfns = [ i.locations for i in inputs ]
-    while [] in all_lfns:
-        import time
-        time.sleep( 0.5 )
-        all_lfns = [ i.locations for i in inputs ]
-
-    logger.info( "Got replicas" )
-
-    for i in inputs:
-        file_replicas[i.lfn] = i.locations
-        #logger.info( "%s" % str( i.accessURL() ) )
-
-    logger.debug( "found all replicas" )
+        i.getMetadata()
+        file_replicas[i.lfn] = i.replicas
+    #file_replicas = result.get( 'Value', {} )
+    #print file_replicas
 
     from sets import Set
     super_dict = dict()
-    for lfn, repz in file_replicas.iteritems():
+    for lfn, repz in file_replicas.items():
         sitez=Set([])
         for i in repz:
-            #print i
             sitez.add( i )
-        super_dict[ lfn ] = sitez
+            super_dict[ lfn ] = sitez
 
     allSubSets = []
     allChosenSets = {}
 
-    logger.info( "Determining overlap" )
-
     import random
     for i in super_dict.keys():
 
-        ## Randomly Select 2 SE as the starting point for spliting jobs
         if len(super_dict[i]) > 2:
-            req_sitez = Set([])
-            chosen = random.sample( super_dict[i], 2 )
-            for s in chosen:
-                req_sitez.add( s )
-        ## Keep the 2 or less SE as the SE of choice
+            req_sitez = Set( random.sample( super_dict[i], 2 ) )
         else:
-            req_sitez = Set([])
-            for s in super_dict[i]:
-                req_sitez.add( s )
+            req_sitez = Set( super_dict[i] )
 
         allChosenSets[ i ] = req_sitez
 
-    logger.debug( "Found all SE in use" )
-
-    Tier1Sites = Set([ ])
 
     for i in super_dict.keys():
 
         req_sitez = allChosenSets[i]
-        _this_subset = []
-
-        ## Starting with i, populate subset with LFNs which have an
-        ## overlap of at least 2 SE
-
+        j = 0
+        this_subset = []
         for k in super_dict.keys():
             if req_sitez.issubset( super_dict[k] ):
-                if len(_this_subset) >= filesPerJob:
+                j = j+1
+                if j>=maxFiles:
                     break
-                _this_subset.append( str(k) )
-                super_dict.pop( k )
+                this_subset.append( k )
+                del super_dict[ k ]
 
-        if len( _this_subset ) > 0:
-            allSubSets.append( _this_subset )
+        if len( this_subset ) > 0:
+            allSubSets.append( this_subset )
 
     split_files = allSubSets
 
-    logger.info( "Created %s subsets" % str( len(split_files) ) )
-
-    #logger.info( "Split Files: %s" % str(split_files) )
+    logger.debug( "Split Files: %s" % str(split_files) )
 
     for dataset in split_files:
         yield dataset

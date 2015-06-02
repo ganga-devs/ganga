@@ -26,15 +26,12 @@ class GangaDatasetSplitter(ISplitter):
         # find the full file list
         full_list = []
         for f in job.inputdata.files:
-        
-            if f.containsWildcards():
-                # we have a wildcard so grab the subfiles
-                for sf in f.getSubFiles(process_wildcards = True):
+            try:
+                for sf in f.getSubFiles():
                     full_list.append(sf)
-            else:
-                # no wildcards so just add the file
-                full_list.append(f)
-                
+            except NotImplementedError:
+                logger.warning("getSubFiles not implemented for File '%s'" % f._name)
+
         if len(full_list) == 0:
             raise ApplicationConfigurationError(None,"GangaDatasetSplitter couldn't find any files to split over")
 

@@ -49,9 +49,6 @@ configDirac.addOption('DiracSpaceTokens',
                       ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','SARA-USER',
                        'PIC-USER','RAL-USER'],
                       'Space tokens allowed for replication, etc.')
-
-configDirac.addOption('DiracDefaultStorageSite', 'LCG.CERN.ch', 'Default Site to be used for getting access to a file and "put"ing a DiracFile')
-
 configDirac.addOption('DiracFileAutoGet', True, 'Should the DiracFile object automatically poll the Dirac backend for missing information on an lfn?' )
 
 def getEnvironment( config = {} ):

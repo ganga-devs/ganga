@@ -323,9 +323,8 @@ def GPIProxyClassFactory(name, pluginclass):
 
     pluginclass.__doc__.strip()
     pluginclass.__doc__ +=  "\n\n" 
-    
+        
     publicdoc = pluginclass.__doc__ + itbuf.getString()
-
     helptext(pluginclass,'This is a Ganga.GPI.%(classname)s implementation class. Refer to Ganga.GPI.%(classname)s.__doc__ for documentation.')
     
     helptext(_init, """GPI %(classname)s object constructor:
@@ -453,7 +452,6 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #        return object.__getattribute__(self,name)
  
     def _getattribute(self, name):
-
         if name.startswith('__') or name in d.keys():
             return object.__getattribute__(self, name)
 

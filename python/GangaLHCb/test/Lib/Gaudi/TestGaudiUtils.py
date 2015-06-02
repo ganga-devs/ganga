@@ -55,9 +55,9 @@ class TestGaudiUtils(GangaGPITestCase):
 ##         # just make sure it doesn't die
 ##         platform = get_user_platform(env)
 
-##     def test_update_project_path(self):
+##     def test_update_cmtproject_path(self):
 ##         env = {'CMTPROJECTPATH' : 'DUMMY'}
-##         update_project_path('SOMETHING',env)
+##         update_cmtproject_path('SOMETHING',env)
 ##         assert env['CMTPROJECTPATH'] == 'SOMETHING:DUMMY'
 
 ##     def test_get_user_dlls(self):

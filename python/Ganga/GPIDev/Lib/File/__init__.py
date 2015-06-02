@@ -2,7 +2,6 @@ from File import File
 from File import ShareDir
 from FileBuffer import FileBuffer
 
-import Configure
 from IGangaFile import IGangaFile
 from LocalFile import LocalFile
 from MassStorageFile import MassStorageFile

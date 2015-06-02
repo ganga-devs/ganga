@@ -19,6 +19,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
 #
+import CMTscript
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 logger = Ganga.Utility.logging.getLogger()
 
@@ -52,7 +53,7 @@ class Bender(GaudiBase):
                                              doc=docstr)
     docstr = 'The package where your top level requirements file is read '  \
              'from. Can be written either as a path '  \
-             '\"Tutorial/Analysis/v6r0\" or in traditional notation '  \
+             '\"Tutorial/Analysis/v6r0\" or in a CMT style notation '  \
              '\"Analysis v6r0 Tutorial\"'
     _schema.datadict['masterpackage'] = SimpleItem(defvalue=None,
                                                    typelist=['str', 'type(None)'],
@@ -97,10 +98,71 @@ class Bender(GaudiBase):
         self._init(False)
 
     def _getshell(self):
+        opts = ''
+        if self.setupProjectOptions: opts = self.setupProjectOptions
 
-        import EnvironFunctions
-        return EnvironFunctions._getshell( self )
+        fd = tempfile.NamedTemporaryFile()
+        script = '#!/bin/sh\n'
+        if self.user_release_area:
+            script += 'User_release_area=%s; export User_release_area\n' % \
+                      expandfilename(self.user_release_area)
+        if self.platform:    
+            script += '. `which LbLogin.sh` -c %s\n' % self.platform
+#            script += 'export CMTCONFIG=%s\n' % self.platform
+        useflag = ''
+        if self.masterpackage:
+            (mpack, malg, mver) = CMTscript.parse_master_package(self.masterpackage)
+            useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
+        cmd = '. SetupProject.sh %s %s %s %s' % (useflag, opts, self.appname, self.version) 
+        script += '%s \n' % cmd
+        fd.write(script)
+        fd.flush()
+        logger.debug(script)
 
+        self.shell = Shell(setup=fd.name)
+        if (not self.shell): raise ApplicationConfigurationError(None,'Shell not created.')
+        
+        logger.debug(pprint.pformat(self.shell.env))
+        
+        fd.close()
+        app_ok = False
+        ver_ok = False
+        for var in self.shell.env:
+            if var.find(self.appname) >= 0: app_ok = True
+            if self.shell.env[var].find(self.version) >= 0: ver_ok = True
+        if not app_ok or not ver_ok:
+            msg = 'Command "%s" failed to properly setup environment.' % cmd
+            logger.error(msg)
+            raise ApplicationConfigurationError(None,msg)
+
+        import copy
+        self.env = copy.deepcopy( self.shell.env )
+
+        return self.shell.env
+
+##         super(type(self), self)._getshell()
+            
+##         opts = ''
+##         if self.setupProjectOptions: opts = self.setupProjectOptions
+            
+##         useflag = ''
+##         if self.masterpackage:
+##             (mpack, malg, mver) = parse_master_package(self.masterpackage)
+##             useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
+##         cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
+##         # script += '%s \n' % cmd
+##         self.shell.cmd('%s \n' % cmd)
+
+##         app_ok = False
+##         ver_ok = False
+##         for var in self.shell.env:
+##             if var.find(self.appname) >= 0: app_ok = True
+##             if self.shell.env[var].find(self.version) >= 0: ver_ok = True
+##         if not app_ok or not ver_ok:
+##             msg = 'Command "%s" failed to properly setup environment.' % cmd
+##             logger.error(msg)
+##             raise ApplicationConfigurationError(None,msg)
+       
     def prepare(self, force=False):
         super(Bender, self).prepare(force)
         self._check_inputs()

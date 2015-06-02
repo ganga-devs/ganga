@@ -13,7 +13,8 @@ from Ganga.GPIDev.Lib.GangaList import GangaList
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-import os, shutil
+import os,shutil
+
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
 shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
@@ -119,10 +120,6 @@ def string_file_shortcut(v,item):
 allComponentFilters['files'] = string_file_shortcut
 
 
-from Ganga.Utility.files import expandfilename
-config = Ganga.Utility.Config.getConfig('Configuration')
-gangadir = config['gangadir']
-root_default = os.path.join(expandfilename(gangadir),'shared',config['user'])
 
 class ShareDir(GangaObject):
     """Represents the directory used to store resources that are shared amongst multiple Ganga objects.
@@ -137,12 +134,12 @@ class ShareDir(GangaObject):
     _category = 'shareddirs'
     _exportmethods = ['add','ls']
     _name = "ShareDir"
-    _root_shared_path = root_default
+    _root_shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
     _data=None
 #    def _readonly(self):
 #        return True
 
-    def __init__(self, name=None, subdir=os.curdir):
+    def __init__(self,name=None,subdir=os.curdir):
         super(ShareDir, self).__init__()
         self._setRegistry(None)
 
@@ -152,16 +149,11 @@ class ShareDir(GangaObject):
             #continue generating directory names until we create a unique one (which will likely be on the first attempt).
             while True:
                 name = 'conf-' + Ganga.Utility.guid.uuid() 
-                if not os.path.isdir(os.path.join(self._root_shared_path,name)):
-                    os.makedirs(os.path.join(self._root_shared_path, name))
-
-                if not os.path.isdir(os.path.join(self._root_shared_path,name)):
-                    logger.error( "ERROR creating path: %s" % os.path.join(self._root_shared_path,name) )
-                    raise GangaException( "ShareDir ERROR" )
-                else:
+                shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
+                if not os.path.isdir(os.path.join(shared_path,name)):
+                    os.makedirs(os.path.join(shared_path, name))
                     break
             self.name=str(name)
-
             #incrementing then decrementing the shareref counter has the effect of putting the newly 
             #created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
             #filled with files, then assigned to an application.
@@ -186,7 +178,7 @@ class ShareDir(GangaObject):
             if isType(item, str):
                 if os.path.isfile(expandfilename(item)):
                     logger.info('Copying file %s to shared directory %s'%(item, self.name))
-                    shutil.copy2(expandfilename(item), os.path.join(self._root_shared_path,self.name))
+                    shutil.copy2(expandfilename(item), os.path.join(shared_path,self.name))
                     shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                     shareref.increase(self.name)
                     shareref.decrease(self.name)
@@ -194,7 +186,7 @@ class ShareDir(GangaObject):
                     logger.error('File %s not found' % expandfilename(item))
             elif isType(item,File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
                 logger.info('Copying file object %s to shared directory %s'%(item.name,self.name))
-                shutil.copy2(expandfilename(item.name), os.path.join(self._root_shared_path,self.name))
+                shutil.copy2(expandfilename(item.name), os.path.join(shared_path,self.name))
                 shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 shareref.increase(self.name)
                 shareref.decrease(self.name)

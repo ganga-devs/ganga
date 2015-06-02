@@ -33,38 +33,25 @@ class MassStorageFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "MassStorageFile"
-    _exportmethods = [ "location" , "get" , "put" , "setLocation", "remove", "accessURL" ]
+    _exportmethods = [ "location" , "get" , "put" , "setLocation" ]
         
     def __init__(self, namePattern='', localDir='', **kwds ):
         """ namePattern is the pattern of the output file that has to be written into mass storage
         """
         super(MassStorageFile, self).__init__()
-        #self.namePattern = namePattern
-        #self.localDir = localDir
-        self._setNamePath( _namePattern = namePattern, _localDir = localDir )
+        self.namePattern = namePattern
+        self.localDir = localDir
         self.locations = []
 
         self.shell = Shell.Shell()
 
-    def __construct__(self, args):
+    def __construct__(self,args):
         if len(args) == 1 and type(args[0]) == type(''):
-            #self.namePattern = args[0]
-            self._setNamePath( args[0], '' )
+            self.namePattern = args[0]
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
-            #self.namePattern = args[0]
-            #self.localDir = args[1]
-            self._setNamePath( args[0], args[1] )
-
-    def _setNamePath( self, _namePattern='', _localDir='' ):
-        if _namePattern != '' and _localDir == '':
-            import os.path
-            self.namePattern = os.path.basename( _namePattern )
-            self.localDir = os.path.dirname( _namePattern )
-        elif _namePattern != '' and _localDir != '':
-            import os.path
-            self.namePattern = _namePattern
-            self.localDir = _localDir
-
+            self.namePattern = args[0]
+            self.localDir = args[1]     
+            
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
         if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
@@ -83,11 +70,13 @@ class MassStorageFile(IGangaFile):
         """
         Sets the location of output files that were uploaded to mass storage from the WN
         """
+        
         job = self.getJobObject()
 
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
+
         postprocesslocations = open(postprocessLocationsPath, 'r')
 
         def mass_line_processor(line, mass_file):
@@ -95,6 +84,7 @@ class MassStorageFile(IGangaFile):
             pattern = lineParts[1]
             outputPath = lineParts[2]   
             name = os.path.basename(outputPath).strip('.gz')
+
             if regex.search(mass_file.namePattern) is not None:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
@@ -109,7 +99,7 @@ class MassStorageFile(IGangaFile):
                     d.outputfilenameformat = mass_file.outputfilenameformat
                     mass_file.subfiles.append(GPIProxyObjectFactory(d))
                     mass_line_processor(line, d)
-            elif name == mass_file.namePattern:
+            elif pattern == mass_file.namePattern:
                 if outputPath == 'ERROR':
                     logger.error("Failed to upload file to mass storage")
                     logger.error(line[line.find('ERROR')+5:])
@@ -131,15 +121,7 @@ class MassStorageFile(IGangaFile):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
-        tmpLocations = []
-        if self.locations == []:
-            if self.subfiles != []:
-                for i in self.subfiles:
-                    for j in i:
-                        tmpLocations.append( j )
-        else:
-            tmpLocations = self.locations
-        return tmpLocations
+        return self.locations
 
     def get(self):
         """
@@ -188,13 +170,8 @@ class MassStorageFile(IGangaFile):
         #if used as a stand alone object
         if self._parent == None:
             if self.localDir == '':
-                import os
-                _CWD = os.getcwd()
-                if os.path.isfile( os.path.join( _CWD, self.namePattern ) ):
-                    sourceDir = _CWD
-                else:
-                    logger.warning( 'localDir attribute is empty, don\'t know from which dir to take the file' )
-                    return
+                logger.warning('localDir attribute is empty, don\'t know from which dir to take the file' )
+                return
             else:
                 sourceDir = self.localDir
 
@@ -221,7 +198,6 @@ class MassStorageFile(IGangaFile):
         massStoragePath = massStorageConfig['path']
 
         #create the last directory (if not exist) from the config path
-        import os.path
         pathToDirName = os.path.dirname(massStoragePath)
         dirName = os.path.basename(massStoragePath)
 
@@ -404,7 +380,7 @@ class MassStorageFile(IGangaFile):
             if outputFile.outputfilenameformat != None and outputFile.outputfilenameformat != '':
                 outputfilenameformat = outputFile.outputfilenameformat
 
-            massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat, massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path']])
+            massStorageCommands.append(['massstorage',outputFile.namePattern , outputfilenameformat, massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
                 
         script = """\n
@@ -542,92 +518,6 @@ class MassStorageFile(IGangaFile):
                     subfile.inputremotedirectory = self.inputremotedirectory
                     
                     self.subfiles.append(GPIProxyObjectFactory(subfile))
-
-    def remove(self, force = False, removeLocal=False):
-        """
-        Removes file from remote storage ONLY by default
-        """
-        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
-        rm_cmd = massStorageConfig['rm_cmd']
-
-        if force == True:
-            _auto_delete = True
-        else:
-            _auto_delete = False
-
-        for i in self.locations:
-
-            if not _auto_delete:
-
-                keyin = None
-
-                while keyin == None:
-                    keyin = raw_input( "Do you want to delete file %s at Location: %s ? [y/n] " % ( str(self.namePattern), str(i) ) )
-                    if keyin == 'y':
-                        _delete_this = True
-                    elif keyin == 'n':
-                        _delete_this = False
-                    else:
-                        print "y/n please!"
-                        keyin = None
-            else:
-                _delete_this = True
-
-            if _delete_this:
-                logger.info( "Deleting File at Location: %s" )
-                self.execSyscmdSubprocess('%s %s' % (rm_cmd, i))
-                self.locations.pop(i)
-
-        if removeLocal:
-
-            sourceDir = ''
-            if self.localDir == '':
-                import os
-                _CWD = os.getcwd()
-                if os.path.isfile( os.path.join( _CWD, self.namePattern ) ):
-                    sourceDir = _CWD
-            else:
-                sourceDir = self.localDir
-
-            _localFile =  os.path.join(sourceDir,self.namePattern)
-
-            if os.path.isfile( _localFile ):
-                
-                if force:
-                    _actual_delete = True
-                else:
-                
-                    keyin = None
-                    while keyin == None:
-                        keyin = raw_input( "Do you want to remove the local File: %s ? [y/n] " % str(_localFile) )
-                        if keyin == 'y':
-                            _actual_delete = True
-                        elif keyin == 'n':
-                            _actual_delete = False
-                        else:
-                            print "y/n please!"
-                            keyin = None
-
-                if _actual_delete:
-                    os.unlink( _localFile )
-
-        return
-
-    def accessURL(self):
-        
-        # Need to come up with a prescription based upon the server address and file on EOS or elsewhere to return a full URL which we can pass to ROOT...
-
-        protoPath = getConfig('Output')['MassStorageFile']['defaultProtocol']
-
-        myLocations = self.location()
-
-        accessURLs = []
-
-        for file in myLocations:
-            import os
-            accessURLs.append( protoPath + os.path.join( os.sep, file ) )
-        
-        return accessURLs
 
 # add MassStorageFile objects to the configuration scope (i.e. it will be possible to write instatiate MassStorageFile() objects via config file)
 import Ganga.Utility.Config

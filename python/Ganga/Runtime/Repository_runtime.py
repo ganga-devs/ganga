@@ -105,13 +105,6 @@ def bootstrap():
     logger.debug(started_registries)
     return retval
 
-def updateLocksNow():
-
-    logger.debug( "Updating timestamp of Lock files" )
-    for registry in getRegistries():
-        registry.updateLocksNow()
-    return
-
 def shutdown():
     logger.debug('registry shutdown')
     #shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
@@ -133,9 +126,8 @@ def shutdown():
             if not thisName in started_registries: continue
             started_registries.remove(thisName) # in case this is called repeatedly, only call shutdown once
             registry.shutdown() # flush and release locks
-        except Exception, x:
-            logger.error( "Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName )
-            logger.error( "%s" % str(x) )
+        except:
+            logger.error( "Failes to Shutdown Repository: %s !!! please check for stale lock files" % thisName )
             logger.error( "Trying to Shutdown cleanly regardless" )
             pass
 

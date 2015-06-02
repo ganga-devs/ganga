@@ -89,14 +89,13 @@ class LHCbDataset(Dataset):
 
     def __getitem__(self,i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
-        return self.files[i]
-        #if type(i) == type(slice(0)):
-        #    ds = LHCbDataset(files=self.files[i])
-        #    ds.depth = self.depth
-        #    ds.XMLCatalogueSlice = self.XMLCatalogueSlice
-        #    return GPIProxyObjectFactory(ds)
-        #else:
-        #    return GPIProxyObjectFactory(self.files[i])
+        if type(i) == type(slice(0)):
+            ds = LHCbDataset(files=self.files[i])
+            ds.depth = self.depth
+            ds.XMLCatalogueSlice = self.XMLCatalogueSlice
+            return GPIProxyObjectFactory(ds)
+        else:
+            return GPIProxyObjectFactory(self.files[i])
 
     def isEmpty(self): return not bool(self.files)
 

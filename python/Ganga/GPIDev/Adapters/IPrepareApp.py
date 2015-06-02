@@ -103,20 +103,14 @@ class IPrepareApp(IApplication):
                         if os.path.abspath(subitem) == subitem:
                             logger.info('Sending file %s to shared directory.'%(subitem))
                             try:
-                                shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                                if not os.path.isidr( shr_dir ):
-                                    os.makedirs( shr_dir )
-                                shutil.copy2(subitem, shr_dir )
+                                shutil.copy2(subitem, os.path.join(shared_path,self.is_prepared.name))
                             except IOError, e:
                                 logger.error(e)
                                 return 0
                     elif type(subitem) is File and subitem.name is not '':
                         logger.info('Sending file object %s to shared directory'%subitem.name)
                         try:
-                            shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                            if not os.path.isdir( shr_dir ):
-                                os.makedirs( shr_dir )
-                            shutil.copy2(subitem.name, shr_dir)
+                            shutil.copy2(subitem.name, os.path.join(shared_path,self.is_prepared.name))
                         except IOError, e:
                             logger.error(e)
                             return 0
@@ -126,10 +120,7 @@ class IPrepareApp(IApplication):
                 if os.path.abspath(prepitem) == prepitem:
                     logger.info('Sending file %s to shared directory.'%(prepitem))
                     try:
-                        shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                        if not os.path.isdir( shr_dir ):
-                            os.makedirs( shr_dir )
-                        shutil.copy2(prepitem, shr_dir)
+                        shutil.copy2(prepitem, os.path.join(shared_path,self.is_prepared.name))
                     except IOError, e:
                         logger.error(e)
                         return 0
@@ -137,10 +128,7 @@ class IPrepareApp(IApplication):
                 logger.debug('found a file')
                 logger.info('Sending file object %s to shared directory'%prepitem.name)
                 try:
-                    shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                    if not os.path.isdir( shr_dir ):
-                        os.makedirs( shr_dir )
-                    shutil.copy2(prepitem.name, shr_dir)
+                    shutil.copy2(prepitem.name, os.path.join(shared_path,self.is_prepared.name))
                 except IOError, e:
                     logger.error(e)
                     return 0

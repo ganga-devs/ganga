@@ -59,10 +59,6 @@ class FileWorkspace:
         logger.debug('creating %s',self.getPath())
         self.jobid = jobid
         try:
-            import os.path
-            if os.path.isdir( self.getPath() ):
-                return
-
             import os
             os.makedirs(self.getPath())
         except OSError,x:
