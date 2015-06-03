@@ -42,7 +42,7 @@ except ImportError:
     logger = Logger() 
 
 session_lock_last = 0
-session_expiration_timeout = 60*60 # in sec
+session_expiration_timeout = 30 # in sec
 session_lock_refresher = None
 
 sessionFiles = []
@@ -101,8 +101,8 @@ class SessionLockRefresher(GangaThread):
                 #print "fail"
                 value = None
                 i = i+1
-                time.sleep(1)
-                if i >= 30: #3000:
+                time.sleep(0.5)
+                if i >= 60: #3000:
                     raise x
                 else:
                     continue
@@ -287,8 +287,8 @@ class SessionLockManager(object):
             try:
                 value = os.open( filename, os.O_EXCL | os.O_CREAT | os.O_WRONLY )
             except OSError, x:
-                time.sleep(1)
-                if i >= 30:
+                time.sleep(0.5)
+                if i >= 60:
                     raise x
                 else:
                     continue
@@ -380,8 +380,8 @@ class SessionLockManager(object):
                  #print "fail"
                 value = None
                 i = i+1
-                time.sleep(1)
-                if i >= 30: #3000:
+                time.sleep(0.5)
+                if i >= 60: #3000:
                     raise x
                 else:
                     continue
@@ -410,9 +410,9 @@ class SessionLockManager(object):
                     fcntl.lockf( self.lockfd, lock_mod )
                 break
             except IOError, x:
-                time.sleep(1)
+                time.sleep(0.5)
                 i=i+1
-                if i >= 30:
+                if i >= 60:
                     raise x
                 else:
                     continue
@@ -437,9 +437,9 @@ class SessionLockManager(object):
             try:
                 value = os.open(filename, os.O_RDONLY)
             except OSError, x:
-                time.sleep(1)
+                time.sleep(0.5)
                 i=i+1
-                if i >= 30:
+                if i >= 60:
                     raise x
                 else:
                     continue
@@ -482,8 +482,8 @@ class SessionLockManager(object):
                 #print "fail"
                 value = None
                 i = i+1
-                time.sleep(1)
-                if i >= 30: #3000:
+                time.sleep(0.5)
+                if i >= 60: #3000:
                     raise x
                 else:
                     continue
@@ -503,8 +503,8 @@ class SessionLockManager(object):
                 #print "fail"
                 value = None
                 i = i+1
-                time.sleep(1)
-                if i >= 30: #3000:
+                time.sleep(0.5)
+                if i >= 60: #3000:
                     raise x
                 else:
                     continue
@@ -612,8 +612,7 @@ class SessionLockManager(object):
         finally:
             self.global_lock_release()
 
-    def lock_ids(self, ids):
-
+    def safe_LockCheck(self):
         global session_lock_last
         import time
         this_time = time.time()
@@ -625,6 +624,10 @@ class SessionLockManager(object):
             global session_lock_refresher
             if session_lock_refresher is not None:
                 session_lock_refresher.checkAndReap()
+
+    def lock_ids(self, ids):
+
+        self.safe_LockCheck()
 
         ids = Set(ids)
         self.global_lock_acquire()
@@ -698,18 +701,7 @@ class SessionLockManager(object):
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
         Returns None on failure
         """
-
-        global session_lock_last
-        import time
-        this_time = time.time()
-        if session_lock_last == 0:
-            session_lock_last = this_time
-        global session_expiration_timeout
-        if abs( session_lock_last - this_time ) > session_expiration_timeout:
-            session_expiration_timeout = this_time
-            global session_lock_refresher
-            if session_lock_refresher is not None:
-                session_lock_refresher.checkAndReap()
+        self.safe_LockCheck()
 
         self.global_lock_acquire()
         try:

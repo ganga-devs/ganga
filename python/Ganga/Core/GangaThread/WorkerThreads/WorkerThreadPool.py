@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import collections, Queue, threading, traceback, signal
+import Queue, threading, traceback, signal
 import os, pickle, subprocess, types, time, threading
 from Ganga.Core.GangaThread                  import GangaThread
 from Ganga.Core                              import GangaException
@@ -9,9 +9,10 @@ from Ganga.Utility.logging                   import getLogger
 from Ganga.Utility.Config                    import getConfig
 
 logger = getLogger()
-QueueElement   = collections.namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
-CommandInput   = collections.namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
-FunctionInput  = collections.namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
+from collections import namedtuple
+QueueElement   = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
+CommandInput   = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
+FunctionInput  = namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
 
 class WorkerThreadPool(object):
     """

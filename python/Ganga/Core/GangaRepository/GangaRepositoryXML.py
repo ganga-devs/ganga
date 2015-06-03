@@ -451,6 +451,8 @@ class GangaRepositoryLocal(GangaRepository):
 
     def flush(self, ids):
         logger.debug( "Flushing: %s" % ids )
+        #import traceback
+        #traceback.print_stack()
         for id in ids:
             try:
                 fn = self.get_fn(id)
@@ -665,15 +667,15 @@ class GangaRepositoryLocal(GangaRepository):
             self._internal_del__(id)
             rmrf(os.path.dirname(fn))
 
-    def lock(self,ids):
+    def lock(self, ids):
         return self.sessionlock.lock_ids(ids)
 
-    def unlock(self,ids):
+    def unlock(self, ids):
         released_ids = self.sessionlock.release_ids(ids)
         if len(released_ids) < len(ids):
             logger.error("The write locks of some objects could not be released!")
 
-    def get_lock_session(self,id): 
+    def get_lock_session(self, id):
         """get_lock_session(id)
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
         Returns None on failure
