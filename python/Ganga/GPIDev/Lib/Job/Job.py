@@ -548,6 +548,11 @@ class Job(GangaObject):
         Transitions from to the current state are allowed by default (so you can updateStatus('running') if job is 'running').
         Such default transitions do not have hooks.
         """
+
+        ##  For debugging to trace Failures and such
+        #import traceback
+        #traceback.print_stack()
+
         fqid = self.getFQID('.')
         logger.debug('attempt to change job %s status from "%s" to "%s"',fqid, self.status,newstatus)
 
@@ -699,7 +704,7 @@ class Job(GangaObject):
         # check if any output was matched - be careful about master jobs
         if not self.subjobs:
             for outputfile in self.outputfiles:
-                if outputfile.hasMatchedFiles():
+                if not outputfile.hasMatchedFiles():
                     postprocessFailure = True
 
         # check for failure reasons

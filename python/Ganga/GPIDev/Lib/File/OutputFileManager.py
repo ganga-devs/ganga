@@ -1,11 +1,10 @@
-from Ganga.Utility.Config import getConfig   
-from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-
-import re
 import os
 import glob 
 import tempfile  
 import copy
+
+from Ganga.Utility.Config import getConfig
+
 """
 Checks if the output files of a given job(we are interested in the backend) 
 should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
@@ -139,8 +138,6 @@ def getWNCodeForOutputSandbox(job, files, jobid):
             if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):     
                 patternsToSandbox.append(outputFile.namePattern)
 
-                if outputFile.compressed:
-                    patternsToZip.append(outputFile.namePattern)               
 
     insertScript = """\n
 from Ganga.Utility.files import recursive_copy
@@ -284,6 +281,8 @@ def getWNCodeForOutputPostprocessing(job, indent):
 
     return insertScript
 
+import re
+
 wildcardregex = re.compile('[*?\[\]]')
 def iexpandWildCards(filelist):
     for f in filelist:
@@ -317,4 +316,4 @@ def getWNCodeForInputdataListCreation(job, indent):
         insertScript = insertScript.replace('###FILELIST###', "[]")
 
     return insertScript
-        
+

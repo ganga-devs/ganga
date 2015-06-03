@@ -156,7 +156,7 @@ class LocalFile(IGangaFile):
             if self.compressed:
                 fname += ".gz"
 
-            if os.path.exists( os.path.join( job.getOutputWorkspace().getPath(), fname) ): 
+            if os.path.isfile( os.path.join( job.getOutputWorkspace().getPath(), fname) ): 
                 return True
             
         return False

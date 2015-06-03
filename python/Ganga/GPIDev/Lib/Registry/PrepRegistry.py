@@ -376,14 +376,10 @@ class ShareRef(GangaObject):
 
             #if the sharedir in the table doesn't exist on the filesytem, and the reference counter is > 0, 
             #we need to unprepare any associated jobs
+            logger.debug( "Examining: %s" % full_shareddir_path )
+            logger.debug( "shareddir: %s" % str(shareddir) )
+            logger.debug( "cleanup_list: %s" % str(cleanup_list) )
             if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
-                #print full_shareddir_path
-                #print shareddir
-                #print cleanup_list
-                #print self.name.keys()
-                #print self.name
-                #import sys
-                #sys.exit(-1)
                 logger.info('%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' % shareddir)
                 self.lookup(sharedir=shareddir, unprepare=True)
                 cleanup_list.append(shareddir)

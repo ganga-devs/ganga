@@ -29,6 +29,15 @@ class GangaDataset(Dataset):
         super(GangaDataset, self).__init__()
         self.files = files
 
+    def __construct__(self, args):
+
+        if len(args) == 1:
+            self.files = args[0]
+        else:
+            logger.error( "Don't know how to construct GangaDataset this way!" )
+
+        return
+
     def __len__(self):
         """The number of files in the dataset."""
         result = 0
@@ -69,10 +78,12 @@ class GangaDataset(Dataset):
         "return a list of filenames to be created as input.txt on the WN"
         filelist = []
         for f in self.files:
-            try:
+            if hasattr( f, 'accessURL' ):
+                filelist += f.accessURL()
+            elif hasattr( f, 'getFilenameList' ):
                 filelist += f.getFilenameList()
-            except NotImplementedError:
-                logger.warning("getFilenameList not implemented for File '%s'" % sf._name)
+            else:
+                logger.warning("accessURL or getFilenameList not implemented for File '%s'" % f._name)
 
         return filelist
 

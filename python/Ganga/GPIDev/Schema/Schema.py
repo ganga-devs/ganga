@@ -331,19 +331,19 @@ class Item:
         #    what = what.__class__
 
         this_type = type(what)
-
-        # for backwards compatibility with Ganga3 CLIP: if a string -- first convert to the class name
-        if this_type is type(''):
-            import Schema # get access to all Item classes defined in this module (schema)
-            try:
-                what = getattr(Schema, what)
-            except AttributeError:
-                # class not found
-                return 0
-
         import types
-        if this_type is types.InstanceType:
-            what = what.__class__
+
+        try:
+            # for backwards compatibility with Ganga3 CLIP: if a string -- first convert to the class name
+            if this_type is type(''):
+                import Schema # get access to all Item classes defined in this module (schema)
+                what = getattr(Schema, what)
+            elif this_type is types.InstanceType:
+                what = what.__class__
+
+        except AttributeError:
+            # class not found
+            return 0
 
         return issubclass(self.__class__, what)
 
