@@ -9,12 +9,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
 class Dirac(DiracBase):
      _schema = DiracBase._schema.inherit_copy()
-#     _schema.datadict['inputSandboxLFNs'] = ComponentItem(category='datafiles', defvalue=[], sequence=1,
-#                                                          typelist=['GangaDirac.Lib.Files.DiracFile.DiracFile'],
-#                                                          doc='LFNs to be downloaded into the work dir on the grid node. Site '\
-#                                                          'matching is *not* performed on these files; they are downloaded.'\
-#                                                          'I.e., do not put prod data here')
-     
+
      _schema.version.major += 0
      _schema.version.minor += 0
      _exportmethods = DiracBase._exportmethods[:]
@@ -25,32 +20,23 @@ class Dirac(DiracBase):
      __doc__               = DiracBase.__doc__
 
 
-     def _addition_sandbox_content(self,subjobconfig):
+     def _addition_sandbox_content(self, subjobconfig):
           input_sandbox = []
-#         for lfn in self.inputSandboxLFNs:
-#               from GangaLHCb.Lib.LHCbDataset.PhysicalFile import PhysicalFile
-#               if type(lfn) is PhysicalFile:
-#                    msg = 'Dirac.inputSandboxLFNs cannot contain a PhysicalFile.'
-#                    logger.error(msg)
-#                    raise BackendError('Dirac',msg)
-#               input_sandbox.append('LFN:'+lfn.name)
           j = self.getJobObject()
           from GangaDirac.Lib.Files.DiracFile import DiracFile
           for f in j.inputfiles.get(DiracFile):
-                   if f.lfn == '':
-                         raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
-                   else:
-                         input_sandbox.append('LFN:' + f.lfn)
+              if f.lfn == '':
+                  raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
+              else:
+                  input_sandbox.append('LFN:' + f.lfn)
           return input_sandbox
 
      def _setup_subjob_dataset(self, dataset):
-          return LHCbDataset(files=[DiracFile( lfn=f ) for f in dataset])
-        
+          return LHCbDataset(files=[DiracFile( lfn=f ) for f in dataset])        
 
      def checkSites(self):
           cmd = 'checkSites()'
           result = execute(cmd)
-#          result = Dirac.dirac_ganga_server.execute(cmd)
           if not result_ok(result):
                logger.warning('Could not obtain site info: %s' % str(result))
                return
@@ -59,7 +45,6 @@ class Dirac(DiracBase):
      def checkTier1s(self):
           cmd = 'checkTier1s()'
           result = execute(cmd)
-#          result = Dirac.dirac_ganga_server.execute(cmd)
           if not result_ok(result):
                logger.warning('Could not obtain Tier-1 info: %s' % str(result))
                return
