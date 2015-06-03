@@ -201,16 +201,13 @@ class ProxyDataDescriptor(object):
                                 obj.application.unprepare()
                                 shareref.increase(val.is_prepared.name)
 
-        #check that the shared directory actually exists before assigning the (prepared) application to a job
-        try:
-            if hasattr(val, 'is_prepared'):
-                if val.is_prepared is not None:
-                    if val.is_prepared is not True:
-                        if hasattr( val.is_prepared, 'name' ):
-                            if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
-                                logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
-        except:
-            pass
+                #check that the shared directory actually exists before assigning the (prepared) application to a job
+                if hasattr(val, 'is_prepared'):
+                    if val.is_prepared is not None:
+                        if val.is_prepared is not True:
+                            if hasattr( val.is_prepared, 'name' ):
+                                if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
+                                    logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
 
         # apply attribute conversion
         def stripAttribute(v):
