@@ -89,6 +89,8 @@ class DiracFile(IGangaFile):
     _category = 'gangafiles'
     _name = "DiracFile"
     _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'locations', 'location', 'accessURL' ]
+    _remoteURLs = {}
+    _storedReplicas = {}
 
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
@@ -109,9 +111,6 @@ class DiracFile(IGangaFile):
             self.localDir = expandfilename( localDir )
         if remoteDir is not None:
             self.remoteDir = remoteDir
-
-        self._remoteURLs = {}
-        self._storedReplicas = {}
 
     def __construct__( self, args ):
         #logger.debug( "__construct__" )
@@ -402,6 +401,8 @@ class DiracFile(IGangaFile):
 
     def getReplicas(self, forceRefresh = False ):
         """
+        Get the list of all SE where this file has a replica
+        This relies on an internally stored list of replicas, (SE and  unless forceRefresh = True
         """
 
         these_replicas = None
@@ -409,9 +410,7 @@ class DiracFile(IGangaFile):
         if len(self.subfiles) != 0:
 
             allReplicas = []
-
             for i in self.subfiles:
-
                 allReplicas.append( i.getReplicas() )
 
             these_replicas = allReplicas
@@ -435,7 +434,9 @@ class DiracFile(IGangaFile):
         return these_replicas
 
     def _updateRemoteURLs( self, reps ):
-
+        """
+        Internal function used for storing all replica information about this LFN at different sites
+        """
         if len(self.subfiles) != 0:
             for i in self.subfiles:
                 i._updateRemoteURLs( reps )
@@ -450,6 +451,7 @@ class DiracFile(IGangaFile):
 
     def location(self):
         """
+        Return a list of LFN locations for this DiracFile
         """
         if len(self.subfiles) == 0:
             if self.lfn == "":
@@ -457,31 +459,38 @@ class DiracFile(IGangaFile):
             else:
                 return [ self.lfn ]
         else:
-            URLS = []
+            ## 1 LFN per DiracFile
+            LFNS = []
             for file in self.subfiles:
                 these_LFNs = file.location()
                 for this_url in these_LFNs:
-                    URLs.append( this_url )
-            return URLs
+                    LFNs.append( this_url )
+            return LFNs
 
-    def accessURL(self):
+    def accessURL(self, thisSE = ''):
         """
+        Attempt to find an accessURL which corresponds to an SE at this given site
+        The given site will be provided either by thisSE which takes precedent or by
+        the value stored in configDirac['DiracDefaultStorageSite']
         """
+        ## If we don't have subfiles then we need to make sure that the replicas are known
         if len(self._remoteURLs) == 0 and len(self.subfiles) == 0:
             self.getReplicas()
 
+        ## Now we have to match the replicas to find one at the DiracDefaultStorageSite
         if len(self.subfiles) == 0:
-            files_URLs = self._remoteURLs
 
+            files_URLs = self._remoteURLs
             this_accessURL = ''
 
             for this_SE in files_URLs.keys():
 
                 this_URL = files_URLs.get(this_SE)
-
                 these_sites_output = execute('getSitesForSE("%s")' % str( this_SE ) )
-
-                default_site = configDirac['DiracDefaultStorageSite']
+                if thisSE == '':
+                    default_site = configDirac['DiracDefaultStorageSite']
+                else:
+                    default_site = thisSE
 
                 if these_sites_output.get('OK', False):
                     these_sites = these_sites_output.get('Value')
@@ -492,8 +501,15 @@ class DiracFile(IGangaFile):
                 if this_accessURL != '':
                     break
 
+            ## Cannot find an accessURL
+            if this_accessURL == '':
+                return []
+
+            ## Currently only written to cope with 1 replica per DIRAC file
+            ## I think adding multiple accessURL for the same file at 1 site adds confusion
             return [ this_accessURL ]
         else:
+            ## For all subfiles request the accessURL, 1 URL per LFN
             _accessURLs = []
             for i in self.subfiles:
                 for j in i.accessURL():
@@ -501,15 +517,22 @@ class DiracFile(IGangaFile):
 
             return _accessURLs
 
-    def get(self):
+    def get(self, localPath = '' ):
         """
-        Retrieves locally the file matching this DiracFile object pattern
+        Retrieves locally the file matching this DiracFile object pattern.
+        If localPath is specified
         """
-        to_location = self.localDir
-        if self.localDir is None:
-            to_location = os.getcwd()
+        if localPath == '':
+            to_location = self.localDir
+
+            if self.localDir is None:
+                to_location = os.getcwd()
             if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
                 to_location = self.getJobObject().outputdir
+        else:
+            to_location = localPath
+
+        self.localDir = to_location
 
         if not os.path.isdir(to_location):
             raise GangaException('"%s" is not a valid directory... Please set the localDir attribute to a valid directory' % self.localDir)
@@ -555,16 +578,25 @@ class DiracFile(IGangaFile):
             raise Exception("No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
 
-    def put(self, force=False ):
+    def put(self, force = False, uploadSE = [], replicate = False ):
         """
         Try to upload file sequentially to storage elements defined in configDirac['DiracSpaceTokens'].
-
         File will be uploaded to the first SE that the upload command succeeds for.
+
+        The first element in the DiracSpaceTokens that is used is the first SE found
+        at the site described by the configDirac['DiracDefaultStorageSite'] attribute
+
+        Alternatively, the user can specify an uploadSE which contains a list of the SE
+        which the file is to be uploaded to.
+
+        If the user wants to replicate this file(s) across all SE then they should state replicate = True.
+
         Return value will be either the stdout from the dirac upload command if not
-        using the wildcard characters '*?[]' in the namePattern. If the wildcard characters
-        are used then the return value will be a list containing newly created DiracFile
-        objects which were the result of glob-ing the wildcards. The objects in this list
-        will have been uploaded or had their failureReason attribute populated if the
+        using the wildcard characters '*?[]' in the namePattern.
+        If the wildcard characters are used then the return value will be a list containing
+        newly created DiracFile objects which were the result of glob-ing the wildcards.
+        
+        The objects in this list will have been uploaded or had their failureReason attribute populated if the
         upload failed.
         """
 
@@ -602,14 +634,15 @@ class DiracFile(IGangaFile):
                 logger.warning("Cannot specify a single lfn for a wildcard namePattern")
                 logger.warning("LFN will be generated automatically")
                 self.lfn=""
-#            if self.guid != "":
-#                logger.warning("Cannot specify a single guid for a wildcard namePattern")
-#                logger.warning("GUID will be generated automatically")
-#                self.guid=""
  
-        import glob, uuid
+        import glob
         if self.remoteDir == '':
-            self.remoteDir = str(uuid.uuid4())
+            import datetime
+            t = datetime.datetime.now()
+            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
+            self.remoteDir = 'GangaFiles_%s' % this_date
+            #import uuid
+            #self.remoteDir = str(uuid.uuid4())
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
         elif self.remoteDir[:5] == "/lhcb":
@@ -637,12 +670,8 @@ class DiracFile(IGangaFile):
                         raise GangaException('File "%s" must exist!'% name)
 
             lfn = self.lfn
-#            guid = self.guid
             if lfn == "":
                 lfn = os.path.join(lfn_base, os.path.basename(name))
-#           if guid == "":
-#               md5 = hashlib.md5(open(name,'rb').read()).hexdigest()
-#               guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()# conforming to DIRAC GUID hex md5 8-4-4-4-12
             
             d=DiracFile()
             d.namePattern = os.path.basename(file)
@@ -650,37 +679,52 @@ class DiracFile(IGangaFile):
             d.localDir    = sourceDir
             stderr=''
             stdout=''
-            logger.info('Uploading file %s' % name)
-#            for se in storage_elements:
-#                stdout = dirac_ganga_server.execute('uploadFile("%s", "%s", "%s")' %(lfn, name, se))
-            stdout = execute('uploadFile("%s", "%s", %s)' %(lfn, name, str(storage_elements)))
+            logger.info('Uploading file %s to %s' % (name, storage_elements[0]) )
+            stdout = execute('uploadFile("%s", "%s", %s)' %(lfn, name, str([storage_elements[0]])))
             if type(stdout)==str: 
-                logger.warning("Couldn't upload file '%s': %s"%(os.path.basename(name), stdout))##FIX this to run on a process so dont need to interpret the string stdout from process
+                logger.warning("Couldn't upload file '%s': %s" % (os.path.basename(name), stdout))
                 continue
             if stdout.get('OK', False) and lfn in stdout.get('Value',{'Successful':{}})['Successful']:
-                if self.compressed or self._parent !=None: # when doing the two step upload delete the temp file
+                if self.compressed or self._parent != None: # when doing the two step upload delete the temp file
                     os.remove(name)
                 # need another eval as datetime needs to be included.
-                guid = stdout['Value']['Successful'][lfn].get('GUID','')#eval(dirac_ganga_server.execute('getMetadata("%s")'%lfn))['Value']['Successful'][lfn]['GUID']
+                guid = stdout['Value']['Successful'][lfn].get('GUID', '')
                 if regex.search(self.namePattern) is not None:
                     d.lfn = lfn
-                    d.locations = stdout['Value']['Successful'][lfn].get('DiracSE','')#[se]
+                    d.locations = stdout['Value']['Successful'][lfn].get('DiracSE','')
                     d.guid = guid
                     outputFiles.append(GPIProxyObjectFactory(d))
                     continue
                 self.lfn = lfn
-                self.locations = stdout['Value']['Successful'][lfn].get('DiracSE','')#[se]
+                self.locations = stdout['Value']['Successful'][lfn].get('DiracSE','')
                 self.guid = guid
-                return
-            failureReason = "Error in uploading file %s : %s"% (os.path.basename(name), str(stdout))
-            logger.error(failureReason)
-            if regex.search(self.namePattern) is not None:
-                d.failureReason =  failureReason
-                outputFiles.append(GPIProxyObjectFactory(d))
-                continue
-            self.failureReason = failureReason
-            return str(stdout)
-        return GPIProxyObjectFactory(outputFiles)
+                #return ## WHY?
+            else:
+                failureReason = "Error in uploading file %s : %s"% (os.path.basename(name), str(stdout))
+                logger.error(failureReason)
+                if regex.search(self.namePattern) is not None:
+                    d.failureReason =  failureReason
+                    outputFiles.append(GPIProxyObjectFactory(d))
+                    continue
+                self.failureReason = failureReason
+                return str(stdout)
+
+        if replicate == True:
+
+            if len(outputFiles) == 1 or len(outputFiles) == 0:
+                storage_elements.pop( 0 )
+                for se in storage_elements:
+                    self.replicate( se )
+            else:
+                storage_elements.pop( 0 )
+                for file in outputFiles:
+                    for se in storage_elements:
+                        file.replicate( se )
+
+        if len(outputFiles) > 0:
+            return GPIProxyObjectFactory(outputFiles)
+        else:
+            return None
 
     def getWNScriptDownloadCommand(self, indent):
 

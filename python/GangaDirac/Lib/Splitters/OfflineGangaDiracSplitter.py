@@ -139,6 +139,8 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
         import Ganga.Runtime.Repository_runtime
         Ganga.Runtime.Repository_runtime.updateLocksNow()
 
+    originals = {}
+
     for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
 
         output = allLFNData[i]
@@ -148,13 +150,20 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
         except Exception, x:
             raise SplitterError( "Error getting LFN Replica information:\n%s" % str(x) )
 
+        logger.info( "Updating URLs: %s of %s" % (str(i*500), str(len(allLFNs)) ) )
+
         for k in values.keys():
             this_dict = {}
             this_dict[k] = values.get(k)
+            ## FIXME HORRIBLE HACK BUT THERE ARE LYTERALLY THOUSANDS OF I/O
+            ## OPERATIONS HAPPENING DUE TO THIS, LETS MINIMISE IT
+            originals[k] = LFNdict[k]._getRegistry().dirty_flush_counter
+            LFNdict[k]._getRegistry().dirty_flush_counter = 1000
             LFNdict[k]._updateRemoteURLs( this_dict )
 
-        logger.info( "Updating URLs: %s" % i )
-
+    ## FIXME AS ABOVE THIS IS HERE TO RESTORE NORMALITY
+    for k, v in originals.iteritems():
+        LFNdict[k]._getRegistry().dirty_flush_counter  = v
 
     ## This finds all replicas for all LFNs...
     ## This will probably struggle for LFNs which don't exist

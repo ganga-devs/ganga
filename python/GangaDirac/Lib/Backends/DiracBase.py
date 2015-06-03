@@ -171,7 +171,7 @@ class DiracBase(IBackend):
 
         
         input_sandbox  += self._addition_sandbox_content(subjobconfig)
-        
+
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##',str(input_sandbox))
 
         dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(),'dirac-script.py')
@@ -507,23 +507,32 @@ class DiracBase(IBackend):
             now = time.time()
             logger.debug('Job '+job.fqid+' Time for Dirac metadata : '+str(now-start))
 
-            
+            logger.debug('Job '+job.fqid+' OutputDataInfo: '+str(file_info_dict))
+            logger.debug('Job '+job.fqid+' OutputSandbox: '+str(getSandboxResult))
+
             ## Set DiracFile metadata
             wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
 
             with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
-                for file_name, info in file_info_dict.iteritems():
+                for file_name in file_info_dict.keys():
+                    info = file_info_dict.get( file_name )
+                    logger.debug( "file_name: %s,\tinfo: %s" % (str(file_name), str(info)) )
+
                     valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
                     if not valid_wildcards:
                         valid_wildcards=['']
 
                     for wc in valid_wildcards:
-                        postprocesslocationsfile.write('DiracFile:::%s&&%s->%s:::%s:::%s\n'% (wc,
-                                                                                              file_name,
-                                                                                              info.get('LFN','Error Getting LFN!'),
-                                                                                              str(info.get('LOCATIONS',['NotAvailable'])),
-                                                                                              info.get('GUID','NotAvailable')
-                                                                                              ))
+                        logger.debug( "wildcard: %s" % str(wc) )
+
+                        DiracFileData = 'DiracFile:::%s&&%s->%s:::%s:::%s\n'% (wc,
+                                                                               file_name,
+                                                                               info.get('LFN','Error Getting LFN!'),
+                                                                               str(info.get('LOCATIONS',['NotAvailable'])),
+                                                                               info.get('GUID','NotAvailable')
+                                                                               )
+                        logger.debug( "DiracFileData: %s" % str(DiracFileData) )
+                        postprocesslocationsfile.write( DiracFileData )
 
             ## check outputsandbox downloaded correctly
             if not result_ok(getSandboxResult):
