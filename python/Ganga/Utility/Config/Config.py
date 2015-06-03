@@ -335,13 +335,14 @@ class ConfigOption:
                     return level
         raise AttributeError,name
 
-    def __setattr__(self,name,value):
-        if name in ['value','level']:
-            raise AttributeError('Cannot set "%s" attribute of the option object'%name)
-        self.__dict__[name]=value
+    def __setattr__(self, name, value):
+        if name in ['value', 'level']:
+            raise AttributeError('Cannot set "%s" attribute of the option object' % name)
+        else:
+            self.__dict__[name]=value
 
     def check_defined(self):
-        return hasattr(self,'default_value')
+        return hasattr(self, 'default_value')
     
     def transform_PATH_option(self,new_value,current_value):
         return transform_PATH_option(self.name,new_value,current_value)

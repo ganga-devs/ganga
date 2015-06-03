@@ -194,7 +194,7 @@ class Shell:
                t0=time.time()
                timeout = 5 # wait just 5 seconds before killing with SIGKILL
                already_killed = True
-            time.sleep(0.1)            
+            time.sleep(0.05)
 
       except OSError, (num, text):
          if num == 10:
