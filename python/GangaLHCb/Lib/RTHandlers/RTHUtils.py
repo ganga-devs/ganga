@@ -130,8 +130,8 @@ def getXMLSummaryScript(indent=''):
 
 def create_runscript():
 
-  import EnvironFunctions
-  environ_script = EnvironFunctions.construct_run_environ()
+  from GangaLHCb.Lib.Applications.EnvironFunctions import construct_run_environ
+  environ_script = construct_run_environ()
 
   script = str("""#!/usr/bin/env python
 

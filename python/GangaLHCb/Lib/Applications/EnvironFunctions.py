@@ -36,9 +36,9 @@ def construct_merge_script( DaVinci_version, scriptName ):
 
 def construct_run_environ():
     if gaudiConfig['useCMakeApplications']:
-        return construct_run_environ_SP()
-    else:
         return construct_run_environ_cmake()
+    else:
+        return construct_run_environ_SP()
 
 
 
