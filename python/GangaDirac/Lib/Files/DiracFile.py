@@ -358,7 +358,8 @@ class DiracFile(IGangaFile):
             try:
                 if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
                     self.guid = ret['Value']['Successful'][self.lfn]['GUID']
-            except: pass
+            except:
+                pass
 
         try:
             reps =  self.getReplicas()
@@ -826,10 +827,13 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
 ###INDENT###    return p
 """
 
-        import uuid
-
         if self.remoteDir == '':
-            self.remoteDir = str(uuid.uuid4())
+            import datetime
+            t = datetime.datetime.now()
+            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
+            self.remoteDir = 'GangaFiles_%s' % this_date
+            #import uuid
+            #self.remoteDir = str(uuid.uuid4())
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir
         else:
@@ -840,7 +844,7 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
                 script+= wildcard_script(file.namePattern, lfn_base, str(file.namePattern in patternsToZip))
             else:
 #                lfn = file.lfn
-                #guid = file.guid
+#                 guid = file.guid
 #                if file.lfn=='':
 #                    lfn = os.path.join(lfn_base, name)
                 #if file.guid == '':
