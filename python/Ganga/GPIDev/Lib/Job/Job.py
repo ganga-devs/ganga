@@ -184,7 +184,7 @@ class Job(GangaObject):
 
     _category = 'jobs'
     _name = 'Job'
-    _exportmethods = ['prepare','unprepare','submit','remove','kill', 'resubmit', 'peek','fail', 'force_status', 'count_subjobs' ]
+    _exportmethods = ['prepare', 'unprepare', 'submit', 'remove', 'kill', 'resubmit', 'peek','fail', 'force_status', 'count_subjobs', 'runPostProcessors' ]
 
     default_registry = 'jobs'
 
@@ -536,7 +536,7 @@ class Job(GangaObject):
     transient_states = ['incomplete','removed','unknown']
     initial_states = ['new','incomplete','template']
 
-    def updateStatus(self,newstatus, transition_update = True, update_master = True):
+    def updateStatus(self, newstatus, transition_update = True, update_master = True, ignore_failures = False ):
         """ Move job to the new status. according to the state transition graph (Job.status_graph).
         If transition is allowed:
           - call the specific transition hook (if exists)
@@ -554,7 +554,7 @@ class Job(GangaObject):
         #traceback.print_stack()
 
         fqid = self.getFQID('.')
-        logger.debug('attempt to change job %s status from "%s" to "%s"',fqid, self.status,newstatus)
+        logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, self.status, newstatus)
 
         try:
             state = self.status_graph[self.status][newstatus]
@@ -563,7 +563,7 @@ class Job(GangaObject):
             if newstatus == self.status:
                 state = Job.State(newstatus)
             else:
-                raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"'%(fqid, self.status,newstatus)) 
+                raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"'%(fqid, self.status, newstatus)) 
 
         self._getWriteAccess()
 
@@ -571,17 +571,17 @@ class Job(GangaObject):
         try:
             if state.hook:
                 try:
-                    getattr(self,state.hook)()
-                except PostprocessStatusUpdate,x:
+                    getattr(self, state.hook)()
+                except PostprocessStatusUpdate, x:
                     newstatus = x.status
 
             if transition_update:
                 #we call this even if there was a hook
-                newstatus = self.transition_update(newstatus)       
+                newstatus = self.transition_update(newstatus)
 
-                if newstatus == 'completed':
+                if newstatus == 'completed' and not ignore_failures == True:
                     if self.outputFilesFailures():
-
+                        logger.info( "outputfile Failure" )
                         self.updateStatus('failed')
                         return
 
@@ -590,27 +590,30 @@ class Job(GangaObject):
                 logger.debug("timenow('%s') called.", self.status)
             else:
                 logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", self.status, newstatus)
+
             self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
-        except Exception,x:
+
+        except Exception, x:
             self.status = saved_status
             log_user_exception()
             raise JobStatusError(x)
 
         if self.status != saved_status:
-            logger.info('job %s status changed to "%s"',fqid,self.status)
+            logger.info('job %s status changed to "%s"', fqid, self.status)
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
-    def transition_update(self,new_status):
+    def transition_update(self, new_status):
         """Propagate status transitions""" 
 
         if new_status == 'completed' or new_status == 'failed' or new_status == 'killed':
             if len(self.postprocessors) > 0:
                 logger.info( "Running postprocessor for Job %s" % self.getFQID('.') )
-                passed = self.postprocessors.execute(self,new_status)
+                passed = self.postprocessors.execute(self, new_status)
                 if passed is not True:
                     new_status = 'failed'        
+
         #Propagate transition updates to applications
         if self.application:
             self.application.transition_update(new_status)
@@ -761,16 +764,33 @@ class Job(GangaObject):
     def monitorSubmitted_hook(self):
         """Send monitoring information (e.g. Dashboard) at the time of job submission"""
         self.getMonitoringService().submit()
-   
+
+    def runPostProcessors(self):
+        logger.info( "Job %s Manually Running PostProcessors" % str(self.getFQID('.')) )
+        try:
+            self.application.postprocess()
+        except Exception, x:
+            logger.error( "Job %s Application postprocess failed" % str(self.getFQID('.')) )
+            logger.error( "\n%s" % str(x) )
+        try:
+            self.postprocessoutput(self.outputfiles, self.outputdir)
+        except Exception, x:
+            logger.error( "Job %s postprocessoutput failed" % str(self.getFQID('.')) )
+            logger.error( "\n%s" % str( x ) )
+
+        logger.debug( "Job %s Finished" % str(self.getFQID('.')) )
+
     def postprocess_hook(self):
+        logger.info( "Job %s Running PostProcessor hook" % str(self.getFQID('.')) )
         self.application.postprocess()
         self.getMonitoringService().complete()
         self.postprocessoutput(self.outputfiles, self.outputdir)
 
     def postprocess_hook_failed(self):
+        logger.info( "Job %s PostProcessor Failed" % str(self.getFQID('.')) )
         self.application.postprocess_failed()
         self.getMonitoringService().fail()
-        
+
     def monitorFailed_hook(self):
         self.getMonitoringService().fail()
 
@@ -1656,7 +1676,7 @@ class Job(GangaObject):
     allowed_force_states = { 'completed' : ['completing','failed'],
                              'failed' : ["submitting","completing","completed","submitted","running","killed"] }
     
-    def force_status(self,status,force=False):
+    def force_status(self, status, force = False):
         ''' Force job to enter the "failed" or "completed" state. This may be
         used for marking jobs "bad" jobs or jobs which are stuck in one of the
         internal ganga states (e.g. completing).
@@ -1669,33 +1689,33 @@ class Job(GangaObject):
             revstates = {}
             for s1 in Job.allowed_force_states:
                 for s2 in Job.allowed_force_states[s1]:
-                    revstates.setdefault(s2,{})
+                    revstates.setdefault(s2, {})
                     revstates[s2][s1] = 1
 
             for s in revstates:
-                logger.info("%s => %s"%(s,revstates[s].keys()))
+                logger.info("%s => %s" % (s, revstates[s].keys()))
             return
             
         if self.status == status:
             return
         
         if not status in Job.allowed_force_states:
-            raise JobError('force_status("%s") not allowed. Job may be forced to %s states only.'%(status,Job.allowed_force_states.keys()))
+            raise JobError('force_status("%s") not allowed. Job may be forced to %s states only.' % (status, Job.allowed_force_states.keys()))
 
         if not self.status in Job.allowed_force_states[status]:
-            raise JobError('Only a job in one of %s may be forced into "%s" (job %s)'%(str(Job.allowed_force_states[status]),status,self.getFQID('.')))
+            raise JobError('Only a job in one of %s may be forced into "%s" (job %s)' % (str(Job.allowed_force_states[status]), status, self.getFQID('.')))
         
         if not force:
             if self.status in ['submitted','running']:
                 try:
-                    self._kill(transition_update=False)
+                    self._kill(transition_update = False)
                 except JobError,x:
-                    x.what += "Use force_status('%s',force=True) to ignore kill errors."%status
+                    x.what += "Use force_status('%s',force=True) to ignore kill errors." % status
                     raise x
         try:
-            logger.info('Forcing job %s to status "%s"',self.getFQID('.'),status)
-            self.updateStatus(status)
-        except JobStatusError,x:
+            logger.info('Forcing job %s to status "%s"', self.getFQID('.'), status)
+            self.updateStatus(status, ignore_failures = True)
+        except JobStatusError, x:
             logger.error(x)
             raise x
 
