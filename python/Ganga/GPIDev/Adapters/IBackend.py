@@ -80,6 +80,7 @@ class IBackend(GangaObject):
             else:
                 raise IncompleteJobSubmissionError(fqid,'submission failed')
         except Exception, x:
+            from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('new')
             if isinstance(x, GangaException):
                 logger.error(str(x))
@@ -150,18 +151,22 @@ class IBackend(GangaObject):
                 else:
                     return True
 
-        master_input_sandbox=self.master_prepare(masterjobconfig)
+        master_input_sandbox = self.master_prepare(masterjobconfig)
 
         if parallel_submit:
 
             from Ganga.GPI import queues
 
-            threads_before = queues.totalNumUserThreads()
+            threads_before = queues.totalNumIntThreads()
 
             for sc, sj in zip(subjobconfigs, rjobs):
 
                 fqid = sj.getFQID('.')
                 b = sj.backend
+                ## FIXME would be nice to move this to the internal threads not user ones
+                #from Ganga.GPIDev.Base.Proxy import stripProxy
+                #all_queues = stripProxy(queues)
+                #all_queues._addSystem( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
                 queues.add( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
 
             while queues.totalNumUserThreads() != 0:
@@ -435,4 +440,4 @@ class IBackend(GangaObject):
         raise NotImplementedError
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
-          
+

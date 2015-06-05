@@ -29,14 +29,15 @@ class GangaDataset(Dataset):
         super(GangaDataset, self).__init__()
         self.files = files
 
-    def __construct__(self, args):
-
-        if len(args) == 1:
-            self.files = args[0]
-        else:
-            logger.error( "Don't know how to construct GangaDataset this way!" )
-
-        return
+#    def __construct__(self, args):
+#
+#        if len(args) == 1:
+#            if type(args[0]) == type(self.files):
+#                self.files = args[0]
+#        else:
+#            logger.error( "Don't know how to construct GangaDataset this way!" )
+#
+#        return
 
     def __len__(self):
         """The number of files in the dataset."""

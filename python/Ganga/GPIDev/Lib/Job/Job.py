@@ -626,13 +626,15 @@ class Job(GangaObject):
         from Ganga.Utility.Config import getConfig, ConfigError
         
         backend_output_postprocess = {}
-                
+        
+        ## THIS IS UGLY WE SHOULD FIX THIS IN A BETTER WAY! rcurrie
         keys = getConfig('Output').options.keys()
         keys.remove('PostProcessLocationsFileName')      
         keys.remove('ForbidLegacyInput')                   
         keys.remove('ForbidLegacyOutput')                
         keys.remove('AutoRemoveFilesWithJob')
         keys.remove('AutoRemoveFileTypes')
+        keys.remove('FailJobIfNoOutputMatched')
 
         for key in keys:
             try:
@@ -1273,6 +1275,16 @@ class Job(GangaObject):
 
     def _selfAppPrepare(self, prepare):
 
+        def delay_check( somepath ):
+            for i in range(100):
+                import os.path
+                if os.path.exists( somepath ):
+                    return True
+                else:
+                    import time
+                    time.sleep(0.1)
+            return False
+
         if hasattr(self.application, 'is_prepared'):
             if (self.application.is_prepared is None) or (prepare == True):
                 logger.debug( "Job %s Calling self.prepare(force=%s)" % ( str(self.getFQID('.')), str(prepare) ) )
@@ -1286,9 +1298,11 @@ class Job(GangaObject):
 
 
             if self.application.is_prepared is not True and self.application.is_prepared is not None:
-                if not os.path.isdir(os.path.join(shared_path,self.application.is_prepared.name)):
+                delay_result = delay_check( os.path.join(shared_path, self.application.is_prepared.name) )
+                if delay_result != True:
                     logger.warning( "prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared )
-                    logger.warning( "tested: %s" % os.path.join(shared_path,self.application.is_prepared.name) )
+                    logger.warning( "tested: %s" % os.path.join(shared_path, self.application.is_prepared.name) )
+                    logger.warning( "result: %s" % str(delay_result) )
                     msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
                     self.unprepare()
                     raise JobError(msg)

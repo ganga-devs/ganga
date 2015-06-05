@@ -430,6 +430,8 @@ class GangaObject(Node):
                        # the test if the class is hidden is performed by x._declared_property('hidden')
                        # which makes sure that _hidden must be *explicitly* declared, not inherited
 
+    _lock_count = 0
+
     # additional properties that may be set in derived classes which were declared as _hidden:
     #   _enable_plugin = 1 -> allow registration of _hidden classes in the allPlugins dictionary
     #   _enable_config = 1 -> allow generation of [default_X] configuration section with schema properties
@@ -500,8 +502,9 @@ class GangaObject(Node):
         Raise LockingError (or so) on fail """
         root = self._getRoot()
         reg = root._getRegistry()
-        if reg is not None:
+        if reg is not None and self._lock_count == 0:
             reg._write_access(root)
+        self._lock_count = self._lock_count + 1
 
     def _releaseWriteAccess(self):
         """ releases write access to the object.
@@ -509,8 +512,10 @@ class GangaObject(Node):
         Please use only if the object is expected to be used by other sessions"""
         root = self._getRoot()
         reg = root._getRegistry()
-        if reg is not None:
+        if reg is not None and self._lock_count == 0:
             reg._release_lock(root)
+        if self._lock_count > 0:
+            self._lock_count = self._lock_count - 1
 
     def _getReadAccess(self):
         """ makes sure the objects _data is there and the object itself has a recent state.

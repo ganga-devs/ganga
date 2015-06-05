@@ -181,7 +181,6 @@ class IPrepareApp(IApplication):
         logger.debug('within incrementShareCounter, calling increase')
         shareref.increase(shared_directory_name)
 
-
     def decrementShareCounter(self, shared_directory_name, remove=0):
         remove=remove
         logger.debug('Decrementing shared directory reference counter')
@@ -207,7 +206,4 @@ class IPrepareApp(IApplication):
             #logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
         else:
             self.incrementShareCounter(prepared_object.is_prepared.name)
-
-
-
 
