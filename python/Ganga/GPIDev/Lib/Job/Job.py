@@ -705,7 +705,7 @@ class Job(GangaObject):
         postprocessFailure = False
 
         # check if any output was matched - be careful about master jobs
-        if not self.subjobs:
+        if getConfig('Output')['FailJobIfNoOutputMatched'] and not self.subjobs:
             for outputfile in self.outputfiles:
                 if not outputfile.hasMatchedFiles():
                     postprocessFailure = True

@@ -10,6 +10,8 @@ def Configure():
 
     outputconfig.addOption('PostProcessLocationsFileName', '__postprocesslocations__', 'name of the file that will contain the locations of the uploaded from the WN files')
 
+    outputconfig.addOption('FailJobIfNoOutputMatched', True, 'if True, a job will be marked failed if output is asked for but not found.')
+
     outputconfig.addOption('ForbidLegacyOutput', True, 'if True, writing to the job outputdata and outputsandbox fields will be forbidden')
 
     outputconfig.addOption('ForbidLegacyInput', True, 'if True, writing to the job inputsandbox field will be forbidden')
