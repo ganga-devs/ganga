@@ -832,9 +832,35 @@ class JobRegistry_Monitor( GangaThread ):
                     import math
                     if max_parallel > 0:
                         for batch_num in range(int( math.ceil( float(len(jobList_fromset)) * (1./float(max_parallel)) ) )):
-                            backendObj.master_updateMonitoringInformation( jobList_fromset[ batch_num* max_parallel : (batch_num+1) * max_parallel ] )
+                            locked = []
+                            sublist = jobList_fromset[ batch_num* max_parallel : (batch_num+1) * max_parallel ]
+                            for job in sublist:
+                                from Ganga.GPIDev.Base.Proxy import stripProxy
+                                try:
+                                    stripProxy(job)._getWriteAccess()
+                                except:
+                                    locked.append(job)
+                            for job in locked:
+                                sublist.pop( sublist.index(job) )
+                            backendObj.master_updateMonitoringInformation( sublist )
+                            for job in sublist:
+                                from Ganga.GPIDev.Base.Proxy import stripProxy
+                                stripProxy(job)._releaseWriteAccess()
                     else:
-                        backendObj.master_updateMonitoringInformation( jobList_fromset )
+                        locked = []
+                        sublist = jobList_fromset
+                        for job in sublist:
+                            from Ganga.GPIDev.Base.Proxy import stripProxy
+                            try:
+                                stripProxy(job)._getWriteAccess()
+                            except:
+                                locked.append(job)
+                        for job in locked:
+                            sublist.pop( sublist.index( job ) )
+                        backendObj.master_updateMonitoringInformation( sublist )
+                        for job in sublist:
+                            from Ganga.GPIDev.Base.Proxy import stripProxy
+                            stripProxy(job)._releaseWriteAccess()
 
 
                     # resubmit if required

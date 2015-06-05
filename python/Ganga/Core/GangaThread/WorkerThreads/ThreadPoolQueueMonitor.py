@@ -19,7 +19,7 @@ class ThreadPoolQueueMonitor(object):
 
     def __init__(self,
                  user_threadpool       = WorkerThreadPool( worker_thread_prefix = "User_Worker_" ),
-                 monitoring_threadpool = WorkerThreadPool( worker_thread_prefix = "Monitor_Worker_" ) ):
+                 monitoring_threadpool = WorkerThreadPool( worker_thread_prefix = "Ganga_Worker_" ) ):
 
         global _user_threadpool
         global _monitoring_threadpool
@@ -48,10 +48,10 @@ class ThreadPoolQueueMonitor(object):
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
         output=''
-        output+= '{0:^58} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
-        output+= '{0:^58} | {1:^50}\n'.format('------------------', '------------------------')
-        output+= '{0:<10} {1:<31} {2:<15} | {0:<10} {1:<33} {2:<10}\n'.format('Name', 'Command', 'Timeout')
-        output+= '{0:<10} {1:<31} {2:<15} | {0:<10} {1:<33} {2:<10}\n'.format('----', '-------', '-------')
+        output+= '{0:^67} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
+        output+= '{0:^67} | {1:^50}\n'.format('------------------', '------------------------')
+        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('Name', 'Command', 'Timeout')
+        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('----', '-------', '-------')
         for u, m in zip( self._user_threadpool.worker_status(),
                          self._monitoring_threadpool.worker_status() ):
             # name has extra spaces as colour characters are invisible but still count
@@ -61,9 +61,11 @@ class ThreadPoolQueueMonitor(object):
                 name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
             if m[1] == 'idle':
                 name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
-            output+= '{0:<21} {1:<33} {2:<10} | {3:<21} {4:<33} {5:<10}\n'.format(name_user, u[1][:30].replace("\n","\\n"), u[2], name_monitor, m[1][:30].replace("\n","\\n"), m[2])
+            output+= '{0:<35} {1:<26} {2:<15} | {3:<35} {4:<28} {5:<10}\n'.format(name_user, u[1][:30].replace("\n","\\n"), u[2], name_monitor, m[1][:30].replace("\n","\\n"), m[2])
 
         def display_element(item):
+            if hasattr( item, 'name' ) and item.name != None:
+                return item.name
             if type(item.command_input[0]) != str:
                 return item.command_input[0].__name__
             return item.command_input[0]
@@ -133,6 +135,17 @@ class ThreadPoolQueueMonitor(object):
                                             args           = args,
                                             kwargs         = kwargs,
                                             priority       = priority)
+
+    def _addSystem(self, worker_code, args = (), kwargs = {}, priority = 5 ):
+
+        if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
+            logger.error( "Error Adding internal task!! please report this to the Ganga developers!" )
+            return
+
+        self._monitoring_threadpool.add_function(worker_code,
+                                                 args = args,
+                                                 kwargs = kwargs,
+                                                 priority = priority )
 
     def addProcess(self, 
                    command, 
@@ -242,17 +255,22 @@ class ThreadPoolQueueMonitor(object):
 
         return num + len(self._user_threadpool.get_queue())
 
-    def totalNumAllThreads(self):
-        """Return the total number of ALL user and worker threads currently running and queued"""
+    def totalNumIntThreads(self):
         num=0
-        for t in self._user_threadpool.worker_status():
-            if t[1] != "idle":
-                num += 1
         for t in self._monitoring_threadpool.worker_status():
             if t[1] != "idle":
                 num += 1
 
-        return num + len( self._user_threadpool.get_queue() ) + len( self._monitoring_threadpool.get_queue() )
+        return num + len(self._user_threadpool.get_queue())
+
+    def totalNumAllThreads(self):
+        """Return the total number of ALL user and worker threads currently running and queued"""
+        num=0
+
+        num = num + self.totalNumUserThreads()
+        num = num + self.totalNumIntThreads()
+
+        return num
 
     def _stop_all_threads(self):
         self._user_threadpool._stop_worker_threads()

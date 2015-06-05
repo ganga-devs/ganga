@@ -42,7 +42,7 @@ except ImportError:
     logger = Logger() 
 
 session_lock_last = 0
-session_expiration_timeout = 30 # in sec
+session_expiration_timeout = 45 # in sec
 session_lock_refresher = None
 
 sessionFiles = []
@@ -114,13 +114,10 @@ class SessionLockRefresher(GangaThread):
         try:
             while not self.should_stop():
 
+                self.updateNow()
                 self.checkAndReap()
 
-                # attempt to reduce amount of I/O on afs
-                if self.afs:
-                    sleeptime = 5#+random.random()
-                else:
-                    sleeptime = 1#+random.random()
+                sleeptime = 1#+random.random()
 
                 for i in range( int(sleeptime*20) ):
                     if not self.should_stop():
@@ -389,26 +386,37 @@ class SessionLockManager(object):
 
     # Global lock function
     def global_lock_setup(self):
-        self.lockfn = os.path.join(self.sdir, "global_lock")
-        try:
-            if not os.path.isfile( self.lockfn ):
-                lock = open(self.lockfn, "w")
-                lock.close() # create file (does not interfere with existing sessions)
-            self.lockfd = self.delayopen_global()
-            registerGlobalSessionFile( self.lockfn )
-            registerGlobalSessionFileHandler( self.lockfd )
-        except IOError, x:
-            raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
-        except OSError, x:
-            raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
+
+        if self.afs:
+            self.lockfn = os.path.join(self.sdir, "global_lock")
+            lock_path = str(self.lockfn)+ '.afs'
+            lock_file = os.path.join( lock_path, "lock_file" )
+            try:
+                if not os.path.exists( lock_path ):
+                    os.makedirs( lock_path )
+                if not os.path.isfile( lock_file ):
+                    lock_file_hand = open( lock_file, "w" )
+                    lock_file_hand.close()
+            except Exception, x:
+                pass
+        else:
+            try:
+                if not os.path.isfile( self.lockfn ):
+                    lock = open(self.lockfn, "w")
+                    lock.close() # create file (does not interfere with existing sessions)
+                self.lockfd = self.delayopen_global()
+                registerGlobalSessionFile( self.lockfn )
+                registerGlobalSessionFileHandler( self.lockfd )
+            except IOError, x:
+                raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
+            except OSError, x:
+                raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
     def delay_lock_mod(self, lock_mod):
         i = 0
         while i < 35:
             try:
-                if not self.afs:
-                    fcntl.lockf( self.lockfd, lock_mod )
-                break
+                fcntl.lockf( self.lockfd, lock_mod )
             except IOError, x:
                 time.sleep(0.5)
                 i=i+1
@@ -420,17 +428,57 @@ class SessionLockManager(object):
 
     def global_lock_acquire(self):
         try:
-            self.delay_lock_mod( fcntl.LOCK_EX )
+            if self.afs:
+
+                lock_path = str(self.lockfn) + '.afs'
+                lock_file = os.path.join( lock_path, "lock_file" )
+
+                def clean_path():
+                    oldtime = os.stat(lock_file).st_ctime
+                    import time
+                    nowtime = time.time()
+                    if abs( int(nowtime) - oldtime ) > 10:
+                        logger.debug( "cleaning" )
+                        os.system( "fs setacl %s $USER rlidwka" % ( lock_path ) )
+
+                while True:
+                    try:
+                        if os.path.isfile( lock_file ):
+                            clean_path()
+                        os.unlink( lock_file )
+                        break
+                    except Exception, x:
+                        import time
+                        time.sleep(0.1)
+
+                os.system( "fs setacl %s $USER rliwka" % ( lock_path  ) )
+
+                while not os.path.isfile( lock_file ):
+                    lock_file_hand = open( lock_file, "w" )
+                    lock_file_hand.close()
+                    import time
+                    time.sleep(0.1)
+
+            else:
+                self.delay_lock_mod( fcntl.LOCK_EX )
+
+            logger.debug("global capture")
         except IOError, x:
             raise RepositoryError(self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
             
     def global_lock_release(self):
         try:
-            self.delay_lock_mod( fcntl.LOCK_UN )
+            if self.afs:
+                lock_path = str(self.lockfn) + '.afs'
+                os.system( "fs setacl %s $USER rlidwka" % ( lock_path )  )
+            else:
+                self.delay_lock_mod( fcntl.LOCK_UN )
+
+            logger.debug("global release")
         except IOError, x:
             raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
 
-    def delay_session_open(self,filename):
+    def delay_session_open(self, filename):
         value = None
         i = 0
         while value is None:
@@ -453,6 +501,7 @@ class SessionLockManager(object):
             Raises RepositoryError if severe access problems occur (corruption otherwise!) """
         try:
             fd = self.delay_session_open( fn ) # This can fail (thats OK, file deleted in the meantime)
+            os.lseek( fd, 0, 0 )
             try:
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_SH)
@@ -525,6 +574,7 @@ class SessionLockManager(object):
             self.delaywrite( fd, pickle.dumps(self.locked))
             if not self.afs:
                 fcntl.lockf( fd, fcntl.LOCK_UN )
+            os.fsync(fd)
             os.close(fd)
         except OSError, x:
             if x.errno != errno.ENOENT:
@@ -629,6 +679,7 @@ class SessionLockManager(object):
 
         self.safe_LockCheck()
 
+        logger.debug( "locking: %s" % str(ids) )
         ids = Set(ids)
         self.global_lock_acquire()
         try:
@@ -643,18 +694,23 @@ class SessionLockManager(object):
                 if sf == self.fn:
                     continue
                 slocked.update(self.session_read(sf))
+            logger.debug( "locked: %s" % str(slocked) )
             ids.difference_update(slocked)
             self.locked.update(ids)
+            logger.debug( "stored_lock: %s" % str(self.locked) )
             self.session_write()
+            logger.debug( "list: %s" % str(list(ids)) )
             return list(ids)
         finally:
             self.global_lock_release()
 
     def release_ids(self, ids):
+        logger.debug( "releasing : %s" % str(ids) )
         self.global_lock_acquire()
         try:
             self.locked.difference_update(ids)
             self.session_write()
+            logger.debug( "list: %s" % str(list(ids)) )
             return list(ids)
         finally:
             self.global_lock_release()

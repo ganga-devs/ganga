@@ -72,6 +72,7 @@ class WorkerThreadPool(object):
 
             #regster as a working thread
             if isinstance(item, QueueElement):
+                oldname = thread.gangaName
                 thread.gangaName = item.name
 
             thread.register()
@@ -135,7 +136,7 @@ class WorkerThreadPool(object):
                 self.__queue.task_done()
                 thread.unregister()
 
-        thread.gangaName = oldname
+            thread.gangaName = oldname
 
     def add_function(self,
                      function, args=(), kwargs={}, priority=5,
@@ -247,7 +248,7 @@ class WorkerThreadPool(object):
         """
         Returns a informatative tuple containing the threads name, current command it's working on and the timeout for that command.
         """
-        return [(w._name, w._command, w._timeout) for w in self.__worker_threads]
+        return [(w.gangaName, w._command, w._timeout) for w in self.__worker_threads]
 
     def _stop_worker_threads(self):
         for w in self.__worker_threads:

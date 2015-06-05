@@ -295,8 +295,8 @@ class GangaRepositoryLocal(GangaRepository):
                             self.index_write(k)
                             self.unlock([k])
                 except Exception, x:
-                    logger.error( "Failed to update index: %s on shutdown" % str(k) )
-                    logger.error( "%s" % str(x) )
+                    logger.debug( "Failed to update index: %s on shutdown" % str(k) )
+                    logger.debug( "%s" % str(x) )
                     pass
             cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
@@ -513,8 +513,8 @@ class GangaRepositoryLocal(GangaRepository):
     def load(self, ids, load_backup=False):
 
         #print "load: %s " % str(ids)
-        #import traceback
-        #traceback.print_stack()
+        import traceback
+        traceback.print_stack()
 
         logger.debug( "Loading Repo object(s): %s" % str(ids) )
 
