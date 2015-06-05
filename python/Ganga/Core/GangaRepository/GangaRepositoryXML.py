@@ -513,8 +513,8 @@ class GangaRepositoryLocal(GangaRepository):
     def load(self, ids, load_backup=False):
 
         #print "load: %s " % str(ids)
-        import traceback
-        traceback.print_stack()
+        #import traceback
+        #traceback.print_stack()
 
         logger.debug( "Loading Repo object(s): %s" % str(ids) )
 
