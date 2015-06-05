@@ -626,6 +626,7 @@ sys.exit(result)
             pid,queue,actualCE,exitcode=None,None,None,None
 
             import re
+            statusfile = None
             try:
                 statusfile=open(f)
                 stat = statusfile.read()
@@ -633,7 +634,8 @@ sys.exit(result)
                 logger.debug('Problem reading status file: %s (%s)',f,str(x))
                 return pid,queue,actualCE,exitcode
             finally:
-                statusfile.close()
+                if statusfile:
+                    statusfile.close()
 
             mpid = repid.search(stat)
             if mpid:
