@@ -101,7 +101,7 @@ class SessionLockRefresher(GangaThread):
                 #print "fail"
                 value = None
                 i = i+1
-                time.sleep(0.5)
+                time.sleep(0.1)
                 if i >= 60: #3000:
                     raise x
                 else:
@@ -284,7 +284,7 @@ class SessionLockManager(object):
             try:
                 value = os.open( filename, os.O_EXCL | os.O_CREAT | os.O_WRONLY )
             except OSError, x:
-                time.sleep(0.5)
+                time.sleep(0.1)
                 if i >= 60:
                     raise x
                 else:
@@ -377,7 +377,7 @@ class SessionLockManager(object):
                  #print "fail"
                 value = None
                 i = i+1
-                time.sleep(0.5)
+                time.sleep(0.1)
                 if i >= 60: #3000:
                     raise x
                 else:
@@ -401,6 +401,7 @@ class SessionLockManager(object):
                 pass
         else:
             try:
+                self.lockfn = os.path.join(self.sdir, "global_lock")
                 if not os.path.isfile( self.lockfn ):
                     lock = open(self.lockfn, "w")
                     lock.close() # create file (does not interfere with existing sessions)
@@ -418,7 +419,7 @@ class SessionLockManager(object):
             try:
                 fcntl.lockf( self.lockfd, lock_mod )
             except IOError, x:
-                time.sleep(0.5)
+                time.sleep(0.1)
                 i=i+1
                 if i >= 60:
                     raise x
@@ -438,7 +439,7 @@ class SessionLockManager(object):
                     import time
                     nowtime = time.time()
                     if abs( int(nowtime) - oldtime ) > 10:
-                        logger.debug( "cleaning" )
+                        logger.debug( "cleaning global lock" )
                         os.system( "fs setacl %s $USER rlidwka" % ( lock_path ) )
 
                 while True:
@@ -449,7 +450,7 @@ class SessionLockManager(object):
                         break
                     except Exception, x:
                         import time
-                        time.sleep(0.1)
+                        time.sleep(0.05)
 
                 os.system( "fs setacl %s $USER rliwka" % ( lock_path  ) )
 
@@ -457,7 +458,7 @@ class SessionLockManager(object):
                     lock_file_hand = open( lock_file, "w" )
                     lock_file_hand.close()
                     import time
-                    time.sleep(0.1)
+                    time.sleep(0.05)
 
             else:
                 self.delay_lock_mod( fcntl.LOCK_EX )
@@ -485,7 +486,7 @@ class SessionLockManager(object):
             try:
                 value = os.open(filename, os.O_RDONLY)
             except OSError, x:
-                time.sleep(0.5)
+                time.sleep(0.1)
                 i=i+1
                 if i >= 60:
                     raise x
@@ -531,7 +532,7 @@ class SessionLockManager(object):
                 #print "fail"
                 value = None
                 i = i+1
-                time.sleep(0.5)
+                time.sleep(0.1)
                 if i >= 60: #3000:
                     raise x
                 else:
@@ -552,7 +553,7 @@ class SessionLockManager(object):
                 #print "fail"
                 value = None
                 i = i+1
-                time.sleep(0.5)
+                time.sleep(0.1)
                 if i >= 60: #3000:
                     raise x
                 else:
