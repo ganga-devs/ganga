@@ -1,5 +1,5 @@
 j = Job()
-j.backend = TestSubmitter(time=60,update_delay=5)
+j.backend = TestSubmitter(time=15,update_delay=5)
 
 j.submit()
 
@@ -17,5 +17,5 @@ print "monitoring loop should go over the jobs now, so let's delete them"
 for j in all:
     j.remove()
 print "wait for the monitoring loop to try to update status about removed jobs"
-time.sleep(30)
+#time.sleep(30) # not needed!
 

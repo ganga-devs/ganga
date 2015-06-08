@@ -65,6 +65,7 @@ class TestReg1(ICheckTest):
         assert(not j.subjobs)
         assert(len(j.subjobs) == 0)
         print j
+        j.application.prepare()
         j.submit()
         assert(len(j.subjobs) == LEN)
         for s in j.subjobs:

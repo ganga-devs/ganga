@@ -6,7 +6,7 @@
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import *
 
-from Ganga.Lib.Executable import Executable,RTHandler
+from Ganga.Lib.Executable import Executable, RTHandler
 
 #a list of states we must see otherwise the test fails
 expected_minimal_states = ['completed','running','submitted']

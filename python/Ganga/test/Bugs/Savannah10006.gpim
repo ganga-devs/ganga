@@ -14,10 +14,13 @@ class Savannah10006(MultipassTest):
         j.application.modify()
         assert(j.application.modified)
 
+        disableServices()
+        reactivate()
+
         return j.id
 
     def pass2(self):
-	print self.data
+        print self.data
         j = jobs(self.data[1])
 
         assert(j.application.modified)

@@ -9,18 +9,18 @@ class PerfStats(MultipassTest):
     """
     def __init__(self):
         MultipassTest.__init__(self,len(jobsc)*2)
-	
-    def setUp(self):	
-	MultipassTest.tearDown(self)
-	fileHandle = open ( '%s.stats' % os.environ['OUTPUT_PATH'], 'w' )
-	print >>fileHandle, '# repository performance results (Ganga startup time, Repository job registration&commit)'	
-	fileHandle.close()
+    
+    def setUp(self):    
+    MultipassTest.tearDown(self)
+    fileHandle = open ( '%s.stats' % os.environ['OUTPUT_PATH'], 'w' )
+    print >>fileHandle, '# repository performance results (Ganga startup time, Repository job registration&commit)'    
+    fileHandle.close()
     
 class TestBase:
     """
     TestBase that defines two steps used to measure the ganga job loading/creation/commit performance:
      - step1:
-	* measure the Ganga startup time with X jobs in repository
+    * measure the Ganga startup time with X jobs in repository
      - step2:
         * measure the average time to register and modify a job in Ganga (when repository has N jobs)
     """
@@ -29,41 +29,45 @@ class TestBase:
 
     def testStartupTime(self):
         import Ganga,time
-	print "starting testStartupTime %s" % self.jobsCount
-	st = time.time() - Ganga.Runtime._prog.start_time	
-	fileHandle = open ( '%s.stats' % os.environ['OUTPUT_PATH'], 'a' )	
-	line = "repository size: %d start-time: %f sec." % (len(jobs),st)
-	print >>fileHandle, line
-	print line
-	fileHandle.close()
+    print "starting testStartupTime %s" % self.jobsCount
+    st = time.time() - Ganga.Runtime._prog.start_time    
+    fileHandle = open ( '%s.stats' % os.environ['OUTPUT_PATH'], 'a' )    
+    line = "repository size: %d start-time: %f sec." % (len(jobs),st)
+    print >>fileHandle, line
+    print line
+    fileHandle.close()
+        disableServices()
+        reactivate()
 
     def testJobRegistration(self):
-	print "starting testJobRegistration %s" % self.jobsCount
+    print "starting testJobRegistration %s" % self.jobsCount
         def create_job(modify=True):
-	    j = Job()
-	    if modify:
-		j.name = 'modified'
-	    return j
-	
-	import time
-	t0=time.time()
+        j = Job()
+        if modify:
+        j.name = 'modified'
+        return j
+    
+    import time
+    t0=time.time()
        
-	j = create_job()
-	start_id = j.id
-	
-	for i in range(self.jobsCount-1):	    
-	    j = create_job()
+    j = create_job()
+    start_id = j.id
+    
+    for i in range(self.jobsCount-1):        
+        j = create_job()
        
-	stop_id = j.id
-	elapsed = time.time()-t0
-	size = len(jobs)
+    stop_id = j.id
+    elapsed = time.time()-t0
+    size = len(jobs)
        
-	#stats.append(float(elapsed)/float(self.jobsCount))
-	line = 'jobs: %d repository size: %d  %.1f sec., %.1f sec./job' % (self.jobsCount,size,elapsed,float(elapsed)/float(self.jobsCount))
-	fileHandle = open ( '%s.stats' % os.environ['OUTPUT_PATH'], 'a' )
-	print >>fileHandle, line
-	fileHandle.close()
-	print line
+    #stats.append(float(elapsed)/float(self.jobsCount))
+    line = 'jobs: %d repository size: %d  %.1f sec., %.1f sec./job' % (self.jobsCount,size,elapsed,float(elapsed)/float(self.jobsCount))
+    fileHandle = open ( '%s.stats' % os.environ['OUTPUT_PATH'], 'a' )
+    print >>fileHandle, line
+    fileHandle.close()
+    print line
+        disableServices()
+        reactivate()
 
 
 # This code is called by the testing framework outside of Ganga when this module is loaded
