@@ -1,10 +1,12 @@
 
+outputconfig = None
+
+if outputconfig == None:
+    from Ganga.Utility.Config import makeConfig
+    outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
 
 def Configure():
 
-    from Ganga.Utility.Config import makeConfig
-
-    outputconfig = makeConfig( "Output", "configuration section for postprocessing the output" )
     outputconfig.addOption('AutoRemoveFilesWithJob', False, 'if True, each outputfile of type in list AutoRemoveFileTypes will be removed when the job is')
     outputconfig.addOption('AutoRemoveFileTypes', ['DiracFile'], 'List of outputfile types that will be auto removed when job is removed if AutoRemoveFilesWithJob is True')
 
