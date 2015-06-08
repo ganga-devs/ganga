@@ -415,16 +415,19 @@ class SessionLockManager(object):
 
     def delay_lock_mod(self, lock_mod):
         i = 0
-        while i < 35:
+        num_tries = 35
+        while i <= num_tries:
             try:
                 fcntl.lockf( self.lockfd, lock_mod )
-            except IOError, x:
+            except IOError as x:
                 time.sleep(0.1)
-                i=i+1
-                if i >= 60:
+                i+=1
+                if i == num_tries: #If we're on the last try
                     raise x
                 else:
                     continue
+            else:
+                break
         return
 
     def global_lock_acquire(self):
