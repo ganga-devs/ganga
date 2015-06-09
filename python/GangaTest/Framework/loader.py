@@ -455,8 +455,11 @@ def %(method_name)s(self):
         #except:
         #    pass
 
-        #from Ganga.GPI import disableServices
-        #disableServices()
+        try:
+            from Ganga.GPI import disableServices
+            disableServices()
+        except:
+            pass
 
         script_runner.append('{ ' + cmd + '; }')
         output = open(output_path,out_mode)
@@ -505,8 +508,11 @@ def %(method_name)s(self):
         #except:
         #    pass
 
-        #from Ganga.GPI import reactivate
-        #reactivate()
+        try:
+            from Ganga.GPI import reactivate
+            reactivate()
+        except:
+            pass
 
         return sts,out,err
         

@@ -475,7 +475,7 @@ if __name__=="__main__":
         #                Coordinator.disableInternalServices()
 
                 from Ganga.Core.InternalServices import ShutdownManager
-        #        ShutdownManager._ganga_run_exitfuncs()
+                ShutdownManager._ganga_run_exitfuncs()
 
         except:
                 pass
