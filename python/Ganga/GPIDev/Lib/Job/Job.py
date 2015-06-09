@@ -630,7 +630,7 @@ class Job(GangaObject):
         
         backend_output_postprocess = {}
         
-        from Ganga.GPIDev.File import getFileConfigKeys
+        from Ganga.GPIDev.Lib.File import getFileConfigKeys
 
         keys = getFileConfigKeys()
 
