@@ -1,8 +1,17 @@
+## Required for ShareDir object
+def getSharedPath():
+    from Ganga.Utility.files import expandfilename
+    from Ganga.Utility.Config import getConfig
+    import os.path
+    root_default = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+    return root_default
+
+import Configure
+
 from File import File
 from File import ShareDir
 from FileBuffer import FileBuffer
 
-import Configure
 from IGangaFile import IGangaFile
 from LocalFile import LocalFile
 from MassStorageFile import MassStorageFile
@@ -29,15 +38,21 @@ from Ganga.Utility.Config import getConfig, ConfigError
 
 import fnmatch 
 
+def getFileConfigKeys():
+    keys = getConfig('Output').options.keys()
+    keys.remove('PostProcessLocationsFileName')
+    keys.remove('ForbidLegacyInput')
+    keys.remove('ForbidLegacyOutput')
+    keys.remove('AutoRemoveFilesWithJob')
+    keys.remove('AutoRemoveFileTypes')
+    keys.remove('FailJobIfNoOutputMatched')
+    return keys
+
 def decodeExtensionKeys():
 
     outputfilesConfig = {}
-    keys = getConfig('Output').options.keys()
-    keys.remove('PostProcessLocationsFileName')
-    keys.remove('ForbidLegacyInput')                     
-    keys.remove('ForbidLegacyOutput')                     
-    keys.remove('AutoRemoveFilesWithJob')
-    keys.remove('AutoRemoveFileTypes')
+
+    keys = getFileConfigKeys()
 
     for key in keys:
         try:
@@ -95,5 +110,6 @@ def string_file_shortcut(v,item):
         return LocalFile._proxyClass(v)._impl
 
     return None 
-        
+
+
 allComponentFilters['gangafiles'] = string_file_shortcut

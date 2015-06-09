@@ -37,7 +37,10 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 import os, shutil, sys, copy
 from Ganga.Utility.Config import getConfig
-shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+
+from Ganga.GPIDev.Lib.File import getSharedPath
+#shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+shared_path = getSharedPath()
 
 class JobStatusError(GangaException):
     def __init__(self,*args):
@@ -627,14 +630,9 @@ class Job(GangaObject):
         
         backend_output_postprocess = {}
         
-        ## THIS IS UGLY WE SHOULD FIX THIS IN A BETTER WAY! rcurrie
-        keys = getConfig('Output').options.keys()
-        keys.remove('PostProcessLocationsFileName')      
-        keys.remove('ForbidLegacyInput')                   
-        keys.remove('ForbidLegacyOutput')                
-        keys.remove('AutoRemoveFilesWithJob')
-        keys.remove('AutoRemoveFileTypes')
-        keys.remove('FailJobIfNoOutputMatched')
+        from Ganga.GPIDev.File import getFileConfigKeys
+
+        keys = getFileConfigKeys()
 
         for key in keys:
             try:
@@ -1302,6 +1300,8 @@ class Job(GangaObject):
                 if delay_result != True:
                     logger.warning( "prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared )
                     logger.warning( "tested: %s" % os.path.join(shared_path, self.application.is_prepared.name) )
+                    from Ganga.GPIDev.Lib.File import ShareDir
+                    logger.warning( "shared_path: %s" % shared_path )
                     logger.warning( "result: %s" % str(delay_result) )
                     msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
                     self.unprepare()

@@ -21,19 +21,21 @@ import copy
 
 regex = re.compile('[*?\[\]]')
 
+def getLCGConfig():
+    return getConfig('Output')['LCGSEFile']['uploadOptions']
+
 class LCGSEFile(IGangaFile):
     """LCGSEFile represents a class marking an output file to be written into LCG SE
     """
-    lcgSEConfig = getConfig('Output')['LCGSEFile']['uploadOptions']
 
     _schema = Schema(Version(1,1), {
         'namePattern' : SimpleItem(defvalue="",doc='pattern of the file name'),
         'localDir'    : SimpleItem(defvalue="",copyable=1,doc='local dir where the file is stored, used from get and put methods'),    
         'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-        'se'          : SimpleItem(defvalue=lcgSEConfig['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
+        'se'          : SimpleItem(defvalue=getLCGConfig()['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
         'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
         'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the file from the VO directory on the SE'),
-        'lfc_host'    : SimpleItem(defvalue=lcgSEConfig['LFC_HOST'], copyable=1, doc='the LCG LFC hostname'),
+        'lfc_host'    : SimpleItem(defvalue=getLCGConfig()['LFC_HOST'], copyable=1, doc='the LCG LFC hostname'),
         'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
         'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
         'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),

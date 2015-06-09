@@ -2,8 +2,8 @@
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from Ganga.GPIDev.Lib.File import File
-from Ganga.GPIDev.Lib.File import LocalFile
+from Ganga.GPIDev.Lib.File.File import File
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 
 transformDictionary = {}
 
