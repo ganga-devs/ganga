@@ -242,7 +242,7 @@ class RegistrySlice(object):
                 self.it = reg.objects.values().__iter__()
             def __iter__(self): return self
             def next(self):
-                return self.it.next()
+                return next(self.it)
         return Iterator(self)
                 
     def __len__(self):

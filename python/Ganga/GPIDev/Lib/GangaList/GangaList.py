@@ -58,7 +58,7 @@ class GangaListIter(object):
     def __init__(self, it):
         self.it = it
     def next(self):
-        return addProxy(self.it.next())
+        return addProxy(next(self.it))
     def __iter__(self):
         return self
 

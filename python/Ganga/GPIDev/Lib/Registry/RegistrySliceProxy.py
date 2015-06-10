@@ -31,7 +31,7 @@ class RegistrySliceProxy(object):
                 self.it = reg._impl.__iter__()
             def __iter__(self): return self
             def next(self):
-                return _wrap(self.it.next())
+                return _wrap(next(self.it))
         return Iterator(self)
 
     def __contains__(self,j):

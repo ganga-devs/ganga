@@ -276,7 +276,7 @@ class IList:
     def next(self):
         if self.sentinel.isSet():            
             raise StopIteration
-        return self.iterator.next()
+        return next(self.iterator)
 
     def __myiter__(self):
         return self

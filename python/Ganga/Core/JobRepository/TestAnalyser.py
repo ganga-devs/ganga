@@ -41,7 +41,7 @@ def analyse(output_dir):
         for l in ll:
             m = re.search(pps, l)
             if m:
-                 ddd[itr.next()]+=float(m.group(1))/lf
+                 ddd[next(itr)]+=float(m.group(1))/lf
     for k in ddd:
         ddd[k] = (ddd[k]/nn, ddd[k]/nn/njobs, ddd[k]/nn/njobs/(sjobs + 1))
     ddd['users'] = nn
