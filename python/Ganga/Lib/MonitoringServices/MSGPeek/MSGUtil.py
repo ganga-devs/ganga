@@ -72,12 +72,14 @@ def createPublisher(T):
                 time.sleep(0.3)
             self.connection.stop()
 
-        def send(self, (dst, msg), headers={}):
+        def send(self, payload, headers={}):
+            (dst, msg) = payload
             msg['_publisher_t'] = time.time()
             log.debug('Queueing message %s' % msg)
             self.msg_q.put((dst, msg, headers))
 
-        def __send(self, (dst, msg, h)):
+        def __send(self, payload):
+            (dst, msg, h) = payload
             log.debug('Sending message %s' % msg)
             self.connection.send(destination=dst, message=repr(msg),
                                  headers=h)
