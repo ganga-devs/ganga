@@ -92,7 +92,7 @@ def _ganga_run_exitfuncs():
         if type(func)==type(()) and len(x[0])==2:
             return x
         else:
-            new = [(sys.maxint,func)]
+            new = [(sys.maxsize,func)]
             new.extend(x[1:])
             return new
 

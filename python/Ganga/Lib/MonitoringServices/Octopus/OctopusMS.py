@@ -65,7 +65,7 @@ class OctopusMS(IMonitoringService):
             p = 8882
 
         h = long(hash(self.job_info.getFQID('.')))
-        h = h + sys.maxint * (long(hash(s)) + sys.maxint)
+        h = h + sys.maxsize * (long(hash(s)) + sys.maxsize)
         
         return {'jobid':self.job_info.getFQID('.'), 'channel':h,
                 'octopus_server': s, 'octopus_port': p}

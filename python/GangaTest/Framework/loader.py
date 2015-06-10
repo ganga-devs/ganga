@@ -362,7 +362,7 @@ class GangaTestLoader:
 
     def __generateTestCaseFromCmd(self, testCmd, testName, testAlias=None, 
                                 setUpCmd=None, tearDownCmd=None, description=None, 
-                                output_path=None, timeout=sys.maxint):
+                                output_path=None, timeout=sys.maxsize):
         """
         Add a single ganga test-case from a gpi test (similar to run_external_test)
         Internally this method decorates the setUp->[testCmd]->tearDown in a TestCase

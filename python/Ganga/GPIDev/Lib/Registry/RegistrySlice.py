@@ -61,7 +61,7 @@ class RegistrySlice(object):
     def ids(self,minid=None,maxid=None):
         "Get the list of job ids. 'minid' and 'maxid' specify optional (inclusive) slice range."
         if maxid is None: 
-            maxid = sys.maxint
+            maxid = sys.maxsize
         if minid is None: 
             minid = 0
         return [k for k in self.objects.keys() if minid <= k <= maxid]
@@ -123,7 +123,7 @@ class RegistrySlice(object):
             select = select_by_list
         else:
             if minid is None: minid = 0
-            if maxid is None: maxid = sys.maxint
+            if maxid is None: maxid = sys.maxsize
             select = select_by_range
 
         for id, obj in self.objects.iteritems():
@@ -280,7 +280,7 @@ class RegistrySlice(object):
     def __getslice__(self,i1,i2):
         import sys
 
-        if i2 == sys.maxint:
+        if i2 == sys.maxsize:
             endrange = ''
         else:
             endrange = str(i2)

@@ -105,7 +105,7 @@ def detectPlatform():
 
     # for older python versions use some tricks
     import sys
-    bits = sys.maxint >> 32
+    bits = sys.maxsize >> 32
 
     if bits: arch = 64
     else:

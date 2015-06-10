@@ -81,12 +81,12 @@ class Octopus:
 
     def create(self, channel = 0):
         if channel == 0:
-            channel = randint(1, sys.maxint)
+            channel = randint(1, sys.maxsize)
         return self.open(channel, 1)
 
     def join(self, channel = 0):
         if channel == 0:
-            channel = randint(1, sys.maxint)
+            channel = randint(1, sys.maxsize)
         return self.open(channel, 0)
 
     def send(self, message):
