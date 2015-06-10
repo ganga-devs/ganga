@@ -1263,7 +1263,7 @@ default_backends = LCG
            #so we have only one possibility to insert python code : 
            # using explicitly '\n' and '\t' chars
            code = config['StartupGPI'].replace('\\t','\t').replace('\\n','\n')
-           exec code in local_ns
+           exec(code, local_ns)
 
         logger.debug( "loaded .ganga.py" )
 

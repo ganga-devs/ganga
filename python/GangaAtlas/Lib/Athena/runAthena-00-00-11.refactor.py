@@ -145,23 +145,23 @@ for o, a in opts:
     if o == "-j":
         jobO=urllib.unquote(a)
     if o == "-i":
-        exec "inputFiles="+a
+        exec("inputFiles="+a)
     if o == "-o":
-        exec "outputFiles="+a
+        exec("outputFiles="+a)
     if o == "-m":
-        exec "minbiasFiles="+a
+        exec("minbiasFiles="+a)
     if o == "-n":
-        exec "cavernFiles="+a
+        exec("cavernFiles="+a)
     if o == "--beamHalo":
-        exec "beamHaloFiles="+a
+        exec("beamHaloFiles="+a)
     if o == "--beamGas":
-        exec "beamGasFiles="+a
+        exec("beamGasFiles="+a)
     if o == "-b":
         byteStream = True
     if o == "-c":
         eventColl = True
     if o == "-p":
-        exec "poolRefs="+a
+        exec("poolRefs="+a)
     if o == "-u":
         urlLRC=a
     if o == "-f":
@@ -181,11 +181,11 @@ for o, a in opts:
     if o == "--lfcHost":
         lfcHost = a
     if o == "--inputGUIDs":
-        exec "inputGUIDs="+a
+        exec("inputGUIDs="+a)
     if o == "--minbiasGUIDs":
-        exec "minbiasGUIDs="+a
+        exec("minbiasGUIDs="+a)
     if o == "--cavernGUIDs":
-        exec "cavernGUIDs="+a
+        exec("cavernGUIDs="+a)
     if o == "--shipInput":
         shipInput = True
     if o == "--addPoolFC":
@@ -211,7 +211,7 @@ for o, a in opts:
     if o == "--generalInput":
         generalInput = True
     if o == "--guidBoundary":
-        exec "guidBoundary="+a
+        exec("guidBoundary="+a)
     if o == "--collRefName":
         collRefName = a
     if o == "--useNextEvent":

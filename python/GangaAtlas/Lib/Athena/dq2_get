@@ -208,7 +208,7 @@ class ToA:
         pass
     # import ToA
     try:
-        exec toa
+        exec(toa)
     except:
         print toa
         print "ERROR : corrupted ToA"        

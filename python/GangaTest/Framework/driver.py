@@ -388,9 +388,9 @@ def exec_module_code(path,ns=None ):
         mod.__name__ = name
         mod.__file__ = filename
         if ns is None:
-                exec code in mod.__dict__
+                exec(code, mod.__dict__)
         else:
-                exec code in ns
+                exec(code, ns)
         
         #restore cwd
         os.chdir(cwd)       

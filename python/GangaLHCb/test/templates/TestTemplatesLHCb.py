@@ -22,4 +22,4 @@ def test_###NAME###(self):
 setattr(TestTemplatesLHCb, 'test_###NAME###', test_###NAME###)
 '''
 for t in templatesLHCb:
-    exec dynamic_test_case.replace('###NAME###', t.name)
+    exec(dynamic_test_case.replace('###NAME###', t.name))

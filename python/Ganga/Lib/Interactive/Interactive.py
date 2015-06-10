@@ -261,7 +261,7 @@ class Interactive( IBackend ):
          "",
          "commandList = [",
          "   'python -c \\\'%s\\\'' % pyCommandString,",
-         "   'exec ' " + exeString + " " + argString + "]",
+         "   'exec(' " + exeString + " " + argString + ")]",
          "commandString = ';'.join( commandList )",
          "",
          "result = os.system( '%s' % commandString )",

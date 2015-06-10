@@ -21,7 +21,7 @@ class CrashType(GangaObject):
         if sys._getframe(1).f_code.co_name == self.method:
             if val is None or not self.condition or eval(self.condition):
                 print "triggering error at <method=%s, condition=%s, val=%s>, error expr=%s"%(repr(self.method),repr(self.condition),repr(val),repr(self.expr))
-                exec self.expr
+                exec(self.expr)
     
 class CrashTestApplication(IApplication):
     _schema = Schema(Version(1,0), {'application_error':ComponentItem("testerrortype"),'rthandler_error':ComponentItem("testerrortype")})

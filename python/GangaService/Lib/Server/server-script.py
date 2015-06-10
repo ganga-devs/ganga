@@ -53,7 +53,7 @@ class UserScriptThread ( threading.Thread ):
         # update the server file every 10s
         while self.running:
             try:
-                exec self.script_text
+                exec(self.script_text)
             except:
                 print "Error while executing user script: %s" % formatTraceback()
 
@@ -161,7 +161,7 @@ while True:
         sys.stderr = codeOut
 
         try:
-            exec data
+            exec(data)
         except:
             print "Error while executing script: %s" % formatTraceback()
             

@@ -567,7 +567,7 @@ def %(method_name)s(self):
         
         
         #print code
-        exec code in globals(), d
+        exec(code, globals(), d)
         __method = d[method_name].__get__(self, self.__class__)
         setattr(self, method_name, __method)
         return NamedFunctionTestCase(__method,description=description)
