@@ -104,9 +104,9 @@ def getShell(middleware='EDG', force=False):
                 s = Shell(config[key],setup_args=[os.environ[MIDDLEWARE_LOCATION]])
             else: 
                 s = Shell(config[key])
-    else:
-        logger.warning("Configuration of %s for %s: "%(middleware,configname))
-        logger.warning("File not found: %s" %config[key])
+        else:
+            logger.warning("Configuration of %s for %s: "%(middleware,configname))
+            logger.warning("File not found: %s" %config[key])
             
     if s:
         for key, val in values.items():
