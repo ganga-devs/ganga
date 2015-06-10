@@ -977,6 +977,11 @@ default_backends = LCG
         exportToGPI('license',license,'Functions')
         # bootstrap credentials
 
+        # New credential management
+        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+        from Ganga.GPIDev.Credentials2 import CredentialStore
+        exportToGPI('credentialStore',GPIProxyObjectFactory(CredentialStore()),'Objects','Credential management.')
+        
         from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
         from Ganga.GPIDev.Credentials import getCredential 
         
