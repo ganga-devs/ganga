@@ -6,6 +6,7 @@
 # Athena DQ2JobSplitter
 
 import math, socket, operator, copy, os, StringIO
+from functools import reduce
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter

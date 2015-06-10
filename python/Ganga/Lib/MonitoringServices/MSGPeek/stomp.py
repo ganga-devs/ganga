@@ -71,6 +71,7 @@ import time
 import types
 import xml.dom.minidom
 from cStringIO import StringIO
+from functools import reduce
 
 #
 # stomp.py version number

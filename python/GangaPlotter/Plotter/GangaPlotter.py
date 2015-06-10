@@ -8,6 +8,7 @@ import GangaPlotHelper
 from pylab import *
 
 import sys
+from functools import reduce
 if sys.hexversion >= 0x020600F0:
     Set = set
 else:

@@ -90,6 +90,8 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 
 """
 
+from functools import reduce
+
 from Ganga.Core.exceptions import GangaException
 class ConfigError(GangaException):
  """ ConfigError indicates that an option does not exist or it cannot be set.
