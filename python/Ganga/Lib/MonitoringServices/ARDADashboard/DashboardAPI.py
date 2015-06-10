@@ -183,7 +183,7 @@ def report(args) :
     taskId = context['MonitorID']
     jobId = context['MonitorJobID']
     logger('SENDING with Task:%s Job:%s' % (taskId, jobId))
-    logger('params : ' + `paramArgs`)
+    logger('params : ' + repr(paramArgs))
     apmonSend(taskId, jobId, paramArgs)
     apmonFree()
     print "Parameters sent to Dashboard."
@@ -232,7 +232,7 @@ if __name__ == '__main__' :
         dashboard = DashboardAPI('Test')
         for i in range(100) :
             #print 'Test', 'testjob_' + `i`, {'testparam':i}
-            dashboard.sendValues({'testparam':i}, 'testjob_' + `i`)
+            dashboard.sendValues({'testparam':i}, 'testjob_' + repr(i))
         dashboard.free()
         sys.exit(0)
     report(args)

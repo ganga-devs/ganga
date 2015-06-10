@@ -29,7 +29,7 @@ def decode(s):
             n, s = s.split(";", 1)
             r = r + unichr(int(n))
         else:
-            raise ValueError("can't handle " + `s`)
+            raise ValueError("can't handle " + repr(s))
     return r
 
 
@@ -221,7 +221,7 @@ class ESISReader(xml.sax.xmlreader.XMLReader):
 
         else:
             raise xml.sax.SAXNotRecognizedException("unknown property %s"
-                                                    % `property`)
+                                                    % repr(property))
 
     def setProperty(self, property, value):
         if property == xml.sax.handler.property_lexical_handler:

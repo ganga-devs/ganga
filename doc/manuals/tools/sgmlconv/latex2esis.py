@@ -74,7 +74,7 @@ class _Stack(list):
     def append(self, entry):
         if not isinstance(entry, str):
             raise LaTeXFormatError("cannot push non-string on stack: "
-                                   + `entry`)
+                                   + repr(entry))
         #dbgmsg("%s<%s>" % (" "*len(self.data), entry))
         list.append(self, entry)
 
@@ -209,7 +209,7 @@ class Conversion:
                             if not m:
                                 raise LaTeXFormatError(
                                     "could not extract parameter %s for %s: %s"
-                                    % (pentry.name, macroname, `line[:100]`))
+                                    % (pentry.name, macroname, repr(line[:100])))
                             if entry.outputname:
                                 self.dump_attr(pentry, m.group(1))
                             line = line[m.end():]
@@ -327,7 +327,7 @@ class Conversion:
             if len(line) > 100:
                 extra = "..."
             raise LaTeXFormatError("could not identify markup: %s%s"
-                                   % (`line[:100]`, extra))
+                                   % (repr(line[:100]), extra))
         while stack:
             entry = self.get_entry(stack[-1])
             if entry.closes:
@@ -361,7 +361,7 @@ class Conversion:
     def get_entry(self, name):
         entry = self.table.get(name)
         if entry is None:
-            dbgmsg("get_entry(%s) failing; building default entry!" % `name`)
+            dbgmsg("get_entry(%s) failing; building default entry!" % repr(name))
             # not defined; build a default entry:
             entry = TableEntry(name)
             entry.has_content = 1
@@ -486,7 +486,7 @@ class TableHandler(xml.sax.handler.ContentHandler):
     def end_macro(self):
         name = self.__current.name
         if name in self.__table:
-            raise ValueError("name %s already in use" % `name`)
+            raise ValueError("name %s already in use" % repr(name))
         self.__table[name] = self.__current
         self.__current = None
 
