@@ -95,7 +95,7 @@ def CMTscript(app,command=''):
          file1.close()
 
    # make file executable
-   os.chmod(fn, 0777)
+   os.chmod(fn, 0o777)
    shell = Shell()  
    rc=shell.system(fn)
    if os.path.exists(tmppath): shutil.rmtree(tmppath)

@@ -9,13 +9,13 @@ from Ganga.Lib.LCG.Compatibility import *
 
 def get_uuid(*args):
     ''' Generates a universally unique ID. '''
-    t = long( time.time() * 1000 )
-    r = long( random.random()*100000000000000000L )
+    t = time.time() * 1000
+    r = random.random()*100000000000000000
     try:
         a = socket.gethostbyname( socket.gethostname() )
     except:
         # if we can't get a network address, just imagine one
-        a = random.random()*100000000000000000L
+        a = random.random()*100000000000000000
     data = str(t)+' '+str(r)+' '+str(a)+' '+str(args)
 
     md5_obj = get_md5_obj()

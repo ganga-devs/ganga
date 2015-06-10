@@ -34,7 +34,7 @@ class GetJobAttrException(Exception):
 ## this function could be put in Ganga.Utility.util
 def isNumeric(myValue):
     '''checks via type() if myVar is numeric or not'''
-    if type(myValue)==type(1) or type(myValue)==type(1L) or \
+    if type(myValue)==type(1) or type(myValue)==type(1) or \
        type(myValue)==type(1.1) or type(myValue)==type(1+1j) :
        return 1
     else:

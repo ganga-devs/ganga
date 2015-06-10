@@ -107,5 +107,5 @@ if 'ATHENA_OPTIONS' in os.environ:
                 print "ERROR: parsing output file in jobOptions"
                 print cmd
                 print rc, output
-            os.chmod(jfile+".new", 0777)
+            os.chmod(jfile+".new", 0o777)
             os.rename(jfile+".new", jfile)   

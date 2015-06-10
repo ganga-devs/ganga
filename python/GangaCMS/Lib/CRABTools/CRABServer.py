@@ -125,7 +125,7 @@ class CRABServer(GangaObject):
         for root, _, files in os.walk(os.path.join(job.inputdata.ui_working_dir,
                                                    'res')): # Just 'res'.
             for f in files:
-                os.chmod(os.path.join(root, f), 0644)
+                os.chmod(os.path.join(root, f), 0o644)
         return True
 
     def postMortem(self, job):
