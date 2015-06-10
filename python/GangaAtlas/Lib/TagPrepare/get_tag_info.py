@@ -52,7 +52,7 @@ def findReferences( infile ):
 
         # check the cache first
         for name in _refCache:
-            if _refCache[name].has_key(ref_guid):
+            if ref_guid in _refCache[name]:
 
                 ref_name = _refCache[name][ref_guid]['lfn']
                 ref_dataset = name
@@ -86,7 +86,7 @@ def findReferences( infile ):
 
         # store useful stuff
         ref_files = _dq.listFilesInDataset(ref_name)
-        if ref_files[0].has_key(ref_guid):
+        if ref_guid in ref_files[0]:
             refs.append([ ref_files[0][ref_guid]['lfn'], ref_name, ref_guid ] )
             print "Found dataset ref: %s, %s" % (ref_name, ref_files[0][ref_guid]['lfn'])
 
@@ -99,7 +99,7 @@ def findReferences( infile ):
 
 #-------------------------------------------
 # Go through the input file list and get TAG info
-if os.environ.has_key('STREAM_REF'):
+if 'STREAM_REF' in os.environ:
     _datasetType = os.environ['STREAM_REF']
     
 _streamRef = 'Stream'+os.environ['STREAM_REF']+'_ref'
@@ -125,7 +125,7 @@ if os.environ['GANGA_ATHENA_WRAPPER_MODE'] == 'grid':
         pass
 
     # First, sort out a dataset and file mapping and dq2-get the files
-    if not os.environ.has_key('DATASETNAME'):
+    if 'DATASETNAME' not in os.environ:
         raise NameError("ERROR: DATASETNAME not defined")
         sys.exit(EC_Configuration)
     

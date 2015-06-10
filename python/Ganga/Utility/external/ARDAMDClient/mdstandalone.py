@@ -131,7 +131,7 @@ class MDStandalone (mdinterface.MDInterface):
 
         
     def __addEntry(self, mdtable, entry, attrs, values):
-        if mdtable.entries.has_key(entry):
+        if entry in mdtable.entries:
             raise CommandException(15, "Entry exists")       
         # new entry
         e=[''] * (len(mdtable.attributes)+1)
@@ -171,7 +171,7 @@ class MDStandalone (mdinterface.MDInterface):
             emptyAttr = [''] * len(mdtable.attributes)
             for entry in entries:
                 entry_key = os.path.basename(entry)
-                if mdtable.entries.has_key(entry_key):
+                if entry_key in mdtable.entries:
                     raise CommandException(15, "Entry exists")
                 row = [entry_key]
                 row.extend(emptyAttr)
@@ -188,7 +188,7 @@ class MDStandalone (mdinterface.MDInterface):
             if not self.__isDir(dirname):
                 dirname = os.path.dirname(dirname)
             mdtable, tablename = self.__loadTable(dirname, True)
-            if mdtable.attributeDict.has_key(name):
+            if name in mdtable.attributeDict:
                 raise CommandException(15, "Attribute exists")
             mdtable.attributes.append([name, t])
             mdtable.update()
@@ -312,7 +312,7 @@ class MDStandalone (mdinterface.MDInterface):
             if not self.__isDir(dirname):
                 dirname = os.path.dirname(dirname)
             mdtable, dirname = self.__loadTable(dirname, True)
-            if not mdtable.attributeDict.has_key(name):
+            if name not in mdtable.attributeDict:
                 raise CommandException(10, "No such key")
             iattr = mdtable.attributeDict[name]
             del mdtable.attributes[iattr]

@@ -1159,15 +1159,15 @@ sys.exit(0)
 
                 job = jobdict[id]
 
-                if job.backend.status != info['Current Status'] and (not info.has_key('ExitCode') or (info.has_key('ExitCode') and info['ExitCode'].isdigit())):
+                if job.backend.status != info['Current Status'] and ('ExitCode' not in info or ('ExitCode' in info and info['ExitCode'].isdigit())):
 
-                    if info.has_key('Worker Node'):
+                    if 'Worker Node' in info:
                         job.backend.workernode = info['Worker Node']
 
-                    if info.has_key('CREAM ISB URI'):
+                    if 'CREAM ISB URI' in info:
                         job.backend.isbURI = info['CREAM ISB URI']
 
-                    if info.has_key('CREAM OSB URI'):
+                    if 'CREAM OSB URI' in info:
                         job.backend.osbURI = info['CREAM OSB URI']
 
                     doStatusUpdate = True
@@ -1199,13 +1199,13 @@ sys.exit(0)
 
                     if doStatusUpdate:
                         job.backend.status = info['Current Status']
-                        if info.has_key('ExitCode') and info['ExitCode'] != "W":
+                        if 'ExitCode' in info and info['ExitCode'] != "W":
                             try:
                                 job.backend.exitcode_cream = int( info['ExitCode'] )
                             except:
                                 job.backend.exitcode_cream = 1
 
-                        if info.has_key('FailureReason'):
+                        if 'FailureReason' in info:
                             try:        
                                 job.backend.reason = info['FailureReason']
                             except:

@@ -5,7 +5,7 @@ import os
 logger = Ganga.Utility.logging.getLogger()
 
 def get_user_platform(env=os.environ):
-    if env.has_key('CMTCONFIG'):
+    if 'CMTCONFIG' in env:
         return env['CMTCONFIG']
     else:
         msg = '"CMTCONFIG" not set. Cannot determine the platform you want to use'
@@ -15,7 +15,7 @@ def get_user_platform(env=os.environ):
 def update_project_path(user_release_area,env=os.environ):
 
     if user_release_area:
-        if env.has_key('CMTPROJECTPATH'):
+        if 'CMTPROJECTPATH' in env:
             cmtpp=env['CMTPROJECTPATH'].split(':')
             if cmtpp[0] != user_release_area:
                 cmtpp = [user_release_area] + cmtpp
@@ -29,7 +29,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
     full_user_ra = fullpath(user_ra) # expand any symbolic links
 
     # Work our way through the CMTPROJECTPATH until we find a cmt directory
-    if not env.has_key('CMTPROJECTPATH'): return [], [], []
+    if 'CMTPROJECTPATH' not in env: return [], [], []
     projectdirs = env['CMTPROJECTPATH'].split(os.pathsep)
     appveruser = os.path.join(appname + '_' + version,'cmt')
     appverrelease = os.path.join(appname.upper(), appname.upper() + '_' + version, 'cmt')
@@ -78,7 +78,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
     py_project_areas = unique(py_project_areas)
 
     ld_lib_path = []
-    if env.has_key('LD_LIBRARY_PATH'):
+    if 'LD_LIBRARY_PATH' in env:
         ld_lib_path = env['LD_LIBRARY_PATH'].split(':')
         project_areas_dict = {}
     for area in project_areas:

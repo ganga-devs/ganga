@@ -14,7 +14,7 @@ def get_repository_list(paths):
             dir = name
         rootfile = os.path.join(name, "CVS", "Root")
         root = open(rootfile).readline().strip()
-        if not d.has_key(root):
+        if root not in d:
             d[root] = RepositoryInfo(dir), [name]
         else:
             d[root][1].append(name)

@@ -797,7 +797,7 @@ class Manager:
         rv = None
         _acquireLock()
         try:
-            if self.loggerDict.has_key(name):
+            if name in self.loggerDict:
                 rv = self.loggerDict[name]
                 if isinstance(rv, PlaceHolder):
                     ph = rv
@@ -825,7 +825,7 @@ class Manager:
         rv = None
         while (i > 0) and not rv:
             substr = name[:i]
-            if not self.loggerDict.has_key(substr):
+            if substr not in self.loggerDict:
                 self.loggerDict[substr] = PlaceHolder(alogger)
             else:
                 obj = self.loggerDict[substr]

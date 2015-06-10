@@ -110,7 +110,7 @@ class RuntimePackage:
             showpath = '<defaultpath>'
         logger.debug("initializing runtime: '%s' '%s'",self.name,showpath)
         
-        if allRuntimes.has_key(self.name):
+        if self.name in allRuntimes:
             if allRuntimes[self.name].path != self.path:
                 logger.warning('possible clash: runtime "%s" already exists at path "%s"',self.name,allRuntimes[self.name].path)
 

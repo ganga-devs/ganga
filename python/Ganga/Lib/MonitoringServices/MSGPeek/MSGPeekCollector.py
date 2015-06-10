@@ -18,9 +18,9 @@ class PeekListener(stomp.ConnectionListener) :
 
     def on_message(self, headers, message):
         dict = eval(message)
-        if dict.has_key("stdout") :
+        if "stdout" in dict :
             sys.stdout.write(dict['stdout'])
-        if dict.has_key("event") :
+        if "event" in dict :
             if dict["event"] == "finished":
                 self.finished = True
                 self.f.close()

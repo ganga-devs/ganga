@@ -156,8 +156,8 @@ class PythonOptionsParser:
         outsandbox = []
         outputdata = []
 
-        if self.opts_dict.has_key('CounterSummarySvc'):
-            if self.opts_dict['CounterSummarySvc'].has_key('xmlfile'):
+        if 'CounterSummarySvc' in self.opts_dict:
+            if 'xmlfile' in self.opts_dict['CounterSummarySvc']:
                  f = self.opts_dict['CounterSummarySvc']['xmlfile']
                  if sbtypes.count('CounterSummarySvc') > 0:
                      outsandbox.append(f)
@@ -166,8 +166,8 @@ class PythonOptionsParser:
 
         datatypes = ['NTupleSvc','EvtTupleSvc']
         for type in datatypes:
-            if self.opts_dict.has_key(type):
-                if self.opts_dict[type].has_key('Output'):
+            if type in self.opts_dict:
+                if 'Output' in self.opts_dict[type]:
                     tuples = self.opts_dict[type]['Output']
                     # tuple output is returned as a list 
                     for t in tuples:
@@ -175,8 +175,8 @@ class PythonOptionsParser:
                         if sbtypes.count(type) > 0: outsandbox.append(f)
                         else: outputdata.append(f)
 
-        if self.opts_dict.has_key('HistogramPersistencySvc'):
-            if self.opts_dict['HistogramPersistencySvc'].has_key('OutputFile'):
+        if 'HistogramPersistencySvc' in self.opts_dict:
+            if 'OutputFile' in self.opts_dict['HistogramPersistencySvc']:
                  f = self.opts_dict['HistogramPersistencySvc']['OutputFile']
                  if sbtypes.count('HistogramPersistencySvc') > 0:
                      outsandbox.append(f)
@@ -185,8 +185,8 @@ class PythonOptionsParser:
 
         datatypes = ['MicroDSTStream','DstWriter','GaussTape','DigiWriter']
         for type in datatypes:
-            if(self.opts_dict.has_key(type)):
-                if(self.opts_dict[type].has_key('Output')):
+            if(type in self.opts_dict):
+                if('Output' in self.opts_dict[type]):
                     # get just the file name
                     file = self.opts_dict[type]['Output'].split('\'')[1]
                     if file.startswith('PFN:') or file.startswith('pfn:'):

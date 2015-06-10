@@ -44,7 +44,7 @@ def get_env():
 
     return global_env
 
-if not get_env().has_key("GANGADIRACENVIRONMENT"):
+if "GANGADIRACENVIRONMENT" not in get_env():
     e = Exception()
     e.args = ('DIRAC env cache file does not exist.',)
     raise e

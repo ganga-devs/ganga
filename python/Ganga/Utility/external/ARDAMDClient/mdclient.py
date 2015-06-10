@@ -567,7 +567,7 @@ class MDClient(MDInterface):
         for g in guidSiteList:
             (guid, site) = g
             command += ' '
-            if self.siteCache.has_key(site):
+            if site in self.siteCache:
                 command = command + guid + ' ' + str(self.siteCache[site])
             else:
                 command = command + guid + ' ' + site

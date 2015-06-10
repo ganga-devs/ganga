@@ -609,11 +609,11 @@ class GetHandler(BaseHTTPRequestHandler):
         toDate = None
 
         #from and to date are either both selected or both not selected
-        if qsDict.has_key('from') and qsDict.has_key('to'):
+        if 'from' in qsDict and 'to' in qsDict:
                 fromDate = convertStringToDatetime(qsDict['from'])
                 toDate = convertStringToDatetime(qsDict['to'])
         #if from and to are not selected, it could be timeRange selected
-        elif qsDict.has_key('timerange'):
+        elif 'timerange' in qsDict:
                 fromDate = getFromDateFromTimeRange(qsDict['timerange'])
 
         json = ''

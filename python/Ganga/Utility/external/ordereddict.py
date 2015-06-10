@@ -105,11 +105,11 @@ The iterators are returned using the custom iterator dIter (which will work in t
     
     def has_key(self, item):
         """Does the dictionary have this key."""
-        return self._thedict.has_key(item)           # does the key exist
+        return item in self._thedict           # does the key exist
         
     def __contains__(self, item):
         """Does the dictionary have this key."""
-        return self._thedict.has_key(item)           # does the key exist
+        return item in self._thedict           # does the key exist
 
     def setdefault(self, item, default=None):
         """Fetch an item if it exists, otherwise set the item to default and return default."""

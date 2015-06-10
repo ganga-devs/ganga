@@ -13,7 +13,7 @@ argv = sys.argv[2:]
 commands = {'init':'voms-proxy-init','info':'voms-proxy-info',
             'destroy':'voms-proxy-destroy'}
 
-if not os.environ.has_key("GANGADIRACENVIRONMENT"):
+if "GANGADIRACENVIRONMENT" not in os.environ:
     raise 'DIRAC env cache file does not exist.'
 dirac_env_cache_file = os.environ["GANGADIRACENVIRONMENT"]
 if not os.path.exists(dirac_env_cache_file):

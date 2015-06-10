@@ -294,9 +294,9 @@ class RootRTHandler(IRuntimeHandler):
 
         rootenv = {}
         #propagate from localhost
-        if environ.has_key('PATH'):
+        if 'PATH' in environ:
             setEnvironment('PATH',environ['PATH'],update=True,environment=rootenv)
-        if environ.has_key('LD_LIBRARY_PATH'):
+        if 'LD_LIBRARY_PATH' in environ:
             setEnvironment('LD_LIBRARY_PATH',environ['LD_LIBRARY_PATH'],update=True,environment=rootenv)    
 
         setEnvironment('LD_LIBRARY_PATH',join(rootsys,'lib'),update=True,environment=rootenv)

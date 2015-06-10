@@ -346,7 +346,7 @@ def fixup_trailing_whitespace(doc, fragment, wsmap):
     while queue:
         node = queue[0]
         del queue[0]
-        if wsmap.has_key(node.nodeName):
+        if node.nodeName in wsmap:
             fixups.append(node)
         for child in node.childNodes:
             if child.nodeType == ELEMENT:
@@ -1030,7 +1030,7 @@ def convert(ifp, ofp):
     for gi in events.parser.get_empties():
         d[gi] = gi
     for key in ("author", "pep", "rfc"):
-        if d.has_key(key):
+        if key in d:
             del d[key]
     knownempty = d.has_key
     #

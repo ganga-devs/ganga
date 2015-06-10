@@ -75,7 +75,7 @@ def getDBDatasets(jobO,trf,dbrelease):
                         dbrFiles[tmpLFN] = tmpVal
                     dbrDsList.append(tmpDbrDS)
                 # check
-                if not dbrFiles.has_key(tmpDbrLFN):
+                if tmpDbrLFN not in dbrFiles:
                     raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
     return dbrFiles,dbrDsList
 
@@ -498,7 +498,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec = JobSpec()
                 jspec.jobDefinitionID   = job.id
 
-                if job.backend.jobSpec.has_key('provenanceID'):
+                if 'provenanceID' in job.backend.jobSpec:
                     jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
                 
                 jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
@@ -635,7 +635,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec = JobSpec()
         jspec.jobDefinitionID   = masterjob.id
 
-        if job.backend.jobSpec.has_key('provenanceID'):
+        if 'provenanceID' in job.backend.jobSpec:
             jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
         
         jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')

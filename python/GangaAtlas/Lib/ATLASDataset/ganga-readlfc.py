@@ -280,7 +280,7 @@ if __name__ == '__main__':
     for i in locrange:
         for location in locations[i]:
             try:
-                if TiersOfATLAS.ToACache.sites[location].has_key('srm'):
+                if 'srm' in TiersOfATLAS.ToACache.sites[location]:
                     tempsrm = TiersOfATLAS.ToACache.sites[location]['srm']
                     tempsrm = re.sub('token:*\w*:','',tempsrm)
                     tempsrm = re.sub(':*\d*/srm/managerv2\?SFN=','', tempsrm)

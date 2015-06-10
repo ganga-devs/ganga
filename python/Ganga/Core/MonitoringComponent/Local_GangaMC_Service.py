@@ -639,7 +639,7 @@ class JobRegistry_Monitor( GangaThread ):
         _purge_actions_queue()
         #release timeout check locks
         timeoutCheck = updateDict_ts.timeoutCheck
-        if self.callbackHookDict.has_key( timeoutCheck ):
+        if timeoutCheck in self.callbackHookDict:
             updateDict_ts.releaseLocks()
             self.removeCallbackHook( timeoutCheck )
         #wake up the calls waiting for cleanup

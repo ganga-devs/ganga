@@ -266,21 +266,21 @@ if __name__ == '__main__':
 
     site_info = {}
     for ce in ce_list:
-        if not ce_info.has_key(ce):
+        if ce not in ce_info:
             print >>log, 'Computing Element %s has been added' % ce
         ce_info[ce] = {
             'close_se' : [],
             'missing' : 0
         }
         site = ce_site[ce]
-        if site_info.has_key(site):
+        if site in site_info:
             if not ce in site_info[site]:
                 site_info[site].append(ce)
         else:
             site_info[site] = [ce]
 
     for se in se_list:
-        if not se_info.has_key(se):
+        if se not in se_info:
             print >>log, 'Storage Element %s has been added' % se 
         se_info[se] = {
             'close_ce' : [],
@@ -309,7 +309,7 @@ if __name__ == '__main__':
     for se, info in se_info.iteritems():
         if not info['missing']: continue
         for ce in info['close_ce']:
-            if not ce_info.has_key(ce): continue
+            if ce not in ce_info: continue
             if not se in ce_info[ce]['close_se']:
                 ce_info[ce]['close_se'].append(se)
 

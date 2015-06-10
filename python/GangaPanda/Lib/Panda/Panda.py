@@ -332,7 +332,7 @@ def runPandaBrokerage(job):
     if status != 0:
         job.backend.reason = 'Non-zero to run brokerage for automatic assignment: %s' % out
         raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
-    if not Client.PandaSites.has_key(out):
+    if out not in Client.PandaSites:
         job.backend.reason = 'brokerage gave wrong PandaSiteID:%s' % out
         raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
     # set site
@@ -412,7 +412,7 @@ def selectPandaSite(job,sites):
     if status != 0:
         job.backend.reason = 'Non-zero to run brokerage for automatic assignment: %s' % out
         raise BackendError('Panda','Non-zero to run brokerage for automatic assignment: %s' % out)
-    if not Client.PandaSites.has_key(out):
+    if out not in Client.PandaSites:
         job.backend.reason = 'brokerage gave wrong PandaSiteID:%s' % out
         raise BackendError('Panda','brokerage gave wrong PandaSiteID:%s' % out)
     # set site
@@ -946,7 +946,7 @@ class Panda(IBackend):
                 if not sj.status in sj_status:
                     continue
 
-                if not mj.backend.jobSpec.has_key('provenanceID'):
+                if 'provenanceID' not in mj.backend.jobSpec:
                     mj.backend.jobSpec['provenanceID'] = sj.backend.jobSpec['jobExecutionID']
 
                 num_sj += 1
@@ -1296,7 +1296,7 @@ class Panda(IBackend):
                     elif status.jobStatus == 'failed':
                         if job.status != 'failed':
                             # check for server side retry
-                            if job.backend.jobSpec.has_key('taskBufferErrorDiag') and job.backend.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                            if 'taskBufferErrorDiag' in job.backend.jobSpec and job.backend.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                 # grab the new panda ID
                                 newPandaID = long(job.backend.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                 job.backend.id = newPandaID
@@ -1310,7 +1310,7 @@ class Panda(IBackend):
                                     
                     elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
                         if job.status != 'killed':
-                            if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
+                            if 'taskBufferErrorDiag' in job.backend.jobSpec and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                 newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
                                 logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
                                 job.backend.id = newPandaID
@@ -1344,7 +1344,7 @@ class Panda(IBackend):
                         elif status.jobStatus in ['starting','running','holding','transferring']:
                             job.updateStatus('running')
                         elif status.jobStatus == 'failed':
-                            if job.backend.buildjob.jobSpec.has_key('taskBufferErrorDiag') and job.backend.buildjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                            if 'taskBufferErrorDiag' in job.backend.buildjob.jobSpec and job.backend.buildjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                 # grab the new panda ID
                                 newPandaID = long(job.backend.buildjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                 job.backend.buildjob.id = newPandaID
@@ -1353,7 +1353,7 @@ class Panda(IBackend):
                             else:
                                 job.updateStatus('failed')
                         elif status.jobStatus == 'cancelled':
-                            if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
+                            if 'taskBufferErrorDiag' in job.backend.jobSpec and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                 newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
                                 logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
                                 job.backend.id = newPandaID
@@ -1401,7 +1401,7 @@ class Panda(IBackend):
                             elif new_stat in ['starting','running','holding','transferring']:
                                 job.updateStatus('running')
                             elif new_stat == 'failed':
-                                if bj.jobSpec.has_key('taskBufferErrorDiag') and bj.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                                if 'taskBufferErrorDiag' in bj.jobSpec and bj.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                     # grab the new panda ID
                                     newPandaID = long(bj.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                     bj.id = newPandaID
@@ -1410,7 +1410,7 @@ class Panda(IBackend):
                                 else:                                    
                                     job.updateStatus('failed')
                             elif new_stat == 'cancelled':
-                                if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
+                                if 'taskBufferErrorDiag' in job.backend.jobSpec and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                     newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
                                     logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
                                     job.backend.id = newPandaID
@@ -1443,7 +1443,7 @@ class Panda(IBackend):
 
                     # check for Panda resubmission
                     if mj.status == 'failed':
-                        if mj.jobSpec.has_key('taskBufferErrorDiag') and mj.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                        if 'taskBufferErrorDiag' in mj.jobSpec and mj.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                             logger.info("Merge job failed for job %s. Panda has resubmitted" % job.fqid)
 
                             # clear the merge jobs and force it to grab them again

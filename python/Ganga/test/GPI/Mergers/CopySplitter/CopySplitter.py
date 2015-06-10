@@ -42,7 +42,7 @@ class CopySplitter(ISplitter):
             #gives tests a chance to alter subjobs
             if self.function_hook:
                 g = globals()
-                if g.has_key(self.function_hook):
+                if self.function_hook in g:
                     g[self.function_hook](j,i)
             
             subjobs.append(j)

@@ -380,7 +380,7 @@ def exec_module_code(path,ns=None ):
         code_str = read_file(filename)
         code     = compile(code_str,filename,'exec')
         (name,ext) = os.path.splitext(filename)
-        if sys.modules.has_key(name):
+        if name in sys.modules:
                 mod = sys.modules[name] # necessary for reload()
         else:
                 mod = new.module(name)

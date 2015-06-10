@@ -60,7 +60,7 @@ def setEnvironment(key, value, update=False,environment=None):
     if environment == None:
         environment = copy.deepcopy(os.environ)
     
-    if update and environment.has_key(key):
+    if update and key in environment:
         value += (os.pathsep + environment[key])#prepend
     environment[key] = value
 

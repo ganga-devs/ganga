@@ -197,7 +197,7 @@ class ICredential( GangaObject ):
       dummy = False
       if not self.command.init:
           dummy = True
-      if self.command.init_parameters.has_key( "valid" ):
+      if "valid" in self.command.init_parameters:
          if not self.command.init_parameters[ "valid" ]:
              dummy = True
 
@@ -274,7 +274,7 @@ class ICredential( GangaObject ):
          else: # Non-GUI credential renewal/creation
             # Check if renewal is from main process (i.e. by bootstrap or user)
             if threading.currentThread().getName() == 'MainThread':
-               if self.command.init_parameters.has_key( "valid" ):
+               if "valid" in self.command.init_parameters:
                   self.command.currentOpts\
                      [ self.command.init_parameters[ 'valid' ] ] = validity
                initList = [ self.command.init ]

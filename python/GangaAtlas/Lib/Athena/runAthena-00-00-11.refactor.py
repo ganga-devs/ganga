@@ -624,7 +624,7 @@ sys.exit(st)
         directTmp = pickle.load(lfcOutPiFile)
         lfcOutPiFile.close()
         # decompose if pfn+meta is returned
-        if directTmp.has_key('meta'):
+        if 'meta' in directTmp:
             directMetaMap = directTmp['meta']
             directTmp = directTmp['pfn']
     else:
@@ -1245,7 +1245,7 @@ if eventColl and mcData == '':
 
         print "=== Create PoolFC ==="
         for ref in poolRefs:
-            if not pfnMap.has_key(ref):
+            if ref not in pfnMap:
                 print " %s not found" % ref
                 
         # create PoolFC
@@ -1334,7 +1334,7 @@ sys.exit(0)
             # insert it to pool catalog
             tmpLFNforPFC = fileName.split('/')[-1]
             tmpLFNforPFC = re.sub('__DQ2-\d+$','',tmpLFNforPFC)
-            if guidMapFromPFC.has_key(tmpLFNforPFC):
+            if tmpLFNforPFC in guidMapFromPFC:
                 filesToPfcMap[guidMapFromPFC[tmpLFNforPFC]] = fileName
             elif not givenPFN:
                 print "ERROR : %s not found in the pilot PFC" % fileName
@@ -1436,7 +1436,7 @@ sys.exit(0)
 
             print "=== add POOL refs to PoolFC ==="
             for ref in poolRefs:
-                if not pfnMap.has_key(ref):
+                if ref not in pfnMap:
                     print " %s not found" % ref
 
             # extract FIDs from PoolFC
@@ -1593,10 +1593,10 @@ if flagBeamHalo:
 if flagBeamGas:
     oFile.write('BeamGasEventSelector = _Service( "BeamGasEventSelector" )\n')
     oFile.write('BeamGasEventSelector.InputCollections = %s\n' % beamGasFiles)
-if outputFiles.has_key('hist'):    
+if 'hist' in outputFiles:    
     oFile.write('HistogramPersistencySvc=_Service("HistogramPersistencySvc")\n')
     oFile.write('HistogramPersistencySvc.OutputFile = "%s"\n' % outputFiles['hist'])
-if outputFiles.has_key('ntuple'):
+if 'ntuple' in outputFiles:
     oFile.write('NTupleSvc = _Service( "NTupleSvc" )\n')
     firstFlag = True
     for sName,fName in outputFiles['ntuple']:
@@ -1648,7 +1648,7 @@ def _getConfig(key):
                 return getattr(tmpAlgSequence,key)
 
 """)
-if outputFiles.has_key('RDO'):
+if 'RDO' in outputFiles:
     oFile.write("""
 key = "StreamRDO"    
 if key in _configs:
@@ -1658,7 +1658,7 @@ else:
 """)
     oFile.write('StreamRDO.OutputFile = "%s"\n' % outputFiles['RDO'])
     oFile.write('pTmpStreamList.append(StreamRDO)\n')
-if outputFiles.has_key('ESD'):
+if 'ESD' in outputFiles:
     oFile.write("""
 key = "StreamESD"    
 if key in _configs:
@@ -1668,7 +1668,7 @@ else:
 """)
     oFile.write('StreamESD.OutputFile = "%s"\n' % outputFiles['ESD'])
     oFile.write('pTmpStreamList.append(StreamESD)\n')
-if outputFiles.has_key('AOD'):
+if 'AOD' in outputFiles:
     oFile.write("""
 key = "StreamAOD"    
 if key in _configs:
@@ -1678,7 +1678,7 @@ else:
 """)
     oFile.write('StreamAOD.OutputFile = "%s"\n' % outputFiles['AOD'])
     oFile.write('pTmpStreamList.append(StreamAOD)\n')
-if outputFiles.has_key('TAG'):
+if 'TAG' in outputFiles:
     oFile.write("""
 key = "StreamTAG"    
 if key in _configs:
@@ -1687,7 +1687,7 @@ else:
     StreamTAG = Algorithm( key )
 """)
     oFile.write('StreamTAG.OutputCollection = "%s"\n' % re.sub('\.root\.*\d*$','',outputFiles['TAG']))
-if outputFiles.has_key('AANT'):
+if 'AANT' in outputFiles:
     firstFlag = True
     oFile.write('THistSvc = _Service ( "THistSvc" )\n')
     sNameList = []
@@ -1708,11 +1708,11 @@ else:
 """ % aName)
         oFile.write('AANTupleStream.StreamName = "%s"\n' % sName)
         oFile.write('AANTupleStream.OutputName = "%s"\n' % fName)        
-    if outputFiles.has_key('THIST'):
+    if 'THIST' in outputFiles:
         for sName,fName in outputFiles['THIST']:
             oFile.write('THistSvc.Output += ["%s DATAFILE=\'%s\' OPT=\'UPDATE\'"]\n' % (sName,fName))
 else:
-    if outputFiles.has_key('THIST'):
+    if 'THIST' in outputFiles:
         oFile.write('THistSvc = _Service ( "THistSvc" )\n')
         firstFlag = True
         for sName,fName in outputFiles['THIST']:
@@ -1721,7 +1721,7 @@ else:
                 oFile.write('THistSvc.Output = ["%s DATAFILE=\'%s\' OPT=\'UPDATE\'"]\n' % (sName,fName))
             else:
                 oFile.write('THistSvc.Output+= ["%s DATAFILE=\'%s\' OPT=\'UPDATE\'"]\n' % (sName,fName))
-if outputFiles.has_key('Stream1'):
+if 'Stream1' in outputFiles:
     oFile.write("""
 key = "Stream1"    
 if key in _configs:
@@ -1734,7 +1734,7 @@ else:
 """)
     oFile.write('Stream1.OutputFile = "%s"\n' % outputFiles['Stream1'])
     oFile.write('pTmpStreamList.append(Stream1)\n')
-if outputFiles.has_key('Stream2'):
+if 'Stream2' in outputFiles:
     oFile.write("""
 key = "Stream2"    
 if key in _configs:
@@ -1763,7 +1763,7 @@ if Stream2_FH != None:
     Stream2_FH.OutputFile = "%s"
 """ % outputFiles['Stream2'])
 
-if outputFiles.has_key('StreamG'):
+if 'StreamG' in outputFiles:
     for stName,stFileName in outputFiles['StreamG']:
         oFile.write("""
 key = "%s"    
@@ -1777,7 +1777,7 @@ else:
 """ % stName)
         oFile.write('StreamX.OutputFile = "%s"\n' % stFileName)
         oFile.write('pTmpStreamList.append(StreamX)\n')    
-if outputFiles.has_key('Meta'):
+if 'Meta' in outputFiles:
     for stName,stFileName in outputFiles['Meta']:
         oFile.write("""
 key = "%s"    
@@ -1791,7 +1791,7 @@ else:
 """ % stName)
         oFile.write('StreamX.OutputFile = "ROOTTREE:%s"\n' % stFileName)
 
-if outputFiles.has_key('UserData'):
+if 'UserData' in outputFiles:
     for stFileName in outputFiles['UserData']:
         oFile.write("""
 try:
@@ -1831,7 +1831,7 @@ except:
 """ % stFileName)
     
 uniqueTag = commands.getoutput('uuidgen 2>/dev/null')
-if outputFiles.has_key('BS'):
+if 'BS' in outputFiles:
     oFile.write('ByteStreamEventStorageOutputSvc = _Service("ByteStreamEventStorageOutputSvc")\n')
     oFile.write('ByteStreamEventStorageOutputSvc.FileTag = "%s"\n' % uniqueTag)
     oFile.write("""
@@ -1971,7 +1971,7 @@ except:
             for tmpGUIDforMeta,tmpPFNforMeta in directPfnMap.iteritems():
                 if tmpPFNforMeta == tmpInputName:
                     # get checksum
-                    if directMetaMap.has_key(tmpGUIDforMeta) and directMetaMap[tmpGUIDforMeta].has_key('checksum'):
+                    if tmpGUIDforMeta in directMetaMap and 'checksum' in directMetaMap[tmpGUIDforMeta]:
                         tmpCheckSum = directMetaMap[tmpGUIDforMeta]['checksum']
                     break    
             if tmpInputName.startswith('dcache:'):
@@ -2246,15 +2246,15 @@ env = 'CMTPATH=%s:$CMTPATH' % workDir
 # construct command
 com  = 'export %s;' % env
 # local RAC
-if (not os.environ.has_key('ATLAS_CONDDB')) or os.environ['ATLAS_CONDDB']=='to.be.set':
-    if os.environ.has_key('OSG_HOSTNAME'):
+if ('ATLAS_CONDDB' not in os.environ) or os.environ['ATLAS_CONDDB']=='to.be.set':
+    if 'OSG_HOSTNAME' in os.environ:
         com += 'export ATLAS_CONDDB=%s;' % os.environ['OSG_HOSTNAME']
-    elif os.environ.has_key('GLOBUS_CE'):
+    elif 'GLOBUS_CE' in os.environ:
         tmpCE = os.environ['GLOBUS_CE'].split('/')[0]
         # remove port number
         tmpCE = re.sub(':\d+$','',tmpCE)
         com += 'export ATLAS_CONDDB=%s;' % tmpCE
-    elif os.environ.has_key('PBS_O_HOST'):
+    elif 'PBS_O_HOST' in os.environ:
         com += 'export ATLAS_CONDDB=%s;' % os.environ['PBS_O_HOST']    
 com += 'cd %s;' % cmtDir
 com += 'echo "use AtlasPolicy AtlasPolicy-*" > requirements;'
@@ -2344,7 +2344,7 @@ print "=== list in run dir ==="
 print commands.getoutput('ls -l')
 
 # rename or archive iROOT files
-if outputFiles.has_key('IROOT'):
+if 'IROOT' in outputFiles:
     for iROOT in outputFiles['IROOT']:
         if iROOT[0].find('*') != -1:
             # archive *
@@ -2370,7 +2370,7 @@ if outputFiles.has_key('IROOT'):
             pass
 
 # rename TAG files
-if outputFiles.has_key('TAG'):
+if 'TAG' in outputFiles:
     woAttrNr = re.sub('\.\d+$','',outputFiles['TAG'])
     if woAttrNr != outputFiles['TAG']:
         print commands.getoutput('mv %s %s' % (woAttrNr,outputFiles['TAG']))
@@ -2380,7 +2380,7 @@ if outputFiles.has_key('TAG'):
         print commands.getoutput('mv %s %s' % (woRootAttrNr,outputFiles['TAG']))
 
 # rename BS file
-if outputFiles.has_key('BS'):
+if 'BS' in outputFiles:
     bsS,bsO = commands.getstatusoutput('mv daq.%s* %s' % (uniqueTag,outputFiles['BS']))
     print bsS,bsO
     if bsS != 0:

@@ -47,7 +47,7 @@ class EventPicking(DQ2Dataset):
 
         # set X509_USER_PROXY
         from pandatools import Client
-        if not os.environ.has_key('X509_USER_PROXY') or os.environ['X509_USER_PROXY'] == '':
+        if 'X509_USER_PROXY' not in os.environ or os.environ['X509_USER_PROXY'] == '':
             os.environ['X509_USER_PROXY'] = Client._x509()
 
         # setup eventLookup
@@ -161,7 +161,7 @@ class EventPicking(DQ2Dataset):
                 tmpLFNs = []
                 tmpAllDSs = {}
                 for tmpguid in runEvtGuidMap[(runNr,evtNr)]:
-                    if dsLFNs.has_key(tmpguid):
+                    if tmpguid in dsLFNs:
                         tmpLFNs.append(dsLFNs[tmpguid])
                         job.inputdata.guids.append(tmpguid)
                         job.inputdata.names.append(dsLFNs[tmpguid][1])
@@ -169,7 +169,7 @@ class EventPicking(DQ2Dataset):
                             job.inputdata.dataset.append(dsLFNs[tmpguid][0])
                     else:
                         tmpAllDSs[tmpguid] = allDSMap[tmpguid]
-                        if guidRunEvtMap.has_key(tmpguid):
+                        if tmpguid in guidRunEvtMap:
                             del guidRunEvtMap[tmpguid]
                 # empty        
                 if tmpLFNs == []:

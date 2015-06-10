@@ -229,7 +229,7 @@ print "***_FINISHED_***"
             if self.ssh_key != "" and os.path.exists(os.path.expanduser( os.path.expandvars( self.ssh_key ) ) ):
                privatekeyfile = os.path.expanduser( os.path.expandvars( self.ssh_key ) )
 
-               if not Remote._key.has_key(self.ssh_key):
+               if self.ssh_key not in Remote._key:
                   
                   if self.key_type == "RSA":
                      password = getpass.getpass('Enter passphrase for key \'%s\': ' % (self.ssh_key))
@@ -277,7 +277,7 @@ print "***_FINISHED_***"
             logger.warning("Error when comunicating with remote host. Retrying...")
             self._transport = None
             self._sftp = None
-            if Remote._key.has_key( self.ssh_key ):
+            if self.ssh_key in Remote._key:
                del Remote._key[self.ssh_key]
 
          num_try = num_try + 1
@@ -775,7 +775,7 @@ print "***_FINISHED_***"
       jobs_sort = {}
       for j in jobs:
          host_str = j.backend.username + "@" + j.backend.host + ":" + j.backend.ganga_dir + "+" + ';'.join(j.backend.pre_script)
-         if not jobs_sort.has_key(host_str):
+         if host_str not in jobs_sort:
             jobs_sort[host_str] = []
 
          jobs_sort[host_str].append(j)

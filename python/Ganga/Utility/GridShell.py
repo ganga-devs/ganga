@@ -92,7 +92,7 @@ def getShell(middleware='EDG', force=False):
 
     MIDDLEWARE_LOCATION = '%s_LOCATION' % middleware
 
-    if config.getEffectiveLevel(key)==2 and os.environ.has_key(MIDDLEWARE_LOCATION):
+    if config.getEffectiveLevel(key)==2 and MIDDLEWARE_LOCATION in os.environ:
         s = Shell()
     else:
         if os.path.exists(config[key]):
@@ -100,32 +100,32 @@ def getShell(middleware='EDG', force=False):
             # the $ARC_LOCATION as argument), this is hardcoded to maintain
             # backwards compatibility (and avoid any side effects) for EDG and
             # GLITE setup scripts which did not take any arguments
-            if key.startswith('ARC') and os.environ.has_key(MIDDLEWARE_LOCATION):
+            if key.startswith('ARC') and MIDDLEWARE_LOCATION in os.environ:
                 s = Shell(config[key],setup_args=[os.environ[MIDDLEWARE_LOCATION]])
             else: 
                 s = Shell(config[key])
-	else:
-	    logger.warning("Configuration of %s for %s: "%(middleware,configname))
-	    logger.warning("File not found: %s" %config[key])
-	    
+    else:
+        logger.warning("Configuration of %s for %s: "%(middleware,configname))
+        logger.warning("File not found: %s" %config[key])
+            
     if s:
         for key, val in values.items():
             s.env[key] = val
 
         # check and set env. variables for default LFC setup 
-        if not s.env.has_key('LFC_HOST'):
+        if 'LFC_HOST' not in s.env:
             try:
                 s.env['LFC_HOST'] = config['DefaultLFC']
             except Ganga.Utility.Config.ConfigError:
                 pass
 
-        if not s.env.has_key('LFC_CONNTIMEOUT'):
+        if 'LFC_CONNTIMEOUT' not in s.env:
             s.env['LFC_CONNTIMEOUT'] = '20'
 
-        if not s.env.has_key('LFC_CONRETRY'):
+        if 'LFC_CONRETRY' not in s.env:
             s.env['LFC_CONRETRY'] = '0'
 
-        if not s.env.has_key('LFC_CONRETRYINT'):
+        if 'LFC_CONRETRYINT' not in s.env:
             s.env['LFC_CONRETRYINT'] = '1'
         
         _allShells[middleware] = s

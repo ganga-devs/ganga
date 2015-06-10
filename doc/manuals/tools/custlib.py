@@ -31,7 +31,7 @@ for dir in sys.path:
         modules[base.lower()] = base
 
 # Minor oddity: the types module is documented in libtypes2.tex
-if modules.has_key('types'):
+if 'types' in modules:
     del modules['types']
     modules['types2'] = None
 
@@ -45,7 +45,7 @@ for file in filelist:
     docs[modname] = modname
 
 mlist = modules.keys()
-mlist = filter(lambda x, docs=docs: docs.has_key(x), mlist)
+mlist = filter(lambda x, docs=docs: x in docs, mlist)
 mlist.sort()
 mlist = map(lambda x, docs=docs: docs[x], mlist)
 

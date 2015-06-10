@@ -1164,13 +1164,13 @@ sys.exit(0)
 
                     if doStatusUpdate:
                         job.backend.status = info['State']
-                        if info.has_key('Exit Code'):
+                        if 'Exit Code' in info:
                             try:
                                 job.backend.exitcode_arc = int( info['Exit Code'] )
                             except:
                                 job.backend.exitcode_arc = 1
                                 
-                        if info.has_key('Job Error'):
+                        if 'Job Error' in info:
                             try:        
                                 job.backend.reason = info['Job Error']
                             except:

@@ -5,7 +5,7 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 # done so that Altas and LHCb can run the tests
 # using other backends
 loc = locals()
-if not loc.has_key('backends_to_test'):
+if 'backends_to_test' not in loc:
     loc['backends_to_test'] = ['Interactive','Local','LCG','Batch']
 
 #temporarily disabled running Root tests on LCG and LSF (due to timeouts), a

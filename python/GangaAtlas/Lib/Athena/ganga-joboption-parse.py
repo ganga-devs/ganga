@@ -92,7 +92,7 @@ for output_file in output_files:
 outFile.close()
        
 # Parse jobOptions file to append jobid to output_files
-if os.environ.has_key('ATHENA_OPTIONS'):
+if 'ATHENA_OPTIONS' in os.environ:
     joboptions = os.environ['ATHENA_OPTIONS'].split(' ')
 
     for jfile in joboptions:

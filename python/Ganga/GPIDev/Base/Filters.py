@@ -49,7 +49,7 @@ class _ComponentFilterManager:
         
     def __setitem__(self,category,filter):        
         
-        if not self._dict.has_key(category):
+        if category not in self._dict:
             self._dict[category] = {}
         
         #the filter can be registered as a tuple: ('filtername',filterfunction)
@@ -64,10 +64,10 @@ class _ComponentFilterManager:
             except AttributeError as e:
                 raise ValueError('FilterManager: Invalid component filter %s.'%filter)
         
-        if self._dict[category].has_key(filtername):
+        if filtername in self._dict[category]:
             raise ValueError('FilterManager: %s component filter already exists for %s category '%(filtername,category))
 
-        if not config.options.has_key(category):
+        if category not in config.options:
             config.addOption(category, "", "")
         config.overrideDefaultValue(category,filtername)
         self._dict[category][filtername] = filterfunc

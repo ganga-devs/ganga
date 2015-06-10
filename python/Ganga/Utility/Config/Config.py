@@ -526,7 +526,7 @@ class PackageConfig:
         for h in self._session_handlers:
             value = h[0](name,value)
 
-        if not self.options.has_key(name):
+        if name not in self.options:
             self.options[name] = ConfigOption(name)
             
         self.options[name].setSessionValue(value)
@@ -768,7 +768,7 @@ def read_ini_files(filenames,system_vars):
                     # is env variable
                     envval = ''
                     logger.debug('looking for ' + str(envvarclean) + ' in the shell environment')
-                    if os.environ.has_key(envvarclean):
+                    if envvarclean in os.environ:
                         envval = os.environ[envvarclean]
                         logger.debug(str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
                         value = value.replace( envvar, envval )
@@ -783,9 +783,9 @@ def read_ini_files(filenames,system_vars):
 
 
 def setSessionValue(config_name,option_name,value):
-    if allConfigs.has_key(config_name):
+    if config_name in allConfigs:
         c = getConfig(config_name)
-        if c.options.has_key(option_name):
+        if option_name in c.options:
             c.setSessionValue(option_name,value)
             return
         if c.is_open:
@@ -865,7 +865,7 @@ def setConfigOption( section = "", item = "", value = "" ):
    if bool( section ) and bool( item ):
       try:
          config = getConfig( section )
-         if config.getEffectiveOptions().has_key( item ):
+         if item in config.getEffectiveOptions():
             config.setSessionValue( item, value )
       except:
          pass

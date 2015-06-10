@@ -705,12 +705,12 @@ class ARDARepositoryMixIn(JobRepository):
         self._rep_lock.acquire(1)
         try: 
             assert(type(selection) == types.DictionaryType)
-            if selection.has_key('table_path'):
+            if 'table_path' in selection:
                 s, p = (selection['attributes'], selection['table_path'])
             else:
                 s, p = (selection, self.root_dir)
             if not USE_FOLDERS_FOR_SUBJOBS:
-                if not s.has_key(self._isasubjob[0]):
+                if self._isasubjob[0] not in s:
                     # select only top level jobs 
                     s[self._isasubjob[0]] = 'N'                
             return (s,p)

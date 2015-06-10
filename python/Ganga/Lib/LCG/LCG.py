@@ -64,7 +64,7 @@ def __fail_missing_jobs__(missing_glite_jids, jobdict):
     '''failing the Ganga jobs if the associated glite job id is appearing in missing_glite_jids'''
 
     for glite_jid in missing_glite_jids:
-        if jobdict.has_key( glite_jid ):
+        if glite_jid in jobdict:
             j = jobdict[glite_jid]
 
             if j.master:
@@ -1678,7 +1678,7 @@ sys.exit(0)
         jobclass  = {}
         for key in jobdict:
             mt = jobdict[key].backend.middleware.upper()
-            if not jobclass.has_key(mt):
+            if mt not in jobclass:
                 jobclass[mt] = [key]
             else:
                 jobclass[mt].append(key)
@@ -1759,7 +1759,7 @@ sys.exit(0)
                         
                     if (sj.status not in LCG._final_ganga_states) and \
                             (sj.backend.parent_id in j.backend.id) and \
-                            (not jobdict.has_key(sj.backend.parent_id)):
+                            (sj.backend.parent_id not in jobdict):
                         jobdict[sj.backend.parent_id] = j
                         
                     #    if j not in mjob_status_updatelist:

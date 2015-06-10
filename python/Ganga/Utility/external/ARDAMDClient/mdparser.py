@@ -246,7 +246,7 @@ class MDParser:
             table, v = v.split(':', 1)
             # Ok, that's a hack, it really only helps for absolute paths...
             if DEBUG: print 'TABLE BEFORE ', table
-            if not self.tables.has_key(table):
+            if table not in self.tables:
                 mdtable, table = self.loadTable(table)
             if DEBUG: print 'TABLE AFTER ', table
             mdtable = self.tables[table]
@@ -257,7 +257,7 @@ class MDParser:
             if DEBUG: print 'Evaluating ', table, v, row
             if v == 'FILE':
                 return 'CONST', str(row[0])
-            if not mdtable.attributeDict.has_key(v):
+            if v not in mdtable.attributeDict:
                 raise CommandException (8, 'Illegal query, unknown ' + v)
             if mdtable.typeDict[v] == 'int':
                 if row[mdtable.attributeDict[v]+1] == '':

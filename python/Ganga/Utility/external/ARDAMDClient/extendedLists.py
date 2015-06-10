@@ -95,7 +95,7 @@ class Block(object):
         del self.entry_keys[key]
 
     def hasKey(self, key):
-        return self.entry_keys.has_key(key)
+        return key in self.entry_keys
 
     def updateKeys(self):
         self.entry_keys = {}
@@ -158,7 +158,7 @@ class EntryBlock(Block):
         kk = key.split('.')
         dd = self.entry_keys
         for k in kk:
-            if not dd.has_key(k):
+            if k not in dd:
                 dd[k] = {}
             dd = dd[k]
 
@@ -168,7 +168,7 @@ class EntryBlock(Block):
         dd = self.entry_keys
         visited = []
         for k in kk:
-            if dd.has_key(k):
+            if k in dd:
                 visited.append((dd,k))
                 dd = dd[k]
             else:
@@ -184,7 +184,7 @@ class EntryBlock(Block):
         kk = key.split('.')
         dd = self.entry_keys
         for k in kk:
-            if not dd.has_key(k):
+            if k not in dd:
                 return False
             else:
                 dd = dd[k]

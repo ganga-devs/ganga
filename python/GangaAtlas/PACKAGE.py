@@ -61,7 +61,7 @@ if sys.hexversion < 0x2050000:
 
 # use appropriate RUCIO Client version
 _external_packages['rucio-clients']['RUCIO_HOME'] = os.path.join(getExternalHome(), 'rucio-clients', _external_packages['rucio-clients']['version'], 'noarch')
-if os.environ.has_key("CMTCONFIG") and os.environ['CMTCONFIG'].find("slc5") > -1:
+if "CMTCONFIG" in os.environ and os.environ['CMTCONFIG'].find("slc5") > -1:
     _external_packages['rucio-clients']['PYTHONPATH'] = [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ]
 
 setup = PackageSetup(_external_packages)
@@ -95,11 +95,11 @@ def standardSetup(setup=setup):
         setup.prependPath(p,'LD_LIBRARY_PATH')
         setup.prependPath(p,'PATH')
         setup.setPath(p,'DQ2_HOME')
-        if setup.packages[p].has_key('DQ2_ENDUSER_SETUP'):
+        if 'DQ2_ENDUSER_SETUP' in setup.packages[p]:
             os.environ['DQ2_ENDUSER_SETUP'] = setup.packages[p]['DQ2_ENDUSER_SETUP']
         setup.setPath(p,'PANDA_SYS')
         setup.setPath(p,'RUCIO_HOME')
-        if setup.packages[p].has_key('RUCIO_AUTH_TYPE'):
+        if 'RUCIO_AUTH_TYPE' in setup.packages[p]:
             os.environ['RUCIO_AUTH_TYPE'] = setup.packages[p]['RUCIO_AUTH_TYPE']
 
     

@@ -150,7 +150,7 @@ class AfsToken ( ICredential ):
       if ( "ICommandSet" == self.command._name ):
          self.command = AfsCommand()
       if not self.username:
-         if os.environ.has_key( "USERNAME" ):
+         if "USERNAME" in os.environ:
             self.username = os.environ[ "USERNAME" ]
       return
 

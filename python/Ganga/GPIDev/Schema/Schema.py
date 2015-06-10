@@ -95,7 +95,7 @@ class Schema:
         return self._filter(SharedItem)
 
     def hasAttribute(self,name):
-        return self.datadict.has_key(name)
+        return name in self.datadict
 
     def getItem(self,name):
         return self.__getitem__(name)
@@ -363,7 +363,7 @@ class Item:
                     
         # conditional initial value logic...
         # unless 'copyable' explicitly set (or forced), protected==1 => copyable==0
-        if not kwds.has_key('copyable') and (not forced or not forced.has_key('copyable')):
+        if 'copyable' not in kwds and (not forced or 'copyable' not in forced):
             if self._meta['protected']:
                 #logger.debug('applied implicit conditional rule: protected==1 => copyable==0')
                 self._meta['copyable'] = 0

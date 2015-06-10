@@ -34,7 +34,7 @@ class PackageSetup:
 
         platfdir = getPlaftorm()
 
-        if package.has_key('noarch') and package['noarch']:
+        if 'noarch' in package and package['noarch']:
            platfdir = 'noarch'
  
         return (os.path.join(getExternalHome(),name,package['version'],platfdir),
@@ -50,7 +50,7 @@ class PackageSetup:
         """
         import os
         path,tarball = self.getPackagePath(name,force)
-        if path and self.packages[name].has_key(var):
+        if path and var in self.packages[name]:
             from Ganga.Utility.util import isStringLike
 
             ppath = self.packages[name][var]

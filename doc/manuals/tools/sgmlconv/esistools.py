@@ -270,7 +270,7 @@ class Attributes(xml.sax.xmlreader.AttributesImpl):
         return self._attrs[name][0]
 
     def get(self, name, default=None):
-        if self._attrs.has_key(name):
+        if name in self._attrs:
             return self._attrs[name][0]
         return default
 

@@ -262,7 +262,7 @@ class DQ2JobSplitter(ISplitter):
 
                 from pandatools import countGuidsClient
                 streamRef = 'StreamAOD_ref'
-                if job.application.atlas_run_config['input'].has_key('collRefName'):
+                if 'collRefName' in job.application.atlas_run_config['input']:
                     streamRef = job.application.atlas_run_config['input']['collRefName']
                 elif job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
                     streamRef = "Stream%s_ref" % job.inputdata.tag_coll_ref
@@ -366,7 +366,7 @@ class DQ2JobSplitter(ISplitter):
                     raise ApplicationConfigurationError(None, "Couldn't find tag file '%s'." % f)
 
                 ref = ''
-                if not app.atlas_run_config['input'].has_key('collRefName') or not app.atlas_run_config['input']['collRefName'] in ['StreamAOD_ref', 'StreamESD_ref', 'StreamRAW_ref']:
+                if 'collRefName' not in app.atlas_run_config['input'] or not app.atlas_run_config['input']['collRefName'] in ['StreamAOD_ref', 'StreamESD_ref', 'StreamRAW_ref']:
                     if job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
                         ref = job.inputdata.tag_coll_ref
                     else:
@@ -442,7 +442,7 @@ class DQ2JobSplitter(ISplitter):
 
                         # add to additional datasets list
                         for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
-                            if not additional_datasets.has_key(job.inputdata.tag_info[tag_file]['dataset']):
+                            if job.inputdata.tag_info[tag_file]['dataset'] not in additional_datasets:
                                 additional_datasets[job.inputdata.tag_info[tag_file]['dataset']] = []
 
                             if not tag_ref[1] in additional_datasets[job.inputdata.tag_info[tag_file]['dataset']]:
@@ -762,7 +762,7 @@ class DQ2JobSplitter(ISplitter):
                 else:
                     udays = 10000
                     skipReplicaLookup = True
-                if locations and locations.has_key(dataset):
+                if locations and dataset in locations:
                     #cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, indata_buf.getvalue().replace('\n', '') + dataset)
                     #siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites)
                     siteinfo = dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites, skipReplicaLookup)

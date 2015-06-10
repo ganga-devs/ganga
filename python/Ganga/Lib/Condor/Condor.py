@@ -541,7 +541,7 @@ class Condor( IBackend ):
             else:
                hostInfo = "Condor"
             status = jobDict[ id ].status
-            if status_colours.has_key( status ):
+            if status in status_colours:
                colour = status_colours[ status ]
             else:
                colour = fg.magenta

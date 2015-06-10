@@ -198,7 +198,7 @@ class CRABBackend(IBackend):
         # Only five sections work here...
         for section in SECTIONS:
 
-            if not job.backend.fjr.has_key(section):
+            if section not in job.backend.fjr:
                 job.backend.fjr[section] = {}
 
             performancereport = doc.getElementsByTagName("PerformanceReport")[0]
@@ -298,7 +298,7 @@ class CRABBackend(IBackend):
                 self.postMortem(job)
                 job.updateStatus('failed')
         else:
-            if not STATUS.has_key(status):  
+            if status not in STATUS:  
                 logger.warning('UNKNOWN STATUS: ' + str(status))
 
         # Check the CRAB created jobs that are set as submitted... for a timeout

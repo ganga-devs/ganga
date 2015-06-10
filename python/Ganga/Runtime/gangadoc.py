@@ -149,12 +149,12 @@ def mygetmodule(object):
         file = inspect.getabsfile(object)
     except TypeError:
         return None
-    if modulesbyfile.has_key(file):
+    if file in modulesbyfile:
         return sys.modules.get(modulesbyfile[file])
     for module in sys.modules.values():
         if inspect.ismodule(module) and hasattr(module, '__file__'): #check if value is indeed a module
             modulesbyfile[os.path.realpath(inspect.getabsfile(module))] = module.__name__
-    if modulesbyfile.has_key(file):
+    if file in modulesbyfile:
         return sys.modules.get(modulesbyfile[file])
     main = sys.modules['__main__']
     if not hasattr(object, '__name__'):

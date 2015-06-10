@@ -218,7 +218,7 @@ class Grid(object):
         '''Gets the LFC_HOST: from current shell or querying BDII on demand'''
         lfc_host = None
 
-        if self.shell.env.has_key('LFC_HOST'):
+        if 'LFC_HOST' in self.shell.env:
             lfc_host = self.shell.env['LFC_HOST']
 
         if not lfc_host:

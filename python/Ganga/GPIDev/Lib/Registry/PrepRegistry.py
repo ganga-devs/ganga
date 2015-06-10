@@ -226,7 +226,7 @@ class ShareRef(GangaObject):
         def helper(object, unp=True, numsubjobs=0):
             shareddir =  os.path.join(getSharedPath(), os.path.basename(object))
             logger.debug('Adding %s to the shareref table.' % shareddir)
-            if self.name.has_key(os.path.basename(object)):
+            if os.path.basename(object) in self.name:
                 self.name[os.path.basename(object)] +=1
             else:
                 self.name[os.path.basename(object)] = 1
@@ -294,10 +294,10 @@ class ShareRef(GangaObject):
         #check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0 
         #so the user is made aware of them at shutdown
         for dir in os.listdir(getSharedDir()):
-            if not self.name.has_key(dir) and rmdir is False:
+            if dir not in self.name and rmdir is False:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository." % dir)
                 self.name[dir] = 0
-            elif not self.name.has_key(dir) and rmdir is True:
+            elif dir not in self.name and rmdir is True:
                 logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % dir)
                 shutil.rmtree(os.path.join(getSharedPath(), dir))
 

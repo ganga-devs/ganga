@@ -41,7 +41,7 @@ class TestRepository(JobRepository):
         logger.debug('commitJobs %s',str([j.id for j in jobs]))
 
         for j in jobs:
-            if not self.jobs.has_key(j.id):
+            if j.id not in self.jobs:
                 raise ValueError('attempt to commit job is not registered',j.id)
 
             self.jobs[j.id].commit += 1
@@ -65,7 +65,7 @@ class TestRepository(JobRepository):
         """
         logger.debug('deleteJobs %s',str(ids))
         for id in ids:
-            if not self.jobs.has_key(id):
+            if id not in self.jobs:
                 raise ValueError('attempt to delet job which does not exist %d',id)
             self.trash[id] = self.jobs[id]
             del self.jobs[id]

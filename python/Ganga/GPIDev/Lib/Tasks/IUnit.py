@@ -300,7 +300,7 @@ class IUnit(GangaObject):
          j = stripProxy( job )
 
          # try to preserve lazy loading
-         if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
+         if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
             if len(j._index_cache['subjobs:status']) > 0:
                for sj_stat in j._index_cache['subjobs:status']:
                   if sj_stat in active_states:
@@ -336,7 +336,7 @@ class IUnit(GangaObject):
          j = stripProxy( job )
 
          # try to preserve lazy loading
-         if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
+         if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
             if len(j._index_cache['subjobs:status']) > 0:
                for sj_stat in j._index_cache['subjobs:status']:
                   if sj_stat == status:
@@ -373,7 +373,7 @@ class IUnit(GangaObject):
          j = stripProxy( job )
 
          # try to preserve lazy loading
-         if hasattr(j, '_index_cache') and j._index_cache and j._index_cache.has_key('subjobs:status'):
+         if hasattr(j, '_index_cache') and j._index_cache and 'subjobs:status' in j._index_cache:
             if len(j._index_cache['subjobs:status']) != 0:
                total += len(j._index_cache['subjobs:status'])
             else:

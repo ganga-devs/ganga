@@ -39,7 +39,7 @@ while  len(processed) < num_pairs:
 #   print processed, len(processed)
     j_status = jobs[start_job+k].status
     id = jobs[start_job].id+k
-    if j_status == "running" and not processed.has_key(id): 
+    if j_status == "running" and id not in processed: 
         """ The client (consumer) will start running after the job (producer) start running"""
         job_b = Job(name="consumer of %d"%(id) )
         job_b.application = Executable(exe=File(JOB_B), args=['-I', str(start_job+k)])     
@@ -47,7 +47,7 @@ while  len(processed) < num_pairs:
         job_b.backend = LCG()
         job_b.submit()
         processed[id]=job_b.id
-    elif (j_status == "completed" or j_status == "failed") and not processed.has_key(id):
+    elif (j_status == "completed" or j_status == "failed") and id not in processed:
         ferr.write('The job %d is %s so no client can be launched in that state\n' %(id, j_status))
         processed[id]=-1
     else:

@@ -67,7 +67,7 @@ def appendLinesToSummaryReport(out,columns,data,render_links=True, append_total=
         print >>out,"""<tr>\n<td>%s</td>\n"""%cell
         
         for column in columns:
-            if data[line].has_key(column):
+            if column in data[line]:
                 total = totals.get(column,[0,0])
                 print >>out, """<td align=center><font color="green">%s</font></td>\n""" % data[line][column][0]
                 print >>out, """<td align=center><font color="red">%s</font></td>\n""" % data[line][column][1]
@@ -81,7 +81,7 @@ def appendLinesToSummaryReport(out,columns,data,render_links=True, append_total=
     if append_total:
         print >>out,"""<tr>\n<td>ALL</td>\n"""
         for column in columns:
-            if totals.has_key(column):
+            if column in totals:
                 print >>out, """<td align=center><font color="green">%s</font></td>\n""" % totals[column][0]
                 print >>out, """<td align=center><font color="red">%s</font></td>\n""" % totals[column][1]
             else:

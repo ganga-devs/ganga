@@ -125,7 +125,7 @@ def getContext(overload={}) :
     context = {}
     for paramName in contextConf.keys() :
         paramValue = None
-        if overload.has_key(paramName) :
+        if paramName in overload :
             paramValue = overload[paramName]
         if paramValue is None :    
             envVar = contextConf[paramName][0] 
@@ -210,7 +210,7 @@ class DashboardAPI :
         if jobId is not None :
             contextArgs['MonitorJobID'] = jobId
         for key in contextConf.keys() :
-            if not contextArgs.has_key(key) and self.defaultContext[key] is not None :
+            if key not in contextArgs and self.defaultContext[key] is not None :
                 contextArgs[key] = self.defaultContext[key]
         context = getContext(contextArgs)
         taskId = context['MonitorID']

@@ -67,7 +67,7 @@ def _makeJobO(files,tag):
         outFile.write('CollInput = [')
     else:
         try:
-            if os.environ.has_key('ATHENA_MAX_EVENTS'):
+            if 'ATHENA_MAX_EVENTS' in os.environ:
                 evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
             else:
                 evtmax = -1
@@ -75,7 +75,7 @@ def _makeJobO(files,tag):
             evtmax = -1
         outFile.write('theApp.EvtMax = %d\n' %evtmax)
 
-        if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+        if 'ATHENA_SKIP_EVENTS' in os.environ:
             skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
             outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
 
@@ -91,7 +91,7 @@ def _makeJobO(files,tag):
     outFile.write(']\n')
 
     ## setting for event picking
-    if os.environ.has_key('ATHENA_RUN_EVENTS'):
+    if 'ATHENA_RUN_EVENTS' in os.environ:
         revt = eval(os.environ['ATHENA_RUN_EVENTS'])
         run_evt = []
         for i in range(len(revt)):

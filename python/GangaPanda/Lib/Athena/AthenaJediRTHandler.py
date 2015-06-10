@@ -75,7 +75,7 @@ def getDBDatasets(jobO,trf,dbrelease):
                         dbrFiles[tmpLFN] = tmpVal
                     dbrDsList.append(tmpDbrDS)
                 # check
-                if not dbrFiles.has_key(tmpDbrLFN):
+                if tmpDbrLFN not in dbrFiles:
                     raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
     return dbrFiles,dbrDsList
 
@@ -806,7 +806,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
         # enable merging
         if job.backend.requirements.enableMerge:
             jobParameters = '-r {0} '.format(self.rundirectory)
-            if job.backend.requirements.configMerge.has_key('exec') and job.backend.requirements.configMerge['exec'] != '':
+            if 'exec' in job.backend.requirements.configMerge and job.backend.requirements.configMerge['exec'] != '':
                 jobParameters += '-j "{0}" '.format(options.mergeScript)
             if not job.backend.nobuild:
                 jobParameters += '-l ${LIB} '

@@ -219,11 +219,11 @@ class GridProxy ( ICredential ):
       if command == self.command.init:
          if clear:
             self.command.currentOpts.clear()
-         if self.command.init_parameters.has_key( "voms" ):
+         if "voms" in self.command.init_parameters:
             if self.voms:
                self.command.currentOpts\
                   [ self.command.init_parameters[ 'voms' ] ] = self.voms
-         if self.command.init_parameters.has_key( "valid" ):
+         if "valid" in self.command.init_parameters:
             if self.validityAtCreation:
                self.command.currentOpts\
                   [ self.command.init_parameters[ 'valid' ] ] \
@@ -413,7 +413,7 @@ class GridProxy ( ICredential ):
             logger.warning( "Command '" + self.command.info + "' not found" )
             logger.warning( "Unable to obtain information on Grid proxy" )
             timeRemaining = ""
-            if _infoCache.has_key( "timeleftInHMS" ):
+            if "timeleftInHMS" in _infoCache:
                del _infoCache[ "timeleftInHMS" ]
             
       if timeRemaining:
@@ -421,7 +421,7 @@ class GridProxy ( ICredential ):
          for line in lineList:
             if ( 1 + line.find( "Couldn't find a valid proxy" ) ):
                timeRemaining = "-1"
-               if _infoCache.has_key('timeleftInHMS'):
+               if 'timeleftInHMS' in _infoCache:
                   del _infoCache['timeleftInHMS']               
                break
             elif ( 1 + line.find( "timeleft" ) ):
@@ -448,7 +448,7 @@ class GridProxy ( ICredential ):
          self.chooseCommandSet()
          infoCommand = ""
 
-         if self.command.info_parameters.has_key( "vo" ):
+         if "vo" in self.command.info_parameters:
             if self.command.info:
                infoCommand = " ".join\
                   ( [ self.command.info, self.command.info_parameters[ "vo" ] ] )
@@ -467,7 +467,7 @@ class GridProxy ( ICredential ):
 
       if not output:
          output = ""
-         if _infoCache.has_key( "voname" ):
+         if "voname" in _infoCache:
             del _infoCache[ "voname" ]
 
       output = output.strip()
@@ -475,7 +475,7 @@ class GridProxy ( ICredential ):
       for error in [ "VOMS extension not found", "unrecognized option" ]:
          if output.find( error ) != -1:
             output = ""
-            if _infoCache.has_key('voname'):
+            if 'voname' in _infoCache:
                del _infoCache['voname']
             break
 
@@ -500,7 +500,7 @@ class GridProxy ( ICredential ):
       path = ''
 
       # check when the grid proxy was created
-      if not _infoCache.has_key( '-path' ) or ( _infoCache[ '-path' ][ 1 ] < ( time.time() - info_refresh ) ):
+      if '-path' not in _infoCache or ( _infoCache[ '-path' ][ 1 ] < ( time.time() - info_refresh ) ):
          self.chooseCommandSet()
          infoCommand = " ".join( [ self.command.info, '-path' ] )
          logger.debug( "Executing cache Command: %s" % infoCommand )
@@ -521,7 +521,7 @@ class GridProxy ( ICredential ):
          return ''
 
       # we're OK to use the cache
-      if _infoCache.has_key( opt ) and\
+      if opt in _infoCache and\
           ( _infoCache[ opt ][ 1 ] > ( time.time() - info_refresh ) ) and\
               ( _infoCache[ opt ][ 1 ] > os.path.getmtime(path) ):
                  logger.debug( "Returning Cached Value %s" % opt )

@@ -66,10 +66,10 @@ def dirac_inputdata(app):
         else: # master job with no splitter or subjob already split proceed as normal
             input_data = job.inputdata.getLFNs()
 
-    elif not job.backend.settings.has_key('Destination'):
+    elif 'Destination' not in job.backend.settings:
         t1_sites = getConfig('DIRAC')['noInputDataBannedSites']
         logger.info('Job has no inputdata (T1 sites will be banned to help avoid overloading them).')
-        if job.backend.settings.has_key('BannedSites'):
+        if 'BannedSites' in job.backend.settings:
             job.backend.settings['BannedSites'].extend(t1_sites)
             job.backend.settings['BannedSites'] = unique(job.backend.settings['BannedSites'])
         else:

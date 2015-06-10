@@ -13,8 +13,8 @@ def outputFilePostProcessingOnWN(job, outputFileClassName):
     backendClassName = job.backend.__class__.__name__
 
     backend_output_postprocess = job.getBackendOutputPostprocessDict()
-    if backend_output_postprocess.has_key(backendClassName):
-        if backend_output_postprocess[backendClassName].has_key(outputFileClassName):
+    if backendClassName in backend_output_postprocess:
+        if outputFileClassName in backend_output_postprocess[backendClassName]:
             if backend_output_postprocess[backendClassName][outputFileClassName] == 'WN':
                 return True
         
@@ -29,8 +29,8 @@ def outputFilePostProcessingOnClient(job, outputFileClassName):
     backendClassName = job.backend.__class__.__name__
 
     backend_output_postprocess = job.getBackendOutputPostprocessDict()
-    if backend_output_postprocess.has_key(backendClassName):
-        if backend_output_postprocess[backendClassName].has_key(outputFileClassName):
+    if backendClassName in backend_output_postprocess:
+        if outputFileClassName in backend_output_postprocess[backendClassName]:
             if backend_output_postprocess[backendClassName][outputFileClassName] == 'client':
                 return True
         

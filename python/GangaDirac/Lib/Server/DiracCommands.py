@@ -137,18 +137,18 @@ def getOutputDataLFNs(id, pipe_out=True): ## could shrink this with dirac.getJob
         parameters = parameters['Value']        
         # remove the sandbox if it has been uploaded
         sandbox = None
-        if parameters.has_key('OutputSandboxLFN'):
+        if 'OutputSandboxLFN' in parameters:
             sandbox = parameters['OutputSandboxLFN']
         
         #now find out about the outputdata
-        if parameters.has_key('UploadedOutputData'):
+        if 'UploadedOutputData' in parameters:
             lfn_list = parameters['UploadedOutputData']
             import re
             lfns = re.split(',\s*',lfn_list)
             if sandbox is not None and sandbox in lfns:
                 lfns.remove(sandbox)
             ok = True
-        elif parameters is not None and parameters.has_key('Message'):
+        elif parameters is not None and 'Message' in parameters:
             message = parameters['Message']
 
     result = {'OK':ok}
@@ -164,7 +164,7 @@ def normCPUTime(id):
     ncput = None
     if parameters is not None and parameters.get('OK',False):
         parameters = parameters['Value']        
-        if parameters.has_key('NormCPUTime(s)'):
+        if 'NormCPUTime(s)' in parameters:
             ncput = parameters['NormCPUTime(s)']
     output( ncput )
 
@@ -232,7 +232,7 @@ def status(job_ids):
 
 def getStateTime(id, status):
     log = dirac.loggingInfo(id)
-    if not log.has_key('Value'):
+    if 'Value' not in log:
         output( None )
         return
     L = log['Value']

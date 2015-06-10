@@ -669,8 +669,8 @@ class Job(GangaObject):
                         os.system("gzip %s" % currentFile)
 
             backend_output_postprocess = self.getBackendOutputPostprocessDict()
-            if backend_output_postprocess.has_key(backendClass):
-                if backend_output_postprocess[backendClass].has_key(outputfileClass):
+            if backendClass in backend_output_postprocess:
+                if outputfileClass in backend_output_postprocess[backendClass]:
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir,

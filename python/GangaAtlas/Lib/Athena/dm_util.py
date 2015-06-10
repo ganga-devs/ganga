@@ -118,7 +118,7 @@ def get_se_hostname(sename_replacements={}):
 
     '''
     sename = ''
-    if os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+    if 'VO_ATLAS_DEFAULT_SE' in os.environ:
         sename  = os.environ['VO_ATLAS_DEFAULT_SE']
 
     if sename:
@@ -143,7 +143,7 @@ def get_transfer_protocols(sename=None):
     protocols = []
 
     ## query to default BDII (LCG_GFAL_INFOSYS)
-    if os.environ.has_key('LCG_GFAL_INFOSYS'):
+    if 'LCG_GFAL_INFOSYS' in os.environ:
         cmd = 'lcg-info --list-se --vo atlas --query SE=\'%s\' --attr Protocol --sed' % sename
 
         f = os.popen(cmd)
@@ -208,7 +208,7 @@ def get_site_domain(domain_replacements={}):
     hostname = None
 
     # First choice: EDG_WL_RB_BROKERINFO or GLITE_WMS_RB_BROKERINFO
-    if os.environ.has_key('EDG_WL_RB_BROKERINFO'):
+    if 'EDG_WL_RB_BROKERINFO' in os.environ:
         try:
             f = open(os.environ['EDG_WL_RB_BROKERINFO'], "r")
             lines = f.readlines()
@@ -219,7 +219,7 @@ def get_site_domain(domain_replacements={}):
         except:
             pass
 
-    if os.environ.has_key('GLITE_WMS_RB_BROKERINFO'):
+    if 'GLITE_WMS_RB_BROKERINFO' in os.environ:
         try:
             f = open(os.environ['GLITE_WMS_RB_BROKERINFO'], "r")
             lines = f.readlines()
@@ -231,7 +231,7 @@ def get_site_domain(domain_replacements={}):
             pass
 
     # Second choice: GANGA_LCG_CE
-    if not hostname and os.environ.has_key('GANGA_LCG_CE'):
+    if not hostname and 'GANGA_LCG_CE' in os.environ:
         try:
             hostname = re.findall('(\S*):2119',os.environ['GANGA_LCG_CE'])
             #print hostname, lcgcename
@@ -239,7 +239,7 @@ def get_site_domain(domain_replacements={}):
             pass
 
     # Third choice: VO_ATLAS_DEFAULT_SE
-    if not hostname and os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+    if not hostname and 'VO_ATLAS_DEFAULT_SE' in os.environ:
         hostname = os.environ['VO_ATLAS_DEFAULT_SE']
 
     # Fourth choice: local hostname
@@ -312,7 +312,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
             altnames = TiersOfATLAS.getSiteProperty(sitename,'alternateName')
             if altnames:
                 for altname in altnames:
-                    if not alternateNameDict.has_key(altname):
+                    if altname not in alternateNameDict:
                         alternateNameDict[altname] = []
                     alternateNameDict[altname].append(sitename)
             
@@ -333,7 +333,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
             altnames = TiersOfATLAS.getSiteProperty(sitename,'alternateName')
             if altnames:
                 for altname in altnames:
-                    if alternateNameDict.has_key(altname):
+                    if altname in alternateNameDict:
                         more_dq2_local_ids += alternateNameDict[altname]
 
         dq2_local_ids += more_dq2_local_ids
@@ -603,7 +603,7 @@ if os.environ.has_key('ATHENA_RUN_EVENTS'):
     jOptionFS = jOptionFS.replace('###FSOUTPUTPREFIX###', repr(fs_of_prefix))
     jOptionFS = jOptionFS.replace('###SAMPLELIST###', repr(pfns))
     jOptionFS = jOptionFS.replace('###GRIDCOPYPROTOCOL###', repr(protocol))
-    if os.environ.has_key('RECEXTYPE'):
+    if 'RECEXTYPE' in os.environ:
         jOptionInput = jOptionInput.replace('###RECEXTYPE###', os.environ['RECEXTYPE'])
     else:
         jOptionInput = jOptionInput.replace('###RECEXTYPE###', 'ESD')
@@ -710,7 +710,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
                     pfnCache = _pfn
                 else:
                     # keep the dummy PFN
-                    if not _pfns_dummy.has_key(_guid):
+                    if _guid not in _pfns_dummy:
                         _pfns_dummy[_guid] = [pfnCache]
                     _pfns_dummy[_guid].append(_pfn)
         return _pfns_dummy
@@ -739,7 +739,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
                         for s in list1:
                             if s != None:
                                 if s.sfn:
-                                    if not pfns.has_key(s.guid):
+                                    if s.guid not in pfns:
                                         pfns[s.guid] = []
                                     pfns[s.guid].append(s.sfn)
                                     csum[s.guid] = {'csumtype':'', 'csumvalue':''}

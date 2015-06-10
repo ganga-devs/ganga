@@ -72,7 +72,7 @@ def filter_string_list(allList, filterList, type=0):
                     if type == 0: matchedDict[item] = True
                     if type == 1: del matchedDict[item]
         else:
-            if allDict.has_key(filter):
+            if filter in allDict:
                 if type == 0: matchedDict[filter] = True
                 if type == 1: del matchedDict[filter]
 

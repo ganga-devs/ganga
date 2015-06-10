@@ -55,7 +55,7 @@ def  getGridProxyPath():
     A valid proxy must be created independently."""
     
     proxyPath = ""
-    if os.environ.has_key( "X509_USER_PROXY" ):
+    if "X509_USER_PROXY" in os.environ:
         proxyPath = os.environ[ "X509_USER_PROXY" ]
     else:
         proxyPath = "".join( [ "/tmp/x509up_u", str( os.getuid() ) ] )

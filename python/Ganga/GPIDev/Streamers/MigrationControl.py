@@ -62,7 +62,7 @@ class MigrationControl(object):
         def get(self, key, def_value = None):
             if not def_value:
                 def_value = MigrationControl.TreeNode({})
-            if not self.has_key(key):
+            if key not in self:
                 self[key] = def_value
                 self[key].flag = self.flag ##child inherits flag
             return self[key]
