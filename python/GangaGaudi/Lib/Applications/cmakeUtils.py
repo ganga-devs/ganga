@@ -2,8 +2,8 @@
 import Ganga.Core.exceptions
 import os
 
-def get_user_platform( env = os.environ )
-    '''
+def get_user_platform( env = os.environ ):
+    ''' 
     '''
     raise NotImplementedError
 
