@@ -620,6 +620,16 @@ class GangaObject(Node):
             return v._on_attribute__set__(self, name)
         return v
 
+import abc
+
+class ObjectMetaABC(ObjectMetaclass, abc.ABCMeta):
+    """
+    A metaclass for making GangaObject ABCs
+    Set "__metaclass__ = ObjectMetaABC" on any GangaObject subclass
+    and decorate any abstract methods with @abc.abstractmethod
+    """
+    pass
+
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
  
