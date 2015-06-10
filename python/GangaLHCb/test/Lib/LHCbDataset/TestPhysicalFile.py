@@ -21,7 +21,7 @@ class TestPhysicalFile(GangaGPITestCase):
         assert full_expand_filename(name) == full_name, 'name not expanded'
         try:            
             full_expand_filename('lfn:'+name)
-            raise 'using lfn should have raised exception'
+            raise RuntimeError('using lfn should have raised exception')
         except:
             pass
 

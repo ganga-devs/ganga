@@ -209,7 +209,7 @@ if __name__ == '__main__':
         ganga_lfc_host = os.environ['GANGA_LFC_HOST']
         os.environ['LFC_HOST'] = ganga_lfc_host
     except:
-        raise "ERROR: GANGA_LFC_HOST not defined"
+        raise LookupError("ERROR: GANGA_LFC_HOST not defined")
         pass
 
 

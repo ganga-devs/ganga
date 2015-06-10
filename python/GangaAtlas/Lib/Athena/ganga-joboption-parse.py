@@ -18,27 +18,27 @@ EC_STAGEOUT      = 410400
 try:
     output_jobid = os.environ['OUTPUT_JOBID']
 except:
-    raise "ERROR: OUTPUT_JOBID not defined"
+    raise LookupError("ERROR: OUTPUT_JOBID not defined")
     sys.exit(EC_STAGEOUT)
 
 try:
     output_datasetname = os.environ['OUTPUT_DATASETNAME']
 except:
-    raise "ERROR: OUTPUT_DATASETNAME not defined"
+    raise LookupError("ERROR: OUTPUT_DATASETNAME not defined")
     sys.exit(EC_STAGEOUT)
 
 # Get output jobid
 try:
     use_short_filename = os.environ['GANGA_SHORTFILENAME']
 except:
-    raise "ERROR: GANGA_SHORTFILENAME not defined"
+    raise LookupError("ERROR: GANGA_SHORTFILENAME not defined")
     sys.exit(EC_STAGEOUT)
 
 # Get output jobid
 try:
     dq2_outputfile_namelength = os.environ['DQ2_OUTPUTFILE_NAMELENGTH']
 except:
-    print "ERROR: DQ2_OUTPUTFILE_NAMELENGTH not defined - using 150 characters"
+    print LookupError("ERROR: DQ2_OUTPUTFILE_NAMELENGTH not defined - using 150 characters")
     dq2_outputfile_namelength = 150
 
     
