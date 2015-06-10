@@ -116,7 +116,7 @@ def _diskSpaceChecker():
                 for line in config['DiskSpaceChecker'].splitlines():
                     code +="\t%s\n" % line
                 exec(code, ns)
-                _checker = new.function(ns["check"].func_code, _prog.local_ns, 'check' )
+                _checker = new.function(ns["check"].__code__, _prog.local_ns, 'check' )
             except Exception as e:
                 log.warning('Syntax errors in disk space checking code: %s. See [PollThread]DiskSpaceChecker' % e)
                 return False

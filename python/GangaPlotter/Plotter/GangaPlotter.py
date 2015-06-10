@@ -252,7 +252,7 @@ class GangaPlotter:
         elif canLoopOver(titleAttr): ## a list
             return self.__defaultSubtitle__(titleAttr[0])
         elif inspect.isfunction(titleAttr): ## other things: function, object ...
-            return 'user function %s' % titleAttr.func_name
+            return 'user function %s' % titleAttr.__name__
 
     def __procPltData__(self,value,pltDataProc):
 
