@@ -793,7 +793,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
                 skipevt = 0
         except:
             skipevt = 0
-        if skipevt<>0:
+        if skipevt != 0:
             outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
 
         outFile.write('try:\n')
@@ -845,7 +845,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         else:
             outFileEvtMax = open('evtmax.py','w').write('theApp.EvtMax = %d\n' %evtmax)
 
-        if skipevt<>0:
+        if skipevt != 0:
             outFileEvtMax = open('evtmax.py','w').write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
             
     # loop over all files

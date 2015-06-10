@@ -77,7 +77,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
 #       input dataset
         if job.inputdata:
-            if job.inputdata._name <> 'DQ2Dataset':
+            if job.inputdata._name != 'DQ2Dataset':
                 raise ApplicationConfigurationError(None,'PANDA application supports only DQ2Datasets')
 
         # run brokerage here if not splitting
@@ -92,7 +92,7 @@ class ExecutablePandaRTHandler(IRuntimeHandler):
 
 #       output dataset
         if job.outputdata:
-            if job.outputdata._name <> 'DQ2OutputDataset':
+            if job.outputdata._name != 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
         else:
             logger.info('Adding missing DQ2OutputDataset')

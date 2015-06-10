@@ -292,7 +292,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
 
         # handle the output dataset
         if job.outputdata:
-            if job.outputdata._name <> 'DQ2OutputDataset':
+            if job.outputdata._name != 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
         else:
             logger.info('Adding missing DQ2OutputDataset')

@@ -41,7 +41,7 @@ def unsubscribe(dst):
 
         
 def is_streaming(id):
-    if len(publisher.listener.streaming) <> 0 : 
+    if len(publisher.listener.streaming) != 0 : 
         return publisher.listener.streaming.get(id, 'end') == 'begin'    
     return False
 

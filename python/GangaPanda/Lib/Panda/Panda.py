@@ -1557,7 +1557,7 @@ class Panda(IBackend):
 
         ## doing master job status update only on those without merging jobs
         for job in jlist_for_masterjob_update:
-            if job.subjobs and job.status <> 'failed':
+            if job.subjobs and job.status != 'failed':
                 job.updateMasterJobStatus()
 
         ## ensure the master job status to be "running" if merging jobs are running or about to be generated

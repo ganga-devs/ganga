@@ -198,7 +198,7 @@ class DQ2JobSplitter(ISplitter):
             else:
                 raise ApplicationConfigurationError(None,'DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')            
 
-        if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset' and job.inputdata._name <> 'EventPicking':
+        if job.inputdata._name != 'DQ2Dataset'  and job.inputdata._name != 'AMIDataset' and job.inputdata._name != 'EventPicking':
             raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
 
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
@@ -207,7 +207,7 @@ class DQ2JobSplitter(ISplitter):
         if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0 and self.filesize <=0):
             raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
  
-        if (self.numevtsperjob > 0 and job.inputdata._name <> 'AMIDataset'):
+        if (self.numevtsperjob > 0 and job.inputdata._name != 'AMIDataset'):
             raise ApplicationConfigurationError(None,"Event based splitting is supported only for AMIDataset as input dataset type")
         # split options are mutually exclusive
         if ( (self.numfiles > 0 or self.numsubjobs > 0) and self.numevtsperjob > 0):

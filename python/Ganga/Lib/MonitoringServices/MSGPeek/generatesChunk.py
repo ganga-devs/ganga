@@ -94,7 +94,7 @@ f.close()
 #        self.messages = self.messages + 1
 #        line = self.f.readline()
 #        print message ,line 
-##        if (line <> message) :
+##        if (line != message) :
 ##            import sys
 ##            print "failed in line %d" %self.messages
 ##            print >> sys.error,  "in line %d there is an error" %self.messages

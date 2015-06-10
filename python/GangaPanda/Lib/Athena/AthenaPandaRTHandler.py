@@ -274,7 +274,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if self.inputdatatype=='DQ2':
             if not job.splitter:
                 runPandaBrokerage(job)
-            elif job.splitter._name <> 'DQ2JobSplitter' and job.splitter._name <> 'AnaTaskSplitterJob':
+            elif job.splitter._name != 'DQ2JobSplitter' and job.splitter._name != 'AnaTaskSplitterJob':
                 raise ApplicationConfigurationError(None,'Splitting with Panda+DQ2Dataset requires DQ2JobSplitter')
         elif self.inputdatatype=='Tier3':
             if job.splitter and job.splitter._name != 'ATLASTier3Splitter':
@@ -294,7 +294,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         
         # handle the output dataset
         if job.outputdata:
-            if job.outputdata._name <> 'DQ2OutputDataset':
+            if job.outputdata._name != 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
         else:
             logger.info('Adding missing DQ2OutputDataset')

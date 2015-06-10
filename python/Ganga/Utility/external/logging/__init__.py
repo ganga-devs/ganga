@@ -845,7 +845,7 @@ class Manager:
         specified logger.
         """
         for c in ph.loggers:
-            if string.find(c.parent.name, alogger.name) <> 0:
+            if string.find(c.parent.name, alogger.name) != 0:
                 alogger.parent = c.parent
                 c.parent = alogger
 
