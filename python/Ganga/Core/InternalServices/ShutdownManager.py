@@ -106,7 +106,7 @@ def _ganga_run_exitfuncs():
         (priority, func), targs, kargs = atexit._exithandlers.pop()
         try:
             if hasattr(func,'im_class'):
-                for cls in inspect.getmro(func.im_class):
+                for cls in inspect.getmro(func.__self__.__class__):
                     if func.__name__ in cls.__dict__: 
                         logger.debug( cls.__name__ + " : " + func.__name__ )
             else:
