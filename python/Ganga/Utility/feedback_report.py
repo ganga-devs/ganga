@@ -206,7 +206,7 @@ def report(job=None):
                                         fileToRead.close()
                         #except IOError, OSError:
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
         
                 def writeErrorLog(errorMessage):
                         try:
@@ -232,7 +232,7 @@ def report(job=None):
                                         fileToWrite.close()
                         #except IOError:
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
                 def renameDataFiles(directory):
 
@@ -275,7 +275,7 @@ def report(job=None):
                         os.mkdir(fullLogDirName)
                 #except OSError:
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
                 #import os.environ in a file
                 fullEnvironFileName = os.path.join(fullLogDirName, environFileName)
@@ -293,7 +293,7 @@ def report(job=None):
                                 inputFile.close()       
                 #except IOError         
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
                 #import user config in a file   
                 userConfigFullFileName = os.path.join(fullLogDirName, userConfigFileName)
@@ -322,7 +322,7 @@ def report(job=None):
                                 inputFile.close()
                 #except IOError does not catch the exception ???
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
                 #write gangarc - default configuration
                 defaultConfigFullFileName = os.path.join(fullLogDirName, defaultConfigFileName)
@@ -337,7 +337,7 @@ def report(job=None):
                                         
                 #except IOError does not catch the exception ???                
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
                 #import ipython history in a file
                 try:
@@ -351,7 +351,7 @@ def report(job=None):
                                 ipythonFile.close()
                 #except IOError does not catch the exception ???                
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
                 #import gangalog in a file      
                 userLogFileLocation = config["Logging"]._logfile
@@ -365,7 +365,7 @@ def report(job=None):
                                 gangaLogFile.close()
                 #except IOError:
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
                 #import the result of jobs command in the report
                 jobsListFullFileName = os.path.join(fullLogDirName, jobsListFileName)
@@ -385,7 +385,7 @@ def report(job=None):
                                         
                 #except IOError does not catch the exception ???                
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
 
                 #import the result of tasks command in the report
@@ -406,7 +406,7 @@ def report(job=None):
                                         
                 #except IOError does not catch the exception ???                
                 except:
-                        writeErrorLog(str(sys.exc_value))
+                        writeErrorLog(str(sys.exc_info()[1]))
 
         
                 #save it here because we will change fullLogDirName, but we want this to be the archive and to be deleted 
@@ -442,7 +442,7 @@ def report(job=None):
                                         inputFile.close()
                         #except IOError, OSError:
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
                         #extract file objects
                         try:                    
@@ -451,7 +451,7 @@ def report(job=None):
                                 extractFileObjects(fullJobSummaryFileName, fileObjectsPath)
                         #except OSError:
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
                         #copy dir of the job ->input/output and subjobs
                         try:
@@ -460,7 +460,7 @@ def report(job=None):
                                 shutil.copytree(parentDir, workspaceDir)
                         #except IOError, OSError
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
                         #copy shared area of the job 
                         try:
@@ -478,7 +478,7 @@ def report(job=None):
                                                         shutil.copytree(shareddir, sharedAreaDir)
                         #except IOError, OSError
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
                         #copy repository job file
                         try:
@@ -517,7 +517,7 @@ def report(job=None):
                                 
                         #except OSError, IOError:
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
 
                 #import task relevant info
@@ -544,7 +544,7 @@ def report(job=None):
                                         inputFile.close()
                         #except IOError, OSError:
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
                         #copy shared area of the task 
                         try:
@@ -562,7 +562,7 @@ def report(job=None):
                                                                 shutil.copytree(shareddir, sharedAreaDir)
                         #except IOError, OSError
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
 
                         #copy repository task file
@@ -590,7 +590,7 @@ def report(job=None):
                                 
                         #except OSError, IOError:
                         except:
-                                writeErrorLog(str(sys.exc_value))
+                                writeErrorLog(str(sys.exc_info()[1]))
 
                 resultArchive = '%s.tar.gz' % folderToArchive
 
