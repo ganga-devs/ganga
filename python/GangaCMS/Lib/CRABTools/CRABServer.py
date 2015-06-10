@@ -35,7 +35,7 @@ class CRABServer(GangaObject):
             if p.returncode != 0:
                 raise CRABServerError('CRAB %s returned %s' % (operation,
                                                                p.returncode))
-        except OSError, e:
+        except OSError as e:
             logger.error(stdout)
             logger.error(stderr)
             raise CRABServerError(e, 'OSError %s crab job(s).' % operation)

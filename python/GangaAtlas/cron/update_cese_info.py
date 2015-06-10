@@ -157,7 +157,7 @@ if __name__ == '__main__':
 #   parse options 
     try:
         opts, args = getopt.getopt(sys.argv[1:],'',['vo=','datafile=','logfiles=','exclude-ce=','exclude-se=','blacklist-site='])
-    except getopt.GetoptError, e:
+    except getopt.GetoptError as e:
         print >>sys.stderr, 'ERROR: %s' % e
         sys.exit(1)
 

@@ -120,7 +120,7 @@ class Block(object):
             if generic_name:
                 try:
                     last = getLast(os.path.join(dirname, generic_name))
-                except OSError, e:
+                except OSError as e:
                     self.on_disk = False
                 else:
                     self.on_disk = True

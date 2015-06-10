@@ -219,7 +219,7 @@ def runTest(NTEST, LEN, rootDir, output_dir, rep_type):
             print 'registering %d jobs...' % NTEST
         try:
             repository.registerJobs(jj)
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in registerJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"           
@@ -235,7 +235,7 @@ def runTest(NTEST, LEN, rootDir, output_dir, rep_type):
         try:
             #rjj = repository.checkoutJobs(map(lambda j: j.id, jj))
             rjj = repository.checkoutJobs({})
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in checkoutJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"
@@ -257,7 +257,7 @@ def runTest(NTEST, LEN, rootDir, output_dir, rep_type):
             print 'commiting %d jobs...' % NTEST
         try:
             repository.commitJobs(jj)
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in commitJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"
@@ -272,7 +272,7 @@ def runTest(NTEST, LEN, rootDir, output_dir, rep_type):
             print 'deleting %d jobs...' % NTEST
         try:
             repository.deleteJobs(map(lambda j: j.id, jj))
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in deleteJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"

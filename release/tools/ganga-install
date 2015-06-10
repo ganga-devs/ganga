@@ -63,7 +63,7 @@ def main():
 
     try:
         opts, args = getopt.gnu_getopt(sys.argv[1:], "", ["prefix=","extern=","silent","force","make-tarballs","fetch-again","help","brute","verbose","prerelease","platf=","all-deps"])
-    except getopt.error, x:
+    except getopt.error as x:
         print "command line syntax error"
         usage()
         sys.exit(2)
@@ -136,7 +136,7 @@ def main():
 
                 latest_revision = get_revision(latest_installer_module.CONFIG['script_revision'])
                 current_revision = get_revision(CONFIG['script_revision'])
-            except Exception,x:
+            except Exception as x:
                 print 'WARNING: cannot check the latest version of the installer script: ',x
 
             if current_revision != latest_revision:
@@ -226,7 +226,7 @@ def main():
             print 'resolving dependencies for',pkg
             try:
                 setup = importName(pkg+'.PACKAGE','setup')
-            except Exception,x:
+            except Exception as x:
                 print 'WARNING: Cannot find dependency information in file '+pkg+'/PACKAGE.py'
                 print x
                 continue
@@ -295,7 +295,7 @@ def makedirs(d):
     try:
         os.makedirs(d)
         print 'created:',d
-    except OSError,x:
+    except OSError as x:
         import errno
         if x.errno != errno.EEXIST:
             raise
@@ -340,12 +340,12 @@ def fetch(tarFileName, targetDir=None, downloadURL = "", override=0, silent=0):
     req = Request(tarFileURL)
     try: 
         response = urlopen(req)
-    except HTTPError, error:
+    except HTTPError as error:
         if not silent:
             print "Couldn't download " + str(tarFileURL) 
             print "Error: " + str(error.code)
         return 0
-    except URLError, error:
+    except URLError as error:
         if not silent:
             print "Couldn't download " + str(tarFileURL)
             print "Reason: " + str(error.reason)
@@ -404,7 +404,7 @@ def tar(tarFileName, targetDir, tarPath, silent,skip=1,force=0,opts=""):
 	#remove incomplete archive
 	try:
 	    os.unlink(tarFileName)
-	except OSError,e:
+	except OSError as e:
 	    pass
 	error('Error creating tarball file %s in directory %s for %s' % (tarFileName,targetDir,tarPath))
 

@@ -539,7 +539,7 @@ elif not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
         svcMgr = theApp.serviceMgr()
         svcMgr.EventSelector.InputCollections = ic
         #svcMgr.EventSelector.SkipBadFiles = True
-    except Exception,inst:
+    except Exception as inst:
         pass
 
     ## else: athenaCommonFlags
@@ -548,14 +548,14 @@ elif not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
             ## the Input AOD File(s)
             from AthenaCommon.AthenaCommonFlags import athenaCommonFlags
             athenaCommonFlags.FilesInput = ic
-        except Exception,inst:
+        except Exception as inst:
             pass
     else:
         try:
             ## the Input ESD File(s)
             from AthenaCommon.AthenaCommonFlags import athenaCommonFlags
             athenaCommonFlags.FilesInput = ic
-        except Exception,inst:
+        except Exception as inst:
             pass
 else:
     try:
@@ -664,7 +664,7 @@ def get_pfns(lfc_host, guids, nthread=10, dummyOnly=False, debug=False):
 
     try:
         import lfcthr
-    except ImportError, exp:
+    except ImportError as exp:
         print >> sys.stderr, '%s' % str(exp)
         print >> sys.stderr, 'unable to load LFC python module. Please check LCG UI environment.'
         print >> sys.stderr, 'python path: %s' % repr(sys.path)

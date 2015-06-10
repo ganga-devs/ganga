@@ -222,7 +222,7 @@ class Batch(IBackend):
         statusfilename = outw.getPath('__jobstatus__')
         try:
             os.remove(statusfilename)
-        except OSError,x:
+        except OSError as x:
             if x.errno!=2:
                 logger.warning("OSError:"+str(x))
             
@@ -426,7 +426,7 @@ def flush_file(f):
 def open_file(fname):
   try:
     filehandle=open(fname,'w')
-  except IOError,x:
+  except IOError as x:
     print 'ERROR: not able to write a status file: ', fname
     print 'ERROR: ',x
     raise
@@ -450,7 +450,7 @@ flush_file(statusfile)
 
 try:
     import tarfile
-except ImportError,x:
+except ImportError as x:
     sys.path.insert(0,###TARFILE_PYTHONPATH###)
     import tarfile
 
@@ -471,7 +471,7 @@ sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
 try:
     import subprocess
-except ImportError,x:
+except ImportError as x:
     sys.path.insert(0,###SUBPROCESS_PYTHONPATH###)
     import subprocess
 
@@ -509,7 +509,7 @@ try:
     heartbeatfile.write('.')
     flush_file(heartbeatfile)
     time.sleep(###HEARTBEATFREQUENCE###)
-except Exception,x:
+except Exception as x:
   print 'ERROR: %s'%str(x)
 
 monitor.progress()
@@ -615,7 +615,7 @@ sys.exit(result)
             talive = 0
             try:
                 talive = time.time()-os.path.getmtime(f)
-            except OSError,x:
+            except OSError as x:
                 logger.debug('Problem reading status file: %s (%s)',f,str(x))
                 
             return talive
@@ -630,7 +630,7 @@ sys.exit(result)
             try:
                 statusfile=open(f)
                 stat = statusfile.read()
-            except IOError,x:
+            except IOError as x:
                 logger.debug('Problem reading status file: %s (%s)',f,str(x))
                 return pid,queue,actualCE,exitcode
             finally:

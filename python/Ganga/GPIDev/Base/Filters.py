@@ -61,7 +61,7 @@ class _ComponentFilterManager:
             try:
                 filtername = filter.__name__
                 filterfunc = filter
-            except AttributeError,e:
+            except AttributeError as e:
                 raise ValueError('FilterManager: Invalid component filter %s.'%filter)
         
         if self._dict[category].has_key(filtername):

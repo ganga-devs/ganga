@@ -140,7 +140,7 @@ class RuntimePackage:
             ## (e.g PackageSetup.setPlatform() is called)
             __import__(self.name+".PACKAGE")
                 
-        except ImportError,x:
+        except ImportError as x:
             logger.warning("cannot import runtime package %s: %s",self.name,str(x))
             
     def getEnvironment(self):
@@ -168,10 +168,10 @@ class RuntimePackage:
 
             # do not import names from BOOT file automatically, use exportToGPI() function explicitly
             exec("import %s.BOOT"%self.name)
-        except ImportError, x:
+        except ImportError as x:
             logger.debug("problems with bootstrap of runtime package %s",self.name)
             logger.debug(x)           
-        except IOError,x:
+        except IOError as x:
             logger.debug("problems with bootstrap of runtime package %s",self.name)
             logger.debug(x)
     def loadNamedTemplates(self, globals, file_ext='tpl', pickle_files=False):
@@ -198,7 +198,7 @@ class RuntimePackage:
             else:
                 logger.debug( "Problems adding templates for runtime package %s",
                         self.name)
-        except Exception, x:
+        except Exception as x:
             logger.debug\
                ( "Problems adding templates for runtime package %s", self.name)
             logger.debug(x)

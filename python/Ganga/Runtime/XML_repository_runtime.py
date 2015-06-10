@@ -38,10 +38,10 @@ def bootstrap():
     try:
         for n in names:
             reps.append(factory(dir = os.path.join(getLocalRoot(),version,n)))
-    except RepositoryError,x:
+    except RepositoryError as x:
         s = print_error(x)
         raise
-    except Exception,x:
+    except Exception as x:
         s = print_error(x)
         log_user_exception(logger)
         raise
@@ -60,7 +60,7 @@ def bootstrap():
         else:
             try:
                 r._scan_repository()
-            except Exception,x:
+            except Exception as x:
                 s = print_error(x)
                 log_user_exception(logger)
                 logger.critical('the repository cannot be loaded (dir=%s)',r.repository.dir)

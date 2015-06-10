@@ -243,7 +243,7 @@ class ConfigOption:
         #try:
         if self.filter:
             session_value = self.filter(self,session_value)
-        #except Exception,x:
+        #except Exception as x:
         #    import  Ganga.Utility.logging
         #    logger = Ganga.Utility.logging.getLogger()
         #    logger.warning('problem with option filter: %s: %s',self.name,x)
@@ -262,7 +262,7 @@ class ConfigOption:
         self.session_value = session_value
         try:
             self.convert_type('session_value')
-        except Exception,x:
+        except Exception as x:
             #rollback if conversion failed
             try:
                 self.session_value = old_value
@@ -275,7 +275,7 @@ class ConfigOption:
         try:
             if self.filter:
                 user_value = self.filter(self,user_value)
-        except Exception,x:
+        except Exception as x:
             logger = getLogger()
             logger.warning('problem with option filter: %s: %s',self.name,x)
         
@@ -292,7 +292,7 @@ class ConfigOption:
         self.user_value = user_value
         try:
             self.convert_type('user_value')
-        except Exception,x:
+        except Exception as x:
             #rollback if conversion failed
             try:
                 self.user_value = old_value
@@ -333,7 +333,7 @@ class ConfigOption:
             for level,name in [(0,'user'),(1,'session'),(2,'default')]:
                 if hasattr(self,name+'_value'):
                     return level
-        raise AttributeError,name
+        raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name in ['value', 'level']:
@@ -380,7 +380,7 @@ class ConfigOption:
             try:
                 new_value = eval(value,config_scope)
                 logger.debug('applied eval(%s) -> %s (%s)',value,new_value,optdesc)
-            except Exception,x:
+            except Exception as x:
                 logger.debug('ignored failed eval(%s): %s (%s)',value,x,optdesc)
 
         # check the type of the value unless the cast_type is not NoneType
@@ -605,7 +605,7 @@ class PackageConfig:
         if at session level or 2 if at default level """
         try:
             return self.options[name].level
-        except KeyError,x:
+        except KeyError as x:
             raise ConfigError('option "%s" does not exist in "%s"'%(x,self.name))
     
     def attachUserHandler(self,pre,post):
@@ -725,7 +725,7 @@ def read_ini_files(filenames,system_vars):
             file_f = open(f)
             cc.readfp(file_f)
             file_f.close()
-        except IOError,x:
+        except IOError as x:
             logger.warning('%s',str(x))
 
         for sec in cc.sections():

@@ -196,7 +196,7 @@ def doc2(thing, title='Python Library Documentation: %s', forceload=0):
                 object = type(object)
             desc += ' object'
         pydoc.pager(title % desc + '\n\n' + pydoc.text.document(object, name))
-    except (ImportError, pydoc.ErrorDuringImport), value:
+    except (ImportError, pydoc.ErrorDuringImport) as value:
         print value
 
 pydoc.doc = doc2

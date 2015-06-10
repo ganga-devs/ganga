@@ -29,7 +29,7 @@ sleep_until_state(j,10,'killed')
 try:
     os.kill(proc_num,0)
     assert(0) # process not killed
-except OSError,x:
+except OSError as x:
     print 'got',x
     pass
 

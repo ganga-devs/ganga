@@ -42,7 +42,7 @@ class TestNestedLists(GangaGPITestCase):
         try:
             self.gangalist + self.filelist
             assert False, 'Exception should be thrown'
-        except TypeMismatchError, e:
+        except TypeMismatchError as e:
             pass
         
     def testSetItem(self):
@@ -52,7 +52,7 @@ class TestNestedLists(GangaGPITestCase):
         try:
             self.gangalist[0] = self.filelist
             assert False, 'Exception should be thrown'
-        except TypeMismatchError, e:
+        except TypeMismatchError as e:
             pass
     
     def testSetSlice(self):
@@ -62,7 +62,7 @@ class TestNestedLists(GangaGPITestCase):
         try:
             self.gangalist[0:4] = self.filelist[0:4]
             assert False, 'Exception should be thrown'
-        except TypeMismatchError, e:
+        except TypeMismatchError as e:
             pass
             
     def testAppend(self):
@@ -70,7 +70,7 @@ class TestNestedLists(GangaGPITestCase):
         try:
             self.gangalist.append(self.filelist)
             assert False, 'Exception should be thrown'
-        except TypeMismatchError, e:
+        except TypeMismatchError as e:
             pass
             
     def testExtend(self):
@@ -78,7 +78,7 @@ class TestNestedLists(GangaGPITestCase):
         try:
             self.gangalist.extend(self.filelist)
             assert False, 'Exception should be thrown'
-        except TypeMismatchError, e:
+        except TypeMismatchError as e:
             pass
             
     def testInsert(self):
@@ -88,7 +88,7 @@ class TestNestedLists(GangaGPITestCase):
         try:
             self.gangalist.insert(5,self.filelist)
             assert False, 'Exception should be thrown'
-        except TypeMismatchError, e:
+        except TypeMismatchError as e:
             pass
             
     

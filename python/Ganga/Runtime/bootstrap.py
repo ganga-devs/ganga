@@ -202,7 +202,7 @@ under certain conditions; type license() for details.
         def file_opens(f,message):
             try:
                 return open(f)
-            except IOError,x:
+            except IOError as x:
                self.exit(message,x)
 
         if self.options.config_file == '':
@@ -413,7 +413,7 @@ under certain conditions; type license() for details.
               logger.info('Making default gangadir: %s' % gangadir)
               try:
                  os.makedirs(gangadir)
-              except OSError, e:
+              except OSError as e:
                  logger.error("Failed to create default gangadir '%s': %s" % (gangadir, e.message))
                  raise
         if self.options.generate_config:
@@ -452,7 +452,7 @@ under certain conditions; type license() for details.
                  opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                  for section,option,val in opts:
                     config = getConfig(section).setUserValue(option,val)
-              except ConfigError,x:
+              except ConfigError as x:
                  self.exit('command line option error when resetting after config generation: %s'%str(x))
 
            
@@ -496,7 +496,7 @@ under certain conditions; type license() for details.
                     should_set = False
                  if should_set:
                     config = Ganga.Utility.Config.setSessionValue(section,option,val)
-           except ConfigError,x:
+           except ConfigError as x:
               self.exit('command line option error: %s'%str(x))
 
         # set logging options
@@ -541,7 +541,7 @@ under certain conditions; type license() for details.
                    if cv[1] != '5' and cv[1] != '6':
                        this_logger.error('file %s was created by a development release (%s)',self.options.config_file, r.group('version'))
                        this_logger.error('try -g option to create valid ~/.gangarc')
-        except IOError,x:
+        except IOError as x:
            pass # ignore all I/O errors (e.g. file does not exist), this is just an advisory check
         finally:
            if cf:
@@ -565,7 +565,7 @@ under certain conditions; type license() for details.
 
         try:
            hostname = Ganga.Utility.util.hostname()
-        except Exception,x: # fixme: use OSError instead?
+        except Exception as x: # fixme: use OSError instead?
            hostname = 'localhost'
         
         # the system variables (such as VERSION) are put to DEFAULTS section of the config module
@@ -629,7 +629,7 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         import getpass
         try:
            config.options['user'].default_value = getpass.getuser()
-        except Exception,x:
+        except Exception as x:
            raise Ganga.Utility.Config.ConfigError('Cannot get default user name'+str(x))
         
         gpiconfig = Ganga.Utility.Config.makeConfig('GPI_Semantics','Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface (what may result in a different behaviour of scripts and commands).')
@@ -819,7 +819,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         try:
            # load Ganga system plugins...
            import plugins
-        except Exception,x:
+        except Exception as x:
            self.logger.critical('Ganga system plugins could not be loaded due to the following reason: %s',str(x))
            self.logger.exception(x)
            raise GangaException(x) 
@@ -855,7 +855,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                     _env = r.getEnvironment()
                     if _env:
                        os.environ.update(_env)
-                except Exception,x:
+                except Exception as x:
                    Ganga.Utility.logging.log_user_exception()
                    self.logger.error("can't get environment for %s, possible problem with the return value of getEvironment()",r.name,)
                    raise
@@ -893,14 +893,14 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         for n,r in zip(allRuntimes.keys(),allRuntimes.values()):
             try:
                 r.bootstrap(Ganga.GPI.__dict__)
-            except Exception,x:
+            except Exception as x:
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error('problems with bootstrapping %s -- ignored',n)
             try:
                 r.loadNamedTemplates(Ganga.GPI.__dict__,
                                      Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
                                      Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
-            except Exception,x:
+            except Exception as x:
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error('problems with loading Named Templates for %s',n)
         # load user-defined plugins...
@@ -909,7 +909,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         for r in allRuntimes.values():
             try:
                r.loadPlugins()
-            except Exception,x:
+            except Exception as x:
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error("problems with loading plugins for %s -- ignored",r.name,)
 
@@ -941,7 +941,7 @@ default_backends = LCG
               if tag == 'default':
                  try:
                     allPlugins.setDefault(category,default_plugins_cfg[opt])
-                 except Ganga.Utility.Plugin.PluginManagerError,x:
+                 except Ganga.Utility.Plugin.PluginManagerError as x:
                     self.logger.warning('cannot set the default plugin "%s": %s',opt,x)
               else:
                  self.logger.warning("do not understand option %s in [Plugins]",opt) 
@@ -951,7 +951,7 @@ default_backends = LCG
         batch_default_name = Ganga.Utility.Config.getConfig('Configuration').getEffectiveOption('Batch')
         try:
            batch_default = allPlugins.find('backends',batch_default_name)
-        except Exception,x:
+        except Exception as x:
            raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)'%str(x))
         else:
            allPlugins.add(batch_default,'backends','Batch')
@@ -1172,7 +1172,7 @@ default_backends = LCG
         for r in allRuntimes.values():
             try:
                r.postBootstrapHook()
-            except Exception,x:
+            except Exception as x:
                 Ganga.Utility.logging.log_user_exception()
                 self.logger.error("problems with post bootstrap hook for %s",r.name,)
 
@@ -1213,7 +1213,7 @@ default_backends = LCG
              self.logger.info("Generating difference HTML reports")
              rc = xmldifferencer.main(self.args)
           return rc
-       except ImportError,e:
+       except ImportError as e:
           self.logger.error("You need GangaTest external package in order to invoke Ganga test-runner.")
           print e
           return -1
@@ -1250,7 +1250,7 @@ default_backends = LCG
         if os.path.exists(fileName):
             try:
                 execfile( fileName, local_ns )
-            except Exception, x:
+            except Exception as x:
                 self.logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))
         # exec StartupGPI code          
         from Ganga.Utility.Config import getConfig      

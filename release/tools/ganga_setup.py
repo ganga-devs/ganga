@@ -64,7 +64,7 @@ def main():
         
         try:
                 opts, args = getopt.getopt(sys.argv[1:], "", ["version=","interactive","show-all","experiment="])
-        except getopt.error, x:
+        except getopt.error as x:
                 usage("command line syntax error")
 
         for o,a in opts:

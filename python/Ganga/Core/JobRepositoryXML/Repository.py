@@ -14,7 +14,7 @@ def removedir(d):
 def makedirs(d):
     try:
         os.makedirs(d)
-    except OSError,x:
+    except OSError as x:
         import errno
         if x.errno != errno.EEXIST:
             raise
@@ -156,7 +156,7 @@ class Repository:
             except KeyboardInterrupt:
                 #FIXME: any special cleanup needed?
                 raise
-            except Exception,x: # I/O and parsing errors
+            except Exception as x: # I/O and parsing errors
                 msg = 'Cannot read job %s: %s'%(fqid(),repr(x))
                 add_error(msg)
                 bad_ids.append(fqid())

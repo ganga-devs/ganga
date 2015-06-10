@@ -74,7 +74,7 @@ class Schema:
     def __getitem__(self, name):
         try:
             return self.datadict[name]
-        except Exception, x:
+        except Exception as x:
             logger.error( "Ganga Cannot find: %s in Object: %s" % ( name, self.name ) )
             from Ganga.Core.exceptions import GangaAttributeError
             raise GangaAttributeError( x )
@@ -158,9 +158,9 @@ class Schema:
             
             try:
                 item = self.getItem(name)
-            except KeyError,x:
+            except KeyError as x:
                 raise Ganga.Utility.Config.ConfigError(errmsg+"attribute not defined in the schema")
-            except Exception,x:
+            except Exception as x:
                 raise Ganga.Utility.Config.ConfigError(errmsg+str(x))
             
             if item.isA(ComponentItem):
@@ -207,7 +207,7 @@ class Schema:
             else:
                 item = self.getItem(attr)
                 defvalue = item['defvalue']
-        except Ganga.Utility.Config.ConfigError, x:
+        except Ganga.Utility.Config.ConfigError as x:
             defvalue = item['defvalue']
 
         # in the checking mode, use the provided value instead

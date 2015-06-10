@@ -81,7 +81,7 @@ class Task(GangaObject):
                     stid = j.application.tasks_id.split(":")
                     if int(stid[-2]) == self.id:
                         j.remove()
-                except Exception, x:
+                except Exception as x:
                     pass
         self._getRegistry()._remove(self)
         logger.info("Task #%s deleted" % self.id)
@@ -193,7 +193,7 @@ class Task(GangaObject):
                             addjob(sj)
                     else:
                         addjob(j)
-            except Exception, x:
+            except Exception as x:
                 #print x
                 pass
         return JobRegistrySliceProxy(jobslice)

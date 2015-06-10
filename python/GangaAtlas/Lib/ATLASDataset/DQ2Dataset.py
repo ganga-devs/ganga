@@ -1577,7 +1577,7 @@ class DQ2OutputDataset(Dataset):
             if not siteID in alllocations:
                 try:
                     dq2.registerDatasetLocation(datasetname, siteID)
-                except DQInvalidRequestException, Value:
+                except DQInvalidRequestException as Value:
                     logger.error('Error registering location %s of dataset %s: %s', datasetname, siteID, Value) 
         finally:
             #dq2_lock.release()
@@ -1629,7 +1629,7 @@ class DQ2OutputDataset(Dataset):
             #dq2_lock.acquire()
             try:
                 ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
-            except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFrozenDatasetException), Value:
+            except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFrozenDatasetException) as Value:
                 logger.warning('Warning, some files already in dataset or dataset is frozen: %s', Value)
                 pass
         finally:
@@ -1675,7 +1675,7 @@ class DQ2OutputDataset(Dataset):
                         #dq2_lock.acquire()
                         try:
                             dq2.registerDatasetLocation(dataset, siteID)
-                        except DQLocationExistsException, DQInternalServerException:
+                        except (DQLocationExistsException, DQInternalServerException):
                             logger.debug("Dataset %s is already registered at location %s", dataset, siteID )
                         
                     finally:

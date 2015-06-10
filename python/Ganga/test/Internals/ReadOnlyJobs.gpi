@@ -14,11 +14,11 @@ print j._impl._readonly()
 try:
     j.application.exe = '3'
     assert('not new job should be read-only' is None)
-except ReadOnlyObjectError,x:
+except ReadOnlyObjectError as x:
     pass
 
 try:
     j.application.exe = '3'
     assert('not new job should be read-only' is None)
-except ReadOnlyObjectError,x:
+except ReadOnlyObjectError as x:
     pass

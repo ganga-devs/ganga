@@ -73,7 +73,7 @@ class CompositeMonitoringService(IMonitoringService):
             else:
                monService = monClass(jobInfos[i], configInfos[i])
             self.monMonServices.append(monService)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="Failed to init %s monitoring service...discarding it" % str(monClass))
             from Ganga.Utility.logging import log_user_exception
@@ -89,7 +89,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.start(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed to *start*: %s" % (monClass, e))
                
@@ -104,7 +104,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.progress(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed to *progress*: %s" % (monClass, e))
                
@@ -120,7 +120,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.stop(exitcode,**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed to *stop*: %s" % (monClass, e))               
       return ret
@@ -134,7 +134,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.prepare(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *prepare*" % monClass)               
       return ret
@@ -148,7 +148,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.submitting(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *submitting*" % monClass)               
       return ret
@@ -162,7 +162,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.submit(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *submit*" % monClass)               
             from Ganga.Utility.logging import log_user_exception
@@ -178,7 +178,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.complete(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *complete*" % monClass)               
       return ret
@@ -192,7 +192,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.fail(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *fail*" % monClass)               
       return ret
@@ -206,7 +206,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.kill(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *kill*" % monClass)               
       return ret
@@ -220,7 +220,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             ret[monClass] = monService.rollback(**opts)
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in job *rollback*" % monClass)               
       return ret
@@ -242,7 +242,7 @@ class CompositeMonitoringService(IMonitoringService):
             # the list might contain duplicate elements.
             # does this cause troubles on the upper levels?            
             modules.extend(monService.getSandboxModules())
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in *getSandboxModules* ... ignoring it." % monClass)
       return modules
@@ -264,7 +264,7 @@ class CompositeMonitoringService(IMonitoringService):
          try:
             monClass = str(monService.__class__)
             infos[monClass] = monService.getJobInfo()            
-         except Exception,e:
+         except Exception as e:
             #discard errors in initialization of monitoring services
             self._log(level="warning",msg="%s monitoring service failed in *getJobInfo*: %s" % (monClass,e))
       return infos

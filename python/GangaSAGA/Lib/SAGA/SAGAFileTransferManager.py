@@ -101,7 +101,7 @@ class SAGAFileTransferAlgorithm(Algorithm):
 
             job.updateStatus('completed')
         
-        except saga.exception, e:
+        except saga.exception as e:
             logger.error('exception caught while poststaging: %s', e.get_full_message())
             job.updateStatus('failed')
         

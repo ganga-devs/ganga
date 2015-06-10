@@ -61,7 +61,7 @@ def createLock(lockfile, guid, tries_limit = 200):
                 os.close(fd)
             if f_guid != guid:
                 raise OSError("Guids mismatch in the lock file")
-        except OSError, e:
+        except OSError as e:
             if tries > tries_limit:
                 return False
             time.sleep(0.05)
@@ -72,7 +72,7 @@ def createLock(lockfile, guid, tries_limit = 200):
 def removeLock(lockfile):
     try:
         os.remove(lockfile)
-    except OSError, e:
+    except OSError as e:
         if e[0] != errno.ENOENT:
             return False
     return True

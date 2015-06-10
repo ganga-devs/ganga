@@ -16,7 +16,7 @@ class MonitoringClient( object ):
             log.debug( "Subscribing to the %s service." % serviceName  )
         try:
             self.__MC[ serviceName ] = monitoringService
-        except Exception, msg:
+        except Exception as msg:
             log.debug( msg )
             return False
         return True
@@ -75,7 +75,7 @@ class MonitoringClient( object ):
         if self.isSubscribed( serviceName ):
             try:
                 self.__MC[ serviceName ].removeClientCallback( func )
-            except Exception, msg:
+            except Exception as msg:
                 log.debug( "unbindClientFunction() failed on %s: %s." % ( serviceName, msg ) )
     
     # Monitoring loop hook functions
@@ -88,7 +88,7 @@ class MonitoringClient( object ):
         if self.isSubscribed( serviceName ):
             try:
                 self.__MC[ serviceName ].removeCallbackHook( hookFunc )
-            except Exception, msg:
+            except Exception as msg:
                 log.debug( "unbindClientFunction() failed on %s: %s." % ( serviceName, msg ) )
     
     # Monitor filters. NOT IN USE YET.

@@ -18,7 +18,7 @@ class RegistrySliceProxy(object):
     def incomplete_ids(self):
         try:
             return self._impl.objects._incomplete_objects
-        except Exception, x:
+        except Exception as x:
             return []
 
     def __iter__(self):

@@ -37,7 +37,7 @@ class IChecker(IPostProcessor):
                     ( (job.master is not None) and self.checkSubjobs) :
                 try:
                     return self.check(job)
-                except Exception, e:
+                except Exception as e:
                     debug_file = open(os.path.join(job.getDebugWorkspace().getPath(),'checker_errors.txt'),'a')
                     debug_file.write('\n Checker has failed with the following error: \n')
                     debug_file.write(str(e))

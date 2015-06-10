@@ -50,7 +50,7 @@ try:
    # Import GPI and run Ganga
    from Ganga.GPI import *
    Ganga.Runtime._prog.run()
-except GangaException,x:
+except GangaException as x:
    Ganga.Runtime._prog.log(x)
    sys.exit(-1)
 

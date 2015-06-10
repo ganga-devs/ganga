@@ -38,7 +38,7 @@ assert os.path.exists(outfile), 'File should exist'
 os.unlink(outfile)
 try:
     os.rmdir(tmpdir)
-except OSError,e:
+except OSError as e:
     print e
     print 'Directory content',os.listdir(tmpdir)
 

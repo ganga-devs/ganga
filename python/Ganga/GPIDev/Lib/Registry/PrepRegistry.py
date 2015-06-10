@@ -41,11 +41,11 @@ class PrepRegistry(Registry):
             try:
                 if not self.metadata is None:
                     self.metadata.shutdown()
-            except Exception, x:
+            except Exception as x:
                 logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
             try:
                 self._flush()
-            except Exception, x:
+            except Exception as x:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, x)
             self._started = False
             for obj in self._objects.values():

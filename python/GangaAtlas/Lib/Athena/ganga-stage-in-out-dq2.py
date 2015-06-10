@@ -1199,7 +1199,7 @@ def register_dataset_location(datasetname, siteID):
         if not siteID in alllocations:
             try:
                 dq2.registerDatasetLocation(datasetname, siteID)
-            except DQInvalidRequestException, Value:
+            except DQInvalidRequestException as Value:
                 print 'Error registering location %s of dataset %s: %s' %(datasetname, siteID, Value) 
     finally:
         dq2_lock.release()
@@ -1245,7 +1245,7 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
         try:
             ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
             val = 0
-        except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFileExistsInDatasetException), Value:
+        except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFileExistsInDatasetException) as Value:
             print 'Warning, some files already in dataset: %s' %Value
             pass
     finally:
@@ -1292,7 +1292,7 @@ def register_datasets_details(datasets,outdata):
                     dq2_lock.acquire()
                     try:
                         datasetinfo = dq2.registerNewDataset(dataset)
-                    except (DQDatasetExistsException,Exception), Value:
+                    except (DQDatasetExistsException,Exception) as Value:
                         print 'Error registering new dataset %s: %s' %(dataset,Value)
                 finally:
                     dq2_lock.release()
@@ -1666,7 +1666,7 @@ if __name__ == '__main__':
                     tagdatasetnames = os.environ['DATASETNAME'].split(":")
 
                 except:
-                    raise NameError, "ERROR: DATASETNAME not defined"
+                    raise NameError("ERROR: DATASETNAME not defined")
 
                 # compose dq2 command
                 dq2setuppath = '$VO_ATLAS_SW_DIR/ddm/latest/setup.sh'
@@ -2276,7 +2276,7 @@ if __name__ == '__main__':
                     output_files.append(output_files_orig[i])
                     renameflag = True
                 except IOError:
-                    raise NameError, "ERROR: problems in output stage-out. Could not read output file: '%s'" % output_files_orig[i]
+                    raise NameError("ERROR: problems in output stage-out. Could not read output file: '%s'" % output_files_orig[i])
                     sys.exit(EC_STAGEOUT)
 
         if len(output_files)==0:
@@ -2287,7 +2287,7 @@ if __name__ == '__main__':
         try:
             datasetname = os.environ['OUTPUT_DATASETNAME']
         except:
-            raise NameError, "ERROR: OUTPUT_DATASETNAME not defined"
+            raise NameError("ERROR: OUTPUT_DATASETNAME not defined")
             sys.exit(EC_Configuration)
 
         if not len(output_files):
@@ -2407,14 +2407,14 @@ if __name__ == '__main__':
         try:
             output_lfn = os.environ['OUTPUT_LFN']
         except:
-            raise NameError, "ERROR: OUTPUT_LFN not defined"
+            raise NameError("ERROR: OUTPUT_LFN not defined")
             sys.exit(EC_Configuration)
 
         # Get output jobid
         try:
             output_jobid = os.environ['OUTPUT_JOBID']
         except:
-            raise NameError, "ERROR: OUTPUT_JOBID not defined"
+            raise NameError("ERROR: OUTPUT_JOBID not defined")
             sys.exit(EC_Configuration)
 
         try:
@@ -2429,7 +2429,7 @@ if __name__ == '__main__':
         try:
             use_short_filename = os.environ['GANGA_SHORTFILENAME']
         except:
-            raise NameError, "ERROR: GANGA_SHORTFILENAME not defined"
+            raise NameError("ERROR: GANGA_SHORTFILENAME not defined")
             sys.exit(EC_STAGEOUT)
     
         guids = []

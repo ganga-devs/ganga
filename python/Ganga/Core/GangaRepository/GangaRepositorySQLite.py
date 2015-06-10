@@ -31,7 +31,7 @@ class GangaRepositorySQLite(GangaRepository):
         self.root = os.path.join(self.registry.location,"0.1",self.registry.name)
         try:
             os.makedirs(self.root)
-        except OSError, x:
+        except OSError as x:
             pass
         self.con = sqlite.connect(os.path.join(self.root,"database.db"))
         print "Connected to ", os.path.join(self.root,"database.db")

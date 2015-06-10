@@ -117,7 +117,7 @@ def _diskSpaceChecker():
                     code +="\t%s\n" % line
                 exec code in ns
                 _checker = new.function(ns["check"].func_code, _prog.local_ns, 'check' )
-            except Exception,e:
+            except Exception as e:
                 log.warning('Syntax errors in disk space checking code: %s. See [PollThread]DiskSpaceChecker' % e)
                 return False
 
@@ -128,7 +128,7 @@ def _diskSpaceChecker():
                     'To protect against possible write errors all internal services has been disabled.'
                     'If you believe the problem has been solved type "reactivate()" to re-enable '
                     'interactions within this session.')
-    except Exception, msg:
+    except Exception as msg:
         log.warning('Exception in free disk space checking code: %s. See [PollThread]DiskSpaceChecker' % msg)        
         return False
     return True

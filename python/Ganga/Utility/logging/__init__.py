@@ -129,7 +129,7 @@ def _make_file_handler(logfile,logfile_size):
     if logfile:
         try:
             new_file_handler = handlers.RotatingFileHandler(logfile,maxBytes=logfile_size,backupCount=1)
-        except IOError,x:
+        except IOError as x:
             private_logger.error('Cannot open the log file: %s',str(x))
             return
         # remove old handler if exists
@@ -200,7 +200,7 @@ def _set_log_level(logger,value):
     try:
         logger.setLevel(_string2level(value))
         return value
-    except AttributeError,x:
+    except AttributeError as x:
         logger.error('%s',str(x))
         logger.warning('possible configuration error: invalid level value (%s), using default level',value)
         return None

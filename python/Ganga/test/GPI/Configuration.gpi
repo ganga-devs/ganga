@@ -17,7 +17,7 @@ def setopt_fails(opt,val):
     try:
         setopt(opt,val)
         assert(not 'setopt(%s,%s) should raise ConfigError!'%(opt,repr(val)))
-    except ConfigError,x:
+    except ConfigError as x:
         pass
 
 # for None anything can be set and no checking is performed

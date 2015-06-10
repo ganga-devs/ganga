@@ -232,7 +232,7 @@ class Loader:
             if name == 'class':
                 try:
                     cls = allPlugins.find(attrs['category'],attrs['name'])
-                except PluginManagerError,e:
+                except PluginManagerError as e:
                     self.errors.append(e)
                     #self.errors.append('Unknown class: %(name)s'%attrs)
                     obj = EmptyGangaObject()

@@ -575,7 +575,7 @@ class Job(GangaObject):
             if state.hook:
                 try:
                     getattr(self, state.hook)()
-                except PostprocessStatusUpdate, x:
+                except PostprocessStatusUpdate as x:
                     newstatus = x.status
 
             if transition_update:
@@ -597,7 +597,7 @@ class Job(GangaObject):
             self.status = newstatus # move to the new state AFTER hooks are called
             self._commit()
 
-        except Exception, x:
+        except Exception as x:
             self.status = saved_status
             log_user_exception()
             raise JobStatusError(x)
@@ -769,12 +769,12 @@ class Job(GangaObject):
         logger.info( "Job %s Manually Running PostProcessors" % str(self.getFQID('.')) )
         try:
             self.application.postprocess()
-        except Exception, x:
+        except Exception as x:
             logger.error( "Job %s Application postprocess failed" % str(self.getFQID('.')) )
             logger.error( "\n%s" % str(x) )
         try:
             self.postprocessoutput(self.outputfiles, self.outputdir)
-        except Exception, x:
+        except Exception as x:
             logger.error( "Job %s postprocessoutput failed" % str(self.getFQID('.')) )
             logger.error( "\n%s" % str( x ) )
 
@@ -1260,7 +1260,7 @@ class Job(GangaObject):
                 try:
                     logger.debug( "Job %s Calling allHandlers.get" % str(self.getFQID('.')) )
                     rtHandler = allHandlers.get(self.application._name,self.backend._name)()
-                except KeyError,x:
+                except KeyError as x:
                     msg = 'runtime handler not found for application=%s and backend=%s'%(self.application._name,self.backend._name)
                     logger.error(msg)
                     raise JobError(msg)
@@ -1443,7 +1443,7 @@ class Job(GangaObject):
             try:
                 #NOTE: this commit is redundant if updateStatus() is used on the line above
                 self._commit()
-            except Exception,x:
+            except Exception as x:
                 msg = 'cannot commit the job %s, submission aborted'%str(self.getFQID('.'))
                 logger.error(msg)
                 self.status = 'new'
@@ -1512,7 +1512,7 @@ class Job(GangaObject):
                 if not r:
                     raise JobManagerError('error during submit')
 
-            except IncompleteJobSubmissionError,x:
+            except IncompleteJobSubmissionError as x:
                 logger.warning('Not all subjobs have been sucessfully submitted: %s',x)
 
             # This appears to be done by the backend now in a way that handles sub-jobs,
@@ -1538,7 +1538,7 @@ class Job(GangaObject):
 
             return 1
 
-        except Exception,x:
+        except Exception as x:
             if isinstance(x,GangaException):
                 log_user_exception(logger,debug = True)
                 logger.error(str(x))
@@ -1627,9 +1627,9 @@ class Job(GangaObject):
             try:
                 if not force:
                     self._kill(transition_update=False)
-            except GangaException,x:
+            except GangaException as x:
                 log_user_exception(logger,debug = True)
-            except Exception,x:
+            except Exception as x:
                 log_user_exception(logger)                
                 logger.warning('unhandled exception in j.kill(), job id=%d',self.id)
 
@@ -1666,7 +1666,7 @@ class Job(GangaObject):
             def doit(f):
                 try:
                     f()
-                except OSError,x:
+                except OSError as x:
                     logger.warning('cannot remove file workspace associated with the job %d : %s',self.id,str(x))
 
             doit(wsp.remove)
@@ -1723,13 +1723,13 @@ class Job(GangaObject):
             if self.status in ['submitted','running']:
                 try:
                     self._kill(transition_update = False)
-                except JobError,x:
+                except JobError as x:
                     x.what += "Use force_status('%s',force=True) to ignore kill errors." % status
                     raise x
         try:
             logger.info('Forcing job %s to status "%s"', self.getFQID('.'), status)
             self.updateStatus(status, ignore_failures = True)
-        except JobStatusError, x:
+        except JobStatusError as x:
             logger.error(x)
             raise x
 
@@ -1778,7 +1778,7 @@ class Job(GangaObject):
                 else:
                     msg = "backend.master_kill() returned False"
                     raise JobError(msg)
-            except GangaException,x:
+            except GangaException as x:
                 msg = "failed to kill job %s: %s"%(fqid,str(x))
                 logger.error(msg)
                 raise JobError(msg)
@@ -1885,7 +1885,7 @@ class Job(GangaObject):
 
         try:
             self._commit()
-        except Exception,x:
+        except Exception as x:
             msg = 'cannot commit the job %s, resubmission aborted'%fqid
             logger.error(msg)
             self.status = oldstatus
@@ -1920,7 +1920,7 @@ class Job(GangaObject):
                         
                 if not result:
                     raise JobManagerError('error during submit')
-            except IncompleteJobSubmissionError,x:
+            except IncompleteJobSubmissionError as x:
                 logger.warning('Not all subjobs of job %s have been sucessfully re-submitted: %s',fqid,x)
                 
             #fix for bug 77962 plus for making auto_resubmit test work  
@@ -1954,7 +1954,7 @@ class Job(GangaObject):
                 ganga_job_submitted(self.application.__class__.__name__, self.backend.__class__.__name__, "0", "0", str(submitted_count))
 
 
-        except GangaException,x:
+        except GangaException as x:
             logger.error("failed to resubmit job, %s" % (str(x),))
             logger.warning('reverting job %s to the %s status', fqid, oldstatus )
             self.status = oldstatus

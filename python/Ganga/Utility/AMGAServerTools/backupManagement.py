@@ -101,7 +101,7 @@ class BackUp:
                     if DEBUG:
                         print "executing command:\n" + cmd + "\n"
                     self._client.execute(cmd)
-                except Exception, e:
+                except Exception as e:
                     print str(e)
         finally:
             self._client.cd(pwd)

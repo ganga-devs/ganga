@@ -103,7 +103,7 @@ if os.path.exists(inputsandboxfile):
 ##
 try:
     import subprocess
-except ImportError,x:
+except ImportError as x:
     sys.path.insert(0, PYTHON_DIR)
     import subprocess
     
@@ -145,7 +145,7 @@ try:
     #flush_file(heartbeatfile)
     time.sleep(30)
     
-except Exception,x:
+except Exception as x:
   print 'ERROR: %s'%str(x)
   outfile.close()
   errfile.close()

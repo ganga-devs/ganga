@@ -378,7 +378,7 @@ class LHCbAnalysisTransform(Transform):
             if not os.path.exists(outputdir):
                os.makedirs(outputdir)
             self.merger.merge(self.getJobs(),outputdir)
-        except Exception, x:
+        except Exception as x:
             logger.error('There was a problem merging the output from all partitions.')
             print x
 

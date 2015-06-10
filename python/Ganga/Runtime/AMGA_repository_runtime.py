@@ -44,10 +44,10 @@ def bootstrap():
     try:
         for n in names:
             reps.append(repositoryFactory(subpath = n))
-    except RepositoryError,x:
+    except RepositoryError as x:
         s = print_error(x)
         raise
-    except Exception,x:
+    except Exception as x:
         s = print_error(x)
         log_user_exception(logger)
         raise

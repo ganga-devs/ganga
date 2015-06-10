@@ -727,9 +727,9 @@ class JobRegistry_Monitor( GangaThread ):
                             bn = j.backend._name
                             active_backends.setdefault( bn, [] )
                             active_backends[ bn ].append( j )
-                except RegistryKeyError, x:
+                except RegistryKeyError:
                     pass # the job was removed
-                except RegistryLockError, x:
+                except RegistryLockError:
                     pass # the job was removed
             else:
                 return {}
@@ -893,13 +893,13 @@ class JobRegistry_Monitor( GangaThread ):
                                 log.warning('Auto-resubmit job %d...' % j.id)
                                 j.auto_resubmit()
                             
-                except BackendError, x:
+                except BackendError as x:
                     self._handleError( x, x.backend_name, 0 )
-                except Exception, x:
+                except Exception as x:
                     self._handleError( x, backendObj._name, 1 )
                 log.debug( "[Update Thread %s] Flushing registry %s." % ( currentThread, [x.id for x in jobList_fromset ] ) )
                 self.registry._flush( jobList_fromset ) # Optimisation required! 
-            except Exception, x:
+            except Exception as x:
                 log.debug( "Monitoring Exception: %s" % str(x) )
             finally:
                 lock.release()
@@ -957,7 +957,7 @@ class JobRegistry_Monitor( GangaThread ):
             log.debug( "Checking %s." % credObj._name )
             try:
                 s = credObj.renew()
-            except Exception, msg:
+            except Exception as msg:
                 return False
             else:
                 return s

@@ -144,7 +144,7 @@ class Options:
         try:
             return getattr(self, key)
         except AttributeError:
-            raise KeyError, key
+            raise KeyError(key)
 
     def parse(self, args):
         opts, args = getopt.getopt(args, "Hi:a:s:lDkqr:",
@@ -612,7 +612,7 @@ def main():
     options = Options()
     try:
         args = options.parse(sys.argv[1:])
-    except getopt.error, msg:
+    except getopt.error as msg:
         error(options, msg)
     if not args:
         # attempt to locate single .tex file in current directory:

@@ -196,13 +196,13 @@ class Shell:
                already_killed = True
             time.sleep(0.05)
 
-      except OSError, (num, text):
-         if num == 10:
+      except OSError as e:
+         if e.errno == 10:
             rc = process.returncode
             logger.debug( "Process has already exitted which will throw a 10" ) 
             logger.debug( "Exit status is: %s" % rc )
          else:
-            logger.warning( 'Problem with shell command: %s, %s', num, text)
+            logger.warning( 'Problem with shell command: %s, %s', e.errno, e.strerror)
             rc = 255
       
       BYTES = 4096
@@ -253,8 +253,8 @@ class Shell:
          
       try:
          rc = subprocess.call( [ '/bin/sh', '-c', cmd ], env=self.env )
-      except OSError, (num, text):
-         logger.warning( 'Problem with shell command: %s, %s', num, text)
+      except OSError as e:
+         logger.warning( 'Problem with shell command: %s, %s', e.errno, e.strerror)
          rc = 255
       return rc
 

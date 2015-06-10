@@ -15,26 +15,26 @@ class TestJobProperties(GangaGPITestCase):
         try:
             del job.nonexistantattribute
             assert(not "should not reach here, nonexistant attribute deleted!")
-        except AttributeError,x:
+        except AttributeError as x:
             pass
 
         try:
             job.nonexistantattribute_kvmndaio = 10
             assert(not "should not reach here, nonexistant attribute has been set!")
-        except AttributeError,x:
+        except AttributeError as x:
             pass
 
         ## CHANGE: AttributeError instead of ProtectedAttributeError
         try:
             del job.id
             assert(not "should not reach here, attribute deleted!")           
-        except AttributeError,x:
+        except AttributeError as x:
             pass
         
         try:
             job.id = 10
             assert(not "should not reach here, attribute overriden!")     
-        except AttributeError,x:
+        except AttributeError as x:
             pass
 
         # CHANGE:
@@ -42,7 +42,7 @@ class TestJobProperties(GangaGPITestCase):
         try:
             job.application = None
             assert(not "should not reach here, garbage assigned to the application component")
-        except GangaAttributeError,x:
+        except GangaAttributeError as x:
             pass
 
 

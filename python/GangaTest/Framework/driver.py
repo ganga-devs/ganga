@@ -90,7 +90,7 @@ class UnitRunner:
                         testClass=os.path.splitext(os.path.basename(self.testPath))[0]
                         clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass)                  
                         self.__instance = clazz()
-                except Exception,e:
+                except Exception as e:
                         print >>sys.stderr, "Cannot load test"
                         import traceback
                         traceback.print_exc(file=sys.stderr)
@@ -111,7 +111,7 @@ class UnitRunner:
                 try:
                         if hasattr(self.__instance,"tearDown") and "tearDown" in sys.argv:
                                 getattr(self.__instance,"tearDown")()
-                except Exception,e:
+                except Exception as e:
                         print >>sys.stderr, "Cannot tear down gracefully the test (%s)" % str(e)
                         import traceback
                         traceback.print_exc()
@@ -156,7 +156,7 @@ class GPIPRunner:
                         self.__instance = clazz()
                         self.testsuite = self._getTestSuite()
                         #print self.__instance
-                except Exception,e:
+                except Exception as e:
                         print >>sys.stderr, "Cannot load test"
                         import traceback
                         traceback.print_exc(file=sys.stderr)
@@ -301,7 +301,7 @@ class GPIPRunner:
                         if hasattr(self.__instance,"tearDown") and "tearDown" in sys.argv:
                             for instance in self._testinstances:
                                 getattr(instance,"tearDown")()
-                except Exception,e:
+                except Exception as e:
                         print >>sys.stderr, "Cannot tear down gracefully the test (%s)" % str(e)
                         import traceback
                         traceback.print_exc()
@@ -321,7 +321,7 @@ def cleanup():
                 templates(id).remove()
             templates.remove()
             logger.info("regular cleanup done.")
-        except Exception,e:
+        except Exception as e:
             logger.exception("Cleanup failed (%s)... will delete repository and workspace dirs manually "%str(e))
 
         logger.info('performing "hard" cleanup')
@@ -457,7 +457,7 @@ if __name__=="__main__":
                                 pass
                 #4. TEAR-DOWN
                 testRunner.tearDown()   
-        except Exception,e:
+        except Exception as e:
                 import traceback
                 traceback.print_exc(file=sys.stderr)
                 success = False

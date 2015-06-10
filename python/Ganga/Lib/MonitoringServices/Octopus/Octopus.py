@@ -43,7 +43,7 @@ class Octopus:
         if not self.connected:
             try:
                 self.connect()
-            except socket.error, e:
+            except socket.error as e:
                 raise ProtocolException(-1, "Could not connect to server "
                                         + e.__str__())
         try:
@@ -70,7 +70,7 @@ class Octopus:
                 raise ProtocolException(-3, "Illegal server header")
             self.buffer = response[pos+4:]
             self.s.setblocking(0)
-        except socket.error, e:
+        except socket.error as e:
             raise ProtocolException(-1, "Could not connect to server "
                                     + e.__str__())
 
@@ -93,7 +93,7 @@ class Octopus:
         if DEBUG: print 'Sending ', message
         try:
             self.s.send(message)
-        except socket.error, e:
+        except socket.error as e:
             raise ProtocolException(-5, "Send failed: " + e.__str__())
     
     def read(self, length=-1):

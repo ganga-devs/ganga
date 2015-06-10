@@ -632,7 +632,7 @@ def string_type_shortcut_filter(val, item):
             obj = allPlugins.find(item['category'], val)()
             obj._auto__init__()
             return obj
-        except PluginManagerError, x:
+        except PluginManagerError as x:
             raise ValueError(x)
     return None
 

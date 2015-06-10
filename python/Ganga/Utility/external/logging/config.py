@@ -207,7 +207,7 @@ def listen(port=DEFAULT_LOGGING_CONFIG_PORT):
     stopListening().
     """
     if not thread:
-        raise NotImplementedError, "listen() needs threading to work"
+        raise NotImplementedError("listen() needs threading to work")
 
     class ConfigStreamHandler(StreamRequestHandler):
         """
@@ -244,7 +244,7 @@ def listen(port=DEFAULT_LOGGING_CONFIG_PORT):
                     f.close()
                     fileConfig(file)
                     os.remove(file)
-            except socket.error, e:
+            except socket.error as e:
                 if type(e.args) != types.TupleType:
                     raise
                 else:

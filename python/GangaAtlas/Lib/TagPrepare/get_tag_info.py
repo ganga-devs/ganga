@@ -126,7 +126,7 @@ if os.environ['GANGA_ATHENA_WRAPPER_MODE'] == 'grid':
 
     # First, sort out a dataset and file mapping and dq2-get the files
     if not os.environ.has_key('DATASETNAME'):
-        raise NameError, "ERROR: DATASETNAME not defined"
+        raise NameError("ERROR: DATASETNAME not defined")
         sys.exit(EC_Configuration)
     
     tagdatasetnames = os.environ['DATASETNAME'].split(":")

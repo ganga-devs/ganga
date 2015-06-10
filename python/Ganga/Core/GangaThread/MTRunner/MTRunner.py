@@ -132,7 +132,7 @@ class MTRunner:
         """
         try:
             self.data.addItem(item)
-        except DuplicateDataItemError, e:
+        except DuplicateDataItemError as e:
             self.logger.debug('skip adding new item: %s' % e.message)
             pass
 

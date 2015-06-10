@@ -113,7 +113,7 @@ class GangaGPIPTestCase(unittest.TestCase):
         if start_index > -1:start_index = start_index + 15
         err = "%s" % text[start_index:end_index]
         if len(err) > 0:
-            raise unittest.TestCase.failureException, err
+            raise unittest.TestCase.failureException(err)
 
 import time
 
@@ -135,7 +135,7 @@ class GPIPPreparationTestCase(unittest.TestCase):
         print '%s starts to run' % self.method_name 
         try:
             checkTest = getattr(self.pytest_instance, self.method_name)()
-        except Exception, preparationError:
+        except Exception as preparationError:
             sio = StringIO.StringIO()
             traceback.print_exc(file=sio)
             self.preparationError = sio.getvalue()
@@ -149,7 +149,7 @@ class GPIPPreparationTestCase(unittest.TestCase):
         try:
             return self.checkTest
         except AttributeError:
-            raise Exception, 'Failed to get the instance of "CheckTest".(Should get this after running the testcase.)'
+            raise Exception('Failed to get the instance of "CheckTest".(Should get this after running the testcase.)')
 
     def getDescription(self):
         return self.description
@@ -183,7 +183,7 @@ class GPIPCheckTestCase(unittest.TestCase):
                 raise self.preError
 
             assert(self.checkTest != None), 'No instance of checktest, this should happen while the preparation of test is failed.'
-        except Exception, error:
+        except Exception as error:
             sio = StringIO.StringIO()
             traceback.print_exc(file=sio)
             self.errorTraceback = sio.getvalue()
@@ -192,7 +192,7 @@ class GPIPCheckTestCase(unittest.TestCase):
 
         try:
             self.checkTest.checkTest()
-        except Exception, runCheckError:
+        except Exception as runCheckError:
             self.runCheckError = runCheckError
             sio = StringIO.StringIO()
             traceback.print_exc(file=sio)
@@ -252,7 +252,7 @@ class SimpleRunnerControl(object):
             self.preparationError = self.preparationTestCase.get_fixture().preparationError
         try:
             self.checkTest = self.preparationTestCase.get_fixture().getCheckTest()
-        except Exception, e:
+        except Exception as e:
             print 'WARNING: Failed to get the instance of check test, because of the fail of the preparation of test, won\'t do the check test.'
             self.checkTest = None 
             if run_status:
@@ -275,7 +275,7 @@ class SimpleRunnerControl(object):
                  ready = self.checkTest.isReadyForCheck()
              else:
                  ready = True
-         except Exception, e:
+         except Exception as e:
              #Change to catch generic exception.
              sio = StringIO.StringIO()
              traceback.print_exc(file=sio)

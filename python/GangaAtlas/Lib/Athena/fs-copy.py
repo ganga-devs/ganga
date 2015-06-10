@@ -176,7 +176,7 @@ def resolveTURL(surl, protocol, outfile, errfile, timeout=300):
             printInfo(mystdout, outfile)
             printError(mystderr, errfile)
 
-    except ImportError,err:
+    except ImportError as err:
         # otherwise, use separate threads to control process IO pipes
         printError('Not able to load subprocess module', errfile)
 
@@ -284,7 +284,7 @@ if __name__ == '__main__':
         else:
             raise getopt.GetoptError('missing source or destination SURL in command arguments.')
 
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         ## close stdout/err and exit the program
         printError(str(err), errfile)
         outfile.close()
@@ -341,7 +341,7 @@ if __name__ == '__main__':
                 printInfo(mystdout, outfile)
                 printError(mystderr, errfile)
 
-        except ImportError,err:
+        except ImportError as err:
             # otherwise, use separate threads to control process IO pipes
             printError('Not able to load subprocess module', errfile)
             break

@@ -210,8 +210,7 @@ def rewrite_descriptor(doc, descriptor):
     # 2a.
     if descriptor.hasAttribute("var"):
         if descname != "opcodedesc":
-            raise RuntimeError, \
-                  "got 'var' attribute on descriptor other than opcodedesc"
+            raise RuntimeError("got 'var' attribute on descriptor other than opcodedesc")
         variable = descriptor.getAttribute("var")
         if variable:
             args = doc.createElement("args")
@@ -569,8 +568,7 @@ def fixup_table(doc, table):
             continue
         if nodeType == ELEMENT:
             if child.tagName != "hline":
-                raise ConversionError(
-                    "unexpected <%s> in table" % child.tagName)
+                raise ConversionError("unexpected <%s> in table" % child.tagName)
             table.removeChild(child)
             continue
         raise ConversionError(
@@ -962,8 +960,7 @@ def write_esis(doc, ofp, knownempty):
             gi = node.tagName
             if knownempty(gi):
                 if node.hasChildNodes():
-                    raise ValueError, \
-                          "declared-empty node <%s> has children" % gi
+                    raise ValueError("declared-empty node <%s> has children" % gi)
                 ofp.write("e\n")
             for k, value in node.attributes.items():
                 if _token_rx.match(value):
@@ -979,7 +976,7 @@ def write_esis(doc, ofp, knownempty):
         elif nodeType == ENTITY_REFERENCE:
             ofp.write("&%s\n" % node.nodeName)
         else:
-            raise RuntimeError, "unsupported node type: %s" % nodeType
+            raise RuntimeError("unsupported node type: %s" % nodeType)
 
 
 def convert(ifp, ofp):

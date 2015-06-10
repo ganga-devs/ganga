@@ -51,7 +51,7 @@ def __getJobAttribute__(job,attrName):
         if not re.match(r'^\_\_.*\_\_$',attr):
             try:
                 attrValue = getattr(attrValue,attr)
-            except Exception,x:
+            except Exception as x:
                 errMsg = 'Cannot select attribute %s: %s!' % (attr,str(x))
                 raise GetJobAttrException(errMsg)
         else:
@@ -79,7 +79,7 @@ def __makeJobInfo__(job,attrNameList):
             else:
                 attrValue, attrClass = attrName(job), None
             jobInfo.append(attrValue)
-        except Exception,x:
+        except Exception as x:
             logger.warning('Ignoring job %d: %s'%(job.id,str(x)))
             jobInfo.append(NOT_APPLICABLE)
 
@@ -120,7 +120,7 @@ def getJobInfoTable(jobs,attrNameList,deep=True):
                 jobInfoTable.append(__makeJobInfo__(j,attrNameList))
                 id += 1
 
-    except Exception, e:
+    except Exception as e:
         raise e
 
     return jobInfoTable
@@ -261,7 +261,7 @@ class GangaPlotter:
         if not pltDataProc is None:
             try:
                 value = pltDataProc(value)
-            except Exception, x:
+            except Exception as x:
                 logger.warning('Ignoring data processing on %s: %s'%(str(value),str(x)))
         else:
             value = value

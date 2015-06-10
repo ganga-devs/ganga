@@ -234,7 +234,7 @@ class ARC(IBackend):
 
                     self.__appendResult__( my_sj.id, jdlpath )
                     return True
-                except Exception,x:
+                except Exception as x:
                     log_user_exception()
                     return False
 
@@ -363,7 +363,7 @@ def lcg_file_download(vo,guid,localFilePath,timeout=60,maxRetry=3):
             else:
                 raise IOError("Download file %s from iocache failed with error code: %d, trial %d." % (os.path.basename(localFilePath), status, i))
 
-        except IOError, e:
+        except IOError as e:
             isDone = False
             printError(str(e))
 
@@ -530,7 +530,7 @@ if scratchdir:
     try:
         os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stdout'), os.path.join(wdir, 'stdout')))
         os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stderr'), os.path.join(wdir, 'stderr')))
-    except Exception,e:
+    except Exception as e:
         printError(sys.exc_info()[0])
         printError(sys.exc_info()[1])
         str_traceback = traceback.format_tb(sys.exc_info()[2])
@@ -616,7 +616,7 @@ try:
         import subprocess
         printInfo('Load application executable with subprocess module')
         status = execSyscmdSubprocess('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
-    except ImportError,err:
+    except ImportError as err:
         # otherwise, use separate threads to control process IO pipes
         printInfo('Load application executable with separate threads')
         status = execSyscmdEnhanced('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
@@ -656,7 +656,7 @@ try:
     if scratchdir:
         os.chdir(orig_wdir)
         os.system("rm %s -rf" % wdir)
-except Exception,e:
+except Exception as e:
     printError(sys.exc_info()[0])
     printError(sys.exc_info()[1])
     str_traceback = traceback.format_tb(sys.exc_info()[2])

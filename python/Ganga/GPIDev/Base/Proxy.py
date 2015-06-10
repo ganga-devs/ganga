@@ -463,7 +463,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
         else:
             try:
                 return object.__getattribute__(self, name)
-            except AttributeError, x:
+            except AttributeError as x:
                 logger.debug( "Attribute: %s NOT found for object %s" % ( name, str(self) ) )
                 raise GangaAttributeError( "%s" % str(x) )
 

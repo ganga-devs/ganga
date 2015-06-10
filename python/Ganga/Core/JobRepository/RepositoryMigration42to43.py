@@ -44,7 +44,7 @@ def migrationRepositoryFactory(repositoryType = 'Local', root_dir = '/users', **
                     try:
                         jdict = eval(self.text2pstr(md[1]))
                         rr = []
-                    except Exception, e:
+                    except Exception as e:
                         msg = 'Dictionary of job %s cannot be evaluated because of the error: %s. The job is most likely corrupted and will not be not imported. To permanently delete the job use the command jobs._impl.repository.deleteJobs([%s]).' % (md[0], str(e),md[0])
                         logger.error(msg)
                     else:
@@ -55,7 +55,7 @@ def migrationRepositoryFactory(repositoryType = 'Local', root_dir = '/users', **
             for jdict in jdicts:
                 try:
                     job = self._streamer._getJobFromDict(jdict)
-                except Exception, e:
+                except Exception as e:
                     msg =  'Exception: %s while constructing job object from dictionary %s' % (str(e), repr(jdict))
                     logger.error(msg)
                 else:
@@ -113,7 +113,7 @@ def migrationRepositoryFactory(repositoryType = 'Local', root_dir = '/users', **
                     ids = ids[_migrate_at_once:]
                     try:
                         jobs = checkoutJobs(old_repository, ids_m)
-                    except Exception, e:
+                    except Exception as e:
                         msg = ("Error while getting %s from the old repository: " % rep_type) + str(e)
                         logger.error(msg)
                     else:
@@ -121,7 +121,7 @@ def migrationRepositoryFactory(repositoryType = 'Local', root_dir = '/users', **
                             # don't register jobs in incomplete state
                             jobs = filter(lambda j: j.status != "incomplete", jobs)
                             registerJobs(new_repository, jobs)
-                        except Exception, e:
+                        except Exception as e:
                             msg = ("Error while saving old %s in the new repository: " % rep_type) + str(e)
                             logger.error(msg)
                         else:
@@ -132,7 +132,7 @@ def migrationRepositoryFactory(repositoryType = 'Local', root_dir = '/users', **
                     job_tree = old_repository.getJobTree()
                     if job_tree:
                         new_repository.setJobTree(job_tree)
-                except Exception, e:
+                except Exception as e:
                     msg = "Error while saving old jobtree in the new repository: " + str(e)
                     logger.error(msg)                
                 if nn > 0:

@@ -86,7 +86,7 @@ class JobRegistrySlice(RegistrySlice):
         try:
             status_colours = config['jobs_status_colours']
             self.status_colours = dict( [ (k, eval(v)) for k,v in status_colours.iteritems() ] )
-        except Exception,x:
+        except Exception as x:
             logger.warning('configuration problem with colour specification: "%s"', str(x))
             status_colours = config.options['jobs_status_colours'].default_value
             self.status_colours = dict( [ (k, eval(v)) for k,v in status_colours.iteritems() ] )

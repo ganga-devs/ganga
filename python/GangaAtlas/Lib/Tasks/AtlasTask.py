@@ -57,9 +57,9 @@ class AtlasTask(ITask):
 
             except DQContainerDoesNotHaveDataset:
                   pass
-            except Exception, x:
+            except Exception as x:
                 logger.error("Problem cleaning out Task container: %s %s", x.__class__, x)
-            except DQException, x:
+            except DQException as x:
                 logger.error('DQ2 Problem cleaning out Task container: %s %s' %( x.__class__, x))
         finally:
             dq2_lock.release()

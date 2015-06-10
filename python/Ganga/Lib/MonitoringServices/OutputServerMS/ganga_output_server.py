@@ -24,7 +24,7 @@ def main():
   def makedirs(path):
     try:
       os.makedirs(path)
-    except OSError,x:
+    except OSError as x:
       import errno
       if x.errno != errno.EEXIST:
         raise

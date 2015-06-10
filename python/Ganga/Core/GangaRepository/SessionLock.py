@@ -97,7 +97,7 @@ class SessionLockRefresher(GangaThread):
         while value is None:
             try:
                 value = os.stat(filename).st_ctime
-            except OSError, x:
+            except OSError as x:
                 #print "fail"
                 value = None
                 i = i+1
@@ -136,14 +136,14 @@ class SessionLockRefresher(GangaThread):
                 # Clear expired session files if monitoring is active
                 self.clearDeadLocks( now )
 
-        except Exception, x:
+        except Exception as x:
             logger.warning("Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
 
     def updateNow( self ):
         try:
             for index in range(len(self.fns)):
                 now = self.updateLocks( index )
-        except Exception, x:
+        except Exception as x:
             logger.warning("Internal exception in Updating session lock thread: %s %s" % (x.__class__.__name__, x))
 
     def updateLocks( self, index ):
@@ -155,7 +155,7 @@ class SessionLockRefresher(GangaThread):
             #if now - oldnow  > session_expiration_timeout/2:
             #    logger.warning("%s: This session can only update its session file every %s seconds - this can cause problems with other sessions!" % (time.time(), now - oldnow))
             #print "%s: Delta is %i seconds" % (time.time(), now - oldnow)
-        except OSError, x:
+        except OSError as x:
             if x.errno != errno.ENOENT:
                 logger.debug("Session file timestamp could not be updated! Locks could be lost!")
             else:
@@ -200,7 +200,7 @@ class SessionLockRefresher(GangaThread):
                         #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
                         #logger.debug( "%s, %s" % ( self.sdir, f ) )
                         os.unlink(os.path.join(self.sdir, f))
-        except OSError, x:
+        except OSError as x:
              # nothing really important, another process deleted the session before we did.
              logger.debug("Unimportant OSError in cleaning locks: %s" % x)
 
@@ -243,7 +243,7 @@ class SessionLockManager(object):
         """Make sure the given directory exists"""
         try:
             os.makedirs(dn)
-        except OSError, x:
+        except OSError as x:
             if x.errno != errno.EEXIST:
                 raise RepositoryError(self.repo, "OSError on directory create: %s" % x)
 
@@ -283,7 +283,7 @@ class SessionLockManager(object):
         while value is None:
             try:
                 value = os.open( filename, os.O_EXCL | os.O_CREAT | os.O_WRONLY )
-            except OSError, x:
+            except OSError as x:
                 time.sleep(0.1)
                 if i >= 60:
                     raise x
@@ -308,14 +308,14 @@ class SessionLockManager(object):
                     os.write(fd, "0")
                     os.close(fd)
                     #registerGlobalSessionFile( self.cntfn )
-                except OSError, x:
+                except OSError as x:
                     if x.errno != errno.EEXIST:
                         raise RepositoryError(self.repo, "OSError on count file create: %s" % x)
             try:
                 self.count = max(self.count, self.cnt_read())
             except ValueError:
                 logger.error("Corrupt count file '%s'! Trying to recover..." % (self.cntfn))
-            except OSError, x:
+            except OSError as x:
                 raise RepositoryError(self.repo, "OSError on count file '%s' access!" % (self.cntfn))
             self.cnt_write()
             # Setup session file
@@ -324,14 +324,14 @@ class SessionLockManager(object):
                 os.write(fd,pickle.dumps(Set()))
                 os.close(fd)
                 registerGlobalSessionFile( self.fn )
-            except OSError, x:
+            except OSError as x:
                 raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn, x))
             global session_lock_refresher
             if session_lock_refresher is None:
                 try:
                     os.close( self.delay_init_open( self.gfn ) )
                     registerGlobalSessionFile( self.gfn )
-                except OSError, x:
+                except OSError as x:
                     raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, x))
                 session_lock_refresher = SessionLockRefresher(self.session_name, self.sdir, self.gfn, None, self.afs)
                 session_lock_refresher.start()
@@ -364,7 +364,7 @@ class SessionLockManager(object):
             #logger.debug("Session file '%s' deleted " % (self.fn))
             os.unlink(self.fn)
             #os.unlink(self.gfn)
-        except OSError, x:
+        except OSError as x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, x))
 
     def delayopen_global(self):
@@ -373,7 +373,7 @@ class SessionLockManager(object):
         while value is None:
             try:
                 value = os.open(self.lockfn, os.O_RDWR)
-            except OSError, x:
+            except OSError as x:
                  #print "fail"
                 value = None
                 i = i+1
@@ -397,7 +397,7 @@ class SessionLockManager(object):
                 if not os.path.isfile( lock_file ):
                     lock_file_hand = open( lock_file, "w" )
                     lock_file_hand.close()
-            except Exception, x:
+            except Exception as x:
                 pass
         else:
             try:
@@ -408,9 +408,9 @@ class SessionLockManager(object):
                 self.lockfd = self.delayopen_global()
                 registerGlobalSessionFile( self.lockfn )
                 registerGlobalSessionFileHandler( self.lockfd )
-            except IOError, x:
+            except IOError as x:
                 raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
-            except OSError, x:
+            except OSError as x:
                 raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
     def delay_lock_mod(self, lock_mod):
@@ -451,7 +451,7 @@ class SessionLockManager(object):
                             clean_path()
                         os.unlink( lock_file )
                         break
-                    except Exception, x:
+                    except Exception as x:
                         import time
                         time.sleep(0.05)
 
@@ -467,7 +467,7 @@ class SessionLockManager(object):
                 self.delay_lock_mod( fcntl.LOCK_EX )
 
             logger.debug("global capture")
-        except IOError, x:
+        except IOError as x:
             raise RepositoryError(self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
             
     def global_lock_release(self):
@@ -479,7 +479,7 @@ class SessionLockManager(object):
                 self.delay_lock_mod( fcntl.LOCK_UN )
 
             logger.debug("global release")
-        except IOError, x:
+        except IOError as x:
             raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
 
     def delay_session_open(self, filename):
@@ -488,7 +488,7 @@ class SessionLockManager(object):
         while value is None:
             try:
                 value = os.open(filename, os.O_RDONLY)
-            except OSError, x:
+            except OSError as x:
                 time.sleep(0.1)
                 i=i+1
                 if i >= 60:
@@ -511,13 +511,13 @@ class SessionLockManager(object):
                     fcntl.lockf(fd, fcntl.LOCK_SH)
                 try:
                     return pickle.loads(os.read(fd, 1048576))#00)) # read up to 1 MB (that is more than enough...)
-                except Exception, x:
+                except Exception as x:
                     logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)."% (fn, x.__class__.__name__, x))
             finally:
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_UN)
                 os.close(fd)
-        except OSError, x:
+        except OSError as x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "Error on session file access '%s': %s" % (fn, x))
         return Set()
@@ -531,7 +531,7 @@ class SessionLockManager(object):
         while value is None:
             try:
                 value = os.open(filename, os.O_WRONLY)
-            except OSError, x:
+            except OSError as x:
                 #print "fail"
                 value = None
                 i = i+1
@@ -552,7 +552,7 @@ class SessionLockManager(object):
         while value is None:
             try:
                 value = os.write( filename, data )
-            except OSError, x:
+            except OSError as x:
                 #print "fail"
                 value = None
                 i = i+1
@@ -580,7 +580,7 @@ class SessionLockManager(object):
                 fcntl.lockf( fd, fcntl.LOCK_UN )
             os.fsync(fd)
             os.close(fd)
-        except OSError, x:
+        except OSError as x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "Error on session file access '%s': %s" % (self.fn, x))
             else:
@@ -588,7 +588,7 @@ class SessionLockManager(object):
                 raise RepositoryError(self.repo, "SessionWrite: Own session file not found! Possibly deleted by another ganga session.\n\
                                     Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
                                     On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (self.fn, x) )
-        except IOError, x:
+        except IOError as x:
             raise RepositoryError(self.repo, "Error on session file locking '%s': %s" % (self.fn, x))
 
     # counter read-write functions
@@ -608,12 +608,12 @@ class SessionLockManager(object):
                 if not self.afs: # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_UN)
                 os.close(fd)
-        except OSError, x:
+        except OSError as x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' read: %s" % (self.cntfn, x))
             else:
                 raise # This can be a recoverable error, depending on where it occurs
-        except IOError, x:
+        except IOError as x:
             raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
 
     def cnt_write(self):
@@ -629,12 +629,12 @@ class SessionLockManager(object):
             if not self.afs:
                 fcntl.lockf(fd, fcntl.LOCK_UN)
             os.close(fd)
-        except OSError, x:
+        except OSError as x:
             if x.errno != errno.ENOENT:
                 raise RepositoryError(self.repo, "OSError on count file '%s' write: %s" % (self.cntfn, x))
             else:
                 raise RepositoryError(self.repo, "Count file '%s' not found! Repository was modified externally!" % (self.cntfn))
-        except IOError, x:
+        except IOError as x:
             raise RepositoryError(self.repo, "Locking error on count file '%s' write: %s" % (self.cntfn, x))
 
     # "User" functions
@@ -689,7 +689,7 @@ class SessionLockManager(object):
         try:
             try:
                 sessions = [sn for sn in os.listdir(self.sdir) if sn.endswith(self.name+".locks")]
-            except OSError, x:
+            except OSError as x:
                 raise RepositoryError(self.repo, "Could not list session directory '%s'!" % (self.sdir))
                 
             slocked = Set()
@@ -743,7 +743,7 @@ class SessionLockManager(object):
                     if not self.afs and fd > 0:
                         fcntl.lockf(fd, fcntl.LOCK_UN) # ONLY NFS
                         os.close(fd)
-                except Exception, x:
+                except Exception as x:
                     logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, x.__class__.__name__, x) )
                     continue
                 if not len(names & prevnames) == 0:
@@ -781,7 +781,7 @@ class SessionLockManager(object):
                         os.close(fd)
                     if id in names:
                         return self.session_to_info(session)
-                except Exception, x:
+                except Exception as x:
                     continue
         finally:
             self.global_lock_release()
@@ -828,7 +828,7 @@ class SessionLockManager(object):
                         if( sf.endswith(".session") ):
                             logger.debug("Reaping LockFile: %s" % (sf) )
                         os.unlink(sf)
-                except OSError, x:
+                except OSError as x:
                     failed = True
             return not failed
         finally:

@@ -167,7 +167,7 @@ for f in f_to_copy:
 for fn in final_list_to_copy:
     try:
         recursive_copy(fn,sharedoutputpath)
-    except Exception,x:
+    except Exception as x:
         print 'ERROR: (job'+###JOBID###+')',x
 """ 
     insertScript = insertScript.replace('###FILES###', str(files))

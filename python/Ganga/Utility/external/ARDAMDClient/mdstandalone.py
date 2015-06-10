@@ -58,7 +58,7 @@ class MDStandalone (mdinterface.MDInterface):
             raise mdinterface.CommandException(16, "Directory exists")
         try:
             os.makedirs(newdir)
-        except OSError, e:
+        except OSError as e:
             if e[0] == errno.EPERM or e[0] == errno.EACCES:
                 raise mdinterface.CommandException(4, "Could not create dir: Permission denied")
             else:
@@ -359,7 +359,7 @@ class MDStandalone (mdinterface.MDInterface):
                 entry = [str(start), str(increment), str(start)]
                 try:
                     write([entry], name)
-                except (OSError,IOError), e:
+                except (OSError,IOError) as e:
                     raise CommandException(17, "sequenceCreate error: " + str(e))
             finally:
                 lock.release()
@@ -380,7 +380,7 @@ class MDStandalone (mdinterface.MDInterface):
                 try:
                     try:
                         entries = readLast(name)
-                    except (OSError,IOError), e:
+                    except (OSError,IOError) as e:
                         raise CommandException(17, "Not a sequence: " + str(e))
                     if not (len(entries)==1 and len(entries[0])==3):
                         raise CommandException(17, "Not a sequence: " + str(e))
@@ -389,7 +389,7 @@ class MDStandalone (mdinterface.MDInterface):
                     entry = [start, increment, newval]
                     try:
                         write([entry], name)
-                    except (OSError,IOError), e:
+                    except (OSError,IOError) as e:
                         raise CommandException(17, "sequenceNext error: " + str(e))
                     return (now, increment, newval)
                 finally:
@@ -410,7 +410,7 @@ class MDStandalone (mdinterface.MDInterface):
                 else:
                     self.sequence_reserve[name][0] = newval
                 return str(now)
-            except Exception, e:
+            except Exception as e:
                 raise CommandException(17, "sequenceNext error: " + str(e))
         else:
             return next(name, reserve)[0]
@@ -427,7 +427,7 @@ class MDStandalone (mdinterface.MDInterface):
             try:
                 try:
                     remove(name)
-                except OSError, e:
+                except OSError as e:
                     raise CommandException(17, "sequenceRemove error: " + str(e))
             finally:
                 lock.release()
@@ -440,7 +440,7 @@ class MDStandalone (mdinterface.MDInterface):
         name = self.__systemPath(self.__absolutePath(dirname))
         try:
             os.rmdir(name)
-        except OSError, e:
+        except OSError as e:
             if e[0] == errno.ENOENT:
                 raise mdinterface.CommandException(1, "Directory not found")
             else:

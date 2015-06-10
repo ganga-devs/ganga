@@ -79,7 +79,7 @@ class IBackend(GangaObject):
                 sj.info.increment()
             else:
                 raise IncompleteJobSubmissionError(fqid,'submission failed')
-        except Exception, x:
+        except Exception as x:
             from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('new')
             if isinstance(x, GangaException):
@@ -193,7 +193,7 @@ class IBackend(GangaObject):
                 else:
                     if handleError(IncompleteJobSubmissionError(fqid, 'submission failed')):
                         return 0
-            except Exception,x:
+            except Exception as x:
                 sj.updateStatus('new')
                 if isinstance(x,GangaException):
                     logger.error(str(x))
@@ -316,7 +316,7 @@ class IBackend(GangaObject):
                         incomplete = 1
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
-                except Exception,x:
+                except Exception as x:
                     log_user_exception(logger,debug=isinstance(x,GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid,str(x)))
         finally:

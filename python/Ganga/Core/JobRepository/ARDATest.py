@@ -136,7 +136,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'registering %d jobs...' % NTEST
         try:
             repository.registerJobs(jj)
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in registerJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"           
@@ -152,7 +152,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
         try:
             for i in range(NTEST):
                 testSplitting(repository, LEN = 10)
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in testSplitting", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"            
@@ -167,7 +167,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'retrieving info about first 10 jobs...'        
         try:
             rjj = repository.checkoutJobs(map(lambda j: j.id, jj[:10]))
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in checkoutJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"               
@@ -182,7 +182,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'retrieving info about ALL jobs'
         try:
             rjj = repository.checkoutJobs({})
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in checkoutJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"
@@ -204,7 +204,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'commiting %d jobs...' % NTEST
         try:
             repository.commitJobs(jj)
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in commitJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"
@@ -219,7 +219,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'setting status for %d jobs...' % NTEST
         try:
             repository.setJobsStatus(map(lambda j: (j.id, 'submitted'), jj))
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in setJobsStatus", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"
@@ -234,7 +234,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'getting status of first 10 jobs...'
         try:
             rjj = repository.getJobsStatus(map(lambda j: j.id, jj[:10]))
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in getJobsStatus", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"
@@ -249,7 +249,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'getting id of jobs with particular attributes...'
         try:
             rjj = repository.getJobIds({'status':'submitted', 'application':'Executable'})
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in getJobIds", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"
@@ -277,7 +277,7 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             print 'deleting %d jobs...' % NTEST
         try:
             repository.deleteJobs(map(lambda j: j.id, jj))
-        except Exception, e:
+        except Exception as e:
             print "EXCEPTION in deleteJobs", str(e)
             if DEBUG:
                 print "--->command status", "FAIL", "\n"

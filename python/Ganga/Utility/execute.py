@@ -63,7 +63,7 @@ def __timeout_func(process, timed_out):
         timed_out.set()
         try:
             os.killpg(process.pid, signal.SIGKILL)
-        except Exception, e:
+        except Exception as e:
             logger.error("Exception trying to kill process: %s"%e)
  
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\

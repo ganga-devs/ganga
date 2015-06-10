@@ -151,7 +151,7 @@ if __name__ == '__main__':
                 histogram = a
             if o in ('-e','--entries'):
                 entries = int(a)
-    except getopt.error, msg:
+    except getopt.error as msg:
         print msg
         sys.exit(2)
 

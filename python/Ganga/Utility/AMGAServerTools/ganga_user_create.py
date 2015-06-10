@@ -48,7 +48,7 @@ def create(user,
     udb = UserDB(**kwds)
     try:
         udb.userCreate(user, password = 'ganga')
-    except Exception, e:
+    except Exception as e:
         print str(e)
         return
     try:
@@ -61,7 +61,7 @@ def create(user,
         else:
             print "WARNING: Can't get certificate subject. \n\
             Certificate subject was't mapped to the user " + user
-    except Exception, e:
+    except Exception as e:
         print str(e)   
 
     # create user directory
@@ -70,13 +70,13 @@ def create(user,
         home_dir = '/users/' + user
     try:
         cls.createDir(home_dir)
-    except Exception, e:
+    except Exception as e:
         print str(e)    
         return
     try:
         cls.chown(home_dir, user)
         cls.chmod(home_dir, 'rwx')
-    except Exception, e:
+    except Exception as e:
         print str(e)    
         return    
 

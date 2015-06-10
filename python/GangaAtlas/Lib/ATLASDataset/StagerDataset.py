@@ -147,7 +147,7 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
                     mylock.release()
             except Empty:
                 pass
-            except DQException, err:
+            except DQException as err:
                 logger.warning(str(err))
                 logger.warning('site %s excluded' % site)
                 pass
@@ -302,7 +302,7 @@ class StagerDataset(DQ2Dataset):
                     mylock.acquire()
                     datasets[ds] = ds_tmp
                     mylock.release()
-                except DQException, err:
+                except DQException as err:
                     logger.warning(str(err))
                 except Empty:
                     pass
@@ -458,7 +458,7 @@ class StagerDataset(DQ2Dataset):
                         vuid = None
                         try:
                             vuid = locations.keys()[0]
-                        except IndexError, err:
+                        except IndexError as err:
                             pass
          
                         mylock.acquire()
@@ -481,7 +481,7 @@ class StagerDataset(DQ2Dataset):
          
                         mylock.release()
          
-                    except DQException, err:
+                    except DQException as err:
                         logger.warning(str(err))
          
                     except Empty:

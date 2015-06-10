@@ -50,7 +50,7 @@ while 1:
     except:
         try:
             exec(cmd)
-        except:# Exception, e:
+        except:
             print "Exception raised executing command (cmd) '%s'\n"%cmd
             print traceback.format_exc()
     client_socket.sendall(end_trans)

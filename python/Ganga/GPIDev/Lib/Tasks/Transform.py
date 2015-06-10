@@ -81,7 +81,7 @@ class Transform(GangaObject):
                    else:
                       app = j.application._impl
                       app.getTransform()._impl.setAppStatus(app,app._getParent().status)
-                except AttributeError, e:
+                except AttributeError as e:
                    logger.error("%s",e)
       pass
 
@@ -120,7 +120,7 @@ class Transform(GangaObject):
                    else:
                       app = j.application._impl
                       app.getTransform()._impl.setAppStatus(app,app._getParent().status)
-                except AttributeError, e:
+                except AttributeError as e:
                    logger.error("%s",e)
 
 
@@ -202,7 +202,7 @@ class Transform(GangaObject):
                      addjob(sj)
                else:
                   addjob(j)
-         except Exception, x:
+         except Exception as x:
             #print x
             pass
       return JobRegistrySliceProxy(jobslice)

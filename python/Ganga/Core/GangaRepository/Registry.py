@@ -102,7 +102,7 @@ class IncompleteObject(object):
                 errstr = "Could not lock '%s' object #%i!" % (self.registry.name,self.id)
                 try:
                     errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
-                except Exception, x:
+                except Exception as x:
                     print x
                     pass
                 raise RegistryLockError(errstr)
@@ -347,7 +347,7 @@ class Registry(object):
             for obj in self.dirty_objs.keys():
                 try:
                     ids.append(self.find(obj))
-                except ObjectNotInRegistryError, x:
+                except ObjectNotInRegistryError as x:
                     logger.error(x.what)
             logger.debug("repository.flush(%s)" % ids)
             self.repository.flush(ids)
@@ -373,7 +373,7 @@ class Registry(object):
                     self.repository.load([id])
                 except KeyError:
                     raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
-                except InaccessibleObjectError, x:
+                except InaccessibleObjectError as x:
                     raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
                 for d in self.changed_ids.itervalues():
                     d.add(id)
@@ -401,7 +401,7 @@ class Registry(object):
                         errstr = "Could not lock '%s' object #%i!" % (self.name,self.find(obj))
                         try:
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(self.find(obj))
-                        except Exception, x:
+                        except Exception as x:
                             print x
                             pass
                         raise RegistryLockError(errstr)
@@ -411,7 +411,7 @@ class Registry(object):
                         self.repository.load([id])
                     except KeyError:
                         raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
-                    except InaccessibleObjectError, x:
+                    except InaccessibleObjectError as x:
                         raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
                     for d in self.changed_ids.itervalues():
                         d.add(id)
@@ -499,11 +499,11 @@ class Registry(object):
             try:
                 if not self.metadata is None:
                     self.metadata.shutdown()
-            except Exception, x:
+            except Exception as x:
                 logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
             try:
                 self._flush()
-            except Exception, x:
+            except Exception as x:
                 logger.error("Exception on flushing '%s' registry: %s", self.name, x)
             self._started = False
             for obj in self._objects.values():

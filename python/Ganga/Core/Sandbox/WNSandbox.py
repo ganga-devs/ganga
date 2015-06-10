@@ -99,7 +99,7 @@ def createOutputSandbox(output_patterns,filter,dest_dir):
     for f in multi_glob(output_patterns,filter):
         try:
             recursive_copy(f,dest_dir)
-        except Exception,x:
+        except Exception as x:
             print "ERROR: (job ###JOBID### createOutput )",x
 
     

@@ -668,7 +668,7 @@ class Grid(object):
             if self.shell.system('mv %s/* %s' % (outdir,directory)) == 0:
                 try:
                     os.rmdir(outdir)
-                except Exception, msg:
+                except Exception as msg:
                     logger.warning( "Error trying to remove the empty directory %s:\n%s" % ( outdir, msg ) )
             else:
                 logger.warning( "Error moving output from %s to %s.\nOutput is left in %s." % (outdir,directory,outdir) )

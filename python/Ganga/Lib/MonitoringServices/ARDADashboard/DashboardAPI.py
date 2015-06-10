@@ -45,20 +45,20 @@ def getApmonInstance():
             #print "Creating ApMon with dynamic configuration/url"
             try :
                 apm = apmon.ApMon(apmonUrlList, apmonLoggingLevel);
-            except Exception, e :
+            except Exception as e:
                 print e
             if apm is not None and not apm.initializedOK():
                 #print "Setting ApMon to static configuration"
                 try :
                     apm.setDestinations(apmonConf)
-                except Exception, e :
+                except Exception as e:
                     apm = None
             apmonInstance = apm
         if apmonInstance is None :
             #print "Creating ApMon with static configuration"
             try :
                 apmonInstance = apmon.ApMon(apmonConf, apmonLoggingLevel)
-            except Exception, e :
+            except Exception as e:
                 pass
     return apmonInstance 
 
@@ -72,7 +72,7 @@ def apmonFree() :
         time.sleep(1)
         try :
             apmonInstance.free()
-        except Exception, e :
+        except Exception as e:
             pass
         apmonInstance = None
     apmonInit = False
@@ -91,7 +91,7 @@ def apmonSend(taskid, jobid, params) :
             jobid = 'unknown'
         try :
             apm.sendParameters(taskid, jobid, params)
-        except Exception, e:
+        except Exception as e:
             pass
 
 #
@@ -105,7 +105,7 @@ def logger(msg) :
         fh = open('report.log','a')
         fh.write(msg)
         fh.close
-    except Exception, e :
+    except Exception as e :
         pass
 
 #

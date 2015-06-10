@@ -75,7 +75,7 @@ class IMerger(IPostProcessor):
         """
         if (len(job.subjobs) != 0):
             try: return self.merge(job.subjobs, job.outputdir)
-            except PostProcessException, e:
+            except PostProcessException as e:
                 logger.error(str(e))
                 return self.failure
         else:
@@ -200,7 +200,7 @@ class IMerger(IPostProcessor):
                 finally:
                     log.close()
                 
-            except PostProcessException, e:
+            except PostProcessException as e:
                 msg = str(e)
 
                 #store the error msg

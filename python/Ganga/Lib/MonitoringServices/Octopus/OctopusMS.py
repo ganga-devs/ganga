@@ -29,7 +29,7 @@ class OctopusMS(IMonitoringService):
         if not self.client.connected:
             try:
                 self.client.create(self.channel)
-            except ProtocolException, e:
+            except ProtocolException as e:
                 print >> sys.stderr, 'Error connecting to octopus server: ', e
                 return
             self.stdoutFile = open('stdout', 'r')
@@ -44,7 +44,7 @@ class OctopusMS(IMonitoringService):
                 self.client.send(b)
                 self.stdoutpos = self.stdoutpos + len(b)
             if self.DEBUG: print 'Leaving progress'
-        except ProtocolException, e:
+        except ProtocolException as e:
                 print >> sys.stderr, 'Error sending to octopus server: ', e
         
     def stop(self,exitcode,*other):

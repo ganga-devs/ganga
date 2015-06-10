@@ -93,8 +93,8 @@ contents_header = '''\
 <!-- Sitemap 1.0 -->
 </HEAD><BODY>
 <OBJECT type="text/site properties">
-	<param name="Window Styles" value="0x801227">
-	<param name="ImageType" value="Folder">
+    <param name="Window Styles" value="0x801227">
+    <param name="ImageType" value="Folder">
 </OBJECT>
 <UL>
 '''
@@ -416,7 +416,7 @@ def do_project(library, output, arch, version):
 def openfile(file):
     try:
         p = open(file, "w")
-    except IOError, msg:
+    except IOError as msg:
         print file, ":", msg
         sys.exit(1)
     return p
@@ -434,7 +434,7 @@ def do_it(args = None):
 
     try:
         optlist, args = getopt.getopt(args, 'ckpv:')
-    except getopt.error, msg:
+    except getopt.error as msg:
         print msg
         usage()
 

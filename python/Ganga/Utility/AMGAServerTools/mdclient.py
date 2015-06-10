@@ -13,7 +13,7 @@ try:
     USE_TLSLITE = True
     from tlslite.api import *
     if DEBUG: print "Using tlslite"
-except ImportError, e:
+except ImportError as e:
     USE_TLSLITE = False
 
 
@@ -266,7 +266,7 @@ class MDClient(MDInterface):
                 pos2 = self.buffer.find('\004', pos+1)
                 self.sessionID = long(self.buffer[pos+8:pos2])
                 self.disconnect(True)
-            if DEBUG:	print "Session ID", self.sessionID
+            if DEBUG: print "Session ID", self.sessionID
             self.buffer=self.buffer[:pos]
             self.EOT=1
         if not line:
@@ -279,7 +279,7 @@ class MDClient(MDInterface):
         self.s.setblocking(0)
         try:
             self.s.recv(1, MSG_PEEK)
-        except Exception, e:
+        except Exception as e:
             gotSomething=0
         self.s.setblocking(1)
         return gotSomething

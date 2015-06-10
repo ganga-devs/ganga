@@ -149,14 +149,14 @@ class AnaTransform(Transform):
                   try:
                       dq2.registerContainer(task_container)
                       logger.debug('Registered container for Task %i: %s' % (task.id, task_container))
-                  except Exception, x:
+                  except Exception as x:
                       logger.error('Problem registering container for Task %i, %s : %s %s' % (task.id, task_container,x.__class__, x))
               for ds in infos.keys():
                   try:
                       dq2.registerDatasetsInContainer(task_container, [ ds ] )
                   except DQContainerAlreadyHasDataset:
                       pass
-                  except Exception, x:
+                  except Exception as x:
                       logger.error('Problem registering dataset %s in container %s: %s %s' %( subtask_dsname, task_container, x.__class__, x))
           finally:
               dq2_lock.release()
@@ -274,7 +274,7 @@ class AnaTransform(Transform):
                finally:
                   dq2_lock.release()
 
-            except Exception, x:
+            except Exception as x:
                raise ApplicationConfigurationError(x, 'Problem in AnaTask - j.application.atlas_dbrelease is wrongly configured ! ')
             db_sites = stripSites(db_locations)
          

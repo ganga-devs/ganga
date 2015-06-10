@@ -305,7 +305,7 @@ def main(generateMiniCats, generatePOOLcat, src_collection_name):
       """
       return guids
 
-   except DQException, e:
+   except DQException as e:
       logger.warning( "Error", e)
 
 if __name__ == '__main__':

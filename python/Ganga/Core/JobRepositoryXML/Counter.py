@@ -13,7 +13,7 @@ class Counter:
             pickle_file = open(self.cntfn)
             self.cnt = pickle.load(pickle_file)
             pickle_file.close()
-        except IOError,x:
+        except IOError as x:
             import errno
             if x.errno == errno.ENOENT:
                 self.cnt = 0

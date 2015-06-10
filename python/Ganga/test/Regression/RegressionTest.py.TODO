@@ -74,7 +74,7 @@ def check(release = None):
             try:
                 print j.id,
                 print j.name
-            except Exception,x:
+            except Exception as x:
                 print x
         print "Test failed."
         return 0

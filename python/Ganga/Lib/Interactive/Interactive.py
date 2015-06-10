@@ -146,7 +146,7 @@ class Interactive( IBackend ):
 
       try:
          os.kill( self.id, signal.SIGKILL )
-      except OSError,x:
+      except OSError as x:
          logger.warning( "Problem killing process %d for job %d: %s",\
             self.id, job.id, str( x ) )
 
@@ -165,7 +165,7 @@ class Interactive( IBackend ):
 
       try:
          shutil.rmtree( self.workdir )
-      except OSError,x:
+      except OSError as x:
          logger.warning( "Problem removing workdir %s: %s", self.workdir,\
             str( x ) )        
 

@@ -52,7 +52,7 @@ class LCGRequirements(GangaObject):
 
          try:
              attr = getattr(other,name)
-         except KeyError,e:
+         except KeyError as e:
              pass
 
          if not attr: attr = getattr(self,name)
@@ -97,7 +97,7 @@ class LCGRequirements(GangaObject):
                   allowed_ces += re.split('\s+', m.group(2))
               else:
                   allowed_ces  = re.split('\s+', ce_req)
-      except KeyError,e:
+      except KeyError as e:
           pass
 
       try:
@@ -108,7 +108,7 @@ class LCGRequirements(GangaObject):
                   excluded_ces += re.split('\s+', m.group(2))
               else:
                   excluded_ces  = re.split('\s+', ce_req)
-      except KeyError,e:
+      except KeyError as e:
           pass
 
       ## composing the requirements given the list of allowed_ces and excluded_ces

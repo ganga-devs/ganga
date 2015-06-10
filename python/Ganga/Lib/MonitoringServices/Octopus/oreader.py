@@ -34,7 +34,7 @@ octopus.join(channel)
 while not octopus.eotFound:
     try:
         data = octopus.read()
-    except socket.error, e:
+    except socket.error as e:
         if e[0] != errno.EAGAIN: 
             raise socket.error(e)
         data = ''

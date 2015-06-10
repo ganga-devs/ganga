@@ -147,7 +147,7 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
         try:
             values = output.get('Value')['Successful']
-        except Exception, x:
+        except Exception as x:
             raise SplitterError( "Error getting LFN Replica information:\n%s" % str(x) )
 
         logger.info( "Updating URLs: %s of %s" % (str(i*500), str(len(allLFNs)) ) )

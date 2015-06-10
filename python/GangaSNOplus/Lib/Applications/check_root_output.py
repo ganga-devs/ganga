@@ -57,7 +57,7 @@ class OutputCheckerPre460(OutputChecker):
                 pass
             else:
                 raise CheckRootException("Number of events simulated is incorrect")
-        except Exception, e:
+        except Exception as e:
             raise CheckRootException("Cannot get TTree: %s" % e)
     
 
@@ -95,7 +95,7 @@ class OutputCheckerPost460(OutputChecker):
                     pass
                 else:
                     raise CheckRootException("Number of events simulated is incorrect")            
-        except Exception, e:
+        except Exception as e:
             raise CheckRootException("Cannot get TTree: %s" % e)
 
 

@@ -514,7 +514,7 @@ def checkMergeJobStatus(job, pandaJobDefId):
 
             ick = True
 
-        except Exception, e:
+        except Exception as e:
             logger.error('general merge job information retrieval error')
             raise e
 
@@ -581,7 +581,7 @@ def retrieveMergeJobs(job, pandaJobDefId):
         except KeyError:
             logger.error('unexpected job information: %s' % repr(info))
 
-        except Exception, e:
+        except Exception as e:
             logger.error('general merge job information retrieval error')
             raise e
 

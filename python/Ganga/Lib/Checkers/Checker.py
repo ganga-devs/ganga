@@ -73,7 +73,7 @@ class MetaDataChecker(IChecker):
             raise PostProcessException('No expression is set. MetaDataChecker will do nothing!')
         try:
             self.result = self.calculateResult(job)
-        except Exception, e:
+        except Exception as e:
             raise PostProcessException('There was an error parsing the checker expression: %s - MetaDataChecker will do nothing!'%e)
         if self.result is not True and self.result is not False:
             raise PostProcessException('The expression "%s" did not evaluate to True or False, MetaDataChecker will do nothing!'%self.expression)
@@ -275,7 +275,7 @@ class CustomChecker(IChecker):
             execfile(self.module.name, ns)
             exec('_result = check(job)',ns)
             result = ns.get('_result',result)
-        except Exception,e:
+        except Exception as e:
             raise PostProcessException('There was a problem with executing the module: %s, CustomChecker will do nothing!'%e)
         if result is not True and result is not False:
             raise PostProcessException('The custom check module did not return True or False, CustomChecker will do nothing!')

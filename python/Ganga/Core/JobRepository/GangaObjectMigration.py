@@ -46,14 +46,14 @@ def migrateGangaObjects(repository, migration_control = None):
             ids = ids[_migrate_at_once:]
             try:
                 jobs = repository.checkoutJobs(ids_m)
-            except Exception, e:
+            except Exception as e:
                 msg = "Error while getting jobs from repository: " + str(e)
                 logger.error(msg)
             else:
                 try:
                     jobs = filter(lambda j: j.status != "incomplete", jobs)
                     repository.commitJobs(jobs)
-                except Exception, e:
+                except Exception as e:
                     msg = "Error while saving converted jobs in the repository: " + str(e)
                     logger.error(msg)
                 else:

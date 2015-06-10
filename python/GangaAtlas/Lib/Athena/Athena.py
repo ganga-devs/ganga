@@ -764,7 +764,7 @@ class Athena(IPrepareApp):
             if job.outputdata:
                 try:
                     job.outputdata.check_content_consistency(numsubjobs)
-                except Exception, Value:
+                except Exception as Value:
                     logger.warning('An ERROR occured during job.outputdata.check_consistency() call: %s, %s', Exception, Value)
                     pass
 
@@ -780,7 +780,7 @@ class Athena(IPrepareApp):
             if job.outputdata:
                 try:
                     job.outputdata.fill()
-                except Exception, Value:
+                except Exception as Value:
                     logger.warning('An ERROR occured during job.outputdata.fill() call: %s, %s', Exception, Value)
                     pass                                   
 

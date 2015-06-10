@@ -23,7 +23,7 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
                 self.dataset = job_info['dataset'][0]
                 self.activity = job_info['activity']
                 self._complete = True
-            except KeyError,msg:
+            except KeyError as msg:
                 return
         
         else:
@@ -93,7 +93,7 @@ class ARDADashboardLCGAthena(ARDADashboardLCG):
                taskId=self.gangaTaskId
                 )
                 self._logger.debug("sent to the monalisa server")
-            except Exception,msg:
+            except Exception as msg:
                 self._logger.debug('could not send monalisa message: %s' % msg)
         else:
             self._logger.debug('did not send the monitoring message because the job is not complete')

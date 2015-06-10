@@ -59,7 +59,7 @@ def get_metadata(dataset = '', file_name = ''):
             for metaid, id in ids.iteritems():
                 metadata[str(metaid)] = str(id)
 
-    except Exception, msg:
+    except Exception as msg:
         logger.warning("Couldn't get metadata from AMI due to %s" % msg)
 
     return metadata     
@@ -94,7 +94,7 @@ def get_file_metadata(dataset='', all=False, numevtsperfile = 0):
             nevents = file_metadata.setdefault('events', 0)
             info.append(file_metadata)
     
-    except Exception, msg:
+    except Exception as msg:
         logger.warning("Couldn't get file metadata from AMI due to %s" % msg)
     
     content = {}
@@ -257,7 +257,7 @@ class AMIDataset(DQ2Dataset):
                         dsName += '/'
                     dsetList.append(dsName)
                     
-        except Exception, msg:
+        except Exception as msg:
             logger.error( msg )
 
         return dsetList

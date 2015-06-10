@@ -405,7 +405,7 @@ def checksum(url):
         try:
             cks = out[0].split()[0].strip()
             return cks
-        except IndexError,e:
+        except IndexError as e:
             print 'checksum index problem for %s:'%url
             print out
             raise JobToolsException('Checksum error: %s'%url)

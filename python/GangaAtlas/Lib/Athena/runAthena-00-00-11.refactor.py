@@ -2183,7 +2183,7 @@ if runAra and len(inputFiles) != 0:
            tmpMacro.close()
        # check startup file
        if not tmpMacroName.endswith('.py'):
-           raise RuntimeError,'startup file (%s) needs to be .py for ARA' % tmpMacroName
+           raise RuntimeError('startup file (%s) needs to be .py for ARA' % tmpMacroName)
        newMacroName = tmpMacroName+'.new'
        tmpMacro = open(tmpMacroName)
        newMacro = open(newMacroName,'w')       

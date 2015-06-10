@@ -29,7 +29,7 @@ class TestObjectConfig( GangaGPITestCase ):
        
     def tearDown(self):
        GangaGPITestCase.tearDown(self)
-       used_configs = ['defaults_Executable',"defaults_LSF","defaults_Job"]	
+       used_configs = ['defaults_Executable',"defaults_LSF","defaults_Job"]
        for c in used_configs:
           getConfig(c).revertToSessionOptions()
 
@@ -63,7 +63,7 @@ class TestObjectConfig( GangaGPITestCase ):
        try:
            jobConfig.setUserValue("backend.queue","myQueue2")
            assert(0)
-       except ConfigError,x:
+       except ConfigError as x:
            print x
        
        # Perform checks
@@ -83,7 +83,7 @@ class TestObjectConfig( GangaGPITestCase ):
        try:
            exeConfig.setUserValue("not_existing_args", ['something_wrong'])
            assert(0)
-       except ConfigError,x:
+       except ConfigError as x:
            print x
            
        exe2 = Executable()
@@ -96,7 +96,7 @@ class TestObjectConfig( GangaGPITestCase ):
            jobConfig.setUserValue("backend", "NOT_EXISTING_BACKEND")           
            jobConfig.setUserValue("backend.queue", "x")
            assert(0)           
-       except ConfigError,x:
+       except ConfigError as x:
            print x
            
        job2 = Job()

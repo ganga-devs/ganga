@@ -25,7 +25,7 @@ class GangaThreadPool:
     def __init__(self):
 
         if not GangaThreadPool._instance == None :
-            raise RuntimeError, 'Only one instance of GangaThreadPool is allowed!'
+            raise RuntimeError('Only one instance of GangaThreadPool is allowed!')
 
         GangaThreadPool._instance=self
 
@@ -36,7 +36,7 @@ class GangaThreadPool:
         logger.debug('service thread "%s" added to the GangaThreadPool',t.getName())
         try:
             self.__threads.append(t)
-        except DuplicateDataItemError, e:
+        except DuplicateDataItemError as e:
             self.logger.debug(str(e))
             pass
 
@@ -44,7 +44,7 @@ class GangaThreadPool:
         logger.debug('service thread "%s" deleted from the GangaThreadPool',t.getName())
         try:
             self.__threads.remove(t)
-        except ValueError,e:
+        except ValueError as e:
             logger.debug(str(e))
             pass
 

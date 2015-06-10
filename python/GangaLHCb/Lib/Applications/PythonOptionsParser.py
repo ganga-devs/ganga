@@ -82,14 +82,14 @@ class PythonOptionsParser:
         if stdout and rc == 0:
             try:
                 options = eval(opts_str)
-            except Exception, e:
+            except Exception as e:
                 logger.error('Cannot eval() the options file. Exception: %s',e)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
                 raise ApplicationConfigurationError(None,stdout+'###SPLIT###'+m)
             try:
                 opts_pkl_string = tmp_pkl.read()        
-            except IOError, e:
+            except IOError as e:
                 logger.error('Cannot read() the temporary pickle file: %s',
                              tmp_pkl.name)
         
@@ -117,7 +117,7 @@ class PythonOptionsParser:
                 else:
                     msg = 'Only extensions of type ".opts" and ".py" allowed'
                     raise TypeError(msg)
-            except IOError, e:
+            except IOError as e:
                 logger.error('%s',e)
                 logger.error('There was an IOError with the options file: %s',
                              name)
@@ -132,7 +132,7 @@ class PythonOptionsParser:
         data = []
         try:
             data = [f for f in self.opts_dict['EventSelector']['Input']]
-        except KeyError, e:
+        except KeyError as e:
             logger.debug('No inputdata has been defined in the options file.')
 
         ds = LHCbDataset()

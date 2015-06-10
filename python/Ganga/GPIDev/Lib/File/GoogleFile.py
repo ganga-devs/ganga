@@ -357,14 +357,14 @@ class GoogleFile(IGangaFile):
                         service.files().delete(fileId=f.id).execute()
                         f.downloadURL = ''
                         logger.info('File \'%s\' permanently deleted from GoogleDrive' % f.title)
-                    except errors.HttpError, error:
+                    except errors.HttpError as error:
                         #print 'An error occurred: %s' % error
                         logger.info('File \'%s\' deletion failed, or file already deleted'% f.title)
                 else:
                     try:
                         service.files().trash(fileId=f.id).execute()
                         logger.info('File \'%s\' removed from GoogleDrive' % f.title)
-                    except errors.HttpError, error:
+                    except errors.HttpError as error:
                         #print 'An error occurred: %s' % error
                         logger.info('File \'%s\' removal failed, or file already removed'% f.title)
 
@@ -375,14 +375,14 @@ class GoogleFile(IGangaFile):
                     service.files().delete(fileId=self.id).execute()
                     self.downloadURL = ''
                     logger.info('File permanently deleted from GoogleDrive')
-                except errors.HttpError, error:
+                except errors.HttpError as error:
                     #print 'An error occurred: %s' % error
                     logger.info('File deletion failed, or file already deleted')
             else:
                 try:
                     service.files().trash(fileId=self.id).execute()
                     logger.info('File removed from GoogleDrive')
-                except errors.HttpError, error:
+                except errors.HttpError as error:
                     #print 'An error occurred: %s' % error
                     logger.info('File removal failed, or file already removed')
                 return None
@@ -401,7 +401,7 @@ class GoogleFile(IGangaFile):
                 try:
                     service.files().untrash(fileId=f.id).execute()
                     logger.info('File \'%s\' restored to GoogleDrive' % f.title)
-                except errors.HttpError, error:
+                except errors.HttpError as error:
                     #print 'An error occurred: %s' % error
                     logger.info('File \'%s\' restore failed, or file does not exist on GoogleDrive'% f.title)
 
@@ -410,7 +410,7 @@ class GoogleFile(IGangaFile):
             try:
                 service.files().untrash(fileId=self.id).execute()
                 logger.info('File restored to GoogleDrive')
-            except errors.HttpError, error:
+            except errors.HttpError as error:
                 #print 'An error occurred: %s' % error
                 logger.info('File restore failed, or file does not exist on GoogleDrive')
             return None
@@ -433,7 +433,7 @@ class GoogleFile(IGangaFile):
                     self.GangaFolderId = i['id']
                     return
             page_token = files.get('nextPageToken')
-        except errors.HttpError, error:
+        except errors.HttpError as error:
             logger.info('Failed to create Ganga folder on GoogleDrive')
             #print 'An error occurred: %s' % error
 

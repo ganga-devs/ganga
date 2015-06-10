@@ -19,7 +19,7 @@ interactive release making tool...
 
 try:
     opts, args = getopt.getopt(sys.argv[1:], "", ["svnurl=",'platf='])
-except getopt.error, x:
+except getopt.error as x:
     print "command line syntax error"
     usage()
     sys.exit(2)
@@ -115,7 +115,7 @@ def remove_prerelease(prereleaseDir):
     try:
         os.unlink(pre_tarball)
         print 'sucessfully removed pre-release tarball %s' % pre_tarball
-    except OSError,e:
+    except OSError as e:
         print 'Cannot delete pre-release tarball: %s' % str(e)  
 
 
@@ -334,7 +334,7 @@ class PrereleaseCommand:
                 try:
                     os.unlink(pre_tarball)
                     print 'sucessfully removed pre-release tarball %s' % pre_tarball
-                except OSError,e:
+                except OSError as e:
                     print 'Cannot delete pre-release tarball: %s' % str(e)          
             else:
                 print "Cannot continue...Terminating"
@@ -447,7 +447,7 @@ class PretestCommand:
 
         try:
             os.makedirs(outputdir)
-        except Exception,e:
+        except Exception as e:
             print 'WARNING: ', str(e)
         
         def run_test(account,name):
@@ -503,7 +503,7 @@ class TestReportCommand:
             
                 try:
                     tf = tarfile.open(join(path,fname),'r:gz')
-                except Exception,e: 
+                except Exception as e: 
                     print "Test file %s could not be retrieved."
                     print "Will just ignore this and continue without it."
                     continue
@@ -724,7 +724,7 @@ class ReleaseCommand:
                     nf.close()
                 #replace the template file (it might be modified by append rules before)
                 shutil.move('%s.new' % template, template)                                
-            except Exception,e:
+            except Exception as e:
                 print 'Warning! Cannot write %s. %s' % (newfile,str(e))
 
 class GenerateManuals:

@@ -799,7 +799,7 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
     for se in storage_elements:
         try:
             result = dirac.addFile(lfn, file_name, se)
-        except Exception,x:
+        except Exception as x:
             print 'Exception running dirac.addFile command:',x
             break
         if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:

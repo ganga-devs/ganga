@@ -309,7 +309,7 @@ class RootRTHandler(IRuntimeHandler):
             python_version = ''
             try:
                 python_version = getConfig('ROOT')['pythonversion']
-            except ConfigError, e:
+            except ConfigError as e:
                 logger.debug('There was a problem trying to get [ROOT]pythonversion: %s.', e)
 
             logger.debug( 'Found version of python: %s', str(python_version) )

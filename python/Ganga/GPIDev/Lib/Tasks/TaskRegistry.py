@@ -144,7 +144,7 @@ class TaskRegistry(Registry):
                             p.finaliseTransforms()
                             p.updateStatus()
                      
-                    except Exception, x:
+                    except Exception as x:
                         logger.error("Exception occurred in task monitoring loop: %s %s\nThe offending task was paused." % (x.__class__,x))
                         type_, value_, traceback_ = sys.exc_info()
                         logger.error("Full traceback:\n %s" % ' '.join(traceback.format_exception(type_, value_, traceback_)))

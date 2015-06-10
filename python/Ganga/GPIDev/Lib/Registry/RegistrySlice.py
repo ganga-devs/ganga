@@ -23,7 +23,7 @@ class RegistrySlice(object):
             cfs = config[display_prefix+'_columns_functions']
             for c in cfs:
                 self._display_columns_functions[c] = eval(cfs[c])
-        except Exception,x:
+        except Exception as x:
             logger.error("Error on evaluating display column functions from config file: %s: %s"% (x.__class__.__name__,x))
 
         from Ganga.Utility.ColourText import Effects
@@ -51,9 +51,9 @@ class RegistrySlice(object):
                     except AttributeError:
                         doc = str(method)
                     result.append(method(obj,*args,**kwds))
-            except GangaException,x:
+            except GangaException as x:
                 if not keep_going: raise
-            except Exception,x:
+            except Exception as x:
                 logger.exception('%s %s %s: %s %s',doc,self.name,id,x.__class__.__name__,str(x))
                 if not keep_going: raise
         return result

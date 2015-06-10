@@ -75,7 +75,7 @@ class ARDADashboardLCG(IMonitoringService):
                 self.gridCertificate = job_info['gridCertificate']
                 self.VO = job_info['VO']
                 self._complete = True
-            except KeyError,msg:
+            except KeyError as msg:
                 # too bad, we will not monitor the job         
                 return
             # on the WN, we get the job ID from envar

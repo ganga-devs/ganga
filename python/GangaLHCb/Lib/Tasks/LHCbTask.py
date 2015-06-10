@@ -76,7 +76,7 @@ class LHCbTask(ITask):
         for t in self.transforms:
             try:
                 t.updateQuery(resubmit)
-            except GangaException, e:
+            except GangaException as e:
                 logger.warning(e.__str__())
                 continue
 

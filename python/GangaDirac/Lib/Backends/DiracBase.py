@@ -205,7 +205,7 @@ class DiracBase(IBackend):
                         incomplete = 1
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
-                except Exception,x:
+                except Exception as x:
                     log_user_exception(logger,debug=isinstance(x,GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid,str(x)))
         finally:
@@ -368,7 +368,7 @@ class DiracBase(IBackend):
             try:
                 dirac_file.get()
                 return dirac_file.lfn
-            except GangaException, e: # should really make the get method throw if doesn't suceed. todo
+            except GangaException as e: # should really make the get method throw if doesn't suceed. todo
                 logger.warning(e)
 
         suceeded=[]

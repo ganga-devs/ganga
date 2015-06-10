@@ -29,7 +29,7 @@ Tool to build Ganga RPMs and/or Python Eggs.
 
 try:
     options, args = getopt.getopt(sys.argv[1:], "hv:", ["help", "version="])
-except getopt.error, x:
+except getopt.error as x:
     print "command line syntax error"
     usage()
     sys.exit(2)

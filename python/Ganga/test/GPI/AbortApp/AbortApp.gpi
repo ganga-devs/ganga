@@ -18,7 +18,7 @@ print 'finished manual removing'
 try:
     j.remove()
     assert False, "should raise JobError but hasn't"
-except JobError,x:
+except JobError as x:
     pass
 print 'finished second manual removing'
 print 'waiting a few seconds'

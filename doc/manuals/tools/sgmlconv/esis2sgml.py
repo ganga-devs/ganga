@@ -149,7 +149,7 @@ def convert(ifp, ofp, xml=0, autoclose=(), verbatims=()):
             ofp.write("&%s;" % data)
             knownempty = 0
         else:
-            raise RuntimeError, "unrecognized ESIS event type: '%s'" % type
+            raise RuntimeError("unrecognized ESIS event type: '%s'" % type)
 
     if LIST_EMPTIES:
         dump_empty_element_names(knownempties)

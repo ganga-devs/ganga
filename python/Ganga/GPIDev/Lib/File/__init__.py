@@ -26,7 +26,7 @@ logger = getLogger()
 # Make ancient systems without simplejson ignore GoogleFile
 try:
     from GoogleFile import GoogleFile
-except ImportError, e:
+except ImportError as e:
     if e.args[0].endswith('django.utils'):
         logger.warning('Lacking simplejson on system makes it impossible to use GoogleFile. Should only happen on some Python 2.4 systems')
     else:

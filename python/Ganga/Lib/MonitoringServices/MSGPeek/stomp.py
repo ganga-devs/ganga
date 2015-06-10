@@ -682,7 +682,7 @@ class Connection(object):
                 assert len(pair) == 2
                 entries[pair[0]] = pair[1]
             return entries
-        except Exception, ex:
+        except Exception as ex:
             # unable to parse message. return original
             return body
         

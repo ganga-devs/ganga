@@ -52,9 +52,9 @@ def getMonitoringClass(mclassname):
          
          _mon_classes[mclassname] = monitoring_class 
          return monitoring_class
-       except ImportError,x:
+       except ImportError as x:
          raise MonitoringServiceError('%s while loading %s'%(str(x),mclassname))
-       except KeyError,x:
+       except KeyError as x:
          raise MonitoringServiceError('class %s not found while loading %s'%(classname,mclassname))
 
 def findMonitoringClassesName(job):

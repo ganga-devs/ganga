@@ -19,7 +19,7 @@ class ARDADashboardLCGExecutable(ARDADashboardLCG):
             # we are on the worker node
             try:
                 self._complete = True
-            except KeyError,msg:
+            except KeyError as msg:
                 return
         
         else:
@@ -50,5 +50,5 @@ class ARDADashboardLCGExecutable(ARDADashboardLCG):
                jobId=self.gangaJobId + '_' + self.gridJobId,
                taskId=self.gangaTaskId
                 )
-            except Exception,msg:
+            except Exception as msg:
                 self._logger.debug('could not send monalisa message: %s' % msg)

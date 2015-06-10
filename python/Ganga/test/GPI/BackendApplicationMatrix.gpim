@@ -35,7 +35,7 @@ class BackendApplicationMatrix(MultipassTest):
                     failed.append((backend, app))
                     print " [WARNING] Job (%s,%s) cannot be submited" % (backend,app)
                 print "*"*80
-            except Exception,e:
+            except Exception as e:
                 print e
 
         disableServices()

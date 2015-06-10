@@ -90,7 +90,7 @@ def gangaObjectFactory(attrDict, migration_class = None):
     else:
         try:
             cls = allPlugins.find(attrDict['category'], attrDict['name'])
-        except PluginManagerError, e:
+        except PluginManagerError as e:
             msg = "Plugin Manager Error: %s" % str(e)
             errors.append(GangaObjectFactoryError(e, msg = msg))
             return (EmptyGangaObject(), migrated[0], errors)
@@ -119,7 +119,7 @@ def gangaObjectFactory(attrDict, migration_class = None):
                         try:
                             obj = cls.getMigrationObject(old_obj)
                             #assert(isinstance(obj, cls))
-                        except Exception, e:
+                        except Exception as e:
                             msg += ' Error in object migration: ' + str(e) 
                         else:
                             obj.__setstate__(obj.__dict__)

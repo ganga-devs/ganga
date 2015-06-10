@@ -38,7 +38,7 @@ for module in modules:
 	    p = [{'module_path':module.replace('.','/'),'maintainer':maintainer,'module_tag':module_tag, 'module_releasenotes':"".join(lines[2:]).strip()}]
 	    packages.extend(p)
 	    fh.close()
-	except Exception,e:
+	except Exception as e:
 	    #we need at least two lines: maintainer and module_tag, otherwise we don't use package tag in the release
 	    print "Invalid tag-file format for %s module. (at least 2 lines are required: maintainer,tag) [%s]" % (module,e)
 	    if fh: fh.close()

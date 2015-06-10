@@ -13,7 +13,7 @@ class OutputServerMS(IMonitoringService):
                     import xmlrpclib
                     s = xmlrpclib.ServerProxy(self.job_info['server_url'])
                     s.send_output(self.job_info['jobid'],name,file(name,'r').read())
-                except Exception,x:
+                except Exception as x:
                     import sys
                     print >> sys.stderr, 'OutputServerMS exception raised while sending "%s": %s'%(name,str(x))
                     import traceback

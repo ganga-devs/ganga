@@ -32,7 +32,7 @@ class TestGaudiUtils(GangaGPITestCase):
             try:
                 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_packs
                 available_packs(app)
-            except KeyError, err:                
+            except KeyError as err:                
                 assert False, 'application %s has no packages' % app
 
     def test_available_versions(self):

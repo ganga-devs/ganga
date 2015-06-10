@@ -19,7 +19,7 @@ class TestFolders(GangaGPITestCase):
 
         try:
             jobtree.rm(j2.id)
-        except TreeError,x:
+        except TreeError as x:
             pass
 
         # make sure the job may be deleted
@@ -108,7 +108,7 @@ class TestFolders(GangaGPITestCase):
         try:
             # add rubbish
             jobtree.add(1)
-        except TreeError,x:
+        except TreeError as x:
             pass
                
     # Add by AT ---

@@ -25,7 +25,7 @@ def check_prime_job(j):
             if fc:
                 print 'job',s.id,': got factors:',fc
             factors.extend(fc)
-        except IOError,x:
+        except IOError as x:
             print x
 
     # check if we have all prime numbers!

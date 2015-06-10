@@ -38,7 +38,7 @@ class ConfigProxy(object):
     def __getitem__(self,o):
         try:
             return getattr(self,o)
-        except AttributeError,x:
+        except AttributeError as x:
             raise ConfigError('Undefined option %s (%s)'%(o,str(x)))
 
     def __setattr__(self,o,v):
@@ -123,7 +123,7 @@ class MainConfigProxy:
     def __getitem__(self,p):
         try:
             return getattr(self,p)
-        except AttributeError,x:
+        except AttributeError as x:
             msg = 'configuration section "%s" not found' % str(p)
             logger.error(msg)
             raise ConfigError(msg)

@@ -95,7 +95,7 @@ for thing in box:
     try:
         b=box[index].__str__()
         logger.info('Box object #' + str(index) + ' read successfully.')
-    except Exception, e:
+    except Exception as e:
         logger.error('Exception for object #' + str(index) + ' in box.')
         logger.error(box[index])
         logger.error(e)

@@ -211,7 +211,7 @@ class ARDARepositoryMixIn(JobRepository):
                 # check that the dir has job counter
                 try:
                     self.sequenceCreate(self._counterName, path)
-                except CommandException, e:
+                except CommandException as e:
                     logger.debug(str(e))            
                     # do nothing; assume that sequence exists
         finally:
@@ -226,7 +226,7 @@ class ARDARepositoryMixIn(JobRepository):
         try:
             try:
                 self.rm(os.path.join(path, '*'))
-            except CommandException, e:
+            except CommandException as e:
                 if e.errorCode == 1: #no enries
                     pass
         finally:
@@ -269,7 +269,7 @@ class ARDARepositoryMixIn(JobRepository):
         try:
             try:
                 self.removeDir(path)
-            except CommandException, e:
+            except CommandException as e:
                 if self._isDirNotFoundError(e): # directory not found
                     return
                 elif self._isDirNotEmptyError(e): # directory not empty
@@ -277,7 +277,7 @@ class ARDARepositoryMixIn(JobRepository):
                     if remove_sequence: 
                         try:
                             self.sequenceRemove(self._getSequenceName(path))
-                        except CommandException, e:
+                        except CommandException as e:
                             if not self._isNotASequenceError(e): # Not a sequence
                                 raise e
                     
@@ -301,7 +301,7 @@ class ARDARepositoryMixIn(JobRepository):
                     # try remove dir (hopefully empty) again
                     try:
                         self.removeDir(path)
-                    except CommandException, e:
+                    except CommandException as e:
                         if not self._isDirNotFoundError(e): #if directory is not found (other process may delete it) don't raise an exception
                             raise e
                 else:
@@ -332,20 +332,20 @@ class ARDARepositoryMixIn(JobRepository):
             for d in dd:
                 try:
                     self.cd(d)
-                except CommandException, e:
+                except CommandException as e:
                     logger.debug(str(e))
                     dd2.insert(0,d)
                 else:
                     try:
                        self.cd(cwd)
-                    except CommandException, e:
+                    except CommandException as e:
                         logger.debug(str(e))
                         raise RepositoryError(e = e, msg = str(e))
                     break
             for d in dd2:
                 try:
                     self.createDir(d)
-                except CommandException, e:
+                except CommandException as e:
                     if e.errorCode != 16:
                         logger.debug(str(e))
                         logger.debug(str(d))
@@ -374,7 +374,7 @@ class ARDARepositoryMixIn(JobRepository):
                                 logger.debug("Attribute %s exists with the different type %s" % (a, dbt))
                 finally:
                     self._finalizeCommand()
-            except CommandException, e:
+            except CommandException as e:
                 if e.errorCode != 15:
                     logger.debug(str(e))
                     raise RepositoryError(e = e, msg = str(e))
@@ -593,7 +593,7 @@ class ARDARepositoryMixIn(JobRepository):
                         self._generic_updateAttr(fqid, attrs, vals, forced_action)
                     else:
                         self._generic_addEntry(fqid, attrs, vals)
-                except (CommandException, RepositoryError), e:
+                except (CommandException, RepositoryError) as e:
                     msg = "_commitJobs() command called while committing job %s raised an exception: %s" % (str(fqid), str(e))
                     msgs.append(msg)
                     # logger.error(msg)
@@ -622,7 +622,7 @@ class ARDARepositoryMixIn(JobRepository):
                         # adjust job counter
                         while get_id(0) < j.id:
                             continue
-                except CommandException, e:
+                except CommandException as e:
                     msg = "sequenceNext() command called while registering jobs raised an exception: %s" % str(e)
                     # logger.error(msg)
                     raise RepositoryError(e = e, msg = msg)
@@ -659,7 +659,7 @@ class ARDARepositoryMixIn(JobRepository):
                         for j in jobs:
                             try:
                                 register_visitor(j, path, j_reserve)
-                            except Exception, e:
+                            except Exception as e:
                                 msg = str(e)
                                 # logger.error(msg)
                                 details[path] = RepositoryError(e = e, msg = msg)
@@ -678,7 +678,7 @@ class ARDARepositoryMixIn(JobRepository):
                             commit_visitor(self._getValues(j, timestamp, deep), path)
                     finally:
                         self._finalizeCommand()
-                except Exception, e:
+                except Exception as e:
                     msg = str(e)
                     # logger.error(msg)
                     details[path] = RepositoryError(e = e, msg = msg)
@@ -778,7 +778,7 @@ class ARDARepositoryMixIn(JobRepository):
                     fqn  = self._getJobFileName(fqid)
                     try:
                         self._generic_getattr(fqid, extended_attr_list)
-                    except CommandException, e:
+                    except CommandException as e:
                         msg = "ARDA interface command getattr() called for job %s raised an exception: %s" % (str(fqid), str(e))
                         logger.error(msg)
                     else:
@@ -786,7 +786,7 @@ class ARDARepositoryMixIn(JobRepository):
                             try:
                                 f, md = self._generic_getEntry()
                                 assert(os.path.basename(fqn) == f)
-                            except Exception, e:
+                            except Exception as e:
                                 msg = "ARDA interface command getEntry() called for job %s raised an exception: %s" % (str(fqid), str(e))
                                 logger.error(msg)
                             else:
@@ -798,7 +798,7 @@ class ARDARepositoryMixIn(JobRepository):
                 selection, path = self._getSelectionAndPath(ids_or_attributes)                 
                 try:
                     self._generic_selectAttr(selection, path, extended_attr_list)              
-                except CommandException, e:
+                except CommandException as e:
                     msg = "ARDA interface command selectAttr() raised an exception: %s" % str(e)
                     logger.error(msg)
                     # raise RepositoryError(e = e, msg = msg)
@@ -806,7 +806,7 @@ class ARDARepositoryMixIn(JobRepository):
                     while not self._generic_eot():
                         try:
                             md = self._generic_getSelectAttrEntry()
-                        except Exception, e:
+                        except Exception as e:
                             msg = "ARDA interface command getSelectAttrEntry() raised an exception: %s" % str(e)
                             logger.error(msg)
                         else:
@@ -848,7 +848,7 @@ class ARDARepositoryMixIn(JobRepository):
         values = [self.guid, istate, repr(time.time())]
         try:
             self._setMetaData(ids, attrs, values, forced_action)
-        except BulkOperationRepositoryError, e:
+        except BulkOperationRepositoryError as e:
             logger.debug(str(e))
         
     #--------------------------------------------------------------------------------------
@@ -867,7 +867,7 @@ class ARDARepositoryMixIn(JobRepository):
                             self._generic_addEntry(fqid, attrs, values)
                         else:
                             self._generic_updateAttr(fqid, attrs, values, forced_action)
-                    except Exception, e:
+                    except Exception as e:
                         msg = str(e)
                         # logger.error(msg)
                         details[fqid] = RepositoryError(e = e, msg = msg)
@@ -930,7 +930,7 @@ class ARDARepositoryMixIn(JobRepository):
                     else:
                         self.sjid_reserve[fqid][0] = newval
                     return str(now)
-                except Exception, e:
+                except Exception as e:
                     raise RepositoryError(e = e, msg = "getNextSubjobId error: " + str(e))
             else:
                 return next(fqid, reserve)[0]
@@ -941,7 +941,7 @@ class ARDARepositoryMixIn(JobRepository):
     def _initCommand(self):
         try:
             self.transaction()
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
             logger.error(msg)
             raise RepositoryError(e = e, msg = msg)          
@@ -951,10 +951,10 @@ class ARDARepositoryMixIn(JobRepository):
         try:
             try:
                 self.commit()
-            except CommandException, e:
+            except CommandException as e:
                 if e.errorCode != 9:
                     raise e
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
             logger.error(msg)
             raise RepositoryError(e = e, msg = msg)            
@@ -1065,7 +1065,7 @@ class ARDARepositoryMixIn(JobRepository):
                             rr.append(visitor(md))
                         if USE_FOLDERS_FOR_SUBJOBS:
                             rr.sort(sorter)
-                except Exception, e:
+                except Exception as e:
                     msg = 'Dictionary of job %s cannot be evaluated because of the error: %s. The job is most likely corrupted and will not be not imported.' % (str(e), str(md[0]))
                     raise RepositoryError(e = e, msg = msg)
                 else:
@@ -1076,7 +1076,7 @@ class ARDARepositoryMixIn(JobRepository):
                 try:
                     jdict = Parser.insertSubJobs(visitor(md))
                     job = self._streamer._getJobFromDict(jdict)
-                except Exception, e:
+                except Exception as e:
                     msg =  'Exception: %s while constructing job object from a dictionary' % (str(e))
                     logger.error(msg)
                 else:
@@ -1132,7 +1132,7 @@ class ARDARepositoryMixIn(JobRepository):
                 for (fqid, ssjlist) in sjlist:
                     try:
                         self._generic_rm(fqid, forced_action)
-                    except (RepositoryError, CommandException), e:
+                    except (RepositoryError, CommandException) as e:
                         msg = "deleteJobs() command called while deleting job %s raised an exception: %s" % (str(fqid), str(e))
                         details[fqid] = RepositoryError(e = e, msg = msg)
                         msgs.append(msg)
@@ -1158,7 +1158,7 @@ class ARDARepositoryMixIn(JobRepository):
                 # remove subjob folder (if any)
                 try:
                     self._forcedRemoveDir(self._getSubJobPath(fqid))
-                except Exception, e:
+                except Exception as e:
                     msg = "Can not remove subjobs folder of the job %s because of the error: %s" % (str(fqid), str(e))
                     # logger.error(msg)
                     details[fqid] = RepositoryError(e = e, msg = msg)
@@ -1196,7 +1196,7 @@ class ARDARepositoryMixIn(JobRepository):
                             values = values_s
                         values[0] = self._pstr2text(repr(ssjlist)) # subjob ids
                         self._generic_updateAttr(mfqid, attrs, values, forced_action)
-                    except Exception, e:
+                    except Exception as e:
                         msg = "Can not update master job %s of subjob %s because of the error: %s" % (str(mfqid), str(fqid), str(e))
                         # logger.error(msg)
                         details[fqid] = RepositoryError(e = e, msg = msg)
@@ -1210,7 +1210,7 @@ class ARDARepositoryMixIn(JobRepository):
                         if len(ssjlist) == 0:
                             # remove subjob folder (if any) 
                             self._forcedRemoveDir(self._getSubJobPath(mfqid))
-                    except Exception, e:
+                    except Exception as e:
                         msg = "Can not unsplit master job %s after deleting the last subjob %s because of the error: %s" % (str(mfqid), str(fqid), str(e))
                         # logger.error(msg)
                         details[fqid] = RepositoryError(e = e, msg = msg)
@@ -1227,7 +1227,7 @@ class ARDARepositoryMixIn(JobRepository):
         try:         
             try:
                 metadata = self._getMetaData(ids_or_attributes, ['id'])
-            except RepositoryError, e:
+            except RepositoryError as e:
                 msg = 'Exception: %s while getting job ids.' % str(e)
                 logger.error(msg)
                 raise e
@@ -1246,7 +1246,7 @@ class ARDARepositoryMixIn(JobRepository):
             attr_list = map(lambda x: x[0], attr_list)
             try:
                 metadata = self._getMetaData(ids_or_attributes, attr_list)
-            except RepositoryError, e:
+            except RepositoryError as e:
                 msg =  'Exception: %s while getting job attributes.' % str(e)
                 logger.error(msg)
                 raise e
@@ -1300,7 +1300,7 @@ class ARDARepositoryMixIn(JobRepository):
                         vals = [status, compressed, blob, self.guid, istate, timestamp]
                         try:
                             self._generic_updateAttr(fqid, attrs, vals, forced_action)
-                        except (CommandException, RepositoryError), e:    
+                        except (CommandException, RepositoryError) as e:    
                             msg = "setJobsStatus() command called while committing job %s raised an exception: %s" % (str(fqid), str(e))
                             msgs.append(msg)
                             # logger.error(msg)
@@ -1326,7 +1326,7 @@ class ARDARepositoryMixIn(JobRepository):
             attr_list = ['status']
             try:
                 metadata = self._getMetaData(ids_or_attributes, attr_list)
-            except RepositoryError, e:
+            except RepositoryError as e:
                 msg =  'Exception: %s while getting job status.' % str(e)
                 logger.error(msg)
                 raise e
@@ -1344,14 +1344,14 @@ class ARDARepositoryMixIn(JobRepository):
             fn    = os.path.join(jtreefldr, str(tree_id))
             try:
                 self.getattr(fn, attrs)
-            except CommandException, e:
+            except CommandException as e:
                 #logger.warning(str(e))
                 logger.debug(str(e))
                 return
             while not self.eot():
                 try:
                     file, values = self.getEntry()
-                except Exception, e:
+                except Exception as e:
                     logger.error(str(e))
                 else:
                     md_list.append(values[0])
@@ -1383,7 +1383,7 @@ class ARDARepositoryMixIn(JobRepository):
                 while not self.eot():
                     try:
                         file, type = self.getEntry()
-                    except Exception, e:
+                    except Exception as e:
                         logger.error(str(e))
                     else:
                         if os.path.basename(file) == os.path.basename(fn):
@@ -1391,7 +1391,7 @@ class ARDARepositoryMixIn(JobRepository):
                             break
                 else:
                     self.addEntry(fn, attrs, values)
-            except CommandException, e:
+            except CommandException as e:
                 logger.debug(str(e))
                 raise RepositoryError(e = e, msg = str(e))
         finally:
@@ -1411,7 +1411,7 @@ class ARDARepositoryMixIn(JobRepository):
                 self._forcedRemoveDir(self.root_dir)
                 # init root dir again
                 self._initAll()
-            except Exception, e:
+            except Exception as e:
                 raise RepositoryError(e = e, msg = str(e))
         finally:
             self._rep_lock.release()
@@ -1454,7 +1454,7 @@ class RemoteARDAJobRepository(ARDARepositoryMixIn, MDClient):
             MDClient.requireSSL(self, key, cert)
             try:
                 MDClient.connect(self)
-            except Exception, e:
+            except Exception as e:
                 msg = "Can not connect to the Repository because of the error: %s" % str(e)
                 logger.error(msg)
                 raise RepositoryError(e = e, msg = msg)
@@ -1473,7 +1473,7 @@ class RemoteARDAJobRepository(ARDARepositoryMixIn, MDClient):
             if not gp.isValid():
                 gp.create()
             fn = gp.location()
-        except Exception, e:
+        except Exception as e:
             msg =  'Exception: %s while getting proxy location' % str(e)
             logger.error(msg)
             fn = ''
@@ -1569,7 +1569,7 @@ class RemoteOracleARDAJobRepository(RemoteARDAJobRepository):
             try:
                 try:
                     map(lambda x: self.removeAttr(path, x[0]), schema)  
-                except CommandException,e:
+                except CommandException as e:
                     if e.errorCode == 9: #TODO: Oracle backend error
                         pass           
             finally:
@@ -1663,7 +1663,7 @@ class RemoteOracleARDAJobRepository(RemoteARDAJobRepository):
                 blob_fn = self._getBlobFileName(fqid, md[blob_index])
                 try:
                     self.getattr(blob_fn, [self._blobsFldrAttr[0]])
-                except CommandException, e:
+                except CommandException as e:
                     msg = "ARDA interface command getattr() called for job %s raised an exception: %s" % (str(fqid), str(e))
                     logger.error(msg)
                 else:
@@ -1695,7 +1695,7 @@ class RemoteOracleARDAJobRepository(RemoteARDAJobRepository):
                 blob_fn = self._getBlobFileName(fqid, md[blob_index])
                 try:
                     self.getattr(blob_fn, [self._blobsFldrAttr[0]])
-                except CommandException, e:
+                except CommandException as e:
                     msg = "ARDA interface command getattr() called for job %s raised an exception: %s" % (str(fqid), str(e))
                     logger.error(msg)
                 else:
@@ -1719,7 +1719,7 @@ class RemoteOracleARDAJobRepository(RemoteARDAJobRepository):
         # remove all associated blobs
         try:
             self.rm(self._getBlobFileName(fqid, '*'))
-        except CommandException, e:
+        except CommandException as e:
             msg = "Can not delete blobs related to the job %s because of the error: %s" % (str(fqid), str(e))
             logger.debug(msg)           
 
@@ -1749,7 +1749,7 @@ class LocalARDAJobRepository(ARDARepositoryMixIn, MDStandalone):
         if not os.path.isdir(local_root):
             try:
                 os.makedirs(local_root)
-            except Exception, e:
+            except Exception as e:
                 logger.error(str(e))
                 raise e
             else:
@@ -1780,7 +1780,7 @@ class LocalARDAJobRepository(ARDARepositoryMixIn, MDStandalone):
                 logger.warning("You can suppress this operation by increasing 'lock_timeout' parameter of the local repository constructor")
                 logger.warning("Deleting old lock files: %s", old_locks)
                 MDStandalone.removeAllLocks(self, self._lock_timeout)
-        except Exception, e:
+        except Exception as e:
             logger.debug(str(e))
             Ganga.Utility.logging.log_user_exception(logger)
             raise RepositoryError(e = e, msg = str(e))
@@ -1799,7 +1799,7 @@ class LocalARDAJobRepository(ARDARepositoryMixIn, MDStandalone):
             # creates dirs in path if do not exist
             try:
                 self.createDir(path)
-            except CommandException, e:
+            except CommandException as e:
                 if e.errorCode != 16:
                     logger.debug(str(e))
                     raise RepositoryError(e = e, msg = str(e))
@@ -1821,7 +1821,7 @@ class LocalARDAJobRepository(ARDARepositoryMixIn, MDStandalone):
                         attr_dir = mdtable.attributes.storage.dirname
                         path_dir = self._MDStandalone__systemPath(p_table)
                         shutil.copy(os.path.join(attr_dir, attr_name), path_dir)
-                except Exception, e:
+                except Exception as e:
                     logger.debug(str(e))
             # create attributes in a standard way
             ARDARepositoryMixIn._createAttrIfMissing(self, path, schema)
@@ -1960,10 +1960,10 @@ class LocalARDAJobRepository(ARDARepositoryMixIn, MDStandalone):
         try:
             try:
                 self.abort()
-            except CommandException, e:
+            except CommandException as e:
                 if e.errorCode != 9:
                     raise e
-        except Exception, e:
+        except Exception as e:
             msg = str(e)
             logger.error(msg)
             raise RepositoryError(e = e, msg = msg)          
@@ -1982,7 +1982,7 @@ class LocalARDAJobRepository(ARDARepositoryMixIn, MDStandalone):
         try:
             try:
                 MDStandalone.removeAllLocks(self, self._lock_timeout)
-            except Exception, e:
+            except Exception as e:
                 logger.debug(str(e))
                 Ganga.Utility.logging.log_user_exception(logger) 
                 raise RepositoryError(e = e, msg = str(e))
@@ -1995,7 +1995,7 @@ class LocalARDAJobRepository(ARDARepositoryMixIn, MDStandalone):
         try:
             try:
                 return MDStandalone.listAllLocks(self, self._lock_timeout)
-            except Exception, e:
+            except Exception as e:
                 logger.debug(str(e))
                 Ganga.Utility.logging.log_user_exception(logger)                
                 raise RepositoryError(e = e, msg = str(e))            

@@ -99,7 +99,7 @@ def _downloadCESEInfo():
         retry += 1
         try:
             data = urllib.urlopen(CESEInfoURL).read()
-        except Exception, e:
+        except Exception as e:
             logger.warning(e)
             pass
 
@@ -136,7 +136,7 @@ def _downloadCESEInfo():
         except EOFError:
             result['creamce_info']  = []
         input.close()
-    except Exception, e:
+    except Exception as e:
         logger.error(e)
         logger.error('Cannot read CE-SE association downloaded from the GANGA website..')
         return None

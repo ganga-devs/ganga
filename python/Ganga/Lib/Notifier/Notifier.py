@@ -75,7 +75,7 @@ remove the notifier object from future jobs.
             smtpObj = smtplib.SMTP(config['SMTPHost'])
             smtpObj.sendmail(sender, receivers, string_message)         
         
-        except smtplib.SMTPException, e:
+        except smtplib.SMTPException as e:
             raise PostProcessException(str(e))     
         return True
  

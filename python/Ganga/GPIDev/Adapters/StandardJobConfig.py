@@ -127,7 +127,7 @@ class StandardJobConfig:
                     fn = _get_path_in_sandbox(a)
                     self.__args_strings.append(fn)
                     self.__all_inputbox.append(a)
-                except AttributeError,x:
+                except AttributeError as x:
                     s = "cannot process argument %s, it is neither File nor string" % repr(a)
                     logger.error(s)
                     raise ValueError(s)
@@ -141,7 +141,7 @@ class StandardJobConfig:
                     logger.warning('file %s is not executable, overriding executable permissions in the input sandbox'%self.exe.name)
                     self.exe.executable = True
                 self.__all_inputbox.append(self.exe)
-            except AttributeError,x:
+            except AttributeError as x:
                 s = "cannot process exe property %s, it is neither File nor string (%s)" % (repr(self.exe),str(x))
                 logger.error(s)
                 raise ValueError(s)

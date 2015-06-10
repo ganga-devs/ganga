@@ -107,7 +107,7 @@ class IPrepareApp(IApplication):
                                 if not os.path.isidr( shr_dir ):
                                     os.makedirs( shr_dir )
                                 shutil.copy2(subitem, shr_dir )
-                            except IOError, e:
+                            except IOError as e:
                                 logger.error(e)
                                 return 0
                     elif type(subitem) is File and subitem.name is not '':
@@ -117,7 +117,7 @@ class IPrepareApp(IApplication):
                             if not os.path.isdir( shr_dir ):
                                 os.makedirs( shr_dir )
                             shutil.copy2(subitem.name, shr_dir)
-                        except IOError, e:
+                        except IOError as e:
                             logger.error(e)
                             return 0
             elif type(prepitem) is str:
@@ -130,7 +130,7 @@ class IPrepareApp(IApplication):
                         if not os.path.isdir( shr_dir ):
                             os.makedirs( shr_dir )
                         shutil.copy2(prepitem, shr_dir)
-                    except IOError, e:
+                    except IOError as e:
                         logger.error(e)
                         return 0
             elif type(prepitem) is File and prepitem.name is not '':
@@ -141,7 +141,7 @@ class IPrepareApp(IApplication):
                     if not os.path.isdir( shr_dir ):
                         os.makedirs( shr_dir )
                     shutil.copy2(prepitem.name, shr_dir)
-                except IOError, e:
+                except IOError as e:
                     logger.error(e)
                     return 0
             else:

@@ -63,14 +63,14 @@ class Localhost(IBackend):
 
       try:
           shutil.rmtree(self.workdir)
-      except OSError,x:
+      except OSError as x:
           import errno
           if x.errno != errno.ENOENT:
               logger.error('problem cleaning the workdir %s, %s',self.workdir,str(x))
               return 0
       try:
           os.mkdir(self.workdir)
-      except Exception,x:
+      except Exception as x:
         logger.error('cannot make the workdir %s, %s',self.workdir,str(x))
         return 0
       return self.run(job.getInputWorkspace().getPath('__jobscript__'))
@@ -78,7 +78,7 @@ class Localhost(IBackend):
     def run(self,scriptpath):
       try:
           process=subprocess.Popen(["python",scriptpath,'subprocess'])
-      except OSError,x:
+      except OSError as x:
           logger.error('cannot start a job process: %s',str(x))
           return 0
       self.wrapper_pid=process.pid
@@ -228,7 +228,7 @@ statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 
 try:
   statusfile=open(statusfilename,'w')
-except IOError,x:
+except IOError as x:
   print 'ERROR: not able to write a status file: ', statusfilename
   print 'ERROR: ',x
   raise
@@ -259,12 +259,12 @@ sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
 try:
     import subprocess
-except ImportError,x:
+except ImportError as x:
     sys.path.insert(0,###SUBPROCESS_PYTHONPATH###)
     import subprocess
 try:
     import tarfile
-except ImportError,x:
+except ImportError as x:
     sys.path.insert(0,###TARFILE_PYTHONPATH###)
     import tarfile
 
@@ -289,7 +289,7 @@ import time #datetime #disabled for python2.2 compatiblity
 
 try:
  child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
-except OSError,x:
+except OSError as x:
  errfile = open( 'tt', 'w' )
  errfile.close()
  print >> statusfile, 'EXITCODE: %d'%-9999
@@ -397,14 +397,14 @@ sys.exit()
             # kill the wrapper script
             # bugfix: #18178 - since wrapper script sets a new session and new group, we can use this to kill all processes in the group
             os.kill(-self.wrapper_pid,signal.SIGKILL)
-        except OSError,x:
+        except OSError as x:
             logger.warning('while killing wrapper script for job %d: pid=%d, %s',job.id,self.wrapper_pid,str(x))
             ok = False
 
         # waitpid to avoid zombies
         try:
             ws = os.waitpid(self.wrapper_pid,0)
-        except OSError,x:
+        except OSError as x:
             logger.warning('problem while waitpid %d: %s',job.id,x)
 
         from Ganga.Utility.files import recursive_copy
@@ -412,7 +412,7 @@ sys.exit()
         for fn in ['stdout','stderr','__syslog__']:
             try:
                 recursive_copy(os.path.join(self.workdir,fn),job.getOutputWorkspace().getPath())
-            except Exception,x:
+            except Exception as x:
                 logger.info('problem retrieving %s: %s',fn,x)
 
         self.remove_workdir()
@@ -423,7 +423,7 @@ sys.exit()
             import shutil
             try:
                 shutil.rmtree(self.workdir)
-            except OSError,x:
+            except OSError as x:
                 logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))            
     
     def updateMonitoringInformation(jobs):
@@ -470,10 +470,10 @@ sys.exit()
             status_file = open(statusfile)
             logger.debug('status file: %s %s',statusfile, status_file.read())
             status_file.close()
-          except IOError,x:
+          except IOError as x:
             logger.debug('problem reading status file: %s (%s)',statusfile,str(x))
             exitcode=None
-          except Exception,x:
+          except Exception as x:
               logger.critical('problem during monitoring: %s',str(x))
               import traceback
               traceback.print_exc()
@@ -490,7 +490,7 @@ sys.exit()
                   logger.critical('wrapper script for job %s exit with code %d',str(j.id),ws[1])
                   logger.critical('report this as a bug at https://its.cern.ch/jira/browse/GANGA')
                   j.updateStatus('failed')
-          except OSError,x:
+          except OSError as x:
               if x.errno != errno.ECHILD:
                   logger.warning('cannot do waitpid for %d: %s',j.backend.wrapper_pid,str(x))
 

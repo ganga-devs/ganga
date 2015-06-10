@@ -18,6 +18,6 @@ if not hasattr(tempfile,'mkdtemp'):
             import os
             os.mkdir(tempdir)
             # probably we should chmod to 700
-        except IOError,x:
+        except IOError as x:
             raise
         return tempdir

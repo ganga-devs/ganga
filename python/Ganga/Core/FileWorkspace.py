@@ -65,7 +65,7 @@ class FileWorkspace:
 
             import os
             os.makedirs(self.getPath())
-        except OSError,x:
+        except OSError as x:
             import errno
             if x.errno == errno.EEXIST:
                 logger.debug('EEXIT: %s',self.getPath())
@@ -120,7 +120,7 @@ class FileWorkspace:
             import os
             os.makedirs(self.getPath()+fileobj.subdir)
             logger.debug('created %s',self.getPath())
-        except OSError,x:
+        except OSError as x:
             import errno
             if x.errno == errno.EEXIST:
                 logger.debug('EEXIT: %s',self.getPath())
@@ -170,9 +170,9 @@ class FileWorkspace:
             else:
                 logger.debug('%s : DOES NOT EXIST',self.getPath())
         #FIXME: error strategy
-        except OSError,x:
+        except OSError as x:
             raise
-        except Exception,x:
+        except Exception as x:
             raise
 
 def gettop():

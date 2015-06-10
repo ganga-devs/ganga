@@ -519,7 +519,7 @@ def %(method_name)s(self):
     #delete the output file if it already exists
     try:
         os.unlink("%(output_path)s")
-    except OSError,e:
+    except OSError as e:
         pass
     
 """ % VARS
@@ -727,7 +727,7 @@ def %(method_name)s(self):
                          test_ini)
         try:
             module = exec_module_code(test_path)
-        except Exception,e:
+        except Exception as e:
             print "[WARNING] Cannot parse Multipass test (invalid format) %s [skipped]-> %s"%(test_path,e)
             return 
             
@@ -817,7 +817,7 @@ def %(method_name)s(self):
             module = exec_module_code(test_path)
             if hasattr(module,'setUp'):
                 getattr(module,'setUp')()
-        except Exception,e:
+        except Exception as e:
             print "[WARNING] Cannot parse PYUnit test  %s [skipped]:"%test_path
             import traceback
             traceback.print_exc()
@@ -923,7 +923,7 @@ def %(method_name)s(self):
             module = exec_module_code(test_path)
             if hasattr(module,'setUp'):
                 getattr(module,'setUp')()
-        except Exception,e:
+        except Exception as e:
             print "[WARNING] Cannot parse GPIP test  %s [skipped]:"%test_path
             import traceback
             traceback.print_exc()
@@ -1020,7 +1020,7 @@ def walk(top, topdown=True, onerror=None):
     # left to visit.  That logic is copied here.
     try:
         names = listdir(top)
-    except Exception, err:
+    except Exception as err:
         print err
         if onerror is not None:
             onerror(err)

@@ -68,7 +68,7 @@ def safe_save(fn,obj,to_file,ignore_subs=''):
             to_file(obj, this_file, ignore_subs)
             this_file.close()
             return
-        except IOError, e:
+        except IOError as e:
             raise IOError("Could not write file '%s' (%s)" % (fn,e))
     try:
         tmpfile = open(fn + ".new", "w")
@@ -77,20 +77,20 @@ def safe_save(fn,obj,to_file,ignore_subs=''):
         #tmpfile.flush()
         #os.fsync(tmpfile.fileno())
         tmpfile.close()
-    except IOError, e:
+    except IOError as e:
         raise IOError("Could not write file %s.new (%s)" % (fn,e))
     # Try to make backup copy...
     try:
         os.unlink(fn+"~")
-    except OSError, e:
+    except OSError as e:
         logger.debug("Error on removing file %s~ (%s) " % (fn,e))
     try:
         os.rename(fn,fn+"~")
-    except OSError, e:
+    except OSError as e:
         logger.debug("Error on file backup %s (%s) " % (fn,e))
     try:
         os.rename(fn+".new",fn)
-    except OSError, e:
+    except OSError as e:
         raise IOError("Error on moving file %s.new (%s) " % (fn,e))
 
 def rmrf(name):
@@ -178,7 +178,7 @@ class GangaRepositoryLocal(GangaRepository):
                 fobj = open(fn,'r')
                 cat, cls, cache = pickle_from_file(fobj)[0]
                 fobj.close()
-            except Exception, x:
+            except Exception as x:
                 raise IOError("Error on unpickling: %s %s" % (x.__class__.__name__, x))
             if id in self.objects:
                 obj = self.objects[id]
@@ -210,7 +210,7 @@ class GangaRepositoryLocal(GangaRepository):
                 this_file = open( ifn,"w" )
                 pickle_to_file((obj._category,obj._name,obj._index_cache),this_file)
                 this_file.close()
-        except IOError, x:
+        except IOError as x:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn,x.__class__.__name__,x))
 
     def get_index_listing(self):
@@ -294,7 +294,7 @@ class GangaRepositoryLocal(GangaRepository):
                         if len(self.lock([k])) != 0:
                             self.index_write(k)
                             self.unlock([k])
-                except Exception, x:
+                except Exception as x:
                     logger.debug( "Failed to update index: %s on shutdown" % str(k) )
                     logger.debug( "%s" % str(x) )
                     pass
@@ -355,11 +355,11 @@ class GangaRepositoryLocal(GangaRepository):
                 if self.index_load(id): # if this succeeds, all is well and we are done
                     changed_ids.append(id)
                 continue
-            except IOError, x:
+            except IOError as x:
                 logger.debug("IOError: Failed to load index %i: %s" % (id,x))
-            except OSError, x:
+            except OSError as x:
                 logger.debug("OSError: Failed to load index %i: %s" % (id,x))
-            except PluginManagerError, x:
+            except PluginManagerError as x:
                 logger.debug("PluginManagerError: Failed to load index %i: %s" % (id,x)) # Probably should be DEBUG
                 summary.append((id,x)) # This is a FATAL error - do not try to load the main file, it will fail as well
                 continue
@@ -380,7 +380,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if id in self.objects:
                         self._internal_del__(id)
                         changed_ids.append(id)
-                except InaccessibleObjectError, x:
+                except InaccessibleObjectError as x:
                     logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
                     summary.append((id,x.orig))
 
@@ -436,7 +436,7 @@ class GangaRepositoryLocal(GangaRepository):
             fn = self.get_fn(ids[i])
             try:
                 os.makedirs(os.path.dirname(fn))
-            except OSError, e:
+            except OSError as e:
                 if e.errno != errno.EEXIST: 
                     raise RepositoryError(self,"OSError on mkdir: %s" % (str(e)))
             self._internal_setitem__(ids[i], objs[i])
@@ -468,7 +468,7 @@ class GangaRepositoryLocal(GangaRepository):
                             sfn = os.path.join(os.path.dirname(fn),str(i),"data")
                             try:
                                 os.makedirs(os.path.dirname(sfn))
-                            except OSError, e:
+                            except OSError as e:
                                 if e.errno != errno.EEXIST: 
                                     raise RepositoryError(self,"OSError: " + str(e))
                             safe_save(sfn, split_cache[i], self.to_file)
@@ -486,9 +486,9 @@ class GangaRepositoryLocal(GangaRepository):
                                 rmrf(os.path.join(os.path.dirname(fn),idn))
                     self.index_write(id)
                     obj._setFlushed()
-            except OSError, x:
+            except OSError as x:
                 raise RepositoryError(self,"OSError on flushing id '%i': %s" % (id,str(x)))
-            except IOError, x:
+            except IOError as x:
                 raise RepositoryError(self,"IOError on flushing id '%i': %s" % (id,str(x)))
 
     def is_loaded( self, id ):
@@ -524,7 +524,7 @@ class GangaRepositoryLocal(GangaRepository):
                 fn = fn+"~"
             try:
                 fobj = open(fn,"r")
-            except IOError, x:
+            except IOError as x:
                 if x.errno == errno.ENOENT: 
                     # remove index so we do not continue working with wrong information
                     try:
@@ -565,7 +565,7 @@ class GangaRepositoryLocal(GangaRepository):
                             try:
                                 #logger.debug( "Loading subjob at: %s" % sfn )
                                 sfobj = open(sfn,"r")
-                            except IOError, x:
+                            except IOError as x:
                                 if x.errno == errno.ENOENT: 
                                     raise IOError("Subobject %i.%i not found: %s" % (id,i,x))
                                 else:
@@ -630,7 +630,7 @@ class GangaRepositoryLocal(GangaRepository):
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except RepositoryError:
                 raise
-            except Exception, x:
+            except Exception as x:
                 if load_backup:
                     logger.debug("Could not load backup object #%i: %s %s", id, x.__class__.__name__, x)
                     raise InaccessibleObjectError(self,id,x)
