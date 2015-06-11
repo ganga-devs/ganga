@@ -42,7 +42,8 @@ except ImportError:
     logger = Logger() 
 
 session_lock_last = 0
-session_expiration_timeout = 45 # in sec
+session_expiration_timeout = Ganga.Utility.Config.getConfig('Configuration')['DiskIOTimeout']
+#session_expiration_timeout = 45 # in sec
 session_lock_refresher = None
 
 sessionFiles = []
@@ -173,33 +174,36 @@ class SessionLockRefresher(GangaThread):
     def clearDeadLocks( self, now ):
         try:
             from Ganga.Core import monitoring_component
-            if not monitoring_component is None and monitoring_component.enabled:
-                # Make list of sessions that are "alive"
-                ls_sdir = os.listdir(self.sdir)
-                session_files = [f for f in ls_sdir if f.endswith(".session")]
-                lock_files = [f for f in ls_sdir if f.endswith(".locks")]
-                for sf in session_files:
-                    joined_path = os.path.join(self.sdir, sf)#
-                    if joined_path in self.fns:
-                        continue
-                    mtm = os.stat( joined_path ).st_ctime
-                    #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
-                    global session_expiration_timeout
-                    if (now - mtm)  > session_expiration_timeout:
-                        logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
-                        os.unlink( joined_path )
-                        session_files.remove(sf)
-                    #elif now - mtm  > session_expiration_timeout/2:
-                    #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
-                # remove all lock files that do not belong to sessions that are alive
-                for f in lock_files:
-                    asf = f.split(".session")[0] + ".session" # Determine the session file which controls this lock file
-                    if not asf in session_files:
-                        logger.debug("Removing dead file %s" % (f) )
-                        #logger.debug("Found, %s session files" % (session_files) )
-                        #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
-                        #logger.debug( "%s, %s" % ( self.sdir, f ) )
-                        os.unlink(os.path.join(self.sdir, f))
+            #if (not monitoring_component is None) and monitoring_component.enabled:
+            # Make list of sessions that are "alive"
+            ls_sdir = os.listdir(self.sdir)
+            session_files = [f for f in ls_sdir if f.endswith(".session") and f.find( str(os.getpid()) ) == -1 ]
+            #metadata_lock_files = [f for f in ls_sdir if f.endswith("metadata.locks") and not f.find( str(os.getpid()) ) ]
+            #all_lock_files = [f for f in ls_sdir if f.endswith(".locks") and not f.find( str(os.getpid()) ) ]
+            #lock_files = [ s for s in all_lock_files and not in metadata_lock_files ]
+            lock_files = [f for f in ls_sdir if f.endswith(".locks") and f.find( str(os.getpid()) ) == -1 ]
+            for sf in session_files:
+                joined_path = os.path.join(self.sdir, sf)#
+                if joined_path in self.fns:
+                    continue
+                mtm = os.stat( joined_path ).st_ctime
+                #print "%s: session %s delta is %s seconds" % (time.time(), sf, now - mtm)
+                global session_expiration_timeout
+                if (now - mtm)  > session_expiration_timeout:
+                    logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
+                    os.unlink( joined_path )
+                    session_files.remove(sf)
+                #elif now - mtm  > session_expiration_timeout/2:
+                #    logger.warning("%s: Session %s is inactive (no update since %s seconds, removal after %s seconds)" % (time.time(), sf, now - mtm, session_expiration_timeout))
+            # remove all lock files that do not belong to sessions that are alive
+            for f in lock_files:
+                asf = f.split(".session")[0] + ".session" # Determine the session file which controls this lock file
+                if not asf in session_files:
+                    logger.debug("Removing dead file %s" % (f) )
+                    #logger.debug("Found, %s session files" % (session_files) )
+                    #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
+                    #logger.debug( "%s, %s" % ( self.sdir, f ) )
+                    os.unlink(os.path.join(self.sdir, f))
         except OSError, x:
              # nothing really important, another process deleted the session before we did.
              logger.debug("Unimportant OSError in cleaning locks: %s" % x)
@@ -673,11 +677,15 @@ class SessionLockManager(object):
         if session_lock_last == 0:
             session_lock_last = this_time
         global session_expiration_timeout
-        if abs( session_lock_last - this_time ) > session_expiration_timeout:
+        _diff = abs( session_lock_last - this_time )
+        if _diff > session_expiration_timeout*0.5 or _diff < 1:
             session_expiration_timeout = this_time
             global session_lock_refresher
             if session_lock_refresher is not None:
                 session_lock_refresher.checkAndReap()
+            else:
+                # self.reap_locks()
+                pass
 
     def lock_ids(self, ids):
 
@@ -807,9 +815,14 @@ class SessionLockManager(object):
         try:
             #sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and not os.path.join(self.sdir, s) == self.gfn]
             sessions = [s for s in os.listdir(self.sdir) if s.endswith(".session") and int(str(s).split('.')[-2]) != int(os.getpid()) ]
-            locks = [s for s in os.listdir(self.sdir) if s.endswith(".lock") and int(str(s).split('.')[-2]) != int(os.getpid()) ]
-            for i in locks:
-                sessions.append( i )
+            metadata_lock_files = [ s for s in os.listdir(self.sdir) if s.endswith("metadata.locks") ]
+            all_lock_files = [ s for s in os.listdir(self.sdir) if s.endswith(".locks") ]
+            lock_files = [ s for s in all_lock_files if s not in metadata_lock_files ]
+            locks = [s for s in lock_files if int(str(s).split('.')[-4]) != int(os.getpid()) ]
+            metadata_locks = [ s for s in metadata_lock_files if int(str(s).split('.')[-5]) != int(os.getpid()) ]
+
+            sessions.extend( locks )
+            sessions.extend( metadata_locks )
 
 #            for s in os.listdir(self.sdir):
 #                if s.endswith(".session"):

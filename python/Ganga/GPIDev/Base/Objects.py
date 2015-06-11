@@ -337,7 +337,6 @@ class Descriptor(object):
         obj._data[self._name] = val
 
         obj._setDirty()
-
             
     def __delete__(self, obj):
         #self._check_getter()
@@ -430,7 +429,7 @@ class GangaObject(Node):
                        # the test if the class is hidden is performed by x._declared_property('hidden')
                        # which makes sure that _hidden must be *explicitly* declared, not inherited
 
-    _lock_count = 0
+    _lock_count = {}
 
     # additional properties that may be set in derived classes which were declared as _hidden:
     #   _enable_plugin = 1 -> allow registration of _hidden classes in the allPlugins dictionary
@@ -446,7 +445,7 @@ class GangaObject(Node):
         super(GangaObject, self).__init__(None)
         for attr, item in self._schema.allItems():
             setattr(self, attr, self._schema.getDefaultValue(attr))
-            
+
         # Overwrite default values with any config values specified
         #self.setPropertiesFromConfig()
 
@@ -502,9 +501,33 @@ class GangaObject(Node):
         Raise LockingError (or so) on fail """
         root = self._getRoot()
         reg = root._getRegistry()
-        if reg is not None and self._lock_count == 0:
-            reg._write_access(root)
-        self._lock_count = self._lock_count + 1
+        if reg is not None:
+            if reg.name not in self._lock_count.keys():
+                self._lock_count[reg.name] = 0
+            logger.debug( "Locking: %s  #%s" % (reg.name, self._lock_count[reg.name]) )
+        if reg is not None and self._lock_count[reg.name] == 0:
+            _haveLocked = False
+            _counter = 1
+            _sleep_size = 2.
+            _timeOut = Ganga.Utility.Config.getConfig('Configuration')['DiskIOTimeout']
+            while not _haveLocked:
+                err = None
+                try:
+                    reg._write_access(root)
+                    _haveLocked = True
+                except Exception, x:
+                    from time import sleep
+                    sleep(_sleep_size)   ##  Sleep 2 sec between tests
+                    logger.info( "Waiting on Write access to registry: %s" % reg.name )
+                    logger.debug( "%s" % str(x) )
+                    err = x
+                _counter = _counter + 1
+                if _counter*_sleep_size >= _timeOut + 5:  ## Sleep 5 sec longer than the time taken to bail out
+                    logger.error( "Failed to get access to registry: %s. Reason: %s" % (reg.name, str(x)) )
+                    raise x
+
+        if reg is not None:
+            self._lock_count[reg.name] = self._lock_count[reg.name] + 1
 
     def _releaseWriteAccess(self):
         """ releases write access to the object.
@@ -512,10 +535,15 @@ class GangaObject(Node):
         Please use only if the object is expected to be used by other sessions"""
         root = self._getRoot()
         reg = root._getRegistry()
-        if reg is not None and self._lock_count == 0:
+        if reg is not None:
+            if reg.name not in self._lock_count.keys():
+                self._lock_count[reg.name] = 0
+            logger.debug( "Releasing: %s  #%s" % (reg.name, self._lock_count[reg.name]) )
+        if reg is not None and self._lock_count[reg.name] == 1:
             reg._release_lock(root)
-        if self._lock_count > 0:
-            self._lock_count = self._lock_count - 1
+        if reg is not None:
+            if self._lock_count[reg.name] > 0:
+                self._lock_count[reg.name] = self._lock_count[reg.name] - 1
 
     def _getReadAccess(self):
         """ makes sure the objects _data is there and the object itself has a recent state.

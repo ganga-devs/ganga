@@ -410,9 +410,9 @@ class Registry(object):
                         obj.__dict__.pop("_registry_refresh",None)
                         self.repository.load([id])
                     except KeyError:
-                        raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
+                        raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id, self.name))
                     except InaccessibleObjectError, x:
-                        raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
+                        raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id, self.name, str(x)))
                     for d in self.changed_ids.itervalues():
                         d.add(id)
                 obj._registry_locked = True
@@ -498,6 +498,10 @@ class Registry(object):
         try:
             try:
                 if not self.metadata is None:
+                    try:
+                        self._flush()
+                    except:
+                        pass
                     self.metadata.shutdown()
             except Exception, x:
                 logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)

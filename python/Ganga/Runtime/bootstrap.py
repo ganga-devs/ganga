@@ -624,14 +624,17 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         config.addOption('ServerTimeout',60,'Timeout in minutes for auto-server shutdown')
         config.addOption('ServerUserScript',"","Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
         config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
-        
+
         # detect default user (equal to unix user name)
         import getpass
         try:
            config.options['user'].default_value = getpass.getuser()
         except Exception,x:
            raise Ganga.Utility.Config.ConfigError('Cannot get default user name'+str(x))
-        
+
+        config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
+
+
         gpiconfig = Ganga.Utility.Config.makeConfig('GPI_Semantics','Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface (what may result in a different behaviour of scripts and commands).')
 
         gpiconfig.addOption('job_submit_keep_going', False, 'Keep on submitting as many subjobs as possible. Option to j.submit(), see Job class for details')
@@ -701,6 +704,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                      _accept(os.path.join(dir,f))]
             return string.join(files,os.pathsep)
 
+        import re
         def _versionsort(s,p = re.compile(r'^v(\d+)r(\d+)p*(\d*)')):
             m = p.match(s)
             if m:
