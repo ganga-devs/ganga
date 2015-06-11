@@ -1278,12 +1278,12 @@ class Panda(IBackend):
                     elif status.jobStatus in ['starting','running','holding','transferring']:
                         if job.status == 'submitting': # Fix for HammerCloud in case jobs are left in submitting state
                             job.updateStatus('submitted')
-                        if job.status != 'running':
+                        elif job.status != 'running':
                             job.updateStatus('running')
                     elif status.jobStatus == 'finished':
                         if job.status == 'submitting': # Fix for HammerCloud in case jobs are left in submitting state
                             job.updateStatus('submitted')
-                        if job.status != 'completed':
+                        elif job.status != 'completed':
                             if not job.backend._name=='PandaBuildJob' and job.status != "completed":
                                 job.backend.fillOutputData(job, status)
                                 if config['enableDownloadLogs']:
@@ -1294,7 +1294,9 @@ class Panda(IBackend):
                             else:
                                 job.updateStatus('completed')
                     elif status.jobStatus == 'failed':
-                        if job.status != 'failed':
+                        if job.status == 'submitting': # Fix for HammerCloud in case jobs are left in submitting state
+                            job.updateStatus('submitted')
+                        elif job.status != 'failed':
                             # check for server side retry
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and job.backend.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                 # grab the new panda ID
@@ -1309,7 +1311,9 @@ class Panda(IBackend):
                                     job.updateStatus('failed')
                                     
                     elif status.jobStatus == 'cancelled' and job.status not in ['completed','failed']: # bug 67716
-                        if job.status != 'killed':
+                        if job.status == 'submitting': # Fix for HammerCloud in case jobs are left in submitting state
+                            job.updateStatus('submitted')
+                        elif job.status != 'killed':
                             if job.backend.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in job.backend.jobSpec['taskBufferErrorDiag']:
                                 newPandaID = checkForRebrokerage(job.backend.jobSpec['taskBufferErrorDiag'])
                                 logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(job.backend.id, newPandaID))
