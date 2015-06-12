@@ -47,10 +47,10 @@ class SubmissionCommit2(MultipassTest):
     def pass3(self):
         try:
             jobid = int(file(self.name).read())
-            except IOError:
-                logger.error('failed to open file: '+self.name)
-            except ValueError:
-                logger.error('failed to read file: '+self.name)
+        except IOError:
+            logger.error('failed to open file: '+self.name)
+        except ValueError:
+            logger.error('failed to read file: '+self.name)
                  
         logger.info('PASS 3: checkout job and compare')
         os.remove(self.name)
