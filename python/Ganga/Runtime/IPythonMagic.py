@@ -50,7 +50,7 @@ def magic_ganga( self, parameter_s = '' ):
          logger.warning( "Script '%s' not found in search path '%s'" %\
             ( argList[ 0 ], path ) )
    else:
-      print magic_ganga.__doc__
+       logger.info(magic_ganga.__doc__)
 
    return None
 

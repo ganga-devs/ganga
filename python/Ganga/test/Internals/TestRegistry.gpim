@@ -12,6 +12,9 @@ from Ganga.Runtime.Repository_runtime import getLocalRoot
 location = getLocalRoot()
 type = config['repositorytype']
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class HammerThread(threading.Thread):
     def __init__(self,id,reg):
         self.id = id
@@ -22,24 +25,24 @@ class HammerThread(threading.Thread):
         super(HammerThread,self).__init__()
 
     def updown(self):
-        print >> sys.stderr,self.id, " shutdown()"
+        logger.info(str(self.id) + " shutdown()")
         self.reg.shutdown()
-        print >> sys.stderr,self.id, " shutdown() done!"
+        logger.info(str(self.id) + " shutdown() done!")
         self.owned_ids = []
-        print >> sys.stderr,self.id, " startup()"
+        logger.info(str(self.id) + " startup()")
         self.reg.startup()
-        print >> sys.stderr,self.id, " startup() done!"
+        logger.info(str(self.id) + " startup() done!")
        
     def uindex(self):
-        print >> sys.stderr,self.id, " update_index(None)" 
+        logger.info(str(self.id) + " update_index(None)" )
         self.reg.ids()
-        print >> sys.stderr,self.id, " update_index(None) done!" 
+        logger.info(str(self.id) + " update_index(None) done!" )
 
     def add(self):
         objs = [TestGangaObject("HT%i"%(self.id),2) for i in range(self.rng.randint(1,2))]
-        print >> sys.stderr,self.id, " add(%s)"%objs
+        logger.info(str(self.id) + " add(%s)"%objs)
         ids = [self.reg._add(obj) for obj in objs]
-        print >> sys.stderr,self.id, " add(%s) done, ids = %s!"%(objs, ids)
+        logger.info(str(self.id) + " add(%s) done, ids = %s!"%(objs, ids))
         assert len(ids) == len(objs)
         # TODO: Check if objects stay the same
         self.owned_ids.extend(ids)
@@ -47,12 +50,12 @@ class HammerThread(threading.Thread):
     def delete(self):
         n = min(len(self.owned_ids),self.rng.randint(1,2))
         ids = self.rng.sample(self.owned_ids,n)
-        print >> sys.stderr,self.id, " delete(%s)"%ids
+        logger.info(str(self.id) + " delete(%s)"%ids)
         [self.reg._remove(self.reg[id]) for id in ids]
         for id in ids:
             assert not id in self.reg._objects
             self.owned_ids.remove(id)
-        print >> sys.stderr,self.id, " delete(%s) done!"%ids
+        logger.info(str(self.id) + " delete(%s) done!"%ids)
 
 
     def load(self):
@@ -60,7 +63,7 @@ class HammerThread(threading.Thread):
         if len(ids) == 0:
             return
         id = self.rng.sample(ids,1)[0]
-        print >> sys.stderr,self.id, " load(%s)"%id
+        logger.info(str(self.id) + " load(%s)"%id)
         try:
             self.reg[id]._getReadAccess()
             assert self.reg[id].name.startswith("HT")
@@ -68,15 +71,15 @@ class HammerThread(threading.Thread):
                 assert self.reg[id].name == "HT%i"%(self.id)
         except KeyError: # If the object has been deleted in the meantime, it must be gone from the registry
             assert not id in self.reg
-            print >> sys.stderr,self.id, "  %s deleted after KeyError (as per specification)" % id
-        print >> sys.stderr,self.id, " load(%s) done!"%id
+            logger.info(str(self.id) + "  %s deleted after KeyError (as per specification)" % id)
+        logger.info(str(self.id) + " load(%s) done!"%id)
 
     def lock(self):
         ids = self.reg.ids()
         if len(ids) == 0:
             return
         id = self.rng.sample(ids,1)[0]
-        print >> sys.stderr,self.id, " lock(%s)"%id
+        logger.info(str(self.id) + " lock(%s)"%id)
         try:
             #self.reg[id]._getWriteAccess()
             assert self.reg[id].name.startswith("HT")
@@ -84,22 +87,22 @@ class HammerThread(threading.Thread):
             if not id in self.owned_ids:
                 self.owned_ids.append(id)
         except KeyError: # If the object has been deleted in the meantime, it must be gone from the registry
-            print >> sys.stderr,self.id, "  %s deleted after KeyError (as per specification)" % id
+            logger.info(str(self.id)+ "  %s deleted after KeyError (as per specification)" % id)
             assert not id in self.reg
         except RegistryLockError: # ok, this is already locked
-            print >> sys.stderr,self.id, "  %s was locked..." % id
-        print >> sys.stderr,self.id, " lock(%s) done!"%id
+            logger.info(str(self.id) + "  %s was locked..." % id)
+        logger.info(str(self.id) + " lock(%s) done!"%id)
 
     def unlock(self):
         if len(self.owned_ids) == 0:
             return
         id = self.rng.sample(self.owned_ids,1)[0]
-        print >> sys.stderr,self.id, " unlock(%s)"%id
+        logger.info(str(self.id) + " unlock(%s)"%id)
         assert self.reg[id].name.startswith("HT")
         self.reg[id].name = "HT-unlocked"
         self.owned_ids.remove(id)
         self.reg._release_lock(self.reg[id])
-        print >> sys.stderr,self.id, " unlock(%s) done!"%id
+        logger.info(str(self.id) + " unlock(%s) done!"%id)
 
 
     def run(self):
@@ -114,12 +117,10 @@ class HammerThread(threading.Thread):
             choices.extend([self.unlock]*5)
             #choices.extend([self.flush]*2)
             self.rng.choice(choices)()
-            if not len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()):
-                print >> sys.stderr,len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
-                assert len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
+            assert len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
             for id in self.owned_ids:
                 if not id in self.reg._objects:
-                    print >> sys.stderr, "LOCKED ID DELETED: ", id
+                    logger.info("LOCKED ID DELETED: " + str(id))
                     assert False
         self.done = True
 
@@ -145,10 +146,10 @@ class TestReg(ICheckTest):
         self.registry = Registry("TestRegistry","TestRegistry")
         self.registry.type = type
         self.registry.location = location
-        print >> sys.stderr,id, " startup()"
+        logger.info(str(id) + " startup()")
         self.registry.startup()
-        print >> sys.stderr,id, " startup() done!"
-        print >> sys.stderr,"RUNNING HAMMERTHREAD #%s on direcory %s" % (id, location)
+        logger.info(str(id) + " startup() done!")
+        logger.info("RUNNING HAMMERTHREAD #%s on direcory %s" % (id, location))
         self.thread = HammerThread(id,self.registry)
         self.thread.start()
 
@@ -158,9 +159,9 @@ class TestReg(ICheckTest):
     def checkTest(self):
         self.thread.join()
         assert self.thread.done
-        print >> sys.stderr,self.id, " shutdown()"
+        logger.info(str(self.id) + " shutdown()")
         self.registry.shutdown()
-        print >> sys.stderr,self.id, " shutdown() done!"
+        logger.info(str(self.id) + " shutdown() done!")
         pass
 
     def cleanup(self):

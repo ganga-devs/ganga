@@ -3,7 +3,6 @@ Sandbox functions used in the job wrapper script on the worker node.
 The text of this module is sourced into the job wrapper script.
 It therefore may use ###TAGS###  which are expanded in the wrapper script.
 """
-from __future__ import print_function
 
 INPUT_TARBALL_NAME = '_input_sandbox.tgz'
 OUTPUT_TARBALL_NAME = '_output_sandbox.tgz'

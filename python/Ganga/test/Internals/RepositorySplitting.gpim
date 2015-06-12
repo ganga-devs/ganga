@@ -51,7 +51,6 @@ class TestReg1(ICheckTest):
         j.splitter=ArgSplitter()
         j.splitter.args = [['ARGUMENT %d'%i] for i in range(LEN)]
         j.application.exe='/bin/echo'
-        print j.application.exe
         self.j = j
 
     def isReadyForCheck(self):
@@ -64,7 +63,6 @@ class TestReg1(ICheckTest):
         j = self.j
         assert(not j.subjobs)
         assert(len(j.subjobs) == 0)
-        print j
         j.application.prepare()
         j.submit()
         assert(len(j.subjobs) == LEN)
@@ -84,10 +82,8 @@ class TestReg2(ICheckTest):
     def checkTest(self):
         j = jobs[self.id]
         assert(len(j.subjobs) == LEN)
-        print 'j.application.exe', j.application.exe
         assert(j.application.exe == '/bin/echo')
         # another ci/co check
-        print 'j.subjobs[1]._impl.application.exe', j.subjobs[1]._impl.application.exe
         j.subjobs[1]._impl.application.exe = '/bin/ls'
         
         j.application._impl.exe = '/bin/pwd'

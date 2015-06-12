@@ -294,7 +294,7 @@ except OSError as x:
  errfile = open( 'tt', 'w' )
  errfile.close()
  print('EXITCODE: %d'%-9999, file=statusfile)
- print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y') #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y'), file=statusfile)
+ print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y'), file=statusfile) #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
  print('PROBLEM STARTING THE APPLICATION SCRIPT: %s %s'%(appscriptpath,str(x)), file=statusfile)
  statusfile.close()
  sys.exit()

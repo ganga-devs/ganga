@@ -15,6 +15,9 @@
 
 from GangaTest.Framework.tests import GangaGPITestCase
 from Ganga.Utility.Config import ConfigError
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
       
 class TestObjectConfig( GangaGPITestCase ):
     """
@@ -25,7 +28,6 @@ class TestObjectConfig( GangaGPITestCase ):
 
     def setUp(self):
        GangaGPITestCase.setUp(self)
-       print "WARNING: this test is NOT GPI test and should be moved to Internal test collection..."
        
     def tearDown(self):
        GangaGPITestCase.tearDown(self)
@@ -64,7 +66,7 @@ class TestObjectConfig( GangaGPITestCase ):
            jobConfig.setUserValue("backend.queue","myQueue2")
            assert(0)
        except ConfigError as x:
-           print x
+           logger.error(x)
        
        # Perform checks
        lsf = LSF()
@@ -84,7 +86,7 @@ class TestObjectConfig( GangaGPITestCase ):
            exeConfig.setUserValue("not_existing_args", ['something_wrong'])
            assert(0)
        except ConfigError as x:
-           print x
+           logger.error(x)
            
        exe2 = Executable()
        assert(exe2.args == exe1.args)
@@ -97,12 +99,12 @@ class TestObjectConfig( GangaGPITestCase ):
            jobConfig.setUserValue("backend.queue", "x")
            assert(0)           
        except ConfigError as x:
-           print x
+           logger.error(x)
            
        job2 = Job()
 
-       print job1.backend
-       print job2.backend
+       logger.info(job1.backend)
+       logger.info(job2.backend)
        
        assert(job1.backend == job2.backend)
 

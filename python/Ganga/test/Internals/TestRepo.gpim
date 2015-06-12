@@ -14,6 +14,9 @@ from Ganga.Runtime.Repository_runtime import getLocalRoot
 location = getLocalRoot()
 type = config['repositorytype']
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class FakeRegistry(object):
     def __init__(self,name):
         self.name = name
@@ -55,36 +58,36 @@ class HammerThread(threading.Thread):
         super(HammerThread,self).__init__()
 
     def updown(self):
-        print >> sys.stderr,  self.id, " shutdown()"
+        logger.info(str(self.id) + " shutdown()")
         self.repo.shutdown()
-        print >> sys.stderr,  self.id, " shutdown() done!"
+        logger.info(str(self.id) + " shutdown() done!")
         self.owned_ids = [] # locks lapse on shutdown!!!
-        print >> sys.stderr,  self.id, " startup()"
+        logger.info(str(self.id) + " startup()")
         self.repo.startup()
-        print >> sys.stderr,  self.id, " startup() done!"
+        logger.info(str(self.id) + " startup() done!")
        
     def uindex(self):
-        print >> sys.stderr,  self.id, " update_index(None)" 
+        logger.info(str(self.id) + " update_index(None)" )
         self.repo.update_index(None)
-        print >> sys.stderr,  self.id, " update_index(None) done!" 
+        logger.info(str(self.id) + " update_index(None) done!" )
 
     def load(self):
         n = min(len(self.repo.objects),self.rng.randint(1,2))
         ids = self.rng.sample(self.repo.objects.keys(),n)
-        print >> sys.stderr,  self.id, " load(%s)"%ids
+        logger.info(str(self.id) + " load(%s)"%ids)
         try:
             self.repo.load(ids)
         except KeyError:
-            print >> sys.stderr,  self.id, " load(%s) failed - one or more ids were deleted by another thread (if no other thread is running, this is an ERROR!)"%ids
+            logger.info(str(self.id) + " load(%s) failed - one or more ids were deleted by another thread (if no other thread is running, this is an ERROR!)"%ids)
             return
         for id in ids:
             assert self.repo.objects[id].name
-        print >> sys.stderr,  self.id, " load(%s) done"%ids
+        logger.info(str(self.id) + " load(%s) done"%ids)
         
     def lock(self):
         n = min(len(self.repo.objects),self.rng.randint(1,2))
         ids = self.rng.sample(self.repo.objects.keys(),n)
-        print >> sys.stderr,  self.id, " lock(%s)"%ids
+        logger.info(str(self.id) + " lock(%s)"%ids)
         lids = self.repo.lock(ids)
         for id in ids:
             if id in self.owned_ids:
@@ -94,31 +97,31 @@ class HammerThread(threading.Thread):
                     try:
                         self.repo.load([id])
                     except KeyError: # object is deleted
-                        print >> sys.stderr,  self.id, " locked deleted ID (%s)"%id
+                        logger.info(str(self.id) + " locked deleted ID (%s)"%id)
                         continue
                     self.repo.objects[id].name = "HT%i"%(self.id)
                     self.owned_ids.append(id)
-        print >> sys.stderr,  self.id, " lock(%s) done"%ids
+        logger.info(str(self.id) + " lock(%s) done"%ids)
 
     def check(self):
-        print >> sys.stderr,  self.id, " check()"
+        logger.info(str(self.id) + " check()")
         self.repo.sessionlock.check()
         for id in self.owned_ids:
             assert self.repo.objects[id].name == "HT%i"%(self.id)
-        print >> sys.stderr,  self.id, " check() done"
+        logger.info(str(self.id) + " check() done")
 
     def flush(self):
         n = min(len(self.owned_ids),self.rng.randint(1,2))
         ids = self.rng.sample(self.owned_ids,n)
-        print >> sys.stderr,  self.id, " flush(%s)"%ids
+        logger.info(str(self.id) + " flush(%s)"%ids)
         self.repo.flush(ids)
-        print >> sys.stderr,  self.id, " flush() done"
+        logger.info(str(self.id) + " flush() done")
         
     def add(self):
         objs = [TestGangaObject("HT%i"%(self.id)) for i in range(self.rng.randint(1,2))]
-        print >> sys.stderr,  self.id, " add(%s)"%objs
+        logger.info(str(self.id) + " add(%s)"%objs)
         ids = self.repo.add(objs)
-        print >> sys.stderr,  self.id, " add(%s) done, ids = %s!"%(objs, ids)
+        logger.info(str(self.id) + " add(%s) done, ids = %s!"%(objs, ids))
         assert len(ids) == len(objs)
         # TODO: Check if objects stay the same
         self.repo.flush(ids)
@@ -127,12 +130,12 @@ class HammerThread(threading.Thread):
     def delete(self):
         n = min(len(self.owned_ids),self.rng.randint(1,2))
         ids = self.rng.sample(self.owned_ids,n)
-        print >> sys.stderr,  self.id, " delete(%s)"%ids
+        logger.info(str(self.id) + " delete(%s)"%ids)
         self.repo.delete(ids)
         for id in ids:
             assert not id in self.repo.objects
             self.owned_ids.remove(id)
-        print >> sys.stderr,  self.id, " delete(%s) done!"%ids
+        logger.info(str(self.id) + " delete(%s) done!"%ids)
 
     def run(self):
         for i in range(200):
@@ -146,9 +149,7 @@ class HammerThread(threading.Thread):
             choices.extend([self.check]*5)
             choices.extend([self.flush]*2)
             self.rng.choice(choices)()
-            if not len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()):
-                print >> sys.stderr,  len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
-                assert len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
+            assert len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
             for id in self.owned_ids:
                 assert id in self.repo.objects
         self.done = True
@@ -183,10 +184,10 @@ class TestRepository(ICheckTest):
         fr.location = location
         self.repo = makeRepository(fr)
         fr.repo = self.repo
-        print >> sys.stderr,  id, " startup()"
+        logger.info(str(id)+ " startup()")
         self.repo.startup()
-        print >> sys.stderr,  id, " startup() done!"
-        print >> sys.stderr,  "RUNNING HAMMERTHREAD ", id
+        logger.info(str(id)+ " startup() done!")
+        logger.info("RUNNING HAMMERTHREAD " + str(id))
         self.thread = HammerThread(id,self.repo)
         self.thread.start()
 
@@ -196,9 +197,9 @@ class TestRepository(ICheckTest):
     def checkTest(self):
         self.thread.join()
         assert self.thread.done
-        print >> sys.stderr,  self.id, " shutdown()"
+        logger.info(str(self.id) + " shutdown()")
         self.repo.shutdown()
-        print >> sys.stderr,  self.id, " shutdown() done!"
+        logger.info(str(self.id) + " shutdown() done!")
         pass
 
     def cleanup(self):

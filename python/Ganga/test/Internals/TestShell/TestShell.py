@@ -11,7 +11,7 @@ s = Ganga.Utility.Shell.Shell()
 config.Logging['Ganga.Utility.Shell'] = "DEBUG"
 
 def command(cmd, timeout=None):
-    logger.info()
+    logger.info('')
     logger.info('*'*30)
     logger.info('running command '+cmd)
     logger.info('timeout'+str(timeout))

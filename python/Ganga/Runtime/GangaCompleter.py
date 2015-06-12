@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 from Ganga.Utility.ColourText import getColour
 import logging, readline, inspect, re, itertools, subprocess, types, operator
 logger = logging.getLogger('CompletionErrorChecker')
@@ -118,7 +120,6 @@ class GangaCompleter(object):
                 if var_args:
                     var_args = map(lambda x: getColour('fg.blue') + x + getColour('fg.normal'), var_args)
                 elif arg_num > 0:
-                    print ''
                     logger.warning('Too many arguments provided')
                     match = match.replace(')', getColour('fg.red') + ')' + getColour('fg.normal'))
 
@@ -187,11 +188,9 @@ class GangaCompleter(object):
 
             user_input = user_input.replace(','.join(tmp), ','.join(new))
             if wrong:
-                print ''
                 logger.warning('Only one positional arg allowed which must be an object of the same type to copy from')
                 #user_input = user_input.replace(','.join(tmp), ','.join(new))
             if unrecognised:
-                print ''
                 for a, c in unrecognised:
                     logger.warning("Unrecognised keyword argument, '%s' is not a modifyable attribute of '%s'" % (a,c))
 
@@ -221,7 +220,7 @@ class GangaCompleter(object):
         display_str +=getColour('fg.normal')
         display_str +=user_input
 
-        print display_str,
+        print(display_str, end='')
         readline.redisplay()
 #        except:
 #            import traceback

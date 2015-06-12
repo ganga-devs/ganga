@@ -15,7 +15,6 @@ class SpecialName(MultipassTest):
         j.submit()
 
     def pass2(self):
-        print jobs
         assert jobs[-1].name == SPECIAL_NAME
 
 # uncomment if you want that jobs are not automatically cleaned up

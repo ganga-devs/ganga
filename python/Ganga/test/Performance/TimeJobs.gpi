@@ -1,3 +1,6 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 import sys
 
 bulk = 100
@@ -11,25 +14,25 @@ try:
     modify = int(sys.argv[3])
     psyco = int(sys.argv[4])
 except IndexError:
-    print 'usage: time_jobs [bulk_size] [cnt] [modify] [psyco]'
-    print 'performance test: create a bulk_size number of jobs and repeat it cnt times'
-    print 'if modify is 1 then the jobs are not only created but also modified'
-    print 'if psyco==1 then psyco optimizer is used'
-    print 'defaults: bulk_size=100, cnt=1, modify=0, psyco=0'
+    logger.error('usage: time_jobs [bulk_size] [cnt] [modify] [psyco]')
+    logger.error('performance test: create a bulk_size number of jobs and repeat it cnt times')
+    logger.error('if modify is 1 then the jobs are not only created but also modified')
+    logger.error('if psyco==1 then psyco optimizer is used')
+    logger.error('defaults: bulk_size=100, cnt=1, modify=0, psyco=0')
 except ValueError:
-    print 'usage: time_jobs [bulk_size] [cnt] [modify] [psyco]'
-    print 'performance test: create a bulk_size number of jobs and repeat it cnt times'
-    print 'if modify is 1 then the jobs are not only created but also modified'
-    print 'if psyco==1 then psyco optimizer is used'
-    print 'defaults: bulk_size=100, cnt=1, modify=0, psyco=0'
+    logger.error('usage: time_jobs [bulk_size] [cnt] [modify] [psyco]')
+    logger.error('performance test: create a bulk_size number of jobs and repeat it cnt times')
+    logger.error('if modify is 1 then the jobs are not only created but also modified')
+    logger.error('if psyco==1 then psyco optimizer is used')
+    logger.error('defaults: bulk_size=100, cnt=1, modify=0, psyco=0')
 
 if psyco:
     try:
         import psyco
         psyco.full()
-        print 'psyco optimization enabled'
+        logger.print('psyco optimization enabled')
     except ImportError:
-        print 'psyco not found'
+        logger.warning('psyco not found')
     
 
 def create_job():
@@ -55,7 +58,7 @@ def time_jobs(N=100):
  size = len(jobs)
 
  stats.append(float(elapsed)/float(N))
- print 'jobs: %d size: %d  %.1f seconds, %.1f seconds/job' % (N,size,elapsed,float(elapsed)/float(N))
+ logger.info('jobs: %d size: %d  %.1f seconds, %.1f seconds/job' % (N,size,elapsed,float(elapsed)/float(N)))
 
 for jj in range(cnt):
     time_jobs(bulk)
@@ -63,5 +66,5 @@ for jj in range(cnt):
 mean_time = 0
 for t in stats:
     mean_time += t
-print 'mean time per job:',mean_time/cnt
+logger.info('mean time per job: '+str(mean_time/cnt))
 

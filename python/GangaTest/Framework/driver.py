@@ -91,7 +91,7 @@ class UnitRunner:
                         clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass)                  
                         self.__instance = clazz()
                 except Exception as e:
-                        print >>sys.stderr, "Cannot load test"
+                        logger.error("Cannot load test")
                         import traceback
                         traceback.print_exc(file=sys.stderr)
                         self.__instance=None
@@ -112,7 +112,7 @@ class UnitRunner:
                         if hasattr(self.__instance,"tearDown") and "tearDown" in sys.argv:
                                 getattr(self.__instance,"tearDown")()
                 except Exception as e:
-                        print >>sys.stderr, "Cannot tear down gracefully the test (%s)" % str(e)
+                        logger.error("Cannot tear down gracefully the test (%s)" % str(e))
                         import traceback
                         traceback.print_exc()
 
@@ -157,7 +157,7 @@ class GPIPRunner:
                         self.testsuite = self._getTestSuite()
                         #print self.__instance
                 except Exception as e:
-                        print >>sys.stderr, "Cannot load test"
+                        logger.error("Cannot load test")
                         import traceback
                         traceback.print_exc(file=sys.stderr)
                         self.__instance=None
@@ -239,7 +239,7 @@ class GPIPRunner:
                             else:
                                 failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), 'Failed in running check test somehow.'])
 
-                print "[%d failed tests]" % len(failedTests)
+                logger.info("[%d failed tests]" % len(failedTests))
                 if len(failedTests) > 0:
                     failedTestsException = FailedTestsException(failedTests)
                     import traceback
@@ -302,7 +302,7 @@ class GPIPRunner:
                             for instance in self._testinstances:
                                 getattr(instance,"tearDown")()
                 except Exception as e:
-                        print >>sys.stderr, "Cannot tear down gracefully the test (%s)" % str(e)
+                        logger.error("Cannot tear down gracefully the test (%s)" % str(e))
                         import traceback
                         traceback.print_exc()
 
@@ -416,7 +416,7 @@ def parse_args(sys_argv):
 if __name__=="__main__":
         
         if len(sys.argv)<4:
-                print >> sys.stderr, "Invalid usage of program. At least three parameters are required"
+                logger.error("Invalid usage of program. At least three parameters are required")
                 sys.exit(1)     
         
         param,opt = parse_args(sys.argv[1:])    

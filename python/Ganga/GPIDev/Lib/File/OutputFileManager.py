@@ -140,7 +140,6 @@ def getWNCodeForOutputSandbox(job, files, jobid):
 
 
     insertScript = """\n
-from __future__ import print_function
 from Ganga.Utility.files import recursive_copy
 import glob
 
