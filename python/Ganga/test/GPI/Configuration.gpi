@@ -1,11 +1,14 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 c = config['TestConfig']
-print c
+logger.info(c)
 
 
 def setopt(o,v):
-    print 'set option %s to value %s (%s type)'%(o,repr(v),type(v))
+    logger.info('set option %s to value %s (%s type)'%(o,repr(v),type(v)))
     c[o] = v
-    print 'what got set is %s (%s)'%(repr(c[o]),type(c[o]))
+    logger.info('what got set is %s (%s)'%(repr(c[o]),type(c[o])))
     return c[o]
 
 def is_unchanged(x,y):

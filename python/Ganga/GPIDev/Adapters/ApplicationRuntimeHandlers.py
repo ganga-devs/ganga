@@ -6,7 +6,7 @@
 
 """ Application adapter table is a mechanism to match application and backend handlers.
 """
- 
+
 class _ApplicationRuntimeHandlers:
     def __init__(self):
         self.handlers = {}
@@ -37,6 +37,7 @@ class _ApplicationRuntimeHandlers:
 allHandlers = _ApplicationRuntimeHandlers()
     
 if __name__ == '__main__':
+    
     a = _ApplicationRuntimeHandlers()
     a.add('a','X',1)
     a.add('a','Y',1)
@@ -44,7 +45,6 @@ if __name__ == '__main__':
     a.add('c','Z',1)
 
     def compare(alist,blist):
-        print alist,blist
         alist.sort()
         blist.sort()
         assert(alist == blist)

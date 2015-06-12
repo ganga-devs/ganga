@@ -322,7 +322,7 @@ class ShareRef(GangaObject):
                 raise ValueError("Invalid default answer: '%s'" % default)
             while 1:
                 logger.info('%s no longer being referenced by any objects. Delete directory?' %shareddir)
-                print question + prompt
+                logger.info(question + prompt)
                 answer = raw_input().lower()
                 if answer == '':
                     return default
@@ -409,7 +409,7 @@ class ShareRef(GangaObject):
                 symbol = {0:'', 1:'/'}[os.path.isdir(file)]
                 if not print_files and symbol != '/':
                     continue
-                print padding*level + pieces[-1] + symbol
+                logging.info(padding*level + pieces[-1] + symbol)
 
 
     def _display(self, interactive=0):

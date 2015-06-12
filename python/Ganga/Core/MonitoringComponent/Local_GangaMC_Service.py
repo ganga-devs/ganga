@@ -1033,7 +1033,7 @@ def getStackTrace():
                         status = status + "      " + function_name + " @ " + filename + " # " + str(line) + "\n"
 
             status = status + "\n"
-        print "Queue",Qin.queue     
+        log.debug("Queue",Qin.queue)
         return status
     finally:
         pass

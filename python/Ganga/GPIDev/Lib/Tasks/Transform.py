@@ -461,13 +461,13 @@ class Transform(GangaObject):
             o += markup("%i " % c, overview_colours[s])
          i+=1
          if i % 20 == 0: o+="\n"
-      print o
+      logger.info(o)
 
    def info(self):
-      print markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status])
-      print "* backend: %s" % self.backend.__class__.__name__
-      print "Application:"
-      self.application.printTree() 
+       logger.info(markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
+       logger.info("* backend: %s" % self.backend.__class__.__name__)
+       logger.info("Application:")
+       self.application.printTree() 
 
    def getPartitionFailures(self, partition):
       """Return the number of failures for this partition"""

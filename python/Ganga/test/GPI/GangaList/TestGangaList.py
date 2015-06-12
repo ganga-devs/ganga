@@ -17,6 +17,9 @@ import string
 #set the seed for repeatable tests
 random.seed(666)
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class TestGangaList(GangaGPITestCase):
 
     def __init__(self):
@@ -71,7 +74,7 @@ class TestGangaList(GangaGPITestCase):
             if not m in gangalist_methods: missing_methods.append(m)
             
         if missing_methods:
-            print missing_methods
+            logger.info(missing_methods)
             
         assert not missing_methods, \
             'Not all of lists methods are implemented: %s' % str(missing_methods)
@@ -316,7 +319,6 @@ class TestGangaList(GangaGPITestCase):
         from TFile import TFile as tF
         count = len(self.proxied1) - 1
         for i in self.proxied1.__reversed__():
-            print count,i,self.proxied1[count]
             assert i is self.proxied1[count]
             assert isProxy(i)
             assert isType(i, tF)

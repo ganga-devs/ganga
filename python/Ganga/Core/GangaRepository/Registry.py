@@ -89,7 +89,7 @@ class IncompleteObject(object):
         self.registry._lock.acquire()
         try:
             self.registry.repository.load([self.id])
-            print "Successfully reloaded '%s' object #%i!" % (self.registry.name,self.id)
+            logger.debug("Successfully reloaded '%s' object #%i!" % (self.registry.name,self.id))
             for d in self.registry.changed_ids.itervalues():
                 d.add(id)
         finally:
@@ -103,7 +103,7 @@ class IncompleteObject(object):
                 try:
                     errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
                 except Exception as x:
-                    print x
+                    logger.error(x)
                     pass
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
@@ -402,7 +402,7 @@ class Registry(object):
                         try:
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(self.find(obj))
                         except Exception as x:
-                            print x
+                            logger.error(x)
                             pass
                         raise RegistryLockError(errstr)
                 finally: # try to load even if lock fails

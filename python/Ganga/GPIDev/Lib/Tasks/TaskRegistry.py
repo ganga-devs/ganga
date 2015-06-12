@@ -318,9 +318,9 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         if Ganga.GPIDev.Lib.Registry.RegistrySlice.config["tasks_show_help"]:
             self.help(short = True)
             Ganga.GPIDev.Lib.Registry.RegistrySlice.config.setUserValue("tasks_show_help",False)
-            print "To show this help message again, type 'tasks.help()'."
-            print
-            print " The following is the output of "+markup("tasks.table()",fgcol("blue"))
+            logger.info("To show this help message again, type 'tasks.help()'.")
+            logger.info('')
+            logger.info(" The following is the output of "+markup("tasks.table()",fgcol("blue")))
             short = False
 
         lenfstring = 0
@@ -369,48 +369,48 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
 
     def help(self, short=False):
         """Print a short introduction and 'cheat sheet' for the Ganga Tasks package"""
-        print
-        print markup(" *** Ganga Tasks: Short Introduction and 'Cheat Sheet' ***", fgcol("blue"))
-        print 
-        print markup("Definitions: ", fgcol("red")) + "'Partition' - A unit of processing, for example processing a file or processing some events from a file"
-        print "             'Transform' - A group of partitions that have a common Ganga Application and Backend."
-        print "             'Task'      - A group of one or more 'Transforms' that can have dependencies on each other"
-        print 
-        print markup("Possible status values for partitions:", fgcol("red"))
-        print ' * "' + markup("ready", overview_colours["ready"]) + '"    - ready to be executed '
-        print ' * "' + markup("hold", overview_colours["hold"]) + '"     - dependencies not completed'
-        print ' * "' + markup("running", overview_colours["running"]) + '"  - at least one job tries to process this partition'
-        print ' * "' + markup("attempted", overview_colours["attempted"]) + '"- tasks tried to process this partition, but has not yet succeeded'
-        print ' * "' + markup("failed", overview_colours["failed"]) + '"   - tasks failed to process this partition several times'
-        print ' * "' + markup("bad", overview_colours["bad"]) + '"      - this partition is excluded from further processing and will not be used as input to subsequent transforms'
-        print ' * "' + markup("completed", overview_colours["completed"]) + '" '
-        print
+        logger.info('')
+        logger.info(markup(" *** Ganga Tasks: Short Introduction and 'Cheat Sheet' ***", fgcol("blue")))
+        logger.info('')
+        logger.info(markup("Definitions: ", fgcol("red")) + "'Partition' - A unit of processing, for example processing a file or processing some events from a file")
+        logger.info("             'Transform' - A group of partitions that have a common Ganga Application and Backend.")
+        logger.info("             'Task'      - A group of one or more 'Transforms' that can have dependencies on each other")
+        logger.info('')
+        logger.info(markup("Possible status values for partitions:", fgcol("red")))
+        logger.info(' * "' + markup("ready", overview_colours["ready"]) + '"    - ready to be executed ')
+        logger.info(' * "' + markup("hold", overview_colours["hold"]) + '"     - dependencies not completed')
+        logger.info(' * "' + markup("running", overview_colours["running"]) + '"  - at least one job tries to process this partition')
+        logger.info(' * "' + markup("attempted", overview_colours["attempted"]) + '"- tasks tried to process this partition, but has not yet succeeded')
+        logger.info(' * "' + markup("failed", overview_colours["failed"]) + '"   - tasks failed to process this partition several times')
+        logger.info(' * "' + markup("bad", overview_colours["bad"]) + '"      - this partition is excluded from further processing and will not be used as input to subsequent transforms')
+        logger.info(' * "' + markup("completed", overview_colours["completed"]) + '" ')
+        logger.info('')
         def c(s):
             return markup(s,fgcol("blue"))
-        print markup("Important commands:", fgcol("red"))
-        print " Get a quick overview     : "+c("tasks")+"                  Get a detailed view    : "+c("tasks.table()") 
-        print " Access an existing task  : "+c("t = tasks(id)")+"          Remove a Task          : "+c("tasks(id).remove()")
-        print " Create a new (MC) Task   : "+c("t = MCTask()")+"           Copy a Task            : "+c("nt = t.copy()")
-        print " Show task configuration  : "+c("t.info()")+"               Show processing status : "+c("t.overview()")
-        print " Set the float of a Task  : "+c("t.float = 100")+"          Set the name of a task : "+c("t.name = 'My Own Task v1'")
-        print " Start processing         : "+c("t.run()")+"                Pause processing       : "+c("t.pause()")
-        print " Access Transform id N    : "+c("tf = t.transforms[N]")+"   Pause processing of tf : "+c("tf.pause()")+"  # This command is reverted by using t.run()"
-        print " Transform Application    : "+c("tf.application")+"         Transform Backend      : "+c("tf.backend")
-        print 
-        print " Set parameter in all applications       : "+c("t.setParameter(my_software_version='1.42.0')")
-        print " Set backend for all transforms          : "+c("t.setBackend(backend) , p.e. t.setBackend(LCG())")
-        print " Limit on how often jobs are resubmitted : "+c("tf.run_limit = 4")
-        print " Manually change the status of partitions: "+c("tf.setPartitionStatus(partition, 'status')")
-        print 
-        print " For an ATLAS Monte Carlo Production Example and specific help type: "+c("MCTask?")
-        print " For an ATLAS Analysis Example and help type: "+c("AnaTask?")
-        print 
+        logger.info(markup("Important commands:", fgcol("red")))
+        logger.info(" Get a quick overview     : "+c("tasks")+"                  Get a detailed view    : "+c("tasks.table()") )
+        logger.info(" Access an existing task  : "+c("t = tasks(id)")+"          Remove a Task          : "+c("tasks(id).remove()"))
+        logger.info(" Create a new (MC) Task   : "+c("t = MCTask()")+"           Copy a Task            : "+c("nt = t.copy()"))
+        logger.info(" Show task configuration  : "+c("t.info()")+"               Show processing status : "+c("t.overview()"))
+        logger.info(" Set the float of a Task  : "+c("t.float = 100")+"          Set the name of a task : "+c("t.name = 'My Own Task v1'"))
+        logger.info(" Start processing         : "+c("t.run()")+"                Pause processing       : "+c("t.pause()"))
+        logger.info(" Access Transform id N    : "+c("tf = t.transforms[N]")+"   Pause processing of tf : "+c("tf.pause()")+"  # This command is reverted by using t.run()")
+        logger.info(" Transform Application    : "+c("tf.application")+"         Transform Backend      : "+c("tf.backend"))
+        logger.info('')
+        logger.info(" Set parameter in all applications       : "+c("t.setParameter(my_software_version='1.42.0')"))
+        logger.info(" Set backend for all transforms          : "+c("t.setBackend(backend) , p.e. t.setBackend(LCG())"))
+        logger.info(" Limit on how often jobs are resubmitted : "+c("tf.run_limit = 4"))
+        logger.info(" Manually change the status of partitions: "+c("tf.setPartitionStatus(partition, 'status')"))
+        logger.info('')
+        logger.info(" For an ATLAS Monte Carlo Production Example and specific help type: "+c("MCTask?"))
+        logger.info(" For an ATLAS Analysis Example and help type: "+c("AnaTask?"))
+        logger.info('')
 
         if not True:
 #      if not short:
-            print "ADVANCED COMMANDS:"
-            print "Add Transform  at position N      : t.insertTransform(N, transform)"
-            print "Remove Transform  at position N   : t.removeTransform(N)"
-            print "Set Transform Application         : tf.application = TaskApp() #This Application must be a 'Task Version' of the usual application" 
-            print "   Adding Task Versions of Applications is easy, contact the developers to request an inclusion"
+            logger.info("ADVANCED COMMANDS:")
+            logger.info("Add Transform  at position N      : t.insertTransform(N, transform)")
+            logger.info("Remove Transform  at position N   : t.removeTransform(N)")
+            logger.info("Set Transform Application         : tf.application = TaskApp() #This Application must be a 'Task Version' of the usual application" )
+            logger.info("   Adding Task Versions of Applications is easy, contact the developers to request an inclusion")
       

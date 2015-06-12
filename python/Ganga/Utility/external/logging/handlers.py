@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # Copyright 2001-2004 by Vinay Sajip. All Rights Reserved.
 #
 # Permission to use, copy, modify, and distribute this software and its
@@ -737,8 +739,7 @@ class NTEventLogHandler(logging.Handler):
                 logging.CRITICAL: win32evtlog.EVENTLOG_ERROR_TYPE,
          }
         except ImportError:
-            print "The Python Win32 extensions for NT (service, event "\
-                        "logging) appear not to be available."
+            print("The Python Win32 extensions for NT (service, event logging) appear not to be available.")
             self._welu = None
 
     def getMessageID(self, record):

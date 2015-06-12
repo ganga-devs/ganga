@@ -372,7 +372,7 @@ class JobTree(GangaObject):
         if bn == '':
             bn = os.sep
         ds = '  [%s]\n' % bn      
-        print ds + printdir(path, 1)     
+        logger.info(ds + printdir(path, 1))
 
 class _proxy_display(object):
     def __get__(self, obj, cls):

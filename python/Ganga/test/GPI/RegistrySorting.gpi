@@ -3,11 +3,9 @@
 # in python2.2 it has a high probability to detect possible failures
 
 for repeat in range(5):
-    print "sorted registry pass",repeat
 
     for start in range(50):
         j = Job()
-        print 'created job ',j.id, start
 
     ids1 = jobs.ids()
     ids2 = jobs.ids()

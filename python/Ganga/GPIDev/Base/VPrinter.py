@@ -1,3 +1,4 @@
+from __future__ import print_function
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -58,30 +59,30 @@ class VPrinter(object):
 
     def comma(self,force=0):
         if not self.nocomma or force: 
-            print >> self.out, ","
+            print(",", file=self.out)
 
         self.nocomma = 0
         
     def nodeBegin(self,node):
         self.level += 1
-        print >> self.out,node._schema.name,'('
+        print(node._schema.name,'(', file=self.out)
         self.nocomma = 1
         self.empty_body = 1
         
     def nodeEnd(self,node):
         if self.empty_body:
-            print >> self.out, self.indent(), ')',
+            print(self.indent(), ')', end=' ', file=self.out)
             self.nocomma = 0
         else:
             if self.nocomma:
                 #print >> self.out, 'NOCOMMA',
-                print >> self.out, ')',
+                print(')', end=' ', file=self.out)
             else:
                 #print >> self.out, 'COMMA',
-                print >> self.out,'\n',self.indent(),')',
+                print('\n',self.indent(),')', end=' ', file=self.out)
                 
         self.level -= 1
-        if self.level == 0: print >> self.out,'\n'
+        if self.level == 0: print('\n', file=self.out)
 
     def showAttribute( self, node, name ):
         visible = False
@@ -114,7 +115,7 @@ class VPrinter(object):
             #    print 'into',repr(value)
             #else:
             #    print 'no transformation'
-            print >> self.out, self.indent(), name, '=', self.quote(value),
+            print(self.indent(), name, '=', self.quote(value), end=' ', file=self.out)
 
     def sharedAttribute(self,node,name, value,sequence):
         if self.showAttribute( node, name ):
@@ -128,11 +129,11 @@ class VPrinter(object):
             #    print 'into',repr(value)
             #else:
             #    print 'no transformation'
-            print >> self.out, self.indent(), name, '=', self.quote(value),
+            print(self.indent(), name, '=', self.quote(value), end=' ', file=self.out)
 
     def acceptOptional(self,s):
         if s is None:
-            print >> self.out, None,
+            print(None, end=' ', file=self.out)
         else:
             runProxyMethod(s,'accept',self)
 
@@ -140,13 +141,13 @@ class VPrinter(object):
         if self.showAttribute( node, name ):
             self.empty_body = 0
             self.comma()
-            print >> self.out, self.indent(), name, '=',
+            print(self.indent(), name, '=', end=' ', file=self.out)
             if sequence:
-                print >> self.out, '[',
+                print('[', end=' ', file=self.out)
                 for s in subnode:
                     self.acceptOptional(s)
-                    print >> self.out,',',
-                print >> self.out, ']',
+                    print(',', end=' ', file=self.out)
+                print(']', end=' ', file=self.out)
             else:
                 self.acceptOptional(subnode)
 
@@ -176,7 +177,7 @@ class VSummaryPrinter(VPrinter):
             str_val = fp(value,self.verbosity_level)
             self.empty_body = 0
             self.comma()
-            print >> self.out, self.indent(), name, '=', self.quote(str_val),
+            print(self.indent(), name, '=', self.quote(str_val), end=' ', file=self.out)
             function_pointer_available = True
         return function_pointer_available
 
@@ -187,7 +188,7 @@ class VSummaryPrinter(VPrinter):
         result = sio.getvalue()
         if result.endswith('\n'):
             result = result[0:-1]
-        print >>self.out, result,
+        print(result, end=' ', file=self.out)
 
     def simpleAttribute(self, node, name, value, sequence):
         """Overrides the baseclass method. Tries to print a summary of the attribute."""
@@ -199,7 +200,7 @@ class VSummaryPrinter(VPrinter):
         if sequence:
             self.empty_body = 0
             self.comma()
-            print >> self.out, self.indent(), name, '=',
+            print(self.indent(), name, '=', end=' ', file=self.out)
             self._CallPrintSummaryTree(value)
             return
 
@@ -216,7 +217,7 @@ class VSummaryPrinter(VPrinter):
         if sequence:
             self.empty_body = 0
             self.comma()
-            print >> self.out, self.indent(), name, '=',
+            print(self.indent(), name, '=', end=' ', file=self.out)
             self._CallPrintSummaryTree(value)
             return
 
@@ -232,7 +233,7 @@ class VSummaryPrinter(VPrinter):
         if isType(subnode,GangaObject):
             self.empty_body = 0
             self.comma()
-            print >> self.out, self.indent(), name, '=',
+            print(self.indent(), name, '=', end=' ', file=self.out)
             self._CallPrintSummaryTree(subnode)
             return
 
@@ -249,7 +250,7 @@ def full_print(obj, out = None):
     if isType(obj,GangaList):
         obj_len = len(obj)
         if obj_len == 0:
-            print >>out, '[]',
+            print('[]', end=' ', file=out)
         else:
             import StringIO
             outString = '['
@@ -268,16 +269,16 @@ def full_print(obj, out = None):
                 count += 1
                 if count != obj_len: outString += ', '
             outString += ']'
-            print >>out, outString, 
+            print(outString, end=' ', file=out) 
         return
 
     if isProxy(obj):
         import StringIO
         sio = StringIO.StringIO()
         runProxyMethod(obj,'printTree',sio)
-        print >>out, sio.getvalue(),
+        print(sio.getvalue(), end=' ', file=out)
     else:
-        print >>out, str(obj),
+        print(str(obj), end=' ', file=out)
 
 
 
@@ -291,7 +292,7 @@ def summary_print(obj, out = None):
     if isType(obj,GangaList):
         obj_len = len(obj)
         if obj_len == 0:
-            print >>out, '[]',
+            print('[]', end=' ', file=out)
         else:
             import StringIO
             outString = '['
@@ -310,15 +311,15 @@ def summary_print(obj, out = None):
                 count += 1
                 if count != obj_len: outString += ', '
             outString += ']'
-            print >>out, outString, 
+            print(outString, end=' ', file=out) 
         return
 
     if isProxy(obj):
         import StringIO
         sio = StringIO.StringIO()
         runProxyMethod(obj,'printSummaryTree',0,0,'',sio)
-        print >>out, sio.getvalue(),
+        print(sio.getvalue(), end=' ', file=out)
     else:
-        print >>out, str(obj),
+        print(str(obj), end=' ', file=out)
 
     

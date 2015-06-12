@@ -3,29 +3,32 @@ import time
 import Ganga
 from Ganga.GPI import *
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 s = Ganga.Utility.Shell.Shell()
 
 config.Logging['Ganga.Utility.Shell'] = "DEBUG"
 
 def command(cmd, timeout=None):
-    print 
-    print '*'*30
-    print 'running command',cmd
-    print 'timeout',timeout
+    logger.info()
+    logger.info('*'*30)
+    logger.info('running command '+cmd)
+    logger.info('timeout'+str(timeout))
 
     t0 = time.time()
     r = s.cmd(cmd, capture_stderr=True, timeout=timeout)
     t1 = time.time()
 
-    print 'command execution results'
+    logger.info('command execution results')
 
-    print 'duration:',t1-t0
-    print 'exit status:',r[0]
-    print 'output file:',r[1]
+    logger.info('duration: '+str(t1-t0))
+    logger.info('exit status: '+str(r[0]))
+    logger.info('output file: '+str(r[1]))
     output_file = open(r[1])
-    print 'output:',output_file.read()
+    logger.info('output: '+str(output_file.read()))
     output_file.close()
-    print 'm',r[2]
+    logger.info('m '+str(r[2]))
 
 
 #no timeout

@@ -90,10 +90,9 @@ def bootstrap(reg, interactive_session):
             i = 0
             while i < 10:
                 time.sleep(3)
-                #print '*'*30,i
                 i += 1
         def stop(self):
-            print "I was asked to stop..."
+            logger.debug("I was asked to stop...")
     #DISABLED
     #s = Stuck()
     #s.start()

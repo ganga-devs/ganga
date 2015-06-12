@@ -1013,7 +1013,7 @@ class Job(GangaObject):
                 self.backend.peek( filename = filename, command = command )
             elif self.count_subjobs() > 0:
                 for sj in self.subjobs:
-                    print "\n  subjob ID: %s" % ( str(sj.fqid('.')) )
+                    logger.info("\n  subjob ID: %s" % ( str(sj.fqid('.')) ))
                     sj.backend.peek( filename = filename, command = command )
         else:
            topdir = os.path.dirname( self.inputdir.rstrip( os.sep ) )

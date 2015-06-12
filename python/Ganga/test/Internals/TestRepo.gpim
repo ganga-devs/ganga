@@ -4,6 +4,9 @@ from Ganga.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
 from GangaTest.Lib.TestObjects import TestGangaObject
 from Ganga.Core.GangaRepository.Registry import makeRepository, Registry
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 #location = "/tmp/ganga-TestRepo-Testdir"
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('Configuration')

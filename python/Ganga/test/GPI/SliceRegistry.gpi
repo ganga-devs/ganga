@@ -28,8 +28,6 @@ assert(contains_in_order(r[:],[j1,j2,j3,j4]))
 assert(contains_in_order(r[:-1],[j1,j2,j3]))
 assert(contains_in_order(r[1:],[j2,j3,j4]))
 
-print r.ids(), [j1.id,j2.id,j3.id,j4.id]
-
 assert(r.ids() == [j1.id,j2.id,j3.id,j4.id])
 assert(r.ids(j1.id,j1.id) == [j1.id])
 assert(r.ids(0,j1.id-1) == [])

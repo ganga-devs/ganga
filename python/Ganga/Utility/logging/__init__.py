@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -213,7 +215,7 @@ def _guess_module_logger_name(modulename,frame=None):
     if frame is None:
         frame = sys._getframe(3) # assuming 2 nested calls to the module boundary!
     else:
-        print 'using frame from the caller'
+        print('using frame from the caller')
 
     # accessing __file__ from globals() is much more reliable than f_code.co_filename (name = os.path.normcase(frame.f_code.co_filename))
     try:
@@ -429,7 +431,7 @@ def log_user_exception(logger=None,debug=False):
 getLevelName = logging.getLevelName
 
 if __name__ == "__main__":
-    print 'Little test'
+    print('Little test')
 
     private_logger = logging.getLogger("TESTLOGGER.CHILD.GRANDCHILD")
     formatter = logging.Formatter(_formats['DEBUG'])

@@ -29,7 +29,6 @@ def startGanga():
 
     ## Start ganga by passing some options for unittesting
 
-    print "\n"
     logger.info( "Starting ganga" )
 
     logger.info( "Parsing Command Line options" )

@@ -395,6 +395,7 @@ class Batch(IBackend):
         environment = jobconfig.env
 
         text = """#!/usr/bin/env python
+from __future__ import print_function
 import shutil
 import os
 import time
@@ -427,8 +428,8 @@ def open_file(fname):
   try:
     filehandle=open(fname,'w')
   except IOError as x:
-    print 'ERROR: not able to write a status file: ', fname
-    print 'ERROR: ',x
+    print('ERROR: not able to write a status file: ', fname)
+    print('ERROR: ',x)
     raise
   return filehandle
 
@@ -482,8 +483,8 @@ for key,value in environment.iteritems():
 sysout2 = os.dup(sys.stdout.fileno())
 syserr2 = os.dup(sys.stderr.fileno())
 
-print >>sys.stdout,"--- GANGA APPLICATION OUTPUT BEGIN ---"
-print >>sys.stderr,"--- GANGA APPLICATION ERROR BEGIN ---"
+print("--- GANGA APPLICATION OUTPUT BEGIN ---", file=sys.stdout)
+print("--- GANGA APPLICATION ERROR BEGIN ---", file=sys.stdout)
 flush_file(sys.stdout)
 flush_file(sys.stderr)
 
@@ -510,14 +511,14 @@ try:
     flush_file(heartbeatfile)
     time.sleep(###HEARTBEATFREQUENCE###)
 except Exception as x:
-  print 'ERROR: %s'%str(x)
+  print('ERROR: %s'%str(x))
 
 monitor.progress()
 flush_file(sys.stdout)
 flush_file(sys.stderr)
 sys.stdout=sys.__stdout__
 sys.stderr=sys.__stderr__
-print >>sys.stdout,"--- GANGA APPLICATION OUTPUT END ---"
+print("--- GANGA APPLICATION OUTPUT END ---", file=sys.stdout)
 
 
 monitor.stop(result)
@@ -532,14 +533,14 @@ from Ganga.Utility.files import multi_glob, recursive_copy
 createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
 
 def printError(message):
-    print >>sys.stderr, message
+    print(message, file=sys.stderr)
 
 def printInfo(message):
-    print >>sys.stdout, message
+    print(message, file=sys.stdout)
 
 ###OUTPUTUPLOADSPOSTPROCESSING###
 
-print >>sys.stderr,"--- GANGA APPLICATION ERROR END ---"
+print("--- GANGA APPLICATION ERROR END ---", file=sys.stderr)
 
 ###OUTPUTSANDBOXPOSTPROCESSING###
 

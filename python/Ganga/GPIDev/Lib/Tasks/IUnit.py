@@ -395,7 +395,7 @@ class IUnit(GangaObject):
       for s in ["submitted", "running", "completed", "failed", "unknown"]:
          o += markup("%i   " % self.n_status(s), overview_colours[s])
 
-      print o
+      logger.info(o)
 
    def copyOutput(self):
       """Copy any output to the given dataset"""

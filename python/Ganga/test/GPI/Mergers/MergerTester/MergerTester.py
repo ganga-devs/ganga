@@ -8,6 +8,8 @@ from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Schema import SimpleItem
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 class MergerTester(IMerger):
     _category = 'postprocessor'
@@ -18,10 +20,10 @@ class MergerTester(IMerger):
     _schema.datadict['wait'] = SimpleItem(defvalue = -1, doc='Time in seconds that the merge should sleep for.')
 
     def mergefiles(self, file_list, output_file):
-        print 'merging'
+        logger.info('merging')
         
         if self.wait > 0:
-            print 'sleeping for %d seconds' % self.wait
+            logger.info('sleeping for %d seconds' % self.wait)
             import time
             time.sleep(self.wait)
         

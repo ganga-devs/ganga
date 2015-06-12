@@ -70,10 +70,10 @@ class Task(GangaObject):
     def remove(self,remove_jobs="do_nothing"):
         """Delete the task"""
         if not remove_jobs in [True,False]:
-            print "You want to remove the task %i named '%s'." % (self.id,self.name)
-            print "Since this operation cannot be easily undone, please call this command again:"
-            print " * as tasks(%i).remove(remove_jobs=True) if you want to remove all associated jobs," % (self.id)
-            print " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id)
+            logger.info("You want to remove the task %i named '%s'." % (self.id,self.name))
+            logger.info("Since this operation cannot be easily undone, please call this command again:")
+            logger.info(" * as tasks(%i).remove(remove_jobs=True) if you want to remove all associated jobs," % (self.id))
+            logger.info(" * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id))
             return
         if remove_jobs:
             for j in GPI.jobs:
@@ -255,15 +255,15 @@ class Task(GangaObject):
 
     def table(self):
         from Ganga.GPI import tasks
-        print tasks[self.id:self.id+1].table()
+        logger.info(tasks[self.id:self.id+1].table())
 
     def overview(self):
         """ Get an ascii art overview over task status. Can be overridden """
-        print "Colours: " + ", ".join([markup(key, overview_colours[key])
-            for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]])
-        print "Lists the partitions of events that are processed in one job, and the number of failures to process it."
-        print "Format: (partition number)[:(number of failed attempts)]"
-        print
+        logger.info("Colours: " + ", ".join([markup(key, overview_colours[key])
+            for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]]))
+        logger.info("Lists the partitions of events that are processed in one job, and the number of failures to process it.")
+        logger.info("Format: (partition number)[:(number of failed attempts)]")
+        logger.info('')
         for t in self.transforms:
             t.overview()
 
@@ -272,7 +272,7 @@ class Task(GangaObject):
             t.info()
 
     def help(self):
-        print "This is a Task without special properties"
+        logger.info("This is a Task without special properties")
 
     ## Helper methods
     def float_all(self):

@@ -4,6 +4,8 @@
 # $Id: VStreamer.py,v 1.5 2009-06-09 13:03:16 moscicki Exp $
 ################################################################################
 
+from __future__ import print_function
+
 # dump object (job) to file f (or stdout)
 def to_file(j,f=None):
     vstreamer = VStreamer(out=f,selection='subjobs')#FIXME: hardcoded subjobs handling
@@ -58,10 +60,10 @@ class VStreamer(object):
             self.out = sys.stdout
 
     def begin_root(self):
-        print >> self.out,'<root>'
+        print('<root>', file=self.out)
         
     def end_root(self):
-        print >> self.out,'</root>'
+        print('</root>', file=self.out)
         
     def indent(self):
         return ' '*(self.level-1)*3
@@ -69,12 +71,12 @@ class VStreamer(object):
     def nodeBegin(self,node):
         self.level += 1
         s = node._schema
-        print >> self.out,self.indent(),'<class name="%s" version="%d.%d" category="%s">'%(s.name,s.version.major,s.version.minor,s.category)
+        print(self.indent(),'<class name="%s" version="%d.%d" category="%s">'%(s.name,s.version.major,s.version.minor,s.category), file=self.out)
         self.nocomma = 1
         self.empty_body = 1
         
     def nodeEnd(self,node):
-        print >> self.out,self.indent(),'</class>'
+        print(self.indent(),'</class>', file=self.out)
         self.level -= 1
         return
     
@@ -84,61 +86,59 @@ class VStreamer(object):
     def simpleAttribute(self,node,name, value,sequence):
         if self.showAttribute( node, name ):
             self.level+=1
-            print >> self.out, self.indent(),
-            print >> self.out, '<attribute name="%s">'%name,
+            print(self.indent(), end=' ', file=self.out)
+            print('<attribute name="%s">'%name, end=' ', file=self.out)
 
             def print_value(v):
-                #print 'value',quote(v)
-                print >> self.out,'<value>%s</value>'%self.quote(v),
+                print('<value>%s</value>'%self.quote(v), end=' ', file=self.out)
                 
             if sequence:
                 self.level+=1
-                print >> self.out
-                print >> self.out, self.indent(),'<sequence>'
+                print(file=self.out)
+                print(self.indent(),'<sequence>', file=self.out)
                 for v in value:
                     self.level+=1
-                    print >> self.out, self.indent(),
+                    print(self.indent(), end=' ', file=self.out)
                     print_value(v)
-                    print >> self.out
+                    print(file=self.out)
                     self.level-=1
-                print >> self.out, self.indent(), '</sequence>'
+                print(self.indent(), '</sequence>', file=self.out)
                 self.level-=1
-                print >> self.out, self.indent(), '</attribute>'
+                print(self.indent(), '</attribute>', file=self.out)
             else:
                 self.level+=1
                 print_value(value)
                 self.level-=1
-                print >> self.out,'</attribute>'
+                print('</attribute>', file=self.out)
             self.level-=1
 
     def sharedAttribute(self,node,name, value,sequence):
         if self.showAttribute( node, name ):
             self.level+=1
-            print >> self.out, self.indent(),
-            print >> self.out, '<attribute name="%s">'%name,
+            print(self.indent(), end=' ', file=self.out)
+            print('<attribute name="%s">'%name, end=' ', file=self.out)
 
             def print_value(v):
-                #print 'value',quote(v)
-                print >> self.out,'<value>%s</value>'%self.quote(v),
+                print('<value>%s</value>'%self.quote(v), end=' ', file=self.out)
                 
             if sequence:
                 self.level+=1
-                print >> self.out
-                print >> self.out, self.indent(),'<sequence>'
+                print(file=self.out)
+                print(self.indent(),'<sequence>', file=self.out)
                 for v in value:
                     self.level+=1
-                    print >> self.out, self.indent(),
+                    print(self.indent(), end=' ', file=self.out)
                     print_value(v)
-                    print >> self.out
+                    print(file=self.out)
                     self.level-=1
-                print >> self.out, self.indent(), '</sequence>'
+                print(self.indent(), '</sequence>', file=self.out)
                 self.level-=1
-                print >> self.out, self.indent(), '</attribute>'
+                print(self.indent(), '</attribute>', file=self.out)
             else:
                 self.level+=1
                 print_value(value)
                 self.level-=1
-                print >> self.out,'</attribute>'
+                print('</attribute>', file=self.out)
             self.level-=1
 
 
@@ -148,7 +148,7 @@ class VStreamer(object):
     def acceptOptional(self,s):
         self.level+=1     
         if s is None:
-            print >> self.out,self.indent(), '<value>None</value>'
+            print(self.indent(), '<value>None</value>', file=self.out)
         else:
             s.accept(self)
         self.level-=1 
@@ -157,17 +157,17 @@ class VStreamer(object):
         if self.showAttribute( node, name ):
             self.empty_body = 0
             self.level+=1
-            print >> self.out, self.indent(), '<attribute name="%s">'%name
+            print(self.indent(), '<attribute name="%s">'%name, file=self.out)
             if sequence:
                 self.level+=1
-                print >> self.out, self.indent(), '<sequence>'
+                print(self.indent(), '<sequence>', file=self.out)
                 for s in subnode:
                     self.acceptOptional(s)
-                print >> self.out,self.indent(), '</sequence>'
+                print(self.indent(), '</sequence>', file=self.out)
                 self.level-=1
             else:
                 self.acceptOptional(subnode)
-            print >> self.out,self.indent(), '</attribute>'
+            print(self.indent(), '</attribute>', file=self.out)
             self.level-=1 
 
     def quote(self,x):

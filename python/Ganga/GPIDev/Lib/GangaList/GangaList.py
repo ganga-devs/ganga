@@ -427,17 +427,17 @@ class GangaList(GangaObject):
             if print_summary:
                 fp = getattr(parent,print_summary)
                 str_val = fp(self._list,verbosity_level)
-                print >>out, str_val,
+                out.write(str_val)
                 return
             
             if (maxLen != -1) and (self_len > maxLen):
-                print >>out, decorateListEntries(self_len, type(self[0]).__name__),
+                out.write(decorateListEntries(self_len, type(self[0]).__name__))
                 return
             else:
                 summary_print(self,out)
                 return
 
-        print >>out, str(self._list),
+        out.write(str(self._list))
         return
     
     def toString(self):

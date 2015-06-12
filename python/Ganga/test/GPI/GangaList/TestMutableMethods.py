@@ -11,6 +11,9 @@ GangaList = GangaList._proxyClass
 import random
 import string
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 def completeJob(job):
     
     job._impl.updateStatus('submitting')
@@ -184,7 +187,7 @@ class TestMutableMethods(GangaGPITestCase):
     def testJobPrint(self):
         
         #just want to check there is no error here. Its hard to test this automatically
-        print self.test_job
+        logger.info(self.test_job)
         
         #now try full_print
         full_print(self.test_job)

@@ -1,6 +1,9 @@
 #!/bin/env python
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 #only define backends if not already defined.
 # done so that Altas and LHCb can run the tests
 # using other backends
@@ -60,7 +63,7 @@ class _TestRootBase(object):
         """Used to construct, configure and test a job."""
         if IJobTest == None:
             IJobTest = _DefaultJobTest(self)
-        print 'Backend:',self.__backend
+        logger.info('Backend:',self.__backend)
         j = Job(application=app,backend=self.__backend)
         IJobTest.setJob(j)
         #configure the job
@@ -72,7 +75,6 @@ class _TestRootBase(object):
     
     def testCintArgs(self):
         '''Runs a basic Cint job and tests that int args are handled.'''
-        print 'testCintArgs'
         n = 123
         s = 'foo'
         r = self._makeRootApp("""
@@ -109,7 +111,6 @@ class _TestRootBase(object):
         
     def testCintArgsAllStrings(self):
         '''Runs a basic Cint job and tests that string args are handled.'''
-        print 'testCintArgsAllStrings'
         
         args = ['foo'*i for i in xrange(5)]
         assert len(args) == 5
@@ -150,7 +151,6 @@ class _TestRootBase(object):
     
     def testCintArgsAllInts(self):
         '''Runs a basic Cint job and tests that int args are handled.'''
-        print 'testCintArgsAllInts'
         
         args = [i*i for i in xrange(5)]
         assert len(args) == 5
@@ -191,7 +191,6 @@ class _TestRootBase(object):
     
     def testNoArgJob(self):
         """Runs the default cint script. Should produce no errors"""
-        print 'testNoArgJob'
         r = Root()
         assert(not r.usepython)
 
@@ -203,7 +202,6 @@ class _TestRootBase(object):
         
     def testNoArgPyRootJob(self):
         """Runs the default PyRoot script. Should produce no errors"""
-        print 'testNoArgPyRootJob'
         r = Root()
         r.usepython = True
 
@@ -215,7 +213,6 @@ class _TestRootBase(object):
      
     def testReturnCode(self):
         '''Runs a basic Cint job and tests that the return code is propagated back to the user.'''
-        print 'testReturnCode'
         exitCode = 45      
         r = self._makeRootApp("""
                 #include <cstdlib>
@@ -229,7 +226,7 @@ class _TestRootBase(object):
                 #wait for test to finish but don't assert
                 assert(self.j.status == 'failed')
  
-                print 'exitCode',self.j.backend.exitcode, exitCode
+                logger.info('exitCode',self.j.backend.exitcode, exitCode)
                 assert self.j.backend.exitcode == exitCode, 'Exit codes do not match'
             def isReadyForCheck(self):
                 #Overwrite the default 'isReadyForCheck' method
@@ -240,7 +237,6 @@ class _TestRootBase(object):
 
     def testCintLoadSharedObject(self):
         '''Runs a basic Cint job and tests so file loading.'''
-        print 'testCintLoadSharedObject'
         r = self._makeRootApp("""
                 #include <cstdlib>
                 void test(){
@@ -293,7 +289,6 @@ class _TestRootBase(object):
 
     def testPythonArgs(self):
         '''Runs a basic python job and tests that int args are handled.'''
-        print 'testPythonArgs'
         n = 123
         s = 'foo'
         r = self._makeRootApp("""#!/usr/bin/env python
@@ -334,7 +329,6 @@ if __name__ == '__main__':
         
     def testPythonRootBasicImport(self):
         '''Runs a basic python job and used same basic root classes'''
-        print 'testPythonRootBasicImport'
         n = 1001
         r = self._makeRootApp("""#!/usr/bin/env python
 from ROOT import gRandom
@@ -368,7 +362,6 @@ finally:
     
     def testUsePythonFlag(self):
         '''Runs a .C file as python using the usepython flag'''
-        print 'testUsePythonFlag'
         r = self._makeRootApp("""#!/usr/bin/env python
 f = file('output.txt','w')
 try:

@@ -606,7 +606,7 @@ if __name__=='__main__':
     assert(not schema['id']['comparable'])
     assert(schema['id']['type'] == 'string')
 
-    print schema['application']['category'], schema['application']['defvalue']
+    logger.info(schema['application']['category']+' '+schema['application']['defvalue'])
 
     import copy
     schema2 = copy.deepcopy(schema)
@@ -625,7 +625,7 @@ if __name__=='__main__':
     assert(schema['id']['copyable'] == 0)
     assert(schema['application']['copyable'] == 1)
 
-    print 'Schema tested OK.'
+    logger.info('Schema tested OK.')
     
         
 #

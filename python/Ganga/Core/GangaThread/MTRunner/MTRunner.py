@@ -32,7 +32,7 @@ class GangaWorkAgent(GangaThread):
 
                 if self._runner.keepAlive:
                     #if self.debug:
-                    #    print 'data queue is empty, check again in 0.5 sec.'
+                    #    logger.debug('data queue is empty, check again in 0.5 sec.')
                     time.sleep(0.5)
                     continue
                 else:

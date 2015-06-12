@@ -42,7 +42,7 @@
 
        # Text will be coloured in red if coloring_enabled,
        # otherwise text will be unchanged.
-       print m('Text in red',code=fg.red)
+       print(m('Text in red',code=fg.red))
 
    It is a better practice to use markup objects to apply colours
    because it is easier to enable/disable the markup if desired.
@@ -50,13 +50,13 @@
    However inserting the codes directly also works:
 
    # Print text in specified colour.
-   print fg.some_colour + 'Text in some_colour' + fx.normal
+   print(fg.some_colour + 'Text in some_colour' + fx.normal)
 
    # Print text with colour of background changed as specified.
-   print bg.some_colour + 'Text with background in some_colour' + fx.normal
+   print(bg.some_colour + 'Text with background in some_colour' + fx.normal)
 
    # Print text with specified effect applied.
-   print fx.some_effect + 'Text with some_effect applied' + fx.normal
+   print(fx.some_effect + 'Text with some_effect applied' + fx.normal)
 
    Note that each ANSI code overrides the previous one, and their effect
    isn't cumulative.  Terminating a string with fx.normal in the above

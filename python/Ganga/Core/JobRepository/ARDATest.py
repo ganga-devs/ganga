@@ -99,8 +99,7 @@ def testSplitting(repository, LEN):
 
 
 def runTest(NTEST, rootDir, output_dir, rep_type):
-    if DEBUG:
-        print 'from runTest: rootDir %s, output_dir %s'%(rootDir, output_dir)
+    logger.debug('from runTest: rootDir %s, output_dir %s'%(rootDir, output_dir))
     if rep_type == "Remote":
         repository = repositoryFactory(repositoryType = rep_type,
                                        root_dir  = rootDir,
@@ -115,8 +114,8 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
                                        streamer   = SimpleJobStreamer(),
                                        local_root = os.path.expanduser('~'))
     else:
-        print "Wrong type of repository..."
-        print "Exiting ..."
+        logger.error("Wrong type of repository...")
+        logger.error("Exiting ...")
         return
     nn = tempfile.mktemp(suffix = '.test')
     nn = os.path.join(output_dir, os.path.basename(nn))
@@ -132,63 +131,51 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             
         #----------------------------------------------------
         t1 = _startText(ff, 'registering %d jobs...' % NTEST)
-        if DEBUG:
-            print 'registering %d jobs...' % NTEST
+        logger.debug('registering %d jobs...' % NTEST)
         try:
             repository.registerJobs(jj)
         except Exception as e:
-            print "EXCEPTION in registerJobs", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"           
+            logger.error("EXCEPTION in registerJobs " + str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->command status", "OK", "\n"
+            logger.debug("--->command status OK")
         _endText(ff, t1)
 
         #----------------------------------------------------
         t1 = _startText(ff, 'testing splitting of %d jobs...' % NTEST)
-        if DEBUG:
-            print 'testing splitting of  %d jobs...' % NTEST
+        logger.debug('testing splitting of  %d jobs...' % NTEST)
         try:
             for i in range(NTEST):
                 testSplitting(repository, LEN = 10)
         except Exception as e:
-            print "EXCEPTION in testSplitting", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"            
+            logger.error("EXCEPTION in testSplitting "+ str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->command status", "OK", "\n"
+            logger.debug("--->command status OK")
         _endText(ff, t1)
 
         #----------------------------------------------------        
         t1 = _startText(ff, 'retrieving info about first 10 jobs...')
-        if DEBUG:
-            print 'retrieving info about first 10 jobs...'        
+        logger.debug('retrieving info about first 10 jobs...')
         try:
             rjj = repository.checkoutJobs(map(lambda j: j.id, jj[:10]))
         except Exception as e:
-            print "EXCEPTION in checkoutJobs", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"               
+            logger.error("EXCEPTION in checkoutJobs " + str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->checkout jobs", map(lambda j: j.id, rjj), "\n"
+            logger.debug("--->checkout jobs " + map(lambda j: j.id, rjj))
         _endText(ff, t1)
 
         #----------------------------------------------------            
         t1 = _startText(ff, 'retrieving info about ALL jobs')
-        if DEBUG:
-            print 'retrieving info about ALL jobs'
+        logger.debug('retrieving info about ALL jobs')
         try:
             rjj = repository.checkoutJobs({})
         except Exception as e:
-            print "EXCEPTION in checkoutJobs", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"
+            logger.error("EXCEPTION in checkoutJobs " + str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->checkout jobs", len(rjj), map(lambda j: j.id, rjj), "\n"
+            logger.debug("--->checkout jobs "+ len(rjj), map(lambda j: j.id, rjj))
         _endText(ff, t1)
 
         for j in jj:
@@ -200,90 +187,75 @@ def runTest(NTEST, rootDir, output_dir, rep_type):
             
         #----------------------------------------------------  
         t1 = _startText(ff, 'commiting %d jobs...' % NTEST)
-        if DEBUG:
-            print 'commiting %d jobs...' % NTEST
+        logger.debug('commiting %d jobs...' % NTEST)
         try:
             repository.commitJobs(jj)
         except Exception as e:
-            print "EXCEPTION in commitJobs", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"
+            logger.error("EXCEPTION in commitJobs " + str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->command status", "OK", "\n"
+            logger.debug("--->command status OK")
         _endText(ff, t1)
 
         #----------------------------------------------------          
         t1 = _startText(ff, 'setting status for %d jobs...' % NTEST)
-        if DEBUG:
-            print 'setting status for %d jobs...' % NTEST
+        logger.debug('setting status for %d jobs...' % NTEST)
         try:
             repository.setJobsStatus(map(lambda j: (j.id, 'submitted'), jj))
         except Exception as e:
-            print "EXCEPTION in setJobsStatus", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"
+            logger.error("EXCEPTION in setJobsStatus " + str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->command status", "OK", "\n"
+            logger.debug("--->command status OK")
         _endText(ff, t1)
 
         #----------------------------------------------------
         t1 = _startText(ff, 'getting status of first 10 jobs...')
-        if DEBUG:
-            print 'getting status of first 10 jobs...'
+        logger.debug('getting status of first 10 jobs...')
         try:
             rjj = repository.getJobsStatus(map(lambda j: j.id, jj[:10]))
         except Exception as e:
-            print "EXCEPTION in getJobsStatus", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"
+            logger.error("EXCEPTION in getJobsStatus " + str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->command output", len(rjj), rjj, "\n"
+            logger.debug("--->command output "+ str(len(rjj))+ str(rjj))
         _endText(ff, t1)
 
         #----------------------------------------------------    
         t1 = _startText(ff, 'getting id of jobs with particular attributes...')
-        if DEBUG:
-            print 'getting id of jobs with particular attributes...'
+        logger.debug('getting id of jobs with particular attributes...')
         try:
             rjj = repository.getJobIds({'status':'submitted', 'application':'Executable'})
         except Exception as e:
-            print "EXCEPTION in getJobIds", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"
+            logger.error("EXCEPTION in getJobIds " + str(e))
+            logger.debug("--->command status FAIL")
         else:
-            if DEBUG:
-                print "--->command output", len(rjj), rjj, "\n"
+            logger.debug("--->command output" + str(len(rjj))+ str(rjj))
         _endText(ff, t1)
 
 
         t1 = _startText(ff, 'retrieving info about ALL jobs')
         rjj = repository.checkoutJobs({})
         if DEBUG:
-            print 'retrieving info about ALL jobs'
+            logger.debug('retrieving info about ALL jobs')
             jj_id = map(lambda j: j.id, jj)
             st_lst = []
             for j in rjj:
                 if j.id in jj_id:
                     st_lst.append((j.id, j.status))
-            print "--->command output", len(st_lst), st_lst, "\n"
+            logger.error("--->command output " + str(len(st_lst)) + ' ' + str(st_lst))
         _endText(ff, t1)
         
         
         t1 = _startText(ff, 'deleting %d jobs...' % NTEST)
-        if DEBUG:
-            print 'deleting %d jobs...' % NTEST
+        logger.debug('deleting %d jobs...' % NTEST)
         try:
             repository.deleteJobs(map(lambda j: j.id, jj))
         except Exception as e:
-            print "EXCEPTION in deleteJobs", str(e)
-            if DEBUG:
-                print "--->command status", "FAIL", "\n"
+            logger.error("EXCEPTION in deleteJobs " + str(e))
+            logger.debug("--->command status FAIL")
         else:        
-            if DEBUG:
-                print "--->command status", "OK", "\n"
+            logger.debug("--->command status OK")
         _endText(ff, t1)
 
     finally:
@@ -320,13 +292,13 @@ if __name__ == '__main__':
     elif REPTYPE == '2':
         REPTYPE = 'Remote'
     else:
-        print "Unknown type of repository. Exiting"
+        logger.error("Unknown type of repository. Exiting")
         sys.exit(1)
     dname = 'users_' + str(NUSERS) + '__jobs_' + str(NTEST)
     output_dir = os.path.join(os.getcwd(), OUTPUT, REPTYPE, dname)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    print "output dir is ", output_dir
+    logger.debug("output dir is ", output_dir)
 
     python_path = NormPath(sys.executable)
     i = 0
@@ -335,10 +307,8 @@ if __name__ == '__main__':
         cmd =  '"import sys\nsys.path.append(\'%s\')\nfrom ARDATest import runTest\nrunTest(%d, \'%s\',\'%s\',\'%s\')"' % (_thisDir, NTEST, rootDir, output_dir, REPTYPE)
         if sys.version_info[:3] < (2,3,0) or sys.version_info[:3] >=(2,3,4):
             cmd = cmd[1:-1]
-        if DEBUG:
-            print cmd
+        logger.debug(cmd)
         pid = os.spawnl(os.P_NOWAIT, python_path, python_path, "-c", cmd)
-        if DEBUG:
-            print "new user process started %d" % pid
+        logger.debug("new user process started %d" % pid)
         i+=1
 

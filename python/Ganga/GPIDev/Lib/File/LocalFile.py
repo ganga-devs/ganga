@@ -173,7 +173,7 @@ class LocalFile(IGangaFile):
                 elif keyin == 'n':
                     _actual_delete = False
                 else:
-                    print "y/n please!"
+                    logger.warning("y/n please!")
                     keyin = None
             if _actual_delete:
                 if not os.path.exists( file ):

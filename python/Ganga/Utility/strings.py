@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 'Utilities for string manipulation'
 
 import re
@@ -82,6 +84,6 @@ if __name__ == "__main__":
     it.addLine('dupaduuza','jerza;fdlkdfs;lkdfkl;')
     it.addLine('d','jerza;fdlkdfs;lkdfkl;')
 
-    print it.getString()
+    print(it.getString())
 
-    print 'strings: Test Passed OK'
+    print('strings: Test Passed OK')

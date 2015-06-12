@@ -59,15 +59,13 @@ class TestCustomMerger(GangaGPITestCase):
         
         file_name = os.path.join(tmpdir,'merge.py')
         module_file = file(file_name,'w')
-        module_file.write("""def mergefiles(file_list, output_file):
+        module_file.write("""from __future__ import print_function
+def mergefiles(file_list, output_file):
     '''Free script for merging files'''
     
-    try:
-        out = file(output_file,'w')
+    with file(output_file,'w') as out:
         for f in file_list:
-            print >> out, f
-    finally:
-        out.close()
+            print(f, file=out)
     
     return True
         """)

@@ -5,10 +5,6 @@
 # $Id: TimeTest.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
 ################################################################################
 
-##import psyco
-##print "psyco imported", psyco
-##psyco.full()
-
 import sys, os
 import time
 import tempfile
@@ -28,8 +24,8 @@ from Ganga.Core.JobRepository.ARDA import repositoryFactory
 from Ganga.GPIDev.Streamers.SimpleStreamer import SimpleJobStreamer
 import Ganga.Runtime.plugins
 
-DEBUG = False
-#DEBUG = True
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 ################################################################################    
 def _startText(ff, txt):
@@ -45,8 +41,7 @@ def _endText(ff, t1):
     ff.write('-s->%f<-s-\n\n\n'% (t2 - t1))     
 
 def runTest(NJOBS, NRUN, rootDir, output_dir, rep_type):
-    if DEBUG:
-        print 'from runTest: rootDir %s, output_dir %s'%(rootDir, output_dir)
+    logger.debug('from runTest: rootDir %s, output_dir %s'%(rootDir, output_dir))
     if rep_type == "Remote":
         repository = repositoryFactory(repositoryType = rep_type,
                                        root_dir  = rootDir,
@@ -61,8 +56,8 @@ def runTest(NJOBS, NRUN, rootDir, output_dir, rep_type):
                                        streamer = SimpleJobStreamer(),
                                        local_root = '/tmp')
     else:
-        print "Wrong type of repository..."
-        print "Exiting ..."
+        logger.error("Wrong type of repository...")
+        logger.error("Exiting ...")
         return
     nn = tempfile.mktemp(suffix = '.test')
     nn = os.path.join(output_dir, os.path.basename(nn))
@@ -81,15 +76,13 @@ def runTest(NJOBS, NRUN, rootDir, output_dir, rep_type):
             jjj.extend(jj)
             t1 = _startText(ff, 'registering %d jobs...' % NJOBS)
             repository.registerJobs(jj)
-            if DEBUG:
-                print "--->command status", "OK", "\n"
+            logger.debug("--->command status", "OK", "\n")
             _endText(ff, t1)
 
 
         t1 = _startText(ff, 'deleting jobs...')
         repository.deleteJobs(map(lambda j: j.id, jjj))
-        if DEBUG:
-            print "--->command status", "OK", "\n"
+        logger.debug("--->command status", "OK", "\n")
         _endText(ff, t1)
 
     finally:
@@ -126,14 +119,14 @@ if __name__ == '__main__':
     elif REPTYPE == '2':
         REPTYPE = 'Remote'
     else:
-        print "Unknown type of repository. Exiting"
+        logger.error("Unknown type of repository. Exiting")
         sys.exit(1)
     NUSERS = 1
     dname = 'runs_' + str(NRUN) + '__jobs_' + str(NJOBS)
     output_dir = os.path.join(os.getcwd(), OUTPUT, REPTYPE, dname)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
-    print "output dir is ", output_dir
+    logger.debug("output dir is ", output_dir)
 
     python_path = NormPath(sys.executable)
     i = 0
@@ -143,10 +136,8 @@ if __name__ == '__main__':
         cmd = cmd[1:-1]
 ##        if sys.version_info[:2] < (2,3):
 ##            cmd = cmd[1:-1]
-        if DEBUG:
-            print cmd
+        logger.debug(cmd)
         pid = os.spawnl(os.P_NOWAIT, python_path, python_path, "-c", cmd)
-        if DEBUG:
-            print "new user process started %d" % pid
+        logger.debug("new user process started %d" % pid)
         i+=1
 

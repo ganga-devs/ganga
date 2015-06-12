@@ -208,6 +208,7 @@ class Interactive( IBackend ):
 
       commandList = [
          "#!/usr/bin/env python",
+         "from __future__ import print_function"
          "# Interactive job wrapper created by Ganga",
          "# %s" % ( time.strftime( "%c" ) ),
          "",
@@ -224,16 +225,16 @@ class Interactive( IBackend ):
          "try:",
          "   statfile = open( statfileName, 'w' )",
          "except IOError, x:",
-         "   print 'ERROR: Unable to write status file: %s' % statfileName",
-         "   print 'ERROR: ',x",
+         "   print('ERROR: Unable to write status file: %s' % statfileName)",
+         "   print('ERROR: ',x)",
          "   raise",
          "",
          "idfileName = os.path.join( '%s', '__id__' )" % outDir,
          "try:",
          "   idfile = open( idfileName, 'w' )",
          "except IOError, x:",
-         "   print 'ERROR: Unable to write id file: %s' % idfileName",
-         "   print 'ERROR: ',x",
+         "   print('ERROR: Unable to write id file: %s' % idfileName)",
+         "   print('ERROR: ',x)",
          "   raise",
          "finally:",
          "   idfile.close()",

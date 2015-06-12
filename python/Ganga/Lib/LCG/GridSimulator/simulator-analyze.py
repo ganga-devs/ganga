@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 #from Ganga.Lib.LCG.GridSimulator import GridSimulator
 #g = GridSimulator()
 #gridmap_filename = g.gridmap_filename
@@ -32,7 +34,7 @@ for gid in gridmap:
         ganga_finished_times.append(finished_jobs[gid])
         deltas.append(ganga_finished_times[-1]-job_finished_times[-1])
     except KeyError:
-        print >> sys.stderr, 'Missing data for:',gid
+        print('Missing data for:',gid, file=sys.stderr)
 
 idle_cnt = 0
 idle = []
@@ -74,15 +76,15 @@ while i<len(job_finished_times) and j<len(ganga_finished_times):
 
 
 f = file('%s/idle.dat'%basedir,'w')
-print >> f, "# time-based counter of jobs which were reported by the grid as finished but not completed/failed in ganga"
-print >> f, "# x = time in seconds from the beginning of the analysis, y = counter of 'idle' jobs"
+f.write("# time-based counter of jobs which were reported by the grid as finished but not completed/failed in ganga\n")
+f.write("# x = time in seconds from the beginning of the analysis, y = counter of 'idle' jobs\n")
 for i in idle:
-    print >> f, "%d %d"%i
+    f.write("%d %d\n"%i)
     
 f = file('%s/deltas.dat'%basedir,'w')
-print >> f, "# time difference (for each individual job) between the job was reported by the grid as finished and completed/failed in ganga"
+f.write("# time difference (for each individual job) between the job was reported by the grid as finished and completed/failed in ganga\n")
 for d in deltas:
-    print >> f, d
+    f.write(d+'\n')
     
         
     

@@ -34,7 +34,7 @@ class GangaRepositorySQLite(GangaRepository):
         except OSError as x:
             pass
         self.con = sqlite.connect(os.path.join(self.root,"database.db"))
-        print "Connected to ", os.path.join(self.root,"database.db")
+        logger.debug("Connected to ", os.path.join(self.root,"database.db"))
         self.cur = self.con.cursor()
         tables = self.cur.execute("SELECT name FROM sqlite_master WHERE type='table' and name LIKE 'objects'")
         if len(self.cur.fetchall()) == 0:

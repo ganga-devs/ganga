@@ -13,6 +13,9 @@
 # cp path/to/simulation.py .
 # run simulation.py as described above
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 config = config['GridSimulator']
 config['submit_time']='0.2'
 config['submit_failure_rate']=0.0
@@ -55,11 +58,11 @@ def submit(N,K):
 M = 5
 
 for i in range(M):
-    print '*'*80
-    print 'starting %d out of %d'%(i,M)
-    print '*'*80
+    logger.info('*'*80)
+    logger.info('starting %d out of %d'%(i,M))
+    logger.info('*'*80)
     submit(50,10)
 
-print 'finished!'
+logger.info('finished!')
 
 

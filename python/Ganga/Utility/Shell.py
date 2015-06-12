@@ -98,8 +98,8 @@ class Shell:
          if not os.path.exists( this_cwd ):
              this_cwd = os.path.abspath( tempfile.gettempdir() )
          logger.debug( "Using CWD: %s" % this_cwd )
-         logger.debug( 'Running:   source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)) )
-         pipe = subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "import os; print os.environ"' % (setup," ".join(setup_args)),
+         logger.debug( 'Running:   source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup," ".join(setup_args)) )
+         pipe = subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup," ".join(setup_args)),
                                 env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
          output = pipe.communicate()
          rc = pipe.poll()

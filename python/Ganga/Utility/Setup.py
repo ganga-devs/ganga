@@ -1,3 +1,5 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 class PackageSetup:
     """ PackageSetup objects represent the external packages required by a given runtime unit of Ganga.
@@ -123,9 +125,8 @@ def checkPythonVersion(minVersion, minHexVersion):
    status = True
 
    if sys.hexversion < minHexVersion:
-      print "ERROR: Ganga requires Python version %s or greater"\
-         % str( minVersion )
-      print "ERROR: Currently using Python %s" % sys.version.split()[ 0 ]
+      logger.error("Ganga requires Python version %s or greater" % str( minVersion ))
+      logger.error("Currently using Python %s" % sys.version.split()[ 0 ])
       status = False
 
    return status
@@ -146,8 +147,8 @@ def setPlatform(platform):
     # change the global platform used in bootstrap
     import Ganga
     if Ganga.PACKAGE._defaultPlatform != platform:
-        print 'The platform identification string (%s) used to resolve Ganga dependencies has been explicitly set to: %s.'\
-              % (Ganga.PACKAGE._defaultPlatform, platform)   
+        logger.info('The platform identification string (%s) used to resolve Ganga dependencies has been explicitly set to: %s.'\
+              % (Ganga.PACKAGE._defaultPlatform, platform)   )
     Ganga.PACKAGE._defaultPlatform =_new_platform =  platform    
 
 def getPlaftorm():

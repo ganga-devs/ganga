@@ -3,6 +3,8 @@
 # python SessionLock.py {1|2}
 # to run locking tests (run several instances in the same directory, from different machines)
 
+from __future__ import print_function
+
 import os, time, errno, threading, fcntl, random
 
 import sys
@@ -22,7 +24,7 @@ try:
     import Ganga.Utility.logging
     logger = Ganga.Utility.logging.getLogger()
 except ImportError:
-    print "IMPORT ERROR SHOULD NOT OCCUR IN PRODUCTION CODE!!!!!!!!!!!!!!!!!!!!!!"
+    print("IMPORT ERROR SHOULD NOT OCCUR IN PRODUCTION CODE!!!!!!!!!!!!!!!!!!!!!!")
     from threading import Thread
     class GangaThread(Thread):
         def __init__(self, name):
@@ -33,9 +35,9 @@ except ImportError:
 
     class Logger:
         def warning(self, msg):
-            print msg
+            print(msg)
         def debug(self, msg):
-            print msg
+            print(msg)
 
     class RepositoryError(Exception):
         pass
@@ -747,7 +749,7 @@ class SessionLockManager(object):
                     logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, x.__class__.__name__, x) )
                     continue
                 if not len(names & prevnames) == 0:
-                    print "Double-locked stuff:", names & prevnames
+                    logger.error("Double-locked stuff: " + str(names & prevnames))
                     assert False
                 #prevnames.union_update(names) Should be alias to update but not in some versions of python
                 prevnames.update(names)
@@ -844,22 +846,22 @@ class SessionLockManager(object):
 def test1():
     slm = SessionLockManager("locktest", "tester")
     while True:
-        print "lock  ---", slm.lock_ids(random.sample(xrange(100), 3))
-        print "unlock---", slm.release_ids(random.sample(xrange(100), 3))
+        logger.debug("lock  --- {0}".format(slm.lock_ids(random.sample(xrange(100), 3))))
+        logger.debug("unlock--- {0}".format(slm.release_ids(random.sample(xrange(100), 3))))
         slm.check()
 
 def test2():
     slm = SessionLockManager("locktest", "tester")
     while True:
         n = random.randint(1, 9)
-        print "get %i ids ---"%n, slm.make_new_ids(n)
+        logger.debug("get {0} ids --- {1}".format(n, slm.make_new_ids(n)))
         slm.check()
 
 import random
 if __name__ == "__main__":
     import sys
     if len(sys.argv) == 1:
-        print "Usage: python SessionLock.py {1|2}"
+        logger.debug("Usage: python SessionLock.py {1|2}")
         sys.exit(-1)
     if sys.argv[1] == "1":
         test1()

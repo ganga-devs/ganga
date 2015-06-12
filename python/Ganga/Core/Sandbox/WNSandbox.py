@@ -3,6 +3,7 @@ Sandbox functions used in the job wrapper script on the worker node.
 The text of this module is sourced into the job wrapper script.
 It therefore may use ###TAGS###  which are expanded in the wrapper script.
 """
+from __future__ import print_function
 
 INPUT_TARBALL_NAME = '_input_sandbox.tgz'
 OUTPUT_TARBALL_NAME = '_output_sandbox.tgz'
@@ -24,7 +25,7 @@ def getPackedInputSandbox(tarpath,dest_dir='.'):
 #
     extract = os.system("tar -C %s -xzf %s"%(dest_dir,tgzfile))
     if extract != 0:
-        print "error: " + str(extract)
+        print("error: " + str(extract))
         raise Exception('cannot upack tarball %s with InputSandbox to %s' % ( tgzfile, dest_dir ) )
 
 #
@@ -68,17 +69,17 @@ def createOutputSandbox(output_patterns,filter,dest_dir):
     except IOError as e:
         import sys
 
-        print "Failed to import files"
-        print "sys:"
-        print sys.path
-        print "env:"
-        print os.environ
-        print "ls:"
-        print os.listdir(".")
-        print "pattern:"
-        print output_patterns
-        print "destdir:"
-        print dest_dir
+        print("Failed to import files")
+        print("sys:")
+        print(sys.path)
+        print("env:")
+        print(os.environ)
+        print("ls:")
+        print(os.listdir("."))
+        print("pattern:")
+        print(output_patterns)
+        print("destdir:")
+        print(dest_dir)
 
         try:
             import traceback
@@ -86,21 +87,21 @@ def createOutputSandbox(output_patterns,filter,dest_dir):
         except:
             pass
 
-        print "Trying fix"
+        print("Trying fix")
         sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
         try:
             from Ganga.Utility.files import multi_glob,recursive_copy
-            print "Success!"
+            print("Success!")
         except IOError as e:
-            print "Fail!"
+            print("Fail!")
             raise e
 
     for f in multi_glob(output_patterns,filter):
         try:
             recursive_copy(f,dest_dir)
         except Exception as x:
-            print "ERROR: (job ###JOBID### createOutput )",x
+            print("ERROR: (job ###JOBID### createOutput )",x)
 
     
 def createPackedOutputSandbox(output_patterns,filter,dest_dir):
@@ -120,17 +121,17 @@ def createPackedOutputSandbox(output_patterns,filter,dest_dir):
     except IOError as e:
         import sys
 
-        print "Failed to import files"
-        print "sys:"
-        print sys.path
-        print "env:"
-        print os.environ
-        print "ls:"
-        print os.listdir(".")
-        print "pattern:"
-        print output_patterns
-        print "destdir:"
-        print dest_dir
+        print("Failed to import files")
+        print("sys:")
+        print(sys.path)
+        print("env:")
+        print(os.environ)
+        print("ls:")
+        print(os.listdir("."))
+        print("pattern:")
+        print(output_patterns)
+        print("destdir:")
+        print(dest_dir)
 
         try:
             import traceback
@@ -138,14 +139,14 @@ def createPackedOutputSandbox(output_patterns,filter,dest_dir):
         except:
             pass
 
-        print "Trying fix"
+        print("Trying fix")
         sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
         try:
             from Ganga.Utility.files import multi_glob,recursive_copy
-            print "Success!"
+            print("Success!")
         except IOError as e:
-            print "Fail!"
+            print("Fail!")
             raise e
 
     outputlist = multi_glob(output_patterns,filter)
@@ -156,7 +157,7 @@ def createPackedOutputSandbox(output_patterns,filter,dest_dir):
     
     if len(outputlist) > 0:
         if os.system("tar czf %s %s"%(tgzfile," ".join(outputlist))) != 0:
-            print "ERROR: (job ###JOBID### createPackedOutput ) can't creat tarball" 
+            print("ERROR: (job ###JOBID### createPackedOutput ) can't creat tarball") 
 
 #
 ##      Future release with tarball module 

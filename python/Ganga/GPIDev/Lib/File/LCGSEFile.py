@@ -362,7 +362,7 @@ class LCGSEFile(IGangaFile):
             if self._parent is not None:
                 to_location = self.getJobObject().outputdir
             else:
-                print "%s is not a valid directory.... Please set the localDir attribute" % self.localDir
+                logger.info("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
                 return
 
         #set lfc host
@@ -376,7 +376,7 @@ class LCGSEFile(IGangaFile):
             (exitcode,output,m) = self.shell.cmd1(cmd, capture_stderr=True)
 
             if exitcode != 0:
-                print 'command %s failed to execute , reason for failure is %s' % (cmd, output)
+                logger.error('command %s failed to execute , reason for failure is %s' % (cmd, output))
 
     def getWNScriptDownloadCommand(self, indent):
 

@@ -190,6 +190,7 @@ class Localhost(IBackend):
       workdir = tempfile.mkdtemp(dir=config['location'])
       
       script= """#!/usr/bin/env python
+from __future__ import print_function
 
 import os,os.path,shutil,tempfile
 import sys,time
@@ -197,9 +198,9 @@ import glob
 import sys
 
 # FIXME: print as DEBUG: to __syslog__ file
-#print sys.path
-#print os.environ['PATH']
-#print sys.version
+#print(sys.path)
+#print(os.environ['PATH'])
+#print(sys.version)
 
 # bugfix #13314 : make sure that the wrapper (spawned process) is detached from Ganga session
 # the process will not receive Control-C signals
@@ -229,8 +230,8 @@ statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
 try:
   statusfile=open(statusfilename,'w')
 except IOError as x:
-  print 'ERROR: not able to write a status file: ', statusfilename
-  print 'ERROR: ',x
+  print('ERROR: not able to write a status file: ', statusfilename)
+  print('ERROR: ',x)
   raise
   
 line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
@@ -292,13 +293,13 @@ try:
 except OSError as x:
  errfile = open( 'tt', 'w' )
  errfile.close()
- print >> statusfile, 'EXITCODE: %d'%-9999
- print >> statusfile, 'FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y') #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
- print >> statusfile, 'PROBLEM STARTING THE APPLICATION SCRIPT: %s %s'%(appscriptpath,str(x))
+ print('EXITCODE: %d'%-9999, file=statusfile)
+ print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y') #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y'), file=statusfile)
+ print('PROBLEM STARTING THE APPLICATION SCRIPT: %s %s'%(appscriptpath,str(x)), file=statusfile)
  statusfile.close()
  sys.exit()
  
-print >> statusfile, 'PID: %d'%child.pid
+print('PID: %d'%child.pid, file=statusfile)
 statusfile.flush()
 
 result = -1

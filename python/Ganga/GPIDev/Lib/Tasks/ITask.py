@@ -111,10 +111,10 @@ class ITask(GangaObject):
             return
                                         
         if not remove_jobs in [True,False]:
-            print "You want to remove the task %i named '%s'." % (self.id,self.name)
-            print "Since this operation cannot be easily undone, please call this command again:"
-            print " * as tasks(%i).remove(remove_jobs=True) if you want to remove all associated jobs," % (self.id)
-            print " * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id)
+            logger.info("You want to remove the task %i named '%s'." % (self.id,self.name))
+            logger.info("Since this operation cannot be easily undone, please call this command again:")
+            logger.info(" * as tasks(%i).remove(remove_jobs=True) if you want to remove all associated jobs," % (self.id))
+            logger.info(" * as tasks(%i).remove(remove_jobs=False) if you want to keep the jobs." % (self.id))
             return
         if remove_jobs:
             
@@ -274,30 +274,30 @@ class ITask(GangaObject):
 
     def table(self):
         from Ganga.GPI import tasks
-        print tasks[self.id:self.id+1].table()
+        logger.info(tasks[self.id:self.id+1].table())
 
     def overview(self, status = ''):
         """ Show an overview of the Task """
         if status and not status in ['bad', 'hold', 'running', 'completed', 'new']:
             logger.error("Not a valid status for unitOverview. Possible options are: 'bad', 'hold', 'running', 'completed', 'new'.")
             return
-      
-        print "Lists the units in each transform and give the state of the subjobs"
-        print
-        print " "* 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor"
+        
+        logger.info("Lists the units in each transform and give the state of the subjobs")
+        logger.info('')
+        logger.info(" "* 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor")
         for trfid in range(0, len(self.transforms)):
-            print "----------------------------------------------------------------------------------------------------------------------"
-            print "----   Transform %d:  %s" % (trfid, self.transforms[trfid].name)
-            print
+            logger.info("----------------------------------------------------------------------------------------------------------------------")
+            logger.info("----   Transform %d:  %s" % (trfid, self.transforms[trfid].name))
+            logger.info('')
             self.transforms[trfid].overview(status)
-            print
+            logger.info('')
 
     def info(self):
         for t in self.transforms:
             t.info()
 
     def help(self):
-        print "This is a Task without special properties"
+        logger.info("This is a Task without special properties")
 
     def resetUnitsByStatus( self, status = 'bad' ):
         """Reset all units of the given status"""

@@ -23,6 +23,9 @@ _GPIhelp = '''Ganga Public Interface (GPI) Index
 
 '''
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 _GPIhelp_sections = { 'Classes' : [], 'Exceptions' : [], 'Functions' : [], 'Objects' : [] }
 
 def adddoc(name,object,doc_section,docstring):
@@ -197,7 +200,7 @@ def doc2(thing, title='Python Library Documentation: %s', forceload=0):
             desc += ' object'
         pydoc.pager(title % desc + '\n\n' + pydoc.text.document(object, name))
     except (ImportError, pydoc.ErrorDuringImport) as value:
-        print value
+        logger.error(value)
 
 pydoc.doc = doc2
 

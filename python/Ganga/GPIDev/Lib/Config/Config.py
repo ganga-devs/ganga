@@ -84,29 +84,29 @@ class ConfigProxy(object):
         levels = map(lambda x: markup(x,fg.red),levels)
         from StringIO import StringIO
         sio = StringIO()
-        print >>sio, '%s'%markup(self._impl.name,name_colour),':',markup(self._impl.docstring,docstring_colour)
+        sio.write('%s'%markup(self._impl.name,name_colour)+' : '+markup(self._impl.docstring,docstring_colour)+'\n')
         opts = self._impl.options.keys()
         opts.sort()
         INDENT = '     '*2
         for o in opts:
-            print >>sio, levels[self._impl.getEffectiveLevel(o)],' ',markup(o,name_colour),'=',markup(repr(self._impl[o]),value_colour)
-            print >>sio, textwrap.fill(markup(self._impl.options[o].docstring.strip(),docstring_colour),width=80, initial_indent=INDENT,subsequent_indent=INDENT)
+            sio.write(levels[self._impl.getEffectiveLevel(o)]+'   '+markup(o,name_colour)+' = '+markup(repr(self._impl[o]),value_colour)+'\n')
+            sio.write(textwrap.fill(markup(self._impl.options[o].docstring.strip(),docstring_colour),width=80, initial_indent=INDENT,subsequent_indent=INDENT)+'\n')
             typelist = self._impl.options[o].typelist
             if not typelist:
                 typedesc = 'Type: '+str(type(self._impl.options[o].default_value))
             else:
                 typedesc = 'Allowed types: '+str([t.split('.')[-1] for t in typelist])
-            print >>sio, markup(INDENT+typedesc,docstring_colour)
+            sio.write(markup(INDENT+typedesc,docstring_colour)+'\n')
             filter = self._impl.options[o].filter
             if filter:
                 filter_doc = filter.__doc__
                 if not filter_doc: filter_doc = "undocumented"
-                print >>sio, markup(INDENT+"Filter: "+filter_doc,docstring_colour)
+                sio.write(markup(INDENT+"Filter: "+filter_doc,docstring_colour)+'\n')
             examples = self._impl.options[o].examples
             if examples:
-                print >>sio,markup(INDENT+"Examples:",docstring_colour)
+                sio.write(markup(INDENT+"Examples:",docstring_colour)+'\n')
                 for e in examples.splitlines():
-                    print >>sio, markup(INDENT+e.strip(),docstring_colour)
+                    sio.write(markup(INDENT+e.strip(),docstring_colour)+'\n')
 
             
         return sio.getvalue()
@@ -153,7 +153,7 @@ class MainConfigProxy:
         
         from StringIO import StringIO
         sio = StringIO()
-        print >>sio, "Ganga Configuration"
+        sio.write("Ganga Configuration"+'\n')
         sections = self._impl.keys()
         sections.sort()
         maxcol = 0
@@ -163,7 +163,7 @@ class MainConfigProxy:
         if maxcol>50:
             maxcol=50
         for p in sections:
-            print >>sio,'%-*s : %s'%(maxcol,p,markup(self._impl[p].docstring.split('\n')[0],fg.boldgrey))
+            sio.write('%-*s : %s'%(maxcol,p,markup(self._impl[p].docstring.split('\n')[0],fg.boldgrey))+'\n')
         return sio.getvalue()
 
 # GPI config singleton.
@@ -174,15 +174,15 @@ def print_config_file():
     sections.sort()
     def print_doc_text(text):
         for line in text.splitlines():
-            print '#',line
+            sio.write('# '+line+'\n')
             
     for p in sections:
         sect = config._impl[p]
         if not sect.cfile:
             continue
-        print
-        print "#======================================================================="
-        print "[%s]"%p
+        sio.write('\n')
+        sio.write("#=======================================================================\n")
+        sio.write("[%s]"%p+'\n')
 
         print_doc_text(sect.docstring)
 
@@ -190,9 +190,9 @@ def print_config_file():
         opts.sort()
         for o in opts:
             if sect.options[o].cfile:
-                print
+                sio.write('\n')
                 print_doc_text(sect.options[o].docstring)
-                print '#%s = %s'%(o,sect.options[o].default_value)
+                sio.write('#%s = %s'%(o,sect.options[o].default_value)+'\n')
 
 def config_file_as_text():
 

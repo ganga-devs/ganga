@@ -54,7 +54,7 @@ def bootstrap():
         allJobRegistries['native_'+n] = r
         if n == 'jobs' and config['DEBUG_startup_profile']:
             PROFN = 'xml.startup.profile.txt'
-            print 'profiling ON, saving status to',PROFN
+            logger.debug('profiling ON, saving status to '+PROFN)
             import profile
             profile.runctx('r._scan_repository()',globals(),{'r':r},PROFN)
         else:

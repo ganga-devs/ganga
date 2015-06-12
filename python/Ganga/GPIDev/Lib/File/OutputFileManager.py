@@ -140,6 +140,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
 
 
     insertScript = """\n
+from __future__ import print_function
 from Ganga.Utility.files import recursive_copy
 import glob
 
@@ -168,7 +169,7 @@ for fn in final_list_to_copy:
     try:
         recursive_copy(fn,sharedoutputpath)
     except Exception as x:
-        print 'ERROR: (job'+###JOBID###+')',x
+        print('ERROR: (job'+###JOBID###+')',x)
 """ 
     insertScript = insertScript.replace('###FILES###', str(files))
     insertScript = insertScript.replace('###PATTERNSTOSANDBOX###', str(patternsToSandbox))

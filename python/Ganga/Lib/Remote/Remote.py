@@ -146,13 +146,14 @@ class Remote( IBackend ):
 
          # Create a ganga script that updates the job info from the remote site
          script = """#!/usr/bin/env python
+from __future__ import print_function
 #-----------------------------------------------------
 # This is a setup script for a remote job. It
 # does very litte
 #-----------------------------------------------------
 
 # print a finished token
-print "***_FINISHED_***"
+print("***_FINISHED_***")
 """
 
          # check for the connection
@@ -436,6 +437,7 @@ print "***_FINISHED_***"
                        or False otherwise"""
 
       script = """#!/usr/bin/env python
+from __future__ import print_function
 #-----------------------------------------------------
 # This is a kill script for a remote job. It
 # attempts to kill the given job and returns
@@ -456,17 +458,17 @@ j = jobs( jid )
 j.kill()
 
 # Start pickle token
-print "***_START_PICKLE_***"
+print("***_START_PICKLE_***")
 
 # pickle the job
 import pickle
-print j.outputdir
-print pickle.dumps(j._impl)
-print j
+print(j.outputdir)
+print(pickle.dumps(j._impl))
+print(j)
 
 # print a finished token
-print "***_END_PICKLE_***"
-print "***_FINISHED_***"
+print("***_END_PICKLE_***")
+print("***_FINISHED_***")
 """
       
       script = script.replace('###CODE###', repr(self._code))
@@ -501,6 +503,7 @@ print "***_FINISHED_***"
                        or False otherwise"""
 
       script = """#!/usr/bin/env python
+from __future__ import print_function
 #-----------------------------------------------------
 # This is a remove script for a remote job. It
 # attempts to kill the given job and returns
@@ -523,7 +526,7 @@ j.remove()
 jobs( jid )
 
 # print a finished token
-print "***_FINISHED_***"
+print("***_FINISHED_***")
 """
       
       script = script.replace('###CODE###', repr(self._code))
@@ -555,6 +558,7 @@ print "***_FINISHED_***"
                        or 0 otherwise"""
 
       script = """#!/usr/bin/env python
+from __future__ import print_function
 #-----------------------------------------------------
 # This is a resubmit script for a remote job. It
 # attempts to kill the given job and returns
@@ -575,17 +579,17 @@ j = jobs( jid )
 j.resubmit()
 
 # Start pickle token
-print "***_START_PICKLE_***"
+print("***_START_PICKLE_***")
 
 # pickle the job
 import pickle
-print j.outputdir
-print pickle.dumps(j._impl)
-print j
+print(j.outputdir)
+print(pickle.dumps(j._impl))
+print(j)
 
 # print a finished token
-print "***_END_PICKLE_***"
-print "***_FINISHED_***"
+print("***_END_PICKLE_***")
+print("***_FINISHED_***")
 """
       
       script = script.replace('###CODE###', repr(self._code))
@@ -636,6 +640,7 @@ print "***_FINISHED_***"
       job = self.getJobObject()
 
       script = """#!/usr/bin/env python
+from __future__ import print_function
 #-----------------------------------------------------
 # This job wrapper script is automatically created by
 # GANGA Remote backend handler.
@@ -684,14 +689,14 @@ fullsbxlist = []
 try:
    tar = tarfile.open(j.inputdir+"/__master_input_sbx__")
    filelist = tar.getnames()
-   print filelist
+   print(filelist)
    
    for f in filelist:
       fullsbxlist.append( f )
       inputsbx.append( j.inputdir + "/" + f )
 
 except:
-   print "Unable to open master input sandbox"
+   print("Unable to open master input sandbox")
 
 try:
    tar = tarfile.open(j.inputdir+"/__subjob_input_sbx__")
@@ -702,12 +707,12 @@ try:
       inputsbx.append( j.inputdir + "/" + f )
 
 except:
-   print "Unable to open subjob input sandbox"
+   print("Unable to open subjob input sandbox")
 
 # sort out the path of the exe
 if appexec in fullsbxlist:
    j.application = Executable ( exe = File(os.path.join(j.inputdir, appexec)), args = appargs, env = environment )
-   print "Script found: %s" % appexec
+   print("Script found: %s" % appexec)
 else:
    j.application = Executable ( exe = appexec, args = appargs, env = environment )
 
@@ -721,16 +726,16 @@ getPackedInputSandbox(j.inputdir+"/__master_input_sbx__", j.inputdir + "/.")
 j.submit()
 
 # Start pickle token
-print "***_START_PICKLE_***"
+print("***_START_PICKLE_***")
 
 # pickle the job
 import pickle
-print j.outputdir
-print pickle.dumps(j._impl)
+print(j.outputdir)
+print(pickle.dumps(j._impl))
 
 # print a finished token
-print "***_END_PICKLE_***"
-print "***_FINISHED_***"
+print("***_END_PICKLE_***")
+print("***_FINISHED_***")
 """
       import inspect
       import Ganga.Core.Sandbox as Sandbox
@@ -783,6 +788,7 @@ print "***_FINISHED_***"
       for host_str in jobs_sort:
          # Create a ganga script that updates the job info for all jobs at this remote site
          script = """#!/usr/bin/env python
+from __future__ import print_function
 #-----------------------------------------------------
 # This is a monitoring script for a remote job. It
 # outputs some useful job info and exits
@@ -808,17 +814,17 @@ for jid in jids:
     j = jobs( jid )
 
     # Start pickle token
-    print "***_START_PICKLE_***"
+    print("***_START_PICKLE_***")
 
     # pickle the job
-    print j.outputdir
-    print pickle.dumps(j._impl)
-    print j
+    print(j.outputdir)
+    print(pickle.dumps(j._impl))
+    print(j)
 
     # print a finished token
-    print "***_END_PICKLE_***"
+    print("***_END_PICKLE_***")
 
-print "***_FINISHED_***"
+print("***_FINISHED_***")
 """
 
          mj = jobs_sort[host_str][0]

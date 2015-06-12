@@ -331,8 +331,8 @@ def dedent(text):
             hello
               world
             '''
-            print repr(s)          # prints '    hello\n      world\n    '
-            print repr(dedent(s))  # prints 'hello\n  world\n'
+            print(repr(s))          # prints '    hello\n      world\n    '
+            print(repr(dedent(s)))  # prints 'hello\n  world\n'
     """
     lines = text.expandtabs().split('\n')
     margin = None

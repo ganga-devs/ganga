@@ -1,3 +1,4 @@
+from __future__ import print_function
 
 import Ganga.Utility.logging
 
@@ -124,22 +125,22 @@ def report(job=None):
                 logger.debug("Responce.read(): --%s--" % responseResult[startIndex:endIndex] )
 
 
-                print 'Your error report was uploaded to ganga developers with the following URL. '
-                print 'You may include this URL and the following summary information in your bug report or in the support email to the developers.'
-                print
-                print '***',responseResult[startIndex:endIndex],'***'
-                print
+                logger.info('Your error report was uploaded to ganga developers with the following URL. ')
+                logger.info('You may include this URL and the following summary information in your bug report or in the support email to the developers.')
+                logger.info('')
+                logger.info('***'+str(responseResult[startIndex:endIndex])+'***')
+                logger.info('')
                 global GANGA_VERSION, JOB_REPORT, APPLICATION_NAME, BACKEND_NAME, PYTHON_PATH
-                print 'Ganga Version : ' + GANGA_VERSION
-                print 'Python Version : ' + "%s.%s.%s" % (sys.version_info[0], sys.version_info[1], sys.version_info[2])
-                print 'Operation System Version : ' + platform.platform() 
+                logger.info('Ganga Version : ' + GANGA_VERSION)
+                logger.info('Python Version : ' + "%s.%s.%s" % (sys.version_info[0], sys.version_info[1], sys.version_info[2]))
+                logger.info('Operation System Version : ' + platform.platform() )
 
                 if JOB_REPORT:
-                        print 'Application Name : ' + APPLICATION_NAME
-                        print 'Backend Name : ' + BACKEND_NAME
+                        logger.info('Application Name : ' + APPLICATION_NAME)
+                        logger.info('Backend Name : ' + BACKEND_NAME)
 
-                print 'Python Path : ' + PYTHON_PATH
-                print
+                logger.info('Python Path : ' + PYTHON_PATH)
+                logger.info('')
 
                 JOB_REPORT = False
                 GANGA_VERSION = ''
@@ -179,10 +180,9 @@ def report(job=None):
                 #uploadFileServer= "http://ganga-ai-02.cern.ch/django/errorreports/"
                 #uploadFileServer= "http://127.0.0.1:8000/errorreports"
 
-                def printDictionary(dictionary):
+                def printDictionary(dictionary, file=sys.stdout):
                         for k,v in dictionary.iteritems():
-                                print '%s: %s' % (k,v)
-                                print
+                                print('%s: %s' % (k,v), file=file)
                                 
                                 if k == 'PYTHONPATH':
                                         global PYTHON_PATH
@@ -283,13 +283,11 @@ def report(job=None):
                 try:
                         inputFile = open(fullEnvironFileName, 'w')
                         try:
-                                sys.stdout = inputFile
-                                printDictionary(os.environ)
+                                printDictionary(os.environ, file=inputFile)
 
-                                print 'OS VERSION : ' + platform.platform()
+                                print('OS VERSION : ' + platform.platform(), file=inputFile)
 
                         finally:
-                                sys.stdout = sys.__stdout__
                                 inputFile.close()       
                 #except IOError         
                 except:
@@ -302,10 +300,7 @@ def report(job=None):
                         inputFile = open(userConfigFullFileName, 'w')
                         try:
                         
-                                sys.stdout = inputFile
-
-                                print "#GANGA_VERSION = %s" % config.System.GANGA_VERSION 
-                                print
+                                print("#GANGA_VERSION = %s" % config.System.GANGA_VERSION, file=inputFile)
 
                                 global GANGA_VERSION
                                 GANGA_VERSION = config.System.GANGA_VERSION
@@ -315,10 +310,9 @@ def report(job=None):
                                 
                                 #this should get the changed values
                                 for c in config:
-                                        print config[c]
+                                    print(config[c], file=inputFile)
 
                         finally:
-                                sys.stdout = sys.__stdout__
                                 inputFile.close()
                 #except IOError does not catch the exception ???
                 except:
@@ -374,13 +368,10 @@ def report(job=None):
                         outputFile = open(jobsListFullFileName, 'w')
                         try:
                         
-                                sys.stdout = outputFile
-                                
                                 from Ganga.GPI import jobs
-                                print jobs      
+                                print(jobs,file=outputFile)
                                         
                         finally:
-                                sys.stdout = sys.__stdout__
                                 outputFile.close()
                                         
                 #except IOError does not catch the exception ???                
@@ -395,13 +386,10 @@ def report(job=None):
                         outputFile = open(tasksListFullFileName, 'w')
                         try:
                         
-                                sys.stdout = outputFile
-                                
                                 from Ganga.GPI import tasks
-                                print tasks      
+                                print(tasks,file=outputFile)
                                         
                         finally:
-                                sys.stdout = sys.__stdout__
                                 outputFile.close()
                                         
                 #except IOError does not catch the exception ???                
@@ -613,9 +601,9 @@ def report(job=None):
 
                 #print the error if there is something
                 if os.path.exists(errorLogPath):
-                        print
-                        print 'An error occured while collecting report information : ' +  open(errorLogPath, 'r').read()
-                        print  
+                        logger.error('')
+                        logger.error('An error occured while collecting report information : ' +  open(errorLogPath, 'r').read())
+                        logger.error('')
 
                 #delete the errorfile from user's pc
                 if(os.path.exists(errorLogPath)):
@@ -652,7 +640,7 @@ def report(job=None):
                                 isTask = True
 
                         if not (isJob or isTask):
-                                print "report() function argument should be reference to a job or task object"
+                                logger.error("report() function argument should be reference to a job or task object")
                                 return
 
                 resultArchive, uploadFileServer, tempDir = report_inner(job, isJob, isTask)
@@ -660,7 +648,7 @@ def report(job=None):
                 report_bytes = os.path.getsize(resultArchive)
 
                 if report_bytes > 1024*1024*100: #if bigger than 100MB
-                        print 'The report is bigger than 100MB and can not be uploaded'
+                        logger.error('The report is bigger than 100MB and can not be uploaded')
                 else:
                         run_upload(server=uploadFileServer, path=resultArchive)
 

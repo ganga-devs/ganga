@@ -23,11 +23,12 @@ def env_update_script(indent=''):
 def python_wrapper(command, python_setup='', update_env=False, indent=''):
     fdread, fdwrite = os.pipe()
     script = '''
+###INDENT###from __future__ import print_function
 ###INDENT###import os, sys, pickle, traceback
 ###INDENT###os.close(###PKL_FDREAD###)
 ###INDENT###with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
 ###INDENT###    def output(data):
-###INDENT###        print >> PICKLE_STREAM, pickle.dumps(data)
+###INDENT###        print(pickle.dumps(data), file=PICKLE_STREAM)
 ###INDENT###    local_ns = {'pickle'        : pickle,
 ###INDENT###                'PICKLE_STREAM' : PICKLE_STREAM,
 ###INDENT###                'output'        : output}
@@ -35,7 +36,7 @@ def python_wrapper(command, python_setup='', update_env=False, indent=''):
 ###INDENT###        exec("""###SETUP### """,   local_ns)
 ###INDENT###        exec("""###COMMAND### """, local_ns)
 ###INDENT###    except:
-###INDENT###        print >> PICKLE_STREAM, pickle.dumps(traceback.format_exc())
+###INDENT###        print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
 '''\
         .replace('###INDENT###'     , indent              )\
         .replace('###SETUP###'      , python_setup.strip())\
@@ -93,7 +94,7 @@ def execute(command,
         command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
 
     if env is None and not update_env:
-        pipe=subprocess.Popen('python -c "import os; print os.environ"',
+        pipe=subprocess.Popen('python -c "from __future__ import print_function; import os; print(os.environ)"',
                                env=None, cwd=None, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE )
         output=pipe.communicate()
         env = eval(eval(str(output))[0])

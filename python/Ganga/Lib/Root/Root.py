@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -179,7 +181,7 @@ class Root(IPrepareApp):
         output = file('gaus.txt','w')
         try:
             for i in range(100):
-                print >>output, gRandom.Gaus()
+                print(gRandom.Gaus(), file=output)
         finally:
             output.close()
             
@@ -500,6 +502,7 @@ def downloadWrapper(app):
 
     # Write a wrapper script that installs ROOT and runs script
     wrapperscript= """#!/usr/bin/env python
+from __future__ import print_function
 '''Script to run root with cint or python.'''
 def downloadAndUnTar(fileName, url):
     '''Downloads and untars a file with tar xfz'''
@@ -634,7 +637,7 @@ if __name__ == '__main__':
     spiURL = 'http://service-spi.web.cern.ch/service-spi/external/distribution/'    
     url = spiURL + fname
     
-    print 'Downloading ROOT version %s from %s.' % (version,url)
+    print('Downloading ROOT version %s from %s.' % (version,url))
     (status, folderName) = downloadAndUnTar(fname,url)
     sys.stdout.flush()
     sys.stderr.flush()
@@ -652,13 +655,13 @@ if __name__ == '__main__':
 
         pythonVersion = findPythonVersion(arch,rootsys)
         if not pythonVersion:
-            print >>sys.stderr, 'Failed to find the correct version of python to use. Exiting'
+            print('Failed to find the correct version of python to use. Exiting', file=sys.stderr)
             sys.exit(-1)
 
         tarFileName = 'Python_%s__LCG_%s.tar.gz' % (pythonVersion, arch)        
         url = spiURL + tarFileName
 
-        print 'Downloading Python version %s from %s.' % (pythonVersion,url)
+        print('Downloading Python version %s from %s.' % (pythonVersion,url))
         downloadAndUnTar(tarFileName,url)
 
         pythonDir = join('.','Python',pythonVersion,arch)
@@ -670,7 +673,7 @@ if __name__ == '__main__':
         setEnvironment('PYTHONPATH',join(rootsys,'lib'),True)
 
     #exec the script
-    print 'Executing ',commandline
+    print('Executing ',commandline)
     sys.stdout.flush()
     sys.stderr.flush()
     sys.exit(system(commandline)>>8)
@@ -714,22 +717,23 @@ def defaultPyRootScript():
     f = open(fname,'w')
     try:
         f.write("""#!/usr/bin/env python
+from __future__ import print_function
 class Main(object):
     def run(self):
         '''Prints out some PyRoot debug info.'''
-        print 'Hello from PyRoot. Importing ROOT...'
+        print('Hello from PyRoot. Importing ROOT...')
         import ROOT
-        print 'Root Load Path', ROOT.gSystem.GetDynamicPath()
+        print('Root Load Path', ROOT.gSystem.GetDynamicPath())
 
         from os.path import pathsep
         import string
         import sys
         
-        print 'Python Load Path', string.join([str(s) for s in sys.path],pathsep)
+        print('Python Load Path', string.join([str(s) for s in sys.path],pathsep))
 
-        print 'Loading libTree:', ROOT.gSystem.Load('libTree')
+        print('Loading libTree:', ROOT.gSystem.Load('libTree'))
 
-        print 'Goodbye...'
+        print('Goodbye...')
 
 if __name__ == '__main__':
 

@@ -219,7 +219,7 @@ class ShareDir(GangaObject):
                 level = level -6
                 pieces = file.split(os.sep)
                 symbol = {0:'', 1:'/'}[os.path.isdir(file)]
-                print padding*level + pieces[-1] + symbol
+                logger.info(padding*level + pieces[-1] + symbol)
         except IOError:
             logger.warn('ShareDir %s not found on storage' % full_shareddir_path)
 

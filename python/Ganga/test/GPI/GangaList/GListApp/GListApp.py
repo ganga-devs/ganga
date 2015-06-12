@@ -27,7 +27,6 @@ class GListApp(IApplication):
         } )
     
     def  configure(self,master_appconfig):
-        print 'Configuring %s.' % self._name
         return (None,None)
     
     def _print_summary_bound_comp(self,value, verbosity_level):       

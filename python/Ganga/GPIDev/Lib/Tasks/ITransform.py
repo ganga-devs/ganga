@@ -100,7 +100,7 @@ OutputFile objects to be copied to all jobs"),
            else:
                o = markup(o,overview_colours["running"])
 
-           print o
+           logger.info(o)
 
                
 ## Special methods:
@@ -370,10 +370,10 @@ OutputFile objects to be copied to all jobs"),
       return sum([u.n_status(status) for u in self.units])
 
    def info(self):
-      print markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status])
-      print "* backend: %s" % self.backend.__class__.__name__
-      print "Application:"
-      self.application.printTree() 
+       logger.info(markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
+       logger.info("* backend: %s" % self.backend.__class__.__name__)
+       logger.info("Application:")
+       self.application.printTree() 
 
    def updateStatus(self, status):
       """Update the transform status"""
@@ -475,7 +475,7 @@ OutputFile objects to be copied to all jobs"),
       """Reset all units of a given status"""
       for unit in self.units:
          if unit.status == status:
-            print "Resetting Unit %d, Transform %d..." % (unit.getID(), self.getID() )
+            logger.info("Resetting Unit %d, Transform %d..." % (unit.getID(), self.getID() ))
             self.resetUnit( unit.getID() )
 
    def checkUnitsAreCompleted( self, parent_units ):

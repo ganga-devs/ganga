@@ -109,7 +109,7 @@ class MultiPostProcessor(IPostProcessor):
         out: An output stream to print to. The last line of output should be printed without a newline.'
         selection: See VPrinter for an explaintion of this.
         """
-        print >> out, GPIProxyObjectFactory(self.process_objects)
+        out.write(GPIProxyObjectFactory(self.process_objects))
     
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters

@@ -16,7 +16,6 @@ class JobInfo:
         
 class TestRepository(JobRepository):
     def __init__(self,schema,role,streamer,root_dir,**kwds):
-        print '*'*100
         logger.debug('__init__ %s',str((schema,role,streamer,root_dir)))
         JobRepository.__init__(self,schema,role,streamer)
         self.root = root_dir

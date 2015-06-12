@@ -100,7 +100,7 @@ class GoogleFile(IGangaFile):
                         webbrowser.get('firefox').open(authorize_url,0,True)
                     except:
                         pass
-            print 'Go to the following link in your browser: ' + authorize_url
+            logger.info('Go to the following link in your browser: ' + authorize_url)
             code = raw_input('Enter verification code: ').strip()
             try:
                 credentials = flow.step2_exchange(code)

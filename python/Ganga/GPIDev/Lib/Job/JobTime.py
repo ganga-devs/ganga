@@ -253,7 +253,7 @@ class JobTime(GangaObject):
                         return None
                     #if something else - asks again
                     else:              
-                        print "y/n please!"
+                        logger.info("y/n please!")
                         keyin = None
 
                 for jobs in j.subjobs: 
@@ -300,7 +300,7 @@ class JobTime(GangaObject):
             return None
         pd = self.details(subjob)
         for key in pd.keys():
-            print key, '\t', pd[key]
+            logger.info(key, '\t', pd[key])
 
     def runtime(self):
         """Method which returns the 'runtime' of the specified job.

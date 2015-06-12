@@ -4,6 +4,9 @@
 #
 # $Id: TestAnalyser.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
 ################################################################################
+
+from __future__ import print_function
+
 import os, sys
 import re
 
@@ -76,7 +79,7 @@ if __name__ == '__main__':
     for dd in os.listdir(output_dir):
         if dd.startswith('users_'):
             analysis_dir = os.path.join(output_dir, dd)
-            print "analysing %s ...\n" % analysis_dir
+            print("analysing %s ...\n" % analysis_dir)
             ddd = analyse(analysis_dir)
             ldict.append(ddd)
     

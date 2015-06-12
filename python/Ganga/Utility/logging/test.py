@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import test
 import Ganga.Utility.logging
 Ganga.Utility.logging.config['Ganga.Utility.logging'] = 'DEBUG'
@@ -5,9 +7,9 @@ Ganga.Utility.logging.config['Ganga.Utility.logging'] = 'DEBUG'
 logger = Ganga.Utility.logging.getLogger()
 
 import sys
-print sys.path
+print(sys.path)
 
-print logger.name
+print(logger.name)
 
 logger.info('info test')
 logger.error('error test')

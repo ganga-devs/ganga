@@ -196,7 +196,7 @@ def disableInternalServices( shutdown = False ):
     # For debugging what services are still alive after being requested to stop before we close the repository
     #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
     #getStackTrace()
-    #print queues_threadpoolMonitor._display(0)
+    #log.info(queues_threadpoolMonitor._display(0))
 
     log.debug( "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services" )
 

@@ -189,7 +189,6 @@ def wrap_callable( any_callable, before, after ):
 
 def wrap_callable_filter( any_callable, before, after ):
    def _wrapped( *args, **kwargs ):
-      print 'wrap_callable_filter', args,kwargs
       args,kwargs = before(list(args),kwargs)
       try:
          return any_callable( *args, **kwargs )
@@ -299,8 +298,6 @@ if __name__ == "__main__":
 
     for i in range(5):
         assert(logic.equivalent(execute_once(),i==0))
-
-    print "TestOK"
     
 #
 #

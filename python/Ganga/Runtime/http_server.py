@@ -556,18 +556,18 @@ class HTTPServerThread(GangaThread):
         except Exception:
             return
         
-            print "Another Ganga session is already started with --webgui option"       
+            print("Another Ganga session is already started with --webgui option" )      
             process_details = getProcessDetails()
 
-            print reg.repository.get_other_sessions()
-            print "Process id : %s, hostname : %s" % (process_details[0], process_details[1])
+            print(reg.repository.get_other_sessions())
+            print("Process id : %s, hostname : %s" % (process_details[0], process_details[1]))
             
             self.stop()
             self.unregister()   
             return      
         """
         
-        print 'Starting web gui monitoring server, please wait ...'
+        logger.info('Starting web gui monitoring server, please wait ...')
 
         #   initialization
 
@@ -577,9 +577,9 @@ class HTTPServerThread(GangaThread):
         #fill jobs dictionary at the begining
         fill_jobs_dictionary()  
 
-        print 'Web gui monitoring server started successfully'
-        print
-        print 'You can monitor your jobs at the following location: ' + getMonitoringLink(port)
+        logger.info('Web gui monitoring server started successfully')
+        logger.info()
+        logger.info('You can monitor your jobs at the following location: ' + getMonitoringLink(port))
 
         #server.serve_forever()
         
@@ -588,7 +588,7 @@ class HTTPServerThread(GangaThread):
                         server.handle_request()
         finally:
                 pass
-                #print "stopping HTTP server thread"
+                #print("stopping HTTP server thread")
                 #os.remove(tempFilePath)
                 #server.server_close()          
              

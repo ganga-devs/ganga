@@ -1,31 +1,33 @@
 # make sure that the job is correctly commited at submit time
 
 import sys
-
 import os,new,types
 from GangaTest.Framework.tests import MultipassTest
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 class SubmissionCommit(MultipassTest):
 
     def __init__(self):
         MultipassTest.__init__(self,2)
-    self.name = '/tmp/ganga.commit_test_data.123'
+        self.name = '/tmp/ganga.commit_test_data.123'
     
     def pass1(self):
-        print 'running in commit mode'
+        logger.info('running in commit mode')
         j = Job()
-        print 'created'
+        logger.info('created')
         j.application = Executable(exe='/bin/date')
         try:
             j.backend = TestSubmitter()
         except:
             import unittest
             raise unittest.TestCase.failureException("Failed to load TestSubmitter")    
-        print 'sub'
+        logger.info('sub')
         j.submit()
-        print j
+        logger.info(j)
         file(self.name,'w').write(str(j.id))
-        print 'saved job id %s to file %s'%(j.id,self.name)
+        logger.info('saved job id %s to file %s'%(j.id,self.name))
         assert(j.backend.start_time != 0)
 
     def pass2(self):
@@ -34,13 +36,13 @@ class SubmissionCommit(MultipassTest):
         try:
             jobid = int(file(self.name).read())
         except IOError:
-            print 'failed to open file:',self.name
+            logger.error('failed to open file:',self.name)
         except ValueError:
-            print 'failed to read file:',self.name
+            logger.error('failed to read file:',self.name)
         assert(jobid != None)    
-        print 'running in checkout mode'
+        logger.info('running in checkout mode')
         os.remove(self.name)
         j = jobs(jobid)
-        print j
+        logger.info(j)
         assert(j.backend.start_time != 0)
-        print 'test passed OK'
+        logger.info('test passed OK')

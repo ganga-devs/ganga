@@ -70,9 +70,9 @@ def recursive_copy(src,dest):
         destdir = dest 
         srcdir,srcbase = os.path.split(src.rstrip('/'))
         if not srcdir=='' and not os.path.isabs(src):
-	    destdir = os.path.join(destdir,srcdir)
-	    if not os.path.isdir(destdir):
-	        os.makedirs(destdir)
+            destdir = os.path.join(destdir,srcdir)
+            if not os.path.isdir(destdir):
+                os.makedirs(destdir)
         shutil.copytree(src,os.path.join(destdir,srcbase))
     else:
 
@@ -80,9 +80,9 @@ def recursive_copy(src,dest):
         if srcdir=='' or os.path.isabs(src): 
             shutil.copy(src,dest)
         else:
-	    destdir = os.path.join(dest,srcdir)
-	    if not os.path.isdir(destdir):
-	        os.makedirs(destdir)
+            destdir = os.path.join(dest,srcdir)
+            if not os.path.isdir(destdir):
+                os.makedirs(destdir)
             shutil.copy(src,destdir)
                
 def remove_prefix(fn,path_list):
@@ -107,9 +107,12 @@ def remove_prefix(fn,path_list):
             return fn[len(p)+len(os.sep):]
 
     return fn
-        
+
+import os.path, Ganga
+_gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
+
 if __name__ == "__main__":
-    print "Testing resursive copy..."
+    logging.info("Testing resursive copy...")
     import os,shutil
     from files import *
 
@@ -121,45 +124,45 @@ if __name__ == "__main__":
     destdir = 'dest'
     os.mkdir(destdir)
 
-    #	Copy file
+    # Copy file
     os.mknod('file1')
     recursive_copy('file1',destdir)
     assert os.path.isfile(destdir+'/file1')
 
-    #	Copy file in dir
+    # Copy file in dir
     os.mkdir('src')
     os.mknod('src/file2')
     recursive_copy('src/file2',destdir)
     assert os.path.isfile(destdir+'/src/file2')
 
-    #	Copy file in dir
+    # Copy file in dir
     #       Check possibility to copy to existing dir
     os.mknod('src/file3')
     recursive_copy('src/file3',destdir)
     assert os.path.isfile(destdir+'/src/file3')
 
-    #	Copy file with abs path
+    # Copy file with abs path
     os.mknod('file4')
     recursive_copy(os.getcwd()+'/file4',destdir)
     assert os.path.isfile(destdir+'/file4')
 
-    #	Copy subdir 
+    # Copy subdir 
     os.mkdir('src/subdir')
     os.mknod('src/subdir/file5')
     recursive_copy('src/subdir',destdir)
     assert os.path.isfile(destdir+'/src/subdir/file5')
 
-    #	Copy subdir 
+    # Copy subdir 
     #       Check "/" at the end
     os.mkdir('src/subdir2')
     os.mknod('src/subdir2/file6')
     recursive_copy('src/subdir2/',destdir)
     assert os.path.isfile(destdir+'/src/subdir2/file6')
 
-    #	Copy subdir with abs path
+    # Copy subdir with abs path
     os.mkdir('src/subdir3')
     os.mknod('src/subdir3/file7')
     recursive_copy(os.getcwd()+'/src/subdir3',destdir)
     assert os.path.isfile(destdir+'/subdir3/file7')
 
-    print "Test OK"
+    logging.info("Test OK")

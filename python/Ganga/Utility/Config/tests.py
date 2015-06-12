@@ -1,3 +1,4 @@
+from __future__ import print_function
 from Ganga.Utility.Config import getConfig,configure
 
 if __name__ == "__main__":
@@ -14,7 +15,7 @@ if __name__ == "__main__":
     Ganga.Utility.logging.bootstrap()
 
     
-    print 'Basic Test'    
+    print('Basic Test')    
     import sys
     
     c1 = getConfig('C1')
@@ -24,15 +25,15 @@ if __name__ == "__main__":
     c2['b']=2
     c2['bb']='yy'
 
-    print 'path=',sys.path[0]
+    print('path=',sys.path[0])
     
     configure([sys.path[0]+'/ConfigTest.ini'])
 
-    print "C1"
-    print c1.getEffectiveOptions()
-    print
-    print "C2"
-    print c2.getEffectiveOptions()
+    print("C1")
+    print(c1.getEffectiveOptions())
+    print()
+    print("C2")
+    print(c2.getEffectiveOptions())
 
     assert(c1['a'] == 3)
     assert(c1['aa'] == 'xx')
@@ -41,19 +42,19 @@ if __name__ == "__main__":
     assert(c2['c'] == 'x')
     assert(c2['d'] == c2['c'])
 
-    print 'Basic Test OK'
-    print
-    print 'Hierarchical Test'
+    print('Basic Test OK')
+    print()
+    print('Hierarchical Test')
 
     c = getConfig('hierarchy')
     
     configure([sys.path[0]+'/A.ini',sys.path[0]+'/B.ini' ])
 
-    print c.getEffectiveOptions()
+    print(c.getEffectiveOptions())
 
     assert(c['MY_PATH'] == 'a2:a')
     assert(c['YOURPATH'] == 'b2')
     assert(c['PATH'] == 'c2')
     assert(c['MY2_PATH'] == 'd2')
     
-    print 'Hierarchical Test OK'
+    print('Hierarchical Test OK')

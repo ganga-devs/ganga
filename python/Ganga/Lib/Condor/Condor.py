@@ -294,6 +294,7 @@ class Condor( IBackend ):
 
       commandList = [
          "#!/usr/bin/env python",
+         "from __future__ import print_function",
          "# Condor job wrapper created by Ganga",
          "# %s" % ( time.strftime( "%c" ) ),
          "",
@@ -333,9 +334,9 @@ class Condor( IBackend ):
          "",
          "endTime = time.strftime"\
             + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
-         "print '\\nJob start: ' + startTime",
-         "print 'Job end: ' + endTime",
-         "print 'Exit code: %s' % str( result )"
+         "print('\\nJob start: ' + startTime)",
+         "print('Job end: ' + endTime)",
+         "print('Exit code: %s' % str( result ))"
          ]
 
       commandString = "\n".join( commandList )

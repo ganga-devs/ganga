@@ -113,7 +113,6 @@ def _ganga_run_exitfuncs():
                 logger.debug( "noclass : " + func.__name__ )
             func(*targs, **kargs)
         except Exception as x:
-            #print 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
             s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
             logger.warning(s)
 

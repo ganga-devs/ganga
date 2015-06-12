@@ -61,10 +61,10 @@ class MetadataDict(GangaObject):
         selection: See VPrinter for an explaintion of this.
         """
         if len(self.data) == 0:
-            print >> out, '{}'
+            out.write('{}\n')
             return
-        print >> out, '{'
+        out.write('{\n')
         for key, value in self.data.iteritems():
-            print >> out, whitespace_marker, '   ', key, '=', value
-        print >> out, whitespace_marker, '   }'
+            out.write(whitespace_marker+ '     '+ key+ ' = '+ value+'\n')
+        out.write(whitespace_marker+ '    }\n')
         

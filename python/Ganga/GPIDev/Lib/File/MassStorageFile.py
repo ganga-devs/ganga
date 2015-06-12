@@ -152,7 +152,7 @@ class MassStorageFile(IGangaFile):
             if self._parent is not None:
                 to_location = self.getJobObject().outputdir
             else:
-                print "%s is not a valid directory.... Please set the localDir attribute" % self.localDir
+                logger.error("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
                 return
 
          
@@ -568,7 +568,7 @@ class MassStorageFile(IGangaFile):
                     elif keyin == 'n':
                         _delete_this = False
                     else:
-                        print "y/n please!"
+                        logger.warning("y/n please!")
                         keyin = None
             else:
                 _delete_this = True
@@ -605,7 +605,7 @@ class MassStorageFile(IGangaFile):
                         elif keyin == 'n':
                             _actual_delete = False
                         else:
-                            print "y/n please!"
+                            logger.warning("y/n please!")
                             keyin = None
 
                 if _actual_delete:

@@ -1,9 +1,12 @@
 # this is the test of global and local names binding of Ganga
 # calling: ganga execfile_test.py should pass
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 def error(s):
     import sys
-    print 'ERROR:',s
+    logger.error(s)
     sys.exit(-1)
     
 try:

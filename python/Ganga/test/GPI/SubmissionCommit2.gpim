@@ -4,6 +4,9 @@ import sys
 import os,new,types
 from GangaTest.Framework.tests import MultipassTest
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class SubmissionCommit2(MultipassTest):
 
     def __init__(self):
@@ -11,15 +14,15 @@ class SubmissionCommit2(MultipassTest):
         self.name = '/tmp/ganga.commit_test2_data.123'
         
     def pass1(self):
-        print 'PASS 1: create new job'
+        logger.info('PASS 1: create new job')
         jobs.remove()
         j = Job()
         j.application = Executable()
         j.backend = Local()
-        print 'created job',j.id
-        print j
+        logger.info('created job '+str(j.id))
+        logger.info(j)
         file(self.name,'w').write(str(-j.id))
-        print 'saved job id %s to file %s'%(j.id,self.name)
+        logger.info('saved job id %s to file %s'%(j.id,self.name))
         disableService()
         reactivate()
 
@@ -27,16 +30,16 @@ class SubmissionCommit2(MultipassTest):
         try:
             jobid = int(file(self.name).read())
         except IOError:
-            print 'failed to open file:',self.name
+            logger.error('failed to open file: '+self.name)
         except ValueError:
-            print 'failed to read file:',self.name
+            logger.error('failed to read file: '+self.name)
             
-        print 'PASS 2: modify the job'
+        logger.info('PASS 2: modify the job')
         j = jobs(-jobid)
         file(self.name,'w').write(str(j.id))
         j.backend = Batch()
         j.application.exe = 'myexecutable'
-        print j
+        logger.info(j)
         self.check_job(j)
         disableService()
         reactivate()
@@ -44,17 +47,17 @@ class SubmissionCommit2(MultipassTest):
     def pass3(self):
         try:
             jobid = int(file(self.name).read())
-        except IOError:
-            print 'failed to open file:',self.name
-        except ValueError:
-            print 'failed to read file:',self.name
+            except IOError:
+                logger.error('failed to open file: '+self.name)
+            except ValueError:
+                logger.error('failed to read file: '+self.name)
                  
-        print 'PASS 3: checkout job and compare'
+        logger.info('PASS 3: checkout job and compare')
         os.remove(self.name)
         j = jobs(jobid)
-        print j
+        logger.info(j)
         self.check_job(j)
-        print 'test passed OK'
+        logger.info('test passed OK')
 
     def check_job(self,j):
         assert(typename(j.application) == 'Executable')

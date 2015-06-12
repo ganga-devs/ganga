@@ -126,6 +126,7 @@ finally:
         number of entries is as expected for the specified histogram."""
         
         scriptString = """#!/usr/bin/env python
+from __future__ import print_function
 #loads the file specified and fails if the number of elements in the histogram is not as expected
 
 import getopt
@@ -152,7 +153,7 @@ if __name__ == '__main__':
             if o in ('-e','--entries'):
                 entries = int(a)
     except getopt.error as msg:
-        print msg
+        print(msg)
         sys.exit(2)
 
     #start the test
