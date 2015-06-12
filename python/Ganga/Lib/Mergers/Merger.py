@@ -404,20 +404,4 @@ class SmartMerger(IMerger):
             merge_results.append(merge_result)
 
         return not False in merge_results
-    
-            
-        
-
-
-    
-
-
-#configure the plugins
-allPlugins.add(SmartMerger,'mergers','SmartMerger') 
-allPlugins.add(TextMerger,'mergers','TextMerger')
-allPlugins.add(RootMerger,'mergers','RootMerger')        
-allPlugins.add(CustomMerger,'mergers','CustomMerger')        
-
-
-
 
