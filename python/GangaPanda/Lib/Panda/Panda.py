@@ -1324,6 +1324,14 @@ class Panda(IBackend):
                     else:
                         logger.warning('Unexpected job status %s',status.jobStatus)
 
+                    # Fix for HammerCloud in case jobs are left in submitting state
+                    if job.status == 'submitting' and status.jobStatus in [ 'registered', 'defined', 'assigning', 'ready', 'pending', 'scouting',
+                                                                      'scouted', 'running', 'prepared', 'done', 'failed', 'finished',
+                                                                      'aborting', 'aborted', 'finishing', 'topreprocess', 'preprocessing',
+                                                                      'tobroken', 'broken', 'toretry', 'toincexec', 'rerefine', 'paused',
+                                                                      'throttled', 'exhausted', 'passed' ]:
+                        job.updateStatus('submitted')
+
                 elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
                     if job.backend.buildjob.status != status.jobStatus:
                         job.backend.buildjob.jobSpec = dict(zip(status._attributes,status.values()))
