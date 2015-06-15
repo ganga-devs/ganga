@@ -145,7 +145,7 @@ class HammerThread(threading.Thread):
             self.rng.choice(choices)()
             if not len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()):
                 print >> sys.stderr,  len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
-                assert (len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()))
+                assert len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
             for id in self.owned_ids:
                 assert id in self.repo.objects
         self.done = True

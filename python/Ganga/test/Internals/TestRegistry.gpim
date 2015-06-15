@@ -117,7 +117,7 @@ class HammerThread(threading.Thread):
             self.rng.choice(choices)()
             if not len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()):
                 print >> sys.stderr,len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
-                assert (len(self.owned_ids), len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys()))
+                assert len(self.owned_ids) == len(dict(zip(self.owned_ids,range(len(self.owned_ids)))).keys())
             for id in self.owned_ids:
                 if not id in self.reg._objects:
                     print >> sys.stderr, "LOCKED ID DELETED: ", id
