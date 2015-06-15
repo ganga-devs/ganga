@@ -60,9 +60,9 @@ before the end of the bootstrap procedure.
 
 To get the effective value of an option you may use:
 
-print config['opt1']
-print config.getEffectiveOption('opt1')
-print config.getEffectiveOptions() # all options
+print(config['opt1'])
+print(config.getEffectiveOption('opt1'))
+print(config.getEffectiveOptions()) # all options
 
 The  effective value  takes  into account  default,  session and  user
 settings  and  may change  at  runtime.  In  GPI  users  only get  the
@@ -73,11 +73,11 @@ level.     Pre-process   handlers   may    modify   what    has   been
 set. Post-process handlers may be used to trigger extra actions.
 
 def pre(opt,val):
-    print 'always setting a square of the value'
+    print('always setting a square of the value')
     return val*2
 
 def post(opt,val):
-    print 'effectively set',val
+    print('effectively set',val)
     
 config.attachUserHandler(pre,post)
 
@@ -172,7 +172,6 @@ def getConfig(name):
     try:
         return allConfigs[name]
     except KeyError:
-        #print 'getConfig',name
         allConfigs[name] = PackageConfig(name,'Documentation not available')
         return allConfigs[name]
 
@@ -188,7 +187,6 @@ def makeConfig(name,docstring,**kwds):
     
     name = _migrate_name(name)
     try:
-        #print 'makeConfig',name
         c = allConfigs[name]
         c.docstring = docstring
         for k in kwds:
@@ -223,9 +221,6 @@ class ConfigOption:
         self.name = name
         
     def defineOption(self,default_value,docstring,**meta):
-
-        #if self.check_defined():
-        #    print 'option',self.name,'already defined'
             
         self.default_value = default_value
         self.docstring = docstring
@@ -249,8 +244,7 @@ class ConfigOption:
         #    import  Ganga.Utility.logging
         #    logger = Ganga.Utility.logging.getLogger()
         #    logger.warning('problem with option filter: %s: %s',self.name,x)
-                
-        #print 'setting session value %s = %s',self.name,str(session_value)
+        
         try:
             session_value = self.transform_PATH_option(session_value,self.session_value)
         except AttributeError:
@@ -463,7 +457,6 @@ class PackageConfig:
         self._config_made = False
 
         if _configured and self.is_open:
-            print 'cannot define open configuration section %s after configure() step'%self.name
             logger = getLogger()
             logger.error('cannot define open configuration section %s after configure() step',self.name)
 
