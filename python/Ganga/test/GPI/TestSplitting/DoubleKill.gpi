@@ -5,6 +5,6 @@ j.splitter = TestSplitter()
 j.splitter.backs = 10*[TestSubmitter()]
 j.submit()
 import time
-time.sleep(10)
+time.sleep(20)
 j.subjobs[9].kill()
 j.kill()
