@@ -61,14 +61,14 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
         for entry in line.split():
              if entry.startswith(user_ra) or entry.startswith(full_user_ra):
                  tmp = entry.rstrip('\)')
-                 fullpath(os.path.join(tmp, 'InstallArea', platform, 'lib' ))
+                 libpath = fullpath(os.path.join(tmp, 'InstallArea', platform, 'lib' ))
                  logger.debug(libpath)
                  project_areas.append(libpath)
                  pypath = fullpath(os.path.join(tmp, 'InstallArea', 'python'  ))
                  logger.debug(pypath)
-                 ooject_areas.append(pypath)
+                 py_project_areas.append(pypath)
                  pypath = fullpath(os.path.join(tmp, 'InstallArea', platform, 'python'))
-                 lodder.debug(pypath)
+                 logger.debug(pypath)
                  py_project_areas.append(pypath)
 
 
