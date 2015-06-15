@@ -78,7 +78,7 @@ class HammerThread(threading.Thread):
         id = self.rng.sample(ids,1)[0]
         print >> sys.stderr,self.id, " lock(%s)"%id
         try:
-            #self.reg[id]._getWriteAccess()
+            self.reg[id]._getWriteAccess()
             assert self.reg[id].name.startswith("HT")
             self.reg[id].name = "HT%i"%(self.id)
             if not id in self.owned_ids:
@@ -98,7 +98,8 @@ class HammerThread(threading.Thread):
         assert self.reg[id].name.startswith("HT")
         self.reg[id].name = "HT-unlocked"
         self.owned_ids.remove(id)
-        self.reg._release_lock(self.reg[id])
+        #self.reg._release_lock(self.reg[id])
+        self.reg[id]._releaseWriteAccess()
         print >> sys.stderr,self.id, " unlock(%s) done!"%id
 
 
@@ -129,12 +130,16 @@ class TestRegistry(MultipassTest):
     def pass1(self):
         t = TestReg(1)
         while not t.isReadyForCheck():
+            from time import sleep
+            sleep(0.5)
             pass
         return t.checkTest()
 
     def pass2(self):
         t = TestReg(1)
         while not t.isReadyForCheck():
+            from time import sleep
+            sleep(0.5)
             pass
         return t.checkTest()
 
@@ -153,7 +158,7 @@ class TestReg(ICheckTest):
         self.thread.start()
 
     def isReadyForCheck(self):
-        return self.thread.done or not self.thread.isAlive()
+        return self.thread.done # or not self.thread.isAlive()
 
     def checkTest(self):
         self.thread.join()

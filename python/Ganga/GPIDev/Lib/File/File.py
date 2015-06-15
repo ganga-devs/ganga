@@ -31,6 +31,8 @@ class File(GangaObject):
                                     'executable': SimpleItem(defvalue=False,hidden=True,transient=True,doc='specify if executable bit should be set when the file is created (internal framework use)')})
     _category = 'files'
     _name = "File"
+    _exportmethods = [ "getPathInSandbox" , "exists", "create", "isExecutable" ]
+
     #added a subdirectory to the File object. The default is os.curdir, that is "." in Unix.
     #The subdir is a relative path and will be appended to the pathname when writing out files.
     # Therefore changing subdir to a anything starting with "/" will still end up relative
@@ -61,7 +63,7 @@ class File(GangaObject):
         else:
             super(File,self).__construct__(args)
 
-    def _attribute_filter__set__(self,attribName,attribValue):
+    def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
             return expandfilename(attribValue)
         return attribValue
@@ -109,14 +111,14 @@ import re
 #regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
 urlprefix=re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
-def string_file_shortcut(v,item):
+def string_file_shortcut_file(v,item):
     if type(v) is type(''):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
         return File._proxyClass(v)._impl
     return None 
         
-allComponentFilters['files'] = string_file_shortcut
+allComponentFilters['files'] = string_file_shortcut_file
 
 
 #from Ganga.Utility.files import expandfilename

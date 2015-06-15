@@ -1,4 +1,3 @@
-
 ################################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -182,7 +181,7 @@ class LCGSEFile(IGangaFile):
         else:
             job = self.getJobObject()
             sourceDir = job.outputdir
-
+        import os
         os.environ['LFC_HOST'] = self.lfc_host
 
         fileName = self.namePattern

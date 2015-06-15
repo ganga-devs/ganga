@@ -64,7 +64,7 @@ def removeGlobalSessionFiles():
     for i in sessionFiles:
         if os.path.isfile( i ):
             if not i.endswith( 'global_lock' ):
-                logger.debug( "Removing: " + str(i) )
+                #logger.debug( "Removing: " + str(i) )
                 os.unlink( i )
 
 def removeGlobalSessionFileHandlers():
@@ -199,7 +199,7 @@ class SessionLockRefresher(GangaThread):
             for f in lock_files:
                 asf = f.split(".session")[0] + ".session" # Determine the session file which controls this lock file
                 if not asf in session_files:
-                    logger.debug("Removing dead file %s" % (f) )
+                    #logger.debug("Removing dead file %s" % (f) )
                     #logger.debug("Found, %s session files" % (session_files) )
                     #logger.debug("self.fns[%s] = %s " % ( index, self.fns[index] ) )
                     #logger.debug( "%s, %s" % ( self.sdir, f ) )
@@ -446,7 +446,7 @@ class SessionLockManager(object):
                     import time
                     nowtime = time.time()
                     if abs( int(nowtime) - oldtime ) > 10:
-                        logger.debug( "cleaning global lock" )
+                        #logger.debug( "cleaning global lock" )
                         os.system( "fs setacl %s $USER rlidwka" % ( lock_path ) )
 
                 while True:
@@ -470,7 +470,7 @@ class SessionLockManager(object):
             else:
                 self.delay_lock_mod( fcntl.LOCK_EX )
 
-            logger.debug("global capture")
+            #logger.debug("global capture")
         except IOError, x:
             raise RepositoryError(self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
             
@@ -482,7 +482,7 @@ class SessionLockManager(object):
             else:
                 self.delay_lock_mod( fcntl.LOCK_UN )
 
-            logger.debug("global release")
+            #logger.debug("global release")
         except IOError, x:
             raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
 
@@ -691,7 +691,7 @@ class SessionLockManager(object):
 
         self.safe_LockCheck()
 
-        logger.debug( "locking: %s" % str(ids) )
+        #logger.debug( "locking: %s" % str(ids) )
         ids = Set(ids)
         self.global_lock_acquire()
         try:
@@ -706,23 +706,23 @@ class SessionLockManager(object):
                 if sf == self.fn:
                     continue
                 slocked.update(self.session_read(sf))
-            logger.debug( "locked: %s" % str(slocked) )
+            #logger.debug( "locked: %s" % str(slocked) )
             ids.difference_update(slocked)
             self.locked.update(ids)
-            logger.debug( "stored_lock: %s" % str(self.locked) )
+            #logger.debug( "stored_lock: %s" % str(self.locked) )
             self.session_write()
-            logger.debug( "list: %s" % str(list(ids)) )
+            #logger.debug( "list: %s" % str(list(ids)) )
             return list(ids)
         finally:
             self.global_lock_release()
 
     def release_ids(self, ids):
-        logger.debug( "releasing : %s" % str(ids) )
+        #logger.debug( "releasing : %s" % str(ids) )
         self.global_lock_acquire()
         try:
             self.locked.difference_update(ids)
             self.session_write()
-            logger.debug( "list: %s" % str(list(ids)) )
+            #logger.debug( "list: %s" % str(list(ids)) )
             return list(ids)
         finally:
             self.global_lock_release()
