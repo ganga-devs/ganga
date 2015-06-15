@@ -1,7 +1,6 @@
 # grep in GangaTest for String_OPT to see the module where the options are defined
 
 c = config['TestConfig']
-print c
 assert(c['String_OPT'] == 'some string')
 assert(c['None_OPT'] == 9)
 assert(c['Int_OPT'] == 9)

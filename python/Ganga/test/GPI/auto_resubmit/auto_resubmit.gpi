@@ -1,5 +1,8 @@
 from GangaTest.Framework.utils import sleep_until_state
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 j = Job()
 j.splitter=ArgSplitter()
 j.splitter.args=[[str(i*3)] for i in range(10)]
@@ -13,8 +16,8 @@ j.submit()
 
 sleep_until_state(j, timeout=120, state='failed')
 
-print "The number of times the master job was submitted",j.info.submit_counter 
-print "Submit counter for individual subjobs",[s.info.submit_counter for s in j.subjobs]
+logger.info("The number of times the master job was submitted",j.info.submit_counter )
+logger.info("Submit counter for individual subjobs "+str([s.info.submit_counter for s in j.subjobs]))
 
 assert(j.status == 'failed')
 assert(j.info.submit_counter > 1 and j.info.submit_counter <= config.PollThread.MaxNumResubmits+1)

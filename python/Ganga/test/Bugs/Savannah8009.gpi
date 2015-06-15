@@ -7,17 +7,13 @@ app.exe = '/bin/echo'
 j = Job(backend=Local(),application=app) 
 j.submit()
 
-print jobs
-
 assert(len(jobs) == 1)
 assert(len(templates) == 0)
 
 if not sleep_until_completed(j):
     assert(not "Timeout on job submission: job is still not finished")
 
-print j
 t = j.copy()
-print t
 
 # make sure that copy creates a new job (and not the template)
 assert(len(jobs) == 2)

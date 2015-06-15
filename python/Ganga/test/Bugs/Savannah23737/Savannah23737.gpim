@@ -10,15 +10,13 @@ class Savannah23737(MultipassTest):
     def __init__(self): MultipassTest.__init__(self,2)
 
     def pass1(self):
-	j = load('testjob')[0]
-	j.submit()
+        j = load('testjob')[0]
+        j.submit()
         return j.id
 
     def pass2(self):
         j = jobs(self.data[1])
-	import time
-        print "Waiting for the jobs to complete"
-	time.sleep(30)
-        print j
-	assert(j.subjobs[0].status == j.subjobs[1].status == j.status == 'completed')
+        import time
+        time.sleep(30)
+        assert(j.subjobs[0].status == j.subjobs[1].status == j.status == 'completed')
 

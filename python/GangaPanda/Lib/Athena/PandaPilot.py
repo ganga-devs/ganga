@@ -6,6 +6,9 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.Core.exceptions import ApplicationConfigurationError
 import os
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class PandaPilot(IApplication):
     """
     PandaPilot application -- start a Panda Pilot on a remote CE
@@ -50,7 +53,7 @@ class LCGRTHandler(IRuntimeHandler):
             job.backend.requirements.sites=[queueToDDM(app.queue)]
             if not job.backend.requirements.sites:
                 raise ApplicationConfigurationError(None,'Could not map queue name to LCG site')
-        print 'Sending pilot for %s to %s'%(app.queue,job.backend.requirements.sites)
+        logger.info('Sending pilot for %s to %s'%(app.queue,job.backend.requirements.sites))
         return LCGJobConfig(app.exe,app._getParent().inputsandbox,[args],app._getParent().outputsandbox,None)
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers

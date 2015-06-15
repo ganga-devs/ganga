@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 import sys, os
 import logging
 import logging.handlers
@@ -112,7 +114,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '-k':
         stop_file = os.path.join(work_dir, gConfig.get('General', 'stopFile') )
         
     open(stop_file, "w")
-    print "Service stop file '%s' created..." % stop_file
+    print("Service stop file '%s' created..." % stop_file)
     sys.exit(0)
     
 # setup the logger
@@ -136,7 +138,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '-d':
         sys.exit(1)
 
     if pid > 0:
-        print "Service created. Exiting parent..."
+        print("Service created. Exiting parent...")
         sys.exit(0)
         
     os.umask(0)
@@ -144,7 +146,7 @@ if len(sys.argv) > 1 and sys.argv[1] == '-d':
     pid = os.fork()
     
     if pid > 0:
-        print "Service created. Exiting parent..."
+        print("Service created. Exiting parent...")
         sys.exit(0)
         
     # removing stream handler and close the streams
@@ -421,7 +423,7 @@ for j in jobs:
       active = True
 
 if not active:
-   print "NOTACTIVE"
+   print("NOTACTIVE")
 """
         gLogger.warning("Preparing run script...")
         
@@ -435,7 +437,6 @@ if not active:
             continue
         
         # run ganga
-        #print gConfig.get('General', 'gangaExec')
         cmd = "cp notifyUser.py "+scripts_dir+"; export X509_USER_PROXY=" + proxy_file + " ; " + gConfig.get('General', 'gangaExec') + " -o'[Configuration]gangadir=%s' -o'[defaults_GridProxy]minValidity=00:15' -o'[Configuration]repositorytype=LocalXML' %s" % (gangadir_dir, script_path)
         gLogger.warning("Running Ganga with command:  %s" % cmd )
         
@@ -466,7 +467,7 @@ if not active:
     # ping the heartbeat file
     try:
         writeHeartbeat(heartbeat_file, start_time)
-        print "HEARTBEAT:  " + time.asctime()
+        print("HEARTBEAT:  " + time.asctime())
     except:
         gLogger.warning("Could not write heartbeat file %s: %s" % (heartbeat_file, formatTraceback()))
 

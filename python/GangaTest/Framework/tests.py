@@ -2,6 +2,9 @@ import unittest
 import traceback
 import StringIO
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class GangaGPITestCase(unittest.TestCase):
         """
         Base class for GPI test-cases
@@ -81,10 +84,8 @@ class GangaGPIPTestCase(unittest.TestCase):
         import os
         import sys
         from subprocess import PIPE,Popen,STDOUT
-        print '\n***** %s' % self.description
-        print '\tLog file: %s' % self.output_path
-
-        #print 'test cmd : %s' % self.testCmd
+        logger.info('\n***** %s' % self.description)
+        logger.info('\tLog file: %s' % self.output_path)
 
         output = open(self.output_path,'w')
         pytf_paths = str.split(os.getenv('PYTF_TOP_DIR'),':')
@@ -132,7 +133,7 @@ class GPIPPreparationTestCase(unittest.TestCase):
         #self.description_org = description
 
     def run_pytest_function(self):
-        print '%s starts to run' % self.method_name 
+        logger.info('%s starts to run' % self.method_name)
         try:
             checkTest = getattr(self.pytest_instance, self.method_name)()
         except Exception as preparationError:
@@ -253,10 +254,10 @@ class SimpleRunnerControl(object):
         try:
             self.checkTest = self.preparationTestCase.get_fixture().getCheckTest()
         except Exception as e:
-            print 'WARNING: Failed to get the instance of check test, because of the fail of the preparation of test, won\'t do the check test.'
+            logger.warning("Failed to get the instance of check test, because of the fail of the preparation of test, won't do the check test.")
             self.checkTest = None 
             if run_status:
-                print 'WARNING: The test preparation is done successfully, did you forget to return the instance of check test?'
+                logger.warning('The test preparation is done successfully, did you forget to return the instance of check test?')
             run_status = False # Mark the run status as fail, in order to set to finish by driver.py.
         self._printEnd('runPreparation')
         return run_status
@@ -325,7 +326,7 @@ class SimpleRunnerControl(object):
         return run_status
 
     def _printBegin(self, method):
-        print '@@@@ [%s] BEGIN of %s' % (self.testName, method)
+        logger.info('@@@@ [%s] BEGIN of %s' % (self.testName, method))
 
     def _printEnd(self, method):
-        print '@@@@ [%s] END of %s' % (self.testName, method)
+        logger.info('@@@@ [%s] END of %s' % (self.testName, method))

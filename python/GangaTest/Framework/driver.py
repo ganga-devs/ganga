@@ -130,7 +130,6 @@ from GangaTest.Framework.tests import GPIPPreparationTestCase, SimpleRunnerContr
 
 class GPIPRunner:
         def __init__(self, testPath, outputPath,timeout,description,releaseTest,report_outputpath,parent_report_name):
-                #print '%s %s %s %s %s %s %s' % (testPath, outputPath,timeout,description,releaseTest,report_outputpath,parent_report_name)
                 self.testPath = testPath
                 #self.testName = testName
                 self.outputPath = outputPath
@@ -143,19 +142,16 @@ class GPIPRunner:
                 self.gpiptest_prefix = self.pytest_name.replace('.', '/')
                 self._testinstances = []
                 self._xml_report_ext = '%s.xml_merged'
-                #print 'Path : %s, NAME : %s, REPORT : %s' %(testPath, 'ALL', self.parent_report_name)
 
         def load(self):
                 self.__instance = None
                 try:
                         exec_module_code(self.testPath,Ganga.Runtime._prog.local_ns)
                         testClass=os.path.splitext(os.path.basename(self.testPath))[0]
-                        clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass) 
-                        #print clazz
+                        clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass)
                         self.clazz = clazz
                         self.__instance = clazz()
                         self.testsuite = self._getTestSuite()
-                        #print self.__instance
                 except Exception as e:
                         logger.error("Cannot load test")
                         import traceback
@@ -213,7 +209,6 @@ class GPIPRunner:
 
                 while not all_done and not (duration > self.timeout):
                     all_done = True
-                    #print 'duration : %d, timeout : %d' % (duration, self.timeout)
                     for run_control in runners_control:
                         if not run_control.isReadyForCheck() and not run_control.isFinished():
                             all_done = False
@@ -282,7 +277,6 @@ class GPIPRunner:
         def _getTestSuite(self):
                 attrs = dir(self.clazz)
                 testcase = None
-                #print attrs
                 testcases = []
                 for test in attrs:
                         stest = str(test)

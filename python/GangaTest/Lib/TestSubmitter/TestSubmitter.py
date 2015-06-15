@@ -37,7 +37,6 @@ class TestSubmitter(IBackend):
     _name = 'TestSubmitter'
 
     def __init__(self):
-        print "TestSubmitter()"
         super(TestSubmitter,self).__init__()
 
     def tryfail(self,what):

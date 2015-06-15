@@ -10,12 +10,15 @@ r = jobs
 
 # this test depends on the jobs dictionary being sorted!
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 def contains_in_order(s,l):
     for j,id in zip(l,s.ids()):
         if j.id != id:
-            print 'Problem with job id=',j.id
-            print s
-            print l
+            logger.info('Problem with job id='+str(j.id))
+            logger.info(s)
+            logger.info(l)
             return False
     return True
 

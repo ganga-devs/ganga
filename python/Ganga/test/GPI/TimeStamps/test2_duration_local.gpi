@@ -32,8 +32,6 @@ j.submit()
 
 assert sleep_until_completed(j,300)
 
-print j.status
-
 assert type(j.time.submissiontime()) == datetime.timedelta
 assert type(j.time.waittime()) == datetime.timedelta
 assert type(j.time.runtime()) == datetime.timedelta
@@ -46,5 +44,3 @@ for sjs in j.subjobs:
     assert type(sjs.time.runtime()) == datetime.timedelta
 
 #end
-
-print "test2_duration_local passed."

@@ -3,6 +3,8 @@
 
 ## NO MONITORING AT PRESENT!
 
+from __future__ import print_function
+
 import os
 import time
 from commands import getstatusoutput
@@ -47,11 +49,11 @@ while not os.path.exists( os.path.join( work_dir, "GangaRun", "ganga.stop" ) ):
             num_submit = int(out)
             
             if (num_clone % 2 == 1) or (num_submit % 2 == 1):
-                print "num. Clone (%d), Num. Submit (%d). Pending requests. Waiting." % (num_clone, num_submit)
+                print("num. Clone (%d), Num. Submit (%d). Pending requests. Waiting." % (num_clone, num_submit))
                 continue
 
             # we've found an action so run it
-            print "Found action. Creating Task."
+            print("Found action. Creating Task.")
             task_str = open( os.path.join( work_dir, "actions", ln ) ).read()
             t = NA62Task()
             t.initFromString(task_str, LCG())
@@ -59,7 +61,7 @@ while not os.path.exists( os.path.join( work_dir, "GangaRun", "ganga.stop" ) ):
             t.run()
 
             # shift the action
-            print "Moving action file to done"
+            print("Moving action file to done")
             os.system("mv %s %s" % (os.path.join( work_dir, "actions", ln ), os.path.join( work_dir, "actions", "done", ln )))
 
             # update the DB
@@ -67,7 +69,7 @@ while not os.path.exists( os.path.join( work_dir, "GangaRun", "ganga.stop" ) ):
                                       (ln, t.transforms[0].application.num_events * t.transforms[0].num_jobs, mysqlc))
 
             if (rc != 0):
-                print "Error updating DB: %s" % out
+                print("Error updating DB: %s" % out)
                 
             
             

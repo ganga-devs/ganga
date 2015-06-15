@@ -7,7 +7,6 @@ class TestGPIP(GangaGPITestCase):
 
     def testFailInPreparation(self):
         '''Test fail in preparation phase'''
-        print 'Test fail in preparation phase.'
 
         j = Job()
 
@@ -21,9 +20,7 @@ class TestGPIP(GangaGPITestCase):
         return jobTest
 
     def testTimeoutTest(self):
-        '''The preparation doesn't matter'''  
-
-        print 'Let\'s be timeout'
+        '''The preparation doesn't matter'''
 
         jobTest = TimeoutJobTest()
 

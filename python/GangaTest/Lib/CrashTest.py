@@ -20,7 +20,7 @@ class CrashType(GangaObject):
         """
         if sys._getframe(1).f_code.co_name == self.method:
             if val is None or not self.condition or eval(self.condition):
-                print "triggering error at <method=%s, condition=%s, val=%s>, error expr=%s"%(repr(self.method),repr(self.condition),repr(val),repr(self.expr))
+                logger.debug("triggering error at <method=%s, condition=%s, val=%s>, error expr=%s"%(repr(self.method),repr(self.condition),repr(val),repr(self.expr)))
                 exec(self.expr)
     
 class CrashTestApplication(IApplication):
@@ -50,7 +50,7 @@ class CrashTestSplitter(ISplitter):
         from Ganga.GPIDev.Lib.Job import Job
         subjobs = []
         for i in range(self.n):
-            print 'Create subjob',i
+            logger.debug('Create subjob '+str(i))
             j = self.createSubjob(job)
             self.error.trigger(i)
             subjobs.append(j)

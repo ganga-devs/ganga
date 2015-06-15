@@ -51,9 +51,9 @@ class Report(object):
     r.addline()
     r.addline('Follow this link:')
     r.addelement(Link('data', 'http://localhost'))
-    print str(r)
-    print
-    print r.tohtml()
+    print(str(r))
+    print()
+    print(r.tohtml())
 
     The Report
     **********
@@ -206,9 +206,9 @@ class Heading(object):
     Example (code / output):
 
     h = Heading('Introduction', 2)
-    print str(h)
-    print
-    print h.tohtml()
+    print(str(h))
+    print()
+    print(h.tohtml())
 
     Introduction
     ************
@@ -255,9 +255,9 @@ class Link(object):
     Example (code / output):
 
     l = Link('My Machine', 'http://localhost')
-    print str(l)
-    print
-    print l.tohtml()
+    print(str(l))
+    print()
+    print(l.tohtml())
 
     My Machine (http://localhost)
     
@@ -297,9 +297,9 @@ class Pre(object):
     Example (code / output):
 
     p = Pre('First line of pre-formatted text.\\nSecond line.')
-    print str(p)
-    print
-    print p.tohtml()
+    print(str(p))
+    print()
+    print(p.tohtml())
 
     First line of pre-formatted text.
     Second line.
@@ -345,9 +345,9 @@ class Table(object):
     t.addrow('submitted', 3)
     t.addrow('failed', 2)
     t.addrow('completed', 5)
-    print str(t)
-    print
-    print t.tohtml()
+    print(str(t))
+    print()
+    print(t.tohtml())
 
     Status               |    Total
     -------------------------------

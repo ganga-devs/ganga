@@ -1,25 +1,26 @@
 import os
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 try:
     #ganga 5
     import Ganga.Runtime.Workspace_runtime
     localDir = Ganga.Runtime.Workspace_runtime.getLocalRoot()
-    print "ganga 5 API detected"
 except ImportError:
     #ganga 4
     localDir = os.path.expanduser( os.path.join(config['FileWorkspace']['topdir'],"Local" ))
-    print "ganga 4 API detected"
     
 # Create 5 default jobs, then list content of local workspace
 for i in range( 5 ):
    Job()
 
-print "Result of 'ls %s' after job submission:" % localDir
+logger.info("Result of 'ls %s' after job submission:" % localDir)
 os.system( "ls %s" % localDir )
 assert(len(os.listdir(localDir)) == 5)
 
 # Delete job 0, then try again to list content of local workspace
-print "Result of 'ls %s' after removing job 0:"
+logger.info("Result of 'ls %s' after removing job 0:")
 jobs(0).remove()
 os.system( "ls %s" % localDir )
 

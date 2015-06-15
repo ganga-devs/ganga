@@ -155,7 +155,6 @@ class TestGoogleFile(GangaGPITestCase):
   #    def test_tmp(self):
 #        import os
 #        #from GangaDirac.Lib.Backends.DiracBase import ganga_dirac_server
-#        #print "HERE", ganga_dirac_server.__class__.__name__, dir(ganga_dirac_server)
 #        self.df.localDir=os.getcwd()
 #        self.ts.toCheck={'timeout':20}
 #        self.assertEqual(self.df.get(),None)

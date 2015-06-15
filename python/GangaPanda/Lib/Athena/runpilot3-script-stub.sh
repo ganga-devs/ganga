@@ -12,9 +12,9 @@ function lfc_test() {
 import sys
 try:
     import lfc
-    print "LFC module imported ok."
+    print("LFC module imported ok.")
 except:
-    print "Failed to import LFC module."
+    print("Failed to import LFC module.")
     sys.exit(1)
 EOF
 }

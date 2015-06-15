@@ -96,12 +96,4 @@ class NGRTHandler(IRuntimeHandler):
 
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         from GangaNG.Lib.NG import NGJobConfig
-        #print 'NGRT Factorizer prepare',(app.exe,app.inputs,app.args,app.outputs,app.envs)
         return NGJobConfig(app.exe,app.inputs,app.args,app.outputs,app.envs)
-                            
-#from GangaNG.Lib.NG.NGRTHandler import NGRTHandler
-
-#allHandlers.add('PrimeFactorizer', 'NG', NGRTHandler)
-
-print "*** PrimeFactorizer application is not enabled on NG (yet) ***"
-

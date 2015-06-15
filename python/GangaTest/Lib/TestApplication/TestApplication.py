@@ -31,7 +31,7 @@ class TestApplication(IPrepareApp):
         self.derived_value = 'This is an example of the derived property: ' + self.exe
 
         # this is to test manually (visually) the logging level mechanism
-        #print "raw print: Hello from TestApplication"
+        #print("raw print: Hello from TestApplication")
         #logger.debug('Hello from TestApplication')
         #logger.info('Hello from TestApplication')
         #logger.warning('Hello from TestApplication')
@@ -98,7 +98,6 @@ class TestAdvancedFileProperties(IApplication):
 #    # setting files = "x" is equvalent to setting files = ['x']                
 #    def _attribute_filter__set__(self,n,v):
 #        if n == 'files':
-#            print n,v
 #            from Ganga.GPIDev.Base.Filters import allComponentFilters
 #            v = allComponentFilters['files'](v,self._schema.getItem('file_or_files'))
 #            if not type(v) is type([]):

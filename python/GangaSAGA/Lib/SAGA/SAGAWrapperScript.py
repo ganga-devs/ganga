@@ -112,8 +112,6 @@ except ImportError as x:
 #sysout2 = os.dup(sys.stdout.fileno())
 #syserr2 = os.dup(sys.stderr.fileno())
 
-#print >>sys.stdout,"--- GANGA APPLICATION OUTPUT BEGIN ---"
-#print >>sys.stderr,"--- GANGA APPLICATION ERROR BEGIN ---"
 #sys.stdout.flush()
 #sys.stderr.flush()
 
@@ -146,7 +144,6 @@ try:
     time.sleep(30)
     
 except Exception as x:
-  print 'ERROR: %s'%str(x)
   outfile.close()
   errfile.close()
   sys.stdout = sys.__stdout__

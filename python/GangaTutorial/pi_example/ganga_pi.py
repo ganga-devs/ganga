@@ -1,6 +1,8 @@
 #[gtutor20@egee-ui ~]$ cat ganga_pi.py
 
-print "Hello, this is ganga_pi... loading...",
+from __future__ import print_function
+
+print("Hello, this is ganga_pi... loading...")
 
 def read_stdout(j):
     return file(j.outputdir+'/stdout').read()
@@ -23,5 +25,5 @@ def create_pi_job(N=NTASKS,M=NINTERVALS):
     j.splitter.args=[[str(i),str(N),str(M)] for i in range(N)]
     return j
 
-print 'OK'
+print('OK')
 

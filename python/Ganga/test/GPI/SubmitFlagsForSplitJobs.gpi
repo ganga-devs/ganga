@@ -1,5 +1,8 @@
 # the effects of keep_on_fail and keep_going flags for subjobs
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 # submission of second subjob fails
 j = Job()
 j.backend=TestSubmitter()
@@ -7,39 +10,34 @@ j.splitter=TestSplitter()
 j.splitter.backs=[TestSubmitter(),TestSubmitter(fail='submit'),TestSubmitter(),TestSubmitter()]
 
 
-print '-'*80
-print 'j.submit(keep_on_fail=False,keep_going=False)'
-print
+logger.info('-'*80)
+logger.info('j.submit(keep_on_fail=False,keep_going=False)')
 j.submit(keep_on_fail=False,keep_going=False)
-print j
+logger.info(j)
 assert(j.subjobs[0].status != 'new')
 assert(j.subjobs[1].status == 'new')
 assert(j.subjobs[2].status == 'new')
 assert(j.subjobs[3].status == 'new')
 
 
-print '-'*80
-print
-print 'keep_on_fail=True,keep_going=False'
+logger.info('-'*80)
+logger.info('keep_on_fail=True,keep_going=False')
 j = j.copy()
 j.submit(keep_on_fail=True,keep_going=False)
-print j
+logger.info(j)
 
 
-print '-'*80
-print 'keep_on_fail=False,keep_going=True'
-print 
+logger.info('-'*80)
+logger.info('keep_on_fail=False,keep_going=True')
 j = j.copy()
 j.submit(keep_on_fail=False,keep_going=True)
-print j
+logger.info(j)
 
 
-print '-'*80
-print 'keep_on_fail=True,keep_going=True'
-print 
+logger.info('-'*80)
+logger.info('keep_on_fail=True,keep_going=True')
 j = j.copy()
 j.submit(keep_on_fail=True,keep_going=True)
-print j
+logger.info(j)
 
-print 
-print '-'*80
+logger.info('-'*80)

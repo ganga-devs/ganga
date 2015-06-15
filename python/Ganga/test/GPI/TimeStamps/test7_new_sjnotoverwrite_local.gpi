@@ -26,5 +26,3 @@ for sjs in j.subjobs:
 assert j.time.new() == t_new_1, "old 'new':%s, new 'new': %s" %(str(t_new_1), str(j.time.new()))
 
 #end:
-
-print "test7_new_sjnotoverwrite_local passed"

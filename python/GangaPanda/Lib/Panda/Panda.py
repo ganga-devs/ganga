@@ -598,7 +598,6 @@ def checkForRebrokerage(string):
         newJobsetID = long(matchObj.group(2))
         newJobID = long(matchObj.group(3))
         return newPandaID
-        print newPandaID
     raise BackendError('Panda','Error getting new PandaID for rebrokered job. Report to DA Help')
 
 
@@ -780,8 +779,6 @@ class Panda(IBackend):
                     js.lockedby = configSys['GANGA_VERSION']
 
                 verbose = logger.isEnabledFor(10)
-#                for js in jobspecs:
-#                    print js.specialHandling
                 status, jobids = Client.submitJobs(jobspecs,verbose)
                 if status:
                     logger.error('Status %d from Panda submit',status)

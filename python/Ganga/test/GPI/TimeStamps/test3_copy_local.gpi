@@ -54,5 +54,3 @@ for i in range(0,len(j4.subjobs)):
         assert j4.subjobs(i).time.new() > j3.subjobs(j).time.new()
 
 #end
-
-print "test3_copy_local passed."

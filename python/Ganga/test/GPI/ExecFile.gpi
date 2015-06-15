@@ -29,6 +29,3 @@ if __name__ != "__main__":
 
 main = __import__('__main__')
 assert(dir(main) == dir())
-
-print 'Test Passed OK'
-

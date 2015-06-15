@@ -141,7 +141,7 @@ class GangaPlotter:
         ## savefile if requested
         if self.output != None:
             savefig(self.output)
-            print 'the plot has been saved in %s' % self.output
+            logger.info('the plot has been saved in %s' % self.output)
 
         ## force to plot if interactive mode is not activated
         if not isinteractive():
@@ -291,7 +291,7 @@ class GangaPlotter:
         i = 0
         for data in dataTable:
 
-            print 'processing data row %d' % i
+            logger.info('processing data row %d' % i)
 
             i+=1
 
@@ -369,9 +369,6 @@ class GangaPlotter:
         for i in range(len(pltYDataProcs),len(pltYColIds)):
             pltYDataProcs.append(None)
 
-        #print pltYColIds
-        #print pltYDataProcs
-
         ##----- 
         ## extract the given data for pie chart 
         ##----- 
@@ -405,7 +402,6 @@ class GangaPlotter:
                 else:
                     pltData[xLabel] = {}
                     pltData[xLabel][yLabel] = yvalue
-        #print pltData
 
         ##----- 
         ## Mapping the extracted data to the columns for bar chart plot 
@@ -423,8 +419,6 @@ class GangaPlotter:
 
         valueLists = self.__unionLists__(valueLists)
 
-        #print valueLists
-
         for v in valueLists:
             barValues = []
             for l in bar_xlabels:
@@ -433,8 +427,6 @@ class GangaPlotter:
                 else:
                     barValues.append(0)
             bars[v] = barValues
-
-        #print bars
 
         # the pltColorMap
         bar_cmap = self.__setColormap__( pltColorMap, len(bars.keys()) )

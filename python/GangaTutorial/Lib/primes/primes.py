@@ -1,5 +1,7 @@
 #!/usr/bin/env ganga
 
+from __future__ import print_function
+
 # Ganga tutorial application developed by Kuba Moscicki, CERN, 2006
 
 # Helper function for prime number factorization application.
@@ -7,9 +9,9 @@
 def check_prime_job(j):
     """ Check the output of job j (or subjobs if exist) and print all calculated prime factors.
     """
-    NUMBER = long(j.application.number)
+    NUMBER = lj.application.number
 
-    print 'Looking for prime factors of',NUMBER
+    print('Looking for prime factors of',NUMBER)
     
     # we can use our function for subjobs or simple jobs at the same time
     if j.subjobs:
@@ -23,23 +25,23 @@ def check_prime_job(j):
         try:
             fc = eval(file(s.outputdir+'/factors-%d.dat'%NUMBER).read())
             if fc:
-                print 'job',s.id,': got factors:',fc
+                print('job',s.id,': got factors:',fc)
             factors.extend(fc)
         except IOError as x:
-            print x
+            print(x)
 
     # check if we have all prime numbers!
     import math
     check = 1
     for f in factors:
-            check *= long(math.pow(f[0],f[1]))
+            check *= int(math.pow(f[0],f[1]))
     print
     
-    if long(check) == NUMBER:
-        print 'All prime factors found:',factors
+    if check == NUMBER:
+        print('All prime factors found:',factors)
     else:
-        print 'Factors found so far',factors,'mulitply to',long(check)
-        print 'There are still missing factors!'
+        print('Factors found so far',factors,'mulitply to',check)
+        print('There are still missing factors!')
 
 
 def split_prime_job(j,millions,number=None):

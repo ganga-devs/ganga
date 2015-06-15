@@ -8,5 +8,4 @@ j.splitter.attribute = 'application.fail'
 j.splitter.values = ['','prepare','']
 
 assert_cannot_submit(j)
-print len(j.subjobs)
 assert(len(j.subjobs)==0)

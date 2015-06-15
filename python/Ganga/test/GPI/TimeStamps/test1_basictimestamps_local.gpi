@@ -69,6 +69,5 @@ for sjs in j.subjobs:
     assert type(sjs.time.final()) == datetime.datetime
 
 #end
-print "test1_basictimestamps_local passed."
 
 

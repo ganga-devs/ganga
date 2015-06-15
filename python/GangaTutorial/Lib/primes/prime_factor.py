@@ -1,5 +1,7 @@
 #!/usr/bin/env python
 
+from __future__ import print_function
+
 # Ganga tutorial application developed by Kuba Moscicki, CERN, 2006
 
 # Find all prime factors of a given NUMBER using a list of primes stored in a text FILE.
@@ -44,8 +46,8 @@ for pfn in pfns:
     pf = file(pfn)
 
     # skip two first lines of the file
-    print pf.readline()
-    print pf.readline()
+    pf.readline()
+    pf.readline()
 
     line = pf.readline()
 
@@ -65,7 +67,7 @@ for pfn in pfns:
     
         line = pf.readline()
 
-print 'Prime factors:',factors
+print('Prime factors:',factors)
 
 # check if all prime factors have been found
 import math
@@ -74,12 +76,12 @@ for f in factors:
     check *= long(math.pow(f[0],f[1]))
 
 if long(check) == NUMBER:
-    print 'All prime factors found!'
+    print('All prime factors found!')
 else:
-    print 'Some prime factors are still to be found. Known factors multiply to',check
+    print('Some prime factors are still to be found. Known factors multiply to',check)
 
 # write the factors to a data file
 ofn = 'factors-%d.dat'%NUMBER
 of = file(ofn,'w')
-print >> of, factors
-print 'Created data file',ofn
+of.write(factors)
+print('Created data file',ofn)

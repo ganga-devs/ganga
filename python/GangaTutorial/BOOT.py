@@ -11,6 +11,9 @@ from GangaTutorial.Lib.primes.primes import check_prime_job, split_prime_job
 
 from Ganga.Runtime.GPIexport import exportToGPI
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 exportToGPI("check_prime_job",check_prime_job,"Functions")
 exportToGPI("split_prime_job",split_prime_job,"Functions")
 
@@ -19,4 +22,4 @@ TUTDIR = os.path.dirname(GangaTutorial.__file__)
 exportToGPI("TUTDIR",TUTDIR,"Objects")
 del os,GangaTutorial
 
-print "*** Ganga Tutorial Loaded OK ***"
+logger.debug("*** Ganga Tutorial Loaded OK ***")

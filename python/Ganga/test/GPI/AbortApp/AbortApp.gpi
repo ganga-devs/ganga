@@ -2,6 +2,9 @@ from GangaTest.Framework.utils import sleep_until_state
 
 from Ganga.GPI import *
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 disableServices()
 reactivate()
 
@@ -12,14 +15,14 @@ j.submit()
 
 sleep_until_state(j, state='failed', timeout=30)
 
-print 'manual removing, j.status=', j.status
+logger.info('manual removing, j.status=', j.status)
 j.remove()
-print 'finished manual removing'
+logger.info('finished manual removing')
 try:
     j.remove()
     assert False, "should raise JobError but hasn't"
 except JobError as x:
     pass
-print 'finished second manual removing'
-print 'waiting a few seconds'
+logger.info('finished second manual removing')
+logger.info('waiting a few seconds')
 

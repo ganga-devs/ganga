@@ -31,6 +31,4 @@ for i in range(0,len(j.subjobs)):
 
 #end
 
-print "test5_details_local passed."
-
 

@@ -92,7 +92,6 @@ class Checker(IAction):
         except IOError as e:
             logger.info(e)
             pass
-        #print self.LastVersionData
         #dirs below will have been deleted on clean up
         config = Ganga.Utility.Config.getConfig('TestRobot')
         #Set Install path with new directory  
@@ -142,7 +141,6 @@ class Checker(IAction):
         match = -1
         for data in VersionList:
             i += 1
-            #print "i = "+str(i)
             if (data == self.LastVersionData) :
                 match = i
                 break

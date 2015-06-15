@@ -23,6 +23,3 @@ jobs.select(1,4)
 jobs.select(status='new')
 jobs.select(backend='Local')
 jobs.select(application='Executable')
-
-
-print "#########FINISHED#########"

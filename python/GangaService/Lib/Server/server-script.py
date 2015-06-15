@@ -12,6 +12,9 @@ from Ganga.Utility.logging import getLogger
 from Ganga.GPI import jobs
 from Ganga.GPI import tasks
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class WatchdogThread ( threading.Thread ):
 
     def __init__(self):
@@ -38,13 +41,13 @@ class UserScriptThread ( threading.Thread ):
         
         # check for some valid script path (note could be None)
         if not config["Configuration"]["ServerUserScript"] or len(config["Configuration"]["ServerUserScript"]) < 2:
-            print "No User Script specified. Exiting from thread..."
+            logger.error("No User Script specified. Exiting from thread...")
             return
             
         try:            
             self.script_text = open(config["Configuration"]["ServerUserScript"], "r").read()
         except:
-            print "UserScriptThread: ERROR: Could not load script '%s'. Reason: '%s'" % (config["Configuration"]["ServerUserScript"], formatTraceback())
+            logger.error("UserScriptThread: ERROR: Could not load script '%s'. Reason: '%s'" % (config["Configuration"]["ServerUserScript"], formatTraceback()))
             return
         
         self.running = True
@@ -55,7 +58,7 @@ class UserScriptThread ( threading.Thread ):
             try:
                 exec(self.script_text)
             except:
-                print "Error while executing user script: %s" % formatTraceback()
+                logger.error("Error while executing user script: %s" % formatTraceback())
 
             time.sleep(config["Configuration"]["ServerUserScriptWaitTime"])
 
@@ -73,7 +76,7 @@ sock = socket(AF_INET,SOCK_STREAM)
 sock.settimeout(5)
 try: sock.bind(addr)
 except:
-    print "ERROR: Couldn't connect on port %d" % port
+    logger.error("ERROR: Couldn't connect on port %d" % port)
     sys.exit(2)
 
 # listen for a connection
@@ -163,7 +166,7 @@ while True:
         try:
             exec(data)
         except:
-            print "Error while executing script: %s" % formatTraceback()
+            logger.error("Error while executing script: %s" % formatTraceback())
             
         sys.stdout = sys.__stdout__
         sys.stderr = sys.__stderr__

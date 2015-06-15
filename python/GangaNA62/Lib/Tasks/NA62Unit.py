@@ -10,6 +10,9 @@ from datetime import datetime, date, time
 
 import os
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class NA62Unit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
     }.items()))
@@ -44,5 +47,5 @@ class NA62Unit(IUnit):
       
          rc, out = getstatusoutput("echo \"INSERT INTO jobs (%s) VALUES (%s)\" | %s" % (ins_fields, ins_vals, mysqlc))
          
-         if (rc):
-            print out
+         if (rc != 0):
+             logger.error(out)
