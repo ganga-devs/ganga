@@ -22,7 +22,7 @@ def isPFN(file):
     from GangaLHCb.Lib.Files import PhysicalFile
     return isinstance(file,PhysicalFile) or isinstance(file,LocalFile) or isinstance(file,MassStorageFile)
 
-def strToDataFile(name,allowNone=True):
+def strToDataFile(name, allowNone=True):
     if len(name) >= 4 and name[0:4].upper() == 'LFN:':
         return DiracFile(lfn = name)
     elif len(name) >= 4 and name[0:4].upper() == 'PFN:':

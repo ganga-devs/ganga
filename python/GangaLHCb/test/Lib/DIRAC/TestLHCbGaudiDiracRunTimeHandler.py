@@ -25,7 +25,7 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         j.prepare()
         from Ganga.Utility.Config import getConfig
         if getConfig('Output')['ForbidLegacyInput']: 
-            j.inputfiles = [LocalFile(name='dummy.in')]
+            j.inputfiles = [LocalFile(namePattern='dummy.in')]
         else:
             j.inputsandbox = [File(name='dummy.in')]
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
@@ -47,8 +47,10 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         #app.extra = self.extra
         stdjobconfig = self.rth.master_prepare(self.app,self.appmasterconfig)
         # should have master.buffer, master.in and options.pkl
-        print 'sandbox =', stdjobconfig.getSandboxFiles()
-        assert len(stdjobconfig.getSandboxFiles()) == 4
+        # shouldn't that now be master.buffer master.in and inputsandbox? rcurrie
+        logger = Ganga.Utility.logging.getLogger()
+        logger.info( 'sandbox = %s'% str(stdjobconfig.getSandboxFiles()) )
+        assert len(stdjobconfig.getSandboxFiles()) == 3
 
     def test_LHCbGaudiDiracRunTimeHandler_prepare(self):
         #app = self.app

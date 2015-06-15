@@ -202,8 +202,8 @@ class AppName(Gaudi):
         """Performs a getpack on the package given within the environment
            of the application. The unix exit code is returned
         """
-        import FileFunction
-        return FileFunction.getpack( self, options )
+        import FileFunctions
+        return FileFunctions.getpack( self, options )
 
     def make(self, argument=None):
         """Performs a make on the application. The unix exit code is 
@@ -222,7 +222,8 @@ class AppName(Gaudi):
             logger.error( "Cannot use this with cmake enabled!" )
             return -1
         command = '###CMT### ' + command
-        return CMTscript.CMTscript(self,command)
+        from GangaLHCb.Lib.Applications.CMTscript import CMTscript
+        return CMTscript(self,command)
 
     def _getshell(self):
         import EnvironFunctions
