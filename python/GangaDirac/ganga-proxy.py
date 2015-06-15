@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+from __future__ import print_function
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import sys
@@ -111,7 +114,7 @@ elif option == 'info':
             if not create_proxy_cache():
                 rc = 1
                 display = False
-        if display: print get_proxy_info()        
+        if display: print(get_proxy_info())
 elif option == 'destroy':
     destroy_proxy_cache()
     rc = exec_command(commands[option],argv)

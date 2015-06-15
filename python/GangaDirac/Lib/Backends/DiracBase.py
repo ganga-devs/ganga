@@ -311,7 +311,7 @@ class DiracBase(IBackend):
         """Peek at the output of a job (Note: filename/command are ignored)."""
         dirac_cmd = 'peek(%d)' % self.id
         result = execute(dirac_cmd)
-        if result_ok(result): print result['Value']
+        if result_ok(result): logger.info(result['Value'])
         else: logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     def getOutputSandbox(self,dir=None):
@@ -425,7 +425,7 @@ class DiracBase(IBackend):
                 except: pass
             msg = 'OK.'
             if not result_ok(result): msg = '%s' % result['Message']
-            print '%s: %s' %  (category,msg)
+            logger.info('%s: %s' %  (category,msg))
         # get pilot info for this job
         if type(self.id) != int: return
         j = self.getJobObject()
@@ -434,11 +434,10 @@ class DiracBase(IBackend):
         cmd = "getJobPilotOutput(%d,'%s')" % \
               (self.id, debug_dir)
         result = execute(cmd)
-        #print 'result =', result
         if result_ok(result):
-            print 'Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id)
+            logger.info('Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id))
         else:
-            print result.get('Message','')
+            logger.error(result.get('Message',''))
 
     def _getStateTime(job, status):
         """Returns the timestamps for 'running' or 'completed' by extracting

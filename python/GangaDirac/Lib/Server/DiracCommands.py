@@ -10,6 +10,9 @@ from DIRAC.Interfaces.API.Dirac      import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 # Write to output pipe
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 #reserved_stdout = sys.stdout
@@ -54,7 +57,7 @@ def getFile(lfns, destDir = ''): output( dirac.getFile(lfns, destDir=destDir) )
 def replicateFile(lfn,destSE,srcSE,locCache=''):
     res = dirac.replicateFile(lfn,destSE,srcSE,locCache)
     output(res)
-    print res
+    logger.debug(res)
 
 def removeReplica(lfn,sE):
     output( dirac.removeReplica(lfn,sE) )
@@ -83,14 +86,6 @@ def uploadFile(lfn, file, diracSEs, guid=None):
         outerr.update({se:result})
     else:
         output(outerr)
-#def uploadFile(lfn, file, diracSE, guid=None):
-#    result = dirac.addFile(lfn,file,diracSE,guid)
-#    if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
-#        md = dirac.getMetadata(lfn)
-#        if md.get('OK',False) and lfn in md.get('Value',{'Successful':{}})['Successful']:
-#            guid=md['Value']['Successful'][lfn]['GUID']
-#            result['Value']['Successful'][lfn].update({'GUID':guid})
-#    print result
 
 def addFile(lfn,file,diracSE,guid):
     output( dirac.addFile(lfn,file,diracSE,guid) )
@@ -216,20 +211,6 @@ def status(job_ids):
 
     output( status_list )
 
-#def getFile(lfn,dir):
-#    result = dirac.getFile(lfn)
-#    if not result or not result.get('OK',False):
-#        print result
- #       return
- ##   f = result['Value']['Successful'][lfn]
- #   fname = f.split('/')[-1]
- #   fdir = f.split('/')[0:-2]
- # #  new_f = os.path.join(dir,fname)
- #   os.system('mv -f %s %s' % (f,new_f))
- #   os.system('rmdir %s' % fdir)
- #   result['Value'] = new_f
- #   print result
-
 def getStateTime(id, status):
     log = dirac.loggingInfo(id)
     if 'Value' not in log:
@@ -250,7 +231,7 @@ def getStateTime(id, status):
         checkstr = ''
             
     if checkstr=='':
-        print None
+        logger.debug(None)
         return
 
     for l in L:

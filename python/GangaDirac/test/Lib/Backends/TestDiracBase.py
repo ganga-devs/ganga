@@ -222,12 +222,6 @@ output(result)
         file2.close()
         file3.close()
 
-##     def test_master_auto_resubmit(self):
-##         import inspect
-##         print inspect.getsource(self.db.master_resubmit).replace('"""%s"""'%inspect.getdoc(self.db.master_resubmit),'')
-##         print inspect.getsource(self.db.master_auto_resubmit)
-    
-
     def test_resubmit(self):
         def _resubmit():
             return '_resubmit run ok'

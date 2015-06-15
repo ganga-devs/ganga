@@ -77,7 +77,6 @@ def dirac_inputdata(app):
 
     #import traceback
     #traceback.print_stack()
-    #print "input_data:\n%s" % input_data
 
     return input_data, parametricinput_data
 
@@ -93,8 +92,6 @@ def dirac_parametric_split(app):
 ##         split_data.append([f.name for f in dataset])
     if len(split_data) > 0:
         return split_data
-
-    #print  "dirac_parametric_split: %s" % str( split_data )
 
     return None
 

@@ -17,7 +17,6 @@ def find_random_site( original_SE_list, banned_SE ):
     while chosen_element == "" and len(input_list) > 0:
         global global_random
         this_element = global_random.sample( input_list, 1 )[0]
-        #print this_element
         if not this_element in banned_SE:
             chosen_element = this_element
             break
@@ -274,7 +273,6 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
                 if req_sitez.issubset( site_dict[k] ):
                     if len(_this_subset) >= filesPerJob:
                         break
-                    #print str(k)
                     _this_subset.append( str(k) )
 
             limit = int(math.floor( float(filesPerJob) * good_fraction ))

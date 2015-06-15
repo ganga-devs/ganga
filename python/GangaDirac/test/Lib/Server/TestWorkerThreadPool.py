@@ -6,6 +6,9 @@ from Ganga.GPI                                     import *
 import unittest, tempfile, os
 from Ganga.Utility.Config import getConfig
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class TestWorkerThreadPool(GangaGPITestCase):
     def setUp(self):
         self.w = WorkerThreadPool()
@@ -22,7 +25,6 @@ class TestWorkerThreadPool(GangaGPITestCase):
         
             i=0
             for worker in w._WorkerThreadPool__worker_threads:
-                print worker._name, i
                 self.assertEqual(worker._name, worker_thread_prefix + str(i))
                 self.assertEqual(worker._command, 'idle')
                 self.assertEqual(worker._timeout, 'N/A')
@@ -51,10 +53,10 @@ class TestWorkerThreadPool(GangaGPITestCase):
                 self.name = name
             def should_stop(self):
                 if not hasattr(self, '_stop'):
-                    print "Entering the loop for the first time."
+                    logger.info("Entering the loop for the first time.")
                     self._stop = True
                     return False
-                print "second time round the loop exiting."
+                logger.info("second time round the loop exiting.")
                 return self._stop
             def register(self):
                 self._registered = datetime.datetime.now()
@@ -65,14 +67,14 @@ class TestWorkerThreadPool(GangaGPITestCase):
         def error(this, message, *args, **kwargs):
             expected = error_chk.pop(0)
             if message != expected:
-                print '#####################################'
-                print '####             DIFF            ####'
-                print '#####################################'
+                logger.info('#####################################')
+                logger.info('####             DIFF            ####')
+                logger.info('#####################################')
             for line in difflib.unified_diff(expected.splitlines(), message.splitlines(), fromfile='expected', tofile='found'):
-                print line
+                logger.info(line)
             else:
                 if message != expected:
-                    print '#####################################'
+                    logger.info('#####################################')
             self.assertEqual(message, expected)
 
         setattr(getLogger().__class__, 'error', error)
