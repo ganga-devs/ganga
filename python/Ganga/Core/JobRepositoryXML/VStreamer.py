@@ -335,9 +335,6 @@ class Loader:
 ################################################################################
 # JUNK
 
-#-o[Logging]Ganga.GPIDev.Lib.JobRegistry=DEBUG -o[Logging]Ganga.Core.JobRepository=DEBUG -o[Configuration]StartupGPI="from Ganga.GPIDev.Base.VStreamer import p,g; j=Job(inputsandbox=['x','y'],outputsandbox=['a','b']); p(j); jj=g(j);"
-
-
 def p(j,f=None):
     vstreamer = VStreamer(out=f)
     vstreamer.begin_root()

@@ -1252,10 +1252,7 @@ default_backends = LCG
             try:
                 execfile( fileName, local_ns )
             except Exception as x:
-                logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))
-        # exec StartupGPI code          
-        from Ganga.Utility.Config import getConfig      
-        config=getConfig('Configuration')       
+                logger.error('Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))      
         # exec StartupGPI code          
         from Ganga.Utility.Config import getConfig      
         config=getConfig('Configuration')
@@ -1264,7 +1261,7 @@ default_backends = LCG
            #so we have only one possibility to insert python code : 
            # using explicitly '\n' and '\t' chars
            code = config['StartupGPI'].replace('\\t','\t').replace('\\n','\n')
-           exec(code, local_ns)
+           exec code in local_ns
 
         logger.debug( "loaded .ganga.py" )
 
