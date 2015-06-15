@@ -7,6 +7,8 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import file_contains, is_job_finished, \
      write_file
 
+from GangaLHCb.test import *
+
 try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
@@ -33,7 +35,6 @@ class TestBender(GangaGPITestCase):
         return LocalJob(j)
 
     def testDirac(self):
-        from GangaLHCb.test import *
         global module
         j = Job(application=Bender(), backend=Dirac())
         j.application.module = module

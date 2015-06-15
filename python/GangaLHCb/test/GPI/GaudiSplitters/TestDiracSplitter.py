@@ -8,6 +8,8 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 
+from Ganga.GPI import *
+
 try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
@@ -33,7 +35,6 @@ if doConfig:
 class TestDiracSplitter(GangaGPITestCase):
 
     def testSplit(self):
-        from Ganga.GPI import *
         j=Job(backend=Dirac())
         j.inputdata = LHCbDataset()
         #j.inputdata.files+=[

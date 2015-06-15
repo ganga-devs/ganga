@@ -60,7 +60,6 @@ class TestDaVinci(GangaGPITestCase):
         #assert(os.path.exists(os.path.join(j.outputdir,'DVHistos.root')))
 
     def test_outputfiles_submit(self):
-        from GangaLHCb.test import *
         j = Job(application=DaVinci(),backend=Dirac())
         j.application.platform = getDiracAppPlatform()
         j.outputfiles = [LocalFile('Something.root')]

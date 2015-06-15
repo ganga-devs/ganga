@@ -31,7 +31,6 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
-        from GangaLHCb.test import *
         self.app.platform = getDiracAppPlatform()
         #self.extra = GaudiExtras()
         #self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'

@@ -6,6 +6,8 @@ import shutil
 import tempfile
 from os.path import join
 
+from GangaLHCb.test import *
+
 #from GangaLHCb.test import *
 
 import Ganga.Utility.Config
@@ -32,7 +34,6 @@ class TestGaudiPython(GangaGPITestCase):
                'stdout should contain string: ' + executionstring
 
     def testDirac(self):
-        from GangaLHCb.test import *
         gp = GaudiPython(platform=getDiracAppPlatform())
         gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Dirac())
