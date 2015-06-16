@@ -421,8 +421,8 @@ class Registry(object):
                         d.add(id)
                 obj._registry_locked = True
             finally:
-                pass
-            #    self._lock.release()
+            #    pass
+                 self._lock.release()
         return True
     
     def _release_lock(self, obj):
