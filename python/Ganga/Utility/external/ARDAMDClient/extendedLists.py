@@ -1,34 +1,37 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: extendedLists.py,v 1.1 2008-07-17 16:41:02 moscicki Exp $
-################################################################################
+##########################################################################
 import os
 import types
 import time
 
 from diskutils import *
 
+
 class Storage(object):
-    def __init__(self, dirname, tries_limit = 200):
-        ## dirname is the name of the directory to store blocks
-        ## tries_limit is the maximum allowed limit for attempts
-        ## to move, remove or write files
+
+    def __init__(self, dirname, tries_limit=200):
+        # dirname is the name of the directory to store blocks
+        # tries_limit is the maximum allowed limit for attempts
+        # to move, remove or write files
         self.dirname = dirname
         self.tries_limit = tries_limit
 
 
 class Block(object):
-    def __init__(self, entries = None, entrlen = None, name = None, storage = None):
+
+    def __init__(self, entries=None, entrlen=None, name=None, storage=None):
         if entries is None:
             entries = []
         if entrlen is None:
-           entrlen = len(entries)
+            entrlen = len(entries)
         self.entries = entries
         self.name = name
         self.storage = storage
-        self.in_memory = True 
-        self.on_disk = False  #if modified: self.on_disk = False 
+        self.in_memory = True
+        self.on_disk = False  # if modified: self.on_disk = False
         self.setLen(entrlen)
         self.updateKeys()
 
@@ -36,7 +39,7 @@ class Block(object):
         if i < self.__len__():
             return self.entries[i]
         else:
-            raise IndexError('list index out of range')            
+            raise IndexError('list index out of range')
 
     def __setitem__(self, i, item):
         if i < self.__len__():
@@ -56,11 +59,11 @@ class Block(object):
             self.setLen(entrlen - 1)
             self.on_disk = False
         else:
-            raise IndexError('list index out of range')        
+            raise IndexError('list index out of range')
 
     def __len__(self):
         return self.entrlen
-            
+
     def append(self, item):
         entrlen = self.__len__()
         self.addKey(item[0])
@@ -77,14 +80,14 @@ class Block(object):
             self.addKey(item[0])
             self.entries.insert(i, item)
             self.setLen(entrlen + 1)
-            self.on_disk = False            
+            self.on_disk = False
         else:
             self.append(item)
 
     def genericName(self):
         if self.name:
             return self.name.split('_')[0]
-        
+
     def setLen(self, entrlen):
         self.entrlen = entrlen
 
@@ -100,7 +103,7 @@ class Block(object):
     def updateKeys(self):
         self.entry_keys = {}
         for i in xrange(self.__len__()):
-            self.addKey(self.entries[i][0])  
+            self.addKey(self.entries[i][0])
 
     def memoryRelease(self):
         # release memory, so that self.entries list can be reused by another block
@@ -111,9 +114,9 @@ class Block(object):
             self.in_memory = False
             entries = self.entries
             self.entries = []
-            return entries 
-    
-    def load(self, forced = False, entries = None):
+            return entries
+
+    def load(self, forced=False, entries=None):
         if self.storage:
             dirname = self.storage.dirname
             generic_name = self.genericName()
@@ -131,11 +134,11 @@ class Block(object):
                         self.in_memory = True
                         self.setLen(entrlen)
                         self.updateKeys()
-                    
+
     def save(self):
         if not self.on_disk:
             if self.in_memory:
-                 if self.storage:
+                if self.storage:
                     dirname = self.storage.dirname
                     tries_limit = self.storage.tries_limit
                     generic_name = self.genericName()
@@ -143,12 +146,13 @@ class Block(object):
                         fn = os.path.join(dirname, generic_name)
                         entrlen = self.__len__()
                         if entrlen > 0:
-                            self.name = os.path.basename(write(self.entries, fn, entrlen, tries_limit))
+                            self.name = os.path.basename(
+                                write(self.entries, fn, entrlen, tries_limit))
                             self.on_disk = True
                         else:
                             remove(fn)
                             self.on_disk = False
-                    
+
 
 class EntryBlock(Block):
 
@@ -163,13 +167,13 @@ class EntryBlock(Block):
             dd = dd[k]
 
     def delKey(self, key):
-        # will delete empty dictionaries  
+        # will delete empty dictionaries
         kk = key.split('.')
         dd = self.entry_keys
         visited = []
         for k in kk:
             if k in dd:
-                visited.append((dd,k))
+                visited.append((dd, k))
                 dd = dd[k]
             else:
                 break
@@ -193,7 +197,7 @@ class EntryBlock(Block):
 
 class BlockCache(object):
 
-    def __init__(self, maxsize = 3):
+    def __init__(self, maxsize=3):
         # maxsize is in blocks
         # if maxsize <= 0, there is no limit
         self.maxsize = maxsize
@@ -203,22 +207,22 @@ class BlockCache(object):
         if block.in_memory:
             if block not in self.blocks:
                 self.blocks.append(block)
-                    
+
     def get(self):
         if self.maxsize > 0:
             if len(self.blocks) >= self.maxsize:
-                return self.blocks.pop(0).memoryRelease()        
+                return self.blocks.pop(0).memoryRelease()
 
-        
+
 class BlockedList(object):
     block_prefix = 'BLOCK-'
-    block_class  = Block
-    
-    def __init__(self, ll = None,
-                 dirname = '',
-                 blocklength  = 100,
-                 cache_size   = 3,
-                 tries_limit  = 200):
+    block_class = Block
+
+    def __init__(self, ll=None,
+                 dirname='',
+                 blocklength=100,
+                 cache_size=3,
+                 tries_limit=200):
         self.storage = Storage(dirname, tries_limit)
         self.blocklength = blocklength
         if ll == None:
@@ -233,39 +237,39 @@ class BlockedList(object):
                 break
             self._addNewBlock(entries)
             start = stop
-            stop += self.blocklength          
-    
+            stop += self.blocklength
+
     def _addNewBlock(self, entries):
         bni = len(self.blocks)
         if bni > 0:
             last_blk = self.blocks[-1]
             gn = last_blk.genericName()
             if gn:
-                bni = int(gn.split('-')[1])+ 1
+                bni = int(gn.split('-')[1]) + 1
         generic_name = self.block_prefix + str(bni)
         entrlen = len(entries)
         free_entries = self.cache.get()
         if free_entries is not None:
             free_entries[:entrlen] = entries
             entries = free_entries
-        blk = self.block_class(entries = entries,
-                               entrlen = entrlen,
-                               name = generic_name,
-                               storage = self.storage)
+        blk = self.block_class(entries=entries,
+                               entrlen=entrlen,
+                               name=generic_name,
+                               storage=self.storage)
         self.blocks.append(blk)
         self.cache.put(blk)
-        
-    def _loadBlock(self, blk, forced = True):
+
+    def _loadBlock(self, blk, forced=True):
         # if block is in memory the forced loading is suppressed
         if not (blk.in_memory and forced):
             free_entries = self.cache.get()
             blk.load(forced, free_entries)
-            self.cache.put(blk)   
-            
+            self.cache.put(blk)
+
     def _translateIndex(self, i):
         if i < 0:
             i += self.__len__()
-            i = max(0,i)
+            i = max(0, i)
         blk_i = i
         for blk in self.blocks:
             tt = blk_i - len(blk)
@@ -282,28 +286,29 @@ class BlockedList(object):
         else:
             (blk, blk_i) = self._translateIndex(i)
             self._loadBlock(blk)
-            return blk[blk_i]           
-  
+            return blk[blk_i]
+
     def __setitem__(self, i, item):
         if type(i) == types.SliceType:
             ss = i.indices(self.__len__())
             ii = range(*ss)
             len_ii = len(ii)
-            len_item = len(item)            
-            if i.step != None: #extended slice
+            len_item = len(item)
+            if i.step != None:  # extended slice
                 if len_ii != len_item:
-                    msg = "attempt to assign sequence of size %d to extended slice of size %d" %(len_item, len_ii)
+                    msg = "attempt to assign sequence of size %d to extended slice of size %d" % (
+                        len_item, len_ii)
                     raise ValueError(msg)
             else:
                 delete = ii[len_item:]
-                delete.reverse() #items to delete
+                delete.reverse()  # items to delete
                 insert = item[len_ii:]
-                insert.reverse() #items to insert
+                insert.reverse()  # items to insert
                 for d in delete:
                     del self[d]
                 for s in insert:
                     self.insert(len_ii, s)
-            map(lambda x: self.__setitem__(*x), zip(ii,item))
+            map(lambda x: self.__setitem__(*x), zip(ii, item))
         else:
             (blk, blk_i) = self._translateIndex(i)
             self._loadBlock(blk)
@@ -326,7 +331,7 @@ class BlockedList(object):
         for blk in self.blocks:
             blen += len(blk)
         return blen
-            
+
     def append(self, item):
         if not self.blocks:
             self._addNewBlock([])
@@ -335,7 +340,7 @@ class BlockedList(object):
             self._addNewBlock([])
             blk = self.blocks[-1]
         self._loadBlock(blk)
-        blk.append(item) 
+        blk.append(item)
 
     def extend(self, iter):
         for item in iter:
@@ -376,9 +381,9 @@ class BlockedList(object):
                         if fn not in names:
                             names.append(fn)
         names.sort(self._sorter)
-        return names       
+        return names
 
-    def load(self, dirname = ''):
+    def load(self, dirname=''):
         if dirname:
             self.storage.dirname = dirname
         blocks = []
@@ -388,49 +393,50 @@ class BlockedList(object):
             if bn in ndict:
                 blk = ndict[bn]
             else:
-                blk = self.block_class(name = bn, storage = self.storage)
-            self._loadBlock(blk, forced = False)
+                blk = self.block_class(name=bn, storage=self.storage)
+            self._loadBlock(blk, forced=False)
             blocks.append(blk)
         self.blocks = blocks
 
-    def save(self, dirname = ''):
+    def save(self, dirname=''):
         if dirname:
-            self.storage.dirname = dirname        
-        for i in xrange(len(self.blocks)-1, -1, -1):
+            self.storage.dirname = dirname
+        for i in xrange(len(self.blocks) - 1, -1, -1):
             blk = self.blocks[i]
             blk.save()
             if len(blk) == 0:
-                del self.blocks[i]     
+                del self.blocks[i]
 
     def mark(self):
-        map(lambda x: setattr(x,'on_disk',False), self.blocks)
+        map(lambda x: setattr(x, 'on_disk', False), self.blocks)
 
     def has_key(self, key):
         for blk in self.blocks:
             if blk.hasKey(key):
                 return True
-        return False    
-        
+        return False
+
 
 class Attributes(BlockedList):
     block_prefix = 'Attr-'
-    
-    def __init__(self, ll = None,
-                 dirname = '',
-                 blocklength  = 20,
-                 cache_size   = 3,
-                 tries_limit  = 200):
-        super(Attributes, self).__init__(ll, dirname, blocklength, cache_size, tries_limit)
+
+    def __init__(self, ll=None,
+                 dirname='',
+                 blocklength=20,
+                 cache_size=3,
+                 tries_limit=200):
+        super(Attributes, self).__init__(
+            ll, dirname, blocklength, cache_size, tries_limit)
 
 
 class Entries(BlockedList):
     block_prefix = 'Entr-'
-    block_class  = EntryBlock
-    
-    def __init__(self, ll = None,
-                 dirname = '',
-                 blocklength  = 100,
-                 cache_size   = 3,
-                 tries_limit  = 200):
-        super(Entries, self).__init__(ll, dirname, blocklength, cache_size, tries_limit)        
-    
+    block_class = EntryBlock
+
+    def __init__(self, ll=None,
+                 dirname='',
+                 blocklength=100,
+                 cache_size=3,
+                 tries_limit=200):
+        super(Entries, self).__init__(
+            ll, dirname, blocklength, cache_size, tries_limit)

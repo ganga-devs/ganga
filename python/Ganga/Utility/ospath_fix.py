@@ -3,6 +3,7 @@
 
 import os.path
 
+
 def realpath(filename):
     """Return the canonical path of the specified filename, eliminating any
 symbolic links encountered in the path."""
@@ -11,7 +12,7 @@ symbolic links encountered in the path."""
     else:
         bits = [''] + filename.split('/')
 
-    for i in range(2, len(bits)+1):
+    for i in range(2, len(bits) + 1):
         component = os.path.join(*bits[0:i])
         # Resolve symbolic links.
         if os.path.islink(component):
@@ -48,4 +49,3 @@ def _resolve_link(path):
 
 os.path.realpath = realpath
 os.path._resolve_link = _resolve_link
-

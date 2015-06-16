@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: FileWorkspace.py,v 1.2 2009-05-20 09:23:46 moscicki Exp $
-################################################################################
+##########################################################################
 
 """
 FileWorkspace subsystem (aka LSE, SE,...) defines the interface to
@@ -14,12 +14,14 @@ FileWorkspace in a location-independent way.
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
-import os,time
+import os
+import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
 
-    
+
 class FileWorkspace:
+
     """
     File workspace  on a local file system.   FileWorkspace object may
     represent any  part of the directory tree  (including 'top' i.e.
@@ -36,31 +38,32 @@ class FileWorkspace:
 
     Old 'splittree' option has been disabled and always defaults to 0.
     It should not be modified because it will not work with sbjobs in the future.
-        
+
     If  jobid  is  None  then  FileWorkspace  represents  the  topmost
     directory (with a given subpath  which may be an empty string ''),
     i.e.: getPath() resolves to 'top/subpath/*' or 'top/*' """
-       
-    def __init__(self,top,subpath='',splittree=0):
+
+    def __init__(self, top, subpath='', splittree=0):
         self.jobid = None
         self.top = top
         self.subpath = subpath
-        self.splittree=0
+        self.splittree = 0
 
-        #LEGACY:
+        # LEGACY:
         if splittree:
-            logger.warning('FileWorkspace splittree option is obsolete and has no-effect')
+            logger.warning(
+                'FileWorkspace splittree option is obsolete and has no-effect')
 
-    def create(self,jobid=None):
+    def create(self, jobid=None):
         """ create a workspace, an optional jobid parameter specifies the job directory
             you can call create() as many times as you want without any harm """
 
-        # FIXME: make a helper method for os.makedirs 
-        logger.debug('creating %s',self.getPath())
+        # FIXME: make a helper method for os.makedirs
+        logger.debug('creating %s', self.getPath())
         self.jobid = jobid
         try:
             import os.path
-            if os.path.isdir( self.getPath() ):
+            if os.path.isdir(self.getPath()):
                 return
 
             import os
@@ -68,27 +71,29 @@ class FileWorkspace:
         except OSError as x:
             import errno
             if x.errno == errno.EEXIST:
-                logger.debug('EEXIT: %s',self.getPath())
+                logger.debug('EEXIT: %s', self.getPath())
             else:
                 raise
-    
+
     # resolve a path to the filename in the context of the file workspace
-    # if filename is None then return the directory corresponding to this file workspace
-    def getPath(self,filename=None):
+    # if filename is None then return the directory corresponding to this file
+    # workspace
+    def getPath(self, filename=None):
         subpath = self.subpath
-        if filename is None: filename = ''
+        if filename is None:
+            filename = ''
         if not self.jobid is None:
             jobdir = str(self.jobid)
         else:
             jobdir = ''
             # do not use subpath if no tree splitting applies
-            if not self.splittree: subpath = ''
-
+            if not self.splittree:
+                subpath = ''
 
         if self.splittree:
-            return expandfilename(os.path.join(self.top,subpath,jobdir,filename))
+            return expandfilename(os.path.join(self.top, subpath, jobdir, filename))
         else:
-            return expandfilename(os.path.join(self.top,jobdir,subpath,filename))
+            return expandfilename(os.path.join(self.top, jobdir, subpath, filename))
 
     # write a file (represent as file object) to the workspace
     # file object may be:
@@ -96,34 +101,35 @@ class FileWorkspace:
     #  - a FileBuffer instance - refers to a file which is does not yet exist but which contents is available in a memory buffer
     #      this is a handy way of creating wrapper scripts etc.
     #  - a tuple (name,contents) - deprecated - equivalent to FileBuffer
-    # 
+    #
     # File classes are define in Ganga.GPIDev.Lib.File package
     #
-    def writefile(self,fileobj,executable=None):
+    def writefile(self, fileobj, executable=None):
 
-        from Ganga.GPIDev.Lib.File import File,FileBuffer
-        
+        from Ganga.GPIDev.Lib.File import File, FileBuffer
+
         try:
-            name,contents = fileobj
+            name, contents = fileobj
         except TypeError:
             pass
         else:
-            fileobj = FileBuffer(name,contents)
-            logger.warning('file "%s": usage of tuples is deprecated, use FileBuffer instead',name)
+            fileobj = FileBuffer(name, contents)
+            logger.warning(
+                'file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows
         # to copy files into the a subdirectory of the workspace
 
-        # FIXME: make a helper method for os.makedirs 
+        # FIXME: make a helper method for os.makedirs
         try:
             import os
-            os.makedirs(self.getPath()+fileobj.subdir)
-            logger.debug('created %s',self.getPath())
+            os.makedirs(self.getPath() + fileobj.subdir)
+            logger.debug('created %s', self.getPath())
         except OSError as x:
             import errno
             if x.errno == errno.EEXIST:
-                logger.debug('EEXIT: %s',self.getPath())
+                logger.debug('EEXIT: %s', self.getPath())
             else:
                 raise
 
@@ -133,70 +139,86 @@ class FileWorkspace:
 
         if executable:
             chmod_executable(outname)
-            
+
         return outname
 
     # remove the workspace (including all files and directories)
     # the part of the tree as resolved by getPath() is pruned recursively
-    # if preserve_top is true then the directory specified by getPath() will be preserved
-    def remove(self,preserve_top=None):         
+    # if preserve_top is true then the directory specified by getPath() will
+    # be preserved
+    def remove(self, preserve_top=None):
         try:
             import shutil
-            logger.debug('removing %s',self.getPath())
+            logger.debug('removing %s', self.getPath())
             if os.path.exists(self.getPath()):
-                self.__removeTrials=0
-                
+                self.__removeTrials = 0
+
                 def retryRemove(function, path, excinfo):
                     """ Address AFS/NSF problems with left-over lock files which prevents
                     the 'shutil.rmtree' to delete the directory (the idea is to wait a bit 
                     for the fs to automatically remove these lock files and try again)
                     """
-                    self.__removeTrials+=1
-                    if self.__removeTrials<=5:
-                        logger.debug('Cannot delete %s (retry count=%s) ... Will wait a bit and try again' 
-                                     % (self.getPath(),self.__removeTrials))
+                    self.__removeTrials += 1
+                    if self.__removeTrials <= 5:
+                        logger.debug('Cannot delete %s (retry count=%s) ... Will wait a bit and try again'
+                                     % (self.getPath(), self.__removeTrials))
                         time.sleep(0.5)
-                        shutil.rmtree(self.getPath(),ignore_errors=False, onerror=retryRemove)
+                        shutil.rmtree(
+                            self.getPath(), ignore_errors=False, onerror=retryRemove)
                     else:
                         exctype, value = excinfo[:2]
                         logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)'
-                                       % (self.getPath(),self.__removeTrials,exctype,value))
-                
-                shutil.rmtree(self.getPath(),ignore_errors=False, onerror=retryRemove)
-                logger.debug('removed %s',self.getPath())
+                                       % (self.getPath(), self.__removeTrials, exctype, value))
+
+                shutil.rmtree(
+                    self.getPath(), ignore_errors=False, onerror=retryRemove)
+                logger.debug('removed %s', self.getPath())
                 if preserve_top and not os.path.exists(self.getPath()):
-                    logger.debug('preserving the topdir: mkdir %s'%self.getPath())
+                    logger.debug(
+                        'preserving the topdir: mkdir %s' % self.getPath())
                     os.mkdir(self.getPath())
             else:
-                logger.debug('%s : DOES NOT EXIST',self.getPath())
-        #FIXME: error strategy
+                logger.debug('%s : DOES NOT EXIST', self.getPath())
+        # FIXME: error strategy
         except OSError as x:
             raise
         except Exception as x:
             raise
 
+
 def gettop():
     c = Ganga.Utility.Config.getConfig('Configuration')
-    return os.path.join(c['gangadir'],'workspace',c['user'],c['repositorytype'])
+    return os.path.join(c['gangadir'], 'workspace', c['user'], c['repositorytype'])
+
 
 class InputWorkspace(FileWorkspace):
+
     """ Part of the workspace for storing input sandbox.
     """
+
     def __init__(self):
-        FileWorkspace.__init__(self,gettop(),subpath='input',splittree=False)
+        FileWorkspace.__init__(
+            self, gettop(), subpath='input', splittree=False)
 
 
 class OutputWorkspace(FileWorkspace):
+
     """ Part of the workspace for storing output sandbox.
-    """    
+    """
+
     def __init__(self):
-        FileWorkspace.__init__(self,gettop(),subpath='output',splittree=False)        
+        FileWorkspace.__init__(
+            self, gettop(), subpath='output', splittree=False)
+
 
 class DebugWorkspace(FileWorkspace):
+
     """ Part of the workspace for storing output sandbox.
-    """    
+    """
+
     def __init__(self):
-        FileWorkspace.__init__(self,gettop(),subpath='debug',splittree=False)        
+        FileWorkspace.__init__(
+            self, gettop(), subpath='debug', splittree=False)
 
 
 #
@@ -286,4 +308,3 @@ class DebugWorkspace(FileWorkspace):
 #
 #
 #
-

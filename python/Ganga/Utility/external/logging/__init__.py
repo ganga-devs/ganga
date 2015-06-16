@@ -26,7 +26,12 @@ Copyright (C) 2001-2004 Vinay Sajip. All Rights Reserved.
 To use, simply 'import logging' and log away!
 """
 
-import sys, os, types, time, string, cStringIO
+import sys
+import os
+import types
+import time
+import string
+import cStringIO
 
 try:
     import thread
@@ -34,10 +39,10 @@ try:
 except ImportError:
     thread = None
 
-__author__  = "Vinay Sajip <vinay_sajip@red-dove.com>"
-__status__  = "beta"
+__author__ = "Vinay Sajip <vinay_sajip@red-dove.com>"
+__status__ = "beta"
 __version__ = "0.4.9.5"
-__date__    = "02 October 2004"
+__date__ = "02 October 2004"
 
 #---------------------------------------------------------------------------
 #   Miscellaneous module data
@@ -66,8 +71,8 @@ if not hasattr(sys, "_getframe"):
 _startTime = time.time()
 
 #
-#raiseExceptions is used to see if exceptions during handling should be
-#propagated
+# raiseExceptions is used to see if exceptions during handling should be
+# propagated
 #
 raiseExceptions = 1
 
@@ -91,20 +96,21 @@ DEBUG = 10
 NOTSET = 0
 
 _levelNames = {
-    CRITICAL : 'CRITICAL',
-    ERROR : 'ERROR',
-    WARNING : 'WARNING',
-    INFO : 'INFO',
-    DEBUG : 'DEBUG',
-    NOTSET : 'NOTSET',
-    'CRITICAL' : CRITICAL,
-    'ERROR' : ERROR,
-    'WARN' : WARNING,
-    'WARNING' : WARNING,
-    'INFO' : INFO,
-    'DEBUG' : DEBUG,
-    'NOTSET' : NOTSET,
+    CRITICAL: 'CRITICAL',
+    ERROR: 'ERROR',
+    WARNING: 'WARNING',
+    INFO: 'INFO',
+    DEBUG: 'DEBUG',
+    NOTSET: 'NOTSET',
+    'CRITICAL': CRITICAL,
+    'ERROR': ERROR,
+    'WARN': WARNING,
+    'WARNING': WARNING,
+    'INFO': INFO,
+    'DEBUG': DEBUG,
+    'NOTSET': NOTSET,
 }
+
 
 def getLevelName(level):
     """
@@ -122,6 +128,7 @@ def getLevelName(level):
     """
     return _levelNames.get(level, ("Level %s" % level))
 
+
 def addLevelName(level, levelName):
     """
     Associate 'levelName' with 'level'.
@@ -129,7 +136,7 @@ def addLevelName(level, levelName):
     This is used when converting levels to text during message formatting.
     """
     _acquireLock()
-    try:    #unlikely to cause an exception, but you never know...
+    try:  # unlikely to cause an exception, but you never know...
         _levelNames[level] = levelName
         _levelNames[levelName] = level
     finally:
@@ -141,13 +148,14 @@ def addLevelName(level, levelName):
 
 #
 #_lock is used to serialize access to shared data structures in this module.
-#This needs to be an RLock because fileConfig() creates Handlers and so
-#might arbitrary user threads. Since Handler.__init__() updates the shared
-#dictionary _handlers, it needs to acquire the lock. But if configuring,
-#the lock would already have been acquired - so we need an RLock.
-#The same argument applies to Loggers and Manager.loggerDict.
+# This needs to be an RLock because fileConfig() creates Handlers and so
+# might arbitrary user threads. Since Handler.__init__() updates the shared
+# dictionary _handlers, it needs to acquire the lock. But if configuring,
+# the lock would already have been acquired - so we need an RLock.
+# The same argument applies to Loggers and Manager.loggerDict.
 #
 _lock = None
+
 
 def _acquireLock():
     """
@@ -161,6 +169,7 @@ def _acquireLock():
     if _lock:
         _lock.acquire()
 
+
 def _releaseLock():
     """
     Release the module-level lock acquired by calling _acquireLock().
@@ -172,7 +181,9 @@ def _releaseLock():
 #   The logging record
 #---------------------------------------------------------------------------
 
+
 class LogRecord:
+
     """
     A LogRecord instance represents an event being logged.
 
@@ -184,6 +195,7 @@ class LogRecord:
     the source line where the logging call was made, and any exception
     information to be logged.
     """
+
     def __init__(self, name, level, pathname, lineno, msg, args, exc_info):
         """
         Initialize a logging record with interesting information.
@@ -217,8 +229,8 @@ class LogRecord:
             self.process = None
 
     def __str__(self):
-        return '<LogRecord: %s, %s, %s, %s, "%s">'%(self.name, self.levelno,
-            self.pathname, self.lineno, self.msg)
+        return '<LogRecord: %s, %s, %s, %s, "%s">' % (self.name, self.levelno,
+                                                      self.pathname, self.lineno, self.msg)
 
     def getMessage(self):
         """
@@ -227,16 +239,17 @@ class LogRecord:
         Return the message for this LogRecord after merging any user-supplied
         arguments with the message.
         """
-        if not hasattr(types, "UnicodeType"): #if no unicode support...
+        if not hasattr(types, "UnicodeType"):  # if no unicode support...
             msg = str(self.msg)
         else:
             try:
                 msg = str(self.msg)
             except UnicodeError:
-                msg = self.msg      #Defer encoding till later
+                msg = self.msg  # Defer encoding till later
         if self.args:
             msg = msg % self.args
         return msg
+
 
 def makeLogRecord(dict):
     """
@@ -253,7 +266,9 @@ def makeLogRecord(dict):
 #   Formatter classes and functions
 #---------------------------------------------------------------------------
 
+
 class Formatter:
+
     """
     Formatter instances are used to convert a LogRecord to text.
 
@@ -365,7 +380,7 @@ class Formatter:
         formatException() and appended to the message.
         """
         record.message = record.getMessage()
-        if string.find(self._fmt,"%(asctime)") >= 0:
+        if string.find(self._fmt, "%(asctime)") >= 0:
             record.asctime = self.formatTime(record, self.datefmt)
         s = self._fmt % record.__dict__
         if record.exc_info:
@@ -384,10 +399,13 @@ class Formatter:
 #
 _defaultFormatter = Formatter()
 
+
 class BufferingFormatter:
+
     """
     A formatter suitable for formatting a number of records.
     """
+
     def __init__(self, linefmt=None):
         """
         Optionally specify a formatter which will be used to format each
@@ -426,7 +444,9 @@ class BufferingFormatter:
 #   Filter classes and functions
 #---------------------------------------------------------------------------
 
+
 class Filter:
+
     """
     Filter instances are used to perform arbitrary filtering of LogRecords.
 
@@ -437,6 +457,7 @@ class Filter:
     "A.B.C", "A.B.C.D", "A.B.D" etc. but not "A.BB", "B.A.B" etc. If
     initialized with the empty string, all events are passed.
     """
+
     def __init__(self, name=''):
         """
         Initialize a filter.
@@ -463,11 +484,14 @@ class Filter:
             return 0
         return (record.name[self.nlen] == ".")
 
+
 class Filterer:
+
     """
     A base class for loggers and handlers which allows them to share
     common code.
     """
+
     def __init__(self):
         """
         Initialize the list of filters to be an empty list.
@@ -507,9 +531,11 @@ class Filterer:
 #   Handler classes and functions
 #---------------------------------------------------------------------------
 
-_handlers = {}  #repository of handlers (for flushing when shutdown called)
+_handlers = {}  # repository of handlers (for flushing when shutdown called)
+
 
 class Handler(Filterer):
+
     """
     Handler instances dispatch logging events to specific destinations.
 
@@ -518,6 +544,7 @@ class Handler(Filterer):
     records as desired. By default, no formatter is specified; in this case,
     the 'raw' message as determined by record.message is logged.
     """
+
     def __init__(self, level=NOTSET):
         """
         Initializes the instance - basically setting the formatter to None
@@ -526,9 +553,9 @@ class Handler(Filterer):
         Filterer.__init__(self)
         self.level = level
         self.formatter = None
-        #get the module data lock, as we're updating a shared structure.
+        # get the module data lock, as we're updating a shared structure.
         _acquireLock()
-        try:    #unlikely to raise an exception, but you never know...
+        try:  # unlikely to raise an exception, but you never know...
             _handlers[self] = 1
         finally:
             _releaseLock()
@@ -583,7 +610,8 @@ class Handler(Filterer):
         This version is intended to be implemented by subclasses and so
         raises a NotImplementedError.
         """
-        raise NotImplementedError('emit must be implemented by Handler subclasses')
+        raise NotImplementedError(
+            'emit must be implemented by Handler subclasses')
 
     def handle(self, record):
         """
@@ -627,9 +655,9 @@ class Handler(Filterer):
         should ensure that this gets called from overridden close()
         methods.
         """
-        #get the module data lock, as we're updating a shared structure.
+        # get the module data lock, as we're updating a shared structure.
         _acquireLock()
-        try:    #unlikely to raise an exception, but you never know...
+        try:  # unlikely to raise an exception, but you never know...
             del _handlers[self]
         finally:
             _releaseLock()
@@ -652,12 +680,15 @@ class Handler(Filterer):
             traceback.print_exception(ei[0], ei[1], ei[2], None, sys.stderr)
             del ei
 
+
 class StreamHandler(Handler):
+
     """
     A handler class which writes logging records, appropriately formatted,
     to a stream. Note that this class does not close the stream, as
     sys.stdout or sys.stderr may be used.
     """
+
     def __init__(self, strm=None):
         """
         Initialize the handler.
@@ -689,7 +720,7 @@ class StreamHandler(Handler):
         try:
             msg = self.format(record)
             fs = "%s\n"
-            if not hasattr(types, "UnicodeType"): #if no unicode support...
+            if not hasattr(types, "UnicodeType"):  # if no unicode support...
                 self.stream.write(fs % msg)
             else:
                 try:
@@ -700,17 +731,20 @@ class StreamHandler(Handler):
         except:
             self.handleError(record)
 
+
 class FileHandler(StreamHandler):
+
     """
     A handler class which writes formatted logging records to disk files.
     """
+
     def __init__(self, filename, mode="a"):
         """
         Open the specified file and use it as the stream for logging.
         """
         StreamHandler.__init__(self, open(filename, mode))
-        #keep the absolute path, otherwise derived classes which use this
-        #may come a cropper when the current directory changes
+        # keep the absolute path, otherwise derived classes which use this
+        # may come a cropper when the current directory changes
         self.baseFilename = os.path.abspath(filename)
         self.mode = mode
 
@@ -726,12 +760,15 @@ class FileHandler(StreamHandler):
 #   Manager classes and functions
 #---------------------------------------------------------------------------
 
+
 class PlaceHolder:
+
     """
     PlaceHolder instances are used in the Manager logger hierarchy to take
     the place of nodes for which no loggers have been defined. This class is
     intended for internal use only and not as part of the public API.
     """
+
     def __init__(self, alogger):
         """
         Initialize with the specified logger being a child of this placeholder.
@@ -750,6 +787,7 @@ class PlaceHolder:
 #
 _loggerClass = None
 
+
 def setLoggerClass(klass):
     """
     Set the class to be used when instantiating a logger. The class should
@@ -758,9 +796,11 @@ def setLoggerClass(klass):
     """
     if klass != Logger:
         if not issubclass(klass, Logger):
-            raise TypeError("logger not derived from logging.Logger: " + klass.__name__)
+            raise TypeError(
+                "logger not derived from logging.Logger: " + klass.__name__)
     global _loggerClass
     _loggerClass = klass
+
 
 def getLoggerClass():
     """
@@ -769,11 +809,14 @@ def getLoggerClass():
 
     return _loggerClass
 
+
 class Manager:
+
     """
     There is [under normal circumstances] just one Manager instance, which
     holds the hierarchy of loggers.
     """
+
     def __init__(self, rootnode):
         """
         Initialize the manager with the root node of the logger hierarchy.
@@ -853,7 +896,9 @@ class Manager:
 #   Logger classes and functions
 #---------------------------------------------------------------------------
 
+
 class Logger(Filterer):
+
     """
     Instances of the Logger class represent a single logging channel. A
     "logging channel" indicates an area of an application. Exactly how an
@@ -868,6 +913,7 @@ class Logger(Filterer):
     level, and "input.csv", "input.xls" and "input.gnu" for the sub-levels.
     There is no arbitrary limit to the depth of nesting.
     """
+
     def __init__(self, name, level=NOTSET):
         """
         Initialize the logger with a name and an optional level.
@@ -1018,7 +1064,8 @@ class Logger(Filterer):
         if exc_info:
             if type(exc_info) != types.TupleType:
                 exc_info = sys.exc_info()
-        record = self.makeRecord(self.name, level, fn, lno, msg, args, exc_info)
+        record = self.makeRecord(
+            self.name, level, fn, lno, msg, args, exc_info)
         self.handle(record)
 
     def handle(self, record):
@@ -1043,7 +1090,7 @@ class Logger(Filterer):
         Remove the specified handler from this logger.
         """
         if hdlr in self.handlers:
-            #hdlr.close()
+            # hdlr.close()
             self.handlers.remove(hdlr)
 
     def callHandlers(self, record):
@@ -1064,7 +1111,7 @@ class Logger(Filterer):
                 if record.levelno >= hdlr.level:
                     hdlr.handle(record)
             if not c.propagate:
-                c = None    #break out
+                c = None  # break out
             else:
                 c = c.parent
         if (found == 0) and not self.manager.emittedNoHandlerWarning:
@@ -1094,12 +1141,15 @@ class Logger(Filterer):
             return 0
         return level >= self.getEffectiveLevel()
 
+
 class RootLogger(Logger):
+
     """
     A root logger is not that different to any other logger, except that
     it must have a logging level and there is only one instance of it in
     the hierarchy.
     """
+
     def __init__(self, level):
         """
         Initialize the logger with the name "root".
@@ -1117,6 +1167,7 @@ Logger.manager = Manager(Logger.root)
 #---------------------------------------------------------------------------
 
 BASIC_FORMAT = "%(levelname)s:%(name)s:%(message)s"
+
 
 def basicConfig(**kwargs):
     """
@@ -1172,6 +1223,7 @@ def basicConfig(**kwargs):
 # Basically delegate everything to the root logger.
 #---------------------------------------------------------------------------
 
+
 def getLogger(name=None):
     """
     Return a logger with the specified name, creating it if necessary.
@@ -1183,7 +1235,7 @@ def getLogger(name=None):
     else:
         return root
 
-#def getRootLogger():
+# def getRootLogger():
 #    """
 #    Return the root logger.
 #
@@ -1192,15 +1244,17 @@ def getLogger(name=None):
 #    """
 #    return root
 
+
 def critical(msg, *args, **kwargs):
     """
     Log a message with severity 'CRITICAL' on the root logger.
     """
     if len(root.handlers) == 0:
         basicConfig()
-    root.critical(*(msg,)+args, **kwargs)
+    root.critical(*(msg,) + args, **kwargs)
 
 fatal = critical
+
 
 def error(msg, *args, **kwargs):
     """
@@ -1208,14 +1262,16 @@ def error(msg, *args, **kwargs):
     """
     if len(root.handlers) == 0:
         basicConfig()
-    root.error(*(msg,)+args, **kwargs)
+    root.error(*(msg,) + args, **kwargs)
+
 
 def exception(msg, *args):
     """
     Log a message with severity 'ERROR' on the root logger,
     with exception information.
     """
-    error(*(msg,)+args, **{'exc_info': 1})
+    error(*(msg,) + args, **{'exc_info': 1})
+
 
 def warning(msg, *args, **kwargs):
     """
@@ -1223,9 +1279,10 @@ def warning(msg, *args, **kwargs):
     """
     if len(root.handlers) == 0:
         basicConfig()
-    root.warning(*(msg,)+args, **kwargs)
+    root.warning(*(msg,) + args, **kwargs)
 
 warn = warning
+
 
 def info(msg, *args, **kwargs):
     """
@@ -1233,7 +1290,8 @@ def info(msg, *args, **kwargs):
     """
     if len(root.handlers) == 0:
         basicConfig()
-    root.info(*(msg,)+args, **kwargs)
+    root.info(*(msg,) + args, **kwargs)
+
 
 def debug(msg, *args, **kwargs):
     """
@@ -1241,7 +1299,8 @@ def debug(msg, *args, **kwargs):
     """
     if len(root.handlers) == 0:
         basicConfig()
-    root.debug(*(msg,)+args, **kwargs)
+    root.debug(*(msg,) + args, **kwargs)
+
 
 def log(level, msg, *args, **kwargs):
     """
@@ -1249,13 +1308,15 @@ def log(level, msg, *args, **kwargs):
     """
     if len(root.handlers) == 0:
         basicConfig()
-    root.log(*(level, msg)+args, **kwargs)
+    root.log(*(level, msg) + args, **kwargs)
+
 
 def disable(level):
     """
     Disable all logging calls less severe than 'level'.
     """
     root.manager.disable = level
+
 
 def shutdown():
     """
@@ -1265,19 +1326,19 @@ def shutdown():
     Should be called at application exit.
     """
     for h in _handlers.keys():
-        #errors might occur, for example, if files are locked
-        #we just ignore them
+        # errors might occur, for example, if files are locked
+        # we just ignore them
         try:
             h.flush()
             h.close()
         except:
             pass
 
-#Let's try and shutdown automatically on application exit...
+# Let's try and shutdown automatically on application exit...
 try:
     import atexit
     atexit.register(shutdown)
-except ImportError: # for Python versions < 2.0
+except ImportError:  # for Python versions < 2.0
     def exithook(status, old_exit=sys.exit):
         try:
             shutdown()

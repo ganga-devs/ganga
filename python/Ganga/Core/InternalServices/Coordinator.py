@@ -1,4 +1,4 @@
-################################################################################
+##########################################################################
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
-# This file is part of Ganga. 
+# This file is part of Ganga.
 #
 # Ganga is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-################################################################################
+##########################################################################
 
 """
  Internal services coordinator :
@@ -34,10 +34,11 @@ from Ganga.Utility.logging import getLogger
 
 log = getLogger()
 
-#the overall state of Ganga internal services
+# the overall state of Ganga internal services
 servicesEnabled = True
 
-def isCredentialRequired (credObj):
+
+def isCredentialRequired(credObj):
     """
     The logic to decide if a given invalid credential
     should trigger the deactivation of Ganga internal services.  
@@ -51,41 +52,45 @@ def isCredentialRequired (credObj):
 
     if credObj.__class__.__name__ == 'GridProxy':
         if Repository_runtime.requiresGridProxy() or Workspace_runtime.requiresGridProxy():
-           return True 
-        from Ganga.GPI import jobs,typename
+            return True
+        from Ganga.GPI import jobs, typename
         for j in jobs:
             ji = j._impl
-            if ji.status in ['submitted','running','completing'] and typename(ji.backend)=='LCG':
+            if ji.status in ['submitted', 'running', 'completing'] and typename(ji.backend) == 'LCG':
                 return True
         return False
-    
+
     log.warning("Unknown credential object : %s" % credObj)
-    
-def notifyInvalidCredential (credObj):
+
+
+def notifyInvalidCredential(credObj):
     """
     The Core is notified when one of the monitored credentials is invalid
     @see ICredential.create()
     """
 
-    #ignore this notification if the internal services are already stopped 
+    # ignore this notification if the internal services are already stopped
     if not servicesEnabled:
-        log.debug ("One of the monitored credential [%s] is invalid BUT the internal services are already disabled." % credObj._name)
+        log.debug(
+            "One of the monitored credential [%s] is invalid BUT the internal services are already disabled." % credObj._name)
         return
 
     if isCredentialRequired(credObj):
-        log.debug ("One of the required credential for the internal services is invalid: [%s]."
-                   "Disabling internal services ..." % credObj._name)
-        _tl = credObj.timeleft()        
+        log.debug("One of the required credential for the internal services is invalid: [%s]."
+                  "Disabling internal services ..." % credObj._name)
+        _tl = credObj.timeleft()
         if _tl == "-1":
-            log.error('%s has been destroyed! Could not shutdown internal services.' % credObj._name)
-            return        
+            log.error(
+                '%s has been destroyed! Could not shutdown internal services.' % credObj._name)
+            return
         disableInternalServices()
         log.warning('%s is about to expire! '
                     'To protect against possible write errors all internal services has been disabled.'
                     'If you believe the problem has been solved type "reactivate()" to re-enable '
-                    'interactions within this session.' %  credObj._name)
+                    'interactions within this session.' % credObj._name)
     else:
-        log.debug ("One of the monitored credential [%s] is invalid BUT it is not required by the internal services" % credObj._name)
+        log.debug(
+            "One of the monitored credential [%s] is invalid BUT it is not required by the internal services" % credObj._name)
 
 
 def _diskSpaceChecker():
@@ -102,45 +107,49 @@ def _diskSpaceChecker():
         return int(used[:-1])<70
     """
     log.debug("Checking disk space")
-    try:        
+    try:
         config = getConfig('PollThread')
-        
+
         if config['DiskSpaceChecker']:
-            _checker = lambda : True
+            _checker = lambda: True
             try:
-                #create the checker                
+                # create the checker
                 from Ganga.Runtime import _prog
                 import new
-                ns={}
+                ns = {}
                 code = "def check():"
                 for line in config['DiskSpaceChecker'].splitlines():
-                    code +="\t%s\n" % line
+                    code += "\t%s\n" % line
                 exec code in ns
-                _checker = new.function(ns["check"].__code__, _prog.local_ns, 'check' )
+                _checker = new.function(
+                    ns["check"].__code__, _prog.local_ns, 'check')
             except Exception as e:
-                log.warning('Syntax errors in disk space checking code: %s. See [PollThread]DiskSpaceChecker' % e)
+                log.warning(
+                    'Syntax errors in disk space checking code: %s. See [PollThread]DiskSpaceChecker' % e)
                 return False
 
-            #call the checker
+            # call the checker
             if _checker() is False:
                 disableInternalServices()
                 log.warning('You are running out of disk space! '
-                    'To protect against possible write errors all internal services has been disabled.'
-                    'If you believe the problem has been solved type "reactivate()" to re-enable '
-                    'interactions within this session.')
+                            'To protect against possible write errors all internal services has been disabled.'
+                            'If you believe the problem has been solved type "reactivate()" to re-enable '
+                            'interactions within this session.')
     except Exception as msg:
-        log.warning('Exception in free disk space checking code: %s. See [PollThread]DiskSpaceChecker' % msg)        
+        log.warning(
+            'Exception in free disk space checking code: %s. See [PollThread]DiskSpaceChecker' % msg)
         return False
     return True
 
+
 def disableMonitoringService():
 
-    #disable the mon loop
-    log.debug( "Shutting down the main monitoring loop" )
+    # disable the mon loop
+    log.debug("Shutting down the main monitoring loop")
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
     stop_and_free_thread_pool()
-    log.debug( "Disabling the central Monitoring" )
+    log.debug("Disabling the central Monitoring")
     from Ganga.Core import monitoring_component
     monitoring_component.disableMonitoring()
 
@@ -148,7 +157,7 @@ def disableMonitoringService():
     queues._purge_all()
     first = 0
     while queues.totalNumAllThreads() != 0:
-        log.debug( "Ensuring that all tasks are purged from the todo!" )
+        log.debug("Ensuring that all tasks are purged from the todo!")
         if first is not 0:
             import time
             time.sleep(1)
@@ -160,9 +169,10 @@ def disableMonitoringService():
         pool.__do_shutdown__()
         first = 1
 
-    log.debug( "Queues Threads should now be gone" )
+    log.debug("Queues Threads should now be gone")
 
-def disableInternalServices( shutdown = False ):
+
+def disableInternalServices(shutdown=False):
     """
     Deactivates all the internal services :
           * monitoring loop
@@ -173,43 +183,48 @@ def disableInternalServices( shutdown = False ):
     """
 
     if shutdown is not True:
-        log.info( "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner" )
-        log.info( " ... Please be patient! " )
+        log.info(
+            "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
+        log.info(" ... Please be patient! ")
 
-    #flush the registries
-    log.debug( "Coordinator Shutting Down Repository_runtime" )
+    # flush the registries
+    log.debug("Coordinator Shutting Down Repository_runtime")
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
 
     global servicesEnabled
 
     if not servicesEnabled:
-        log.error( "Cannot disable services, they've already been disabled" )
+        log.error("Cannot disable services, they've already been disabled")
         from Ganga.Core.exceptions import GangaException
-        raise GangaException( "Cannot disable services" )
+        raise GangaException("Cannot disable services")
 
     log.debug("Disabling the internal services")
 
-    #disable the mon loop
+    # disable the mon loop
     disableMonitoringService()
 
     # For debugging what services are still alive after being requested to stop before we close the repository
     #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import getStackTrace
-    #getStackTrace()
-    #log.info(queues_threadpoolMonitor._display(0))
+    # getStackTrace()
+    # log.info(queues_threadpoolMonitor._display(0))
 
-    log.debug( "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services" )
+    log.debug(
+        "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services")
 
     if shutdown is not True:
-        log.info( "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt" )
+        log.info(
+            "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
 
-    #flush the registries
+    # flush the registries
     #log.debug( "Coordinator Shutting Down Repository_runtime" )
     #from Ganga.Runtime import Repository_runtime
-    #Repository_runtime.shutdown()
+    # Repository_runtime.shutdown()
 
-    #this will disable any interactions with the registries (implicitly with the GPI)
-    servicesEnabled = False    
+    # this will disable any interactions with the registries (implicitly with
+    # the GPI)
+    servicesEnabled = False
+
 
 def enableMonitoringService():
     from Ganga.Core import monitoring_component
@@ -222,6 +237,7 @@ def enableMonitoringService():
     global servicesEnabled
     servicesEnabled = True
 
+
 def enableInternalServices():
     """
     activates the internal services previously disabled due to expired credentials
@@ -229,15 +245,15 @@ def enableInternalServices():
     global servicesEnabled
 
     if servicesEnabled:
-        log.error( "Cannot (re)enable services, they're already running" )
+        log.error("Cannot (re)enable services, they're already running")
         from Ganga.Core.exceptions import GangaException
-        raise GangaException( "Cannot (re)enable services" )
+        raise GangaException("Cannot (re)enable services")
 
-    #startup the registries
+    # startup the registries
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.bootstrap()
 
-    #make sure all required credentials are valid
+    # make sure all required credentials are valid
     missing_cred = getMissingCredentials()
     if missing_cred:
         log.error("The following credentials are still required: %s."
@@ -251,88 +267,91 @@ def enableInternalServices():
     servicesEnabled = True
     log.info('Internal services reactivated successfuly')
 
+
 def checkInternalServices(errMsg='Internal services disabled. Job registry is read-only.'):
     """
     Check the state of internal services and return a ReadOnlyObjectError exception
     in case the state is disabled.    
     """
-    
+
     global servicesEnabled
     from Ganga.GPIDev.Base import ReadOnlyObjectError
-    
+
     if not servicesEnabled:
         raise ReadOnlyObjectError(errMsg)
+
 
 def getMissingCredentials():
     """
     get a list of missing credentials
     i.e:  invalid credentials that are needed by the internal services to run
-    """    
+    """
     from Ganga.GPIDev.Credentials import _allCredentials as availableCreds
-    return [name for name in availableCreds \
-            if not availableCreds[name].isValid() and \
+    return [name for name in availableCreds
+            if not availableCreds[name].isValid() and
             isCredentialRequired(availableCreds[name])]
+
 
 def bootstrap():
 
     #global servicesEnabled
     #servicesEnabled = True
 
-    #export to GPI 
+    # export to GPI
     from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI('reactivate', enableInternalServices, 'Functions' ) 
-    exportToGPI('disableMonitoring', disableMonitoringService, 'Functions' )
-    exportToGPI('enableMonitoring', enableMonitoringService, 'Functions' )
-    exportToGPI('disableServices', disableInternalServices ,'Functions' )
+    exportToGPI('reactivate', enableInternalServices, 'Functions')
+    exportToGPI('disableMonitoring', disableMonitoringService, 'Functions')
+    exportToGPI('enableMonitoring', enableMonitoringService, 'Functions')
+    exportToGPI('disableServices', disableInternalServices, 'Functions')
 
     servicesEnabled = True
 
 #
 #$Log: not supported by cvs2svn $
-#Revision 1.1.4.1  2009/07/08 11:18:21  ebke
-#Initial commit of all - mostly small - modifications due to the new GangaRepository.
-#No interface visible to the user is changed
+# Revision 1.1.4.1  2009/07/08 11:18:21  ebke
+# Initial commit of all - mostly small - modifications due to the new GangaRepository.
+# No interface visible to the user is changed
 #
-#Revision 1.1  2008/07/17 16:40:50  moscicki
-#migration of 5.0.2 to HEAD
+# Revision 1.1  2008/07/17 16:40:50  moscicki
+# migration of 5.0.2 to HEAD
 #
-#the doc and release/tools have been taken from HEAD
+# the doc and release/tools have been taken from HEAD
 #
-#Revision 1.3.6.4  2008/03/11 15:22:42  moscicki
-#merge from Ganga-5-0-restructure-config-branch
+# Revision 1.3.6.4  2008/03/11 15:22:42  moscicki
+# merge from Ganga-5-0-restructure-config-branch
 #
-#Revision 1.3.6.3.2.1  2008/03/07 13:36:07  moscicki
-#removal of [DefaultJobRepository] and [FileWorkspace]
-#new options in [Configuration] user, gangadir, repositorytype, workspacetype
+# Revision 1.3.6.3.2.1  2008/03/07 13:36:07  moscicki
+# removal of [DefaultJobRepository] and [FileWorkspace]
+# new options in [Configuration] user, gangadir, repositorytype, workspacetype
 #
-#Revision 1.3.6.3  2008/02/12 09:25:52  amuraru
-#fixed repositories shutdown
+# Revision 1.3.6.3  2008/02/12 09:25:52  amuraru
+# fixed repositories shutdown
 #
-#Revision 1.3.6.2  2008/02/05 12:33:23  amuraru
-#fixed DiskSpaceChecker alignment
+# Revision 1.3.6.2  2008/02/05 12:33:23  amuraru
+# fixed DiskSpaceChecker alignment
 #
-#Revision 1.3.6.1  2007/12/10 19:24:42  amuraru
-#merged changes from Ganga 4.4.4
+# Revision 1.3.6.1  2007/12/10 19:24:42  amuraru
+# merged changes from Ganga 4.4.4
 #
-#Revision 1.7  2007/12/05 12:42:54  amuraru
-#Ganga/Core/InternalServices/Coordinator.py
+# Revision 1.7  2007/12/05 12:42:54  amuraru
+# Ganga/Core/InternalServices/Coordinator.py
 #
-#Revision 1.6  2007/12/04 12:59:03  amuraru
+# Revision 1.6  2007/12/04 12:59:03  amuraru
 #*** empty log message ***
 #
-#Revision 1.5  2007/11/26 14:04:30  amuraru
-#allow indentation using \t tab char in DiskSpaceChecker
+# Revision 1.5  2007/11/26 14:04:30  amuraru
+# allow indentation using \t tab char in DiskSpaceChecker
 #
-#Revision 1.4  2007/10/29 14:06:00  amuraru
+# Revision 1.4  2007/10/29 14:06:00  amuraru
 # added free disk space checker to monitoring loop
 #
-#Revision 1.3  2007/07/27 18:02:34  amuraru
-#updated to comply with the latest requirement for GPI free functions docstrings
+# Revision 1.3  2007/07/27 18:02:34  amuraru
+# updated to comply with the latest requirement for GPI free functions docstrings
 #
-#Revision 1.2  2007/07/27 14:31:56  moscicki
-#credential and clean shutdown updates from Adrian (from Ganga-4-4-0-dev-branch)
+# Revision 1.2  2007/07/27 14:31:56  moscicki
+# credential and clean shutdown updates from Adrian (from Ganga-4-4-0-dev-branch)
 #
-#Revision 1.1.2.1  2007/07/27 13:04:00  amuraru
+# Revision 1.1.2.1  2007/07/27 13:04:00  amuraru
 #*** empty log message ***
 #
 #

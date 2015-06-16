@@ -5,16 +5,19 @@ from threading import Lock
 from Queue import Empty
 from Algorithm import AlgorithmError
 from Ganga.Core.GangaThread.GangaThread import GangaThread
-from Ganga.Core.GangaThread.MTRunner.Data import DuplicateDataItemError 
+from Ganga.Core.GangaThread.MTRunner.Data import DuplicateDataItemError
 from Ganga.Utility.logging import getLogger
 
+
 class MTRunnerError(Exception):
+
     """
     Class for general MTRunner errors.
     """
 
     def __init__(self, message):
         self.message = message
+
 
 class GangaWorkAgent(GangaThread):
 
@@ -31,7 +34,7 @@ class GangaWorkAgent(GangaThread):
             if self._runner.data.isEmpty():
 
                 if self._runner.keepAlive:
-                    #if self.debug:
+                    # if self.debug:
                     #    logger.debug('data queue is empty, check again in 0.5 sec.')
                     time.sleep(0.5)
                     continue
@@ -42,14 +45,15 @@ class GangaWorkAgent(GangaThread):
                 try:
                     item = self._runner.data.getNextItem()
 
-                    ## write out the debug log
-                    #self._runner.lock.acquire()
+                    # write out the debug log
+                    # self._runner.lock.acquire()
                     #f = open('/tmp/hclee/mt_debug.log','a')
                     #f.write( 'worker %s get item %s \n' % (self.getName(), item) )
-                    #f.close()
-                    #self._runner.lock.release()
+                    # f.close()
+                    # self._runner.lock.release()
 
-                    logger.debug( 'worker %s get item %s' % (self.getName(), item) )
+                    logger.debug('worker %s get item %s' %
+                                 (self.getName(), item))
                     rslt = self._runner.algorithm.process(item)
                     if rslt:
                         self._runner.lock.acquire()
@@ -66,12 +70,13 @@ class GangaWorkAgent(GangaThread):
                     pass
 
         self.unregister()
-        
+
 
 class MTRunner:
+
     """
     Class to handle multiple concurrent threads running on the same algorithm. 
-    
+
     @since: 0.0.1
     @author: Hurng-Chun Lee 
     @contact: hurngchunlee@gmail.com
@@ -87,12 +92,13 @@ class MTRunner:
     algorithm running on a dataset.
     """
 
-    _attributes = ('name', 'algorithm', 'data', 'numThread', 'doneList', 'lock', 'keepAlive')
+    _attributes = (
+        'name', 'algorithm', 'data', 'numThread', 'doneList', 'lock', 'keepAlive')
 
     def __init__(self, name, algorithm=None, data=None, numThread=10, keepAlive=False):
         """
         initializes the MTRunner object. 
-        
+
         @since: 0.0.1
         @author: Hurng-Chun Lee 
         @contact: hurngchunlee@gmail.com
@@ -102,17 +108,17 @@ class MTRunner:
         """
 
         if (not algorithm) or (not data):
-            raise MTRunnerError('algorithm and data must not be None') 
+            raise MTRunnerError('algorithm and data must not be None')
 
         self.algorithm = algorithm
-        self.data      = data
+        self.data = data
         self.numThread = numThread
-        self.doneList  = []
-        self.lock      = Lock()
-        self.name      = name
+        self.doneList = []
+        self.lock = Lock()
+        self.name = name
         self.keepAlive = keepAlive
-        self._agents   = []
-        self.logger    = getLogger()
+        self._agents = []
+        self.logger = getLogger()
 
     def getDoneList(self):
         """
@@ -142,7 +148,8 @@ class MTRunner:
         """
 
         for i in range(self.numThread):
-            t = GangaWorkAgent( runnerObj=self, name='%s_worker_agent_%d' % (self.name, i) )
+            t = GangaWorkAgent(
+                runnerObj=self, name='%s_worker_agent_%d' % (self.name, i))
             self._agents.append(t)
             t.start()
 
@@ -153,34 +160,34 @@ class MTRunner:
         The caller will be blocked until exceeding the timeout or all worker agents finish their jobs.
         """
 
-        ## check the number of alive threads
+        # check the number of alive threads
         try:
             t1 = time.time()
 
             while self.__cnt_alive_threads__() > 0:
                 t2 = time.time()
 
-                ## break the loop if exceeding the timeout
-                if timeout >= 0 and t2-t1 > timeout:
+                # break the loop if exceeding the timeout
+                if timeout >= 0 and t2 - t1 > timeout:
                     break
                 else:
-                    ## sleep for another 0.5 second
+                    # sleep for another 0.5 second
                     time.sleep(0.5)
 
         except KeyboardInterrupt:
-            self.logger.error('Keyboard interruption on MTRunner: %s' % self.name)
+            self.logger.error(
+                'Keyboard interruption on MTRunner: %s' % self.name)
 
     def stop(self, timeout=-1):
         """
         waits worker agents to finish their works.
         """
 
-        ## ask all agents to stop
+        # ask all agents to stop
         for agent in self._agents:
             agent.stop()
 
         self.join(timeout=timeout)
-
 
     def __cnt_alive_threads__(self):
 
@@ -190,4 +197,3 @@ class MTRunner:
                 num_alive_threads += 1
 
         return num_alive_threads
-

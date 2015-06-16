@@ -21,38 +21,40 @@ from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.LCG import grids
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
+
 class ARC(IBackend):
+
     '''ARC backend - direct job submission to an ARC CE'''
-    _schema = Schema(Version(1,0), {
-        'CE'                  : SimpleItem(defvalue='',doc='ARC CE endpoint'),
-        'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
-        'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
-        'sandboxcache'        : ComponentItem('GridSandboxCache',copyable=1,doc='Interface for handling oversized input sandbox'),
-        'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
-        'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
-        'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
-        'exitcode_arc'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
-        'actualCE'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='The ARC CE where the job actually runs.'),
-        'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
-        'workernode'          : SimpleItem(defvalue='',protected=1,copyable=0,doc='The worker node on which the job actually runs.'),
-        'isbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The input sandbox URI on ARC CE'),
-        'osbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The output sandbox URI on ARC CE'),
-        'verbose'             : SimpleItem(defvalue=False,doc='Use verbose options for ARC commands')
+    _schema = Schema(Version(1, 0), {
+        'CE': SimpleItem(defvalue='', doc='ARC CE endpoint'),
+        'jobtype': SimpleItem(defvalue='Normal', doc='Job type: Normal, MPICH'),
+        'requirements': ComponentItem('LCGRequirements', doc='Requirements for the resource selection'),
+        'sandboxcache': ComponentItem('GridSandboxCache', copyable=1, doc='Interface for handling oversized input sandbox'),
+        'id': SimpleItem(defvalue='', typelist=['str', 'list'], protected=1, copyable=0, doc='Middleware job identifier'),
+        'status': SimpleItem(defvalue='', typelist=['str', 'dict'], protected=1, copyable=0, doc='Middleware job status'),
+        'exitcode': SimpleItem(defvalue='', protected=1, copyable=0, doc='Application exit code'),
+        'exitcode_arc': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
+        'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='The ARC CE where the job actually runs.'),
+        'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
+        'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
+        'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on ARC CE'),
+        'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on ARC CE'),
+        'verbose': SimpleItem(defvalue=False, doc='Use verbose options for ARC commands')
     })
 
     _category = 'backends'
 
-    _name =  'ARC'
+    _name = 'ARC'
 
     def __init__(self):
         super(ARC, self).__init__()
 
         # dynamic requirement object loading
         try:
-            reqName1  = config['Requirements']
-            reqName   = config['Requirements'].split('.').pop()
+            reqName1 = config['Requirements']
+            reqName = config['Requirements'].split('.').pop()
             reqModule = __import__(reqName1, globals(), locals(), [reqName1])
-            reqClass  = vars(reqModule)[reqName]
+            reqClass = vars(reqModule)[reqName]
             self.requirements = reqClass()
 
             logger.debug('load %s as LCGRequirements' % reqName)
@@ -61,23 +63,23 @@ class ARC(IBackend):
             pass
 
         # dynamic sandbox cache object loading
-        ## force to use GridftpSandboxCache
+        # force to use GridftpSandboxCache
         self.sandboxcache = GridftpSandboxCache()
         try:
-            scName1  = config['SandboxCache']
-            scName   = config['SandboxCache'].split('.').pop()
+            scName1 = config['SandboxCache']
+            scName = config['SandboxCache'].split('.').pop()
             scModule = __import__(scName1, globals(), locals(), [scName1])
-            scClass  = vars(scModule)[scName]
+            scClass = vars(scModule)[scName]
             self.sandboxcache = scClass()
             logger.debug('load %s as SandboxCache' % scName)
         except:
             logger.debug('load default SandboxCache')
             pass
 
-    def __refresh_jobinfo__(self,job):
+    def __refresh_jobinfo__(self, job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
-        job.backend.status   = ''
-        job.backend.reason   = ''
+        job.backend.status = ''
+        job.backend.reason = ''
         job.backend.actualCE = ''
         job.backend.exitcode = ''
         job.backend.exitcode_arc = ''
@@ -92,19 +94,20 @@ class ARC(IBackend):
 
         self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.middleware = 'GLITE'
-        self.sandboxcache.timeout    = config['SandboxTransferTimeout']
+        self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids[ self.sandboxcache.middleware ].__get_lfc_host__()
+                self.sandboxcache.lfc_host = grids[
+                    self.sandboxcache.middleware].__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
-                token   = ''
+                token = ''
                 se_host = config['DefaultSE']
                 m = re_token.match(se_host)
                 if m:
-                    token   = m.group(1)
+                    token = m.group(1)
                     se_host = m.group(2)
 
                 self.sandboxcache.se = se_host
@@ -114,8 +117,6 @@ class ARC(IBackend):
 
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
-
-
 
         return True
 
@@ -139,42 +140,43 @@ class ARC(IBackend):
            is returned.
            '''
 
-        idx = {'lfc_host':'', 'local':[], 'remote':{}}
+        idx = {'lfc_host': '', 'local': [], 'remote': {}}
 
         job = self.getJobObject()
 
-        ## read-in the previously uploaded files
+        # read-in the previously uploaded files
         uploadedFiles = []
 
-        ## getting the uploaded file list from the master job
+        # getting the uploaded file list from the master job
         if job.master:
             uploadedFiles += job.master.backend.sandboxcache.get_cached_files()
 
-        ## set and get the $LFC_HOST for uploading oversized sandbox
+        # set and get the $LFC_HOST for uploading oversized sandbox
         self.__setup_sandboxcache__(job)
 
         uploadedFiles += self.sandboxcache.get_cached_files()
 
         lfc_host = None
 
-        ## for LCGSandboxCache, take the one specified in the sansboxcache object.
-        ## the value is exactly the same as the one from the local grid shell env. if
-        ## it is not specified exclusively.
+        # for LCGSandboxCache, take the one specified in the sansboxcache object.
+        # the value is exactly the same as the one from the local grid shell env. if
+        # it is not specified exclusively.
         if self.sandboxcache._name == 'LCGSandboxCache':
             lfc_host = self.sandboxcache.lfc_host
 
-        ## or in general, query it from the Grid object
+        # or in general, query it from the Grid object
         if not lfc_host:
-            lfc_host = grids[self.sandboxcache.middleware.upper()].__get_lfc_host__()
+            lfc_host = grids[
+                self.sandboxcache.middleware.upper()].__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 
         abspath = os.path.abspath(file)
-        fsize   = os.path.getsize(abspath)
+        fsize = os.path.getsize(abspath)
 
         if fsize > config['BoundSandboxLimit']:
 
-            md5sum  = get_md5sum(abspath, ignoreGzipTimestamp=True)
+            md5sum = get_md5sum(abspath, ignoreGzipTimestamp=True)
 
             doUpload = True
             for uf in uploadedFiles:
@@ -186,13 +188,15 @@ class ARC(IBackend):
 
             if doUpload:
 
-                logger.warning('The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file,config['BoundSandboxLimit']) )
+                logger.warning(
+                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file, config['BoundSandboxLimit']))
 
-                if self.sandboxcache.upload( [abspath] ):
+                if self.sandboxcache.upload([abspath]):
                     remote_sandbox = self.sandboxcache.get_cached_files()[-1]
                     idx['remote'][remote_sandbox.name] = remote_sandbox.id
                 else:
-                    logger.error('Oversized sandbox not successfully pre-staged')
+                    logger.error(
+                        'Oversized sandbox not successfully pre-staged')
                     return None
         else:
             idx['local'].append(abspath)
@@ -202,12 +206,13 @@ class ARC(IBackend):
     def __mt_job_prepare__(self, rjobs, subjobconfigs, masterjobconfig):
         '''preparing jobs in multiple threads'''
 
-        logger.warning('preparing %d subjobs ... it may take a while' % len(rjobs))
+        logger.warning(
+            'preparing %d subjobs ... it may take a while' % len(rjobs))
 
         # prepare the master job (i.e. create shared inputsandbox, etc.)
-        master_input_sandbox=IBackend.master_prepare(self,masterjobconfig)
+        master_input_sandbox = IBackend.master_prepare(self, masterjobconfig)
 
-        ## uploading the master job if it's over the WMS sandbox limitation
+        # uploading the master job if it's over the WMS sandbox limitation
         for f in master_input_sandbox:
             master_input_idx = self.__check_and_prestage_inputfile__(f)
 
@@ -227,32 +232,36 @@ class ARC(IBackend):
 
                 try:
                     logger.debug("preparing job %s" % my_sj.getFQID('.'))
-                    jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
+                    jdlpath = my_sj.backend.preparejob(
+                        my_sc, master_input_sandbox)
 
                     if (not jdlpath) or (not os.path.exists(jdlpath)):
-                        raise GangaException('job %s not properly prepared' % my_sj.getFQID('.'))
+                        raise GangaException(
+                            'job %s not properly prepared' % my_sj.getFQID('.'))
 
-                    self.__appendResult__( my_sj.id, jdlpath )
+                    self.__appendResult__(my_sj.id, jdlpath)
                     return True
                 except Exception as x:
                     log_user_exception()
                     return False
 
         mt_data = []
-        for sc,sj in zip(subjobconfigs,rjobs):
-            mt_data.append( [sc, sj] )
+        for sc, sj in zip(subjobconfigs, rjobs):
+            mt_data.append([sc, sj])
 
-        myAlg  = MyAlgorithm()
+        myAlg = MyAlgorithm()
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
+        runner = MTRunner(
+            name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
         runner.start()
         runner.join(-1)
 
         if len(runner.getDoneList()) < len(mt_data):
             return None
         else:
-            # return a JDL file dictionary with subjob ids as keys, JDL file paths as values
+            # return a JDL file dictionary with subjob ids as keys, JDL file
+            # paths as values
             return runner.getResults()
 
     def __mt_bulk_submit__(self, node_jdls):
@@ -260,46 +269,52 @@ class ARC(IBackend):
 
         job = self.getJobObject()
 
-        logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
+        logger.warning(
+            'submitting %d subjobs ... it may take a while' % len(node_jdls))
 
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
             def __init__(self, gridObj, masterInputWorkspace, ce, arcverbose):
                 Algorithm.__init__(self)
-                self.inpw    = masterInputWorkspace
+                self.inpw = masterInputWorkspace
                 self.gridObj = gridObj
-                self.ce      = ce
+                self.ce = ce
                 self.arcverbose = arcverbose
 
             def process(self, jdl_info):
-                my_sj_id  = jdl_info[0]
+                my_sj_id = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
                 #my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce, self.verbose)
-                my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce, self.arcverbose)
+                my_sj_jid = self.gridObj.arc_submit(
+                    my_sj_jdl, self.ce, self.arcverbose)
 
                 if not my_sj_jid:
                     return False
                 else:
-                    self.__appendResult__( my_sj_id, my_sj_jid )
+                    self.__appendResult__(my_sj_id, my_sj_jid)
                     return True
 
         mt_data = []
         for id, jdl in node_jdls.items():
-            mt_data.append( (id, jdl) )
-            
-        myAlg  = MyAlgorithm(gridObj=grids['GLITE'],masterInputWorkspace=job.getInputWorkspace(), ce=self.CE, arcverbose=self.verbose)
+            mt_data.append((id, jdl))
+
+        myAlg = MyAlgorithm(gridObj=grids['GLITE'], masterInputWorkspace=job.getInputWorkspace(
+        ), ce=self.CE, arcverbose=self.verbose)
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(name='arc_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
+        runner = MTRunner(name='arc_jsubmit', algorithm=myAlg,
+                          data=myData, numThread=config['SubmissionThread'])
         runner.start()
         runner.join(timeout=-1)
 
         if len(runner.getDoneList()) < len(mt_data):
-            ## not all bulk jobs are successfully submitted. canceling the submitted jobs on WMS immediately
-            logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            grids['GLITE'].arc_cancelMultiple( runner.getResults().values() )
+            # not all bulk jobs are successfully submitted. canceling the
+            # submitted jobs on WMS immediately
+            logger.error(
+                'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
+            grids['GLITE'].arc_cancelMultiple(runner.getResults().values())
             return None
         else:
             return runner.getResults()
@@ -673,7 +688,7 @@ sys.exit(0)
 """
         return script
 
-    def preparejob(self,jobconfig,master_job_sandbox):
+    def preparejob(self, jobconfig, master_job_sandbox):
         '''Prepare the JDL'''
 
         script = self.__jobWrapperTemplate__()
@@ -685,26 +700,35 @@ sys.exit(0)
 
         import Ganga.Core.Sandbox as Sandbox
 
-        script = script.replace('###OUTPUTSANDBOX###',repr(jobconfig.outputbox)) #FIXME: check what happens if 'stdout','stderr' are specified here
+        # FIXME: check what happens if 'stdout','stderr' are specified here
+        script = script.replace(
+            '###OUTPUTSANDBOX###', repr(jobconfig.outputbox))
 
-        script = script.replace('###APPLICATION_NAME###',job.application._name)
-        script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
-        script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
+        script = script.replace(
+            '###APPLICATION_NAME###', job.application._name)
+        script = script.replace(
+            '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
+        script = script.replace(
+            '###APPLICATIONARGS###', repr(jobconfig.getArguments()))
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
 
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
+        script = script.replace(
+            '###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, '    '))
 
-        script = script.replace('###DOWNLOADINPUTFILES###',getWNCodeForDownloadingInputFiles(job, '    '))
+        script = script.replace(
+            '###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, '    '))
 
         if jobconfig.env:
-            script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
+            script = script.replace(
+                '###APPLICATIONENVS###', repr(jobconfig.env))
         else:
-            script = script.replace('###APPLICATIONENVS###',repr({}))
+            script = script.replace('###APPLICATIONENVS###', repr({}))
 
-        script = script.replace('###WRAPPERLOG###',repr(wrapperlog))
+        script = script.replace('###WRAPPERLOG###', repr(wrapperlog))
         import inspect
-        script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
+        script = script.replace(
+            '###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
         mon = job.getMonitoringService()
 
@@ -716,23 +740,26 @@ sys.exit(0)
 
         # try to print out the monitoring service information in debug mode
         try:
-            logger.debug('job info of monitoring service: %s' % str(self.monInfo))
+            logger.debug('job info of monitoring service: %s' %
+                         str(self.monInfo))
         except:
             pass
 
-        script = script.replace('###MONITORING_SERVICE###',mon.getWrapperScriptConstructorText())
+        script = script.replace(
+            '###MONITORING_SERVICE###', mon.getWrapperScriptConstructorText())
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
+        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(
+            Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
-        ## sandbox of child jobs should include master's sandbox
+        # sandbox of child jobs should include master's sandbox
         sandbox_files.extend(master_job_sandbox)
 
-        ## check the input file size and pre-upload larger inputs to the iocache
+        # check the input file size and pre-upload larger inputs to the iocache
         lfc_host = ''
 
-        input_sandbox_uris  = []
+        input_sandbox_uris = []
         input_sandbox_names = []
 
         ick = True
@@ -753,29 +780,31 @@ sys.exit(0)
 
                 if idx['remote']:
                     abspath = os.path.abspath(f)
-                    fsize   = os.path.getsize(abspath)
+                    fsize = os.path.getsize(abspath)
 
                     if fsize > max_prestaged_fsize:
                         max_prestaged_fsize = fsize
 
-                    input_sandbox_uris.append( idx['remote'][ os.path.basename(f) ] )
+                    input_sandbox_uris.append(
+                        idx['remote'][os.path.basename(f)])
 
-                    input_sandbox_names.append( os.path.basename( urlparse(f)[2] ) )
+                    input_sandbox_names.append(
+                        os.path.basename(urlparse(f)[2]))
 
                 if idx['local']:
                     input_sandbox_uris += idx['local']
-                    input_sandbox_names.append( os.path.basename(f) )
+                    input_sandbox_names.append(os.path.basename(f))
 
         if not ick:
             logger.error('stop job submission')
             return None
 
-        ## determin the lcg-cp timeout according to the max_prestaged_fsize
-        ##  - using the assumption of 1 MB/sec.
+        # determin the lcg-cp timeout according to the max_prestaged_fsize
+        # - using the assumption of 1 MB/sec.
         max_prestaged_fsize = 0
         lfc_host = ''
         transfer_timeout = config['SandboxTransferTimeout']
-        predict_timeout  = int( math.ceil( max_prestaged_fsize/1000000.0 ) )
+        predict_timeout = int(math.ceil(max_prestaged_fsize / 1000000.0))
 
         if predict_timeout > transfer_timeout:
             transfer_timeout = predict_timeout
@@ -783,22 +812,25 @@ sys.exit(0)
         if transfer_timeout < 60:
             transfer_timeout = 60
 
-        script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
+        script = script.replace(
+            '###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
 
-        ## update the job wrapper with the inputsandbox list
-        script = script.replace('###INPUTSANDBOX###',repr({'remote':{}, 'local': input_sandbox_names }))
+        # update the job wrapper with the inputsandbox list
+        script = script.replace(
+            '###INPUTSANDBOX###', repr({'remote': {}, 'local': input_sandbox_names}))
 
-        ## write out the job wrapper and put job wrapper into job's inputsandbox
-        scriptPath = inpw.writefile(FileBuffer('__jobscript_%s__' % job.getFQID('.'),script),executable=1)
-        input_sandbox  = input_sandbox_uris + [scriptPath]
+        # write out the job wrapper and put job wrapper into job's inputsandbox
+        scriptPath = inpw.writefile(
+            FileBuffer('__jobscript_%s__' % job.getFQID('.'), script), executable=1)
+        input_sandbox = input_sandbox_uris + [scriptPath]
 
         for isb in input_sandbox:
             logger.debug('ISB URI: %s' % isb)
 
-        ## compose output sandbox to include by default the following files:
-        ##  - gzipped stdout (transferred only when the JobLogHandler is WMS)
-        ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
-        ##  - __jobscript__.log (job wrapper's log)
+        # compose output sandbox to include by default the following files:
+        # - gzipped stdout (transferred only when the JobLogHandler is WMS)
+        # - gzipped stderr (transferred only when the JobLogHandler is WMS)
+        # - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
@@ -806,33 +838,33 @@ sys.exit(0)
             output_sandbox.append(outputSandboxPattern)
 
         if config['JobLogHandler'] in ['WMS']:
-            output_sandbox += ['stdout.gz','stderr.gz']
+            output_sandbox += ['stdout.gz', 'stderr.gz']
 
         if len(jobconfig.outputbox):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
-        ## compose ARC XRSL
+        # compose ARC XRSL
         xrsl = {
             #'VirtualOrganisation' : config['VirtualOrganisation'],
-            'executable' : os.path.basename(scriptPath),
+            'executable': os.path.basename(scriptPath),
             'environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
             #'stdout'                : 'stdout',
             #'stderr'                : 'stderr',
-            'inputFiles'            : input_sandbox,
-            'outputFiles'           : output_sandbox,
+            'inputFiles': input_sandbox,
+            'outputFiles': output_sandbox,
             #'OutputSandboxBaseDestURI': 'gsiftp://localhost'
         }
 
         xrsl['environment'].update({'GANGA_LCG_CE': self.CE})
         #xrsl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
 
-        #if self.jobtype.upper() in ['NORMAL','MPICH']:
-            #xrsl['JobType'] = self.jobtype.upper()
-            #if self.jobtype.upper() == 'MPICH':
-                #xrsl['Requirements'].append('(other.GlueCEInfoTotalCPUs >= NodeNumber)')
-                #xrsl['Requirements'].append('Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
-                #xrsl['NodeNumber'] = self.requirements.nodenumber
-        #else:
+        # if self.jobtype.upper() in ['NORMAL','MPICH']:
+        #xrsl['JobType'] = self.jobtype.upper()
+        # if self.jobtype.upper() == 'MPICH':
+        #xrsl['Requirements'].append('(other.GlueCEInfoTotalCPUs >= NodeNumber)')
+        # xrsl['Requirements'].append('Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
+        #xrsl['NodeNumber'] = self.requirements.nodenumber
+        # else:
         #    logger.warning('JobType "%s" not supported' % self.jobtype)
         #    return
 
@@ -842,11 +874,11 @@ sys.exit(0)
 
         xrslText = Grid.expandxrsl(xrsl)
         logger.debug('subjob XRSL: %s' % xrslText)
-        return inpw.writefile(FileBuffer('__xrslfile__',xrslText))
+        return inpw.writefile(FileBuffer('__xrslfile__', xrslText))
 
     def kill(self):
         '''Kill the job'''
-        job   = self.getJobObject()
+        job = self.getJobObject()
 
         logger.info('Killing job %s' % job.getFQID('.'))
 
@@ -873,16 +905,16 @@ sys.exit(0)
 
         job = self.getJobObject()
 
-        ## killing the individually re-submitted subjobs
+        # killing the individually re-submitted subjobs
         logger.debug('cancelling running/submitted subjobs.')
 
-        ## 1. collect job ids
+        # 1. collect job ids
         ids = []
         for sj in job.subjobs:
-            if sj.status in ['submitted','running'] and sj.backend.id:
+            if sj.status in ['submitted', 'running'] and sj.backend.id:
                 ids.append(sj.backend.id)
 
-        ## 2. cancel the collected jobs
+        # 2. cancel the collected jobs
         ck = grids['GLITE'].arc_cancelMultiple(ids)
         if not ck:
             logger.warning('Job cancellation failed')
@@ -897,21 +929,22 @@ sys.exit(0)
     def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''submit multiple subjobs in parallel, by default using 10 concurrent threads'''
 
-        assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
-        
+        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
+
         # prepare the subjobs, jdl repository before bulk submission
-        node_jdls = self.__mt_job_prepare__(rjobs, subjobconfigs, masterjobconfig)
-        
+        node_jdls = self.__mt_job_prepare__(
+            rjobs, subjobconfigs, masterjobconfig)
+
         if not node_jdls:
             logger.error('Some jobs not successfully prepared')
             return False
-        
+
         # set all subjobs to submitting status
         for sj in rjobs:
             sj.updateStatus('submitting')
-        
-        node_jids  = self.__mt_bulk_submit__(node_jdls)
-        
+
+        node_jids = self.__mt_bulk_submit__(node_jdls)
+
         status = False
 
         if node_jids:
@@ -923,13 +956,14 @@ sys.exit(0)
                     sj.updateStatus('submitted')
                     sj.info.submit_counter += 1
                 else:
-                    logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
-                    
+                    logger.warning(
+                        'subjob %s not successfully submitted' % sj.getFQID('.'))
+
             status = True
 
         return status
 
-    def master_bulk_resubmit(self,rjobs):
+    def master_bulk_resubmit(self, rjobs):
         '''ARC bulk resubmission'''
 
         from Ganga.Core import IncompleteJobSubmissionError
@@ -940,14 +974,14 @@ sys.exit(0)
         # compose master JDL for collection job
         node_jdls = {}
         for sj in rjobs:
-            jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
+            jdlpath = os.path.join(sj.inputdir, '__jdlfile__')
             node_jdls[sj.id] = jdlpath
 
         # set all subjobs to submitting status
         for sj in rjobs:
             sj.updateStatus('submitting')
 
-        node_jids  = self.__mt_bulk_submit__(node_jdls)
+        node_jids = self.__mt_bulk_submit__(node_jdls)
 
         status = False
 
@@ -961,8 +995,9 @@ sys.exit(0)
                     sj.updateStatus('submitted')
                     sj.info.submit_counter += 1
                 else:
-                    logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
-                    
+                    logger.warning(
+                        'subjob %s not successfully submitted' % sj.getFQID('.'))
+
             status = True
 
 #            # set all subjobs to submitted status
@@ -977,7 +1012,7 @@ sys.exit(0)
 
         return status
 
-    def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''Submit the master job to the grid'''
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
@@ -985,53 +1020,58 @@ sys.exit(0)
 
         job = self.getJobObject()
 
-        ## finding ARC CE endpoint for job submission
+        # finding ARC CE endpoint for job submission
         #allowed_celist = []
-        #try:
+        # try:
         #    allowed_celist = self.requirements.getce()
         #    if not self.CE and allowed_celist:
         #        self.CE = allowed_celist[0]
-        #except:
+        # except:
         #    logger.warning('ARC CE assigment from ARCRequirements failed.')
 
-        #if self.CE and allowed_celist:
+        # if self.CE and allowed_celist:
         #    if self.CE not in allowed_celist:
         #        logger.warning('submission to CE not allowed: %s, use %s instead' % ( self.CE, allowed_celist[0] ) )
         #        self.CE = allowed_celist[0]
-        
+
         # use arc info to check for any endpoints recorded in the config file
         rc, output = grids['GLITE'].arc_info()
 
         if not self.CE and rc != 0:
-            raise GangaException("ARC CE endpoint not set and no default settings in '%s'. " % config['ArcConfigFile'])
+            raise GangaException(
+                "ARC CE endpoint not set and no default settings in '%s'. " % config['ArcConfigFile'])
         elif self.CE:
-            logger.info('ARC CE endpoint set to: '+str(self.CE))
+            logger.info('ARC CE endpoint set to: ' + str(self.CE))
         else:
-            logger.info("Using ARC CE endpoints defined in '%s'" % config['ArcConfigFile'])
+            logger.info("Using ARC CE endpoints defined in '%s'" %
+                        config['ArcConfigFile'])
 
-        ## delegate proxy to ARC CE
-        #if not grids['GLITE'].arc_proxy_delegation(self.CE):
+        # delegate proxy to ARC CE
+        # if not grids['GLITE'].arc_proxy_delegation(self.CE):
         #    logger.warning('proxy delegation to %s failed' % self.CE)
 
-        ## doing massive job preparation
+        # doing massive job preparation
         if len(job.subjobs) == 0:
-            ick = IBackend.master_submit(self,rjobs,subjobconfigs,masterjobconfig)
+            ick = IBackend.master_submit(
+                self, rjobs, subjobconfigs, masterjobconfig)
         else:
-            ick = self.master_bulk_submit(rjobs,subjobconfigs,masterjobconfig)
-        
+            ick = self.master_bulk_submit(
+                rjobs, subjobconfigs, masterjobconfig)
+
         profiler.check('==> master_submit() elapsed time')
 
         return ick
 
-    def submit(self,subjobconfig,master_job_sandbox):
+    def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
         ick = False
 
-        xrslpath = self.preparejob(subjobconfig,master_job_sandbox)
+        xrslpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if xrslpath:
-            self.id = grids['GLITE'].arc_submit(xrslpath,self.CE, self.verbose)
+            self.id = grids['GLITE'].arc_submit(
+                xrslpath, self.CE, self.verbose)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1039,7 +1079,7 @@ sys.exit(0)
 
         return ick
 
-    def master_auto_resubmit(self,rjobs):
+    def master_auto_resubmit(self, rjobs):
         """
         Resubmit each subjob individually as bulk resubmission will overwrite
         previous master job statuses
@@ -1056,7 +1096,7 @@ sys.exit(0)
 
         return True
 
-    def master_resubmit(self,rjobs):
+    def master_resubmit(self, rjobs):
         '''Resubmit the master job to the grid'''
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
@@ -1066,7 +1106,7 @@ sys.exit(0)
 
         ick = False
 
-        ## delegate proxy to ARC CE
+        # delegate proxy to ARC CE
         if not grids['GLITE'].arc_proxy_delegation(self.CE):
             logger.warning('proxy delegation to %s failed' % self.CE)
 
@@ -1074,17 +1114,17 @@ sys.exit(0)
             # case 1: master job normal resubmission
             logger.debug('rjobs: %s' % str(rjobs))
             logger.debug('mode: master job normal resubmission')
-            ick = IBackend.master_resubmit(self,rjobs)
+            ick = IBackend.master_resubmit(self, rjobs)
 
         elif job.master:
             # case 2: individual subjob resubmission
             logger.debug('mode: individual subjob resubmission')
-            ick = IBackend.master_resubmit(self,rjobs)
+            ick = IBackend.master_resubmit(self, rjobs)
 
         else:
             # case 3: master job bulk resubmission
             logger.debug('mode: master job resubmission')
-            
+
             ick = self.master_bulk_resubmit(rjobs)
             if not ick:
                 raise GangaException('ARC bulk submission failure')
@@ -1103,7 +1143,7 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = grids['GLITE'].arc_submit(jdlpath,self.CE,self.verbose)
+            self.id = grids['GLITE'].arc_submit(jdlpath, self.CE, self.verbose)
 
             if self.id:
                 # refresh the lcg job information
@@ -1120,73 +1160,77 @@ sys.exit(0)
 
         backenddict = {}
         jobdict = {}
-        for j in jobs:            
-            if j.backend.id and ( (datetime.datetime.utcnow() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
-                jobdict[ j.backend.id ] = j
-                backenddict[ j.backend.actualCE ] = j
+        for j in jobs:
+            if j.backend.id and ((datetime.datetime.utcnow() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
+                jobdict[j.backend.id] = j
+                backenddict[j.backend.actualCE] = j
 
         if len(jobdict.keys()) == 0:
             return
 
-        jobInfoDict = grids['GLITE'].arc_status(jobdict.keys(),backenddict.keys())
+        jobInfoDict = grids['GLITE'].arc_status(
+            jobdict.keys(), backenddict.keys())
         jidListForPurge = []
 
-        ## update job information for those available in jobInfoDict
+        # update job information for those available in jobInfoDict
         for id, info in jobInfoDict.items():
 
             if info:
 
                 job = jobdict[id]
-                
+
                 if job.backend.actualCE != urlparse(id)[1].split(":")[0]:
                     job.backend.actualCE = urlparse(id)[1].split(":")[0]
-                
+
                 if job.backend.status != info['State']:
-                    
+
                     doStatusUpdate = True
 
-                    ## no need to update Ganga job status if backend status is not changed
+                    # no need to update Ganga job status if backend status is
+                    # not changed
                     if info['State'] == job.backend.status:
                         doStatusUpdate = False
 
-                    ## download output sandboxes if final status is reached
-                    elif info['State'] in ['Finished', '(FINISHED)','Finished (FINISHED)']:
+                    # download output sandboxes if final status is reached
+                    elif info['State'] in ['Finished', '(FINISHED)', 'Finished (FINISHED)']:
 
-                        ## grab output sandbox
-                        if grids['GLITE'].arc_get_output( job.backend.id, job.getOutputWorkspace( create = True ).getPath() ):
-                            (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.getOutputWorkspace( create = True ).getPath())
+                        # grab output sandbox
+                        if grids['GLITE'].arc_get_output(job.backend.id, job.getOutputWorkspace(create=True).getPath()):
+                            (ick, app_exitcode) = grids['GLITE'].__get_app_exitcode__(
+                                job.getOutputWorkspace(create=True).getPath())
                             job.backend.exitcode = app_exitcode
 
-                            jidListForPurge.append( job.backend.id )
+                            jidListForPurge.append(job.backend.id)
 
                         else:
-                            logger.error('fail to download job output: %s' % jobdict[id].getFQID('.'))
+                            logger.error(
+                                'fail to download job output: %s' % jobdict[id].getFQID('.'))
 
                     if doStatusUpdate:
                         job.backend.status = info['State']
                         if 'Exit Code' in info:
                             try:
-                                job.backend.exitcode_arc = int( info['Exit Code'] )
+                                job.backend.exitcode_arc = int(
+                                    info['Exit Code'])
                             except:
                                 job.backend.exitcode_arc = 1
-                                
+
                         if 'Job Error' in info:
-                            try:        
+                            try:
                                 job.backend.reason = info['Job Error']
                             except:
-                                pass    
-
+                                pass
 
                         job.backend.updateGangaJobStatus()
             else:
-                logger.warning('fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
+                logger.warning(
+                    'fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
 
-        ## purging the jobs the output has been fetched locally                                                                                                    
+        # purging the jobs the output has been fetched locally
         if jidListForPurge:
             if not grids['GLITE'].arc_purgeMultiple(jidListForPurge):
                 logger.warning("Failed to purge all ARC jobs.")
 
-                
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
     def updateGangaJobStatus(self):
@@ -1198,15 +1242,17 @@ sys.exit(0)
             job.updateStatus('running')
         elif self.status.startswith('Finished'):
             if job.backend.exitcode and job.backend.exitcode != 0:
-                job.backend.reason = 'non-zero app. exit code: %s' % repr(job.backend.exitcode)
+                job.backend.reason = 'non-zero app. exit code: %s' % repr(
+                    job.backend.exitcode)
                 job.updateStatus('failed')
             elif job.backend.exitcode_arc and job.backend.exitcode_arc != 0:
-                job.backend.reason = 'non-zero ARC job exit code: %s' % repr(job.backend.exitcode_arc)
+                job.backend.reason = 'non-zero ARC job exit code: %s' % repr(
+                    job.backend.exitcode_arc)
                 job.updateStatus('failed')
             else:
                 job.updateStatus('completed')
 
-        elif self.status in ['DONE-FAILED','ABORTED','UNKNOWN','Failed']:
+        elif self.status in ['DONE-FAILED', 'ABORTED', 'UNKNOWN', 'Failed']:
             job.updateStatus('failed')
 
         elif self.status in ['CANCELLED']:
@@ -1222,11 +1268,14 @@ logger = getLogger()
 
 config = getConfig('LCG')
 
-## add ARC specific configuration options
+# add ARC specific configuration options
 #config.addOption('ArcInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
 #config.addOption('ArcOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
-config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240, 'Time in seconds to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
-config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml", 'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
-config.addOption('ArcConfigFile', "", 'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
+config.addOption('ArcWaitTimeBeforeStartingMonitoring', 240,
+                 'Time in seconds to wait after submission before starting to monitor ARC jobs to ensure they are in the system')
+config.addOption('ArcJobListFile', "~/.arc/gangajobs.xml",
+                 'File to store ARC job info in when submitting and monitoring, i.e. argument to "-j" option in arcsub. Ganga default is different to ARC default (~/.arc/jobs.xml) to keep them separate.')
+config.addOption('ArcConfigFile', "",
+                 'Config file for ARC submission. Use to specify CEs, etc. Default is blank which will mean no config file is specified and the default (~/arc/client.conf) is used')
 #config.addOption('ArcPrologue','','sets the prologue script')
 #config.addOption('ArcEpilogue','','sets the epilogue script')

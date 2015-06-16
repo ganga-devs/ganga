@@ -1,1 +1,2 @@
-import ApplicationMigration, AttributeMigration
+import ApplicationMigration
+import AttributeMigration

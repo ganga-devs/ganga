@@ -7,11 +7,11 @@
 # Author: K. Harrison
 # Created: 051228
 # Version 1.0: 051228
-                                                                                
+
 """Package initialisation file"""
-                                                                                
-__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "28 July 2006"
+
+__author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__ = "28 July 2006"
 __version__ = "1.0"
 
 from Condor import Condor

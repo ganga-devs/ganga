@@ -1,15 +1,16 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: GangaRepository.py,v 1.1.2.9 2009-07-16 14:04:17 ebke Exp $
-################################################################################
+##########################################################################
 
 # Only the corresponding registry may access the methods of a GangaRepository.
 # It should only raise RepositoryErrors and LockingErrors
 
 # there are two "MAGIC" variables in an object: id and status.
 # If a root object has an id field, it will be set to the repository id
-# if a root object has a status field and some load error occurs, it will be set to "incomplete"
+# if a root object has a status field and some load error occurs, it will
+# be set to "incomplete"
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -22,58 +23,76 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
 # Empty Ganga Object. This must never be saved back to file.
+
+
 class EmptyGangaObject(GangaObject):
+
     """Empty Ganga Object. Is used to construct incomplete jobs"""
-    _schema = Schema(Version(0,0), {})
-    _name   = "EmptyGangaObject"
+    _schema = Schema(Version(0, 0), {})
+    _name = "EmptyGangaObject"
     _category = "internal"
     _hidden = 1
 
 # Error raised on schema version error
+
+
 class SchemaVersionError(GangaException):
-    def __init__(self,what):
-        GangaException.__init__(self,what)
-        self.what=what
+
+    def __init__(self, what):
+        GangaException.__init__(self, what)
+        self.what = what
+
     def __str__(self):
-        return "SchemaVersionError: %s"%self.what
+        return "SchemaVersionError: %s" % self.what
+
 
 class InaccessibleObjectError(GangaException):
-    def __init__(self,repo,id,orig):
-        GangaException.__init__(self,"Inaccessible Object")
-        self.repo=repo
-        self.id=id
-        self.orig=orig
+
+    def __init__(self, repo, id, orig):
+        GangaException.__init__(self, "Inaccessible Object")
+        self.repo = repo
+        self.id = id
+        self.orig = orig
+
     def __str__(self):
         if str(self.orig).find('comments') > -1:
             return "Please restart Ganga in order to reload the object"
         else:
-            return "Repository '%s' object #%s is not accessible because of an %s: %s"%(self.repo.registry.name,self.id,self.orig.__class__.__name__, str(self.orig))
+            return "Repository '%s' object #%s is not accessible because of an %s: %s" % (self.repo.registry.name, self.id, self.orig.__class__.__name__, str(self.orig))
+
 
 class RepositoryError(GangaException):
+
     """ This error is raised if there is a fatal error in the repository."""
-    def __init__(self,repo,what):
-        self.what=what
+
+    def __init__(self, repo, what):
+        self.what = what
         self.repository = repo
-        logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
-        logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
+        logger.error("A severe error occurred in the Repository '%s': %s" % (
+            repo.registry.name, what))
+        logger.error(
+            'If you believe the problem has been solved, type "reactivate()" to re-enable ')
         import Ganga.Runtime.bootstrap
-        #bootstrap.printOpenFiles()
+        # bootstrap.printOpenFiles()
         disableInternalServices()
-        GangaException.__init__(self,what)
+        GangaException.__init__(self, what)
+
 
 class GangaRepository(object):
+
     """ GangaRepository is the base class for repository backend implementations.
         It provides an interface for developers of new backends.
         The base class implements a transient Ganga Repository for testing purposes.
     """
-    def __init__(self, registry, locking = True):
+
+    def __init__(self, registry, locking=True):
         """GangaRepository constructor. Initialization should be done in startup()"""
         self.registry = registry
         self.objects = {}
         self.incomplete_objects = []
         self._found_classes = {}
 
-## Functions that should be overridden and implemented by derived classes.
+# Functions that should be overridden and implemented by derived classes.
     def startup(self):
         """startup() --> None
         Connect to the repository.
@@ -81,7 +100,7 @@ class GangaRepository(object):
         """
         raise NotImplementedError
 
-    def update_index(self, id = None):
+    def update_index(self, id=None):
         """update_index(id = None) --> iterable of ids
         Read the index containing the given ID (or all indices if id is None).
         Create objects as needed , and set the _index_cache for all objects 
@@ -98,7 +117,7 @@ class GangaRepository(object):
         """
         raise NotImplementedError
 
-    def add(self, objs, force_ids = None):
+    def add(self, objs, force_ids=None):
         """add(objects) --> list of object IDs in this repository
         Add the given objects to the repository and return their IDs 
         After successfully determining the id call _internal_setitem__(id,obj)
@@ -107,7 +126,7 @@ class GangaRepository(object):
         Raise RepositoryError
         """
         raise NotImplementedError
-        
+
     def delete(self, ids):
         """delete(ids) --> None
         Delete the objects specified by the ids from the repository.
@@ -135,7 +154,7 @@ class GangaRepository(object):
         """
         raise NotImplementedError
 
-    def lock(self,ids):
+    def lock(self, ids):
         """lock(ids) --> bool
         Locks the specified IDs against modification from other Ganga sessions
         Raise RepositoryError
@@ -143,7 +162,7 @@ class GangaRepository(object):
         """
         raise NotImplementedError
 
-    def unlock(self,ids):
+    def unlock(self, ids):
         """unlock(ids) --> None
         Unlock the specified IDs to allow another Ganga session to modify them
         EXPERIMENTAL - does not have to be implemented.
@@ -158,14 +177,14 @@ class GangaRepository(object):
         pass
 
 # Optional but suggested functions
-    def get_lock_session(self,id): 
+    def get_lock_session(self, id):
         """get_lock_session(id)
         Tries to determine the session that holds the lock on id for information purposes, and return an informative string.
         Returns None on failure
         """
         return None
 
-    def get_other_sessions(self): 
+    def get_other_sessions(self):
         """get_session_list()
         Tries to determine the other sessions that are active and returns an informative string for each of them.
         """
@@ -185,9 +204,9 @@ class GangaRepository(object):
         Raise PluginManagerError if the class name is not found"""
         if (category, classname) not in self._found_classes:
             cls = allPlugins.find(category, classname)
-            self._found_classes[ (category, classname) ] = cls
-        cls = self._found_classes[ (category, classname) ]
-        obj  = super(cls, cls).__new__(cls)
+            self._found_classes[(category, classname)] = cls
+        cls = self._found_classes[(category, classname)]
+        obj = super(cls, cls).__new__(cls)
         obj._proxyObject = None
         obj._data = None
 
@@ -203,7 +222,7 @@ class GangaRepository(object):
         self.objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
-        if obj._data and "id" in obj._data.keys(): # MAGIC id
+        if obj._data and "id" in obj._data.keys():  # MAGIC id
             obj.id = id
         obj._setRegistry(self.registry)
 
@@ -219,19 +238,21 @@ class GangaRepository(object):
 
 
 class GangaRepositoryTransient(object):
+
     """This class implements a transient Ganga Repository for testing purposes.
     """
-## Functions that should be overridden and implemented by derived classes.
+# Functions that should be overridden and implemented by derived classes.
+
     def startup(self):
         self._next_id = 0
 
-    def update_index(self, id = None):
+    def update_index(self, id=None):
         pass
 
     def shutdown(self):
         pass
 
-    def add(self, objs, force_ids = None):
+    def add(self, objs, force_ids=None):
         assert force_ids is None or len(force_ids) == len(objs)
         ids = []
         for i in range(len(objs)):
@@ -244,7 +265,7 @@ class GangaRepositoryTransient(object):
             ids.append(id)
             self._next_id = max(self._next_id + 1, id + 1)
         return ids
-        
+
     def delete(self, ids):
         for id in ids:
             self._internal_del__(id)
@@ -255,8 +276,8 @@ class GangaRepositoryTransient(object):
     def flush(self, ids):
         pass
 
-    def lock(self,ids):
+    def lock(self, ids):
         return True
 
-    def unlock(self,ids):
+    def unlock(self, ids):
         pass

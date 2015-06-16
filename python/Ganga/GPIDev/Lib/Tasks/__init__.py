@@ -1,12 +1,12 @@
 # Import classes that should be in the Tasks namespace
-## Import the list of tasks and the task and abstract job definition
+# Import the list of tasks and the task and abstract job definition
 #from TaskList import TaskList
 
 from Ganga.Core.GangaRepository import addRegistry
 from TaskRegistry import TaskRegistry
 addRegistry(TaskRegistry("tasks", "Tasks Registry"))
 
-## Tasks
+# Tasks
 from Task import Task
 from Transform import Transform
 
@@ -24,5 +24,4 @@ from CoreUnit import CoreUnit
 #logger = Ganga.Utility.logging.getLogger()
 from common import logger
 
-from TaskApplication import ExecutableTask, ArgSplitterTask 
-
+from TaskApplication import ExecutableTask, ArgSplitterTask

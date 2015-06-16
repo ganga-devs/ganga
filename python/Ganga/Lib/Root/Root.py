@@ -1,10 +1,10 @@
 from __future__ import print_function
 
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: Root.py,v 1.4 2008-09-12 08:08:58 wreece Exp $
-################################################################################
+##########################################################################
 
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
@@ -18,31 +18,38 @@ from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core import ApplicationConfigurationError
 
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
-from Ganga.Utility.root import getrootsys,getpythonhome
+from Ganga.Utility.root import getrootsys, getpythonhome
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 #config = getConfig('Root_Properties')
 
-import sys, shutil
-config = makeConfig('ROOT',"Options for Root backend")
-config.addOption('arch','slc4_ia32_gcc34','Architecture of ROOT')
-config.addOption('location','/afs/cern.ch/sw/lcg/external/root','Location of ROOT')
-config.addOption('path','','Set to a specific ROOT version. Will override other options.')
-config.addOption('pythonhome','${location}/../Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
-config.addOption('pythonversion','',"Version number of python used for execution python ROOT script")
-config.addOption('version','6.02.00','Version of ROOT')
-    
+import sys
+import shutil
+config = makeConfig('ROOT', "Options for Root backend")
+config.addOption('arch', 'slc4_ia32_gcc34', 'Architecture of ROOT')
+config.addOption(
+    'location', '/afs/cern.ch/sw/lcg/external/root', 'Location of ROOT')
+config.addOption(
+    'path', '', 'Set to a specific ROOT version. Will override other options.')
+config.addOption('pythonhome', '${location}/../Python/${pythonversion}/${arch}/',
+                 'Location of the python used for execution of PyROOT script')
+config.addOption('pythonversion', '',
+                 "Version number of python used for execution python ROOT script")
+config.addOption('version', '6.02.00', 'Version of ROOT')
+
 import os
 from Ganga.Utility.files import expandfilename
-shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
- 
+shared_path = os.path.join(expandfilename(getConfig(
+    'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+
 
 class Root(IPrepareApp):
+
     """
     Root application -- running ROOT
-    
+
     To run a job in ROOT you need to specify the CINT script to be
     executed. Additional files required at run time (shared libraries,
     source files, other scripts, Ntuples) should be placed in the
@@ -68,31 +75,31 @@ class Root(IPrepareApp):
     r.args = ['Minbias', 10]
 
     j = Job(application=r, backend=LCG())
-    
+
     Using Shared Libraries:
 
     If you have private shared libraries that should be loaded you need to
     include them in the inputsandbox. Files you want back as a result of
     running your job should be placed in your outputsandbox. 
-    
+
     The shared library mechanism is particularly useful in order to create 
     a thin wrapper around code that uses precompiled libraries, or
     that has not been designed to work in the CINT environment.
-    
+
     **For more detailed instructions, see the following Wiki page:**
-    
+
     https://twiki.cern.ch/twiki/bin/view/ArdaGrid/HowToRootJobsSharedObject
-    
+
     A summary of this page is given below:
-    
+
     Consider the follow in CINT script, runMain.C, that makes use of a ROOT 
     compatible shared library:
-    
+
     void runMain(){
       //set up main, eg command line opts
       char* argv[] = {"runMain.C","--muons","100"};
       int argc = 3;
-  
+
       //load the shared library
       gSystem->Load("libMain");
 
@@ -100,12 +107,12 @@ class Root(IPrepareApp):
       Main m(argv,argc);
       int returnCode = m.run();
     }
-    
+
     The class Main is as follows and has been compiled into a shared
     library, libMain.so. 
-    
+
     Main.h:
-    
+
     #ifndef MAIN_H
     #define MAIN_H
     #include "TObject.h"
@@ -116,13 +123,13 @@ class Root(IPrepareApp):
           Main(){}//needed by Root IO
           Main(char* argv[], int argc);
           int run();
-  
+
           ClassDef(Main,1)//Needed for CINT
     };
     #endif
-    
+
     Main.cpp:
-    
+
     #include <iostream>
     using std::cout;
     using std::endl;
@@ -139,11 +146,11 @@ class Root(IPrepareApp):
     }
 
     To run this on LCG, a Job could be created as follows:
-    
+
     r = Root()
     r.version = '5.12.00' #version must be on LCG external site
     r.script = 'runMain.C'
-    
+
     j = Job(application=r,backend=LCG())
     j.inputsandbox = ['libMain.so']
 
@@ -156,42 +163,42 @@ class Root(IPrepareApp):
     used is 'slc3_ia32_gcc323' if the Root version is 5.16 or earlier and
     'slc4_ia32_gcc34' otherwise. This reflects the availability of builds
     on the SPI server:
-    
+
     http://service-spi.web.cern.ch/service-spi/external/distribution/
-         
-     
+
+
     For backends that use a local installation of ROOT the location should
     be set correctly in the [Root] section of the configuration.
-    
+
     Using Python and Root:
-    
+
     The Root project provides bindings for Python, the language supported by 
     the Ganga command line interface. These bindings are referred to as PyRoot.
     A job is run using PyRoot if the script has the '.py' extension or the 
     usepython flag is set to True.
-    
+
     There are many example PyRoot scripts available in the Root tutorials. 
     A short example is given below:
-    
+
     gengaus.py:
-    
+
     if __name__ == '__main__':
         from ROOT import gRandom
-        
+
         output = file('gaus.txt','w')
         try:
             for i in range(100):
                 print(gRandom.Gaus(), file=output)
         finally:
             output.close()
-            
+
     The above script could be run in Ganga as follows:
-            
+
     r = Root()
     r.version = '5.14.00'
     r.script = '~/gengaus.py'
     r.usepython = True #set automatically for '.py' scripts
-    
+
     j = Job(application=r,backend=Local())
     j.outputsandbox = ['gaus.txt']
     j.submit()
@@ -202,37 +209,37 @@ class Root(IPrepareApp):
 
     The pythonhome variable in the [Root] section of .gangarc controls which
     interpreter will be used for PyRoot jobs.
-        
+
     When using PyRoot on a remote backend, e.g. LCG, the python version that
     is used will depend on that used to build the Root version requested.
-    
+
     """
-    _schema = Schema(Version(1,1), {
-        'script' : FileItem(defvalue=File(),preparable=1, doc='A File object specifying the script to execute when Root starts',checkset='_checkset_script'), 
-        'args' : SimpleItem(defvalue=[],typelist=['str','int'],sequence=1,doc="List of arguments for the script. Accepted types are numerics and strings"),
-        'version' : SimpleItem(defvalue='5.18.00',doc="The version of Root to run"),
-        'usepython' : SimpleItem(defvalue = False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
-        'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
+    _schema = Schema(Version(1, 1), {
+        'script': FileItem(defvalue=File(), preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
+        'args': SimpleItem(defvalue=[], typelist=['str', 'int'], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
+        'version': SimpleItem(defvalue='5.18.00', doc="The version of Root to run"),
+        'usepython': SimpleItem(defvalue=False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
+        'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool'], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
-        } )
+    })
     _category = 'applications'
     _name = 'Root'
-    _exportmethods = ['prepare','unprepare']
-    _GUIPrefs = [ { 'attribute' : 'script', 'widget' : 'FileOrString' },
-                  { 'attribute' : 'args', 'widget' : 'String_List' },
-                  { 'attribute' : 'version', 'widget' : 'String' },
-                  { 'attribute' : 'usepython', 'widget' : 'Bool' } ]
-    
-    _GUIAdvancedPrefs = [ { 'attribute' : 'script', 'widget' : 'FileOrString' },
-                          { 'attribute' : 'args', 'widget' : 'String_List' },
-                          { 'attribute' : 'usepython', 'widget' : 'Bool' },
-                          { 'attribute' : 'version', 'widget' : 'String' } ]
+    _exportmethods = ['prepare', 'unprepare']
+    _GUIPrefs = [{'attribute': 'script', 'widget': 'FileOrString'},
+                 {'attribute': 'args', 'widget': 'String_List'},
+                 {'attribute': 'version', 'widget': 'String'},
+                 {'attribute': 'usepython', 'widget': 'Bool'}]
+
+    _GUIAdvancedPrefs = [{'attribute': 'script', 'widget': 'FileOrString'},
+                         {'attribute': 'args', 'widget': 'String_List'},
+                         {'attribute': 'usepython', 'widget': 'Bool'},
+                         {'attribute': 'version', 'widget': 'String'}]
 
     def __init__(self):
-        super(Root,self).__init__()
-        
-    def configure(self,masterappconfig):
-        return (None,None)
+        super(Root, self).__init__()
+
+    def configure(self, masterappconfig):
+        return (None, None)
 
     def unprepare(self, force=False):
         """
@@ -244,25 +251,26 @@ class Root(IPrepareApp):
             self.is_prepared = None
         self.hash = None
 
-
-
     def prepare(self, force=False):
         """
         A method to place the Root application into a prepared state.
         """
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+            raise Exception(
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
         self.is_prepared = ShareDir()
-        logger.info('Created shared directory: %s'%(self.is_prepared.name))
+        logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
         try:
             copy_worked = self.copyPreparables()
             if copy_worked == 0:
-                logger.error('Failed during prepare() phase. Unpreparing application.')
+                logger.error(
+                    'Failed during prepare() phase. Unpreparing application.')
                 self.unprepare()
                 return 0
             else:
-                #add the newly created shared directory into the metadata system if the app is associated with a persisted object
+                # add the newly created shared directory into the metadata
+                # system if the app is associated with a persisted object
                 self.checkPreparedHasParent(self)
                 self.post_prepare()
                 return 1
@@ -270,41 +278,46 @@ class Root(IPrepareApp):
             self.unprepare()
             raise
 
-    def _checkset_script(self,value):
-        """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention.""" 
+    def _checkset_script(self, value):
+        """Callback used to set usepython to 1 if the script name has a *.py or *.PY extention."""
         from os.path import splitext
-        (_,ext) = splitext(str(value.name))
-        #use pyroot if this is a python script
+        (_, ext) = splitext(str(value.name))
+        # use pyroot if this is a python script
         if('.py' == ext.lower()):
             logger.debug('Setting usepython to True')
             self.usepython = True
 
 
 class RootRTHandler(IRuntimeHandler):
-    
+
     def quoteCintArgString(self, cintArg):
         return '\\"%s\\"' % cintArg
-    
-    def _getRootEnvSys(self,version,usepython=False):
+
+    def _getRootEnvSys(self, version, usepython=False):
         """Returns an environment suitable for running Root and sometimes Python."""
         from os.path import join
         from os import environ
 
-        from Ganga.Lib.Root.shared import setEnvironment,findPythonVersion
+        from Ganga.Lib.Root.shared import setEnvironment, findPythonVersion
 
         rootsys = getrootsys(version)
 
         rootenv = {}
-        #propagate from localhost
+        # propagate from localhost
         if 'PATH' in environ:
-            setEnvironment('PATH',environ['PATH'],update=True,environment=rootenv)
+            setEnvironment(
+                'PATH', environ['PATH'], update=True, environment=rootenv)
         if 'LD_LIBRARY_PATH' in environ:
-            setEnvironment('LD_LIBRARY_PATH',environ['LD_LIBRARY_PATH'],update=True,environment=rootenv)    
+            setEnvironment(
+                'LD_LIBRARY_PATH', environ['LD_LIBRARY_PATH'], update=True, environment=rootenv)
 
-        setEnvironment('LD_LIBRARY_PATH',join(rootsys,'lib'),update=True,environment=rootenv)
-        setEnvironment('PATH',join(rootsys,'bin'),update=True,environment=rootenv)
-        setEnvironment('ROOTSYS',rootsys,update=False,environment=rootenv)
-        logger.debug('Have set Root variables. rootenv is now %s', str(rootenv))
+        setEnvironment(
+            'LD_LIBRARY_PATH', join(rootsys, 'lib'), update=True, environment=rootenv)
+        setEnvironment(
+            'PATH', join(rootsys, 'bin'), update=True, environment=rootenv)
+        setEnvironment('ROOTSYS', rootsys, update=False, environment=rootenv)
+        logger.debug(
+            'Have set Root variables. rootenv is now %s', str(rootenv))
 
         if usepython:
             # first get from config
@@ -312,43 +325,52 @@ class RootRTHandler(IRuntimeHandler):
             try:
                 python_version = getConfig('ROOT')['pythonversion']
             except ConfigError as e:
-                logger.debug('There was a problem trying to get [ROOT]pythonversion: %s.', e)
+                logger.debug(
+                    'There was a problem trying to get [ROOT]pythonversion: %s.', e)
 
-            logger.debug( 'Found version of python: %s', str(python_version) )
+            logger.debug('Found version of python: %s', str(python_version))
 
-            #now try grepping files
-            if not python_version:    
+            # now try grepping files
+            if not python_version:
                 python_version = findPythonVersion(rootsys)
 
             if (python_version is None):
-                logger.warn('Unable to find the Python version needed for Root version %s. See the [ROOT] section of your .gangarc file.', version)
+                logger.warn(
+                    'Unable to find the Python version needed for Root version %s. See the [ROOT] section of your .gangarc file.', version)
             else:
                 logger.debug('Python version found was %s', python_version)
-            python_home  = getpythonhome(pythonversion=python_version)
-            logger.debug('PYTHONHOME is being set to %s',python_home)
+            python_home = getpythonhome(pythonversion=python_version)
+            logger.debug('PYTHONHOME is being set to %s', python_home)
 
-            python_bin = join(python_home,'bin')
-            setEnvironment('PATH',python_bin,update=True,environment=rootenv)
-            setEnvironment('PYTHONPATH',join(rootsys,'lib'),update=True,environment=rootenv)
+            python_bin = join(python_home, 'bin')
+            setEnvironment(
+                'PATH', python_bin, update=True, environment=rootenv)
+            setEnvironment(
+                'PYTHONPATH', join(rootsys, 'lib'), update=True, environment=rootenv)
             logger.debug('Added PYTHONPATH. rootenv is now %s', str(rootenv))
-            
-            if join(python_bin,'python') != sys.executable:
-            #only try to do all this if the python currently running isn't going to be used
+
+            if join(python_bin, 'python') != sys.executable:
+                # only try to do all this if the python currently running isn't
+                # going to be used
                 logger.debug('Using a different Python - %s.', python_home)
-                python_lib = join(python_home,'lib')
+                python_lib = join(python_home, 'lib')
 
                 import os.path
                 if not os.path.exists(python_bin) or not os.path.exists(python_lib):
-                    logger.error('The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
-                    logger.error('PYTHONPATH is: ' + str( os.path ) )            
+                    logger.error(
+                        'The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
+                    logger.error('PYTHONPATH is: ' + str(os.path))
 
-                setEnvironment('LD_LIBRARY_PATH',python_lib,update=True,environment=rootenv)
-                setEnvironment('PYTHONHOME',python_home,update=False,environment=rootenv)
-                setEnvironment('PYTHONPATH',python_lib,update=True,environment=rootenv)
-            
-        return (rootenv, rootsys)    
-            
-    def _prepareCintJobConfig(self,app,appconfig,appmasterconfig,jobmasterconfig):
+                setEnvironment(
+                    'LD_LIBRARY_PATH', python_lib, update=True, environment=rootenv)
+                setEnvironment(
+                    'PYTHONHOME', python_home, update=False, environment=rootenv)
+                setEnvironment(
+                    'PYTHONPATH', python_lib, update=True, environment=rootenv)
+
+        return (rootenv, rootsys)
+
+    def _prepareCintJobConfig(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """JobConfig for executing a Root script using CINT."""
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         from os.path import join, split
@@ -358,150 +380,160 @@ class RootRTHandler(IRuntimeHandler):
         # enclosed in (). Strings should be enclosed in escaped double quotes.
         arglist = []
         for arg in app.args:
-            if type(arg)==type('str'):
+            if type(arg) == type('str'):
                 arglist.append(self.quoteCintArgString(arg))
             else:
                 arglist.append(arg)
-        rootarg='('+string.join([str(s) for s in arglist],',')+')'
+        rootarg = '(' + string.join([str(s) for s in arglist], ',') + ')'
 
         script = app.script
-        if script==File():
-            script=File(defaultScript())
+        if script == File():
+            script = File(defaultScript())
         else:
-            script=File(os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.script.name)))
+            script = File(os.path.join(os.path.join(
+                shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
 
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
-        arguments=['-b', '-q', join('.',script.subdir,
-                                    split(script.name)[1])+rootarg]
-        inputsandbox=app._getParent().inputsandbox+[script]
+        arguments = ['-b', '-q', join('.', script.subdir,
+                                      split(script.name)[1]) + rootarg]
+        inputsandbox = app._getParent().inputsandbox + [script]
 
         (rootenv, _) = self._getRootEnvSys(app.version)
-        logger.debug( "ROOT environment:\n %s: ", str(rootenv) )
+        logger.debug("ROOT environment:\n %s: ", str(rootenv))
 
-        return StandardJobConfig('root.exe',inputsandbox,arguments,
-                                 app._getParent().outputsandbox,rootenv)
+        return StandardJobConfig('root.exe', inputsandbox, arguments,
+                                 app._getParent().outputsandbox, rootenv)
 
-    def _preparePyRootJobConfig(self,app,appconfig,appmasterconfig,jobmasterconfig):
+    def _preparePyRootJobConfig(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """JobConfig for executing a Root script using CINT."""
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         from os.path import join, split
 
         script = app.script
-        if script==File():
-            script=File(defaultPyRootScript())
+        if script == File():
+            script = File(defaultPyRootScript())
         else:
-            script=File(os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.script.name)))
+            script = File(os.path.join(os.path.join(
+                shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
 
-        arguments = [join('.',script.subdir,split(script.name)[1])]
+        arguments = [join('.', script.subdir, split(script.name)[1])]
         arguments.extend([str(s) for s in app.args])
         arguments.append('-b')
-        
-        inputsandbox=app._getParent().inputsandbox+[script]
 
-        (rootenv, _) = self._getRootEnvSys(app.version,usepython=True)
-        logger.debug( "PyRoot environment:\n %s: ", str(rootenv) )
+        inputsandbox = app._getParent().inputsandbox + [script]
 
-        return StandardJobConfig('python',inputsandbox,arguments,
-                                 app._getParent().outputsandbox,rootenv)
-        
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
+        (rootenv, _) = self._getRootEnvSys(app.version, usepython=True)
+        logger.debug("PyRoot environment:\n %s: ", str(rootenv))
+
+        return StandardJobConfig('python', inputsandbox, arguments,
+                                 app._getParent().outputsandbox, rootenv)
+
+    def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """The default prepare method. Used to select scripting backend."""
         if(app.usepython):
-            return self._preparePyRootJobConfig(app,appconfig,
-                                          appmasterconfig,jobmasterconfig)
+            return self._preparePyRootJobConfig(app, appconfig,
+                                                appmasterconfig, jobmasterconfig)
         else:
-            return self._prepareCintJobConfig(app,appconfig,
-                                        appmasterconfig,jobmasterconfig)
-            
+            return self._prepareCintJobConfig(app, appconfig,
+                                              appmasterconfig, jobmasterconfig)
+
+
 class RootLocalRTHandler(RootRTHandler):
+
     """Same as RootRTHander, but slight difference in string quoting used."""
+
     def quoteCintArgString(self, cintArg):
         return '"%s"' % cintArg
 
+
 class RootDownloadHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
+
+    def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         runScript, inputsandbox, rootenv = downloadWrapper(app)
-        
-        #propage command line args
+
+        # propage command line args
         argList = [str(s) for s in app.args]
 
-        return StandardJobConfig(runScript,inputsandbox,argList,
-                                 app._getParent().outputsandbox,rootenv)
+        return StandardJobConfig(runScript, inputsandbox, argList,
+                                 app._getParent().outputsandbox, rootenv)
 
 
 class RootLCGRTHandler(IRuntimeHandler):
-    def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
+
+    def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
 
         runScript, inputsandbox, rootenv = downloadWrapper(app)
 
-        #propage command line args
+        # propage command line args
         argList = [str(s) for s in app.args]
 
-        return LCGJobConfig(runScript,inputsandbox,argList,
-                            app._getParent().outputsandbox,rootenv)
-    
+        return LCGJobConfig(runScript, inputsandbox, argList,
+                            app._getParent().outputsandbox, rootenv)
+
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
-allHandlers.add('Root','Cronus',RootRTHandler)
-allHandlers.add('Root','LSF', RootLocalRTHandler)
-allHandlers.add('Root','Local', RootLocalRTHandler)
-allHandlers.add('Root','Interactive', RootRTHandler)
-#Easy way to test the system with ROOT dowloaded on demand
-#allHandlers.add('Root','Local', RootDownloadHandler) 
-allHandlers.add('Root','PBS', RootLocalRTHandler)
-allHandlers.add('Root','SGE', RootLocalRTHandler)
-allHandlers.add('Root','Condor', RootRTHandler)
-allHandlers.add('Root','LCG', RootLCGRTHandler)
-allHandlers.add('Root','CREAM', RootLCGRTHandler)
-allHandlers.add('Root','ARC', RootLCGRTHandler)
-allHandlers.add('Root','TestSubmitter', RootRTHandler)
-allHandlers.add('Root','Remote', RootLCGRTHandler)
+allHandlers.add('Root', 'Cronus', RootRTHandler)
+allHandlers.add('Root', 'LSF', RootLocalRTHandler)
+allHandlers.add('Root', 'Local', RootLocalRTHandler)
+allHandlers.add('Root', 'Interactive', RootRTHandler)
+# Easy way to test the system with ROOT dowloaded on demand
+#allHandlers.add('Root','Local', RootDownloadHandler)
+allHandlers.add('Root', 'PBS', RootLocalRTHandler)
+allHandlers.add('Root', 'SGE', RootLocalRTHandler)
+allHandlers.add('Root', 'Condor', RootRTHandler)
+allHandlers.add('Root', 'LCG', RootLCGRTHandler)
+allHandlers.add('Root', 'CREAM', RootLCGRTHandler)
+allHandlers.add('Root', 'ARC', RootLCGRTHandler)
+allHandlers.add('Root', 'TestSubmitter', RootRTHandler)
+allHandlers.add('Root', 'Remote', RootLCGRTHandler)
+
 
 def downloadWrapper(app):
-    from os.path import join,split
-    from Ganga.GPIDev.Lib.File import  FileBuffer
+    from os.path import join, split
+    from Ganga.GPIDev.Lib.File import FileBuffer
     import string
 
-    rootsys=join('.','root')
-    rootenv={'ROOTSYS':rootsys}
+    rootsys = join('.', 'root')
+    rootenv = {'ROOTSYS': rootsys}
 
     script = app.script
-    if script==File():
+    if script == File():
         if not app.usepython:
-            script=File(defaultScript())
+            script = File(defaultScript())
         else:
-            script=File(defaultPyRootScript())
+            script = File(defaultPyRootScript())
     else:
-        script=File(os.path.join(os.path.join(shared_path,app.is_prepared.name),os.path.basename(app.script.name)))
+        script = File(os.path.join(os.path.join(
+            shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
 
     commandline = ''
-    scriptPath  = join('.',script.subdir,split(script.name)[1])
+    scriptPath = join('.', script.subdir, split(script.name)[1])
     if not app.usepython:
         # Arguments to the ROOT script needs to be a comma separated list
         # enclosed in (). Strings should be enclosed in escaped double quotes.
         arglist = []
         for arg in app.args:
-            if type(arg)==type('str'):
-                arglist.append('\\\\"'+arg+'\\\\"')
+            if type(arg) == type('str'):
+                arglist.append('\\\\"' + arg + '\\\\"')
             else:
                 arglist.append(arg)
-        rootarg='\('+string.join([str(s) for s in arglist],',')+'\)'
-        
-        #use root
-        commandline='\'root.exe -b -q '+ scriptPath + \
-                     rootarg + '\''
+        rootarg = '\(' + string.join([str(s) for s in arglist], ',') + '\)'
+
+        # use root
+        commandline = '\'root.exe -b -q ' + scriptPath + \
+            rootarg + '\''
     else:
-        #use python
-        pyarg = string.join([str(s) for s in app.args],' ')
+        # use python
+        pyarg = string.join([str(s) for s in app.args], ' ')
         commandline = '\'%(PYTHONCMD)s ' + scriptPath + ' ' + pyarg + ' -b \''
-        
-    logger.debug( "Command line: %s: ", commandline )
+
+    logger.debug("Command line: %s: ", commandline)
 
     # Write a wrapper script that installs ROOT and runs script
-    wrapperscript= """#!/usr/bin/env python
+    wrapperscript = """#!/usr/bin/env python
 from __future__ import print_function
 '''Script to run root with cint or python.'''
 def downloadAndUnTar(fileName, url):
@@ -680,24 +712,27 @@ if __name__ == '__main__':
 
 """
 
-    wrapperscript = wrapperscript.replace('###COMMANDLINE###',commandline)
-    wrapperscript = wrapperscript.replace('###ROOTVERSION###',app.version)
-    wrapperscript = wrapperscript.replace('###SCRIPTPATH###',scriptPath)
-    wrapperscript = wrapperscript.replace('###USEPYTHON###',str(app.usepython))
+    wrapperscript = wrapperscript.replace('###COMMANDLINE###', commandline)
+    wrapperscript = wrapperscript.replace('###ROOTVERSION###', app.version)
+    wrapperscript = wrapperscript.replace('###SCRIPTPATH###', scriptPath)
+    wrapperscript = wrapperscript.replace(
+        '###USEPYTHON###', str(app.usepython))
 
-    logger.debug('Script to run on worker node\n'+wrapperscript)
+    logger.debug('Script to run on worker node\n' + wrapperscript)
     scriptName = "rootwrapper_generated_%s.py" % randomString()
-    runScript = FileBuffer( scriptName, wrapperscript, executable = 1 )
+    runScript = FileBuffer(scriptName, wrapperscript, executable=1)
 
-    inputsandbox=app._getParent().inputsandbox+[script]
-    return runScript,inputsandbox,rootenv
+    inputsandbox = app._getParent().inputsandbox + [script]
+    return runScript, inputsandbox, rootenv
+
 
 def defaultScript():
-    import tempfile,os
+    import tempfile
+    import os
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
-    fname = os.path.join(tmpdir,'test.C')
-    f = open(fname,'w')
+    fname = os.path.join(tmpdir, 'test.C')
+    f = open(fname, 'w')
     f.write("""
     void test() {
       cout << "Hello World from ROOT" << endl;
@@ -709,12 +744,14 @@ def defaultScript():
     f.close()
     return fname
 
+
 def defaultPyRootScript():
-    import tempfile,os
+    import tempfile
+    import os
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
-    fname = os.path.join(tmpdir,'test.py')
-    f = open(fname,'w')
+    fname = os.path.join(tmpdir, 'test.py')
+    f = open(fname, 'w')
     try:
         f.write("""#!/usr/bin/env python
 from __future__ import print_function
@@ -748,26 +785,26 @@ if __name__ == '__main__':
         f.close()
     return fname
 
-def randomString():
-            """Simple method to generate a random string"""
-            from random import randint
-            from string import ascii_uppercase,join
-            
-            def addToSample(sample,ascii_length):
-                """Basically random.select but python2.2"""
-                a = ascii_uppercase[randint(0,ascii_length-1)]
-                if not a in sample:
-                    sample.append(a)
-                else:
-                    #passing by referance
-                    addToSample(sample,ascii_length)
 
-            ascii_length = len(ascii_uppercase)     
-            sample = []
-            for _ in range(6):
-                addToSample(sample,ascii_length)
-            assert(len(sample) == 6)
-            
-            #seed is set to clock during import
-            return join([str(a) for a in sample],'')
-        
+def randomString():
+    """Simple method to generate a random string"""
+    from random import randint
+    from string import ascii_uppercase, join
+
+    def addToSample(sample, ascii_length):
+        """Basically random.select but python2.2"""
+        a = ascii_uppercase[randint(0, ascii_length - 1)]
+        if not a in sample:
+            sample.append(a)
+        else:
+            # passing by referance
+            addToSample(sample, ascii_length)
+
+    ascii_length = len(ascii_uppercase)
+    sample = []
+    for _ in range(6):
+        addToSample(sample, ascii_length)
+    assert(len(sample) == 6)
+
+    # seed is set to clock during import
+    return join([str(a) for a in sample], '')

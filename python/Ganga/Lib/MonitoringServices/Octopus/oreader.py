@@ -5,7 +5,9 @@
 
 
 from Octopus import *
-import getopt, sys, errno
+import getopt
+import sys
+import errno
 import time
 import os
 import sys
@@ -18,7 +20,7 @@ except KeyError:
 try:
     p = os.environ['GANGA_OCTOPUS_PORT']
 except KeyError:
-    p = 8882                                        
+    p = 8882
 
 octopus = Octopus(s, p)
 try:
@@ -35,10 +37,10 @@ while not octopus.eotFound:
     try:
         data = octopus.read()
     except socket.error as e:
-        if e[0] != errno.EAGAIN: 
+        if e[0] != errno.EAGAIN:
             raise socket.error(e)
         data = ''
-    if len(data) <=0 :
+    if len(data) <= 0:
         time.sleep(0.1)
     else:
         sys.stdout.write(data)

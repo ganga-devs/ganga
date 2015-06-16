@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
-################################################################################
+##########################################################################
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
@@ -21,7 +21,9 @@ import time
 import threading
 pSubmitLock = threading.Lock()
 
+
 class IBackend(GangaObject):
+
     """
     Base class for all backend objects.
 
@@ -35,30 +37,30 @@ class IBackend(GangaObject):
     either  call submit()  method  explicitly in  the  case of  no
     splitting, or make  the implementation of master_submit() handle
     the non-split jobs as well.
-    
+
     """
 
-    _schema =  Schema(Version(0,0), {})
+    _schema = Schema(Version(0, 0), {})
     _category = 'backends'
     _hidden = 1
 
-    # specify how the default implementation of master_prepare() method creates the input sandbox
+    # specify how the default implementation of master_prepare() method
+    # creates the input sandbox
     _packed_input_sandbox = True
 
     def __init__(self):
-        super(IBackend,self).__init__()
+        super(IBackend, self).__init__()
 ##         import sys
 ##         frame = sys._getframe(1)
 ##         logger = Ganga.Utility.logging.getLogger(frame=frame)
 ##         del frame
 ##         from Ganga.Utility.util import GenericWrapper, wrap_callable_filter
-##         def before(args,kwargs):
+# def before(args,kwargs):
 ##             args[0] = 'hello'+args[0]
-##             return args,kwargs
-##         def after():
-##             pass
+# return args,kwargs
+# def after():
+# pass
 ##         self.logger = GenericWrapper(logger,before,after, forced = ['info','error','warning','critical', 'debug'], wrapper_function=wrap_callable_filter)
-
 
     def setup(self):
         """ This is a hook called for each job when Ganga.Core services are
@@ -68,7 +70,7 @@ class IBackend(GangaObject):
         """
         pass
 
-    def _parallel_submit( self, b, sj, sc, master_input_sandbox, fqid, logger ):
+    def _parallel_submit(self, b, sj, sc, master_input_sandbox, fqid, logger):
 
         global pSubmitLok
         lock = pSubmitLock
@@ -78,15 +80,15 @@ class IBackend(GangaObject):
                 sj.updateStatus('submitted')
                 sj.info.increment()
             else:
-                raise IncompleteJobSubmissionError(fqid,'submission failed')
+                raise IncompleteJobSubmissionError(fqid, 'submission failed')
         except Exception as x:
             from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('new')
             if isinstance(x, GangaException):
                 logger.error(str(x))
-                log_user_exception(logger, debug = True)
+                log_user_exception(logger, debug=True)
             else:
-                log_user_exception(logger, debug = False)
+                log_user_exception(logger, debug=False)
         finally:
             try:
                 lock.release()
@@ -94,7 +96,6 @@ class IBackend(GangaObject):
                 pass
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
-
         """  Submit   the  master  job  and  all   its  subjobs.   The
         masterjobconfig  is  shared,  individual  subjob  configs  are
         defined  in  subjobconfigs.   Submission  of  individual  jobs
@@ -117,7 +118,7 @@ class IBackend(GangaObject):
            do_some_processsing_of(masterjobconfig)
            ...
            return IBackend.master_submit(self,subjobconfigs,masterjobconfig,keep_joing)
-        
+
 
         Implementation note: we set keep_going to be optional in the
         signature of IBackend.master_submit() to allow the existing
@@ -132,11 +133,11 @@ class IBackend(GangaObject):
         """
         from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
-        
+
         job = self.getJobObject()
-        logger.debug( "SubJobConfigs: %s" % len(subjobconfigs) )
-        logger.debug( "rjobs: %s" % len(rjobs) )
-        assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
+        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logger.debug("rjobs: %s" % len(rjobs))
+        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
 
         incomplete = 0
         incomplete_subjobs = []
@@ -163,31 +164,33 @@ class IBackend(GangaObject):
 
                 fqid = sj.getFQID('.')
                 b = sj.backend
-                ## FIXME would be nice to move this to the internal threads not user ones
+                # FIXME would be nice to move this to the internal threads not user ones
                 #from Ganga.GPIDev.Base.Proxy import stripProxy
                 #all_queues = stripProxy(queues)
                 #all_queues._addSystem( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
-                queues.add( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
+                queues.add(
+                    self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
             while queues.totalNumUserThreads() != 0:
                 import time
-                time.sleep( 1. )
+                time.sleep(1.)
 
             for i in rjobs:
-                if i.status in [ "new", "failed" ]:
+                if i.status in ["new", "failed"]:
                     return 0
             return 1
 
-        for sc,sj in zip(subjobconfigs,rjobs):
+        for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
-            logger.info("submitting job %s to %s backend", fqid, sj.backend._name)
+            logger.info(
+                "submitting job %s to %s backend", fqid, sj.backend._name)
             try:
                 b = sj.backend
                 sj.updateStatus('submitting')
                 if b.submit(sc, master_input_sandbox):
                     sj.updateStatus('submitted')
-                    #sj._commit() # PENDING: TEMPORARY DISABLED
+                    # sj._commit() # PENDING: TEMPORARY DISABLED
                     incomplete = 1
                     sj.info.increment()
                 else:
@@ -195,20 +198,21 @@ class IBackend(GangaObject):
                         return 0
             except Exception as x:
                 sj.updateStatus('new')
-                if isinstance(x,GangaException):
+                if isinstance(x, GangaException):
                     logger.error(str(x))
-                    log_user_exception(logger, debug = True)
+                    log_user_exception(logger, debug=True)
                 else:
-                    log_user_exception(logger, debug = False)
+                    log_user_exception(logger, debug=False)
                 if handleError(IncompleteJobSubmissionError(fqid, str(x))):
                     return 0
-                
+
         if incomplete_subjobs:
-            raise IncompleteJobSubmissionError(incomplete_subjobs,'submission failed')
+            raise IncompleteJobSubmissionError(
+                incomplete_subjobs, 'submission failed')
 
         return 1
 
-    def submit(self,subjobconfig,master_input_sandbox):
+    def submit(self, subjobconfig, master_input_sandbox):
         """
         Submit an individual job. Return 1 in case of success.
 
@@ -225,53 +229,58 @@ class IBackend(GangaObject):
         Transition from Ganga 4.0.x:
          - subjobconfig is equvalent to jobconfig in the older interface.
          - jobid is an obsolte parameter which will be removed in the future
-        
+
         """
         raise NotImplementedError
-
 
     def master_prepare(self, masterjobconfig):
         """ Prepare the master job (shared sandbox files). This method is/should be called by master_submit() exactly once.
         The input sandbox is created according to self._packed_input_sandbox flag (a class attribute)
         """
-        
 
         job = self.getJobObject()
-       
+
         create_sandbox = job.createInputSandbox
         if self._packed_input_sandbox:
             create_sandbox = job.createPackedInputSandbox
 
         if masterjobconfig:
             if hasattr(job.application, 'is_prepared') and isinstance(job.application.is_prepared, ShareDir):
-                sharedir_pred     = lambda f: f.name.find(job.application.is_prepared.name) > -1
-                sharedir_files    = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
-                nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
-            else: # ATLAS use bool to bypass the prepare mechanism and some ATLAS apps have no is_prepared
-                sharedir_files    = []
+                sharedir_pred = lambda f: f.name.find(
+                    job.application.is_prepared.name) > -1
+                sharedir_files = itertools.ifilter(
+                    sharedir_pred, masterjobconfig.getSandboxFiles())
+                nonsharedir_files = itertools.ifilterfalse(
+                    sharedir_pred, masterjobconfig.getSandboxFiles())
+            # ATLAS use bool to bypass the prepare mechanism and some ATLAS
+            # apps have no is_prepared
+            else:
+                sharedir_files = []
                 nonsharedir_files = masterjobconfig.getSandboxFiles()
             inputsandbox = create_sandbox(nonsharedir_files, master=True)
-            inputsandbox.extend(itertools.imap(lambda f: f.name, sharedir_files))
+            inputsandbox.extend(
+                itertools.imap(lambda f: f.name, sharedir_files))
             return inputsandbox
-        
+
         tmpDir = None
-        files=[]
+        files = []
         if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
-            files = job.inputsandbox # RTHandler is not required to produce masterjobconfig, in that case just use the inputsandbox
-            
+            # RTHandler is not required to produce masterjobconfig, in that
+            # case just use the inputsandbox
+            files = job.inputsandbox
+
         result = create_sandbox(files, master=True)
         if tmpDir != None:
             import shutil
-            #remove temp dir
+            # remove temp dir
             if os.path.exists(tmpDir):
-                shutil.rmtree(tmpDir)  
+                shutil.rmtree(tmpDir)
         return result
 
-
-    def master_auto_resubmit(self,rjobs):
+    def master_auto_resubmit(self, rjobs):
         """ A hook in case someone wanted to override the auto
         resubmission behaviour. Otherwise, it auto_resubmit is
         equivalent for all practical purposes to a normal resubmit (so
@@ -284,8 +293,8 @@ class IBackend(GangaObject):
         automatically resubmitted.
         """
         return True
-        
-    def master_resubmit(self,rjobs,backend=None):
+
+    def master_resubmit(self, rjobs, backend=None):
         """ Resubmit (previously submitted) job. Configuration phase is skipped.
         Default implementation works is an emulated-bulk operation.
         If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
@@ -294,15 +303,17 @@ class IBackend(GangaObject):
         from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
         incomplete = 0
+
         def handleError(x):
             if incomplete:
                 raise x
             else:
-                return 0            
+                return 0
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info("resubmitting job %s to %s backend",fqid,sj.backend._name)
+                logger.info(
+                    "resubmitting job %s to %s backend", fqid, sj.backend._name)
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
@@ -312,58 +323,59 @@ class IBackend(GangaObject):
                         result = b.resubmit(backend=backend)
                     if result:
                         sj.updateStatus('submitted')
-                        #sj._commit() # PENDING: TEMPORARY DISABLED
+                        # sj._commit() # PENDING: TEMPORARY DISABLED
                         incomplete = 1
                     else:
-                        return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
+                        return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
-                    log_user_exception(logger,debug=isinstance(x,GangaException))
-                    return handleError(IncompleteJobSubmissionError(fqid,str(x)))
+                    log_user_exception(
+                        logger, debug=isinstance(x, GangaException))
+                    return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
             if master:
                 master.updateMasterJobStatus()
         return 1
-    
+
     def resubmit(self):
         raise NotImplementedError
-    
+
     def master_kill(self):
         """ Kill a job and all its subjobs. Return 1 in case of success.
-        
+
         The default implementation uses the kill() method and emulates
         the bulk  operation on all subjobs.  It tries to  kill as many
         subjobs  as  possible even  if  there  are  failures.  If  the
         operation is incomplete then raise IncompleteKillError().
         """
-        
+
         job = self.getJobObject()
 
         r = True
-        
+
         if len(job.subjobs):
             problems = []
             for s in job.subjobs:
-                if s.status in ['submitted','running']:
+                if s.status in ['submitted', 'running']:
                     if not s.backend.kill():
                         r = False
                         problems.append(s.id)
             if not r:
                 from Ganga.Core import IncompleteKillError
-                raise IncompleteKillError('subjobs %s were not killed'%problems)
+                raise IncompleteKillError(
+                    'subjobs %s were not killed' % problems)
         else:
             r = job.backend.kill()
         return r
-    
-    def kill(self):
 
+    def kill(self):
         """  Kill a job  (and also  all its  subjobs). This  method is
         never called by the framework directly.  It may only be called
         by the default implementation of master_kill().  """
-        
+
         raise NotImplementedError
 
-    def peek( self, filename = "", command = "" ):
+    def peek(self, filename="", command=""):
         """
         Allow viewing of job output files on the backend
         (i.e. while job is in 'running' state)
@@ -375,12 +387,12 @@ class IBackend(GangaObject):
 
         Return value: None
         """
-        
+
         # This is a dummy implementation - it only provides access
         # to files in the job's output directory
 
         job = self.getJobObject()
-        job.peek( filename = os.path.join( "..", filename ), command = command )
+        job.peek(filename=os.path.join("..", filename), command=command)
         return None
 
     def remove(self):
@@ -399,7 +411,6 @@ class IBackend(GangaObject):
         pass
 
     def master_updateMonitoringInformation(jobs):
-        
         """ Update monitoring information for  jobs: jobs is a list of
         jobs  in   this  backend  which   require  monitoring  (either
         'submitted' or 'running' state).  The jobs list never contains
@@ -411,24 +422,28 @@ class IBackend(GangaObject):
 
         simple_jobs = []
 
-        ## FIXME Add some check for (sub)jobs which are in a transient state but are not locked by an active session of ganga
-        
+        # FIXME Add some check for (sub)jobs which are in a transient state but
+        # are not locked by an active session of ganga
+
         for j in jobs:
             if len(j.subjobs):
-                monitorable_subjobs = [s for s in j.subjobs if s.status in ['submitted','running'] ]
-                logger.debug('Monitoring subjobs: %s',repr([jj._repr() for jj in monitorable_subjobs]))
+                monitorable_subjobs = [
+                    s for s in j.subjobs if s.status in ['submitted', 'running']]
+                logger.debug('Monitoring subjobs: %s', repr(
+                    [jj._repr() for jj in monitorable_subjobs]))
                 j.backend.updateMonitoringInformation(monitorable_subjobs)
                 j.updateMasterJobStatus()
             else:
                 simple_jobs.append(j)
 
         if simple_jobs:
-            logger.debug('Monitoring jobs: %s',repr([jj._repr() for jj in simple_jobs]))
+            logger.debug(
+                'Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs]))
             simple_jobs[0].backend.updateMonitoringInformation(simple_jobs)
 
-    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
+    master_updateMonitoringInformation = staticmethod(
+        master_updateMonitoringInformation)
 
-        
     def updateMonitoringInformation(jobs):
         """ Update monitoring information for individual jobs: jobs is
         a  list which  may contain  subjobs as  well as  the non-split
@@ -440,4 +455,3 @@ class IBackend(GangaObject):
         raise NotImplementedError
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
-

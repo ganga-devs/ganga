@@ -4,75 +4,79 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
-#only define backends if not already defined.
+# only define backends if not already defined.
 # done so that Altas and LHCb can run the tests
 # using other backends
 loc = locals()
 if 'backends_to_test' not in loc:
-    loc['backends_to_test'] = ['Interactive','Local','LCG','Batch']
+    loc['backends_to_test'] = ['Interactive', 'Local', 'LCG', 'Batch']
 
-#temporarily disabled running Root tests on LCG and LSF (due to timeouts), a
-#proper solution is needed for the future (either splitting the submit and
-#verify phases, or to make a test backend that woudl exercise the rt-handlers
-#or to move it to a generic robot).
+# temporarily disabled running Root tests on LCG and LSF (due to timeouts), a
+# proper solution is needed for the future (either splitting the submit and
+# verify phases, or to make a test backend that woudl exercise the rt-handlers
+# or to move it to a generic robot).
+
 
 class TestRoot(GangaGPITestCase):
+
     '''
     This is the Ganga testcase used by the testing framework
     The test methods are dynamically added to TestRoot (emulate an unittest test suite). 
     At the begining it is just an empty class
     '''
-    
-class _TestRootBase(object):
-    def __init__(self,backend):
-        self.__backend = backend
-        self.cputime = 10 #(minutes) for remote jobs
 
-    def _makeFileName(self,usepython):
+
+class _TestRootBase(object):
+
+    def __init__(self, backend):
+        self.__backend = backend
+        self.cputime = 10  # (minutes) for remote jobs
+
+    def _makeFileName(self, usepython):
         fName = 'test.%s'
         ext = 'C'
         if usepython:
             ext = 'py'
         fName = fName % ext
         return fName
-    
-    def _makeRootApp(self,scriptString,args=[],usepython=False, file_name = None):
+
+    def _makeRootApp(self, scriptString, args=[], usepython=False, file_name=None):
         '''The script will be named test.{C,py} and so you should name the function test'''
         import os
         from tempfile import mktemp
-        
+
         if not file_name:
             file_name = self._makeFileName(usepython)
-        
-        #write string to tmpfile
+
+        # write string to tmpfile
         tmpdir = mktemp()
         os.mkdir(tmpdir)
-        fileName = os.path.join(tmpdir,file_name)
-        
+        fileName = os.path.join(tmpdir, file_name)
+
         from GangaTest.Framework.utils import write_file
-        write_file(fileName,scriptString)
-        
-        #make a Root application object
+        write_file(fileName, scriptString)
+
+        # make a Root application object
         r = Root()
         r.script = fileName
         r.args = args
-        
+
         return r
-    
-    def _submitJob(self,app,IJobTest=None):
+
+    def _submitJob(self, app, IJobTest=None):
         """Used to construct, configure and test a job."""
         if IJobTest == None:
             IJobTest = _DefaultJobTest(self)
-        logger.info('Backend:',self.__backend)
-        j = Job(application=app,backend=self.__backend)
+        logger.info('Backend:', self.__backend)
+        j = Job(application=app, backend=self.__backend)
         IJobTest.setJob(j)
-        #configure the job
+        # configure the job
         IJobTest.configJob()
-        #submit the jobs
+        # submit the jobs
         j.submit()
-        #returning the IJobTest instance instead of doing the check here
+        # returning the IJobTest instance instead of doing the check here
         return IJobTest
-    
+
     def testCintArgs(self):
         '''Runs a basic Cint job and tests that int args are handled.'''
         n = 123
@@ -90,29 +94,31 @@ class _TestRootBase(object):
                         file.close();
                     }
                 }
-        """, [n,s], usepython = False)
-        
+        """, [n, s], usepython=False)
+
         assert(not r.usepython)
-        
+
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 from GangaTest.Framework.utils import file_contains
-                from os.path import join,exists
-                output = join(self.j.outputdir,'output.txt')
+                from os.path import join, exists
+                output = join(self.j.outputdir, 'output.txt')
                 assert os.path.exists(output), 'File must have been written'
-                assert(file_contains(output,'###%d###' % n))
-                assert(file_contains(output,'@@@%s@@@' % s))
+                assert(file_contains(output, '###%d###' % n))
+                assert(file_contains(output, '@@@%s@@@' % s))
                 assert(self.j.status != 'failed')
+
             def configJob(self):
-                super(JobTest,self).configJob()
+                super(JobTest, self).configJob()
                 self.j.outputfiles = [LocalFile('output.txt')]
 
-        return self._submitJob(r,JobTest(self))
-        
+        return self._submitJob(r, JobTest(self))
+
     def testCintArgsAllStrings(self):
         '''Runs a basic Cint job and tests that string args are handled.'''
-        
-        args = ['foo'*i for i in xrange(5)]
+
+        args = ['foo' * i for i in xrange(5)]
         assert len(args) == 5
         r = self._makeRootApp("""
                 #include <fstream>
@@ -130,29 +136,32 @@ class _TestRootBase(object):
                         file.close();
                     }
                 }
-        """, args, usepython = False)
-        
+        """, args, usepython=False)
+
         assert(not r.usepython)
-        
+
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 from GangaTest.Framework.utils import file_contains
-                from os.path import join,exists
-                output = join(self.j.outputdir,'output.txt')
+                from os.path import join, exists
+                output = join(self.j.outputdir, 'output.txt')
                 assert os.path.exists(output), 'File must have been written'
                 for i in xrange(len(args)):
-                    assert(file_contains(output,'<s%d>%s</s%d>' % (i+1,args[i],i+1)))
+                    assert(
+                        file_contains(output, '<s%d>%s</s%d>' % (i + 1, args[i], i + 1)))
                 assert(self.j.status != 'failed')
+
             def configJob(self):
-                super(JobTest,self).configJob()
+                super(JobTest, self).configJob()
                 self.j.outputfiles = [LocalFile('output.txt')]
 
-        return self._submitJob(r,JobTest(self))
-    
+        return self._submitJob(r, JobTest(self))
+
     def testCintArgsAllInts(self):
         '''Runs a basic Cint job and tests that int args are handled.'''
-        
-        args = [i*i for i in xrange(5)]
+
+        args = [i * i for i in xrange(5)]
         assert len(args) == 5
         r = self._makeRootApp("""
                 #include <fstream>
@@ -170,70 +179,77 @@ class _TestRootBase(object):
                         file.close();
                     }
                 }
-        """, args, usepython = False)
-        
+        """, args, usepython=False)
+
         assert(not r.usepython)
-        
+
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 from GangaTest.Framework.utils import file_contains
-                from os.path import join,exists
-                output = join(self.j.outputdir,'output.txt')
+                from os.path import join, exists
+                output = join(self.j.outputdir, 'output.txt')
                 assert os.path.exists(output), 'File must have been written'
                 for i in xrange(len(args)):
-                    assert(file_contains(output,'<s%d>%d</s%d>' % (i+1,args[i],i+1)))
+                    assert(
+                        file_contains(output, '<s%d>%d</s%d>' % (i + 1, args[i], i + 1)))
                 assert(self.j.status != 'failed')
+
             def configJob(self):
-                super(JobTest,self).configJob()
+                super(JobTest, self).configJob()
                 self.j.outputfiles = [LocalFile('output.txt')]
 
-        return self._submitJob(r,JobTest(self))
-    
+        return self._submitJob(r, JobTest(self))
+
     def testNoArgJob(self):
         """Runs the default cint script. Should produce no errors"""
         r = Root()
         assert(not r.usepython)
 
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 assert(self.j.status != 'failed')
-                
-        return self._submitJob(r,JobTest(self))
-        
+
+        return self._submitJob(r, JobTest(self))
+
     def testNoArgPyRootJob(self):
         """Runs the default PyRoot script. Should produce no errors"""
         r = Root()
         r.usepython = True
 
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 assert(self.j.status != 'failed')
-                
-        return self._submitJob(r,JobTest(self))        
-     
+
+        return self._submitJob(r, JobTest(self))
+
     def testReturnCode(self):
         '''Runs a basic Cint job and tests that the return code is propagated back to the user.'''
-        exitCode = 45      
+        exitCode = 45
         r = self._makeRootApp("""
                 #include <cstdlib>
                 void test(){
                     exit(%d);
                 }
         """ % exitCode)
-        
+
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
-                #wait for test to finish but don't assert
+                # wait for test to finish but don't assert
                 assert(self.j.status == 'failed')
- 
-                logger.info('exitCode',self.j.backend.exitcode, exitCode)
+
+                logger.info('exitCode', self.j.backend.exitcode, exitCode)
                 assert self.j.backend.exitcode == exitCode, 'Exit codes do not match'
+
             def isReadyForCheck(self):
-                #Overwrite the default 'isReadyForCheck' method
+                # Overwrite the default 'isReadyForCheck' method
                 from GangaTest.Framework.utils import is_job_state
-                return is_job_state(self.j, ['completed','new','killed','failed','unknown','removed'])
-        
-        return self._submitJob(r,JobTest(self))
+                return is_job_state(self.j, ['completed', 'new', 'killed', 'failed', 'unknown', 'removed'])
+
+        return self._submitJob(r, JobTest(self))
 
     def testCintLoadSharedObject(self):
         '''Runs a basic Cint job and tests so file loading.'''
@@ -255,37 +271,39 @@ class _TestRootBase(object):
                     int returnCode = m.run();
                 }
         """)
-        #seems to be some problem with default version of ROOT
+        # seems to be some problem with default version of ROOT
         r.version = '5.14.00h'
 
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 from GangaTest.Framework.utils import file_contains
-                from os.path import exists,join
+                from os.path import exists, join
 
-                output = join(self.j.outputdir,'output.txt')
+                output = join(self.j.outputdir, 'output.txt')
                 assert exists(output), 'Output file must exist'
-                assert(file_contains(output,'12345'))
+                assert(file_contains(output, '12345'))
                 assert(self.j.status != 'failed')
+
             def configJob(self):
-                super(JobTest,self).configJob()
-                from os.path import dirname,join
-                #testing framework seems to define this variable for us
+                super(JobTest, self).configJob()
+                from os.path import dirname, join
+                # testing framework seems to define this variable for us
                 testDir = dirname(globals()['testPath'])
-                
-                mainCpp = join(testDir,'Main.cpp')
-                mainH = join(testDir,'Main.h')
-                makeFile = join(testDir,'Makefile')
-    
+
+                mainCpp = join(testDir, 'Main.cpp')
+                mainH = join(testDir, 'Main.h')
+                makeFile = join(testDir, 'Makefile')
+
                 import Ganga.Utility.Config
                 if not getConfig('Output')['ForbidLegacyInput']:
-                    self.j.inputsandbox = [mainCpp,mainH,makeFile]
+                    self.j.inputsandbox = [mainCpp, mainH, makeFile]
                 else:
-                    self.j.inputfiles = [ LocalFile(mainCpp), LocalFile(mainH), LocalFile(makeFile) ]
+                    self.j.inputfiles = [
+                        LocalFile(mainCpp), LocalFile(mainH), LocalFile(makeFile)]
                 self.j.outputfiles = [LocalFile('output.txt')]
 
-        return self._submitJob(r,JobTest(self))
-    
+        return self._submitJob(r, JobTest(self))
 
     def testPythonArgs(self):
         '''Runs a basic python job and tests that int args are handled.'''
@@ -307,26 +325,29 @@ if __name__ == '__main__':
         f.write(s % (n,str))        
     finally:
         f.close()
-        """, [n,s], usepython = True)
-        
+        """, [n, s], usepython=True)
+
         assert(r.usepython)
-        
+
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 from GangaTest.Framework.utils import file_contains
                 from os.path import join
-               
-                output = join(self.j.outputdir,'output.txt')
-                assert(self.j.status == 'completed'), 'Job Status : %s' % self.j.status 
-                assert(file_contains(output,'###%d###' % n))
-                assert(file_contains(output,'@@@%s@@@' % s))
+
+                output = join(self.j.outputdir, 'output.txt')
+                assert(
+                    self.j.status == 'completed'), 'Job Status : %s' % self.j.status
+                assert(file_contains(output, '###%d###' % n))
+                assert(file_contains(output, '@@@%s@@@' % s))
                 assert(self.j.status != 'failed')
+
             def configJob(self):
-                super(JobTest,self).configJob()
+                super(JobTest, self).configJob()
                 self.j.outputfiles = [LocalFile('output.txt')]
 
-        return self._submitJob(r,JobTest(self))
-        
+        return self._submitJob(r, JobTest(self))
+
     def testPythonRootBasicImport(self):
         '''Runs a basic python job and used same basic root classes'''
         n = 1001
@@ -343,23 +364,25 @@ try:
     f.write('###%d###' % len(ran))        
 finally:
     f.close()
-""", [n], usepython = True)
-        
+""", [n], usepython=True)
+
         assert(r.usepython)
-        
+
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 from GangaTest.Framework.utils import file_contains
                 from os.path import join
-                output = join(self.j.outputdir,'output.txt')
-                assert(file_contains(output,'###%d###' % n))
+                output = join(self.j.outputdir, 'output.txt')
+                assert(file_contains(output, '###%d###' % n))
                 assert(self.j.status != 'failed')
+
             def configJob(self):
-                super(JobTest,self).configJob()
+                super(JobTest, self).configJob()
                 self.j.outputfiles = [LocalFile('output.txt')]
 
-        return self._submitJob(r,JobTest(self))
-    
+        return self._submitJob(r, JobTest(self))
+
     def testUsePythonFlag(self):
         '''Runs a .C file as python using the usepython flag'''
         r = self._makeRootApp("""#!/usr/bin/env python
@@ -368,41 +391,46 @@ try:
     f.write('###Running###')        
 finally:
     f.close()
-""", [], usepython = True, file_name = 'test.C')
-        
+""", [], usepython=True, file_name='test.C')
+
         assert(not r.usepython)
         r.usepython = True
-        
+
         class JobTest(_DefaultJobTest):
+
             def checkTest(self):
                 from GangaTest.Framework.utils import file_contains
                 from os.path import join
-                output = join(self.j.outputdir,'output.txt')
-                assert(file_contains(output,'###Running###'))
+                output = join(self.j.outputdir, 'output.txt')
+                assert(file_contains(output, '###Running###'))
                 assert(self.j.status != 'failed')
+
             def configJob(self):
-                super(JobTest,self).configJob()
+                super(JobTest, self).configJob()
                 self.j.outputfiles = [LocalFile('output.txt')]
-        return self._submitJob(r,JobTest(self))
+        return self._submitJob(r, JobTest(self))
+
 
 class _DefaultJobTest(ICheckTest):
+
     """Does some simple job config and testing. Intended to be a common base class"""
+
     def __init__(self, test):
         self.test = test
 
-    def setJob(self,j):
+    def setJob(self, j):
         self.j = j
 
     def configJob(self):
         """Sets up a generic root job for running"""
         if hasattr(self.j.backend, 'requirements'):
-            #used for LCG
+            # used for LCG
             self.j.backend.requirements.cputime = self.test.cputime
-        elif  hasattr(self.j.backend, 'queue'):
-            #used for batch
+        elif hasattr(self.j.backend, 'queue'):
+            # used for batch
             self.j.backend.queue = '8nm'
-        elif  hasattr(self.j.backend, 'CPUTime'):
-            self.j.backend.CPUTime = self.test.cputime*60 #in sec
+        elif hasattr(self.j.backend, 'CPUTime'):
+            self.j.backend.CPUTime = self.test.cputime * 60  # in sec
 
     def isReadyForCheck(self):
         """Tests that a job completed"""
@@ -410,24 +438,25 @@ class _DefaultJobTest(ICheckTest):
         return is_job_completed(self.j)
 
 # Add the tests to the test container (TestRoot)
+
+
 def addTests(test_container, testinstance, testname):
     """Nasty introspective function to produce a test suite"""
-    from inspect import getmembers,ismethod
+    from inspect import getmembers, ismethod
     import new
-    #introspect the testclass to find methods to pass on
-    for test in getmembers(testinstance): #the test methods used
+    # introspect the testclass to find methods to pass on
+    for test in getmembers(testinstance):  # the test methods used
         if ismethod(test[1]):
             instanceMethodName = test[1].__name__
-            #look at the method name before appending
+            # look at the method name before appending
             if instanceMethodName[0:4].lower() == 'test':
-                method = getattr(testinstance,instanceMethodName)
-                method_name='%s_%s' % (instanceMethodName,testname)
-                #set the method onto the Test container
+                method = getattr(testinstance, instanceMethodName)
+                method_name = '%s_%s' % (instanceMethodName, testname)
+                # set the method onto the Test container
                 setattr(test_container, method_name, method)
 
-#am forced to hard code as plugins are not loaded yet.
-#this is the list of backends to run
+# am forced to hard code as plugins are not loaded yet.
+# this is the list of backends to run
 for b in backends_to_test:
     testcase = _TestRootBase(b)
     addTests(TestRoot, testcase, b)
-

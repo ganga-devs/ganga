@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: AfsToken.py,v 1.4 2009/03/18 18:28:15 karl Exp $
-################################################################################
+##########################################################################
 #
 # File: AfsToken.py
 # Author: K. Harrison
@@ -67,14 +67,14 @@
 #                 expiry in timeleftInHMS() - avoid problems with leap years
 #
 # 28/02/2008 KH:  In isAvailable(), assume AFS is available if cell
-#                 is defined 
+#                 is defined
 #
 # 25/06/2008 KH: Remove separate checks on location of local workspace
 #                and local repository, which in Ganga 5 are under directory
 #                defined via ['Configuration']gangadir
 #
 # 02/07/2008 KH: Update to use requiresAfsToken() function of
-#                Ganga.Runtime.Repository_runtime to determine 
+#                Ganga.Runtime.Repository_runtime to determine
 #                whether Ganga repository is on AFS
 #
 # 18/03/2009 MWS: Added the 'log' option to isValid()
@@ -85,9 +85,9 @@
 #
 
 """Module defining class for creating, querying and renewing AFS token"""
-                                                                                
-__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "05 November 2009"
+
+__author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__ = "05 November 2009"
 __version__ = "1.16"
 
 import os
@@ -105,196 +105,204 @@ from Ganga.Utility.logging import getLogger
 
 logger = getLogger()
 
-class AfsCommand( ICommandSet ):
-   """
-   Class used to define shell commands and options for working with AFS token
-   """
 
-   _schema = ICommandSet._schema.inherit_copy()
-   _schema['init']._meta['defvalue'] = "kinit"
-   _schema['info']._meta['defvalue'] = "tokens"
-   _schema['destroy']._meta['defvalue'] = "unlog"
-   _schema['init_parameters']._meta['defvalue'] = { "pipe" : "-pipe", "valid" : "-l", \
-         "username" : "-principal", "cell" : "-cell" }
-   _schema['destroy_parameters']._meta['defvalue'] = { "cell" : "-cell" }
-   
-   _name = "AfsCommand"
-   _hidden = 1
-   _enable_config = 1
-   
-   def __init__( self ):
-      super( AfsCommand, self ).__init__()
-      self.currentOpts = {}
-      self.infoOpts = {}
-      self.destroyOpts = {}
-      return
+class AfsCommand(ICommandSet):
 
-registerCommandSet( AfsCommand )
+    """
+    Class used to define shell commands and options for working with AFS token
+    """
 
-class AfsToken ( ICredential ):
-   """
-   Class for working with AFS token
-   """
+    _schema = ICommandSet._schema.inherit_copy()
+    _schema['init']._meta['defvalue'] = "kinit"
+    _schema['info']._meta['defvalue'] = "tokens"
+    _schema['destroy']._meta['defvalue'] = "unlog"
+    _schema['init_parameters']._meta['defvalue'] = {"pipe": "-pipe", "valid": "-l",
+                                                    "username": "-principal", "cell": "-cell"}
+    _schema['destroy_parameters']._meta['defvalue'] = {"cell": "-cell"}
 
-   _schema = ICredential._schema.inherit_copy()
-   _schema.datadict[ "cell" ] = SimpleItem( defvalue = "", doc = \
-      "AFS cell with which token is used [empty string implies local cell]" )
-   _schema.datadict[ "username" ] = SimpleItem( defvalue = "",
-      doc = "AFS username with which token is used [defaults to login id]" )
-   _name = "AfsToken"
-   _hidden = 1
-   _enable_config = 1
+    _name = "AfsCommand"
+    _hidden = 1
+    _enable_config = 1
 
-   def __init__( self, middleware = "" ):
-      super( AfsToken, self ).__init__()
-      if ( "ICommandSet" == self.command._name ):
-         self.command = AfsCommand()
-      if not self.username:
-         if "USERNAME" in os.environ:
-            self.username = os.environ[ "USERNAME" ]
-      return
+    def __init__(self):
+        super(AfsCommand, self).__init__()
+        self.currentOpts = {}
+        self.infoOpts = {}
+        self.destroyOpts = {}
+        return
 
-   # Populate the self.command.currentOpts dictionary with 
-   # AfsToken specific options.
-   def buildOpts( self, command, clear = True):
-      if command == self.command.init:
-         if clear:
-            self.command.currentOpts.clear()
-         if self.username:
-            self.command.currentOpts[ self.command.init_parameters[ 'username' ] ] = self.username
-         if self.cell:
-            self.command.currentOpts[ self.command.init_parameters[ 'cell' ] ] = self.cell
-         if self.validityAtCreation:
-            self.command.currentOpts[ self.command.init_parameters[ 'valid' ] ] = self.validityAtCreation
-      elif command == self.command.destroy:
-         if clear:
-            self.command.destroyOpts.clear()
-         if self.cell:
-            self.command.destroyOpts[ self.command.destroy_parameters[ 'cell' ] ] = self.cell
-      elif command == self.command.info:
-         if clear:
-            self.command.infoOpts.clear()
+registerCommandSet(AfsCommand)
 
-   def create( self, validity = "", maxTry = 0, minValidity = "", check = False ):
-      self.buildOpts( self.command.init )
-      return ICredential.create( self, validity, maxTry, minValidity, check )
 
-   def destroy( self, allowed_exit = [ 0 ] ):
-      self.buildOpts( self.command.destroy )
-      return ICredential.destroy( self, allowed_exit )
+class AfsToken (ICredential):
 
-   def isAvailable( self ):
+    """
+    Class for working with AFS token
+    """
 
-      if self.cell:
-         available = True
-      else:
-         available = False
+    _schema = ICredential._schema.inherit_copy()
+    _schema.datadict["cell"] = SimpleItem(
+        defvalue="", doc="AFS cell with which token is used [empty string implies local cell]")
+    _schema.datadict["username"] = SimpleItem(defvalue="",
+                                              doc="AFS username with which token is used [defaults to login id]")
+    _name = "AfsToken"
+    _hidden = 1
+    _enable_config = 1
 
-      if not available:
-#         gangadir = fullpath( getConfig( "Configuration" )[ "gangadir" ] )
-#         if ( 0 == gangadir.find( "/afs" ) ):
-#            available = True
-         available = Repository_runtime.requiresAfsToken() 
+    def __init__(self, middleware=""):
+        super(AfsToken, self).__init__()
+        if ("ICommandSet" == self.command._name):
+            self.command = AfsCommand()
+        if not self.username:
+            if "USERNAME" in os.environ:
+                self.username = os.environ["USERNAME"]
+        return
 
-      if available:
-         infoCommand = self.command.info.split()[ 0 ]
-         available = False
-         try:
-            pathList = os.environ[ "PATH" ].split( os.pathsep )
-         except KeyError:
-            pathList = []
-         for searchDir in pathList:
-            try:
-               fileList = os.listdir( searchDir )
-            except OSError:
-               fileList = []
-            if infoCommand in fileList:
-               available = True
-               break
-         if available:
-            logger.debug( "Command '%s' found in directory '%s'" % \
-               ( infoCommand, searchDir ) )
-         else:
-            logger.debug( "Unable to find command '%s'" % infoCommand )
+    # Populate the self.command.currentOpts dictionary with
+    # AfsToken specific options.
+    def buildOpts(self, command, clear=True):
+        if command == self.command.init:
+            if clear:
+                self.command.currentOpts.clear()
+            if self.username:
+                self.command.currentOpts[
+                    self.command.init_parameters['username']] = self.username
+            if self.cell:
+                self.command.currentOpts[
+                    self.command.init_parameters['cell']] = self.cell
+            if self.validityAtCreation:
+                self.command.currentOpts[
+                    self.command.init_parameters['valid']] = self.validityAtCreation
+        elif command == self.command.destroy:
+            if clear:
+                self.command.destroyOpts.clear()
+            if self.cell:
+                self.command.destroyOpts[
+                    self.command.destroy_parameters['cell']] = self.cell
+        elif command == self.command.info:
+            if clear:
+                self.command.infoOpts.clear()
 
-      if available:
-         timeleft = self.timeleft()
-         if not timeleft:
+    def create(self, validity="", maxTry=0, minValidity="", check=False):
+        self.buildOpts(self.command.init)
+        return ICredential.create(self, validity, maxTry, minValidity, check)
+
+    def destroy(self, allowed_exit=[0]):
+        self.buildOpts(self.command.destroy)
+        return ICredential.destroy(self, allowed_exit)
+
+    def isAvailable(self):
+
+        if self.cell:
+            available = True
+        else:
             available = False
 
-      return available
+        if not available:
+            #         gangadir = fullpath( getConfig( "Configuration" )[ "gangadir" ] )
+            #         if ( 0 == gangadir.find( "/afs" ) ):
+            #            available = True
+            available = Repository_runtime.requiresAfsToken()
 
-   def isValid( self, validity = "", log = False, force_check = False ):
-      return ICredential.isValid( self, validity, log, force_check )
+        if available:
+            infoCommand = self.command.info.split()[0]
+            available = False
+            try:
+                pathList = os.environ["PATH"].split(os.pathsep)
+            except KeyError:
+                pathList = []
+            for searchDir in pathList:
+                try:
+                    fileList = os.listdir(searchDir)
+                except OSError:
+                    fileList = []
+                if infoCommand in fileList:
+                    available = True
+                    break
+            if available:
+                logger.debug("Command '%s' found in directory '%s'" %
+                             (infoCommand, searchDir))
+            else:
+                logger.debug("Unable to find command '%s'" % infoCommand)
 
-   def location( self ):
-      """
-      Dummy method - returns empty string
-      """
-      return ""
+        if available:
+            timeleft = self.timeleft()
+            if not timeleft:
+                available = False
 
-   def renew( self, validity = "", maxTry = 0, minValidity = "", check = True ):
-      return ICredential.renew( self, validity, maxTry, minValidity, check )
+        return available
 
-   def timeleft( self, units = "hh:mm:ss", force_check = False ):
-      return ICredential.timeleft( self, units, force_check = force_check )
+    def isValid(self, validity="", log=False, force_check=False):
+        return ICredential.isValid(self, validity, log, force_check)
 
-   def timeleftInHMS( self, force_check = False ):
+    def location(self):
+        """
+        Dummy method - returns empty string
+        """
+        return ""
 
-      localTuple = time.localtime()
-      status, output, message = self.shell.cmd1( self.command.info )
+    def renew(self, validity="", maxTry=0, minValidity="", check=True):
+        return ICredential.renew(self, validity, maxTry, minValidity, check)
 
-      timeRemaining = "00:00:00"
+    def timeleft(self, units="hh:mm:ss", force_check=False):
+        return ICredential.timeleft(self, units, force_check=force_check)
 
-      if status:
-         if ( 1 + output.lower().find( "command not found" ) ):
-            logger.warning( "Command '" + self.command.info + "' not found" )
-            logger.warning( "Unable to obtain information on AFS tokens" )
-            timeRemaining = ""
+    def timeleftInHMS(self, force_check=False):
 
-      if timeRemaining:
-         timeString = ""
-         lineList = output.split( "\n" )
-         timeRemaining = "-1"
-         for line in lineList:
-            if ( 1 + line.lower().find( "tokens for" ) ):
-               elementList = line.rstrip( "]" ).split( "[" )[ 1 ].split()
-               if self.cell:
-                  afsString = "".join( [ " afs@", self.cell, " " ] )
-               else:
-                  afsString = "afs@"
-               if not ( 1 + line.find( afsString ) ):
-                  elementList = []
-               if len( elementList ) > 1:
-                  elementList.append( str( localTuple[ 0 ] ) )
-                  timeString = " ".join( elementList[ 1 : ] )
-                  timeTuple = time.strptime( timeString, "%b %d %H:%M %Y" )
-                  timeList = list( timeTuple )
-                  if localTuple[ 1 ] > timeTuple[ 1 ]:
-                     timeList[ 0 ] = 1 + localTuple[ 0 ]
-                  timeList[ 8 ] = localTuple[ 8 ]
-                  timeTuple = tuple( timeList )
-                  timeLeft = int( time.mktime( timeTuple ) - time.time() )
-                  hours = timeLeft / ( 60 * 60 )
-                  minutes = ( timeLeft - hours * 60 * 60 ) / 60
-                  seconds = timeLeft - hours * 60 * 60 - minutes * 60
-                  minString = str( minutes )
-                  if len( minString ) < 2:
-                     minString = "0" + minString
-                  secString = str( seconds )
-                  if len( secString ) < 2:
-                     secString = "0" + secString
-                  timeRemaining = "%s:%s:%s" % \
-                     ( str( hours ), minString, secString )
-            if ( timeRemaining != "-1" ):
-               break
+        localTuple = time.localtime()
+        status, output, message = self.shell.cmd1(self.command.info)
 
-      return timeRemaining
+        timeRemaining = "00:00:00"
 
-  # Add documentation strings from base class
-   for method in \
-      [ create, destroy, isAvailable, isValid, renew, timeleft, timeleftInHMS ]:
-      if hasattr( ICredential, method.__name__ ):
-         baseMethod = getattr( ICredential, method.__name__ )
-         setattr( method, "__doc__",\
-            baseMethod.__doc__.replace( "credential", "AFS token" ) )
+        if status:
+            if (1 + output.lower().find("command not found")):
+                logger.warning("Command '" + self.command.info + "' not found")
+                logger.warning("Unable to obtain information on AFS tokens")
+                timeRemaining = ""
+
+        if timeRemaining:
+            timeString = ""
+            lineList = output.split("\n")
+            timeRemaining = "-1"
+            for line in lineList:
+                if (1 + line.lower().find("tokens for")):
+                    elementList = line.rstrip("]").split("[")[1].split()
+                    if self.cell:
+                        afsString = "".join([" afs@", self.cell, " "])
+                    else:
+                        afsString = "afs@"
+                    if not (1 + line.find(afsString)):
+                        elementList = []
+                    if len(elementList) > 1:
+                        elementList.append(str(localTuple[0]))
+                        timeString = " ".join(elementList[1:])
+                        timeTuple = time.strptime(timeString, "%b %d %H:%M %Y")
+                        timeList = list(timeTuple)
+                        if localTuple[1] > timeTuple[1]:
+                            timeList[0] = 1 + localTuple[0]
+                        timeList[8] = localTuple[8]
+                        timeTuple = tuple(timeList)
+                        timeLeft = int(time.mktime(timeTuple) - time.time())
+                        hours = timeLeft / (60 * 60)
+                        minutes = (timeLeft - hours * 60 * 60) / 60
+                        seconds = timeLeft - hours * 60 * 60 - minutes * 60
+                        minString = str(minutes)
+                        if len(minString) < 2:
+                            minString = "0" + minString
+                        secString = str(seconds)
+                        if len(secString) < 2:
+                            secString = "0" + secString
+                        timeRemaining = "%s:%s:%s" % \
+                            (str(hours), minString, secString)
+                if (timeRemaining != "-1"):
+                    break
+
+        return timeRemaining
+
+    # Add documentation strings from base class
+    for method in \
+            [create, destroy, isAvailable, isValid, renew, timeleft, timeleftInHMS]:
+        if hasattr(ICredential, method.__name__):
+            baseMethod = getattr(ICredential, method.__name__)
+            setattr(method, "__doc__",
+                    baseMethod.__doc__.replace("credential", "AFS token"))

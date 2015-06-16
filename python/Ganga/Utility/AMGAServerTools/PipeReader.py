@@ -5,7 +5,7 @@
 #
 # Author:       Alexander Soroko
 #
-# Created:      20/10/2003     
+# Created:      20/10/2003
 #----------------------------------------------------------------------------
 
 """Read from pipe in non blocking manner. It is portable to both
@@ -18,9 +18,11 @@ import threading
 
 MIN_TIMEOUT = 0.01
 
-################################################################################
+##########################################################################
+
+
 class PipeReader:
-    
+
     def __init__(self, readfile, timeout=None, pipesize=0, blocksize=1024):
         """Initialise a non-blocking pipe object, given a real file readfile.
         timeout = the default timeout (in seconds) at which read will decide
@@ -31,7 +33,7 @@ class PipeReader:
         blocksize = the maximum block size for a raw read."""
 
         self.rfile = readfile
-        # default timeout allowed between blocks   
+        # default timeout allowed between blocks
         if timeout:
             self.timeout = timeout
         else:
@@ -41,19 +43,19 @@ class PipeReader:
         self._q = Queue.Queue(self.pipesize)
         self._stop = threading.Event()
         self._stop.clear()
-        self._thread = threading.Thread(target = self._readtoq)
+        self._thread = threading.Thread(target=self._readtoq)
         self._thread.start()
 
-#-------------------------------------------------------------------------------        
-    def __del__(self): 
+#-------------------------------------------------------------------------
+    def __del__(self):
         self.stop()
-        
-#-------------------------------------------------------------------------------        
-    def stop(self): 
+
+#-------------------------------------------------------------------------
+    def stop(self):
         self._stop.set()
         self._thread.join()
-        
-#-------------------------------------------------------------------------------        
+
+#-------------------------------------------------------------------------
     def _readtoq(self):
         try:
             while 1:
@@ -63,19 +65,19 @@ class PipeReader:
                 else:
                     self._q.put(item)
                 if self._stop.isSet():
-                    break    
+                    break
         except:
             return
-        
-#-------------------------------------------------------------------------------                       
+
+#-------------------------------------------------------------------------
     def has_data(self):
         return not self._q.empty()
-    
-#-------------------------------------------------------------------------------                       
+
+#-------------------------------------------------------------------------
     def isReading(self):
         return self._thread.isAlive()
-    
-#------------------------------------------------------------------------------- 
+
+#-------------------------------------------------------------------------
     def instantRead(self, maxblocks=0):
         """Read data from the queue, to a maximum of maxblocks (0 = infinite).
         Does not block."""
@@ -87,9 +89,9 @@ class PipeReader:
             if blockcount == maxblocks:
                 break
         return data
-    
-#-------------------------------------------------------------------------------    
-    def read(self, maxblocks=0, timeout=None, condition = None):
+
+#-------------------------------------------------------------------------
+    def read(self, maxblocks=0, timeout=None, condition=None):
         """Read data from the queue, allowing timeout seconds between block arrival.
         if timeout = None, then use default timeout. If timeout<0,
         then wait indefinitely.
@@ -102,17 +104,17 @@ class PipeReader:
                 return 1
             else:
                 return time.time() < endtime
-            
+
         data = ''
         blockcount = 0
         if timeout == None:
             timeout = self.timeout
-            
+
         if timeout < 0:
             endtime = -1
         else:
             endtime = time.time() + timeout
-        
+
         while keepReading(endtime):
             block = self.instantRead(1)
             if block != '':
@@ -121,7 +123,7 @@ class PipeReader:
                 if blockcount == maxblocks:
                     break
                 if endtime != -1:
-                    endtime = time.time() + timeout #reset endtime
+                    endtime = time.time() + timeout  # reset endtime
                 continue
             else:
                 time.sleep(MIN_TIMEOUT)
@@ -135,6 +137,5 @@ class PipeReader:
                 # stopping
                 if not self.has_data():
                     break
-                
-        return data
 
+        return data

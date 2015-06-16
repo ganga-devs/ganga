@@ -2,27 +2,30 @@
 from Queue import Queue
 import threading
 
+
 class DuplicateDataItemError(Exception):
+
     """
     Class raised when adding the same item in the Data object.
     """
 
     def __init__(self, message):
-        self.message = message 
+        self.message = message
 
 
 class Data:
+
     """
     Class to define user dataset collection.
     """
 
-    _attributes = ('collection','queue')
+    _attributes = ('collection', 'queue')
 
     def __init__(self, collection=[]):
-     
+
         self.collection = collection
         self.queue = Queue(maxsize=-1)
-        self.lock  = threading.Lock()
+        self.lock = threading.Lock()
 
         for item in collection:
             self.queue.put(item)
@@ -49,11 +52,12 @@ class Data:
 
                 #f = open('/tmp/hclee/mt_tasks.log', 'a')
                 #f.write( '%s \n' % str(item) )
-                #f.close()
+                # f.close()
 
                 self.queue.put(item)
             else:
-                raise DuplicateDataItemError('data item \'%s\' already in the task queue' % str(item))
+                raise DuplicateDataItemError(
+                    'data item \'%s\' already in the task queue' % str(item))
         finally:
             self.lock.release()
 

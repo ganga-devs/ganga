@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: diskutils.py,v 1.1 2008-07-17 16:41:02 moscicki Exp $
-################################################################################
+##########################################################################
 import sys
 import os
 import types
@@ -12,11 +12,11 @@ import atexit
 import random
 
 
-##if time.time() < time.time():
+# if time.time() < time.time():
 ##    timestampMethod = time.time
-##elif time.clock() < time.clock():
+# elif time.clock() < time.clock():
 ##    timestampMethod = time.clock
-##else:
+# else:
 ##    raise OSError("Can not find an appropriate timestamp function in the time module")
 
 
@@ -24,31 +24,31 @@ import random
 def timestampMethod():
     timestamp = '%.7f' % time.time()
     for p in range(3):
-        timestamp += str(random.randint(0,9))
+        timestamp += str(random.randint(0, 9))
     return timestamp
-          
 
-def newGuid(value = None):
+
+def newGuid(value=None):
     """newGUID(value = None) --> guid value - any python object"""
-    tt = time.gmtime()[0:6] + (random.randint(0,9),
-                               random.randint(0,9),
-                               random.randint(0,9),
-                               random.randint(0,9),
-                               random.randint(0,9),
-                               random.randint(0,9),
-                               random.randint(0,9),
-                               random.randint(0,9),
-                               random.randint(0,9),                               
+    tt = time.gmtime()[0:6] + (random.randint(0, 9),
+                               random.randint(0, 9),
+                               random.randint(0, 9),
+                               random.randint(0, 9),
+                               random.randint(0, 9),
+                               random.randint(0, 9),
+                               random.randint(0, 9),
+                               random.randint(0, 9),
+                               random.randint(0, 9),
                                id(value))
-    return '_' + (''.join(map(str, tt))).replace('-','')
+    return '_' + (''.join(map(str, tt))).replace('-', '')
 
 
-def createLock(lockfile, guid, tries_limit = 200):
+def createLock(lockfile, guid, tries_limit=200):
     tries = 0
     while True:
-        tries = tries +1
+        tries = tries + 1
         try:
-            guid += '\0' #mark the end of string
+            guid += '\0'  # mark the end of string
             fd = os.open(lockfile, os.O_WRONLY | os.O_CREAT | os.O_EXCL)
             try:
                 guidlen = os.write(fd, guid)
@@ -77,10 +77,10 @@ def removeLock(lockfile):
             return False
     return True
 
-    
 
 class RLock(object):
-    def __init__(self, lockfile = 'Lock', tries_limit = 200):
+
+    def __init__(self, lockfile='Lock', tries_limit=200):
         self.lockfile = lockfile
         self.guid = newGuid(self)
         self.counter = 0
@@ -93,7 +93,7 @@ class RLock(object):
                 return False
         self.counter += 1
         return True
-    
+
     def release(self):
         if self.counter > 0:
             if self.counter == 1:
@@ -111,17 +111,19 @@ class RLock(object):
                     f.close()
             except:
                 return
-            if f_guid.endswith('\0'): #lock file was correctly written
-                if f_guid.rstrip('\0') != self.guid: # by another RLock
+            if f_guid.endswith('\0'):  # lock file was correctly written
+                if f_guid.rstrip('\0') != self.guid:  # by another RLock
                     return
         removeLock(self.lockfile)
         self.counter = 0
-          
+
 
 class Filterer(object):
-    def __init__(self, fn, tmp = False):
+
+    def __init__(self, fn, tmp=False):
         self.fn = fn
         self.tmp = tmp
+
     def __call__(self, fn):
         ff = fn.split('_')
         fflen = len(ff)
@@ -136,7 +138,7 @@ class Filterer(object):
                         if ff[1] != '':
                             return True
         return False
-                    
+
 
 def listFiles(dirname):
     files = []
@@ -152,11 +154,11 @@ def getTimeStamp(fn):
     ff = fn.split('_')
     if len(ff) > 1:
         return ff[1].split('.')
-    return (0,0)
+    return (0, 0)
 
 
 def sorter(x, y):
-    x, y = map(getTimeStamp, (x,y))
+    x, y = map(getTimeStamp, (x, y))
     if x[0] < y[0]:
         return -1
     elif x[0] == y[0]:
@@ -170,7 +172,7 @@ def sorter(x, y):
         return 1
 
 
-def getHistory(fn, tmp = False):
+def getHistory(fn, tmp=False):
     # fn -- generic
     dirname, basename = os.path.split(os.path.abspath(fn))
     ffs = filter(Filterer(basename, tmp), listFiles(dirname))
@@ -182,7 +184,7 @@ def getLast(fn):
     # fn -- generic
     dirname, ffs = getHistory(fn)
     ffs.reverse()
-    for hf in ffs:  
+    for hf in ffs:
         hfn = os.path.join(dirname, hf)
         tmp_fn = hfn + '_'
         if not os.path.isfile(tmp_fn):
@@ -205,8 +207,8 @@ def __fillEntry(entries, lentr, i, f):
         entries.append(fields)
     return True
 
-    
-def read(fn, entries = None):
+
+def read(fn, entries=None):
     # fn -- precise
     # if entries is not none they will be filled first
     # this is a way to reduce memory leak in Python
@@ -223,22 +225,22 @@ def read(fn, entries = None):
         return (entries, i)
     finally:
         f.close()
-        
 
-def readLast(fn, entries = None):
+
+def readLast(fn, entries=None):
     # fn -- generic
     return read(getLast(fn), entries)[0]
 
-    
-def move(tmp_fn, fn, tries_limit = 200):
+
+def move(tmp_fn, fn, tries_limit=200):
     # tmp_fn, fn -- precise
     if os.path.isfile(fn):
-        raise OSError("File exists %s" % fn) 
+        raise OSError("File exists %s" % fn)
     os.rename(tmp_fn, fn)
     # check that file was moved
     tries = 0
     while True:
-        tries = tries +1
+        tries = tries + 1
         if os.path.isfile(tmp_fn) or not os.path.isfile(fn):
             if tries > tries_limit:
                 raise OSError("Can not rename file %s" % tmp_fn)
@@ -247,28 +249,28 @@ def move(tmp_fn, fn, tries_limit = 200):
             return
 
 
-def remove(fn, tries_limit = 200):
+def remove(fn, tries_limit=200):
     # fn -- generic
-    dirname, ffs = getHistory(fn, tmp = False)
-    for hf in ffs:  
+    dirname, ffs = getHistory(fn, tmp=False)
+    for hf in ffs:
         fn = os.path.join(dirname, hf)
         os.remove(fn)
         # check that file was removed
         tries = 0
         while True:
-            tries = tries +1
+            tries = tries + 1
             if os.path.isfile(fn):
                 if tries > tries_limit:
                     raise OSError("Can not remove file %s" % fn)
                 time.sleep(0.05)
             else:
-                return    
-    
+                return
 
-def write(entries, fn, lines_to_write = -1, tries_limit = 200):
+
+def write(entries, fn, lines_to_write=-1, tries_limit=200):
     # fn -- generic
-    dirname, ffs = getHistory(fn, tmp = False)
-    dirname, hfs = getHistory(fn, tmp = True)
+    dirname, ffs = getHistory(fn, tmp=False)
+    dirname, hfs = getHistory(fn, tmp=True)
     fn = '_'.join([fn, timestampMethod()])
     tmp_fn = fn + '_'
     f = open(tmp_fn, 'w')
@@ -279,7 +281,7 @@ def write(entries, fn, lines_to_write = -1, tries_limit = 200):
             lines_to_write -= 1
             if not len(entry):
                 continue
-            line=''
+            line = ''
             for field in entry:
                 if len(line):
                     line += '\0'
@@ -296,4 +298,3 @@ def write(entries, fn, lines_to_write = -1, tries_limit = 200):
             except OSError:
                 pass
     return fn
-    

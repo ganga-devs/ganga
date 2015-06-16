@@ -1,5 +1,5 @@
 # 05-07-03
-#v1.0.3
+# v1.0.3
 
 # ordereddict.py
 # A class that is a drop in replacement for an ordinary dictionary.
@@ -9,7 +9,8 @@
 # Copyright Michael Foord
 # Not for use in commercial projects without permission. (Although permission will probably be given).
 # If you use this code in a project then please credit me and include a link back.
-# If you release the project then let me know (and include this message with my code !)
+# If you release the project then let me know (and include this message
+# with my code !)
 
 # No warranty express or implied for the accuracy, fitness to purpose or otherwise for this code....
 # Use at your own risk !!!
@@ -17,12 +18,13 @@
 # E-mail or michael AT foord DOT me DOT uk
 # Maintained at www.voidspace.org.uk/atlantibots/pythonutils.html
 
-import sys          # purely used for the version_info 
+import sys          # purely used for the version_info
 
-####################################################################################
+##########################################################################
 
 
 class dIter:
+
     """Implements a basic dictionary iterator with 3 modes.
     If mode=0 (default) returns the keys (by returns I mean iterates over !)
     If mode=1 returns the values
@@ -31,14 +33,16 @@ class dIter:
     mode=1 equates to the itervalues method.
     mode=-1 equates to the iteritems method.
     """
+
     def __init__(self, indict, mode=0):
         self.thedict = indict
         self.inseq = indict.keys()
         self.index = 0
         self.mode = mode
-        
+
     def next(self):
-        if self.index >= len(self.inseq): raise StopIteration
+        if self.index >= len(self.inseq):
+            raise StopIteration
         thekey = self.inseq[self.index]
         self.index += 1
         if not self.mode:
@@ -47,13 +51,15 @@ class dIter:
             return self.thedict[thekey]
         elif self.mode == -1:
             return (thekey, self.thedict[thekey])
-    
+
     def __iter__(self):
         return self
 
-####################################################################################
+##########################################################################
+
 
 class oDict:
+
     """An ordered dictionary. ordereddict = oDict(indict, order)"""
     __doc__ = """ordereddict = oDict({'a' : 1, 'b' : 2}, True)
 The dictionary can be initialised with an optional dictionary passed in as the first argument,
@@ -77,7 +83,7 @@ The iterators are returned using the custom iterator dIter (which will work in t
 
     def __getitem__(self, item):
         """Fetching a value."""
-        return  self._thedict[item]
+        return self._thedict[item]
 
     def __delitem__(self, item):
         """Deleting a keyword"""
@@ -94,7 +100,7 @@ The iterators are returned using the custom iterator dIter (which will work in t
                 return self._thedict.pop(self.keys()[0])
             except IndexError:
                 raise KeyError(': \'pop(): dictionary is empty\'')
-            
+
     def popitem(self):
         """Emulates the popitem method - pops the first one in the list based on the chosen sort method."""
         try:
@@ -102,11 +108,11 @@ The iterators are returned using the custom iterator dIter (which will work in t
         except IndexError:
             raise KeyError(': \'popitem(): dictionary is empty\'')
         return (theitem, self._thedict.pop(theitem))
-    
+
     def has_key(self, item):
         """Does the dictionary have this key."""
         return item in self._thedict           # does the key exist
-        
+
     def __contains__(self, item):
         """Does the dictionary have this key."""
         return item in self._thedict           # does the key exist
@@ -114,7 +120,7 @@ The iterators are returned using the custom iterator dIter (which will work in t
     def setdefault(self, item, default=None):
         """Fetch an item if it exists, otherwise set the item to default and return default."""
         return self._thedict.setdefault(item, default)
-    
+
     def get(self, item, default=None):
         """Fetch the item if it exists, otherwise return default."""
         return self._thedict.get(item, default)
@@ -122,7 +128,7 @@ The iterators are returned using the custom iterator dIter (which will work in t
     def update(self, indict):
         """Update the current oDdict with the dictionary supplied."""
         self._thedict.update(indict)
-        
+
     def copy(self):
         """Create a new oDict object that is a copy of this one."""
         return oDict(self._thedict)
@@ -130,7 +136,7 @@ The iterators are returned using the custom iterator dIter (which will work in t
     def dict(self):
         """Create a dictionary version of this oDict."""
         return dict.copy(self._thedict)
-    
+
     def clear(self):
         """Clear oDict."""
         self._thedict.clear()
@@ -138,7 +144,7 @@ The iterators are returned using the custom iterator dIter (which will work in t
     def __repr__(self):
         """An oDict version of __repr__ """
         return 'oDict(' + self._thedict.__repr__() + ')'
-    
+
     def keys(self):
         """Return an ordered list of the keys of this oDict."""
         thelist = self._thedict.keys()
@@ -148,31 +154,31 @@ The iterators are returned using the custom iterator dIter (which will work in t
             thelist.sort()
             thelist.reverse()
         return thelist
-    
+
     def items(self):
-        """Like keys() but returns a list of (key, value)""" 
+        """Like keys() but returns a list of (key, value)"""
         return [(key, self._thedict[key]) for key in self.keys()]
 
     def values(self):
-        """Like keys() but returns an ordered list of values (ordered by key)""" 
+        """Like keys() but returns an ordered list of values (ordered by key)"""
         return [self._thedict[key] for key in self.keys()]
 
     def fromkeys(cls, *args):
         """Return a new oDict initialised from the values supplied.
         If sys.version_info > 2.2 this becomes a classmethod."""
         return oDict(*args)
-    
-    if (sys.version_info[0] + sys.version_info[1]/10.0) >= 2.2:
+
+    if (sys.version_info[0] + sys.version_info[1] / 10.0) >= 2.2:
         fromkeys = classmethod(fromkeys)
 
     def __len__(self):
         return len(self._thedict)
-    
+
     def __cmp__(self, other):
         if hasattr(other, '_thedict'):
             other = other._thedict
         return cmp(self._thedict, other)
-     
+
     def __eq__(self, other):
         if hasattr(other, '_thedict'):
             other = other._thedict
@@ -181,24 +187,24 @@ The iterators are returned using the custom iterator dIter (which will work in t
     def __ne__(self, other):
         if hasattr(other, '_thedict'):
             other = other._thedict
-        return self._thedict.__ne__(other) 
+        return self._thedict.__ne__(other)
 
     def __gt__(self, other):
         if hasattr(other, '_thedict'):
             other = other._thedict
-        return self._thedict.__gt__(other) 
+        return self._thedict.__gt__(other)
 
     def __ge__(self, other):
         if hasattr(other, '_thedict'):
             other = other._thedict
         return self._thedict.__ge__(other)
-    
-    def __lt__(self, other): 
+
+    def __lt__(self, other):
         if hasattr(other, '_thedict'):
             other = other._thedict
         return self._thedict.__lt__(other)
-    
-    def __le__(self, other): 
+
+    def __le__(self, other):
         if hasattr(other, '_thedict'):
             other = other._thedict
         return self._thedict.__le__(other)
@@ -227,11 +233,12 @@ The iterators are returned using the custom iterator dIter (which will work in t
         """An oDict version of __str__ """
         return 'oDict(' + self._thedict.__str__() + ')'
 
-############################################################################################
+##########################################################################
 
 if __name__ == '__main__':
-    dictmethods = ['__class__', '__cmp__', '__contains__', '__delattr__', '__delitem__', '__doc__', '__eq__', '__ge__', '__getattribute__', '__getitem__', '__gt__', '__hash__', '__init__', '__iter__', '__le__', '__len__', '__lt__', '__ne__', '__new__', '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__setitem__', '__str__', 'clear', 'copy', 'fromkeys', 'get', 'has_key', 'items', 'iteritems', 'iterkeys', 'itervalues', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values']
-    odict = oDict({'x' : 'a', 'y' : 'b', 'z' : 'c'})
+    dictmethods = ['__class__', '__cmp__', '__contains__', '__delattr__', '__delitem__', '__doc__', '__eq__', '__ge__', '__getattribute__', '__getitem__', '__gt__', '__hash__', '__init__', '__iter__', '__le__', '__len__', '__lt__', '__ne__', '__new__',
+                   '__reduce__', '__reduce_ex__', '__repr__', '__setattr__', '__setitem__', '__str__', 'clear', 'copy', 'fromkeys', 'get', 'has_key', 'items', 'iteritems', 'iterkeys', 'itervalues', 'keys', 'pop', 'popitem', 'setdefault', 'update', 'values']
+    odict = oDict({'x': 'a', 'y': 'b', 'z': 'c'})
     print 'print oDict.__doc__ \n', oDict.__doc__
     print
     print
@@ -242,30 +249,41 @@ if __name__ == '__main__':
     print 'See the docs as to why those attributes are missing !!'
     print 'Method test.\nIf nothing prints below this then all the tests passed !\n'
     dlist = []
-    for key in odict.iterkeys(): dlist.append(key)
-    if dlist != ['x', 'y', 'z']: print 'Order fail in iterkeys method.'
+    for key in odict.iterkeys():
+        dlist.append(key)
+    if dlist != ['x', 'y', 'z']:
+        print 'Order fail in iterkeys method.'
 
     dlist = []
-    for value in odict.itervalues(): dlist.append(value)
-    if dlist != ['a', 'b', 'c']: print 'Order fail in itervalues method.'
-    
-    dlist = []
-    for item in odict.iteritems(): dlist.append(item)
-    if dlist != [('x','a'), ('y','b'), ('z','c')]: print 'Order fail in iteritems method.'
+    for value in odict.itervalues():
+        dlist.append(value)
+    if dlist != ['a', 'b', 'c']:
+        print 'Order fail in itervalues method.'
 
-    if not odict.keys() == ['x', 'y', 'z']: print 'Order fail in keys method.'
-    if not odict.values() == ['a', 'b', 'c']: print 'Order fail in values method.'
-    if not odict.items() == [('x','a'), ('y','b'), ('z','c')]: print 'Order fail in items method.'
+    dlist = []
+    for item in odict.iteritems():
+        dlist.append(item)
+    if dlist != [('x', 'a'), ('y', 'b'), ('z', 'c')]:
+        print 'Order fail in iteritems method.'
+
+    if not odict.keys() == ['x', 'y', 'z']:
+        print 'Order fail in keys method.'
+    if not odict.values() == ['a', 'b', 'c']:
+        print 'Order fail in values method.'
+    if not odict.items() == [('x', 'a'), ('y', 'b'), ('z', 'c')]:
+        print 'Order fail in items method.'
     dlist = []
     while odict:
         dlist.append(odict.pop())
         if len(dlist) > 4:
             print 'Fail in pop to remove items'
             break
-    if dlist != ['a', 'b', 'c']: print 'Order fail in pop method.'
-    if not odict.fromkeys({'test':'z', 'fish':4}, False) == oDict({'test':'z', 'fish':4}, False): print 'Odd behaviour in fromkeys method.'
+    if dlist != ['a', 'b', 'c']:
+        print 'Order fail in pop method.'
+    if not odict.fromkeys({'test': 'z', 'fish': 4}, False) == oDict({'test': 'z', 'fish': 4}, False):
+        print 'Odd behaviour in fromkeys method.'
 
-    
+
 """
 oDict is an ordered dictionary.
 It behaves as a drop in replacement for an ordinary dictionary in almost every circumstance.
@@ -335,4 +353,3 @@ Made fromkeys a classmethod where Python Version > 2.2
 First version, appears to work fine.
 
 """
-

@@ -7,11 +7,15 @@ from GangaRepository import RepositoryError
 from Registry import RegistryError, RegistryAccessError, RegistryKeyError, RegistryLockError, ObjectNotInRegistryError
 
 allRegistries = {}
+
+
 def addRegistry(registry):
-   allRegistries[registry.name] = registry
+    allRegistries[registry.name] = registry
+
 
 def getRegistries():
-   return allRegistries.values()
+    return allRegistries.values()
+
 
 def getRegistry(name):
-   return allRegistries[name]
+    return allRegistries[name]

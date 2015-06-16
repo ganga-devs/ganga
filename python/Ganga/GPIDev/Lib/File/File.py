@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
-################################################################################
+##########################################################################
 
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('Configuration')
@@ -13,12 +13,15 @@ from Ganga.GPIDev.Lib.GangaList import GangaList
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-import os, shutil
+import os
+import shutil
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
-shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
+shared_path = os.path.join(expandfilename(gangadir), 'shared', config['user'])
+
 
 class File(GangaObject):
+
     """Represent the files, both local and remote and provide an interface to transparently get access to them.
 
     Typically in the context of job submission, the files are copied to the directory where the application
@@ -26,74 +29,74 @@ class File(GangaObject):
     is not universally supported however and needs a review.
 
     """
-    _schema = Schema(Version(1,1), {'name': SimpleItem(defvalue="",doc='path to the file source'),
-                                    'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)'),
-                                    'executable': SimpleItem(defvalue=False,hidden=True,transient=True,doc='specify if executable bit should be set when the file is created (internal framework use)')})
+    _schema = Schema(Version(1, 1), {'name': SimpleItem(defvalue="", doc='path to the file source'),
+                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)'),
+                                     'executable': SimpleItem(defvalue=False, hidden=True, transient=True, doc='specify if executable bit should be set when the file is created (internal framework use)')})
     _category = 'files'
     _name = "File"
-    _exportmethods = [ "getPathInSandbox" , "exists", "create", "isExecutable" ]
+    _exportmethods = ["getPathInSandbox", "exists", "create", "isExecutable"]
 
-    #added a subdirectory to the File object. The default is os.curdir, that is "." in Unix.
-    #The subdir is a relative path and will be appended to the pathname when writing out files.
+    # added a subdirectory to the File object. The default is os.curdir, that is "." in Unix.
+    # The subdir is a relative path and will be appended to the pathname when writing out files.
     # Therefore changing subdir to a anything starting with "/" will still end up relative
     # to the pathname when the file is copied.
     #
     # There is no protection on putting the parent directory. So ".." is legal and will make
     # the file end up in the parent directory. - AM
-    def __init__(self,name=None, subdir=os.curdir):
+    def __init__(self, name=None, subdir=os.curdir):
         super(File, self).__init__()
 
         if not name is None:
             assert(type(name) is type(''))
-            self.name = name 
+            self.name = name
 
         if not subdir is None:
             self.subdir = subdir
 
-
-    def __construct__(self,args):
+    def __construct__(self, args):
         if len(args) == 1 and type(args[0]) == type(''):
             v = args[0]
             import os.path
             expanded = expandfilename(v)
-            if not urlprefix.match(expanded): # if it is not already an absolute filename
+            # if it is not already an absolute filename
+            if not urlprefix.match(expanded):
                 self.name = os.path.abspath(expanded)
-            else: #bugfix #20545 
+            else:  # bugfix #20545
                 self.name = expanded
         else:
-            super(File,self).__construct__(args)
+            super(File, self).__construct__(args)
 
     def _attribute_filter__set__(self, attribName, attribValue):
         if attribName is 'name':
             return expandfilename(attribValue)
         return attribValue
-    
+
     def getPathInSandbox(self):
         """return a relative location of a file in a sandbox: subdir/name"""
-        from Ganga.Utility.files import real_basename       
-        return self.subdir+os.sep+real_basename(self.name)
+        from Ganga.Utility.files import real_basename
+        return self.subdir + os.sep + real_basename(self.name)
 
     def exists(self):
         """check if the file exists (as specified by 'name')"""
         import os.path
         return os.path.isfile(expandfilename(self.name))
-        
-    def create(self,outname):
+
+    def create(self, outname):
         """create a file in  a local filesystem as 'outname', maintain
         the original permissions """
         import shutil
 
-        shutil.copy(expandfilename(self.name),outname)
+        shutil.copy(expandfilename(self.name), outname)
         if self.executable:
             chmod_executable(outname)
-            
+
     def __repr__(self):
         """Get   the  representation   of  the   file.  Since   the  a
         SimpleStreamer uses  __repr__ for persistency  it is important
         to return  a valid python expression  which fully reconstructs
         the object.  """
 
-        return "File(name='%s',subdir='%s')"%(self.name,self.subdir)
+        return "File(name='%s',subdir='%s')" % (self.name, self.subdir)
 
     def isExecutable(self):
         """  return true  if  a file  is  create()'ed with  executable
@@ -101,23 +104,25 @@ class File(GangaObject):
         file are checked"""
         return self.executable or is_executable(expandfilename(self.name))
 
-# add File objects to the configuration scope (i.e. it will be possible to write instatiate File() objects via config file)
+# add File objects to the configuration scope (i.e. it will be possible to
+# write instatiate File() objects via config file)
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['File'] = File
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 import re
-#regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
-urlprefix=re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
+# regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
+urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
-def string_file_shortcut_file(v,item):
+
+def string_file_shortcut_file(v, item):
     if type(v) is type(''):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
         return File._proxyClass(v)._impl
-    return None 
-        
+    return None
+
 allComponentFilters['files'] = string_file_shortcut_file
 
 
@@ -128,21 +133,23 @@ allComponentFilters['files'] = string_file_shortcut_file
 
 from Ganga.GPIDev.Lib.File import getSharedPath
 
+
 class ShareDir(GangaObject):
+
     """Represents the directory used to store resources that are shared amongst multiple Ganga objects.
 
     Currently this is only used in the context of the prepare() method for certain applications, such as
     the Executable() application. A single ("prepared") application can be associated to multiple jobs.
 
     """
-    _schema = Schema(Version(1,0), {'name': SimpleItem(defvalue='',doc='path to the file source'),
-                                    'subdir': SimpleItem(defvalue=os.curdir,doc='destination subdirectory (a relative path)')})
-                                    
+    _schema = Schema(Version(1, 0), {'name': SimpleItem(defvalue='', doc='path to the file source'),
+                                     'subdir': SimpleItem(defvalue=os.curdir, doc='destination subdirectory (a relative path)')})
+
     _category = 'shareddirs'
-    _exportmethods = ['add','ls']
+    _exportmethods = ['add', 'ls']
     _name = "ShareDir"
     #_root_shared_path = root_default
-    _data=None
+    _data = None
 #    def _readonly(self):
 #        return True
 
@@ -153,30 +160,31 @@ class ShareDir(GangaObject):
         if not name is None:
             self.name = name
         else:
-            #continue generating directory names until we create a unique one (which will likely be on the first attempt).
+            # continue generating directory names until we create a unique one
+            # (which will likely be on the first attempt).
             while True:
-                name = 'conf-' + Ganga.Utility.guid.uuid() 
-                if not os.path.isdir(os.path.join(getSharedPath(),name)):
+                name = 'conf-' + Ganga.Utility.guid.uuid()
+                if not os.path.isdir(os.path.join(getSharedPath(), name)):
                     os.makedirs(os.path.join(getSharedPath(), name))
 
-                if not os.path.isdir(os.path.join(getSharedPath(),name)):
-                    logger.error( "ERROR creating path: %s" % os.path.join(getSharedPath(),name) )
-                    raise GangaException( "ShareDir ERROR" )
+                if not os.path.isdir(os.path.join(getSharedPath(), name)):
+                    logger.error("ERROR creating path: %s" %
+                                 os.path.join(getSharedPath(), name))
+                    raise GangaException("ShareDir ERROR")
                 else:
                     break
-            self.name=str(name)
+            self.name = str(name)
 
-            #incrementing then decrementing the shareref counter has the effect of putting the newly 
-            #created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
-            #filled with files, then assigned to an application.
+            # incrementing then decrementing the shareref counter has the effect of putting the newly
+            # created ShareDir into the shareref table. This is desirable if a ShareDir is created in isolation,
+            # filled with files, then assigned to an application.
             #a=Job(); s=ShareDir(); a.application.is_prepared=s
         #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-        #shareref.increase(self.name)
-        #shareref.decrease(self.name)
+        # shareref.increase(self.name)
+        # shareref.decrease(self.name)
 
 
-
-#this constructor enables the ability to add files to a ShareDir at initiation by calling
+# this constructor enables the ability to add files to a ShareDir at initiation by calling
 # ShareDir('filetoadd')
 #    def __construct__(self,addfile):
 #        self.addfile = addfile
@@ -185,32 +193,37 @@ class ShareDir(GangaObject):
 
     def add(self, input):
         if not isType(input, list):
-            input = [input] 
+            input = [input]
         for item in input:
             if isType(item, str):
                 if os.path.isfile(expandfilename(item)):
-                    logger.info('Copying file %s to shared directory %s'%(item, self.name))
-                    shutil.copy2(expandfilename(item), os.path.join(getSharedPath(),self.name))
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    logger.info(
+                        'Copying file %s to shared directory %s' % (item, self.name))
+                    shutil.copy2(
+                        expandfilename(item), os.path.join(getSharedPath(), self.name))
+                    shareref = GPIProxyObjectFactory(
+                        getRegistry("prep").getShareRef())
                     shareref.increase(self.name)
                     shareref.decrease(self.name)
                 else:
                     logger.error('File %s not found' % expandfilename(item))
-            elif isType(item,File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
-                logger.info('Copying file object %s to shared directory %s'%(item.name,self.name))
-                shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(),self.name))
-                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+            elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
+                logger.info(
+                    'Copying file object %s to shared directory %s' % (item.name, self.name))
+                shutil.copy2(
+                    expandfilename(item.name), os.path.join(getSharedPath(), self.name))
+                shareref = GPIProxyObjectFactory(
+                    getRegistry("prep").getShareRef())
                 shareref.increase(self.name)
                 shareref.decrease(self.name)
             else:
                 logger.error('File %s not found' % expandfilename(item.name))
-                    
 
     def ls(self):
         """
         Print the contents of the ShareDir
         """
-        full_shareddir_path =  os.path.join(getSharedPath(),self.name)
+        full_shareddir_path = os.path.join(getSharedPath(), self.name)
         try:
             os.path.isdir(full_shareddir_path)
             cmd = "find '%s'" % (full_shareddir_path)
@@ -218,38 +231,35 @@ class ShareDir(GangaObject):
             padding = '|  '
             for file in files:
                 level = file.count(os.sep)
-                level = level -6
+                level = level - 6
                 pieces = file.split(os.sep)
-                symbol = {0:'', 1:'/'}[os.path.isdir(file)]
-                logger.info(padding*level + pieces[-1] + symbol)
+                symbol = {0: '', 1: '/'}[os.path.isdir(file)]
+                logger.info(padding * level + pieces[-1] + symbol)
         except IOError:
-            logger.warn('ShareDir %s not found on storage' % full_shareddir_path)
+            logger.warn('ShareDir %s not found on storage' %
+                        full_shareddir_path)
 
-
-
-
-        
     def exists(self):
         """check if the file exists (as specified by 'name')"""
         import os.path
         return os.path.isdir(expandfilename(self.name))
-        
-    def create(self,outname):
+
+    def create(self, outname):
         """create a file in  a local filesystem as 'outname', maintain
         the original permissions """
         import shutil
 
-        shutil.copy(expandfilename(self.name),outname)
+        shutil.copy(expandfilename(self.name), outname)
         if self.executable:
             chmod_executable(outname)
-            
+
     def __repr__(self):
         """Get   the  representation   of  the   file.  Since   the  a
         SimpleStreamer uses  __repr__ for persistency  it is important
         to return  a valid python expression  which fully reconstructs
         the object.  """
 
-        return "ShareDir(name='%s',subdir='%s')"%(self.name,self.subdir)
+        return "ShareDir(name='%s',subdir='%s')" % (self.name, self.subdir)
 
     def isExecutable(self):
         """  return true  if  a file  is  create()'ed with  executable
@@ -263,16 +273,17 @@ Ganga.Utility.Config.config_scope['ShareDir'] = ShareDir
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
 import re
-#regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
-urlprefix=re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
+# regex [[PROTOCOL:][SETYPE:]..[<alfanumeric>:][/]]/filename
+urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
-def string_sharedfile_shortcut(v,item):
+
+def string_sharedfile_shortcut(v, item):
     if type(v) is type(''):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
         return ShareDir._proxyClass(v)._impl
-    return None 
-        
+    return None
+
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut
 #
 #

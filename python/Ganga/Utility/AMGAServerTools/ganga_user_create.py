@@ -26,6 +26,8 @@ DEBUG = False
 #DEBUG = True
 
 #---------------------------------------------------------------------------
+
+
 def translateSubject(subject):
     ss = subject.split('/')
     if len(ss) < 2:
@@ -37,24 +39,27 @@ def translateSubject(subject):
         return ss
 
 #---------------------------------------------------------------------------
+
+
 def create(user,
-           cert_subject = '',
-           cert_path = '',
-           cert_file = '',
-           home_dir = '',
+           cert_subject='',
+           cert_path='',
+           cert_file='',
+           home_dir='',
            **kwds):
 
-    # create user 
+    # create user
     udb = UserDB(**kwds)
     try:
-        udb.userCreate(user, password = 'ganga')
+        udb.userCreate(user, password='ganga')
     except Exception as e:
         print str(e)
         return
     try:
         if not cert_subject:
             if cert_path == '':
-                cert_path = '/afs/cern.ch/user/'+ user[0] + '/' + user + '/.globus'
+                cert_path = '/afs/cern.ch/user/' + \
+                    user[0] + '/' + user + '/.globus'
             cert_subject = getCertificateSubject(cert_path, cert_file)
         if cert_subject:
             udb.userSubjectAdd(user, translateSubject(cert_subject))
@@ -62,7 +67,7 @@ def create(user,
             print "WARNING: Can't get certificate subject. \n\
             Certificate subject was't mapped to the user " + user
     except Exception as e:
-        print str(e)   
+        print str(e)
 
     # create user directory
     cls = Collections(**kwds)
@@ -71,36 +76,38 @@ def create(user,
     try:
         cls.createDir(home_dir)
     except Exception as e:
-        print str(e)    
+        print str(e)
         return
     try:
         cls.chown(home_dir, user)
         cls.chmod(home_dir, 'rwx')
     except Exception as e:
-        print str(e)    
-        return    
+        print str(e)
+        return
 
 #---------------------------------------------------------------------------
+
+
 def main():
-        
+
     from optparse import OptionParser
     parser = OptionParser()
-    parser.add_option("--cert-subject", dest = "cert_subject",
-                      help = "subject of user certificate")    
-    parser.add_option("--cert-file", dest = "cert_file",
-                      help = "name of user certificate file")
-    parser.add_option("--cert-path", dest = "cert_path",
-                      help = "path where to look for the user certificate")
-    parser.add_option("--home-dir", dest = "home_dir",
-                      help = "name of user home directory in the repository")
-    parser.add_option("--host", dest = "host",
-                      help = "url of the repository server")
-    parser.add_option("--port", dest = "port", type = "int",
-                      help = "port number")
-    parser.add_option("--login", dest = "login", 
-                      help = "login name for the administrator")
-    parser.add_option("--password", dest = "password", 
-                      help = "administrator's password")        
+    parser.add_option("--cert-subject", dest="cert_subject",
+                      help="subject of user certificate")
+    parser.add_option("--cert-file", dest="cert_file",
+                      help="name of user certificate file")
+    parser.add_option("--cert-path", dest="cert_path",
+                      help="path where to look for the user certificate")
+    parser.add_option("--home-dir", dest="home_dir",
+                      help="name of user home directory in the repository")
+    parser.add_option("--host", dest="host",
+                      help="url of the repository server")
+    parser.add_option("--port", dest="port", type="int",
+                      help="port number")
+    parser.add_option("--login", dest="login",
+                      help="login name for the administrator")
+    parser.add_option("--password", dest="password",
+                      help="administrator's password")
 
     (options, args) = parser.parse_args()
 
@@ -109,17 +116,17 @@ def main():
     else:
         print "No user name was given. Exiting..."
         return
-    
+
     kwargs = {}
-    for o in ['cert_subject','cert_file','cert_path','home_dir','host','port','login','password']:
+    for o in ['cert_subject', 'cert_file', 'cert_path', 'home_dir', 'host', 'port', 'login', 'password']:
         v = getattr(options, o)
         if v:
             kwargs[o] = v
 
     create(user, **kwargs)
-    
-    
-################################################################################
+
+
+##########################################################################
 usage = """
 """
 

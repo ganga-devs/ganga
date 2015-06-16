@@ -1,10 +1,12 @@
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from Ganga.Lib.LCG.Utility import * 
+from Ganga.Lib.LCG.Utility import *
 
 logger = getLogger()
 
+
 class LCGOutputDownloadTask:
+
     """
     Class for defining a data object for each output downloading task.
     """
@@ -13,7 +15,7 @@ class LCGOutputDownloadTask:
 
     def __init__(self, gridObj, jobObj, use_wms_proxy):
         self.gridObj = gridObj
-        self.jobObj  = jobObj
+        self.jobObj = jobObj
         self.use_wms_proxy = use_wms_proxy
 
     def __eq__(self, other):
@@ -31,7 +33,9 @@ class LCGOutputDownloadTask:
         """
         return 'downloading task for job %s' % self.jobObj.getFQID('.')
 
+
 class LCGOutputDownloadAlgorithm(Algorithm):
+
     """
     Class for implementing the logic of each downloading task.
     """
@@ -41,46 +45,51 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         downloads output of one LCG job 
         """
 
-        pps_check = (True,None)
+        pps_check = (True, None)
 
         grid = item.gridObj
-        job  = item.jobObj
+        job = item.jobObj
         wms_proxy = item.use_wms_proxy
 
-        ## it is very likely that the job's downloading task has been
-        ## created and assigned in a previous monitoring loop
-        ## ignore such kind of cases
+        # it is very likely that the job's downloading task has been
+        # created and assigned in a previous monitoring loop
+        # ignore such kind of cases
         if job.status in ['completing', 'completed', 'failed']:
             return True
 
-        ## it can also happen that the job was killed/removed by user between
-        ## the downloading task was created in queue and being taken by one of
-        ## the downloading thread. Ignore suck kind of cases
-        if job.status in ['removed','killed']:
+        # it can also happen that the job was killed/removed by user between
+        # the downloading task was created in queue and being taken by one of
+        # the downloading thread. Ignore suck kind of cases
+        if job.status in ['removed', 'killed']:
             return True
 
         job.updateStatus('completing')
         outw = job.getOutputWorkspace()
 
-        pps_check = grid.get_output(job.backend.id, outw.getPath(), wms_proxy=wms_proxy)
+        pps_check = grid.get_output(
+            job.backend.id, outw.getPath(), wms_proxy=wms_proxy)
 
         if pps_check[0]:
             job.updateStatus('completed')
             job.backend.exitcode = 0
         else:
             job.updateStatus('failed')
-            # update the backend's reason if the failure detected in the Ganga's pps
+            # update the backend's reason if the failure detected in the
+            # Ganga's pps
             if pps_check[1] != 0:
-                job.backend.reason = 'non-zero app. exit code: %s' % pps_check[1]
+                job.backend.reason = 'non-zero app. exit code: %s' % pps_check[
+                    1]
                 job.backend.exitcode = pps_check[1]
 
-        # needs to update the master job's status to give an up-to-date status of the whole job
+        # needs to update the master job's status to give an up-to-date status
+        # of the whole job
         if job.master:
             job.master.updateMasterJobStatus()
 
-        self.__appendResult__( job.getFQID('.'), True )
+        self.__appendResult__(job.getFQID('.'), True)
 
         return True
+
 
 class LCGOutputDownloader(MTRunner):
 
@@ -90,8 +99,9 @@ class LCGOutputDownloader(MTRunner):
 
     def __init__(self, numThread=10):
 
-        MTRunner.__init__(self, name='lcg_output_downloader', data=Data(collection=[]), algorithm=LCGOutputDownloadAlgorithm())
-        
+        MTRunner.__init__(self, name='lcg_output_downloader', data=Data(
+            collection=[]), algorithm=LCGOutputDownloadAlgorithm())
+
         self.keepAlive = True
         self.numThread = numThread
 
@@ -102,9 +112,9 @@ class LCGOutputDownloader(MTRunner):
     def addTask(self, grid, job, use_wms_proxy):
 
         task = LCGOutputDownloadTask(grid, job, use_wms_proxy)
-        
-        logger.debug( 'add output downloading task: job %s' % job.getFQID('.') )
+
+        logger.debug('add output downloading task: job %s' % job.getFQID('.'))
 
         self.addDataItem(task)
-        
+
         return True

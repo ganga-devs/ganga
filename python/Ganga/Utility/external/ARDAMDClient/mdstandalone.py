@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: mdstandalone.py,v 1.1 2008-07-17 16:41:02 moscicki Exp $
-################################################################################
+##########################################################################
 import os
 import re
 import errno
@@ -14,6 +14,7 @@ from mdtable import MDTable
 from diskutils import RLock, getLast, readLast, write, remove
 
 DEBUG = False
+
 
 def visitLocksRemove(arg, directory, files):
     age = arg
@@ -35,10 +36,10 @@ def visitLocksList(arg, directory, files):
         filename = os.path.join(directory, name)
         mtime = os.stat(filename).st_mtime
         if age > 0 and mtime > age:
-            continue               
-        line = filename[len(root)-1:] # Remove path to root directory
+            continue
+        line = filename[len(root) - 1:]  # Remove path to root directory
         line = os.path.normpath(line)
-        line = line[0: len(line)-5] # Remove /LOCK
+        line = line[0: len(line) - 5]  # Remove /LOCK
         if len(line) == 0:
             line = "/"
         line = os.path.normpath(line)
@@ -46,6 +47,7 @@ def visitLocksList(arg, directory, files):
 
 
 class MDStandalone (mdinterface.MDInterface):
+
     def __mkdir(self, newdir):
         """ works the way a good mkdir should :)
         - already exists, silently complete
@@ -60,20 +62,20 @@ class MDStandalone (mdinterface.MDInterface):
             os.makedirs(newdir)
         except OSError as e:
             if e[0] == errno.EPERM or e[0] == errno.EACCES:
-                raise mdinterface.CommandException(4, "Could not create dir: Permission denied")
+                raise mdinterface.CommandException(
+                    4, "Could not create dir: Permission denied")
             else:
                 raise mdinterface.CommandException(16, "Directory existed")
 
-
     def __init__(self, root,
-                 blocklength  = 1000,
-                 cache_size   = 100000,
-                 tries_limit  = 200):
+                 blocklength=1000,
+                 cache_size=100000,
+                 tries_limit=200):
         self.root = os.path.normpath(root)
         self.blocklength = blocklength
-        self.cache_size  = cache_size
+        self.cache_size = cache_size
         self.tries_limit = tries_limit
-        self.rows=[]
+        self.rows = []
         self.tables = {}
         self.currentDir = '/'
         self.loaded_tables = {}
@@ -81,87 +83,82 @@ class MDStandalone (mdinterface.MDInterface):
         self.transaction_in_prgs = False
         self.sequence_reserve = {}
 
-
     def __isDir(self, dirname):
         name = self.__systemPath(dirname)
         return os.path.isdir(name)
 
-
     def __absolutePath(self, table):
-        if DEBUG: print '__absolutePath for ', table
+        if DEBUG:
+            print '__absolutePath for ', table
         if len(table) and table[0] == '/':
             prefix = ''
         else:
             prefix = self.currentDir + '/'
         table = os.path.normpath(prefix + table).replace(os.sep, '/')
-        if DEBUG: print '__absolutePath: returning', table
+        if DEBUG:
+            print '__absolutePath: returning', table
         return table
-
 
     def __systemPath(self, path):
         path = os.path.normpath(self.root + '/' + path)
-        if DEBUG: print '__systemPath returns: ', path
+        if DEBUG:
+            print '__systemPath returns: ', path
         return path
-
 
     def __initTransaction(self):
         if not self.transaction_in_prgs:
             self.tables = {}
 
-
-    def __loadTable(self, table, update = True):
+    def __loadTable(self, table, update=True):
         table = self.__absolutePath(table)
-        if DEBUG: print 'Loading table', table
+        if DEBUG:
+            print 'Loading table', table
         if table in self.tables:
             mdtable = self.tables[table]
         else:
-            mdtable = self.__getTable(table) 
+            mdtable = self.__getTable(table)
             if not mdtable.lock():
-                raise CommandException(9, 'Could not acquire table lock %s' % table)
+                raise CommandException(
+                    9, 'Could not acquire table lock %s' % table)
             self.tables[table] = mdtable
             mdtable.load()
         return mdtable, table
 
-
     def __saveTable(self, table):
         if not self.transaction_in_prgs:
-            if DEBUG: print 'Saving table', table
+            if DEBUG:
+                print 'Saving table', table
             mdtable = self.loaded_tables[table]
             mdtable.save()
 
-        
     def __addEntry(self, mdtable, entry, attrs, values):
         if entry in mdtable.entries:
-            raise CommandException(15, "Entry exists")       
+            raise CommandException(15, "Entry exists")
         # new entry
-        e=[''] * (len(mdtable.attributes)+1)
-        e[0]=entry
+        e = [''] * (len(mdtable.attributes) + 1)
+        e[0] = entry
         for i in range(0, len(attrs)):
-            e[mdtable.attributeDict[attrs[i]]+1] = values[i]
+            e[mdtable.attributeDict[attrs[i]] + 1] = values[i]
         mdtable.entries.append(e)
-        
 
     def __getTable(self, table):
         dirname = self.__systemPath(table)
         if not os.path.isdir(dirname):
-            raise CommandException(1, 'File or directory does not exist')               
+            raise CommandException(1, 'File or directory does not exist')
         if table not in self.loaded_tables:
             self.loaded_tables[table] = MDTable(dirname,
-                                                blocklength = self.blocklength,
-                                                cache_size  = self.cache_size,
-                                                tries_limit = self.tries_limit)
+                                                blocklength=self.blocklength,
+                                                cache_size=self.cache_size,
+                                                tries_limit=self.tries_limit)
         return self.loaded_tables[table]
-    
 
     def releaseAllLocks(self):
         if not self.transaction_in_prgs:
             for table in self.tables:
                 self.tables[table].unlock()
 
-        
     def eot(self):
         return len(self.rows) == 0
-
 
     def addEntries(self, entries):
         self.__initTransaction()
@@ -179,7 +176,6 @@ class MDStandalone (mdinterface.MDInterface):
             self.__saveTable(tablename)
         finally:
             self.releaseAllLocks()
-
 
     def addAttr(self, file, name, t):
         self.__initTransaction()
@@ -200,7 +196,6 @@ class MDStandalone (mdinterface.MDInterface):
             self.__saveTable(tablename)
         finally:
             self.releaseAllLocks()
-        
 
     def listAttr(self, file):
         self.__initTransaction()
@@ -219,7 +214,6 @@ class MDStandalone (mdinterface.MDInterface):
         finally:
             self.releaseAllLocks()
 
-
     def addEntry(self, file, keys, values):
         self.__initTransaction()
         try:
@@ -229,7 +223,6 @@ class MDStandalone (mdinterface.MDInterface):
             self.__saveTable(tablename)
         finally:
             self.releaseAllLocks()
-
 
     def getattr(self, file, attrs):
         self.__initTransaction()
@@ -251,26 +244,25 @@ class MDStandalone (mdinterface.MDInterface):
                     row.append(e[0])
                     for j in range(0, len(attrs)):
                         index = mdtable.attributeDict[attrs[j]]
-                        row.append(e[index+1])
+                        row.append(e[index + 1])
                     self.rows.append(row)
         finally:
             self.releaseAllLocks()
-
 
     def getEntry(self):
         e = self.rows.pop(0)
         # entry, row = (e[0], e[1:])
         return (e[0], e[1:])
 
-    
     def createDir(self, dirname):
-        if DEBUG: print 'createDir ', dirname
+        if DEBUG:
+            print 'createDir ', dirname
         newdir = self.__systemPath(self.__absolutePath(dirname))
         self.__mkdir(newdir)
 
-
     def listEntries(self, dirname):
-        if DEBUG: print 'listEntries ', dirname
+        if DEBUG:
+            print 'listEntries ', dirname
         self.__initTransaction()
         try:
             dirname = self.__absolutePath(dirname)
@@ -278,16 +270,16 @@ class MDStandalone (mdinterface.MDInterface):
                 entry = "*"
             else:
                 dirname, entry = os.path.split(dirname)
-                
+
             # List directories, first
             dirs = os.listdir(self.__systemPath(dirname))
             for d in dirs:
-                if self.__isDir(dirname + '/' +d):
+                if self.__isDir(dirname + '/' + d):
                     row = []
-                    row.append(dirname + '/' +d)
+                    row.append(dirname + '/' + d)
                     row.append('collection')
                     self.rows.append(row)
-            
+
             # Now list entries
             mdtable, dirname = self.__loadTable(dirname)
             pattern = entry.replace('*', '.*')
@@ -303,9 +295,9 @@ class MDStandalone (mdinterface.MDInterface):
         finally:
             self.releaseAllLocks()
 
-
     def removeAttr(self, file, name):
-        if DEBUG: print 'removeAttr ', file, name
+        if DEBUG:
+            print 'removeAttr ', file, name
         self.__initTransaction()
         try:
             dirname = self.__absolutePath(file)
@@ -319,23 +311,23 @@ class MDStandalone (mdinterface.MDInterface):
             mdtable.update()
             for i in range(0, len(mdtable.entries)):
                 e = mdtable.entries[i]
-                del e[iattr+1] 
+                del e[iattr + 1]
                 mdtable.entries[i] = e
             self.__saveTable(dirname)
         finally:
             self.releaseAllLocks()
-        
 
-    def rm(self, path):        
-        if DEBUG: print 'rm ', path
+    def rm(self, path):
+        if DEBUG:
+            print 'rm ', path
         self.__initTransaction()
         try:
             dirname, entry = os.path.split(path)
             mdtable, dirname = self.__loadTable(dirname, True)
             pattern = entry.replace('*', '.*')
             pattern = pattern.replace('?', '.')
-            for i in range(len(mdtable.entries)-1, -1, -1):
-                e =  mdtable.entries[i]
+            for i in range(len(mdtable.entries) - 1, -1, -1):
+                e = mdtable.entries[i]
                 r = re.match(pattern, e[0])
                 if r and r.group(0) == e[0]:
                     del mdtable.entries[i]
@@ -343,10 +335,10 @@ class MDStandalone (mdinterface.MDInterface):
         finally:
             self.releaseAllLocks()
 
-
     def sequenceCreate(self, name, directory, increment=1, start=1):
-        name = self.__systemPath(self.__absolutePath(directory) + '/SEQ'+name)
-        lockfile = name+".LOCK"
+        name = self.__systemPath(
+            self.__absolutePath(directory) + '/SEQ' + name)
+        lockfile = name + ".LOCK"
         lock = RLock(lockfile)
         if lock.acquire():
             try:
@@ -359,38 +351,41 @@ class MDStandalone (mdinterface.MDInterface):
                 entry = [str(start), str(increment), str(start)]
                 try:
                     write([entry], name)
-                except (OSError,IOError) as e:
-                    raise CommandException(17, "sequenceCreate error: " + str(e))
+                except (OSError, IOError) as e:
+                    raise CommandException(
+                        17, "sequenceCreate error: " + str(e))
             finally:
                 lock.release()
         else:
             raise CommandException(9, "Cannot lock %s" % name)
 
-
-    def sequenceNext(self, name, reserve = 1):
+    def sequenceNext(self, name, reserve=1):
         # with reserve > 1 this method returns
         # reserved  value for the counter if there is one available,
-        # otherwise it will reserve specified number of values and return the first one
+        # otherwise it will reserve specified number of values and return the
+        # first one
         def next(name, reserve):
             dirname, seq = os.path.split(name)
-            name = self.__systemPath(self.__absolutePath(dirname) + '/SEQ'+seq)
-            lockfile = name+".LOCK"
+            name = self.__systemPath(
+                self.__absolutePath(dirname) + '/SEQ' + seq)
+            lockfile = name + ".LOCK"
             lock = RLock(lockfile)
             if lock.acquire():
                 try:
                     try:
                         entries = readLast(name)
-                    except (OSError,IOError) as e:
+                    except (OSError, IOError) as e:
                         raise CommandException(17, "Not a sequence: " + str(e))
-                    if not (len(entries)==1 and len(entries[0])==3):
+                    if not (len(entries) == 1 and len(entries[0]) == 3):
                         raise CommandException(17, "Not a sequence: " + str(e))
-                    start, increment, now = entries[0]   
+                    start, increment, now = entries[0]
                     newval = str(int(now) + int(increment) * reserve)
                     entry = [start, increment, newval]
                     try:
                         write([entry], name)
-                    except (OSError,IOError) as e:
-                        raise CommandException(17, "sequenceNext error: " + str(e))
+                    except (OSError, IOError) as e:
+                        raise CommandException(
+                            17, "sequenceNext error: " + str(e))
                     return (now, increment, newval)
                 finally:
                     lock.release()
@@ -415,28 +410,28 @@ class MDStandalone (mdinterface.MDInterface):
         else:
             return next(name, reserve)[0]
 
-
     def sequenceRemove(self, name):
         if name in self.sequence_reserve:
             del self.sequence_reserve[name]
         dirname, seq = os.path.split(name)
-        name = self.__systemPath(self.__absolutePath(dirname) + '/SEQ'+seq)
-        lockfile = name+".LOCK"
+        name = self.__systemPath(self.__absolutePath(dirname) + '/SEQ' + seq)
+        lockfile = name + ".LOCK"
         lock = RLock(lockfile)
-        if lock.acquire():       
+        if lock.acquire():
             try:
                 try:
                     remove(name)
                 except OSError as e:
-                    raise CommandException(17, "sequenceRemove error: " + str(e))
+                    raise CommandException(
+                        17, "sequenceRemove error: " + str(e))
             finally:
                 lock.release()
         else:
             raise CommandException(9, "Cannot lock %s" % name)
-        
-    
+
     def removeDir(self, dirname):
-        if DEBUG: print 'removeDir ', dirname
+        if DEBUG:
+            print 'removeDir ', dirname
         name = self.__systemPath(self.__absolutePath(dirname))
         try:
             os.rmdir(name)
@@ -444,11 +439,11 @@ class MDStandalone (mdinterface.MDInterface):
             if e[0] == errno.ENOENT:
                 raise mdinterface.CommandException(1, "Directory not found")
             else:
-                raise mdinterface.CommandException(11, "Directory not empty")                                    
-    
-        
+                raise mdinterface.CommandException(11, "Directory not empty")
+
     def selectAttr(self, attrs, query):
-        if DEBUG: print 'selectAttr ', attrs, query
+        if DEBUG:
+            print 'selectAttr ', attrs, query
         self.__initTransaction()
         try:
             self.rows = []
@@ -459,10 +454,10 @@ class MDStandalone (mdinterface.MDInterface):
                 mdtable, table = self.__loadTable(table)
                 tList.append(table)
                 aList.append(attr)
-            
+
             parser = MDParser(query, self.tables,
-                              self.currentDir, self.__loadTable)      
-            
+                              self.currentDir, self.__loadTable)
+
             # First, only load necessary tables
             parser.parseWhereClause()
             allTables = []
@@ -483,27 +478,26 @@ class MDStandalone (mdinterface.MDInterface):
                         if aList[j] == "FILE":
                             index = 0
                         else:
-                            index = t.attributeDict[aList[j]]+1
+                            index = t.attributeDict[aList[j]] + 1
                         row.append(t.entries[t.currentRow][index])
                     self.rows.append(row)
-                for j in range (0, len(allTables)):
+                for j in range(0, len(allTables)):
                     if allTables[j].currentRow < 0:
                         continue
                     allTables[j].currentRow = allTables[j].currentRow + 1
                     if allTables[j].currentRow < len(allTables[j].entries):
                         break
-                    allTables[j].currentRow = 0   
+                    allTables[j].currentRow = 0
         finally:
             self.releaseAllLocks()
-
 
     def getSelectAttrEntry(self):
         # attributes = self.rows.pop(0)
         return self.rows.pop(0)
 
-
     def updateAttr(self, pattern, updateExpr, condition):
-        if DEBUG: print 'updateAttr ', pattern, updateExpr, condition
+        if DEBUG:
+            print 'updateAttr ', pattern, updateExpr, condition
         self.__initTransaction()
         try:
             dirname = self.__absolutePath(pattern)
@@ -525,11 +519,11 @@ class MDStandalone (mdinterface.MDInterface):
             expressions = []
             for e in updateExpr:
                 var, exp = self.splitUpdateClause(e)
-                index = mdtable.attributeDict[var]+1
+                index = mdtable.attributeDict[var] + 1
                 p = MDParser(exp, self.tables, tablename,
                              self.__loadTable)
                 parser.parseWhereClause()
-                expressions.append( (index, exp, p) )
+                expressions.append((index, exp, p))
 
             # Find all tables which have entries and list them in allTables,
             # and count the number of iterations we need to do
@@ -538,7 +532,7 @@ class MDStandalone (mdinterface.MDInterface):
             for k, v in self.tables.iteritems():
                 v.initRowPointer()
                 if len(v.entries) == 0:
-                  continue
+                    continue
                 allTables.append(v)
                 if iterations == 0:
                     iterations = len(v.entries)
@@ -552,12 +546,12 @@ class MDStandalone (mdinterface.MDInterface):
                 r = re.match(pattern, e[0])
                 if r and r.group(0) == e[0]:
                     if parser.parseWhereClause():
-                        for j in range (0, len(expressions)):
+                        for j in range(0, len(expressions)):
                             index, exp, p = expressions[j]
                             value = p.parseStatement()
                             e[index] = value
                         mdtable.entries[mdtable.currentRow] = e
-                for j in range (0, len(allTables)):
+                for j in range(0, len(allTables)):
                     allTables[j].currentRow = allTables[j].currentRow + 1
                     if allTables[j].currentRow < len(allTables[j].entries):
                         break
@@ -567,7 +561,6 @@ class MDStandalone (mdinterface.MDInterface):
         finally:
             self.releaseAllLocks()
 
-
     def setAttr(self, file, keys, values):
         self.__initTransaction()
         tablename, entry = os.path.split(file)
@@ -576,21 +569,19 @@ class MDStandalone (mdinterface.MDInterface):
             pattern = entry.replace('*', '.*')
             pattern = pattern.replace('?', '.')
             for i in range(0, len(mdtable.entries)):
-                e =  mdtable.entries[i]
+                e = mdtable.entries[i]
                 r = re.match(pattern, e[0])
                 if r and r.group(0) == e[0]:
                     for j in range(0, len(keys)):
                         index = mdtable.attributeDict[keys[j]]
-                        e[index+1] = values[j]
+                        e[index + 1] = values[j]
                     mdtable.entries[i] = e
                 self.__saveTable(tablename)
         finally:
             self.releaseAllLocks()
 
-
     def pwd(self):
         return self.currentDir
-
 
     def cd(self, dir):
         dir = self.__absolutePath(dir)
@@ -598,18 +589,17 @@ class MDStandalone (mdinterface.MDInterface):
             raise CommandException(1, "Not a directory")
         self.currentDir = dir
 
-
     def upload(self, collection, attributes):
-        self.transaction() # start transaction
+        self.transaction()  # start transaction
         mdtable, tablename = self.__loadTable(collection, True)
         self.upload_cmd['collection'] = tablename
         self.upload_cmd['attributes'] = attributes
 
-
     def put(self, file, values):
         if not self.transaction_in_prgs:
-            raise CommandException(9, "Could not abort No transaction in progress. Command was: abort")
-        elif len(values)!=len(self.upload_cmd['attributes']):
+            raise CommandException(
+                9, "Could not abort No transaction in progress. Command was: abort")
+        elif len(values) != len(self.upload_cmd['attributes']):
             raise CommandException(3, "Illegal command")
         tablename, entry = os.path.split(file)
         if tablename:
@@ -618,20 +608,20 @@ class MDStandalone (mdinterface.MDInterface):
         attrs = self.upload_cmd['attributes']
         self.__addEntry(mdtable, entry, attrs, values)
 
-
     def abort(self):
         if not self.transaction_in_prgs:
-            raise CommandException(9, "Could not abort No transaction in progress. Command was: abort")
+            raise CommandException(
+                9, "Could not abort No transaction in progress. Command was: abort")
         try:
             self.transaction_in_prgs = False
             self.upload_cmd = {}
         finally:
             self.releaseAllLocks()
 
-
     def commit(self):
         if not self.transaction_in_prgs:
-            raise CommandException(9, "Could not commit No transaction in progress. Command was: commit")
+            raise CommandException(
+                9, "Could not commit No transaction in progress. Command was: commit")
         try:
             self.transaction_in_prgs = False
             for table in self.tables:
@@ -639,28 +629,26 @@ class MDStandalone (mdinterface.MDInterface):
         finally:
             self.releaseAllLocks()
 
-            
     def transaction(self):
         self.__initTransaction()
         if not self.transaction_in_prgs:
             self.transaction_in_prgs = True
-        
 
     # Removes all locks, even those of other processes recursively
     # starting at the root directory by deleting the LOCK files
     # If age is given it restricts the deletion operation on most
     # operating systems to locks older than age seconds
-    def removeAllLocks(self, age = -1):
+    def removeAllLocks(self, age=-1):
         if age > 0:
-            age = time.time()-age
-        os.path.walk(self.root, visitLocksRemove, age);
+            age = time.time() - age
+        os.path.walk(self.root, visitLocksRemove, age)
 
-
-    # Returns a list witha all currently held locks (locks older than age if age>0)
-    def listAllLocks(self, age = -1):
+    # Returns a list witha all currently held locks (locks older than age if
+    # age>0)
+    def listAllLocks(self, age=-1):
         if age > 0:
-            age = time.time()-age
-        
+            age = time.time() - age
+
         lines = []
-        os.path.walk(self.root, visitLocksList, (age, self.root, lines));
+        os.path.walk(self.root, visitLocksList, (age, self.root, lines))
         return lines

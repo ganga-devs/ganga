@@ -1,5 +1,5 @@
 from __future__ import print_function
-from Ganga.Utility.Config import getConfig,configure
+from Ganga.Utility.Config import getConfig, configure
 
 if __name__ == "__main__":
 
@@ -8,26 +8,25 @@ if __name__ == "__main__":
     # There are two ways of forcing debug in for this test:
 
     # WAY 1:
-    #Ganga.Utility.logging.config.setUserOption('Ganga.Utility.Config','DEBUG')
-    
+    # Ganga.Utility.logging.config.setUserOption('Ganga.Utility.Config','DEBUG')
+
     # WAY 2:
-    Ganga.Utility.logging.config['Ganga.Utility.Config']='DEBUG'
+    Ganga.Utility.logging.config['Ganga.Utility.Config'] = 'DEBUG'
     Ganga.Utility.logging.bootstrap()
 
-    
-    print('Basic Test')    
+    print('Basic Test')
     import sys
-    
-    c1 = getConfig('C1')
-    c1.setDefaultOptions({'a':1,'aa':'xx' })
-        
-    c2 = getConfig('C2')
-    c2['b']=2
-    c2['bb']='yy'
 
-    print('path=',sys.path[0])
-    
-    configure([sys.path[0]+'/ConfigTest.ini'])
+    c1 = getConfig('C1')
+    c1.setDefaultOptions({'a': 1, 'aa': 'xx'})
+
+    c2 = getConfig('C2')
+    c2['b'] = 2
+    c2['bb'] = 'yy'
+
+    print('path=', sys.path[0])
+
+    configure([sys.path[0] + '/ConfigTest.ini'])
 
     print("C1")
     print(c1.getEffectiveOptions())
@@ -47,8 +46,8 @@ if __name__ == "__main__":
     print('Hierarchical Test')
 
     c = getConfig('hierarchy')
-    
-    configure([sys.path[0]+'/A.ini',sys.path[0]+'/B.ini' ])
+
+    configure([sys.path[0] + '/A.ini', sys.path[0] + '/B.ini'])
 
     print(c.getEffectiveOptions())
 
@@ -56,5 +55,5 @@ if __name__ == "__main__":
     assert(c['YOURPATH'] == 'b2')
     assert(c['PATH'] == 'c2')
     assert(c['MY2_PATH'] == 'd2')
-    
+
     print('Hierarchical Test OK')

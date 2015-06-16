@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: ColourText.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
-################################################################################
+##########################################################################
 
 # File: ColourText.py
 # Author: K. Harrison
@@ -67,134 +67,140 @@
    individual classes.
 """
 
-__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "24 August 2005"
+__author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__ = "24 August 2005"
 __version__ = "1.0"
 
-class ANSIMarkup:
-   """ Apply ANSI colouring codes.
-   """
-   def __init__(self,default_code=None):
-      if default_code is None:
-         default_code = Effects().normal
-      self.default_code = default_code
 
-   def __call__(self,text,code=None):
-      if code is None:
-         code = self.default_code
-      return code+text+self.default_code
+class ANSIMarkup:
+
+    """ Apply ANSI colouring codes.
+    """
+
+    def __init__(self, default_code=None):
+        if default_code is None:
+            default_code = Effects().normal
+        self.default_code = default_code
+
+    def __call__(self, text, code=None):
+        if code is None:
+            code = self.default_code
+        return code + text + self.default_code
+
 
 class NoMarkup:
-   """ Leave text unchanged.
-   """
-   def __init__(self,default_code=None):
-      pass
 
-   def __call__(self,text,code=None):
-      return text
+    """ Leave text unchanged.
+    """
+
+    def __init__(self, default_code=None):
+        pass
+
+    def __call__(self, text, code=None):
+        return text
+
 
 class Background:
 
-   """Class for creating objects carrying ANSI codes for changing
-      text background colour.  The defined colours are:
+    """Class for creating objects carrying ANSI codes for changing
+       text background colour.  The defined colours are:
 
-      black, blue, cyan, green, orange, magenta, red, white.
+       black, blue, cyan, green, orange, magenta, red, white.
 
-      In all cases, the text foregreound colour is the terminal
-      default (usually black or white)."""
+       In all cases, the text foregreound colour is the terminal
+       default (usually black or white)."""
 
-   def __init__( self ):
-      """Set ANSI codes for defined colours"""
+    def __init__(self):
+        """Set ANSI codes for defined colours"""
 
-      _base  = '\033[%sm'
-      self.black = _base % "0;40"
-      self.red = _base % "0;41"
-      self.green = _base % "0;42"
-      self.orange = _base % "0;43"
-      self.blue = _base % "0;44"
-      self.magenta = _base % "0;45"
-      self.cyan = _base % "0;46"
-      self.white = _base % "0;47"
+        _base = '\033[%sm'
+        self.black = _base % "0;40"
+        self.red = _base % "0;41"
+        self.green = _base % "0;42"
+        self.orange = _base % "0;43"
+        self.blue = _base % "0;44"
+        self.magenta = _base % "0;45"
+        self.cyan = _base % "0;46"
+        self.white = _base % "0;47"
+
 
 class Effects:
 
-   """Class for creating objects carrying ANSI codes for text
-      effects.  The defined effects are:
+    """Class for creating objects carrying ANSI codes for text
+       effects.  The defined effects are:
 
-      normal,
+       normal,
 
-      bold, reverse, underline,
- 
-      nobold, noreverse, nounderline.
+       bold, reverse, underline,
 
-      All effects imply terminal defaults for the colours."""
+       nobold, noreverse, nounderline.
 
-   def __init__( self ):
-      """Set ANSI codes for defined effects"""
-      _base  = '\033[%sm'
-      self.normal = _base % "0;0"
-      self.bold = _base % "0;1"
-      self.underline = _base % "0;4"
-      self.reverse = _base % "0;7"
-      self.nobold = _base % "0;21"
-      self.nounderline = _base % "0;24"
-      self.noreverse = _base % "0;27"
+       All effects imply terminal defaults for the colours."""
+
+    def __init__(self):
+        """Set ANSI codes for defined effects"""
+        _base = '\033[%sm'
+        self.normal = _base % "0;0"
+        self.bold = _base % "0;1"
+        self.underline = _base % "0;4"
+        self.reverse = _base % "0;7"
+        self.nobold = _base % "0;21"
+        self.nounderline = _base % "0;24"
+        self.noreverse = _base % "0;27"
+
 
 class Foreground:
-   """Class for creating objects carrying ANSI codes for changing
-      text foreground colour.  The defined colours are:
 
-      black, blue, cyan, green, orange, magenta, red, white,
+    """Class for creating objects carrying ANSI codes for changing
+       text foreground colour.  The defined colours are:
 
-      boldblue, boldcyan, boldgreen, boldgreen, boldgrey,
-      boldmagenta, boldred, boldwhite, boldyellow.
+       black, blue, cyan, green, orange, magenta, red, white,
 
-      For good visibility, the bold colours are better."""
+       boldblue, boldcyan, boldgreen, boldgreen, boldgrey,
+       boldmagenta, boldred, boldwhite, boldyellow.
 
-   def __init__( self ):
-      """Set ANSI codes for defined colours"""
+       For good visibility, the bold colours are better."""
 
-      _base  = '\033[%sm'
-      self.normal = _base % "0"
-      self.black = _base % "0;30"
-      self.red = _base % "0;31"
-      self.green = _base % "0;32"
-      self.orange = _base % "0;33"
-      self.blue = _base % "0;34"
-      self.magenta = _base % "0;35"
-      self.cyan = _base % "0;36"
-      self.white = _base % "0;37"
-      self.boldgrey = _base % "1;30"
-      self.boldred = _base % "1;31"
-      self.boldgreen = _base % "1;32"
-      self.boldyellow = _base % "1;33"
-      self.boldblue = _base % "1;34"
-      self.boldmagenta = _base % "1;35"
-      self.boldcyan = _base % "1;36"
-      self.boldwhite = _base % "1;37"
+    def __init__(self):
+        """Set ANSI codes for defined colours"""
+
+        _base = '\033[%sm'
+        self.normal = _base % "0"
+        self.black = _base % "0;30"
+        self.red = _base % "0;31"
+        self.green = _base % "0;32"
+        self.orange = _base % "0;33"
+        self.blue = _base % "0;34"
+        self.magenta = _base % "0;35"
+        self.cyan = _base % "0;36"
+        self.white = _base % "0;37"
+        self.boldgrey = _base % "1;30"
+        self.boldred = _base % "1;31"
+        self.boldgreen = _base % "1;32"
+        self.boldyellow = _base % "1;33"
+        self.boldblue = _base % "1;34"
+        self.boldmagenta = _base % "1;35"
+        self.boldcyan = _base % "1;36"
+        self.boldwhite = _base % "1;37"
 
 
-colour_objects = { 'fg' : Foreground(), 'bg' : Background(), 'fx' : Effects() }
+colour_objects = {'fg': Foreground(), 'bg': Background(), 'fx': Effects()}
+
 
 def getColour(name):
-   """ Get a colour code from the symbolic name: fg = Foreground(), bg = Background(), fx = Effects()
-   The name examples fg.red, fx.normal, bg.white
-   Raise ValueError if name undefined or malformed.
-   """
-   x,y = name.split('.')
-   return getattr(colour_objects[x],y)
+    """ Get a colour code from the symbolic name: fg = Foreground(), bg = Background(), fx = Effects()
+    The name examples fg.red, fx.normal, bg.white
+    Raise ValueError if name undefined or malformed.
+    """
+    x, y = name.split('.')
+    return getattr(colour_objects[x], y)
 
-   try:
-      x,y = name.split('.')
-   except Exception:
-      raise ValueError('unknown colour code %s'%str(name))
+    try:
+        x, y = name.split('.')
+    except Exception:
+        raise ValueError('unknown colour code %s' % str(name))
 
-   try:
-      return getattr(colour_objects[x],y)
-   except Exception:
-      raise ValueError('unknown colour code %s'%str(name))
-   
-      
-   
-
-   
+    try:
+        return getattr(colour_objects[x], y)
+    except Exception:
+        raise ValueError('unknown colour code %s' % str(name))

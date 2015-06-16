@@ -1,11 +1,12 @@
-##!/usr/bin/env python
-################################################################################
+# !/usr/bin/env python
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: PerformanceTest.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
-################################################################################
+##########################################################################
 
-import sys, os
+import sys
+import os
 import time
 import re
 import tempfile
@@ -18,8 +19,7 @@ _root = os.path.dirname(os.path.dirname(os.path.dirname(_thisDir)))
 sys.path.append(_root)
 
 
-
-from Ganga.GPIDev.Lib.Job.Job  import Job
+from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Lib.Executable.Executable import Executable
 from Ganga.Core.JobRepository.ARDA import repositoryFactory
 from Ganga.GPIDev.Streamers.SimpleStreamer import SimpleJobStreamer
@@ -31,33 +31,36 @@ logger = getLogger(modulename=True)
 #DEBUG = False
 DEBUG = True
 
-################################################################################
+##########################################################################
 # memory testing
+
+
 def getmem():
     """Gives memory used by the calling process in kb"""
-    ss = os.popen('pmap %d | tail -1'%os.getpid(), 'r').read()
+    ss = os.popen('pmap %d | tail -1' % os.getpid(), 'r').read()
     if ss:
         m = re.search(r'([0-9]*)K', ss)
         if m:
-            return int(m.group(1))        
+            return int(m.group(1))
 
 
-def writerep(n, m, bunch = 100):
+def writerep(n, m, bunch=100):
     """writerep(n, m, bunch = 100) --> (memory increase in kb, creation time)
         register n bunches of GPIDev jobs; each bunch contains 'bunch' jobs;
         each job has name of 'm' characters"""
     m1 = getmem()
     if m1 is not None:
-        dt =_writerep(n, m, bunch)
+        dt = _writerep(n, m, bunch)
         m2 = getmem()
         if m2 is not None:
             return (m2 - m1, dt)
 
-def _writerep(n, m, bunch = 100):
+
+def _writerep(n, m, bunch=100):
     jj = []
     for i in range(bunch):
         j = Job()
-        j.application.args = [m*'x'+ str(i)]
+        j.application.args = [m * 'x' + str(i)]
         jj.append(j)
     from Ganga.GPI import jobs
     rep = jobs._impl.repository
@@ -66,10 +69,10 @@ def _writerep(n, m, bunch = 100):
         rep.registerJobs(jj)
     t2 = time.time()
     del jj
-    return t2-t1
+    return t2 - t1
 
-        
-def readrep(bunch = 100):
+
+def readrep(bunch=100):
     """readrep(bunch = 100) --> (memory increase in kb, retrieval time)
         checkout all jobs in the repository as GPIDev objects by bunches;
         each bunch contains no more than 'bunch' jobs"""
@@ -78,15 +81,15 @@ def readrep(bunch = 100):
         dt = _readrep(bunch)
         m2 = getmem()
         if m2 is not None:
-            return (m2-m1, dt)
+            return (m2 - m1, dt)
 
 
-def _readrep(bunch = 100):
+def _readrep(bunch=100):
     def _co(ii):
         jj = rep.checkoutJobs(ii)
     from Ganga.GPI import jobs
     rep = jobs._impl.repository
-    ids = rep.getJobIds({}) 
+    ids = rep.getJobIds({})
     start = 0
     ii = ids[start: start + bunch]
     t1 = time.time()
@@ -95,7 +98,7 @@ def _readrep(bunch = 100):
         start += bunch
         ii = ids[start: start + bunch]
     t2 = time.time()
-    return t2-t1
+    return t2 - t1
 
 
 def readallrep():
@@ -106,7 +109,7 @@ def readallrep():
         dt = _readallrep()
         m2 = getmem()
         if m2 is not None:
-            return (m2-m1, dt)
+            return (m2 - m1, dt)
 
 
 def _readallrep():
@@ -116,10 +119,10 @@ def _readallrep():
     jj = rep.checkoutJobs({})
     t2 = time.time()
     del jj
-    return t2-t1
+    return t2 - t1
 
 
-def delrep(n, bunch = 100):
+def delrep(n, bunch=100):
     """delrep(bunch = 100) --> (memory increase in kb, delete time)
         delete n*bunch jobs in the repository by bunches;
         each bunch contains no more than 'bunch' jobs"""
@@ -128,15 +131,15 @@ def delrep(n, bunch = 100):
         dt = _delrep(n, bunch)
         m2 = getmem()
         if m2 is not None:
-            return (m2-m1, dt)
-        
+            return (m2 - m1, dt)
 
-def _delrep(n, bunch = 100):
+
+def _delrep(n, bunch=100):
     from Ganga.GPI import jobs
     rep = jobs._impl.repository
     ids = rep.getJobIds({})
     start = 0
-    ids = ids[start:n*bunch]
+    ids = ids[start:n * bunch]
     ii = ids[start:start + bunch]
     t1 = time.time()
     while ii:
@@ -144,12 +147,13 @@ def _delrep(n, bunch = 100):
         start += bunch
         ii = ids[start:start + bunch]
     t2 = time.time()
-    return t2-t1
+    return t2 - t1
 
 
-################################################################################    
+##########################################################################
 
-ARG_LEN = 100 #controls length of a job
+ARG_LEN = 100  # controls length of a job
+
 
 def _startText(ff, txt):
     ff.write(txt)
@@ -157,25 +161,27 @@ def _startText(ff, txt):
     ff.write('operation started at %s \n' % time.ctime(t1))
     return t1
 
+
 def _endText(ff, t1):
     t2 = time.time()
     ff.write('operation finished at %s \n' % time.ctime(t2))
     ff.write('time used: %f seconds \n' % (t2 - t1))
-    ff.write('-s->%f<-s-\n\n\n'% (t2 - t1))     
+    ff.write('-s->%f<-s-\n\n\n' % (t2 - t1))
 
 
-def getSplitJob(LEN = 10):
+def getSplitJob(LEN=10):
     # top level splitting
     mj = Job()
     jj = []
     for i in range(LEN):
         sj = Job()
         sj.application.exe = '/bin/myexe' + str(i)
-        sj.application.args = ['/'+ ARG_LEN*'abc' + str(i)]
+        sj.application.args = ['/' + ARG_LEN * 'abc' + str(i)]
         sj._setParent(mj)
         jj.append(sj)
     mj.subjobs = jj
     return mj
+
 
 def registerJobs(jobList, repository):
     for mj in jobList:
@@ -183,28 +189,29 @@ def registerJobs(jobList, repository):
 
 
 def runTest(NTEST, LEN, rootDir, output_dir, rep_type):
-    logger.debug('from runTest: rootDir %s, output_dir %s'%(rootDir, output_dir))
+    logger.debug('from runTest: rootDir %s, output_dir %s' %
+                 (rootDir, output_dir))
     if rep_type == "Remote":
-        repository = repositoryFactory(repositoryType = rep_type,
-                                       root_dir  = rootDir,
-                                       streamer  = SimpleJobStreamer(),
-                                       host      = 'gangamd.cern.ch',
+        repository = repositoryFactory(repositoryType=rep_type,
+                                       root_dir=rootDir,
+                                       streamer=SimpleJobStreamer(),
+                                       host='gangamd.cern.ch',
                                        #host      = 'lxgate41.cern.ch',
-                                       port      = 8822,
-                                       login     = os.getlogin(),
-                                       keepalive = True)
+                                       port=8822,
+                                       login=os.getlogin(),
+                                       keepalive=True)
     elif rep_type == "Local":
-        repository = repositoryFactory(repositoryType = rep_type,
-                                       root_dir   = rootDir,
-                                       streamer   = SimpleJobStreamer(),
+        repository = repositoryFactory(repositoryType=rep_type,
+                                       root_dir=rootDir,
+                                       streamer=SimpleJobStreamer(),
                                        #local_root = os.path.expanduser('~'),
-                                       local_root = os.path.join('/afs/cern.ch/sw/ganga/workdir',
-                                                                 os.getlogin(), 'gangadir/repository'))
+                                       local_root=os.path.join('/afs/cern.ch/sw/ganga/workdir',
+                                                               os.getlogin(), 'gangadir/repository'))
     else:
         logger.error("Wrong type of repository...")
         logger.error("Exiting ...")
         return
-    nn = tempfile.mktemp(suffix = '.test')
+    nn = tempfile.mktemp(suffix='.test')
     nn = os.path.join(output_dir, os.path.basename(nn))
     ff = file(nn, 'w')
     try:
@@ -212,32 +219,33 @@ def runTest(NTEST, LEN, rootDir, output_dir, rep_type):
         for i in range(NTEST):
             j = getSplitJob(LEN)
             j.name = "MyJob" + str(i)
-            j.application.args = ['/' + ARG_LEN*'abcd']
+            j.application.args = ['/' + ARG_LEN * 'abcd']
             jj.append(j)
-            
+
         #----------------------------------------------------
         t1 = _startText(ff, 'registering %d jobs...' % NTEST)
         logger.debug('registering %d jobs...' % NTEST)
         try:
             repository.registerJobs(jj)
         except Exception as e:
-            logger.error("EXCEPTION in registerJobs "+str(e))
+            logger.error("EXCEPTION in registerJobs " + str(e))
             logger.debug("--->command status", "FAIL")
         else:
             logger.debug("--->command status", "OK")
         _endText(ff, t1)
 
-        #----------------------------------------------------            
+        #----------------------------------------------------
         t1 = _startText(ff, 'retrieving info about ALL jobs')
         logger.debug('retrieving info about ALL jobs')
         try:
             #rjj = repository.checkoutJobs(map(lambda j: j.id, jj))
             rjj = repository.checkoutJobs({})
         except Exception as e:
-            logger.error("EXCEPTION in checkoutJobs "+ str(e))
+            logger.error("EXCEPTION in checkoutJobs " + str(e))
             logger.debug("--->command status", "FAIL")
         else:
-            logger.debug("--->checkout jobs", len(rjj), map(lambda j: j.id, rjj))
+            logger.debug(
+                "--->checkout jobs", len(rjj), map(lambda j: j.id, rjj))
         _endText(ff, t1)
 
         # some job modification
@@ -246,35 +254,37 @@ def runTest(NTEST, LEN, rootDir, output_dir, rep_type):
             j.name = j.name + 'Changed'
             for sj in j.subjobs:
                 sj.application.exe = '/bin/ls'
-            
-        #----------------------------------------------------  
+
+        #----------------------------------------------------
         t1 = _startText(ff, 'commiting %d jobs...' % NTEST)
         logger.debug('commiting %d jobs...' % NTEST)
         try:
             repository.commitJobs(jj)
         except Exception as e:
-            logger.error("EXCEPTION in commitJobs "+ str(e))
+            logger.error("EXCEPTION in commitJobs " + str(e))
             logger.debug("--->command status", "FAIL")
         else:
             logger.debug("--->command status", "OK")
         _endText(ff, t1)
-        
-        #----------------------------------------------------    
+
+        #----------------------------------------------------
         t1 = _startText(ff, 'deleting %d jobs...' % NTEST)
         logger.debug('deleting %d jobs...' % NTEST)
         try:
             repository.deleteJobs(map(lambda j: j.id, jj))
         except Exception as e:
-            logger.error("EXCEPTION in deleteJobs "+ str(e))
+            logger.error("EXCEPTION in deleteJobs " + str(e))
             logger.debug("--->command status", "FAIL")
-        else:        
+        else:
             logger.debug("--->command status", "OK")
         _endText(ff, t1)
 
     finally:
         ff.close()
 
-################################################################################
+##########################################################################
+
+
 def NormPath(path):
     if sys.platform == 'win32':
         directory, file = os.path.split(path)
@@ -294,13 +304,14 @@ def NormPath(path):
 
     return path
 
-################################################################################
+##########################################################################
 if __name__ == '__main__':
-    NTEST  = int(raw_input('Enter a number of job to test --->'))
-    LEN    = int(raw_input('Enter a number of subjobs per job --->'))
+    NTEST = int(raw_input('Enter a number of job to test --->'))
+    LEN = int(raw_input('Enter a number of subjobs per job --->'))
     NUSERS = int(raw_input('Enter a number of '"users"' to test --->'))
     OUTPUT = raw_input('Enter a name of output dir --->')
-    REPTYPE= raw_input('Enter type of repository (Local[1] or Remote[2]) --->')
+    REPTYPE = raw_input(
+        'Enter type of repository (Local[1] or Remote[2]) --->')
     if REPTYPE == '1':
         REPTYPE = 'Local'
     elif REPTYPE == '2':
@@ -308,7 +319,8 @@ if __name__ == '__main__':
     else:
         logger.error("Unknown type of repository. Exiting")
         sys.exit(1)
-    dname = 'users_' + str(NUSERS) + '__jobs_' + str(NTEST) + '__subjobs_'+ str(LEN)
+    dname = 'users_' + str(NUSERS) + '__jobs_' + \
+        str(NTEST) + '__subjobs_' + str(LEN)
     output_dir = os.path.join(os.getcwd(), OUTPUT, REPTYPE, dname)
     if not os.path.exists(output_dir):
         os.makedirs(output_dir)
@@ -317,12 +329,12 @@ if __name__ == '__main__':
     python_path = NormPath(sys.executable)
     i = 0
     while i < NUSERS:
-        rootDir  = '/users/testframework'
-        cmd =  '"import sys\nsys.path.append(\'%s\')\nfrom PerformanceTest import runTest\nrunTest(%d, %d, \'%s\',\'%s\',\'%s\')"' % (_thisDir, NTEST, LEN, rootDir, output_dir, REPTYPE)
-        if sys.version_info[:3] < (2,3,0) or sys.version_info[:3] >=(2,3,4):
+        rootDir = '/users/testframework'
+        cmd = '"import sys\nsys.path.append(\'%s\')\nfrom PerformanceTest import runTest\nrunTest(%d, %d, \'%s\',\'%s\',\'%s\')"' % (
+            _thisDir, NTEST, LEN, rootDir, output_dir, REPTYPE)
+        if sys.version_info[:3] < (2, 3, 0) or sys.version_info[:3] >= (2, 3, 4):
             cmd = cmd[1:-1]
         logger.debug(cmd)
         pid = os.spawnl(os.P_NOWAIT, python_path, python_path, "-c", cmd)
         logger.debug("new user process started %d" % pid)
-        i+=1
-
+        i += 1

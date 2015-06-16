@@ -1,19 +1,20 @@
 
 class RegistrySliceProxy(object):
+
     """This object is an access list to registry slices"""
 
-    def __init__(self,_impl):
+    def __init__(self, _impl):
         self.__dict__['_impl'] = _impl
-        
-    def ids(self,minid=None,maxid=None):
+
+    def ids(self, minid=None, maxid=None):
         """ Return a list of ids of all objects.
         """
-        return self._impl.ids(minid,maxid)
+        return self._impl.ids(minid, maxid)
 
-    def clean(self,confirm=False,force=False):
+    def clean(self, confirm=False, force=False):
         """ Cleans this registry completely.
         Returns True on success, False on failure"""
-        return self._impl.clean(confirm,force)
+        return self._impl.clean(confirm, force)
 
     def incomplete_ids(self):
         try:
@@ -27,20 +28,23 @@ class RegistrySliceProxy(object):
           print(j.id)
         """
         class Iterator:
-            def __init__(self,reg):
+
+            def __init__(self, reg):
                 self.it = reg._impl.__iter__()
+
             def __iter__(self): return self
+
             def next(self):
                 return _wrap(next(self.it))
         return Iterator(self)
 
-    def __contains__(self,j):
+    def __contains__(self, j):
         return self._impl.__contains__(j._impl)
-    
+
     def __len__(self):
         return self._impl.__len__()
 
-    def select(self,minid=None,maxid=None,**attrs):
+    def select(self, minid=None, maxid=None, **attrs):
         """ Select a subset of objects. Examples for jobs:
         jobs.select(10): select jobs with ids higher or equal to 10;
         jobs.select(10,20) select jobs with ids in 10,20 range (inclusive);
@@ -52,9 +56,9 @@ class RegistrySliceProxy(object):
         unwrap_attrs = {}
         for a in attrs:
             unwrap_attrs[a] = _unwrap(attrs[a])
-        return self.__class__(self._impl.select(minid,maxid,**unwrap_attrs))
+        return self.__class__(self._impl.select(minid, maxid, **unwrap_attrs))
 
-    def _display(self,interactive=0):
+    def _display(self, interactive=0):
         return self._impl._display(interactive)
 
     __str__ = _display
@@ -65,16 +69,20 @@ class RegistrySliceProxy(object):
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Objects import GangaObject
 from RegistrySlice import RegistrySlice
+
+
 def _wrap(obj):
-    if isinstance(obj,GangaObject):
+    if isinstance(obj, GangaObject):
         return GPIProxyObjectFactory(obj)
-    if isinstance(obj,RegistrySlice):
+    if isinstance(obj, RegistrySlice):
         return obj._proxyClass(obj)
     if type(obj) == list:
-        return map(GPIProxyObjectFactory,obj)
+        return map(GPIProxyObjectFactory, obj)
     return obj
 
 # strip Proxy and get into the ganga object implementation
+
+
 def _unwrap(obj):
     try:
         return obj._impl

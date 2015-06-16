@@ -7,82 +7,89 @@ from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 
 handler_map = []
 
+
 def __task__init__(self):
-    ## This assumes TaskApplication is #1 in MRO ( the list of methods )
+    # This assumes TaskApplication is #1 in MRO ( the list of methods )
     baseclass = self.__class__.mro()[2]
     baseclass.__init__(self)
-    ## Now do a trick to convince classes to use us if they foolishly check the name
-    ## (this is a bug workaround)
+    # Now do a trick to convince classes to use us if they foolishly check the name
+    # (this is a bug workaround)
     #self._name = baseclass._name
 
-def taskify(baseclass,name):
+
+def taskify(baseclass, name):
     smajor = baseclass._schema.version.major
     sminor = baseclass._schema.version.minor
 
     if baseclass._category == "applications":
         schema_items = {
-            'id'       : SimpleItem(defvalue=-1, protected=1, copyable=1,splitable=1,doc='number of this application in the transform.', typelist=["int"]),
-            'tasks_id' : SimpleItem(defvalue="-1:-1", protected=1, copyable=1,splitable=1,doc='id of this task:transform',typelist=["str"]),
-            }.items()
+            'id': SimpleItem(defvalue=-1, protected=1, copyable=1, splitable=1, doc='number of this application in the transform.', typelist=["int"]),
+            'tasks_id': SimpleItem(defvalue="-1:-1", protected=1, copyable=1, splitable=1, doc='id of this task:transform', typelist=["str"]),
+        }.items()
         taskclass = TaskApplication
     elif baseclass._category == "splitters":
         schema_items = {
-            'task_partitions' : SimpleItem(defvalue=[], copyable=1,doc='task partition numbers.', typelist=["list"]),
+            'task_partitions': SimpleItem(defvalue=[], copyable=1, doc='task partition numbers.', typelist=["list"]),
         }.items()
         taskclass = TaskSplitter
 
     classdict = {
-        "_schema"   : Schema(Version(smajor,sminor), dict(baseclass._schema.datadict.items() + schema_items)), 
-        "_category" : baseclass._category,
-        "_name"     : name,
-        "__init__"  : __task__init__,
-        }
+        "_schema": Schema(Version(smajor, sminor), dict(baseclass._schema.datadict.items() + schema_items)),
+        "_category": baseclass._category,
+        "_name": name,
+        "__init__": __task__init__,
+    }
 
-    for var in ["_GUIPrefs","_GUIAdvancedPrefs","_exportmethods"]:
-        if var in baseclass.__dict__: 
+    for var in ["_GUIPrefs", "_GUIAdvancedPrefs", "_exportmethods"]:
+        if var in baseclass.__dict__:
             classdict[var] = baseclass.__dict__[var]
-    cls = classobj(name,(taskclass,baseclass), classdict)
+    cls = classobj(name, (taskclass, baseclass), classdict)
 
-    ## Use the same handlers as for the base class
+    # Use the same handlers as for the base class
     handler_map.append((baseclass.__name__, name))
 
     return cls
 
+
 class TaskApplication(object):
+
     def getTransform(self):
         tid = self.tasks_id.split(":")
         if len(tid) == 2 and tid[0].isdigit() and tid[1].isdigit():
-           try: 
-              task = GPI.tasks(int(tid[0]))
-           except KeyError:
-              return None
-           if task:
-              return task.transforms[int(tid[1])]
+            try:
+                task = GPI.tasks(int(tid[0]))
+            except KeyError:
+                return None
+            if task:
+                return task.transforms[int(tid[1])]
         if len(tid) == 3 and tid[1].isdigit() and tid[2].isdigit():
-           task = GPI.tasks(int(tid[1]))
-           if task:
-              return task.transforms[int(tid[2])]
-        return None 
+            task = GPI.tasks(int(tid[1]))
+            if task:
+                return task.transforms[int(tid[2])]
+        return None
 
-    def transition_update(self,new_status):
-        #print "Transition Update of app ", self.id, " to ",new_status
+    def transition_update(self, new_status):
+        # print "Transition Update of app ", self.id, " to ",new_status
         try:
             transform = self.getTransform()
-            if self.tasks_id.startswith("00"): ## Master job
-               if new_status == "new": ## something went wrong with submission
-                  for sj in self._getParent().subjobs:
-                     sj.application.transition_update(new_status)
-           
-               if transform:
-                   transform._impl.setMasterJobStatus(self._getParent(), new_status)
+            if self.tasks_id.startswith("00"):  # Master job
+                if new_status == "new":  # something went wrong with submission
+                    for sj in self._getParent().subjobs:
+                        sj.application.transition_update(new_status)
+
+                if transform:
+                    transform._impl.setMasterJobStatus(
+                        self._getParent(), new_status)
 
             else:
-               if transform:
-                   transform._impl.setAppStatus(self, new_status)
-                   
+                if transform:
+                    transform._impl.setAppStatus(self, new_status)
+
         except Exception as x:
-            import traceback, sys
-            logger.error("Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)
+            import traceback
+            import sys
+            logger.error(
+                "Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)
             logger.error(x.__class__.__name__ + " : " + x)
             tb = sys.exc_info()[2]
             if tb:
@@ -91,23 +98,24 @@ class TaskApplication(object):
                 logger.error("No Traceback available")
 
             logger.error("%s", x)
-            
 
 
 class TaskSplitter(object):
-    ### Splitting based on numsubjobs
-    def split(self,job):
-        subjobs = self.__class__.mro()[2].split(self,job)
-        ## Get information about the transform
+    # Splitting based on numsubjobs
+
+    def split(self, job):
+        subjobs = self.__class__.mro()[2].split(self, job)
+        # Get information about the transform
         transform = stripProxy(job.application.getTransform())
         id = job.application.id
         partition = transform._app_partition[id]
-        ## Tell the transform this job will never be executed ...
+        # Tell the transform this job will never be executed ...
         transform.setAppStatus(job.application, "removed")
-        ## .. but the subjobs will be
-        for i in range(0,len(subjobs)):
+        # .. but the subjobs will be
+        for i in range(0, len(subjobs)):
             subjobs[i].application.tasks_id = job.application.tasks_id
-            subjobs[i].application.id = transform.getNewAppID(self.task_partitions[i])
+            subjobs[i].application.id = transform.getNewAppID(
+                self.task_partitions[i])
             # Do not set to submitting - failed submission will make the applications stuck...
             # transform.setAppStatus(subjobs[i].application, "submitting")
         if not job.application.tasks_id.startswith("00"):
@@ -115,39 +123,37 @@ class TaskSplitter(object):
         return subjobs
 
 
-
-
-
-
 from Ganga.Lib.Executable.Executable import Executable
 from Ganga.Lib.Splitters import ArgSplitter
 
-ExecutableTask = taskify(Executable,"ExecutableTask")
-ArgSplitterTask = taskify(ArgSplitter,"ArgSplitterTask")
+ExecutableTask = taskify(Executable, "ExecutableTask")
+ArgSplitterTask = taskify(ArgSplitter, "ArgSplitterTask")
 
 task_map = {"Executable": ExecutableTask}
+
+
 def taskApp(app):
-    """ Copy the application app into a task application. Returns a task application without proxy """ 
+    """ Copy the application app into a task application. Returns a task application without proxy """
     a = stripProxy(app)
     if "Task" in a._name:
-       return a
+        return a
     elif a._name in task_map:
-       b = task_map[a._name]()
+        b = task_map[a._name]()
 
     else:
-       logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
-       raise AttributeError()
+        logger.error(
+            "The application '%s' cannot be used with the tasks package yet!" % a._name)
+        raise AttributeError()
     for k in a._data:
-       b._data[k] = a._data[k]
+        b._data[k] = a._data[k]
 
-    #We need to recalculate the application's preparable hash here, since the text string representation 
-    #of the application has changed (e.g. Executable -> ExecutableTask).
+    # We need to recalculate the application's preparable hash here, since the text string representation
+    # of the application has changed (e.g. Executable -> ExecutableTask).
     if hasattr(b, 'hash') and b.hash is not None:
         try:
             b.calc_hash()
         except:
-            logger.warn('Non fatal error recalculating the task application hash value')
+            logger.warn(
+                'Non fatal error recalculating the task application hash value')
 
     return b
-    
-       

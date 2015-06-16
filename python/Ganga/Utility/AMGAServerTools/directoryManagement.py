@@ -19,23 +19,26 @@ DEBUG = False
 #DEBUG = True
 
 #---------------------------------------------------------------------------
+
+
 class Collections:
+
     """Represents interface for manipulating collections (directories)"""
 
     def __init__(self,
-                 host      = 'gangamd.cern.ch',
-                 port      = 8822,
-                 login     = 'root',
-                 password  = '',
-                 keepalive = False,
-                 reqSSL    = True,
+                 host='gangamd.cern.ch',
+                 port=8822,
+                 login='root',
+                 password='',
+                 keepalive=False,
+                 reqSSL=True,
                  **kwds):
-        
-        self._client = MDClient(host = host,
-                                port = port,
-                                login = login,
-                                password = password,
-                                keepalive = keepalive)
+
+        self._client = MDClient(host=host,
+                                port=port,
+                                login=login,
+                                password=password,
+                                keepalive=keepalive)
 
         if reqSSL:
             fn = getGridProxyPath()
@@ -54,7 +57,7 @@ class Collections:
         """Creates the directory dir if it does not yet exist but parent dir
         already exist"""
         self._client.createDir(dir)
-        
+
     #-----------------------------------------------------------------------
     def listDir(self, dir):
         """Returns names of all subdirectories in the directory dir"""
@@ -96,7 +99,7 @@ class Collections:
     def cd(self, dir):
         """Changes the current directory to the given directory"""
         self._client.cd(dir)
-    
+
     #-----------------------------------------------------------------------
     def chown(self, dir, new_owner):
         """Changes the owner of the directory"""
@@ -118,8 +121,8 @@ class Collections:
         The format of the group user:groupname.
         The format of rights is rwx"""
         cmd = 'acl_add ' + dir + ' ' + group + ' ' + rights
-        self._client.execute(cmd)        
-        
+        self._client.execute(cmd)
+
     #-----------------------------------------------------------------------
     def aclRemove(self, dir, group):
         """Removes group from the dir ACL.
@@ -140,7 +143,7 @@ class Collections:
             res.append(row.split(' '))
         return res
 
-        
-################################################################################
+
+##########################################################################
 usage = """
 """

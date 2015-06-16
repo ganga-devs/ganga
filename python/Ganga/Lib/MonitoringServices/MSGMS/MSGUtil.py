@@ -12,21 +12,23 @@ try:
     config = Config.getConfig('Logging')
     # test if stomp.py logging is already set
     if 'stomp.py' in config:
-        pass #config['stomp.py']
+        pass  # config['stomp.py']
     else:
         # set stomp.py logger to CRITICAL
         logging.getLogger('stomp.py').setLevel(logging.CRITICAL)
         # add stomp.py option to Logging configuration
-        config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
+        config.addOption(
+            'stomp.py', 'CRITICAL', 'logger for stomp.py external package')
 except:
     # if we are on the worker node, this will fail. so continue quietly
     pass
 
 
-#Sandbox modules required for MSG
+# Sandbox modules required for MSG
 def getSandboxModules():
     """Return the list of sandbox modules required for MSG monitoring services."""
-    import stomp, stomputil
+    import stomp
+    import stomputil
     import Ganga.Lib.MonitoringServices.MSGMS
     return [
         Ganga,
@@ -42,15 +44,17 @@ def getSandboxModules():
         stomp.utils,
         stomputil,
         stomputil.publisher,
-        ]
+    ]
 
 
-#Ganga-specific createPublisher
+# Ganga-specific createPublisher
 from stomputil.publisher import IDLE_TIMEOUT, EXIT_TIMEOUT
+
+
 def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=IDLE_TIMEOUT, exit_timeout=EXIT_TIMEOUT):
     """Create a new publisher thread which extends GangaThread where available
     (i.e. on the client) or Thread otherwise (i.e. on the worker node).
-    
+
     N.B. If GangaThread is not available then an exit handler is added, with the
     given timeout.
 
@@ -62,15 +66,15 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
             Negative value indicates never close connection.
     @param exit_timeout: Maximum seconds to clear message queue on exit.
             Negative value indicates clear queue without timeout.
-    
+
     Usage::
         from Ganga.Lib.MonitoringServices.MSG import MSGUtil
         p = MSGUTIL.createPublisher('dashb-mb.cern.ch', 61113)
         p.start()
         p.send('/topic/ganga.dashboard.test', 'Hello World!')
-        
+
     See also stomputil.publisher
-    """            
+    """
     # use GangaThread class on client or Thread class otherwise
     try:
         from Ganga.Core.GangaThread import GangaThread as Thread
@@ -86,7 +90,8 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
         logger = None
     # create and start _publisher
     import stomputil
-    publisher = stomputil.createPublisher(Thread, server, port, user, password, logger, idle_timeout)
+    publisher = stomputil.createPublisher(
+        Thread, server, port, user, password, logger, idle_timeout)
     if managed_thread:
         # set GangaThread as non-critical
         publisher.setCritical(False)
@@ -94,4 +99,3 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
         # add exit handler if not GangaThread
         publisher.addExitHandler(exit_timeout)
     return publisher
-

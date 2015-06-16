@@ -1,9 +1,10 @@
-## Required for ShareDir object
+# Required for ShareDir object
 def getSharedPath():
     from Ganga.Utility.files import expandfilename
     from Ganga.Utility.Config import getConfig
     import os.path
-    root_default = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
+    root_default = os.path.join(expandfilename(getConfig(
+        'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
     return root_default
 
 import Configure
@@ -28,7 +29,8 @@ try:
     from GoogleFile import GoogleFile
 except ImportError as e:
     if e.args[0].endswith('django.utils'):
-        logger.warning('Lacking simplejson on system makes it impossible to use GoogleFile. Should only happen on some Python 2.4 systems')
+        logger.warning(
+            'Lacking simplejson on system makes it impossible to use GoogleFile. Should only happen on some Python 2.4 systems')
     else:
         raise
 
@@ -36,7 +38,8 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
 
 
-import fnmatch 
+import fnmatch
+
 
 def getFileConfigKeys():
     keys = getConfig('Output').options.keys()
@@ -47,6 +50,7 @@ def getFileConfigKeys():
     keys.remove('AutoRemoveFileTypes')
     keys.remove('FailJobIfNoOutputMatched')
     return keys
+
 
 def decodeExtensionKeys():
 
@@ -64,11 +68,12 @@ def decodeExtensionKeys():
             outputfilesConfig[key] = outputFilePatterns
 
         except ConfigError:
-            pass    
+            pass
 
     return outputfilesConfig
 
-def findOutputFileTypeByFileName(filename):      
+
+def findOutputFileTypeByFileName(filename):
 
     matchKeys = []
 
@@ -79,16 +84,19 @@ def findOutputFileTypeByFileName(filename):
                 matchKeys.append(key)
 
     if len(matchKeys) == 1:
-        logger.debug("File name pattern %s matched %s, assigning to %s" % ( filename, str(matchKeys), matchKeys[-1] ) )
+        logger.debug("File name pattern %s matched %s, assigning to %s" % (
+            filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     elif len(matchKeys) > 1:
-        logger.warning("file name pattern %s matched %s, assigning to %s" % (filename, str(matchKeys), matchKeys[-1] ) )
+        logger.warning("file name pattern %s matched %s, assigning to %s" % (
+            filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     else:
-        logger.debug( "File name pattern %s is not matched" % filename )
+        logger.debug("File name pattern %s is not matched" % filename)
         return None
 
-def string_file_shortcut(v,item):
+
+def string_file_shortcut(v, item):
     if type(v) is type(''):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
@@ -96,20 +104,20 @@ def string_file_shortcut(v,item):
         if key is not None:
             if key == 'MassStorageFile':
                 from MassStorageFile import MassStorageFile
-                return MassStorageFile._proxyClass(v)._impl         
+                return MassStorageFile._proxyClass(v)._impl
             elif key == 'LCGSEFile':
                 from LCGSEFile import LCGSEFile
-                return LCGSEFile._proxyClass(v)._impl                                
+                return LCGSEFile._proxyClass(v)._impl
             elif key == 'DiracFile':
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
-                    return  DiracFile._proxyClass(v)._impl                                
+                    return DiracFile._proxyClass(v)._impl
                 except:
                     pass
 
         return LocalFile._proxyClass(v)._impl
 
-    return None 
+    return None
 
 
 allComponentFilters['gangafiles'] = string_file_shortcut

@@ -3,14 +3,15 @@ from GangaThreadPool import GangaThreadPool
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
+
 class GangaThread(Thread):
 
     def __init__(self, name, auto_register=True, critical=True, **kwds):
 
-        self.gangaName = str(name) # want to copy actual not by ref!
+        self.gangaName = str(name)  # want to copy actual not by ref!
         name = 'GANGA_Update_Thread_%s' % name
 
-        Thread.__init__(self, name = name, **kwds)
+        Thread.__init__(self, name=name, **kwds)
         self.setDaemon(True)
         self.__should_stop_flag = False
         self.__critical = critical
@@ -21,7 +22,7 @@ class GangaThread(Thread):
 
     def isCritical(self):
         """Return critical flag.
-        
+
         @return: Boolean critical flag.
         """
         return self.__critical
@@ -29,7 +30,7 @@ class GangaThread(Thread):
     def setCritical(self, critical):
         """Set critical flag, which can be used for example in shutdown
         algorithms. See Ganga/Core/__init__.py for example.
-        
+
         @param critical: Boolean critical flag.
         """
         self.__critical = critical
@@ -39,7 +40,7 @@ class GangaThread(Thread):
 
     def stop(self):
         if not self.__should_stop_flag:
-            logger.debug("Stopping: %s",self.gangaName)
+            logger.debug("Stopping: %s", self.gangaName)
             self.__should_stop_flag = True
 
     def unregister(self):
@@ -47,4 +48,3 @@ class GangaThread(Thread):
 
     def register(self):
         GangaThreadPool.getInstance().addServiceThread(self)
-

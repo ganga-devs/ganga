@@ -2,7 +2,7 @@
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: Schema.py,v 1.3 2009-05-20 13:40:22 moscicki Exp $
-################################################################################
+##########################################################################
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -16,22 +16,25 @@ from Ganga.Core.exceptions import GangaException
 
 # Version of the schema.
 
+
 class Version:
-    def __init__(self,major,minor):
+
+    def __init__(self, major, minor):
         self.major = major
         self.minor = minor
 
-    def __eq__(self,v):
+    def __eq__(self, v):
         return self.major == v.major and self.minor == v.minor
 
-    def __ne__(self,v):
+    def __ne__(self, v):
         return not self == v
 
-    def isCompatible(self,v):
+    def isCompatible(self, v):
         return v.major == self.major and v.minor <= self.minor
-        
+
+
 def defaultConfigSectionName(name):
-    return 'defaults_'+name #_Properties
+    return 'defaults_' + name  # _Properties
 
 # Schema defines the logical model of the Ganga Public Interface (GPI)
 # for  jobs and  pluggable  job components  such  as applications  and
@@ -59,6 +62,7 @@ def defaultConfigSectionName(name):
 # possible  however   the  _pluginclass  objects   are  shared  unless
 # overriden explicitly.
 
+
 class Schema:
     # Schema constructor is used by Ganga plugin developers.
     # Ganga will automatically set a reference to the plugin class which corresponds to this schema, hence
@@ -66,6 +70,7 @@ class Schema:
     #
     # datadict: dictionary of properties (schema items)
     # version: the version information
+
     def __init__(self, version, datadict):
         self.datadict = datadict
         self.version = version
@@ -75,16 +80,17 @@ class Schema:
         try:
             return self.datadict[name]
         except Exception as x:
-            logger.error( "Ganga Cannot find: %s in Object: %s" % ( name, self.name ) )
+            logger.error("Ganga Cannot find: %s in Object: %s" %
+                         (name, self.name))
             from Ganga.Core.exceptions import GangaAttributeError
-            raise GangaAttributeError( x )
-    
+            raise GangaAttributeError(x)
+
     category = property(lambda self: self._pluginclass._category)
     name = property(lambda self: self._pluginclass._name)
 
     def allItems(self):
-        return zip(self.datadict.keys(),self.datadict.values())
-        
+        return zip(self.datadict.keys(), self.datadict.values())
+
     def simpleItems(self):
         return self._filter(SimpleItem)
 
@@ -94,33 +100,33 @@ class Schema:
     def sharedItems(self):
         return self._filter(SharedItem)
 
-    def hasAttribute(self,name):
+    def hasAttribute(self, name):
         return name in self.datadict
 
-    def getItem(self,name):
+    def getItem(self, name):
         return self.__getitem__(name)
-        
-    def _filter(self,klass):
+
+    def _filter(self, klass):
         r = []
-        
-        for n,c in zip(self.datadict.keys(),self.datadict.values()):
-            if issubclass(c.__class__,klass):
-                r.append((n,c))
+
+        for n, c in zip(self.datadict.keys(), self.datadict.values()):
+            if issubclass(c.__class__, klass):
+                r.append((n, c))
         return r
-    
-    def isEqual(self,schema):
+
+    def isEqual(self, schema):
         return self.name == schema.name and self.category == schema.category
 
-##     # NOT TESTED
-##     def isCompatible(self,schema):
-##         if len(self.datadict.keys()) != len(schema.datadict.keys()):
-##             return 0
+# NOT TESTED
+# def isCompatible(self,schema):
+# if len(self.datadict.keys()) != len(schema.datadict.keys()):
+# return 0
 
-##         for k in self.datadict.keys():
-##             if not self[k].isA(schema[k])
-##                 return 0
-##         return 1
-        
+# for k in self.datadict.keys():
+# if not self[k].isA(schema[k])
+# return 0
+# return 1
+
     def getPluginClass(self):
         return self._pluginclass
 
@@ -133,10 +139,12 @@ class Schema:
         import Ganga.Utility.Config
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
-        config = Ganga.Utility.Config.makeConfig( defaultConfigSectionName(self.name), "default attribute values for %s objects"%self.name) #self._pluginclass._proxyClass.__doc__ )
+        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(
+            self.name), "default attribute values for %s objects" % self.name)  # self._pluginclass._proxyClass.__doc__ )
 
-        for name,item in self.allItems():
-            if not item['protected'] and not item['hidden']: #and not item['sequence']: #FIXME: do we need it or not??
+        for name, item in self.allItems():
+            # and not item['sequence']: #FIXME: do we need it or not??
+            if not item['protected'] and not item['hidden']:
                 if 'typelist' in item._meta:
                     types = item['typelist']
                     if types == []:
@@ -146,56 +154,63 @@ class Schema:
 
                 if item['sequence']:
                     if not types is None:
-                        types.append('list') # bugfix 36398: allow to assign a list in the configuration
+                        # bugfix 36398: allow to assign a list in the
+                        # configuration
+                        types.append('list')
                 if type(item['defvalue']) is type({}):
                     if not types is None:
-                        types.append('dict') 
-                config.addOption(name,item['defvalue'],item['doc'],override=False,typelist=types)
+                        types.append('dict')
+                config.addOption(
+                    name, item['defvalue'], item['doc'], override=False, typelist=types)
 
+        def prehook(name, x):
+            errmsg = "Cannot set %s=%s in [%s]: " % (
+                name, repr(x), config.name)
 
-        def prehook(name,x):
-            errmsg = "Cannot set %s=%s in [%s]: "%(name,repr(x),config.name)
-            
             try:
                 item = self.getItem(name)
             except KeyError as x:
-                raise Ganga.Utility.Config.ConfigError(errmsg+"attribute not defined in the schema")
+                raise Ganga.Utility.Config.ConfigError(
+                    errmsg + "attribute not defined in the schema")
             except Exception as x:
-                raise Ganga.Utility.Config.ConfigError(errmsg+str(x))
-            
+                raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
+
             if item.isA(ComponentItem):
                 if not type(x) is type('') and not x is None:
-                    raise Ganga.Utility.Config.ConfigError(errmsg+"only strings and None allowed as a default value of Component Item.")
+                    raise Ganga.Utility.Config.ConfigError(
+                        errmsg + "only strings and None allowed as a default value of Component Item.")
                 try:
-                    self._getDefaultValueInternal(name,x,check=True)
+                    self._getDefaultValueInternal(name, x, check=True)
                 except:
-                    raise Ganga.Utility.Config.ConfigError(errmsg+str(x))
+                    raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
             if item['protected'] or item['hidden']:
-                raise Ganga.Utility.Config.ConfigError(errmsg+"protected or hidden property")
+                raise Ganga.Utility.Config.ConfigError(
+                    errmsg + "protected or hidden property")
 
             # FIXME: File() == 'x' triggers AttributeError
-            #try:
+            # try:
             #    if x == '': x = None
-            #except AttributeError:
+            # except AttributeError:
             #    pass
 
             return x
 
-        config.attachUserHandler(prehook,None)
-        config.attachSessionHandler(prehook,None)
+        config.attachUserHandler(prehook, None)
+        config.attachSessionHandler(prehook, None)
 
-    def getDefaultValue(self,attr):
+    def getDefaultValue(self, attr):
         """ Get the default value of a schema item, both simple and component.
         """
         return self._getDefaultValueInternal(attr)
 
-    def _getDefaultValueInternal(self,attr, val=None, check=False):
+    def _getDefaultValueInternal(self, attr, val=None, check=False):
         """ Get the default value of a schema item, both simple and component.
         If check is True then val is used instead of default value: this is used to check if the val may be used as a default value (e.g. if it is OK to use it as a value in the config file)
         """
         import Ganga.Utility.Config
-        config = Ganga.Utility.Config.getConfig( defaultConfigSectionName(self.name) )
+        config = Ganga.Utility.Config.getConfig(
+            defaultConfigSectionName(self.name))
 
         #item = self.getItem(attr)
         item = None
@@ -218,9 +233,10 @@ class Schema:
             item = self.getItem(attr)
         if item.isA(ComponentItem):
 
-            # FIXME: limited support for initializing non-empty sequences (i.e. apps => ['DaVinci','Executable'] is NOT correctly initialized)
+            # FIXME: limited support for initializing non-empty sequences (i.e.
+            # apps => ['DaVinci','Executable'] is NOT correctly initialized)
 
-            if not item['sequence']: 
+            if not item['sequence']:
                 if defvalue is None:
                     if not item['load_default']:
                         assert(item['optional'])
@@ -231,13 +247,13 @@ class Schema:
 
                 if type(defvalue) is type('') or defvalue is None:
                     from Ganga.Utility.Plugin import allPlugins
-                    return allPlugins.find(item['category'],defvalue)()
+                    return allPlugins.find(item['category'], defvalue)()
 
-        # make a copy of the default value (to avoid strange effects if the original modified)
+        # make a copy of the default value (to avoid strange effects if the
+        # original modified)
         import copy
         return copy.deepcopy(defvalue)
 
-        
 
 # Items in schema may be either Components,Simples, Files or BindingItems.
 #
@@ -275,7 +291,7 @@ class Schema:
 # changable_at_resubmit: if true than the value may be changed at job resubmission, see Job.resubmit()
 #
 #
-# Metaproperties of SimpleItems 
+# Metaproperties of SimpleItems
 #
 # typelist  : a list of type names (strings) indicating allowed types of the property (e.g. ["str","int","Ganga.GPIDev.Lib.File.File.File"]), see: http://twiki.cern.ch/twiki/bin/view/ArdaGrid/GangaTypes
 #
@@ -303,16 +319,18 @@ class Schema:
 # ref/copy  : reference vs copy semantics for file contents
 #
 
-## # BindingItems enable to hook arbitrary getter methods and do not have any implicit storage. Therefore
-## # the BindingItems are always transient, cannot be copied, cannot be sequences and have None default value.
+# BindingItems enable to hook arbitrary getter methods and do not have any implicit storage. Therefore
+# the BindingItems are always transient, cannot be copied, cannot be
+# sequences and have None default value.
 
 class Item:
     # default values of common metaproperties
-    _metaproperties = {'transient' : 0, 'protected' : 0, 'hidden' : 0, 'comparable' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 1, 'doc' : '','visitable':1, 'checkset':None, 'filter':None,'strict_sequence':1, 'summary_print':None, 'summary_sequence_maxlen':5,'proxy_get':None,'getter':None, 'changable_at_resubmit':0, 'preparable':0}
-    
+    _metaproperties = {'transient': 0, 'protected': 0, 'hidden': 0, 'comparable': 1, 'sequence': 0, 'defvalue': None, 'copyable': 1, 'doc': '', 'visitable': 1, 'checkset': None,
+                       'filter': None, 'strict_sequence': 1, 'summary_print': None, 'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0}
+
     def __init__(self):
         self._meta = Item._metaproperties.copy()
-        
+
     def __getitem__(self, key):
         return self._meta[key]
 
@@ -327,16 +345,19 @@ class Item:
     def isA(self, what):
 
         #import types
-        #if type(what) is types.InstanceType:
+        # if type(what) is types.InstanceType:
         #    what = what.__class__
 
         this_type = type(what)
         import types
 
         try:
-            # for backwards compatibility with Ganga3 CLIP: if a string -- first convert to the class name
+            # for backwards compatibility with Ganga3 CLIP: if a string --
+            # first convert to the class name
             if this_type is type(''):
-                import Schema # get access to all Item classes defined in this module (schema)
+                # get access to all Item classes defined in this module
+                # (schema)
+                import Schema
                 what = getattr(Schema, what)
             elif this_type is types.InstanceType:
                 what = what.__class__
@@ -347,7 +368,7 @@ class Item:
 
         return issubclass(self.__class__, what)
 
-    def _update(self,kwds,forced=None):
+    def _update(self, kwds, forced=None):
         """ Add new metaproperties/override old values. To be used by derived contructors only.
         'forced' is an (optional) dictionary containing all values which cannot be modified by
         the user of the derived contructor.
@@ -356,13 +377,15 @@ class Item:
             # find intersection
             forbidden = [k for k in forced if k in kwds]
             if len(forbidden) > 0:
-                raise TypeError('%s received forbidden (forced) keyword arguments %s' %(str(self.__class__),str(forbidden)))
+                raise TypeError('%s received forbidden (forced) keyword arguments %s' % (
+                    str(self.__class__), str(forbidden)))
             self._meta.update(forced)
 
         self._meta.update(kwds)
-                    
+
         # conditional initial value logic...
-        # unless 'copyable' explicitly set (or forced), protected==1 => copyable==0
+        # unless 'copyable' explicitly set (or forced), protected==1 =>
+        # copyable==0
         if 'copyable' not in kwds and (not forced or 'copyable' not in forced):
             if self._meta['protected']:
                 #logger.debug('applied implicit conditional rule: protected==1 => copyable==0')
@@ -371,13 +394,13 @@ class Item:
     # return a description of the property including a docstring
     def describe(self):
 
-        specdoc = '('+self._describe() + ')'
-        
+        specdoc = '(' + self._describe() + ')'
+
         if self['doc']:
-            s = "%s. %s"% (self['doc'],specdoc)
+            s = "%s. %s" % (self['doc'], specdoc)
         else:
             s = specdoc
-            
+
         return s
 
     # return a meta description of the property
@@ -385,109 +408,121 @@ class Item:
         first = ','
         #txt = ' ['
         txt = ''
-        for m in ['transient','protected','comparable','optional']:
+        for m in ['transient', 'protected', 'comparable', 'optional']:
             if m in self._meta:
-                txt += '%s%s' % ( first, m )
-            #try:
+                txt += '%s%s' % (first, m)
+            # try:
             #    if self[m]:
             #        txt += '%s%s'%(first,m)
             #        first = ','
-            #except KeyError:
+            # except KeyError:
             #    pass
         #txt += ']'
-        txt = " default="+repr(self['defvalue'])+txt
-        if self['sequence']: txt = " list," + txt
+        txt = " default=" + repr(self['defvalue']) + txt
+        if self['sequence']:
+            txt = " list," + txt
         return txt
 
     def _check_type(self, val, name, enableGangaList=True):
-        from Ganga.Core import GangaAttributeError,ProtectedAttributeError,ReadOnlyObjectError,TypeMismatchError,SchemaError
+        from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError, SchemaError
 
         if enableGangaList:
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
         else:
             GangaList = list
-            
+
         item = self
 
         # type checking does not make too much sense for Component Items because component items are
         # always checked at the object (_impl) level for category compatibility
-        
+
         if item.isA(ComponentItem):
             return
 
         validTypes = item._meta['typelist']
 
-        # setting typelist explicitly to None results in disabling the type checking completely
+        # setting typelist explicitly to None results in disabling the type
+        # checking completely
         if validTypes is None:
             return
-                
+
         def check(isAllowedType):
             if not isAllowedType:
-                raise TypeMismatchError( 'Attribute "%s" expects a value of the following types: %s' % ( name, validTypes ) )
+                raise TypeMismatchError(
+                    'Attribute "%s" expects a value of the following types: %s' % (name, validTypes))
 
         if item._meta['sequence']:
-            if not isinstance( item._meta['defvalue'], (list,GangaList) ):
-                raise SchemaError( 'Attribute "%s" defined as a sequence but defvalue is not a list.' % name )
-                
-            if not isinstance( val, (GangaList,list) ):
-                raise TypeMismatchError( 'Attribute "%s" expects a list.' % name )
+            if not isinstance(item._meta['defvalue'], (list, GangaList)):
+                raise SchemaError(
+                    'Attribute "%s" defined as a sequence but defvalue is not a list.' % name)
+
+            if not isinstance(val, (GangaList, list)):
+                raise TypeMismatchError(
+                    'Attribute "%s" expects a list.' % name)
 
         if validTypes:
-            if item._meta[ 'sequence' ]:
-                
-                for valItem in val:
-                    if not valueTypeAllowed( valItem, validTypes ):
-                        raise TypeMismatchError( 'List entry %s for %s is invalid. Valid types: %s' % ( valItem, name, validTypes ) )
+            if item._meta['sequence']:
 
-                    
+                for valItem in val:
+                    if not valueTypeAllowed(valItem, validTypes):
+                        raise TypeMismatchError(
+                            'List entry %s for %s is invalid. Valid types: %s' % (valItem, name, validTypes))
+
                 return
-            else: # Non-sequence
-                if isinstance( item._meta['defvalue'], dict ):
-                    if isinstance( val, dict ):
+            else:  # Non-sequence
+                if isinstance(item._meta['defvalue'], dict):
+                    if isinstance(val, dict):
                         for dKey, dVal in val.iteritems():
-                            if not valueTypeAllowed( dKey, validTypes ) or not valueTypeAllowed( dVal, validTypes ):
-                                raise TypeMismatchError( 'Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % ( dKey, dVal, name, validTypes ) )
-                    else: # new value is not a dict
-                        raise TypeMismatchError( 'Attribute "%s" expects a dictionary.' % name )
+                            if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
+                                raise TypeMismatchError(
+                                    'Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
+                    else:  # new value is not a dict
+                        raise TypeMismatchError(
+                            'Attribute "%s" expects a dictionary.' % name)
                     return
-                else: # a 'simple' (i.e. non-dictionary) non-sequence value
-                    check(valueTypeAllowed( val, validTypes ))
+                else:  # a 'simple' (i.e. non-dictionary) non-sequence value
+                    check(valueTypeAllowed(val, validTypes))
                     return
 
         # typelist is not defined, use the type of the default value
         if item._meta['defvalue'] is None:
-            logger.warning('type-checking disabled: type information not provided for %s, contact plugin developer',name)
+            logger.warning(
+                'type-checking disabled: type information not provided for %s, contact plugin developer', name)
         else:
             if item._meta['sequence']:
-                logger.warning('type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer',name)
+                logger.warning(
+                    'type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
             else:
-                check(isinstance( val, type(item._meta['defvalue']) ))
+                check(isinstance(val, type(item._meta['defvalue'])))
 
-    
+
 class ComponentItem(Item):
     # schema user of a ComponentItem cannot change the forced values below
     _forced = {}
-    
-    def __init__(self,category,optional=0,load_default=1,**kwds):
+
+    def __init__(self, category, optional=0, load_default=1, **kwds):
         Item.__init__(self)
         kwds['category'] = category
         kwds['optional'] = optional
         kwds['load_default'] = load_default
         #kwds['getter'] = getter
-        self._update(kwds,forced=ComponentItem._forced)
-        assert(implies(self['defvalue'] is None and not self['load_default'], self['optional']))
+        self._update(kwds, forced=ComponentItem._forced)
+        assert(
+            implies(self['defvalue'] is None and not self['load_default'], self['optional']))
 
-        assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
+        assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self[
+               'protected'] and not self['sequence'] and not self['copyable']))
 
     def _describe(self):
-        return "'"+self['category']+"' object,"+Item._describe(self)
+        return "'" + self['category'] + "' object," + Item._describe(self)
 
 from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
-valueTypeAllowed = lambda val,valTypeList: _valueTypeAllowed(val,valTypeList,logger)
-
+valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(
+    val, valTypeList, logger)
 
 
 class SimpleItem(Item):
+
     def __init__(self, defvalue, typelist=[], **kwds):
         Item.__init__(self)
         kwds['defvalue'] = defvalue
@@ -499,7 +534,8 @@ class SimpleItem(Item):
 
 
 class SharedItem(Item):
-    def __init__(self,defvalue,typelist=[],**kwds):
+
+    def __init__(self, defvalue, typelist=[], **kwds):
         Item.__init__(self)
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
@@ -507,74 +543,76 @@ class SharedItem(Item):
 
     def _describe(self):
         return 'shared property,' + Item._describe(self)
-    
+
 #    def _increment(self):
 #        return Item
-
 
 
 #    def type_match(self,v):
 #        return (self['sequence'] and v == []) or \
 #               (not self['typelist'] or valueTypeAllowed( v, self['typelist']))
 
-## class BindingItem(Item):
+# class BindingItem(Item):
 ##     _forced = {'transient' : 1, 'sequence' : 0, 'defvalue' : None, 'copyable' : 0}
 
-##     def __init__(self,getter,**kwds):
-##         Item.__init__(self)
+# def __init__(self,getter,**kwds):
+# Item.__init__(self)
 ##         assert(not getter is None)
 ##         kwds['getter'] = getter
-## ##         kwds['setter'] = setter
-## ##        assert(not setter is None)
-##         self._update(kwds,forced=BindingItem._forced)
+# kwds['setter'] = setter
+# assert(not setter is None)
+# self._update(kwds,forced=BindingItem._forced)
 
-       
-# Files are important and common enough to merit a special support for defining their metaproperties
+
+# Files are important and common enough to merit a special support for
+# defining their metaproperties
 class FileItem(ComponentItem):
-    def __init__(self,**kwds):
-        ComponentItem.__init__(self,'files')
+
+    def __init__(self, **kwds):
+        ComponentItem.__init__(self, 'files')
         self._update(kwds)
 
     def _describe(self):
-        return "'files' object,"+ Item._describe(self)
+        return "'files' object," + Item._describe(self)
 
 
 class GangaFileItem(ComponentItem):
-    def __init__(self,**kwds):
-        ComponentItem.__init__(self,'gangafiles')
+
+    def __init__(self, **kwds):
+        ComponentItem.__init__(self, 'gangafiles')
         self._update(kwds)
 
     def _describe(self):
-        return "'gangafiles' object,"+ Item._describe(self)
-
+        return "'gangafiles' object," + Item._describe(self)
 
 
 # a helper class which gives a human readible representation of schema items
 # for example suitable for python interactive help()
 def make_helper(item):
     class SchemaItemHelper:
+
         def __repr__(self):
             return item.describe()
     return SchemaItemHelper()
 
-if __name__=='__main__':
+if __name__ == '__main__':
 
     # a simple test
 
     dd = {
-        'application' : ComponentItem(category='applications'),
-        'backend' :     ComponentItem(category='backends'),
-        'name' :        SimpleItem('',comparable=0),
-        'workdir' :     SimpleItem(defvalue=None,type='string',transient=1,protected=1,comparable=0),
-        'status' :      SimpleItem(defvalue='new', protected=1, comparable=0),
-        'id':           SimpleItem(defvalue=None,type='string',protected=1, comparable=0),
-        'inputbox':     FileItem(defvalue=[],sequence=1),
-        'outputbox':    FileItem(defvalue=[],sequence=1),
-        'overriden_copyable' : SimpleItem(defvalue=None,protected=1,copyable=1),
-        'plain_copyable' : SimpleItem(defvalue=None,copyable=0)
-        }
-    
-    schema = Schema(Version(1,0),dd)
+        'application': ComponentItem(category='applications'),
+        'backend':     ComponentItem(category='backends'),
+        'name':        SimpleItem('', comparable=0),
+        'workdir':     SimpleItem(defvalue=None, type='string', transient=1, protected=1, comparable=0),
+        'status':      SimpleItem(defvalue='new', protected=1, comparable=0),
+        'id':           SimpleItem(defvalue=None, type='string', protected=1, comparable=0),
+        'inputbox':     FileItem(defvalue=[], sequence=1),
+        'outputbox':    FileItem(defvalue=[], sequence=1),
+        'overriden_copyable': SimpleItem(defvalue=None, protected=1, copyable=1),
+        'plain_copyable': SimpleItem(defvalue=None, copyable=0)
+    }
+
+    schema = Schema(Version(1, 0), dd)
 
     # NOT a public interface: emulate the Ganga Plugin object for test purposes
     # Note that pclass MUST be a new-style class in order to support deepcopy
@@ -583,11 +621,11 @@ if __name__=='__main__':
         _name = 'Job'
     schema._pluginclass = pclass
     # end of emulating code
-    #allSchemas.add(schema)
+    # allSchemas.add(schema)
 
     assert(schema.name == 'Job')
     assert(schema.category == 'jobs')
-    
+
     assert(schema.allItems() == dd.items())
 
     cc = (schema.componentItems() + schema.simpleItems()).sort()
@@ -596,17 +634,18 @@ if __name__=='__main__':
 
     for i in schema.allItems():
         assert(schema[i[0]] == schema.getItem(i[0]))
-    
-    assert(schema['id'].isA(SimpleItem))    
+
+    assert(schema['id'].isA(SimpleItem))
     assert(schema['application'].isA(ComponentItem))
     assert(schema['inputbox'].isA(ComponentItem))
-    assert(schema['inputbox'].isA(FileItem))    
-    
+    assert(schema['inputbox'].isA(FileItem))
+
     assert(schema['id']['protected'])
     assert(not schema['id']['comparable'])
     assert(schema['id']['type'] == 'string')
 
-    logger.info(schema['application']['category']+' '+schema['application']['defvalue'])
+    logger.info(schema['application']['category'] +
+                ' ' + schema['application']['defvalue'])
 
     import copy
     schema2 = copy.deepcopy(schema)
@@ -619,15 +658,15 @@ if __name__=='__main__':
         assert(schema.getItem(i[0]) is not schema2.getItem(i[0]))
 
     # check the implied rules
-    
+
     assert(schema['overriden_copyable']['copyable'] == 1)
     assert(schema['plain_copyable']['copyable'] == 0)
     assert(schema['id']['copyable'] == 0)
     assert(schema['application']['copyable'] == 1)
 
     logger.info('Schema tested OK.')
-    
-        
+
+
 #
 #
 # $Log: not supported by cvs2svn $

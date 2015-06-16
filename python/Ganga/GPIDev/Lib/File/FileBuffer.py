@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: FileBuffer.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
-################################################################################
+##########################################################################
 
 
 from IGangaFile import IGangaFile
@@ -11,11 +11,13 @@ logger = Ganga.Utility.logging.getLogger()
 
 import os
 
+
 class FileBuffer:
+
     """ FileBuffer represents a file in memory which has not been yet created.
         This is a handy way of creating small wrapper scripts to be generated on the fly.
     """
-    
+
     # Added a subdir (see File.py for comments) - AM
     def __init__(self, name, contents, subdir=os.curdir, executable=0):
         """ name is the name of the file to be created
@@ -24,46 +26,45 @@ class FileBuffer:
         """
         self.name = name
         self._contents = contents
-        self.subdir=subdir
-        self.executable=executable
+        self.subdir = subdir
+        self.executable = executable
 
     def getPathInSandbox(self):
         """return a relative location of a file in a sandbox: subdir/name"""
-        from Ganga.Utility.files import real_basename       
-        return self.subdir+os.sep+real_basename(self.name)
-    
+        from Ganga.Utility.files import real_basename
+        return self.subdir + os.sep + real_basename(self.name)
+
     def getContents(self):
         """return a string with the contents of the file buffer"""
-        logger.debug( "Reading FileBuffer: %s" % self.name )
+        logger.debug("Reading FileBuffer: %s" % self.name)
         if type(self._contents) is type(''):
             return self._contents
         else:
             return self._contents.read()
 
-    def create(self,outname=None):
+    def create(self, outname=None):
         """create a file in a local filesystem as 'outname' """
         filename = self.name
         if outname is not None:
             filename = outname
 
-        thisfile = open(filename,'w')
-        thisfile.write( self.getContents() )
+        thisfile = open(filename, 'w')
+        thisfile.write(self.getContents())
         thisfile.close()
-        #file(filename,'w').write(self.getContents())
+        # file(filename,'w').write(self.getContents())
 
         if self.executable:
             from Ganga.Utility.files import chmod_executable
             chmod_executable(filename)
 
-        logger.debug( "Created %s in: %s" % ( filename, os.path.realpath(filename) ) )
+        logger.debug("Created %s in: %s" %
+                     (filename, os.path.realpath(filename)))
 
         return self
-
 
     def isExecutable(self):
         """ return true if a file is create()'ed with executable permissions"""
         return self.executable
-
 
 
 #

@@ -1,7 +1,10 @@
-from Ganga.Core.JobRepository.ARDA import RemoteARDAJobRepository,schema
+from Ganga.Core.JobRepository.ARDA import RemoteARDAJobRepository, schema
 
-rep1 = RemoteARDAJobRepository(schema,root_dir = '/testdir/GangaTest/kuba3/Jobs')
-rep2 = RemoteARDAJobRepository(schema,root_dir = '/testdir/GangaTest/kuba3/Templates')
+rep1 = RemoteARDAJobRepository(
+    schema, root_dir='/testdir/GangaTest/kuba3/Jobs')
+rep2 = RemoteARDAJobRepository(
+    schema, root_dir='/testdir/GangaTest/kuba3/Templates')
+
 
 def wipe(rep):
     ids = rep.getJobIds({})

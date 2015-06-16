@@ -2,18 +2,22 @@ import Ganga.Utility.logging
 from Ganga.Core.exceptions import *
 logger = Ganga.Utility.logging.getLogger()
 
+
 class PluginManagerError(GangaValueError):
-    def __init__(self,x): ValueError.__init__(self,x)
-    
+
+    def __init__(self, x): ValueError.__init__(self, x)
+
 # Simple Ganga Plugin Mechanism
 #
 # Any object may be registered (added) in the plugin manager provided that
 # you are able to specify the name and the category to which it belongs.
-# 
+#
 # If you do not use category all plugins are registered in a flat list. Otherwise
 # there is a list of names for each category seaprately.
 
+
 class PluginManager(object):
+
     def __init__(self):
         self.all_dict = {}
         self.first = {}
@@ -28,26 +32,28 @@ class PluginManager(object):
         """
         #logger.debug( "Attempting to Find Plugin: %s" % name )
         #import traceback
-        #traceback.print_stack()
+        # traceback.print_stack()
 
-        ##  Simple attempt to pre-load and cache Plugin lookups
-        key = str(category)+"_"+str(name)
+        # Simple attempt to pre-load and cache Plugin lookups
+        key = str(category) + "_" + str(name)
         if key in self._prev_found:
-            return self._prev_found[ key ]
+            return self._prev_found[key]
 
         try:
             if name is not None:
                 if category in self.first:
-                    logger.debug( "Returning based upon Category and Name" )
-                    logger.debug( "name: %s cat: %s" % (str(name), str(category)) )
+                    logger.debug("Returning based upon Category and Name")
+                    logger.debug("name: %s cat: %s" %
+                                 (str(name), str(category)))
                     if name in self.all_dict[category]:
                         self._prev_found[key] = self.all_dict[category][name]
                         return self.all_dict[category][name]
 
             if (name is None) and category is not None:
                 if (category in self.first):
-                    logger.debug( "Returning based upon Category ONLY" )
-                    logger.debug( "name: %s cat: %s" % (str(name), str(category)) )
+                    logger.debug("Returning based upon Category ONLY")
+                    logger.debug("name: %s cat: %s" %
+                                 (str(name), str(category)))
                     self._prev_found[key] = self.first[category]
                     return self.first[category]
 
@@ -56,24 +62,27 @@ class PluginManager(object):
                     for this_name in self.all_dict[category_i]:
                         if name == this_name:
                             message1 = "Category of %s, has likely changed between ganga versions!" % name
-                            message2 = "Category Requested: %s,   Category in which plugin was found: %s" % ( category, category_i )
+                            message2 = "Category Requested: %s,   Category in which plugin was found: %s" % (
+                                category, category_i)
                             message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
-                            logger.debug( message1 )
-                            logger.debug( message2 )
-                            logger.debug( message3 )
-                            self._prev_found[ key] = self.all_dict[category_i][name]
+                            logger.debug(message1)
+                            logger.debug(message2)
+                            logger.debug(message3)
+                            self._prev_found[key] = self.all_dict[
+                                category_i][name]
                             return self.all_dict[category_i][name]
- 
+
         except KeyError:
             pass
         except:
-            logger.error( "Some Other unexpected ERROR!" )
+            logger.error("Some Other unexpected ERROR!")
             raise
 
         if name is None:
             s = "cannot find default plugin for category " + category
         else:
-            s = "cannot find '%s' in a category '%s', or elsewhere" % (name, category)
+            s = "cannot find '%s' in a category '%s', or elsewhere" % (
+                name, category)
 
         if name is None and category is None:
             s = "Serious Plugin Error has occured"
@@ -98,8 +107,7 @@ class PluginManager(object):
         assert(not name is None)
         pluginobj = self.find(category, name)
         self.first[category] = pluginobj
-            
-    
+
     def allCategories(self):
         return self.all_dict
 
@@ -109,6 +117,5 @@ class PluginManager(object):
             return cat
         else:
             return {}
-    
-allPlugins = PluginManager()
 
+allPlugins = PluginManager()

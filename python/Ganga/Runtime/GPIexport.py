@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: GPIexport.py,v 1.1 2008-07-17 16:41:00 moscicki Exp $
-################################################################################
+##########################################################################
 
 """ Utility for exporting symbols to GPI.
 """
@@ -13,7 +13,8 @@ import Ganga.GPI
 
 from gangadoc import adddoc
 
-def exportToGPI(name,object,doc_section,docstring=None):
+
+def exportToGPI(name, object, doc_section, docstring=None):
     '''
     Make object available publicly as "name" in Ganga.GPI module. Add automatic documentation to gangadoc system.
     "doc_section" specifies how the object should be documented.
@@ -25,12 +26,12 @@ def exportToGPI(name,object,doc_section,docstring=None):
 
     It has been observed that doing exportToGPI("obj",object,"Objects") may not work. To be understood.
     '''
-    
-    setattr(Ganga.GPI,name,object)
 
-    adddoc(name,object,doc_section,docstring)
+    setattr(Ganga.GPI, name, object)
 
-    #print 'EXPORTED',name,object
+    adddoc(name, object, doc_section, docstring)
+
+    # print 'EXPORTED',name,object
 #
 #
 # $Log: not supported by cvs2svn $

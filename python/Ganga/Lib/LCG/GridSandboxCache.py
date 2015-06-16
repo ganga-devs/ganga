@@ -16,12 +16,13 @@ from types import *
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Credentials import getCredential 
+from Ganga.GPIDev.Credentials import getCredential
 
 from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG.Utility import *
 
 from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Effects
+
 
 class GridFileIndex(GangaObject):
 
@@ -31,24 +32,25 @@ class GridFileIndex(GangaObject):
     @author: Hurng-Chun Lee 
     @contact: hurngchunlee@gmail.com
     '''
- 
-    _schema = Schema(Version(1,0), {
-       'id'         : SimpleItem(defvalue='', doc='the main identity of the file'),
-       'name'       : SimpleItem(defvalue='', doc='the name of the file'),
-       'md5sum'     : SimpleItem(defvalue='', doc='the md5sum of the file'),
-       'attributes' : SimpleItem(defvalue={}, doc='a key:value pairs of file metadata')
+
+    _schema = Schema(Version(1, 0), {
+        'id': SimpleItem(defvalue='', doc='the main identity of the file'),
+        'name': SimpleItem(defvalue='', doc='the name of the file'),
+        'md5sum': SimpleItem(defvalue='', doc='the md5sum of the file'),
+        'attributes': SimpleItem(defvalue={}, doc='a key:value pairs of file metadata')
     })
- 
+
     _category = 'GridFileIndex'
     _name = 'GridFileIndex'
 
     logger = getLogger()
- 
+
     def __init__(self):
-        super(GridFileIndex,self).__init__()
+        super(GridFileIndex, self).__init__()
 
     def __eq__(self, other):
         return other.id == self.id
+
 
 class GridSandboxCache(GangaObject):
 
@@ -58,29 +60,30 @@ class GridSandboxCache(GangaObject):
     @author: Hurng-Chun Lee 
     @contact: hurngchunlee@gmail.com
     '''
- 
-    _schema = Schema(Version(1,1), {
-       'vo'         : SimpleItem(defvalue='dteam', hidden=1, copyable=0, doc='the Grid virtual organization'),
-       'middleware' : SimpleItem(defvalue='EDG', hidden=1, copyable=1, doc='the LCG middleware type'),
-       'protocol'   : SimpleItem(defvalue='', copyable=1, doc='file transfer protocol'),
-       'max_try'    : SimpleItem(defvalue=1, doc='max. number of tries in case of failures'),
-       'timeout'    : SimpleItem(defvalue=180, copyable=0, hidden=1, doc='transfer timeout in seconds'),
-       'uploaded_files' : ComponentItem('GridFileIndex', defvalue=[], sequence=1, protected=1, copyable=0, hidden=1, doc='a repository record for the uploaded files')
+
+    _schema = Schema(Version(1, 1), {
+        'vo': SimpleItem(defvalue='dteam', hidden=1, copyable=0, doc='the Grid virtual organization'),
+        'middleware': SimpleItem(defvalue='EDG', hidden=1, copyable=1, doc='the LCG middleware type'),
+        'protocol': SimpleItem(defvalue='', copyable=1, doc='file transfer protocol'),
+        'max_try': SimpleItem(defvalue=1, doc='max. number of tries in case of failures'),
+        'timeout': SimpleItem(defvalue=180, copyable=0, hidden=1, doc='transfer timeout in seconds'),
+        'uploaded_files': ComponentItem('GridFileIndex', defvalue=[], sequence=1, protected=1, copyable=0, hidden=1, doc='a repository record for the uploaded files')
     })
- 
+
     _category = 'GridSandboxCache'
     _name = 'GridSandboxCache'
-    _exportmethods = ['upload', 'download', 'delete', 'get_cached_files', 'list_cached_files', 'cleanup']
+    _exportmethods = ['upload', 'download', 'delete',
+                      'get_cached_files', 'list_cached_files', 'cleanup']
 
     logger = getLogger()
 
     def __init__(self):
-        super(GridSandboxCache,self).__init__()
+        super(GridSandboxCache, self).__init__()
 
     def upload(self, files=[], opts=''):
         """
         Uploads multiple files to a remote grid storage.
-        
+
         @param files is a list of local files to be uploaded to the grid.
                The elemement can be a file path or a File object.
 
@@ -99,16 +102,18 @@ class GridSandboxCache(GangaObject):
 
         uploaded_files = self.impl_upload(files=paths, opts=opts)
 
-        if len( uploaded_files ) == len( files ):
-            status = self.impl_bookkeepUploadedFiles(uploaded_files, append=True, opts=opts)
+        if len(uploaded_files) == len(files):
+            status = self.impl_bookkeepUploadedFiles(
+                uploaded_files, append=True, opts=opts)
         else:
             status = False
 
         if len(uploaded_files) == len(files):
-            status = self.impl_bookkeepUploadedFiles(uploaded_files, append=True, opts=opts)
+            status = self.impl_bookkeepUploadedFiles(
+                uploaded_files, append=True, opts=opts)
         else:
             status = False
-            
+
         return status
 
     def download(self, files=[], dest_dir=None, opts=''):
@@ -125,12 +130,13 @@ class GridSandboxCache(GangaObject):
                - [index_grid_file_1, index_grid_file_2, ...]
 
         @param dest_dir is a local destination directory to store the downloaded files.
-        
+
         @return True if files are successfully downloaded; otherwise it returns False
         """
-        status  = False
+        status = False
         myFiles = self.__get_file_index_objects__(files)
-        downloadedFiles = self.impl_download(files=myFiles, dest_dir=dest_dir, opts=opts)
+        downloadedFiles = self.impl_download(
+            files=myFiles, dest_dir=dest_dir, opts=opts)
 
         if len(downloadedFiles) == len(myFiles):
             status = True
@@ -149,7 +155,7 @@ class GridSandboxCache(GangaObject):
 
         @return True if files are successfully deleted; otherwise it returns False
         """
-        status  = False
+        status = False
         myFiles = self.__get_file_index_objects__(files)
         deletedFiles = self.impl_delete(files=myFiles, opts=opts)
 
@@ -200,18 +206,18 @@ class GridSandboxCache(GangaObject):
         fg = Foreground()
         fx = Effects()
 
-        status_colors = {'inuse':fg.orange,
-                         'free' :fg.blue,
-                         'gone' :fg.red}
+        status_colors = {'inuse': fg.orange,
+                         'free': fg.blue,
+                         'gone': fg.red}
 
-        status_mapping = {'new'       : 'inuse',
-                          'submitted' : 'inuse',
-                          'submitting':'inuse',
-                          'running'   : 'inuse',
-                          'completed' : 'free',
+        status_mapping = {'new': 'inuse',
+                          'submitted': 'inuse',
+                          'submitting': 'inuse',
+                          'running': 'inuse',
+                          'completed': 'free',
                           'completing': 'free',
-                          'failed'    : 'free',
-                          'killed'    : 'free'}
+                          'failed': 'free',
+                          'killed': 'free'}
 
         if doColoring:
             markup = ANSIMarkup()
@@ -220,7 +226,8 @@ class GridSandboxCache(GangaObject):
 
         def __markup_by_status__(fileIndex, counter, status):
 
-            fmtStr = '\n%4d\t%-30s\t%-12s\t%s' % (counter, fileIndex.name, status, fileIndex.id)
+            fmtStr = '\n%4d\t%-30s\t%-12s\t%s' % (
+                counter, fileIndex.name, status, fileIndex.id)
 
             try:
                 return markup(fmtStr, status_colors[status])
@@ -228,9 +235,9 @@ class GridSandboxCache(GangaObject):
                 return markup(fmtStr, fx.normal)
 
         j = self.getJobObject()
-        
+
         for f in self.get_cached_files(opts=opts):
-            
+
             my_status = 'unknown'
 
             if j:
@@ -260,7 +267,7 @@ class GridSandboxCache(GangaObject):
 
         return ds
 
-    ## methods to be implemented in the child classes 
+    # methods to be implemented in the child classes
     def impl_upload(self, files=[], opts=''):
         """
         Uploads multiple files to a remote grid storage.
@@ -315,8 +322,8 @@ class GridSandboxCache(GangaObject):
         files = self.uploaded_files
 
         return files
-    
-    ## private methods
+
+    # private methods
     def __get_file_index_objects__(self, files=[]):
         '''Gets file index object according to the given file list
              - try to get the GridFileIndex object from the local index file.  
@@ -335,27 +342,27 @@ class GridSandboxCache(GangaObject):
 
     def __get_unique_fname__(self):
         '''gets an unique filename'''
-        cred  = getCredential('GridProxy',self.middleware)
-        uid   = re.sub(r'[\:\-\(\)]{1,}','',cred.identity()).lower()
+        cred = getCredential('GridProxy', self.middleware)
+        uid = re.sub(r'[\:\-\(\)]{1,}', '', cred.identity()).lower()
         fname = 'user.%s.%s' % (uid, get_uuid())
         return fname
 
-    def __cmd_retry_loop__(self,shell,cmd,maxRetry=3):
+    def __cmd_retry_loop__(self, shell, cmd, maxRetry=3):
         '''Executing system command with retry feature'''
-        i      = 0
-        rc     = 0
+        i = 0
+        rc = 0
         output = None
-        m      = None
+        m = None
         try_again = True
         while try_again:
             i = i + 1
             self.logger.debug('run cmd: %s' % cmd)
-            rc, output, m = shell.cmd1(cmd,allowed_exit=[0,255])
-            if rc in [0,255]:
+            rc, output, m = shell.cmd1(cmd, allowed_exit=[0, 255])
+            if rc in [0, 255]:
                 try_again = False
             elif i == maxRetry:
                 try_again = False
             else:
-                self.logger.warning("trial %d: error: %s" % (i,output))
- 
+                self.logger.warning("trial %d: error: %s" % (i, output))
+
         return (rc, output, m)

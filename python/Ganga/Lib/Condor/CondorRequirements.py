@@ -6,7 +6,7 @@
 # File: CondorRequirements.py
 # Author: K. Harrison
 # Created: 051229
-# 
+#
 # KH - 060728 : Correction to way multiple requirements are combined
 #               in convert method
 #
@@ -22,8 +22,8 @@
 
 """Module containing class for handling Condor requirements"""
 
-__author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
-__date__    = "29 July 2008"
+__author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
+__date__ = "29 July 2008"
 __version__ = "1.4"
 
 from Ganga.GPIDev.Base.Objects import GangaObject
@@ -35,92 +35,93 @@ import types
 
 logger = getLogger()
 
-class CondorRequirements( GangaObject ):
-   '''Helper class to group Condor requirements.
 
-   See also: http://www.cs.wisc.edu/condor/manual
-   '''
+class CondorRequirements(GangaObject):
 
-   _schema = Schema(Version(1,0), { 
-      "machine" : SimpleItem( defvalue = "", typelist = [ "str", "list" ],
-         doc = """
+    '''Helper class to group Condor requirements.
+
+    See also: http://www.cs.wisc.edu/condor/manual
+    '''
+
+    _schema = Schema(Version(1, 0), {
+        "machine": SimpleItem(defvalue="", typelist=["str", "list"],
+                              doc="""
 Requested execution hosts, given as a string of space-separated names:
 'machine1 machine2 machine3'; or as a list of names:
 [ 'machine1', 'machine2', 'machine3' ]
 """ ),
-      "excluded_machine" : SimpleItem( defvalue = "",
-         typelist = [ "str", "list" ],
-         doc = """
+        "excluded_machine": SimpleItem(defvalue="",
+                                       typelist=["str", "list"],
+                                       doc="""
 Excluded execution hosts, given as a string of space-separated names:
 'machine1 machine2 machine3'; or as a list of names:
 [ 'machine1', 'machine2', 'machine3' ]
 """ ),
-      "opsys" : SimpleItem( defvalue = "LINUX", doc = "Operating system" ),
-      "arch" : SimpleItem( defvalue = "INTEL", doc = "System architecture" ),
-      "memory" : SimpleItem( defvalue = 400, doc = "Mininum physical memory" ),
-      "virtual_memory" : SimpleItem( defvalue = 400,
-         doc = "Minimum virtual memory" ),
-      "other" : SimpleItem( defvalue=[], typelist = [ "str" ], sequence=1, \
-         doc= """
+        "opsys": SimpleItem(defvalue="LINUX", doc="Operating system"),
+        "arch": SimpleItem(defvalue="INTEL", doc="System architecture"),
+        "memory": SimpleItem(defvalue=400, doc="Mininum physical memory"),
+        "virtual_memory": SimpleItem(defvalue=400,
+                                     doc="Minimum virtual memory"),
+        "other": SimpleItem(defvalue=[], typelist=["str"], sequence=1,
+                            doc="""
 Other requirements, given as a list of strings, for example:
 [ 'OSTYPE == "SLC4"', '(POOL == "GENERAL" || POOL == "GEN_FARM")' ];
 the final requirement is the AND of all elements in the list
 """ )
-      } )
+    })
 
-   _category = 'condor_requirements'
-   _name = 'CondorRequirements'
+    _category = 'condor_requirements'
+    _name = 'CondorRequirements'
 
-   def __init__( self ):
-      super( CondorRequirements, self ).__init__()
+    def __init__(self):
+        super(CondorRequirements, self).__init__()
 
-   def convert( self):
-      '''Convert the condition(s) to a JDL specification'''
-      
-      requirementList = []
-      
-      if self.machine:
-         if type( self.machine ) == types.StringType:
-            machineList = self.machine.split()
-         else:
-            machineList = self.machine
-         machineConditionList = []
-         for machine in machineList:
-            machineConditionList.append( "Machine == \"%s\"" % str( machine ) )
-         machineConditionString = " || ".join( machineConditionList )
-         requirement = ( " ".join( [ "(", machineConditionString, ")" ] ) )
-         requirementList.append( requirement )
+    def convert(self):
+        '''Convert the condition(s) to a JDL specification'''
 
-      if self.excluded_machine:
-         if type( self.excluded_machine ) == types.StringType:
-            machineList = self.excluded_machine.split()
-         else:
-            machineList = self.excluded_machine
-         for machine in machineList:
-            requirementList.append( "Machine != \"%s\"" % str( machine ) )
+        requirementList = []
 
-      if self.opsys:
-         requirementList.append( "OpSys == \"%s\"" % str( self.opsys ) )
+        if self.machine:
+            if type(self.machine) == types.StringType:
+                machineList = self.machine.split()
+            else:
+                machineList = self.machine
+            machineConditionList = []
+            for machine in machineList:
+                machineConditionList.append("Machine == \"%s\"" % str(machine))
+            machineConditionString = " || ".join(machineConditionList)
+            requirement = (" ".join(["(", machineConditionString, ")"]))
+            requirementList.append(requirement)
 
-      if self.arch:
-         requirementList.append( "Arch == \"%s\"" % str( self.arch ) )
+        if self.excluded_machine:
+            if type(self.excluded_machine) == types.StringType:
+                machineList = self.excluded_machine.split()
+            else:
+                machineList = self.excluded_machine
+            for machine in machineList:
+                requirementList.append("Machine != \"%s\"" % str(machine))
 
-      if self.memory:
-         requirementList.append( "Memory >= %s" % str( self.memory ) )
+        if self.opsys:
+            requirementList.append("OpSys == \"%s\"" % str(self.opsys))
 
-      if self.virtual_memory:
-         requirementList.append\
-            ( "VirtualMemory >= %s" % str( self.virtual_memory ) )
+        if self.arch:
+            requirementList.append("Arch == \"%s\"" % str(self.arch))
 
-      if self.other:
-         requirementList.extend( self.other )
+        if self.memory:
+            requirementList.append("Memory >= %s" % str(self.memory))
 
-      requirementString = "requirements = " + " && ".join( requirementList )
+        if self.virtual_memory:
+            requirementList.append\
+                ("VirtualMemory >= %s" % str(self.virtual_memory))
 
-      return requirementString
+        if self.other:
+            requirementList.extend(self.other)
+
+        requirementString = "requirements = " + " && ".join(requirementList)
+
+        return requirementString
 
 # Allow property values to be either string or list
-config = getConfig( "defaults_CondorRequirements" )
-for property in [ "machine", "excluded_machine" ]:
-   config.options[property].type =  [ types.StringType, types.ListType ]
-
+config = getConfig("defaults_CondorRequirements")
+for property in ["machine", "excluded_machine"]:
+    config.options[property].type = [types.StringType, types.ListType]

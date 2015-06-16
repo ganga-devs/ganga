@@ -93,38 +93,46 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 from functools import reduce
 
 from Ganga.Core.exceptions import GangaException
-class ConfigError(GangaException):
- """ ConfigError indicates that an option does not exist or it cannot be set.
- """
- def __init__(self,what):
-     #GangaException.__init__(self)
-     super(ConfigError, self).__init__()
-     self.what = what
 
- def __str__(self):
-     return "ConfigError: %s "%(self.what)
-    
+
+class ConfigError(GangaException):
+
+    """ ConfigError indicates that an option does not exist or it cannot be set.
+    """
+
+    def __init__(self, what):
+        # GangaException.__init__(self)
+        super(ConfigError, self).__init__()
+        self.what = what
+
+    def __str__(self):
+        return "ConfigError: %s " % (self.what)
+
 # WARNING: avoid importing logging at the module level in this file
 # for example, do not do here: from Ganga.Utility.logging import logger
 # use getLogger() function defined below:
 
 logger = None
 
+
 def getLogger():
     global logger
     if not logger is None:
         return logger
 
-    # for the configuration of the logging package itself (in the initial phases) the logging may be disabled
+    # for the configuration of the logging package itself (in the initial
+    # phases) the logging may be disabled
     try:
-        import  Ganga.Utility.logging
+        import Ganga.Utility.logging
         logger = Ganga.Utility.logging.getLogger()
         return logger
     except AttributeError:
-        # in such a case we return a mock proxy object which ignore all calls such as logger.info()...
+        # in such a case we return a mock proxy object which ignore all calls
+        # such as logger.info()...
         class X:
-            def __getattr__(self,name):
-                def f(*args,**kwds):
+
+            def __getattr__(self, name):
+                def f(*args, **kwds):
                     pass
                 return f
         return X()
@@ -142,19 +150,24 @@ translated_names = {}
 # helper function which helps migrating the names from old naming convention
 # to the stricter new one: spaces are removed, colons replaced by underscored
 # returns a valid name or raises a ValueError
+
+
 def _migrate_name(name):
     import Ganga.Utility.strings as strings
 
     if (name not in translated_names.keys()) and (not strings.is_identifier(name)):
         name2 = strings.drop_spaces(name)
-        name2 = name2.replace(':','_')
+        name2 = name2.replace(':', '_')
 
         if not strings.is_identifier(name2):
-            raise ValueError('config name %s is not a valid python identifier' % name)
+            raise ValueError(
+                'config name %s is not a valid python identifier' % name)
         else:
             logger = getLogger()
-            logger.warning('obsolete config name found: replaced "%s" -> "%s"'%(name,name2))
-            logger.warning('config names must be python identifiers, please correct your usage in the future ')
+            logger.warning(
+                'obsolete config name found: replaced "%s" -> "%s"' % (name, name2))
+            logger.warning(
+                'config names must be python identifiers, please correct your usage in the future ')
             translated_names[name] = name2
     else:
         translated_names[name] = name
@@ -167,44 +180,47 @@ def getConfig(name):
     Temporary name migration conversion applies -- see _migrate_name().
     Principle is the same as for getLogger() -- the config instances may
     be easily shared between different parts of the program."""
-    
+
     name = _migrate_name(name)
     try:
         return allConfigs[name]
     except KeyError:
-        allConfigs[name] = PackageConfig(name,'Documentation not available')
+        allConfigs[name] = PackageConfig(name, 'Documentation not available')
         return allConfigs[name]
 
-def makeConfig(name,docstring,**kwds):
+
+def makeConfig(name, docstring, **kwds):
     """
     Create a config package and attach metadata to it. makeConfig() should be called once for each package.
     """
 
     if _after_bootstrap:
         #import traceback
-        #traceback.print_stack()
-        raise ConfigError('attempt to create a configuration section [%s] after bootstrap'%name)
-    
+        # traceback.print_stack()
+        raise ConfigError(
+            'attempt to create a configuration section [%s] after bootstrap' % name)
+
     name = _migrate_name(name)
     try:
         c = allConfigs[name]
         c.docstring = docstring
         for k in kwds:
-            setattr(c,k,kwds[k])
+            setattr(c, k, kwds[k])
     except KeyError:
-        c = allConfigs[name] = PackageConfig(name,docstring,**kwds)
+        c = allConfigs[name] = PackageConfig(name, docstring, **kwds)
 
-##     # _after_bootstrap flag solves chicken-egg problem between logging and config modules
-##     if _after_bootstrap:
-##          # make the GPI proxy
+# _after_bootstrap flag solves chicken-egg problem between logging and config modules
+# if _after_bootstrap:
+# make the GPI proxy
 ##          from Ganga.GPIDev.Lib.Config.Config import createSectionProxy
-##          createSectionProxy(name)
-        
+# createSectionProxy(name)
+
     c._config_made = True
     return c
-    
+
 
 class ConfigOption:
+
     """ Configuration Option has a name, default value and a docstring.
 
     Metainformation:
@@ -217,36 +233,38 @@ class ConfigOption:
        * typelist - None => a typelist as in GPI schema 
     The configuration option may also define the session_value and default_value. The value property gives the effective value.
     """
-    def __init__(self,name):
+
+    def __init__(self, name):
         self.name = name
-        
-    def defineOption(self,default_value,docstring,**meta):
-            
+
+    def defineOption(self, default_value, docstring, **meta):
+
         self.default_value = default_value
         self.docstring = docstring
-        self.hidden=False
-        self.cfile=True
+        self.hidden = False
+        self.cfile = True
         self.examples = None
         self.filter = None
         self.typelist = None
-        
+
         for m in meta:
-            setattr(self,m,meta[m])
-        
+            setattr(self, m, meta[m])
+
         self.convert_type('session_value')
         self.convert_type('user_value')
-        
-    def setSessionValue(self,session_value):
-        #try:
+
+    def setSessionValue(self, session_value):
+        # try:
         if self.filter:
-            session_value = self.filter(self,session_value)
-        #except Exception as x:
+            session_value = self.filter(self, session_value)
+        # except Exception as x:
         #    import  Ganga.Utility.logging
         #    logger = Ganga.Utility.logging.getLogger()
         #    logger.warning('problem with option filter: %s: %s',self.name,x)
-        
+
         try:
-            session_value = self.transform_PATH_option(session_value,self.session_value)
+            session_value = self.transform_PATH_option(
+                session_value, self.session_value)
         except AttributeError:
             pass
 
@@ -254,29 +272,30 @@ class ConfigOption:
             old_value = self.session_value
         except AttributeError:
             pass
-        
+
         self.session_value = session_value
         try:
             self.convert_type('session_value')
         except Exception as x:
-            #rollback if conversion failed
+            # rollback if conversion failed
             try:
                 self.session_value = old_value
             except NameError:
                 del self.session_value
             raise x
 
-    def setUserValue(self,user_value):
+    def setUserValue(self, user_value):
 
         try:
             if self.filter:
-                user_value = self.filter(self,user_value)
+                user_value = self.filter(self, user_value)
         except Exception as x:
             logger = getLogger()
-            logger.warning('problem with option filter: %s: %s',self.name,x)
-        
+            logger.warning('problem with option filter: %s: %s', self.name, x)
+
         try:
-            user_value = self.transform_PATH_option(user_value,self.user_value)
+            user_value = self.transform_PATH_option(
+                user_value, self.user_value)
         except AttributeError:
             pass
 
@@ -284,73 +303,75 @@ class ConfigOption:
             old_value = self.user_value
         except AttributeError:
             pass
-        
+
         self.user_value = user_value
         try:
             self.convert_type('user_value')
         except Exception as x:
-            #rollback if conversion failed
+            # rollback if conversion failed
             try:
                 self.user_value = old_value
             except NameError:
                 del self.user_value
             raise x
 
-    def overrideDefaultValue(self,default_value):
+    def overrideDefaultValue(self, default_value):
         try:
-            default_value = self.transform_PATH_option(default_value,self.default_value)
+            default_value = self.transform_PATH_option(
+                default_value, self.default_value)
         except AttributeError:
             pass
         self.default_value = default_value
         self.convert_type('user_value')
         self.convert_type('session_value')
-        
-    def __getattr__(self,name):
+
+    def __getattr__(self, name):
         if name == 'value':
             values = []
 
-            for n in ['user','session','default']:
+            for n in ['user', 'session', 'default']:
                 try:
-                    values.append(getattr(self,n+'_value'))
+                    values.append(getattr(self, n + '_value'))
                 except AttributeError:
                     pass
-                
+
             if values:
-                return reduce(self.transform_PATH_option,values)
-            
-            #for n in ['user','session','default']:
+                return reduce(self.transform_PATH_option, values)
+
+            # for n in ['user','session','default']:
             #    try:
             #        return getattr(self,n+'_value')
             #    except AttributeError:
             #        pass
-            
+
         if name == 'level':
 
-            for level,name in [(0,'user'),(1,'session'),(2,'default')]:
-                if hasattr(self,name+'_value'):
+            for level, name in [(0, 'user'), (1, 'session'), (2, 'default')]:
+                if hasattr(self, name + '_value'):
                     return level
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
         if name in ['value', 'level']:
-            raise AttributeError('Cannot set "%s" attribute of the option object' % name)
+            raise AttributeError(
+                'Cannot set "%s" attribute of the option object' % name)
         else:
-            self.__dict__[name]=value
+            self.__dict__[name] = value
 
     def check_defined(self):
         return hasattr(self, 'default_value')
-    
-    def transform_PATH_option(self,new_value,current_value):
-        return transform_PATH_option(self.name,new_value,current_value)
-    
-    def convert_type(self,x_name):
+
+    def transform_PATH_option(self, new_value, current_value):
+        return transform_PATH_option(self.name, new_value, current_value)
+
+    def convert_type(self, x_name):
         ''' Convert the type of session_value or user_value (referred to by x_name) according to the types defined by the self.
         If the option has not been defined or the x_name in question is not defined, then this method is no-op.
         If conversion cannot be performed (type mismatch) then raise ConfigError.
         '''
-        
+
         try:
-            value = getattr(self,x_name)
+            value = getattr(self, x_name)
         except AttributeError:
             return
 
@@ -359,67 +380,79 @@ class ConfigOption:
         # calculate the cast type, if it cannot be done then the option has not been yet defined (setDefaultValue)
         # in this case do not modify the value
         if not self.typelist is None:
-            cast_type = self.typelist # in this case cast_type is a list of string dotnames (like for typelist property in schemas)
+            # in this case cast_type is a list of string dotnames (like for
+            # typelist property in schemas)
+            cast_type = self.typelist
         else:
             try:
-                cast_type = type(self.default_value) # in this case cast_type is a single type object
+                # in this case cast_type is a single type object
+                cast_type = type(self.default_value)
             except AttributeError:
                 return
-            
+
         new_value = value
 
         #optdesc = 'while setting option [%s]%s = %s ' % (self.name,o,str(value))
-        optdesc = 'while setting option [.]%s = %s ' % (self.name,str(value))
-        
+        optdesc = 'while setting option [.]%s = %s ' % (self.name, str(value))
+
         # eval string values only if the cast_type is not exactly a string
         if type(value) is type('') and not cast_type is type(''):
             try:
-                new_value = eval(value,config_scope)
-                logger.debug('applied eval(%s) -> %s (%s)',value,new_value,optdesc)
+                new_value = eval(value, config_scope)
+                logger.debug(
+                    'applied eval(%s) -> %s (%s)', value, new_value, optdesc)
             except Exception as x:
-                logger.debug('ignored failed eval(%s): %s (%s)',value,x,optdesc)
+                logger.debug(
+                    'ignored failed eval(%s): %s (%s)', value, x, optdesc)
 
         # check the type of the value unless the cast_type is not NoneType
-        logger.debug('checking value type: %s (%s)',str(cast_type),optdesc)
+        logger.debug('checking value type: %s (%s)', str(cast_type), optdesc)
 
         import types
-        def check_type(x,t):
+
+        def check_type(x, t):
             return type(x) is t or x is t
-        
+
         type_matched = False
 
-        # first we check using the same rules for typelist as for the GPI proxy objects
+        # first we check using the same rules for typelist as for the GPI proxy
+        # objects
         try:
             import Ganga.GPIDev.TypeCheck
-            type_matched = Ganga.GPIDev.TypeCheck._valueTypeAllowed(new_value,cast_type,logger)
-        except TypeError: #cast_type is not a list
-            type_matched = check_type(new_value,cast_type)
-            
+            type_matched = Ganga.GPIDev.TypeCheck._valueTypeAllowed(
+                new_value, cast_type, logger)
+        except TypeError:  # cast_type is not a list
+            type_matched = check_type(new_value, cast_type)
+
         from Ganga.Utility.logic import implies
         if not implies(not cast_type is type(None), type_matched):
-            raise ConfigError('type mismatch: expected %s got %s (%s)'%(str(cast_type),str(type(new_value)),optdesc))
+            raise ConfigError('type mismatch: expected %s got %s (%s)' % (
+                str(cast_type), str(type(new_value)), optdesc))
 
-        setattr(self,x_name,new_value)
+        setattr(self, x_name, new_value)
 
 # indicate if the GPI proxies for the configuration have been created
 _after_bootstrap = False
-    
+
 # Scope used by eval when reading-in the configuration.
 # Symbols defined in this scope will be correctly evaluated. For example, File class adds itself here.
-# This dictionary may also be used by other parts of the system, e.g. XML repository.
+# This dictionary may also be used by other parts of the system, e.g. XML
+# repository.
 config_scope = {}
 
+
 class PackageConfig:
+
     """ Package  Config object  represents a  Configuration  Unit (typically
     related to Ganga Packages). It should not be created directly
     but only via the getConfig method.
-    
+
     PackageConfig has a name which  corresponds to the [name] section in
     the .gangarc  file.  Once initialized the configuration  may only be
     modified by special setUserValues  methods. This will give a chance
     to Ganga  to take  further actions such  as automatic update  of the
     .gangarc file.
-    
+
     The PackageConfig interface is designed for Ganga Package Developers.
     User oriented interface is available via the GPI.
 
@@ -429,8 +462,8 @@ class PackageConfig:
       - hidden: True => section is not visible in the GPI
 
     """
-   
-    def __init__(self,name,docstring,**meta):
+
+    def __init__(self, name, docstring, **meta):
         """ Arguments:
          - name may not contain blanks and should be a valid python identifier otherwise ValueError is raised
          - temporary name migration conversion applies -- see _migrate_name()
@@ -439,44 +472,46 @@ class PackageConfig:
           - cfile
         """
         self.name = _migrate_name(name)
-        self.options = {} #  {'name':Option('name',default_value,docstring)}
+        self.options = {}  # {'name':Option('name',default_value,docstring)}
         self.docstring = docstring
         self.hidden = False
         self.cfile = True
-        
+
         # processing handlers
         self._user_handlers = []
         self._session_handlers = []
 
         self.is_open = False
-        
+
         for m in meta:
-            setattr(self,m,meta[m])
+            setattr(self, m, meta[m])
 
         # sanity check to force using makeConfig()
         self._config_made = False
 
         if _configured and self.is_open:
             logger = getLogger()
-            logger.error('cannot define open configuration section %s after configure() step',self.name)
+            logger.error(
+                'cannot define open configuration section %s after configure() step', self.name)
 
-    def _addOpenOption(self,name,value):
-        self.addOption(name,value,"",override=True)
-    
+    def _addOpenOption(self, name, value):
+        self.addOption(name, value, "", override=True)
+
     def __iter__(self):
         """  Iterate over the effective options. """
-        #return self.getEffectiveOptions().__iter__()
+        # return self.getEffectiveOptions().__iter__()
         return self.options.__iter__()
-    
-    def __getitem__(self,o):
+
+    def __getitem__(self, o):
         """ Get the effective value of option o. """
         return self.getEffectiveOption(o)
 
-    def addOption(self,name,default_value, docstring, override=False, **meta):
+    def addOption(self, name, default_value, docstring, override=False, **meta):
 
         if _after_bootstrap and not self.is_open:
-            raise ConfigError('attempt to add a new option [%s]%s after bootstrap'%(self.name,name))
- 
+            raise ConfigError(
+                'attempt to add a new option [%s]%s after bootstrap' % (self.name, name))
+
         try:
             option = self.options[name]
         except KeyError:
@@ -485,11 +520,12 @@ class PackageConfig:
         if option.check_defined() and not override:
             logger = getLogger()
             #import traceback
-            #traceback.print_stack()
-            logger.warning('attempt to add again the option [%s]%s (ignored)',self.name,name)
+            # traceback.print_stack()
+            logger.warning(
+                'attempt to add again the option [%s]%s (ignored)', self.name, name)
             return
 
-        option.defineOption(default_value,docstring,**meta)
+        option.defineOption(default_value, docstring, **meta)
         self.options[option.name] = option
 
         try:
@@ -498,14 +534,14 @@ class PackageConfig:
             del allConfigFileValues[self.name][option.name]
         except KeyError:
             pass
-        
 
-##         # set the GPI proxy object if already created, if not it will be created by bootstrap() function in the GPI Config module
-##         if _after_bootstrap:
+
+# set the GPI proxy object if already created, if not it will be created by bootstrap() function in the GPI Config module
+# if _after_bootstrap:
 ##             from Ganga.GPIDev.Lib.Config.Config import createOptionProxy
-##             createOptionProxy(self.name,name)
-                       
-    def setSessionValue(self,name,value,raw=0):
+# createOptionProxy(self.name,name)
+
+    def setSessionValue(self, name, value, raw=0):
         """  Add or  override options  as a  part of  second  phase of
         initialization of  this configuration module (PHASE  2) If the
         default type of the option  is not string, then the expression
@@ -513,26 +549,27 @@ class PackageConfig:
         treatment  of  PATH-like  variables  is disabled  (enabled  by
         default).  The special treatment  applies to the session level
         values only (and not the default one!).  """
-        
+
         logger = getLogger()
 
-        logger.debug('trying to set session option [%s]%s = %s',self.name, name,value)
-       
+        logger.debug(
+            'trying to set session option [%s]%s = %s', self.name, name, value)
+
         for h in self._session_handlers:
-            value = h[0](name,value)
+            value = h[0](name, value)
 
         if name not in self.options:
             self.options[name] = ConfigOption(name)
-            
+
         self.options[name].setSessionValue(value)
-        
-        logger.debug('sucessfully set session option [%s]%s = %s',self.name, name,value)
+
+        logger.debug(
+            'sucessfully set session option [%s]%s = %s', self.name, name, value)
 
         for h in self._session_handlers:
-            h[1](name,value)
-        
+            h[1](name, value)
 
-    def setUserValue(self,name,value):
+    def setUserValue(self, name, value):
         """ Modify option  at runtime. This  method corresponds to  the user
         action so  the value of  the option is considered  'modified' If
         the  default  type  of  the  option  is  not  string,  then  the
@@ -540,34 +577,35 @@ class PackageConfig:
 
         logger = getLogger()
 
-        logger.debug('trying to set user option [%s]%s = %s',self.name, name,value)
+        logger.debug(
+            'trying to set user option [%s]%s = %s', self.name, name, value)
 
         for h in self._user_handlers:
-            value = h[0](name,value)
-            
+            value = h[0](name, value)
+
         self.options[name].setUserValue(value)
-        
-        logger.debug('successfully set user option [%s]%s = %s',self.name, name,value)
+
+        logger.debug(
+            'successfully set user option [%s]%s = %s', self.name, name, value)
 
         for h in self._user_handlers:
-            h[1](name,value)
+            h[1](name, value)
 
-
-    def overrideDefaultValue(self,name,val):
+    def overrideDefaultValue(self, name, val):
         self.options[name].overrideDefaultValue(val)
-        
-    def revertToSession(self,name):
+
+    def revertToSession(self, name):
         try:
             del self.options[name].user_value
         except AttributeError:
             pass
 
-    def revertToDefault(self,name):
+    def revertToDefault(self, name):
         self.revertToSession(name)
         try:
             del self.options[name].session_value
         except AttributeError:
-            pass       
+            pass
 
     def revertToSessionOptions(self):
         for name in self.options:
@@ -589,21 +627,24 @@ class PackageConfig:
             return self.options[name].value
         except KeyError:
             logger = getLogger()
-            logger.debug( "Effective Option %s NOT FOUND, Effective Options are:" % ( name ) )
+            logger.debug(
+                "Effective Option %s NOT FOUND, Effective Options are:" % (name))
             opts = self.getEffectiveOptions()
             for i in opts:
-                logger.debug( "\t%s" % ( i ) )
-            raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name) )
+                logger.debug("\t%s" % (i))
+            raise ConfigError(
+                'option "%s" does not exist in "%s"' % (name, self.name))
 
-    def getEffectiveLevel(self,name):
+    def getEffectiveLevel(self, name):
         """ Return 0 if option is effectively set at the user level, 1
         if at session level or 2 if at default level """
         try:
             return self.options[name].level
         except KeyError as x:
-            raise ConfigError('option "%s" does not exist in "%s"'%(x,self.name))
-    
-    def attachUserHandler(self,pre,post):
+            raise ConfigError(
+                'option "%s" does not exist in "%s"' % (x, self.name))
+
+    def attachUserHandler(self, pre, post):
         """ Attach a user handler:
         - pre(name,x) will be always called before setUserValue(name,x)
         - post(name,x2) will be always called after setUserValue(name,x)
@@ -611,37 +652,44 @@ class PackageConfig:
         pre() acts as a filter for the value of the option: its return value (x2) will be set
         Before setting the value will be evaluated (unless a default value type is a string)
         post() will get x2 as the option value.
-    
+
         It is OK to give None for pre or post. For example:
            config.attachUserHandler(None,post) attaches only the post handler. """
-    
-        if pre is None: pre = lambda opt,val:val
-        if post is None: post = lambda opt,val:None
-            
-        self._user_handlers.append((pre,post))
 
-    def attachSessionHandler(self,pre,post):
+        if pre is None:
+            pre = lambda opt, val: val
+        if post is None:
+            post = lambda opt, val: None
+
+        self._user_handlers.append((pre, post))
+
+    def attachSessionHandler(self, pre, post):
         """See attachUserHandler(). """
-        # FIXME: this will NOT always work and should be redesigned, see ConfigOption.filter
-        if pre is None: pre = lambda opt,val:val
-        if post is None: post = lambda opt,val:None
-            
-        self._session_handlers.append((pre,post))
+        # FIXME: this will NOT always work and should be redesigned, see
+        # ConfigOption.filter
+        if pre is None:
+            pre = lambda opt, val: val
+        if post is None:
+            post = lambda opt, val: None
+
+        self._session_handlers.append((pre, post))
 
     def deleteUndefinedOptions(self):
         for o in self.options.keys():
             if not self.options[o].check_defined():
                 del self.options[o]
-                
+
 import ConfigParser
+
 
 def make_config_parser(system_vars):
     cfg = ConfigParser.ConfigParser()
-    cfg.optionxform = str # case sensitive
+    cfg.optionxform = str  # case sensitive
     cfg.defaults().update(system_vars)
     return cfg
 
-def transform_PATH_option(name,new_value,current_value):
+
+def transform_PATH_option(name, new_value, current_value):
     """
     Return the new value of the option 'name' taking into account special rules for PATH-like variables:
 
@@ -656,9 +704,9 @@ def transform_PATH_option(name,new_value,current_value):
          ANY_PATH = x
        file2.ini:
          ANY_PATH = y
-       
+
        result of the merge is: ANY_PATH = x:y
-       
+
        If you want to override the path you should use :::path, for example:
        file1.ini:
          ANY_PATH = x
@@ -667,19 +715,22 @@ def transform_PATH_option(name,new_value,current_value):
        result of the merge is: ANY_PATH = y
 
     For other variables just return the new_value.
-    """ 
- 
+    """
+
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
-        logger.debug('PATH-like variable: %s %s %s',name,new_value,current_value)
+        logger.debug(
+            'PATH-like variable: %s %s %s', name, new_value, current_value)
         if current_value is None:
             ret_value = new_value
         elif new_value[:3] != ':::':
-            logger.debug('Prepended %s to PATH-like variable %s',new_value,name)
+            logger.debug(
+                'Prepended %s to PATH-like variable %s', new_value, name)
             ret_value = new_value + ':' + current_value
         else:
-            logger.debug('Resetting PATH-like variable %s to %s',name,new_value)
-            ret_value = new_value #[3:]
+            logger.debug(
+                'Resetting PATH-like variable %s to %s', name, new_value)
+            ret_value = new_value  # [3:]
 
         # remove duplicate path entries
         if ret_value[:3] == ':::':
@@ -693,50 +744,55 @@ def transform_PATH_option(name,new_value,current_value):
 
     return new_value
 
-def read_ini_files(filenames,system_vars):
+
+def read_ini_files(filenames, system_vars):
     """ Return  a ConfigParser object  which contains  all options  from the
     sequence of files (which are parsed from left-to-right).
     Apply special rules for PATH-like variables - see transform_PATH_option() """
-    
-    import re, os
+
+    import re
+    import os
     logger = getLogger()
 
-    logger.debug('reading ini files: %s',str(filenames))
+    logger.debug('reading ini files: %s', str(filenames))
 
     main = make_config_parser(system_vars)
 
-    #load all config files and apply special rules for PATH-like variables
-    #note: main.read(filenames) cannot be used because of that
+    # load all config files and apply special rules for PATH-like variables
+    # note: main.read(filenames) cannot be used because of that
 
     if type(filenames) is type(''):
         filenames = [filenames]
 
     for f in filenames:
-        if f is None or f=='':
+        if f is None or f == '':
             continue
-        cc =  make_config_parser(system_vars)
-        logger.info('reading config file %s',f)
+        cc = make_config_parser(system_vars)
+        logger.info('reading config file %s', f)
         try:
             file_f = open(f)
             cc.readfp(file_f)
             file_f.close()
         except IOError as x:
-            logger.warning('%s',str(x))
+            logger.warning('%s', str(x))
 
         for sec in cc.sections():
             if not main.has_section(sec):
                 main.add_section(sec)
 
             for name in cc.options(sec):
-                value = cc.get(sec,name)
+                value = cc.get(sec, name)
 
                 for localvar in re.finditer('\$\{[^${}]*\}', value):
                     localvarstripped = re.sub(r'[^\w]', '', localvar.group(0))
                     try:
-                        value = value.replace(localvar.group(0),cc.get(sec,localvarstripped))
+                        value = value.replace(
+                            localvar.group(0), cc.get(sec, localvarstripped))
                     except:
-                        logger.debug('The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
-                        logger.debug('[' + sec + '] configuration section of ' + f)
+                        logger.debug(
+                            'The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
+                        logger.debug(
+                            '[' + sec + '] configuration section of ' + f)
                 # do not put the DEFAULTS into the sections (no need)
                 if name in cc.defaults().keys():
                     continue
@@ -744,58 +800,65 @@ def read_ini_files(filenames,system_vars):
                 # special rules (NOT APPLIED IN DEFAULT SECTION):
 
                 try:
-                    current_value = main.get(sec,name)
+                    current_value = main.get(sec, name)
                 except ConfigParser.NoOptionError:
                     current_value = None
-                    
-                value = transform_PATH_option(name,value,current_value)
+
+                value = transform_PATH_option(name, value, current_value)
 
                 from Ganga.Utility.Config import expandgangasystemvars
                 value = expandgangasystemvars(None, value)
                 # check for the use of environment vars
                 re.search('\$\{[^${}]*\}', value)     # matches on ${...}
                 for envvar in re.finditer('\$\$[^${}]*\$\$', value):
-                    #yeah, if the same variable appears more than once, we'll look it up in the 
-                    #environment more than once too...but that's not too arduous.
+                    # yeah, if the same variable appears more than once, we'll look it up in the
+                    # environment more than once too...but that's not too
+                    # arduous.
                     envvar = envvar.group(0)
                     envvarclean = envvar.strip('$')
 
                     # is env variable
                     envval = ''
-                    logger.debug('looking for ' + str(envvarclean) + ' in the shell environment')
+                    logger.debug(
+                        'looking for ' + str(envvarclean) + ' in the shell environment')
                     if envvarclean in os.environ:
                         envval = os.environ[envvarclean]
-                        logger.debug(str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
-                        value = value.replace( envvar, envval )
+                        logger.debug(
+                            str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
+                        value = value.replace(envvar, envval)
                     else:
-                        logger.debug('The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
-                    
-                # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF AT ALL?
+                        logger.debug(
+                            'The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
+
+                # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF
+                # AT ALL?
                 value = value.rstrip()
-                main.set(sec,name,value)
-        
+                main.set(sec, name, value)
+
     return main
 
 
-def setSessionValue(config_name,option_name,value):
+def setSessionValue(config_name, option_name, value):
     if config_name in allConfigs:
         c = getConfig(config_name)
         if option_name in c.options:
-            c.setSessionValue(option_name,value)
+            c.setSessionValue(option_name, value)
             return
         if c.is_open:
-            c._addOpenOption(option_name,value)
-            c.setSessionValue(option_name,value)
+            c._addOpenOption(option_name, value)
+            c.setSessionValue(option_name, value)
             return
 
-    # put value in the buffer, it will be removed from the buffer when option is added
-    allConfigFileValues.setdefault(config_name,{})
+    # put value in the buffer, it will be removed from the buffer when option
+    # is added
+    allConfigFileValues.setdefault(config_name, {})
     allConfigFileValues[config_name][option_name] = value
 
 
 _configured = False
 
-def configure(filenames,system_vars):
+
+def configure(filenames, system_vars):
     """ Sets session values for all options in all configuration units
     defined in the sequence of config files.  Initialize config parser
     object with system variables (such as GANGA_TOP, GANGA_VERSION and
@@ -806,70 +869,74 @@ def configure(filenames,system_vars):
     the configuration options (default values) may have not yet been defined.
     """
 
-
-    cfg = read_ini_files(filenames,system_vars)
+    cfg = read_ini_files(filenames, system_vars)
 
     for name in cfg.sections():
         for o in cfg.options(name):
-            # Important: do not put the options from the DEFAULTS section into the configuration units!
+            # Important: do not put the options from the DEFAULTS section into
+            # the configuration units!
             if o in cfg.defaults().keys():
                 continue
-            v = cfg.get(name,o)
-            setSessionValue(name,o,v)
+            v = cfg.get(name, o)
+            setSessionValue(name, o, v)
 
     _configured = True
+
 
 def load_user_config(filename, system_vars):
     import os
     logger = getLogger()
-    if not os.path.exists(filename): return
+    if not os.path.exists(filename):
+        return
     new_cfg = read_ini_files(filename, system_vars)
     for name in new_cfg.sections():
         current_cfg_section = getConfig(name)
-        if not current_cfg_section.options: # if this section does not exists
-            #supressing these messages as depending on what stage of the bootstrap.py you 
-            #call the function more or less of the default options have been loaded
-            #currently calling after initialise() could call after bootstrap()
-            logger.debug("Section '%s' defined in '%s' is not valid exists and will be removed" % (name,filename))
+        if not current_cfg_section.options:  # if this section does not exists
+            # supressing these messages as depending on what stage of the bootstrap.py you
+            # call the function more or less of the default options have been loaded
+            # currently calling after initialise() could call after bootstrap()
+            logger.debug(
+                "Section '%s' defined in '%s' is not valid exists and will be removed" % (name, filename))
             continue
-        
+
         for o in new_cfg.options(name):
             if o not in current_cfg_section.options:
-                logger.warning("Option '[%s] %s' defined in '%s' is not valid and will be removed" % (name,o,filename))
+                logger.warning("Option '[%s] %s' defined in '%s' is not valid and will be removed" % (
+                    name, o, filename))
                 continue
-            v = new_cfg.get(name,o)
-            current_cfg_section.setUserValue(o,v)
-        
+            v = new_cfg.get(name, o)
+            current_cfg_section.setUserValue(o, v)
+
 
 # KH 050725: Add possibility to overwrite at run-time option set in
 #            configuration file
 #            => useful for executables where particular actions need
 #               to be forced or suppressed
-def setConfigOption( section = "", item = "", value = "" ):
-   """Function to overwrite option values set in configuration file:
+def setConfigOption(section="", item="", value=""):
+    """Function to overwrite option values set in configuration file:
 
-      Arguments:
-         section - Name of relevant section within configuration file
-         item    - Item for which value is to be changed
-         value   - Value to be assigned
+       Arguments:
+          section - Name of relevant section within configuration file
+          item    - Item for which value is to be changed
+          value   - Value to be assigned
 
-      Function needs to be called after configuration file has been parsed.
+       Function needs to be called after configuration file has been parsed.
 
-      Return value: None"""
+       Return value: None"""
 
-   if bool( section ) and bool( item ):
-      try:
-         config = getConfig( section )
-         if item in config.getEffectiveOptions():
-            config.setSessionValue( item, value )
-      except:
-         pass
+    if bool(section) and bool(item):
+        try:
+            config = getConfig(section)
+            if item in config.getEffectiveOptions():
+                config.setSessionValue(item, value)
+        except:
+            pass
 
-   return None
+    return None
 # KH 050725: End of addition
 
 
-def expandConfigPath(path,top):
+def expandConfigPath(path, top):
     """ Split the path and return a list, where all relative path components will have top prepended.
         Example: 'A:/B/C::D/E' -> ['top/A','/B/C','top/D/E']
     """
@@ -878,33 +945,37 @@ def expandConfigPath(path,top):
     for p in path.split(':'):
         if p:
             if not os.path.isabs(p):
-                p = os.path.join(top,p)
+                p = os.path.join(top, p)
             l.append(p)
     return l
+
 
 def sanityCheck():
 
     logger = getLogger()
     for c in allConfigs.values():
         if not c._config_made:
-            logger.error("sanity check failed: %s: no makeConfig() found in the code",c.name)
+            logger.error(
+                "sanity check failed: %s: no makeConfig() found in the code", c.name)
 
     for name in allConfigFileValues:
         opts = allConfigFileValues[name]
         try:
             cfg = allConfigs[name]
         except KeyError:
-            logger.error("unknown configuration section: [%s]",name)
+            logger.error("unknown configuration section: [%s]", name)
             continue
 
         if not cfg.is_open:
             if opts:
-                logger.error("unknown options [%s]%s",name,','.join(opts.keys()))
+                logger.error(
+                    "unknown options [%s]%s", name, ','.join(opts.keys()))
         else:
             # add all options for open sections
-            for o,v in zip(opts.keys(),opts.values()):
-                cfg._addOpenOption(o,v)
-                cfg.setSessionValue(o,v)
+            for o, v in zip(opts.keys(), opts.values()):
+                cfg._addOpenOption(o, v)
+                cfg.setSessionValue(o, v)
+
 
 def getFlavour():
 
@@ -914,7 +985,7 @@ def getFlavour():
         lhcb = True
     else:
         lhcb = False
-    
+
     if 'GangaAtlas' in runtimepath:
         atlas = True
     else:
