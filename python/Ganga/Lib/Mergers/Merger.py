@@ -225,12 +225,9 @@ class RootMerger(IMerger):
         rc, out = commands.getstatusoutput(merge_cmd)
 
         log_file = '%s.hadd_output' % output_file
-        log = open(log_file, 'w')
-        try:
+        with open(log_file, 'w') as log:
             log.write('# -- Hadd output -- #\n')
             log.write('%s\n' % out)
-        finally:
-            log.close()
 
         if rc:
             logger.error(out)

@@ -50,10 +50,6 @@ class Data:
             if item not in self.collection:
                 self.collection.append(item)
 
-                #f = open('/tmp/hclee/mt_tasks.log', 'a')
-                #f.write( '%s \n' % str(item) )
-                # f.close()
-
                 self.queue.put(item)
             else:
                 raise DuplicateDataItemError(

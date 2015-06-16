@@ -45,13 +45,7 @@ def urisplit(uri):
 def readStrippedLines(fileName):
     '''reads in a list of strings from a file'''
 
-    lines = []
-    f = open(fileName, 'r')
-    for l in f.readlines():
-        lines.append(l.strip())
-    f.close()
-    return lines
-
+    return [l.strip() for l in open(fileName, 'r')]
 
 def filter_string_list(allList, filterList, type=0):
     '''picks a list of strings from allList (mis-)matching the elementes in the filterList

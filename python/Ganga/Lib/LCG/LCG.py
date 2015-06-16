@@ -324,9 +324,8 @@ class LCG(IBackend):
 
         logger.error('No matched resource: check/report the JDL below')
 
-        f = open(jdl, 'r')
-        lines = f.readlines()
-        f.close()
+        with open(jdl, 'r') as f:
+            lines = f.readlines()
 
         logger.error(
             '=== JDL ===\n' + '\n'.join(map(lambda l: l.strip(), lines)))
@@ -1433,7 +1432,6 @@ sys.exit(0)
         # Use GLITE's job perusal feature if enabled
         if self.middleware.upper() == "GLITE" and self.status == "Running" and self.perusable:
             fname = os.path.join(job.outputdir, '_peek.dat')
-            #f    = open(fname,'w')
 
             sh = grids[self.middleware.upper()].shell
             re, output, m = sh.cmd(
@@ -2105,10 +2103,9 @@ sys.exit(0)
         import re
         configexcludedCEs = getConfig('LCG')['ExcludedCEs']
 
-        jdlFileRead = open(jdlpath, 'r')
-        jdlText = jdlFileRead.read()
-        hasRequirements = jdlText.find("Requirements =") > -1
-        jdlFileRead.close()
+        with open(jdlpath, 'r') as jdlFileRead:
+            jdlText = jdlFileRead.read()
+            hasRequirements = jdlText.find("Requirements =") > -1
 
         if hasRequirements == False:
 
@@ -2116,29 +2113,27 @@ sys.exit(0)
 
                 linesToAppend = []
 
-                jdlFileAppend = open(jdlpath, 'a')
-                linesToAppend.append("Requirements = \n")
-                excludedCEs = re.split('\s+', configexcludedCEs)
-                index = 1
+                with open(jdlpath, 'a') as jdlFileAppend:
+                    linesToAppend.append("Requirements = \n")
+                    excludedCEs = re.split('\s+', configexcludedCEs)
+                    index = 1
 
-                for excludedCE in excludedCEs:
-                    # if not the last one
-                    if index != len(excludedCEs):
-                        linesToAppend.append(
-                            '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
-                    else:
-                        linesToAppend.append(
-                            '   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
+                    for excludedCE in excludedCEs:
+                        # if not the last one
+                        if index != len(excludedCEs):
+                            linesToAppend.append(
+                                '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                        else:
+                            linesToAppend.append(
+                                '   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
 
-                    index += 1
+                        index += 1
 
-                jdlFileAppend.writelines(linesToAppend)
-                jdlFileAppend.close()
+                    jdlFileAppend.writelines(linesToAppend)
         else:
 
-            jdlFileRead = open(jdlpath, 'r')
-            originalLines = jdlFileRead.readlines()
-            jdlFileRead.close()
+            with open(jdlpath, 'r') as jdlFileRead:
+                originalLines = jdlFileRead.readlines()
 
             index = 0
             thereAreExcudedCEs = False
@@ -2216,9 +2211,8 @@ sys.exit(0)
             if newLines[i - 1].endswith(' &&\n'):
                 newLines[i - 1] = newLines[i - 1][:-4] + ';\n'
 
-            jdlFileWrite = open(jdlpath, 'w')
-            jdlFileWrite.writelines(newLines)
-            jdlFileWrite.close()
+            with open(jdlpath, 'w') as jdlFileWrite:
+                jdlFileWrite.writelines(newLines)
 
 
 class LCGJobConfig(StandardJobConfig):
@@ -2251,11 +2245,9 @@ class LCGJobConfig(StandardJobConfig):
 def __getVOFromConfigVO__(file):
     re_vo = re.compile(r'.*VirtualOrganisation\s*=\s*"(.*)"')
     try:
-        f = open(file)
-        for l in f.readlines():
+        for l in open(file):
             m = re_vo.match(l.strip())
             if m:
-                f.close()
                 return m.groups()[0]
     except:
         raise Ganga.Utility.Config.ConfigError(

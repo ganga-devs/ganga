@@ -110,8 +110,6 @@ class LCGSEFile(IGangaFile):
         if not os.path.exists(postprocessLocationsPath):
             return
 
-        postprocesslocations = open(postprocessLocationsPath, 'r')
-
         def lcgse_line_processor(line, lcgse_file):
             guid = line[line.find('->') + 2:]
             pattern = line.split(' ')[1]
@@ -132,16 +130,14 @@ class LCGSEFile(IGangaFile):
                     lcgse_file.failureReason = guid[6:]
                     return
                 lcgse_file.locations = guid
-
-        for line in postprocesslocations.readlines():
+                
+        for line in open(postprocessLocationsPath, 'r'):
 
             if line.strip() == '':
                 continue
 
             if line.startswith('lcgse'):
                 lcgse_line_processor(line.strip(), self)
-
-        postprocesslocations.close()
 
     def location(self):
         """

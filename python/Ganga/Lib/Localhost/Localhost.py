@@ -145,7 +145,7 @@ class Localhost(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
-        for l in f.readlines():
+        for l in f:
             if checkstr in l:
                 pos = l.find(checkstr)
                 timestr = l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]
@@ -169,15 +169,11 @@ class Localhost(IBackend):
         j = self.getJobObject()
         # check for file. if it's not there don't bother calling getSateTime
         # (twice!)
-        try:
-            p = os.path.join(j.outputdir, '__jobstatus__')
-            logger.debug("Opening output file at: %s", p)
-            f = open(p)
-            f.close()
-        except IOError:
+        p = os.path.join(j.outputdir, '__jobstatus__')
+        if not os.path.isfile(p):
             logger.error('unable to open file %s', p)
             return None
-        del f
+        
         r = self.getStateTime('running')
         c = self.getStateTime('completed')
         d = {'START': r, 'STOP': c}
@@ -471,9 +467,8 @@ sys.exit()
 
         def get_exit_code(f):
             import re
-            statusfile = open(f)
-            stat = statusfile.read()
-            statusfile.close()
+            with open(f) as statusfile:
+                stat = statusfile.read()
             m = re.compile(
                 r'^EXITCODE: (?P<exitcode>-?\d*)', re.M).search(stat)
 
@@ -484,9 +479,8 @@ sys.exit()
 
         def get_pid(f):
             import re
-            statusfile = open(f)
-            stat = statusfile.read()
-            statusfile.close()
+            with open(f) as statusfile:
+                stat = statusfile.read()
             m = re.compile(r'^PID: (?P<pid>\d*)', re.M).search(stat)
 
             if m is None:
@@ -509,10 +503,9 @@ sys.exit()
                         #logger.info('Local job %d status changed to running, pid=%d',j.id,pid)
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
-                status_file = open(statusfile)
-                logger.debug(
-                    'status file: %s %s', statusfile, status_file.read())
-                status_file.close()
+                with open(statusfile) as status_file:
+                    logger.debug(
+                        'status file: %s %s', statusfile, status_file.read())
             except IOError as x:
                 logger.debug(
                     'problem reading status file: %s (%s)', statusfile, str(x))

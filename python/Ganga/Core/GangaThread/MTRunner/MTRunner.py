@@ -45,13 +45,6 @@ class GangaWorkAgent(GangaThread):
                 try:
                     item = self._runner.data.getNextItem()
 
-                    # write out the debug log
-                    # self._runner.lock.acquire()
-                    #f = open('/tmp/hclee/mt_debug.log','a')
-                    #f.write( 'worker %s get item %s \n' % (self.getName(), item) )
-                    # f.close()
-                    # self._runner.lock.release()
-
                     logger.debug('worker %s get item %s' %
                                  (self.getName(), item))
                     rslt = self._runner.algorithm.process(item)

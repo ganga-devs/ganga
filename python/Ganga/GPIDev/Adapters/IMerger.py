@@ -203,26 +203,20 @@ class IMerger(IPostProcessor):
                 # create a log file of the merge
                 # we only get to here if the merge_tool ran ok
                 log_file = '%s.merge_summary' % outputfile
-                log = open(log_file, 'w')
-                try:
+                with open(log_file, 'w') as log:
                     log.write('# -- List of files merged -- #\n')
                     for f in files[k]:
                         log.write('%s\n' % f)
                     log.write('# -- End of list -- #\n')
-                finally:
-                    log.close()
 
             except PostProcessException as e:
                 msg = str(e)
 
                 # store the error msg
                 log_file = '%s.merge_summary' % outputfile
-                log = open(log_file, 'w')
-                try:
+                with open(log_file, 'w') as log:
                     log.write('# -- Error in Merge -- #\n')
                     log.write('\t%s\n' % msg)
-                finally:
-                    log.close()
                 raise e
 
         return self.success

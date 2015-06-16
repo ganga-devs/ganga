@@ -86,50 +86,46 @@ def createPackedInputSandbox(sandbox_files, inws, name):
 
 #
 # Future release with tarball module
-    this_tarfile = open(tgzfile, 'w')
-    tf = tarfile.open(name=tgzfile, fileobj=this_tarfile, mode="w:gz")
-    tf.dereference = True  # --not needed in Windows
+    with open(tgzfile, 'w') as this_tarfile:
+        with tarfile.open(name=tgzfile, fileobj=this_tarfile, mode="w:gz") as tf:
+            tf.dereference = True  # --not needed in Windows
 
-    for f in sandbox_files:
-        fileobj = None
-        try:
-            contents = f.getContents()   # is it FileBuffer?
-            # print "Getting FileBuffer Contents"
+            for f in sandbox_files:
+                fileobj = None
+                try:
+                    contents = f.getContents()   # is it FileBuffer?
+                    # print "Getting FileBuffer Contents"
 
-        except AttributeError:         # File
-            # print "Getting File %s" % f.name
-            # tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
-            try:
-                fileobj = open(f.name)
-            except:
-                raise SandboxError("File %s does not exist." % f.name)
-            tinfo = tf.gettarinfo(
-                f.name, os.path.join(f.subdir, os.path.basename(f.name)))
+                except AttributeError:         # File
+                    # print "Getting File %s" % f.name
+                    # tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
+                    try:
+                        fileobj = open(f.name)
+                    except:
+                        raise SandboxError("File %s does not exist." % f.name)
+                    tinfo = tf.gettarinfo(
+                        f.name, os.path.join(f.subdir, os.path.basename(f.name)))
 
-        else:                          # FileBuffer
-            from StringIO import StringIO
-            fileobj = StringIO(contents)
+                else:                          # FileBuffer
+                    from StringIO import StringIO
+                    fileobj = StringIO(contents)
 
-            tinfo = tarfile.TarInfo()
-            # FIX for Ganga/test/Internals/FileBuffer_Sandbox
-            # Don't keep the './' on files as looking for an exact filename
-            # afterwards won't work
-            if f.subdir == os.curdir:
-                tinfo.name = os.path.basename(f.name)
-            else:
-                tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
-            import time
-            tinfo.mtime = time.time()
-            tinfo.size = fileobj.len
+                    tinfo = tarfile.TarInfo()
+                    # FIX for Ganga/test/Internals/FileBuffer_Sandbox
+                    # Don't keep the './' on files as looking for an exact filename
+                    # afterwards won't work
+                    if f.subdir == os.curdir:
+                        tinfo.name = os.path.basename(f.name)
+                    else:
+                        tinfo.name = os.path.join(f.subdir, os.path.basename(f.name))
+                    import time
+                    tinfo.mtime = time.time()
+                    tinfo.size = fileobj.len
 
-        if f.isExecutable():
-            tinfo.mode = tinfo.mode | stat.S_IXUSR
-        tf.addfile(tinfo, fileobj)
-        fileobj.close()
-
-    # tf.list()
-    tf.close()
-    this_tarfile.close()
+                if f.isExecutable():
+                    tinfo.mode = tinfo.mode | stat.S_IXUSR
+                tf.addfile(tinfo, fileobj)
+                fileobj.close()
 
     #this_tarfile_test = tarfile.open( tgzfile, 'r' )
     # this_tarfile_test.list()

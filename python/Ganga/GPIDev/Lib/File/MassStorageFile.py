@@ -91,7 +91,6 @@ class MassStorageFile(IGangaFile):
             job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
-        postprocesslocations = open(postprocessLocationsPath, 'r')
 
         def mass_line_processor(line, mass_file):
             lineParts = line.split(' ')
@@ -119,16 +118,14 @@ class MassStorageFile(IGangaFile):
                     mass_file.failureReason = line[line.find('ERROR') + 5:]
                     return
                 mass_file.locations = [outputPath.strip('\n')]
-
-        for line in postprocesslocations.readlines():
+                
+        for line in open(postprocessLocationsPath, 'r'):
 
             if line.strip() == '':
                 continue
 
             if line.startswith('massstorage'):
                 mass_line_processor(line.strip(), self)
-
-        postprocesslocations.close()
 
     def location(self):
         """

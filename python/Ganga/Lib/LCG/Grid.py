@@ -140,9 +140,8 @@ class Grid(object):
             temp_wms_conf = tempfile.mktemp('.conf')
 
             # read in original
-            this_file = open(wms_conf_path, "r")
-            orig_text = this_file.read()
-            this_file.close()
+            with open(wms_conf_path, "r") as this_file:
+                orig_text = this_file.read()
 
             # find the last bracket and add in the new text
             pos = orig_text.rfind("]")
@@ -151,9 +150,8 @@ class Grid(object):
             new_text = orig_text[:pos] + wms_text
 
             # write the new config file
-            this_file = open(temp_wms_conf, "w")
-            this_file.write(new_text)
-            this_file.close()
+            with open(temp_wms_conf, "w") as this_file:
+                this_file.write(new_text)
 
             self.wms_list = self.config['GLITE_ALLOWED_WMS_LIST'][:]
 
@@ -203,10 +201,8 @@ class Grid(object):
         logfile = self.__resolve_gridcmd_log_path__(regxp_logfname, cmd_output)
 
         if logfile:
-            f = open(logfile, 'r')
-            for l in f.readlines():
+            for l in open(logfile, 'r'):
                 logger.warning(l.strip())
-            f.close()
 
             # here we assume the logfile is no longer needed at this point -
             # remove it
@@ -264,9 +260,8 @@ class Grid(object):
 
         if logfile:
 
-            f = open(logfile, 'r')
-            output = f.readlines()
-            f.close()
+            with open(logfile, 'r') as f:
+                output = f.readlines()
 
             re_jid = re.compile(
                 '^Unable to retrieve the status for: (https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)\s*$')
@@ -426,9 +421,8 @@ class Grid(object):
         '''Native bulk cancellation supported by GLITE middleware.'''
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         if self.middleware == 'EDG':
             logger.warning(
@@ -473,9 +467,8 @@ class Grid(object):
             return ([], [])
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         if self.middleware == 'EDG':
             cmd = 'edg-job-status'
@@ -605,9 +598,8 @@ class Grid(object):
         '''Fetch the logging info of the given job and save the output in the job's outputdir'''
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         if self.middleware == 'EDG':
             cmd = 'edg-job-get-logging-info -v %d' % verbosity
@@ -716,9 +708,8 @@ class Grid(object):
             return True
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         # do the cancellation using a proper LCG command
         if self.middleware == 'EDG':
@@ -989,9 +980,8 @@ class Grid(object):
             return ([], [])
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
         cmd = 'glite-ce-job-status'
         exec_bin = True
@@ -1015,9 +1005,8 @@ class Grid(object):
             return False
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
         cmd = 'glite-ce-job-purge'
         exec_bin = True
@@ -1043,9 +1032,8 @@ class Grid(object):
             return False
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
         cmd = 'glite-ce-job-cancel'
         exec_bin = True
@@ -1098,13 +1086,11 @@ class Grid(object):
             logger.warning('job runtime log not found: %s' % runtime_log)
             return (False, 'job runtime log not found: %s' % runtime_log)
 
-        f = open(runtime_log, 'r')
-        for line in f.readlines():
+        for line in open(runtime_log, 'r'):
             mat = pat.match(line)
             if mat:
                 app_exitcode = eval(mat.groups()[0])
                 break
-        f.close()
 
         # returns False if the exit code of the real executable is not zero
         # the job status of GANGA will be changed to 'failed' if the return
@@ -1313,9 +1299,8 @@ class Grid(object):
             return ([], [])
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         cmd = 'arcstat'
         exec_bin = True
@@ -1450,9 +1435,8 @@ class Grid(object):
             return False
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         cmd = 'arcclean'
         exec_bin = True
@@ -1511,9 +1495,8 @@ class Grid(object):
             return True
 
         idsfile = tempfile.mktemp('.jids')
-        ids_file = open(idsfile, 'w')
-        ids_file.write('\n'.join(jobids) + '\n')
-        ids_file.close()
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         cmd = 'arckill'
         exec_bin = True

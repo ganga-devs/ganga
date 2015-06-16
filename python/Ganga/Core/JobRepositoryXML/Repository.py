@@ -87,9 +87,8 @@ class Repository:
 
         for j in jobs:
             dir = os.path.join(self.dir, j.getFQID(os.sep))
-            data_file = open(os.path.join(dir, 'data'), 'w')
-            to_file(j, data_file)
-            data_file.close()
+            with open(os.path.join(dir, 'data'), 'w') as data_file:
+                to_file(j, data_file)
 
     def deleteJobs(self, jobids):
         # logger.debug('deleteJobs #jobs=%d ids=%s',len(jobids), jobids)
@@ -156,9 +155,8 @@ class Repository:
                     return '.'.join([str(masterid), str(id)])
             try:
                 # read job data and reconstruct the object
-                data_file = open(os.path.join(dir, str(id), 'data'))
-                j, errors = from_file(data_file)
-                data_file.close()
+                with open(os.path.join(dir, str(id), 'data')) as data_file:
+                    j, errors = from_file(data_file)
                 if errors:  # data errors
                     j.status = 'incomplete'
                     for e in errors:

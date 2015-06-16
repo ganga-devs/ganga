@@ -48,10 +48,8 @@ class FileBuffer:
         if outname is not None:
             filename = outname
 
-        thisfile = open(filename, 'w')
-        thisfile.write(self.getContents())
-        thisfile.close()
-        # file(filename,'w').write(self.getContents())
+        with open(filename, 'w') as thisfile:
+            thisfile.write(self.getContents())
 
         if self.executable:
             from Ganga.Utility.files import chmod_executable

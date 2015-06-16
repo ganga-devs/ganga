@@ -126,9 +126,9 @@ class GoogleFile(IGangaFile):
 
             # Pickle credential data
             if credentials is not '':
-                output = open(cred_path, "wb")
-                pickle.dump(credentials, output)
-                output.close()
+                with open(cred_path, "wb") as output:
+                    pickle.dump(credentials, output)
+                
                 os.chmod(cred_path, stat.S_IWUSR | stat.S_IRUSR)
                 logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '
                             'The file will give permission to modify files in your GoogleDrive. '
@@ -205,9 +205,8 @@ class GoogleFile(IGangaFile):
                             if self.localDir == '':
                                 dir_path = os.getcwd()
                         completeName = os.path.join(dir_path, f.title)
-                        gotfile = open(completeName, "wb")
-                        gotfile.write(content)
-                        gotfile.close()
+                        with open(completeName, "wb") as gotfile:
+                            gotfile.write(content)
 
                     else:
                         # print 'An error occurred: %s' % resp
@@ -233,9 +232,8 @@ class GoogleFile(IGangaFile):
                         dir_path = self.getJobObject(
                         ).getOutputWorkspace().getPath()
                     completeName = os.path.join(dir_path, self.namePattern)
-                    gotfile = open(completeName, "wb")
-                    gotfile.write(content)
-                    gotfile.close()
+                    with open(completeName, "wb") as gotfile:
+                        gotfile.write(content)
                 else:
                     # print 'An error occurred: %s' % resp
                     logger.info(
@@ -300,13 +298,12 @@ class GoogleFile(IGangaFile):
                 # Metadata file and md5checksum intergrity check
                 file = service.files().insert(
                     body=body, media_body=media_body).execute()
-                thefile = open(FILENAME, 'rb')
-                if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
-                    logger.info("File \'%s\' uploaded successfully" % filename)
-                else:
-                    logger.error(
-                        "File \'%s\' uploaded unsuccessfully" % filename)
-                thefile.close()
+                with open(FILENAME, 'rb') as thefile:
+                    if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
+                        logger.info("File \'%s\' uploaded successfully" % filename)
+                    else:
+                        logger.error(
+                            "File \'%s\' uploaded unsuccessfully" % filename)
 
                 # Assign new schema components to each file and append to job
                 # subfiles
@@ -339,13 +336,12 @@ class GoogleFile(IGangaFile):
                 body=body, media_body=media_body).execute()
             # pprint.pprint(file) #Prints metadata
 
-            thefile = open(FILENAME, 'rb')
-            if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
-                logger.info("File \'%s\' uploaded succesfully" %
-                            self.namePattern)
-            else:
-                logger.error("Upload Unsuccessful")
-            thefile.close()
+            with open(FILENAME, 'rb') as thefile:
+                if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
+                    logger.info("File \'%s\' uploaded succesfully" %
+                                self.namePattern)
+                else:
+                    logger.error("Upload Unsuccessful")
 
             # Assign values to new schema components
             self.downloadURL = file.get('downloadUrl', '')
@@ -488,9 +484,8 @@ class GoogleFile(IGangaFile):
         http = httplib2.Http()
         if self.__initialized == False:
             self.__initializeCred()
-        nput = open(cred_path, "rb")
-        credentials = pickle.load(nput)
-        nput.close()
+        with open(cred_path, "rb") as nput:
+            credentials = pickle.load(nput)
         http = credentials.authorize(http)
         service = build('drive', 'v2', http=http)
         return service

@@ -66,19 +66,17 @@ def safe_save(fn, obj, to_file, ignore_subs=''):
     if not os.path.exists(fn):
         # file does not exist, so make it fast!
         try:
-            this_file = open(fn, "w")
-            to_file(obj, this_file, ignore_subs)
-            this_file.close()
+            with open(fn, "w") as this_file:
+                to_file(obj, this_file, ignore_subs)
             return
         except IOError as e:
             raise IOError("Could not write file '%s' (%s)" % (fn, e))
     try:
-        tmpfile = open(fn + ".new", "w")
-        to_file(obj, tmpfile, ignore_subs)
-        # Important: Flush, then sync file before renaming!
-        # tmpfile.flush()
-        # os.fsync(tmpfile.fileno())
-        tmpfile.close()
+        with open(fn + ".new", "w") as tmpfile:
+            to_file(obj, tmpfile, ignore_subs)
+            # Important: Flush, then sync file before renaming!
+            # tmpfile.flush()
+            # os.fsync(tmpfile.fileno())
     except IOError as e:
         raise IOError("Could not write file %s.new (%s)" % (fn, e))
     # Try to make backup copy...
@@ -187,9 +185,8 @@ class GangaRepositoryLocal(GangaRepository):
         # index timestamp changed
         if self._cache_load_timestamp.get(id, 0) != os.stat(fn).st_ctime:
             try:
-                fobj = open(fn, 'r')
-                cat, cls, cache = pickle_from_file(fobj)[0]
-                fobj.close()
+                with open(fn, 'r') as fobj:
+                    cat, cls, cache = pickle_from_file(fobj)[0]
             except Exception as x:
                 raise IOError("Error on unpickling: %s %s" %
                               (x.__class__.__name__, x))
@@ -221,10 +218,9 @@ class GangaRepositoryLocal(GangaRepository):
             new_idx_cache = self.registry.getIndexCache(obj)
             if new_idx_cache != obj._index_cache or not os.path.exists(ifn):
                 obj._index_cache = new_idx_cache
-                this_file = open(ifn, "w")
-                pickle_to_file(
-                    (obj._category, obj._name, obj._index_cache), this_file)
-                this_file.close()
+                with open(ifn, "w") as this_file:
+                    pickle_to_file(
+                        (obj._category, obj._name, obj._index_cache), this_file)
         except IOError as x:
             logger.error("Index saving to '%s' failed: %s %s" %
                          (ifn, x.__class__.__name__, x))
@@ -270,9 +266,8 @@ class GangaRepositoryLocal(GangaRepository):
                 logger.debug("Reading Master index")
                 import os
                 self._master_index_timestamp = os.stat(_master_idx).st_ctime
-                input_f = open(_master_idx, 'r')
-                this_master_cache = pickle_from_file(input_f)[0]
-                input_f.close()
+                with open(_master_idx, 'r') as input_f:
+                    this_master_cache = pickle_from_file(input_f)[0]
                 for this_cache in this_master_cache:
                     this_id = this_cache[0]
                     self._cache_load_timestamp[this_id] = this_cache[1]
@@ -336,9 +331,8 @@ class GangaRepositoryLocal(GangaRepository):
                 this_master_cache.append(cached_list)
 
             try:
-                of = open(_master_idx, 'w')
-                pickle_to_file(this_master_cache, of)
-                of.close()
+                with open(_master_idx, 'w') as of:
+                    pickle_to_file(this_master_cache, of)
             except:
                 try:
                     import os

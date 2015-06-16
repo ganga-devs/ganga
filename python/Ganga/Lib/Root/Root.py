@@ -732,16 +732,15 @@ def defaultScript():
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
     fname = os.path.join(tmpdir, 'test.C')
-    f = open(fname, 'w')
-    f.write("""
-    void test() {
-      cout << "Hello World from ROOT" << endl;
-      cout << "Load Path : " << gSystem->GetDynamicPath() << endl;
-      gSystem->Load("libTree");
-      gSystem->Exit(0);
-    }
-    """)
-    f.close()
+    with open(fname, 'w') as f:
+        f.write("""
+        void test() {
+            cout << "Hello World from ROOT" << endl;
+            cout << "Load Path : " << gSystem->GetDynamicPath() << endl;
+            gSystem->Load("libTree");
+            gSystem->Exit(0);
+        }
+        """)
     return fname
 
 
@@ -751,8 +750,7 @@ def defaultPyRootScript():
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
     fname = os.path.join(tmpdir, 'test.py')
-    f = open(fname, 'w')
-    try:
+    with open(fname, 'w') as f:
         f.write("""#!/usr/bin/env python
 from __future__ import print_function
 class Main(object):
@@ -781,8 +779,6 @@ if __name__ == '__main__':
     sys.exit(0)
     
     """)
-    finally:
-        f.close()
     return fname
 
 

@@ -506,9 +506,8 @@ class Condor(IBackend):
                 checkExit = True
                 if os.path.isfile(condorLogPath):
                     checkExit = False
-                    condorLog = open(condorLogPath)
-                    lineList = condorLog.readlines()
-                    condorLog.close()
+                    with open(condorLogPath) as condorLog:
+                        lineList = condorLog.readlines()
                     for line in lineList:
                         if -1 != line.find("terminated"):
                             checkExit = True
@@ -522,9 +521,8 @@ class Condor(IBackend):
                     stdoutPath = "".join([outDir, "stdout"])
                     jobStatus = "failed"
                     if os.path.isfile(stdoutPath):
-                        stdout = open(stdoutPath)
-                        lineList = stdout.readlines()
-                        stdout.close()
+                        with open(stdoutPath) as stdout:
+                            lineList = stdout.readlines()
                         try:
                             exitLine = lineList[-1]
                             exitCode = exitLine.strip().split()[-1]

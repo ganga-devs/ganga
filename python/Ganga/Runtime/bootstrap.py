@@ -252,21 +252,9 @@ under certain conditions; type license() for details.
         versions_filename = os.path.join(
             Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
         if not os.path.exists(versions_filename):
-            # As soon as we ditch slc5 support and get above python 2.4 can put this back
-            #          with open(versions_filename, 'w') as versions_file:
-            #             versions_file.write(version + '\n')
-            #          return True
             if update:
-                try:
-                    versions_file = open(versions_filename, 'w')
-                except:
-                    pass
-                else:
-                    try:
-                        versions_file.write(version + '\n')
-                    except:
-                        pass
-                    versions_file.close()
+                with open(versions_filename, 'w') as versions_file:
+                    versions_file.write(version + '\n')
             return True
 
             # As soon as we ditch slc5 support and get above python 2.4 can put this back
@@ -392,15 +380,13 @@ under certain conditions; type license() for details.
 
             bounding_line = '**************************************************************************************************************\n'
             dividing_line = '--------------------------------------------------------------------------------------------------------------\n'
-            f = open(pathname, 'r')
-            try:
-                notes = [l.strip() for l in f.read().replace(
-                    bounding_line, '').split(dividing_line)]
-            except:
-                logger.error('Error while attempting to read release notes')
-                f.close()
-                raise
-            f.close()
+            with open(pathname, 'r') as f:
+                try:
+                    notes = [l.strip() for l in f.read().replace(
+                        bounding_line, '').split(dividing_line)]
+                except:
+                    logger.error('Error while attempting to read release notes')
+                    raise
 
             if notes[0].find(version) < 0:
                 logger.error(
@@ -578,38 +564,34 @@ under certain conditions; type license() for details.
 
         Ganga.Utility.logging.force_global_level(self.options.force_loglevel)
 
-        cf = None
         try:
-            cf = open(self.options.config_file)
-            first_line = cf.readline()
-            import re
-            r = re.compile(
-                r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
-            this_logger = Ganga.Utility.logging.getLogger("Configure")
-            if not r:
-                this_logger.error(
-                    'file %s does not seem to be a Ganga config file', self.options.config_file)
-                this_logger.error('try -g option to create valid ~/.gangarc')
-            else:
-                cv = r.group('version').split('-')
-                if cv[1] == '4':
+            with open(self.options.config_file) as cf:
+                first_line = cf.readline()
+                import re
+                r = re.compile(
+                    r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
+                this_logger = Ganga.Utility.logging.getLogger("Configure")
+                if not r:
                     this_logger.error(
-                        'file %s is old an Ganga 4 configuration file (%s)', self.options.config_file, r.group('version'))
-                    this_logger.error(
-                        'try -g option to create valid ~/.gangarc')
+                        'file %s does not seem to be a Ganga config file', self.options.config_file)
+                    this_logger.error('try -g option to create valid ~/.gangarc')
                 else:
-                    if cv[1] != '5' and cv[1] != '6':
+                    cv = r.group('version').split('-')
+                    if cv[1] == '4':
                         this_logger.error(
-                            'file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
+                            'file %s is old an Ganga 4 configuration file (%s)', self.options.config_file, r.group('version'))
                         this_logger.error(
                             'try -g option to create valid ~/.gangarc')
+                    else:
+                        if cv[1] != '5' and cv[1] != '6':
+                            this_logger.error(
+                                'file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
+                            this_logger.error(
+                                'try -g option to create valid ~/.gangarc')
         except IOError as x:
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
             pass
-        finally:
-            if cf:
-                cf.close()
 
         #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
         #cf = file(self.options.config_file)

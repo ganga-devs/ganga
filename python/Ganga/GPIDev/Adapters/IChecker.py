@@ -40,11 +40,9 @@ class IChecker(IPostProcessor):
                 try:
                     return self.check(job)
                 except Exception as e:
-                    debug_file = open(
-                        os.path.join(job.getDebugWorkspace().getPath(), 'checker_errors.txt'), 'a')
-                    debug_file.write(
-                        '\n Checker has failed with the following error: \n')
-                    debug_file.write(str(e))
+                    with open(os.path.join(job.getDebugWorkspace().getPath(), 'checker_errors.txt'), 'a') as debug_file:
+                        debug_file.write('\n Checker has failed with the following error: \n')
+                        debug_file.write(str(e))
                     logger.error(str(e))
                     return True
         else:

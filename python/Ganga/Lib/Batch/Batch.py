@@ -4,6 +4,7 @@ from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import BackendError
+import os.path
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -49,9 +50,8 @@ def shell_cmd(cmd, soutfile=None, allowed_exit=[0]):
     if not rc in allowed_exit:
         logger.debug('exit status [%d] of command %s', rc, cmd)
         logger.debug('full output is in file: %s', soutfile)
-        sout_file = open(soutfile)
-        logger.debug('<first 255 bytes of output>\n%s', sout_file.read(255))
-        sout_file.close()
+        with open(soutfile) as sout_file:
+            logger.debug('<first 255 bytes of output>\n%s', sout_file.read(255))
         logger.debug('<end of first 255 bytes of output>')
 
     m = None
@@ -59,9 +59,8 @@ def shell_cmd(cmd, soutfile=None, allowed_exit=[0]):
     if rc != 0:
         logger.debug('non-zero [%d] exit status of command %s ', rc, cmd)
         import re
-        sout_file = open(soutfile)
-        m = re.compile(r"command not found$", re.M).search(sout_file.read())
-        sout_file.close()
+        with open(soutfile) as sout_file:
+            m = re.compile(r"command not found$", re.M).search(sout_file.read())
 
     return rc, soutfile, m is None
 
@@ -125,11 +124,10 @@ class Batch(IBackend):
         if not ef:
             logger.warning(
                 'Problem submitting batch job. Maybe your chosen batch system is not available or you have configured it wrongly')
-            sout_file = open(soutfile)
-            logger.warning(sout_file.read())
-            raiseable = BackendError(klass._name, 'It seems that %s commands are not installed properly:%s' % (
-                klass._name, sout_file.readline()))
-            sout_file.close()
+            with open(soutfile) as sout_file:
+                logger.warning(sout_file.read())
+                raiseable = BackendError(klass._name, 'It seems that %s commands are not installed properly:%s' % (
+                    klass._name, sout_file.readline()))
         return rc, soutfile
 
     command = classmethod(command)
@@ -195,9 +193,8 @@ class Batch(IBackend):
             inw.getPath(), queue_option, stderr_option, stdout_option, script_cmd)
         self.command_string = command_str
         rc, soutfile = self.command(command_str)
-        sout_file = open(soutfile)
-        sout = sout_file.read()
-        sout_file.close()
+        with open(soutfile) as sout_file:
+            sout = sout_file.read()
         import re
         m = re.compile(self.config['submit_res_pattern'], re.M).search(sout)
         if m is None:
@@ -285,9 +282,8 @@ class Batch(IBackend):
         rc, soutfile = self.command(command_str)
         logger.debug('from command get rc: "%d"', rc)
         if rc == 0:
-            sout_file = open(soutfile)
-            sout = sout_file.read()
-            sout_file.close()
+            with open(soutfile) as sout_file:
+                sout = sout_file.read()
             import re
             m = re.compile(
                 self.config['submit_res_pattern'], re.M).search(sout)
@@ -311,18 +307,16 @@ class Batch(IBackend):
                     logger.info(
                         'could not match the output and extract the Batch queue name')
         else:
-            sout_file = open(soutfile)
-            logger.warning(sout_file.read())
-            sout_file.close()
+            with open(soutfile) as sout_file:
+                logger.warning(sout_file.read())
 
         return rc == 0
 
     def kill(self):
         rc, soutfile = self.command(self.config['kill_str'] % (self.id))
 
-        sout_file = open(soutfile)
-        sout = sout_file.read()
-        sout_file.close()
+        with open(soutfile) as sout_file:
+            sout = sout_file.read()
         logger.debug(
             'while killing job %s: rc = %d', self.getJobObject().getFQID('.'), rc)
         if rc == 0:
@@ -391,15 +385,11 @@ class Batch(IBackend):
         j = self.getJobObject()
         # check for file. if it's not there don't bother calling getSateTime
         # (twice!)
-        try:
-            p = os.path.join(j.outputdir, '__jobstatus__')
-            logger.debug("Opening output file at: %s", p)
-            f = open(p)
-            f.close()
-        except IOError:
+        p = os.path.join(j.outputdir, '__jobstatus__')
+        if not os.path.isfile(p):
             logger.error('unable to open file %s', p)
             return None
-        del f
+        
         r = self.getStateTime('running')
         c = self.getStateTime('completed')
         d = {'START': r, 'STOP': c}

@@ -223,18 +223,16 @@ class Shell:
             logger.warning('exit status [%d] of command %s', rc, cmd)
             if mention_outputfile_on_errors:
                 logger.warning('full output is in file: %s', soutfile)
-            sout_file = open(soutfile)
-            logger.warning(
-                '<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
-            sout_file.close()
+            with open(soutfile) as sout_file:
+                logger.warning(
+                    '<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
             logger.warning('<end of first %d bytes of output>', BYTES)
 
         # FIXME /bin/sh might have also other error messages
         m = None
         if rc != 0:
-            sout_file = open(soutfile)
-            m = re.search('command not found\n', sout_file.read())
-            sout_file.close()
+            with open(soutfile) as sout_file:
+                m = re.search('command not found\n', sout_file.read())
             if m:
                 logger.warning('command %s not found', cmd)
 
@@ -246,9 +244,8 @@ class Shell:
         rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
                                   timeout, mention_outputfile_on_errors=False, python=python)
 
-        out_file = open(outfile)
-        output = out_file.read()
-        out_file.close()
+        with open(outfile) as out_file:
+            output = out_file.read()
         import os
         os.unlink(outfile)
 
@@ -293,14 +290,13 @@ class Shell:
             self.dirname = mkdtemp()
 
         fullpath = join(self.dirname, cmd)
-        f = open(fullpath, 'w')
-        f.write("#!/bin/bash\n")
-        for k, v in self.env.iteritems():
-            f.write("export %s='%s'\n" % (k, v))
-        if preexecute:
-            f.write("%s\n" % preexecute)
-        f.write("%s $*\n" % cmd)
-        f.close()
+        with open(fullpath, 'w') as f:
+            f.write("#!/bin/bash\n")
+            for k, v in self.env.iteritems():
+                f.write("export %s='%s'\n" % (k, v))
+            if preexecute:
+                f.write("%s\n" % preexecute)
+            f.write("%s $*\n" % cmd)
         import stat
         import os
         os.chmod(fullpath, stat.S_IRWXU)
