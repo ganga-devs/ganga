@@ -54,10 +54,7 @@ _external_packages = {
 
     }
 
-# use DQ2Clients 2.3.0 if running <2.6
 import sys
-if sys.hexversion < 0x2050000:
-    _external_packages['DQ2Clients']['version'] = '2.3.0'
 
 # use appropriate RUCIO Client version
 _external_packages['rucio-clients']['RUCIO_HOME'] = os.path.join(getExternalHome(), 'rucio-clients', _external_packages['rucio-clients']['version'], 'noarch')
@@ -67,8 +64,8 @@ if "CMTCONFIG" in os.environ and os.environ['CMTCONFIG'].find("slc5") > -1:
 setup = PackageSetup(_external_packages)
 
 # Default minimum Python version number asked for by Ganga
-_defaultMinVersion = "2.3"
-_defaultMinHexVersion = 0x20300f0
+_defaultMinVersion = "2.6"
+_defaultMinHexVersion = 0x20600f0
 
 def standardSetup(setup=setup):
 

@@ -90,12 +90,7 @@ import tarfile
 
 if os.path.exists(inputsandboxfile): 
     tar = tarfile.open(inputsandboxfile)
-    if sys.version_info[0] == 2 and sys.version_info[1] < 5 :
-        for tarinfo in tar:
-            tar.extract(tarinfo)
-    else:
-        # New in Python 2.5
-        tar.extractall()
+    tar.extractall()
     tar.close()
 
 ## Try to import the subprocess library. If it's not in the 

@@ -346,12 +346,8 @@ class SAGA(IBackend):
         #else:
         #    wd_uuid +=  job.name + "-"
 
-        if sys.version_info < (2, 5):
-            uuid_str = os.popen("/usr/bin/uuidgen").read()
-            wd_uuid += uuid_str.rstrip("\n") 
-        else:
-            import uuid
-            wd_uuid += str(uuid.uuid4()) 
+        import uuid
+        wd_uuid += str(uuid.uuid4()) 
         
         job.backend.workdir_uuid = wd_uuid
         
