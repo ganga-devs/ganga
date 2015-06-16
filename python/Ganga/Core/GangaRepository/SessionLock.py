@@ -14,10 +14,6 @@ import fcntl
 import random
 
 import sys
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
 
 try:
     import cPickle as pickle
@@ -313,7 +309,7 @@ class SessionLockManager(object):
         self.cntfn = os.path.join(realpath, name, "cnt")
 
         self.afs = (realpath[:4] == "/afs")
-        self.locked = Set()
+        self.locked = set()
         self.count = minimum_count
         self.session_name = session_name
         self.name = name
@@ -367,7 +363,7 @@ class SessionLockManager(object):
             # Setup session file
             try:
                 fd = self.delay_init_open(self.fn)
-                os.write(fd, pickle.dumps(Set()))
+                os.write(fd, pickle.dumps(set()))
                 os.close(fd)
                 registerGlobalSessionFile(self.fn)
             except OSError as x:
@@ -398,7 +394,7 @@ class SessionLockManager(object):
         """Shutdown the thread and locking system (on ganga shutdown or repo error)"""
         #logger.debug( "Shutting Down SessionLockManager, self.fn = %s" % (self.fn) )
         # print "Shutting Down SessionLock"
-        self.locked = Set()
+        self.locked = set()
         try:
             global session_lock_refresher
             session_lock_refresher.stop()
@@ -579,7 +575,7 @@ class SessionLockManager(object):
             if x.errno != errno.ENOENT:
                 raise RepositoryError(
                     self.repo, "Error on session file access '%s': %s" % (fn, x))
-        return Set()
+        return set()
 
     # This function attempts to grab the ctime from a file which should exist
     # As we don't want this to fail outright it attempts to re-read every 1s
@@ -762,7 +758,7 @@ class SessionLockManager(object):
         self.safe_LockCheck()
 
         #logger.debug( "locking: %s" % str(ids) )
-        ids = Set(ids)
+        ids = set(ids)
         self.global_lock_acquire()
         try:
             try:
@@ -772,7 +768,7 @@ class SessionLockManager(object):
                 raise RepositoryError(
                     self.repo, "Could not list session directory '%s'!" % (self.sdir))
 
-            slocked = Set()
+            slocked = set()
             for session in sessions:
                 sf = os.path.join(self.sdir, session)
                 if sf == self.fn:
@@ -807,7 +803,7 @@ class SessionLockManager(object):
             f.close()
             assert newcount >= self.count
             sessions = os.listdir(self.sdir)
-            prevnames = Set()
+            prevnames = set()
             for session in sessions:
                 if not session.endswith(self.name + ".locks"):
                     continue

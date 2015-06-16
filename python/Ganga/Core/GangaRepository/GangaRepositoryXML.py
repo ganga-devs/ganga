@@ -25,13 +25,7 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 
-
 import sys
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
-
 
 printed_explanation = False
 
@@ -366,7 +360,7 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("updating index...")
         objs = self.get_index_listing()
         changed_ids = []
-        deleted_ids = Set(self.objects.keys())
+        deleted_ids = set(self.objects.keys())
         summary = []
         if firstRun:
             self._read_master_cache()

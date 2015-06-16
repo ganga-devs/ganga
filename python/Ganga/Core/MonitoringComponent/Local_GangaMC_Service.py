@@ -6,10 +6,6 @@ from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
 
 import sys
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
 
 from Ganga.Utility.threads import SynchronisedObject
 from Ganga.Utility.util import IList
@@ -254,7 +250,7 @@ class UpdateDict(object):
             backendObj, jSet, lock = self.table[backend].updateActionTuple()
         except KeyError:  # New backend.
             self.table[backend] = _DictEntry(
-                backendObj, Set(jobList), threading.RLock(), timeoutMax)
+                backendObj, set(jobList), threading.RLock(), timeoutMax)
             # queue to get processed
             Qin.put(
                 JobAction(backendCheckingFunction, self.table[backend].updateActionTuple()))
@@ -305,7 +301,7 @@ class UpdateDict(object):
             log.error(
                 "Error clearing the %s backend. It does not exist!" % backend)
         else:
-            entry.jobSet = Set()
+            entry.jobSet = set()
             entry.timeoutCounter = entry.timeoutCounterMax
 
     def timeoutCheck(self):
@@ -816,7 +812,7 @@ class JobRegistry_Monitor(GangaThread):
 
             #log.info( "%s" % str( jobList ) )
 
-            returnableSet = Set([])  # IList()
+            returnableSet = set([])  # IList()
 
             for job in jobList:
 
@@ -833,7 +829,7 @@ class JobRegistry_Monitor(GangaThread):
                         if size > config['MaxNumberParallelMonitor']:
                             break
                 else:
-                    return Set([]), 999
+                    return set([]), 999
 
             return returnableSet, size
             # Function to replace this simpler IList description
@@ -841,7 +837,7 @@ class JobRegistry_Monitor(GangaThread):
 
         def _returnMonitorableSubJobs(jobList, found):
 
-            returnableSet = Set([])  # IList()
+            returnableSet = set([])  # IList()
 
             for job in jobList:
 
@@ -855,7 +851,7 @@ class JobRegistry_Monitor(GangaThread):
                         if size > (config['MaxNumberParallelMonitor'] - found):
                             break
                     else:
-                        return Set([])
+                        return set([])
 
             return returnableSet
 
@@ -885,7 +881,7 @@ class JobRegistry_Monitor(GangaThread):
                     masterJobList_fromset = _returnMonitorableSubJobs(
                         jobListSet, found)
                 else:
-                    masterJobList_fromset = Set([])
+                    masterJobList_fromset = set([])
 
                 # Combine both lists
                 jobList_fromset = list(

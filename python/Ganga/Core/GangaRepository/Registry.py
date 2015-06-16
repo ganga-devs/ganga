@@ -9,11 +9,6 @@ import threading
 
 import sys
 
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
-
 
 class RegistryError(GangaException):
 
@@ -507,8 +502,8 @@ class Registry(object):
                 for d in self.changed_ids.itervalues():
                     d.update(changed_ids)
                 self._update_index_timer = time.time()
-            res = self.changed_ids.get(name, Set(self.ids()))
-            self.changed_ids[name] = Set()
+            res = self.changed_ids.get(name, set(self.ids()))
+            self.changed_ids[name] = set()
             return res
         finally:
             self._lock.release()
