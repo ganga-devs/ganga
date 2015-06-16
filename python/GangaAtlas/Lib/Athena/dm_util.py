@@ -10,11 +10,6 @@ from Queue import Queue, Empty
 from dq2.info import TiersOfATLAS
 from dq2.common.DQException import *
 
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
-
 try:
     import hashlib
     md = hashlib.md5()
@@ -177,7 +172,7 @@ def get_transfer_protocols(sename=None):
 
     if protocols:
         ## keep unique protocol names and remove '_UNDEF_' in the list
-        protocols = list( Set( protocols ) )
+        protocols = list( set( protocols ) )
         try:
             protocols.remove('_UNDEF_')
             print >> sys.stdout, 'protocol undefined for SE: %s' % sename
@@ -342,7 +337,7 @@ def resolve_dq2_local_site_id(ds_locations, site_domain, se_hostname, force_site
     # resolving the best location according to the dataset locations
     #  - get the common part between dq2_local_ids and ds_locations
     #  - pick the first one in the common part
-    candidates = list(Set(dq2_local_ids) & Set(ds_locations))
+    candidates = list(set(dq2_local_ids) & set(ds_locations))
 
     print >> sys.stdout, str(candidates)
 

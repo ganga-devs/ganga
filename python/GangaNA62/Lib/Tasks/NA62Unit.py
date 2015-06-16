@@ -1,6 +1,5 @@
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
-from sets import Set
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError

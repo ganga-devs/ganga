@@ -694,15 +694,11 @@ class DQ2JobSplitter(ISplitter):
 
                 # perform logical AND to find a cloud that has all data
                 import sys
-                if sys.hexversion >= 0x020600F0:
-                    Set = set
-                else:
-                    from sets import Set
             
-                cloud_set = Set(job.backend.requirements.list_clouds())
+                cloud_set = set(job.backend.requirements.list_clouds())
             
                 for key in avail_clouds:
-                    cloud_set = cloud_set & Set(avail_clouds[key])
+                    cloud_set = cloud_set & set(avail_clouds[key])
 
                 # find users cloud and submit there by preference
                 fav_cloud = ''

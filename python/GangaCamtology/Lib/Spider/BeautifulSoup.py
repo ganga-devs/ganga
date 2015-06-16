@@ -95,10 +95,6 @@ except ImportError:
   name2codepoint = {}
 
 import sys
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
 
 #These hacks make Beautiful Soup able to parse XML with namespaces
 sgmllib.tagfind = re.compile('[a-zA-Z][-_.:a-zA-Z0-9]*')
