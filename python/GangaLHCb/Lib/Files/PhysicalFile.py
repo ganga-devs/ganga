@@ -47,29 +47,35 @@ class PhysicalFile(LocalFile):
                                     'compressed' : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere',transient=1)})
     _category = 'gangafiles'
     _name = 'PhysicalFile'
-    _exportmethods = ['upload']
+    _exportmethods = ['location', 'upload']
 
     def __init__(self, name=''):
         val = full_expand_filename(name)
         super(PhysicalFile, self).__init__( namePattern = val )
+        self.namePattern = os.path.basename(name)
+        self.localDir = os.path.dirname(val)
         self.name = val
-        self.namePattern = val
         logger.warning( "!!! PhysicalFile has been deprecated, this is now just a wrapper to the LocalFile object" )
         logger.warning( "!!! Please update your scripts before PhysicalFile is removed" )
 
     def __construct__(self, args):
         if (len(args) != 1) or (type(args[0]) is not type('')):
             super(PhysicalFile, self).__construct__(args)
-        else:    
+        else:
             self.name = full_expand_filename(args[0])
-        
+            val = full_expand_filename(args[0])
+            self.localDir = os.path.dirname( val )
+            self.namePattern = os.path.basename( val )
+
     def _attribute_filter__set__( self, n, v ):
-        val = full_expand_filename(v)
-        if n == 'name' and self.namePattern != val:
-            self.namePattern = val
-        if n == 'namePattern' and self.name != val:
+        if n == 'name':
+            import os.path
+            val = full_expand_filename(v)
             self.name = val
-        return val
+            self.namePattern = os.path.basename( val )
+            self.localDir = os.path.dirname( val )
+            return val
+        return v
 
     def upload( self, lfn, diracSE, guid = None ):
 

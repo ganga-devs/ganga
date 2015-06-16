@@ -105,7 +105,10 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
                     logger.warning("File %s in %s does not exist. Skipping...", str(f), str(libpath))
 
     for pypath in py_project_areas:
-        if os.path.exists( pypath):
+        if os.path.exists(pypath):
+            from GangaGaudi.Lib.Applications.GaudiUtils import pyFileCollector
+            from Ganga.Utility.Config import getConfig
+            configGaudi = getConfig('GAUDI')
             pyFileCollector(pypath, merged_pys, subdir_pys, configGaudi['pyFileCollectionDepth'])
 
     import pprint
@@ -119,7 +122,9 @@ def make(self, argument=''):
     """Build the code in the release area the application object points
        to. The actual command executed is "cmt broadcast make <argument>"
        after the proper configuration has taken place."""
-    config = Ganga.Utility.Config.getConfig('GAUDI')
+
+    from Ganga.Utility.Config import getConfig
+    config = getConfig('GAUDI')
 
     execute('cmt broadcast %s %s' % (config['make_cmd'],argument),
             shell=True,

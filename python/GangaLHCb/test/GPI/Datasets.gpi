@@ -1,14 +1,19 @@
+## Need this for assertions to be true
+#from GangaDirac.Lib.Files.DiracFile import DiracFile 
+#from GangaLHCb.Lib.Files.PhysicalFile import PhysicalFile
+DiracFileType = DiracFile
 # test constructors/setters
 ds = LHCbDataset(['lfn:a','pfn:b'])
 assert len(ds) == 2
-assert isinstance(ds[0],DiracFile)
+print ds[0]
+assert isinstance(ds[0],DiracFileType)
 assert isinstance(ds[1],PhysicalFile)
 ds = LHCbDataset()
 ds.files = ['lfn:a','pfn:b']
-assert isinstance(ds[0],DiracFile)
+assert isinstance(ds[0],DiracFileType)
 assert isinstance(ds[1],PhysicalFile)
 ds.files.append('lfn:c')
-assert isinstance(ds[-1],DiracFile)
+assert isinstance(ds[-1],DiracFileType)
 d = OutputData(['a','b'])
 assert isinstance(d.files[0],str)
 assert isinstance(d.files[1],str)
@@ -19,7 +24,8 @@ assert isinstance(j.inputdata,LHCbDataset)
 j.outputfiles = ['a',DiracFile('b')]
 #assert isinstance(j.outputfiles[0],SandboxFile)
 assert isinstance(j.outputfiles[0],LocalFile)
-assert isinstance(j.outputfiles[1],DiracFile)
+print type(j.outputfiles[1])
+assert isinstance(j.outputfiles[1],DiracFileType)
 #
 LFN_DATA = ['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000005_1.dimuon.dst',
 'LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000006_1.dimuon.dst']

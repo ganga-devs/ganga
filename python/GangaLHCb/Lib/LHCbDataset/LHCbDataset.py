@@ -89,7 +89,7 @@ class LHCbDataset(GangaDataset):
 
     def __getitem__(self,i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
-        return self.files[i]
+        return GPIProxyObjectFactory(self.files[i])
         #if type(i) == type(slice(0)):
         #    ds = LHCbDataset(files=self.files[i])
         #    ds.depth = self.depth
@@ -421,7 +421,8 @@ def string_datafile_shortcut_lhcb(name, item):
 
 allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
 
-def string_dataset_shortcut_lhcb(files,item):
+## Name of this method set in the GPIComponentFilters section of the Core... either overload this default or leave it
+def string_dataset_shortcut(files,item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
     ## This clever change mirrors that in IPostprocessor (see there)
@@ -450,6 +451,6 @@ def string_dataset_shortcut_lhcb(files,item):
     else:
         return None # used to be c'tors, but shouldn't happen now
 
-allComponentFilters['datasets'] = string_dataset_shortcut_lhcb
+allComponentFilters['datasets'] = string_dataset_shortcut
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
