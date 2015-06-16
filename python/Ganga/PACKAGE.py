@@ -16,8 +16,8 @@ The standardSetup() function is used to perform automatic initialization of the 
 """
 
 # Default minimum Python version number asked for by Ganga
-_defaultMinVersion = "2.2"
-_defaultMinHexVersion = 0x20200f0
+_defaultMinVersion = "2.6"
+_defaultMinHexVersion = 0x20600f0
 
 # The default values will be guessed but you may override them here
 _defaultPlatform = None  # 'slc3_gcc323'
