@@ -260,9 +260,6 @@ class Grid(object):
 
         if logfile:
 
-            with open(logfile, 'r') as f:
-                output = f.readlines()
-
             re_jid = re.compile(
                 '^Unable to retrieve the status for: (https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)\s*$')
             re_key = re.compile('^.*(no matching jobs found)\s*$')
@@ -270,7 +267,7 @@ class Grid(object):
             m_jid = None
             m_key = None
             myjid = ''
-            for line in output:
+            for line in open(logfile, 'r'):
                 m_jid = re_jid.match(line)
                 if m_jid:
                     myjid = m_jid.group(1)

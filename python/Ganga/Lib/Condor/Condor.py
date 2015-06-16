@@ -506,9 +506,7 @@ class Condor(IBackend):
                 checkExit = True
                 if os.path.isfile(condorLogPath):
                     checkExit = False
-                    with open(condorLogPath) as condorLog:
-                        lineList = condorLog.readlines()
-                    for line in lineList:
+                    for line in open(condorLogPath):
                         if -1 != line.find("terminated"):
                             checkExit = True
                             break

@@ -324,11 +324,7 @@ class LCG(IBackend):
 
         logger.error('No matched resource: check/report the JDL below')
 
-        with open(jdl, 'r') as f:
-            lines = f.readlines()
-
-        logger.error(
-            '=== JDL ===\n' + '\n'.join(map(lambda l: l.strip(), lines)))
+        logger.error('=== JDL ===\n' + '\n'.join(l.strip() for l in open(jdl, 'r')))
 
         return
 
@@ -835,12 +831,6 @@ class LCG(IBackend):
 
             # returns the name of the file where the logging info is saved
             return loginfo_output
-
-            #f = open(loginfo_output,'r')
-            #info = map(lambda x:x.strip(),f.readlines())
-            # f.close()
-            # returns the logging info as an array of strings
-            # return info
         else:
             logger.debug('Getting logging info of job %s failed.' %
                          job.getFQID('.'))

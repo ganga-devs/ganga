@@ -34,8 +34,7 @@ if config.Configuration.Batch == 'PBS':
     out=child.fromchild
     result=-1
     while result==-1:
-      lines=out.readlines()
-      for line in lines:
+      for line in out:
         items=line.split()
         d[items[0]]=items[5]
       result=child.poll()

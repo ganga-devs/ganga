@@ -361,7 +361,7 @@ class Batch(IBackend):
             logger.debug('unable to open file %s', p)
             return None
 
-        for l in f.readlines():
+        for l in f:
             if checkstr in l:
                 pos = l.find(checkstr)
                 timestr = l[pos + len(checkstr) + 1:pos + len(checkstr) + 25]

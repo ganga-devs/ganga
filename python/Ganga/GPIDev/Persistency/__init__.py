@@ -179,18 +179,18 @@ def load(filename="", returnList=True):
     searchPath = getSearchPath("LOAD_PATH")
     filepath = getScriptPath(filename, searchPath)
     try:
-        inFile = open(filepath)
+        with open(filepath) as inFile:
+            lineList = []
+            for line in inFile:
+                if (line.strip().startswith("#Ganga#")):
+                    lineList.append("#Ganga#")
+                else:
+                    lineList.append(line)
+            itemList = ("".join(lineList)).split("#Ganga#")
     except IOError:
         logger.error("Unable to open file %s" % (str(filename)))
         logger.error("No objects loaded")
         return returnValue
-
-    lineList = inFile.readlines()
-    for i in range(len(lineList)):
-        line = lineList[i].strip()
-        if (0 == line.find("#Ganga#")):
-            lineList[i] = "#Ganga#"
-    itemList = ("".join(lineList)).split("#Ganga#")
 
     objectList = []
     for item in itemList:
