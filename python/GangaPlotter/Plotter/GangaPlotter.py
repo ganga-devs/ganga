@@ -9,10 +9,6 @@ from pylab import *
 
 import sys
 from functools import reduce
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
 
 from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.logging import getLogger
@@ -150,10 +146,10 @@ class GangaPlotter:
 
     def __unionLists__(self,lists):
 
-        unionSet = Set(lists[0])
+        unionSet = set(lists[0])
 
         for i in range(1,len(lists)):
-            newSet   = Set(lists[i])
+            newSet   = set(lists[i])
             unionSet.update(newSet)
 
         unionList = []
