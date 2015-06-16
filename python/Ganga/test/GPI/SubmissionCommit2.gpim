@@ -23,7 +23,7 @@ class SubmissionCommit2(MultipassTest):
         logger.info(j)
         file(self.name,'w').write(str(-j.id))
         logger.info('saved job id %s to file %s'%(j.id,self.name))
-        disableService()
+        disableServices()
         reactivate()
 
     def pass2(self):
@@ -41,7 +41,7 @@ class SubmissionCommit2(MultipassTest):
         j.application.exe = 'myexecutable'
         logger.info(j)
         self.check_job(j)
-        disableService()
+        disableServices()
         reactivate()
 
     def pass3(self):

@@ -79,7 +79,8 @@ class SplitByFiles(GaudiInputDataSplitter):
                 elif type(i) == type( DiracFile() ):
                     datatmp.append( i )
                 else:
-                    x = GangaException( "Unknown(unexpected) file object: %s" % i )
+                    from Ganga.Core.exceptions import GangaException
+                    x = GangaException( "Unknown(unexpected) DiracFile object: %s" % i )
                     raise x
         elif type(dataset) == type( '' ):
             datatmp.append( DiracFile( lfn=dataset ) )

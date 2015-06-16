@@ -8,20 +8,25 @@ from Ganga.Utility.util import containsGangaObjects,isNestedList
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError, isType
 import copy,sys
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=1)
+
 def makeGangaList(_list, mapfunction = None, parent = None, preparable = False):
     """Should be used for makeing full gangalists"""
     
     #work with a simple list always
-    if isType(_list,list):
+    if isType(_list, list):
         _list = _list
-    elif isType(_list,GangaList):
+    elif isType(_list, GangaList):
         _list = getProxyAttr(_list,'_list')
     else:
         _list = [_list]
-    
+
+    logger.debug( "_list: %s" % str(_list) )
+
     if mapfunction is not None:
-        _list = map(mapfunction,_list)
-    
+        _list = map(mapfunction, _list)
+
     result = GangaList()
     result.extend(_list)
 

@@ -384,42 +384,44 @@ class LHCbDataset(GangaDataset):
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 
-def string_datafile_shortcut(name,item):
+def string_datafile_shortcut_lhcb(name, item):
 
     # Overload the LHCb instance if the Core beet us to it
-    mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut( name, item )
+    mainFileOutput = None
+    try:
+        mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut( name, item )
+    except Exception, x:
+        pass
 
     #   We can do some 'magic' with strings so lets do that here
-    if (mainFileOutput is not None) and (type(name) is not type('')):
-        return mainFileOutput
+    if (mainFileOutput is not None):
+        logger.debug( "Core Found: %s" % str( mainFileOutput ) )
+        if (type(name) is not type('')):
+            return mainFileOutput
 
-    from GangaLHCb.Lib.Backends.Dirac import Dirac
     if type(name) is not type(''):
         return None
-    if item is None:
+    if item is None and name is None:
         return None # used to be c'tor, but shouldn't happen now
     else: # something else...require pfn: or lfn:
         try:
-            file = strToDataFile(name,False)
+            file = strToDataFile(name, False)
 #            if item is Dirac._schema['inputSandboxLFNs']:
-            if type(file) is PhysicalFile:
-                msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
-                raise GangaException(msg)
+            #if type(file) is PhysicalFile:
+            #    msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
+            #    raise GangaException(msg)
             return file
-        except:
-            try:
-                strToDataFile( name,False )
-            except:
-                # if the Core can make a file object from a string then use that, else raise an error
-                if mainFileOutput is not None:
-                    return mainFileOutput
-                else:
-                    raise
+        except Exception, x:
+            # if the Core can make a file object from a string then use that, else raise an error
+            if mainFileOutput is not None:
+                return mainFileOutput
+            else:
+                raise x
     return None
 
-allComponentFilters['gangafiles'] = string_datafile_shortcut
+allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
 
-def string_dataset_shortcut(files,item):
+def string_dataset_shortcut_lhcb(files,item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
     ## This clever change mirrors that in IPostprocessor (see there)
@@ -448,6 +450,6 @@ def string_dataset_shortcut(files,item):
     else:
         return None # used to be c'tors, but shouldn't happen now
 
-allComponentFilters['datasets'] = string_dataset_shortcut
+allComponentFilters['datasets'] = string_dataset_shortcut_lhcb
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

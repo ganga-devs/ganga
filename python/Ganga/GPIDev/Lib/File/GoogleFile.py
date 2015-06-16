@@ -121,10 +121,11 @@ class GoogleFile(IGangaFile):
                             'The file will give permission to modify files in your GoogleDrive. '\
                             'Permission can be revoked by going to "Manage Apps" in your GoogleDrive ' \
                             'or by deleting the credentials through the deleteCredentials GoogleFile method.' % cred_path)
-        self._check_Ganga_folder()
 
         self.__initialized = True
-        
+
+        self._check_Ganga_folder()
+
     def __construct__(self, args):
         if (len(args) != 1) or (type(args[0]) is not type('')):
             super(GoogleFile, self).__construct__(args)

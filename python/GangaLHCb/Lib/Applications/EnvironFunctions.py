@@ -116,6 +116,7 @@ exit $?
         script_file.write(shell_script)
         script_file.close()
     except:
+        from Ganga.Core.exception import PostProcessException
         raise PostProcessException('Problem writing merge script')
 
     return script_file_name
@@ -182,6 +183,7 @@ def guess_version_SP(appname):
 
 
 def _getshell_SP(self):
+    logger = getLogger()
     opts = ''
     if self.setupProjectOptions: opts = self.setupProjectOptions
 
@@ -203,12 +205,13 @@ def _getshell_SP(self):
     script += '%s \n' % cmd
     fd.write(script)
     fd.flush()
-    #logger.debug(script)
+    logger.debug(script)
 
     self.shell = Shell(setup=fd.name)
     if (not self.shell): raise ApplicationConfigurationError(None,'Shell not created.')
 
-    #logger.debug(pprint.pformat(self.shell.env))
+    import pprint
+    logger.debug(pprint.pformat(self.shell.env))
 
     fd.close()
 
@@ -220,7 +223,8 @@ def _getshell_SP(self):
         if self.shell.env[var].find(self.version) >= 0: ver_ok = True
     if not app_ok or not ver_ok:
         msg = 'Command "%s" failed to properly setup environment.' % cmd
-        #logger.error(msg)
+        logger.error(msg)
+        from Ganga.Core.exceptions import ApplicationConfigurationError
         raise ApplicationConfigurationError(None,msg)
 
     import copy

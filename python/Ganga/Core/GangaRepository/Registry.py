@@ -306,7 +306,7 @@ class Registry(object):
                     d.add(id)
             finally:
                 self._lock.release()
-            
+
 
     def _dirty(self,obj):
         """ Mark an object as dirty.
@@ -333,7 +333,7 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError"""
-        logger.debug("_flush(%s)" % objs)
+        logger.debug("Reg: %s _flush(%s)" % (self.name, objs))
         if not self._started:
             raise RegistryAccessError("Cannot flush to a disconnected repository!")
         for obj in objs:
@@ -360,7 +360,7 @@ class Registry(object):
         sub-obj is the object the read access is actually desired (ignored at the moment)
         Raise RegistryAccessError
         Raise RegistryKeyError"""
-        #logger.debug("_read_access(%s)" % obj)
+        #logger.debug("Reg %s _read_access(%s)" % (self.name, str(obj)))
         if not obj._data or "_registry_refresh" in obj.__dict__:
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect."%(self.find(obj),self.name))
@@ -388,7 +388,11 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError
         Raise ObjectNotInRegistryError"""
-        #logger.debug("_write_access(%s)" % obj)
+        logger.debug("Reg: %s _write_access(%s)" % (self.name, str(obj)))
+
+        #if self.name == "prep.metadata":
+        #    import traceback
+        #    traceback.print_stack()
 
         if not self._started:
             raise RegistryAccessError("Cannot get write access to a disconnected repository!")
@@ -410,14 +414,15 @@ class Registry(object):
                         obj.__dict__.pop("_registry_refresh",None)
                         self.repository.load([id])
                     except KeyError:
-                        raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id,self.name))
+                        raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id, self.name))
                     except InaccessibleObjectError as x:
-                        raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id,self.name,str(x)))
+                        raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id, self.name, str(x)))
                     for d in self.changed_ids.itervalues():
                         d.add(id)
                 obj._registry_locked = True
             finally:
-                self._lock.release()
+            #    pass
+                 self._lock.release()
         return True
     
     def _release_lock(self, obj):
@@ -427,7 +432,7 @@ class Registry(object):
         Raise ObjectNotInRegistryError"""
         if not self._started:
             raise RegistryAccessError("Cannot manipulate locks of a disconnected repository!")
-        #logger.debug("_release_lock(%s)" % id(obj))
+        logger.debug("Reg: %s _release_lock(%s)" % (self.name, str(id(obj))))
         self._lock.acquire()
         try:
             if obj._registry_locked:
@@ -498,6 +503,10 @@ class Registry(object):
         try:
             try:
                 if not self.metadata is None:
+                    try:
+                        self._flush()
+                    except:
+                        pass
                     self.metadata.shutdown()
             except Exception as x:
                 logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)

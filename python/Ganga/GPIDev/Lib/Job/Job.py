@@ -1657,10 +1657,8 @@ class Job(GangaObject):
         if not template:
             # remove the corresponding workspace files
 
-            # FIXME: this is a hack to remove the entire job directory, should be properly solved with the self.workspace()
-            from Ganga.Core.FileWorkspace import InputWorkspace
-            wsp = InputWorkspace()
-            wsp.subpath=''
+            wsp = self.getWorkspace( 'InputWorkspace' )
+
             wsp.jobid = self.id
 
             def doit(f):
@@ -1681,7 +1679,11 @@ class Job(GangaObject):
                     for sj in self.subjobs:
                         self.application.decrementShareCounter(self.application.is_prepared.name)
                         
-                
+        try:
+            self._setDirty()
+            self._releaseWriteAccess()
+        except:
+            pass
 
     def fail(self,force=False):
         """Deprecated. Use force_status('failed') instead."""

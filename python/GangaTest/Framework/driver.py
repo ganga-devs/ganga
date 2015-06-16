@@ -69,9 +69,10 @@ class GPIRunner:
                 
         def tearDown(self):
                 """
-                NOP: .cleanup file is ran in a different session
+                RUNNING CLEANUP IN THE NEXT SESSION CAUSES MONITORING ERRORS!!!!!
+                let's NEVER, NEVER, EVER! rely on this - rcurrie
                 """
-                pass
+                cleanup()
         
                 
 class UnitRunner:

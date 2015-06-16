@@ -4,7 +4,7 @@ j.backend = TestSubmitter(time=300)
 j.splitter = TestSplitter()
 j.splitter.backs = 10*[TestSubmitter()]
 j.submit()
-import time
-time.sleep(20)
+from time import sleep
+sleep(20)
 j.subjobs[9].kill()
 j.kill()

@@ -436,7 +436,9 @@ class JobRegistry_Monitor( GangaThread ):
         self.runClientCallbacks()
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config[ 'base_poll_rate' ]
-        
+
+    def isEnabled( self ):
+        return self.enabled or self.__isInProgress()
     
     def runMonitoring( self, jobs=None, steps=1, timeout=60):
         """
@@ -603,7 +605,7 @@ class JobRegistry_Monitor( GangaThread ):
 
         try:
             #signal the main thread to finish
-            self.steps=-1
+            self.steps = 0
             self.stopIter.set()
         except:
             pass

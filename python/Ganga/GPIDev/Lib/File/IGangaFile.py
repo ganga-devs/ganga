@@ -152,3 +152,4 @@ class IGangaFile(GangaObject):
             return True
         
         return False
+

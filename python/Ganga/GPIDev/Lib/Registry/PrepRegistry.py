@@ -35,8 +35,8 @@ class PrepRegistry(Registry):
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         self.shareref = self.metadata[self.metadata.ids()[-1]]
-        self.shareref.closedown()
         self._lock.acquire()
+        self.shareref.closedown()
         try:
             try:
                 if not self.metadata is None:
@@ -120,7 +120,6 @@ class ShareRef(GangaObject):
 
         self._setDirty()
         self._releaseWriteAccess()
-
 
     def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
