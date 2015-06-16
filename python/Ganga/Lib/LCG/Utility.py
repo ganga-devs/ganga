@@ -5,7 +5,7 @@ import random
 import gzip
 from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
-from Ganga.Lib.LCG.Compatibility import *
+import hashlib
 
 
 def get_uuid(*args):
@@ -19,7 +19,7 @@ def get_uuid(*args):
         a = random.random() * 100000000000000000
     data = str(t) + ' ' + str(r) + ' ' + str(a) + ' ' + str(args)
 
-    md5_obj = get_md5_obj()
+    md5_obj = hashlib.md5()
     md5_obj.update(data)
     data = md5_obj.hexdigest()
 
@@ -106,7 +106,7 @@ def get_md5sum(fname, ignoreGzipTimestamp=False):
     else:
         f = open(fname, 'rb')
 
-    m = get_md5_obj()
+    m = hashlib.md5()
 
     while True:
         d = f.read(8096)

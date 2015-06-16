@@ -8,4 +8,3 @@ from LCGSandboxCache import *
 from GridftpSandboxCache import *
 from ElapsedTimeProfiler import *
 from LCGOutputDownloader import *
-from Compatibility import *
