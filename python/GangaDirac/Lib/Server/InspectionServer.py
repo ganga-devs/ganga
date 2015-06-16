@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 # For running inspections of the environment
 import sys, socket, traceback
 import collections
@@ -32,9 +34,9 @@ class socketWrapper(object):
 #print "TCPServer Waiting for client on port 5000"
 
 
-while 1:
+while True:
     client_socket, address = server_socket.accept()
-    print  >>server_stdout, "Connection request from ", SocketAddress(*address)
+    print("Connection request from ", SocketAddress(*address), file=server_stdout)
 
     sock = socketWrapper(client_socket)
 
@@ -44,15 +46,15 @@ while 1:
         client_socket.close()
         break
     
-    print >>server_stdout, "Executing command '%s'"%cmd
+    print("Executing command '%s'"%cmd, file=server_stdout)
     try:
-        print eval(cmd)
+        print(eval(cmd))
     except:
         try:
             exec(cmd)
         except:
-            print "Exception raised executing command (cmd) '%s'\n"%cmd
-            print traceback.format_exc()
+            print("Exception raised executing command (cmd) '%s'\n"%cmd)
+            print(traceback.format_exc())
     client_socket.sendall(end_trans)
     client_socket.shutdown(socket.SHUT_RDWR)
     client_socket.close()

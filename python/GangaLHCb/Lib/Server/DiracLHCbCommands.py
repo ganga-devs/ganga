@@ -10,6 +10,9 @@ parseCommandLine()
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 diraclhcb=DiracLHCb()
 # Write to output pipe
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
@@ -40,7 +43,7 @@ def getLHCbInputDataCatalog(lfns,depth,site,xml_file):
     output( diraclhcb.getInputDataCatalog(lfns,site,xml_file) )
 
 def bookkeepingGUI(file):
-    print os.system('dirac-bookkeeping-gui %s' % file)
+    logger.info(os.system('dirac-bookkeeping-gui %s' % file))
 
 def getDataset(path,dqflag,type,start,end,sel):
     if type is 'Path':
@@ -96,7 +99,7 @@ def getFile(lfns, destDir = ''): output( diraclhcb.getFile(lfns, destDir=destDir
 def replicateFile(lfn,destSE,srcSE,locCache=''):
     res = diraclhcb.replicateFile(lfn,destSE,srcSE,locCache)
     output(res)
-    print res
+    logger.info(res)
 
 def removeReplica(lfn,sE):
     output( diraclhcb.removeReplica(lfn,sE) )
@@ -293,7 +296,7 @@ def getStateTime(id, status):
         checkstr = ''
             
     if checkstr=='':
-        print None
+        logger.info(None)
         return
 
     for l in L:
