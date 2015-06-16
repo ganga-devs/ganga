@@ -24,7 +24,7 @@ def isPFN(file):
 
 def strToDataFile(name, allowNone=True):
     if len(name) >= 4 and name[0:4].upper() == 'LFN:':
-        return DiracFile(lfn = name)
+        return DiracFile(lfn=name[4:])
     elif len(name) >= 4 and name[0:4].upper() == 'PFN:':
         from GangaLHCb.Lib.Files import PhysicalFile
         return PhysicalFile(name)

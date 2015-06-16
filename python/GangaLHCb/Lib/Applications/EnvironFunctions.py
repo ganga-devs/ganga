@@ -199,8 +199,9 @@ def _getshell_SP(self):
         #script += 'export CMTCONFIG=%s\n' % self.platform
     useflag = ''
     if self.masterpackage:
-       (mpack, malg, mver) = CMTscript.parse_master_package(self.masterpackage)
-       useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
+        from GangaLHCb.Lib.Applications.CMTscript import parse_master_package
+        (mpack, malg, mver) = parse_master_package(self.masterpackage)
+        useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
     cmd = '. SetupProject.sh %s %s %s %s' % (useflag, opts, self.appname, self.version)
     script += '%s \n' % cmd
     fd.write(script)

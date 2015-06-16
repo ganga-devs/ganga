@@ -37,6 +37,7 @@ def make_CMT(self, argument=None):
        returned. Any arguments given are passed onto CMT as in
        dv.make('clean').
     """
+    command = configGaudi['make_cmd']
     if argument:
         command+=' '+argument
     from GangaLHCb.Lib.Applications.CMTscript import CMTscript

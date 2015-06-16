@@ -6,11 +6,13 @@ full_name = pwd + '/' + name
 # pfn's
 #
 pfn = LocalFile(name)
-assert pfn.namePattern == full_name
+assert pfn.location()[0] == full_name
 pfn = PhysicalFile('pfn:'+name)
-assert pfn.namePattern == full_name
+assert pfn.location()[0] == full_name
 pfn = PhysicalFile('PFN:'+name)
-assert pfn.namePattern == full_name
+assert pfn.location()[0] == full_name
+pfn = PhysicalFile('PFN:'+name)
+assert pfn.name == full_name
 try:
     pfn = LocalFile('lfn:'+name)
     raise 'Should have got exception trying to create PhysicalFile from lfn.'
