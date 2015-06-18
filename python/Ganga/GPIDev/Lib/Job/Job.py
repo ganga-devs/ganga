@@ -837,9 +837,9 @@ class Job(GangaObject):
         logger.debug( "Job %s Calling _init_workspace", str(self.getFQID('.')) )
         self.getDebugWorkspace(create=True)
 
-    def getWorkspace(self,what,create=True):
+    def getWorkspace(self, what, create=True):
         import Ganga.Core.FileWorkspace
-        Workspace = getattr(Ganga.Core.FileWorkspace,what)
+        Workspace = getattr(Ganga.Core.FileWorkspace, what)
         w = Workspace()
         import os
         w.jobid = self.getFQID(os.sep)
@@ -1576,7 +1576,7 @@ class Job(GangaObject):
         self._commit()
 
     
-    def remove(self,force=False):
+    def remove(self, force=False):
         '''Remove the job.
 
         If job  has been submitted try  to kill it  first. Then remove
@@ -1602,7 +1602,7 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
-        if self.master:
+        if self.master is not None:
             msg = 'cannot remove subjob %s'%self.getFQID('.')
             logger.info(msg)
             raise JobError(msg)
@@ -1648,28 +1648,48 @@ class Job(GangaObject):
             except AttributeError:
                 # Some applications do not have transition_update
                 pass
-        
+
         if self._registry:
-            self._registry._remove(self,auto_removed=1)
+            self._registry._remove(self, auto_removed=1)
 
         self.status = 'removed'
 
         if not template:
             # remove the corresponding workspace files
 
-            wsp = self.getWorkspace( 'InputWorkspace' )
-
-            wsp.jobid = self.id
+            for sj in self.subjobs:
+                def doit_sj(f):
+                    try:
+                        f()
+                    except OSError, err:
+                        logger.warning('cannot remove file workspace associated with the sub-job %d : %s', self.getFQID('.'), str(err))
+                
+                wsp_input = self.getInputWorkspace(create=False)
+                doit_sj(wsp_input.remove)
+                wsp_output = self.getOutputWorkspace(create=False)
+                doit_sj(wsp_output.remove)
+                wsp_debug = self.getDebugWorkspace(create=False)
+                doit_sj(wsp_debug.remove)
 
             def doit(f):
                 try:
                     f()
-                except OSError,x:
-                    logger.warning('cannot remove file workspace associated with the job %d : %s',self.id,str(x))
+                except OSError, err:
+                    logger.warning('cannot remove file workspace associated with the job %d : %s', self.id, str(err))
 
+            wsp_input = self.getInputWorkspace(create=False)
+            wsp_input.jobid = self.id
+            doit(wsp_input.remove)
+            wsp_output = self.getOutputWorkspace(create=False)
+            wsp_output.jobid = self.id
+            doit(wsp_output.remove)
+            wsp_debug = self.getDebugWorkspace(create=False)
+            wsp_debug.remove(preserve_top=False)
+
+            wsp = self.getInputWorkspace(create=False)
+            wsp.subpath = ''
+            wsp.jobid = self.id
             doit(wsp.remove)
-
-            self.getDebugWorkspace(create=False).remove(preserve_top=False)
 
             #If the job is associated with a shared directory resource (e.g. has a prepared() application)
             #decrement the reference counter.
@@ -1678,7 +1698,7 @@ class Job(GangaObject):
                     self.application.decrementShareCounter(self.application.is_prepared.name)
                     for sj in self.subjobs:
                         self.application.decrementShareCounter(self.application.is_prepared.name)
-                        
+
         try:
             self._setDirty()
             self._releaseWriteAccess()
