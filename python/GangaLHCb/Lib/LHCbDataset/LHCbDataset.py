@@ -253,11 +253,12 @@ class LHCbDataset(GangaDataset):
         Note: site defaults to config.LHCb.LocalSite
         Note: If the XMLCatalogueSlice attribute is set, then it returns
               what is written there.'''
-        if self.XMLCatalogueSlice.name:
-            f = open(self.XMLCatalogueSlice.name)
-            xml_catalog = f.read()
-            f.close()
-            return xml_catalog
+        if hasattr( self.XMLCatalogueSlice, 'name' ):
+            if self.XMLCatalogueSlice.name:
+                f = open(self.XMLCatalogueSlice.name)
+                xml_catalog = f.read()
+                f.close()
+                return xml_catalog
         if not site: site = getConfig('LHCb')['LocalSite']
         lfns = self.getLFNs()
         depth = self.depth
