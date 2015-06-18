@@ -3,17 +3,11 @@
 #
 ##########################################################################
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
-from Ganga.Utility.Plugin import allPlugins
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
+from Ganga.Utility.logging import getLogger
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('Configuration')
-import os
-import string
 import smtplib
 import email
 

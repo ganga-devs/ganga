@@ -68,7 +68,7 @@ class HammerThread(threading.Thread):
             self.reg[id]._getReadAccess()
             assert self.reg[id].name.startswith("HT")
             if id in self.owned_ids:
-                assert self.reg[id].name == "HT%i"%(self.id)
+                assert self.reg[id].name == "HT%i"%(self.id), "{0} == {1}".format(self.reg[id].name, "HT%i"%(self.id))
         except KeyError: # If the object has been deleted in the meantime, it must be gone from the registry
             assert not id in self.reg
             logger.info(str(self.id) + "  %s deleted after KeyError (as per specification)" % id)

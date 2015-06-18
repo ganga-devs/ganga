@@ -40,7 +40,7 @@ Extend the behaviour of the default *atexit* module to support:
 
 import atexit
 
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
 
@@ -98,7 +98,6 @@ def _ganga_run_exitfuncs():
     atexit._exithandlers = map(add_priority, atexit._exithandlers)
     atexit._exithandlers.sort(priority_cmp)
 
-    import time
     import inspect
     while atexit._exithandlers:
 

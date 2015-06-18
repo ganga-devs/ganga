@@ -7,7 +7,6 @@
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from copy import deepcopy
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
 
 

@@ -4,8 +4,6 @@
 # $Id: FileBuffer.py,v 1.1 2008-07-17 16:40:53 moscicki Exp $
 ##########################################################################
 
-
-from IGangaFile import IGangaFile
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 

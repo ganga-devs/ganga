@@ -1,7 +1,6 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.Core import BackendError
 import os.path
@@ -24,7 +23,6 @@ import Ganga.Utility.Config
 
 # logger.addFilter(BatchFilter())
 
-from Ganga.Core import FileWorkspace
 import os
 
 
@@ -122,10 +120,10 @@ class Batch(IBackend):
     def command(klass, cmd, soutfile=None, allowed_exit=[0]):
         rc, soutfile, ef = shell_cmd(cmd, soutfile, allowed_exit)
         if not ef:
-            logger.warning(
+            logger.error(
                 'Problem submitting batch job. Maybe your chosen batch system is not available or you have configured it wrongly')
             with open(soutfile) as sout_file:
-                logger.warning(sout_file.read())
+                logger.error(sout_file.read())
                 raiseable = BackendError(klass._name, 'It seems that %s commands are not installed properly:%s' % (
                     klass._name, sout_file.readline()))
         return rc, soutfile

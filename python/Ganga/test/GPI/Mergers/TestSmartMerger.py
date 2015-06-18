@@ -1,5 +1,5 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file, sleep_until_state
+from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file
 import os
 import tempfile
 

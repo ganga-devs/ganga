@@ -3,11 +3,10 @@
 # * lazy loading
 # * locking
 
-from GangaRepository import GangaRepository, PluginManagerError, EmptyGangaObject, RepositoryError, InaccessibleObjectError
-from Ganga.Utility.Config import getConfig
+from GangaRepository import GangaRepository, RepositoryError, InaccessibleObjectError
+from Ganga.Utility.Plugin import PluginManagerError
 import os
 import os.path
-import fcntl
 import time
 import errno
 
@@ -24,8 +23,6 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
-
-import sys
 
 printed_explanation = False
 
@@ -715,8 +712,6 @@ class GangaRepositoryLocal(GangaRepository):
                     os.unlink(os.path.dirname(fn) + ".index")
                 except OSError:
                     pass
-                # self._internal_setitem__(id, EmptyGangaObject()) // NO NO NO!
-                # BREAKS EVERYTHING HORRIBLY!
                 raise InaccessibleObjectError(self, id, x)
             finally:
                 fobj.close()

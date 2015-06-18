@@ -4,8 +4,6 @@
 # $Id: GenericSplitter.py,v 1.2 2008-09-09 15:11:35 moscicki Exp $
 ###############################################################################
 
-import inspect
-
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy

@@ -1,4 +1,3 @@
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
@@ -174,8 +173,6 @@ class BoxRegistry(Registry):
         super(BoxRegistry, self).startup()
 
 from RegistrySlice import RegistrySlice
-from Ganga.Core.GangaRepository import getRegistry
-
 
 class BoxRegistrySlice(RegistrySlice):
 

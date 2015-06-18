@@ -8,7 +8,6 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.logic import implies
-from Ganga.Core.exceptions import GangaException
 
 #
 # Ganga Public Interface Schema
@@ -424,7 +423,7 @@ class Item:
         return txt
 
     def _check_type(self, val, name, enableGangaList=True):
-        from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError, SchemaError
+        from Ganga.Core import GangaAttributeError, TypeMismatchError, SchemaError
 
         if enableGangaList:
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList

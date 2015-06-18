@@ -1,7 +1,4 @@
 from common import *
-from TaskApplication import ExecutableTask, taskApp
-from Ganga.GPIDev.Lib.Job.Job import JobError, Job
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job.MetadataDict import *
 from IUnit import IUnit

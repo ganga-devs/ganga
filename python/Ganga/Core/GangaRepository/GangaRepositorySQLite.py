@@ -3,13 +3,9 @@
 # * lazy loading
 # * locking
 
-from GangaRepository import GangaRepository, PluginManagerError, EmptyGangaObject, RepositoryError, InaccessibleObjectError
-from Ganga.Utility.Config import getConfig
+from GangaRepository import GangaRepository, RepositoryError
 import os
 import os.path
-import fcntl
-import time
-import errno
 
 import sqlite
 
@@ -20,9 +16,6 @@ except:
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
-
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
-from Ganga.GPIDev.Base.Objects import Node
 
 
 class GangaRepositorySQLite(GangaRepository):

@@ -5,7 +5,7 @@
 ##########################################################################
 from __future__ import division
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, file_contains, write_file, sleep_until_state
+from GangaTest.Framework.utils import sleep_until_completed, write_file
 import gzip
 import os
 import tempfile

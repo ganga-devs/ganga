@@ -1,9 +1,6 @@
 from GangaTest.Framework.tests import GangaGPITestCase
 from Ganga.GPIDev.Lib.File.GoogleFile import GoogleFile
-import unittest
-import tempfile
 import os
-import pickle
 
 
 class TestGoogleFile(GangaGPITestCase):

@@ -7,8 +7,6 @@ from GangaRepository import InaccessibleObjectError
 import time
 import threading
 
-import sys
-
 
 class RegistryError(GangaException):
 

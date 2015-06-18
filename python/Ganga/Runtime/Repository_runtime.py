@@ -5,15 +5,13 @@ Internal initialization of the repositories.
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('Configuration')
 
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
 import os.path
 from Ganga.Utility.files import expandfilename
-from Ganga.Core.GangaRepository import getRegistries, RepositoryError
+from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Lib.Job import Job
 
 
 def requiresAfsToken():

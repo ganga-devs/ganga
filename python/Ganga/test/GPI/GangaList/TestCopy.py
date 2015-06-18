@@ -5,7 +5,6 @@
 ##########################################################################
 
 from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.GPIDev.Base.Proxy import addProxy, getProxyAttr, isProxy, isType
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 #GangaList = GangaList._proxyClass

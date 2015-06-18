@@ -5,9 +5,6 @@
 ##########################################################################
 from __future__ import division
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, write_file
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
-import os
 
 
 class TestPostProcessor_structure(GangaGPITestCase):

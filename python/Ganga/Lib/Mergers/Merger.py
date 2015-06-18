@@ -4,15 +4,13 @@
 # $Id: Merger.py,v 1.5 2009-03-18 10:46:01 wreece Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IMerger import IMerger
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import FileItem, SimpleItem
 
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logging import getLogger
 import commands
 import os
 import string

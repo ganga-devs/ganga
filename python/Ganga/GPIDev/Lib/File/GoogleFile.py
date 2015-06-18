@@ -13,7 +13,6 @@ logger = logging.getLogger('Ganga.GPIDev.Lib.File.GoogleFile')
 regex = re.compile('[*?\[\]]')
 import os
 import pickle
-import pprint
 import stat
 import webbrowser
 import httplib2
@@ -334,7 +333,6 @@ class GoogleFile(IGangaFile):
             # Metadata storage and md5checksum integrity check
             file = service.files().insert(
                 body=body, media_body=media_body).execute()
-            # pprint.pprint(file) #Prints metadata
 
             with open(FILENAME, 'rb') as thefile:
                 if file.get('md5Checksum') == hashlib.md5(thefile.read()).hexdigest():
@@ -474,7 +472,6 @@ class GoogleFile(IGangaFile):
             'mimeType': 'application/vnd.google-apps.folder'
         }
         file = service.files().insert(body=body).execute()
-        # pprint.pprint(file)
         self.GangaFolderId = file.get('id')
 
     def _setup_service(self):

@@ -1,11 +1,8 @@
 from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.GPIDev.Base.Proxy import addProxy, getProxyAttr, isProxy, isType, TypeMismatchError
+from Ganga.GPIDev.Base.Proxy import addProxy, TypeMismatchError
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
-import os
-import pickle
 import random
 import string
-import tempfile
 
 
 class TestNestedLists(GangaGPITestCase):

@@ -1,9 +1,7 @@
 
 from common import *
 
-import sys
-
-from TaskApplication import ExecutableTask, taskApp
+from TaskApplication import taskApp
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 

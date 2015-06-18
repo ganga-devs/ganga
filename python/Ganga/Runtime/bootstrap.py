@@ -41,7 +41,6 @@ _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 
 from Ganga.Utility.files import fullpath
 
-import exceptions
 import sys
 import time
 
@@ -753,11 +752,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         shellconfig.addOption('IgnoredVars', [
                               '_', 'SHVL', 'PWD'], 'list of env variables not inherited in Shell environment')
 
-        #[Output] section
-        # Trigger loading of the Configure elements from within the File
-        # directory, having lots of options for these files here feels wrong
-        import Ganga.GPIDev.Lib.File.Configure
-
         #[Queues] section
         queuesconfig = makeConfig(
             "Queues", "configuration section for the queues")
@@ -928,7 +922,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         # dictionary automatically
         try:
             import Ganga.Utility.files
-            config = Ganga.Utility.Config.getConfig('Configuration')
+            from Ganga.Utility.Config.Config import getConfig
+            config = getConfig('Configuration')
 
             # runtime warnings issued by the interpreter may be suppresed
             #config['IgnoreRuntimeWarnings'] = False
@@ -1079,9 +1074,8 @@ default_backends = LCG
             'ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
         exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
         exportToGPI('JobError', JobError, 'Exceptions')
-
-        # initialize external monitoring services subsystem
-        import Ganga.GPIDev.MonitoringServices
+        
+        import Ganga.GPIDev.MonitoringServices; 'SIDE-EFFECTS' #This has a side-effect on import of adding a config section
 
         def license():
             'Print the full license (GPL)'
@@ -1238,15 +1232,15 @@ default_backends = LCG
         # import default runtime modules
         import Repository_runtime
         import Ganga.Core
-        import associations
+        
+        from associations import load_associations
+        load_associations()
 
         # bootstrap user-defined runtime modules and enable transient named
         # template registries
 
         # bootstrap runtime modules
-        import Ganga.GPIDev.Lib.Registry
-        from Ganga.GPIDev.Lib.JobTree import JobTree, TreeError
-        import Ganga.GPIDev.Lib.Tasks
+        from Ganga.GPIDev.Lib.JobTree import TreeError
 
         # boostrap the repositories and connect to them
         for n, k, d in Repository_runtime.bootstrap():
@@ -1495,10 +1489,8 @@ default_backends = LCG
 
         shell = config['TextShell']
 
-        import Ganga.Utility.Config.Config
-        # Ganga.Utility.Config.Config.sanityCheck()
-
         if shell == 'IPython':
+            import Ganga.Utility.Config
             ipconfig = Ganga.Utility.Config.getConfig('TextShell_IPython')
 #            ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython','IPython shell configuration')
 #            ipconfig.addOption('args',"['-colors','LightBG', '-noautocall']",'FIXME')
@@ -1521,8 +1513,6 @@ default_backends = LCG
 
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
-
-            from Ganga.Utility.logging import enableCaching
 
             import Ganga.Utility.logging
             Ganga.Utility.logging.enableCaching()
@@ -1572,7 +1562,6 @@ default_backends = LCG
             ipshell.IP.user_ns['ganga_prompt'] = ganga_prompt
 
             # attach magic functions
-            import IPythonMagic
             py_version = float(sys.version.split()[0].rsplit('.', 1)[0])
             if py_version >= 2.6:
                 import readline

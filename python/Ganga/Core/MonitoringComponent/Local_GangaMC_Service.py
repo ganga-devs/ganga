@@ -5,10 +5,7 @@ import time
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
 
-import sys
-
 from Ganga.Utility.threads import SynchronisedObject
-from Ganga.Utility.util import IList
 
 import Ganga.GPIDev.Credentials as Credentials
 from Ganga.Core.InternalServices import Coordinator
@@ -18,12 +15,9 @@ import Ganga.Utility.logging
 log = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import BackendError
-import Ganga.GPIDev.Adapters.IBackend
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.makeConfig(
     'PollThread', 'background job status monitoring and output retrieval')
-
-from Ganga.Core import GangaException
 
 # some defaults
 config.addOption('repeat_messages', False,
@@ -104,7 +98,7 @@ class MonitoringWorkerThread(GangaThread):
     def _execUpdateAction(self):
         global tpFreeThreads
         # DEBUGGING THREADS
-        ##import sys
+        # import sys
         # sys.settrace(_trace)
         while not self.should_stop():
             log.debug("%s waiting..." % threading.currentThread())
@@ -812,7 +806,7 @@ class JobRegistry_Monitor(GangaThread):
 
             #log.info( "%s" % str( jobList ) )
 
-            returnableSet = set([])  # IList()
+            returnableSet = set([])
 
             for job in jobList:
 
@@ -832,12 +826,10 @@ class JobRegistry_Monitor(GangaThread):
                     return set([]), 999
 
             return returnableSet, size
-            # Function to replace this simpler IList description
-            #IList(filter( lambda x: x.status in [ 'submitted', 'running' ], jobListSet ), self.stopIter)
 
         def _returnMonitorableSubJobs(jobList, found):
 
-            returnableSet = set([])  # IList()
+            returnableSet = set([])
 
             for job in jobList:
 
@@ -854,9 +846,6 @@ class JobRegistry_Monitor(GangaThread):
                         return set([])
 
             return returnableSet
-
-            # Function to replace the simpler IList description
-            #IList(filter( lambda x: ( (x.status in [ 'submitting' ]) and (len(x.subjobs) > 0) ), jobListSet ), self.stopIter)
 
         # This function will be run by update threads
         def checkBackend(backendObj, jobListSet, lock):

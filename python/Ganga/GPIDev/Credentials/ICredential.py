@@ -71,7 +71,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Plugin.GangaPlugin import allPlugins, PluginManagerError
+from Ganga.Utility.Plugin.GangaPlugin import allPlugins
 from Ganga.Utility.Shell import Shell
 
 from Ganga.Core.InternalServices import Coordinator

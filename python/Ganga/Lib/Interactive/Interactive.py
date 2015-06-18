@@ -27,7 +27,7 @@ __version__ = "1.4"
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Lib.File import FileBuffer
-from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility import logging, tempfile, util
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import expand_vars
@@ -38,7 +38,6 @@ import re
 import shutil
 import signal
 import time
-import copy
 
 
 logger = logging.getLogger()
@@ -77,17 +76,15 @@ class Interactive(IBackend):
         if keyword and outfileName and hasattr(job, "outputdir"):
             outfilePath = os.path.join(job.outputdir, outfileName)
             try:
-                statfile = open(outfilePath)
-                statString = statfile.read()
-                testString = "".join(["^", keyword, " (?P<value>\\d*)"])
-                regexp = re.compile(testString, re.M)
-                match = regexp.search(statString)
-                if match:
-                    value = int(match.group("value"))
+                with open(outfilePath) as statfile:
+                    statString = statfile.read()
+                    testString = "".join(["^", keyword, " (?P<value>\\d*)"])
+                    regexp = re.compile(testString, re.M)
+                    match = regexp.search(statString)
+                    if match:
+                        value = int(match.group("value"))
             except IOError:
                 pass
-            finally:
-                statfile.close()
         return value
 
     def submit(self, jobconfig, master_input_sandbox):
@@ -263,7 +260,7 @@ class Interactive(IBackend):
             "",
             "commandList = [",
             "   'python -c \\\'%s\\\'' % pyCommandString,",
-            "   'exec(' " + exeString + " " + argString + ")]",
+            "   'exec ' " + exeString + " " + argString + "]",
             "commandString = ';'.join( commandList )",
             "",
             "result = os.system( '%s' % commandString )",

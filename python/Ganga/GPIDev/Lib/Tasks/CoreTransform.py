@@ -3,7 +3,7 @@ from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
 from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-from Ganga.GPIDev.Lib.Job.Job import JobError, Job
+from Ganga.GPIDev.Lib.Job.Job import Job
 import copy
 import re
 

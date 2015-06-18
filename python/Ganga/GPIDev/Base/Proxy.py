@@ -10,9 +10,8 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 import Ganga.GPIDev.Schema as Schema
 
-from Ganga.Core import GangaException, GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError, SchemaError
+from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
-from Ganga.Utility.util import importName
 prepconfig = getConfig('Preparable')
 
 import os
@@ -480,8 +479,6 @@ def GPIProxyClassFactory(name, pluginclass):
         # need to know about the types that require metadata attribute checking
         # this allows derived types to get same behaviour for free.
         from Ganga.GPIDev.Lib.Job.Job import Job
-        from Ganga.GPIDev.Lib.Tasks.Task import Task
-        from Ganga.GPIDev.Lib.Tasks.Transform import Transform
         metadata_objects = [Job]
         if x == '_impl':
             raise AttributeError(

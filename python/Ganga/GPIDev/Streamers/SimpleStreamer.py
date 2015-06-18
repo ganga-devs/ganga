@@ -5,7 +5,7 @@
 ##########################################################################
 
 
-from utilities import serialize, gangaObjectFactory, GangaObjectFactoryError
+from utilities import serialize, gangaObjectFactory
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)

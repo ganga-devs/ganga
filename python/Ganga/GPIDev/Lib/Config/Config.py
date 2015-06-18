@@ -71,7 +71,7 @@ class ConfigProxy(object):
         return self._display(False)
 
     def _display(self, colour):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, getColour, Foreground, Background, Effects
+        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, getColour, Foreground, Effects
         import Ganga.Utility.external.textwrap as textwrap
 
         if colour:
@@ -165,7 +165,7 @@ class MainConfigProxy:
         return self._display(False)
 
     def _display(self, colour):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
+        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Effects
 
         if colour:
             markup = ANSIMarkup()

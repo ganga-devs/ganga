@@ -2,7 +2,7 @@
 from Ganga.GPIDev.Schema import *
 from common import *
 from new import classobj
-from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 
 handler_map = []

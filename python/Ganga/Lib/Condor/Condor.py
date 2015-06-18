@@ -60,15 +60,12 @@ __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "09 August 2009"
 __version__ = "2.5"
 
-from CondorRequirements import CondorRequirements
-
 from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.ColourText import Foreground, Effects
 
-import Ganga.Utility.Config
 import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
 

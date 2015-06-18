@@ -15,7 +15,7 @@
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from Ganga.Utility.Plugin import PluginManagerError, allPlugins
+from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core.InternalServices.Coordinator import disableInternalServices
 from Ganga.Core import GangaException
 
@@ -72,8 +72,6 @@ class RepositoryError(GangaException):
             repo.registry.name, what))
         logger.error(
             'If you believe the problem has been solved, type "reactivate()" to re-enable ')
-        import Ganga.Runtime.bootstrap
-        # bootstrap.printOpenFiles()
         disableInternalServices()
         GangaException.__init__(self, what)
 

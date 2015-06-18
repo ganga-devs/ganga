@@ -4,10 +4,8 @@ import subprocess
 import threading
 import pickle
 import signal
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
-from Ganga.Utility.Shell import expand_vars
+from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
 

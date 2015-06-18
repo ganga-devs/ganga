@@ -1010,7 +1010,6 @@ sys.exit(0)
     def master_bulk_resubmit(self, rjobs):
         '''CREAM bulk resubmission'''
 
-        from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
 #        job = self.getJobObject()

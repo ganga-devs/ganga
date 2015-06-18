@@ -12,7 +12,6 @@
 
 import os
 import re
-import time
 import math
 #import tempfile
 from types import *
@@ -30,9 +29,6 @@ from Ganga.Utility.util import isStringLike
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import *
-
-# for runtime stdout/stderr inspection
-from Ganga.Lib.MonitoringServices.Octopus import Octopus, ProtocolException
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -625,7 +621,6 @@ class LCG(IBackend):
     def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''GLITE bulk submission'''
 
-        from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
@@ -689,7 +684,6 @@ class LCG(IBackend):
     def master_bulk_resubmit(self, rjobs):
         '''GLITE bulk resubmission'''
 
-        from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
         job = self.getJobObject()
@@ -853,8 +847,6 @@ class LCG(IBackend):
             msg = 'only jobs in \'new\', \'failed\', \'submitted\' or \'completed\' state can do match'
             logger.warning(msg)
             return
-
-        from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError
 
         doPrepareEmulation = False
 
@@ -1475,12 +1467,6 @@ sys.exit(0)
             '###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
         mon = job.getMonitoringService()
-
-#        # catch the monitoring service information of OctopusMS
-#        if mon.getJobInfo().has_key('Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS'):
-#            self.monInfo = mon.getJobInfo()['Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS']
-#        else:
-#            self.monInfo = None
 
         self.monInfo = None
 

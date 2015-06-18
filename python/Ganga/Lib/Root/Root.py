@@ -6,16 +6,11 @@ from __future__ import print_function
 # $Id: Root.py,v 1.4 2008-09-12 08:08:58 wreece Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 #from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core import ApplicationConfigurationError
 
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
 from Ganga.Utility.root import getrootsys, getpythonhome
@@ -26,7 +21,6 @@ logger = Ganga.Utility.logging.getLogger()
 #config = getConfig('Root_Properties')
 
 import sys
-import shutil
 config = makeConfig('ROOT', "Options for Root backend")
 config.addOption('arch', 'slc4_ia32_gcc34', 'Architecture of ROOT')
 config.addOption(

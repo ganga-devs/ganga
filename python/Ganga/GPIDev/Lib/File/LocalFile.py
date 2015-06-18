@@ -4,7 +4,6 @@
 # $Id: LocalFile.py,v 0.1 2011-09-29 15:40:00 idzhunov Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 
 from IGangaFile import IGangaFile

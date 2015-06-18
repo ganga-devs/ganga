@@ -82,7 +82,7 @@ class FileWorkspace:
         subpath = self.subpath
         if filename is None:
             filename = ''
-        if not self.jobid is None:
+        if self.jobid is not None:
             jobdir = str(self.jobid)
         else:
             jobdir = ''
@@ -106,7 +106,7 @@ class FileWorkspace:
     #
     def writefile(self, fileobj, executable=None):
 
-        from Ganga.GPIDev.Lib.File import File, FileBuffer
+        from Ganga.GPIDev.Lib.File import FileBuffer
 
         try:
             name, contents = fileobj
@@ -146,7 +146,7 @@ class FileWorkspace:
     # the part of the tree as resolved by getPath() is pruned recursively
     # if preserve_top is true then the directory specified by getPath() will
     # be preserved
-    def remove(self, preserve_top=None):
+    def remove(self, preserve_top=False):
         try:
             import shutil
             logger.debug('removing %s', self.getPath())

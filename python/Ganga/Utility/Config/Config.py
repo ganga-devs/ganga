@@ -408,8 +408,6 @@ class ConfigOption:
         # check the type of the value unless the cast_type is not NoneType
         logger.debug('checking value type: %s (%s)', str(cast_type), optdesc)
 
-        import types
-
         def check_type(x, t):
             return type(x) is t or x is t
 

@@ -28,19 +28,14 @@
 ##########################################################################
 
 import os
-import sys
-import re
-import tempfile
 from types import *
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.File import *
 
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import isStringLike
 
 _allShells = {}
 
@@ -123,7 +118,7 @@ def getShell(middleware='EDG', force=False):
         if 'LFC_HOST' not in s.env:
             try:
                 s.env['LFC_HOST'] = config['DefaultLFC']
-            except Ganga.Utility.Config.ConfigError:
+            except ConfigError:
                 pass
 
         if 'LFC_CONNTIMEOUT' not in s.env:

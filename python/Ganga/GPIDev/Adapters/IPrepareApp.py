@@ -4,7 +4,6 @@
 # $Id: IApplication.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
@@ -18,7 +17,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.files import expandfilename
 config = makeConfig('Preparable', 'Parameters for preparable applications')
 config.addOption('unprepare_on_copy', False,

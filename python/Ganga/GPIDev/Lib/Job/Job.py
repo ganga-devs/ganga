@@ -9,40 +9,32 @@ from Ganga.GPIDev.Schema import *
 from MetadataDict import *
 
 import Ganga.Utility.logging
-from Ganga.Lib.Notifier import Notifier
-from Ganga.Lib.Checkers import FileChecker, CustomChecker
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiPostProcessor
 logger = Ganga.Utility.logging.getLogger()
 
-from Ganga.Utility.util import isStringLike
+foo = 'fred'
+
 from Ganga.Utility.logging import log_user_exception
 
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.getConfig('Configuration')
-from Ganga.Utility.files import expandfilename
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository import RegistryKeyError
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
-from Ganga.GPIDev.Lib.File import ShareDir
 
 from Ganga.GPIDev.Lib.Registry import *
 from Ganga.Core.GangaRepository import *
 
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, addProxy, stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 import os
-import shutil
-import sys
 import copy
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import getSharedPath
-#shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
 shared_path = getSharedPath()
 
 
@@ -100,8 +92,7 @@ class JobInfo(GangaObject):
     def increment(self):
         self.submit_counter += 1
 
-from JobTime import JobTime
-
+from JobTime import JobTime #Provides plugin for category 'jobtime'
 
 class Job(GangaObject):
 
@@ -893,7 +884,7 @@ class Job(GangaObject):
         super(Job, self)._auto__init__()
 
     def _init_workspace(self):
-        logger.debug("Job %s Calling _init_workspace", str(self.getFQID('.')))
+        logger.debug("Job %s Calling _init_workspace " + str(self.getFQID('.')))
         self.getDebugWorkspace(create=True)
 
     def getWorkspace(self, what, create=True):
@@ -1384,7 +1375,6 @@ class Job(GangaObject):
                         "prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared)
                     logger.warning(
                         "tested: %s" % os.path.join(shared_path, self.application.is_prepared.name))
-                    from Ganga.GPIDev.Lib.File import ShareDir
                     logger.warning("shared_path: %s" % shared_path)
                     logger.warning("result: %s" % str(delay_result))
                     msg = "Cannot find shared directory for prepared application; reverting job to new and unprepared"
@@ -1427,9 +1417,6 @@ class Job(GangaObject):
 
             subjobs = self.splitter.validatedSplit(self)
             if subjobs:
-                # print "*"*80
-                #import sys
-                # subjobs[0].printTree(sys.stdout)
 
                 # EBKE changes
                 i = 0
@@ -1491,7 +1478,7 @@ class Job(GangaObject):
         if keep_on_fail is None:
             keep_on_fail = gpiconfig['job_submit_keep_on_fail']
 
-        from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError, GangaException
+        from Ganga.Core import JobManagerError, IncompleteJobSubmissionError, GangaException
 
         # make sure nobody writes to the cache during this operation
         # job._registry.cache_writers_mutex.lock()
@@ -1783,11 +1770,9 @@ class Job(GangaObject):
             # decrement the reference counter.
             if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
                 if self.application.is_prepared is not True:
-                    self.application.decrementShareCounter(
-                        self.application.is_prepared.name)
+                    self.application.decrementShareCounter(self.application.is_prepared.name)
                     for sj in self.subjobs:
-                        self.application.decrementShareCounter(
-                            self.application.is_prepared.name)
+                        self.application.decrementShareCounter(self.application.is_prepared.name)
 
         try:
             self._setDirty()

@@ -1,17 +1,8 @@
 #!/usr/bin/env python
 import Queue
-import threading
 import traceback
-import signal
-import os
-import pickle
-import subprocess
 import types
-import time
-import threading
 from Ganga.Core.GangaThread import GangaThread
-from Ganga.Core import GangaException
-from Ganga.GPIDev.Credentials import getCredential
 from Ganga.Utility.execute import execute
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig

@@ -3,14 +3,13 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.GPIDev.Base.Proxy import addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.Utility.Plugin.GangaPlugin import allPlugins
 from Ganga.Utility.util import containsGangaObjects, isNestedList
 from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError, isType
 import copy
 import sys
 
 from Ganga.Utility.logging import getLogger
-logger = getLogger(modulename=1)
+logger = getLogger(modulename=True)
 
 
 def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):

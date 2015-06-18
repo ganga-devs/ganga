@@ -143,23 +143,6 @@ if not _defaultPlatform:
     _defaultPlatform = detectPlatform()
 
 
-# BEGIN horrid hack as ganga core still supports python 2.4!!
-import sys
-try:
-    from email.mime.multipart import MIMEMultipart
-except:
-    import email
-    import email.MIMEMultipart
-    import email.MIMENonMultipart
-    import email.Generator
-    import email.Parser
-    sys.modules['email.mime'] = email
-    sys.modules['email.mime.multipart'] = email.MIMEMultipart
-    sys.modules['email.mime.nonmultipart'] = email.MIMENonMultipart
-    sys.modules['email.generator'] = email.Generator
-    sys.modules['email.parser'] = email.Parser
-# END horrid hack
-
 from Ganga.Utility.Setup import PackageSetup
 # The setup object
 setup = PackageSetup(_externalPackages)

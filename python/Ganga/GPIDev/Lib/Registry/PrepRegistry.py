@@ -1,17 +1,10 @@
 import os
-import types
-import atexit
 import shutil
 import time
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import Registry
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
-from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryAccessError, RegistryKeyError
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy, _wrap
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-import Ganga.Utility.logging
-from Ganga.GPIDev.Lib.File import ShareDir, getSharedPath
+from Ganga.GPIDev.Lib.File import getSharedPath
 import Ganga.Utility.Config
 logger = Ganga.Utility.logging.getLogger()
 

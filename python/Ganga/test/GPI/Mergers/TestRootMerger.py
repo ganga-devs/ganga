@@ -183,7 +183,7 @@ if __name__ == '__main__':
         r.script = File(fileName)
 
         j = Job(application=r, backend=Local())
-        import Ganga.Utility.Config
+        from Ganga.Utility.Config import getConfig
         if not getConfig('Output')['ForbidLegacyInput']:
             j.inputsandbox = [file_path]
         else:

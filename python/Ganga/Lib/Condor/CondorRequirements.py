@@ -27,7 +27,7 @@ __date__ = "29 July 2008"
 __version__ = "1.4"
 
 from Ganga.GPIDev.Base.Objects import GangaObject
-from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 

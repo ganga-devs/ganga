@@ -27,6 +27,7 @@ logger = getLogger()
 # Make ancient systems without simplejson ignore GoogleFile
 try:
     from GoogleFile import GoogleFile
+    _foo = hat()
 except ImportError as e:
     if e.args[0].endswith('django.utils'):
         logger.warning(

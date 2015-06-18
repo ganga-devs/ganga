@@ -4,7 +4,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryIndexError, RegistryAccessError
+from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
 import fnmatch
 from Ganga.Utility.external.ordereddict import oDict
 
@@ -343,7 +343,7 @@ class RegistrySlice(object):
         return str(val)
 
     def _display(self, interactive=0):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
+        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Effects
         if interactive:
             markup = ANSIMarkup()
         else:

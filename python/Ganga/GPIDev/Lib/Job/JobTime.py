@@ -1,13 +1,13 @@
-import os
 import datetime
-import time
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['datetime'] = datetime
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 class JobTime(GangaObject):
 

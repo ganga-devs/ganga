@@ -1,10 +1,7 @@
-## from Ganga.Utility.Config import makeConfig, ConfigError
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import isStringLike
 
 from Ganga.Utility.GridShell import getShell
-from Ganga.Lib.LCG.GridCache import GridCache
 
 from Ganga.GPIDev.Credentials.ICredential import ICredential
 

@@ -8,19 +8,13 @@ from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Schema import ComponentItem, Schema, SimpleItem, Version
-from Ganga.Utility.ColourText import Foreground, Effects
 
-import Ganga.Utility.Config
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-import commands
 import inspect
 import os
-import time
 from Ganga.Lib.Root import randomString
-
-logger = Ganga.Utility.logging.getLogger()
 
 
 def shutdown_transport(tr):
@@ -640,7 +634,6 @@ print("***_FINISHED_***")
 
     def grabremoteinfo(self, out):
 
-        from string import strip
         import pickle
 
         # Find the start and end of the pickle
@@ -802,7 +795,6 @@ print("***_FINISHED_***")
         # info with the info of the remote job
         import os
         import getpass
-        from string import strip
 
         # first, loop over the jobs and sort by host, username, gangadir and
         # pre_script

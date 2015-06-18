@@ -98,9 +98,6 @@ from ICredential import ICredential
 from ICredential import registerCommandSet
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Runtime import Repository_runtime
-from Ganga.Utility.Config import getConfig
-from Ganga.Utility.Config.Config import ConfigError
-from Ganga.Utility.files import fullpath
 from Ganga.Utility.logging import getLogger
 
 logger = getLogger()
@@ -199,9 +196,6 @@ class AfsToken (ICredential):
             available = False
 
         if not available:
-            #         gangadir = fullpath( getConfig( "Configuration" )[ "gangadir" ] )
-            #         if ( 0 == gangadir.find( "/afs" ) ):
-            #            available = True
             available = Repository_runtime.requiresAfsToken()
 
         if available:

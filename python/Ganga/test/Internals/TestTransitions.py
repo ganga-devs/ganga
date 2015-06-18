@@ -3,7 +3,6 @@
 #
 # $Id: TestTransitions.py,v 1.1 2008-07-17 16:41:16 moscicki Exp $
 ##########################################################################
-from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Schema import *
 
 from Ganga.Lib.Executable import Executable, RTHandler
@@ -37,7 +36,7 @@ from Ganga.Utility.Plugin import allPlugins
 allPlugins.add(MockExeApplication, 'applications', 'MockExeApplication')
 
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed, failureException, file_contains
+from GangaTest.Framework.utils import sleep_until_completed
 
 
 class TestTransitions(GangaGPITestCase):

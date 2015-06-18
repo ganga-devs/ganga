@@ -244,7 +244,7 @@ class TestMutableMethods(GangaGPITestCase):
 
         from Ganga.GPIDev.Lib.File import File as gFile
 
-        import Ganga.Utility.Config
+        from Ganga.Utility.Config import getConfig
         if not getConfig('Output')['ForbidLegacyInput']:
 
             def testList(_list):

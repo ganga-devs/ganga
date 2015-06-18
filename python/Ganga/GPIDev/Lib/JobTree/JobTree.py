@@ -5,12 +5,11 @@
 ##########################################################################
 import os
 import types
-import atexit
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
-from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryAccessError, RegistryKeyError
+from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryKeyError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy, _wrap
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
@@ -129,7 +128,7 @@ class JobTree(GangaObject):
         return GPIProxyObjectFactory(c)
 
     def _display(self, interactive=0):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
+        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup
         if interactive:
             markup = ANSIMarkup()
         else:

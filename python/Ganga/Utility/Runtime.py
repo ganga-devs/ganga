@@ -67,7 +67,7 @@ def getSearchPath(configPar="SCRIPTS_PATH"):
        Return value: Search path"""
 
     import os
-    from Ganga.Utility.Config import Config, ConfigError, getConfig
+    from Ganga.Utility.Config import ConfigError, getConfig
 
     config = getConfig("Configuration")
 

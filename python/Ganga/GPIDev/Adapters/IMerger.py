@@ -5,13 +5,9 @@
 ##########################################################################
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
-from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor, MultiPostProcessor
-from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
 from Ganga.GPIDev.Schema import *
-import commands
 import os
-import string
 
 from posixpath import curdir, sep, pardir, join, abspath, commonprefix
 

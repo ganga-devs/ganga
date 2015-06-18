@@ -295,7 +295,7 @@ class _TestRootBase(object):
                 mainH = join(testDir, 'Main.h')
                 makeFile = join(testDir, 'Makefile')
 
-                import Ganga.Utility.Config
+                from Ganga.Utility.Config import getConfig
                 if not getConfig('Output')['ForbidLegacyInput']:
                     self.j.inputsandbox = [mainCpp, mainH, makeFile]
                 else:
@@ -443,7 +443,6 @@ class _DefaultJobTest(ICheckTest):
 def addTests(test_container, testinstance, testname):
     """Nasty introspective function to produce a test suite"""
     from inspect import getmembers, ismethod
-    import new
     # introspect the testclass to find methods to pass on
     for test in getmembers(testinstance):  # the test methods used
         if ismethod(test[1]):

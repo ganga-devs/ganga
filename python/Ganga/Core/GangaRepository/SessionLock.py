@@ -9,7 +9,6 @@ from __future__ import print_function
 import os
 import time
 import errno
-import threading
 import fcntl
 import random
 
@@ -196,8 +195,6 @@ class SessionLockRefresher(GangaThread):
 
     def clearDeadLocks(self, now):
         try:
-            from Ganga.Core import monitoring_component
-            # if (not monitoring_component is None) and monitoring_component.enabled:
             # Make list of sessions that are "alive"
             ls_sdir = os.listdir(self.sdir)
             session_files = [f for f in ls_sdir if f.endswith(

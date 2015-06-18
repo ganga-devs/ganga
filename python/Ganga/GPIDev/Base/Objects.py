@@ -17,22 +17,18 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 from Ganga.Utility.Plugin import allPlugins, PluginManagerError
-from Ganga.Utility.Config import Config
+from Ganga.Utility.Config.Config import getConfig
 
 import types
 import copy
 
 import Ganga.GPIDev.Schema as Schema
 
-from Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, isType, TypeMismatchError
+from Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError
 from Ganga.Core import GangaValueError
 
-from Ganga.Utility.logic import implies
-from Ganga.Utility.util import canLoopOver, isStringLike
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
-
-import sys
 from Ganga.Core import GangaException
 
 
@@ -336,9 +332,6 @@ class Descriptor(object):
 
         if item.isA(Schema.ComponentItem):
             if item['sequence']:
-                ##                 checklist=filter(lambda x: not implies(x is None,item['optional']) or  x._category != item['category'],val)
-                # if len(checklist) > 0:
-                ##                     raise AttributeError('%s: attempt to assign incompatible objects %s to the property in category "%s"'%(self._name, str(checklist),item['category']))
                 if item['preparable']:
                     val = makeGangaList(
                         val, cloneVal, parent=obj, preparable=True)
@@ -557,8 +550,7 @@ class GangaObject(Node):
             _haveLocked = False
             _counter = 1
             _sleep_size = 2.
-            _timeOut = Ganga.Utility.Config.getConfig(
-                'Configuration')['DiskIOTimeout']
+            _timeOut = getConfig('Configuration')['DiskIOTimeout']
             while not _haveLocked:
                 err = None
                 try:

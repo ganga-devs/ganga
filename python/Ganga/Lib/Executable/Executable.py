@@ -4,7 +4,6 @@
 # $Id: Executable.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 from Ganga.GPIDev.Schema import *
@@ -12,14 +11,9 @@ from Ganga.GPIDev.Schema import *
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import *
-#from Ganga.GPIDev.Lib.File import File
-#from Ganga.GPIDev.Lib.File import SharedDir
-from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef
-from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core import ApplicationConfigurationError
 
 import os
-import shutil
 from Ganga.Utility.files import expandfilename
 shared_path = os.path.join(expandfilename(getConfig(
     'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])

@@ -9,7 +9,7 @@ class InternalParentAssignment(MultipassTest):
 
     def pass1(self):
         j = Job()
-        import Ganga.Utility.Config
+        from Ganga.Utility.Config import getConfig
         if not getConfig('Output')['ForbidLegacyInput']:
             j.inputsandbox = ['a', 'b', 'c']
             assert(j._impl.inputsandbox[0]._parent)
@@ -26,7 +26,7 @@ class InternalParentAssignment(MultipassTest):
         # print self.data
         j = jobs(self.data[1])
         # print j
-        import Ganga.Utility.Config
+        from Ganga.Utility.Config import getConfig
         if not getConfig('Output')['ForbidLegacyInput']:
             assert(j._impl.inputsandbox[0]._parent)
         else:

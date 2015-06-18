@@ -15,7 +15,6 @@ from Ganga.GPIDev.Lib.File import File, ShareDir
 
 import os
 import itertools
-import datetime
 import time
 
 import threading

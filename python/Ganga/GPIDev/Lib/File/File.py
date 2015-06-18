@@ -9,7 +9,6 @@ config = Ganga.Utility.Config.getConfig('Configuration')
 gangadir = Ganga.Utility.Config.getConfig('Configuration')['gangadir']
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.GangaList import GangaList
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory

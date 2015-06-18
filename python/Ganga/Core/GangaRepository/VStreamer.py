@@ -216,9 +216,8 @@ class VStreamer(object):
 ##########################################################################
 # XML Parser.
 
-from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.Plugin import PluginManagerError, allPlugins
-from Ganga.GPIDev.Schema import Schema, Version
+from Ganga.GPIDev.Schema import Version
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()

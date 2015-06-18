@@ -19,8 +19,6 @@ import Ganga.Utility.util
 from Ganga.GPIDev.Lib.File import FileBuffer
 
 import os
-import sys
-import copy
 import os.path
 import re
 import errno

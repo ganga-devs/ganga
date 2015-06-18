@@ -98,8 +98,6 @@ class StandardJobConfig:
         You do not have to call this method unless you explicitly modify some of the original values.
         '''
 
-        from Ganga.GPIDev.Lib.File import File
-
         self.__all_inputbox = self.inputbox[:]
         self.__args_strings = []
         self.__exe_string = ""

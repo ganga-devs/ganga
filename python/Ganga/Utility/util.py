@@ -291,37 +291,6 @@ def importName(modulename, name):
 # ------------------------
 
 
-class IList:
-
-    """
-    Proxy class for list objects that enables breaking the elements iteration if the 
-    condition flag (sentinel) is set to False during this process
-    All the other operations are delegated to the list object itself
-    #note: the same functionality could be achieved by extending list object 
-    #and overriding the __iter__() method but unfortunately this is not exposed in Python2.2
-    #TODO: review this implementation in a more OO way when min Python version in Ganga is 2.3
-    """
-
-    def __init__(self, list, sentinel):
-        self._list = list
-        self.sentinel = sentinel
-        self.iterator = None
-
-    def next(self):
-        if self.sentinel.isSet():
-            raise StopIteration
-        return next(self.iterator)
-
-    def __myiter__(self):
-        return self
-
-    def __getattr__(self, attrib):
-        if attrib == '__iter__':
-            self.iterator = iter(self._list)
-            return getattr(self, '__myiter__')
-        return getattr(self._list, attrib)
-
-
 if __name__ == "__main__":
     import Ganga.Utility.logic as logic
 

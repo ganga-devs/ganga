@@ -1,6 +1,5 @@
 
 from GangaTest.Framework.tests import GangaGPITestCase
-import unittest
 
 
 class TestJobProperties(GangaGPITestCase):

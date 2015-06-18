@@ -3,18 +3,13 @@
 #
 ##########################################################################
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IChecker import IChecker, IFileChecker
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
-from Ganga.Utility.Plugin import allPlugins
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.GPIDev.Schema import FileItem, SimpleItem
+from Ganga.Utility.logging import getLogger
 import commands
 import copy
 import os
-import string
 import re
 
 

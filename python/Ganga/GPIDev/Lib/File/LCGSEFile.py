@@ -363,8 +363,6 @@ class LCGSEFile(IGangaFile):
         """
         Retrieves locally all files matching this LCGSEFile object pattern
         """
-        import subprocess
-
         to_location = self.localDir
 
         if not os.path.isdir(self.localDir):
