@@ -45,6 +45,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                                                      doc='name of the backend algorithm to use for splitting',
                                                      typelist=['str'], protected =1, visitable=0)
 
+    _exportmethods = ['split']
 
     def _attribute_filter__set__(self, name, value):
         if name is 'filesPerJob':
@@ -100,7 +101,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         j.inputdata = LHCbDataset( files             = datatmp[:],
                                    persistency       = self.persistency,
                                    depth             = self.depth )
-        j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
+        #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
 
         return j
 
@@ -112,10 +113,10 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         indata = inputdata
 
-        try:
-            logger.debug( "indata length: %s" % str( len(indata) ) )
-        except:
-            pass
+        #try:
+        #    logger.debug( "indata length: %s" % str( len(indata) ) )
+        #except:
+        #    pass
 
         #if not job.inputdata or not inputdata:
         #    logger.debug( "no job.inputdata" )
@@ -135,6 +136,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         self.depth             = indata.depth
         self.persistency       = indata.persistency
+
         self.XMLCatalogueSlice = indata.XMLCatalogueSlice
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:

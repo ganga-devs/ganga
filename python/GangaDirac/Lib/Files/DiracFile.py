@@ -99,7 +99,7 @@ class DiracFile(IGangaFile):
 
         #logger.debug( "DiracFile" )
 
-        super(DiracFile, self).__init__( **kwds )
+        super(DiracFile, self).__init__()
         self.locations   = []
 
         if str(namePattern).upper()[0:4] == "LFN:" and lfn=='':
@@ -420,12 +420,13 @@ class DiracFile(IGangaFile):
             if (self._storedReplicas == {} and len(self.subfiles) == 0 ) or forceRefresh:
 
                 self._storedReplicas =  execute('getReplicas("%s")' % self.lfn)
-                if self._storedReplicas.get( 'OK', False ):
+                if self._storedReplicas.get( 'OK', False ) is True:
                     self._storedReplicas = self._storedReplicas['Value']['Successful']
                 else:
                     logger.error( "Couldn't find replicas for: %s" % str( self.lfn ) )
                     raise GangaError( "Couldn't find replicas for: %s" % str( self.lfn ) )
                 logger.debug( "getReplicas: %s" % str(self._storedReplicas) )
+
                 self._updateRemoteURLs( self._storedReplicas )
 
                 these_replicas = [ self._storedReplicas[self.lfn] ]
@@ -442,6 +443,8 @@ class DiracFile(IGangaFile):
             for i in self.subfiles:
                 i._updateRemoteURLs( reps )
         else:
+            if self.lfn not in reps.keys():
+                return
             if self.locations != reps[self.lfn].keys():
                 self.locations = reps[self.lfn].keys()
             #logger.debug( "locations: %s" % str( self.locations ) )

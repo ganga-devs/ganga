@@ -32,12 +32,13 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    schema['files'] = ComponentItem(category='gangafiles',defvalue=[],
-                                    sequence=1,doc=docstr)
+    #schema['files'] = ComponentItem(category='gangafiles',defvalue=[],
+    #                                sequence=1,doc=docstr)
+    schema['files'] =  GangaFileItem(defvalue=[],typelist=['str','Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'],sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'
     schema['depth'] = SimpleItem(defvalue=0 ,doc=docstr)
     docstr = 'Use contents of file rather than generating catalog.'
-    schema['XMLCatalogueSlice']= FileItem(defvalue=None,doc=docstr)
+    schema['XMLCatalogueSlice']= GangaFileItem(defvalue=None,doc=docstr)
     docstr = 'Specify the dataset persistency technology'
     schema['persistency'] = SimpleItem(defvalue=None,typelist=['str','type(None)'] ,doc=docstr)
 
@@ -65,16 +66,25 @@ class LHCbDataset(GangaDataset):
     def __construct__(self, args):
         logger.debug( "__construct__" )
         self.files = []
-        if (len(args) != 1) or (type(args[0]) is not type([])):
-            super(LHCbDataset,self).__construct__(args)
+        if (len(args) != 1):
+            super(LHCbDataset,self).__construct__(args[1:])
+
+        logger.debug( "__construct__: %s" % str(args) )
+
+        if len(args) == 0:
+            return
+
+        self.files = []
+        if type( args[0] ) == type(''):
+            this_file = strToDataFile(args[0],False)
+            self.files.append(file_arg)
         else:
-            self.files = []
-            for f in args[0]:
-                if type(f) is type(''):
-                    file = strToDataFile(f,False)
-                    self.files.append(file)
+            for file_arg in args[0]:
+                if type(file_arg) is type(''):
+                    this_file = strToDataFile(file_arg,False)
                 else:
-                    self.files.append(f)
+                    this_file = file_arg
+                self.files.append(file_arg)
         logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
 
     def __len__(self):
@@ -89,7 +99,9 @@ class LHCbDataset(GangaDataset):
 
     def __getitem__(self,i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
-        return GPIProxyObjectFactory(self.files[i])
+        this_file = self.files[i]
+        #return GPIProxyObjectFactory(this_file)
+        return this_file
         #if type(i) == type(slice(0)):
         #    ds = LHCbDataset(files=self.files[i])
         #    ds.depth = self.depth
@@ -146,24 +158,36 @@ class LHCbDataset(GangaDataset):
                 logger.warning(msg)
                 logger.warning(str(result))
 
-    def extend(self,files,unique=False):
+    def extend(self, files,unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
         logger.debug( "extending Dataset" )
+        logger.debug( "files: %s" % str(files) )
         from Ganga.GPIDev.Base import ReadOnlyObjectError
-        if not hasattr(files,"__getitem__"):
-            files = [ files ]
-            #raise GangaException('Argument "files" must be a iterable.')
+
+        logger.debug(" extending by %s" % files )
 
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now'%(self._parent.id, self._name))
+
+        _external_files = []
+
+        if type( files ) == type(''):
+            _external_files = [ files ]
+
+        if not hasattr(files,"__getitem__"):
+            _external_files = [ files ]
+            #raise GangaException('Argument "files" must be a iterable.')
+
         names = self.getFileNames()
-        files = [f for f in files] # just in case they extend w/ self
-        for f in files:
-            file = getDataFile(f)
-            if file is None: file = f
-            if unique and file.namePattern in names: continue
-            self.files.append(file)
+        logger.debug( "names: %s" % str(names) )
+        _external_files.extend( [f for f in files if type(f) != type('')] ) # just in case they extend w/ self
+
+        for this_f in _external_files:
+            _file = getDataFile(this_f)
+            if _file is None: _file = this_f
+            if unique and _file.namePattern in names: continue
+            self.files.append(_file)
 
     def removeFile(self,file):
         try:
@@ -428,6 +452,7 @@ def string_dataset_shortcut(files,item):
     ## This clever change mirrors that in IPostprocessor (see there)
     ## essentially allows for dynamic extensions to JobTemplate
     ## such as LHCbJobTemplate etc.
+
     inputdataList  = [i._impl._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()\
                           if hasattr(i, '_impl')\
                           and isinstance(i._impl, ObjectMetaclass)\

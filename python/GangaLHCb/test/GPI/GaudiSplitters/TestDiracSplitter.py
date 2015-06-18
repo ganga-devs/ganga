@@ -11,8 +11,8 @@ from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except x:
-    print x
+except Exception, x:
+    print str(x)
     doConfig = True
 
 if doConfig:
@@ -77,8 +77,9 @@ class TestDiracSplitter(GangaGPITestCase):
         import copy
         #myLFNs = copy.deepcopy(LFNs)
         #myLFNs = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
+
         myLFNs = BKQuery('/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()[0:5]
-        myLFNs.extend( 'LFN:/not/a/file.dst' )
+        myLFNs.append( 'LFN:/not/a/file.dst' )
 
         j.inputdata = myLFNs
 
