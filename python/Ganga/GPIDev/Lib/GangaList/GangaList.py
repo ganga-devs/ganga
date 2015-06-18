@@ -319,30 +319,7 @@ class GangaList(GangaObject):
     def __reversed__(self):
         """Implements the __reversed__ list method introduced in 2.4"""
 
-        try:
-            return reversed(self._list)
-        except NameError:
-            # workaround for pythion < 2.4
-            class GangaReverseIter(object):
-
-                """Simple wrapper around the list"""
-
-                def __init__(self, data):
-                    self.data = data
-                    self.count = len(self.data) - 1
-
-                def next(self):
-                    self.count -= 1
-                    if self.count:
-                        result = self.data[self.count + 1]
-                        return result
-                    else:
-                        raise StopIteration()
-
-                def __iter__(self):
-                    return self
-
-            return GangaReverseIter(self._list)
+        return reversed(self._list)
 
     def _export___reversed__(self):
         return GangaListIter(self.__reversed__())
