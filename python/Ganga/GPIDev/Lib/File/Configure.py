@@ -72,8 +72,12 @@ def Configure():
 
     import pwd
     import grp
-    from Ganga.Utility.Config import getConfig
-    user = getConfig('Configuration')['user']
+    from Ganga.Utility.Config import getConfig, ConfigError
+    try:
+        user = getConfig('Configuration')['user']
+    except ConfigError:
+        import getpass
+        user = getpass.getuser()
     groupid = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
     groupnames = {'z5': 'lhcb', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
     groupname = 'undefined'
