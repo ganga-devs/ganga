@@ -40,7 +40,6 @@ import signal
 import subprocess
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
-from Ganga.Utility.Config import getConfig
 
 
 def expand_vars(env):
@@ -64,8 +63,6 @@ def expand_vars(env):
 
 
 class Shell:
-
-    exceptions = getConfig('Shell')['IgnoredVars']
 
     def __init__(self, setup=None, setup_args=[]):
         """The setup script is sourced (with possible arguments) and the
@@ -132,15 +129,6 @@ class Shell:
             if env2:
                 env = env2
 
-            # print "Setup: %s " % setup
-            # print output
-            # print env
-
-            # for key in Shell.exceptions:
-            #   try:
-            #      del env[key]
-            #   except KeyError:
-            #      pass
             self.env = env
         else:
             # bug #44334: Ganga/Utility/Shell.py does not save environ

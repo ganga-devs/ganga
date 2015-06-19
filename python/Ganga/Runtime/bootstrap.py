@@ -749,8 +749,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         #[Shell] section
         shellconfig = makeConfig(
             "Shell", "configuration parameters for internal Shell utility.")
-        shellconfig.addOption('IgnoredVars', [
-                              '_', 'SHVL', 'PWD'], 'list of env variables not inherited in Shell environment')
 
         #[Queues] section
         queuesconfig = makeConfig(
