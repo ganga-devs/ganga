@@ -871,7 +871,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 self.logger.debug('re-executing the process for LD_LIBRARY_PATH changes to take effect')
                 os.environ['GANGA_INTERNAL_PROCREEXEC'] = '1'
                 prog = os.path.normpath(sys.argv[0])
-                os.execv(prog,sys.argv)
+                self.logger.debug('Program: %s' % str(prog) )
+                self.logger.debug('sys.argv: %s' % str(sys.argv) )
+                os.execv(prog, sys.argv)
 
         else:
             self.logger.debug('skipped the environment initialization -- the processed has been re-execed and setup was done already')
@@ -1338,7 +1340,8 @@ default_backends = LCG
 
         # and exit unless -i was specified
         if not self.interactive:
-            sys.exit(0)
+            return
+            #    sys.exit(0)
 
         # interactive python shell
 

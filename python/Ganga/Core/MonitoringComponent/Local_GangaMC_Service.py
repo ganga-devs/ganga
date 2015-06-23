@@ -897,8 +897,8 @@ class JobRegistry_Monitor( GangaThread ):
                             
                 except BackendError, x:
                     self._handleError( x, x.backend_name, 0 )
-                except Exception, x:
-                    self._handleError( x, backendObj._name, 1 )
+                #except Exception, x:
+                #    self._handleError( x, backendObj._name, 1 )
                 log.debug( "[Update Thread %s] Flushing registry %s." % ( currentThread, [x.id for x in jobList_fromset ] ) )
                 self.registry._flush( jobList_fromset ) # Optimisation required! 
             except Exception, x:
