@@ -6,6 +6,7 @@ import gzip
 from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 import hashlib
+import socket
 
 
 def get_uuid(*args):

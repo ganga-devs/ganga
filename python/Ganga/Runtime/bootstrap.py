@@ -419,7 +419,7 @@ under certain conditions; type license() for details.
     def new_user_wizard(self):
         import os
         from Ganga.Utility.logging import getLogger
-        from Ganga.Utility.Config.Config import load_user_config, getConfig
+        from Ganga.Utility.Config.Config import load_user_config, getConfig, ConfigError
 
         logger = getLogger('NewUserWizard')
         specified_gangadir = os.path.expanduser(
@@ -857,7 +857,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         # fork ourselves so we a daemon
         if self.options.daemon:
-            print.debug("Daemonising Ganga...")
+            logger.debug("Daemonising Ganga...")
             pid = os.fork()
             if pid < 0:
                 sys.exit(1)

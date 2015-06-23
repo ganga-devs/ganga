@@ -126,7 +126,6 @@ import Ganga
 _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 
 if __name__ == "__main__":
-    logging.info("Testing resursive copy...")
     import os
     import shutil
     from files import *
@@ -179,5 +178,3 @@ if __name__ == "__main__":
     os.mknod('src/subdir3/file7')
     recursive_copy(os.getcwd() + '/src/subdir3', destdir)
     assert os.path.isfile(destdir + '/subdir3/file7')
-
-    logging.info("Test OK")
