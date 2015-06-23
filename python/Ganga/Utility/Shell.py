@@ -271,7 +271,7 @@ class Shell:
 
         fullpath = s.wrapper('lcg-cp', 'echo lcg-cp called with arguments $*'"""
 
-        from Ganga.Utility.tempfile_compatibility import mkdtemp
+        from tempfile import mkdtemp
         from os.path import join
 
         if not self.dirname:

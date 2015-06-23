@@ -20,15 +20,8 @@ from __future__ import print_function
 #  - special functions:
 #       - log_user_exception() allows to format nicely exception messages
 
-try:
-    import logging
-    import logging.handlers as handlers
-
-except ImportError:
-    import Ganga.Utility.external.logging as logging
-    import Ganga.Utility.external.logging.handlers as handlers
-    # print 'using logger shipped with Ganga (probably you are running
-    # python2.2 or older)'
+import logging
+import logging.handlers as handlers
 
 # initialize the root logger for the logger created directly in python
 # executable scripts which have no name starting by "Ganga."

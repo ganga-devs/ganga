@@ -888,7 +888,7 @@ class Panda(IBackend):
         
         from Ganga.GPIDev.Lib.Job import Job
         from Ganga.Core.GangaRepository import getRegistry
-        from Ganga.Utility.guid import uuid
+        import uuid
         from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 
         if self._getParent()._getParent(): # if has a parent then this is a subjob
@@ -903,7 +903,7 @@ class Panda(IBackend):
         # create a new job and copy the main parts
         job = self._getParent()
         mj = Job()
-        mj.info.uuid = uuid()
+        mj.info.uuid = uuid.uuid4()()
         mj.name = job.name
         mj.application = job.application
         mj.application.run_event   = []

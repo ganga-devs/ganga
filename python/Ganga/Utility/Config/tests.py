@@ -5,12 +5,6 @@ if __name__ == "__main__":
 
     import Ganga.Utility.logging
 
-    # There are two ways of forcing debug in for this test:
-
-    # WAY 1:
-    # Ganga.Utility.logging.config.setUserOption('Ganga.Utility.Config','DEBUG')
-
-    # WAY 2:
     Ganga.Utility.logging.config['Ganga.Utility.Config'] = 'DEBUG'
     Ganga.Utility.logging.bootstrap()
 

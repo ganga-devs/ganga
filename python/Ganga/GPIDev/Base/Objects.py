@@ -556,7 +556,7 @@ class GangaObject(Node):
                 try:
                     reg._write_access(root)
                     _haveLocked = True
-                except Exception, x:
+                except Exception as x:
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
                     logger.info(

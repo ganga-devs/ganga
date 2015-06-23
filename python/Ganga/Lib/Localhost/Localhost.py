@@ -201,7 +201,7 @@ class Localhost(IBackend):
         outputpatterns = jobconfig.outputbox
         environment = jobconfig.env
 
-        from Ganga.Utility import tempfile
+        import tempfile
         workdir = tempfile.mkdtemp(dir=config['location'])
 
         script = """#!/usr/bin/env python

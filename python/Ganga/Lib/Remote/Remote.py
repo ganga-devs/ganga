@@ -650,7 +650,7 @@ print("***_FINISHED_***")
     def preparejob(self, jobconfig, master_input_sandbox):
         """Prepare the script to create the job on the remote host"""
 
-        from Ganga.Utility import tempfile
+        import tempfile
 
         workdir = tempfile.mkdtemp()
         job = self.getJobObject()

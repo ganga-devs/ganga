@@ -11,6 +11,7 @@ from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 import os
 import shutil
+import uuid
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
 
@@ -151,7 +152,7 @@ class ShareDir(GangaObject):
             # continue generating directory names until we create a unique one
             # (which will likely be on the first attempt).
             while True:
-                name = 'conf-' + Ganga.Utility.guid.uuid()
+                name = 'conf-{0}'.format(uuid.uuid4())
                 if not os.path.isdir(os.path.join(getSharedPath(), name)):
                     os.makedirs(os.path.join(getSharedPath(), name))
 

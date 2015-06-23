@@ -1,4 +1,4 @@
-from Ganga.Utility.tempfile_compatibility import *
+from tempfile import mkdtemp
 from GangaLHCb.test import *
 from os.path import join,basename
 from os import remove

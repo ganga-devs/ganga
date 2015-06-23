@@ -11,8 +11,6 @@ from MetadataDict import *
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-foo = 'fred'
-
 from Ganga.Utility.logging import log_user_exception
 
 import Ganga.Utility.Config
@@ -32,6 +30,8 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 import os
 import copy
+import uuid
+
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import getSharedPath
@@ -66,8 +66,6 @@ class PreparedStateError(GangaException):
 
 class FakeError(GangaException):
     pass
-
-import Ganga.Utility.guid
 
 
 class JobInfo(GangaObject):
@@ -859,7 +857,7 @@ class Job(GangaObject):
             logger.debug("Calling unprepare() from Job.py")
             self.application.unprepare()
 
-        self.info.uuid = Ganga.Utility.guid.uuid()
+        self.info.uuid = uuid.uuid4()
 
         # increment the shareref counter if the job we're copying is prepared.
         # ALEX added try/if for loading of named job templates
@@ -1424,7 +1422,7 @@ class Job(GangaObject):
                 #self.subjobs = subjobs
                 # for j in self.subjobs:
                 for j in subjobs:
-                    j.info.uuid = Ganga.Utility.guid.uuid()
+                    j.info.uuid = uuid.uuid4()
                     j.status = 'new'
                     #j.splitter = None
                     j.time.timenow('new')
@@ -1642,6 +1640,7 @@ class Job(GangaObject):
                 logger.error(
                     '%s ... reverting job %s to the new status', str(x), self.getFQID('.'))
                 self.updateStatus('new')
+                #TODO Add traceback of 'x'. Need 'six' or 'future.utils' to do it for 2+3
                 raise JobError(x)
 
     def rollbackToNewState(self):

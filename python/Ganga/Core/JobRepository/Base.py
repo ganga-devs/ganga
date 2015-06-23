@@ -4,6 +4,7 @@
 # $Id: Base.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
 ##########################################################################
 
+import uuid
 
 class JobRepository(object):
 
@@ -28,8 +29,7 @@ class JobRepository(object):
         self._role = role
         self._streamer = streamer
         self._tree_streamer = tree_streamer
-        from Ganga.Utility.guid import newGuid
-        self.guid = newGuid(self)
+        self.guid = str(uuid.uuid4())
 
     def _getStreamFromJob(self, job):
         if self._streamer:

@@ -28,7 +28,7 @@ from Ganga.Core import Sandbox
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
-from Ganga.Utility import logging, tempfile, util
+from Ganga.Utility import logging, util
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import expand_vars
 
@@ -38,6 +38,7 @@ import re
 import shutil
 import signal
 import time
+import tempfile
 
 
 logger = logging.getLogger()
