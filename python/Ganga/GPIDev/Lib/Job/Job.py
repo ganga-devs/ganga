@@ -477,7 +477,6 @@ class Job(GangaObject):
         if hasattr(self, '_Job_constructed') and self._Job_constructed == True:
             if hasattr(self, 'status'):
                 oldstat = self.status
-            # except:
             else:
                 oldstat = None
         else:
@@ -711,7 +710,7 @@ class Job(GangaObject):
                                                         outputfile.namePattern)):
                             try:
                                 os.remove(f)
-                            except:
+                            except IOError:
                                 logger.error(
                                     'failed to remove temporary/intermediary file: %s' % f)
                     elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
@@ -859,7 +858,6 @@ class Job(GangaObject):
         # try:
         # if hasattr(getRegistry("prep"), 'getShareRef'):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-        # except: pass
 
         # register the job (it will also commit it)
         # job gets its id now
@@ -916,7 +914,7 @@ class Job(GangaObject):
         for f in files:
             try:
                 logger.debug(str("\t") + str(f.name))
-            except:
+            except AttributeError:
                 logger.debug(str("\t") + str(f))
         #logger.debug( "\n" )
 
@@ -1215,7 +1213,7 @@ class Job(GangaObject):
             #   I am the master Job
             try:
                 appsubconfig = self._storedAppSubConfig
-            except:
+            except AttributeError:
                 pass
 
             if appsubconfig is None or len(appsubconfig) == 0:
