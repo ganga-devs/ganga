@@ -43,45 +43,6 @@ def urisplit(uri):
     return (scheme, authority, path, query, fragment)
 
 
-def readStrippedLines(fileName):
-    '''reads in a list of strings from a file'''
-
-    return [l.strip() for l in open(fileName, 'r')]
-
-def filter_string_list(allList, filterList, type=0):
-    '''picks a list of strings from allList (mis-)matching the elementes in the filterList
-         - type = 0 : including lists given by filterLists
-         - type = 1 : excluding lists given by filterLists
-    '''
-
-    matchedDict = {}
-    allDict = {}
-
-    for item in allList:
-        allDict[item] = True
-
-    if type == 1:
-        matchedDict = allDict
-
-    for filter in filterList:
-        if filter.find('*') > 0:
-            wc = ".*".join(filter.split('*'))
-            for item in allDict.keys():
-                if re.match(wc, item) != None:
-                    if type == 0:
-                        matchedDict[item] = True
-                    if type == 1:
-                        del matchedDict[item]
-        else:
-            if filter in allDict:
-                if type == 0:
-                    matchedDict[filter] = True
-                if type == 1:
-                    del matchedDict[filter]
-
-    return matchedDict.keys()
-
-
 def get_md5sum(fname, ignoreGzipTimestamp=False):
     ''' Calculates the MD5 checksum of a file '''
 
