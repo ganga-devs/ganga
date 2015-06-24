@@ -2,7 +2,7 @@ from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 
-class PackageSetup:
+class PackageSetup(object):
 
     """ PackageSetup objects represent the external packages required by a given runtime unit of Ganga.
     The package information is stored in a dictionary. See Ganga/PACKAGE.py

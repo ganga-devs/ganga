@@ -27,7 +27,7 @@ class RegistrySliceProxy(object):
         for j in jobs:
           print(j.id)
         """
-        class Iterator:
+        class Iterator(object):
 
             def __init__(self, reg):
                 self.it = reg._impl.__iter__()

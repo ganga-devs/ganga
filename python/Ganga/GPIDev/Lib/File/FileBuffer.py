@@ -10,7 +10,7 @@ logger = Ganga.Utility.logging.getLogger()
 import os
 
 
-class FileBuffer:
+class FileBuffer(object):
 
     """ FileBuffer represents a file in memory which has not been yet created.
         This is a handy way of creating small wrapper scripts to be generated on the fly.

@@ -16,7 +16,7 @@ def drop_spaces(x):
     return x.replace(' ', '')
 
 
-class ItemizedTextParagraph:
+class ItemizedTextParagraph(object):
 
     """Format a paragraph with itemized text.
 

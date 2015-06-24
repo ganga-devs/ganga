@@ -266,7 +266,7 @@ class RegistrySlice(object):
 
     def __iter__(self):
         "Iterator for the objects. "
-        class Iterator:
+        class Iterator(object):
 
             def __init__(self, reg):
                 self.it = reg.objects.values().__iter__()

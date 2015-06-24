@@ -65,7 +65,7 @@ class GangaWorkAgent(GangaThread):
         self.unregister()
 
 
-class MTRunner:
+class MTRunner(object):
 
     """
     Class to handle multiple concurrent threads running on the same algorithm. 

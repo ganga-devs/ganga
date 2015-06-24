@@ -23,7 +23,7 @@ import sys          # purely used for the version_info
 ##########################################################################
 
 
-class dIter:
+class dIter(object):
 
     """Implements a basic dictionary iterator with 3 modes.
     If mode=0 (default) returns the keys (by returns I mean iterates over !)
@@ -58,7 +58,7 @@ class dIter:
 ##########################################################################
 
 
-class oDict:
+class oDict(object):
 
     """An ordered dictionary. ordereddict = oDict(indict, order)"""
     __doc__ = """ordereddict = oDict({'a' : 1, 'b' : 2}, True)

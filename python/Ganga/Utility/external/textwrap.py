@@ -31,7 +31,7 @@ __all__ = ['TextWrapper', 'wrap', 'fill']
 _whitespace = '\t\n\x0b\x0c\r '
 
 
-class TextWrapper:
+class TextWrapper(object):
 
     """
     Object for wrapping/filling text.  The public interface consists of

@@ -8,7 +8,7 @@
 """
 
 
-class _ApplicationRuntimeHandlers:
+class _ApplicationRuntimeHandlers(object):
 
     def __init__(self):
         self.handlers = {}

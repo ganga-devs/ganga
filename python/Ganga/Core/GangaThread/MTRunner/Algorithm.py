@@ -9,7 +9,7 @@ class AlgorithmError(Exception):
         self.message = message
 
 
-class Algorithm:
+class Algorithm(object):
 
     """
     Class to define user algorithm.

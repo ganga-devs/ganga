@@ -5,7 +5,7 @@ from Ganga.Lib.LCG.Utility import *
 logger = getLogger()
 
 
-class LCGOutputDownloadTask:
+class LCGOutputDownloadTask(object):
 
     """
     Class for defining a data object for each output downloading task.

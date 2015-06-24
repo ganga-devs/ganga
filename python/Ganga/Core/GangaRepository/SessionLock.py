@@ -38,7 +38,7 @@ except ImportError:
         def should_stop(self):
             return False
 
-    class Logger:
+    class Logger(object):
 
         def warning(self, msg):
             print(msg)

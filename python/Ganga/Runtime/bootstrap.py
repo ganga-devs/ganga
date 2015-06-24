@@ -105,7 +105,7 @@ if DEBUGFILES or MONITOR_FILES:
 #atexit.register = register
 
 
-class GangaProgram:
+class GangaProgram(object):
 
     """ High level API to create instances of Ganga programs and configure/run it """
 

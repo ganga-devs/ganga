@@ -13,7 +13,7 @@ class DuplicateDataItemError(Exception):
         self.message = message
 
 
-class Data:
+class Data(object):
 
     """
     Class to define user dataset collection.

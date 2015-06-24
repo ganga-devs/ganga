@@ -1,5 +1,5 @@
 
-class IMonitoringService:
+class IMonitoringService(object):
 
     """ Interface of the monitoring service.
     Each method correponds to particular events which occur at ganga client or job wrapper (worker node).

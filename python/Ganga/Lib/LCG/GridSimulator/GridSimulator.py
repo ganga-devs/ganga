@@ -79,7 +79,7 @@ import time
 cmd = 'simulation'
 
 
-class GridSimulator:
+class GridSimulator(object):
 
     '''Simulator of LCG interactions'''
 

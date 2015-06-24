@@ -4,14 +4,14 @@ import time
 logger = getLogger('GangaThread')
 
 
-class GangaThreadPool:
+class GangaThreadPool(object):
 
     _attributes = ('SHUTDOWN_TIMEOUT')
 
     # GangaThreadPool singleton instance
     _instance = None
 
-    class SingletonHelper:
+    class SingletonHelper(object):
 
         def __call__(self, *args, **kw):
 

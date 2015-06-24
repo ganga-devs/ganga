@@ -132,7 +132,7 @@ class ConfigProxy(object):
         return sio.getvalue()
 
 
-class MainConfigProxy:
+class MainConfigProxy(object):
 
     """ A proxy class for the main config object which contains all configuration sections.
     The configuration section proxies are set as attributes by the bootstrap() function.

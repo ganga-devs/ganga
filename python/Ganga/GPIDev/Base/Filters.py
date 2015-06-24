@@ -44,7 +44,7 @@ def void_filter(val, item):
     return None
 
 
-class _ComponentFilterManager:
+class _ComponentFilterManager(object):
 
     def __init__(self):
         # for each category there may be multiple filters registered, the one used being defined

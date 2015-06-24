@@ -30,7 +30,7 @@ if psyco:
     try:
         import psyco
         psyco.full()
-        logger.print('psyco optimization enabled')
+        logger.info('psyco optimization enabled')
     except ImportError:
         logger.warning('psyco not found')
     

@@ -500,7 +500,7 @@ class Job(GangaObject):
         #    raise AttributeError('cannot modify job.status directly, use job.updateStatus() method instead...')
         #del frame
 
-    class State:
+    class State(object):
 
         def __init__(self, state, transition_comment='', hook=None):
             self.state = state

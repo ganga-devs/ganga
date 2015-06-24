@@ -10,7 +10,7 @@ import copy
 logger = getLogger()
 
 
-class StandardJobConfig:
+class StandardJobConfig(object):
 
     """
     StandardJobConfig defines a standard input for many of the handlers: LSF, Localhost,LCG.

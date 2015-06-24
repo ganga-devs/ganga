@@ -48,11 +48,11 @@ class TestGoogleFile(GangaGPITestCase):
     def test_aput(self):
 
         ################################################################
-        class service:
+        class service(object):
 
-            class files:
+            class files(object):
 
-                class insert:
+                class insert(object):
 
                     def __init__(this, body, media_body):
                         this.body = body
@@ -80,19 +80,19 @@ class TestGoogleFile(GangaGPITestCase):
     def test_get(self):
 
         #######################################################
-        class http:
+        class http(object):
 
             def request(this, f):
                 self.assertEqual(f, self.gf.downloadURL)
 
-                class resp:
+                class resp(object):
 
                     def status(this):
                         return 200
                 content = ''
                 return resp, content
 
-        class service:
+        class service(object):
 
             def __init__(this):
                 this._http = http()
@@ -119,11 +119,11 @@ class TestGoogleFile(GangaGPITestCase):
     def test_remove(self):
 
         #####
-        class service:
+        class service(object):
 
-            class files:
+            class files(object):
 
-                class trash:
+                class trash(object):
 
                     def __init__(this, fileId):
                         this.fileID = self.id
@@ -151,11 +151,11 @@ class TestGoogleFile(GangaGPITestCase):
     def test_restore(self):
 
         #####
-        class service:
+        class service(object):
 
-            class files:
+            class files(object):
 
-                class untrash:
+                class untrash(object):
 
                     def __init__(this, fileId):
                         this.fileId = self.id

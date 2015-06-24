@@ -8,7 +8,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
-class IRuntimeHandler:
+class IRuntimeHandler(object):
 
     """ The RuntimeHandler is a connector between the application and the backend.
 

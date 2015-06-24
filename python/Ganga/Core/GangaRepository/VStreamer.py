@@ -226,7 +226,7 @@ logger = getLogger()
 from GangaRepository import EmptyGangaObject, SchemaVersionError
 
 
-class Loader:
+class Loader(object):
 
     """ Job object tree loader.
     """

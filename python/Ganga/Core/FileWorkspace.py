@@ -20,7 +20,7 @@ import time
 from Ganga.Utility.files import expandfilename, chmod_executable
 
 
-class FileWorkspace:
+class FileWorkspace(object):
 
     """
     File workspace  on a local file system.   FileWorkspace object may

@@ -72,7 +72,7 @@ __date__ = "24 August 2005"
 __version__ = "1.0"
 
 
-class ANSIMarkup:
+class ANSIMarkup(object):
 
     """ Apply ANSI colouring codes.
     """
@@ -88,7 +88,7 @@ class ANSIMarkup:
         return code + text + self.default_code
 
 
-class NoMarkup:
+class NoMarkup(object):
 
     """ Leave text unchanged.
     """
@@ -100,7 +100,7 @@ class NoMarkup:
         return text
 
 
-class Background:
+class Background(object):
 
     """Class for creating objects carrying ANSI codes for changing
        text background colour.  The defined colours are:
@@ -124,7 +124,7 @@ class Background:
         self.white = _base % "0;47"
 
 
-class Effects:
+class Effects(object):
 
     """Class for creating objects carrying ANSI codes for text
        effects.  The defined effects are:
@@ -149,7 +149,7 @@ class Effects:
         self.noreverse = _base % "0;27"
 
 
-class Foreground:
+class Foreground(object):
 
     """Class for creating objects carrying ANSI codes for changing
        text foreground colour.  The defined colours are:

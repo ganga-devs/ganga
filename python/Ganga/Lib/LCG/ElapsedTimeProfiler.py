@@ -13,7 +13,7 @@ import time
 from Ganga.Utility.logging import getLogger
 
 
-class ElapsedTimeProfiler:
+class ElapsedTimeProfiler(object):
 
     '''Elapsed time profiler'''
 

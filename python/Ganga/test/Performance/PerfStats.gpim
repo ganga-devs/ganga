@@ -18,7 +18,7 @@ class PerfStats(MultipassTest):
         with open ( '%s.stats' % os.environ['OUTPUT_PATH'], 'w' ) as fileHandle:
             fileHandle.write('# repository performance results (Ganga startup time, Repository job registration&commit)')
     
-class TestBase:
+class TestBase(object):
     """
     TestBase that defines two steps used to measure the ganga job loading/creation/commit performance:
      - step1:

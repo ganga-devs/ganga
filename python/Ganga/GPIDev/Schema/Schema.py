@@ -16,7 +16,7 @@ from Ganga.Utility.logic import implies
 # Version of the schema.
 
 
-class Version:
+class Version(object):
 
     def __init__(self, major, minor):
         self.major = major
@@ -62,7 +62,7 @@ def defaultConfigSectionName(name):
 # overriden explicitly.
 
 
-class Schema:
+class Schema(object):
     # Schema constructor is used by Ganga plugin developers.
     # Ganga will automatically set a reference to the plugin class which corresponds to this schema, hence
     # defining the schema's name and category.
@@ -322,7 +322,7 @@ class Schema:
 # the BindingItems are always transient, cannot be copied, cannot be
 # sequences and have None default value.
 
-class Item:
+class Item(object):
     # default values of common metaproperties
     _metaproperties = {'transient': 0, 'protected': 0, 'hidden': 0, 'comparable': 1, 'sequence': 0, 'defvalue': None, 'copyable': 1, 'doc': '', 'visitable': 1, 'checkset': None,
                        'filter': None, 'strict_sequence': 1, 'summary_print': None, 'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0}
@@ -588,7 +588,7 @@ class GangaFileItem(ComponentItem):
 # a helper class which gives a human readible representation of schema items
 # for example suitable for python interactive help()
 def make_helper(item):
-    class SchemaItemHelper:
+    class SchemaItemHelper(object):
 
         def __repr__(self):
             return item.describe()

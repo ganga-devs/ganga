@@ -62,7 +62,7 @@ def expand_vars(env):
     return tmp_dict
 
 
-class Shell:
+class Shell(object):
 
     def __init__(self, setup=None, setup_args=[]):
         """The setup script is sourced (with possible arguments) and the

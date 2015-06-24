@@ -129,7 +129,7 @@ def getLogger():
     except AttributeError:
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
-        class X:
+        class X(object):
 
             def __getattr__(self, name):
                 def f(*args, **kwds):
@@ -219,7 +219,7 @@ def makeConfig(name, docstring, **kwds):
     return c
 
 
-class ConfigOption:
+class ConfigOption(object):
 
     """ Configuration Option has a name, default value and a docstring.
 
@@ -439,7 +439,7 @@ _after_bootstrap = False
 config_scope = {}
 
 
-class PackageConfig:
+class PackageConfig(object):
 
     """ Package  Config object  represents a  Configuration  Unit (typically
     related to Ganga Packages). It should not be created directly

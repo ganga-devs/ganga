@@ -495,7 +495,7 @@ class ShareRef(GangaObject):
         return self._display(interactive=interactive)
 
 
-class shareref_data:
+class shareref_data(object):
 
     def __init__(self, name, date, counter):
         self.name = name

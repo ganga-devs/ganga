@@ -97,7 +97,7 @@ def getSearchPath(configPar="SCRIPTS_PATH"):
     return pathString2
 
 
-class RuntimePackage:
+class RuntimePackage(object):
 
     def __init__(self, path):
         import os.path
