@@ -1,1 +1,1 @@
-from Executable import *
+from Executable import Executable

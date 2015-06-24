@@ -4,7 +4,13 @@ Subsystems are autonomous components (such as a remote services) which may be in
 Subsystems may also be created as local objects in the Ganga Client process.
 """
 
-from exceptions import *
+import time
+
+from exceptions import GangaException, ApplicationConfigurationError, \
+    BackendError, RepositoryError, BulkOperationRepositoryError, \
+    IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
+    GangaAttributeError, GangaValueError, ProtectedAttributeError, \
+    ReadOnlyObjectError, TypeMismatchError, SchemaError
 
 monitoring_component = None
 
@@ -64,8 +70,7 @@ def bootstrap(reg, interactive_session):
     monitoring_component.start()
 
     # register the MC shutdown hook
-    import atexit
-
+    
     change_atexitPolicy(interactive_session)
 
     # export to GPI
@@ -85,30 +90,9 @@ def bootstrap(reg, interactive_session):
     if config['autostart']:
         monitoring_component.enableMonitoring()
 
-    # THIS IS FOR DEBUGGING ONLY
-    import time
-
-    class Stuck(GangaThread.GangaThread):
-
-        def __init__(self):
-            GangaThread.GangaThread.__init__(self, name='Stuck')
-
-        def run(self):
-            i = 0
-            while i < 10:
-                time.sleep(3)
-                i += 1
-
-        def stop(self):
-            logger.debug("I was asked to stop...")
-    # DISABLED
-    #s = Stuck()
-    # s.start()
-
 
 def should_wait_interactive_cb(t_total, critical_thread_ids, non_critical_thread_ids):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
-    import time
     global t_last
     if t_last is None:
         t_last = -time.time()

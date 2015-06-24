@@ -1,6 +1,6 @@
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.Core.exceptions import *
-from Ganga.GPIDev.Schema import *
+from Ganga.Core.exceptions import GangaAttributeError
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import addProxy
 import copy
 

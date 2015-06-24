@@ -1,5 +1,5 @@
 from Ganga.GPIDev.Lib.Tasks import ITask
-from common import *
+from Ganga.GPIDev.Schema import Schema, Version
 
 ########################################################################
 

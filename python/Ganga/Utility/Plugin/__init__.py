@@ -1,1 +1,1 @@
-from GangaPlugin import *
+from GangaPlugin import allPlugins, PluginManagerError

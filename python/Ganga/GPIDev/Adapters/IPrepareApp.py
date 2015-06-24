@@ -8,10 +8,10 @@ from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Lib.File import File
 import os
 import shutil
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()

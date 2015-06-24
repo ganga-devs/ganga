@@ -2,19 +2,21 @@ import os
 import os.path
 from urlparse import urlparse
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 from Ganga.Utility.GridShell import getShell
 
 from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
-from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.Utility import urisplit, get_md5sum
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
 gridftp_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy(
 ).datadict
 gridftp_file_index_schema_datadict = GridFileIndex._schema.inherit_copy(
 ).datadict
+
+
+from Ganga.Utility.logging import getLogger
 
 
 class GridftpFileIndex(GridFileIndex):

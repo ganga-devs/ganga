@@ -5,8 +5,8 @@
 ##########################################################################
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from MetadataDict import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
+from . import MetadataDict
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -20,9 +20,6 @@ from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository import RegistryKeyError
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
-
-from Ganga.GPIDev.Lib.Registry import *
-from Ganga.Core.GangaRepository import *
 
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, addProxy, stripProxy
@@ -62,10 +59,6 @@ class PreparedStateError(GangaException):
 
     def __str__(self):
         return "PreparedStateError: %s" % str(self.txt)
-
-
-class FakeError(GangaException):
-    pass
 
 
 class JobInfo(GangaObject):

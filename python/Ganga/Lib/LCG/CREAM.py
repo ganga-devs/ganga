@@ -9,12 +9,12 @@ from urlparse import urlparse
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
-from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.Utility import get_md5sum
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
 from Ganga.Lib.LCG.Grid import Grid

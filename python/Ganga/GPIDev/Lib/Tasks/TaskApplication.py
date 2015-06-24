@@ -1,6 +1,5 @@
 
-from Ganga.GPIDev.Schema import *
-from common import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from new import classobj
 from Ganga.GPIDev.Base.Proxy import stripProxy
 

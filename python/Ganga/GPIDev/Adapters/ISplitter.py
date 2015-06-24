@@ -6,7 +6,7 @@
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import TypeMismatchError
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.Utility.util import containsGangaObjects, isNestedList
 
 

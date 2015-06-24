@@ -1,5 +1,5 @@
 import Ganga.Utility.logging
-from Ganga.Core.exceptions import *
+from Ganga.Core.exceptions import GangaValueError
 logger = Ganga.Utility.logging.getLogger()
 
 

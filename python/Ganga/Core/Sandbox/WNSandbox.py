@@ -8,6 +8,7 @@ INPUT_TARBALL_NAME = '_input_sandbox.tgz'
 OUTPUT_TARBALL_NAME = '_output_sandbox.tgz'
 PYTHON_DIR = '_python'
 
+import os
 
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.

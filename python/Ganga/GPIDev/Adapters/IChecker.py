@@ -4,7 +4,7 @@
 # $Id: IMerger.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 import os
 import glob
 

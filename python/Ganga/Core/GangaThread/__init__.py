@@ -1,2 +1,2 @@
-from GangaThreadPool import *
-from GangaThread import *
+from GangaThreadPool import GangaThreadPool
+from GangaThread import GangaThread

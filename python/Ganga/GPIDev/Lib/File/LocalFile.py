@@ -4,7 +4,7 @@
 # $Id: LocalFile.py,v 0.1 2011-09-29 15:40:00 idzhunov Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from IGangaFile import IGangaFile
 
@@ -12,6 +12,8 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
+
+import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 import re

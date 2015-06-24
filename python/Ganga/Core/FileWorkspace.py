@@ -66,7 +66,6 @@ class FileWorkspace(object):
             if os.path.isdir(self.getPath()):
                 return
 
-            import os
             os.makedirs(self.getPath())
         except OSError as x:
             import errno
@@ -123,7 +122,6 @@ class FileWorkspace(object):
 
         # FIXME: make a helper method for os.makedirs
         try:
-            import os
             os.makedirs(self.getPath() + fileobj.subdir)
             logger.debug('created %s', self.getPath())
         except OSError as x:

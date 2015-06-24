@@ -6,12 +6,15 @@
 
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.Core import ApplicationConfigurationError
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 import os
 from Ganga.Utility.files import expandfilename

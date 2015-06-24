@@ -28,10 +28,6 @@
 ##########################################################################
 
 import os
-from types import *
-
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
 
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import getConfig, ConfigError

@@ -1,5 +1,5 @@
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version
 
 # Dataset class represents the empty dataset and is a base class for specific, non-empty datasets.
 #

@@ -1,4 +1,3 @@
-from common import *
 from Transform import Transform
 from Ganga.Utility.util import containsGangaObjects, isNestedList
 from TaskApplication import ArgSplitterTask

@@ -1,6 +1,6 @@
 
 from Ganga.GPIDev.Lib.Dataset import Dataset
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 
 class TaskChainInput(Dataset):

@@ -641,7 +641,7 @@ under certain conditions; type license() for details.
         # the SCRIPTS_PATH must be initialized before the config files are loaded
         # for the path to be correctly prepended
 
-        from Ganga.Utility.Config import Config, makeConfig
+        from Ganga.Utility.Config import makeConfig
         config = makeConfig(
             "Configuration", "global configuration parameters.\nthis is a catch all section.")
         config.addOption('SCRIPTS_PATH', 'Ganga/scripts', """the search path to scripts directory.

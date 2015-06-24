@@ -1,4 +1,4 @@
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
 from IGangaFile import IGangaFile
 import logging
@@ -9,7 +9,7 @@ from Ganga.Utility.Config import getConfig
 import re
 import copy
 import glob
-logger = logging.getLogger('Ganga.GPIDev.Lib.File.GoogleFile')
+logger = getLogger()
 regex = re.compile('[*?\[\]]')
 import os
 import pickle

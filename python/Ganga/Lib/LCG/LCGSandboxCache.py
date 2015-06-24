@@ -12,19 +12,18 @@
 import os
 import os.path
 import re
-from types import *
+
 from urlparse import urlparse
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell
 
 from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
-from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.Utility import get_md5sum
 
 lcg_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy(
 ).datadict

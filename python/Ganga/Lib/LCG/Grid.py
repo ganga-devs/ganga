@@ -1,10 +1,7 @@
 import os
 import re
 import tempfile
-from types import *
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
 from Ganga.GPIDev.Credentials import getCredential
 
 from Ganga.Utility.Config import getConfig, ConfigError
@@ -14,7 +11,7 @@ from Ganga.Utility.GridShell import getShell
 
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpFileIndex, GridftpSandboxCache
 
-from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.Utility import get_uuid
 from Ganga.Lib.Root import randomString
 
 # global variables
@@ -1180,7 +1177,7 @@ class Grid(object):
                 text = text.rstrip(',\n') + '\n'  # Get rid of trailing comma
                 text += '};\n'
 
-            elif type(value) == ListType:
+            elif type(value) == list:
                 if value:
                     text += '%s = {\n   "%s"\n};\n' % (key,
                                                        '",\n   "'.join(value))

@@ -128,7 +128,6 @@ _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 if __name__ == "__main__":
     import os
     import shutil
-    from files import *
 
     workdir = 'test_recursive_copy'
     shutil.rmtree(workdir, True)

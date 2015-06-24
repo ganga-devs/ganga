@@ -11,15 +11,12 @@
 # Date:   January 2007
 import re
 
-from types import *
-
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Credentials import getCredential
 
 from Ganga.Utility.logging import getLogger
-from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.Utility import get_uuid
 
 from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Effects
 

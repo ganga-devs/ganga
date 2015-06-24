@@ -9,7 +9,7 @@ from __future__ import print_function
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
 #from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, FileItem
 from Ganga.GPIDev.Lib.File import File, ShareDir
 
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError

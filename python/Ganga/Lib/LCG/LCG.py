@@ -13,14 +13,12 @@
 import os
 import re
 import math
-#import tempfile
-from types import *
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import makeConfig, getConfig
@@ -28,7 +26,7 @@ from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
-from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -2341,6 +2339,8 @@ def __postConfigHandler__(opt, val):
 logger = getLogger()
 
 logger.debug('LCG module initialization: begin')
+
+import Ganga.Utility.Config
 
 config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')

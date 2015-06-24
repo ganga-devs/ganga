@@ -1,5 +1,5 @@
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()

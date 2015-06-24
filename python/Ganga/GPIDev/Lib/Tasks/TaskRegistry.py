@@ -1,4 +1,4 @@
-from common import *
+from common import overview_colours, status_colours, config, logger, markup, fgcol
 import time
 import traceback
 import sys
@@ -46,9 +46,6 @@ config.addOption(
     'TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
 config.addOption('ForceTaskMonitoring', False,
                  "Monitor tasks even if the monitoring loop isn't enabled")
-
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
 
 
 class TaskRegistry(Registry):

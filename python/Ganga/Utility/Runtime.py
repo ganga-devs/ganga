@@ -176,10 +176,6 @@ class RuntimePackage(object):
     def bootstrap(self, globals):
         try:
             import os.path
-            # import fixes logging problem: the logger belongs to the original
-            # packages rather than to the package defined by the "globals"
-            # namespace (Ganga.GPI)
-            ##exec("from %s.BOOT import *"%self.name,globals)
 
             # do not import names from BOOT file automatically, use
             # exportToGPI() function explicitly

@@ -4,7 +4,7 @@
 # $Id: LCGSEFile.py,v 0.1 2011-02-12 15:40:00 idzhunov Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging

@@ -4,7 +4,7 @@
 # $Id: ExeSplitter.py,v 1.1 2008-07-17 16:40:59 moscicki Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 
 

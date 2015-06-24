@@ -1,7 +1,7 @@
 import datetime
 import time
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Core import BackendError
 import os.path
 

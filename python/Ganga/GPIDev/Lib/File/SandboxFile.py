@@ -1,7 +1,8 @@
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
+import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 

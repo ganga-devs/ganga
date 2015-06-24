@@ -1,5 +1,5 @@
-from common import *
-from Ganga.GPIDev.Lib.Tasks.common import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from common import logger
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
 from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset

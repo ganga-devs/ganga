@@ -1,10 +1,12 @@
 
-from common import *
+from common import logger, status_colours, overview_colours
 
 from TaskApplication import taskApp
+from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
-
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
 
 class Transform(GangaObject):
     _schema = Schema(Version(1, 0), {
