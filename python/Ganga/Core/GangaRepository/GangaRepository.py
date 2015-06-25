@@ -19,20 +19,6 @@ from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core.InternalServices.Coordinator import disableInternalServices
 from Ganga.Core import GangaException
 
-from Ganga.GPIDev.Base.Objects import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version
-
-# Empty Ganga Object. This must never be saved back to file.
-
-
-class EmptyGangaObject(GangaObject):
-
-    """Empty Ganga Object. Is used to construct incomplete jobs"""
-    _schema = Schema(Version(0, 0), {})
-    _name = "EmptyGangaObject"
-    _category = "internal"
-    _hidden = 1
-
 # Error raised on schema version error
 
 

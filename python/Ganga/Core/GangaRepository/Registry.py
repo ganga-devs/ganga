@@ -424,7 +424,7 @@ class Registry(object):
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError
-        Raise ObjectNotInRegistryError"""
+        Raise ObjectNotInRegistryError (via self.find())"""
         logger.debug("Reg: %s _write_access(%s)" % (self.name, str(obj)))
 
         # if self.name == "prep.metadata":
@@ -434,19 +434,15 @@ class Registry(object):
         if not self._started:
             raise RegistryAccessError(
                 "Cannot get write access to a disconnected repository!")
-        if not obj._registry_locked:
-            self._lock.acquire()
-            try:
+        if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
+            with self._lock:
                 id = self.find(obj)
                 try:
-                    if len(self.repository.lock([self.find(obj)])) == 0:
-                        errstr = "Could not lock '%s' object #%i!" % (
-                            self.name, self.find(obj))
+                    if len(self.repository.lock([id])) == 0:
+                        errstr = "Could not lock '%s' object #%i!" % (self.name, id)
                         try:
-                            errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(
-                                self.find(obj))
+                            errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(id)
                         except Exception as x:
-                            logger.error(x)
                             pass
                         raise RegistryLockError(errstr)
                 finally:  # try to load even if lock fails
@@ -462,9 +458,7 @@ class Registry(object):
                     for d in self.changed_ids.itervalues():
                         d.add(id)
                 obj._registry_locked = True
-            finally:
-                #    pass
-                self._lock.release()
+                
         return True
 
     def _release_lock(self, obj):

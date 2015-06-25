@@ -31,6 +31,8 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from Ganga.Core import GangaException
 
+from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError, RegistryAccessError
+
 
 class PreparedStateError(GangaException):
 
@@ -260,7 +262,11 @@ class Descriptor(object):
                 lookup_result = None
                 try:
                     lookup_result = obj._index_cache[self._name]
-                except:
+                except TypeError:
+                    #obj._index_cache is probably still 'None'
+                    pass
+                except KeyError:
+                    #obj._index_cache is probably still an empty dict
                     pass
                 if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
                     result = lookup_result
@@ -556,7 +562,7 @@ class GangaObject(Node):
                 try:
                     reg._write_access(root)
                     _haveLocked = True
-                except Exception as x:
+                except (RegistryLockError, RegistryAccessError) as x:
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
                     logger.info(

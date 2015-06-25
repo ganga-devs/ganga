@@ -58,7 +58,7 @@ class GangaWorkAgent(GangaThread):
                     break
                 except Empty:
                     pass
-                except:
+                except Exception: #General case to print unexpected exceptions
                     traceback.print_exc()
                     pass
 

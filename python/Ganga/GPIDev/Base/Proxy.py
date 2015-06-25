@@ -21,6 +21,8 @@ shared_path = os.path.join(expandfilename(getConfig(
 
 # some proxy related convieniance methods
 
+except:
+    raise
 
 def isProxy(obj):
     """Checks if an object is a proxy"""
@@ -340,10 +342,8 @@ def GPIProxyClassFactory(name, pluginclass):
 
         # at the object level _impl is a ganga plugin object
         self.__dict__['_impl'] = pluginclass()
-        try:
-            self._impl.__construct__(map(stripProxy, args))
-        except:
-            raise
+
+        self._impl.__construct__(map(stripProxy, args))
 
         # initialize all properties from keywords of the constructor
         for k in kwds:

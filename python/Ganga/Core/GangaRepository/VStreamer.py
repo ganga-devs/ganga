@@ -222,8 +222,19 @@ from Ganga.GPIDev.Schema import Version
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema import Schema, Version
+
 # Empty Ganga Object
-from GangaRepository import EmptyGangaObject, SchemaVersionError
+class EmptyGangaObject(GangaObject):
+    
+    """Empty Ganga Object. Is used to construct incomplete jobs"""
+    _schema = Schema(Version(0, 0), {})
+    _name = "EmptyGangaObject"
+    _category = "internal"
+    _hidden = 1
+
+from GangaRepository import SchemaVersionError
 
 
 class Loader(object):
