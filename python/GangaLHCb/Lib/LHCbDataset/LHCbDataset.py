@@ -100,8 +100,8 @@ class LHCbDataset(GangaDataset):
     def __getitem__(self,i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
         this_file = self.files[i]
-        #return GPIProxyObjectFactory(this_file)
-        return this_file
+        return GPIProxyObjectFactory(this_file)
+        #return this_file
         #if type(i) == type(slice(0)):
         #    ds = LHCbDataset(files=self.files[i])
         #    ds.depth = self.depth

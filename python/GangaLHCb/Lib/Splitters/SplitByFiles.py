@@ -93,16 +93,20 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         logger.debug( "Creating new Job in Splitter" )
         j=Job()
-        j.copyFrom(stripProxy(job))
+        logger.debug( "Copying From Job" )
+        j.copyFrom(stripProxy(job), ['inputdata', 'inputsandbox', 'inputfiles'])
+        logger.debug( "Unsetting Splitter" )
         j.splitter = None
+        logger.debug( "Unsetting Merger" )
         j.merger = None
-        j.inputsandbox = [] ## master added automatically
-        j.inputfiles = []
+        #j.inputsandbox = [] ## master added automatically
+        #j.inputfiles = []
+        logger.debug( "Setting InputData" )
         j.inputdata = LHCbDataset( files             = datatmp[:],
                                    persistency       = self.persistency,
                                    depth             = self.depth )
         #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
-
+        logger.debug( "Returning new subjob" )
         return j
 
 

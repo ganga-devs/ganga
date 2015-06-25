@@ -88,7 +88,7 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'locations', 'location', 'accessURL' ]
+    _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'locations', 'location', 'accessURL', '_updateRemoteURLs' ]
     _remoteURLs = {}
     _storedReplicas = {}
 
@@ -200,12 +200,18 @@ class DiracFile(IGangaFile):
                 logger.warning( "Do NOT have an LFN, for file: %s" % self.namePattern )
                 logger.warning( "If file exists locally try first using the method put()" )
             return object.__getattribute__(self, 'lfn')
-        elif name is 'guid' or name is 'locations':
+        elif name in [ 'guid', 'locations' ]:
             if configDirac[ 'DiracFileAutoGet' ]:
-                if self.guid is None or self.guid == '' or self.locations == []:
-                    if self.lfn != "":
-                        self.getMetadata()
-                        return object.__getattribute__(self, 'guid')
+                if name is 'guid':
+                    if self.guid is None or self.guid == '':
+                        if self.lfn != "":
+                            self.getMetadata()
+                            return object.__getattribute__(self, 'guid')
+                if name is 'locations':
+                    if self.locations == []:
+                        if self.lfn != "":
+                            self.getMetadata()
+                            return object.__getattribute__(self, 'locations')
 
         return object.__getattribute__(self, name )
 
@@ -451,7 +457,7 @@ class DiracFile(IGangaFile):
             for site in self.locations:
                 #logger.debug( "site: %s" % str( site ) )
                 self._remoteURLs[site] = reps[self.lfn][site]
-                #logger.debug( "_remoteURLs[site]: %s" % str(self._remoteURLs[site] ) )
+                logger.debug( "Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site] ) )
 
     def location(self):
         """

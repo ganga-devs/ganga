@@ -173,18 +173,21 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
         logger.info( "Updating URLs: %s of %s" % (str(i*500), str(len(allLFNs)) ) )
 
         for this_lfn in values.keys():
+            logger.debug( "LFN: %s" % str(this_lfn) )
             this_dict = {}
             this_dict[this_lfn] = values.get(this_lfn)
 
             ## FIXME HORRIBLE HACK BUT THERE ARE LYTERALLY THOUSANDS OF I/O
             ## OPERATIONS HAPPENING DUE TO THIS, LETS MINIMISE IT
-            original_write_perm[this_lfn] = LFNdict[this_lfn]._getRegistry().dirty_flush_counter
-            LFNdict[this_lfn]._getRegistry().dirty_flush_counter = 1000
+            from Ganga.GPIDev.Base.Proxy import stripProxy
+            original_write_perm[this_lfn] = stripProxy(LFNdict[this_lfn])._getRegistry().dirty_flush_counter
+            stripProxy(LFNdict[this_lfn])._getRegistry().dirty_flush_counter = 1000
 
-
+            logger.debug( "Updating RemoteURLs" )
             LFNdict[this_lfn]._updateRemoteURLs( this_dict )
+            logger.debug( "This_dict: %s" % str( this_dict) )
             ##  If we find NO replicas
-            if LFNdict[this_lfn].locations == []:
+            if this_dict[this_lfn].keys() == []:
                 bad_lfns.append( this_lfn )
 
 
@@ -197,7 +200,8 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     for k, v in original_write_perm.iteritems():
         if k in bad_lfns:
             continue
-        LFNdict[k]._getRegistry().dirty_flush_counter  = v
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        stripProxy(LFNdict[k])._getRegistry().dirty_flush_counter  = v
 
     ## This finds all replicas for all LFNs...
     ## This will probably struggle for LFNs which don't exist
@@ -311,11 +315,14 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
             limit = int(math.floor( float(filesPerJob) * good_fraction ))
 
+            logger.debug( "Size limit: %s" % str(limit) )
             ##  If subset is too small throw it away
             if len( _this_subset ) < limit:
+                logger.debug( "%s < %s" % ( str( len( _this_subset )), str( limit) ) )
                 allChosenSets[ iterating_LFN ] = generate_site_selection( site_dict[iterating_LFN], wanted_common_site )
                 continue
             else:
+                logger.debug( "%s > %s" % ( str( len( _this_subset )), str( limit) ) )
                 ##  else Dataset was large enough to be considered useful
                 logger.info( "Generating Dataset of size: %s" % str(len(_this_subset)) )
                 allSubSets.append( _this_subset )
@@ -336,11 +343,14 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
         if iterations >= iterative_limit:
 
             if wanted_common_site > 1:
+                logger.debug( "Reducing Common Site Size" )
                 wanted_common_site = wanted_common_site - 1
                 iterations = 0
                 good_fraction = 0.75
             else:
                 good_fraction = good_fraction * 0.75
+
+            logger.debug( "good_fraction: %s" % str(good_fraction) )
 
     split_files = allSubSets
 

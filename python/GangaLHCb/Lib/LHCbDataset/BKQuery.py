@@ -2,7 +2,6 @@
 import datetime
 from Ganga.GPIDev.Base import GangaObject
 from LHCbDataset import *
-from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -161,7 +160,8 @@ RecoToDST-07/90000000/DST" ,
         if not type(files) is list: # i.e. a dict of LFN:Metadata
             #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
             files = files.keys()
-        
+       
+        from Ganga.GPI import DiracFile
         ds = LHCbDataset()
         for f in files:
             ds.files.append(DiracFile(lfn = f))
@@ -245,7 +245,8 @@ class BKQueryDict(GangaObject):
         if not type(files) is list:
             if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
-        
+    
+        from Ganga.GPI import DiracFile
         ds = LHCbDataset()
         for f in files:
             ds.files.append(DiracFile(lfn = f))
