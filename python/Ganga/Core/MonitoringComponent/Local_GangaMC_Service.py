@@ -105,14 +105,11 @@ class MonitoringWorkerThread(GangaThread):
             #setattr(threading.currentThread(), 'action', None)
             tpFreeThreads += 1
 
-            from Queue import Empty
             while not self.should_stop():
                 try:
                     action = Qin.get(block=True, timeout=0.5)
                     break
                 except Queue.Empty:
-                    continue
-                except Empty:
                     continue
 
             if self.should_stop():
@@ -191,7 +188,6 @@ def _purge_actions_queue():
     Purge Qin: consume the current queued actions 
     Note: the producer (i.e JobRegistry_Monitor) should be stopped before the method is called
     """
-    from Queue import Empty
     # purge the queue
     for i in range(len(Qin.queue)):
         try:
@@ -200,7 +196,7 @@ def _purge_actions_queue():
             # fail to terminate
             if isinstance(action, JobAction) and action.function == 'stop':
                 Qin.put(action)
-        except Empty:
+        except Queue.Empty:
             break
 
 if config['autostart']:
@@ -409,8 +405,7 @@ class JobRegistry_Monitor(GangaThread):
 
         while self.alive:
             # synchronize the main loop since we can get disable requests
-            self.__mainLoopCond.acquire()
-            try:
+            with self.__mainLoopCond:
                 log.debug('Monitoring loop lock acquired. Running loop')
                 # we are blocked here while the loop is disabled
                 while not self.enabled:
@@ -451,8 +446,6 @@ class JobRegistry_Monitor(GangaThread):
                             self.enabled = False
                             # notify the blocking call of runMonitoring()
                             self.__monStepsTerminatedEvent.set()
-            finally:
-                self.__mainLoopCond.release()
 
         # final cleanup
         self.__cleanUp()
@@ -526,9 +519,8 @@ class JobRegistry_Monitor(GangaThread):
                     "Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
                 return False
 
-        self.__mainLoopCond.acquire()
-        log.debug('Monitoring loop lock acquired. Enabling mon loop')
-        try:
+        with self.__mainLoopCond:
+            log.debug('Monitoring loop lock acquired. Enabling mon loop')
             if self.enabled or self.__isInProgress():
                 log.error("The monitoring loop is already running.")
                 return False
@@ -561,8 +553,6 @@ class JobRegistry_Monitor(GangaThread):
 
             # wake up the mon loop
             self.__mainLoopCond.notifyAll()
-        finally:
-            self.__mainLoopCond.release()
 
         # wait to execute the steps
         self.__monStepsTerminatedEvent.wait()
@@ -586,9 +576,8 @@ class JobRegistry_Monitor(GangaThread):
                 "Cannot start monitoring loop. It has already been stopped")
             return False
 
-        self.__mainLoopCond.acquire()
-        log.debug('Monitoring loop lock acquired. Enabling mon loop')
-        try:
+        with self.__mainLoopCond:
+            log.debug('Monitoring loop lock acquired. Enabling mon loop')
             self.enabled = True
             # infinite loops
             self.steps = -1
@@ -598,8 +587,7 @@ class JobRegistry_Monitor(GangaThread):
             # Start backend update timeout checking.
             self.setCallbackHook(updateDict_ts.timeoutCheck, {}, True)
             self.__mainLoopCond.notifyAll()
-        finally:
-            self.__mainLoopCond.release()
+
         return True
 
     def disableMonitoring(self):
@@ -623,9 +611,8 @@ class JobRegistry_Monitor(GangaThread):
             logger.error(
                 "ERROR STOPPING MONITORING THREAD, feel free to force exit")
 
-        self.__mainLoopCond.acquire()
-        log.debug('Monitoring loop lock acquired. Disabling mon loop')
-        try:
+        with self.__mainLoopCond:
+            log.debug('Monitoring loop lock acquired. Disabling mon loop')
             self.enabled = False
             self.steps = -1
             self.stopIter.set()
@@ -633,8 +620,6 @@ class JobRegistry_Monitor(GangaThread):
             log.debug('Monitoring loop disabled')
             # wake up the monitoring loop
             self.__mainLoopCond.notifyAll()
-        finally:
-            self.__mainLoopCond.release()
         # wait for cleanup
         # self.__cleanUp()
         # self.__cleanUpEvent.wait()
@@ -665,14 +650,11 @@ class JobRegistry_Monitor(GangaThread):
         except:
             pass
 
-        self.__mainLoopCond.acquire()
-        if self.enabled:
-            log.info('Stopping the monitoring component...')
-        try:
+        with self.__mainLoopCond:
+            if self.enabled:
+                log.info('Stopping the monitoring component...')
             # wake up the monitoring loop
             self.__mainLoopCond.notifyAll()
-        finally:
-            self.__mainLoopCond.release()
         # wait for cleanup
         self.__cleanUpEvent.wait()
         self.__cleanUpEvent.clear()
