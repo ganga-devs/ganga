@@ -1326,12 +1326,10 @@ class Panda(IBackend):
 
                     # Fix for HammerCloud in case jobs are left in submitting state
                     if job.status == 'submitting' and status.jobStatus in [ 'registered', 'defined', 'assigning', 'ready', 'pending', 'scouting',
-                                                                            'scouted', 'running', 'prepared', 'done', 'failed', 'finished',
-                                                                            'aborting', 'aborted', 'finishing', 'topreprocess', 'preprocessing',
-                                                                            'tobroken', 'broken', 'toretry', 'toincexec', 'rerefine', 'paused',
-                                                                            'throttled', 'exhausted', 'passed',
-                                                                            'unknown', 'assigned', 'waiting', 'activated', 'sent', 
-                                                                            'starting', 'holding', 'transferring' ]:
+                                                                      'scouted', 'running', 'prepared', 'done', 'failed', 'finished',
+                                                                      'aborting', 'aborted', 'finishing', 'topreprocess', 'preprocessing',
+                                                                      'tobroken', 'broken', 'toretry', 'toincexec', 'rerefine', 'paused',
+                                                                      'throttled', 'exhausted', 'passed' ]:
                         job.updateStatus('submitted')
 
                 elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
