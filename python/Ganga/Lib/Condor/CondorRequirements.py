@@ -31,8 +31,6 @@ from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 
-import types
-
 logger = getLogger()
 
 
@@ -82,7 +80,7 @@ the final requirement is the AND of all elements in the list
         requirementList = []
 
         if self.machine:
-            if type(self.machine) == types.StringType:
+            if isinstance(self.machine, str):
                 machineList = self.machine.split()
             else:
                 machineList = self.machine
@@ -94,7 +92,7 @@ the final requirement is the AND of all elements in the list
             requirementList.append(requirement)
 
         if self.excluded_machine:
-            if type(self.excluded_machine) == types.StringType:
+            if isinstance(self.excluded_machine, str):
                 machineList = self.excluded_machine.split()
             else:
                 machineList = self.excluded_machine
@@ -124,4 +122,4 @@ the final requirement is the AND of all elements in the list
 # Allow property values to be either string or list
 config = getConfig("defaults_CondorRequirements")
 for property in ["machine", "excluded_machine"]:
-    config.options[property].type = [types.StringType, types.ListType]
+    config.options[property].type = [str, list]

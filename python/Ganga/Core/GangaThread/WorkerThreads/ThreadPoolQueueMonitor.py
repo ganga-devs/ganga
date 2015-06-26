@@ -1,4 +1,4 @@
-import types
+import collections
 from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
@@ -136,7 +136,7 @@ class ThreadPoolQueueMonitor(object):
                                  queue with lower number = higher priority.
                                  This then should be an int normally 0-9
         """
-        if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
+        if not isinstance(worker_code, collections.Callable):
             logger.error(
                 'Only python callable objects can be added to the queue using queues.add()')
             logger.error(
@@ -152,7 +152,7 @@ class ThreadPoolQueueMonitor(object):
 
     def _addSystem(self, worker_code, args=(), kwargs={}, priority=5):
 
-        if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
+        if not isinstance(worker_code, collections.Callable):
             logger.error(
                 "Error Adding internal task!! please report this to the Ganga developers!")
             return

@@ -21,8 +21,6 @@ shared_path = os.path.join(expandfilename(getConfig(
 
 # some proxy related convieniance methods
 
-except:
-    raise
 
 def isProxy(obj):
     """Checks if an object is a proxy"""

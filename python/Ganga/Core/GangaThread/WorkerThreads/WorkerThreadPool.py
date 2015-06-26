@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import Queue
 import traceback
-import types
+import collections
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Utility.execute import execute
 from Ganga.Utility.logging import getLogger
@@ -164,7 +164,7 @@ class WorkerThreadPool(object):
                      fallback_func=None, fallback_args=(), fallback_kwargs={},
                      name=None):
 
-        if not isinstance(function, types.FunctionType) and not isinstance(function, types.MethodType):
+        if not isinstance(function, collections.Callable):
             logger.error(
                 'Only a python callable object may be added to the queue using the add_function() method')
             return
@@ -234,7 +234,7 @@ class WorkerThreadPool(object):
 #        only with args. Otherwise it is called with the result of executing the command on the local
 #        DIRAC server as the first arg.
 #        """
-#        if isinstance(command, types.FunctionType) or isinstance(command, types.MethodType):
+#        if isinstance(command, collections.Callable):
 #            self.__queue.put( QueueElement(priority      = priority,
 #                                           command_input = FunctionInput(command, command_args, command_kwargs),
 #                                           callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
@@ -249,8 +249,7 @@ class WorkerThreadPool(object):
 #
 #    ######################################################################################################
     def map(function, *iterables):
-        if not isinstance(function, types.FunctionType) \
-                and not isinstance(function, types.MethodType):
+        if not isinstance(function, collections.Callable):
             raise Exception('must be a function')
         for args in zip(*iterables):
             self.__queue.put(QueueElement(priority=5,

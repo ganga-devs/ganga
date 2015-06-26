@@ -186,7 +186,6 @@ def mygetmodule(object):
 
 def doc2(thing, title='Python Library Documentation: %s', forceload=0):
     """Display text documentation, given an object or a path to an object."""
-    import types
     try:
         object, name = pydoc.resolve(thing, forceload)
         desc = pydoc.describe(object)
@@ -203,11 +202,7 @@ def doc2(thing, title='Python Library Documentation: %s', forceload=0):
             # If the passed object is a piece of data or an instance,
             # document its available methods instead of its value.
 
-            # if this is a instance of used defined old-style class
-            if type(object) == types.InstanceType:
-                object = object.__class__
-            else:
-                object = type(object)
+            object = type(object)
             desc += ' object'
         pydoc.pager(title % desc + '\n\n' + pydoc.text.document(object, name))
     except (ImportError, pydoc.ErrorDuringImport) as value:

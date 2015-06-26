@@ -340,32 +340,22 @@ class Item(object):
     # all calls are equivalent:
     # item.isA('SimpleItem')
     # item.isA(SimpleItem)
-    # item.isA(SimpleItem())
     def isA(self, what):
-
-        #import types
-        # if type(what) is types.InstanceType:
-        #    what = what.__class__
-
-        this_type = type(what)
-        import types
 
         try:
             # for backwards compatibility with Ganga3 CLIP: if a string --
             # first convert to the class name
-            if this_type is type(''):
+            if isinstance(what, str):
                 # get access to all Item classes defined in this module
                 # (schema)
                 import Schema
                 what = getattr(Schema, what)
-            elif this_type is types.InstanceType:
-                what = what.__class__
 
         except AttributeError:
             # class not found
-            return 0
+            return False
 
-        return issubclass(self.__class__, what)
+        return isinstance(self, what)
 
     def _update(self, kwds, forced=None):
         """ Add new metaproperties/override old values. To be used by derived contructors only.

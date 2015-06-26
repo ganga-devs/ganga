@@ -4,7 +4,6 @@
 # $Id: JobTree.py,v 1.2.4.4 2009-07-24 13:39:39 ebke Exp $
 ##########################################################################
 import os
-import types
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
@@ -107,7 +106,7 @@ class JobTree(GangaObject):
             if d not in f:
                 f[d] = {}
             f = f[d]
-            if type(f) != types.DictionaryType:
+            if not isinstance(f, dict):
                 raise TreeError(2, "%s not a directory" % str(d))
         return f
 
@@ -117,7 +116,7 @@ class JobTree(GangaObject):
             if d not in f:
                 raise TreeError(1, "Directory %s does not exist" % str(d))
             f = f[d]
-            if type(f) != types.DictionaryType:
+            if not isinstance(f, dict):
                 raise TreeError(2, "%s not a directory" % str(d))
         return f
 
@@ -257,7 +256,7 @@ class JobTree(GangaObject):
         f = self.__select_dir(path)
         res = {'folders': [], 'jobs': []}
         for i in f:
-            if type(f[i]) == types.DictionaryType:
+            if isinstance(f[i], dict):
                 res['folders'].append(i)
             else:
                 res['jobs'].append(f[i])
@@ -342,7 +341,7 @@ class JobTree(GangaObject):
             f = self.__select_dir(path)
             fc = f.copy()
             for i in fc:
-                if type(fc[i]) == types.DictionaryType:
+                if isinstance(fc[i], dict):
                     self.cleanlinks(os.path.join(path, i))
                 else:
                     try:

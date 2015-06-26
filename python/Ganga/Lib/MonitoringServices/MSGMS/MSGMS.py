@@ -99,8 +99,7 @@ class MSGMS(IMonitoringService):
 
     def getMessage(self, event):
         """Create message from job_info adding hostname and event."""
-        import types
-        if isinstance(self.job_info, types.DictType):
+        if isinstance(self.job_info, dict):
             # on worker node so just copy job_info
             message = self.job_info.copy()
         else:

@@ -23,7 +23,6 @@ import Ganga.Utility.logging
 import os
 import sys
 import time
-import types
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -87,9 +86,9 @@ def stripped_export(item=None, filename="", mode="w"):
         return returnValue
 
     from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
-    if (type(item) is types.ListType):
+    if isinstance(item, list):
         objectList = item
-    elif type(item) is types.TupleType:
+    elif isinstance(item, tuple):
         objectList = item
     elif isinstance(item, RegistrySliceProxy):
         # cant use stripProxy as not a subclass of GPIProxyObject
