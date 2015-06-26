@@ -228,7 +228,8 @@ class AtlasUnit(IUnit):
       j = GPI.Job()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
-      j.inputdata = self.inputdata.clone()
+      if j.inputdata:
+         j.inputdata = self.inputdata.clone()
 
       trf = self._getParent()
       task = trf._getParent()
@@ -404,9 +405,15 @@ class AtlasUnit(IUnit):
       if not super(AtlasUnit,self).checkForSubmission():
          return False
 
+      # check that parent units are complete because otherwise, when we check for submission to do submissions first (ITransform.update)
+      # datasets may not have been created yet
+      if not self.checkParentUnitsAreComplete():
+         return False
+
       # Add a check for chain units to have frozen their input DS
       if len(self.req_units) > 0 and self.inputdata._name == "DQ2Dataset" and not self.inputdata.tag_info:
 
+         # check datasets are frozen
          for uds in self.inputdata.dataset:
             try:
                dq2_lock.acquire()
