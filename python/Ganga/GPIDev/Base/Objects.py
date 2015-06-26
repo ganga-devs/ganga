@@ -391,9 +391,8 @@ class ObjectMetaclass(type):
 
         # export public methods of this class and also of all the bases
         # this class is scanned last to extract the most up-to-date docstring
-        dictlist = [b.__dict__ for b in cls.__mro__]
-        for di in range(0, len(dictlist)):
-            d = dictlist[len(dictlist) - 1 - di]
+        dicts = (b.__dict__ for b in reversed(cls.__mro__))
+        for d in dicts:
             for k in d:
                 if k in cls._exportmethods:
                     try:
@@ -402,7 +401,7 @@ class ObjectMetaclass(type):
                     except KeyError:
                         internal_name = k
                         method = d[k]
-                    if not (type(method) == types.FunctionType):
+                    if not isinstance(method, types.FunctionType):
                         continue
                     f = ProxyMethodDescriptor(k, internal_name)
                     f.__doc__ = method.__doc__
