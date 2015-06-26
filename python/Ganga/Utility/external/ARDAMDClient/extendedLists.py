@@ -231,7 +231,7 @@ class BlockedList(object):
         self.blocks = []
         start = 0
         stop = self.blocklength
-        while 1:
+        while True:
             entries = ll[start:stop]
             if not entries:
                 break
@@ -279,7 +279,7 @@ class BlockedList(object):
         raise IndexError('list index out of range')
 
     def __getitem__(self, i):
-        if type(i) == types.SliceType:
+        if isinstance(i, types.SliceType):
             ss = i.indices(self.__len__())
             ii = range(*ss)
             return map(self.__getitem__, ii)
@@ -289,7 +289,7 @@ class BlockedList(object):
             return blk[blk_i]
 
     def __setitem__(self, i, item):
-        if type(i) == types.SliceType:
+        if isinstance(i, types.SliceType):
             ss = i.indices(self.__len__())
             ii = range(*ss)
             len_ii = len(ii)
@@ -315,7 +315,7 @@ class BlockedList(object):
             blk[blk_i] = item
 
     def __delitem__(self, i):
-        if type(i) == types.SliceType:
+        if isinstance(i, types.SliceType):
             ss = i.indices(self.__len__())
             ii = range(*ss)
             if ss[0] < ss[1]:

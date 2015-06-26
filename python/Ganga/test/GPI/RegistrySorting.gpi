@@ -8,7 +8,6 @@ for repeat in range(5):
         j = Job()
 
     ids1 = jobs.ids()
-    ids2 = jobs.ids()
-    ids2.sort()
+    ids2 = sorted(jobs.ids())
     assert(ids1==ids2)
     jobs.remove()

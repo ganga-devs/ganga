@@ -82,7 +82,7 @@ certFile    -- name of the certificate file
 if __name__ == '__main__':
     if len(sys.argv) > 1:
         if sys.argv[1] == '-i':
-            while 1:
+            while True:
                 certPath = raw_input(
                     'Enter path to the certificate (If different from current directory)--->')
                 certFile = raw_input(

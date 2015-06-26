@@ -43,14 +43,14 @@ class File(GangaObject):
         super(File, self).__init__()
 
         if not name is None:
-            assert(type(name) is type(''))
+            assert(isinstance(name, str))
             self.name = name
 
         if not subdir is None:
             self.subdir = subdir
 
     def __construct__(self, args):
-        if len(args) == 1 and type(args[0]) == type(''):
+        if len(args) == 1 and isinstance(args[0], str):
             v = args[0]
             import os.path
             expanded = expandfilename(v)
@@ -113,7 +113,7 @@ urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
 
 def string_file_shortcut_file(v, item):
-    if type(v) is type(''):
+    if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
         return File._proxyClass(v)._impl
@@ -267,7 +267,7 @@ urlprefix = re.compile('^(([a-zA-Z_][\w]*:)+/?)?/')
 
 
 def string_sharedfile_shortcut(v, item):
-    if type(v) is type(''):
+    if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
         return ShareDir._proxyClass(v)._impl

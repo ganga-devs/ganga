@@ -35,7 +35,7 @@ class FileBuffer(object):
     def getContents(self):
         """return a string with the contents of the file buffer"""
         logger.debug("Reading FileBuffer: %s" % self.name)
-        if type(self._contents) is type(''):
+        if isinstance(self._contents, str):
             return self._contents
         else:
             return self._contents.read()

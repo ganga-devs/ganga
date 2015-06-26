@@ -492,7 +492,7 @@ class JobRegistry_Monitor(GangaThread):
           This method is meant to be used in Ganga scripts to request monitoring on demand. 
         """
 
-        if not type(steps) is int or steps < 1:
+        if not isinstance(steps, int) or steps < 1:
             log.warning(
                 "The number of monitor steps should be a positive integer")
             return False

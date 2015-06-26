@@ -42,13 +42,13 @@ class RegistrySlice(object):
     def do_collective_operation(self, keep_going, method, *args, **kwds):
         """
         """
-        if not type(keep_going) is bool:
+        if not isinstance(keep_going, bool):
             raise GangaException("The variable 'keep_going' must be a boolean. Probably you wanted to do %s(%s).%s()" % (
                 self.name, keep_going, method))
         result = []
         for id, obj in self.objects.iteritems():
             try:
-                if type(method) is str:
+                if isinstance(method, str):
                     doc = method
                     result.append(getattr(obj, method)(*args, **kwds))
                 else:
@@ -205,7 +205,7 @@ class RegistrySlice(object):
                                         selected = False
                                         break
                                 else:
-                                    if type(attrvalue) is str:
+                                    if isinstance(attrvalue, str):
                                         regex = fnmatch.translate(attrvalue)
                                         reobj = re.compile(regex)
                                         if not reobj.match(getattr(obj, a)):
@@ -241,7 +241,7 @@ class RegistrySlice(object):
     def __call__(self, id):
         """ Retrieve an object by id.
         """
-        if type(id) is str:
+        if isinstance(id, str):
             if id.isdigit():
                 id = int(id)
             else:
@@ -290,13 +290,13 @@ class RegistrySlice(object):
           or by name. If retrieved by name then the job must be unique, otherwise the RegistryKeyError is raised.
          If the input is incorrect, RegistryAccessError is raised.
         """
-        if type(x) == int:
+        if isinstance(x, int):
             try:
                 return self.objects.values()[x]
             except IndexError:
                 raise RegistryIndexError('list index out of range')
 
-        if type(x) == str:
+        if isinstance(x, str):
             ids = []
             for j in self.objects.values():
                 if j.name == x:

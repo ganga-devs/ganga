@@ -171,7 +171,7 @@ class Shell(object):
 
             process = subprocess.Popen(command, env=self.env, cwd=this_cwd)
             pid = process.pid
-            while 1:
+            while True:
                 wpid, sts = os.waitpid(pid, os.WNOHANG)
                 if wpid != 0:
                     if os.WIFSIGNALED(sts):

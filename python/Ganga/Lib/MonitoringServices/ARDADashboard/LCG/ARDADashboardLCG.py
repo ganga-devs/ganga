@@ -67,7 +67,7 @@ class ARDADashboardLCG(IMonitoringService):
     def __init__(self, job_info):
         IMonitoringService.__init__(self, job_info)
 
-        if type(job_info) is DictionaryType:
+        if isinstance(job_info, DictionaryType):
             # we are on the worker node. We just need
             # to get values from the dictionary
 
@@ -243,5 +243,5 @@ class ARDADashboardLCG(IMonitoringService):
 
     def stop(self, exitcode, **opts):
         if self._complete:
-            if type(exitcode) is IntType:
+            if isinstance(exitcode, IntType):
                 self.dashboard.publish(JobExitCode=exitcode)

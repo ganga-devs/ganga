@@ -399,9 +399,7 @@ class Transform(GangaObject):
 
     def getNextPartitions(self, n):
         """Returns the N next partitions to process"""
-        partitionlist = [c for c in self._partition_status if self._partition_status[
-            c] in ["ready", "attempted"]]
-        partitionlist.sort()
+        partitionlist = sorted(c for c,v in self._partition_status.items() if v in ["ready", "attempted"])
         return partitionlist[:n]
 
     def getNewAppID(self, partition):
@@ -470,8 +468,7 @@ class Transform(GangaObject):
         o = markup("#%s: %s '%s'\n" % (
             id, self.__class__.__name__, self.name), status_colours[self.status])
         i = 0
-        partitions = self._partition_status.keys()
-        partitions.sort()
+        partitions = sorted(self._partition_status.keys())
         for c in partitions:
             s = self._partition_status[c]
             if c in self.getPartitionApps():

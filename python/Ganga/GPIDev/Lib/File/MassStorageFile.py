@@ -50,10 +50,10 @@ class MassStorageFile(IGangaFile):
         self.shell = Shell.Shell()
 
     def __construct__(self, args):
-        if len(args) == 1 and type(args[0]) == type(''):
+        if len(args) == 1 and isinstance(args[0], str):
             #self.namePattern = args[0]
             self._setNamePath(args[0], '')
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
+        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
             #self.namePattern = args[0]
             #self.localDir = args[1]
             self._setNamePath(args[0], args[1])

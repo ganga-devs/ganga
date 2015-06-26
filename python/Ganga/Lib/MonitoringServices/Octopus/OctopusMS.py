@@ -12,7 +12,7 @@ class OctopusMS(IMonitoringService):
 
     def __init__(self, job_info):
         IMonitoringService.__init__(self, job_info)
-        if type(job_info) is type({}):
+        if isinstance(job_info, type({})):
             print job_info
             self.server = self.job_info['octopus_server']
             self.port = self.job_info['octopus_port']

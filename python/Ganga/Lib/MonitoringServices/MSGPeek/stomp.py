@@ -520,7 +520,7 @@ class Connection(object):
         not present in the header map.
         """
         for required_header_key in required_header_keys:
-            if type(required_header_key) == tuple:
+            if isinstance(required_header_key, tuple):
                 found_alternative = False
                 for alternative in required_header_key:
                     if alternative in headers.keys():
@@ -537,7 +537,7 @@ class Connection(object):
         """
         Send a STOMP frame.
         """
-        if type(payload) == dict:
+        if isinstance(payload, dict):
             headers["transformation"] = "jms-map-xml"
             payload = self.__convert_dict(payload)
 
@@ -770,7 +770,7 @@ class Connection(object):
                     break
                 except socket.error:
                     self.__socket = None
-                    if type(sys.exc_info()[1]) == types.TupleType:
+                    if isinstance(sys.exc_info()[1], types.TupleType):
                         exc = sys.exc_info()[1][1]
                     else:
                         exc = sys.exc_info()[1]

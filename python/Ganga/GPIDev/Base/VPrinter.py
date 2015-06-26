@@ -11,7 +11,7 @@ from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod
 def quoteValue(value, selection):
     """A quoting function. Used to get consistent formatting"""
     # print "Quoting",repr(value),selection
-    if type(value) == type(''):
+    if isinstance(value, str):
         if selection == 'copyable':
 
             value = value.replace('"', R'\"')

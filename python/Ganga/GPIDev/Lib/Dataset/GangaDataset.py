@@ -51,7 +51,7 @@ class GangaDataset(Dataset):
 
     def __getitem__(self, i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
-        if type(i) == type(slice(0)):
+        if isinstance(i, type(slice(0))):
             ds = GangaDataset(files=self.files[i])
             return GPIProxyObjectFactory(ds)
         else:

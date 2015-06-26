@@ -1120,7 +1120,7 @@ class Grid(object):
 
                 xrsl += ")\n"
 
-            elif type(value) is dict:
+            elif isinstance(value, dict):
                 # expand if a dictionary
                 xrsl += "(%s=" % key
                 for key2, value2 in value.iteritems():
@@ -1177,7 +1177,7 @@ class Grid(object):
                 text = text.rstrip(',\n') + '\n'  # Get rid of trailing comma
                 text += '};\n'
 
-            elif type(value) == list:
+            elif isinstance(value, list):
                 if value:
                     text += '%s = {\n   "%s"\n};\n' % (key,
                                                        '",\n   "'.join(value))

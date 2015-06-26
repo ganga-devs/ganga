@@ -57,7 +57,7 @@ class MultiPostProcessor(IPostProcessor):
         super(MultiPostProcessor, self).__init__()
 
     def __construct__(self, value):
-        if (type(value) is type([])):
+        if isinstance(value, list):
             for process in value:
                 self.addProcess(process)
         elif isinstance(value._impl, MultiPostProcessor):

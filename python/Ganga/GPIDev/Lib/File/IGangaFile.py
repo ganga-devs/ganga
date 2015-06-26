@@ -92,12 +92,12 @@ class IGangaFile(GangaObject):
         return False
 
     def _list_get__match__(self, to_match):
-        if type(to_match) == str:
+        if isinstance(to_match, str):
             return fnmatch(self.namePattern, to_match)
         # Note: type(DiracFile) = ObjectMetaclass
         # type(ObjectMetaclass) = type
         # hence checking against a class type not an instance
-        if type(type(to_match)) == type:
+        if isinstance(type(to_match), type):
             return issubclass(self.__class__, to_match)
         return to_match == self
 

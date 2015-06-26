@@ -75,7 +75,7 @@ class ThreadPoolQueueMonitor(object):
         def display_element(item):
             if hasattr(item, 'name') and item.name != None:
                 return item.name
-            if type(item.command_input[0]) != str:
+            if not isinstance(item.command_input[0], str):
                 return item.command_input[0].__name__
             return item.command_input[0]
         output += '\n'
@@ -232,7 +232,7 @@ class ThreadPoolQueueMonitor(object):
                    fallback_kwargs = kwargs for the fallback_func are given here
                                      as a dict.
         """
-        if type(command) != str:
+        if not isinstance(command, str):
             logger.error("Input command must be of type 'string'")
             return
 

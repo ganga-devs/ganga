@@ -32,7 +32,7 @@ class MetadataDict(GangaObject):
         if key in Job._schema.datadict.keys():
             raise GangaAttributeError(
                 '\'%s\' is a reserved key name and cannot be used in the metadata' % key)
-        if type(key) is not type(''):
+        if not isinstance(key, str):
             raise GangaAttributeError(
                 'Metadata key must be of type \'str\' not %s' % type(key))
         if isinstance(value, GangaObject):

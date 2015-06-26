@@ -78,7 +78,7 @@ class TransientRegistrySlice(RegistrySlice):
         """
         Retrieve an object by id.
         """
-        if type(id) is str:
+        if isinstance(id, str):
             if id.isdigit():
                 id = int(id)
             else:

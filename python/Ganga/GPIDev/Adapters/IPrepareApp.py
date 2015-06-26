@@ -97,7 +97,7 @@ class IPrepareApp(IApplication):
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' % (prepitem))
             # we may have a list of files/strings
-            if type(prepitem) is list or type(prepitem) is GangaList:
+            if isinstance(prepitem, (list, GangaList)):
                 logger.debug('found a list')
                 for subitem in prepitem:
                     if isType(subitem, str):
@@ -115,7 +115,7 @@ class IPrepareApp(IApplication):
                             except IOError as e:
                                 logger.error(e)
                                 return 0
-                    elif type(subitem) is File and subitem.name is not '':
+                    elif isinstance(subitem, File) and subitem.name is not '':
                         logger.info(
                             'Sending file object %s to shared directory' % subitem.name)
                         try:
@@ -127,7 +127,7 @@ class IPrepareApp(IApplication):
                         except IOError as e:
                             logger.error(e)
                             return 0
-            elif type(prepitem) is str:
+            elif isinstance(prepitem, str):
                 logger.debug('found a string')
                 # we have a file. if it's an absolute path, copy it to the
                 # shared dir
@@ -143,7 +143,7 @@ class IPrepareApp(IApplication):
                     except IOError as e:
                         logger.error(e)
                         return 0
-            elif type(prepitem) is File and prepitem.name is not '':
+            elif isinstance(prepitem, File) and prepitem.name is not '':
                 logger.debug('found a file')
                 logger.info(
                     'Sending file object %s to shared directory' % prepitem.name)

@@ -16,7 +16,7 @@ class ARDADashboardLCGExecutable(ARDADashboardLCG):
             return
 
         self._complete = False
-        if type(job_info) is DictionaryType:
+        if isinstance(job_info, DictionaryType):
             # we are on the worker node
             try:
                 self._complete = True

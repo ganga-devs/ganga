@@ -139,7 +139,7 @@ class Executable(IPrepareApp):
         # property
 
         def validate_argument(x, exe=None):
-            if type(x) is type(''):
+            if isinstance(x, str):
                 if exe:
                     if not x:
                         raise ApplicationConfigurationError(
@@ -214,7 +214,7 @@ class RTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
-            if type(app.exe) is str:
+            if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
                     logger.info("Submitting a prepared application; taking any input files from %s" % (
@@ -225,7 +225,7 @@ class RTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif type(app.exe) is File:
+            elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(
@@ -243,7 +243,7 @@ class LCGRTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
-            if type(app.exe) is str:
+            if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
                     logger.info("Submitting a prepared application; taking any input files from %s" % (
@@ -254,7 +254,7 @@ class LCGRTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif type(app.exe) is File:
+            elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(
@@ -270,7 +270,7 @@ class gLiteRTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
-            if type(app.exe) is str:
+            if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
                     logger.info("Submitting a prepared application; taking any input files from %s" % (
@@ -281,7 +281,7 @@ class gLiteRTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif type(app.exe) is File:
+            elif isinstance(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(os.path.join(

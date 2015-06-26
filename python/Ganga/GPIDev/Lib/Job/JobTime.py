@@ -174,7 +174,7 @@ class JobTime(GangaObject):
         j = self.getJobObject()
         for sjs in j.subjobs:
             try:
-                if type(sjs.time.timestamps[status]) == datetime.datetime:
+                if isinstance(sjs.time.timestamps[status], datetime.datetime):
                     list.append(sjs.time.timestamps[status])
                 else:
                     logger.debug(
@@ -305,7 +305,7 @@ class JobTime(GangaObject):
             # Subjob id or string passed
             else:
                 # string = error
-                if type(subjob) != int:
+                if not isinstance(subjob, int):
                     raise TypeError("Subjob id requires type 'int'")
                 # subjob id supplied
                 for sj in j.subjobs:

@@ -109,7 +109,7 @@ class WorkerThreadPool(object):
             try:
                 if isinstance(item.command_input, FunctionInput):
                     these_args = item.command_input.args
-                    if type(these_args) == type(''):
+                    if isinstance(these_args, str):
                         these_args = (these_args, )
                     result = item.command_input.function(
                         *these_args, **item.command_input.kwargs)
@@ -183,7 +183,7 @@ class WorkerThreadPool(object):
                     fallback_func=None, fallback_args=(), fallback_kwargs={},
                     name=None):
 
-        if type(command) != str:
+        if not isinstance(command, str):
             logger.error("Input command must be of type 'string'")
             return
         self.__queue.put(QueueElement(priority=priority,

@@ -61,7 +61,7 @@ def failed(val):
 
 def get_number(val):
     import random
-    if type(val) is type(''):
+    if isinstance(val, str):
         t = eval(val, {'random': random})
     else:
         t = val

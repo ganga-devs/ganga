@@ -367,7 +367,7 @@ class Condor(IBackend):
         if self.env:
             for key in self.env.keys():
                 value = self.env[key]
-                if (type(value) == type("")):
+                if (isinstance(value, str)):
                     value = os.path.expandvars(value)
                 else:
                     value = str(value)
@@ -376,7 +376,7 @@ class Condor(IBackend):
         if jobconfig.env:
             for key in jobconfig.env.keys():
                 value = jobconfig.env[key]
-                if (type(value) == type("")):
+                if (isinstance(value, str)):
                     value = os.path.expandvars(value)
                 else:
                     value = str(value)

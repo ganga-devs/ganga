@@ -705,7 +705,7 @@ class GangaObject(Node):
 
 
 def string_type_shortcut_filter(val, item):
-    if type(val) is type(''):
+    if isinstance(val, str):
         if item is None:
             raise ValueError(
                 'cannot apply default string conversion, probably you are trying to use it in the constructor')

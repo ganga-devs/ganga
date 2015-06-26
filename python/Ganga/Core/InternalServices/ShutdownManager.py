@@ -88,7 +88,7 @@ def _ganga_run_exitfuncs():
         """
         import sys
         func = x[0]
-        if type(func) == type(()) and len(x[0]) == 2:
+        if isinstance(func, tuple) and len(x[0]) == 2:
             return x
         else:
             new = [(sys.maxsize, func)]

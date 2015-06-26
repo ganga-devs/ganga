@@ -99,7 +99,7 @@ Type 'quit'   to return to Ganga.
 """ % (_prog.hello_string))
 
     def help(self, request):
-        if type(request) is type(''):
+        if isinstance(request, str):
             if request == 'python':
                 pydoc.Helper.intro(self)
                 return

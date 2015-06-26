@@ -396,7 +396,7 @@ class ConfigOption(object):
         optdesc = 'while setting option [.]%s = %s ' % (self.name, str(value))
 
         # eval string values only if the cast_type is not exactly a string
-        if type(value) is type('') and not cast_type is type(''):
+        if isinstance(value, str) and not isinstance('', cast_type):
             try:
                 new_value = eval(value, config_scope)
                 logger.debug(
@@ -409,7 +409,7 @@ class ConfigOption(object):
         logger.debug('checking value type: %s (%s)', str(cast_type), optdesc)
 
         def check_type(x, t):
-            return type(x) is t or x is t
+            return isinstance(x, t) or x is t
 
         type_matched = False
 
@@ -423,7 +423,7 @@ class ConfigOption(object):
             type_matched = check_type(new_value, cast_type)
 
         from Ganga.Utility.logic import implies
-        if not implies(not cast_type is type(None), type_matched):
+        if not implies(not isinstance(None, cast_type), type_matched):
             raise ConfigError('type mismatch: expected %s got %s (%s)' % (
                 str(cast_type), str(type(new_value)), optdesc))
 
@@ -759,7 +759,7 @@ def read_ini_files(filenames, system_vars):
     # load all config files and apply special rules for PATH-like variables
     # note: main.read(filenames) cannot be used because of that
 
-    if type(filenames) is type(''):
+    if isinstance(filenames, str):
         filenames = [filenames]
 
     for f in filenames:

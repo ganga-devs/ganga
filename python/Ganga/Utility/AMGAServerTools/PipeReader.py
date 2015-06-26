@@ -58,7 +58,7 @@ class PipeReader:
 #-------------------------------------------------------------------------
     def _readtoq(self):
         try:
-            while 1:
+            while True:
                 item = self.rfile.read(self.blocksize)
                 if item == '':
                     break

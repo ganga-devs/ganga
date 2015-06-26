@@ -13,7 +13,7 @@ def setopt(o,v):
 
 def is_unchanged(x,y):
     assert(x==y)
-    assert(type(x) is type(y))
+    assert(isinstance(x, type(y)))
     return 1
 
 def setopt_fails(opt,val):

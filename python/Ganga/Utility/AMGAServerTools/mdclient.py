@@ -232,7 +232,7 @@ class MDClient(MDInterface):
         return self.__fetchRow()
 
     def __fetchData(self):
-        while 1:
+        while True:
             # Look for end of transmission
             pos = self.buffer.find('\004')
             if pos > -1:
@@ -287,7 +287,7 @@ class MDClient(MDInterface):
         return gotSomething
 
     def __quoteValue(self, value):
-        if type(value) == type(str()):
+        if isinstance(value, type(str())):
             value = value.replace('\'', '\\\'')
             value = "'" + value + "'"
         return value

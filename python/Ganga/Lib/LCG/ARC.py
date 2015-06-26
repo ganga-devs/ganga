@@ -735,7 +735,7 @@ sys.exit(0)
         self.monInfo = None
 
         # set the monitoring file by default to the stdout
-        if type(self.monInfo) is type({}):
+        if isinstance(self.monInfo, dict):
             self.monInfo['remotefile'] = 'stdout'
 
         # try to print out the monitoring service information in debug mode

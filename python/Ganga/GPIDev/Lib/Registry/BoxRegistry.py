@@ -82,9 +82,9 @@ class BoxRegistry(Registry):
 
 # Methods for the "box" proxy (but not for slice proxies)
     def _get_obj(self, obj_id):
-        if type(obj_id) == str:
+        if isinstance(obj_id, str):
             return self[self._getIDByName(obj_id)]
-        elif type(obj_id) == int:
+        elif isinstance(obj_id, int):
             return self[obj_id]
         else:
             obj = _unwrap(obj_id)

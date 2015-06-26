@@ -374,7 +374,7 @@ class RootRTHandler(IRuntimeHandler):
         # enclosed in (). Strings should be enclosed in escaped double quotes.
         arglist = []
         for arg in app.args:
-            if type(arg) == type('str'):
+            if isinstance(arg, str):
                 arglist.append(self.quoteCintArgString(arg))
             else:
                 arglist.append(arg)
@@ -510,7 +510,7 @@ def downloadWrapper(app):
         # enclosed in (). Strings should be enclosed in escaped double quotes.
         arglist = []
         for arg in app.args:
-            if type(arg) == type('str'):
+            if isinstance(arg, str):
                 arglist.append('\\\\"' + arg + '\\\\"')
             else:
                 arglist.append(arg)

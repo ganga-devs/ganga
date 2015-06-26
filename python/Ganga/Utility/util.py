@@ -54,8 +54,7 @@ def unique(s):
         # Sort to bring duplicate elements together and weed out the
         # duplcates in on sinle pass
     try:
-        t = list(s)
-        t.sort()
+        t = sorted(s)
     except TypeError:
         del t  # move on to the next method
     else:

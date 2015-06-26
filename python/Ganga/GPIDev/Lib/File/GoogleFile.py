@@ -139,7 +139,7 @@ class GoogleFile(IGangaFile):
         self._check_Ganga_folder()
 
     def __construct__(self, args):
-        if (len(args) != 1) or (type(args[0]) is not type('')):
+        if (len(args) != 1) or (not isinstance(args[0], str)):
             super(GoogleFile, self).__construct__(args)
         else:
             self.namePattern = args[0]
@@ -497,9 +497,9 @@ class GoogleFile(IGangaFile):
         return False
 
     def _list_get__match__(self, to_match):
-        if type(to_match) == str:
+        if isinstance(to_match, str):
             return fnmatch(self.namePattern, to_match)
-        if type(to_match) == type:
+        if isinstance(to_match, type):
             # note stripProxy wont work on class types that aren't instances
             return isinstance(self, to_match._impl)
         return to_match == self

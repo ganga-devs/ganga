@@ -41,7 +41,7 @@ class LocalFile(IGangaFile):
         """
         super(LocalFile, self).__init__()
 
-        if type(namePattern) == type(''):
+        if isinstance(namePattern, str):
             self.namePattern = namePattern
         elif isinstance(namePattern, File):
             import os.path
@@ -56,7 +56,7 @@ class LocalFile(IGangaFile):
             logger.error(
                 "Unkown type: %s . Cannot Create LocalFile from this!" % str(type(namePattern)))
 
-        if type(localDir) == type(''):
+        if isinstance(localDir, str):
             if localDir != '':
                 self.localDir = localDir
         else:
@@ -66,9 +66,9 @@ class LocalFile(IGangaFile):
     def __construct__(self, args):
 
         from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
-        if len(args) == 1 and type(args[0]) == type(''):
+        if len(args) == 1 and isinstance(args[0], str):
             self.namePattern = args[0]
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
+        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
             self.namePattern = args[0]
             self.localDir = args[1]
         elif len(args) == 1 and isinstance(args[0], SandboxFile):

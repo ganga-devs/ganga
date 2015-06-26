@@ -98,8 +98,7 @@ class ConfigProxy(object):
         sio = StringIO()
         sio.write('%s' % markup(self._impl.name, name_colour) +
                   ' : ' + markup(self._impl.docstring, docstring_colour) + '\n')
-        opts = self._impl.options.keys()
-        opts.sort()
+        opts = sorted(self._impl.options.keys())
         INDENT = '     ' * 2
         for o in opts:
             sio.write(levels[self._impl.getEffectiveLevel(
@@ -177,8 +176,7 @@ class MainConfigProxy(object):
         from StringIO import StringIO
         sio = StringIO()
         sio.write("Ganga Configuration" + '\n')
-        sections = self._impl.keys()
-        sections.sort()
+        sections = sorted(self._impl.keys())
         maxcol = 0
         for p in sections:
             if len(p) > maxcol:
@@ -195,8 +193,7 @@ config = MainConfigProxy()
 
 
 def print_config_file():
-    sections = config._impl.keys()
-    sections.sort()
+    sections = sorted(config._impl.keys())
 
     def print_doc_text(text):
         for line in text.splitlines():
@@ -213,8 +210,7 @@ def print_config_file():
 
         print_doc_text(sect.docstring)
 
-        opts = sect.options.keys()
-        opts.sort()
+        opts = sorted(sect.options.keys())
         for o in opts:
             if sect.options[o].cfile:
                 sio.write('\n')
@@ -229,8 +225,7 @@ def config_file_as_text():
 
     text = ''
 
-    sections = config._impl.keys()
-    sections.sort()
+    sections = sorted(config._impl.keys())
     INDENT = "#  "
     INDENT_value = "# "
     for p in sections:
@@ -245,8 +240,7 @@ def config_file_as_text():
                               initial_indent=INDENT, subsequent_indent=INDENT) + "\n"
         text += "[%s]\n\n" % p
 
-        opts = sect.options.keys()
-        opts.sort()
+        opts = sorted(sect.options.keys())
         for o in opts:
             if sect.options[o].cfile:
                 text += ""

@@ -323,7 +323,7 @@ class ShareRef(GangaObject):
                 prompt = '(Yes/[NO]/All/None)'
             else:
                 raise ValueError("Invalid default answer: '%s'" % default)
-            while 1:
+            while True:
                 logger.info(
                     '%s no longer being referenced by any objects. Delete directory?' % shareddir)
                 logger.info(question + prompt)
@@ -446,9 +446,7 @@ class ShareRef(GangaObject):
                 else:
                     unsorted.append(shareref_data(
                         os.path.basename(element), "Directory not found", self.name[element]))
-            decorated = [(name.date, i, name)
-                         for i, name in enumerate(unsorted)]
-            decorated.sort()
+            decorated = sorted((name.date, i, name) for i, name in enumerate(unsorted))
             sorted_refs = [name for date, i, name in decorated]
             for line in sorted_refs:
                 if isinstance(line.date, int):

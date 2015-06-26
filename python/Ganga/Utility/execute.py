@@ -188,7 +188,7 @@ def execute(command,
         stdout = pickle.loads(stdout)
     except:
         local_ns = {}
-        if type(eval_includes) is str:
+        if isinstance(eval_includes, str):
             exec(eval_includes, {}, local_ns)
         try:
             stdout = eval(stdout, {}, local_ns)

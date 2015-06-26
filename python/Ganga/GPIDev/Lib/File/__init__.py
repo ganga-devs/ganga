@@ -89,7 +89,7 @@ def findOutputFileTypeByFileName(filename):
 
 
 def string_file_shortcut(v, item):
-    if type(v) is type(''):
+    if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
         key = findOutputFileTypeByFileName(v)

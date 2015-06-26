@@ -192,9 +192,7 @@ class Registry(object):
                 self._lock.release()
             self._update_index_timer = time.time()
 
-        k = self._objects.keys()
-        k.sort()
-        return k
+        return sorted(self._objects.keys())
 
     def items(self):
         """ Return the items (ID,obj) in this registry. 
@@ -209,9 +207,7 @@ class Registry(object):
                 self._lock.release()
             self._update_index_timer = time.time()
 
-        its = self._objects.items()
-        its.sort()
-        return its
+        return sorted(self._objects.items())
 
     def iteritems(self):
         """ Return the items (ID,obj) in this registry."""

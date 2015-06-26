@@ -165,7 +165,7 @@ class winPopen:
 
 #---------------------------------------------------------------------------
     def wait(self):
-        while 1:
+        while True:
             status = self.poll()
             if status == -1:
                 time.sleep(MIN_TIMEOUT)

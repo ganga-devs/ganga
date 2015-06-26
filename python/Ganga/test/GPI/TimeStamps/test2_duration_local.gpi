@@ -13,9 +13,9 @@ assert j.time.waittime() == None
 j.submit()
 
 assert sleep_until_completed(j,300)
-assert type(j.time.submissiontime()) == datetime.timedelta
-assert type(j.time.waittime()) == datetime.timedelta
-assert type(j.time.runtime()) == datetime.timedelta
+assert isinstance(j.time.submissiontime(), datetime.timedelta)
+assert isinstance(j.time.waittime(), datetime.timedelta)
+assert isinstance(j.time.runtime(), datetime.timedelta)
 
 #subjobs
 
@@ -32,15 +32,15 @@ j.submit()
 
 assert sleep_until_completed(j,300)
 
-assert type(j.time.submissiontime()) == datetime.timedelta
-assert type(j.time.waittime()) == datetime.timedelta
-assert type(j.time.runtime()) == datetime.timedelta
+assert isinstance(j.time.submissiontime(), datetime.timedelta)
+assert isinstance(j.time.waittime(), datetime.timedelta)
+assert isinstance(j.time.runtime(), datetime.timedelta)
 
 
 
 for sjs in j.subjobs:
-    assert type(sjs.time.submissiontime()) == datetime.timedelta #submitting does not appear in subjobs currently.
-    assert type(sjs.time.waittime()) == datetime.timedelta
-    assert type(sjs.time.runtime()) == datetime.timedelta
+    assert isinstance(sjs.time.submissiontime(), datetime.timedelta) #submitting does not appear in subjobs currently.
+    assert isinstance(sjs.time.waittime(), datetime.timedelta)
+    assert isinstance(sjs.time.runtime(), datetime.timedelta)
 
 #end

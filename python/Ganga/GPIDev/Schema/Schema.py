@@ -156,7 +156,7 @@ class Schema(object):
                         # bugfix 36398: allow to assign a list in the
                         # configuration
                         types.append('list')
-                if type(item['defvalue']) is type({}):
+                if isinstance(item['defvalue'], dict):
                     if not types is None:
                         types.append('dict')
                 config.addOption(
@@ -175,7 +175,7 @@ class Schema(object):
                 raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
             if item.isA(ComponentItem):
-                if not type(x) is type('') and not x is None:
+                if not isinstance(x, str) and not x is None:
                     raise Ganga.Utility.Config.ConfigError(
                         errmsg + "only strings and None allowed as a default value of Component Item.")
                 try:
@@ -244,7 +244,7 @@ class Schema(object):
                 # if a defvalue of a component item is an object (not string) just process it as for SimpleItems (useful for FileItems)
                 # otherwise do a lookup via plugin registry
 
-                if type(defvalue) is type('') or defvalue is None:
+                if isinstance(defvalue, str) or defvalue is None:
                     from Ganga.Utility.Plugin import allPlugins
                     return allPlugins.find(item['category'], defvalue)()
 

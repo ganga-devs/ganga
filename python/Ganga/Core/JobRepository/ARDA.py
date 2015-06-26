@@ -345,7 +345,7 @@ class ARDARepositoryMixIn(JobRepository):
             if not os.path.isabs(path):
                 path = os.path.join(cwd, path)
             dd = [path]
-            while 1:
+            while True:
                 d = os.path.dirname(path)
                 if d == path:
                     break
@@ -727,7 +727,7 @@ class ARDARepositoryMixIn(JobRepository):
     #-------------------------------------------------------------------------
     def _fqnConverter(self, i):
         assert(type(i) in [types.TupleType, types.ListType, types.IntType])
-        if type(i) == types.IntType:
+        if isinstance(i, types.IntType):
             return (i,)
         else:
             return i
@@ -736,7 +736,7 @@ class ARDARepositoryMixIn(JobRepository):
     def _getSelectionAndPath(self, selection):
         self._rep_lock.acquire(1)
         try:
-            assert(type(selection) == types.DictionaryType)
+            assert(isinstance(selection, types.DictionaryType))
             if 'table_path' in selection:
                 s, p = (selection['attributes'], selection['table_path'])
             else:

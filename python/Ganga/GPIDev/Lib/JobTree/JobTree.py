@@ -91,7 +91,7 @@ class JobTree(GangaObject):
             else:
                 d = path
             d = os.path.normpath(d)
-            while 1:
+            while True:
                 d, fn = os.path.split(d)
                 if fn:
                     pp.insert(0, fn)

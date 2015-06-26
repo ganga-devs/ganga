@@ -62,7 +62,7 @@ class _ComponentFilterManager(object):
         # the filter can be registered as a tuple: ('filtername',filterfunction)
         # or just as a function in which case the function name is used as an
         # alias
-        if type(filter) == type(()) and len(filter) >= 2:
+        if isinstance(filter, tuple) and len(filter) >= 2:
             filtername = filter[0]
             filterfunc = filter[1]
         else:

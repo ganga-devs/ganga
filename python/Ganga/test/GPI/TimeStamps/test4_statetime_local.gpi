@@ -13,7 +13,7 @@ j.submit()
 assert sleep_until_state(j, 30, 'completed')
 
 assert j.time.submitted() == j.time.timestamps['submitted']
-assert type(j.time.submitted()) == datetime.datetime
+assert isinstance(j.time.submitted(), datetime.datetime)
 
 logger.info("Job 1/6 done.")
 
@@ -30,12 +30,12 @@ j_comp.resubmit()
 
 assert sleep_until_state(j_comp, 30, 'completed')
 
-assert type(j_comp.time.new()) == datetime.datetime
-assert type(j_comp.time.submitting()) == datetime.datetime
-assert type(j_comp.time.timestamps['resubmitted']) == datetime.datetime
-assert type(j_comp.time.backend_running()) == datetime.datetime
-assert type(j_comp.time.backend_final()) == datetime.datetime
-assert type(j_comp.time.final()) == datetime.datetime
+assert isinstance(j_comp.time.new(), datetime.datetime)
+assert isinstance(j_comp.time.submitting(), datetime.datetime)
+assert isinstance(j_comp.time.timestamps['resubmitted'], datetime.datetime)
+assert isinstance(j_comp.time.backend_running(), datetime.datetime)
+assert isinstance(j_comp.time.backend_final(), datetime.datetime)
+assert isinstance(j_comp.time.final(), datetime.datetime)
 
 
 logger.info("Job 2/6 done")
@@ -55,11 +55,11 @@ j_fail.force_status('failed')
 
 assert sleep_until_state(j_fail, 30, 'failed')
 
-assert type(j_fail.time.new()) == datetime.datetime
-assert type(j_fail.time.submitting()) == datetime.datetime
-assert type(j_fail.time.submitted()) == datetime.datetime
-assert type(j_fail.time.backend_running()) == datetime.datetime
-assert type(j_fail.time.final()) == datetime.datetime
+assert isinstance(j_fail.time.new(), datetime.datetime)
+assert isinstance(j_fail.time.submitting(), datetime.datetime)
+assert isinstance(j_fail.time.submitted(), datetime.datetime)
+assert isinstance(j_fail.time.backend_running(), datetime.datetime)
+assert isinstance(j_fail.time.final(), datetime.datetime)
 
 logger.info("Job 3/6 done")
 
@@ -75,7 +75,7 @@ j.submit()
 assert sleep_until_state(j, 120, 'completed')
 
 assert j.time.submitted() == j.time.timestamps['submitted']
-assert type(j.time.submitted()) == datetime.datetime
+assert isinstance(j.time.submitted(), datetime.datetime)
 
 logger.info("Job 4/6 done.")
 
@@ -94,12 +94,12 @@ j_comp.resubmit()
 
 assert sleep_until_state(j_comp, 120, 'completed')
 
-assert type(j_comp.time.new()) == datetime.datetime
-assert type(j_comp.time.submitting()) == datetime.datetime, "Job %d" %j_comp.id
-assert type(j_comp.time.timestamps['resubmitted']) == datetime.datetime
-assert type(j_comp.time.backend_running()) == datetime.datetime
-assert type(j_comp.time.backend_final()) == datetime.datetime
-assert type(j_comp.time.final()) == datetime.datetime
+assert isinstance(j_comp.time.new(), datetime.datetime)
+assert isinstance(j_comp.time.submitting(), datetime.datetime), "Job %d" %j_comp.id
+assert isinstance(j_comp.time.timestamps['resubmitted'], datetime.datetime)
+assert isinstance(j_comp.time.backend_running(), datetime.datetime)
+assert isinstance(j_comp.time.backend_final(), datetime.datetime)
+assert isinstance(j_comp.time.final(), datetime.datetime)
 
 
 logger.info("Job 5/6 done")
@@ -119,14 +119,14 @@ j_fail.force_status('failed')
 
 assert sleep_until_state(j_fail, 120, 'failed')
 
-assert type(j_fail.time.new()) == datetime.datetime
-assert type(j_fail.time.submitting()) == datetime.datetime
-assert type(j_fail.time.submitted()) == datetime.datetime
+assert isinstance(j_fail.time.new(), datetime.datetime)
+assert isinstance(j_fail.time.submitting(), datetime.datetime)
+assert isinstance(j_fail.time.submitted(), datetime.datetime)
 if 'backend_running' in j_fail.time.timestamps.keys():
-    assert type(j_fail.time.backend_running()) == datetime.datetime
+    assert isinstance(j_fail.time.backend_running(), datetime.datetime)
 else:
     logger.info("'backend_running' not in timestamps.")
-assert type(j_fail.time.final()) == datetime.datetime
+assert isinstance(j_fail.time.final(), datetime.datetime)
 
 logger.info("Job 6/6 done")
 

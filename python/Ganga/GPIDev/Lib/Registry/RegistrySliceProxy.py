@@ -76,7 +76,7 @@ def _wrap(obj):
         return GPIProxyObjectFactory(obj)
     if isinstance(obj, RegistrySlice):
         return obj._proxyClass(obj)
-    if type(obj) == list:
+    if isinstance(obj, list):
         return map(GPIProxyObjectFactory, obj)
     return obj
 

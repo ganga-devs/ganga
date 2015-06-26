@@ -116,11 +116,11 @@ class TestJobProperties(GangaGPITestCase):
         j2.backend.queue = 'b'
 
         # CHANGE: comparing types is more "pythonic"
-        assert(type(j.backend) is not type(j2.backend))
+        assert(not isinstance(j.backend, type(j2.backend)))
 
         j.backend = j2.backend
 
-        assert(type(j.backend) is type(j2.backend))
+        assert(isinstance(j.backend, type(j2.backend)))
 
         assert(j.backend.queue == 'b')
 
@@ -129,14 +129,14 @@ class TestJobProperties(GangaGPITestCase):
         # check the assignment of jobless components
 
         j = Job(backend="Local")
-        assert(type(j.backend) == Local)
+        assert(isinstance(j.backend, Local))
 
         b = Batch(queue='b')
         assert(b.queue == 'b')
 
         j.backend = b
 
-        assert(type(j.backend) == Batch)
+        assert(isinstance(j.backend, Batch))
         assert(j.backend.queue == 'b')
 
         b.queue = 'c'

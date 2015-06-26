@@ -123,7 +123,7 @@ class StandardJobConfig(object):
         # make an assumption that all File Items go to the sandbox (thus
         # convert to basename)
         for a in self.args:
-            if type(a) is type(''):
+            if isinstance(a, str):
                 self.__args_strings.append(a)
             else:
                 try:
@@ -136,7 +136,7 @@ class StandardJobConfig(object):
                     logger.error(s)
                     raise ValueError(s)
 
-        if type(self.exe) is type(''):
+        if isinstance(self.exe, str):
             self.__exe_string = self.exe
         else:
             try:

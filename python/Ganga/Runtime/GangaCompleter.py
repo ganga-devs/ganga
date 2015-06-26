@@ -338,7 +338,7 @@ class GangaCompleter(object):
             if arg_spec.args[:num_default_free]:
                 t += ', '.join(arg_spec.args[:num_default_free]) + ', '
             for var, deflt in zip(arg_spec.args[num_default_free:], arg_spec.defaults):
-                if type(deflt) == str:
+                if isinstance(deflt, str):
                     t += "%s ='%s', " % (var, deflt)
                 else:
                     t += '%s =%s, ' % (var, str(deflt))

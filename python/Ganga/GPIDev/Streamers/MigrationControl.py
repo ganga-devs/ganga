@@ -177,8 +177,7 @@ class MigrationControl(object):
             choices = self._choices_compact
         else:
             choices = self._choices_full
-        chcs = map(int, choices.keys())
-        chcs.sort()
+        chcs = sorted(map(int, choices.keys()))
         chcs = map(str, chcs)
         for k in chcs:
             prompt += "%s : %s\n" % (k, choices[k])

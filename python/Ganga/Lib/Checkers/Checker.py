@@ -17,9 +17,7 @@ logger = getLogger()
 
 
 def SortedValues(adict):
-    import ROOT
-    items = adict.items()
-    items.sort()
+    items = sorted(adict.items())
     return [value for key, value in items]
 
 
@@ -234,10 +232,8 @@ class RootFileChecker(IFileChecker):
                                 subtf = ROOT.TFile.Open(subfile)
                                 subtrees = GetTreeObjects(subtf)
 
-                                substructure = subtrees.keys()
-                                substructure.sort()
-                                masterstructure = mastertrees.keys()
-                                masterstructure.sort()
+                                substructure = sorted(subtrees.keys())
+                                masterstructure = sorted(mastertrees.keys())
                                 if (substructure != masterstructure):
                                     logger.info(
                                         'File structure of subjob %s is not the same as master job, failing job', sj.fqid)
