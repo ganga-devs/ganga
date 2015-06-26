@@ -1197,11 +1197,9 @@ class Panda(IBackend):
         active_status = [ None, 'defined', 'unknown', 'assigned', 'waiting', 'activated', 'sent', 'starting', 'running', 'holding', 'transferring' ]
 
         jobdict = {}
-        monitoredjobids = []
 
         for job in jobs:
 
-            monitoredjobids.append(job.id)
             buildjob = job.backend.buildjob
             if buildjob and buildjob.id and buildjob.status in active_status:
                 jobdict[buildjob.id] = job
@@ -1219,12 +1217,8 @@ class Panda(IBackend):
                 jobdict[job.backend.id] = job 
 
             for subjob in job.subjobs:
-                if subjob.backend.status in active_status or subjob.status in ['running', 'submitted', 'submitting']:
+                if subjob.backend.status in active_status or subjob.status in ['running', 'submitted']:
                     jobdict[subjob.backend.id] = subjob
-                    if not subjob.backend.id:
-                        logger.debug("WARNING!! Job: %d - Subjob: %d - Status: %s - Backend ID: %d " % (job.id, subjob.id, subjob.status, subjob.backend.id))
-                else:
-                    logger.debug('Skipping monitoring of Jobid: %d - Subjob id: %d - Status: %s - Backend ID: %d' % (job.id, subjob.id, subjob.status, subjob.backend.id))
 
             if job.status in ['running', 'submitted'] and job.backend.domergeretrieve:
                 job.backend.mergejobs = []
@@ -1232,8 +1226,6 @@ class Panda(IBackend):
                 
         # split into 2000-job pieces
         allJobIDs = jobdict.keys()
-        logger.debug("Monitored JobIDs: %s" % monitoredjobids)
-        logger.debug("Monitored Panda JobIDs: %s" % allJobIDs)
         jIDPieces = [allJobIDs[i:i+2000] for i in range(0,len(allJobIDs),2000)]
 
         jlist_merge_finished = []
@@ -1334,12 +1326,10 @@ class Panda(IBackend):
 
                     # Fix for HammerCloud in case jobs are left in submitting state
                     if job.status == 'submitting' and status.jobStatus in [ 'registered', 'defined', 'assigning', 'ready', 'pending', 'scouting',
-                                                                            'scouted', 'running', 'prepared', 'done', 'failed', 'finished',
-                                                                            'aborting', 'aborted', 'finishing', 'topreprocess', 'preprocessing',
-                                                                            'tobroken', 'broken', 'toretry', 'toincexec', 'rerefine', 'paused',
-                                                                            'throttled', 'exhausted', 'passed',
-                                                                            'unknown', 'assigned', 'waiting', 'activated', 'sent', 
-                                                                            'starting', 'holding', 'transferring' ]:
+                                                                      'scouted', 'running', 'prepared', 'done', 'failed', 'finished',
+                                                                      'aborting', 'aborted', 'finishing', 'topreprocess', 'preprocessing',
+                                                                      'tobroken', 'broken', 'toretry', 'toincexec', 'rerefine', 'paused',
+                                                                      'throttled', 'exhausted', 'passed' ]:
                         job.updateStatus('submitted')
 
                 elif job.backend.buildjob and job.backend.buildjob.id == status.PandaID:
@@ -1417,9 +1407,7 @@ class Panda(IBackend):
                                 if s in bjstats:
                                     new_stat = s
                                     break
-                            if job.status == 'submitting': # Fix for HammerCloud in case jobs are left in submitting state
-                                job.updateStatus('submitted')
-    
+                            
                             if new_stat in ['defined','unknown','assigned','waiting','activated','sent','finished']:
                                 job.updateStatus('submitted')
                             elif new_stat in ['starting','running','holding','transferring']:
