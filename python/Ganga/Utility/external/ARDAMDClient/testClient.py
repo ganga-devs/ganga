@@ -1,7 +1,9 @@
 #!/usr/bin/env python
-import mdstandalone
-import mdinterface
-import mdclient
+from __future__ import absolute_import
+#!/usr/bin/env python
+from . import mdstandalone
+from . import mdinterface
+from . import mdclient
 import time
 import math
 

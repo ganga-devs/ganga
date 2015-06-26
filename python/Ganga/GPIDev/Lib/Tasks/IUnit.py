@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
-from common import markup, overview_colours, logger
+from .common import markup, overview_colours, logger
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import time

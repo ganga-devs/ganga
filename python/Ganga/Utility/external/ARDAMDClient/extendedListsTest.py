@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # !/usr/bin/env python
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -11,13 +12,13 @@ import re
 import time
 import tempfile
 
-import extendedListsTest
+from . import extendedListsTest
 _thisDir = os.path.dirname(extendedListsTest.__file__)
 if not _thisDir:
     _thisDir = os.getcwd()
 
-from diskutils import *
-from extendedLists import *
+from .diskutils import *
+from .extendedLists import *
 
 #DEBUG = False
 DEBUG = True

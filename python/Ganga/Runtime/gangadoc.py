@@ -8,6 +8,7 @@
 Remove hardcoded limits on the help text.
 This module makes changes to the content of the pydoc module.
 """
+from __future__ import absolute_import
 
 import pydoc
 
@@ -109,14 +110,14 @@ Type 'quit'   to return to Ganga.
                 return
 
             if request == 'interactive':
-                import eliza
+                from . import eliza
                 self.output.write("""
 This is an interactive help. At the prompt type your questions in plain english\n\n""")
                 eliza.command_interface()
                 return
 
             # eval the expression (in the context of Ganga.GPI namespace)
-            from gangadoceval import evaluate
+            from .gangadoceval import evaluate
             request = evaluate(request)
 
         return pydoc.Helper.help(self, request)

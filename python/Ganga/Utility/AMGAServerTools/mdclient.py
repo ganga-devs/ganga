@@ -1,10 +1,11 @@
+from __future__ import absolute_import
 #
 # $Id: mdclient.py,v 1.1 2008-07-17 16:41:01 moscicki Exp $
 #
 import socket
-import mdinterface
+from . import mdinterface
 import time
-from mdinterface import CommandException, MDInterface
+from .mdinterface import CommandException, MDInterface
 
 DEBUG = False
 

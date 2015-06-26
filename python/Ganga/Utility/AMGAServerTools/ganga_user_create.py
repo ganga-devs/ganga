@@ -9,12 +9,13 @@
 # Created:      21/04/2006
 #----------------------------------------------------------------------------
 
+from __future__ import absolute_import
 import sys
 import os
 import re
-from certificate import getCertificateSubject
-from userManagement import UserDB
-from directoryManagement import Collections
+from .certificate import getCertificateSubject
+from .userManagement import UserDB
+from .directoryManagement import Collections
 
 
 #_defaultMinVersion = "2.2"

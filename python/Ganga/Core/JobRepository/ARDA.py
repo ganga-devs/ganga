@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -16,8 +17,8 @@ import Ganga.Utility.external.ARDAMDClient.mdclient
 import Ganga.Utility.external.ARDAMDClient.mdstandalone
 import Ganga.Utility.external.ARDAMDClient.mdparser
 import Ganga.Utility.Config
-from Base import JobRepository
-from Separator import Parser
+from .Base import JobRepository
+from .Separator import Parser
 from Ganga.Core.exceptions import RepositoryError, BulkOperationRepositoryError
 from Ganga.Utility.external.ARDAMDClient.mdclient import MDClient
 from Ganga.Utility.external.ARDAMDClient.mdstandalone import MDStandalone
@@ -2180,7 +2181,7 @@ def repositoryFactory(**kwargs):
                                          **kwargs)
 
         logger.debug("Creating test repository...")
-        from TestRepository import TestRepository
+        from .TestRepository import TestRepository
         if not kwargs.get('local_root'):
             # local_root is dynamically derived it is not configurable
             # parameter anymore

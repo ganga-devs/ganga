@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 # add display default values for the box
-from RegistrySlice import config
+from .RegistrySlice import config
 config.addOption('box_columns',
                  ("id", "type", "name", "application"),
                  'list of job attributes to be printed in separate columns')
@@ -172,7 +173,7 @@ class BoxRegistry(Registry):
         self._needs_metadata = True
         super(BoxRegistry, self).startup()
 
-from RegistrySlice import RegistrySlice
+from .RegistrySlice import RegistrySlice
 
 class BoxRegistrySlice(RegistrySlice):
 
@@ -216,7 +217,7 @@ class BoxRegistrySlice(RegistrySlice):
             return super(BoxRegistrySlice, self).__getitem__(id)
 
 
-from RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
+from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 
 
 class BoxRegistrySliceProxy(RegistrySliceProxy):

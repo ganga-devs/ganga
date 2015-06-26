@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -115,7 +116,7 @@ def gangaObjectFactory(attrDict, migration_class=None):
         msg = "Incompatible schema versions of plugin %s in the category %s. Current version %s. Repository version %s." % (
             attrDict['name'], attrDict['category'], v2, v1)
         if schema.version.major > version.major:  # no forward migration
-            from MigrationControl import migration
+            from .MigrationControl import migration
             if migration.isAllowed(attrDict['category'], attrDict['name'], attrDict['version'], msg=msg):
                 # try if migration provided by the plugin class
                 try:

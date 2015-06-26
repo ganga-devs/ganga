@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -341,6 +342,9 @@ class Item(object):
     # item.isA('SimpleItem')
     # item.isA(SimpleItem)
     def isA(self, what):
+        
+        this_type = type(what)
+        import types
 
         try:
             # for backwards compatibility with Ganga3 CLIP: if a string --
@@ -348,14 +352,16 @@ class Item(object):
             if isinstance(what, str):
                 # get access to all Item classes defined in this module
                 # (schema)
-                import Schema
+                from . import Schema
                 what = getattr(Schema, what)
+            elif isinstance(what, types.InstanceType):
+                what = what.__class__
 
         except AttributeError:
             # class not found
             return False
 
-        return isinstance(self, what)
+        return issubclass(self.__class__, what)
 
     def _update(self, kwds, forced=None):
         """ Add new metaproperties/override old values. To be used by derived contructors only.

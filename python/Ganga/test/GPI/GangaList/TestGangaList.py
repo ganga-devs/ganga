@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #

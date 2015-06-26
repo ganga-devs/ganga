@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -7,7 +8,7 @@ import os
 import types
 import time
 
-from diskutils import *
+from .diskutils import *
 
 
 class Storage(object):

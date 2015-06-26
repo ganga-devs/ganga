@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -252,7 +253,7 @@ class ProxyDataDescriptor(object):
 
         # unwrap proxy
         if item.isA(Schema.ComponentItem):
-            from Filters import allComponentFilters
+            from .Filters import allComponentFilters
             item = obj._impl._schema.getItem(self._name)
             cfilter = allComponentFilters[item['category']]
             stripper = lambda v: stripComponentObject(v, cfilter, item)

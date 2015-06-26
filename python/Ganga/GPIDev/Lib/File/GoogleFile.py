@@ -1,6 +1,7 @@
+from __future__ import absolute_import
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from fnmatch import fnmatch
-from IGangaFile import IGangaFile
+from .IGangaFile import IGangaFile
 import logging
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory

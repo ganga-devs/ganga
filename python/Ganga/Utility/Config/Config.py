@@ -274,15 +274,7 @@ class ConfigOption(object):
             pass
 
         self.session_value = session_value
-        try:
-            self.convert_type('session_value')
-        except Exception as x:
-            # rollback if conversion failed
-            try:
-                self.session_value = old_value
-            except NameError:
-                del self.session_value
-            raise x
+        self.convert_type('session_value')
 
     def setUserValue(self, user_value):
 
@@ -379,7 +371,7 @@ class ConfigOption(object):
 
         # calculate the cast type, if it cannot be done then the option has not been yet defined (setDefaultValue)
         # in this case do not modify the value
-        if not self.typelist is None:
+        if self.typelist is not None:
             # in this case cast_type is a list of string dotnames (like for
             # typelist property in schemas)
             cast_type = self.typelist
@@ -396,7 +388,7 @@ class ConfigOption(object):
         optdesc = 'while setting option [.]%s = %s ' % (self.name, str(value))
 
         # eval string values only if the cast_type is not exactly a string
-        if isinstance(value, str) and not isinstance('', cast_type):
+        if isinstance(value, str) and not isinstance(cast_type, str):
             try:
                 new_value = eval(value, config_scope)
                 logger.debug(
@@ -423,7 +415,7 @@ class ConfigOption(object):
             type_matched = check_type(new_value, cast_type)
 
         from Ganga.Utility.logic import implies
-        if not implies(not isinstance(None, cast_type), type_matched):
+        if not implies(not cast_type is type(None), type_matched):
             raise ConfigError('type mismatch: expected %s got %s (%s)' % (
                 str(cast_type), str(type(new_value)), optdesc))
 

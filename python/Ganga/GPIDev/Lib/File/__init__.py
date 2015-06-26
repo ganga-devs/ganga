@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # Required for ShareDir object
 def getSharedPath():
     from Ganga.Utility.files import expandfilename
@@ -7,24 +8,24 @@ def getSharedPath():
         'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
     return root_default
 
-import Configure
+from . import Configure
 
-from File import File
-from File import ShareDir
-from FileBuffer import FileBuffer
+from .File import File
+from .File import ShareDir
+from .FileBuffer import FileBuffer
 
-from IGangaFile import IGangaFile
-from LocalFile import LocalFile
-from MassStorageFile import MassStorageFile
-from LCGSEFile import LCGSEFile
-from SandboxFile import SandboxFile
+from .IGangaFile import IGangaFile
+from .LocalFile import LocalFile
+from .MassStorageFile import MassStorageFile
+from .LCGSEFile import LCGSEFile
+from .SandboxFile import SandboxFile
 
-import FileUtils
+from . import FileUtils
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
-from GoogleFile import GoogleFile
+from .GoogleFile import GoogleFile
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
@@ -95,10 +96,10 @@ def string_file_shortcut(v, item):
         key = findOutputFileTypeByFileName(v)
         if key is not None:
             if key == 'MassStorageFile':
-                from MassStorageFile import MassStorageFile
+                from .MassStorageFile import MassStorageFile
                 return MassStorageFile._proxyClass(v)._impl
             elif key == 'LCGSEFile':
-                from LCGSEFile import LCGSEFile
+                from .LCGSEFile import LCGSEFile
                 return LCGSEFile._proxyClass(v)._impl
             elif key == 'DiracFile':
                 try:

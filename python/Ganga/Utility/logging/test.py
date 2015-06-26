@@ -1,6 +1,7 @@
 from __future__ import print_function
+from __future__ import absolute_import
 
-import test
+from . import test
 import Ganga.Utility.logging
 Ganga.Utility.logging.config['Ganga.Utility.logging'] = 'DEBUG'
 

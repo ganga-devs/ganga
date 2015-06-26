@@ -88,6 +88,7 @@
 #                 is consistent with available proxy
 
 """Module defining class for creating, querying and renewing Grid proxy"""
+from __future__ import absolute_import
 
 __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "12 November 2009"
@@ -97,9 +98,9 @@ import os
 import re
 import time
 
-from ICredential import ICommandSet
-from ICredential import ICredential
-from ICredential import registerCommandSet
+from .ICredential import ICommandSet
+from .ICredential import ICredential
+from .ICredential import registerCommandSet
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.GridShell import getShell

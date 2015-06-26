@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -5,9 +6,9 @@
 ##########################################################################
 import os
 import time
-from extendedLists import Entries, Attributes
-from diskutils import RLock
-from mdinterface import CommandException
+from .extendedLists import Entries, Attributes
+from .diskutils import RLock
+from .mdinterface import CommandException
 
 
 class EmptyTableException(Exception):

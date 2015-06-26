@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -83,7 +84,7 @@ class JobInfo(GangaObject):
     def increment(self):
         self.submit_counter += 1
 
-from JobTime import JobTime #Provides plugin for category 'jobtime'
+from .JobTime import JobTime #Provides plugin for category 'jobtime'
 
 class Job(GangaObject):
 

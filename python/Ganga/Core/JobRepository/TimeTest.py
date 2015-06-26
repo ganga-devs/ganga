@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # !/usr/bin/env python
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -10,7 +11,7 @@ import os
 import time
 import tempfile
 
-import TimeTest
+from . import TimeTest
 _thisDir = os.path.dirname(TimeTest.__file__)
 if not _thisDir:
     _thisDir = os.getcwd()

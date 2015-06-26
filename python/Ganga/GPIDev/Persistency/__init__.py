@@ -16,9 +16,10 @@ __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "21 October 2005"
 __version__ = "1.0"
 
-from Ganga.GPI import *
+import Ganga.GPI
 from Ganga.Utility.Runtime import getScriptPath, getSearchPath
 from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
 import Ganga.Utility.logging
 import os
 import sys
@@ -85,7 +86,6 @@ def stripped_export(item=None, filename="", mode="w"):
         logger.error("No object saved")
         return returnValue
 
-    from Ganga.GPIDev.Lib.Registry.RegistrySliceProxy import RegistrySliceProxy
     if isinstance(item, list):
         objectList = item
     elif isinstance(item, tuple):
@@ -198,7 +198,8 @@ def load(filename="", returnList=True):
             try:
                 object = eval(item, Ganga.GPI.__dict__)
                 objectList.append(object)
-            except NameError:
+            except NameError as x:
+                logger.exception(x)
                 logger.warning(
                     "Unable to load object with definition %s" % item)
                 logger.warning("Required plug-ins may not be available")

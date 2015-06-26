@@ -1,11 +1,12 @@
+from __future__ import absolute_import
 
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: mdparser.py,v 1.1 2008-07-17 16:41:02 moscicki Exp $
 ##########################################################################
-from mdinterface import CommandException
-from mdtable import EmptyTableException
+from .mdinterface import CommandException
+from .mdtable import EmptyTableException
 import re
 
 # TODO: Check types when writing

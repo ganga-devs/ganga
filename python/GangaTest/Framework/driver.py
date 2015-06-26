@@ -28,7 +28,7 @@ Test driver used to executed GPI, GPIM and PyUnit tests
 This file is executed as a Ganga script so we can access to all GPI objects
 """
 
-import os,os.path,sys,new,types
+import os,os.path,sys,new
 
 from Ganga.Utility.Config import getConfig
 myconfig = getConfig('TestingFramework')

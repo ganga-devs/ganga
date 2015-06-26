@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -5,7 +6,7 @@
 ##########################################################################
 
 
-from utilities import serialize, gangaObjectFactory
+from .utilities import serialize, gangaObjectFactory
 import pickle
 
 

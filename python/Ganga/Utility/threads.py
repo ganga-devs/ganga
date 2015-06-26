@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 
 
 def execInThread(target, args=(), kwargs={}, timeout=None,
@@ -27,7 +28,7 @@ def execInThread(target, args=(), kwargs={}, timeout=None,
 
 # ------------------------
 
-from util import GenericWrapper
+from .util import GenericWrapper
 
 
 class SynchronisedObject(GenericWrapper):

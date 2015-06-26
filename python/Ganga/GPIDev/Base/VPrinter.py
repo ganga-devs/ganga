@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -245,7 +246,7 @@ class VSummaryPrinter(VPrinter):
             return
         if self._CallSummaryPrintMember(node, name, subnode):
             return
-        from Objects import GangaObject
+        from .Objects import GangaObject
         if isType(subnode, GangaObject):
             self.empty_body = 0
             self.comma()

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import glob
 import pickle
 import os
@@ -5,7 +6,7 @@ import sys
 import copy
 from Ganga.GPIDev.Persistency import load, stripped_export
 from Ganga.Core.GangaRepository import allRegistries
-from GangaRepository import GangaRepository
+from .GangaRepository import GangaRepository
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 

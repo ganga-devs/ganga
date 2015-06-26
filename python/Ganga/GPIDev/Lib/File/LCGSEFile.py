@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -12,7 +13,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility import GridShell
 
-from IGangaFile import IGangaFile
+from .IGangaFile import IGangaFile
 
 import re
 import os

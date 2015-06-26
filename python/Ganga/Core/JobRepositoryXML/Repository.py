@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
@@ -23,8 +24,8 @@ def makedirs(d):
         if x.errno != errno.EEXIST:
             raise
 
-from VStreamer import to_file, from_file
-from Counter import Counter
+from .VStreamer import to_file, from_file
+from .Counter import Counter
 
 
 class Repository:

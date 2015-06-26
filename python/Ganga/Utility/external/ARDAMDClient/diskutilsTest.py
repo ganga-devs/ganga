@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # !/usr/bin/env python
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
@@ -11,12 +12,12 @@ import re
 import time
 import tempfile
 
-import diskutilsTest
+from . import diskutilsTest
 _thisDir = os.path.dirname(diskutilsTest.__file__)
 if not _thisDir:
     _thisDir = os.getcwd()
 
-from diskutils import *
+from .diskutils import *
 
 #DEBUG = False
 DEBUG = True

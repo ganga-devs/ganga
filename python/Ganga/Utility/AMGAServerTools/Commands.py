@@ -8,13 +8,14 @@
 # Created:      05/02/2003
 #----------------------------------------------------------------------------
 
+from __future__ import absolute_import
 import os
 import sys
 import time
 import threading
 import popen2
 import signal
-import PipeReader
+from . import PipeReader
 
 MIN_TIMEOUT = 0.01
 

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -6,7 +7,7 @@
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
-from IGangaFile import IGangaFile
+from .IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 

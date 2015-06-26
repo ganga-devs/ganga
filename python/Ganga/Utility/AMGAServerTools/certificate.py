@@ -8,10 +8,11 @@
 # Created:      21/03/2006
 #----------------------------------------------------------------------------
 
+from __future__ import absolute_import
 import sys
 import os
 import re
-from Commands import submitCmd
+from .Commands import submitCmd
 
 DEBUG = False
 #DEBUG = True

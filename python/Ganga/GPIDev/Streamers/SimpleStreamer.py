@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -5,7 +6,7 @@
 ##########################################################################
 
 
-from utilities import serialize, gangaObjectFactory
+from .utilities import serialize, gangaObjectFactory
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
@@ -24,7 +25,7 @@ class SimpleJobStreamer(object):
             if migrated:
                 # add job to the MigrationControl list for flushing back to the
                 # repository
-                from MigrationControl import migrated_jobs
+                from .MigrationControl import migrated_jobs
                 if j not in migrated_jobs:
                     migrated_jobs.append(j)
         return j

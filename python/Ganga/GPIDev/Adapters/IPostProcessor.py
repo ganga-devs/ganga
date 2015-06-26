@@ -8,6 +8,8 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
+import Ganga.GPI
+
 
 class PostProcessException(GangaException):
 

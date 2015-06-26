@@ -8,12 +8,13 @@
 # Created:      01/05/2006
 #----------------------------------------------------------------------------
 
+from __future__ import absolute_import
 import sys
 import os
 import re
-from certificate import getGridProxyPath
-from mdclient import MDClient
-from mdinterface import CommandException
+from .certificate import getGridProxyPath
+from .mdclient import MDClient
+from .mdinterface import CommandException
 
 #DEBUG = False
 DEBUG = True

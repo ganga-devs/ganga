@@ -3,10 +3,11 @@ Core package defines the fundamental subsystems of Ganga Architecture.
 Subsystems are autonomous components (such as a remote services) which may be independetly deployed.
 Subsystems may also be created as local objects in the Ganga Client process.
 """
+from __future__ import absolute_import
 
 import time
 
-from exceptions import GangaException, ApplicationConfigurationError, \
+from .exceptions import GangaException, ApplicationConfigurationError, \
     BackendError, RepositoryError, BulkOperationRepositoryError, \
     IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
     GangaAttributeError, GangaValueError, ProtectedAttributeError, \

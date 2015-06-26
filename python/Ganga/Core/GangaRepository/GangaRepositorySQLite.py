@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 # Note: Following stuff must be considered in a GangaRepository:
 #
 # * lazy loading
 # * locking
 
-from GangaRepository import GangaRepository, RepositoryError
+from .GangaRepository import GangaRepository, RepositoryError
 import os
 import os.path
 

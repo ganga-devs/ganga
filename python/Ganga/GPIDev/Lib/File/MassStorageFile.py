@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -9,7 +10,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Utility import Shell
 
-from IGangaFile import IGangaFile
+from .IGangaFile import IGangaFile
 
 import re
 import os

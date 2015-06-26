@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -7,11 +8,11 @@ import os
 import re
 import errno
 import time
-import mdinterface
-from mdinterface import CommandException, MDInterface
-from mdparser import MDParser
-from mdtable import MDTable
-from diskutils import RLock, getLast, readLast, write, remove
+from . import mdinterface
+from .mdinterface import CommandException, MDInterface
+from .mdparser import MDParser
+from .mdtable import MDTable
+from .diskutils import RLock, getLast, readLast, write, remove
 
 DEBUG = False
 

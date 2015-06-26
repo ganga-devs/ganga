@@ -1,16 +1,17 @@
+from __future__ import absolute_import
 # Note: Following stuff must be considered in a GangaRepository:
 #
 # * lazy loading
 # * locking
 
-from GangaRepository import GangaRepository, RepositoryError, InaccessibleObjectError
+from .GangaRepository import GangaRepository, RepositoryError, InaccessibleObjectError
 from Ganga.Utility.Plugin import PluginManagerError
 import os
 import os.path
 import time
 import errno
 
-from SessionLock import SessionLockManager
+from .SessionLock import SessionLockManager
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()

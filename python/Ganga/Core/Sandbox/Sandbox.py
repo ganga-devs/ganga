@@ -1,9 +1,10 @@
+from __future__ import absolute_import
 import os
 import sys
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=True)
 
-from WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
+from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
 from Ganga.Core import GangaException
 
 

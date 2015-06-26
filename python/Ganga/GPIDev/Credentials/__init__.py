@@ -26,15 +26,16 @@
 
 """Initialisation file for the Credentials package,
    containing classes for working with different types of credential."""
+from __future__ import absolute_import
 
 __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "25 September 2007"
 __version__ = "1.5"
 
-from AfsToken import AfsToken
+from .AfsToken import AfsToken
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Plugin import allPlugins
-from GridProxy import GridProxy
+from .GridProxy import GridProxy
 
 _credentialPlugins = {}
 for item in locals().keys():

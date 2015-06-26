@@ -1,12 +1,13 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: mdclient.py,v 1.1 2008-07-17 16:41:02 moscicki Exp $
 ##########################################################################
 import socket
-import mdinterface
+from . import mdinterface
 import time
-from mdinterface import CommandException, MDInterface
+from .mdinterface import CommandException, MDInterface
 
 DEBUG = False
 

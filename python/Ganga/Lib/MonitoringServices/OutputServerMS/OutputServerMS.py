@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 
 
@@ -34,7 +35,7 @@ class OutputServerMS(IMonitoringService):
             URL = os.environ['GANGA_OUTPUTSERVERMS_URL']
         except KeyError:
             from Ganga.Utility.util import hostname
-            import ganga_output_server
+            from . import ganga_output_server
             URL = 'http://%s:%d' % (hostname(),
                                     ganga_output_server.DEFAULT_PORT)
 

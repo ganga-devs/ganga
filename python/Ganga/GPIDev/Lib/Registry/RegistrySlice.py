@@ -208,7 +208,7 @@ class RegistrySlice(object):
                                     if isinstance(attrvalue, str):
                                         regex = fnmatch.translate(attrvalue)
                                         reobj = re.compile(regex)
-                                        if not reobj.match(getattr(obj, a)):
+                                        if not reobj.match(str(getattr(obj, a))): #Compare the type of the attribute against attrvalue
                                             selected = False
                                     else:
                                         if getattr(obj, a) != attrvalue:

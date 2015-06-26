@@ -85,6 +85,7 @@
 #
 
 """Module defining class for creating, querying and renewing AFS token"""
+from __future__ import absolute_import
 
 __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "05 November 2009"
@@ -93,9 +94,9 @@ __version__ = "1.16"
 import os
 import time
 
-from ICredential import ICommandSet
-from ICredential import ICredential
-from ICredential import registerCommandSet
+from .ICredential import ICommandSet
+from .ICredential import ICredential
+from .ICredential import registerCommandSet
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Runtime import Repository_runtime
 from Ganga.Utility.logging import getLogger

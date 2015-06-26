@@ -9,9 +9,10 @@
 # Version 1.0: 060728
 
 """Package initialisation file"""
+from __future__ import absolute_import
 
 __author__ = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__ = "28 July 2006"
 __version__ = "1.0"
 
-from Interactive import Interactive
+from .Interactive import Interactive

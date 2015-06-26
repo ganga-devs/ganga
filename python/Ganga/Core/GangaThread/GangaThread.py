@@ -1,5 +1,6 @@
+from __future__ import absolute_import
 from threading import Thread
-from GangaThreadPool import GangaThreadPool
+from .GangaThreadPool import GangaThreadPool
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 

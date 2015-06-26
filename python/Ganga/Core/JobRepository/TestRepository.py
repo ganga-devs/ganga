@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 from Ganga.Utility.logging import getLogger
 
 logger = getLogger(modulename=1)
 
-from Base import JobRepository
+from .Base import JobRepository
 
 
 class JobInfo:

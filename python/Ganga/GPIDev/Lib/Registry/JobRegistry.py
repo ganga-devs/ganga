@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -5,7 +6,7 @@
 ##########################################################################
 
 # display default values for job list
-from RegistrySlice import config
+from .RegistrySlice import config
 config.addOption('jobs_columns',
                  ("fqid", "status", "name", "subjobs", "application",
                   "backend", "backend.actualCE", "comment"),
@@ -77,7 +78,7 @@ class JobRegistry(Registry):
     def getJobTree(self):
         return self.jobtree
 
-from RegistrySlice import RegistrySlice
+from .RegistrySlice import RegistrySlice
 
 
 class JobRegistrySlice(RegistrySlice):
@@ -192,7 +193,7 @@ class JobRegistrySlice(RegistrySlice):
         self.do_collective_operation(keep_going, 'remove', force=force)
 
 
-from RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
+from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
 
 
 class JobRegistrySliceProxy(RegistrySliceProxy):

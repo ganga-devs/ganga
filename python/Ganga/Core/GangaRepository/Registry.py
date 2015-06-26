@@ -1,8 +1,9 @@
+from __future__ import absolute_import
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
-from GangaRepository import InaccessibleObjectError
+from .GangaRepository import InaccessibleObjectError
 
 import time
 import threading
@@ -79,15 +80,15 @@ class RegistryIndexError(RegistryError, IndexError):
 def makeRepository(registry):
     """Factory that selects, imports and instantiates the correct GangaRepository"""
     if registry.type in ["LocalXML", "LocalPickle"]:
-        from GangaRepositoryXML import GangaRepositoryLocal
+        from .GangaRepositoryXML import GangaRepositoryLocal
         return GangaRepositoryLocal(registry)
     elif registry.type in ["SQLite"]:
-        from GangaRepositorySQLite import GangaRepositorySQLite
+        from .GangaRepositorySQLite import GangaRepositorySQLite
         return GangaRepositorySQLite(registry)
     elif registry.type in ["Transient"]:
         return GangaRepository(registry)
     elif registry.type in ["ImmutableTransient"]:
-        from GangaRepositoryImmutableTransient import GangaRepositoryImmutableTransient
+        from .GangaRepositoryImmutableTransient import GangaRepositoryImmutableTransient
         return GangaRepositoryImmutableTransient(registry, registry.location, registry.file_ext, registry.pickle_files)
     else:
         raise RegistryError(

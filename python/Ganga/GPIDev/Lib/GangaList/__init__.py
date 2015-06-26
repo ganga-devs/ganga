@@ -1,1 +1,2 @@
-from GangaList import GangaList
+from __future__ import absolute_import
+from .GangaList import GangaList

@@ -21,6 +21,7 @@
 ##########################################################################
 
 from __future__ import print_function
+from __future__ import absolute_import
 
 # store Ganga version based on CVS sticky tag for this file
 _gangaVersion = "$Name: Ganga-SVN $"
@@ -735,7 +736,7 @@ http://ipython.scipy.org/doc/manual''')
             'args', "['-colors','LightBG', %s]" % noautocall, 'FIXME')
 
         # import configuration from spyware
-        import spyware
+        from . import spyware
 
         import Ganga.Utility.ColourText
 
@@ -909,7 +910,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         try:
             # load Ganga system plugins...
-            import plugins
+            from . import plugins
         except Exception as x:
             logger.critical(
                 'Ganga system plugins could not be loaded due to the following reason: %s', str(x))
@@ -977,7 +978,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             del os.environ['GANGA_INTERNAL_PROCREEXEC']
 
         # start queues
-        from GPIexport import exportToGPI
+        from .GPIexport import exportToGPI
         from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
         exportToGPI('queues', ThreadPoolQueueMonitor(), 'Objects')
 
@@ -1014,7 +1015,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 logger.error(
                     "problems with loading plugins for %s -- ignored", r.name,)
 
-        from GPIexport import exportToGPI
+        from .GPIexport import exportToGPI
 
         from Ganga.Utility.Plugin import allPlugins
         # make all plugins visible in GPI
@@ -1228,10 +1229,10 @@ default_backends = LCG
         exportToGPI('force_job_failed', force_job_failed, 'Functions')
 
         # import default runtime modules
-        import Repository_runtime
+        from . import Repository_runtime
         import Ganga.Core
         
-        from associations import load_associations
+        from .associations import load_associations
         load_associations()
 
         # bootstrap user-defined runtime modules and enable transient named
@@ -1258,7 +1259,7 @@ default_backends = LCG
                     'Mechanism for tracking use of shared directory resources')
 
         # bootstrap the workspace
-        import Workspace_runtime
+        from . import Workspace_runtime
         Workspace_runtime.bootstrap()
 
         # migration repository
@@ -1414,7 +1415,7 @@ default_backends = LCG
 #            return _new_version
 
         # monitor the  ganga usage
-        import spyware
+        from . import spyware
 
         # this logic is a bit convoluted
         runs_script = len(self.args) > 0

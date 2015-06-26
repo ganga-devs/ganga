@@ -1,4 +1,5 @@
-from common import overview_colours, status_colours, config, logger, markup, fgcol
+from __future__ import absolute_import
+from .common import overview_colours, status_colours, config, logger, markup, fgcol
 import time
 import traceback
 import sys
@@ -71,7 +72,7 @@ class TaskRegistry(Registry):
         # Add runtime handlers for all the taskified applications, since now
         # all the backends are loaded
         from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
-        from TaskApplication import handler_map
+        from .TaskApplication import handler_map
         for basename, name in handler_map:
             for backend in allHandlers.getAllBackends(basename):
                 allHandlers.add(

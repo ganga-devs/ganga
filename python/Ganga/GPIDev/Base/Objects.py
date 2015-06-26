@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -24,7 +25,7 @@ import copy
 
 import Ganga.GPIDev.Schema as Schema
 
-from Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError
+from .Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError
 from Ganga.Core import GangaValueError
 
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
@@ -172,14 +173,14 @@ class Node(object):
                 setattr(self, name, c)
 
     def printTree(self, f=None, sel=''):
-        from VPrinter import VPrinter
+        from .VPrinter import VPrinter
         self.accept(VPrinter(f, sel))
 
     # printPrepTree is only ever run on applications, from within IPrepareApp.py
     # if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
     # see the relevant code in VPrinter to understand why
     def printPrepTree(self, f=None, sel='preparable'):
-        from VPrinter import VPrinter
+        from .VPrinter import VPrinter
         self.accept(VPrinter(f, sel))
 
     def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection=''):
@@ -192,7 +193,7 @@ class Node(object):
         out: An output stream to print to. The last line of output should be printed without a newline.'
         selection: See VPrinter for an explaintion of this.
         """
-        from VPrinter import VSummaryPrinter
+        from .VPrinter import VSummaryPrinter
         self.accept(
             VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection))
 
@@ -724,7 +725,7 @@ def string_type_shortcut_filter(val, item):
 # TestNativeSpecific.testFileSequence
 
 
-from Filters import allComponentFilters
+from .Filters import allComponentFilters
 allComponentFilters.setDefault(string_type_shortcut_filter)
 
 #

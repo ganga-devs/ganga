@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -27,6 +28,7 @@ from Ganga.Utility.util import isStringLike
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
+from Ganga.Utility.logic import implies
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -34,9 +36,9 @@ except KeyError:
     simulator_enabled = False
 
 if simulator_enabled:
-    from GridSimulator import GridSimulator as Grid
+    from .GridSimulator import GridSimulator as Grid
 else:
-    from Grid import Grid
+    from .Grid import Grid
 
 global lcg_output_downloader
 lcg_output_downloader = None

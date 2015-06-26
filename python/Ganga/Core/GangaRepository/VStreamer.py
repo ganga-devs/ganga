@@ -1,4 +1,5 @@
 from __future__ import print_function
+from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -234,7 +235,7 @@ class EmptyGangaObject(GangaObject):
     _category = "internal"
     _hidden = 1
 
-from GangaRepository import SchemaVersionError
+from .GangaRepository import SchemaVersionError
 
 
 class Loader(object):

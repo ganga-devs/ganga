@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 
 class RegistrySliceProxy(object):
 
@@ -68,7 +69,7 @@ class RegistrySliceProxy(object):
 # leave all others unchanged
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Objects import GangaObject
-from RegistrySlice import RegistrySlice
+from .RegistrySlice import RegistrySlice
 
 
 def _wrap(obj):
