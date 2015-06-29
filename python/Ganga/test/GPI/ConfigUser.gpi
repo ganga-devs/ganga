@@ -17,8 +17,7 @@ expected = { 'str' : [ (1,ConfigError), (3*3,ConfigError), (2.5, ConfigError), (
              'notexisting' : [ (1,ConfigError), (3*3,ConfigError), (2.5,ConfigError), (str,ConfigError), ('str',ConfigError), ([1,2],ConfigError), ('[1,2]',ConfigError), (None,ConfigError)]
              }
 
-for t in expected:
-    elist = expected[t]
+for t, elist in expected.items():
     for i in range(1,len(elist)):
 
         opt = '%s%d'%(t,i)
@@ -39,7 +38,7 @@ for t in expected:
         else:
             assign()
             if not c[opt] == elist[i][1]:
-                logger.error('FAILED: assigned value is'+ repr(c[opt])+ 'while setting',)
+                logger.error('FAILED: assigned value is ' + repr(c[opt]) + ' while setting',)
                 pp()
                 assert(0)
 

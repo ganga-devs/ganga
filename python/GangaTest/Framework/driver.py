@@ -302,7 +302,7 @@ class GPIPRunner:
                         traceback.print_exc()
 
 #utils 
-def cleanup():    
+def cleanup():   
     if myconfig['AutoCleanup'] == True:
         logger.info("[TestingFramework]AutoCleanup=True")
         logger.info("cleaning up job repository...")
