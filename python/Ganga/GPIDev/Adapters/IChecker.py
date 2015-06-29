@@ -8,6 +8,8 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 import os
 import glob
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 class IChecker(IPostProcessor):
 
