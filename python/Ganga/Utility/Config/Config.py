@@ -388,7 +388,7 @@ class ConfigOption(object):
         optdesc = 'while setting option [.]%s = %s ' % (self.name, str(value))
 
         # eval string values only if the cast_type is not exactly a string
-        if isinstance(value, str) and not isinstance(cast_type, str):
+        if isinstance(value, str) and cast_type is not str:
             try:
                 new_value = eval(value, config_scope)
                 logger.debug(
