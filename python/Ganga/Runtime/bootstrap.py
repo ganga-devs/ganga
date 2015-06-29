@@ -1610,7 +1610,17 @@ def exit( value=None ):
             sys.displayhook = _display
             c = code.InteractiveConsole(locals=local_ns)
             c.interact()
-
+            
+    def log(self,x):
+        
+        import sys
+        # FIXME: for some reason self.logger.critical does not print any messages here
+        if self.options.force_loglevel == 'DEBUG':
+            import traceback
+            traceback.print_exc(file=sys.stderr)
+        else:
+            print(x, file=sys.stderr)
+            print('(consider --debug option for more information)', file=sys.stderr)
 
 #
 #
