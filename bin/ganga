@@ -18,10 +18,12 @@
 # Perform setup needed for using Ganga Public Interface (GPI)
 # This is a Copy/Paste logic which must stay in THIS file
 
+import sys
+
 def standardSetup():
    """Function to perform standard setup for Ganga.
    """   
-   import sys, os.path
+   import os.path
 
    # insert the path to Ganga itself
    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
@@ -36,7 +38,6 @@ del standardSetup
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 from Ganga.Core import GangaException
-import sys
 
 try:
    # Process options given at command line and in configuration file(s)
