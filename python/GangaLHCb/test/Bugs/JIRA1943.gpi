@@ -34,7 +34,7 @@ for app in Applications:
         # Trigger the sandboxes to be prepared
 
         j.submit()
-        print "Checking inputSandBox for app=%s, backend=%s" %( app._impl._name, thisbackend._impl._name )
+        print("Checking inputSandBox for app=%s, backend=%s" %( app._impl._name, thisbackend._impl._name ))
         assert(checkFileInSandbox(j,basename(fname)))
         j.kill()
 

@@ -48,9 +48,9 @@ file = open(os.path.join(filename,'pyfiles.log'),'r')
 
 lines = [line for line in file.readlines()]
 status = [line.find('test')>=0 for line in lines]
-print "Lines =",lines
-print 'status list =', status
-print 'expected = [True, True, True]',
+print("Lines =",lines)
+print('status list =', status)
+print('expected = [True, True, True]')
 
 file.close()
 if False in status or len(status)!=3:

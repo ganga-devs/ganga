@@ -5,6 +5,7 @@ from .common import logger, markup, overview_colours, status_colours
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from .IUnit import IUnit
 import time
 import os

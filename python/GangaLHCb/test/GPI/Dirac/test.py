@@ -1,3 +1,3 @@
-print "this is from test.py"
+print("this is from test.py")
 
 

@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import time
@@ -10,15 +12,12 @@ parseCommandLine()
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 
-from Ganga.Utility.logging import getLogger
-logger = getLogger(modulename=True)
-
 diraclhcb=DiracLHCb()
 # Write to output pipe
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
 #def output(object):
-#    print >> sys.stdout, pickle.dumps(object)
+#    print(pickle.dumps(object), file=sys.stdout)
 
 # DiracLHCb commands
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
@@ -43,7 +42,7 @@ def getLHCbInputDataCatalog(lfns,depth,site,xml_file):
     output( diraclhcb.getInputDataCatalog(lfns,site,xml_file) )
 
 def bookkeepingGUI(file):
-    logger.info(os.system('dirac-bookkeeping-gui %s' % file))
+    print(os.system('dirac-bookkeeping-gui %s' % file))
 
 def getDataset(path,dqflag,type,start,end,sel):
     if type is 'Path':
@@ -99,7 +98,7 @@ def getFile(lfns, destDir = ''): output( diraclhcb.getFile(lfns, destDir=destDir
 def replicateFile(lfn,destSE,srcSE,locCache=''):
     res = diraclhcb.replicateFile(lfn,destSE,srcSE,locCache)
     output(res)
-    logger.info(res)
+    print(res)
 
 def removeReplica(lfn,sE):
     output( diraclhcb.removeReplica(lfn,sE) )
@@ -138,7 +137,7 @@ def uploadFile(lfn, file, diracSEs, guid=None):
 #        if md.get('OK',False) and lfn in md.get('Value',{'Successful':{}})['Successful']:
 #            guid=md['Value']['Successful'][lfn]['GUID']
 #            result['Value']['Successful'][lfn].update({'GUID':guid})
-#    print result
+#    print(result)
 
 def addFile(lfn,file,diracSE,guid):
     output( diraclhcb.addFile(lfn,file,diracSE,guid) )
@@ -265,7 +264,7 @@ def status(job_ids):
 #def getFile(lfn,dir):
 #    result = diraclhcb.getFile(lfn)
 #    if not result or not result.get('OK',False):
-#        print result
+#        print(result)
  #       return
  ##   f = result['Value']['Successful'][lfn]
  #   fname = f.split('/')[-1]
@@ -274,7 +273,7 @@ def status(job_ids):
  #   os.system('mv -f %s %s' % (f,new_f))
  #   os.system('rmdir %s' % fdir)
  #   result['Value'] = new_f
- #   print result
+ #   print(result)
 
 def getStateTime(id, status):
     log = diraclhcb.loggingInfo(id)
@@ -296,7 +295,6 @@ def getStateTime(id, status):
         checkstr = ''
             
     if checkstr=='':
-        logger.info(None)
         return
 
     for l in L:

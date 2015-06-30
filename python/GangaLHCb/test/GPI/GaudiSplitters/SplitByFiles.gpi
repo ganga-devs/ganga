@@ -18,7 +18,7 @@ assert(j.inputdata.files[-1].lfn==j.subjobs[1].inputdata.files[-1].lfn)
 
 k = j.copy()
 k.splitter.maxFiles=1
-print k
+print(k)
 k.submit()
 assert(len(k.subjobs)==1)
 assert(len(k.subjobs[0].inputdata.files)==1)

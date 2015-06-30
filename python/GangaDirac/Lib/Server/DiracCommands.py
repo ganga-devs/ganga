@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import time
@@ -9,9 +11,6 @@ parseCommandLine()
 from DIRAC.Interfaces.API.Dirac      import Dirac
 from DIRAC.Interfaces.API.DiracAdmin import DiracAdmin
 dirac = Dirac()
-
-from Ganga.Utility.logging import getLogger
-logger = getLogger(modulename=True)
 
 # Write to output pipe
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
@@ -57,7 +56,7 @@ def getFile(lfns, destDir = ''): output( dirac.getFile(lfns, destDir=destDir) )
 def replicateFile(lfn,destSE,srcSE,locCache=''):
     res = dirac.replicateFile(lfn,destSE,srcSE,locCache)
     output(res)
-    logger.debug(res)
+    print(res)
 
 def removeReplica(lfn,sE):
     output( dirac.removeReplica(lfn,sE) )
@@ -231,7 +230,7 @@ def getStateTime(id, status):
         checkstr = ''
             
     if checkstr=='':
-        logger.debug(None)
+        print(None)
         return
 
     for l in L:

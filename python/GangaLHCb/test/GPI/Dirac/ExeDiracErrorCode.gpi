@@ -26,7 +26,7 @@ j = Job(application = e, backend = Dirac())
 j.backend.settings['CPUTime'] = 600
 j.submit()
 
-print j
+print(j)
 
 from GangaTest.Framework.utils import sleep_until_completed, file_contains
 sleep_until_completed(j)
@@ -37,6 +37,6 @@ import time
 time.sleep(30)
 fileName = os.path.join(j.outputdir,'std.out')
 file = open(fileName,'r')
-print file.read()
+print(file.read())
 file.close()
 assert file_contains(fileName, 'status 45'), 'Exit code should be returned from DIRAC'

@@ -2,15 +2,9 @@ import os
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed
 
-try:
-    import Ganga.Utility.Config.Config
-    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except x:
-    print x
-    doConfig = True
+import Ganga.Utility.Config.Config
 
-if doConfig:
-    from GangaLHCb.test import *
+from GangaLHCb.test import getDiracAppPlatform
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -37,7 +31,7 @@ class TestDaVinci(GangaGPITestCase):
         j.inputdata = [DiracFile(lfn = "/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst")]
         j.submit()
         sleep_until_completed(j,1800)
-        #print j.status
+        #print(j.status)
         assert j.status == "completed"
         #j.peek()
         assert(os.path.exists(os.path.join(j.outputdir,outfile_name)))

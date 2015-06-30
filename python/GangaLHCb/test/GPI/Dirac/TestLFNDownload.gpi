@@ -11,7 +11,7 @@ f.write('This is a test %f \\n')
 f.close()
 """ % time.time()
 write_file(scriptname,code)
-print 'code =', code
+print('code =', code)
 jscript=Job(application=Executable(),backend=Dirac())
 jscript.backend.settings['CPUTime'] = 300
 jscript.application.exe=File(scriptname)
@@ -22,7 +22,7 @@ jscript.submit()
 sleep_until_completed(jscript)
 assert jscript.status == 'completed', 'job must complete. it is %s' % jscript.status
 
-print 'j = ', jscript
+print('j = ', jscript)
 
 tmpdir = tempfile.mktemp()
 os.mkdir(tmpdir)
@@ -39,7 +39,7 @@ os.unlink(outfile)
 try:
     os.rmdir(tmpdir)
 except OSError as e:
-    print e
-    print 'Directory content',os.listdir(tmpdir)
+    print(e)
+    print('Directory content',os.listdir(tmpdir))
 
 jscript.outputfiles[0].remove()

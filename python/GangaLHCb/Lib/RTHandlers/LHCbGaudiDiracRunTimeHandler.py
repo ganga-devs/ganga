@@ -181,7 +181,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         )
         logger.debug( "prepare: LHCbGaudiDiracRunTimeHandler" )
 
-        #print inputsandbox
+        #print(inputsandbox)
 
         thisenv = None
         #if appmasterconfig:

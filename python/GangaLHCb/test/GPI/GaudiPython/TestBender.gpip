@@ -13,7 +13,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -59,9 +59,9 @@ class LocalJob(ICheckTest):
 
     def checkTest(self):
         fname = join(self.j.outputdir,'stdout')
-        print "fname = %s" % fname
+        print("fname = %s" % fname)
         f = open(fname)
-        print 'f =', f.read()
+        print('f =', f.read())
         f.close()
         #executionstring = 'Application Manager Configured successfully'
         executionstring = 'num_events: -1'
