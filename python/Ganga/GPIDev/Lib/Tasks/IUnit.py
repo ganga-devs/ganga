@@ -101,13 +101,34 @@ class IUnit(GangaObject):
             job = GPI.jobs(self.active_job_ids[0])
             if job.status in ["failed", "killed"]:
                 return True
-
+            
             return False
+
+
+    def checkParentUnitsAreComplete(self):
+        """Check to see if the parent units are complete"""
+        req_ok = True
+        task = self._getParent()._getParent()
+        for req in self.req_units:
+            req_trf_id = int(req.split(":")[0])
+
+            if req.find("ALL") == -1:
+                req_unit_id = int(req.split(":")[1])
+                if task.transforms[req_trf_id].units[req_unit_id].status != "completed":
+                    req_ok = False
+
+            else:
+                # need all units from this trf
+                for u in task.transforms[req_trf_id].units:
+                    if u.status != "completed":
+                        req_ok = False
+
+        return req_ok
 
     def checkMajorResubmit(self, job):
         """check if this job needs to be fully rebrokered or not"""
         pass
-
+   
     def majorResubmit(self, job):
         """perform a mjor resubmit/rebroker"""
         self.prev_job_ids.append(job.id)
@@ -131,21 +152,7 @@ class IUnit(GangaObject):
         maxsub = task.n_tosub()
 
         # check parent unit(s)
-        req_ok = True
-        for req in self.req_units:
-            req_trf_id = int(req.split(":")[0])
-
-            if req.find("ALL") == -1:
-                req_unit_id = int(req.split(":")[1])
-
-                if task.transforms[req_trf_id].units[req_unit_id].status != "completed":
-                    req_ok = False
-
-            else:
-                # need all units from this trf
-                for u in task.transforms[req_trf_id].units:
-                    if u.status != "completed":
-                        req_ok = False
+        req_ok = self.checkParentUnitsAreComplete()
 
         # set the start time if not already set
         if len(self.req_units) > 0 and req_ok and self.start_time == 0:

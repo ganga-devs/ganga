@@ -42,6 +42,8 @@ class LocalFile(IGangaFile):
         """
         super(LocalFile, self).__init__()
 
+        self.tmp_pwd = None
+
         if isinstance(namePattern, str):
             self.namePattern = namePattern
         elif isinstance(namePattern, File):
@@ -60,6 +62,10 @@ class LocalFile(IGangaFile):
         if isinstance(localDir, str):
             if localDir != '':
                 self.localDir = localDir
+            else:
+                from os.path import abspath
+                this_pwd = abspath('.')
+                self.tmp_pwd = this_pwd
         else:
             logger.error(
                 "Unkown type: %s . Cannot set LocalFile localDir using this!" % str(type(localDir)))
@@ -139,6 +145,20 @@ class LocalFile(IGangaFile):
             for f in self.subfiles:
                 filelist.append(os.path.join(f.localDir, f.namePattern))
         else:
+            if self.localDir == '':
+                if os.path.exists( os.path.join( self.tmp_pwd, self.namePattern ) ):
+                    self.localDir = self.tmp_pwd
+                    logger.debug( "File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir) )
+                else:
+                    from os.path import abspath
+                    this_pwd = abspath('.')
+                    now_tmp_pwd = this_pwd
+                    if os.path.exists( os.path.join( now_tmp_pwd, self.namePattern ) ):
+                        self.localDir = now_tmp_pwd
+                        logger.debug( "File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir) )
+                    else:
+                        logger.debug( "File: %s NOT found, NOT setting localDir: %s !!!" % (str(self.namePattern), self.localDir) )
+
             filelist.append(os.path.join(self.localDir, self.namePattern))
 
         return filelist

@@ -52,6 +52,7 @@ class Node(object):
     def __init__(self, parent):
         self._data = {}
         self._setParent(parent)
+        super(Node, self).__init__()
 
     def __getstate__(self):
         dict = self.__dict__.copy()
@@ -152,13 +153,14 @@ class Node(object):
     # copy all the properties recursively from the srcobj
     # if schema of self and srcobj are not compatible raises a ValueError
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
-    def copyFrom(self, srcobj):
-        # Check if this object is derived from the source object, then the copy
-        # will not throw away information
+    def copyFrom(self, srcobj, _ignore_atts=[]):
+        # Check if this object is derived from the source object, then the copy will not throw away information
         if not isinstance(self, srcobj.__class__) and not isinstance(srcobj, self.__class__):
-            raise GangaValueError(
-                "copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
+            raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
         for name, item in self._schema.allItems():
+            if name in _ignore_atts:
+                continue
+            logger.debug( "Copying: %s : %s" % (str(name), str(item)) )
             if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
                 if srcobj.application.is_prepared is not None and srcobj.application.is_prepared is not True:
                     srcobj.application.incrementShareCounter(
@@ -171,6 +173,10 @@ class Node(object):
             else:
                 c = copy.deepcopy(getattr(srcobj, name))
                 setattr(self, name, c)
+        
+    def printTree(self,f=None, sel='' ):
+        from VPrinter import VPrinter
+        self.accept(VPrinter(f,sel))
 
     def printTree(self, f=None, sel=''):
         from .VPrinter import VPrinter

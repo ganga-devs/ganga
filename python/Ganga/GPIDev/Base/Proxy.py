@@ -16,9 +16,6 @@ from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObj
 prepconfig = getConfig('Preparable')
 
 import os
-from Ganga.Utility.files import expandfilename
-shared_path = os.path.join(expandfilename(getConfig(
-    'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
 
 # some proxy related convieniance methods
 
@@ -236,6 +233,8 @@ class ProxyDataDescriptor(object):
                     if val.is_prepared is not None:
                         if val.is_prepared is not True:
                             if hasattr(val.is_prepared, 'name'):
+                                from Ganga.Utility.files import expandfilename
+                                shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
                                 if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
                                     logger.error(
                                         'ShareDir directory not found: %s' % val.is_prepared.name)
@@ -421,6 +420,8 @@ def GPIProxyClassFactory(name, pluginclass):
 
         if hasattr(self, 'application'):
             if hasattr(self.application, 'is_prepared'):
+                from Ganga.Utility.files import expandfilename
+                shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
                 if self.application.is_prepared is not None and\
                         self.application.is_prepared is not True:
                     if hasattr(self.application.is_prepared, 'name'):
@@ -448,6 +449,8 @@ def GPIProxyClassFactory(name, pluginclass):
 
         if unprepare is True:
             if hasattr(self, 'is_prepared'):
+                from Ganga.Utility.files import expandfilename
+                shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),'shared',getConfig('Configuration')['user'])
                 if self.is_prepared is not None:
                     if self.is_prepared is not True:
                         if hasattr(self.is_prepared, 'name'):

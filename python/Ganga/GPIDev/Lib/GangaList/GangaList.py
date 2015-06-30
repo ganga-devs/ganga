@@ -23,7 +23,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
     else:
         _list = [_list]
 
-    logger.debug("_list: %s" % str(_list))
+    #logger.debug("_list: %s" % str(_list))
 
     if mapfunction is not None:
         _list = map(mapfunction, _list)

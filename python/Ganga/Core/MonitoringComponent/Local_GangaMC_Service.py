@@ -941,14 +941,13 @@ class JobRegistry_Monitor(GangaThread):
                             if j.backend.check_auto_resubmit():
                                 log.warning('Auto-resubmit job %d...' % j.id)
                                 j.auto_resubmit()
-
+                            
                 except BackendError as x:
                     self._handleError(x, x.backend_name, 0)
-                except Exception as x:
-                    self._handleError(x, backendObj._name, 1)
-                log.debug("[Update Thread %s] Flushing registry %s." %
-                          (currentThread, [x.id for x in jobList_fromset]))
-                self.registry._flush(jobList_fromset)  # Optimisation required!
+                #except Exception as x:
+                #    self._handleError(x, backendObj._name, 1)
+                log.debug( "[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset ]))
+                self.registry._flush(jobList_fromset) # Optimisation required! 
             except Exception as x:
                 log.debug("Monitoring Exception: %s" % str(x))
             finally:
