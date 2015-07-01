@@ -4,7 +4,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -33,7 +33,7 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         stdjobconfig = self.rth.master_prepare(self.app,None)
         os.system('rm -f /tmp/testrdrth_mp.C')
         isbox = stdjobconfig.getSandboxFiles()
-        print "inputsandbox = ",isbox
+        print("inputsandbox = ",isbox)
         assert len(isbox) == 2, 'incorrect number of files in sandbox'
         assert (isbox[0].name == 'dummy.in') or (isbox[1].name == 'dummy.in'), 'incorrect file name'
         
@@ -44,6 +44,6 @@ class TestRootDiracRTHandler(GangaGPITestCase):
         stdjobconfig = self.rth.prepare(self.app,None,None,self.rth.master_prepare(self.app,None))
         os.system('rm -f /tmp/testrdrth_mp.C')
         l = len(stdjobconfig.getOutputSandboxFiles())
-        print "outputsandbox = ",stdjobconfig.getOutputSandboxFiles()
+        print("outputsandbox = ",stdjobconfig.getOutputSandboxFiles())
         assert  l == 4, 'outputsandbox error'
 

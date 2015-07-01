@@ -109,7 +109,7 @@ output(result)
 #        confirm = execute(api_script.replace('###EXE_SCRIPT###', exe_path_name)\
 #                        .replace('###EXE_SCRIPT_BASE###', os.path.basename(exe_path_name)))
 #        self.id = confirm['Value']
-#        print "ID is",self.id
+#        print("ID is",self.id)
 ##        open_id = open('id_file', 'wb')
 ##        open_id.write('%d'%id)
 ##        open_id.close()
@@ -137,15 +137,15 @@ output(result)
 #        id = get_id()
 #        lfn = get_lfn()
 #        new_lfn = os.path.dirname(lfn)
-#        print "NEWLFN:", new_lfn
+#        print("NEWLFN:", new_lfn)
 #        location = get_location()
-#        print lfn
-#        print id
-#        print location
-#        print "OUTPUTSANDBOX:", execute('getOutputSandbox("%s")'%id)
-#        print "OUTPUTDATALFNS:", execute('getOutputDataLFNs("%s")'%id)
-#        print "REMOVEFILE:", execute('removeFile("%s")'%lfn)
-#        print "KILLING:", execute('kill("%s")'%id)
+#        print(lfn)
+#        print(id)
+#        print(location)
+#        print("OUTPUTSANDBOX:", execute('getOutputSandbox("%s")'%id))
+#        print("OUTPUTDATALFNS:", execute('getOutputDataLFNs("%s")'%id))
+#        print("REMOVEFILE:", execute('removeFile("%s")'%lfn))
+#        print("KILLING:", execute('kill("%s")'%id))
         
     def test_alex(self):
         assert False, 'TESTING'
@@ -369,7 +369,7 @@ output(result)
         confirm = execute('getInputDataCatalog("%s","","")'%self.__class__._getFileLFN)
         self.assertEqual(confirm['Message'], 'Failed to access all of requested input data', 'Command not executed successfully')
         #self.assertTrue(confirm['OK'], 'Command not executed successfully')
-        #print "REMOVEFILE:", execute('removeFile("%s")'%lfn)
+        #print("REMOVEFILE:", execute('removeFile("%s")'%lfn))
 
     def test_getLHCbInputDataCatalog(self):
         #init_job()
@@ -378,10 +378,10 @@ output(result)
         confirm = execute('getLHCbInputDataCatalog("%s",0,"","")'%(self.__class__._getFileLFN))
         self.assertEqual(confirm['Message'], 'Failed to access all of requested input data', 'Command not executed successfully')
         #self.assertTrue(confirm['OK'], 'Command not executed successfully')
-        #print "REMOVEFILE:", execute('removeFile("%s")'%lfn)
+        #print("REMOVEFILE:", execute('removeFile("%s")'%lfn))
 
 #    def test_bookkeepingGUI(self): #file
 #        confirm = execute('bookkeepingGUI("")')
-#        print "CONFIRM:", confirm
-#        print type(confirm)
+#        print("CONFIRM:", confirm)
+#        print(type(confirm))
 #        self.assertEqual(confirm, "WELCOME", 'Command not executed successfully')

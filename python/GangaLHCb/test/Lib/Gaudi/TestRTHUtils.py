@@ -8,7 +8,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -22,7 +22,7 @@ class TestRTHUtils(GangaGPITestCase):
     def test_jobid_as_string(self):
         from GangaLHCb.Lib.RTHandlers.RTHUtils import jobid_as_string
         j = Job(application=DaVinci())
-        print 'version =', j.application.version
+        print('version =', j.application.version)
         ok = jobid_as_string(j).rfind(str(j.id)) >= 0
         assert ok, 'job id string should contain the job id number'
         j.inputdata = ['pfn:a','pfn:b']
@@ -41,7 +41,7 @@ class TestRTHUtils(GangaGPITestCase):
 ##         extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'
 ##         extra.master_input_files = [File(name='master.in')]
 ##         isbox = get_master_input_sandbox(j,extra)
-##         print 'isbox = ', isbox
+##         print('isbox = ', isbox)
 ##         found_buffer = False
 ##         found_file = False
 ##         found_sboxfile = False

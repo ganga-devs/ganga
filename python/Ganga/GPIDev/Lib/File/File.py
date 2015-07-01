@@ -15,6 +15,8 @@ import uuid
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 class File(GangaObject):
 
