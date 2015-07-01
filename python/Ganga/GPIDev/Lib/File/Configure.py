@@ -80,17 +80,12 @@ def Configure():
         user = getpass.getuser()
     groupid = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
     groupnames = {'z5': 'lhcb', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
-    groupname = 'undefined'
-    try:
-        groupname = groupnames[groupid]
-    except:
-        pass
-    massStoragePath = ''
+    groupname = groupnames.get(groupid, 'undefined')
 
     try:
         import os.path
         massStoragePath = os.path.join(os.environ['EOS_HOME'], 'ganga')
-    except:
+    except KeyError:
         massStoragePath = "/eos/%s/user/%s/%s/ganga" % (
             groupname, user[0], user)
 
