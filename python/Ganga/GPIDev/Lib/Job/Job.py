@@ -32,8 +32,7 @@ import uuid
 
 from Ganga.Utility.Config import getConfig
 
-from Ganga.GPIDev.Lib.File import getSharedPath
-shared_path = getSharedPath()
+import Ganga.GPIDev.Lib.File
 
 
 class JobStatusError(GangaException):
@@ -1358,6 +1357,7 @@ class Job(GangaObject):
                 logger.info(msg)
 
             if self.application.is_prepared is not True and self.application.is_prepared is not None:
+                shared_path = Ganga.GPIDev.Lib.File.getSharedPath()
                 delay_result = delay_check(
                     os.path.join(shared_path, self.application.is_prepared.name))
                 if delay_result != True:
