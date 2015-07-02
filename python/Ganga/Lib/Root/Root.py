@@ -15,6 +15,8 @@ from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.Utility.Config import makeConfig, getConfig, ConfigError
 from Ganga.Utility.root import getrootsys, getpythonhome
 
+from Ganga.Core import ApplicationPrepareError
+
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
@@ -250,7 +252,7 @@ class Root(IPrepareApp):
         A method to place the Root application into a prepared state.
         """
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception(
+            raise ApplicationPrepareError(
                 '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
         self.is_prepared = ShareDir()
         logger.info('Created shared directory: %s' % (self.is_prepared.name))

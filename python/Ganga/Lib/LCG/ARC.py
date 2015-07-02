@@ -563,7 +563,7 @@ try:
 #   download inputsandbox from remote cache
     for f,guid in input_sandbox['remote'].iteritems():
         if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
-            raise Exception('Download remote input %s:%s failed.' % (guid,f) )
+            raise IOError('Download remote input %s:%s failed.' % (guid,f) )
         else:
             getPackedInputSandbox(f)
 
@@ -648,7 +648,7 @@ try:
     os.system("mv stderr.1.gz %s/stderr.gz" % orig_wdir)
 
     if not status:
-        raise Exception('Application execution failed.')
+        raise OSError('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)      
 
     ###OUTPUTUPLOADSPOSTPROCESSING###

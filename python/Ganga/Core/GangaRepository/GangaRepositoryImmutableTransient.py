@@ -5,7 +5,7 @@ import os
 import sys
 import copy
 from Ganga.GPIDev.Persistency import load, stripped_export
-from Ganga.Core.GangaRepository import allRegistries
+from Ganga.Core.GangaRepository import allRegistries, RepositoryError
 from .GangaRepository import GangaRepository
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -95,8 +95,7 @@ class GangaRepositoryImmutableTransient(GangaRepository):
 
                 else:
                     if not stripped_export(obj, fn):
-                        raise Exception(
-                            'Failure in stripped_export method, returned False')
+                        raise RepositoryError(self, 'Failure in stripped_export method, returned False')
             except:
                 logger.error("Unable to write to file '%s'" % fn)
                 raise

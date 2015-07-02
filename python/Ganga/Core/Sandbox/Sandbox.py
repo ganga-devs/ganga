@@ -5,7 +5,7 @@ import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=True)
 
 from .WNSandbox import OUTPUT_TARBALL_NAME, PYTHON_DIR
-from Ganga.Core import GangaException
+from Ganga.Core import GangaException, GangaIOError
 
 
 class SandboxError(GangaException):
@@ -40,7 +40,7 @@ def getGangaModulesAsSandboxFiles(modules):
         fullpath = os.path.realpath(inspect.getsourcefile(m))
         dir, fn = os.path.split(remove_prefix(fullpath, sys.path))
         if os.path.join(dir, fn) == fullpath:
-            raise Exception('Cannot find the prefix for %s' % fullpath)
+            raise GangaIOError('Cannot find the prefix for %s' % fullpath)
         files.append(File(fullpath, subdir=os.path.join(PYTHON_DIR, dir)))
     return files
 

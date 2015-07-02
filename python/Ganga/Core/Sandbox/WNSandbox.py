@@ -10,6 +10,8 @@ PYTHON_DIR = '_python'
 
 import os
 
+import tarfile
+
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.
        This function is called by wrapper script at the run time.
@@ -18,40 +20,8 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
       'dest_dir': a destination directory
     """
 
-    #tgzfile = os.path.join(src_dir,INPUT_TARBALL_NAME)
-    tgzfile = tarpath
-
-#
-# Curent release with os module
-#
-    extract = os.system("tar -C %s -xzf %s" % (dest_dir, tgzfile))
-    if extract != 0:
-        print("error: " + str(extract))
-        raise Exception(
-            'cannot upack tarball %s with InputSandbox to %s' % (tgzfile, dest_dir))
-
-#
-# Future release with tarfile module
-#
-#    tf = tarfile.open(tgzfile,"r:gz")
-#
-#    [tf.extract(tarinfo,dest_dir) for tarinfo in tf]
-#
-#    tf.close()
-
-
-def getInputSandbox(src_dir, dest_dir='.'):
-    """Get all input sandbox_files from tarball and write them to the workdir.
-       This function is called by wrapper script at the run time.
-    Arguments:
-      'src_dir': a source directory  with InputSandbox files.
-      'dest_dir': a destination directory 
-    """
-
-    cmd = "tar chf - -C %s . | tar xf - -C %s" % (src_dir, dest_dir)
-    if os.system(cmd) != 0:
-        raise Exception(
-            "getInputSandbox() failed to execute command: %s" % cmd)
+    with tarfile.open(tarpath,"r:gz") as tf:
+        tf.extractAll(dest_dir)
 
 
 def createOutputSandbox(output_patterns, filter, dest_dir):
@@ -151,19 +121,8 @@ def createPackedOutputSandbox(output_patterns, filter, dest_dir):
 
     outputlist = multi_glob(output_patterns, filter)
 
-#
-# Curent release with os module
-#
-
-    if len(outputlist) > 0:
-        if os.system("tar czf %s %s" % (tgzfile, " ".join(outputlist))) != 0:
-            print(
-                "ERROR: (job ###JOBID### createPackedOutput ) can't creat tarball")
-
-#
-# Future release with tarball module
-#
-#        tf = tarfile.open(tgzfile,"w:gz")
-#        tf.dereference=True
-#        [tf.add(f) for f in outputlist]
-#        tf.close()
+    if outputlist:
+        with tarfile.open(tgzfile,"w:gz") as tf:
+            tf.dereference=True
+            for f in outputlist:
+                tf.add(f)

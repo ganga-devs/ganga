@@ -11,7 +11,8 @@ from .exceptions import GangaException, ApplicationConfigurationError, \
     BackendError, RepositoryError, BulkOperationRepositoryError, \
     IncompleteJobSubmissionError, IncompleteKillError, JobManagerError, \
     GangaAttributeError, GangaValueError, ProtectedAttributeError, \
-    ReadOnlyObjectError, TypeMismatchError, SchemaError
+    ReadOnlyObjectError, TypeMismatchError, SchemaError, ApplicationPrepareError, \
+    GangaIOError
 
 monitoring_component = None
 

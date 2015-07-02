@@ -11,7 +11,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.Config import getConfig
 
 from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Core import ApplicationConfigurationError
+from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
@@ -104,8 +104,7 @@ class Executable(IPrepareApp):
         """
 
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable

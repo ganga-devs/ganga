@@ -6,6 +6,7 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
 import fnmatch
+import collections
 from Ganga.Utility.external.ordereddict import oDict
 
 import Ganga.Utility.Config
@@ -128,17 +129,9 @@ class RegistrySlice(object):
         def select_by_range(id):
             return minid <= id <= maxid
 
-        def is_container(c):
-            try:
-                0 in c
-            except:
-                return False
-            else:
-                return True
-
         ids = None
 
-        if is_container(minid):
+        if isinstance(minid, collections.Container):
             ids = minid
             select = select_by_list
         else:

@@ -250,7 +250,7 @@ class WorkerThreadPool(object):
 #    ######################################################################################################
     def map(function, *iterables):
         if not isinstance(function, collections.Callable):
-            raise Exception('must be a function')
+            raise TypeError('must be a function')
         for args in zip(*iterables):
             self.__queue.put(QueueElement(priority=5,
                                           command_input=FunctionInput(

@@ -59,6 +59,10 @@ class ApplicationConfigurationError(GangaException):
         return "ApplicationConfigurationError: %s %s" % (self.message, e)
 
 
+class ApplicationPrepareError(GangaException):
+    pass
+
+
 class BackendError(GangaException):
 
     def __init__(self, backend_name, message):
@@ -161,6 +165,10 @@ class GangaValueError(ValueError, GangaException):
 
     def __init__(self, *a, **k):
         ValueError.__init__(self, *a, **k)
+
+
+class GangaIOError(IOError, GangaException):
+    pass
 
 
 class ProtectedAttributeError(GangaAttributeError):

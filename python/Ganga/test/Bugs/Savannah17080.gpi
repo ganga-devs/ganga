@@ -4,7 +4,6 @@ j.splitter.backs = [TestSubmitter(),TestSubmitter(),TestSubmitter()]
 j.backend= TestSubmitter()
 b = j.splitter.backs[1]
 b.fail = 'submit'
-#b.raw_string_exception = True # test the worst case (deprecated exceptions)!
 
 assert(j.status=='new')
 j.submit()
