@@ -21,7 +21,7 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
     """
 
     with tarfile.open(tarpath,"r:gz") as tf:
-        tf.extractAll(dest_dir)
+        tf.extractall(dest_dir)
 
 
 def createOutputSandbox(output_patterns, filter, dest_dir):
