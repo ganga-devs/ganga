@@ -1,4 +1,3 @@
-
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
@@ -262,17 +261,16 @@ def config_file_as_text():
                             value = "\n# ".join(lines)
                             def_value = "\n# ".join(def_lines)
                     except:
+                        Ganga.Utility.logging.log_unknown_exception()
                         pass
                     text += '#%s = %s\n' % (o, def_value)
                     text += '%s = %s\n\n' % (o, value)
                 else:
                     value = sect.getEffectiveOption(o)
-                    try:
+                    if isinstance(value, str):
                         lines = value.splitlines()
                         if len(lines) > 1:
                             value = "\n# ".join(lines)
-                    except:
-                        pass
                     text += '#%s = %s\n\n' % (o, value)
 
     return text

@@ -35,7 +35,7 @@ def safe_save(fn, obj, to_file, ignore_subs=''):
             try:
                 logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!'
                                % (obj.application._name, obj._name, obj._registry_id))
-            except:
+            except AttributeError:
                 logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!'
                                % (obj.application._name, obj._name))
 
@@ -51,7 +51,7 @@ def safe_save(fn, obj, to_file, ignore_subs=''):
             try:
                 logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!'
                                % (obj.analysis.application._name, obj._name, obj._registry_id))
-            except:
+            except AttributeError:
                 logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!'
                                % (obj.analysis.application._name, obj._name))
             logger.warning(
@@ -258,11 +258,9 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _read_master_cache(self):
         try:
-            import os.path
             _master_idx = os.path.join(self.root, 'master.idx')
             if os.path.isfile(_master_idx):
                 logger.debug("Reading Master index")
-                import os
                 self._master_index_timestamp = os.stat(_master_idx).st_ctime
                 with open(_master_idx, 'r') as input_f:
                     this_master_cache = pickle_from_file(input_f)[0]
@@ -275,6 +273,7 @@ class GangaRepositoryLocal(GangaRepository):
             else:
                 logger.debug("Not Reading Master Index")
         except:
+            Ganga.Utility.logging.log_unknown_exception()
             logger.debug("Master Index corrupt, ignoring it")
             for k, v in self._cache_load_timestamp.iteritems():
                 self._cache_load_timestamp.pop(k)
@@ -289,11 +288,9 @@ class GangaRepositoryLocal(GangaRepository):
     def _write_master_cache(self, shutdown=False):
         logger.debug("Updating master index")
         try:
-            import os.path
             _master_idx = os.path.join(self.root, 'master.idx')
             this_master_cache = []
             if os.path.isfile(_master_idx) and not shutdown:
-                import os
                 if abs(self._master_index_timestamp - os.stat(_master_idx).st_ctime) < 300:
                     return
             items_to_save = self.objects.iteritems()
@@ -320,8 +317,12 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     fn = self.get_idxfn(k)
                     time = os.stat(fn).st_ctime
-                except:
-                    time = 0
+                except OSError as x:
+                    import errno
+                    if x.errno == errno.ENOENT: #If file is not found
+                        time = 0
+                    else:
+                        raise
                 cached_list.append(time)
                 cached_list.append(self._cached_cat[k])
                 cached_list.append(self._cached_cls[k])
@@ -331,13 +332,14 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 with open(_master_idx, 'w') as of:
                     pickle_to_file(this_master_cache, of)
-            except:
+            except IOError:
                 try:
-                    import os
-                    os.unlink(os.path.join(self.root, 'master.idx'))
-                except:
+                    os.remove(os.path.join(self.root, 'master.idx'))
+                except OSError as x:
+                    Ganga.Utility.logging.log_user_exception(debug=True)
                     pass
         except:
+            Ganga.Utility.logging.log_unknown_exception()
             pass
 
         return
@@ -581,6 +583,7 @@ class GangaRepositoryLocal(GangaRepository):
                             logger.debug(
                                 "No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
                 except:
+                    Ganga.Utility.logging.log_unknown_exception()
                     pass
             try:
                 must_load = (not id in self.objects) or (
