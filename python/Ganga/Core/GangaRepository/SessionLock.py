@@ -155,6 +155,7 @@ class SessionLockRefresher(GangaThread):
                 self.clearDeadLocks(now)
 
         except Exception as x:
+            Ganga.Utility.logging.log_unknown_exception()
             logger.warning(
                 "Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
 
@@ -163,6 +164,7 @@ class SessionLockRefresher(GangaThread):
             for index in range(len(self.fns)):
                 now = self.updateLocks(index)
         except Exception as x:
+            Ganga.Utility.logging.log_unknown_exception()
             logger.warning("Internal exception in Updating session lock thread: %s %s" % (
                 x.__class__.__name__, x))
 
@@ -441,6 +443,7 @@ class SessionLockManager(object):
                     lock_file_hand = open(lock_file, "w")
                     lock_file_hand.close()
             except Exception as x:
+                Ganga.Utility.logging.log_unknown_exception()
                 pass
         else:
             try:
@@ -498,6 +501,7 @@ class SessionLockManager(object):
                         os.unlink(lock_file)
                         break
                     except Exception as x:
+                        Ganga.Utility.logging.log_unknown_exception()
                         import time
                         time.sleep(0.05)
 
@@ -562,6 +566,7 @@ class SessionLockManager(object):
                     # 00)) # read up to 1 MB (that is more than enough...)
                     return pickle.loads(os.read(fd, 1048576))
                 except Exception as x:
+                    Ganga.Utility.logging.log_unknown_exception()
                     logger.warning(
                         "corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, x.__class__.__name__, x))
             finally:
@@ -817,6 +822,7 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
                 except Exception as x:
+                    Ganga.Utility.logging.log_unknown_exception()
                     logger.warning("CHECKER: session file %s corrupted: %s %s" % (
                         session, x.__class__.__name__, x))
                     continue
@@ -858,6 +864,7 @@ class SessionLockManager(object):
                     if id in names:
                         return self.session_to_info(session)
                 except Exception as x:
+                    Ganga.Utility.logging.log_unknown_exception()
                     continue
         finally:
             self.global_lock_release()
@@ -927,6 +934,7 @@ class SessionLockManager(object):
         try:
             return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], time.ctime(int(si[-3]) / 1000))
         except Exception:
+            Ganga.Utility.logging.log_unknown_exception()
             return session
 
 

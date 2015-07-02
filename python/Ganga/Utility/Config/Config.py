@@ -114,6 +114,7 @@ class ConfigError(GangaException):
 
 logger = None
 
+import Ganga.Utility.logging
 
 def getLogger():
     global logger
@@ -123,7 +124,6 @@ def getLogger():
     # for the configuration of the logging package itself (in the initial
     # phases) the logging may be disabled
     try:
-        import Ganga.Utility.logging
         logger = Ganga.Utility.logging.getLogger()
         return logger
     except AttributeError:
@@ -778,6 +778,7 @@ def read_ini_files(filenames, system_vars):
                         value = value.replace(
                             localvar.group(0), cc.get(sec, localvarstripped))
                     except:
+                        Ganga.Utility.logging.log_unknown_exception()
                         logger.debug(
                             'The variable \"' + localvarstripped + '\" is referenced but not defined in the ')
                         logger.debug(

@@ -22,8 +22,8 @@ from .SandboxFile import SandboxFile
 
 from . import FileUtils
 
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 from .GoogleFile import GoogleFile
 
@@ -106,6 +106,7 @@ def string_file_shortcut(v, item):
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
                     return DiracFile._proxyClass(v)._impl
                 except:
+                    Ganga.Utility.logging.log_unknown_exception()
                     pass
 
         return LocalFile._proxyClass(v)._impl

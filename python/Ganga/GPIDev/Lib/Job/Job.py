@@ -1789,6 +1789,7 @@ class Job(GangaObject):
             self._setDirty()
             self._releaseWriteAccess()
         except:
+            Ganga.Utility.logging.log_unknown_exception()
             pass
 
     def fail(self, force=False):

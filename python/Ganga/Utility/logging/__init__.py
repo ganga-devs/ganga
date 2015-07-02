@@ -465,6 +465,17 @@ def log_user_exception(logger=None, debug=False):
         logmethod(line)
     logmethod('-' * len(banner))
 
+def log_unknown_exception():
+    """
+    This is convenince function which is used to track down what exceptions
+    are being caught by ambiguous 'except' clauses.
+    It should only be called from within an exception handler.
+    """
+    import traceback
+    tb = traceback.format_exc()
+    tb_logger = getLogger('Ganga.Utility.logging.log_unknown_exception')
+    tb_logger.debug(tb)
+
 
 # extra imports for more convenient work with the logging module
 getLevelName = logging.getLevelName

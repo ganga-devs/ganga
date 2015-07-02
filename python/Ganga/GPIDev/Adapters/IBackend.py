@@ -94,6 +94,7 @@ class IBackend(GangaObject):
             try:
                 lock.release()
             except:
+                Ganga.Utility.logging.log_unknown_exception()
                 pass
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):

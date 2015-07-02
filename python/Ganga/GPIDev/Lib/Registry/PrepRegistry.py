@@ -245,12 +245,14 @@ class ShareRef(GangaObject):
                 shutil.move(object.is_prepared.name,
                             os.path.join(getSharedPath(), os.path.basename(object.is_prepared.name)))
             except:
+                Ganga.Utility.logging.log_unknown_exception()
                 logger.warn('Unable to move directory %s to %s', object.is_prepared.name,
                             os.path.join(getSharedPath(), os.path.basename(object.is_prepared.name)))
             try:
                 object._impl.is_prepared.name = os.path.basename(
                     object.is_prepared.name)
             except:
+                Ganga.Utility.logging.log_unknown_exception()
                 logger.warn(
                     "Unable to convert object's is_prepared.name attribute to a relative path")
 
@@ -282,9 +284,11 @@ class ShareRef(GangaObject):
                     try:
                         numsubjobs = len(item.keys()[0].subjobs.ids())
                     except:
+                        Ganga.Utility.logging.log_unknown_exception()
                         numsubjobs = 0
                     helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
             except:
+                Ganga.Utility.logging.log_unknown_exception()
                 pass
 
         # here we iterate over the lookup_input list and unprepare as

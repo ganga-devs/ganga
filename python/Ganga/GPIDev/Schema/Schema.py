@@ -10,6 +10,7 @@ logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.logic import implies
 
+
 #
 # Ganga Public Interface Schema
 #
@@ -182,6 +183,7 @@ class Schema(object):
                 try:
                     self._getDefaultValueInternal(name, x, check=True)
                 except:
+                    Ganga.Utility.logging.log_unknown_exception()
                     raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
             if item['protected'] or item['hidden']:

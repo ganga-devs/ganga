@@ -542,6 +542,7 @@ class Registry(object):
                     try:
                         self._flush()
                     except:
+                        Ganga.Utility.logging.log_unknown_exception()
                         pass
                     self.metadata.shutdown()
             except Exception as x:

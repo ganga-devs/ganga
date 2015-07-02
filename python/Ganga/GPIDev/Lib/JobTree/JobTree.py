@@ -160,6 +160,7 @@ class JobTree(GangaObject):
             try:
                 f = f[d]
             except:
+                Ganga.Utility.logging.log_unknown_exception()
                 return False
         return True
 
@@ -289,6 +290,7 @@ class JobTree(GangaObject):
             try:
                 registry = registry._parent
             except:
+                Ganga.Utility.logging.log_unknown_exception()
                 pass
             path = os.path.join(*self.__get_path(path))
             res.name = "jobs found in %s" % path
