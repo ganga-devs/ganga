@@ -471,10 +471,14 @@ def log_unknown_exception():
     are being caught by ambiguous 'except' clauses.
     It should only be called from within an exception handler.
     """
-    import traceback
-    tb = traceback.format_exc()
     tb_logger = getLogger('Ganga.Utility.logging.log_unknown_exception')
-    tb_logger.debug(tb)
+    
+    #Fetch the place from where this function was called to locate the bare except
+    from inspect import getframeinfo, stack, getsourcefile
+    caller = getframeinfo(stack()[1][0])
+    
+    tb_logger.debug('Bare except clause triggered {0}:{1}'.format(caller.filename, caller.lineno))
+    tb_logger.debug('Exception caught:', exc_info=True)
 
 
 # extra imports for more convenient work with the logging module
