@@ -55,7 +55,12 @@ class ThreadPoolQueueMonitor(object):
         for u, m in zip( self._user_threadpool.worker_status(),
                          self._monitoring_threadpool.worker_status() ):
             # name has extra spaces as colour characters are invisible but still count
-            name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
+            if u[0] is not None:
+                # User task has no ganga name
+                name_user = getColour('fg.red') + u[0] + getColour('fg.normal')
+            else:
+                # User task has a ganga name
+                name_user = getColour('fg.red') + u[1] + getColour('fg.normal')
             name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
             if u[1] == 'idle':
                 name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
