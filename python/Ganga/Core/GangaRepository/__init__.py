@@ -5,6 +5,7 @@ Also, a list of all Registries is kept here
 import GangaRepository
 from GangaRepository import RepositoryError
 from Registry import RegistryError, RegistryAccessError, RegistryKeyError, RegistryLockError, ObjectNotInRegistryError
+from Ganga.Core.GangaRepository import SubJobXMLList
 
 allRegistries = {}
 def addRegistry(registry):

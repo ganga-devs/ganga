@@ -28,10 +28,9 @@ if sys.hexversion >= 0x020600F0:
 else:
     from sets import Set
 
-
 printed_explanation = False
 
-def safe_save(fn,obj,to_file,ignore_subs=''):
+def safe_save(fn, obj, to_file, ignore_subs=''):
     """Writes a file safely, raises IOError on error"""
     if hasattr(obj, 'application') and hasattr(obj.application, 'hash') and obj.application.hash is not None:
         if not obj.application.calc_hash(verify=True):  
@@ -112,6 +111,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def __init__(self, registry):
         super(GangaRepositoryLocal,self).__init__(registry)
+        self.dataFileName = "data"
         self.sub_split = "subjobs"
         self.root = os.path.join(self.registry.location,"6.0",self.registry.name)
         self.lockroot = os.path.join(self.registry.location,"6.0")
@@ -155,7 +155,7 @@ class GangaRepositoryLocal(GangaRepository):
     def get_fn(self,id):
         """ Returns the file name where the data for this object id is saved"""
         if id not in self.saved_paths:
-            self.saved_paths[id] = os.path.join(self.root, "%ixxx"% int(id*0.001), "%i"%id, "data")
+            self.saved_paths[id] = os.path.join(self.root, "%ixxx"% int(id*0.001), "%i"%id, self.dataFileName)
         return self.saved_paths[id]
 
     def get_idxfn(self,id):
@@ -459,23 +459,37 @@ class GangaRepositoryLocal(GangaRepository):
                 obj = self.objects[id]
                 if obj._name != "EmptyGangaObject":
                     split_cache = None
-                    do_sub_split = (not self.sub_split is None) and (self.sub_split in obj._data) and len(obj._data[self.sub_split]) > 0 and hasattr(obj._data[self.sub_split][0],"_dirty")
-                    if do_sub_split:
-                        split_cache = obj._data[self.sub_split]
-                        for i in range(len(split_cache)):
-                            if not split_cache[i]._dirty:
-                                continue
-                            sfn = os.path.join(os.path.dirname(fn),str(i),"data")
-                            try:
-                                os.makedirs(os.path.dirname(sfn))
-                            except OSError, e:
-                                if e.errno != errno.EEXIST: 
-                                    raise RepositoryError(self,"OSError: " + str(e))
-                            safe_save(sfn, split_cache[i], self.to_file)
-                            split_cache[i]._setFlushed()                
+
+                    has_children = (not self.sub_split is None) and (self.sub_split in obj._data) and len(obj._data[self.sub_split]) > 0
+
+                    if has_children:
+                        if hasattr(obj._data[self.sub_split], 'flush'):
+                            ## I've been read from disk in the new SubJobXMLList format I know how to flush
+                            obj._data[self.sub_split].flush()
+                        else:
+                            ## I have been constructed in this session, I don't know how to flush!
+                            if hasattr(obj._data[self.sub_split][0], "_dirty"):
+                                split_cache = obj._data[self.sub_split]
+                                for i in range(len(split_cache)):
+                                    if not split_cache[i]._dirty:
+                                        continue
+                                    sfn = os.path.join(os.path.dirname(fn), str(i), self.dataFileName)
+                                    try:
+                                        os.makedirs(os.path.dirname(sfn))
+                                    except OSError, e:
+                                        if e.errno != errno.EEXIST:
+                                            raise RepositoryError(self,"OSError: " + str(e))
+                                    safe_save(sfn, split_cache[i], self.to_file)
+                                    split_cache[i]._setFlushed()
+                            from Ganga.Core.GangaRepository import SubJobXMLList
+                            ## Now generate an index file to take advantage of future non-loading goodness
+                            tempSubJList = SubJobXMLList.SubJobXMLList( os.path.dirname(fn), self.registry, self.dataFileName, False )
+                            tempSubJList.write_subJobIndex()
+
                         safe_save(fn, obj, self.to_file, self.sub_split)
                         # clean files not in subjobs anymore... (bug 64041)
                         for idn in os.listdir(os.path.dirname(fn)):
+                            split_cache = obj._data[self.sub_split]
                             if idn.isdigit() and int(idn) >= len(split_cache):
                                 rmrf(os.path.join(os.path.dirname(fn),idn))
                     else:
@@ -486,6 +500,7 @@ class GangaRepositoryLocal(GangaRepository):
                                 rmrf(os.path.join(os.path.dirname(fn),idn))
                     self.index_write(id)
                     obj._setFlushed()
+
             except OSError, x:
                 raise RepositoryError(self,"OSError on flushing id '%i': %s" % (id,str(x)))
             except IOError, x:
@@ -503,7 +518,7 @@ class GangaRepositoryLocal(GangaRepository):
         ld = os.listdir(os.path.dirname(fn))
         i=0
         while str(i) in ld:
-            sfn = os.path.join(os.path.dirname(fn),str(i),"data")
+            sfn = os.path.join(os.path.dirname(fn), str(i), self.dataFileName)
             if os.path.exists( sfn ):
                 node_count = node_count + 1
             i += 1
@@ -549,35 +564,13 @@ class GangaRepositoryLocal(GangaRepository):
                 tmpobj = None
                 if must_load or (self._load_timestamp.get(id,0) != os.fstat(fobj.fileno()).st_ctime):
                     tmpobj, errs = self.from_file(fobj)
-                    do_sub_split = (not self.sub_split is None) and (self.sub_split in tmpobj._data) and len(tmpobj._data[self.sub_split]) == 0
-                    if do_sub_split:
-                        i = 0
-                        ld = os.listdir(os.path.dirname(fn))
-                        if len(ld) == 0:
-                            os.rmdir( os.path.dirname(fn) )
-                            raise IOError( "No job index or data found, removing empty directory: %s" % os.path.dirname(fn) )
-                        l = []
-                        logger.debug( "About to load about %s subjobs" % str(len(ld) ) )
-                        while str(i) in ld:
-                            sfn = os.path.join(os.path.dirname(fn),str(i),"data")
-                            if load_backup:
-                                sfn = sfn+"~"
-                            try:
-                                #logger.debug( "Loading subjob at: %s" % sfn )
-                                sfobj = open(sfn,"r")
-                            except IOError, x:
-                                if x.errno == errno.ENOENT: 
-                                    raise IOError("Subobject %i.%i not found: %s" % (id,i,x))
-                                else:
-                                    raise RepositoryError(self,"IOError on loading subobject %i.%i: %s" % (id,i,x))
-                            ff = self.from_file(sfobj)
-                            l.append(ff[0])
-                            errs.extend(ff[1])
-                            i += 1
-                            sfobj.close()
-                        tmpobj._data[self.sub_split] = makeGangaListByRef(l)
-                    if len(errs) > 0:
-                        raise errs[0]
+
+                    has_children = (not self.sub_split is None) and (self.sub_split in tmpobj._data) and len(tmpobj._data[self.sub_split]) == 0
+
+                    if has_children:
+                        from Ganga.Core.GangaRepository import SubJobXMLList
+                        tmpobj._data[self.sub_split] = SubJobXMLList.SubJobXMLList( os.path.dirname(fn), self.registry, self.dataFileName, load_backup )
+
                     #if len(errs) > 0 and "status" in tmpobj._data: # MAGIC "status" if incomplete
                     #    tmpobj._data["status"] = "incomplete"
                     #    logger.error("Registry '%s': Could not load parts of object #%i: %s" % (self.registry.name,id,map(str,errs)))
@@ -603,10 +596,10 @@ class GangaRepositoryLocal(GangaRepository):
                                     self.index_write(id)
                                     #self.unlock([id])
 
-                                    old_idx_subset = all((k in new_idx_cache and new_idx_cache[k]==v) for k,v in obj._index_cache.iteritems())
+                                    old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
                                     if not old_idx_subset:
                                         ## Old index cache isn't subset of new index cache
-                                        new_idx_subset = all((k in obj._index_cache and obj._index_cache[k]==v) for k,v in new_idx_cache.iteritems())
+                                        new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.iteritems())
                                     else:
                                         ## Old index cache is subset of new index cache so no need to check
                                         new_idx_subset = True
@@ -619,14 +612,10 @@ class GangaRepositoryLocal(GangaRepository):
                                 obj._index_cache = None
                     else:
                         self._internal_setitem__(id, tmpobj)
-                    if do_sub_split:
-                        try:
-                            for sobj in self.objects[id]._data[self.sub_split]:
-                                sobj._setParent(self.objects[id])
-                        except AttributeError:
-                            pass # not actually Ganga objects in the sub-split field
-                        self.objects[id]._data[self.sub_split]._setParent(self.objects[id])
-                        
+
+                    if self.sub_split in self.objects[id]._data.keys():
+                        self.objects[id]._data[self.sub_split]._setParent( self.objects[id] )
+
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
             except RepositoryError:
                 raise
