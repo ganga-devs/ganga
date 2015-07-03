@@ -2,9 +2,12 @@ from Ganga.GPIDev.Adapters.ISplitter    import SplittingError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging              import getLogger
+from Ganga.Utility.Config                     import getConfig
+import random
+
+configDirac = getConfig('DIRAC')
 logger = getLogger()
 
-import random
 global_random = random
 
 ##  Find a random element from a python list that isn't in a given banned list
@@ -111,10 +114,10 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     ## First FIND ALL LFN REPLICAS AND SE<->SITE MAPPINGS AND STORE THIS IN MEMORY
     ## THIS IS DONE IN PARALLEL TO AVOID OVERLOADING DIRAC WITH THOUSANDS OF REQUESTS AT ONCE ON ONE CONNECTION
 
-    wanted_common_site = 2
-    iterative_limit = 50
-    good_fraction = 0.75
-    uniqueSE = True
+    wanted_common_site = configDirac['OfflineSplitterMaxCommonSites']
+    iterative_limit = configDirac['OfflineSplitterLimit']
+    good_fraction = configDirac['OfflineSplitterFraction']
+    uniqueSE = configDirac['OfflineSplitterUniqueSE']
 
     split_files = []
 
