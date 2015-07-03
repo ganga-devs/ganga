@@ -18,8 +18,6 @@ logger = getLogger()
 
 import os
 from Ganga.Utility.files import expandfilename
-shared_path = os.path.join(expandfilename(getConfig(
-    'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
 
 
 class Executable(IPrepareApp):
@@ -213,6 +211,8 @@ class RTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
+            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
+                                       'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
@@ -242,6 +242,8 @@ class LCGRTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
+            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
+                                       'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
@@ -269,6 +271,8 @@ class gLiteRTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
+            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
+                                       'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:

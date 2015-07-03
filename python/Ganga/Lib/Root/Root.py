@@ -37,8 +37,6 @@ config.addOption('version', '6.02.00', 'Version of ROOT')
 
 import os
 from Ganga.Utility.files import expandfilename
-shared_path = os.path.join(expandfilename(getConfig(
-    'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
 
 
 class Root(IPrepareApp):
@@ -233,6 +231,9 @@ class Root(IPrepareApp):
 
     def __init__(self):
         super(Root, self).__init__()
+        
+        self.shared_path = os.path.join(expandfilename(getConfig(
+            'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
 
     def configure(self, masterappconfig):
         return (None, None)
@@ -387,7 +388,7 @@ class RootRTHandler(IRuntimeHandler):
             script = File(defaultScript())
         else:
             script = File(os.path.join(os.path.join(
-                shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
+                self.shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
 
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
@@ -411,7 +412,7 @@ class RootRTHandler(IRuntimeHandler):
             script = File(defaultPyRootScript())
         else:
             script = File(os.path.join(os.path.join(
-                shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
+                self.shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
 
         arguments = [join('.', script.subdir, split(script.name)[1])]
         arguments.extend([str(s) for s in app.args])
@@ -503,7 +504,7 @@ def downloadWrapper(app):
             script = File(defaultPyRootScript())
     else:
         script = File(os.path.join(os.path.join(
-            shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
+            self.shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
 
     commandline = ''
     scriptPath = join('.', script.subdir, split(script.name)[1])

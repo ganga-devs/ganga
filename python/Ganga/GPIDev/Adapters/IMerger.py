@@ -39,12 +39,11 @@ config.addOption('std_merge', 'TextMerger', 'Standard (default) merger')
 def getDefaultMergeDir():
     """Gets the default location of the mergers outputdir from the config"""
 
-    outputdir = gangadir + "/merge_results"
     try:
         config = getConfig('Mergers')
         outputdir = config['merge_output_dir']
     except ConfigError:
-        pass
+        outputdir = gangadir + "/merge_results"
     return os.path.expanduser(outputdir)
 
 
