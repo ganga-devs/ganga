@@ -393,7 +393,8 @@ class AtlasUnit(IUnit):
 
       # register the dataset if applicable
       if status == "completed":
-         if not self.registerDataset():
+         job = GPI.jobs(self.active_job_ids[0])
+         if job.outputdata and job.outputdata._impl._name == "DQ2OutputDataset" and not self.registerDataset():
             return
          
       super(AtlasUnit,self).updateStatus(status)

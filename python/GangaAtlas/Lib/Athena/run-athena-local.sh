@@ -215,7 +215,12 @@ if os.path.exists('input_files'):
         elif (os.path.exists(lfn.strip()) and (os.stat(lfn.strip()).st_size>0)):
             print 'Input: %s' % lfn.strip()
             ic.append('%s' % lfn.strip())
-    EventSelector.InputCollections = ic
+            
+    # set the InputCollections depending on what's in the namespace
+    try:
+        EventSelector.InputCollections = ic
+    except NameError:
+        svcMgr.EventSelector.InputCollections = ic
 
     if os.environ.has_key('ATHENA_MAX_EVENTS'):
         theApp.EvtMax = int(os.environ['ATHENA_MAX_EVENTS'])
