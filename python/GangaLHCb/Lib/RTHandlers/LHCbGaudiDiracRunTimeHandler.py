@@ -5,7 +5,6 @@ from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTime
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils                 import result_ok
-from GangaDirac.Lib.Files.DiracFile                     import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities            import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
@@ -72,6 +71,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        from Ganga.GPI import DiracFile
         outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
 
         data_str  = 'import os\n'

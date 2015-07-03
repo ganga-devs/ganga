@@ -162,10 +162,14 @@ RecoToDST-07/90000000/DST" ,
             files = files.keys()
        
         from Ganga.GPI import DiracFile
-        ds = LHCbDataset()
+        #ds = LHCbDataset()
+        new_files = []
         for f in files:
-            ds.files.append(DiracFile(lfn = f))
-        
+            new_files.append('LFN:'+str(f))
+            #ds.extend([DiracFile(lfn = f)])
+
+        ds = LHCbDataset( new_files )
+
         return GPIProxyObjectFactory(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -247,10 +251,14 @@ class BKQueryDict(GangaObject):
                 files = files['LFNs'].keys()
     
         from Ganga.GPI import DiracFile
-        ds = LHCbDataset()
+        #ds = LHCbDataset()
+        new_files=[]
         for f in files:
-            ds.files.append(DiracFile(lfn = f))
-         
+            new_files.append('LFN:'+str(f))
+            #ds.extend([DiracFile(lfn = f)])
+
+        ds = LHCbDataset( new_files )
+
         return GPIProxyObjectFactory(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

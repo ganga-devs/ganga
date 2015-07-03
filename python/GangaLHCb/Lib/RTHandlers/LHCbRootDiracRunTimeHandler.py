@@ -4,7 +4,6 @@ from GangaLHCb.Lib.RTHandlers.RTHUtils             import lhcbdiracAPI_script_te
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare,sandbox_prepare,script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils       import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils            import result_ok
-from GangaDirac.Lib.Files.DiracFile                import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities       import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager       import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.IRuntimeHandler         import IRuntimeHandler
@@ -76,6 +75,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
+        from Ganga.GPI import DiracFile
         outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
 
         # NOTE special case for replicas: replicate string must be empty for no replication

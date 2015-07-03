@@ -3,7 +3,6 @@ from GangaDirac.Lib.Backends.DiracUtils    import result_ok
 from Ganga.GPIDev.Schema                   import Schema, Version, ComponentItem
 from Ganga.Core                            import BackendError
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
-from GangaDirac.Lib.Files.DiracFile        import DiracFile
 from Ganga.GPIDev.Base.Proxy               import GPIProxyObjectFactory
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
 
@@ -23,7 +22,7 @@ class Dirac(DiracBase):
      def _addition_sandbox_content(self, subjobconfig):
           input_sandbox = []
           j = self.getJobObject()
-          from GangaDirac.Lib.Files.DiracFile import DiracFile
+          from Ganga.GPI import DiracFile
           for f in j.inputfiles.get(DiracFile):
               if f.lfn == '':
                   raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)

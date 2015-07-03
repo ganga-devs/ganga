@@ -49,9 +49,18 @@ def getLFNReplicas( allLFNs, index ):
 
     i = index
 
-    from GangaDirac.Lib.Utilities.DiracUtilities import execute
+    output = None
 
-    output = execute( 'getReplicas(%s)' % str( allLFNs[(i*500):((i+1)*500)] ) )
+    for toy_num in range(5):
+
+        try:
+            from GangaDirac.Lib.Utilities.DiracUtilities import execute
+            output = execute( 'getReplicas(%s)' % str( allLFNs[(i*500):((i+1)*500)] ) )
+            these_values = output.get( 'Values' ).get('Successful')
+            break
+        except Exception, err:
+            #catch 'Successful' not found and others
+            pass
 
     min = i*500
 
@@ -98,11 +107,11 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
     Generator that yields a datasets for dirac split jobs
     """
-
+    from Ganga.GPIDev.Adapters.ISplitter import SplittingError
     ## First FIND ALL LFN REPLICAS AND SE<->SITE MAPPINGS AND STORE THIS IN MEMORY
     ## THIS IS DONE IN PARALLEL TO AVOID OVERLOADING DIRAC WITH THOUSANDS OF REQUESTS AT ONCE ON ONE CONNECTION
 
-    wanted_common_site = 3
+    wanted_common_site = 2
     iterative_limit = 50
     good_fraction = 0.75
     uniqueSE = True
@@ -148,27 +157,39 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     bad_lfns = []
 
     for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
-
+        logger.info( "%s of %s" % (str(i), str(int(math.ceil( float(len(allLFNs))*0.002 )))) )
         output = allLFNData[i]
 
+        if output == None:
+            logger.error( "Error getting Replica information from Dirac: [%s,%s]" % ( str(i*500), str((i+1)*500) ) )
+            raise Exception('Error from Dirac')
+
         try:
-            if len(output.get('Value')['Failed'].keys()) > 0:
+            results = output.get('Value')
+            if len(results.get('Failed').keys()) > 0:
                 if ignoremissing is False:
-                    values = output.get('Value')['Failed']
-                    from Ganga.GPIDev.Adapters.ISplitter import SplittingError
+                    values = results.get('Failed')
                     raise SplittingError( "Error getting LFN Replica information:\n%s" % str(values) )
                 else:
-                    for this_lfn in output.get('Value')['Failed'].keys():
+                    for this_lfn in results.get('Failed').keys():
                         bad_lfns.append( this_lfn )
         except SplittingError, split_Err:
             raise split_Err
         except Exception, err:
-            pass # FIXME
+            try:
+                error = output
+                logger.error( "%s" % str(output) )
+            except:
+                pass
+            logger.error( "Unknown error in parsing Dirac LFN Failed output" )
+            raise
 
         try:
-            values = output.get('Value')['Successful']
+            results = output.get('Value')
+            values = results.get('Successful')
         except Exception, err:
-            pass # FIXME
+            logger.error( "Unknown error in parsing Dirac LFN Successful output" )
+            raise
 
         logger.info( "Updating URLs: %s of %s" % (str(i*500), str(len(allLFNs)) ) )
 
