@@ -59,8 +59,6 @@ def expand_vars(env):
 
 class Shell:
 
-   exceptions=getConfig('Shell')['IgnoredVars']
-
    def __init__(self, setup=None, setup_args=[]):
       
       """The setup script is sourced (with possible arguments) and the
@@ -125,15 +123,6 @@ class Shell:
          if env2:
             env = env2
 
-         #print "Setup: %s " % setup
-         #print output
-         #print env
-
-         #for key in Shell.exceptions:
-         #   try:
-         #      del env[key]
-         #   except KeyError:
-         #      pass
          self.env = env
       else:
          env=dict(os.environ) #bug #44334: Ganga/Utility/Shell.py does not save environ

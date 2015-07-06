@@ -14,8 +14,6 @@ import httplib2
 from apiclient.discovery import build
 from apiclient import errors
 
-cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
-
 badlogger=logging.getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
@@ -69,11 +67,12 @@ class GoogleFile(IGangaFile):
         super(GoogleFile, self).__init__()
         self.namePattern = namePattern
         self.__initialized = False
-
+        
+        self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
 
     def __initializeCred( self ):
 
-        while os.path.isfile(cred_path) == False :
+        while os.path.isfile(self.cred_path) == False :
             from oauth2client.client import OAuth2WebServerFlow
 
             # Copy your credentials from the APIs Console
@@ -113,14 +112,14 @@ class GoogleFile(IGangaFile):
 
             #Pickle credential data
             if credentials is not '':
-                output = open(cred_path,"wb")
+                output = open(self.cred_path,"wb")
                 pickle.dump(credentials, output)
                 output.close()
-                os.chmod(cred_path, stat.S_IWUSR | stat.S_IRUSR)
+                os.chmod(self.cred_path, stat.S_IWUSR | stat.S_IRUSR)
                 logger.info('Your GoogleDrive credentials have been stored in the file %s and are only readable by you. '\
                             'The file will give permission to modify files in your GoogleDrive. '\
                             'Permission can be revoked by going to "Manage Apps" in your GoogleDrive ' \
-                            'or by deleting the credentials through the deleteCredentials GoogleFile method.' % cred_path)
+                            'or by deleting the credentials through the deleteCredentials GoogleFile method.' % self.cred_path)
 
         self.__initialized = True
 
@@ -163,8 +162,8 @@ class GoogleFile(IGangaFile):
             example use: GoogleFile().deleteCredentials()
         """
         if self.__initilized == True:
-            if os.path.isfile(cred_path) == True :
-                os.remove(cred_path)
+            if os.path.isfile(self.cred_path) == True :
+                os.remove(self.cred_path)
                 logger.info('GoogleDrive credentials deleted')
                 return None
         else:
@@ -454,7 +453,7 @@ class GoogleFile(IGangaFile):
         http = httplib2.Http()
         if self.__initialized == False:
             self.__initializeCred()
-        nput = open(cred_path,"rb")
+        nput = open(self.cred_path,"rb")
         credentials = pickle.load(nput)
         nput.close()
         http = credentials.authorize(http)
