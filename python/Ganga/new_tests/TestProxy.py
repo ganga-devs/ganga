@@ -7,6 +7,14 @@ class TestGangaObject(GangaObject):
     _schema = Schema(Version(1,0), {'a' : SimpleItem(42, typelist=['int'])})
     _category = 'TestGangaObject'
     _name = 'TestGangaObject'
+    
+    _exportmethods = ['example']
+    
+    def example(self):
+        return 'example_string'
+    
+    def not_proxied(self):
+        return 'example_string'
 
 import Ganga.GPIDev.Base.Proxy
 import Ganga.Core.exceptions
@@ -79,6 +87,18 @@ class TestProxy(unittest.TestCase):
 
     def test_isProxy(self):
         self.assertTrue(Ganga.GPIDev.Base.Proxy.isProxy(self.p))
+
+    def test_make_proxy_proxy(self):
+        self.assertTrue(Ganga.GPIDev.Base.Proxy.addProxy(self.p) is self.p)
+
+    def test_call_proxy_method(self):
+        self.assertEqual(self.p.example(), 'example_string')
+
+    def test_call_nonproxied_method(self):
+        def _call():
+            self.p.not_proxied()
+            
+        self.assertRaises(Ganga.Core.exceptions.GangaAttributeError, _call)
 
 class TestVersion(unittest.TestCase):
     """
