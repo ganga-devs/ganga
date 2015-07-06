@@ -20,8 +20,7 @@ logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.files import expandfilename
 config = makeConfig('Preparable', 'Parameters for preparable applications')
-config.addOption('unprepare_on_copy', False,
-                 'Unprepare a prepared application when it is copied')
+config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application when it is copied')
 
 
 class IPrepareApp(IApplication):
@@ -91,10 +90,8 @@ class IPrepareApp(IApplication):
                 logger.debug('adding to sharedir %s' %
                              (self.__getattribute__(name)))
                 send_to_sharedir.append(self.__getattribute__(name))
-
         shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                    'shared', getConfig('Configuration')['user'])
-
         for prepitem in send_to_sharedir:
             logger.debug('working on %s' % (prepitem))
             # we may have a list of files/strings

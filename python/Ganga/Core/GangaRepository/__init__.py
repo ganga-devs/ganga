@@ -6,6 +6,7 @@ from __future__ import absolute_import
 from . import GangaRepository
 from .GangaRepository import RepositoryError, InaccessibleObjectError, SchemaVersionError
 from .Registry import RegistryError, RegistryAccessError, RegistryKeyError, RegistryLockError, ObjectNotInRegistryError
+from Ganga.Core.GangaRepository import SubJobXMLList
 
 allRegistries = {}
 

@@ -22,10 +22,12 @@ from __future__ import print_function
 
 import logging
 import logging.handlers as handlers
+import sys
 
 # initialize the root logger for the logger created directly in python
 # executable scripts which have no name starting by "Ganga."
-logging.basicConfig()
+# By default everything goes to stdout
+logging.basicConfig(stream=sys.stdout)
 
 _formats = {
     'DEBUG': '%(asctime)s "%(filename)s" at %(lineno)d, %(name)-35s: %(levelname)-8s %(message)s',
@@ -418,6 +420,22 @@ def bootstrap(internal=0, handler=None):
             private_logger.info(msg)
 
         _set_log_level(getLogger(opt), config[opt])
+
+    
+    class NoErrorFilter(logging.Filter):
+        """
+        A filter which only allow messages which are WARNING or lower to be logged
+        """
+        def filter(self, record):
+            return record.levelno <= 30
+    #Make the default handler not print ERROR and CRITICAL
+    direct_screen_handler.addFilter(NoErrorFilter())
+
+    #Add a new handler for ERROR and CRITICAL which prints to stderr
+    error_logger = logging.StreamHandler(sys.stderr)
+    error_logger.setLevel(logging.ERROR)
+    _set_formatter(error_logger)
+    main_logger.addHandler(error_logger)
 
     # if internal:
     #    import atexit

@@ -79,7 +79,6 @@ class GoogleFile(IGangaFile):
         self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
 
     def __initializeCred(self):
-
         while os.path.isfile(self.cred_path) == False:
             from oauth2client.client import OAuth2WebServerFlow
 

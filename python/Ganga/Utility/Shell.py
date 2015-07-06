@@ -63,7 +63,6 @@ def expand_vars(env):
 
 
 class Shell(object):
-
     def __init__(self, setup=None, setup_args=[]):
         """The setup script is sourced (with possible arguments) and the
         environment is captured. The environment variables are expanded

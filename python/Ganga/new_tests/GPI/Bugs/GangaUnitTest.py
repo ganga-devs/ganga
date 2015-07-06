@@ -11,12 +11,20 @@ def startGanga():
         import sys
         import os.path
 
-        # insert the path to Ganga itself
-        exeDir = os.path.abspath(
-            "/afs/cern.ch/user/r/rcurrie/cmtuser/GANGA/GANGA_v600r99/install/ganga/bin")  # which ganga
+        try:
+            from os import environ
+            GangaSysRoot = os.environ.get('GANGASYSROOT')
+        except Exception as err:
+            print("Exception Raised finding GANGASYSROOT,\n\tPLEASE DEFINE THIS IN YOUR ENVIRONMENT TO RUN THE TESTS\n")
+            raise err
 
-        # os.path.join( os.path.dirname(exeDir), 'python' )
-        gangaDir = "/afs/cern.ch/user/r/rcurrie/cmtuser/GANGA/GANGA_v600r99/install/ganga/python"
+        exe_relPath = "../install/ganga/bin"
+        python_relPath = "../install/ganga/python"
+
+        # insert the path to Ganga itself
+        exeDir =  os.path.abspath( os.path.join( GangaSysRoot, exe_relPath) ) #os.path.abspath( "/afs/cern.ch/user/r/rcurrie/cmtuser/GANGA/GANGA_v600r99/install/ganga/bin" ) # which ganga
+
+        gangaDir = os.path.abspath( os.path.join( GangaSysRoot, python_relPath) ) #"/afs/cern.ch/user/r/rcurrie/cmtuser/GANGA/GANGA_v600r99/install/ganga/python" #os.path.join( os.path.dirname(exeDir), 'python' )
         sys.path.insert(0, gangaDir)
 
         import Ganga.PACKAGE
@@ -137,9 +145,10 @@ def stopGanga():
     logger.info("Shutting Down Internal Services")
 
     # Disable internal services such as monitoring and other tasks
-    from Ganga.Core.InternalServices import Coordinator
-    if Coordinator.servicesEnabled:
-        Coordinator.disableInternalServices()
+    #from Ganga.Core.InternalServices import Coordinator
+    #if Coordinator.servicesEnabled:
+    #    Coordinator.disableInternalServices()
+    #    Coordinator.servicesEnabled = False
 
     logger.info("Mimicking ganga exit")
     from Ganga.Core.InternalServices import ShutdownManager

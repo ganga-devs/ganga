@@ -62,9 +62,11 @@ class JobRegistry(Registry):
         # store subjob status
         if hasattr(obj, "subjobs"):
             c["subjobs:status"] = []
-            for sj in obj.subjobs:
-                c["subjobs:status"].append(sj.status)
-
+            if hasattr(obj.subjobs, "getAllCachedData"):
+                for sj in obj.subjobs.getAllCachedData():
+                    c["subjobs:status"].append(sj['status'])
+            #for sj in obj.subjobs:
+            #    c["subjobs:status"].append(sj.status)
         return c
 
     def startup(self):

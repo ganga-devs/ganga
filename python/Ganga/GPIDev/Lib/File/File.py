@@ -125,7 +125,6 @@ allComponentFilters['files'] = string_file_shortcut_file
 
 from Ganga.GPIDev.Lib.File import getSharedPath
 
-
 class ShareDir(GangaObject):
 
     """Represents the directory used to store resources that are shared amongst multiple Ganga objects.

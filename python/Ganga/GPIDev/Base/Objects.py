@@ -493,14 +493,14 @@ class GangaObject(Node):
         for attr, item in self._schema.allItems():
             setattr(self, attr, self._schema.getDefaultValue(attr))
 
+        self._lock_count = {}
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
 
-    # construct an object of this type from the arguments. Defaults to copy
-    # constructor.
+    # construct an object of this type from the arguments. Defaults to copy constructor.
     def __construct__(self, args):
-        # act as a copy constructor applying the object conversion at the same
-        # time (if applicable)
+        self._lock_count = {}
+        # act as a copy constructor applying the object conversion at the same time (if applicable)
         if len(args) == 0:
             return
         elif len(args) == 1:
@@ -542,6 +542,7 @@ class GangaObject(Node):
                     shareref.increase(shared_dir.name)
                 except AttributeError:
                     pass
+        c.lock_count = {}
         return c
 
     def accept(self, visitor):
@@ -554,11 +555,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            if reg.name not in self._lock_count.keys():
-                self._lock_count[reg.name] = 0
-            logger.debug("Locking: %s  #%s" %
-                         (reg.name, self._lock_count[reg.name]))
-        if reg is not None and self._lock_count[reg.name] == 0:
+            #logger.debug( "Locking: %s for job %s" % (reg.name, str(self.getJobObject().getFQID('.'))) )
             _haveLocked = False
             _counter = 1
             _sleep_size = 2.
@@ -582,9 +579,6 @@ class GangaObject(Node):
                         "Failed to get access to registry: %s. Reason: %s" % (reg.name, str(x)))
                     raise x
 
-        if reg is not None:
-            self._lock_count[reg.name] = self._lock_count[reg.name] + 1
-
     def _releaseWriteAccess(self):
         """ releases write access to the object.
         Raise LockingError (or so) on fail
@@ -592,15 +586,8 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            if reg.name not in self._lock_count.keys():
-                self._lock_count[reg.name] = 0
-            logger.debug("Releasing: %s  #%s" %
-                         (reg.name, self._lock_count[reg.name]))
-        if reg is not None and self._lock_count[reg.name] == 1:
+            logger.debug( "Releasing: %s" % (reg.name) )
             reg._release_lock(root)
-        if reg is not None:
-            if self._lock_count[reg.name] > 0:
-                self._lock_count[reg.name] = self._lock_count[reg.name] - 1
 
     def _getReadAccess(self):
         """ makes sure the objects _data is there and the object itself has a recent state.

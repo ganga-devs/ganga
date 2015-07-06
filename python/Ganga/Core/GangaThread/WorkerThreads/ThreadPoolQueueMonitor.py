@@ -48,20 +48,20 @@ class ThreadPoolQueueMonitor(object):
 
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
-        output = ''
-        output += '{0:^67} | {1:^50}\n'.format(
-            'Ganga user threads:', 'Ganga monitoring threads:')
-        output += '{0:^67} | {1:^50}\n'.format(
-            '------------------', '------------------------')
-        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format(
-            'Name', 'Command', 'Timeout')
-        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format(
-            '----', '-------', '-------')
-        for u, m in zip(self._user_threadpool.worker_status(),
-                        self._monitoring_threadpool.worker_status()):
-            # name has extra spaces as colour characters are invisible but
-            # still count
-            name_user = getColour('fg.red') + u[0] + getColour('fg.normal')
+        output=''
+        output+= '{0:^67} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
+        output+= '{0:^67} | {1:^50}\n'.format('------------------', '------------------------')
+        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('Name', 'Command', 'Timeout')
+        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('----', '-------', '-------')
+        for u, m in zip( self._user_threadpool.worker_status(),
+                         self._monitoring_threadpool.worker_status() ):
+            # name has extra spaces as colour characters are invisible but still count
+            if u[0] is not None:
+                # User task has no ganga name
+                name_user = getColour('fg.red') + u[0] + getColour('fg.normal')
+            else:
+                # User task has a ganga name
+                name_user = getColour('fg.red') + u[1] + getColour('fg.normal')
             name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
             if u[1] == 'idle':
                 name_user = name_user.replace(

@@ -52,10 +52,8 @@ config.addOption(
 config.addOption('DiskSpaceChecker', "",
                  "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 
-config.addOption('MaxNumberParallelMonitor', 50,
-                 "Maximum number of (sub)jobs to be passed to the backend for monitoring at once")
 
-#config.addOption( 'max_shutdown_retries',5,'OBSOLETE: this option has no effect anymore')
+config.addOption( 'max_shutdown_retries',5,'OBSOLETE: this option has no effect anymore')
 
 
 THREAD_POOL_SIZE = config['update_thread_pool_size']
@@ -474,9 +472,7 @@ class JobRegistry_Monitor(GangaThread):
         self.runClientCallbacks()
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
-
-    def isEnabled(self):
-        return self.enabled or self.__isInProgress()
+        
 
     def runMonitoring(self, jobs=None, steps=1, timeout=60):
         """
@@ -604,12 +600,13 @@ class JobRegistry_Monitor(GangaThread):
             if self.enabled:
                 log.info("Disabling Monitoring Service")
 
-            # THIS NEEDS TO BE HERE FOR A CLEAN DISABLE OF THE MONITORING LOOP!
-            self.enabled = False
-            # CANNOT DETERMINE IF WE SHOULD CONTINUE WITH EXPENSIVE OUT OF THRE
-        except:
+                ##  THIS NEEDS TO BE HERE FOR A CLEAN DISABLE OF THE MONITORING LOOP!!!!!
+                self.enabled = False
+                ## CANNOT DETERMINE IF WE SHOULD CONTINUE WITH EXPENSIVE OUT OF THREAD TASKS OTHERWISE!!!!!
+        except Exception as err:
             logger.error(
                 "ERROR STOPPING MONITORING THREAD, feel free to force exit")
+            logger.error("%s" % str(err) )  ##  This except is left in incase we decide to add things here which can fail!
 
         with self.__mainLoopCond:
             log.debug('Monitoring loop lock acquired. Disabling mon loop')
@@ -620,10 +617,6 @@ class JobRegistry_Monitor(GangaThread):
             log.debug('Monitoring loop disabled')
             # wake up the monitoring loop
             self.__mainLoopCond.notifyAll()
-        # wait for cleanup
-        # self.__cleanUp()
-        # self.__cleanUpEvent.wait()
-        # self.__cleanUpEvent.clear()
         return True
 
     def stop(self, fail_cb=None, max_retries=5):
@@ -637,25 +630,27 @@ class JobRegistry_Monitor(GangaThread):
             return False
         else:
             self.alive = False
-
+        
+        self.__mainLoopCond.acquire()
         if self.enabled:
             log.info('Stopping the monitoring component...')
             self.alive = False
             self.enabled = False
 
         try:
-            # signal the main thread to finish
-            self.steps = 0
+            #signal the main thread to finish
+            self.steps = 0        
             self.stopIter.set()
-        except:
-            pass
-
-        with self.__mainLoopCond:
-            if self.enabled:
-                log.info('Stopping the monitoring component...')
-            # wake up the monitoring loop
+        except Exception as err:
+            logger.error("stopIter error: %s" % str(err))
+        try:
+            #wake up the monitoring loop
             self.__mainLoopCond.notifyAll()
-        # wait for cleanup
+        except Exception as err:
+            logger.error("Monitoring Stop Error: %s" % str(err))
+        finally:
+            self.__mainLoopCond.release()
+        #wait for cleanup        
         self.__cleanUpEvent.wait()
         self.__cleanUpEvent.clear()
 
@@ -757,109 +752,37 @@ class JobRegistry_Monitor(GangaThread):
         # iteration exception is raised
         fixed_ids = self.registry.ids()
         for i in fixed_ids:
-            if (self.enabled) and (not self.should_stop()):
-                try:
-                    j = self.registry(i)
-                    if j.status in ['submitted', 'running']:
-                        # j._getWriteAccess()
-                        bn = j.backend._name
-                        active_backends.setdefault(bn, [])
-                        active_backends[bn].append(j)
-                    elif j.status in ['submitting']:
-                        if j.count_subjobs() > 0:
-                            # j._getWriteAccess()
-                            bn = j.backend._name
-                            active_backends.setdefault(bn, [])
-                            active_backends[bn].append(j)
-                except RegistryKeyError:
-                    pass  # the job was removed
-                except RegistryLockError:
-                    pass  # the job was removed
-            else:
-                return {}
+            try:
+                j = self.registry(i)
+                if j.status in ['submitted', 'running'] or (j.master and (j.status in ['submitting'])):
+                    j._getWriteAccess()
+                    bn = j.backend._name
+                    active_backends.setdefault(bn, [])
+                    active_backends[ bn ].append(j)
+            except RegistryKeyError:
+                pass # the job was removed
+            except RegistryLockError:
+                pass # the job was removed
         return active_backends
 
     def makeUpdateJobStatusFunction(self, makeActiveBackendsFunc=None):
-
         if makeActiveBackendsFunc is None:
             makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
 
-        def _returnMonitorableJobs(jobList):
-
-            #log.info( "%s" % str( jobList ) )
-
-            returnableSet = set([])
-
-            for job in jobList:
-
-                if (not self.should_stop()) or (self.enabled):
-
-                    if job.status in ['submitted', 'running']:
-                        returnableSet.add(job)
-                        size = 0
-                        for i in returnableSet:
-                            if i.count_subjobs() > 0:
-                                size = size + i.count_subjobs()
-                            else:
-                                size = size + 1
-                        if size > config['MaxNumberParallelMonitor']:
-                            break
-                else:
-                    return set([]), 999
-
-            return returnableSet, size
-
-        def _returnMonitorableSubJobs(jobList, found):
-
-            returnableSet = set([])
-
-            for job in jobList:
-
-                if (not self.should_stop()) and (self.enabled):
-
-                    if job.status in ['submitting'] and job.count_subjobs() > 0:
-                        returnableSet.add(job)
-                        size = 0
-                        for i in returnableSet:
-                            size = size + job.count_subjobs()
-                        if size > (config['MaxNumberParallelMonitor'] - found):
-                            break
-                    else:
-                        return set([])
-
-            return returnableSet
-
-        # This function will be run by update threads
-        def checkBackend(backendObj, jobListSet, lock):
+        def checkBackend( backendObj, jobListSet, lock ): # This function will be run by update threads
             currentThread = threading.currentThread()
             # timeout mechanism may have acquired the lock to impose delay.
             lock.acquire()
             try:
                 log.debug("[Update Thread %s] Lock acquired for %s" %
                           (currentThread, backendObj._name))
-
-                # I expect this to be an expensive function as it can trigger loading from disk several large jobs from disk
-                # Can we optimise this a little perhaps as this can lead to a slowdown in monitoring startup
-                # Can python islice fix this? rcurrie
-
-                # All standard jobs to be monitored
-                alljobList_fromset, found = _returnMonitorableJobs(jobListSet)
-
-                max_parallel = config['MaxNumberParallelMonitor'] - found
-
-                if len(alljobList_fromset) < max_parallel:
-                    # All jobs which may have subjobs to be monitored
-                    masterJobList_fromset = _returnMonitorableSubJobs(
-                        jobListSet, found)
-                else:
-                    masterJobList_fromset = set([])
-
-                # Combine both lists
-                jobList_fromset = list(
-                    alljobList_fromset.union(masterJobList_fromset))
-
-                #log.info( "%s" % str(jobList_fromset) )
-
+                alljobList_fromset = IList(filter(lambda x:x.status in ['submitted', 'running'], jobListSet ), self.stopIter)
+                #print alljobList_fromset
+                masterJobList_fromset = IList(filter(lambda x:(x.master is not None) and (x.status in ['submitting']), jobListSet ), self.stopIter)
+                #print masterJobList_fromset
+                jobList_fromset = alljobList_fromset
+                jobList_fromset.extend(masterJobList_fromset)
+                #print jobList_fromset
                 updateDict_ts.clearEntry(backendObj._name)
                 try:
                     log.debug("[Update Thread %s] Updating %s with %s." % (
@@ -868,45 +791,7 @@ class JobRegistry_Monitor(GangaThread):
                         if hasattr(j, 'backend'):
                             if hasattr(j.backend, 'setup'):
                                 j.backend.setup()
-
-                    # It was observed we were saturating some methods in the backend by requesting to
-                    # update several hundred subjobs when a job is submitted
-                    # In order to fix this add configurable to only pass n many
-                    # jobs to the backend
-                    import math
-                    if max_parallel > 0:
-                        for batch_num in range(int(math.ceil(float(len(jobList_fromset)) * (1. / float(max_parallel))))):
-                            locked = []
-                            sublist = jobList_fromset[
-                                batch_num * max_parallel: (batch_num + 1) * max_parallel]
-                            for job in sublist:
-                                from Ganga.GPIDev.Base.Proxy import stripProxy
-                                try:
-                                    stripProxy(job)._getWriteAccess()
-                                except:
-                                    locked.append(job)
-                            for job in locked:
-                                sublist.pop(sublist.index(job))
-                            backendObj.master_updateMonitoringInformation(
-                                sublist)
-                            for job in sublist:
-                                from Ganga.GPIDev.Base.Proxy import stripProxy
-                                stripProxy(job)._releaseWriteAccess()
-                    else:
-                        locked = []
-                        sublist = jobList_fromset
-                        for job in sublist:
-                            from Ganga.GPIDev.Base.Proxy import stripProxy
-                            try:
-                                stripProxy(job)._getWriteAccess()
-                            except:
-                                locked.append(job)
-                        for job in locked:
-                            sublist.pop(sublist.index(job))
-                        backendObj.master_updateMonitoringInformation(sublist)
-                        for job in sublist:
-                            from Ganga.GPIDev.Base.Proxy import stripProxy
-                            stripProxy(job)._releaseWriteAccess()
+                    backendObj.master_updateMonitoringInformation( jobList_fromset )
 
                     # resubmit if required
                     for j in jobList_fromset:
@@ -944,12 +829,12 @@ class JobRegistry_Monitor(GangaThread):
                             
                 except BackendError as x:
                     self._handleError(x, x.backend_name, 0)
-                #except Exception as x:
-                #    self._handleError(x, backendObj._name, 1)
-                log.debug( "[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset ]))
-                self.registry._flush(jobList_fromset) # Optimisation required! 
-            except Exception as x:
-                log.debug("Monitoring Exception: %s" % str(x))
+                except Exception as err:
+                    self._handleError(err, backendObj._name, 1)
+                log.debug( "[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
+                self.registry._flush(jobList_fromset) # Optimisation required!
+            except Exception as err:
+                logger.debug("Monitoring Loop Error: %s" % str(err))
             finally:
                 lock.release()
                 log.debug("[Update Thread %s] Lock released for %s." %
@@ -958,22 +843,17 @@ class JobRegistry_Monitor(GangaThread):
         def f(activeBackendsFunc):
             activeBackends = activeBackendsFunc()
             for jList in activeBackends.values():
-                currentThread = threading.currentThread()
-                if (not currentThread.should_stop()) and self.enabled:
-                    backendObj = jList[0].backend
-                    try:
-                        pRate = config[backendObj._name]
-                    except:
-                        pRate = config['default_backend_poll_rate']
-                    # TODO: To include an if statement before adding entry to
-                    #       updateDict. Entry is added only if credential requirements
-                    #       of the particular backend is satisfied.
-                    #       This requires backends to hold relevant information on its
-                    #       credential requirements.
-                    updateDict_ts.addEntry(
-                        backendObj, checkBackend, jList, pRate)
-                else:
-                    break
+                backendObj = jList[0].backend
+                try:
+                   pRate = config[backendObj._name]
+                except:
+                   pRate = config['default_backend_poll_rate']
+                # TODO: To include an if statement before adding entry to
+                #       updateDict. Entry is added only if credential requirements
+                #       of the particular backend is satisfied.
+                #       This requires backends to hold relevant information on its
+                #       credential requirements.
+                updateDict_ts.addEntry(backendObj, checkBackend, jList, pRate)
 
         if makeActiveBackendsFunc == self.__defaultActiveBackendsFunc:
             self.defaultUpdateJobStatus = f

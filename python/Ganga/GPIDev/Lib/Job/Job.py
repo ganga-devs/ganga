@@ -34,7 +34,6 @@ from Ganga.Utility.Config import getConfig
 
 import Ganga.GPIDev.Lib.File
 
-
 class JobStatusError(GangaException):
 
     def __init__(self, *args):
@@ -1358,8 +1357,7 @@ class Job(GangaObject):
 
             if self.application.is_prepared is not True and self.application.is_prepared is not None:
                 shared_path = Ganga.GPIDev.Lib.File.getSharedPath()
-                delay_result = delay_check(
-                    os.path.join(shared_path, self.application.is_prepared.name))
+                delay_result = delay_check(os.path.join(shared_path, self.application.is_prepared.name))
                 if delay_result != True:
                     logger.warning(
                         "prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared)
