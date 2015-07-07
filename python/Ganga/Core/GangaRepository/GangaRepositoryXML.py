@@ -484,6 +484,7 @@ class GangaRepositoryLocal(GangaRepository):
                             from Ganga.Core.GangaRepository import SubJobXMLList
                             ## Now generate an index file to take advantage of future non-loading goodness
                             tempSubJList = SubJobXMLList.SubJobXMLList( os.path.dirname(fn), self.registry, self.dataFileName, False )
+                            tempSubJList._setParent( obj ) 
                             tempSubJList.write_subJobIndex()
 
                         safe_save(fn, obj, self.to_file, self.sub_split)

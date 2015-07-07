@@ -51,8 +51,17 @@ class SubJobXMLList(GangaList):
                 index_file_obj = open( index_file, "r" )
                 self.subjobIndexData = from_file( index_file_obj )[0]
                 index_file_obj.close()
+                for subjob in self.subjobIndexData.keys():
+                    mod_time = self.subjobIndexData.get(subjob)['modified']
+                    disk_location = self.__get_dataFile(subjob)
+                    import os
+                    disk_time = os.stat(disk_location).st_ctime
+                    if mod_time != disk_time:
+                        self.subjobIndexData = {}
+                        break
             except Exception, err:
-                logger.error( "Index file open, error: %s" % str(err) )
+                logger.error( "Subjob Index file open, error: %s" % str(err) )
+                self.subjobIndexData = {}
         return
 
     def write_subJobIndex(self):
@@ -61,6 +70,9 @@ class SubJobXMLList(GangaList):
         for i in range(len(self)):
             this_cache = self.registry.getIndexCache( self.__getitem__(i) )
             all_caches[i] = this_cache
+            disk_location = self.__get_dataFile(i)
+            import os
+            all_caches[i]['modified'] = os.stat(disk_location).st_ctime
 
         import os.path
         try:
@@ -136,6 +148,8 @@ class SubJobXMLList(GangaList):
                 if job_obj:
                     fqid = job_obj.getFQID('.')
                     logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, str(fqid)) )
+                else:
+                    logger.debug( "Loading subjob at: %s" % subjob_data )
                 sj_file = open(subjob_data, "r")
             except IOError, x:
                 if x.errno == errno.ENOENT:
