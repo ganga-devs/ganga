@@ -759,7 +759,7 @@ class JobRegistry_Monitor( GangaThread ):
                         if not j.do_auto_resubmit:
                             continue
 
-                        if j.count_subjobs() == 0:
+                        if len(j.subjobs) == 0:
                             try_resubmit = j.info.submit_counter <= config['MaxNumResubmits']
                         else:
                             # Check for max number of resubmissions
