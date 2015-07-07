@@ -44,6 +44,13 @@ class ThreadPoolQueueMonitor(object):
         _user_threadpool = self._user_threadpool
         _monitoring_threadpool = self._monitoring_threadpool
 
+    def _display_element(self, item):
+        if hasattr( item, 'name' ) and item.name != None:
+            return item.name
+        elif type(item.command_input[0]) != str:
+            return item.command_input[0].__name__
+        else:
+            return item.command_input[0]
 
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
@@ -68,34 +75,68 @@ class ThreadPoolQueueMonitor(object):
                 name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
             output+= '{0:<35} {1:<26} {2:<15} | {3:<35} {4:<28} {5:<10}\n'.format(name_user, u[1][:30].replace("\n","\\n"), u[2], name_monitor, m[1][:30].replace("\n","\\n"), m[2])
 
-        def display_element(item):
-            if hasattr( item, 'name' ) and item.name != None:
-                return item.name
-            if type(item.command_input[0]) != str:
-                return item.command_input[0].__name__
-            return item.command_input[0]
         output+= '\n'
         output+= "Ganga user queue:\n"
         output+= "----------------\n"
-        output+= str([display_element(i) for i in self._user_threadpool.get_queue()])
+        output+= str([self._display_element(i) for i in self._user_threadpool.get_queue()])
         output+= '\n'
         output+= "Ganga monitoring queue:\n"
         output+= "----------------------\n"
-        output+= str([display_element(i) for i in self._monitoring_threadpool.get_queue()])
+        output+= str([self._display_element(i) for i in self._monitoring_threadpool.get_queue()])
         return output
 
-    def purge(self):
+    def purge(self, force=False):
         """
         Purge the Ganga user thread pool's queue
         """
-        self._user_threadpool.clear_queue()
+        _user_queue = [i for i in self._user_threadpool.get_queue()]
+        queue_size = len(_user_queue)
+        _actually_purge = False
+        if force == True:
+            _actually_purge = True
+        if queue_size > 0 and not force:
+            keyin = None
+            while keyin == None:
+                print "User queue contains unfinished tasks:"
+                print str([self._display_element(i) for i in _user_queue])
+                keyin = raw_input( "Do you want to Purge the user queue [y/n] " )
+                if keyin == 'y':
+                    _actually_purge = True
+                elif keyin == 'n':
+                    _actually_purge = False
+                else:
+                    print "y/n please!"
+                    keyin = None
+        if _actually_purge:
+            self._user_threadpool.clear_queue()
 
-    def _purge_all(self):
+    def _purge_all(self, force=False):
         """
         Purge ALL of the Ganga user AND Worker thread queues!
         """
-        self._user_threadpool.clear_queue()
-        self._monitoring_threadpool.clear_queue()
+        self.purge()
+
+        _monitor_queue = [ i for i in self._monitoring_threadpool.get_queue()]
+
+        queue_size = len(_monitor_queue)
+        _actually_purge = False
+        if force == True:
+            _actually_purge = True
+        if queue_size > 0 and not force:
+            keyin = None
+            while keyin == None:
+                print "Monitoring queue contains unfinished tasks:"
+                print str([self._display_element(i) for i in _monitor_queue])
+                keyin = raw_input( "Do you want to Purge the monitoring queue [y/n] " )
+                if keyin == 'y':
+                    _actually_purge = True
+                elif keyin == 'n':
+                    _actually_purge = False
+                else:
+                    print "y/n please"
+                    keyin = None
+        if _actually_purge:
+            self._monitoring_threadpool.clear_queue()
 
     def add(self, worker_code, args=(), kwargs={}, priority = 5):
         """
@@ -271,7 +312,6 @@ class ThreadPoolQueueMonitor(object):
     def totalNumAllThreads(self):
         """Return the total number of ALL user and worker threads currently running and queued"""
         num=0
-
         num = num + self.totalNumUserThreads()
         num = num + self.totalNumIntThreads()
 
