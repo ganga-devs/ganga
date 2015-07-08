@@ -6,6 +6,7 @@
 
 import uuid
 
+
 class JobRepository(object):
 
     """JobRepository class is an interface for developers, that need to access

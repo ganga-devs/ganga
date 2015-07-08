@@ -385,7 +385,8 @@ under certain conditions; type license() for details.
                     notes = [l.strip() for l in f.read().replace(
                         bounding_line, '').split(dividing_line)]
                 except:
-                    logger.error('Error while attempting to read release notes')
+                    logger.error(
+                        'Error while attempting to read release notes')
                     raise
 
             if notes[0].find(version) < 0:
@@ -574,7 +575,8 @@ under certain conditions; type license() for details.
                 if not r:
                     this_logger.error(
                         'file %s does not seem to be a Ganga config file', self.options.config_file)
-                    this_logger.error('try -g option to create valid ~/.gangarc')
+                    this_logger.error(
+                        'try -g option to create valid ~/.gangarc')
                 else:
                     cv = r.group('version').split('-')
                     if cv[1] == '4':
@@ -967,8 +969,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                     're-executing the process for LD_LIBRARY_PATH changes to take effect')
                 os.environ['GANGA_INTERNAL_PROCREEXEC'] = '1'
                 prog = os.path.normpath(sys.argv[0])
-                self.logger.debug('Program: %s' % str(prog) )
-                self.logger.debug('sys.argv: %s' % str(sys.argv) )
+                self.logger.debug('Program: %s' % str(prog))
+                self.logger.debug('sys.argv: %s' % str(sys.argv))
                 os.execv(prog, sys.argv)
 
         else:
@@ -1075,8 +1077,9 @@ default_backends = LCG
             'ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
         exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
         exportToGPI('JobError', JobError, 'Exceptions')
-        
-        import Ganga.GPIDev.MonitoringServices; 'SIDE-EFFECTS' #This has a side-effect on import of adding a config section
+
+        import Ganga.GPIDev.MonitoringServices
+        # This has a side-effect on import of adding a config section 'SIDE-EFFECTS'
 
         def license():
             'Print the full license (GPL)'
@@ -1233,7 +1236,7 @@ default_backends = LCG
         # import default runtime modules
         from . import Repository_runtime
         import Ganga.Core
-        
+
         from .associations import load_associations
         load_associations()
 
@@ -1613,11 +1616,12 @@ def exit( value=None ):
             sys.displayhook = _display
             c = code.InteractiveConsole(locals=local_ns)
             c.interact()
-            
-    def log(self,x):
-        
+
+    def log(self, x):
+
         import sys
-        # FIXME: for some reason self.logger.critical does not print any messages here
+        # FIXME: for some reason self.logger.critical does not print any
+        # messages here
         if self.options.force_loglevel == 'DEBUG':
             import traceback
             traceback.print_exc(file=sys.stderr)

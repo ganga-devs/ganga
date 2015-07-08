@@ -21,18 +21,19 @@ __version__ = "1.0"
 
 from Ganga.Utility.Config import makeConfig
 
+
 def load_associations():
     config = makeConfig(
         "File_Associations", 'Default associations between file types and file-viewing commands. The name identifies the extension and the value the commans. New extensions can be added. A single & after the command indicates that the process will be started in the background. A && after the command indicates that a new terminal will be opened and the command executed in that terminal.', is_open=True)
 
     config.addOption("newterm_command", "xterm",
-                    'Command for opening a new terminal (xterm, gnome-terminal, ...')
+                     'Command for opening a new terminal (xterm, gnome-terminal, ...')
     config.addOption("newterm_exeopt", "-e",
-                    'Option to give to a new terminal to tell it to execute a command.')
+                     'Option to give to a new terminal to tell it to execute a command.')
     config.addOption(
         "listing_command", "ls -ltr", 'Command for listing the content of a directory')
     config.addOption('fallback_command', 'less',
-                    'Default command to use if there is no association with the file type')
+                     'Default command to use if there is no association with the file type')
     config.addOption('htm', 'firefox &', 'Command for viewing html files.')
     config.addOption('html', 'firefox &', 'Command for viewing html files.')
     config.addOption('root', 'root.exe &&', 'Command for opening ROOT files.')

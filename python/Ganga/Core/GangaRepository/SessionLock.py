@@ -932,7 +932,7 @@ class SessionLockManager(object):
     def session_to_info(self, session):
         si = session.split(".")
         try:
-            return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]) )
+            return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]))
         except Exception:
             Ganga.Utility.logging.log_unknown_exception()
             return session

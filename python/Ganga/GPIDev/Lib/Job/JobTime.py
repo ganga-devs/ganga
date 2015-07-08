@@ -9,6 +9,7 @@ Ganga.Utility.Config.config_scope['datetime'] = datetime
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
+
 class JobTime(GangaObject):
 
     """Job timestamp access.

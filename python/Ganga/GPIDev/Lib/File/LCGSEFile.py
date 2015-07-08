@@ -131,7 +131,7 @@ class LCGSEFile(IGangaFile):
                     lcgse_file.failureReason = guid[6:]
                     return
                 lcgse_file.locations = guid
-                
+
         for line in open(postprocessLocationsPath, 'r'):
 
             if line.strip() == '':

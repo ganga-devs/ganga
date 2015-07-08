@@ -12,6 +12,7 @@ import os
 
 import tarfile
 
+
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.
        This function is called by wrapper script at the run time.
@@ -20,7 +21,7 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
       'dest_dir': a destination directory
     """
 
-    with tarfile.open(tarpath,"r:gz") as tf:
+    with tarfile.open(tarpath, "r:gz") as tf:
         tf.extractall(dest_dir)
 
 
@@ -122,7 +123,7 @@ def createPackedOutputSandbox(output_patterns, filter, dest_dir):
     outputlist = multi_glob(output_patterns, filter)
 
     if outputlist:
-        with tarfile.open(tgzfile,"w:gz") as tf:
-            tf.dereference=True
+        with tarfile.open(tgzfile, "w:gz") as tf:
+            tf.dereference = True
             for f in outputlist:
                 tf.add(f)

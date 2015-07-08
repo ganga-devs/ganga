@@ -14,17 +14,22 @@ def startGanga():
         try:
             from os import environ
             GangaSysRoot = os.environ.get('GANGASYSROOT')
-        except Exception as err:
-            print("Exception Raised finding GANGASYSROOT,\n\tPLEASE DEFINE THIS IN YOUR ENVIRONMENT TO RUN THE TESTS\n")
+        except Exception, err:
+            print "Exception Raised finding GANGASYSROOT,\n\tPLEASE DEFINE THIS IN YOUR ENVIRONMENT TO RUN THE TESTS\n"
             raise err
+
+        if GangaSysRoot == None:
+            raise Exception(
+                "GANGASYSROOT evaluated to None, please check Ganga setup")
 
         exe_relPath = "../install/ganga/bin"
         python_relPath = "../install/ganga/python"
 
         # insert the path to Ganga itself
-        exeDir =  os.path.abspath( os.path.join( GangaSysRoot, exe_relPath) ) #os.path.abspath( "/afs/cern.ch/user/r/rcurrie/cmtuser/GANGA/GANGA_v600r99/install/ganga/bin" ) # which ganga
+        exeDir = os.path.abspath(
+            os.path.join(GangaSysRoot, exe_relPath))  # which ganga
 
-        gangaDir = os.path.abspath( os.path.join( GangaSysRoot, python_relPath) ) #"/afs/cern.ch/user/r/rcurrie/cmtuser/GANGA/GANGA_v600r99/install/ganga/python" #os.path.join( os.path.dirname(exeDir), 'python' )
+        gangaDir = os.path.abspath(os.path.join(GangaSysRoot, python_relPath))
         sys.path.insert(0, gangaDir)
 
         import Ganga.PACKAGE
@@ -42,6 +47,7 @@ def startGanga():
 
     # Start ganga by passing some options for unittesting
 
+    print "\n"
     logger.info("Starting ganga")
 
     logger.info("Parsing Command Line options")
@@ -146,7 +152,7 @@ def stopGanga():
 
     # Disable internal services such as monitoring and other tasks
     #from Ganga.Core.InternalServices import Coordinator
-    #if Coordinator.servicesEnabled:
+    # if Coordinator.servicesEnabled:
     #    Coordinator.disableInternalServices()
     #    Coordinator.servicesEnabled = False
 
@@ -165,11 +171,13 @@ def stopGanga():
 class GangaUnitTest(unittest.TestCase):
 
     def setUp(self):
+        unittest.TestCase.setUp(self)
         # Start ganga and internal services
         # This is called before each unittest
         startGanga()
 
     def tearDown(self):
+        unittest.TestCase.tearDown(self)
         # Stop ganga and mimick an exit to shutdown all internal processes
         stopGanga()
 

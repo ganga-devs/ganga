@@ -11,6 +11,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
+
 class ArgSplitter(ISplitter):
 
     """

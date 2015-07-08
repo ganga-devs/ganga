@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 
+
 class RegistrySliceProxy(object):
 
     """This object is an access list to registry slices"""

@@ -387,7 +387,7 @@ class Batch(IBackend):
         if not os.path.isfile(p):
             logger.error('unable to open file %s', p)
             return None
-        
+
         r = self.getStateTime('running')
         c = self.getStateTime('completed')
         d = {'START': r, 'STOP': c}

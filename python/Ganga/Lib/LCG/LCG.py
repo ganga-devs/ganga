@@ -320,7 +320,8 @@ class LCG(IBackend):
 
         logger.error('No matched resource: check/report the JDL below')
 
-        logger.error('=== JDL ===\n' + '\n'.join(l.strip() for l in open(jdl, 'r')))
+        logger.error('=== JDL ===\n' + '\n'.join(l.strip()
+                                                 for l in open(jdl, 'r')))
 
         return
 

@@ -119,7 +119,7 @@ class MassStorageFile(IGangaFile):
                     mass_file.failureReason = line[line.find('ERROR') + 5:]
                     return
                 mass_file.locations = [outputPath.strip('\n')]
-                
+
         for line in open(postprocessLocationsPath, 'r'):
 
             if line.strip() == '':

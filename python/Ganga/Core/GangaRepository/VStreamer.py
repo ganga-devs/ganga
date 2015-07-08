@@ -227,8 +227,10 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
 # Empty Ganga Object
+
+
 class EmptyGangaObject(GangaObject):
-    
+
     """Empty Ganga Object. Is used to construct incomplete jobs"""
     _schema = Schema(Version(0, 0), {})
     _name = "EmptyGangaObject"

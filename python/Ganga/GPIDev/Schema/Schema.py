@@ -344,7 +344,7 @@ class Item(object):
     # item.isA('SimpleItem')
     # item.isA(SimpleItem)
     def isA(self, what):
-        
+
         this_type = type(what)
         import types
 

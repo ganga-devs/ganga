@@ -3,6 +3,7 @@ from Ganga.Core.exceptions import GangaAttributeError
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import addProxy
 
+
 class MetadataDict(GangaObject):
 
     '''MetadataDict class

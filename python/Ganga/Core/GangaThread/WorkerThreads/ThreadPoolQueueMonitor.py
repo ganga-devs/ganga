@@ -46,16 +46,25 @@ class ThreadPoolQueueMonitor(object):
         _user_threadpool = self._user_threadpool
         _monitoring_threadpool = self._monitoring_threadpool
 
+    def _display_element(self, item):
+        if hasattr(item, 'name') and item.name != None:
+            return item.name
+        elif type(item.command_input[0]) != str:
+            return item.command_input[0].__name__
+        else:
+            return item.command_input[0]
+
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
-        output=''
-        output+= '{0:^67} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
-        output+= '{0:^67} | {1:^50}\n'.format('------------------', '------------------------')
-        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('Name', 'Command', 'Timeout')
-        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('----', '-------', '-------')
-        for u, m in zip( self._user_threadpool.worker_status(),
-                         self._monitoring_threadpool.worker_status() ):
-            # name has extra spaces as colour characters are invisible but still count
+        output = ''
+        output += '{0:^67} | {1:^50}\n'.format('Ganga user threads:', 'Ganga monitoring threads:')
+        output += '{0:^67} | {1:^50}\n'.format('------------------', '------------------------')
+        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('Name', 'Command', 'Timeout')
+        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('----', '-------', '-------')
+        for u, m in zip(self._user_threadpool.worker_status(),
+                        self._monitoring_threadpool.worker_status()):
+            # name has extra spaces as colour characters are invisible but
+            # still count
             if u[0] is not None:
                 # User task has no ganga name
                 name_user = getColour('fg.red') + u[0] + getColour('fg.normal')
@@ -72,36 +81,70 @@ class ThreadPoolQueueMonitor(object):
             output += '{0:<35} {1:<26} {2:<15} | {3:<35} {4:<28} {5:<10}\n'.format(
                 name_user, u[1][:30].replace("\n", "\\n"), u[2], name_monitor, m[1][:30].replace("\n", "\\n"), m[2])
 
-        def display_element(item):
-            if hasattr(item, 'name') and item.name != None:
-                return item.name
-            if not isinstance(item.command_input[0], str):
-                return item.command_input[0].__name__
-            return item.command_input[0]
         output += '\n'
         output += "Ganga user queue:\n"
         output += "----------------\n"
-        output += str([display_element(i)
+        output += str([self._display_element(i)
                        for i in self._user_threadpool.get_queue()])
         output += '\n'
         output += "Ganga monitoring queue:\n"
         output += "----------------------\n"
-        output += str([display_element(i)
+        output += str([self._display_element(i)
                        for i in self._monitoring_threadpool.get_queue()])
         return output
 
-    def purge(self):
+    def purge(self, force=False):
         """
         Purge the Ganga user thread pool's queue
         """
-        self._user_threadpool.clear_queue()
+        _user_queue = [i for i in self._user_threadpool.get_queue()]
+        queue_size = len(_user_queue)
+        _actually_purge = False
+        if force == True:
+            _actually_purge = True
+        if queue_size > 0 and not force:
+            keyin = None
+            while keyin == None:
+                print "User queue contains unfinished tasks:"
+                print str([self._display_element(i) for i in _user_queue])
+                keyin = raw_input("Do you want to Purge the user queue [y/n] ")
+                if keyin == 'y':
+                    _actually_purge = True
+                elif keyin == 'n':
+                    _actually_purge = False
+                else:
+                    print "y/n please!"
+                    keyin = None
+        if _actually_purge:
+            self._user_threadpool.clear_queue()
 
-    def _purge_all(self):
+    def _purge_all(self, force=False):
         """
         Purge ALL of the Ganga user AND Worker thread queues!
         """
-        self._user_threadpool.clear_queue()
-        self._monitoring_threadpool.clear_queue()
+        self.purge()
+
+        _monitor_queue = [i for i in self._monitoring_threadpool.get_queue()]
+
+        queue_size = len(_monitor_queue)
+        _actually_purge = False
+        if force == True:
+            _actually_purge = True
+        if queue_size > 0 and not force:
+            keyin = None
+            while keyin == None:
+                print "Monitoring queue contains unfinished tasks:"
+                print str([self._display_element(i) for i in _monitor_queue])
+                keyin = raw_input("Do you want to Purge the monitoring queue [y/n] ")
+                if keyin == 'y':
+                    _actually_purge = True
+                elif keyin == 'n':
+                    _actually_purge = False
+                else:
+                    print "y/n please"
+                    keyin = None
+        if _actually_purge:
+            self._monitoring_threadpool.clear_queue()
 
     def add(self, worker_code, args=(), kwargs={}, priority=5):
         """
@@ -137,12 +180,9 @@ class ThreadPoolQueueMonitor(object):
                                  This then should be an int normally 0-9
         """
         if not isinstance(worker_code, collections.Callable):
-            logger.error(
-                'Only python callable objects can be added to the queue using queues.add()')
-            logger.error(
-                'Did you perhaps try to add the return value of the function/method rather than the function/method itself')
-            logger.error(
-                'e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
+            logger.error('Only python callable objects can be added to the queue using queues.add()')
+            logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
+            logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
             logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
         self._user_threadpool.add_function(worker_code,
@@ -153,8 +193,7 @@ class ThreadPoolQueueMonitor(object):
     def _addSystem(self, worker_code, args=(), kwargs={}, priority=5):
 
         if not isinstance(worker_code, collections.Callable):
-            logger.error(
-                "Error Adding internal task!! please report this to the Ganga developers!")
+            logger.error("Error Adding internal task!! please report this to the Ganga developers!")
             return
 
         self._monitoring_threadpool.add_function(worker_code,
@@ -232,7 +271,7 @@ class ThreadPoolQueueMonitor(object):
                    fallback_kwargs = kwargs for the fallback_func are given here
                                      as a dict.
         """
-        if not isinstance(command, str):
+        if type(command) != type(''):
             logger.error("Input command must be of type 'string'")
             return
 
@@ -281,7 +320,6 @@ class ThreadPoolQueueMonitor(object):
     def totalNumAllThreads(self):
         """Return the total number of ALL user and worker threads currently running and queued"""
         num = 0
-
         num = num + self.totalNumUserThreads()
         num = num + self.totalNumIntThreads()
 

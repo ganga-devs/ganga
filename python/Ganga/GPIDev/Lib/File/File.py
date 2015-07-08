@@ -18,6 +18,7 @@ from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
+
 class File(GangaObject):
 
     """Represent the files, both local and remote and provide an interface to transparently get access to them.
@@ -124,6 +125,7 @@ def string_file_shortcut_file(v, item):
 allComponentFilters['files'] = string_file_shortcut_file
 
 from Ganga.GPIDev.Lib.File import getSharedPath
+
 
 class ShareDir(GangaObject):
 

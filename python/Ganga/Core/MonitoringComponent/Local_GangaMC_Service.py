@@ -53,7 +53,8 @@ config.addOption('DiskSpaceChecker', "",
                  "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 
 
-config.addOption( 'max_shutdown_retries',5,'OBSOLETE: this option has no effect anymore')
+config.addOption(
+    'max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
 
 
 THREAD_POOL_SIZE = config['update_thread_pool_size']
@@ -472,7 +473,6 @@ class JobRegistry_Monitor(GangaThread):
         self.runClientCallbacks()
         self.__updateTimeStamp = time.time()
         self.__sleepCounter = config['base_poll_rate']
-        
 
     def runMonitoring(self, jobs=None, steps=1, timeout=60):
         """
@@ -600,13 +600,15 @@ class JobRegistry_Monitor(GangaThread):
             if self.enabled:
                 log.info("Disabling Monitoring Service")
 
-                ##  THIS NEEDS TO BE HERE FOR A CLEAN DISABLE OF THE MONITORING LOOP!!!!!
+                # THIS NEEDS TO BE HERE FOR A CLEAN DISABLE OF THE MONITORING L
                 self.enabled = False
-                ## CANNOT DETERMINE IF WE SHOULD CONTINUE WITH EXPENSIVE OUT OF THREAD TASKS OTHERWISE!!!!!
+                # CANNOT DETERMINE IF WE SHOULD CONTINUE WITH EXPENSIVE OUT OF
         except Exception as err:
             logger.error(
                 "ERROR STOPPING MONITORING THREAD, feel free to force exit")
-            logger.error("%s" % str(err) )  ##  This except is left in incase we decide to add things here which can fail!
+            # This except is left in incase we decide to add things here which
+            # can fail!
+            logger.error("%s" % str(err))
 
         with self.__mainLoopCond:
             log.debug('Monitoring loop lock acquired. Disabling mon loop')
@@ -630,7 +632,7 @@ class JobRegistry_Monitor(GangaThread):
             return False
         else:
             self.alive = False
-        
+
         self.__mainLoopCond.acquire()
         if self.enabled:
             log.info('Stopping the monitoring component...')
@@ -638,19 +640,19 @@ class JobRegistry_Monitor(GangaThread):
             self.enabled = False
 
         try:
-            #signal the main thread to finish
-            self.steps = 0        
+            # signal the main thread to finish
+            self.steps = 0
             self.stopIter.set()
         except Exception as err:
             logger.error("stopIter error: %s" % str(err))
         try:
-            #wake up the monitoring loop
+            # wake up the monitoring loop
             self.__mainLoopCond.notifyAll()
         except Exception as err:
             logger.error("Monitoring Stop Error: %s" % str(err))
         finally:
             self.__mainLoopCond.release()
-        #wait for cleanup        
+        # wait for cleanup
         self.__cleanUpEvent.wait()
         self.__cleanUpEvent.clear()
 
@@ -758,31 +760,31 @@ class JobRegistry_Monitor(GangaThread):
                     j._getWriteAccess()
                     bn = j.backend._name
                     active_backends.setdefault(bn, [])
-                    active_backends[ bn ].append(j)
+                    active_backends[bn].append(j)
             except RegistryKeyError:
-                pass # the job was removed
+                pass  # the job was removed
             except RegistryLockError:
-                pass # the job was removed
+                pass  # the job was removed
         return active_backends
 
     def makeUpdateJobStatusFunction(self, makeActiveBackendsFunc=None):
         if makeActiveBackendsFunc is None:
             makeActiveBackendsFunc = self.__defaultActiveBackendsFunc
 
-        def checkBackend( backendObj, jobListSet, lock ): # This function will be run by update threads
+        # This function will be run by update threads
+        def checkBackend(backendObj, jobListSet, lock):
             currentThread = threading.currentThread()
             # timeout mechanism may have acquired the lock to impose delay.
             lock.acquire()
             try:
-                log.debug("[Update Thread %s] Lock acquired for %s" %
-                          (currentThread, backendObj._name))
-                alljobList_fromset = IList(filter(lambda x:x.status in ['submitted', 'running'], jobListSet ), self.stopIter)
-                #print alljobList_fromset
-                masterJobList_fromset = IList(filter(lambda x:(x.master is not None) and (x.status in ['submitting']), jobListSet ), self.stopIter)
-                #print masterJobList_fromset
+                log.debug("[Update Thread %s] Lock acquired for %s" % (currentThread, backendObj._name))
+                alljobList_fromset = IList(filter(lambda x: x.status in ['submitted', 'running'], jobListSet), self.stopIter)
+                # print alljobList_fromset
+                masterJobList_fromset = IList(filter(lambda x: (x.master is not None) and (x.status in ['submitting']), jobListSet), self.stopIter)
+                # print masterJobList_fromset
                 jobList_fromset = alljobList_fromset
                 jobList_fromset.extend(masterJobList_fromset)
-                #print jobList_fromset
+                # print jobList_fromset
                 updateDict_ts.clearEntry(backendObj._name)
                 try:
                     log.debug("[Update Thread %s] Updating %s with %s." % (
@@ -791,7 +793,8 @@ class JobRegistry_Monitor(GangaThread):
                         if hasattr(j, 'backend'):
                             if hasattr(j.backend, 'setup'):
                                 j.backend.setup()
-                    backendObj.master_updateMonitoringInformation( jobList_fromset )
+                    backendObj.master_updateMonitoringInformation(
+                        jobList_fromset)
 
                     # resubmit if required
                     for j in jobList_fromset:
@@ -799,9 +802,8 @@ class JobRegistry_Monitor(GangaThread):
                         if not j.do_auto_resubmit:
                             continue
 
-                        if j.count_subjobs() == 0:
-                            try_resubmit = j.info.submit_counter <= config[
-                                'MaxNumResubmits']
+                        if len(j.subjobs) == 0:
+                            try_resubmit = j.info.submit_counter <= config['MaxNumResubmits']
                         else:
                             # Check for max number of resubmissions
                             skip = False
@@ -826,13 +828,14 @@ class JobRegistry_Monitor(GangaThread):
                             if j.backend.check_auto_resubmit():
                                 log.warning('Auto-resubmit job %d...' % j.id)
                                 j.auto_resubmit()
-                            
+
                 except BackendError as x:
                     self._handleError(x, x.backend_name, 0)
                 except Exception as err:
                     self._handleError(err, backendObj._name, 1)
-                log.debug( "[Update Thread %s] Flushing registry %s." % (currentThread, [x.id for x in jobList_fromset]))
-                self.registry._flush(jobList_fromset) # Optimisation required!
+                log.debug("[Update Thread %s] Flushing registry %s." %
+                          (currentThread, [x.id for x in jobList_fromset]))
+                self.registry._flush(jobList_fromset)  # Optimisation required!
             except Exception as err:
                 logger.debug("Monitoring Loop Error: %s" % str(err))
             finally:
@@ -845,9 +848,9 @@ class JobRegistry_Monitor(GangaThread):
             for jList in activeBackends.values():
                 backendObj = jList[0].backend
                 try:
-                   pRate = config[backendObj._name]
+                    pRate = config[backendObj._name]
                 except:
-                   pRate = config['default_backend_poll_rate']
+                    pRate = config['default_backend_poll_rate']
                 # TODO: To include an if statement before adding entry to
                 #       updateDict. Entry is added only if credential requirements
                 #       of the particular backend is satisfied.
@@ -871,8 +874,7 @@ class JobRegistry_Monitor(GangaThread):
 
             def cb_Failure():
                 self.enableCallbackHook(credCheckJobInsertor)
-                self._handleError('%s checking failed!' %
-                                  credObj._name, credObj._name, 1)
+                self._handleError('%s checking failed!' % credObj._name, credObj._name, 1)
 
             log.debug('Inserting %s checking function to Qin.' % credObj._name)
             _action = JobAction(function=self.makeCredChecker(credObj),
@@ -974,3 +976,4 @@ def getStackTrace():
         return status
     finally:
         pass
+

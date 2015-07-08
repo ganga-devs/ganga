@@ -421,17 +421,18 @@ def bootstrap(internal=0, handler=None):
 
         _set_log_level(getLogger(opt), config[opt])
 
-    
     class NoErrorFilter(logging.Filter):
+
         """
         A filter which only allow messages which are WARNING or lower to be logged
         """
+
         def filter(self, record):
             return record.levelno <= 30
-    #Make the default handler not print ERROR and CRITICAL
+    # Make the default handler not print ERROR and CRITICAL
     direct_screen_handler.addFilter(NoErrorFilter())
 
-    #Add a new handler for ERROR and CRITICAL which prints to stderr
+    # Add a new handler for ERROR and CRITICAL which prints to stderr
     error_logger = logging.StreamHandler(sys.stderr)
     error_logger.setLevel(logging.ERROR)
     _set_formatter(error_logger)
@@ -483,6 +484,7 @@ def log_user_exception(logger=None, debug=False):
         logmethod(line)
     logmethod('-' * len(banner))
 
+
 def log_unknown_exception():
     """
     This is convenince function which is used to track down what exceptions
@@ -490,11 +492,12 @@ def log_unknown_exception():
     It should only be called from within an exception handler.
     """
     tb_logger = getLogger('Ganga.Utility.logging.log_unknown_exception')
-    
-    #Fetch the place from where this function was called to locate the bare except
+
+    # Fetch the place from where this function was called to locate the bare
+    # except
     from inspect import getframeinfo, stack, getsourcefile
     caller = getframeinfo(stack()[1][0])
-    
+
     tb_logger.debug('Bare except clause triggered {0}:{1}'.format(caller.filename, caller.lineno))
     tb_logger.debug('Exception caught:', exc_info=True)
 

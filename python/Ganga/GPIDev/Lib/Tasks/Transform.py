@@ -9,6 +9,7 @@ from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
 
+
 class Transform(GangaObject):
     _schema = Schema(Version(1, 0), {
         'status': SimpleItem(defvalue='new', protected=1, copyable=0, doc='Status - running, pause or completed', typelist=["str"]),
@@ -400,7 +401,8 @@ class Transform(GangaObject):
 
     def getNextPartitions(self, n):
         """Returns the N next partitions to process"""
-        partitionlist = sorted(c for c,v in self._partition_status.items() if v in ["ready", "attempted"])
+        partitionlist = sorted(
+            c for c, v in self._partition_status.items() if v in ["ready", "attempted"])
         return partitionlist[:n]
 
     def getNewAppID(self, partition):

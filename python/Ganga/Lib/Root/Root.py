@@ -231,7 +231,7 @@ class Root(IPrepareApp):
 
     def __init__(self):
         super(Root, self).__init__()
-        
+
         self.shared_path = os.path.join(expandfilename(getConfig(
             'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
 

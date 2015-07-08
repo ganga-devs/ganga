@@ -146,18 +146,18 @@ class LocalFile(IGangaFile):
                 filelist.append(os.path.join(f.localDir, f.namePattern))
         else:
             if self.localDir == '':
-                if os.path.exists( os.path.join( self.tmp_pwd, self.namePattern ) ):
+                if os.path.exists(os.path.join(self.tmp_pwd, self.namePattern)):
                     self.localDir = self.tmp_pwd
-                    logger.debug( "File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir) )
+                    logger.debug("File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir))
                 else:
                     from os.path import abspath
                     this_pwd = abspath('.')
                     now_tmp_pwd = this_pwd
-                    if os.path.exists( os.path.join( now_tmp_pwd, self.namePattern ) ):
+                    if os.path.exists(os.path.join(now_tmp_pwd, self.namePattern)):
                         self.localDir = now_tmp_pwd
-                        logger.debug( "File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir) )
+                        logger.debug("File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir))
                     else:
-                        logger.debug( "File: %s NOT found, NOT setting localDir: %s !!!" % (str(self.namePattern), self.localDir) )
+                        logger.debug("File: %s NOT found, NOT setting localDir: %s !!!" % (str(self.namePattern), self.localDir))
 
             filelist.append(os.path.join(self.localDir, self.namePattern))
 

@@ -72,7 +72,7 @@ def bootstrap(reg, interactive_session):
     monitoring_component.start()
 
     # register the MC shutdown hook
-    
+
     change_atexitPolicy(interactive_session)
 
     # export to GPI

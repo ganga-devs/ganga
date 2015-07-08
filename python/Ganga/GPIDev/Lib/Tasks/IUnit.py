@@ -101,9 +101,8 @@ class IUnit(GangaObject):
             job = GPI.jobs(self.active_job_ids[0])
             if job.status in ["failed", "killed"]:
                 return True
-            
-            return False
 
+            return False
 
     def checkParentUnitsAreComplete(self):
         """Check to see if the parent units are complete"""
@@ -128,7 +127,7 @@ class IUnit(GangaObject):
     def checkMajorResubmit(self, job):
         """check if this job needs to be fully rebrokered or not"""
         pass
-   
+
     def majorResubmit(self, job):
         """perform a mjor resubmit/rebroker"""
         self.prev_job_ids.append(job.id)

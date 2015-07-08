@@ -28,8 +28,8 @@ def relpath(path, start=curdir):
 
 # set the mergers config up
 config = makeConfig('Mergers', 'parameters for mergers')
-config.addOption('associate', {'log':'TextMerger','root':'RootMerger',
-                 'text':'TextMerger','txt':'TextMerger'}, 'Dictionary of file associations')
+config.addOption('associate', {'log': 'TextMerger', 'root': 'RootMerger',
+                               'text': 'TextMerger', 'txt': 'TextMerger'}, 'Dictionary of file associations')
 gangadir = getConfig('Configuration')['gangadir']
 config.addOption('merge_output_dir', gangadir +
                  '/merge_results', "location of the merger's outputdir")

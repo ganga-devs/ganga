@@ -154,17 +154,17 @@ class Node(object):
     # if schema of self and srcobj are not compatible raises a ValueError
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
     def copyFrom(self, srcobj, _ignore_atts=[]):
-        # Check if this object is derived from the source object, then the copy will not throw away information
+        # Check if this object is derived from the source object, then the copy
+        # will not throw away information
         if not isinstance(self, srcobj.__class__) and not isinstance(srcobj, self.__class__):
             raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
         for name, item in self._schema.allItems():
             if name in _ignore_atts:
                 continue
-            logger.debug( "Copying: %s : %s" % (str(name), str(item)) )
+            logger.debug("Copying: %s : %s" % (str(name), str(item)))
             if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
                 if srcobj.application.is_prepared is not None and srcobj.application.is_prepared is not True:
-                    srcobj.application.incrementShareCounter(
-                        srcobj.application.is_prepared.name)
+                    srcobj.application.incrementShareCounter(srcobj.application.is_prepared.name)
             if not self._schema.hasAttribute(name):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(srcobj._name,self._name))
                 setattr(self, name, self._schema.getDefaultValue(name))
@@ -173,10 +173,10 @@ class Node(object):
             else:
                 c = copy.deepcopy(getattr(srcobj, name))
                 setattr(self, name, c)
-        
-    def printTree(self,f=None, sel='' ):
+
+    def printTree(self, f=None, sel=''):
         from VPrinter import VPrinter
-        self.accept(VPrinter(f,sel))
+        self.accept(VPrinter(f, sel))
 
     def printTree(self, f=None, sel=''):
         from .VPrinter import VPrinter
@@ -270,10 +270,10 @@ class Descriptor(object):
                 try:
                     lookup_result = obj._index_cache[self._name]
                 except TypeError:
-                    #obj._index_cache is probably still 'None'
+                    # obj._index_cache is probably still 'None'
                     pass
                 except KeyError:
-                    #obj._index_cache is probably still an empty dict
+                    # obj._index_cache is probably still an empty dict
                     pass
                 if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
                     result = lookup_result
@@ -497,10 +497,12 @@ class GangaObject(Node):
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
 
-    # construct an object of this type from the arguments. Defaults to copy constructor.
+    # construct an object of this type from the arguments. Defaults to copy
+    # constructor.
     def __construct__(self, args):
         self._lock_count = {}
-        # act as a copy constructor applying the object conversion at the same time (if applicable)
+        # act as a copy constructor applying the object conversion at the same
+        # time (if applicable)
         if len(args) == 0:
             return
         elif len(args) == 1:
@@ -586,7 +588,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            logger.debug( "Releasing: %s" % (reg.name) )
+            logger.debug("Releasing: %s" % (reg.name))
             reg._release_lock(root)
 
     def _getReadAccess(self):

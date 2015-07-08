@@ -1,5 +1,7 @@
 from __future__ import absolute_import
 # Required for ShareDir object
+
+
 def getSharedPath():
     from Ganga.Utility.files import expandfilename
     from Ganga.Utility.Config import getConfig

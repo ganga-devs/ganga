@@ -27,6 +27,7 @@ from Ganga.GPIDev.Base.Objects import Node
 
 printed_explanation = False
 
+
 def safe_save(fn, obj, to_file, ignore_subs=''):
     """Writes a file safely, raises IOError on error"""
     if hasattr(obj, 'application') and hasattr(obj.application, 'hash') and obj.application.hash is not None:
@@ -166,8 +167,7 @@ class GangaRepositoryLocal(GangaRepository):
     def get_idxfn(self, id):
         """ Returns the file name where the data for this object id is saved"""
         if id not in self.saved_idxpaths:
-            self.saved_idxpaths[id] = os.path.join(
-                self.root, "%ixxx" % int(id * 0.001), "%i.index" % id)
+            self.saved_idxpaths[id] = os.path.join(self.root, "%ixxx" % int(id * 0.001), "%i.index" % id)
         return self.saved_idxpaths[id]
 
     def index_load(self, id):
@@ -318,7 +318,7 @@ class GangaRepositoryLocal(GangaRepository):
                     time = os.stat(fn).st_ctime
                 except OSError as x:
                     import errno
-                    if x.errno == errno.ENOENT: #If file is not found
+                    if x.errno == errno.ENOENT:  # If file is not found
                         time = 0
                     else:
                         raise
@@ -491,30 +491,38 @@ class GangaRepositoryLocal(GangaRepository):
                 if obj._name != "EmptyGangaObject":
                     split_cache = None
 
-                    has_children = (not self.sub_split is None) and (self.sub_split in obj._data) and len(obj._data[self.sub_split]) > 0
+                    has_children = (not self.sub_split is None) and (
+                        self.sub_split in obj._data) and len(obj._data[self.sub_split]) > 0
 
                     if has_children:
                         if hasattr(obj._data[self.sub_split], 'flush'):
-                            ## I've been read from disk in the new SubJobXMLList format I know how to flush
+                            # I've been read from disk in the new SubJobXMLList
+                            # format I know how to flush
                             obj._data[self.sub_split].flush()
                         else:
-                            ## I have been constructed in this session, I don't know how to flush!
+                            # I have been constructed in this session, I don't
+                            # know how to flush!
                             if hasattr(obj._data[self.sub_split][0], "_dirty"):
                                 split_cache = obj._data[self.sub_split]
                                 for i in range(len(split_cache)):
                                     if not split_cache[i]._dirty:
                                         continue
-                                    sfn = os.path.join(os.path.dirname(fn), str(i), self.dataFileName)
+                                    sfn = os.path.join(
+                                        os.path.dirname(fn), str(i), self.dataFileName)
                                     try:
                                         os.makedirs(os.path.dirname(sfn))
                                     except OSError as e:
                                         if e.errno != errno.EEXIST:
-                                            raise RepositoryError(self, "OSError: " + str(e))
-                                    safe_save(sfn, split_cache[i], self.to_file)
+                                            raise RepositoryError(
+                                                self, "OSError: " + str(e))
+                                    safe_save(
+                                        sfn, split_cache[i], self.to_file)
                                     split_cache[i]._setFlushed()
                             from Ganga.Core.GangaRepository import SubJobXMLList
-                            ## Now generate an index file to take advantage of future non-loading goodness
+                            # Now generate an index file to take advantage of
+                            # future non-loading goodness
                             tempSubJList = SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False)
+                            tempSubJList._setParent(obj)
                             tempSubJList.write_subJobIndex()
 
                         safe_save(fn, obj, self.to_file, self.sub_split)
@@ -533,9 +541,11 @@ class GangaRepositoryLocal(GangaRepository):
                     obj._setFlushed()
 
             except OSError as x:
-                raise RepositoryError(self,"OSError on flushing id '%i': %s" % (id, str(x)))
+                raise RepositoryError(
+                    self, "OSError on flushing id '%i': %s" % (id, str(x)))
             except IOError as x:
-                raise RepositoryError(self,"IOError on flushing id '%i': %s" % (id, str(x)))
+                raise RepositoryError(
+                    self, "IOError on flushing id '%i': %s" % (id, str(x)))
 
     def is_loaded(self, id):
 
@@ -601,11 +611,13 @@ class GangaRepositoryLocal(GangaRepository):
                 if must_load or (self._load_timestamp.get(id, 0) != os.fstat(fobj.fileno()).st_ctime):
                     tmpobj, errs = self.from_file(fobj)
 
-                    has_children = (not self.sub_split is None) and (self.sub_split in tmpobj._data) and len(tmpobj._data[self.sub_split]) == 0
+                    has_children = (not self.sub_split is None) and (
+                        self.sub_split in tmpobj._data) and len(tmpobj._data[self.sub_split]) == 0
 
                     if has_children:
                         from Ganga.Core.GangaRepository import SubJobXMLList
-                        tmpobj._data[self.sub_split] = SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup)
+                        tmpobj._data[self.sub_split] = SubJobXMLList.SubJobXMLList(
+                            os.path.dirname(fn), self.registry, self.dataFileName, load_backup)
 
                     # if len(errs) > 0 and "status" in tmpobj._data: # MAGIC "status" if incomplete
                     #    tmpobj._data["status"] = "incomplete"
@@ -637,7 +649,8 @@ class GangaRepositoryLocal(GangaRepository):
 
                                     old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
                                     if not old_idx_subset:
-                                        ## Old index cache isn't subset of new index cache
+                                        # Old index cache isn't subset of new
+                                        # index cache
                                         new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.iteritems())
                                     else:
                                         # Old index cache is subset of new
@@ -645,10 +658,8 @@ class GangaRepositoryLocal(GangaRepository):
                                         new_idx_subset = True
 
                                     if not old_idx_subset and not new_idx_subset:
-                                        logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (
-                                            self.registry.name, id))
-                                        logger.debug(
-                                            "old cache: %s\t\tnew cache: %s" % (str(obj._index_cache), str(new_idx_cache)))
+                                        logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, id))
+                                        logger.debug("old cache: %s\t\tnew cache: %s" % (str(obj._index_cache), str(new_idx_cache)))
                                         self.unlock([id])
                                 # if we cannot lock this, the inconsistency is
                                 # most likely the result of another ganga

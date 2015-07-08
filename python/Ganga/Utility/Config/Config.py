@@ -116,6 +116,7 @@ logger = None
 
 import Ganga.Utility.logging
 
+
 def getLogger():
     global logger
     if not logger is None:

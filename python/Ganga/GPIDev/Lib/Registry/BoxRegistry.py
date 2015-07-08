@@ -175,6 +175,7 @@ class BoxRegistry(Registry):
 
 from .RegistrySlice import RegistrySlice
 
+
 class BoxRegistrySlice(RegistrySlice):
 
     def __init__(self, name):
