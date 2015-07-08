@@ -14,6 +14,7 @@ class GangaException(Exception):
     logger = None
 
     def __init__(self, *args, **kwds):
+        super(GangaException, self).__init__(args)
         Exception.__init__(self, *args)
         self.kwds = kwds
 
@@ -53,10 +54,10 @@ class ApplicationConfigurationError(GangaException):
 
     def __str__(self):
         if self.excpt:
-            e = '(%s:%s)' % (str(type(self.excpt)), str(self.excpt))
+            err = '(%s:%s)' % (str(type(self.excpt)), str(self.excpt))
         else:
-            e = ''
-        return "ApplicationConfigurationError: %s %s" % (self.message, e)
+            err = ''
+        return "ApplicationConfigurationError: %s %s" % (self.message, err)
 
 
 class ApplicationPrepareError(GangaException):
@@ -82,15 +83,15 @@ class RepositoryError(GangaException):
     exception 'e' raised by the DB client.
     """
 
-    def __init__(self, e=None, msg=None, details=None):
+    def __init__(self, err=None, msg=None, details=None):
         if msg == None:
-            msg = "RepositoryError: %s" % str(e)
+            msg = "RepositoryError: %s" % str(err)
         GangaException.__init__(self, msg)
-        self.e = e
+        self.err = err
         self.details = details
 
     def getOriginalMDError(self):
-        return self.e
+        return self.err
 
 
 # Exception raised by the Ganga Repository
@@ -104,7 +105,7 @@ class BulkOperationRepositoryError(RepositoryError):
 
     def __init__(self, details=None, msg=None):
         if msg == None:
-            msg = "RepositoryError: %s" % str(e)
+            msg = "RepositoryError: %s" % str(err)
         RepositoryError.__init__(self, msg=msg, details=details)
         if details == None:
             self.details = {}
@@ -164,6 +165,7 @@ class GangaAttributeError(AttributeError, GangaException):
 class GangaValueError(ValueError, GangaException):
 
     def __init__(self, *a, **k):
+        GangaException.__init__(self, *a, **k)
         ValueError.__init__(self, *a, **k)
 
 
