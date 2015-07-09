@@ -54,11 +54,6 @@ configDirac.addOption('DiracDefaultStorageSite', 'LCG.CERN.ch', 'Default Site to
 
 configDirac.addOption('DiracFileAutoGet', True, 'Should the DiracFile object automatically poll the Dirac backend for missing information on an lfn?' )
 
-configDirac.addOption('OfflineSplitterFraction', 0.75, 'If subset is above OfflineSplitterFraction*filesPerJob then keep the subset' )
-configDirac.addOption('OfflineSplitterMaxCommonSites', 3, 'Maximum number of storage sites all LFN should share in the same dataset. This is reduced to 1 as the splitter gets more desperate to group the data.' )
-configDirac.addOption('OfflineSplitterUniqueSE', True, 'Should the Sites chosen be accessing different Storage Elements.' )
-configDirac.addOption('OfflineSplitterLimit', 50, 'Number of iterations of selecting random Sites that are performed before the spliter reduces the OfflineSplitter fraction by raising it by 1 power and reduces OfflineSplitterMaxCommonSites by 1. Smaller number makes the splitter accept many smaller subsets higher means keeping more subsets but takes much more CPU to match files accordingly.' )
-
 def getEnvironment( config = {} ):
    import sys
    import os.path

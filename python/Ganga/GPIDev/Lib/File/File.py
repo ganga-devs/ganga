@@ -4,6 +4,9 @@
 # $Id: File.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ################################################################################
 
+import Ganga.Utility.Config
+config = Ganga.Utility.Config.getConfig('Configuration')
+gangadir = Ganga.Utility.Config.getConfig('Configuration')['gangadir']
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import *
 from Ganga.GPIDev.Lib.GangaList import GangaList
@@ -13,6 +16,7 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 import os, shutil
 
 from Ganga.Utility.files import expandfilename, chmod_executable, is_executable
+shared_path = os.path.join(expandfilename(gangadir),'shared',config['user'])
 
 class File(GangaObject):
     """Represent the files, both local and remote and provide an interface to transparently get access to them.
@@ -116,6 +120,12 @@ def string_file_shortcut_file(v,item):
         
 allComponentFilters['files'] = string_file_shortcut_file
 
+
+#from Ganga.Utility.files import expandfilename
+#config = Ganga.Utility.Config.getConfig('Configuration')
+#gangadir = config['gangadir']
+#root_default = os.path.join(expandfilename(gangadir),'shared',config['user'])
+
 from Ganga.GPIDev.Lib.File import getSharedPath
 
 class ShareDir(GangaObject):
@@ -131,6 +141,7 @@ class ShareDir(GangaObject):
     _category = 'shareddirs'
     _exportmethods = ['add','ls']
     _name = "ShareDir"
+    #_root_shared_path = root_default
     _data=None
 #    def _readonly(self):
 #        return True

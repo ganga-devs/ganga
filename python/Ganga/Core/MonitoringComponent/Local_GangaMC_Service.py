@@ -550,43 +550,28 @@ class JobRegistry_Monitor( GangaThread ):
         """
         Disable the monitoring loop
         """
-
+        
         if not self.alive:
             log.error("Cannot disable monitoring loop. It has already been stopped")
             return False
-
-        try:
-            if self.enabled:
-                log.info( "Disabling Monitoring Service" )
-
-                ##  THIS NEEDS TO BE HERE FOR A CLEAN DISABLE OF THE MONITORING LOOP!!!!!
-                self.enabled = False
-                ## CANNOT DETERMINE IF WE SHOULD CONTINUE WITH EXPENSIVE OUT OF THREAD TASKS OTHERWISE!!!!!
-        except Exception, err:
-            logger.error("ERROR STOPPING MONITORING THREAD, feel free to force exit")
-            logger.error("%s" % str(err) )  ##  This except is left in incase we decide to add things here which can fail!
-
-        self.__mainLoopCond.acquire()
+        
+        self.__mainLoopCond.acquire() 
         log.debug( 'Monitoring loop lock acquired. Disabling mon loop' )
-        try:
+        try:  
             self.enabled = False
             self.steps=-1
             self.stopIter.set()
-
             log.debug( 'Monitoring loop disabled' )
-            #wake up the monitoring loop
-            self.__mainLoopCond.notifyAll()
-        except Exception, err:
-            logger.debug( "Shutdown Error: %s" % str(err) )
+            #wake up the monitoring loop            
+            self.__mainLoopCond.notifyAll()                
         finally:
             self.__mainLoopCond.release()
-
-        #wait for cleanup
+        #wait for cleanup        
         #self.__cleanUp()
         #self.__cleanUpEvent.wait()
-        #self.__cleanUpEvent.clear()
+        #self.__cleanUpEvent.clear()        
         return True
-
+            
     def stop( self, fail_cb=None, max_retries=5 ):
         """
         Stop the monitoring loop
@@ -596,26 +581,17 @@ class JobRegistry_Monitor( GangaThread ):
         if not self.alive:
             log.warning("Monitoring loop has already been stopped")
             return False
-        else:
-            self.alive = False
         
         self.__mainLoopCond.acquire()
-        if self.enabled:
-            log.info( 'Stopping the monitoring component...' )
-            self.alive = False
-            self.enabled = False
-
+        if self.enabled: log.info( 'Stopping the monitoring component...' )
         try: 
             #signal the main thread to finish
-            self.steps = 0        
+            self.alive = False
+            self.enabled = False
+            self.steps=-1        
             self.stopIter.set()
-        except Exception, err:
-            logger.error( "stopIter error: %s" % str(err) )
-        try:
-            #wake up the monitoring loop
+            #wake up the monitoring loop            
             self.__mainLoopCond.notifyAll()
-        except Exception, err:
-            logger.error( "Monitoring Stop Error: %s" % str(err) )
         finally:
             self.__mainLoopCond.release()
         #wait for cleanup        
@@ -759,7 +735,7 @@ class JobRegistry_Monitor( GangaThread ):
                         if not j.do_auto_resubmit:
                             continue
 
-                        if len(j.subjobs) == 0:
+                        if j.count_subjobs() == 0:
                             try_resubmit = j.info.submit_counter <= config['MaxNumResubmits']
                         else:
                             # Check for max number of resubmissions
@@ -785,12 +761,10 @@ class JobRegistry_Monitor( GangaThread ):
                             
                 except BackendError, x:
                     self._handleError( x, x.backend_name, 0 )
-                except Exception, err:
-                    self._handleError( err, backendObj._name, 1 )
+                except Exception, x:
+                    self._handleError( x, backendObj._name, 1 )
                 log.debug( "[Update Thread %s] Flushing registry %s." % ( currentThread, [x.id for x in jobList_fromset ] ) )
-                self.registry._flush( jobList_fromset ) # Optimisation required!
-            except Exception, err:
-                logger.debug( "Monitoring Loop Error: %s" % str( err ) )
+                self.registry._flush( jobList_fromset ) # Optimisation required! 
             finally:
                 lock.release()
                 log.debug( "[Update Thread %s] Lock released for %s." % ( currentThread, backendObj._name ) )

@@ -79,7 +79,7 @@ class PhysicalFile(LocalFile):
 
     def upload( self, lfn, diracSE, guid = None ):
 
-        from Ganga.GPI import DiracFile
+        from GangaDirac.Lib.Files.DiracFile import DiracFile
         diracFile = DiracFile( namePattern = self.name, lfn = lfn )
 
         diracFile.put( force = True )

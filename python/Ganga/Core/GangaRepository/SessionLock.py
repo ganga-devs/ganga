@@ -71,11 +71,10 @@ def removeGlobalSessionFileHandlers():
     global sessionFileHandlers
     for i in sessionFileHandlers:
         try:
-            fcntl.lockf( i, fcntl.LOCK_UN )
+            fcntl.lockf( i, lock_mod )
             i.close()
-        except Exception, err:
-            logger.debug( "Failed to unlock or close sessionfilehandler" )
-            logger.debug( "%s" % str(err) )
+        except:
+            pass
 
 def getGlobalSessionFiles():
     global sessionFiles
@@ -851,7 +850,7 @@ class SessionLockManager(object):
     def session_to_info(self, session):
         si = session.split(".")
         try:
-            return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]) )
+            return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], time.ctime(int(si[-3])/1000))
         except Exception:
             return session
 

@@ -11,6 +11,7 @@ from Ganga.Utility.logging                         import getLogger
 from Ganga.Utility.util                            import unique
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import script_generator, get_share_path, master_sandbox_prepare, sandbox_prepare
+#from GangaDirac.Lib.Files.DiracFile                import DiracFile
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -76,7 +77,6 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
            outbox, outdata = parser.get_output(job)
            
            #outputfiles.update(set(outdata[:]))
-           #from Ganga.GPI import DiracFile
            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            job.non_copyable_outputfiles.extend([addProxy(MassStorageFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            job.non_copyable_outputfiles.extend([addProxy(LocalFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])

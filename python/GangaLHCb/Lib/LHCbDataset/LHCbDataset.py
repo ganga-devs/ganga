@@ -53,15 +53,12 @@ class LHCbDataset(GangaDataset):
                       'isEmpty', 'hasPFNs', 'getPFNs' ]#,'pop']
 
     def __init__(self, files=[], persistency=None, depth=0):
-        new_files = GangaList()
-        for this_file in files:
-            if type(this_file) == type(''):
-                new_files.append( strToDataFile(this_file, False) )
-            else:
-                new_files.append( this_file )
+        for f in files:
+            if type(f) == type(''):
+                f = strToDataFile( f,False )
         super(LHCbDataset, self).__init__()
         logger.debug( "Creating dataset with:\n%s" % files )
-        self.files = new_files
+        self.files = files
         self.persistency=persistency
         self.depth = depth
         logger.debug( "Dataset Created" )
@@ -102,18 +99,16 @@ class LHCbDataset(GangaDataset):
 
     def __getitem__(self,i):
         '''Proivdes scripting (e.g. ds[2] returns the 3rd file) '''
-        #this_file = self.files[i]
-        #print type(this_file)
-        #return this_file
+        this_file = self.files[i]
         #return GPIProxyObjectFactory(this_file)
-        #return this_file
-        if type(i) == type(slice(0)):
-            ds = LHCbDataset(files=self.files[i])
-            ds.depth = self.depth
-            #ds.XMLCatalogueSlice = self.XMLCatalogueSlice
-            return GPIProxyObjectFactory(ds)
-        else:
-            return GPIProxyObjectFactory(self.files[i])
+        return this_file
+        #if type(i) == type(slice(0)):
+        #    ds = LHCbDataset(files=self.files[i])
+        #    ds.depth = self.depth
+        #    ds.XMLCatalogueSlice = self.XMLCatalogueSlice
+        #    return GPIProxyObjectFactory(ds)
+        #else:
+        #    return GPIProxyObjectFactory(self.files[i])
 
     def isEmpty(self): return not bool(self.files)
 
@@ -127,13 +122,13 @@ class LHCbDataset(GangaDataset):
     def hasLFNs(self):
         'Returns True is the dataset has LFNs and False otherwise.'
         for f in self.files:
-            if isDiracFile(GPIProxyObjectFactory(f)): return True
+            if isDiracFile(f): return True
         return False
 
     def hasPFNs(self):
         'Returns True is the dataset has PFNs and False otherwise.'
         for f in self.files:
-            if not isDiracFile(GPIProxyObjectFactory(f)): return True
+            if not isDiracFile(f): return True
         return False
 
     def replicate(self,destSE='',srcSE='',locCache=''):
@@ -146,7 +141,7 @@ class LHCbDataset(GangaDataset):
             raise GangaException('Cannot replicate dataset w/ no LFNs.')
         retry_files = []
         for f in self.files:
-            if not isDiracFile(GPIProxyObjectFactory(f)): continue
+            if not isDiracFile(f): continue
             try:
                 result = f.replicate(destSE,srcSE,locCache)
             except:
@@ -166,11 +161,11 @@ class LHCbDataset(GangaDataset):
     def extend(self, files,unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
-        #logger.debug( "extending Dataset" )
-        #logger.debug( "files: %s" % str(files) )
+        logger.debug( "extending Dataset" )
+        logger.debug( "files: %s" % str(files) )
         from Ganga.GPIDev.Base import ReadOnlyObjectError
 
-        #logger.debug(" extending by %s" % files )
+        logger.debug(" extending by %s" % files )
 
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now'%(self._parent.id, self._name))
@@ -185,7 +180,7 @@ class LHCbDataset(GangaDataset):
             #raise GangaException('Argument "files" must be a iterable.')
 
         names = self.getFileNames()
-        #logger.debug( "names: %s" % str(names) )
+        logger.debug( "names: %s" % str(names) )
         _external_files.extend( [f for f in files if type(f) != type('')] ) # just in case they extend w/ self
 
         for this_f in _external_files:
@@ -206,7 +201,7 @@ class LHCbDataset(GangaDataset):
         lfns = []
         if not self: return lfns
         for f in self.files:
-            if isDiracFile(GPIProxyObjectFactory(f)):
+            if isDiracFile(f):
                 subfiles = f.getSubFiles()
                 if len(subfiles) == 0:
                     lfns.append( f.lfn )
@@ -229,7 +224,6 @@ class LHCbDataset(GangaDataset):
         'Returns a list of the names of all files stored in the dataset.'
         names = []
         for i in self.files:
-            from Ganga.GPI import DiracFile
             if isinstance( i, DiracFile ):
                 names.append( i.lfn )
             else:
@@ -309,7 +303,7 @@ class LHCbDataset(GangaDataset):
                 if matched: break
             sdatasetsnew += '\n        '
             sdatasetsold += '\n        '
-            if isDiracFile(GPIProxyObjectFactory(f)):
+            if isDiracFile(f):
                 sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
                 sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:

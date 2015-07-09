@@ -1,6 +1,7 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 #from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
 #from SplitterUtils import DiracSplitter
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -63,7 +64,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         #    pass
         #from Ganga.GPI import GangaList
         from Ganga.GPIDev.Lib.GangaList import GangaList
-        from Ganga.GPI import DiracFile
+
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
                 if isinstance( i, DiracFile ):
@@ -92,20 +93,16 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         logger.debug( "Creating new Job in Splitter" )
         j=Job()
-        logger.debug( "Copying From Job" )
-        j.copyFrom(stripProxy(job), ['inputdata', 'inputsandbox', 'inputfiles'])
-        logger.debug( "Unsetting Splitter" )
+        j.copyFrom(stripProxy(job))
         j.splitter = None
-        logger.debug( "Unsetting Merger" )
         j.merger = None
-        #j.inputsandbox = [] ## master added automatically
-        #j.inputfiles = []
-        logger.debug( "Setting InputData" )
+        j.inputsandbox = [] ## master added automatically
+        j.inputfiles = []
         j.inputdata = LHCbDataset( files             = datatmp[:],
                                    persistency       = self.persistency,
                                    depth             = self.depth )
         #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
-        logger.debug( "Returning new subjob" )
+
         return j
 
 

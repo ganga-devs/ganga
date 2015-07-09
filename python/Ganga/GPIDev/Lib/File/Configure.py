@@ -60,24 +60,23 @@ def Configure():
 
     ### MassStorageFile
 
-    import pwd
-    import grp
-    from Ganga.Utility.Config import getConfig, ConfigError
+    import pwd, grp
+    from Ganga.Utility.Config import getConfig
+    user = getConfig('Configuration')['user']
+    groupid=grp.getgrgid( pwd.getpwnam(user).pw_gid ).gr_name
+    groupnames={'z5' : 'lhcb', 'zp' : 'atlas', 'zh' : 'cms', 'vl' : 'na62'}
+    groupname='undefined'
     try:
-        user = getConfig('Configuration')['user']
-    except ConfigError:
-        import getpass
-        user = getpass.getuser()
-    groupid = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
-    groupnames = {'z5': 'lhcb', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
-    groupname = groupnames.get(groupid, 'undefined')
+        groupname = groupnames[groupid]
+    except:
+        pass
+    massStoragePath = ''
 
     try:
         import os.path
         massStoragePath = os.path.join(os.environ['EOS_HOME'], 'ganga')
-    except KeyError:
-        massStoragePath = "/eos/%s/user/%s/%s/ganga" % (
-            groupname, user[0], user)
+    except:
+        massStoragePath = "/eos/%s/user/%s/%s/ganga" % (groupname, user[0], user)
 
     ##  From: http://eos.cern.ch/index.php?option=com_content&view=article&id=87:using-eos-at-cern&catid=31:general&Itemid=41
     protoByExperiment = { 'atlas' : 'root://eosatlas.cern.ch',
