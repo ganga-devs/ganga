@@ -420,7 +420,8 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError
         Raise ObjectNotInRegistryError (via self.find())"""
-        logger.debug("Reg: %s _write_access(%s)" % (self.name, str(obj)))
+
+        #logger.debug("Reg: %s _write_access(%s)" % (self.name, str(obj)))
 
         # if self.name == "prep.metadata":
         #    import traceback

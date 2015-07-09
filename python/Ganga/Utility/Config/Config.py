@@ -763,8 +763,8 @@ def read_ini_files(filenames, system_vars):
         try:
             with open(f) as file_f:
                 cc.readfp(file_f)
-        except IOError as x:
-            logger.warning('%s', str(x))
+        except Exception as x:
+            logger.warning('Exception reading config file %s', str(x))
 
         for sec in cc.sections():
             if not main.has_section(sec):

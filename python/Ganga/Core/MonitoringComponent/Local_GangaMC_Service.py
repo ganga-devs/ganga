@@ -394,6 +394,9 @@ class JobRegistry_Monitor(GangaThread):
         self.stopIter = threading.Event()
         self.stopIter.set()
 
+    def isEnabled( self ):
+        return self.enabled or self.__isInProgress()
+
     def run(self):
         """
         Main monitoring loop

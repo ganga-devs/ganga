@@ -30,9 +30,7 @@ __all__ = ['TextWrapper', 'wrap', 'fill']
 # since 0xa0 is not in range(128).
 _whitespace = '\t\n\x0b\x0c\r '
 
-
 class TextWrapper(object):
-
     """
     Object for wrapping/filling text.  The public interface consists of
     the wrap() and fill() methods; the other methods are just there for
@@ -92,6 +90,7 @@ class TextWrapper(object):
                                  r'[\"\']?'           # optional end-of-quote
                                  % string.lowercase)
 
+
     def __init__(self,
                  width=70,
                  initial_indent="",
@@ -107,6 +106,7 @@ class TextWrapper(object):
         self.replace_whitespace = replace_whitespace
         self.fix_sentence_endings = fix_sentence_endings
         self.break_long_words = break_long_words
+
 
     # -- Private methods -----------------------------------------------
     # (possibly useful for subclasses to override)
@@ -126,6 +126,7 @@ class TextWrapper(object):
             elif isinstance(text, unicode):
                 text = text.translate(self.unicode_whitespace_trans)
         return text
+
 
     def _split(self, text):
         """_split(text : string) -> [string]
@@ -153,9 +154,9 @@ class TextWrapper(object):
         """
         i = 0
         pat = self.sentence_end_re
-        while i < len(chunks) - 1:
-            if chunks[i + 1] == " " and pat.search(chunks[i]):
-                chunks[i + 1] = "  "
+        while i < len(chunks)-1:
+            if chunks[i+1] == " " and pat.search(chunks[i]):
+                chunks[i+1] = "  "
                 i += 2
             else:
                 i += 1
@@ -173,14 +174,14 @@ class TextWrapper(object):
         # If we're allowed to break long words, then do so: put as much
         # of the next chunk onto the current line as will fit.
         if self.break_long_words:
-            cur_line.extend(chunks[0][0:space_left])
+            cur_line.append(chunks[0][0:space_left])
             chunks[0] = chunks[0][space_left:]
 
         # Otherwise, we have to preserve the long word intact.  Only add
         # it to the current line if there's nothing already there --
         # that minimizes how much we violate the width constraint.
         elif not cur_line:
-            cur_line.extend(chunks.pop(0))
+            cur_line.append(chunks.pop(0))
 
         # If we're not allowed to break long words, and there's already
         # text on the current line, do nothing.  Next time through the
@@ -231,7 +232,7 @@ class TextWrapper(object):
 
                 # Can at least squeeze this chunk onto the current line.
                 if cur_len + l <= width:
-                    cur_line.extend(chunks.pop(0))
+                    cur_line.append(chunks.pop(0))
                     cur_len += l
 
                 # Nope, this line is full.
@@ -250,9 +251,10 @@ class TextWrapper(object):
             # Convert current line back to a string and store it in list
             # of all lines (return value).
             if cur_line:
-                lines.extend(indent + ''.join(cur_line))
+                lines.append(indent + ''.join(cur_line))
 
         return lines
+
 
     # -- Public interface ----------------------------------------------
 
@@ -296,7 +298,6 @@ def wrap(text, width=70, **kwargs):
     """
     w = TextWrapper(width=width, **kwargs)
     return w.wrap(text)
-
 
 def fill(text, width=70, **kwargs):
     """Fill a single paragraph of text, returning a new string.
