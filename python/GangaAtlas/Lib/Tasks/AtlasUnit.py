@@ -228,7 +228,7 @@ class AtlasUnit(IUnit):
       j = GPI.Job()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
-      if j.inputdata:
+      if self.inputdata:
          j.inputdata = self.inputdata.clone()
 
       trf = self._getParent()
