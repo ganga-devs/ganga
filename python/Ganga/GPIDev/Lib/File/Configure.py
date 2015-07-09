@@ -82,10 +82,21 @@ def Configure():
     from Ganga.Utility.Config import getConfig, ConfigError
     try:
         user = getConfig('Configuration')['user']
-    except ConfigError:
+    except ConfigError, err:
+        import sys
+        sys.stderr('Configure Error: %s' % str(err) )
         import getpass
         user = getpass.getuser()
-    groupid = grp.getgrgid(pwd.getpwnam(user).pw_gid).gr_name
+
+    ## FIXME Sometimes the wrong user is set gere for the unittests, I've added this to correct for it - rcurrie
+    try:
+        pwd_nam = pwd.getpwnam(user)
+    except:
+        import getpass
+        user = getpass.getuser()
+        pwd_nam = pwd.getpwnam(user)
+
+    groupid = grp.getgrgid(pwd_nam.pw_gid).gr_name
     groupnames = {'z5': 'lhcb', 'zp': 'atlas', 'zh': 'cms', 'vl': 'na62'}
     groupname = groupnames.get(groupid, 'undefined')
 
