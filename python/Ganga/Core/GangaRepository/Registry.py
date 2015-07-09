@@ -1,9 +1,8 @@
-from __future__ import absolute_import
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
-from .GangaRepository import InaccessibleObjectError
+from Ganga.Core.GangaRepository import InaccessibleObjectError
 
 import time
 import threading
@@ -80,15 +79,15 @@ class RegistryIndexError(RegistryError, IndexError):
 def makeRepository(registry):
     """Factory that selects, imports and instantiates the correct GangaRepository"""
     if registry.type in ["LocalXML", "LocalPickle"]:
-        from .GangaRepositoryXML import GangaRepositoryLocal
+        from Ganga.Core.GangaRepository.GangaRepositoryXML import GangaRepositoryLocal
         return GangaRepositoryLocal(registry)
     elif registry.type in ["SQLite"]:
-        from .GangaRepositorySQLite import GangaRepositorySQLite
+        from Ganga.Core.GangaRepository.GangaRepositorySQLite import GangaRepositorySQLite
         return GangaRepositorySQLite(registry)
     elif registry.type in ["Transient"]:
         return GangaRepository(registry)
     elif registry.type in ["ImmutableTransient"]:
-        from .GangaRepositoryImmutableTransient import GangaRepositoryImmutableTransient
+        from Ganga.Core.GangaRepository.GangaRepositoryImmutableTransient import GangaRepositoryImmutableTransient
         return GangaRepositoryImmutableTransient(registry, registry.location, registry.file_ext, registry.pickle_files)
     else:
         raise RegistryError(
@@ -121,10 +120,9 @@ class IncompleteObject(object):
                 errstr = "Could not lock '%s' object #%i!" % (
                     self.registry.name, self.id)
                 try:
-                    errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(
-                        self.id)
-                except Exception as x:
-                    logger.error(x)
+                    errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
+                except Exception as err:
+                    logger.debug("Remove Lock error: %s" % str(err))
                     pass
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
@@ -164,7 +162,8 @@ class Registry(object):
             Raise RegistryKeyError"""
         try:
             return self._objects[id]
-        except KeyError:
+        except KeyError, err:
+            logger.debug("Repo KeyError: %s" % str(err))
             if id in self._incomplete_objects:
                 return IncompleteObject(self, id)
             raise RegistryKeyError("Could not find object #%s" % id)
@@ -236,17 +235,17 @@ class Registry(object):
             else:
                 raise ObjectNotInRegistryError(
                     "Object %s does not seem to be in this registry!" % obj)
-        except AttributeError:
-            raise ObjectNotInRegistryError(
-                "Object %s does not seem to be in any registry!" % obj)
-        except AssertionError:
+        except AttributeError, err:
+            logger.debug("%s" % str(err))
+            raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj)
+        except AssertionError, err:
+            logger.debug("%s" % str(err))
             #import traceback
             # traceback.print_stack()
-            raise ObjectNotInRegistryError(
-                "Object %s is a duplicated version of the one in this registry!" % obj)
-        except KeyError:
-            raise ObjectNotInRegistryError(
-                "Object %s does not seem to be in this registry!" % obj)
+            raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % obj)
+        except KeyError, err:
+            logger.debug("%s", str(err))
+            raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj)
 
     def clean(self, force=False):
         """Deletes all elements of the registry, if no other sessions are present.
@@ -321,9 +320,9 @@ class Registry(object):
             id = self.find(obj)
             try:
                 self._write_access(obj)
-            except RegistryKeyError:
-                logger.warning(
-                    "double delete: Object #%i is not present in registry '%s'!" % (id, self.name))
+            except RegistryKeyError, err:
+                logger.debug("Registry KeyError: %s" % str(err))
+                logger.warning("double delete: Object #%i is not present in registry '%s'!" % (id, self.name))
                 return
             logger.debug(
                 'deleting the object %d from the registry %s', id, self.name)
@@ -380,8 +379,8 @@ class Registry(object):
             for obj in self.dirty_objs.keys():
                 try:
                     ids.append(self.find(obj))
-                except ObjectNotInRegistryError as x:
-                    logger.error(x.what)
+                except ObjectNotInRegistryError as err:
+                    logger.error(" Object not in Repository: %s" % str(err))
             logger.debug("repository.flush(%s)" % ids)
             self.repository.flush(ids)
             self.dirty_objs = {}
@@ -405,12 +404,11 @@ class Registry(object):
                 id = self.find(obj)
                 try:
                     self.repository.load([id])
-                except KeyError:
-                    raise RegistryKeyError(
-                        "The object #%i in registry '%s' was deleted!" % (id, self.name))
-                except InaccessibleObjectError as x:
-                    raise RegistryKeyError(
-                        "The object #%i in registry '%s' could not be accessed - %s!" % (id, self.name, str(x)))
+                except KeyError, err:
+                    logger.debug("_read_access KeyError %s" % str(err))
+                    raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id, self.name))
+                except InaccessibleObjectError as err:
+                    raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id, self.name, str(err)))
                 for d in self.changed_ids.itervalues():
                     d.add(id)
             finally:
@@ -439,19 +437,19 @@ class Registry(object):
                         errstr = "Could not lock '%s' object #%i!" % (self.name, id)
                         try:
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(id)
-                        except Exception as x:
+                        except Exception as err:
+                            logger.debug( "Locking Exception: %s" % str(err) )
                             pass
                         raise RegistryLockError(errstr)
                 finally:  # try to load even if lock fails
                     try:
                         obj.__dict__.pop("_registry_refresh", None)
                         self.repository.load([id])
-                    except KeyError:
-                        raise RegistryKeyError(
-                            "The object #%i in registry '%s' was deleted!" % (id, self.name))
-                    except InaccessibleObjectError as x:
-                        raise RegistryKeyError(
-                            "The object #%i in registry '%s' could not be accessed - %s!" % (id, self.name, str(x)))
+                    except KeyError, err:
+                        logger.debug("_write_access KeyError %s" % str(err))
+                        raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id, self.name))
+                    except InaccessibleObjectError as err:
+                        raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (id, self.name, str(err)))
                     for d in self.changed_ids.itervalues():
                         d.add(id)
                 obj._registry_locked = True
@@ -541,18 +539,16 @@ class Registry(object):
                 if not self.metadata is None:
                     try:
                         self._flush()
-                    except:
-                        Ganga.Utility.logging.log_unknown_exception()
+                    except Exception, err:
+                        logger.debug("shutdown _flush Exception: %s" % str(err))
                         pass
                     self.metadata.shutdown()
-            except Exception as x:
-                logger.error(
-                    "Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
+            except Exception as err:
+                logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, str(err))
             try:
                 self._flush()
-            except Exception as x:
-                logger.error(
-                    "Exception on flushing '%s' registry: %s", self.name, x)
+            except Exception as err:
+                logger.debug("Exception on flushing '%s' registry: %s", self.name, str(err))
             self._started = False
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
@@ -569,8 +565,7 @@ class Registry(object):
             if full:
                 other_sessions = self.repository.get_other_sessions()
                 if len(other_sessions) > 0:
-                    s += ", %i other concurrent sessions:\n * %s" % (
-                        len(other_sessions), "\n * ".join(other_sessions))
+                    s += ", %i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions))
             return s
         finally:
             self._lock.release()
@@ -578,5 +573,5 @@ class Registry(object):
     def print_other_sessions(self):
         other_sessions = self.repository.get_other_sessions()
         if len(other_sessions) > 0:
-            logger.warning("%i other concurrent sessions:\n * %s" %
-                           (len(other_sessions), "\n * ".join(other_sessions)))
+            logger.warning("%i other concurrent sessions:\n * %s" % (len(other_sessions), "\n * ".join(other_sessions)))
+

@@ -1,20 +1,18 @@
-from __future__ import absolute_import
 # Note: Following stuff must be considered in a GangaRepository:
 #
 # * lazy loading
 # * locking
 
-from .GangaRepository import GangaRepository, RepositoryError, InaccessibleObjectError
+from Ganga.Core.GangaRepository import GangaRepository, RepositoryError, InaccessibleObjectError
 from Ganga.Utility.Plugin import PluginManagerError
 import os
 import os.path
 import time
 import errno
 
-from .SessionLock import SessionLockManager
+from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core.GangaRepository.PickleStreamer import to_file as pickle_to_file
 from Ganga.Core.GangaRepository.PickleStreamer import from_file as pickle_from_file
@@ -24,6 +22,9 @@ from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
+from Ganga.Core.GangaRepository import SubJobXMLList
+
+logger = Ganga.Utility.logging.getLogger()
 
 printed_explanation = False
 
@@ -33,31 +34,24 @@ def safe_save(fn, obj, to_file, ignore_subs=''):
     if hasattr(obj, 'application') and hasattr(obj.application, 'hash') and obj.application.hash is not None:
         if not obj.application.calc_hash(verify=True):
             try:
-                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!'
-                               % (obj.application._name, obj._name, obj._registry_id))
-            except AttributeError:
-                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!'
-                               % (obj.application._name, obj._name))
-
-            logger.warning(
-                'If you knowingly circumvented the protection, ignore this message (and, optionally,')
-            logger.warning(
-                're-prepare() the application). Otherwise, please file a bug report at:')
+                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (obj.application._name, obj._name, obj._registry_id))
+            except AttributeError, err:
+                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (obj.application._name, obj._name))
+                logger.warning("%s" % str(err))
+            logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
+            logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
             # logger.warning('http://savannah.cern.ch/projects/ganga/')
             logger.warning('https://its.cern.ch/jira/browse/GANGA')
     elif hasattr(obj, 'analysis') and hasattr(obj.analysis, 'application') and \
             hasattr(obj.analysis.application, 'hash') and obj.analysis.application.hash is not None:
         if not obj.analysis.application.calc_hash(verify=True):
             try:
-                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!'
-                               % (obj.analysis.application._name, obj._name, obj._registry_id))
-            except AttributeError:
-                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!'
-                               % (obj.analysis.application._name, obj._name))
-            logger.warning(
-                'If you knowingly circumvented the protection, ignore this message (and, optionally,')
-            logger.warning(
-                're-prepare() the application). Otherwise, please file a bug report at:')
+                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (obj.analysis.application._name, obj._name, obj._registry_id))
+            except AttributeError, err:
+                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (obj.analysis.application._name, obj._name))
+                logger.warning("%s" % str(err))
+            logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
+            logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
             # logger.warning('http://savannah.cern.ch/projects/ganga/')
             logger.warning('https://its.cern.ch/jira/browse/GANGA')
 
@@ -98,12 +92,14 @@ def rmrf(name):
             rmrf(os.path.join(name, sfn))
         try:
             os.removedirs(name)
-        except OSError:
+        except OSError, err:
+            logger.debug("%s" % str(err))
             pass
     else:
         try:
             os.unlink(name)
-        except OSError:
+        except OSError, err:
+            logger.debug("%s" % str(err))
             pass
 
 
@@ -185,8 +181,8 @@ class GangaRepositoryLocal(GangaRepository):
                 with open(fn, 'r') as fobj:
                     cat, cls, cache = pickle_from_file(fobj)[0]
             except Exception as x:
-                raise IOError("Error on unpickling: %s %s" %
-                              (x.__class__.__name__, x))
+                logger.debug("index_load Exception: %s" % str(x))
+                raise IOError("Error on unpickling: %s %s" %(x.__class__.__name__, x))
             if id in self.objects:
                 obj = self.objects[id]
                 if obj._data:
@@ -218,9 +214,8 @@ class GangaRepositoryLocal(GangaRepository):
                 with open(ifn, "w") as this_file:
                     pickle_to_file(
                         (obj._category, obj._name, obj._index_cache), this_file)
-        except IOError as x:
-            logger.error("Index saving to '%s' failed: %s %s" %
-                         (ifn, x.__class__.__name__, x))
+        except IOError as err:
+            logger.error("Index saving to '%s' failed: %s %s" % (ifn, err.__class__.__name__, str(err)))
 
     def get_index_listing(self):
         """Get dictionary of possible objects in the Repository: True means index is present,
@@ -229,16 +224,16 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             obj_chunks = [
                 d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
-        except OSError:
-            raise RepositoryError(
-                self, "Could not list repository '%s'!" % (self.root))
+        except OSError, err:
+            logger.debug("get_index_listing Exception: %s" % str(err))
+            raise RepositoryError(self, "Could not list repository '%s'!" % (self.root))
         objs = {}  # True means index is present, False means index not present
         for c in obj_chunks:
             try:
                 listing = os.listdir(os.path.join(self.root, c))
-            except OSError:
-                raise RepositoryError(
-                    self, "Could not list repository '%s'!" % (os.path.join(self.root, c)))
+            except OSError, err:
+                logger.debug("get_index_listing Exception: %s")
+                raise RepositoryError(self, "Could not list repository '%s'!" % (os.path.join(self.root, c)))
             objs.update(dict([(int(l), False)
                               for l in listing if l.isdigit()]))
             for l in listing:
@@ -251,7 +246,8 @@ class GangaRepositoryLocal(GangaRepository):
                             os.unlink(self.get_idxfn(id))
                             logger.warning(
                                 "Deleted index file without data file: %s" % self.get_idxfn(id))
-                        except OSError:
+                        except OSError, err:
+                            logger.debug("get_index_listing delete Exception: %s" % str(err))
                             pass
         return objs
 
@@ -271,9 +267,10 @@ class GangaRepositoryLocal(GangaRepository):
                     self._cached_obj[this_id] = this_cache[4]
             else:
                 logger.debug("Not Reading Master Index")
-        except:
+        except Exception, err:
             Ganga.Utility.logging.log_unknown_exception()
             logger.debug("Master Index corrupt, ignoring it")
+            logger.debug("Exception: %s" % str(err))
             for k, v in self._cache_load_timestamp.iteritems():
                 self._cache_load_timestamp.pop(k)
             for k, v in self._cached_cat.iteritems():
@@ -304,10 +301,9 @@ class GangaRepositoryLocal(GangaRepository):
                         if len(self.lock([k])) != 0:
                             self.index_write(k)
                             self.unlock([k])
-                except Exception as x:
-                    logger.debug(
-                        "Failed to update index: %s on shutdown" % str(k))
-                    logger.debug("%s" % str(x))
+                except Exception as err:
+                    logger.debug("Failed to update index: %s on shutdown" % str(k))
+                    logger.debug("%s" % str(err))
                     pass
             cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
@@ -316,9 +312,10 @@ class GangaRepositoryLocal(GangaRepository):
                 try:
                     fn = self.get_idxfn(k)
                     time = os.stat(fn).st_ctime
-                except OSError as x:
+                except OSError as err:
+                    logger.debug("_write_master_cache: %s" % str(err))
                     import errno
-                    if x.errno == errno.ENOENT:  # If file is not found
+                    if err.errno == errno.ENOENT:  # If file is not found
                         time = 0
                     else:
                         raise
@@ -331,13 +328,15 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 with open(_master_idx, 'w') as of:
                     pickle_to_file(this_master_cache, of)
-            except IOError:
+            except IOError, err:
+                logger.debug("write_master: %s" % str(err))
                 try:
                     os.remove(os.path.join(self.root, 'master.idx'))
                 except OSError as x:
                     Ganga.Utility.logging.log_user_exception(debug=True)
                     pass
-        except:
+        except Exception, err:
+            logger.debug("write_error2: %s" % str(err))
             Ganga.Utility.logging.log_unknown_exception()
             pass
 
@@ -372,17 +371,16 @@ class GangaRepositoryLocal(GangaRepository):
                 if self.index_load(id):
                     changed_ids.append(id)
                 continue
-            except IOError as x:
-                logger.debug("IOError: Failed to load index %i: %s" % (id, x))
-            except OSError as x:
-                logger.debug("OSError: Failed to load index %i: %s" % (id, x))
-            except PluginManagerError as x:
+            except IOError as err:
+                logger.debug("IOError: Failed to load index %i: %s" % (id, str(err)))
+            except OSError as err:
+                logger.debug("OSError: Failed to load index %i: %s" % (id, str(err)))
+            except PluginManagerError as err:
                 # Probably should be DEBUG
-                logger.debug(
-                    "PluginManagerError: Failed to load index %i: %s" % (id, x))
+                logger.debug("PluginManagerError: Failed to load index %i: %s" % (id, str(err)))
                 # This is a FATAL error - do not try to load the main file, it
                 # will fail as well
-                summary.append((id, x))
+                summary.append((id, err))
                 continue
 
             # print id
@@ -398,14 +396,14 @@ class GangaRepositoryLocal(GangaRepository):
                     if len(self.lock([id])) != 0:
                         self.index_write(id)
                         self.unlock([id])
-                except KeyError:
+                except KeyError, err:
+                    logger.debug("update KeyError: %s" % str(err))
                     # deleted job
                     if id in self.objects:
                         self._internal_del__(id)
                         changed_ids.append(id)
                 except InaccessibleObjectError as x:
-                    logger.debug("Failed to load id %i: %s %s" %
-                                 (id, x.orig.__class__.__name__, x.orig))
+                    logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
                     summary.append((id, x.orig))
 
         # Check deleted files:
@@ -468,15 +466,15 @@ class GangaRepositoryLocal(GangaRepository):
                 os.makedirs(os.path.dirname(fn))
             except OSError as e:
                 if e.errno != errno.EEXIST:
-                    raise RepositoryError(
-                        self, "OSError on mkdir: %s" % (str(e)))
+                    raise RepositoryError( self, "OSError on mkdir: %s" % (str(e)))
             self._internal_setitem__(ids[i], objs[i])
             # Set subjobs dirty - they will not be flushed if they are not.
             if self.sub_split and self.sub_split in objs[i]._data:
                 try:
                     for j in range(len(objs[i]._data[self.sub_split])):
                         objs[i]._data[self.sub_split][j]._dirty = True
-                except AttributeError:
+                except AttributeError, err:
+                    logger.debug("RepoXML add Exception: %s" % str(err))
                     pass  # this is not a list of Ganga objects
         return ids
 
@@ -541,11 +539,9 @@ class GangaRepositoryLocal(GangaRepository):
                     obj._setFlushed()
 
             except OSError as x:
-                raise RepositoryError(
-                    self, "OSError on flushing id '%i': %s" % (id, str(x)))
+                raise RepositoryError(self, "OSError on flushing id '%i': %s" % (id, str(x)))
             except IOError as x:
-                raise RepositoryError(
-                    self, "IOError on flushing id '%i': %s" % (id, str(x)))
+                raise RepositoryError(self, "IOError on flushing id '%i': %s" % (id, str(x)))
 
     def is_loaded(self, id):
 
@@ -588,7 +584,8 @@ class GangaRepositoryLocal(GangaRepository):
                         # remove internal representation
                         self._internal_del__(id)
                         os.unlink(os.path.dirname(fn) + ".index")
-                    except OSError:
+                    except OSError, err:
+                        logger.debug("load unlink Error: %s" % str(err))
                         pass
                     raise KeyError(id)
                 else:
@@ -599,10 +596,9 @@ class GangaRepositoryLocal(GangaRepository):
                         ld = os.listdir(os.path.dirname(fn))
                         if len(ld) == 0:
                             os.rmdir(os.path.dirname(fn))
-                            logger.debug(
-                                "No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
-                except:
-                    Ganga.Utility.logging.log_unknown_exception()
+                            logger.debug("No job index or data found, removing empty directory: %s" % os.path.dirname(fn))
+                except Exception, err:
+                    logger.debug("load error %s" % str(err))
                     pass
             try:
                 must_load = (not id in self.objects) or (
@@ -615,9 +611,10 @@ class GangaRepositoryLocal(GangaRepository):
                         self.sub_split in tmpobj._data) and len(tmpobj._data[self.sub_split]) == 0
 
                     if has_children:
-                        from Ganga.Core.GangaRepository import SubJobXMLList
-                        tmpobj._data[self.sub_split] = SubJobXMLList.SubJobXMLList(
-                            os.path.dirname(fn), self.registry, self.dataFileName, load_backup)
+                        logger.debug("Initializing SubJobXMLList")
+                        tmpobj._data[self.sub_split] = SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup)
+
+                    logger.debug("Constructed SubJobXMLList")
 
                     # if len(errs) > 0 and "status" in tmpobj._data: # MAGIC "status" if incomplete
                     #    tmpobj._data["status"] = "incomplete"
@@ -672,23 +669,22 @@ class GangaRepositoryLocal(GangaRepository):
                         self.objects[id]._data[self.sub_split]._setParent(self.objects[id])
 
                     self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
-            except RepositoryError:
+            except RepositoryError as err:
+                logger.debug("Repo Exception: %s" % str(err))
                 raise
-            except Exception as x:
+            except Exception as err:
                 if load_backup:
-                    logger.debug(
-                        "Could not load backup object #%i: %s %s", id, x.__class__.__name__, x)
-                    raise InaccessibleObjectError(self, id, x)
+                    logger.debug("Could not load backup object #%i: %s %s", id, err.__class__.__name__, str(err))
+                    raise InaccessibleObjectError(self, id, err)
 
-                logger.debug(
-                    "Could not load object #%i: %s %s", id, x.__class__.__name__, x)
+                logger.debug("Could not load object #%i: %s %s", id, err.__class__.__name__, str(err))
                 # try loading backup
                 try:
                     self.load([id], load_backup=True)
-                    logger.warning(
-                        "Object '%s' #%i loaded from backup file - the last changes may be lost.", self.registry.name, id)
+                    logger.warning("Object '%s' #%i loaded from backup file - the last changes may be lost.", self.registry.name, id)
                     continue
-                except Exception:
+                except Exception as err:
+                    logger.debug("Exception when loading backup: %s" % str(err) )
                     pass
                 # add object to incomplete_objects
                 if not id in self.incomplete_objects:
@@ -699,7 +695,7 @@ class GangaRepositoryLocal(GangaRepository):
                     os.unlink(os.path.dirname(fn) + ".index")
                 except OSError:
                     pass
-                raise InaccessibleObjectError(self, id, x)
+                raise InaccessibleObjectError(self, id, err)
             finally:
                 fobj.close()
 
@@ -710,7 +706,8 @@ class GangaRepositoryLocal(GangaRepository):
             fn = self.get_fn(id)
             try:
                 os.unlink(os.path.dirname(fn) + ".index")
-            except OSError:
+            except OSError, err:
+                logger.debug("Delete Error: %s" % str(err))
                 pass
             self._internal_del__(id)
             rmrf(os.path.dirname(fn))

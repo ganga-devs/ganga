@@ -19,18 +19,19 @@ try:
 except ImportError:
     import pickle
 
+import Ganga.Utility.logging
+
 try:
     from Ganga.Core.GangaThread import GangaThread
     from Ganga.Core.GangaRepository import RepositoryError
-    import Ganga.Utility.logging
-    logger = Ganga.Utility.logging.getLogger()
 except ImportError:
-    print(
-        "IMPORT ERROR SHOULD NOT OCCUR IN PRODUCTION CODE!!!!!!!!!!!!!!!!!!!!!!")
     from threading import Thread
 
-    class GangaThread(Thread):
+    print("IMPORT ERROR SHOULD NOT OCCUR IN PRODUCTION CODE!!!!!!!!!!!!!!!!!!!!!!")
+    
 
+    class GangaThread(Thread):
+    
         def __init__(self, name):
             self.name = name
             super(GangaThread, self).__init__()
@@ -38,17 +39,13 @@ except ImportError:
         def should_stop(self):
             return False
 
-    class Logger(object):
-
-        def warning(self, msg):
-            print(msg)
-
-        def debug(self, msg):
-            print(msg)
 
     class RepositoryError(Exception):
         pass
-    logger = Logger()
+
+
+logger = Ganga.Utility.logging.getLogger()
+
 
 session_lock_last = 0
 session_expiration_timeout = Ganga.Utility.Config.getConfig(
@@ -155,18 +152,14 @@ class SessionLockRefresher(GangaThread):
                 self.clearDeadLocks(now)
 
         except Exception as x:
-            Ganga.Utility.logging.log_unknown_exception()
-            logger.warning(
-                "Internal exception in session lock thread: %s %s" % (x.__class__.__name__, x))
+            logger.warning( "Internal exception in session lock thread: %s %s" % (x.__class__.__name__, str(x)))
 
     def updateNow(self):
         try:
             for index in range(len(self.fns)):
                 now = self.updateLocks(index)
         except Exception as x:
-            Ganga.Utility.logging.log_unknown_exception()
-            logger.warning("Internal exception in Updating session lock thread: %s %s" % (
-                x.__class__.__name__, x))
+            logger.warning("Internal exception in Updating session lock thread: %s %s" % ( x.__class__.__name__, str(x)))
 
     def updateLocks(self, index):
         try:
@@ -352,12 +345,12 @@ class SessionLockManager(object):
                             self.repo, "OSError on count file create: %s" % x)
             try:
                 self.count = max(self.count, self.cnt_read())
-            except ValueError:
-                logger.error(
-                    "Corrupt count file '%s'! Trying to recover..." % (self.cntfn))
-            except OSError as x:
-                raise RepositoryError(
-                    self.repo, "OSError on count file '%s' access!" % (self.cntfn))
+            except ValueError, err:
+                logger.debug("Startup ValueError Exception: %s" % str(err))
+                logger.error("Corrupt count file '%s'! Trying to recover..." % (self.cntfn))
+            except OSError as err:
+                logger.debug("Startup OSError Exception: %s" % str(err))
+                raise RepositoryError(self.repo, "OSError on count file '%s' access!" % (self.cntfn))
             self.cnt_write()
             # Setup session file
             try:
@@ -365,17 +358,17 @@ class SessionLockManager(object):
                 os.write(fd, pickle.dumps(set()))
                 os.close(fd)
                 registerGlobalSessionFile(self.fn)
-            except OSError as x:
-                raise RepositoryError(
-                    self.repo, "Error on session file '%s' creation: %s" % (self.fn, x))
+            except OSError as err:
+                logger.debug("Startup Session Exception: %s" % str(err))
+                raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn, err))
             global session_lock_refresher
             if session_lock_refresher is None:
                 try:
                     os.close(self.delay_init_open(self.gfn))
                     registerGlobalSessionFile(self.gfn)
-                except OSError as x:
-                    raise RepositoryError(
-                        self.repo, "Error on session file '%s' creation: %s" % (self.gfn, x))
+                except OSError as err:
+                    logger.debug("Startup Lock Refresher Exception: %s" % str(err))
+                    raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, err))
                 session_lock_refresher = SessionLockRefresher(
                     self.session_name, self.sdir, self.gfn, None, self.afs)
                 session_lock_refresher.start()
@@ -409,8 +402,7 @@ class SessionLockManager(object):
             os.unlink(self.fn)
             # os.unlink(self.gfn)
         except OSError as x:
-            logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (
-                self.fn, self.gfn, x))
+            logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, str(x)))
 
     def delayopen_global(self):
         value = None
@@ -442,8 +434,8 @@ class SessionLockManager(object):
                 if not os.path.isfile(lock_file):
                     lock_file_hand = open(lock_file, "w")
                     lock_file_hand.close()
-            except Exception as x:
-                Ganga.Utility.logging.log_unknown_exception()
+            except Exception as err:
+                logger.debug("Global Lock Setup Error: %s" % str(err))
                 pass
         else:
             try:
@@ -456,11 +448,9 @@ class SessionLockManager(object):
                 registerGlobalSessionFile(self.lockfn)
                 registerGlobalSessionFileHandler(self.lockfd)
             except IOError as x:
-                raise RepositoryError(
-                    self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
+                raise RepositoryError(self.repo, "Could not create lock file '%s': %s" % (self.lockfn, x))
             except OSError as x:
-                raise RepositoryError(
-                    self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
+                raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
     def delay_lock_mod(self, lock_mod):
         i = 0
@@ -500,10 +490,10 @@ class SessionLockManager(object):
                             clean_path()
                         os.unlink(lock_file)
                         break
-                    except Exception as x:
-                        Ganga.Utility.logging.log_unknown_exception()
+                    except Exception as err:
+                        logger.debug("Global Lock aquire Exception: %s" % str(err))
                         import time
-                        time.sleep(0.05)
+                        time.sleep(0.01)
 
                 os.system("fs setacl %s $USER rliwka" % (lock_path))
 
@@ -511,15 +501,14 @@ class SessionLockManager(object):
                     lock_file_hand = open(lock_file, "w")
                     lock_file_hand.close()
                     import time
-                    time.sleep(0.05)
+                    time.sleep(0.01)
 
             else:
                 self.delay_lock_mod(fcntl.LOCK_EX)
 
             #logger.debug("global capture")
         except IOError as x:
-            raise RepositoryError(
-                self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "IOError on lock ('%s'): %s" % (self.lockfn, x))
 
     def global_lock_release(self):
         try:
@@ -531,8 +520,7 @@ class SessionLockManager(object):
 
             #logger.debug("global release")
         except IOError as x:
-            raise RepositoryError(
-                self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
+            raise RepositoryError(self.repo, "IOError on unlock ('%s'): %s" % (self.lockfn, x))
 
     def delay_session_open(self, filename):
         value = None
@@ -566,9 +554,7 @@ class SessionLockManager(object):
                     # 00)) # read up to 1 MB (that is more than enough...)
                     return pickle.loads(os.read(fd, 1048576))
                 except Exception as x:
-                    Ganga.Utility.logging.log_unknown_exception()
-                    logger.warning(
-                        "corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, x.__class__.__name__, x))
+                    logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, x.__class__.__name__, str(x)))
             finally:
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_UN)
@@ -822,9 +808,7 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
                 except Exception as x:
-                    Ganga.Utility.logging.log_unknown_exception()
-                    logger.warning("CHECKER: session file %s corrupted: %s %s" % (
-                        session, x.__class__.__name__, x))
+                    logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, x.__class__.__name__, str(x)))
                     continue
                 if not len(names & prevnames) == 0:
                     logger.error(
@@ -863,8 +847,8 @@ class SessionLockManager(object):
                         os.close(fd)
                     if id in names:
                         return self.session_to_info(session)
-                except Exception as x:
-                    Ganga.Utility.logging.log_unknown_exception()
+                except Exception as err:
+                    logger.debug("Get Lock Session Exception: %s" % str(err))
                     continue
         finally:
             self.global_lock_release()
@@ -933,8 +917,8 @@ class SessionLockManager(object):
         si = session.split(".")
         try:
             return "%s (pid %s) since %s" % (".".join(si[:-3]), si[-2], ".".join(si[-5:-3]))
-        except Exception:
-            Ganga.Utility.logging.log_unknown_exception()
+        except Exception, err:
+            logger.debug( "Session Info Exception: %s" % str(err))
             return session
 
 

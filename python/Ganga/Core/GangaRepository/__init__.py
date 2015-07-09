@@ -2,11 +2,10 @@
 Provides Persistency and the base class for all Registries
 Also, a list of all Registries is kept here
 """
-from __future__ import absolute_import
-from . import GangaRepository
-from .GangaRepository import RepositoryError, InaccessibleObjectError, SchemaVersionError
-from .Registry import RegistryError, RegistryAccessError, RegistryKeyError, RegistryLockError, ObjectNotInRegistryError
-from Ganga.Core.GangaRepository import SubJobXMLList
+
+from Ganga.Core.GangaRepository.GangaRepository import GangaRepository, RepositoryError, InaccessibleObjectError, SchemaVersionError
+from Ganga.Core.GangaRepository import GangaRepositoryXML
+from Ganga.Core.GangaRepository.Registry import RegistryError, RegistryAccessError, RegistryKeyError, RegistryLockError, ObjectNotInRegistryError
 
 allRegistries = {}
 

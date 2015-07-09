@@ -27,7 +27,8 @@ def isProxy(obj):
     # e.g. isProxy(DiracFile) fails at the Ganga prompt
     try:
         return issubclass(obj, GPIProxyObject)
-    except TypeError:
+    except TypeError, err:
+        logger.debug("isProxy Exception: %s" % str(err))
         return issubclass(obj.__class__, GPIProxyObject)
 
 
@@ -380,10 +381,15 @@ def GPIProxyClassFactory(name, pluginclass):
         _str, """Return a printable string representing %(classname)s object as a tree of properties.""")
 
     def _repr(self):
-        try:
+        if hasattr(self._impl, '_repr'):
             return self._impl._repr()
-        except AttributeError:
+        else:
             return '<' + repr(self._impl) + ' PROXY at ' + hex(abs(id(self))) + '>'
+        #try:
+        #    return self._impl._repr()
+        #except AttributeError, err:
+        #    logger.debug("_repr Exception: %s" % str(err))
+        #    return '<' + repr(self._impl) + ' PROXY at ' + hex(abs(id(self))) + '>'
     helptext(_repr, "Return an short representation of %(classname)s object.")
 
     def _eq(self, x):

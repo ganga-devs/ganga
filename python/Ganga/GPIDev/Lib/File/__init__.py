@@ -1,39 +1,31 @@
-from __future__ import absolute_import
-# Required for ShareDir object
+from Ganga.GPIDev.Lib.File import Configure
+from Ganga.GPIDev.Lib.File.Configure import getSharedPath
 
+from Ganga.GPIDev.Lib.File.File import File
+from Ganga.GPIDev.Lib.File.File import ShareDir
+from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 
-def getSharedPath():
-    from Ganga.Utility.files import expandfilename
-    from Ganga.Utility.Config import getConfig
-    import os.path
-    root_default = os.path.join(expandfilename(getConfig(
-        'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
-    return root_default
+from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
+from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
+from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile
+from Ganga.GPIDev.Lib.File.LCGSEFile import LCGSEFile
+from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
 
-from . import Configure
-
-from .File import File
-from .File import ShareDir
-from .FileBuffer import FileBuffer
-
-from .IGangaFile import IGangaFile
-from .LocalFile import LocalFile
-from .MassStorageFile import MassStorageFile
-from .LCGSEFile import LCGSEFile
-from .SandboxFile import SandboxFile
-
-from . import FileUtils
+from Ganga.GPIDev.Lib.File import FileUtils
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
 
-from .GoogleFile import GoogleFile
+from Ganga.GPIDev.Lib.File.GoogleFile import GoogleFile
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
 
 
 import fnmatch
+
+
+
+logger = Ganga.Utility.logging.getLogger()
 
 
 def getFileConfigKeys():

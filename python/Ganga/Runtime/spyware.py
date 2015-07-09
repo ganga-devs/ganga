@@ -1,3 +1,5 @@
+import time
+import os.path
 from Ganga.Utility.Config import getConfig
 config = getConfig('Configuration')
 config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",
@@ -7,9 +9,16 @@ config.addOption('UsageMonitoringMSG', True,
 
 monitor = None
 
-import time
-import os.path
-
+def _setupMonitor( _URL, msg, msg2 ):
+    import ApMon.apmon
+    # the ApMon constructor may start background threads to refresh the configuration from URL
+    # NOTE: the configuration (including defaultLogLevel) is overriden from
+    # the config file specified in URL
+    global monitor
+    monitor = ApMon.apmon.ApMon(_URL, defaultLogLevel = ApMon.apmon.Logger.FATAL)
+    monitor.sendParameters('GangaUsage', msg, msg2)
+    # stop any background threads started by the ApMon constructor
+    monitor.free()
 
 def ganga_started(session_type, **extended_attributes):
     host = getConfig('System')['GANGA_HOSTNAME']
@@ -25,17 +34,10 @@ def ganga_started(session_type, **extended_attributes):
     usage_message.update(extended_attributes)
 
     if config['UsageMonitoringURL']:
-        import ApMon.apmon
-        global monitor
-        # the ApMon constructor may start background threads to refresh the configuration from URL
-        # NOTE: the configuration (including defaultLogLevel) is overriden from
-        # the config file specified in URL
-        monitor = ApMon.apmon.ApMon(
-            config['UsageMonitoringURL'], defaultLogLevel=ApMon.apmon.Logger.FATAL)
-        monitor.sendParameters(
-            'GangaUsage', '%s@%s_%s' % (user, host, start), usage_message)
-        # stop any background threads started by the ApMon constructor
-        monitor.free()
+        from Ganga.GPI import queues
+        # Lets move the actual monitoring out of the main thread for some performance
+        msg = '%s@%s_%s' % (user, host, start)
+        queues.add( _setupMonitor, (config['UsageMonitoringURL'], msg, usage_message) )
 
     if config['UsageMonitoringMSG']:
         from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil

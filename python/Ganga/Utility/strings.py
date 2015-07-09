@@ -38,10 +38,12 @@ class ItemizedTextParagraph(object):
 
     def __init__(self, head, width=80, separator=' ', linesep=None):
         self.head = head
+        self.head_size = len(self.head)
         self.items = []
         self.desc = []
         self.width = width
         self.sep = separator
+        self.sep_size = len(self.sep)
         self.linesep = linesep
 
     def addLine(self, item, description):
@@ -55,18 +57,18 @@ class ItemizedTextParagraph(object):
             if len(it) > maxitem:
                 maxitem = len(it)
 
-        indent = ' ' * (len(self.head) / 2)
+        indent = ' ' * int(self.head_size*0.5)
 
         buf = self.head + '\n'
 
         import Ganga.Utility.external.textwrap as textwrap
 
         for it, d in zip(self.items, self.desc):
-            if not self.linesep is None:
+            if self.linesep is not None:
                 buf += self.linesep + '\n'
             buf2 = '%-*s%s%s' % (maxitem, it, self.sep, d)
             buf += textwrap.fill(buf2, width=self.width, initial_indent=indent,
-                                 subsequent_indent=' ' * (maxitem + len(self.sep)) + indent) + '\n'
+                                 subsequent_indent=' ' * (maxitem + self.sep_size) + indent) + '\n'
 
         return buf
 
@@ -91,3 +93,4 @@ if __name__ == "__main__":
     print(it.getString())
 
     print('strings: Test Passed OK')
+

@@ -6,6 +6,13 @@ if outputconfig == None:
     outputconfig = makeConfig(
         "Output", "configuration section for postprocessing the output")
 
+def getSharedPath():
+    # Required to be initialized for ShareDir object
+    from Ganga.Utility.files import expandfilename
+    from Ganga.Utility.Config import getConfig
+    import os.path
+    root_default = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+    return root_default
 
 def Configure():
 

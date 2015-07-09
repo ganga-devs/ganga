@@ -1,12 +1,11 @@
-# This, although inheriting from GangaList should be here as the class has
-# to know about on-disk structure of the XML repo
+#Mimicking a GangaList for subjobs
 
-from Ganga.GPIDev.Lib.GangaList import GangaList
+from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
+from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
 logger = getLogger()
 
-
-class SubJobXMLList(GangaList):
+class SubJobXMLList(GangaObject):
 
     """
         jobDirectory: Directory of parent job containing subjobs
@@ -19,10 +18,17 @@ class SubJobXMLList(GangaList):
     _enable_plugin = 1
     _name = 'SubJobXMLList'
 
-    _schema = GangaList._schema.inherit_copy()
+    # FIXME for some reason exists a bug in copying this from GangaList - rcurrie
+    #_schema = GangaList._schema.inherit_copy()
+    #_schema = Schema(Version(1, 0), {'_list': SimpleItem(defvalue=[], doc='The raw list', hidden=1),
+    #                                 '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
+    #                                 })
+    _schema = Schema(Version(1, 0), {'_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),})
     _enable_config = 1
 
     def __init__(self, jobDirectory, registry, dataFileName, load_backup):
+
+        super(SubJobXMLList, self).__init__()
 
         self.jobDirectory = jobDirectory
         from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
@@ -31,18 +37,20 @@ class SubJobXMLList(GangaList):
         self.dataFileName = dataFileName
         self.load_backup = load_backup
 
-        self._cachedJobs = {}
         self._definedParent = None
         self._storedList = []
 
         self.registry = registry
 
-        super(SubJobXMLList, self).__init__()
-
         self.subjob_master_index_name = "subjobs.idx"
 
         self.subjobIndexData = {}
         self.load_subJobIndex()
+
+    def getCachedJobs(self):
+        if not hasattr(self, '_cachedJobs'):
+            self._cachedJobs = {}
+        return self._cachedJobs
 
     def load_subJobIndex(self):
 
@@ -55,15 +63,16 @@ class SubJobXMLList(GangaList):
                 self.subjobIndexData = from_file(index_file_obj)[0]
                 index_file_obj.close()
                 for subjob in self.subjobIndexData.keys():
-                    mod_time = self.subjobIndexData.get(subjob)['modified']
-                    disk_location = self.__get_dataFile(subjob)
-                    import os
-                    disk_time = os.stat(disk_location).st_ctime
-                    if mod_time != disk_time:
-                        self.subjobIndexData = {}
-                        break
+                    if 'modified' in self.subjobIndexData.get(subjob):
+                        mod_time = self.subjobIndexData.get(subjob)['modified']
+                        disk_location = self.__get_dataFile(subjob)
+                        import os
+                        disk_time = os.stat(disk_location).st_ctime
+                        if mod_time != disk_time:
+                            self.subjobIndexData = {}
+                            break
             except Exception, err:
-                logger.error("Subjob Index file open, error: %s" % str(err))
+                logger.debug("Subjob Index file open, error: %s" % str(err))
                 self.subjobIndexData = {}
         return
 
@@ -92,7 +101,7 @@ class SubJobXMLList(GangaList):
     def _attribute_filter__get__(self, name):
 
         if name == "_list":
-            if len(self._cachedJobs.keys()) != len(self):
+            if len(self.getCachedJobs().keys()) != len(self):
                 if self._storedList != []:
                     self._storedList = []
                 i = 0
@@ -122,8 +131,11 @@ class SubJobXMLList(GangaList):
 
     def __len__(self):
         subjob_count = 0
-        from os import listdir
-        jobDirectoryList = listdir(self.jobDirectory)
+        from os import listdir, path
+        if path.isdir(self.jobDirectory):
+            jobDirectoryList = listdir(self.jobDirectory)
+        else:
+            return 0
 
         i = 0
         while str(i) in jobDirectoryList:
@@ -137,7 +149,7 @@ class SubJobXMLList(GangaList):
 
     def __getitem__(self, index):
 
-        if not index in self._cachedJobs.keys():
+        if not index in self.getCachedJobs().keys():
             subjob_data = self.__get_dataFile(str(index))
             try:
                 # For debugging where this was called from to try and push it to as high a level as possible at runtime
@@ -150,6 +162,7 @@ class SubJobXMLList(GangaList):
                 except Exception, err:
                     logger.debug("Error: %s" % str(err))
                     job_obj = None
+                    pass
                 if job_obj:
                     fqid = job_obj.getFQID('.')
                     logger.debug(
@@ -163,14 +176,14 @@ class SubJobXMLList(GangaList):
                 else:
                     raise RepositoryError(
                         self, "IOError on loading subobject %i.%i: %s" % (id, i, x))
-            self._cachedJobs[index] = self.from_file(sj_file)[0]
+            self.getCachedJobs()[index] = self.from_file(sj_file)[0]
             if self._definedParent:
-                self._cachedJobs[index]._setParent(self._definedParent)
-        return self._cachedJobs[index]
+                self.getCachedJobs()[index]._setParent(self._definedParent)
+        return self.getCachedJobs()[index]
 
     def _setParent(self, parentObj):
-        for k in self._cachedJobs.keys():
-            self._cachedJobs[k]._setParent(parentObj)
+        for k in self.getCachedJobs().keys():
+            self.getCachedJobs()[k]._setParent(parentObj)
         self._definedParent = parentObj
         super(SubJobXMLList, self)._setParent(parentObj)
 
@@ -196,9 +209,9 @@ class SubJobXMLList(GangaList):
         from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
 
         for index in range(len(self)):
-            if index in self._cachedJobs.keys():
+            if index in self.getCachedJobs().keys():
                 subjob_data = self.__get_dataFile(str(index))
-                subjob_obj = self._cachedJobs[index]
+                subjob_obj = self.getCachedJobs()[index]
 
                 safe_save(subjob_data, subjob_obj, self.to_file)
 

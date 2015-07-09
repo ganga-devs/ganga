@@ -71,6 +71,7 @@ class GangaRepository(object):
 
     def __init__(self, registry, locking=True):
         """GangaRepository constructor. Initialization should be done in startup()"""
+        super(GangaRepository, self).__init__()
         self.registry = registry
         self.objects = {}
         self.incomplete_objects = []

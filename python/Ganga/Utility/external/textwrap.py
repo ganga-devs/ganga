@@ -173,14 +173,14 @@ class TextWrapper(object):
         # If we're allowed to break long words, then do so: put as much
         # of the next chunk onto the current line as will fit.
         if self.break_long_words:
-            cur_line.append(chunks[0][0:space_left])
+            cur_line.extend(chunks[0][0:space_left])
             chunks[0] = chunks[0][space_left:]
 
         # Otherwise, we have to preserve the long word intact.  Only add
         # it to the current line if there's nothing already there --
         # that minimizes how much we violate the width constraint.
         elif not cur_line:
-            cur_line.append(chunks.pop(0))
+            cur_line.extend(chunks.pop(0))
 
         # If we're not allowed to break long words, and there's already
         # text on the current line, do nothing.  Next time through the
@@ -231,7 +231,7 @@ class TextWrapper(object):
 
                 # Can at least squeeze this chunk onto the current line.
                 if cur_len + l <= width:
-                    cur_line.append(chunks.pop(0))
+                    cur_line.extend(chunks.pop(0))
                     cur_len += l
 
                 # Nope, this line is full.
@@ -250,7 +250,7 @@ class TextWrapper(object):
             # Convert current line back to a string and store it in list
             # of all lines (return value).
             if cur_line:
-                lines.append(indent + ''.join(cur_line))
+                lines.extend(indent + ''.join(cur_line))
 
         return lines
 

@@ -123,7 +123,8 @@ def detectPlatform():
         r = c.match(platform.platform())
         if r and r.group('ver').split('.')[0] == '5':
             platfstring = platf5
-    except ImportError:
+    except ImportError, err:
+        logger.debug("Ganga PACKAGE Import Exception: %s" % str(err))
         pass
 
     return platfstring[arch]

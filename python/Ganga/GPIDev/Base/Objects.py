@@ -1,4 +1,3 @@
-from __future__ import absolute_import
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -15,7 +14,6 @@ from __future__ import absolute_import
 #    obj._setDirty()
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 from Ganga.Utility.Plugin import allPlugins, PluginManagerError
 from Ganga.Utility.Config.Config import getConfig
@@ -25,15 +23,14 @@ import copy
 
 import Ganga.GPIDev.Schema as Schema
 
-from .Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError
+from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError
 from Ganga.Core import GangaValueError
 
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
 from Ganga.Core import GangaException
 
-from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryLockError, RegistryAccessError
-
+logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 class PreparedStateError(GangaException):
 
@@ -126,7 +123,8 @@ class Node(object):
         def getdata(name):
             try:
                 return getattr(self, name)
-            except AttributeError:
+            except AttributeError, err:
+                logger.debug("accept visitor error: %s" % str(err))
                 return self._data[name]
 
         for (name, item) in self._schema.simpleItems():
@@ -231,20 +229,19 @@ class Descriptor(object):
         self._checkset_name = None
         self._filter_name = None
 
-        try:
+
+        if not hasattr( item, '_meta'):
+            return
+
+        if 'getter' in item._meta:
             self._getter_name = item['getter']
-        except KeyError:
-            pass
 
-        try:
+        if 'checkset' in item._meta:
             self._checkset_name = item['checkset']
-        except KeyError:
-            pass
 
-        try:
+        if 'filter' in item._meta:
             self._filter_name = item['filter']
-        except KeyError:
-            pass
+
 
     def _bind_method(self, obj, name):
         if name is None:
@@ -253,8 +250,7 @@ class Descriptor(object):
 
     def _check_getter(self):
         if self._getter_name:
-            raise AttributeError(
-                'cannot modify or delete "%s" property (declared as "getter")' % self._name)
+            raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % self._name)
 
     def __get__(self, obj, cls):
         if obj is None:
@@ -267,14 +263,16 @@ class Descriptor(object):
             else:
                 # LAZYLOADING
                 lookup_result = None
+
                 try:
-                    lookup_result = obj._index_cache[self._name]
-                except TypeError:
-                    # obj._index_cache is probably still 'None'
+                    if obj._index_cache:
+                        if self._name in obj._index_cache.keys():
+                            lookup_result = obj._index_cache[self._name]
+                except Exception, err:
+                    logger.debug("Lazy Loading Exception: %s" % str(err))
+                    lookup_result = None
                     pass
-                except KeyError:
-                    # obj._index_cache is probably still an empty dict
-                    pass
+
                 if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
                     result = lookup_result
                 else:
@@ -286,16 +284,12 @@ class Descriptor(object):
                             if self._name in self._data._impl:
                                 result = obj._data._impl[self._name]
                             else:
-                                logger.debug(
-                                    "Error, cannot find %s parameter in %s" % (self._name, obj._name))
-                                GangaException(
-                                    "Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                                logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                                GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                 result = obj._data[self._name]
                         else:
-                            logger.debug(
-                                "Error, cannot find %s parameter in %s" % (self._name, obj._name))
-                            GangaException(
-                                "Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                            logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                            GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                             result = obj._data[self._name]
 
             return result
@@ -402,12 +396,16 @@ class ObjectMetaclass(type):
         for d in dicts:
             for k in d:
                 if k in cls._exportmethods:
-                    try:
-                        internal_name = "_export_" + k
-                        method = d[internal_name]
-                    except KeyError:
+
+                    internal_name = "_export_" + k
+                    if internal_name not in d.keys():
                         internal_name = k
-                        method = d[k]
+                    try:
+                        method = d[internal_name]
+                    except Exception, err:
+                        logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (str(internal_name), str(d)))
+                        logger.debug("ObjectMetaClass Error: %s" % str(err))
+
                     if not isinstance(method, types.FunctionType):
                         continue
                     f = ProxyMethodDescriptor(k, internal_name)
@@ -542,7 +540,8 @@ class GangaObject(Node):
                         getRegistry("prep").getShareRef())
                     logger.debug("Increasing shareref")
                     shareref.increase(shared_dir.name)
-                except AttributeError:
+                except AttributeError, err:
+                    logger.debug("__deepcopy__ Exception: %s" % str(err))
                     pass
         c.lock_count = {}
         return c
@@ -564,14 +563,14 @@ class GangaObject(Node):
             _timeOut = getConfig('Configuration')['DiskIOTimeout']
             while not _haveLocked:
                 err = None
+                from Ganga.Core.GangaRepository.Registry import RegistryLockError, RegistryAccessError
                 try:
                     reg._write_access(root)
                     _haveLocked = True
                 except (RegistryLockError, RegistryAccessError) as x:
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
-                    logger.info(
-                        "Waiting on Write access to registry: %s" % reg.name)
+                    logger.info("Waiting on Write access to registry: %s" % reg.name)
                     logger.debug("%s" % str(x))
                     err = x
                 _counter = _counter + 1
@@ -627,13 +626,15 @@ class GangaObject(Node):
         r = self._getRoot()
         try:
             return r._registry
-        except AttributeError:
+        except AttributeError, err:
+            logger.debug("_getRegistry Exception: %s" % str(err))
             return None
 
     def _getRegistryID(self):
         try:
             return self._registry.find(self)
-        except AttributeError:
+        except AttributeError, err:
+            logger.debug("_getRegistryID Exception: %s" % str(err))
             return None
 
     # mark object as "dirty" and inform the registry about it
@@ -710,8 +711,9 @@ def string_type_shortcut_filter(val, item):
             obj = allPlugins.find(item['category'], val)()
             obj._auto__init__()
             return obj
-        except PluginManagerError as x:
-            raise ValueError(x)
+        except PluginManagerError as err:
+            logger.debug("string_type_shortcut_filter Exception: %s" % str(err))
+            raise ValueError(err)
     return None
 
 # FIXME: change into classmethod (do they inherit?) and then change stripComponentObject to use class instead of

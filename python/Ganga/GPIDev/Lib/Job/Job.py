@@ -12,13 +12,11 @@ import Ganga.Utility.logging
 from Ganga.Lib.Notifier import Notifier
 from Ganga.Lib.Checkers import FileChecker, CustomChecker
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiPostProcessor
-logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.util import isStringLike
 from Ganga.Utility.logging import log_user_exception
 
 import Ganga.Utility.Config
-config = Ganga.Utility.Config.getConfig('Configuration')
 from Ganga.Utility.files import expandfilename
 
 from Ganga.Core import GangaException
@@ -40,6 +38,12 @@ import shutil
 import sys
 import copy
 from Ganga.Utility.Config import getConfig
+
+import Ganga.Utility.guid
+from JobTime import JobTime
+
+logger = Ganga.Utility.logging.getLogger()
+config = Ganga.Utility.Config.getConfig('Configuration')
 
 
 class JobStatusError(GangaException):
@@ -71,8 +75,6 @@ class PreparedStateError(GangaException):
 class FakeError(GangaException):
     pass
 
-import Ganga.Utility.guid
-
 
 class JobInfo(GangaObject):
 
@@ -95,8 +97,6 @@ class JobInfo(GangaObject):
 
     def increment(self):
         self.submit_counter += 1
-
-from JobTime import JobTime
 
 
 class Job(GangaObject):
@@ -398,7 +398,7 @@ class Job(GangaObject):
         special_list.append('inputfiles')
         special_list.append('subjobs')
 
-        if not name in special_list:
+        if name not in special_list:
             return object.__getattribute__(self, name)
 
         if name == 'outputfiles':
@@ -472,7 +472,7 @@ class Job(GangaObject):
             except KeyError:
                 id = None
         # try:
-        if hasattr(self, '_Job_constructed') and self._Job_constructed == True:
+        if hasattr(self, '_Job_constructed') and self._Job_constructed is True:
             if hasattr(self, 'status'):
                 oldstat = self.status
             # except:
@@ -503,7 +503,7 @@ class Job(GangaObject):
         def __init__(self, *states):
             self.states = {}
             for s in states:
-                assert(not s.state in self)
+                assert(s.state not in self)
                 self[s.state] = s
 
     status_graph = {'new': Transitions(State('submitting', 'j.submit()', hook='monitorSubmitting_hook'),
@@ -610,7 +610,7 @@ class Job(GangaObject):
                 # we call this even if there was a hook
                 newstatus = self.transition_update(newstatus)
 
-                if newstatus == 'completed' and not ignore_failures == True:
+                if newstatus == 'completed' and ignore_failures is not True:
                     if self.outputFilesFailures():
                         logger.info("outputfile Failure")
                         self.updateStatus('failed')
@@ -700,8 +700,8 @@ class Job(GangaObject):
                         os.system("gzip %s" % currentFile)
 
             backend_output_postprocess = self.getBackendOutputPostprocessDict()
-            if backend_output_postprocess.has_key(backendClass):
-                if backend_output_postprocess[backendClass].has_key(outputfileClass):
+            if backendClass in backend_output_postprocess:
+                if outputfileClass in backend_output_postprocess[backendClass]:
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir,
@@ -727,7 +727,7 @@ class Job(GangaObject):
             if outputfile.__class__.__name__ == 'MassStorageFile':
                 (validOutputFiles, errorMsg) = outputfile.validate()
 
-                if validOutputFiles == False:
+                if validOutputFiles is False:
                     return (validOutputFiles, errorMsg)
 
         return (True, '')
@@ -1150,19 +1150,17 @@ class Job(GangaObject):
 
         """
         if not hasattr(self.application, 'is_prepared'):
-            logger.warning(
-                "Non-preparable application %s cannot be prepared" % self.application._name)
+            logger.warning("Non-preparable application %s cannot be prepared" % self.application._name)
             return
 
-        if (self.application.is_prepared is not None) and (force == False):
-            msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (
-                self.id)
+        if (self.application.is_prepared is not None) and (force is False):
+            msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (self.id)
             raise JobError(msg)
         if (self.application.is_prepared is None):
             add_to_inputsandbox = self.application.prepare()
             if isType(add_to_inputsandbox, list):
                 self.inputsandbox.extend(add_to_inputsandbox)
-        elif (self.application.is_prepared is not None) and (force == True):
+        elif (self.application.is_prepared is not None) and (force is True):
             self.application.unprepare(force=True)
             self.application.prepare(force=True)
 
@@ -1342,7 +1340,7 @@ class Job(GangaObject):
             return False
 
         if hasattr(self.application, 'is_prepared'):
-            if (self.application.is_prepared is None) or (prepare == True):
+            if (self.application.is_prepared is None) or (prepare is True):
                 logger.debug("Job %s Calling self.prepare(force=%s)" %
                              (str(self.getFQID('.')), str(prepare)))
                 self.prepare(force=True)
@@ -1359,7 +1357,7 @@ class Job(GangaObject):
                 shared_path = Ganga.GPIDev.Lib.File.getSharedPath()
                 delay_result = delay_check(
                     os.path.join(shared_path, self.application.is_prepared.name))
-                if delay_result != True:
+                if delay_result is not True:
                     logger.warning(
                         "prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared)
                     logger.warning(
@@ -1597,7 +1595,7 @@ class Job(GangaObject):
             # in the case of a master job however we need to still perform this
             if len(rjobs) != 1:
                 self.info.increment()
-            if self.master != None:
+            if self.master is not None:
                 self.updateStatus('submitted')
             # make sure that the status change goes to the repository, NOTE:
             # this commit is redundant if updateStatus() is used on the line
@@ -1720,7 +1718,7 @@ class Job(GangaObject):
 
         # incomplete or unknown jobs may not have valid application or backend
         # objects
-        if not self.status in ['incomplete', 'unknown']:
+        if self.status not in ['incomplete', 'unknown']:
             # tell the backend that the job was removed
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
@@ -1824,11 +1822,11 @@ class Job(GangaObject):
         if self.status == status:
             return
 
-        if not status in Job.allowed_force_states:
+        if status not in Job.allowed_force_states:
             raise JobError('force_status("%s") not allowed. Job may be forced to %s states only.' % (
                 status, Job.allowed_force_states.keys()))
 
-        if not self.status in Job.allowed_force_states[status]:
+        if self.status not in Job.allowed_force_states[status]:
             raise JobError('Only a job in one of %s may be forced into "%s" (job %s)' % (
                 str(Job.allowed_force_states[status]), status, self.getFQID('.')))
 
@@ -1864,7 +1862,7 @@ class Job(GangaObject):
 
             fqid = self.getFQID('.')
             logger.info('killing job %s', fqid)
-            if not self.status in ['submitted', 'running']:
+            if self.status not in ['submitted', 'running']:
                 if self.status in ['completed', 'failed']:
                     logger.warning("Job %s has already reached it's final state: %s and cannot be killed" % (
                         fqid, self.status))
@@ -1951,9 +1949,8 @@ class Job(GangaObject):
             raise JobError(msg)
 
         # the status check is disabled when auto_resubmit
-        if not self.status in ['completed', 'failed', 'killed'] and not auto_resubmit:
-            msg = "cannot resubmit job %s which is in '%s' state" % (
-                fqid, self.status)
+        if self.status not in ['completed', 'failed', 'killed'] and not auto_resubmit:
+            msg = "cannot resubmit job %s which is in '%s' state" % (fqid, self.status)
             logger.error(msg)
             raise JobError(msg)
 
@@ -1978,8 +1975,7 @@ class Job(GangaObject):
         # check if the backend supports extra 'backend' argument for
         # master_resubmit()
         import inspect
-        supports_master_resubmit = len(
-            inspect.getargspec(self.backend.master_resubmit)[0]) > 1
+        supports_master_resubmit = len(inspect.getargspec(self.backend.master_resubmit)[0]) > 1
 
         if not supports_master_resubmit and backend:
             raise JobError(
@@ -2102,7 +2098,7 @@ class Job(GangaObject):
         # EBKE changes
         objects = [self._getRoot()]
         reg = self._getRegistry()
-        if not reg is None:
+        if reg is not None:
             reg._flush(objects)
 
 
@@ -2216,7 +2212,7 @@ class Job(GangaObject):
 
         elif attr == 'outputdata':
 
-            if value != None:
+            if value is not None:
 
                 if getConfig('Output')['ForbidLegacyOutput']:
                     logger.error(
@@ -2241,7 +2237,7 @@ class Job(GangaObject):
             # Temporary polution of Atlas stuff to (almost) transparently
             # switch from Panda to Jedi
             configPanda = None
-            if value != None and value.__class__.__name__ == "Panda":
+            if value is not None and value.__class__.__name__ == "Panda":
                 configPanda = Ganga.Utility.Config.getConfig('Panda')
 
             if configPanda and not configPanda['AllowDirectSubmission']:

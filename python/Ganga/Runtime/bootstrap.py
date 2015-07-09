@@ -20,8 +20,6 @@
 #
 ##########################################################################
 
-from __future__ import print_function
-from __future__ import absolute_import
 
 # store Ganga version based on CVS sticky tag for this file
 _gangaVersion = "$Name: Ganga-SVN $"
@@ -264,7 +262,8 @@ under certain conditions; type license() for details.
 #             return True
         try:
             versions_file = open(versions_filename, 'r+')
-        except:
+        except Exception, err:
+            logger.debug("Versions file error: %s" % str(err))
             pass
         else:
             try:
@@ -273,7 +272,8 @@ under certain conditions; type license() for details.
                         versions_file.write(version + '\n')
                     versions_file.close()
                     return True
-            except:
+            except Exception, err:
+                logger.debug("Error Reading versions: %s" % str(err))
                 pass
             versions_file.close()
         return False
@@ -289,11 +289,10 @@ under certain conditions; type license() for details.
                 if not os.path.exists(bn):
                     try:
                         os.rename(config_file, bn)
-                    except:
-                        logger.error(
-                            'Failed to create config backup file %s' % bn)
-                        logger.error(
-                            'Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
+                    except Exception, err:
+                        logger.error('Failed to create config backup file %s' % bn)
+                        logger.error('Old file will not be overwritten, please manually remove it and start ganga with the -g option to re-generate it')
+                        logger.error('Reason: %s' % str(err))
                         return
                     logger.info('Copied current config file to %s' % bn)
                     break
@@ -331,14 +330,15 @@ under certain conditions; type license() for details.
 #          new_config_file.write(new_config)
 
         try:
-            config_head_file = open(
-                os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r')
-        except:
+            config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r')
+        except Exception, err:
+            logger.debug("Error loading Config Head file: %s" % str(err))
             pass
         else:
             try:
                 new_config += config_head_file.read()
-            except:
+            except Exception, err:
+                logger.debug("Template File Exception: %s" % str(err))
                 logger.error("failed to read from the config template file")
                 config_head_file.close()
                 raise
@@ -349,17 +349,18 @@ under certain conditions; type license() for details.
 
         try:
             new_config_file = open(config_file, 'w')
-        except:
+        except Exception, err:
+            logger.debug("Error opening new config file: %s" % str(err))
             pass
         else:
             try:
                 new_config_file.write(new_config)
-            except:
-                logger.error(
-                    "failed to write to new config file '%s'" % config_file)
-                new_config_file.close()
+            except Exception, err:
+                logger.error("failed to write to new config file '%s'" % config_file)
+                logger.error('reason: %s;' % str(err))
                 raise
-            new_config_file.close()
+            finally:
+                new_config_file.close()
 
     def print_release_notes(self):
         from Ganga.Utility.logging import getLogger
@@ -384,9 +385,9 @@ under certain conditions; type license() for details.
                 try:
                     notes = [l.strip() for l in f.read().replace(
                         bounding_line, '').split(dividing_line)]
-                except:
-                    logger.error(
-                        'Error while attempting to read release notes')
+                except Exception, err:
+                    logger.error('Error while attempting to read release notes')
+                    logger.debug('Reason: %s' % str(err))
                     raise
 
             if notes[0].find(version) < 0:
@@ -441,9 +442,8 @@ under certain conditions; type license() for details.
             logger.info('Making default gangadir: %s' % gangadir)
             try:
                 os.makedirs(gangadir)
-            except OSError as e:
-                logger.error(
-                    "Failed to create default gangadir '%s': %s" % (gangadir, e.message))
+            except OSError as err:
+                logger.error("Failed to create default gangadir '%s': %s" % (gangadir, err.message))
                 raise
         if self.options.generate_config:
             logger = getLogger('ConfigUpdater')
@@ -487,8 +487,7 @@ under certain conditions; type license() for details.
                     for section, option, val in opts:
                         config = getConfig(section).setUserValue(option, val)
                 except ConfigError as x:
-                    self.exit(
-                        'command line option error when resetting after config generation: %s' % str(x))
+                    self.exit('command line option error when resetting after config generation: %s' % str(x))
 
     def parse_cmdline_config_options(self, cmdline_options):
         """ Parse a list of command line config options and return a list of triplets (section,option,value).
@@ -552,7 +551,8 @@ under certain conditions; type license() for details.
             if logLevel:
                 self.options.force_loglevel = logLevel
             if self.options.force_loglevel in (None, 'DEBUG'):
-                print(self.hello_string)
+                import sys
+                sys.stdout.write(str(self.hello_string)+'\n')
 #                self.new_user_wizard()
 
         if self.options.config_file is None or self.options.config_file == '':
@@ -569,8 +569,7 @@ under certain conditions; type license() for details.
             with open(self.options.config_file) as cf:
                 first_line = cf.readline()
                 import re
-                r = re.compile(
-                    r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
+                r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
                 this_logger = Ganga.Utility.logging.getLogger("Configure")
                 if not r:
                     this_logger.error(
@@ -593,6 +592,7 @@ under certain conditions; type license() for details.
         except IOError as x:
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
+            logger.debug("Config File Exception: %s" % str(x))
             pass
 
         #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
@@ -605,13 +605,14 @@ under certain conditions; type license() for details.
         if self.options.config_path is None:
             try:
                 self.options.config_path = os.environ['GANGA_CONFIG_PATH']
-            except KeyError:
+            except KeyError, err:
+                self.options.config_path = ''
+            if self.options.config_path is None:
                 self.options.config_path = ''
 
         import Ganga.Utility.files
         import Ganga.Utility.util
-        self.options.config_path = Ganga.Utility.files.expandfilename(
-            self.options.config_path)
+        self.options.config_path = Ganga.Utility.files.expandfilename(self.options.config_path)
 
         try:
             hostname = Ganga.Utility.util.hostname()
@@ -738,7 +739,7 @@ http://ipython.scipy.org/doc/manual''')
             'args', "['-colors','LightBG', %s]" % noautocall, 'FIXME')
 
         # import configuration from spyware
-        from . import spyware
+        from Ganga.Runtime import spyware
 
         import Ganga.Utility.ColourText
 
@@ -912,10 +913,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         try:
             # load Ganga system plugins...
-            from . import plugins
+            from Ganga.Runtime import plugins
         except Exception as x:
-            logger.critical(
-                'Ganga system plugins could not be loaded due to the following reason: %s', str(x))
+            logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', str(x))
             logger.exception(x)
             raise GangaException(x)
 
@@ -943,7 +943,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
             for path in paths:
                 r = RuntimePackage(path)
-        except KeyError:
+        except KeyError, err:
+            logger.debug("init KeyError: %s" % str(err))
             pass
 
         # initialize the environment only if the current ganga process has not
@@ -956,10 +957,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                     _env = r.getEnvironment()
                     if _env:
                         os.environ.update(_env)
-                except Exception as x:
-                    Ganga.Utility.logging.log_user_exception()
-                    logger.error(
-                        "can't get environment for %s, possible problem with the return value of getEvironment()", r.name,)
+                except Exception as err:
+                    logger.error("can't get environment for %s, possible problem with the return value of getEvironment()" % r.name)
+                    logger.error("Reason: %s" % str(err))
                     raise
 
             # in some cases the reexecution of the process is needed for LD_LIBRARY_PATH to take effect
@@ -982,7 +982,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             del os.environ['GANGA_INTERNAL_PROCREEXEC']
 
         # start queues
-        from .GPIexport import exportToGPI
+        from Ganga.Runtime.GPIexport import exportToGPI
         from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
         exportToGPI('queues', ThreadPoolQueueMonitor(), 'Objects')
 
@@ -998,28 +998,27 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
             try:
                 r.bootstrap(Ganga.GPI.__dict__)
-            except Exception as x:
-                Ganga.Utility.logging.log_user_exception()
+            except Exception as err:
                 logger.error('problems with bootstrapping %s -- ignored', n)
+                logger.error('Reason: %s' % str(err))
             try:
                 r.loadNamedTemplates(Ganga.GPI.__dict__,
                                      Ganga.Utility.Config.getConfig(
                                          'Configuration')['namedTemplates_ext'],
                                      Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
-            except Exception as x:
-                Ganga.Utility.logging.log_user_exception()
+            except Exception as err:
                 logger.error('problems with loading Named Templates for %s', n)
+                logger.error('Reason: %s' % str(err))
         # load user-defined plugins...
 
         for r in allRuntimes.values():
             try:
                 r.loadPlugins()
-            except Exception as x:
-                Ganga.Utility.logging.log_user_exception()
-                logger.error(
-                    "problems with loading plugins for %s -- ignored", r.name,)
+            except Exception as err:
+                logger.error("problems with loading plugins for %s -- ignored" % r.name)
+                logger.error('Reason: %s' % str(err))
 
-        from .GPIexport import exportToGPI
+        from Ganga.Runtime.GPIexport import exportToGPI
 
         from Ganga.Utility.Plugin import allPlugins
         # make all plugins visible in GPI
@@ -1041,19 +1040,17 @@ default_backends = LCG
         for opt in default_plugins_cfg:
             try:
                 category, tag = opt.split('_')
-            except ValueError:
+            except ValueError, err:
                 logger.warning("do not understand option %s in [Plugins]", opt)
+                logger.debug('Reason: %s' % str(err))
             else:
                 if tag == 'default':
                     try:
-                        allPlugins.setDefault(
-                            category, default_plugins_cfg[opt])
+                        allPlugins.setDefault(category, default_plugins_cfg[opt])
                     except Ganga.Utility.Plugin.PluginManagerError as x:
-                        logger.warning(
-                            'cannot set the default plugin "%s": %s', opt, x)
+                        logger.warning('cannot set the default plugin "%s": %s' % (opt, x))
                 else:
-                    logger.warning(
-                        "do not understand option %s in [Plugins]", opt)
+                    logger.warning("do not understand option %s in [Plugins]", opt)
 
         # set alias for default Batch plugin (it will not appear in the
         # configuration)
@@ -1063,8 +1060,7 @@ default_backends = LCG
         try:
             batch_default = allPlugins.find('backends', batch_default_name)
         except Exception as x:
-            raise Ganga.Utility.Config.ConfigError(
-                'Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
+            raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
         else:
             allPlugins.add(batch_default, 'backends', 'Batch')
             exportToGPI('Batch', batch_default._proxyClass, 'Classes')
@@ -1234,10 +1230,10 @@ default_backends = LCG
         exportToGPI('force_job_failed', force_job_failed, 'Functions')
 
         # import default runtime modules
-        from . import Repository_runtime
+        from Ganga.Runtime import Repository_runtime
         import Ganga.Core
 
-        from .associations import load_associations
+        from Ganga.Runtime.associations import load_associations
         load_associations()
 
         # bootstrap user-defined runtime modules and enable transient named
@@ -1264,7 +1260,7 @@ default_backends = LCG
                     'Mechanism for tracking use of shared directory resources')
 
         # bootstrap the workspace
-        from . import Workspace_runtime
+        from Ganga.Runtime import Workspace_runtime
         Workspace_runtime.bootstrap()
 
         # migration repository
@@ -1302,10 +1298,9 @@ default_backends = LCG
         for r in allRuntimes.values():
             try:
                 r.postBootstrapHook()
-            except Exception as x:
-                Ganga.Utility.logging.log_user_exception()
-                logger.error(
-                    "problems with post bootstrap hook for %s", r.name,)
+            except Exception as err:
+                logger.error("problems with post bootstrap hook for %s" % r.name)
+                logger.error("Reason: %s" % str(err))
 
     def startTestRunner(self):
         """
@@ -1420,7 +1415,7 @@ default_backends = LCG
 #            return _new_version
 
         # monitor the  ganga usage
-        from . import spyware
+        from Ganga.Runtime import spyware
 
         # this logic is a bit convoluted
         runs_script = len(self.args) > 0
@@ -1431,8 +1426,10 @@ default_backends = LCG
             else:
                 session_type += 'startup_script'
 
-        spyware.ganga_started(session_type, interactive=self.interactive, GUI=self.options.GUI, webgui=self.options.webgui,
-                              script_file=runs_script, text_shell=config['TextShell'], test_framework=self.options.TEST)
+        spyware.ganga_started(session_type=session_type, interactive=self.interactive,
+                              GUI=self.options.GUI, webgui=self.options.webgui,
+                              script_file=runs_script, text_shell=config['TextShell'],
+                              test_framework=self.options.TEST)
 
         if self.options.TEST:
             sys.argv = self.args
@@ -1476,20 +1473,20 @@ default_backends = LCG
         # possible.
         def _display(obj):
             if isinstance(obj, type):
-                print(obj)
+                sys.stdout.write(str(obj)+'\n')
                 return
             # if hasattr(obj,'_display'):
             #   print
             #   print obj._display(1)
             #   return
             elif hasattr(obj, '_impl') and hasattr(obj._impl, '_display'):
-                print(obj._display(1))
+                sys.stdout.write(str(obj._display(1))+'\n')
                 return
             elif hasattr(obj, '_display'):
-                print(obj._display(1))
+                sys.stdout.write(str(obj._display(1))+'\n')
                 return
             else:
-                print(obj)
+                sys.stdout.write(str(obj)+'\n')
             return
 
         shell = config['TextShell']
@@ -1502,8 +1499,7 @@ default_backends = LCG
             args = eval(ipconfig['args'])
 
             try:
-                logger.warning(
-                    'Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', os.environ['IPYTHONDIR'])
+                logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', os.environ['IPYTHONDIR'])
             except KeyError:
                 newpath = os.path.expanduser('~/.ipython-ganga')
                 oldpath = os.path.expanduser('~/.ipython')
@@ -1626,8 +1622,8 @@ def exit( value=None ):
             import traceback
             traceback.print_exc(file=sys.stderr)
         else:
-            print(x, file=sys.stderr)
-            print('(consider --debug option for more information)', file=sys.stderr)
+            sys.stderr.write(str(x)+'\n')
+            sys.stderr.write('(consider --debug option for more information)\n')
 
 #
 #
