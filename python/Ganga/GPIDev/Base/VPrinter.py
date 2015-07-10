@@ -266,7 +266,11 @@ def full_print(obj, out=None):
         out = sys.stdout
 
     from Ganga.GPIDev.Lib.GangaList import GangaList
-    if isType(obj, GangaList):
+
+    from Ganga.GPIDev.Base.Proxy import stripProxy
+    obj = stripProxy(obj)
+
+    if isinstance(obj, GangaList.GangaList):
         obj_len = len(obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)

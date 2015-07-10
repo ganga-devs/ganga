@@ -25,11 +25,19 @@ def isProxy(obj):
 #    return isinstance(obj.__class__, GPIProxyObject)
     # Alex changed for below as doesn't check class objects, only instances
     # e.g. isProxy(DiracFile) fails at the Ganga prompt
-    try:
+    import inspect
+    if inspect.isclass(obj):
         return issubclass(obj, GPIProxyObject)
-    except TypeError, err:
-        logger.debug("isProxy Exception: %s" % str(err))
+    else:
         return issubclass(obj.__class__, GPIProxyObject)
+
+    #try:
+    #    return issubclass(obj, GPIProxyObject)
+    #except TypeError, err:
+    #    logger.debug("isProxy Exception: %s" % str(err))
+    #    import traceback
+    #    traceback.print_stack()
+    #    return issubclass(obj.__class__, GPIProxyObject)
 
 
 def isType(obj, type_or_seq):

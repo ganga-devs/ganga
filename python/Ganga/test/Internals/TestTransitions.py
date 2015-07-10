@@ -46,12 +46,11 @@ class TestTransitions(GangaGPITestCase):
         m = MockExeApplication()
 
         j = Job(backend=Local())
-        j._impl.application = m
+        j.application = m
 
         j.submit()
 
         assert sleep_until_completed(j), 'Job should complete'
         assert j.status == 'completed'
         assert j.application.called, 'The method should have been called'
-        assert len(
-            expected_minimal_states) == 0, 'We should have seen all the minimal states'
+        assert len(expected_minimal_states) == 0, 'We should have seen all the minimal states'

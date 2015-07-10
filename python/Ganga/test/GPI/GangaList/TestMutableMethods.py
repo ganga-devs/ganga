@@ -6,14 +6,18 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import decorateListEntries
 from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-GangaList = GangaList._proxyClass
 
 import random
 import string
+import time
 
 from Ganga.Utility.logging import getLogger
+
+GangaList = GangaList._proxyClass
 logger = getLogger(modulename=True)
 
+g_random = random
+g_random.seed(time.time())
 
 def completeJob(job):
 
@@ -30,10 +34,11 @@ class TestMutableMethods(GangaGPITestCase):
         self.test_job = Job()
 
     def _makeRandomString(self):
-        str_len = random.randint(3, 10)
+        global g_random
+        str_len = g_random.randint(3, 10)
         s = ''
         for _ in range(str_len):
-            s += random.choice(string.ascii_letters)
+            s += g_random.choice(string.ascii_letters)
         return s
 
     def _makeRandomTFile(self):
@@ -262,8 +267,7 @@ class TestMutableMethods(GangaGPITestCase):
             testList(j.inputsandbox)
 
             # now use mutable methods instead
-            j.inputsandbox.extend(
-                [self._makeRandomString() for _ in range(10)])
+            j.inputsandbox.extend([self._makeRandomString() for _ in range(10)])
             assert len(j.inputsandbox) == 20, 'Must be added correctly'
             testList(j.inputsandbox)
 
@@ -331,3 +335,4 @@ class TestMutableMethods(GangaGPITestCase):
         sio = StringIO.StringIO()
         full_print(g, sio)
         assert g_string == sio.getvalue(), 'Orphaned lists should full_print'
+
