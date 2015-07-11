@@ -118,6 +118,7 @@ OutputFile objects to be copied to all jobs"),
         return 1
 
     def initialize(self):
+        from Ganga import GPI
         self.backend = stripProxy(GPI.Local())
         self.updateStatus("new")
 

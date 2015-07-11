@@ -374,8 +374,8 @@ def p(j, f=None):
 
 
 def g(j):
-    import StringIO
-    s = StringIO.StringIO()
+    import cStringIO
+    s = cStringIO.StringIO()
     p(j, s)
     return Parser().parse(s.getvalue())
 

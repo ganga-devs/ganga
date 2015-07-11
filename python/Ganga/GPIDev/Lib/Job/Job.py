@@ -187,7 +187,7 @@ class Job(GangaObject):
                                      'splitter': ComponentItem('splitters', defvalue=None, load_default=0, optional=1, doc='optional splitter'),
                                      'subjobs': ComponentItem('jobs', defvalue=[], sequence=1, protected=1, load_default=0, copyable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
                                      'master': ComponentItem('jobs', getter="_getParent", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, doc='master job', visitable=0),
-                                     'postprocessors': ComponentItem('postprocessor', defvalue=None, doc='list of postprocessors to run after job has finished'),
+                                     'postprocessors': ComponentItem('postprocessor', defvalue=GangaList(), doc='list of postprocessors to run after job has finished'),
                                      'merger': ComponentItem('mergers', defvalue=None, hidden=1, copyable=0, load_default=0, optional=1, doc='optional output merger'),
                                      'do_auto_resubmit': SimpleItem(defvalue=False, doc='Automatically resubmit failed subjobs'),
                                      'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1, copyable=0),
@@ -250,11 +250,9 @@ class Job(GangaObject):
                     if getConfig('Output')['ForbidLegacyInput']:
 
                         if original_job.inputfiles == []:
-                            self.inputfiles = copy.deepcopy(
-                                original_job.master.inputfiles)
+                            self.inputfiles = copy.deepcopy(original_job.master.inputfiles)
                         else:
-                            self.inputfiles = copy.deepcopy(
-                                original_job.inputfiles)
+                            self.inputfiles = copy.deepcopy(original_job.inputfiles)
                         self.inputsandbox = []
                     else:
 
@@ -327,13 +325,11 @@ class Job(GangaObject):
             import Ganga.GPIDev.Lib.File.FileUtils
             if self.inputsandbox != []:
                 for i in self.inputsandbox:
-                    c.inputfiles.append(
-                        Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                    c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
             else:
                 if self.master and self.master.inputsandbox != []:
                     for i in self.master.inputsandbox:
-                        c.inputfiles.append(
-                            Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
+                        c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
 
             c.inputsandbox = []
 
@@ -438,22 +434,26 @@ class Job(GangaObject):
         # If we ask for 'inputfiles', return the expanded list of subfiles
         if name == 'inputfiles':
 
-            currentInputFiles = object.__getattribute__(self, name)
+            return object.__getattribute__(self, name)
+            #return self.__getattribute__(name)
 
-            import re
-            regex = re.compile('[*?\[\]]')
-            files = GangaList()
-
-            for f in currentInputFiles:
-                f.processWildcardMatches()  # Expand out subfiles
-                if regex.search(f.namePattern) and hasattr(stripProxy(f), 'subfiles') and stripProxy(f).subfiles:
-                    files.extend(makeGangaListByRef(stripProxy(f).subfiles))
-                else:
-                    files.append(f)
-
-            currentInputFiles = files
-
-            return addProxy(currentInputFiles)
+            #currentInputFiles = object.__getattribute__(self, name)
+            #currentInputFiles = self.__getattribute__(name)
+            #
+            #import re
+            #regex = re.compile('[*?\[\]]')
+            #files = GangaList()
+            #
+            #for f in currentInputFiles:
+            #    f.processWildcardMatches()  # Expand out subfiles
+            #    if regex.search(f.namePattern) and hasattr(stripProxy(f), 'subfiles') and stripProxy(f).subfiles:
+            #        files.extend(makeGangaListByRef(stripProxy(f).subfiles))
+            #    else:
+            #        files.append(f)
+            #
+            #currentInputFiles = files
+            #
+            #return addProxy(currentInputFiles)
 
         if name == 'subjobs':
             return self._subjobs_proxy()
@@ -641,8 +641,7 @@ class Job(GangaObject):
 
         if new_status == 'completed' or new_status == 'failed' or new_status == 'killed':
             if len(self.postprocessors) > 0:
-                logger.info("Running postprocessor for Job %s" %
-                            self.getFQID('.'))
+                logger.info("Running postprocessor for Job %s" % self.getFQID('.'))
                 passed = self.postprocessors.execute(self, new_status)
                 if passed is not True:
                     new_status = 'failed'

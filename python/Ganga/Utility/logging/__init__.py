@@ -470,8 +470,8 @@ def force_global_level(level):
 
 def log_user_exception(logger=None, debug=False):
     import traceback
-    import StringIO
-    buf = StringIO.StringIO()
+    import cStringIO
+    buf = cStringIO.StringIO()
     traceback.print_exc(file=buf)
     banner = 10 * '-' + ' error in user/extension code ' + 10 * '-'
     if not logger:

@@ -55,6 +55,7 @@ class Transform(GangaObject):
         return 1
 
     def initialize(self):
+        from Ganga import GPI
         self.backend = stripProxy(GPI.Local())
 
     def check(self):

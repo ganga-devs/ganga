@@ -26,9 +26,12 @@ class SubJobXMLList(GangaObject):
     _schema = Schema(Version(1, 0), {'_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),})
     _enable_config = 1
 
-    def __init__(self, jobDirectory, registry, dataFileName, load_backup):
+    def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False):
 
         super(SubJobXMLList, self).__init__()
+
+        if jobDirectory == '':
+            return
 
         self.jobDirectory = jobDirectory
         from Ganga.Core.GangaRepository.VStreamer import from_file, to_file

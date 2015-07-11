@@ -48,8 +48,8 @@ class MultiPostProcessor(IPostProcessor):
     """
 
     _category = 'postprocessor'
-    _exportmethods = [
-        '__add__', '__get__', '__str__', '__getitem__', 'append', 'remove']
+    #_exportmethods = ['__add__', '__get__', '__str__', '__getitem__', 'append', 'remove']
+    _exportmethods = ['__add__', '__get__', '__getitem__', 'append', 'remove']
     _name = 'MultiPostProcessor'
     _schema = Schema(Version(1, 0), {
         'process_objects': ComponentItem('postprocessor', defvalue=[], hidden=1, doc='A list of Processors to run', sequence=1)

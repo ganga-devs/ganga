@@ -196,8 +196,8 @@ class VSummaryPrinter(VPrinter):
         return function_pointer_available
 
     def _CallPrintSummaryTree(self, obj):
-        import StringIO
-        sio = StringIO.StringIO()
+        import cStringIO
+        sio = cStringIO.StringIO()
         runProxyMethod(obj, 'printSummaryTree', self.level,
                        self.verbosity_level, self.indent(), sio, self.selection)
         result = sio.getvalue()
@@ -275,12 +275,12 @@ def full_print(obj, out=None):
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
-            import StringIO
+            import cStringIO
             outString = '['
             count = 0
             for x in obj:
                 if isinstance(x, GangaObject):
-                    sio = StringIO.StringIO()
+                    sio = cStringIO.StringIO()
                     x.printTree(sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
@@ -297,8 +297,8 @@ def full_print(obj, out=None):
         return
 
     if isProxy(obj):
-        import StringIO
-        sio = StringIO.StringIO()
+        import cStringIO
+        sio = cStringIO.StringIO()
         runProxyMethod(obj, 'printTree', sio)
         print(sio.getvalue(), end=' ', file=out)
     else:
@@ -312,17 +312,17 @@ def summary_print(obj, out=None):
         out = sys.stdout
 
     from Ganga.GPIDev.Lib.GangaList import GangaList
-    if isType(obj, GangaList):
+    if isType(obj, GangaList.GangaList):
         obj_len = len(obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
-            import StringIO
+            import cStringIO
             outString = '['
             count = 0
             for x in obj:
                 if isinstance(x, GangaObject):
-                    sio = StringIO.StringIO()
+                    sio = cStringIO.StringIO()
                     x.printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()
                     # remove trailing whitespace and newlines
@@ -339,8 +339,8 @@ def summary_print(obj, out=None):
         return
 
     if isProxy(obj):
-        import StringIO
-        sio = StringIO.StringIO()
+        import cStringIO
+        sio = cStringIO.StringIO()
         runProxyMethod(obj, 'printSummaryTree', 0, 0, '', sio)
         print(sio.getvalue(), end=' ', file=out)
     else:

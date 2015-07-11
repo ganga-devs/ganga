@@ -217,10 +217,9 @@ class TestMutableMethods(GangaGPITestCase):
     def testBoundMethodPrintsSequence(self):
 
         # sequences
-        assert str(
-            self.test_job.application.bound_print_comp) == '_print_summary_bound_comp'
-        assert str(
-            self.test_job.application.bound_print_simple) == '_print_summary_bound_simple'
+        print(str(self.test_job.application.bound_print_comp))
+        assert str(self.test_job.application.bound_print_comp) == '_print_summary_bound_comp'
+        assert str(self.test_job.application.bound_print_simple) == '_print_summary_bound_simple'
 
     def testBoundMethodPrintsNonSequence(self):
         # due to lack of implementation
@@ -262,12 +261,14 @@ class TestMutableMethods(GangaGPITestCase):
             testList(j.inputsandbox)
 
             # now create with shortcuts - must still work
-            j.inputsandbox = [self._makeRandomString() for _ in range(10)]
+            list_one = [self._makeRandomString() for _ in range(10)]
+            j.inputsandbox = list_one
             assert len(j.inputsandbox) == 10, 'Must be added correctly'
             testList(j.inputsandbox)
 
             # now use mutable methods instead
-            j.inputsandbox.extend([self._makeRandomString() for _ in range(10)])
+            list_two = [self._makeRandomString() for _ in range(10)]
+            j.inputsandbox.extend(list_two)
             assert len(j.inputsandbox) == 20, 'Must be added correctly'
             testList(j.inputsandbox)
 
@@ -283,18 +284,24 @@ class TestMutableMethods(GangaGPITestCase):
                     assert isType(
                         l, IGangaFile), "All entries must be of type IGangaFile"
 
-            j.inputfiles = [
-                LocalFile(self._makeRandomString()) for _ in range(10)]
+            list_one = [LocalFile(self._makeRandomString()) for _ in range(10)]
+            j.inputfiles = list_one
             assert len(j.inputfiles) == 10, "Must add correctly"
             testList(j.inputfiles)
 
-            j.inputfiles = [
-                LocalFile(self._makeRandomString()) for _ in range(10)]
+            list_two = [LocalFile(self._makeRandomString()) for _ in range(10)]
+            j.inputfiles = list_two
             assert len(j.inputfiles) == 10, "Must still be added correctly"
+            assert j.inputfiles == list_two, "Must have been overloaded"
             testList(j.inputfiles)
 
-            j.inputfiles.extend(
-                [LocalFile(self._makeRandomString()) for _ in range(10)])
+            list_third = [LocalFile(self._makeRandomString()) for _ in range(10)]
+            j.inputfiles.extend(list_third)
+            #print(list_two)
+            #print(list_third)
+            #print(j.inputfiles)
+            #for f in list_third:
+            #    j.inputfiles.append(f)
             assert len(j.inputfiles) == 20, "Must be added correctly finally"
             testList(j.inputfiles)
 
@@ -308,6 +315,9 @@ class TestMutableMethods(GangaGPITestCase):
 
         g = GangaList()
         l = []
+        print('"'+str(g)+'"')
+        print('"'+str(l)+'"')
+        print(l == g)
         assert str(l) == str(g), 'Empty lists should print the same'
 
         for i in xrange(100):
@@ -334,5 +344,5 @@ class TestMutableMethods(GangaGPITestCase):
         import StringIO
         sio = StringIO.StringIO()
         full_print(g, sio)
-        assert g_string == sio.getvalue(), 'Orphaned lists should full_print'
+        assert g_string == str(sio.getvalue()).rstrip(), 'Orphaned lists should full_print'
 

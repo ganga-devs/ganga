@@ -198,8 +198,7 @@ class Node(object):
         selection: See VPrinter for an explaintion of this.
         """
         from .VPrinter import VSummaryPrinter
-        self.accept(
-            VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection))
+        self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection))
 
     def __eq__(self, node):
 
@@ -212,6 +211,7 @@ class Node(object):
             if item['comparable']:
                 if getattr(self, name) != getattr(node, name):
                     return 0
+
         return 1
 
     def __ne__(self, node):
@@ -340,8 +340,7 @@ class Descriptor(object):
         if item.isA(Schema.ComponentItem):
             if item['sequence']:
                 if item['preparable']:
-                    val = makeGangaList(
-                        val, cloneVal, parent=obj, preparable=True)
+                    val = makeGangaList(val, cloneVal, parent=obj, preparable=True)
                 else:
                     val = makeGangaList(val, cloneVal, parent=obj)
             else:
@@ -704,8 +703,7 @@ class GangaObject(Node):
 def string_type_shortcut_filter(val, item):
     if isinstance(val, str):
         if item is None:
-            raise ValueError(
-                'cannot apply default string conversion, probably you are trying to use it in the constructor')
+            raise ValueError('cannot apply default string conversion, probably you are trying to use it in the constructor')
         from Ganga.Utility.Plugin import allPlugins, PluginManagerError
         try:
             obj = allPlugins.find(item['category'], val)()

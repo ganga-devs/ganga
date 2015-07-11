@@ -7,15 +7,16 @@ from __future__ import absolute_import
 
 import Ganga.Utility.logging
 from Ganga.Utility.Config import getConfig
-logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 import Ganga.GPIDev.Schema as Schema
 
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
+import os
+
 prepconfig = getConfig('Preparable')
 
-import os
+logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 # some proxy related convieniance methods
 
@@ -381,12 +382,11 @@ def GPIProxyClassFactory(name, pluginclass):
     """)
 
     def _str(self):
-        import StringIO
-        sio = StringIO.StringIO()
+        import cStringIO
+        sio = cStringIO.StringIO()
         self._impl.printSummaryTree(0, 0, '', out=sio)
-        return sio.getvalue()
-    helptext(
-        _str, """Return a printable string representing %(classname)s object as a tree of properties.""")
+        return str(sio.getvalue()).rstrip()
+    helptext(_str, """Return a printable string representing %(classname)s object as a tree of properties.""")
 
     def _repr(self):
         if hasattr(self._impl, '_repr'):
@@ -406,9 +406,9 @@ def GPIProxyClassFactory(name, pluginclass):
             result = self._impl.__eq__(x._impl)
         else:
             result = self._impl.__eq__(x)
+
         return result
-    helptext(
-        _eq, "Equality operator (==), compare the %(classname)s properties which are declared as [comparable].")
+    helptext(_eq, "Equality operator (==), compare the %(classname)s properties which are declared as [comparable].")
 
     def _ne(self, x):
         if isinstance(x, GPIProxyObject):

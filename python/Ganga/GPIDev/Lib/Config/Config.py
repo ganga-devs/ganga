@@ -93,7 +93,7 @@ class ConfigProxy(object):
 
         levels = ['**', '* ', '  ']
         levels = map(lambda x: markup(x, fg.red), levels)
-        from StringIO import StringIO
+        from cStringIO import StringIO
         sio = StringIO()
         sio.write('%s' % markup(self._impl.name, name_colour) +
                   ' : ' + markup(self._impl.docstring, docstring_colour) + '\n')
@@ -172,7 +172,7 @@ class MainConfigProxy(object):
 
         fg = Foreground()
 
-        from StringIO import StringIO
+        from cStringIO import StringIO
         sio = StringIO()
         sio.write("Ganga Configuration" + '\n')
         sections = sorted(self._impl.keys())
