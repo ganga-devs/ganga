@@ -559,7 +559,10 @@ class GangaObject(Node):
             _haveLocked = False
             _counter = 1
             _sleep_size = 2.
-            _timeOut = getConfig('Configuration')['DiskIOTimeout']
+            try:
+                _timeOut = getConfig('Configuration')['DiskIOTimeout']
+            except ConfigurationError:
+                _timeOut = 5. # 5sec hardcoded default
             while not _haveLocked:
                 err = None
                 from Ganga.Core.GangaRepository.Registry import RegistryLockError, RegistryAccessError
