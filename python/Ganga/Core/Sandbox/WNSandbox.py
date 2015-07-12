@@ -11,7 +11,7 @@ PYTHON_DIR = '_python'
 import os
 
 import tarfile
-
+from contextlib import closing
 
 def getPackedInputSandbox(tarpath, dest_dir='.'):
     """Get all sandbox_files from tarball and write them to the workdir.
@@ -21,7 +21,7 @@ def getPackedInputSandbox(tarpath, dest_dir='.'):
       'dest_dir': a destination directory
     """
 
-    with tarfile.open(tarpath, "r:gz") as tf:
+    with closing(tarfile.open(tarpath, "r:gz")) as tf:
         tf.extractall(dest_dir)
 
 
