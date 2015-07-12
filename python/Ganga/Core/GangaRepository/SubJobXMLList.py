@@ -19,7 +19,10 @@ class SubJobXMLList(GangaList.GangaList):
     _schema = GangaList.GangaList._schema.inherit_copy()
     _enable_config = 1
 
-    def __init__(self, jobDirectory, registry, dataFileName, load_backup ):
+    def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False ):
+
+        if jobDirectory == '' and registry is None:
+            return
 
         self.jobDirectory = jobDirectory
         from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
@@ -46,22 +49,38 @@ class SubJobXMLList(GangaList.GangaList):
         import os.path
         index_file = os.path.join(self.jobDirectory, self.subjob_master_index_name )
         if os.path.isfile( index_file ):
+            index_file_obj = None
             try:
                 from Ganga.Core.GangaRepository.PickleStreamer import from_file
-                index_file_obj = open( index_file, "r" )
-                self.subjobIndexData = from_file( index_file_obj )[0]
-                index_file_obj.close()
-                for subjob in self.subjobIndexData.keys():
-                    mod_time = self.subjobIndexData.get(subjob)['modified']
-                    disk_location = self.__get_dataFile(subjob)
-                    import os
-                    disk_time = os.stat(disk_location).st_ctime
-                    if mod_time != disk_time:
-                        self.subjobIndexData = {}
-                        break
+                try:
+                    index_file_obj = open( index_file, "r" )
+                    self.subjobIndexData = from_file( index_file_obj )[0]
+                except IOError, err:
+                    self.subjobIndexData = None
+
+                if self.subjobIndexData is None:
+                    self.subjobIndexData = {}
+                else:
+                    for subjob in self.subjobIndexData.keys():
+                        index_data = self.subjobIndexData.get(subjob)
+                        if index_data is not None and 'modified' in index_data:
+                            mod_time = index_data['modified']
+                            disk_location = self.__get_dataFile(str(subjob))
+                            import os
+                            disk_time = os.stat(disk_location).st_ctime
+                            if mod_time != disk_time:
+                                self.subjobIndexData = {}
+                                break
+                        else:
+                            self.subjobIndexData = {}
             except Exception, err:
                 logger.error( "Subjob Index file open, error: %s" % str(err) )
                 self.subjobIndexData = {}
+            finally:
+                if index_file_obj is not None:
+                    index_file_obj.close()
+                if self.subjobIndexData is None:
+                    self.subjobIndexData = {}
         return
 
     def write_subJobIndex(self):
