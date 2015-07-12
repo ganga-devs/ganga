@@ -965,12 +965,11 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             # in some cases the reexecution of the process is needed for LD_LIBRARY_PATH to take effect
             # re-exec the process if it is allowed in the options
             if self.options.rexec:
-                logger.debug(
-                    're-executing the process for LD_LIBRARY_PATH changes to take effect')
+                logger.debug('re-executing the process for LD_LIBRARY_PATH changes to take effect')
                 os.environ['GANGA_INTERNAL_PROCREEXEC'] = '1'
                 prog = os.path.normpath(sys.argv[0])
-                self.logger.debug('Program: %s' % str(prog))
-                self.logger.debug('sys.argv: %s' % str(sys.argv))
+                logger.debug('Program: %s' % str(prog))
+                logger.debug('sys.argv: %s' % str(sys.argv))
                 os.execv(prog, sys.argv)
 
         else:
