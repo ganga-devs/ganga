@@ -1414,7 +1414,7 @@ class Job(GangaObject):
                 #self.subjobs = subjobs
                 # for j in self.subjobs:
                 for j in subjobs:
-                    j.info.uuid = Ganga.Utility.guid.uuid()
+                    j.info.uuid = uuid.uuid()
                     j.status = 'new'
                     #j.splitter = None
                     j.time.timenow('new')
