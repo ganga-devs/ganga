@@ -74,7 +74,7 @@ else:
     os.environ['JOBOPTPATH'] = '%s/%s/%s_%s/%s/%s/%s/options/job.opts' \
                                % (os.environ[app + '_release_area'],app_upper,
                                   app_upper,version,package,app,version)
-    print 'Using the master optionsfile:', opts
+    print('Using the master optionsfile: '+ str(opts))
     sys.stdout.flush()
     
 """

@@ -547,7 +547,7 @@ class SBInputPersonalProduction(Dataset):
         
         try:
             self.__sbcurrent()
-        except GangaException, e:
+        except GangaException as e:
             logger.debug(e)
             self.setSoftwareVersion()
     

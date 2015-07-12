@@ -114,9 +114,9 @@ class MultiTask(Task):
             ds_list = dq2.listDatasetsInContainer(self.getContainerName())
          except DQContainerDoesNotHaveDataset:
             pass
-         except Exception, x:
+         except Exception as x:
             logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
-         except DQException, x:
+         except DQException as x:
             logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
       finally:
           dq2_lock.release()
@@ -163,7 +163,7 @@ class MultiTask(Task):
                      logger.error("Found no tid dataset but multiple datasets match %s*!" % dset)
                      return
                   tid_datasets = [dslist[0]]
-         except Exception, e:
+         except Exception as e:
             logger.error('DQ2 Error while listing dataset %s*! %s' % (dset, e))
             return
          logger.info("Found %i datasets matching %s..." % (len(tid_datasets), dset))

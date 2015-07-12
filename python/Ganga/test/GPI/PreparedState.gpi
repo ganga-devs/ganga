@@ -280,10 +280,3 @@ tmpname = box(box.ids()[-1]).is_prepared.name
 shareref.lookup(box(box.ids()[-1]).is_prepared.name, unprepare=True)
 s=shareref._impl.name
 assert s[tmpname] == 0, 'Test 38c failed; shareref.lookup() didnt behave as expected'
-
-
-
-
-print "############################"
-print "REACHED END OF PREPARE TESTS"
-print "############################"

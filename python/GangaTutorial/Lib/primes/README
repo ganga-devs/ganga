@@ -14,7 +14,7 @@ j.submit()
 # when the job is completed look into standard output
 j.peek()
 j.peek('factors-4643871513989286.dat')
-print j.outputdir
+print(j.outputdir)
 cat $j.outputdir/*.dat
 
 # use a helper function to check if we found all primes

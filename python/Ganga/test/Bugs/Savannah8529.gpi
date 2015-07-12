@@ -9,7 +9,6 @@ j3 = Job(application = TestApplication())
 
 j4 = Job(application = "TestApplication")
 
-print j1, j2, j3, j4
 assert(j1.application.derived_value == j2.application.derived_value)
 assert(j2.application.derived_value == j3.application.derived_value)
 assert(j3.application.derived_value == j4.application.derived_value)

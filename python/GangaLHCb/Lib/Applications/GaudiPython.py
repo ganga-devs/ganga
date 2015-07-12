@@ -150,8 +150,6 @@ class GaudiPython(GaudiBase):
         #master_input_files += self.script[:]
         #return (None,self.extra)
         #return (None,GaudiJobConfig(inputbox=master_input_files))
-        #print "CONFIGURE ENV:"
-        #print self._getshell()
         return (None, StandardJobConfig(env = None )) #self._getshell() ))
 
     def configure(self,master_appconfig):
@@ -179,8 +177,6 @@ class GaudiPython(GaudiBase):
         #self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
         #return (None,self.extra)
         logger.debug( "Returning Job Configuration" )
-        #print "CONFIGURE2 ENV:"
-        #print self._getshell()
         return (None, StandardJobConfig(inputbox=input_files,
                                        outputbox=outputsandbox,
                                        env = None )) #self._getshell()))

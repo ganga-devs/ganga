@@ -511,7 +511,7 @@ class MultiTransform(Transform):
                       else:
                           mj.outputdata.retrieve(blocking=True, subjobDownload=True, outputNamesRE=".root")
 
-                  except Exception, x:
+                  except Exception as x:
                       logger.error("Exception during retrieve %s %s" % (x.__class__,x))
                   
                   # check if the download worked
@@ -572,7 +572,7 @@ class MultiTransform(Transform):
 
                       try:
                           self.merger.merge( subjobs = joblist, local_location = local_location)
-                      except Exception, x:
+                      except Exception as x:
                           logger.error("Exception during merger %s %s" % (x.__class__,x))
                       
                       # check files are there
@@ -625,7 +625,7 @@ class MultiTransform(Transform):
 
               try:
                   self.merger.merge( subjobs = joblist, local_location = local_location)
-              except Exception, x:
+              except Exception as x:
                   logger.error("Exception during merger %s %s" % (x.__class__,x))
                       
               # check files are there
@@ -1107,7 +1107,7 @@ class MultiTransform(Transform):
       #sjl = splitter.split(self)
       try:
           sjl = splitter.split(self)
-      except Exception, x:          
+      except Exception as x:          
           logger.error('Problem in Task %i, Transform %i, Unit %i: General Exception during split %s %s\nDeactivating unit.' %
                        (self._getParent().id, self.getID(), unit_num, x.__class__,x, ))
           self.unit_state_list[unit_num]['active'] = False
@@ -1115,7 +1115,7 @@ class MultiTransform(Transform):
           self.unit_state_list[unit_num]['reason'] = "Error during split. No valid site?"
           self.inputdata = temp_inds
           return
-      except DQException, x:
+      except DQException as x:
           logger.error("Problem in Task %i, Transform %i, Unit %i: Exception in DQ2 during split %s %s\nDeactivating unit. Maybe no valid sites found?" %
                        (self._getParent().id, self.getID(), unit_num, x.__class__,x))
           self.unit_state_list[unit_num]['active'] = False
@@ -1303,9 +1303,9 @@ class MultiTransform(Transform):
                   dq2.registerContainer(trf_container)
                   logger.info('Registered container for Transform %i: %s' % (self.getID(), trf_container))
                   
-              except Exception, x:
+              except Exception as x:
                   logger.error('Problem registering container for Transform %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
-              except DQException, x:
+              except DQException as x:
                   logger.error('DQ2 Problem registering container for Transform %i, %s : %s %s' % (self.getID(), trf_container,x.__class__, x))
 
           if j.subjobs:
@@ -1315,9 +1315,9 @@ class MultiTransform(Transform):
                       dq2.registerDatasetsInContainer(trf_container, [ ds ] )
                   except DQContainerAlreadyHasDataset:
                       pass
-                  except Exception, x:
+                  except Exception as x:
                       logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-                  except DQException, x:
+                  except DQException as x:
                       logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
           else:
               try:
@@ -1325,9 +1325,9 @@ class MultiTransform(Transform):
                   
               except DQContainerAlreadyHasDataset:
                   pass
-              except Exception, x:
+              except Exception as x:
                   logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-              except DQException, x:
+              except DQException as x:
                   logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
       finally:
           dq2_lock.release()
@@ -1346,9 +1346,9 @@ class MultiTransform(Transform):
               try:
                   dq2.registerContainer(task_container)
                   logger.info('Registered container for Task %i: %s' % (self._getParent().id, task_container))
-              except Exception, x:
+              except Exception as x:
                   logger.error('Problem registering container for Task %i, %s : %s %s' % (self._getParent().id, task_container,x.__class__, x))
-              except DQException, x:
+              except DQException as x:
                   logger.error('DQ2 Problem registering container for Task %i, %s : %s %s' % (self._getParent().id, task_container,x.__class__, x))
 
           if j.subjobs:
@@ -1358,9 +1358,9 @@ class MultiTransform(Transform):
                       dq2.registerDatasetsInContainer(task_container, [ ds ] )
                   except DQContainerAlreadyHasDataset:
                       pass
-                  except Exception, x:
+                  except Exception as x:
                       logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-                  except DQException, x:
+                  except DQException as x:
                       logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
           else:
               try:
@@ -1368,9 +1368,9 @@ class MultiTransform(Transform):
                   
               except DQContainerAlreadyHasDataset:
                   pass
-              except Exception, x:
+              except Exception as x:
                   logger.error('Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-              except DQException, x:
+              except DQException as x:
                   logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
 
       finally:
@@ -1401,9 +1401,9 @@ class MultiTransform(Transform):
                           dq2.deleteDatasetsFromContainer(trf_container, [ ds ] )
                       except DQContainerDoesNotHaveDataset:
                           pass
-                      except Exception, x:
+                      except Exception as x:
                           logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-                      except DQException, x:
+                      except DQException as x:
                           logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
               else:
                   
@@ -1411,9 +1411,9 @@ class MultiTransform(Transform):
                       dq2.deleteDatasetsFromContainer(trf_container, [ j.outputdata.datasetname ] )
                   except DQContainerDoesNotHaveDataset:
                       pass
-                  except Exception, x:
+                  except Exception as x:
                       logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-                  except DQException, x:
+                  except DQException as x:
                           logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x)) 
       finally:
           dq2_lock.release()
@@ -1438,9 +1438,9 @@ class MultiTransform(Transform):
                           dq2.deleteDatasetsFromContainer(task_container, [ ds ] )
                       except DQContainerDoesNotHaveDataset:
                           pass
-                      except Exception, x:
+                      except Exception as x:
                           logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-                      except DQException, x:
+                      except DQException as x:
                           logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
               else:
                   
@@ -1448,9 +1448,9 @@ class MultiTransform(Transform):
                       dq2.deleteDatasetsFromContainer(task_container, [ j.outputdata.datasetname ] )
                   except DQContainerDoesNotHaveDataset:
                       pass
-                  except Exception, x:
+                  except Exception as x:
                       logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
-                  except DQException, x:
+                  except DQException as x:
                           logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x)) 
       finally:
           dq2_lock.release()
@@ -1488,9 +1488,9 @@ class MultiTransform(Transform):
               ds_list = dq2.listDatasetsInContainer(self.getContainerName())
           except DQContainerDoesNotHaveDataset:
               pass
-          except Exception, x:
+          except Exception as x:
               logger.error('Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
-          except DQException, x:
+          except DQException as x:
               logger.error('DQ2 Problem finding datasets associated with TRF container %s: %s %s' %( self.getContainerName(), x.__class__, x))
       finally:
           dq2_lock.release()
@@ -1510,9 +1510,9 @@ class MultiTransform(Transform):
               ds_list = dq2.listDatasetsInContainer(cont_name)
           except DQContainerDoesNotHaveDataset:
               pass
-          except Exception, x:
+          except Exception as x:
               logger.error('Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
-          except DQException, x:
+          except DQException as x:
               logger.error('DQ2 Problem finding datasets associated with Unit container %s: %s %s' %( cont_name, x.__class__, x))
       finally:
           dq2_lock.release()

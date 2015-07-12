@@ -1,4 +1,3 @@
 j = Job()
-print j
 assert(j.application.exe == 'echo2')
 assert(j.application.args == ['Hello World2'])

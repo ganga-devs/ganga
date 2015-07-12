@@ -173,7 +173,7 @@ def check_outputs(options):
             exists[i] = True
             any_exist = True
             print "check_outputs::LFN already in use %s" % lfc_path
-        except job_tools.JobToolsException, e:
+        except job_tools.JobToolsException as e:
             print "check_outputs::LFN unused %s, %s" % (lfc_path, e)
             all_exist = False
     # Now, if all exist, we need to append the return card and show that the job has in fact completed
@@ -202,7 +202,7 @@ def check_outputs(options):
                 dump_out[root_file]['cksum'] = checksum
                 dump_out[root_file]['name'] = se_name
                 dump_out[root_file]['lfc'] = lfc_path
-            except job_tools.JobToolsException, e:
+            except job_tools.JobToolsException as e:
                 print "check_outputs::Problem checking output for %s: %s" % (lfc_path, e)
                 raise
         return dump_out

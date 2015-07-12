@@ -1,49 +1,55 @@
 #!/usr/bin/env python
-import Queue, threading, traceback, signal
-import os, pickle, subprocess, types, time, threading
-from Ganga.Core.GangaThread                  import GangaThread
-from Ganga.Core                              import GangaException
-from Ganga.GPIDev.Credentials                import getCredential
-from Ganga.Utility.execute                   import execute
-from Ganga.Utility.logging                   import getLogger
-from Ganga.Utility.Config                    import getConfig
+import Queue
+import traceback
+import collections
+from Ganga.Core.GangaThread import GangaThread
+from Ganga.Utility.execute import execute
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.Config import getConfig
 
 logger = getLogger()
 from collections import namedtuple
-QueueElement   = namedtuple('QueueElement',  ['priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
-CommandInput   = namedtuple('CommandInput',  ['command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
-FunctionInput  = namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
+QueueElement = namedtuple('QueueElement',  [
+                          'priority', 'command_input', 'callback_func', 'fallback_func', 'name'])
+CommandInput = namedtuple('CommandInput',  [
+                          'command', 'timeout', 'env', 'cwd', 'shell', 'python_setup', 'eval_includes', 'update_env'])
+FunctionInput = namedtuple('FunctionInput', ['function', 'args', 'kwargs'])
+
 
 class WorkerThreadPool(object):
+
     """
     Client class through which Ganga objects interact with the local DIRAC server.
     """
-    __slots__ = ['__queue', '__worker_threads', '_saved_num_worker', '_saved_thread_prefix' ]
+    __slots__ = ['__queue', '__worker_threads',
+                 '_saved_num_worker', '_saved_thread_prefix']
 
-    def __init__( self,
-                  num_worker_threads   = getConfig('Queues')['NumWorkerThreads'],
-                  worker_thread_prefix = 'Worker_' ):
+    def __init__(self,
+                 num_worker_threads=getConfig('Queues')['NumWorkerThreads'],
+                 worker_thread_prefix='Worker_'):
         self.__queue = Queue.PriorityQueue()
         self.__worker_threads = []
 
         self._saved_num_worker = num_worker_threads
         self._saved_thread_prefix = worker_thread_prefix
 
-        self.__init_worker_threads( self._saved_num_worker, self._saved_thread_prefix )
+        self.__init_worker_threads(
+            self._saved_num_worker, self._saved_thread_prefix)
 
-    def __init_worker_threads(self, num_worker_threads, worker_thread_prefix ):
+    def __init_worker_threads(self, num_worker_threads, worker_thread_prefix):
         if len(self.__worker_threads) > 0:
             logger.warning("Threads already started!")
             for i in self.__worker_threads:
-                logger.info( "Worker Thread: %s is already running!" % i.gangaName )
+                logger.info(
+                    "Worker Thread: %s is already running!" % i.gangaName)
             return
 
         for i in range(num_worker_threads):
-            t = GangaThread(name = worker_thread_prefix + str(i),
-                            auto_register = False,
+            t = GangaThread(name=worker_thread_prefix + str(i),
+                            auto_register=False,
                             target=self.__worker_thread)
-            t._Thread__args=(t,)
-            t._name    = worker_thread_prefix + str(i)
+            t._Thread__args = (t,)
+            t._name = worker_thread_prefix + str(i)
             t._command = 'idle'
             t._timeout = 'N/A'
             t.start()
@@ -63,14 +69,16 @@ class WorkerThreadPool(object):
 
         oldname = thread.gangaName
 
-        ## Note can use threading.current_thread to get the thread rather than passing it as an arg
-        ## easier to unit test this way though with a dummy thread.
+        # Note can use threading.current_thread to get the thread rather than passing it as an arg
+        # easier to unit test this way though with a dummy thread.
         while not thread.should_stop():
             try:
                 item = self.__queue.get(True, 0.05)
-            except Queue.Empty: continue #wait 0.05 sec then loop again to give shutdown a chance
+            except Queue.Empty:
+                # wait 0.05 sec then loop again to give shutdown a chance
+                continue
 
-            #regster as a working thread
+            # regster as a working thread
             if isinstance(item, QueueElement):
                 oldname = thread.gangaName
                 thread.gangaName = item.name
@@ -83,15 +91,17 @@ class WorkerThreadPool(object):
                 self.__queue.task_done()
                 thread.unregister()
                 continue
-             
+
             if isinstance(item.command_input, FunctionInput):
                 thread._command = item.command_input.function.__name__
             elif isinstance(item.command_input, CommandInput):
                 thread._command = item.command_input.command
                 thread._timeout = item.command_input.timeout
             else:
-                logger.error("Unrecognised input command type: '%s'" % repr(item.command_input))
-                logger.error("                       expected: ('FunctionInput' or 'CommandInput')")
+                logger.error(
+                    "Unrecognised input command type: '%s'" % repr(item.command_input))
+                logger.error(
+                    "                       expected: ('FunctionInput' or 'CommandInput')")
                 self.__queue.task_done()
                 thread.unregister()
                 continue
@@ -99,36 +109,46 @@ class WorkerThreadPool(object):
             try:
                 if isinstance(item.command_input, FunctionInput):
                     these_args = item.command_input.args
-                    if type( these_args ) == type(''):
-                        these_args = ( these_args, )
-                    result = item.command_input.function( *these_args, **item.command_input.kwargs)
+                    if isinstance(these_args, str):
+                        these_args = (these_args, )
+                    result = item.command_input.function(
+                        *these_args, **item.command_input.kwargs)
                 else:
                     result = execute(*item.command_input)
-            except Exception, e:
-                logger.error("Exception raised executing '%s' in Thread '%s':\n%s"%(thread._command, thread.gangaName, traceback.format_exc()))
+            except Exception as e:
+                logger.error("Exception raised executing '%s' in Thread '%s':\n%s" % (
+                    thread._command, thread.gangaName, traceback.format_exc()))
                 if item.fallback_func.function is not None:
                     if isinstance(item.fallback_func, FunctionInput):
                         thread._command = item.fallback_func.function.__name__
                         thread._timeout = 'N/A'
                         try:
-                            item.fallback_func.function(e, *item.fallback_func.args, **item.fallback_func.kwargs)
-                        except Exception, x:
-                            logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s"%(thread._command, thread.gangaName, traceback.format_exc()))
+                            item.fallback_func.function(
+                                e, *item.fallback_func.args, **item.fallback_func.kwargs)
+                        except Exception as x:
+                            logger.error("Exception raised in fallback function '%s' of Thread '%s':\n%s" % (
+                                thread._command, thread.gangaName, traceback.format_exc()))
                     else:
-                        logger.error("Unrecognised fallback_func type: '%s'" % repr(item.fallback_func))
-                        logger.error("                       expected: 'FunctionInput'")
+                        logger.error(
+                            "Unrecognised fallback_func type: '%s'" % repr(item.fallback_func))
+                        logger.error(
+                            "                       expected: 'FunctionInput'")
             else:
                 if item.callback_func.function is not None:
                     if isinstance(item.callback_func, FunctionInput):
                         thread._command = item.callback_func.function.__name__
                         thread._timeout = 'N/A'
                         try:
-                            item.callback_func.function(result, *item.callback_func.args, **item.callback_func.kwargs)
-                        except Exception, e:
-                            logger.error("Exception raised in callback_func '%s' of Thread '%s': %s"%(thread._command, thread.gangaName, traceback.format_exc()))
+                            item.callback_func.function(
+                                result, *item.callback_func.args, **item.callback_func.kwargs)
+                        except Exception as e:
+                            logger.error("Exception raised in callback_func '%s' of Thread '%s': %s" % (
+                                thread._command, thread.gangaName, traceback.format_exc()))
                     else:
-                        logger.error("Unrecognised callback_func type: '%s'" % repr(item.callback_func))
-                        logger.error("                       expected: 'FunctionInput'") 
+                        logger.error(
+                            "Unrecognised callback_func type: '%s'" % repr(item.callback_func))
+                        logger.error(
+                            "                       expected: 'FunctionInput'")
             finally:
                 # unregister as a working thread bcoz free
                 thread._command = 'idle'
@@ -142,33 +162,38 @@ class WorkerThreadPool(object):
                      function, args=(), kwargs={}, priority=5,
                      callback_func=None, callback_args=(), callback_kwargs={},
                      fallback_func=None, fallback_args=(), fallback_kwargs={},
-                     name = None):
+                     name=None):
 
-        if not isinstance(function, types.FunctionType) and not isinstance(function, types.MethodType):
-            logger.error('Only a python callable object may be added to the queue using the add_function() method')
+        if not isinstance(function, collections.Callable):
+            logger.error(
+                'Only a python callable object may be added to the queue using the add_function() method')
             return
-        self.__queue.put( QueueElement(priority      = priority,
-                                       command_input = FunctionInput(function, args, kwargs),
-                                       callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
-                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs), name = name
-                                       ) )
+        self.__queue.put(QueueElement(priority=priority,
+                                      command_input=FunctionInput(
+                                          function, args, kwargs),
+                                      callback_func=FunctionInput(
+                                          callback_func, callback_args, callback_kwargs),
+                                      fallback_func=FunctionInput(fallback_func, fallback_args, fallback_kwargs), name=name
+                                      ))
 
     def add_process(self,
                     command, timeout=None, env=None, cwd=None, shell=False,
                     python_setup='', eval_includes=None, update_env=False, priority=5,
                     callback_func=None, callback_args=(), callback_kwargs={},
                     fallback_func=None, fallback_args=(), fallback_kwargs={},
-                    name = None):
+                    name=None):
 
-        if type(command) != str:
+        if not isinstance(command, str):
             logger.error("Input command must be of type 'string'")
             return
-        self.__queue.put( QueueElement(priority      = priority,
-                                       command_input = CommandInput(command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
-                                       callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
-                                       fallback_func = FunctionInput(fallback_func, fallback_args, fallback_kwargs), name = name
-                                       ) )
-    #simple no need for callback
+        self.__queue.put(QueueElement(priority=priority,
+                                      command_input=CommandInput(
+                                          command, timeout, env, cwd, shell, python_setup, eval_includes, update_env),
+                                      callback_func=FunctionInput(
+                                          callback_func, callback_args, callback_kwargs),
+                                      fallback_func=FunctionInput(fallback_func, fallback_args, fallback_kwargs), name=name
+                                      ))
+    # simple no need for callback
 #    def add(self, function, *args, **kwargs):
 #        self.add_function(function, args, kwargs)
 
@@ -176,12 +201,13 @@ class WorkerThreadPool(object):
 #                python_setup=None, eval_includes=None, update_env=False,priority=5):
 #        pass
 
-    ## Legacy methods put here to keep it working while I migrate
-    ######################################################################################################
+    # Legacy methods put here to keep it working while I migrate
+    ##########################################################################
 #    def execute(self, command, timeout=getConfig('DIRAC')['Timeout'], env=default_env, cwd=None, shell=False, python_setup=default_includes, eval_includes=None, update_env=False):
-#        return execute(command, timeout, env, cwd, shell, python_setup,eval_includes,update_env)
+# return execute(command, timeout, env, cwd, shell,
+# python_setup,eval_includes,update_env)
 
-#    def execute_nonblocking( self, 
+#    def execute_nonblocking( self,
 #                             command,
 #                             command_args    = (),
 #                             command_kwargs  = {},
@@ -208,7 +234,7 @@ class WorkerThreadPool(object):
 #        only with args. Otherwise it is called with the result of executing the command on the local
 #        DIRAC server as the first arg.
 #        """
-#        if isinstance(command, types.FunctionType) or isinstance(command, types.MethodType):
+#        if isinstance(command, collections.Callable):
 #            self.__queue.put( QueueElement(priority      = priority,
 #                                           command_input = FunctionInput(command, command_args, command_kwargs),
 #                                           callback_func = FunctionInput(callback_func, callback_args, callback_kwargs),
@@ -223,26 +249,25 @@ class WorkerThreadPool(object):
 #
 #    ######################################################################################################
     def map(function, *iterables):
-        if not isinstance(function, types.FunctionType) \
-                and not isinstance(function, types.MethodType):
-            raise Exception('must be a function')
+        if not isinstance(function, collections.Callable):
+            raise TypeError('must be a function')
         for args in zip(*iterables):
-            self.__queue.put( QueueElement(priority      = 5,
-                                           command_input = FunctionInput(function, args, {})
-                                           ) )
-            
+            self.__queue.put(QueueElement(priority=5,
+                                          command_input=FunctionInput(
+                                              function, args, {})
+                                          ))
+
     def clear_queue(self):
         """
         Purges the thread pools queue.
         """
-        self.__queue.queue=[]
+        self.__queue.queue = []
 
     def get_queue(self):
         """
         Returns the current state of the multiprocess queue that the local DIRAC server is working through.
         """
         return self.__queue.queue[:]
-
 
     def worker_status(self):
         """
@@ -254,7 +279,7 @@ class WorkerThreadPool(object):
         for w in self.__worker_threads:
             w.stop()
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
-            #w.unregister()
+            # w.unregister()
             #del w
         #del self.__worker_threads[:]
         self.__worker_threads = []
@@ -264,7 +289,8 @@ class WorkerThreadPool(object):
         if len(self.__worker_threads) > 0:
             self._stop_worker_threads()
 
-        self.__init_worker_threads( self._saved_num_worker, self._saved_thread_prefix )
+        self.__init_worker_threads(
+            self._saved_num_worker, self._saved_thread_prefix)
         return
 
 ###################################################################

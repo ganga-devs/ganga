@@ -52,7 +52,7 @@ def filecheck(filename):
         # Assume first line is:
         # File: '/eos/atlas/user/m/mslater/tests/1.0/AnalysisSkeleton.aan.root'  Size: 1461388
         toks = out.split("\n")[0].split(":")
-        if len(toks) <> 3:
+        if len(toks) != 3:
             logger.warning("Unexpected EOS output '%s'" % (out.split("\n")[0]))
             return 1
 

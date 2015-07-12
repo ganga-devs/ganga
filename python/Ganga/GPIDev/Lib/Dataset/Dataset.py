@@ -1,15 +1,17 @@
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version
 
 # Dataset class represents the empty dataset and is a base class for specific, non-empty datasets.
 #
 # Derived dataset classes may be freely defined and may be either specific to applications or more generic.
 # The schema and internal interface is a convention between the dataset provider and the application provider.
 #
-# Applications are encouraged to test and handle empty datasets with the isEmpty() method.
+# Applications are encouraged to test and handle empty datasets with the
+# isEmpty() method.
+
 
 class Dataset(GangaObject):
-    _schema = Schema(Version(1,0), {})
+    _schema = Schema(Version(1, 0), {})
     _category = 'datasets'
     _name = "EmptyDataset"
 
@@ -20,7 +22,7 @@ class Dataset(GangaObject):
     # You may override it in your dataset definition but it is not mandatory.
     def isEmpty(self):
         return self._name == Dataset._name
-    
+
 #
 #
 #

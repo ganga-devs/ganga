@@ -1,23 +1,26 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 c = config['TestConfig']
-print c
+logger.info(c)
 
 
 def setopt(o,v):
-    print 'set option %s to value %s (%s type)'%(o,repr(v),type(v))
+    logger.info('set option %s to value %s (%s type)'%(o,repr(v),type(v)))
     c[o] = v
-    print 'what got set is %s (%s)'%(repr(c[o]),type(c[o]))
+    logger.info('what got set is %s (%s)'%(repr(c[o]),type(c[o])))
     return c[o]
 
 def is_unchanged(x,y):
     assert(x==y)
-    assert(type(x) is type(y))
+    assert(isinstance(x, type(y)))
     return 1
 
 def setopt_fails(opt,val):
     try:
         setopt(opt,val)
         assert(not 'setopt(%s,%s) should raise ConfigError!'%(opt,repr(val)))
-    except ConfigError,x:
+    except ConfigError as x:
         pass
 
 # for None anything can be set and no checking is performed

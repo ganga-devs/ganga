@@ -162,7 +162,7 @@ def isDQ2SRMSite(location):
     '''helper function to verify a location'''
     
     try:
-        return ToACache.sites[location].has_key('srm')
+        return 'srm' in ToACache.sites[location]
     except KeyError:
         return False
 
@@ -222,7 +222,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                     logger.warning('Dataset %s not found',dataset)
                     return {}
 
-        if not locations.has_key(datasetvuid):
+        if datasetvuid not in locations:
             logger.warning('Dataset %s not found',dataset)
             return {}
 
@@ -281,7 +281,7 @@ def dq2_list_locations_siteindex(datasets=[], timeout=15, days=2, replicaList=Fa
                     #dq2_lock.release()
                     pass
 
-                if datasetinfo.has_key('checkdate'):
+                if 'checkdate' in datasetinfo:
                     checkdate = datasetinfo['checkdate']
                     try:
                         checktime = time.mktime(time.strptime(checkdate.split(".")[0],'%Y-%m-%d %H:%M:%S'))
@@ -749,7 +749,7 @@ class DQ2Dataset(Dataset):
             # Sum up all dataset filesizes:
             sumfilesize = 0 
             for guid, lfn in allcontents:
-                if contents_size.has_key(guid):
+                if guid in contents_size:
                     try:
                         sumfilesize += contents_size[guid]
                         allcontentsSize.append((guid, (lfn, contents_size[guid],contents_checksum[guid],contents_scope[guid])))
@@ -762,7 +762,7 @@ class DQ2Dataset(Dataset):
                 tmpInfo = []
                 sumfilesizeDataset = 0
                 for guid, lfn in contents:
-                    if contents_size.has_key(guid):
+                    if guid in contents_size:
                         try:
                             sumfilesizeDataset += contents_size[guid]
                             contentsSize.append((guid, (lfn, contents_size[guid], contents_checksum[guid],contents_scope[guid])))
@@ -904,7 +904,7 @@ class DQ2Dataset(Dataset):
                         continue
                 #return []
 
-            if not locations.has_key(datasetvuid):
+            if datasetvuid not in locations:
                 logger.warning('Dataset %s not found',dataset)
                 continue
                 #return []
@@ -1023,7 +1023,7 @@ class DQ2Dataset(Dataset):
                     except:
                         datasetvuid = ''
 
-            if not locations.has_key(datasetvuid):
+            if datasetvuid not in locations:
                 print 'Dataset %s not found' % dataset
                 return
 
@@ -1076,7 +1076,7 @@ class DQ2Dataset(Dataset):
                         logger.warning('Dataset %s not found',dataset)
                         return
 
-            if not locations.has_key(datasetvuid):
+            if datasetvuid not in locations:
                 print 'Dataset %s not found' % dataset
                 return
             locations = locations[datasetvuid]
@@ -1475,7 +1475,7 @@ class DQ2OutputDataset(Dataset):
                 except:
                     logger.warning('Dataset %s not found',datasetname)
 
-        if not locations.has_key(datasetvuid):
+        if datasetvuid not in locations:
             logger.warning('Dataset %s not found',datasetname)
             return []
         if complete==0:
@@ -1567,7 +1567,7 @@ class DQ2OutputDataset(Dataset):
             except KeyError:
                 logger.error('Dataset %s not found', datasetname )
                 return -1
-            if not locations.has_key(datasetvuid):
+            if datasetvuid not in locations:
                 logger.error( 'Dataset %s not found', datasetname )
                 return -1
             alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
@@ -1577,7 +1577,7 @@ class DQ2OutputDataset(Dataset):
             if not siteID in alllocations:
                 try:
                     dq2.registerDatasetLocation(datasetname, siteID)
-                except DQInvalidRequestException, Value:
+                except DQInvalidRequestException as Value:
                     logger.error('Error registering location %s of dataset %s: %s', datasetname, siteID, Value) 
         finally:
             #dq2_lock.release()
@@ -1629,7 +1629,7 @@ class DQ2OutputDataset(Dataset):
             #dq2_lock.acquire()
             try:
                 ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
-            except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFrozenDatasetException), Value:
+            except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFrozenDatasetException) as Value:
                 logger.warning('Warning, some files already in dataset or dataset is frozen: %s', Value)
                 pass
         finally:
@@ -1675,7 +1675,7 @@ class DQ2OutputDataset(Dataset):
                         #dq2_lock.acquire()
                         try:
                             dq2.registerDatasetLocation(dataset, siteID)
-                        except DQLocationExistsException, DQInternalServerException:
+                        except (DQLocationExistsException, DQInternalServerException):
                             logger.debug("Dataset %s is already registered at location %s", dataset, siteID )
                         
                     finally:
@@ -1970,9 +1970,9 @@ class DQ2OutputDataset(Dataset):
         os.environ['DQ2_URL_SERVER'] = config['DQ2_URL_SERVER']
         os.environ['DQ2_URL_SERVER_SSL'] = config['DQ2_URL_SERVER_SSL']
         
-        if not os.environ.has_key('DQ2_LOCAL_ID'):
+        if 'DQ2_LOCAL_ID' not in os.environ:
             os.environ['DQ2_LOCAL_ID'] = "DUMMY"
-        if not os.environ.has_key('DQ2_COPY_COMMAND'):
+        if 'DQ2_COPY_COMMAND' not in os.environ:
             os.environ['DQ2_COPY_COMMAND']="lcg-cp --vo atlas"
 
         if (job.outputdata.outputdata and job.backend._name in [ 'LCG', 'CREAM'] and job.outputdata.output) or (job.backend._name == 'Panda'):

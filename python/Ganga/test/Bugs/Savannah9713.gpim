@@ -7,12 +7,10 @@ class Savannah9713(MultipassTest):
 
     def pass1(self):
         t = JobTemplate()
-        print t
         assert(t.status == 'template')
         return t.id
 
     def pass2(self):
         t = templates(self.data[1])
-        print t
         assert(t.status == 'template')
 

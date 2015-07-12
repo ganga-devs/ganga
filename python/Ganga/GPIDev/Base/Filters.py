@@ -8,101 +8,112 @@
 #  j = Job()
 #  j2 = Job(j)  <=> copy constructor
 #
-#  
+#
 #
 # Semantics:
 #  gpi_proxy.x = v  --> f = select_filter(category_of(x)); f(v,schema_item_of(x))
 #  gpi_proxy.y = [v1,v2] --> f = select_filter(category_of(x)); [f(v,schema_item_of(y)) for v in [v1,v2]]
 #  x = X(y,...) --> f = select_filter(X._category); f(y,None)
 #
-# Component filters are applied *only* to component properties and they are applied *before* attribute filters.
+# Component filters are applied *only* to component properties and they
+# are applied *before* attribute filters.
 
 # Component filter has the following signature:
 #     filter(val,item) --> return a GangaObject instance or None if no conversion performed
 #
 #     item is None if the filter is called outside of the attribute assignment context
-# 
-# If conversion takes place filter MUST return an object which is an instance (derived) of GangaObject.
+#
+# If conversion takes place filter MUST return an object which is an
+# instance (derived) of GangaObject.
 
-# Void filter does nothing. This is the default filter if no other default has been defined.
+# Void filter does nothing. This is the default filter if no other default
+# has been defined.
 
 from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.Config.Config import ConfigError
 
 # test configuration properties
-config = makeConfig('GPIComponentFilters',"""Customization of GPI component object assignment
+config = makeConfig('GPIComponentFilters', """Customization of GPI component object assignment
 for each category there may be multiple filters registered, the one used being defined 
 in the configuration file in [GPIComponentFilters]
 e.g: {'datasets':{'lhcbdatasets':lhcbFilter, 'testdatasets':testFilter}...}
-""",is_open=False)
+""", is_open=False)
 
-def void_filter(val,item):
+
+def void_filter(val, item):
     return None
 
-class _ComponentFilterManager:
+
+class _ComponentFilterManager(object):
+
     def __init__(self):
-        #for each category there may be multiple filters registered, the one used being defined 
-        #in the configuration file in [GPIComponentFilters]
-        #e.g: {'datasets':{'lhcbdatasets':lhcbFilter, 'testdatasets':testFilter}...}
+        # for each category there may be multiple filters registered, the one used being defined
+        # in the configuration file in [GPIComponentFilters]
+        # e.g: {'datasets':{'lhcbdatasets':lhcbFilter,
+        # 'testdatasets':testFilter}...}
         self._dict = {}
         self.default = None
-        
-    def __setitem__(self,category,filter):        
-        
-        if not self._dict.has_key(category):
+
+    def __setitem__(self, category, filter):
+
+        if category not in self._dict:
             self._dict[category] = {}
-        
-        #the filter can be registered as a tuple: ('filtername',filterfunction)
-        #or just as a function in which case the function name is used as an alias
-        if type(filter)==type(()) and len(filter)>=2:
+
+        # the filter can be registered as a tuple: ('filtername',filterfunction)
+        # or just as a function in which case the function name is used as an
+        # alias
+        if isinstance(filter, tuple) and len(filter) >= 2:
             filtername = filter[0]
-            filterfunc = filter[1]            
+            filterfunc = filter[1]
         else:
             try:
                 filtername = filter.__name__
                 filterfunc = filter
-            except AttributeError,e:
-                raise ValueError('FilterManager: Invalid component filter %s.'%filter)
-        
-        if self._dict[category].has_key(filtername):
-            raise ValueError('FilterManager: %s component filter already exists for %s category '%(filtername,category))
+            except AttributeError as e:
+                raise ValueError(
+                    'FilterManager: Invalid component filter %s.' % filter)
 
-        if not config.options.has_key(category):
+        if filtername in self._dict[category]:
+            raise ValueError('FilterManager: %s component filter already exists for %s category ' % (
+                filtername, category))
+
+        if category not in config.options:
             config.addOption(category, "", "")
-        config.overrideDefaultValue(category,filtername)
+        config.overrideDefaultValue(category, filtername)
         self._dict[category][filtername] = filterfunc
 
-    def setDefault(self,filter):
+    def setDefault(self, filter):
         if self.default:
             raise ValueError('FilterManager: default filter already exists')
 
         self.default = filter
 
-    def __getitem__(self,category):
+    def __getitem__(self, category):
         try:
             filters = self._dict[category]
         except KeyError:
-            #no filters registered for this category
-            if self.default: return self.default
+            # no filters registered for this category
+            if self.default:
+                return self.default
             return void_filter
-        
+
         try:
-            filtername = config[category]            
+            filtername = config[category]
             return filters[filtername]
         except ConfigError:
-            #if we have only one filter registered for this category we use it
-            if len(filters)==1: 
+            # if we have only one filter registered for this category we use it
+            if len(filters) == 1:
                 return filters.values()[0]
-            else: #ambiguity
-                raise ValueError('FilterManager: Multiple filters detected for %s category: %s, '\
-                                 'but no one has be set as default in [GPIComponentFilters] section of the configuration file' 
-                                 % (category,str(filters.keys())))
+            else:  # ambiguity
+                raise ValueError('FilterManager: Multiple filters detected for %s category: %s, '
+                                 'but no one has be set as default in [GPIComponentFilters] section of the configuration file'
+                                 % (category, str(filters.keys())))
         except KeyError:
-            #wrong filter name in configuration for this category
-            raise ValueError('FilterManager: %s filter is not registered for %s category.'\
-                             'Check your [GPIComponentFilters] section of the configuration file' 
-                             % (filtername,category))
-        
+            # wrong filter name in configuration for this category
+            raise ValueError('FilterManager: %s filter is not registered for %s category.'
+                             'Check your [GPIComponentFilters] section of the configuration file'
+                             % (filtername, category))
+
 
 # all filters register here...
 allComponentFilters = _ComponentFilterManager()

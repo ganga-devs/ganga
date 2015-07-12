@@ -17,6 +17,9 @@ __author__  = "K.Harrison <Harrison@hep.phy.cam.ac.uk>"
 __date__    = "29 August 2006"
 __version__ = "1.2"
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 import os
 import sys
 

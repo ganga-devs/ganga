@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import os
 import sys
 import time
@@ -54,7 +56,7 @@ def getFile(lfns, destDir = ''): output( dirac.getFile(lfns, destDir=destDir) )
 def replicateFile(lfn,destSE,srcSE,locCache=''):
     res = dirac.replicateFile(lfn,destSE,srcSE,locCache)
     output(res)
-    print res
+    print(res)
 
 def removeReplica(lfn,sE):
     output( dirac.removeReplica(lfn,sE) )
@@ -83,14 +85,6 @@ def uploadFile(lfn, file, diracSEs, guid=None):
         outerr.update({se:result})
     else:
         output(outerr)
-#def uploadFile(lfn, file, diracSE, guid=None):
-#    result = dirac.addFile(lfn,file,diracSE,guid)
-#    if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
-#        md = dirac.getMetadata(lfn)
-#        if md.get('OK',False) and lfn in md.get('Value',{'Successful':{}})['Successful']:
-#            guid=md['Value']['Successful'][lfn]['GUID']
-#            result['Value']['Successful'][lfn].update({'GUID':guid})
-#    print result
 
 def addFile(lfn,file,diracSE,guid):
     output( dirac.addFile(lfn,file,diracSE,guid) )
@@ -137,18 +131,18 @@ def getOutputDataLFNs(id, pipe_out=True): ## could shrink this with dirac.getJob
         parameters = parameters['Value']        
         # remove the sandbox if it has been uploaded
         sandbox = None
-        if parameters.has_key('OutputSandboxLFN'):
+        if 'OutputSandboxLFN' in parameters:
             sandbox = parameters['OutputSandboxLFN']
         
         #now find out about the outputdata
-        if parameters.has_key('UploadedOutputData'):
+        if 'UploadedOutputData' in parameters:
             lfn_list = parameters['UploadedOutputData']
             import re
             lfns = re.split(',\s*',lfn_list)
             if sandbox is not None and sandbox in lfns:
                 lfns.remove(sandbox)
             ok = True
-        elif parameters is not None and parameters.has_key('Message'):
+        elif parameters is not None and 'Message' in parameters:
             message = parameters['Message']
 
     result = {'OK':ok}
@@ -164,7 +158,7 @@ def normCPUTime(id):
     ncput = None
     if parameters is not None and parameters.get('OK',False):
         parameters = parameters['Value']        
-        if parameters.has_key('NormCPUTime(s)'):
+        if 'NormCPUTime(s)' in parameters:
             ncput = parameters['NormCPUTime(s)']
     output( ncput )
 
@@ -216,23 +210,9 @@ def status(job_ids):
 
     output( status_list )
 
-#def getFile(lfn,dir):
-#    result = dirac.getFile(lfn)
-#    if not result or not result.get('OK',False):
-#        print result
- #       return
- ##   f = result['Value']['Successful'][lfn]
- #   fname = f.split('/')[-1]
- #   fdir = f.split('/')[0:-2]
- # #  new_f = os.path.join(dir,fname)
- #   os.system('mv -f %s %s' % (f,new_f))
- #   os.system('rmdir %s' % fdir)
- #   result['Value'] = new_f
- #   print result
-
 def getStateTime(id, status):
     log = dirac.loggingInfo(id)
-    if not log.has_key('Value'):
+    if 'Value' not in log:
         output( None )
         return
     L = log['Value']
@@ -250,7 +230,7 @@ def getStateTime(id, status):
         checkstr = ''
             
     if checkstr=='':
-        print None
+        print(None)
         return
 
     for l in L:

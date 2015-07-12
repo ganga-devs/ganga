@@ -36,8 +36,7 @@ if config.Configuration.Batch == 'LSF':
     out=child.fromchild
     result=-1
     while result==-1:
-      lines=out.readlines()
-      for line in lines:
+      for line in out:
         items=line.split()
         d[items[0]]=items[3]
       result=child.poll()

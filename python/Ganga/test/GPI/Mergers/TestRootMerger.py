@@ -1,15 +1,17 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: TestRootMerger.py,v 1.2 2009-03-18 10:46:01 wreece Exp $
-################################################################################
+##########################################################################
 from __future__ import division
 from GangaTest.Framework.tests import GangaGPITestCase
-from GangaTest.Framework.utils import sleep_until_completed,write_file
+from GangaTest.Framework.utils import sleep_until_completed, write_file
 import os
 import tempfile
 
+
 class TestRootMerger(GangaGPITestCase):
+
     """
     Most of the generic merge functionality is tested in TestTextMerger as it is
     more straight forward to write tests for txt. However, the basic functionality of the root
@@ -17,18 +19,18 @@ class TestRootMerger(GangaGPITestCase):
     """
 
     def __init__(self):
-        
+
         self.jobslice = []
         self.file_name = 'fillrandom.py'
         self.output_name = 'fillrandom.root'
 
     def setUp(self):
-        
+
         for _ in range(3):
 
-            j = Job(application=Root(),backend=Local())
+            j = Job(application=Root(), backend=Local())
 
-            #the following is from the root tutorial
+            # the following is from the root tutorial
             scriptString = """#!/usr/bin/env python
             
 from ROOT import TCanvas, TPad, TFormula, TF1, TPaveLabel, TH1F, TFile
@@ -101,14 +103,14 @@ finally:
    out_log.close()
 """
 
-            #write string to tmpfile
+            # write string to tmpfile
             tmpdir = tempfile.mktemp()
             os.mkdir(tmpdir)
-            fileName = os.path.join(tmpdir,self.file_name)
+            fileName = os.path.join(tmpdir, self.file_name)
 
             write_file(fileName, scriptString)
 
-            #TODO
+            # TODO
             j.application.script = File(fileName)
             j.outputfiles = [LocalFile(self.output_name)]
             self.jobslice.append(j)
@@ -117,15 +119,16 @@ finally:
 
         for j in self.jobslice:
             j.submit()
-            
+
             sleep_until_completed(j)
             assert j.status == 'completed'
-            
+
     def runHistogramEntriesTest(self, file_path, histo_name, expected_entries):
         """Submits a root job that opens the specified histogram and checks that the
         number of entries is as expected for the specified histogram."""
-        
+
         scriptString = """#!/usr/bin/env python
+from __future__ import print_function
 #loads the file specified and fails if the number of elements in the histogram is not as expected
 
 import getopt
@@ -151,8 +154,8 @@ if __name__ == '__main__':
                 histogram = a
             if o in ('-e','--entries'):
                 entries = int(a)
-    except getopt.error, msg:
-        print msg
+    except getopt.error as msg:
+        print(msg)
         sys.exit(2)
 
     #start the test
@@ -166,20 +169,21 @@ if __name__ == '__main__':
     myFile.Close()
 """
 
-        #write string to tmpfile
+        # write string to tmpfile
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
-        fileName = os.path.join(tmpdir,'testforentries.py')
-        
+        fileName = os.path.join(tmpdir, 'testforentries.py')
+
         write_file(fileName, scriptString)
-        
-        #configure a test job
+
+        # configure a test job
         r = Root()
-        r.args = ['-f',os.path.basename(file_path),'-g',histo_name,'-e',expected_entries]
+        r.args = [
+            '-f', os.path.basename(file_path), '-g', histo_name, '-e', expected_entries]
         r.script = File(fileName)
 
-        j = Job(application=r,backend=Local())
-        import Ganga.Utility.Config
+        j = Job(application=r, backend=Local())
+        from Ganga.Utility.Config import getConfig
         if not getConfig('Output')['ForbidLegacyInput']:
             j.inputsandbox = [file_path]
         else:
@@ -188,12 +192,11 @@ if __name__ == '__main__':
 
         sleep_until_completed(j)
         return j.status == 'completed'
- 
+
     def tearDown(self):
 
         for j in self.jobslice:
             j.remove()
-
 
     def testSimpleRun(self):
         """Test to make sure jobs run as is."""
@@ -202,36 +205,37 @@ if __name__ == '__main__':
 
         for j in self.jobslice:
 
-            root_file = os.path.join(j.outputdir,self.output_name)
-            assert os.path.exists(root_file), 'Job should have made a root file'
-            assert self.runHistogramEntriesTest(root_file,'h1f',10000), 'Number of histogram entries is as expected'
-            assert not self.runHistogramEntriesTest(root_file,'h1f',10001), 'Number of histogram entries is not being properly tested'
-
+            root_file = os.path.join(j.outputdir, self.output_name)
+            assert os.path.exists(
+                root_file), 'Job should have made a root file'
+            assert self.runHistogramEntriesTest(
+                root_file, 'h1f', 10000), 'Number of histogram entries is as expected'
+            assert not self.runHistogramEntriesTest(
+                root_file, 'h1f', 10001), 'Number of histogram entries is not being properly tested'
 
     def testRootMergeSimple(self):
 
         self.runJobSlice()
 
-        rm = RootMerger(args = '-f2')
+        rm = RootMerger(args='-f2')
         rm.files = ['fillrandom.root']
 
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
-        fileName = os.path.join(tmpdir,'fillrandom.root')
+        fileName = os.path.join(tmpdir, 'fillrandom.root')
 
-        assert rm.merge(self.jobslice,tmpdir), 'Merge should run correctly'
+        assert rm.merge(self.jobslice, tmpdir), 'Merge should run correctly'
         assert os.path.exists(fileName), 'Root file should exist'
 
-        assert self.runHistogramEntriesTest(fileName,'h1f',10000*len(self.jobslice)),'Number of entries should be increased after merge'
-        
-        
+        assert self.runHistogramEntriesTest(
+            fileName, 'h1f', 10000 * len(self.jobslice)), 'Number of entries should be increased after merge'
 
     def testRootAutoMergeSimple(self):
 
-        #just take one job
+        # just take one job
         j = self.jobslice[0]
 
-        #add a merger
+        # add a merger
         rm = RootMerger()
         rm.files = ['fillrandom.root']
         j.postprocessors = rm
@@ -240,57 +244,64 @@ if __name__ == '__main__':
         s = CopySplitter()
         s.number = 7
         j.splitter = s
-        
+
         j.submit()
 
         sleep_until_completed(j)
         assert len(j.subjobs) == s.number, 'Splitting must have worked'
         assert j.status == 'completed', 'Job must complete normally'
 
-        root_file = os.path.join(j.outputdir,'fillrandom.root')
+        root_file = os.path.join(j.outputdir, 'fillrandom.root')
         assert os.path.exists(root_file), 'Merged file must exist'
-        assert self.runHistogramEntriesTest(root_file,'h1f',10000*j.splitter.number),'Number of entries should be as expected'
-        
+        assert self.runHistogramEntriesTest(
+            root_file, 'h1f', 10000 * j.splitter.number), 'Number of entries should be as expected'
+
     def testSmartMerge(self):
 
         for j in self.jobslice:
-            j.outputfiles = [LocalFile(self.output_name),LocalFile('fillrandom.foo')]
+            j.outputfiles = [
+                LocalFile(self.output_name), LocalFile('fillrandom.foo')]
         self.runJobSlice()
 
-        sm = SmartMerger()# foo files are defined in the ini file (as root)
-        sm.files = ['stdout','fillrandom.root','fillrandom.foo']
+        sm = SmartMerger()  # foo files are defined in the ini file (as root)
+        sm.files = ['stdout', 'fillrandom.root', 'fillrandom.foo']
 
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
 
-        assert sm.merge(self.jobslice, outputdir = tmpdir), 'Merge must run correctly'
+        assert sm.merge(
+            self.jobslice, outputdir=tmpdir), 'Merge must run correctly'
 
         for j in self.jobslice:
 
             for f in sm.files:
-                merge_out = os.path.join(tmpdir,f)
+                merge_out = os.path.join(tmpdir, f)
                 assert os.path.exists(merge_out), 'File must have been created'
-        
-        assert self.runHistogramEntriesTest(os.path.join(tmpdir,'fillrandom.foo'),'h1f',10000*len(self.jobslice)),'Number of entries should be increased after merge'
+
+        assert self.runHistogramEntriesTest(os.path.join(
+            tmpdir, 'fillrandom.foo'), 'h1f', 10000 * len(self.jobslice)), 'Number of entries should be increased after merge'
 
     def testSmartMergeFileNameInConfig(self):
 
         for j in self.jobslice:
-            j.outputfiles = [LocalFile(self.output_name),LocalFile('outfile.abc')]
+            j.outputfiles = [
+                LocalFile(self.output_name), LocalFile('outfile.abc')]
         self.runJobSlice()
 
-        sm = SmartMerger()# foo files are defined in the ini file (as root)
-        sm.files = ['fillrandom.root','outfile.abc']
+        sm = SmartMerger()  # foo files are defined in the ini file (as root)
+        sm.files = ['fillrandom.root', 'outfile.abc']
 
         tmpdir = tempfile.mktemp()
         os.mkdir(tmpdir)
 
-        assert sm.merge(self.jobslice, outputdir = tmpdir), 'Merge must run correctly'
+        assert sm.merge(
+            self.jobslice, outputdir=tmpdir), 'Merge must run correctly'
 
         for j in self.jobslice:
 
             for f in sm.files:
-                merge_out = os.path.join(tmpdir,f)
+                merge_out = os.path.join(tmpdir, f)
                 log_out = '%s.merge_summary' % merge_out
-                assert os.path.exists(log_out), 'The merge_summary file must have been created'
+                assert os.path.exists(
+                    log_out), 'The merge_summary file must have been created'
                 assert os.path.exists(merge_out), 'File must have been created'

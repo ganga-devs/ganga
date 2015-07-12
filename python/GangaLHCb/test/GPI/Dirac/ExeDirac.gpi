@@ -45,10 +45,10 @@ assert jcommand.status == 'completed', 'Command job should complete'
 assert jscript.status == 'completed', 'Script job should complete'
 
 #file = open(join(jcommand.outputdir,'std.out'))
-#print 'std.out =', file.read()
+#print('std.out =', file.read())
 #file.close()
 #file = open(join(jcommand.outputdir,'stdout'))
-#print 'stdout =', file.read()
+#print('stdout =', file.read())
 #file.close()
 
 

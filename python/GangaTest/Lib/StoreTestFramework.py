@@ -16,12 +16,12 @@ class StoreTestApplication(IApplication):
 
     def configure(self, masterappconfig):
         self.specific_config = self.factor*masterappconfig
-        print "application.configure =>",self.specific_config
+        logger.debug("application.configure => "+str(self.specific_config))
         return (1,self.specific_config)
 
     def master_configure(self):
         self.shared_config = self.factor*10
-        print 'application.master_configure =>',self.shared_config
+        logger.debug("application.master_configure => "+str(self.shared_config))
         return (1,self.shared_config)
     
 
@@ -36,7 +36,6 @@ class StoreTestSplitter(ISplitter):
         subjobs = []
         for i in range(self.n):
             #print "*"*80
-            print 'Create subjob',i
             j = self.createSubjob(job)
             j.application.factor = i
             subjobs.append(j)
@@ -55,7 +54,6 @@ class StoreTestBackend(IBackend):
     _name = 'StoreTestBackend'
 
     def submit(self,jobconfig,master_input_sandbox):
-        print "backend.submit",jobconfig,master_input_sandbox
         #self.shared_config = masterjobconfig.value
         self.specific_config = jobconfig.value
         #print "backend.submit",self.shared_config,self.specific_config
@@ -87,12 +85,10 @@ class JobConfigObject:
 class NeutralRuntimeHandler(IRuntimeHandler):
     def master_prepare(self, app, appmasterconfig):
         r = appmasterconfig-5
-        print "rthandler.master_prepare =>", r
         return JobConfigObject(r)
 
     def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
         r = appsubconfig+jobmasterconfig.value-appmasterconfig
-        print "rthandler.prepare =>",r
         return JobConfigObject(r)
 
 allHandlers.add('StoreTestApplication','StoreTestBackend',NeutralRuntimeHandler)

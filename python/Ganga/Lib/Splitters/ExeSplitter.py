@@ -1,35 +1,37 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: ExeSplitter.py,v 1.1 2008-07-17 16:40:59 moscicki Exp $
-################################################################################
+##########################################################################
 
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 
+
 class ExeSplitter(ISplitter):
+
     """ Split executable applications (OBSOLETE).
-    
+
     This splitter allows the creation of subjobs where each subjob has a different Executable application.
     This splitter is OBSOLETED use GenericSplitter or ArgSplitter instead.
     """
     _name = "ExeSplitter"
-    _schema = Schema(Version(1,0), {
-        'apps' : ComponentItem('applications',defvalue=[],sequence=1,doc='a list of Executable app objects')
-        } )
+    _schema = Schema(Version(1, 0), {
+        'apps': ComponentItem('applications', defvalue=[], sequence=1, doc='a list of Executable app objects')
+    })
 
-    def split(self,job):
+    def split(self, job):
         subjobs = []
         for a in self.apps:
             # for each subjob make a full copy of the master job
             j = self.createSubjob(job)
-            j.application=a
+            j.application = a
             if not a.exe:
                 j.application.exe = job.application.exe
             subjobs.append(j)
         return subjobs
 
-                
+
 #
 #
 # $Log: not supported by cvs2svn $

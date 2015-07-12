@@ -2,10 +2,8 @@
 from GangaTest.Framework.utils import sleep_until_completed,failureException
 
 j = Job()
-print j.info
 assert(j.info.submit_counter==0)
 j.submit()
-print j.info
 assert(j.info.submit_counter==1)
 if not sleep_until_completed(j,60):
     raise failureException ("Timeout on job submission: job is still not finished")

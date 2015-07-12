@@ -747,7 +747,7 @@ if j.splitter and j.splitter.__class__.__name__=='AthenaSplitterJob':
 
 try:
     j.submit()
-except GangaException, e:
+except GangaException as e:
     print >>sys.stderr, 'ERROR: %s - %s' % (type(e),e)
 
 

@@ -191,7 +191,7 @@ class AppName(Gaudi):
        # parser = check_inputs(optsfiles, extraopts, self.env) 
         try:
             parser = PythonOptionsParser(optsfiles,extraopts,self.getenv(False))
-        except Exception, e:
+        except Exception as e:
             msg = 'Unable to parse the job options. Please check options ' \
                   'files and extraopts.'
             raise ApplicationConfigurationError(None,msg)
@@ -248,7 +248,7 @@ class AppName(Gaudi):
             
         try:
             parser = PythonOptionsParser(optsfiles,extraopts,self.getenv(False))
-        except ApplicationConfigurationError, e:
+        except ApplicationConfigurationError as e:
             # fix this when preparing not attached to job
             
             msg2=''
@@ -286,7 +286,7 @@ class AppName(Gaudi):
     def _parse_options(self):
         try:
             parser = self._get_parser()
-        except ApplicationConfigurationError, e:
+        except ApplicationConfigurationError as e:
             raise e
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),

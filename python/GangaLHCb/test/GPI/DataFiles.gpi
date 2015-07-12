@@ -15,7 +15,7 @@ pfn = PhysicalFile('PFN:'+name)
 assert pfn.name == full_name
 try:
     pfn = LocalFile('lfn:'+name)
-    raise 'Should have got exception trying to create PhysicalFile from lfn.'
+    raise RuntimeError('Should have got exception trying to create PhysicalFile from lfn.')
 except:
     pass
 #
@@ -29,7 +29,7 @@ lfn = DiracFile('LFN:'+name)
 assert lfn.lfn == name
 try:
     lfn = DiracFile('pfn:'+name)
-    raise 'Should have got exception trying to create LogicalFile from pfn.'
+    raise RuntimeError('Should have got exception trying to create LogicalFile from pfn.')
 except:
     pass
 #

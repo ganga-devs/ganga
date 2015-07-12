@@ -1,8 +1,8 @@
-exec python -x "$0" "$@"
+#exec python -x "$0" "$@"
 import zlib,sys
 
 #adler starting value is _not_ 0L
-adler=1L
+adler=1
 filename=sys.argv[1]
 
 try:

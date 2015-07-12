@@ -1,7 +1,9 @@
 import os
 import Ganga.Utility.Config
-import Ganga.Utility.logging
 import platform
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 ## CMSSW parameters
 configCMSSW=Ganga.Utility.Config.makeConfig('CMSSW','Parameters for CMSSW')
@@ -33,9 +35,9 @@ def getEnvironment( config = {} ):
 
     arch = platform.machine()
     if not arch == 'x86_64':
-        print 'GangaCMS> [ERROR] %s not supported. Different than 64 bits.'%(arch)
+        logger.error('GangaCMS> %s not supported. Different than 64 bits.'%(arch))
         return
-    print 'GangaCMS> [INFO] not supported different OS than SLC5'
+    logger.info('GangaCMS> not supported different OS than SLC5')
 
     config = Ganga.Utility.Config.getConfig('CMSSW')
     cmssw_version = config['CMSSW_VERSION']
@@ -43,20 +45,20 @@ def getEnvironment( config = {} ):
     crab_version = config['CRAB_VERSION']
     cmssw_setup_script = os.path.join(cmssw_setup,'CMSSW_generic.sh')
     if not os.path.exists(cmssw_setup_script):
-        print 'GangaCMS> [ERROR] CMSSW setup script not found: "%s"'%(cmssw_setup_script)
+        logger.error('GangaCMS> CMSSW setup script not found: "%s"'%(cmssw_setup_script))
         return
 
     location = config['location']
 
     cmsswhome = os.path.join(location,cmssw_version)
     if not os.path.exists(cmsswhome):
-        print 'GangaCMS> [ERROR] CMSSW location not found: "%s"'%(cmsswhome)
+        logger.error('GangaCMS> CMSSW location not found: "%s"'%(cmsswhome))
         return
 
 #    from Ganga.Utility.Shell import Shell
 #    shell = Shell(cmssw_setup_script)   
 
-    print 'GangaCMS> [INFO] getEnvironment : done'   
+    logger.info('GangaCMS> [INFO] getEnvironment : done')
 #    return shell.env
     return {}
 
@@ -76,5 +78,5 @@ def loadPlugins( config = {} ):
        crab_cfg_configs[section].addOption(k,None,'%s at crab.cfg'%(k))
 
 
-    print 'GangaCMS> [INFO] loadPlugins : done'
+    logger.info('GangaCMS> [INFO] loadPlugins : done')
 

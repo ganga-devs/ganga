@@ -6,7 +6,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -32,7 +32,7 @@ class TestGaudiUtils(GangaGPITestCase):
             try:
                 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_packs
                 available_packs(app)
-            except KeyError, err:                
+            except KeyError as err:                
                 assert False, 'application %s has no packages' % app
 
     def test_available_versions(self):

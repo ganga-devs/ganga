@@ -1,4 +1,7 @@
-print 'number of jobs in repository',len(jobs)
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
+logger.info('number of jobs in repository '+str(len(jobs)))
 
 import time, profile
 t0 = time.time()
@@ -13,9 +16,9 @@ def pp(updated,traversed):
     global last_t
     dt = time.time()-last_t
     last_t = time.time()
-    print 'time %d'%dt
-    print 'traversed %d jobs'%traversed
-    print 'updated %d jobs (%s j/s)'%(updated,updated/dt)
+    logger.info('time %d'%dt)
+    logger.info('traversed %d jobs'%traversed)
+    logger.info('updated %d jobs (%s j/s)'%(updated,updated/dt))
 
 def update(j,i):
     global cnt

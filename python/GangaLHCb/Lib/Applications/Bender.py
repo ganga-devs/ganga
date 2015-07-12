@@ -131,8 +131,6 @@ class Bender(GaudiBase):
 ##         master_input_files += [self.module]
         #self.extra.master_input_files += [self.module]
         #return (None,self.extra)
-        #print "Bender:"
-        #print self._getshell()
         return (None,StandardJobConfig())
 
     def configure(self,master_appconfig):

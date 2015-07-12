@@ -2,7 +2,7 @@ from GangaTest.Framework.tests import MultipassTest
 
 class Savannah10016(MultipassTest):
     def __init__(self): 
-	MultipassTest.__init__(self,2)
+        MultipassTest.__init__(self,2)
 
     def pass1(self):
         j = Job()

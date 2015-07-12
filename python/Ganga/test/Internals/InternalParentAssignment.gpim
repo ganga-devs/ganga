@@ -4,30 +4,30 @@ from GangaTest.Framework.tests import MultipassTest
 
 
 class InternalParentAssignment(MultipassTest):
-    def __init__(self): MultipassTest.__init__(self,2)
+
+    def __init__(self): MultipassTest.__init__(self, 2)
 
     def pass1(self):
         j = Job()
-        import Ganga.Utility.Config
+        from Ganga.Utility.Config import getConfig
         if not getConfig('Output')['ForbidLegacyInput']:
-            j.inputsandbox = ['a','b','c']
+            j.inputsandbox = ['a', 'b', 'c']
             assert(j._impl.inputsandbox[0]._parent)
         else:
-            j.inputfiles = [LocalFile('a'),LocalFile('b'),LocalFile('c')]
+            j.inputfiles = [LocalFile('a'), LocalFile('b'), LocalFile('c')]
             assert(j._impl.inputfiles[0]._parent)
-        #print j
-        #print jobs(j.id)
+        # print j
+        # print jobs(j.id)
         disableServices()
         reactivate()
         return j.id
 
     def pass2(self):
-        #print self.data
+        # print self.data
         j = jobs(self.data[1])
-        #print j
-        import Ganga.Utility.Config
+        # print j
+        from Ganga.Utility.Config import getConfig
         if not getConfig('Output')['ForbidLegacyInput']:
             assert(j._impl.inputsandbox[0]._parent)
         else:
             assert(j._impl.inputfiles[0]._parent)
-

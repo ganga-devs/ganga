@@ -14,7 +14,7 @@ configDirac.addOption('Timeout', 1000,
 configDirac.addOption('splitFilesChunks', 5000,
                       'when splitting datasets, pre split into chunks of this int')
 diracenv = ""
-if os.environ.has_key("GANGADIRACENVIRONMENT"):
+if "GANGADIRACENVIRONMENT" in os.environ:
    diracenv = os.environ["GANGADIRACENVIRONMENT"]
 
 configDirac.addOption('DiracEnvFile', diracenv,

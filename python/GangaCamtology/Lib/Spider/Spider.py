@@ -122,10 +122,6 @@ class Spider(IApplication):
     def ExtractQueuedLinks( self, queued_list ):
 
         import sys
-        if sys.hexversion >= 0x020600F0:
-            Set = set
-        else:
-            from sets import Set
         
         # first, get together all similar domains
         queued_arr = { }
@@ -140,7 +136,7 @@ class Spider(IApplication):
 
         # create the sets
         for list_key in temp_list:
-            queued_arr[list_key] = Set( temp_list[list_key] )
+            queued_arr[list_key] = set( temp_list[list_key] )
             
         # now add these to the lists in the directories
         for list_key in temp_list:
@@ -155,7 +151,7 @@ class Spider(IApplication):
             for ln in queued_file.readlines():
                 temp_list2.append( ln.strip('\n') )
             queued_file.close()
-            old_queue_list = Set( temp_list2 )
+            old_queue_list = set( temp_list2 )
          
             viewed_file = open( os.path.join(dom, 'viewed_list.txt'), 'r')
 
@@ -163,7 +159,7 @@ class Spider(IApplication):
             for ln in viewed_file.readlines():
                 temp_list2.append( ln.strip('\n') )
                 
-            viewed_list = Set( temp_list2 )
+            viewed_list = set( temp_list2 )
             
             # find the links that aren't in the viewed list and is the union of the queued list
             new_queued_list = (queued_arr[list_key] - viewed_list) | old_queue_list

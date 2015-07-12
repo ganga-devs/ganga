@@ -8,11 +8,13 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed, sleep_until_state
 
+from Ganga.GPI import *
+
 try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except Exception, x:
-    print str(x)
+except Exception as x:
+    print(str(x))
     doConfig = True
 
 if doConfig:
@@ -33,7 +35,6 @@ if doConfig:
 class TestDiracSplitter(GangaGPITestCase):
 
     def testSplit(self):
-        from Ganga.GPI import *
         j=Job(backend=Dirac())
         j.inputdata = LHCbDataset()
         #j.inputdata.files+=[
@@ -46,10 +47,10 @@ class TestDiracSplitter(GangaGPITestCase):
         #    ]
         #j.inputdata = LFNs
 
-        #print "try1"
+        #print("try1")
         #somedata = BKQuery('LFN:/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()#[0:5]
         #j.inputdata = somedata[0:5]
-        #print "try2"
+        #print("try2")
         j.inputdata = BKQuery('/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()[0:5]
         #j.inputdata = BKQuery('LFN:/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
         #j.inputdata = BKQuery('/lhcb/LHCb/Collision10/DIMUON.DST/00010942/0000/00010942_00000218_1.dimuon.dst', dqflag=['OK']).getDataset()[0:5]
@@ -59,7 +60,7 @@ class TestDiracSplitter(GangaGPITestCase):
         ds.bulksubmit=False
         ds.filesPerJob = 2
         result = ds.split(j)
-        print "Got %s subjobs" % len(result)
+        print("Got %s subjobs" % len(result))
         assert len(result) >= 3, 'Unexpected number of subjobs'
 
     def testIgnoreMissing(self):
@@ -88,13 +89,13 @@ class TestDiracSplitter(GangaGPITestCase):
         ds.ignoremissing = True
         # shouldn't throw exception
         result = ds.split(j)
-        print 'result = ', result
+        print('result = ', result)
         ds.ignoremissing = False
         # should throw exception
         threw = False
         try:
             result = ds.split(j)
-            print 'result = ', result
+            print('result = ', result)
         except:
             threw = True
         assert threw, 'should have thrown exception'

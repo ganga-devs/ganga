@@ -154,7 +154,7 @@ if __name__ == '__main__':
     print '%s out of %s file of dataset %s have been processed.' %(numfiles3, len(input_files_sel), datasetname)
     print 'Number could be wrong for certain input modes!'
     
-    if os.environ.has_key('GANGA_VERSION'):
+    if 'GANGA_VERSION' in os.environ:
         ganga_version = os.environ['GANGA_VERSION']
     else:
         ganga_version = 'GANGA-5'

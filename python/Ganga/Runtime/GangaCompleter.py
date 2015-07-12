@@ -1,18 +1,29 @@
+from __future__ import print_function
+
 from Ganga.Utility.ColourText import getColour
-import logging, readline, inspect, re, itertools, subprocess, types, operator
+import logging
+import readline
+import inspect
+import re
+import itertools
+import subprocess
+import types
+import operator
 logger = logging.getLogger('CompletionErrorChecker')
 
 
-complete_bracket_matcher=re.compile('(\([^()]*?\))')
-##used to not keep track of the replacements
-#def bracket_sanitiser(text):
+complete_bracket_matcher = re.compile('(\([^()]*?\))')
+# used to not keep track of the replacements
+# def bracket_sanitiser(text):
+
+
 def bracket_sanitiser(text, replacement_list=[]):
-#    print "checking:", text
+    #    print "checking:", text
     match_list = complete_bracket_matcher.findall(text)
     if match_list:
         for bracket in match_list:
-#            print "found:", bracket
-##            text = text.replace(bracket,'')
+            #            print "found:", bracket
+            ##            text = text.replace(bracket,'')
             text = text.replace(bracket, '##%d##' % len(replacement_list), 1)
 #            print "text:",text
             replacement_list.append(bracket)
@@ -21,7 +32,9 @@ def bracket_sanitiser(text, replacement_list=[]):
         text = bracket_sanitiser(text, replacement_list)
     return text
 
-bracket_replacement_matcher=re.compile('##([0-9]+?)##')
+bracket_replacement_matcher = re.compile('##([0-9]+?)##')
+
+
 def arg_splitter(text, strip_args=True):
     replacement_list = []
     text = bracket_sanitiser(text, replacement_list)
@@ -30,46 +43,50 @@ def arg_splitter(text, strip_args=True):
     if not replacement_list or replacement_list[-1] == '()':
         return []
     if strip_args:
-        args = map(lambda x: x.strip(), replacement_list.pop()[1:-1].split(',')) #remove () and split and strip
+        # remove () and split and strip
+        args = map(
+            lambda x: x.strip(), replacement_list.pop()[1:-1].split(','))
     else:
         args = replacement_list.pop()[1:-1].split(',')
 #    print "args:", str(args)
     for i, a in enumerate(args):
-#        print "arg:", a
+        #        print "arg:", a
         while a.find('#') != -1:
             for r in bracket_replacement_matcher.findall(a):
-#                print "replacing:", r, str(replacement_list)
+                #                print "replacing:", r, str(replacement_list)
                 a = a.replace('##%s##' % r, replacement_list[int(r)])
         args[i] = a
     return args
 
 open_method_matcher = re.compile('([a-zA-Z0-9_.]+?)\(.*?')
+
+
 def current_class_method_and_arg(text, namespace=globals()):
     '''
     should return class_object_label, class_name, method_name, arg_num
     '''
     text = bracket_sanitiser(text)
     matches = open_method_matcher.findall(text)
-    namespace.update({'types' : types})
+    namespace.update({'types': types})
 #    print "open methods:", matches
     if not matches:
         return None, None, None, None
-    split_match = matches[-1].rsplit('.', 1) ## get the class object as well
+    split_match = matches[-1].rsplit('.', 1)  # get the class object as well
 
     class_label = None
-    class_name  = None
+    class_name = None
     method_name = split_match[-1]
     if len(split_match) > 1:
         class_label = split_match[0]
         class_name = eval('%s.__class__.__name__' % class_label, namespace)
         tmp = '.'.join([class_label, method_name])
         if eval('type(%s) != types.FunctionType and type(%s) != types.MethodType' % (tmp, tmp), namespace):
-            ## constructor
+            # constructor
             class_label = tmp
             class_name = eval('%s.__class__.__name__' % tmp, namespace)
             method_name = None
     elif eval('type(%s) != types.FunctionType and type(%s) != types.MethodType' % (method_name, method_name), namespace):
-        ## constructor
+        # constructor
         class_label = method_name
         class_name = method_name
         method_name = None
@@ -78,49 +95,58 @@ def current_class_method_and_arg(text, namespace=globals()):
 
     return class_label, class_name, method_name, arg_count
 
+
 class GangaCompleter(object):
+
     def __init__(self, func, ns):
         self.func = func
         self.ns = ns
         self.ns['inspect'] = inspect
 #        self.ns['types']   = types
- 
+
     def shell_size(self):
         '''
         Returns the size of the calling shell
-        
+
         Returns a tuple of two ints representing the shells height and width respectively
         '''
-        ## note in python 3 can just do
-        #shutil.get_terminal_size
-        size_list = subprocess.Popen(['stty','size'], stdout=subprocess.PIPE).communicate()[0].split()
-        return eval(size_list[0]), eval(size_list[1]) 
+        # note in python 3 can just do
+        # shutil.get_terminal_size
+        size_list = subprocess.Popen(
+            ['stty', 'size'], stdout=subprocess.PIPE).communicate()[0].split()
+        return eval(size_list[0]), eval(size_list[1])
 
-    ## want to push all colouring into the displayer as then wont mess up text strngs for python < 2.whatever who dont get it
+    # want to push all colouring into the displayer as then wont mess up text
+    # strngs for python < 2.whatever who dont get it
     def colouriser(self, match, user_input):
-#        try:
+        #        try:
         if user_input.rstrip().endswith('(') or user_input.rstrip().endswith(','):
-            class_label, class_name, method_name, arg_num = current_class_method_and_arg(user_input, self.ns)
+            class_label, class_name, method_name, arg_num = current_class_method_and_arg(
+                user_input, self.ns)
             args = arg_splitter(match)
-            var_args     = filter(lambda x: '*'     in x, args)
+            var_args = filter(lambda x: '*' in x, args)
             non_var_args = filter(lambda x: '*' not in x, args)
-            if method_name is None: ## constructor
-                match = match.replace(class_name, getColour('fg.green') + class_name + getColour('fg.normal'))
+            if method_name is None:  # constructor
+                match = match.replace(
+                    class_name, getColour('fg.green') + class_name + getColour('fg.normal'))
                 return match
 
-            match = match.replace(method_name, getColour('fg.green') + method_name + getColour('fg.normal'))
+            match = match.replace(
+                method_name, getColour('fg.green') + method_name + getColour('fg.normal'))
             if args:
-                match = match.replace(', '.join(args),'##ARGS##')
+                match = match.replace(', '.join(args), '##ARGS##')
 
             if arg_num < len(non_var_args):
-                non_var_args[arg_num] = getColour('fg.blue') + non_var_args[arg_num] + getColour('fg.normal')
+                non_var_args[arg_num] = getColour(
+                    'fg.blue') + non_var_args[arg_num] + getColour('fg.normal')
             else:
                 if var_args:
-                    var_args = map(lambda x: getColour('fg.blue') + x + getColour('fg.normal'), var_args)
+                    var_args = map(
+                        lambda x: getColour('fg.blue') + x + getColour('fg.normal'), var_args)
                 elif arg_num > 0:
-                    print ''
                     logger.warning('Too many arguments provided')
-                    match = match.replace(')', getColour('fg.red') + ')' + getColour('fg.normal'))
+                    match = match.replace(')', getColour(
+                        'fg.red') + ')' + getColour('fg.normal'))
 
             return match.replace('##ARGS##', ', '.join(itertools.chain(non_var_args, var_args)))
 
@@ -128,21 +154,27 @@ class GangaCompleter(object):
             split_text = match.split('.')
             schema_items = {}
             if eval('hasattr(%s, "_schema") and hasattr(%s, "_readonly")' % (split_text[0], split_text[0]), self.ns):
-                read_only    = eval('%s._readonly()'              % split_text[0], self.ns)
-                schema_items = eval('dict(%s._schema.allItems())' % split_text[0], self.ns)
+                read_only = eval('%s._readonly()' % split_text[0], self.ns)
+                schema_items = eval(
+                    'dict(%s._schema.allItems())' % split_text[0], self.ns)
             elif eval('hasattr(%s,"_impl") and hasattr(%s._impl, "_schema") and hasattr(%s._impl, "_readonly")' % (split_text[0], split_text[0], split_text[0]), self.ns):
-                read_only    = eval('%s._impl._readonly()'              % split_text[0], self.ns)
-                schema_items = eval('dict(%s._impl._schema.allItems())' % split_text[0], self.ns)
+                read_only = eval('%s._impl._readonly()' %
+                                 split_text[0], self.ns)
+                schema_items = eval(
+                    'dict(%s._impl._schema.allItems())' % split_text[0], self.ns)
 
-            #if schema_items is not None and split_text[1] in schema_items:
+            # if schema_items is not None and split_text[1] in schema_items:
             current_item = schema_items.get(split_text[1], None)
             if current_item is not None:
                 if read_only:
-                    split_text[1] = getColour('fg.red')   + split_text[1] + getColour('fg.normal')
+                    split_text[1] = getColour(
+                        'fg.red') + split_text[1] + getColour('fg.normal')
                 elif current_item['protected']:
-                    split_text[1] = getColour('fg.red')   + split_text[1] + getColour('fg.normal')
+                    split_text[1] = getColour(
+                        'fg.red') + split_text[1] + getColour('fg.normal')
                 else:
-                    split_text[1] = getColour('fg.green') + split_text[1] + getColour('fg.normal')
+                    split_text[1] = getColour(
+                        'fg.green') + split_text[1] + getColour('fg.normal')
                 return '.'.join(split_text)
 
         return match
@@ -151,103 +183,124 @@ class GangaCompleter(object):
 #            print traceback.format_exc()
 
     def error_checker(self, user_input):
-        pass #was going to use this to make displayer smaller by factoring out the error checking bit
+        # was going to use this to make displayer smaller by factoring out the
+        # error checking bit
+        pass
 
-    ## be on guard that the columns might break if the largest completion used to set the
-    ## column width is infact a method so gets added to by the colours
+    # be on guard that the columns might break if the largest completion used to set the
+    # column width is infact a method so gets added to by the colours
     def displayer(self, substitution, matches, longest_match_length):
-#        try:
+        #        try:
         max_line_width = self.shell_size()[1]
-        column_width   = longest_match_length + 2#max(itertools.imap(lambda x: len(x), matches)) + 2 #two blank spaces
-        num_per_line   = max_line_width / column_width
+        # max(itertools.imap(lambda x: len(x), matches)) + 2 #two blank spaces
+        column_width = longest_match_length + 2
+        num_per_line = max_line_width / column_width
         # need this as if partial auto-complete happens then get duplicate text
-        # this is bcoz readline.get_line_buffer() already contains the partial completed text
-        user_input     = readline.get_line_buffer()[:readline.get_endidx()]
+        # this is bcoz readline.get_line_buffer() already contains the partial
+        # completed text
+        user_input = readline.get_line_buffer()[:readline.get_endidx()]
 
-        class_label, class_name, method_name, arg_num = current_class_method_and_arg(user_input, self.ns)
+        class_label, class_name, method_name, arg_num = current_class_method_and_arg(
+            user_input, self.ns)
 
         if num_per_line == 0 or user_input.strip().endswith('(') or user_input.strip().endswith(','):
             num_per_line = 1
 
-        if class_name is not None and method_name is None and user_input.strip().endswith(','): ## constructor
-            #if user_input.strip().endswith('(') or user_input.strip().endswith(','):
-            tmp =  arg_splitter(user_input+')', strip_args=False)
-            new = tmp[:]#map(lambda x: x.strip(), tmp)
-            wrong=False
-            unrecognised=[]
-            for i, arg in enumerate(itertools.ifilter(lambda x: x!='', itertools.imap(lambda x: x.strip(), new))):
+        # constructor
+        if class_name is not None and method_name is None and user_input.strip().endswith(','):
+            # if user_input.strip().endswith('(') or
+            # user_input.strip().endswith(','):
+            tmp = arg_splitter(user_input + ')', strip_args=False)
+            new = tmp[:]  # map(lambda x: x.strip(), tmp)
+            wrong = False
+            unrecognised = []
+            for i, arg in enumerate(itertools.ifilter(lambda x: x != '', itertools.imap(lambda x: x.strip(), new))):
                 if '=' in arg:
                     split_arg = arg.split('=')
                     if split_arg[0].strip() not in eval('dict(%s._impl._schema.allItems())' % class_name, self.ns):
                         unrecognised.append((split_arg[0].strip(), class_name))
-                        new[i] = new[i].replace(split_arg[0] + '=', getColour('fg.red') + split_arg[0] + getColour('fg.normal') + '=') # include = to avoid replacing letters e.g. a in the RHS also to keep the users spaces intact
+                        # include = to avoid replacing letters e.g. a in the
+                        # RHS also to keep the users spaces intact
+                        new[i] = new[i].replace(split_arg[
+                                                0] + '=', getColour('fg.red') + split_arg[0] + getColour('fg.normal') + '=')
                 elif not eval('isinstance(%s, %s)' % (arg, class_name), self.ns):
-                    new[i]=new[i].replace(arg, getColour('fg.red') + arg + getColour('fg.normal'))
-                    wrong=True
+                    new[i] = new[i].replace(
+                        arg, getColour('fg.red') + arg + getColour('fg.normal'))
+                    wrong = True
 
             user_input = user_input.replace(','.join(tmp), ','.join(new))
             if wrong:
-                print ''
-                logger.warning('Only one positional arg allowed which must be an object of the same type to copy from')
+                logger.warning(
+                    'Only one positional arg allowed which must be an object of the same type to copy from')
                 #user_input = user_input.replace(','.join(tmp), ','.join(new))
             if unrecognised:
-                print ''
                 for a, c in unrecognised:
-                    logger.warning("Unrecognised keyword argument, '%s' is not a modifyable attribute of '%s'" % (a,c))
+                    logger.warning(
+                        "Unrecognised keyword argument, '%s' is not a modifyable attribute of '%s'" % (a, c))
 
-        colour_green   = getColour('fg.green')
-        colour_red     = getColour('fg.red')
+        colour_green = getColour('fg.green')
+        colour_red = getColour('fg.red')
         #colour_blue   = getColour('fg.blue')
-        colour_normal  = getColour('fg.normal')
+        colour_normal = getColour('fg.normal')
 
         display_str = '\n'
-        for i, m in enumerate(itertools.ifilter(lambda x: x!='', matches)):
+        for i, m in enumerate(itertools.ifilter(lambda x: x != '', matches)):
             coloured_text = self.colouriser(m, user_input)
             width = column_width
             if colour_green in coloured_text:
                 width = column_width + len(colour_green) + len(colour_normal)
             elif colour_red in coloured_text:
                 width = column_width + len(colour_red) + len(colour_normal)
-            display_str +=('{0:<%d}' % width).format(coloured_text)
-            if num_per_line and (i+1)%num_per_line ==0:
-                display_str +='\n'
+            display_str += ('{0:<%d}' % width).format(coloured_text)
+            if num_per_line and (i + 1) % num_per_line == 0:
+                display_str += '\n'
 
-        if num_per_line and (i+1)%num_per_line ==0:
-            display_str +='\n'            
+        if num_per_line and (i + 1) % num_per_line == 0:
+            display_str += '\n'
         else:
-            display_str +='\n\n'
-        display_str +=getColour('fg.blue')
-        display_str +='In [%s]:'%len(self.ns['In'])
-        display_str +=getColour('fg.normal')
-        display_str +=user_input
+            display_str += '\n\n'
+        display_str += getColour('fg.blue')
+        display_str += 'In [%s]:' % len(self.ns['In'])
+        display_str += getColour('fg.normal')
+        display_str += user_input
 
-        print display_str,
+        print(display_str, end='')
         readline.redisplay()
 #        except:
 #            import traceback
 #            print traceback.format_exc()
 
     def build_func_string(self, line):
-#        try:
+        #        try:
         matches = ['']
-        ## get the argspec
-        class_label, class_name, method_name, arg_num = current_class_method_and_arg(line, self.ns)
+        # get the argspec
+        class_label, class_name, method_name, arg_num = current_class_method_and_arg(
+            line, self.ns)
         if method_name is not None and class_name is not None:
-            # must use class label here so as to get things not defined working like queues
-            tmp_arg_spec = eval('inspect.getargspec(%s.%s)' % (class_label, method_name), self.ns)
-            arg_spec     = inspect.ArgSpec(tmp_arg_spec.args[1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
+            # must use class label here so as to get things not defined working
+            # like queues
+            tmp_arg_spec = eval(
+                'inspect.getargspec(%s.%s)' % (class_label, method_name), self.ns)
+            arg_spec = inspect.ArgSpec(tmp_arg_spec.args[
+                                       1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
         elif method_name is not None:
-            arg_spec     = eval('inspect.getargspec(%s)'    % method_name              , self.ns)
-        elif class_name is not None: ##constructor
+            arg_spec = eval('inspect.getargspec(%s)' % method_name, self.ns)
+        elif class_name is not None:  # constructor
             schema_items = None
             if eval('hasattr(%s,"_schema")' % class_name, self.ns):
-                schema_items= eval('%s._schema.allItems()' % class_name, self.ns)
+                schema_items = eval(
+                    '%s._schema.allItems()' % class_name, self.ns)
             elif eval('hasattr(%s,"_impl") and hasattr(%s._impl,"_schema")' % (class_name, class_name), self.ns):
-                schema_items= eval('%s._impl._schema.allItems()' % class_name, self.ns)
+                schema_items = eval(
+                    '%s._impl._schema.allItems()' % class_name, self.ns)
 
-            if schema_items is None: # note wont work for build in types as these are defined in C or things with slot wrappers
-                tmp_arg_spec = eval('inspect.getargspec(%s.__init__)' % class_name, self.ns)
-                arg_spec     = inspect.ArgSpec(tmp_arg_spec.args[1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
+            # note wont work for build in types as these are defined in C or
+            # things with slot wrappers
+            if schema_items is None:
+                tmp_arg_spec = eval(
+                    'inspect.getargspec(%s.__init__)' % class_name, self.ns)
+                arg_spec = inspect.ArgSpec(tmp_arg_spec.args[
+                                           1:], tmp_arg_spec.varargs, tmp_arg_spec.keywords, tmp_arg_spec.defaults)
             else:
                 t_args = []
                 t_defaults = []
@@ -260,24 +313,23 @@ class GangaCompleter(object):
                 else:
                     t_defaults = tuple(t_defaults)
                 arg_spec = inspect.ArgSpec(t_args, None, None, t_defaults)
-            matches.append('%s()'   %  class_name             )
-            matches.append('%s(%s)' % (class_name, class_name))                
-        #else:
+            matches.append('%s()' % class_name)
+            matches.append('%s(%s)' % (class_name, class_name))
+        # else:
         #    if class_name is not None:
         #        arg_spec     = eval('inspect.getargspec(%s.%s)' % (class_name, method_name), self.ns)
         #    else:
-        #        arg_spec     = eval('inspect.getargspec(%s)' % method_name       , self.ns)                
+        #        arg_spec     = eval('inspect.getargspec(%s)' % method_name       , self.ns)
 
-
-        ## create string
-        t=''
+        # create string
+        t = ''
         if method_name is not None and class_name is not None:
             t += '.'.join([str(class_name), str(method_name)])
         elif method_name is not None:
             t += str(method_name)
         elif class_name is not None:
             t += str(class_name)
-        t+='('
+        t += '('
 
         if arg_spec.defaults is None:
             t += ', '.join(arg_spec.args)
@@ -286,7 +338,7 @@ class GangaCompleter(object):
             if arg_spec.args[:num_default_free]:
                 t += ', '.join(arg_spec.args[:num_default_free]) + ', '
             for var, deflt in zip(arg_spec.args[num_default_free:], arg_spec.defaults):
-                if type(deflt) == str:
+                if isinstance(deflt, str):
                     t += "%s ='%s', " % (var, deflt)
                 else:
                     t += '%s =%s, ' % (var, str(deflt))
@@ -296,7 +348,7 @@ class GangaCompleter(object):
         if arg_spec.keywords is not None:
             t += '**%s, ' % arg_spec.keywords
         if t.endswith(', '):
-            t = t[:-2] # remove trailing ,
+            t = t[:-2]  # remove trailing ,
         t += ')'
         matches.append(t)
         return matches
@@ -305,26 +357,26 @@ class GangaCompleter(object):
 #            print traceback.format_exc()
 
     def complete(self, text, state):
-#        try:
+        #        try:
         response = None
         whole_line = readline.get_line_buffer()
         replace_complete_start = readline.get_begidx()
-        replace_complete_end   = readline.get_endidx()
-        if state==0:
+        replace_complete_end = readline.get_endidx()
+        if state == 0:
             if text == ''\
                     and whole_line != '' \
                     and replace_complete_start == len(whole_line) \
-                    and replace_complete_end   == len(whole_line):
+                    and replace_complete_end == len(whole_line):
                 #cls_label, class_name, method, arg_num = current_class_method_and_arg(whole_line.rstrip())
-                #print cls, method
+                # print cls, method
                 if whole_line.rstrip().endswith('(') or whole_line.rstrip().endswith(','):
-                    #if method is not None:                           
-                    self.matches=self.build_func_string(whole_line.rstrip())
+                    # if method is not None:
+                    self.matches = self.build_func_string(whole_line.rstrip())
 
-                #elif whole_line.rstrip().endswith(','):
-                    #if method is not None:
+                # elif whole_line.rstrip().endswith(','):
+                    # if method is not None:
                 #    self.matches=self.build_func_string(whole_line.rstrip())
-                else: ## e.g. a=<tab>
+                else:  # e.g. a=<tab>
                     self.matches = [self.func(text, 0)]
                     for i in itertools.count(1):
                         next = self.func(text, i)

@@ -1,18 +1,19 @@
-################################################################################
+from __future__ import absolute_import
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: LCGSEFile.py,v 0.1 2011-02-12 15:40:00 idzhunov Exp $
-################################################################################
+##########################################################################
 
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
-from Ganga.Utility.Config import getConfig 
+from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
 from Ganga.Utility import GridShell
 
-from IGangaFile import IGangaFile
+from .IGangaFile import IGangaFile
 
 import re
 import os
@@ -20,33 +21,36 @@ import copy
 
 regex = re.compile('[*?\[\]]')
 
+
 def getLCGConfig():
     return getConfig('Output')['LCGSEFile']['uploadOptions']
 
+
 class LCGSEFile(IGangaFile):
+
     """LCGSEFile represents a class marking an output file to be written into LCG SE
     """
 
-    _schema = Schema(Version(1,1), {
-        'namePattern' : SimpleItem(defvalue="",doc='pattern of the file name'),
-        'localDir'    : SimpleItem(defvalue="",copyable=1,doc='local dir where the file is stored, used from get and put methods'),    
-        'joboutputdir': SimpleItem(defvalue="",doc='outputdir of the job with which the outputsandbox file object is associated'),
-        'se'          : SimpleItem(defvalue=getLCGConfig()['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
-        'se_type'     : SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
-        'se_rpath'    : SimpleItem(defvalue='', copyable=1, doc='the relative path to the file from the VO directory on the SE'),
-        'lfc_host'    : SimpleItem(defvalue=getLCGConfig()['LFC_HOST'], copyable=1, doc='the LCG LFC hostname'),
-        'srm_token'   : SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
-        'SURL'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
-        'port'        : SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
-        'locations'   : SimpleItem(defvalue=[],copyable=1,typelist=['str'],sequence=1,doc="list of locations where the outputfiles were uploaded"),
-        'subfiles'      : ComponentItem(category='gangafiles',defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-        'failureReason' : SimpleItem(defvalue="",protected=1,copyable=0,doc='reason for the upload failure'),
-        'compressed'  : SimpleItem(defvalue=False, typelist=['bool'],protected=0,doc='wheather the output file should be compressed before sending somewhere')})
+    _schema = Schema(Version(1, 1), {
+        'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
+        'localDir': SimpleItem(defvalue="", copyable=1, doc='local dir where the file is stored, used from get and put methods'),
+        'joboutputdir': SimpleItem(defvalue="", doc='outputdir of the job with which the outputsandbox file object is associated'),
+        'se': SimpleItem(defvalue=getLCGConfig()['dest_SRM'], copyable=1, doc='the LCG SE hostname'),
+        'se_type': SimpleItem(defvalue='', copyable=1, doc='the LCG SE type'),
+        'se_rpath': SimpleItem(defvalue='', copyable=1, doc='the relative path to the file from the VO directory on the SE'),
+        'lfc_host': SimpleItem(defvalue=getLCGConfig()['LFC_HOST'], copyable=1, doc='the LCG LFC hostname'),
+        'srm_token': SimpleItem(defvalue='', copyable=1, doc='the SRM space token, meaningful only when se_type is set to srmv2'),
+        'SURL': SimpleItem(defvalue='', copyable=1, doc='the LCG SE SURL'),
+        'port': SimpleItem(defvalue='', copyable=1, doc='the LCG SE port'),
+        'locations': SimpleItem(defvalue=[], copyable=1, typelist=['str'], sequence=1, doc="list of locations where the outputfiles were uploaded"),
+        'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+        'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
+        'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere')})
     _category = 'gangafiles'
     _name = "LCGSEFile"
-    _exportmethods = [ "location" , "setLocation" , "get" , "put" , "getUploadCmd"]
+    _exportmethods = ["location", "setLocation", "get", "put", "getUploadCmd"]
 
-    def __init__(self,namePattern='', localDir='', **kwds):
+    def __init__(self, namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into LCG SE
         """
         super(LCGSEFile, self).__init__()
@@ -54,47 +58,47 @@ class LCGSEFile(IGangaFile):
         self.localDir = localDir
 
         self.locations = []
-        
+
         self.shell = GridShell.getShell()
 
     def __setattr__(self, attr, value):
-        if attr == 'se_type' and value not in ['','srmv1','srmv2','se']:
+        if attr == 'se_type' and value not in ['', 'srmv1', 'srmv2', 'se']:
             raise AttributeError('invalid se_type: %s' % value)
-        super(LCGSEFile,self).__setattr__(attr, value)
+        super(LCGSEFile, self).__setattr__(attr, value)
 
-    def __construct__(self,args):
-        if len(args) == 1 and type(args[0]) == type(''):
+    def __construct__(self, args):
+        if len(args) == 1 and isinstance(args[0], str):
             self.namePattern = args[0]
-        elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
+        elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
             self.namePattern = args[0]
-            self.localDir = args[1]     
-            
+            self.localDir = args[1]
+
     def _on_attribute__set__(self, obj_type, attrib_name):
         r = copy.deepcopy(self)
         if obj_type.__class__.__name__ == 'Job' and attrib_name == 'outputfiles':
-            r.locations=[]
-            r.localDir=''
-            r.failureReason=''
+            r.locations = []
+            r.localDir = ''
+            r.failureReason = ''
         return r
 
     def __repr__(self):
         """Get the representation of the file."""
 
-        return "LCGSEFile(namePattern='%s')"% self.namePattern
+        return "LCGSEFile(namePattern='%s')" % self.namePattern
 
-    
     def __get_unique_fname__(self):
         '''gets an unique filename'''
 
         import random
         import time
 
-        uuid = (str(random.uniform(0,100000000))+'-'+str(time.time())).replace('.','-')
+        uuid = (str(random.uniform(0, 100000000)) +
+                '-' + str(time.time())).replace('.', '-')
         user = getConfig('Configuration')['user']
 
         fname = 'user.%s.%s' % (user, uuid)
         return fname
-    
+
     def setLocation(self):
         """
         Sets the location of output files that were uploaded to lcg storage element from the WN
@@ -102,23 +106,22 @@ class LCGSEFile(IGangaFile):
 
         job = self.getJobObject()
 
-        postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
+        postprocessLocationsPath = os.path.join(
+            job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
         if not os.path.exists(postprocessLocationsPath):
             return
 
-        postprocesslocations = open(postprocessLocationsPath, 'r')
-
         def lcgse_line_processor(line, lcgse_file):
-            guid = line[line.find('->')+2:]
+            guid = line[line.find('->') + 2:]
             pattern = line.split(' ')[1]
             name = line.split(' ')[2].strip('.gz')
 
             if regex.search(lcgse_file.namePattern) is not None:
-                d=LCGSEFile(namePattern=name)
+                d = LCGSEFile(namePattern=name)
                 d.compressed = lcgse_file.compressed
                 d.lfc_host = lcgse_file.lfc_host
                 d.se = lcgse_file.se
-                #todo copy also the other attributes
+                # todo copy also the other attributes
                 lcgse_file.subfiles.append(GPIProxyObjectFactory(d))
                 lcgse_line_processor(line, d)
             elif pattern == lcgse_file.namePattern:
@@ -129,36 +132,35 @@ class LCGSEFile(IGangaFile):
                     return
                 lcgse_file.locations = guid
 
-        for line in postprocesslocations.readlines():
-                
-            if line.strip() == '':      
+        for line in open(postprocessLocationsPath, 'r'):
+
+            if line.strip() == '':
                 continue
-         
+
             if line.startswith('lcgse'):
                 lcgse_line_processor(line.strip(), self)
 
-        postprocesslocations.close()
-        
     def location(self):
         """
         Return list with the locations of the post processed files (if they were configured to upload the output somewhere)
         """
         return self.locations
 
-    
     def getUploadCmd(self):
 
         vo = getConfig('LCG')['VirtualOrganisation']
 
         cmd = 'lcg-cr --vo %s ' % vo
         if self.se != '':
-            cmd  = cmd + ' -d %s' % self.se
+            cmd = cmd + ' -d %s' % self.se
         if self.se_type == 'srmv2' and self.srm_token != '':
             cmd = cmd + ' -D srmv2 -s %s' % self.srm_token
-          
-        ## specify the physical location
+
+        # specify the physical location
         if self.se_rpath != '':
-            cmd = cmd + ' -P %s/ganga.%s/filename' % ( self.se_rpath, self.__get_unique_fname__() )
+            cmd = cmd + \
+                ' -P %s/ganga.%s/filename' % (self.se_rpath,
+                                              self.__get_unique_fname__())
 
         return cmd
 
@@ -166,15 +168,16 @@ class LCGSEFile(IGangaFile):
         """
         Executes the internally created command for file upload to LCG SE, this method will
         be called on the client
-        """     
+        """
         import glob
 
         sourceDir = ''
 
-        #if used as a stand alone object
+        # if used as a stand alone object
         if self._parent == None:
             if self.localDir == '':
-                logger.warning('localDir attribute is empty, don\'t know from which dir to take the file' )
+                logger.warning(
+                    'localDir attribute is empty, don\'t know from which dir to take the file')
                 return
             else:
                 sourceDir = self.localDir
@@ -187,7 +190,7 @@ class LCGSEFile(IGangaFile):
         fileName = self.namePattern
 
         if self.compressed:
-            fileName = '%s.gz' % self.namePattern          
+            fileName = '%s.gz' % self.namePattern
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
@@ -195,79 +198,86 @@ class LCGSEFile(IGangaFile):
                 cmd = cmd.replace('filename', currentFile)
                 cmd = cmd + ' file:%s' % currentFile
 
-                (exitcode,output,m) = self.shell.cmd1(cmd, capture_stderr=True)
+                (exitcode, output, m) = self.shell.cmd1(
+                    cmd, capture_stderr=True)
 
-                d=LCGSEFile(namePattern=os.path.basename(currentFile))
+                d = LCGSEFile(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
                 d.lfc_host = self.lfc_host
                 d.se = self.se
-                #todo copy also the other attributes
+                # todo copy also the other attributes
 
                 if exitcode == 0:
-                
-                    match = re.search('(guid:\S+)',output)
+
+                    match = re.search('(guid:\S+)', output)
                     if match:
                         d.locations = output.strip()
 
-                    ## Alex removed this as more general approach in job.py after put() is called
-                    #remove file from output dir if this object is attached to a job
-                    #if self._parent != None:
+                    # Alex removed this as more general approach in job.py after put() is called
+                    # remove file from output dir if this object is attached to a job
+                    # if self._parent != None:
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
                 else:
                     d.failureReason = output
                     if self._parent != None:
-                        logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
+                        logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
+                            str(self._parent.fqid), self.failureReason))
                     else:
-                        logger.error("The file can't be uploaded because of %s" % (self.failureReason))
+                        logger.error(
+                            "The file can't be uploaded because of %s" % (self.failureReason))
 
                 self.subfiles.append(GPIProxyObjectFactory(d))
-                
+
         else:
-            logger.debug( "sourceDir: %s" % sourceDir )
-            logger.debug( "fileName: %s" % fileName )
+            logger.debug("sourceDir: %s" % sourceDir)
+            logger.debug("fileName: %s" % fileName)
             currentFile = os.path.join(sourceDir, fileName)
             import os.path
-            if os.path.isfile( currentFile ):
-                logger.debug( "currentFile: %s exists!" % currentFile )
+            if os.path.isfile(currentFile):
+                logger.debug("currentFile: %s exists!" % currentFile)
             else:
-                logger.debug( "currentFile: %s DOES NOT exist!" % currentFile )
+                logger.debug("currentFile: %s DOES NOT exist!" % currentFile)
 
             cmd = self.getUploadCmd()
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
 
-            logger.debug( "cmd is: %s" % cmd )
+            logger.debug("cmd is: %s" % cmd)
 
             (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
 
             if exitcode == 0:
-                
-                match = re.search('(guid:\S+)',output)
+
+                match = re.search('(guid:\S+)', output)
                 if match:
                     self.locations = output.strip()
 
-                ## Alex removed this as more general approach in job.py after put() is called
-                #remove file from output dir if this object is attached to a job
-                #if self._parent != None:
+                # Alex removed this as more general approach in job.py after put() is called
+                # remove file from output dir if this object is attached to a job
+                # if self._parent != None:
                 #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
             else:
                 self.failureReason = output
                 if self._parent != None:
-                    logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (str(self._parent.fqid), self.failureReason))
+                    logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
+                        str(self._parent.fqid), self.failureReason))
                 else:
-                    logger.error("The file can't be uploaded because of %s" % (self.failureReason) )
-            
+                    logger.error(
+                        "The file can't be uploaded because of %s" % (self.failureReason))
+
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
-        """        
+        """
         lcgCommands = []
 
         for outputFile in outputFiles:
-            lcgCommands.append('lcgse %s %s %s' % (outputFile.namePattern , outputFile.lfc_host,  outputFile.getUploadCmd()))
-            logger.debug( "OutputFile (%s) cmd for WN script is: %s" % ( outputFile.namePattern, outputFile.getUploadCmd() ) )
+            lcgCommands.append('lcgse %s %s %s' % (
+                outputFile.namePattern, outputFile.lfc_host,  outputFile.getUploadCmd()))
+            logger.debug("OutputFile (%s) cmd for WN script is: %s" %
+                         (outputFile.namePattern, outputFile.getUploadCmd()))
 
         script = """\n
 
@@ -345,37 +355,38 @@ class LCGSEFile(IGangaFile):
         script = script.replace('###LCGCOMMANDS###', str(lcgCommands))
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
-        script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
+        script = script.replace(
+            '###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
 
-        return script   
+        return script
 
     def get(self):
         """
         Retrieves locally all files matching this LCGSEFile object pattern
         """
-        import subprocess
-
         to_location = self.localDir
 
         if not os.path.isdir(self.localDir):
             if self._parent is not None:
                 to_location = self.getJobObject().outputdir
             else:
-                print "%s is not a valid directory.... Please set the localDir attribute" % self.localDir
+                logger.info(
+                    "%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
                 return
 
-        #set lfc host
+        # set lfc host
         os.environ['LFC_HOST'] = self.lfc_host
 
-        vo = getConfig('LCG')['VirtualOrganisation']  
+        vo = getConfig('LCG')['VirtualOrganisation']
 
         for location in self.locations:
             destFileName = os.path.join(to_location, self.namePattern)
             cmd = 'lcg-cp --vo %s %s file:%s' % (vo, location, destFileName)
-            (exitcode,output,m) = self.shell.cmd1(cmd, capture_stderr=True)
+            (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
 
             if exitcode != 0:
-                print 'command %s failed to execute , reason for failure is %s' % (cmd, output)
+                logger.error(
+                    'command %s failed to execute , reason for failure is %s' % (cmd, output))
 
     def getWNScriptDownloadCommand(self, indent):
 
@@ -385,34 +396,38 @@ class LCGSEFile(IGangaFile):
 ###INDENT###cwDir = os.getcwd()
 ###INDENT###dwnCmd = 'lcg-cp --vo ###VO### lfn:/grid/###VO###/###LOCATION###/###NAMEPATTERN### file:%s' % os.path.join(cwDir, '###NAMEPATTERN###')
 ###INDENT###os.system(dwnCmd)
-"""     
-        
+"""
+
         script = script.replace('###INDENT###', indent)
         script = script.replace('###LFC_HOST###', self.lfc_host)
-        script = script.replace('###VO###', getConfig('LCG')['VirtualOrganisation'])
+        script = script.replace(
+            '###VO###', getConfig('LCG')['VirtualOrganisation'])
         script = script.replace('###LOCATION###', self.se_rpath)
         script = script.replace('###NAMEPATTERN###', self.namePattern)
 
         return script
-    
+
     def processWildcardMatches(self):
         if self.subfiles:
             return self.subfiles
-        
+
         from fnmatch import fnmatch
-        
+
         if regex.search(self.namePattern):
-            #TODO namePattern shouldn't contain slashes and se_rpath should not contain wildcards
-            exitcode,output,m = self.shell.cmd1('lcg-ls lfn:/grid/'+getConfig('LCG')['VirtualOrganisation']+'/'+self.se_rpath, capture_stderr=True)
+            # TODO namePattern shouldn't contain slashes and se_rpath should
+            # not contain wildcards
+            exitcode, output, m = self.shell.cmd1('lcg-ls lfn:/grid/' + getConfig(
+                'LCG')['VirtualOrganisation'] + '/' + self.se_rpath, capture_stderr=True)
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):
                     subfile = LCGSEFile(namePattern=filename)
                     subfile.se_rpath = self.se_rpath
                     subfile.lfc_host = self.lfc_host
-                    
+
                     self.subfiles.append(GPIProxyObjectFactory(subfile))
 
-# add LCGSEFile objects to the configuration scope (i.e. it will be possible to write instatiate LCGSEFile() objects via config file)
+# add LCGSEFile objects to the configuration scope (i.e. it will be
+# possible to write instatiate LCGSEFile() objects via config file)
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['LCGSEFile'] = LCGSEFile

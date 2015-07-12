@@ -487,7 +487,7 @@ class Athena(IPrepareApp):
             self.atlas_production = productionVer
         if projectName != '':
             self.atlas_project = projectName
-        if os.environ.has_key('CMTCONFIG'):
+        if 'CMTCONFIG' in os.environ:
             self.atlas_cmtconfig = os.environ['CMTCONFIG']
             if self.atlas_cmtconfig.startswith('x86_64'):
                 raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
@@ -547,9 +547,9 @@ class Athena(IPrepareApp):
             self.stats['jdltime']  = int(os.stat(os.path.join(job.inputdir,'__jdlfile__'))[9])
 
         try:        
-            if not self.stats.has_key('starttime') and self.stats.has_key('gangatime1'):
+            if 'starttime' not in self.stats and 'gangatime1' in self.stats:
                 self.stats['starttime'] = self.stats['gangatime1']
-            if not self.stats.has_key('stoptime') and self.stats.has_key('gangatime5'):
+            if 'stoptime' not in self.stats and 'gangatime5' in self.stats:
                 self.stats['stoptime'] = self.stats['gangatime5'] 
         except:
             pass
@@ -737,15 +737,15 @@ class Athena(IPrepareApp):
             pass
 
         if job.backend._name in [ 'NG' ]:
-            if self.stats.has_key('gangatime1'):
+            if 'gangatime1' in self.stats:
                 self.stats['starttime'] = self.stats['gangatime1'] 
-            if self.stats.has_key('gangatime5'):
+            if 'gangatime5' in self.stats:
                 self.stats['stoptime'] = self.stats['gangatime5'] 
 
         try:        
-            if not self.stats.has_key('starttime') and self.stats.has_key('gangatime1'):
+            if 'starttime' not in self.stats and 'gangatime1' in self.stats:
                 self.stats['starttime'] = self.stats['gangatime1']
-            if not self.stats.has_key('stoptime') and self.stats.has_key('gangatime5'):
+            if 'stoptime' not in self.stats and 'gangatime5' in self.stats:
                 self.stats['stoptime'] = self.stats['gangatime5'] 
         except:
             pass
@@ -764,7 +764,7 @@ class Athena(IPrepareApp):
             if job.outputdata:
                 try:
                     job.outputdata.check_content_consistency(numsubjobs)
-                except Exception, Value:
+                except Exception as Value:
                     logger.warning('An ERROR occured during job.outputdata.check_consistency() call: %s, %s', Exception, Value)
                     pass
 
@@ -780,7 +780,7 @@ class Athena(IPrepareApp):
             if job.outputdata:
                 try:
                     job.outputdata.fill()
-                except Exception, Value:
+                except Exception as Value:
                     logger.warning('An ERROR occured during job.outputdata.fill() call: %s, %s', Exception, Value)
                     pass                                   
 
@@ -798,25 +798,25 @@ class Athena(IPrepareApp):
             numfiles3 = 0
             totalevents = 0
             for subjob in job.subjobs:
-                if subjob.application.stats.has_key('numfiles'):
+                if 'numfiles' in subjob.application.stats:
                     if subjob.application.stats['numfiles']:
                         try:
                             numfiles = numfiles + int(subjob.application.stats['numfiles'])
                         except:
                             pass
-                if subjob.application.stats.has_key('numfiles2'):
+                if 'numfiles2' in subjob.application.stats:
                     if subjob.application.stats['numfiles2']:
                         try:
                             numfiles2 = numfiles2 + int(subjob.application.stats['numfiles2'])
                         except:
                             pass
-                if subjob.application.stats.has_key('numfiles3'):
+                if 'numfiles3' in subjob.application.stats:
                     if subjob.application.stats['numfiles3']:
                         try:
                             numfiles3 = numfiles3 + int(subjob.application.stats['numfiles3'])
                         except:
                             pass
-                if subjob.application.stats.has_key('totalevents'):
+                if 'totalevents' in subjob.application.stats:
                     if subjob.application.stats['totalevents']:
                         try:
                             totalevents = int(totalevents) + int(subjob.application.stats['totalevents'])
@@ -831,7 +831,7 @@ class Athena(IPrepareApp):
         """Add install.sh and requirements to inputsandbox needed on LGC/NG backend"""
 
         # tmpDir
-        if os.environ.has_key('TMPDIR'):
+        if 'TMPDIR' in os.environ:
             tmpDir = os.environ['TMPDIR']
         else:
             cn = os.path.basename( os.path.expanduser( "~" ) )
@@ -929,7 +929,7 @@ class Athena(IPrepareApp):
 
         # Set CMTCONFIG
         if self.atlas_cmtconfig == "":
-            if os.environ.has_key('CMTCONFIG'):
+            if 'CMTCONFIG' in os.environ:
                 self.atlas_cmtconfig = os.environ['CMTCONFIG']
                 if self.atlas_cmtconfig.startswith('x86_64'):
                     #raise ApplicationConfigurationError(None, 'CMTCONFIG = %s, Your CMT setup is using 64 bit - please change to 32 bit !'% self.atlas_cmtconfig )
@@ -1086,7 +1086,7 @@ class Athena(IPrepareApp):
             logger.info('Set Athena run configuration to: %s',self.atlas_run_config)
 
         # tmpDir
-        if os.environ.has_key('TMPDIR'):
+        if 'TMPDIR' in os.environ:
             tmpDir = os.environ['TMPDIR']
         else:
             cn = os.path.basename( os.path.expanduser( "~" ) )
@@ -1116,7 +1116,7 @@ class Athena(IPrepareApp):
         # copy RootCore packages
         if self.useRootCore or self.useRootCoreNoBuild:
             # check $ROOTCOREDIR
-            if not os.environ.has_key('ROOTCOREDIR'):
+            if 'ROOTCOREDIR' not in os.environ:
                 raise ApplicationConfigurationError(None,'$ROOTCOREDIR is not definied in your enviornment. Please setup RootCore runtime beforehand')
 
             # check grid_submit.sh
@@ -1298,7 +1298,7 @@ class Athena(IPrepareApp):
             self.user_area.name=mktemp('.tar.gz',self.package, self.user_area_path)
 
         else:  
-            if os.environ.has_key('TMPDIR'):
+            if 'TMPDIR' in os.environ:
                 tmpDir = os.environ['TMPDIR']
             else:
                 cn = os.path.basename( os.path.expanduser( "~" ) )
@@ -1350,7 +1350,7 @@ class Athena(IPrepareApp):
         group_area_remote = options.get('group_area_remote')
         if self.grouparea:
             if not group_area_remote:
-                if os.environ.has_key('TMPDIR'):
+                if 'TMPDIR' in os.environ:
                     tmp = os.environ['TMPDIR']
                 else:
                     cn = os.path.basename( os.path.expanduser( "~" ) )

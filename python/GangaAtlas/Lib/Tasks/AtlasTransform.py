@@ -1,7 +1,6 @@
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from sets import Set
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -77,9 +76,9 @@ class AtlasTransform(ITransform):
 
          except DQContainerDoesNotHaveDataset:
             pass
-         except Exception, x:
+         except Exception as x:
             logger.error("Problem cleaning out Transform container: %s %s", x.__class__, x)
-         except DQException, x:
+         except DQException as x:
             logger.error('DQ2 Problem cleaning out Transform container: %s %s' %( x.__class__, x))
       finally:
          dq2_lock.release()

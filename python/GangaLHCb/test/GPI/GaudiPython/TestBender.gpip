@@ -7,11 +7,13 @@ from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
 from GangaTest.Framework.utils import file_contains, is_job_finished, \
      write_file
 
+from GangaLHCb.test import *
+
 try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -33,7 +35,6 @@ class TestBender(GangaGPITestCase):
         return LocalJob(j)
 
     def testDirac(self):
-        from GangaLHCb.test import *
         global module
         j = Job(application=Bender(), backend=Dirac())
         j.application.module = module
@@ -58,9 +59,9 @@ class LocalJob(ICheckTest):
 
     def checkTest(self):
         fname = join(self.j.outputdir,'stdout')
-        print "fname = %s" % fname
+        print("fname = %s" % fname)
         f = open(fname)
-        print 'f =', f.read()
+        print('f =', f.read())
         f.close()
         #executionstring = 'Application Manager Configured successfully'
         executionstring = 'num_events: -1'

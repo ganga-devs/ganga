@@ -104,6 +104,6 @@ class Savannah33992(ICheckTest):
         assert os.path.exists(f)
         with open(f,'r') as std_out:
             for line in std_out.readlines():
-                print line
+                print(line)
         assert file_contains(f, 'Status after script_wrapper.py execution is 0'), 'Incorrect exit code'
 

@@ -7,5 +7,4 @@ j.splitter = GenericSplitter()
 j.splitter.attribute = 'application.fail'
 j.splitter.values = ['','config','']
 assert_cannot_submit(j)
-print len(j.subjobs)
 assert(len(j.subjobs)==0)

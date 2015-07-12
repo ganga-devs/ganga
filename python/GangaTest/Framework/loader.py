@@ -362,7 +362,7 @@ class GangaTestLoader:
 
     def __generateTestCaseFromCmd(self, testCmd, testName, testAlias=None, 
                                 setUpCmd=None, tearDownCmd=None, description=None, 
-                                output_path=None, timeout=sys.maxint):
+                                output_path=None, timeout=sys.maxsize):
         """
         Add a single ganga test-case from a gpi test (similar to run_external_test)
         Internally this method decorates the setUp->[testCmd]->tearDown in a TestCase
@@ -519,7 +519,7 @@ def %(method_name)s(self):
     #delete the output file if it already exists
     try:
         os.unlink("%(output_path)s")
-    except OSError,e:
+    except OSError as e:
         pass
     
 """ % VARS
@@ -567,7 +567,7 @@ def %(method_name)s(self):
         
         
         #print code
-        exec code in globals(), d
+        exec(code, globals(), d)
         __method = d[method_name].__get__(self, self.__class__)
         setattr(self, method_name, __method)
         return NamedFunctionTestCase(__method,description=description)
@@ -727,7 +727,7 @@ def %(method_name)s(self):
                          test_ini)
         try:
             module = exec_module_code(test_path)
-        except Exception,e:
+        except Exception as e:
             print "[WARNING] Cannot parse Multipass test (invalid format) %s [skipped]-> %s"%(test_path,e)
             return 
             
@@ -817,7 +817,7 @@ def %(method_name)s(self):
             module = exec_module_code(test_path)
             if hasattr(module,'setUp'):
                 getattr(module,'setUp')()
-        except Exception,e:
+        except Exception as e:
             print "[WARNING] Cannot parse PYUnit test  %s [skipped]:"%test_path
             import traceback
             traceback.print_exc()
@@ -923,7 +923,7 @@ def %(method_name)s(self):
             module = exec_module_code(test_path)
             if hasattr(module,'setUp'):
                 getattr(module,'setUp')()
-        except Exception,e:
+        except Exception as e:
             print "[WARNING] Cannot parse GPIP test  %s [skipped]:"%test_path
             import traceback
             traceback.print_exc()
@@ -1020,7 +1020,7 @@ def walk(top, topdown=True, onerror=None):
     # left to visit.  That logic is copied here.
     try:
         names = listdir(top)
-    except Exception, err:
+    except Exception as err:
         print err
         if onerror is not None:
             onerror(err)

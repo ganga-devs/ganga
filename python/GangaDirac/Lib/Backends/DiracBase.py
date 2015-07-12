@@ -141,7 +141,7 @@ class DiracBase(IBackend):
 #        return True
 
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
-        if not result_ok(result) or not result.has_key('Value'):
+        if not result_ok(result) or 'Value' not in result:
             logger.error(err_msg)
             raise BackendError('Dirac',err_msg)
         
@@ -205,7 +205,7 @@ class DiracBase(IBackend):
                         incomplete = 1
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
-                except Exception,x:
+                except Exception as x:
                     log_user_exception(logger,debug=isinstance(x,GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid,str(x)))
         finally:
@@ -311,7 +311,7 @@ class DiracBase(IBackend):
         """Peek at the output of a job (Note: filename/command are ignored)."""
         dirac_cmd = 'peek(%d)' % self.id
         result = execute(dirac_cmd)
-        if result_ok(result): print result['Value']
+        if result_ok(result): logger.info(result['Value'])
         else: logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     def getOutputSandbox(self,dir=None):
@@ -368,7 +368,7 @@ class DiracBase(IBackend):
             try:
                 dirac_file.get()
                 return dirac_file.lfn
-            except GangaException, e: # should really make the get method throw if doesn't suceed. todo
+            except GangaException as e: # should really make the get method throw if doesn't suceed. todo
                 logger.warning(e)
 
         suceeded=[]
@@ -425,7 +425,7 @@ class DiracBase(IBackend):
                 except: pass
             msg = 'OK.'
             if not result_ok(result): msg = '%s' % result['Message']
-            print '%s: %s' %  (category,msg)
+            logger.info('%s: %s' %  (category,msg))
         # get pilot info for this job
         if type(self.id) != int: return
         j = self.getJobObject()
@@ -434,11 +434,10 @@ class DiracBase(IBackend):
         cmd = "getJobPilotOutput(%d,'%s')" % \
               (self.id, debug_dir)
         result = execute(cmd)
-        #print 'result =', result
         if result_ok(result):
-            print 'Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id)
+            logger.info('Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id))
         else:
-            print result.get('Message','')
+            logger.error(result.get('Message',''))
 
     def _getStateTime(job, status):
         """Returns the timestamps for 'running' or 'completed' by extracting

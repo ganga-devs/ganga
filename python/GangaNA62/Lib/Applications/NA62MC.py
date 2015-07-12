@@ -64,8 +64,8 @@ class NA62MC(IPrepareApp):
         nec_str = open(os.path.join( work_dir, nec_file )).read().strip().strip('#')
         mysqlc = "mysql -hhughnon.ppe.gla.ac.uk -ugridbot -p%s -s GridJobs" % nec_str
         rc, out = getstatusoutput("echo \"SELECT run FROM jobs ORDER BY run DESC LIMIT 1;\" | %s" % mysqlc)
-        if (rc):
-            print out
+        if rc != 0:
+            logger.error(out)
         run_num = int(out) + 1
             
         return run_num

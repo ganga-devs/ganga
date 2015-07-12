@@ -6,7 +6,11 @@
 
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
 
 class ArgSplitter(ISplitter):
 
@@ -38,25 +42,25 @@ class ArgSplitter(ISplitter):
     subjob 1 : AAA  1
     subjob 2 : BBB  2
     subjob 3 : CCC  3
-"""    
+"""
     _name = "ArgSplitter"
-    _schema = Schema(Version(1,0), {
-            'args' : SimpleItem(defvalue=[],typelist=['list','Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'],sequence=1,checkset='_checksetNestedLists',doc='A list of lists of arguments to pass to script')
-        } )
+    _schema = Schema(Version(1, 0), {
+        'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, checkset='_checksetNestedLists', doc='A list of lists of arguments to pass to script')
+    })
 
-    def split(self,job):
-        
+    def split(self, job):
+
         subjobs = []
 
         for arg in self.args:
             j = addProxy(self.createSubjob(job))
             # Add new arguments to subjob
-            j.application.args=arg
-            logger.debug('Arguments for split job is: '+str(arg))
+            j.application.args = arg
+            logger.debug('Arguments for split job is: ' + str(arg))
             subjobs.append(stripProxy(j))
         return subjobs
 
-                
+
 #
 #
 # $Log: not supported by cvs2svn $

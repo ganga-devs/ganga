@@ -1,22 +1,26 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: exceptions.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
-################################################################################
+##########################################################################
+
 
 class GangaException(Exception):
+
     """ Markup base class for well-behaved exception that should not print the whole traceback to user's prompt
         Any subclass of this exception is handled by a custom IPython exception handler
         and is printed out in an usable format to iPython prompt
     """
     logger = None
 
-    def __init__(self,*args,**kwds):
-        Exception.__init__(self,*args)
+    def __init__(self, *args, **kwds):
+        super(GangaException, self).__init__(args)
+        Exception.__init__(self, *args)
         self.kwds = kwds
 
         # This code will give a stack trace from a GangaException only when debugging is enabled
-        # This makes debugging what's going on much easier whilst hiding mess from users
+        # This makes debugging what's going on much easier whilst hiding mess
+        # from users
         if self.logger is None:
             import Ganga.Utility.logging
             self.logger = Ganga.Utility.logging.getLogger()
@@ -34,96 +38,117 @@ class GangaException(Exception):
          String representation of this class
         """
         _str = "%s: " % self.__class__.__name__
-        if hasattr(self,'args') and self.args:
-            _str +=" %s" % str(self.args)
-        if hasattr(self,'kwds') and self.kwds:
-            _str +=" %s" % str(self.kwds)
+        if hasattr(self, 'args') and self.args:
+            _str += " %s" % str(self.args)
+        if hasattr(self, 'kwds') and self.kwds:
+            _str += " %s" % str(self.kwds)
         return _str
 
+
 class ApplicationConfigurationError(GangaException):
-    def __init__(self,excpt,message):
-        GangaException.__init__(self,excpt,message)
+
+    def __init__(self, excpt, message):
+        GangaException.__init__(self, excpt, message)
         self.message = message
         self.excpt = excpt
 
     def __str__(self):
         if self.excpt:
-            e = '(%s:%s)'%(str(type(self.excpt)),str(self.excpt))
+            err = '(%s:%s)' % (str(type(self.excpt)), str(self.excpt))
         else:
-            e = ''
-        return "ApplicationConfigurationError: %s %s"%(self.message,e)
+            err = ''
+        return "ApplicationConfigurationError: %s %s" % (self.message, err)
+
+
+class ApplicationPrepareError(GangaException):
+    pass
+
 
 class BackendError(GangaException):
-    def __init__(self,backend_name,message):
-        GangaException.__init__(self,backend_name,message)
+
+    def __init__(self, backend_name, message):
+        GangaException.__init__(self, backend_name, message)
         self.backend_name = backend_name
         self.message = message
 
     def __str__(self):
-        return "BackendError: %s (%s backend) "%(self.message,self.backend_name)
+        return "BackendError: %s (%s backend) " % (self.message, self.backend_name)
 
-    
+
 # Exception raised by the Ganga Repository
 class RepositoryError(GangaException):
+
     """
     For non-bulk operations this exception may contain an original
     exception 'e' raised by the DB client.
     """
-    def __init__(self, e = None, msg = None, details = None):
+
+    def __init__(self, err=None, msg=None, details=None):
         if msg == None:
-            msg = "RepositoryError: %s" % str(e)
+            msg = "RepositoryError: %s" % str(err)
         GangaException.__init__(self, msg)
-        self.e = e
-        self.details = details 
-        
+        self.err = err
+        self.details = details
+
     def getOriginalMDError(self):
-        return self.e
+        return self.err
 
 
 # Exception raised by the Ganga Repository
 class BulkOperationRepositoryError(RepositoryError):
+
     """
     For bulk operations this exception
     have a non-empty dictionary 'details'
     which contains ids of failed jobs as keys and 'original' exceptions as values.
     """
-    def __init__(self, details = None, msg = None):
+
+    def __init__(self, details=None, msg=None):
         if msg == None:
-            msg = "RepositoryError: %s"% str(e)
-        RepositoryError.__init__(self, msg = msg, details = details)
+            msg = "RepositoryError: %s" % str(err)
+        RepositoryError.__init__(self, msg=msg, details=details)
         if details == None:
             self.details = {}
 
     def listFailedJobs(self):
         return self.details.keys()
 
-    def getOriginalJobError(self, id):        
+    def getOriginalJobError(self, id):
         return self.details.get(id)
 
+
 class IncompleteJobSubmissionError(GangaException):
-    def __init__(self,*args):
-        GangaException.__init__(self,*args)
+
+    def __init__(self, *args):
+        GangaException.__init__(self, *args)
+
 
 class IncompleteKillError(GangaException):
-    def __init__(self,*args):
-        GangaException.__init__(self,*args)        
+
+    def __init__(self, *args):
+        GangaException.__init__(self, *args)
+
 
 class JobManagerError(GangaException):
-    def __init__(self,msg):
+
+    def __init__(self, msg):
         self.msg = msg
-        GangaException.__init__(self,msg)
+        GangaException.__init__(self, msg)
 
     def __str__(self):
         return "JobManagerError: %s" % str(self.msg)
 
-class GangaAttributeError(AttributeError,GangaException):
+
+class GangaAttributeError(AttributeError, GangaException):
     logger = None
-    def __init__(self,*a,**k):
-        GangaException.__init__(self,*a,**k)
-        AttributeError.__init__(self,*a,**k)
+
+    def __init__(self, *a, **k):
+        GangaException.__init__(self, *a, **k)
+        AttributeError.__init__(self, *a, **k)
 
         # This code will give a stack trace from a GangaException only when debugging is enabled
-        # This makes debugging what's going on much easier whilst hiding mess from users
+        # This makes debugging what's going on much easier whilst hiding mess
+        # from users
         if self.logger is None:
             import Ganga.Utility.logging
             self.logger = Ganga.Utility.logging.getLogger()
@@ -136,28 +161,44 @@ class GangaAttributeError(AttributeError,GangaException):
                 import traceback
                 traceback.print_stack()
 
-class GangaValueError(ValueError,GangaException):
-    def __init__(self,*a,**k):
-        ValueError.__init__(self,*a,**k)
-    
+
+class GangaValueError(ValueError, GangaException):
+
+    def __init__(self, *a, **k):
+        GangaException.__init__(self, *a, **k)
+        ValueError.__init__(self, *a, **k)
+
+
+class GangaIOError(IOError, GangaException):
+    pass
+
+
 class ProtectedAttributeError(GangaAttributeError):
+
     'Attribute is read-only and may not be modified by the user (for example job.id)'
-    def __init__(self,*a,**k):
-        GangaAttributeError.__init__(self,*a,**k)
+
+    def __init__(self, *a, **k):
+        GangaAttributeError.__init__(self, *a, **k)
+
 
 class ReadOnlyObjectError(GangaAttributeError):
+
     'Object cannot be modified (for example job in a submitted state)'
-    def __init__(self,*a,**k):
-        GangaAttributeError.__init__(self,*a,**k)
+
+    def __init__(self, *a, **k):
+        GangaAttributeError.__init__(self, *a, **k)
+
 
 class TypeMismatchError(GangaAttributeError):
-    def __init__(self,*a,**k):
-        GangaAttributeError.__init__(self,*a,**k)
+
+    def __init__(self, *a, **k):
+        GangaAttributeError.__init__(self, *a, **k)
 
 
 class SchemaError(GangaAttributeError):
-    def __init__(self,*a,**k):
-        GangaAttributeError.__init__(self,*a,**k)
+
+    def __init__(self, *a, **k):
+        GangaAttributeError.__init__(self, *a, **k)
 
 #
 #
@@ -208,4 +249,4 @@ class SchemaError(GangaAttributeError):
 # *** empty log message ***
 #
 #
-#  
+#

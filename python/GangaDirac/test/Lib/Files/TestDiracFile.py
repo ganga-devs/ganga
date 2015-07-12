@@ -10,6 +10,9 @@ from GangaDirac.Lib.Files.DiracFile                import DiracFile
 #from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
 import unittest, tempfile, os
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class TestDiracFile(GangaGPITestCase):
     def setUp(self):
         self.returnObject = None
@@ -109,11 +112,11 @@ class TestDiracFile(GangaGPITestCase):
                          ]
         
         for label, fr in fail_returns:
-            print "Testing failure when return is", label,'...',
+            logger.info("Testing failure when return is {0} ...".format(label))
             self.returnObject = fr
             self.assertEqual(self.df.remove(), self.returnObject)
             self.assertEqual(self.df.lfn, 'lfn')
-            print "Pass"
+            logger.info("Pass")
 
     def test_replicate(self):
       
@@ -129,10 +132,10 @@ class TestDiracFile(GangaGPITestCase):
                          ("LFN not in Value['Successful']",{'OK':True, 'Value':{'Successful':{}}})
                          ]
         for label, fr in fail_returns:
-            print "Testing failure when return is", label,'...',
+            logger.info("Testing failure when return is {0} ...".format(label))
             self.returnObject = fr
             self.assertEqual(self.df.replicate('DEST'), self.returnObject)
-            print "Pass"
+            logger.info("Pass")
           
         self.df.lfn=''
         self.assertRaises(Exception, self.df.replicate,'DEST')
@@ -198,10 +201,10 @@ class TestDiracFile(GangaGPITestCase):
                          ("LFN not in Value['Successful']",{'OK':True, 'Value':{'Successful':{}}})
                          ]
         for label, fr in fail_returns:
-            print "Testing failure when return is", label,'...',
+            logger.info("Testing failure when return is {0} ...".format(label))
             self.returnObject = fr
             self.assertEqual(self.df.get(), self.returnObject)
-            print "Pass"
+            logger.info("Pass")
 
 
 

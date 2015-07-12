@@ -1,16 +1,20 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: Base.py,v 1.1 2008-07-17 16:40:50 moscicki Exp $
-################################################################################
+##########################################################################
+
+import uuid
+
 
 class JobRepository(object):
+
     """JobRepository class is an interface for developers, that need to access
     jobs/job attributes stored in the database.
     Implementation details are given in the derived class.
     """
 
-    def __init__(self, schema, role, streamer = None, tree_streamer = None):
+    def __init__(self, schema, role, streamer=None, tree_streamer=None):
         """schema is a subset of job schema. It should be list of tuples
         (attr, dbtype), where attr is a name of attribute, and dbtype is
         database specific type.
@@ -26,9 +30,7 @@ class JobRepository(object):
         self._role = role
         self._streamer = streamer
         self._tree_streamer = tree_streamer
-        from Ganga.Utility.guid import newGuid
-        self.guid = newGuid(self)
-
+        self.guid = str(uuid.uuid4())
 
     def _getStreamFromJob(self, job):
         if self._streamer:
@@ -39,7 +41,7 @@ class JobRepository(object):
         if self._streamer:
             return self._streamer.getJobFromStream(stream)
         return
-        
+
     def registerJobs(self, jobs):
         """registerJobs(self, jobs) --> None
         throws RepositoryError
@@ -82,7 +84,7 @@ class JobRepository(object):
         attributes = {'status':'submitted', 'application':'DaVinci'}
         """
         return []
-        
+
     def getJobAttributes(self, ids_or_attributes):
         """getJobAttributes(self, ids_or_attributes) --> list of dictionaries with 
         job metadata stored in the registry.
@@ -93,7 +95,7 @@ class JobRepository(object):
         attributes = {'status':'submitted', 'application':'DaVinci'}
         """
         return []
-    
+
     def setJobsStatus(self, statusList):
         """setJobsStatus(self, statusList) --> None
         throws RepositoryError
@@ -113,17 +115,16 @@ class JobRepository(object):
         """
         return []
 
-    def getJobTree(self, tree_id = 0):
+    def getJobTree(self, tree_id=0):
         """getJobTree(self, tree_id = 0) --> jobtree object.
         throws RepositoryError.
         tree_id - id of jobtree in registry. Can be used to support back up"""
         return
 
-    def setJobTree(self, jobtree, tree_id = 0):
+    def setJobTree(self, jobtree, tree_id=0):
         """setJobTree(self, jobtree, tree_id = 0) --> None.
         throws RepositoryError.
         Registers and/or modifies jobtree object in the repository.
         jobtree - jobtree object
         tree_id - id of jobtree in registry. Can be used to support back up"""
         return
-    

@@ -7,6 +7,9 @@ today = date.today()
 import commands
 outputdatasetname_panda = commands.getoutput('uuidgen')
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 srcdir = "/afs/cern.ch/sw/ganga/external/test-externals/1.0/noarch/"
 srcdirana = srcdir + "ATLAS_Panda_16.6.7"
 release = "16.6.7"
@@ -49,7 +52,7 @@ class PandaTest(ICheckTest):
             self.tmpdir = None
             return
         self.tmpdir = '/tmp/ganga_%s_testing_data-%s' % (self.__class__.__name__, getpass.getuser())
-        print 'PandaTest %s: copying testing data from %s to %s' % (self.__class__.__name__, srcdir, self.tmpdir)
+        logger.info('PandaTest %s: copying testing data from %s to %s' % (self.__class__.__name__, srcdir, self.tmpdir))
         os.system('rm -rf %s' % self.tmpdir)
         os.system('cp -r %s %s' % (srcdir, self.tmpdir))
         self.j = j
@@ -60,12 +63,12 @@ class PandaTest(ICheckTest):
 
     def checkTest(self):
         assert(self.j.status == 'submitted' or self.j.status == 'running' or self.j.status == 'completed'), 'Job status is not \'submitted\''
-        print "Test %s succeeded!" % (self.__class__.__name__)
+        logger.info("Test %s succeeded!" % (self.__class__.__name__))
 
     def cleanup(self):
         if self.tmpdir is None:
             return
-        print 'PandaTest %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir)
+        logger.info('PandaTest %s: removing temporary directory %s' % (self.__class__.__name__, self.tmpdir))
         os.system('rm -rf %s' % self.tmpdir)
 
 class TestAthenaPanda(PandaTest):

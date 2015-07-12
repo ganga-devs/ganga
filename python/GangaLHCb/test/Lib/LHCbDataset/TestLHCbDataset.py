@@ -7,7 +7,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -15,8 +15,7 @@ if doConfig:
     from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 
 def make_dataset(files):
-    from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
-    from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
+    from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
     ds = LHCbDataset()
     for f in files: ds.files.append(strToDataFile(f))
     return ds

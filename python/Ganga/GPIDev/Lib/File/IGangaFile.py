@@ -1,14 +1,17 @@
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from fnmatch import fnmatch
 import re
 
 regex = re.compile('[*?\[\]]')
 
+
 class IGangaFile(GangaObject):
+
     """IGangaFile represents base class for output files, such as MassStorageFile, LCGSEFile, DiracFile, LocalFile, etc 
     """
-    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name')})
+    _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(
+        defvalue="", doc='pattern of the file name')})
     _category = 'gangafiles'
     _name = 'IGangaFile'
     _hidden = 1
@@ -34,18 +37,18 @@ class IGangaFile(GangaObject):
         """
         raise NotImplementedError
 
-    def getSubFiles(self, process_wildcards = False):
+    def getSubFiles(self, process_wildcards=False):
         """
         Returns the sub files if wildcards are used
-        """        
+        """
         # should we process wildcards? Used for inputfiles
         if process_wildcards:
             self.processWildcardMatches()
-        
+
         # if we have subfiles, return that
-        if hasattr(self, 'subfiles'): 
+        if hasattr(self, 'subfiles'):
             return self.subfiles
-            
+
         return []
 
     def getFilenameList(self):
@@ -71,7 +74,7 @@ class IGangaFile(GangaObject):
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
         raise NotImplementedError
-    
+
     def processWildcardMatches(self):
         """
         If namePattern contains a wildcard, populate the subfiles property
@@ -89,13 +92,13 @@ class IGangaFile(GangaObject):
         return False
 
     def _list_get__match__(self, to_match):
-        if type(to_match) == str:
+        if isinstance(to_match, str):
             return fnmatch(self.namePattern, to_match)
-        ## Note: type(DiracFile) = ObjectMetaclass
-        ##       type(ObjectMetaclass) = type
-        ## hence checking against a class type not an instance
-        if type(type(to_match)) == type:
-             return issubclass(self.__class__, to_match)
+        # Note: type(DiracFile) = ObjectMetaclass
+        # type(ObjectMetaclass) = type
+        # hence checking against a class type not an instance
+        if isinstance(type(to_match), type):
+            return issubclass(self.__class__, to_match)
         return to_match == self
 
     def execSyscmdSubprocess(self, cmd):
@@ -107,7 +110,8 @@ class IGangaFile(GangaObject):
         mystderr = ''
 
         try:
-            child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            child = subprocess.Popen(
+                cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             (mystdout, mystderr) = child.communicate()
             exitcode = child.returncode
         finally:
@@ -132,16 +136,16 @@ class IGangaFile(GangaObject):
         Return if this file has got valid matched files. Default implementation checks for
         subfiles and locations
         """
-        
+
         # check for subfiles
-        if (hasattr(self, 'subfiles') and len(self.subfiles) > 0): 
+        if (hasattr(self, 'subfiles') and len(self.subfiles) > 0):
             # we have subfiles so we must have actual files associated
             return True
-            
+
         # check for locations
-        if (hasattr(self, 'locations') and len(self.locations) > 0): 
+        if (hasattr(self, 'locations') and len(self.locations) > 0):
             return True
-            
+
         return False
 
     def containsWildcards(self):
@@ -150,6 +154,6 @@ class IGangaFile(GangaObject):
         """
         if regex.search(self.namePattern) != None:
             return True
-        
+
         return False
 

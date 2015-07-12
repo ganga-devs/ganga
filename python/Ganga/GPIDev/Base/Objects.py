@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: Objects.py,v 1.5.2.10 2009-07-24 13:35:53 ebke Exp $
-################################################################################
+##########################################################################
 # NOTE: Make sure that _data and __dict__ of any GangaObject are only referenced
 # here - this is necessary for write locking and lazy loading!
 # IN THIS FILE:
@@ -14,41 +14,40 @@
 #    obj._setDirty()
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 from Ganga.Utility.Plugin import allPlugins, PluginManagerError
-from Ganga.Utility.Config import Config
+from Ganga.Utility.Config.Config import getConfig
 
 import types
 import copy
 
 import Ganga.GPIDev.Schema as Schema
 
-from Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, isType, TypeMismatchError
+from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError
 from Ganga.Core import GangaValueError
 
-from Ganga.Utility.logic import implies
-from Ganga.Utility.util import canLoopOver, isStringLike
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 
-
-import sys
 from Ganga.Core import GangaException
+
+logger = Ganga.Utility.logging.getLogger(modulename=1)
+
 class PreparedStateError(GangaException):
-    def __init__(self,txt):
-        GangaException.__init__(self,txt)
-        self.txt=txt
+
+    def __init__(self, txt):
+        GangaException.__init__(self, txt)
+        self.txt = txt
+
     def __str__(self):
-        return "PreparedStateError: %s"%str(self.txt)
+        return "PreparedStateError: %s" % str(self.txt)
 
 
-    
 class Node(object):
     _parent = None
     _index_cache = None
 
     def __init__(self, parent):
-        self._data= {}
+        self._data = {}
         self._setParent(parent)
         super(Node, self).__init__()
 
@@ -62,51 +61,54 @@ class Node(object):
 
     def __setstate__(self, dict):
         for n, v in dict['_data'].items():
-            if isinstance(v,Node):
+            if isinstance(v, Node):
                 v._setParent(self)
-            if hasattr(v,"__iter__") and not hasattr(v,"iteritems"):
-                # set the parent of the list or dictionary (or other iterable) items
+            if hasattr(v, "__iter__") and not hasattr(v, "iteritems"):
+                # set the parent of the list or dictionary (or other iterable)
+                # items
                 for i in v:
-                    if isinstance(i,Node):
+                    if isinstance(i, Node):
                         i._setParent(self)
 
         self.__dict__ = dict
 
-    def __copy__(self, memo = None):
+    def __copy__(self, memo=None):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
-        dict = self.__dict__.copy() #FIXME: this is different than for deepcopy... is this really correct?
+        # FIXME: this is different than for deepcopy... is this really correct?
+        dict = self.__dict__.copy()
         obj.__dict__ = dict
         return obj
 
-    def __deepcopy__(self, memo = None):
+    def __deepcopy__(self, memo=None):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         dict = self.__getstate__()
         for n in dict:
-            dict[n] = copy.deepcopy(dict[n],memo) # FIXED
+            dict[n] = copy.deepcopy(dict[n], memo)  # FIXED
         obj.__setstate__(dict)
         return obj
 
     def _getParent(self):
         return self._parent
-        #if "_data" in self.__dict__ and not self._data is None:
+        # if "_data" in self.__dict__ and not self._data is None:
         #    return self._data['parent']
-        #return None
+        # return None
 
     def _setParent(self, parent):
         self._parent = parent
-        #if not self._data is None:
+        # if not self._data is None:
         #    self._data['parent'] = parent
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
-    # cond is an optional function which may cut the search path: when it returns True, then the parent is returned as root
-    def _getRoot(self,cond=None):
+    # cond is an optional function which may cut the search path: when it
+    # returns True, then the parent is returned as root
+    def _getRoot(self, cond=None):
         if self._parent is None:
             return self
         root = None
-        obj  = self
+        obj = self
         while not obj is None:
             root = obj
             if cond and cond(root):
@@ -114,27 +116,31 @@ class Node(object):
             obj = obj._getParent()
         return root
 
-    # accept a visitor pattern 
-    def accept(self,visitor):
+    # accept a visitor pattern
+    def accept(self, visitor):
         visitor.nodeBegin(self)
 
         def getdata(name):
             try:
-                return getattr(self,name)
-            except AttributeError:
+                return getattr(self, name)
+            except AttributeError, err:
+                logger.debug("accept visitor error: %s" % str(err))
                 return self._data[name]
-            
-        for (name,item) in self._schema.simpleItems():
-            if item['visitable']:            
-                visitor.simpleAttribute(self,name,getdata(name),item['sequence'])
 
-        for (name,item) in self._schema.sharedItems():
-            if item['visitable']:            
-                visitor.sharedAttribute(self,name,getdata(name),item['sequence'])
-
-        for (name,item) in self._schema.componentItems():
+        for (name, item) in self._schema.simpleItems():
             if item['visitable']:
-                visitor.componentAttribute(self,name,getdata(name),item['sequence'])
+                visitor.simpleAttribute(
+                    self, name, getdata(name), item['sequence'])
+
+        for (name, item) in self._schema.sharedItems():
+            if item['visitable']:
+                visitor.sharedAttribute(
+                    self, name, getdata(name), item['sequence'])
+
+        for (name, item) in self._schema.componentItems():
+            if item['visitable']:
+                visitor.componentAttribute(
+                    self, name, getdata(name), item['sequence'])
 
         visitor.nodeEnd(self)
 
@@ -146,13 +152,14 @@ class Node(object):
     # if schema of self and srcobj are not compatible raises a ValueError
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
     def copyFrom(self, srcobj, _ignore_atts=[]):
-        # Check if this object is derived from the source object, then the copy will not throw away information
+        # Check if this object is derived from the source object, then the copy
+        # will not throw away information
         if not isinstance(self, srcobj.__class__) and not isinstance(srcobj, self.__class__):
             raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
         for name, item in self._schema.allItems():
             if name in _ignore_atts:
                 continue
-            logger.debug( "Copying: %s : %s" % (str(name), str(item)) )
+            logger.debug("Copying: %s : %s" % (str(name), str(item)))
             if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
                 if srcobj.application.is_prepared is not None and srcobj.application.is_prepared is not True:
                     srcobj.application.incrementShareCounter(srcobj.application.is_prepared.name)
@@ -164,19 +171,23 @@ class Node(object):
             else:
                 c = copy.deepcopy(getattr(srcobj, name))
                 setattr(self, name, c)
-        
-    def printTree(self,f=None, sel='' ):
-        from VPrinter import VPrinter
-        self.accept(VPrinter(f,sel))
 
-    #printPrepTree is only ever run on applications, from within IPrepareApp.py
-    #if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
-    #see the relevant code in VPrinter to understand why
-    def printPrepTree(self,f=None, sel='preparable' ):
+    def printTree(self, f=None, sel=''):
         from VPrinter import VPrinter
-        self.accept(VPrinter(f,sel))
+        self.accept(VPrinter(f, sel))
 
-    def printSummaryTree(self,level = 0, verbosity_level = 0, whitespace_marker = '', out = None, selection = ''):
+    def printTree(self, f=None, sel=''):
+        from .VPrinter import VPrinter
+        self.accept(VPrinter(f, sel))
+
+    # printPrepTree is only ever run on applications, from within IPrepareApp.py
+    # if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
+    # see the relevant code in VPrinter to understand why
+    def printPrepTree(self, f=None, sel='preparable'):
+        from .VPrinter import VPrinter
+        self.accept(VPrinter(f, sel))
+
+    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection=''):
         """If this method is overridden, the following should be noted:
 
         level: the hierachy level we are currently at in the object tree.
@@ -186,57 +197,60 @@ class Node(object):
         out: An output stream to print to. The last line of output should be printed without a newline.'
         selection: See VPrinter for an explaintion of this.
         """
-        from VPrinter import VSummaryPrinter
+        from .VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection))
 
-    def __eq__(self,node):
-        
+    def __eq__(self, node):
+
         if self is node:
             return 1
         if not node or not self._schema.isEqual(node._schema):
             return 0
 
-        for (name,item) in self._schema.allItems():
+        for (name, item) in self._schema.allItems():
             if item['comparable']:
-                if getattr(self,name) != getattr(node,name):
+                if getattr(self, name) != getattr(node, name):
                     return 0
+
         return 1
 
-    def __ne__(self,node):
+    def __ne__(self, node):
         return not self == node
-            
-################################################################################   
+
+##########################################################################
+
+
 class Descriptor(object):
+
     def __init__(self, name, item):
-            self._name  = name
-            self._item = item
-            self._getter_name = None
-            self._checkset_name = None
-            self._filter_name = None
-            
-            try:
-                self._getter_name = item['getter']
-            except KeyError:
-                pass
+        self._name = name
+        self._item = item
+        self._getter_name = None
+        self._checkset_name = None
+        self._filter_name = None
 
-            try:
-                self._checkset_name = item['checkset']
-            except KeyError:
-                pass
-            
-            try:
-                self._filter_name = item['filter']
-            except KeyError:
-                pass
 
-    def _bind_method(self,obj,name):
+        if not hasattr( item, '_meta'):
+            return
+
+        if 'getter' in item._meta:
+            self._getter_name = item['getter']
+
+        if 'checkset' in item._meta:
+            self._checkset_name = item['checkset']
+
+        if 'filter' in item._meta:
+            self._filter_name = item['filter']
+
+
+    def _bind_method(self, obj, name):
         if name is None:
             return None
-        return getattr(obj,name)
+        return getattr(obj, name)
 
     def _check_getter(self):
         if self._getter_name:
-            raise AttributeError('cannot modify or delete "%s" property (declared as "getter")'%self._name)                    
+            raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % self._name)
 
     def __get__(self, obj, cls):
         if obj is None:
@@ -247,12 +261,18 @@ class Descriptor(object):
             if g:
                 result = g()
             else:
-                #LAZYLOADING
+                # LAZYLOADING
                 lookup_result = None
+
                 try:
-                    lookup_result = obj._index_cache[self._name]
-                except:
+                    if obj._index_cache:
+                        if self._name in obj._index_cache.keys():
+                            lookup_result = obj._index_cache[self._name]
+                except Exception, err:
+                    logger.debug("Lazy Loading Exception: %s" % str(err))
+                    lookup_result = None
                     pass
+
                 if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
                     result = lookup_result
                 else:
@@ -264,12 +284,12 @@ class Descriptor(object):
                             if self._name in self._data._impl:
                                 result = obj._data._impl[self._name]
                             else:
-                                logger.debug( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
-                                GangaException( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
+                                logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                                GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                 result = obj._data[self._name]
                         else:
-                            logger.debug( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
-                            GangaException( "Error, cannot find %s parameter in %s" % (self._name, obj._name) )
+                            logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                            GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                             result = obj._data[self._name]
 
             return result
@@ -278,34 +298,39 @@ class Descriptor(object):
 
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
 
-        cs = self._bind_method(obj,self._checkset_name)
+        cs = self._bind_method(obj, self._checkset_name)
         if cs:
             cs(val)
         filter = self._bind_method(obj, self._filter_name)
         if filter:
             val = filter(val)
 
-        #LOCKING
+        # LOCKING
         obj._getWriteAccess()
-        
-        #self._check_getter()
-            
+
+        # self._check_getter()
+
         def cloneVal(v):
-            #print 'cloneVal:',self._name,v,item['optional'],item['load_default'], item['defvalue']
+            # print
+            # 'cloneVal:',self._name,v,item['optional'],item['load_default'],
+            # item['defvalue']
             if v is None:
                 assert(item['optional'])
                 return None
-            else:    
+            else:
                 assert(isinstance(v, Node))
                 if isinstance(v, GangaList):
                     catagories = v.getCategory()
                     len_cat = len(catagories)
-                    #we pass on empty lists, as the catagory is yet to be defined
+                    # we pass on empty lists, as the catagory is yet to be
+                    # defined
                     if (len_cat > 1) or ((len_cat == 1) and (catagories[0] != item['category'])):
-                        raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' %(self._name, v,item['category']))  
-                else:                                                         
-                        if v._category != item['category']:
-                            raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' %(self._name, v,item['category']))  
+                        raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (
+                            self._name, v, item['category']))
+                else:
+                    if v._category != item['category']:
+                        raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (
+                            self._name, v, item['category']))
                 v = v.clone()
                 v._setParent(obj)
                 return v
@@ -314,103 +339,109 @@ class Descriptor(object):
 
         if item.isA(Schema.ComponentItem):
             if item['sequence']:
-##                 checklist=filter(lambda x: not implies(x is None,item['optional']) or  x._category != item['category'],val)
-##                 if len(checklist) > 0:
-##                     raise AttributeError('%s: attempt to assign incompatible objects %s to the property in category "%s"'%(self._name, str(checklist),item['category']))
                 if item['preparable']:
-                    val = makeGangaList(val,cloneVal, parent = obj, preparable = True)
+                    val = makeGangaList(val, cloneVal, parent=obj, preparable=True)
                 else:
-                    val = makeGangaList(val,cloneVal, parent = obj)
+                    val = makeGangaList(val, cloneVal, parent=obj)
             else:
                 val = cloneVal(val)
 
-##                 if val is None:
-##                     assert(item['optional'])
-##                 else:    
+# if val is None:
+# assert(item['optional'])
+# else:
 ##                     assert(isinstance(val, Node))
-##                     if val._category != item['category']:
+# if val._category != item['category']:
 ##                         raise AttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' %(self._name, val,item['category']))
 ##                     val = cloneVal(val)
         else:
             if item['sequence']:
                 if item['preparable']:
-                    val = makeGangaList(val, parent = obj, preparable = True)
+                    val = makeGangaList(val, parent=obj, preparable=True)
                 else:
-                    val = makeGangaList(val, parent = obj)
+                    val = makeGangaList(val, parent=obj)
 
         obj._data[self._name] = val
 
         obj._setDirty()
-            
+
     def __delete__(self, obj):
-        #self._check_getter()
+        # self._check_getter()
         del obj._data[self._name]
 
 
 class ObjectMetaclass(type):
     _descriptor = Descriptor
+
     def __init__(cls, name, bases, dict):
         super(ObjectMetaclass, cls).__init__(name, bases, dict)
 
         # ignore the 'abstract' base class
         # FIXME: this mechanism should be based on explicit cls._name or alike
         if name == 'GangaObject':
-            return 
+            return
 
-        logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
-        
+        logger.debug(
+            "Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
+
         # all Ganga classes must have (even empty) schema
         assert(not cls._schema is None)
-        
+
         # produce a GPI class (proxy)
         proxyClass = GPIProxyClassFactory(name, cls)
-        
+
         # export public methods of this class and also of all the bases
         # this class is scanned last to extract the most up-to-date docstring
-        dictlist = [b.__dict__ for b in cls.__mro__]
-        for di in range(0, len(dictlist)):
-            d = dictlist[len(dictlist)-1-di]
+        dicts = (b.__dict__ for b in reversed(cls.__mro__))
+        for d in dicts:
             for k in d:
                 if k in cls._exportmethods:
+
+                    internal_name = "_export_" + k
+                    if internal_name not in d.keys():
+                        internal_name = k
                     try:
-                        internal_name = "_export_"+k
                         method = d[internal_name]
-                    except KeyError:
-                         internal_name = k
-                         method = d[k]
-                    if not (type(method) == types.FunctionType):
-                       continue
+                    except Exception, err:
+                        logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (str(internal_name), str(d)))
+                        logger.debug("ObjectMetaClass Error: %s" % str(err))
+
+                    if not isinstance(method, types.FunctionType):
+                        continue
                     f = ProxyMethodDescriptor(k, internal_name)
                     f.__doc__ = method.__doc__
                     setattr(proxyClass, k, f)
 
         # sanity checks for schema...
         if not '_schema' in dict.keys():
-            s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
+            s = "Class %s must _schema (it cannot be silently inherited)" % (
+                name,)
             logger.error(s)
             raise ValueError(s)
 
         if not cls._schema._pluginclass is None:
-            logger.warning('Possible schema clash in class %s between %s and %s',name,cls._name,cls._schema._pluginclass._name)
+            logger.warning('Possible schema clash in class %s between %s and %s',
+                           name, cls._name, cls._schema._pluginclass._name)
 
         # export visible properties... do not export hidden properties
-        for attr, item in cls._schema.allItems():            
+        for attr, item in cls._schema.allItems():
             setattr(cls, attr, cls._descriptor(attr, item))
             if not item['hidden']:
                 setattr(proxyClass, attr, ProxyDataDescriptor(attr))
 
         # additional check of type
-        # bugfix #40220: Ensure that default values satisfy the declared types in the schema
+        # bugfix #40220: Ensure that default values satisfy the declared types
+        # in the schema
         for attr, item in cls._schema.simpleItems():
             if not item['getter']:
-                item._check_type(item['defvalue'], '.'.join([name, attr]), enableGangaList=False)
+                item._check_type(
+                    item['defvalue'], '.'.join([name, attr]), enableGangaList=False)
 
         # create reference in schema to the pluginclass
         cls._schema._pluginclass = cls
 
         # store generated proxy class
         cls._proxyClass = proxyClass
-        
+
         # register plugin class
         if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
             allPlugins.add(cls, cls._category, cls._name)
@@ -419,51 +450,63 @@ class ObjectMetaclass(type):
         if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
             cls._schema.createDefaultConfig()
 
-    
+
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass
-    _schema       = None # obligatory, specified in the derived classes
-    _proxyClass   = None # created automatically
-    _registry     = None # automatically set for Root objects
-    _exportmethods= [] # optional, specified in the derived classes
+    _schema = None  # obligatory, specified in the derived classes
+    _proxyClass = None  # created automatically
+    _registry = None  # automatically set for Root objects
+    _exportmethods = []  # optional, specified in the derived classes
 
-    # by default classes are not hidden, config generation and plugin registration is enabled
-    _hidden       = 1  # optional, specify in the class if you do not want to export it publicly in GPI,
-                       # the class will not be registered as a plugin unless _enable_plugin is defined
-                       # the test if the class is hidden is performed by x._declared_property('hidden')
-                       # which makes sure that _hidden must be *explicitly* declared, not inherited
+    # by default classes are not hidden, config generation and plugin
+    # registration is enabled
+    # optional, specify in the class if you do not want to export it publicly
+    # in GPI,
+    _hidden = 1
+    # the class will not be registered as a plugin unless _enable_plugin is defined
+    # the test if the class is hidden is performed by x._declared_property('hidden')
+    # which makes sure that _hidden must be *explicitly* declared, not
+    # inherited
 
     _lock_count = {}
 
     # additional properties that may be set in derived classes which were declared as _hidden:
     #   _enable_plugin = 1 -> allow registration of _hidden classes in the allPlugins dictionary
-    #   _enable_config = 1 -> allow generation of [default_X] configuration section with schema properties
-    
-    # the constructor is directly used by the GPI proxy so the GangaObject must be fully initialized
+    # _enable_config = 1 -> allow generation of [default_X] configuration
+    # section with schema properties
+
+    # the constructor is directly used by the GPI proxy so the GangaObject
+    # must be fully initialized
     def __init__(self):
         # IMPORTANT: if you add instance attributes like in the line below
         # make sure to update the __getstate__ method as well
-        self._proxyObject  = None # use cache to help preserve proxy objects identity in GPI
-        self._dirty = False # dirty flag is true if the object has been modified locally and its contents is out-of-sync with its repository
-        
+        # use cache to help preserve proxy objects identity in GPI
+        self._proxyObject = None
+        # dirty flag is true if the object has been modified locally and its
+        # contents is out-of-sync with its repository
+        self._dirty = False
+
         super(GangaObject, self).__init__(None)
         for attr, item in self._schema.allItems():
             setattr(self, attr, self._schema.getDefaultValue(attr))
 
         self._lock_count = {}
         # Overwrite default values with any config values specified
-        #self.setPropertiesFromConfig()
+        # self.setPropertiesFromConfig()
 
-    # construct an object of this type from the arguments. Defaults to copy constructor.
+    # construct an object of this type from the arguments. Defaults to copy
+    # constructor.
     def __construct__(self, args):
         self._lock_count = {}
-        # act as a copy constructor applying the object conversion at the same time (if applicable)
+        # act as a copy constructor applying the object conversion at the same
+        # time (if applicable)
         if len(args) == 0:
             return
         elif len(args) == 1:
             self.copyFrom(args[0])
         else:
-            raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))        
+            raise TypeMismatchError(
+                "Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
@@ -480,21 +523,24 @@ class GangaObject(Node):
         self._proxyObject = None
         self._dirty = False
 
-    # on the deepcopy reset all non-copyable properties as defined in the schema
-    def __deepcopy__(self, memo = None):
+    # on the deepcopy reset all non-copyable properties as defined in the
+    # schema
+    def __deepcopy__(self, memo=None):
         self._getReadAccess()
-        c = super(GangaObject,self).__deepcopy__(memo)
-        for name,item in self._schema.allItems():
+        c = super(GangaObject, self).__deepcopy__(memo)
+        for name, item in self._schema.allItems():
             if not item['copyable']:
-                setattr(c,name,self._schema.getDefaultValue(name))
+                setattr(c, name, self._schema.getDefaultValue(name))
             if item.isA(Schema.SharedItem):
-                shared_dir=getattr(c,name)
+                shared_dir = getattr(c, name)
                 try:
                     from Ganga.Core.GangaRepository import getRegistry
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    shareref = GPIProxyObjectFactory(
+                        getRegistry("prep").getShareRef())
                     logger.debug("Increasing shareref")
                     shareref.increase(shared_dir.name)
-                except AttributeError:
+                except AttributeError, err:
+                    logger.debug("__deepcopy__ Exception: %s" % str(err))
                     pass
         c.lock_count = {}
         return c
@@ -513,21 +559,24 @@ class GangaObject(Node):
             _haveLocked = False
             _counter = 1
             _sleep_size = 2.
-            _timeOut = Ganga.Utility.Config.getConfig('Configuration')['DiskIOTimeout']
+            _timeOut = getConfig('Configuration')['DiskIOTimeout']
             while not _haveLocked:
                 err = None
+                from Ganga.Core.GangaRepository.Registry import RegistryLockError, RegistryAccessError
                 try:
                     reg._write_access(root)
                     _haveLocked = True
-                except Exception, x:
+                except (RegistryLockError, RegistryAccessError) as x:
                     from time import sleep
-                    sleep(_sleep_size)   ##  Sleep 2 sec between tests
-                    logger.info( "Waiting on Write access to registry: %s" % reg.name )
-                    logger.debug( "%s" % str(x) )
+                    sleep(_sleep_size)  # Sleep 2 sec between tests
+                    logger.info("Waiting on Write access to registry: %s" % reg.name)
+                    logger.debug("%s" % str(x))
                     err = x
                 _counter = _counter + 1
-                if _counter*_sleep_size >= _timeOut + 5:  ## Sleep 5 sec longer than the time taken to bail out
-                    logger.error( "Failed to get access to registry: %s. Reason: %s" % (reg.name, str(x)) )
+                # Sleep 5 sec longer than the time taken to bail out
+                if _counter * _sleep_size >= _timeOut + 5:
+                    logger.error(
+                        "Failed to get access to registry: %s. Reason: %s" % (reg.name, str(x)))
                     raise x
 
     def _releaseWriteAccess(self):
@@ -537,7 +586,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            logger.debug( "Releasing: %s" % (reg.name) )
+            logger.debug("Releasing: %s" % (reg.name))
             reg._release_lock(root)
 
     def _getReadAccess(self):
@@ -546,7 +595,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            reg._read_access(root,self)
+            reg._read_access(root, self)
 #            Uncomment to debug the lazy loading
 #            print "excepting because of access to ", self._name
 #            import traceback
@@ -554,11 +603,14 @@ class GangaObject(Node):
 #                print line.strip()
 #                print
 
-    # define when the object is read-only (for example a job is read-only in the states other than new)
+    # define when the object is read-only (for example a job is read-only in
+    # the states other than new)
     def _readonly(self):
         r = self._getRoot()
-        # is object a root for itself? check needed otherwise infinite recursion
-        if r is None or r is self: return 0
+        # is object a root for itself? check needed otherwise infinite
+        # recursion
+        if r is None or r is self:
+            return 0
         else:
             return r._readonly()
 
@@ -567,20 +619,22 @@ class GangaObject(Node):
         assert self._getParent() is None
         self._registry = registry
 
-    # get the registry for the object by getting the registry associated with the root object (if any)
+    # get the registry for the object by getting the registry associated with
+    # the root object (if any)
     def _getRegistry(self):
         r = self._getRoot()
         try:
             return r._registry
-        except AttributeError:
+        except AttributeError, err:
+            logger.debug("_getRegistry Exception: %s" % str(err))
             return None
 
     def _getRegistryID(self):
         try:
             return self._registry.find(self)
-        except AttributeError:
+        except AttributeError, err:
+            logger.debug("_getRegistryID Exception: %s" % str(err))
             return None
-
 
     # mark object as "dirty" and inform the registry about it
     # the registry is always associated with the root object
@@ -599,24 +653,23 @@ class GangaObject(Node):
     def _auto__init__(self):
         pass
 
-
-
     # return True if _name attribute was explicitly defined in the class
     # this means that implicit (inherited) _name attribute has no effect in the derived class
-    # example: cls._declared_property('hidden') => True if there is class attribute _hidden explicitly declared 
-    def _declared_property(self,name):
-        return '_'+name in self.__dict__
+    # example: cls._declared_property('hidden') => True if there is class
+    # attribute _hidden explicitly declared
+    def _declared_property(self, name):
+        return '_' + name in self.__dict__
 
     _declared_property = classmethod(_declared_property)
-            
+
     # get the job object associated with self or raise an assertion error
     # the FIRST PARENT Job is returned...
     # this method is for convenience and may well be moved to some subclass
     def getJobObject(self):
         from Ganga.GPIDev.Lib.Job import Job
-        r = self._getRoot(cond=lambda o: isinstance(o,Job))
-        if not isinstance(r,Job):
-            raise AssertionError('no job associated with object '+repr(self))
+        r = self._getRoot(cond=lambda o: isinstance(o, Job))
+        if not isinstance(r, Job):
+            raise AssertionError('no job associated with object ' + repr(self))
         return r
 
     # Customization of the GPI attribute assignment: Attribute Filters
@@ -632,22 +685,23 @@ class GangaObject(Node):
     #  is used for *all* kinds of attributes (component and simple)
     #
     # Attribute Filters are used mainly for side effects such as modification of the state of the self object
-    # (as described above). 
+    # (as described above).
     #
     # Attribute Filter may also perform an additional conversion of the value which is being assigned.
     #
     # Returns the attribute value (converted or original)
     #
-    def _attribute_filter__set__(self,name,v):
+    def _attribute_filter__set__(self, name, v):
         if (hasattr(v, '_on_attribute__set__')):
             return v._on_attribute__set__(self, name)
         return v
 
 # define the default component object filter:
 # obj.x = "Y"   <=> obj.x = Y()
- 
+
+
 def string_type_shortcut_filter(val, item):
-    if type(val) is type(''):
+    if isinstance(val, str):
         if item is None:
             raise ValueError('cannot apply default string conversion, probably you are trying to use it in the constructor')
         from Ganga.Utility.Plugin import allPlugins, PluginManagerError
@@ -655,16 +709,18 @@ def string_type_shortcut_filter(val, item):
             obj = allPlugins.find(item['category'], val)()
             obj._auto__init__()
             return obj
-        except PluginManagerError, x:
-            raise ValueError(x)
+        except PluginManagerError as err:
+            logger.debug("string_type_shortcut_filter Exception: %s" % str(err))
+            raise ValueError(err)
     return None
 
 # FIXME: change into classmethod (do they inherit?) and then change stripComponentObject to use class instead of
 # FIXME: object (object model clearly fails with sequence of Files)
-# FIXME: test: ../bin/ganga -c local_lhcb.ini run.py TestNativeSpecific.testFileSequence
+# FIXME: test: ../bin/ganga -c local_lhcb.ini run.py
+# TestNativeSpecific.testFileSequence
 
 
-from Filters import allComponentFilters
+from .Filters import allComponentFilters
 allComponentFilters.setDefault(string_type_shortcut_filter)
 
 #

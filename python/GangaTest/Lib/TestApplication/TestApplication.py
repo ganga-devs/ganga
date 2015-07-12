@@ -20,7 +20,6 @@ class TestApplication(IPrepareApp):
                                     'env' : SimpleItem(defvalue={},doc='Environment'),# introduced for RTHandler compatibility
                                     'fail': SimpleItem(defvalue='',doc='Define the artificial runtime failures: "config", "prepare"'),
                                     'postprocess_mark_as_failed': SimpleItem(defvalue=False,doc='Update teh status of the job as failed in the postprocess step'),
-                                    'raw_string_exception' :  SimpleItem(defvalue=False,doc='If true use strings as exceptions.'),
                                     'is_prepared' : SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)','str','bool'],protected=0,comparable=1,doc='Location of shared resources. Presence of this attribute implies the application has been prepared.')
                                     } )
     _name = 'TestApplication'
@@ -31,7 +30,7 @@ class TestApplication(IPrepareApp):
         self.derived_value = 'This is an example of the derived property: ' + self.exe
 
         # this is to test manually (visually) the logging level mechanism
-        #print "raw print: Hello from TestApplication"
+        #print("raw print: Hello from TestApplication")
         #logger.debug('Hello from TestApplication')
         #logger.info('Hello from TestApplication')
         #logger.warning('Hello from TestApplication')
@@ -41,14 +40,10 @@ class TestApplication(IPrepareApp):
     def configure(self,masterappconfig):
         if self.fail == 'config':
             x = 'triggered failure during config'
-            if not self.raw_string_exception:
-                x = Exception(x)
-            raise x
+            raise Exception(x)
         appcfg = ''
         if self.fail == 'prepare':
             appcfg += 'error'
-            if self.raw_string_exception:
-                appcfg += 'raw_string_exception'
         return (None,appcfg)
 
     def modify(self):
@@ -98,7 +93,6 @@ class TestAdvancedFileProperties(IApplication):
 #    # setting files = "x" is equvalent to setting files = ['x']                
 #    def _attribute_filter__set__(self,n,v):
 #        if n == 'files':
-#            print n,v
 #            from Ganga.GPIDev.Base.Filters import allComponentFilters
 #            v = allComponentFilters['files'](v,self._schema.getItem('file_or_files'))
 #            if not type(v) is type([]):
@@ -118,9 +112,7 @@ class TestRTHandler(RTHandler):
     def prepare(self,app,appconfig,appmasterconfig,jobmasterconfig):
         if appconfig.find('error') != -1:
             x = 'triggered failure during config'
-            if appconfig.find('raw_string_exception') == -1:
-                x = Exception(x)
-            raise x            
+            raise Exception(x) 
         return RTHandler.prepare(self,app,appconfig,appmasterconfig,jobmasterconfig)
     
 allHandlers.add('TestApplication','TestSubmitter',TestRTHandler)

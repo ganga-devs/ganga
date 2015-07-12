@@ -178,9 +178,6 @@ class SplitByFiles(GaudiInputDataSplitter):
             else:
                 raise SplitterError( "Backend algorithm not selected!" )
 
-            #print outdata
-            #exit(0)
-
             logger.debug( "outdata: %s " % str( outdata ) )
             return outdata
         else:

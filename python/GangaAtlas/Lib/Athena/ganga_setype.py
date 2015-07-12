@@ -60,7 +60,7 @@ def localsitename():
     hostname = None
     domainname = None
     # First choice: EDG_WL_RB_BROKERINFO or GLITE_WMS_RB_BROKERINFO
-    if os.environ.has_key('EDG_WL_RB_BROKERINFO'):
+    if 'EDG_WL_RB_BROKERINFO' in os.environ:
         try:
             f = open(os.environ['EDG_WL_RB_BROKERINFO'], "r")
             lines = f.readlines()
@@ -71,7 +71,7 @@ def localsitename():
         except:
             pass
 
-    if os.environ.has_key('GLITE_WMS_RB_BROKERINFO'):
+    if 'GLITE_WMS_RB_BROKERINFO' in os.environ:
         try:
             f = open(os.environ['GLITE_WMS_RB_BROKERINFO'], "r")
             lines = f.readlines()
@@ -83,7 +83,7 @@ def localsitename():
             pass
 
     # Second choice: GANGA_LCG_CE
-    if not hostname and os.environ.has_key('GANGA_LCG_CE'):
+    if not hostname and 'GANGA_LCG_CE' in os.environ:
         try:
             hostname = re.findall('(\S*):2119',os.environ['GANGA_LCG_CE'])
             lcgcename = re.findall('(\S*):2119',os.environ['GANGA_LCG_CE'])[0]
@@ -92,7 +92,7 @@ def localsitename():
             pass
 
     # Third choice: VO_ATLAS_DEFAULT_SE
-    if not hostname and os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+    if not hostname and 'VO_ATLAS_DEFAULT_SE' in os.environ:
         hostname = os.environ['VO_ATLAS_DEFAULT_SE']
         if hostname.find('grid.sara.nl')>=0: hostname = ''
             
@@ -173,7 +173,7 @@ if __name__ == '__main__':
     
     tiersofatlas = getTiersOfATLASCache()
 
-    if os.environ.has_key('VO_ATLAS_DEFAULT_SE'):
+    if 'VO_ATLAS_DEFAULT_SE' in os.environ:
         sitese=os.environ['VO_ATLAS_DEFAULT_SE']
         #print 'ganga_setype.py: VO_ATLAS_DEFAULT_SE=%s'%sitese
     elif sys.argv[1:]:

@@ -14,8 +14,13 @@ This code is free for any purpose, with no warranty of any kind.
 -- John B. Dell'Aquila <jbd@alum.mit.edu>
 """
 
-import win32api, win32process, win32security
-import win32event, win32con, msvcrt, win32gui
+import win32api
+import win32process
+import win32security
+import win32event
+import win32con
+import msvcrt
+import win32gui
 
 
 def logonUser(loginString):
@@ -32,10 +37,11 @@ def logonUser(loginString):
         passwd,
         win32con.LOGON32_LOGON_INTERACTIVE,
         win32con.LOGON32_PROVIDER_DEFAULT
-        )
+    )
 
 
 class Process:
+
     """
     A Windows process.
     """
@@ -126,7 +132,7 @@ class Process:
         win32gui.EnumWindows(self.__close__, 0)
         if self.wait(gracePeriod) != win32event.WAIT_OBJECT_0:
             win32process.TerminateProcess(self.hProcess, 0)
-            win32api.Sleep(100) # wait for resources to be released
+            win32api.Sleep(100)  # wait for resources to be released
 
     def __close__(self, hwnd, dummy):
         """
@@ -163,7 +169,7 @@ def run(cmd, mSec=None, stdin=None, stdout=None, stderr=None, **kw):
     child = Process(cmd, **kw)
     if child.wait(mSec) != win32event.WAIT_OBJECT_0:
         child.kill()
-        raise WindowsError, 'process timeout exceeded'
+        raise WindowsError('process timeout exceeded')
     return child.exitCode()
 
 
@@ -192,5 +198,5 @@ _this_is_a_test_of_stderr_\r
     cmd.close()
     print 'NOTEPAD exit code:', run('notepad.exe %s' % out.file.name,
                                     show=win32con.SW_MAXIMIZE,
-                                    mSec=timeoutSeconds*1000)
+                                    mSec=timeoutSeconds * 1000)
     out.close()

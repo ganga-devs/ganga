@@ -134,7 +134,7 @@ class GaudiBase(IPrepareApp):
             if not os.path.exists(project_path):
                 try:
                     os.makedirs(project_path)
-                except Exception, e:
+                except Exception as e:
                     logger.error("Can not create project user directory: "+project_path)
                     return
 

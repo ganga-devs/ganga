@@ -1,7 +1,5 @@
 # test manual failing and removal of jobs stuck in submitting or completing states
 
-print config.Configuration
-
 def goto_state(j,dest):
 
     if dest == 'killed':

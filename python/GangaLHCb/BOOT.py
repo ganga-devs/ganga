@@ -1,5 +1,7 @@
-
 from Ganga.Runtime.GPIexport import exportToGPI
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 def browseBK(gui=True):
     """Return an LHCbDataset from the GUI LHCb Bookkeeping.
@@ -42,11 +44,11 @@ def fixBKQueryInBox(newCategory='query'):
         return 'class name=\"BKQuery\"' in line
 
     gangadir = getConfig('Configuration')['gangadir']
-    print 'found gangadir =',gangadir
+    logger.info('found gangadir = '+gangadir)
     for root, dirs, files in os.walk(gangadir):
         if 'data' in files and 'box' in root and not 'box.' in root:
             path = os.path.join(root,'data')
-            print "looking at",path
+            logger.info("looking at "+path)
             f1 = file(path,'r')
             f2 = file(path+'~','r')
             lines1 = f1.readlines()
@@ -59,7 +61,7 @@ def fixBKQueryInBox(newCategory='query'):
             newline =  ' <class name=\"BKQuery\" version=\"1.2\" category=\"%s\">\n'%newCategory
             if len(line1) is 1:
                 lines1[lines1.index(line1[0])] = newline
-                print 'backing up old settings...'
+                logger.info('backing up old settings...')
                 os.system('cp %s %sX; mv %s~ %s~X'%(path,path,path,path))
                 f1=file(path,'w')
                 f2=file(path+'~','w')
@@ -69,11 +71,10 @@ def fixBKQueryInBox(newCategory='query'):
                 f1.close()
                 f2.close()
                 p = os.path.join(root[:-2],root.split('/')[-1]+'.index')
-                #print "path to delete =",p
                 os.system('rm -f %s'%p)
             elif len(line2) is 1:
                 lines2[lines2.index(line2[0])] = newline
-                print 'backing up old settings...'
+                logger.info('backing up old settings...')
                 os.system('cp %s %sX; mv %s~ %s~X'%(path,path,path,path))
                 f1=file(path,'w')
                 f2=file(path+'~','w')
@@ -83,10 +84,9 @@ def fixBKQueryInBox(newCategory='query'):
                 f1.close()
                 f2.close()
                 p = os.path.join(root[:-2],root.split('/')[-1]+'.index')
-                #print "path to delete =",p
                 os.system('rm -f %s'%p)
-    print "box repository converted!\n"
-    print "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS."
+    logger.info("box repository converted!\n")
+    logger.info("PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS.")
 
 exportToGPI('fixBKQueryInBox',fixBKQueryInBox,'Functions')
 
@@ -94,14 +94,14 @@ def restoreOLDBox():
     import os
     from Ganga.Utility.Config import getConfig
     gangadir = getConfig('Configuration')['gangadir']
-    print 'found gangadir =',gangadir
+    logger.info('found gangadir = '+gangadir)
     for root, dirs, files in os.walk(gangadir):
         if 'dataX' in files and 'box' in root and not 'box.' in root:
             path = os.path.join(root,'data')
-            print "restoring old BKQuery box file..."
+            logger.info("restoring old BKQuery box file...")
             os.system('mv %sX %s; mv %s~X %s~'%(path,path,path,path))
             
-    print "box repository converted!\n"
-    print "PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS."
+    logger.info("box repository converted!\n")
+    logger.info("PLEASE NOW QUIT THIS GANGA SESSION AND RESTART TO SEE EFFECTS.")
 
 exportToGPI('restoreOLDBox',restoreOLDBox,'Functions')

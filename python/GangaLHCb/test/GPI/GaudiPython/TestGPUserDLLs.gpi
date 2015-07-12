@@ -56,13 +56,13 @@ def file_find_replace(fname,find,replace,new_name=None):
 #fname = join(j.outputdir,'stdout')
 #file = open(fname)
 #found_line = False
-#print 'stdout = '
+#print('stdout = ')
 #for line in file.readlines():
-#    print line
+#    print(line)
 #    if line.find('# muons n@, Go Steelers!') >= 0:
 #        found_line = True
 #        assert int(line.split('|')[3]) > 0, 'problem reading data'
-#        print '# muons =', int(line.split('|')[3])
+#        print('# muons =', int(line.split('|')[3]))
 #        break
 #file.close()
 #assert found_line, 'special string not found'

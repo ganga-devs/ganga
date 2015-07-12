@@ -1,34 +1,37 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: IApplication.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
-################################################################################
+##########################################################################
 
-from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Adapters.IApplication import IApplication
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import *
-import os, shutil
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Lib.File import File
+import os
+import shutil
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.files import expandfilename
 config = makeConfig('Preparable', 'Parameters for preparable applications')
 config.addOption('unprepare_on_copy', False, 'Unprepare a prepared application when it is copied')
 
+
 class IPrepareApp(IApplication):
+
     """
     Base class for all applications which can be placed into a prepared\
     state. 
     """
-    _schema =  Schema(Version(0,0), { 'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'],hidden=1)} )
-    _category='applications'
+    _schema = Schema(Version(0, 0), {'hash': SimpleItem(
+        defvalue=None, typelist=['type(None)', 'str'], hidden=1)})
+    _category = 'applications'
     _name = 'PrepareApp'
     _hidden = 1
 
@@ -40,12 +43,11 @@ class IPrepareApp(IApplication):
 #            logger.error("Cannot modify a prepared application's attributes. First unprepare() the application.")
 #            return 1
 
-
     def _auto__init__(self, unprepare=None):
         if unprepare is True:
-            logger.debug("Calling unprepare() from IPrepareApp's _auto__init__()")
+            logger.debug(
+                "Calling unprepare() from IPrepareApp's _auto__init__()")
             self.unprepare()
-
 
     def prepare(self, force=False):
         """
@@ -54,7 +56,6 @@ class IPrepareApp(IApplication):
 
         """
         pass
-
 
     def post_prepare(self):
         """
@@ -74,7 +75,6 @@ class IPrepareApp(IApplication):
             self.is_prepared = None
         self.hash = None
 
-
     def copyPreparables(self):
         """
         This method iterates over all attributes in an application and decides\
@@ -84,70 +84,77 @@ class IPrepareApp(IApplication):
         otherwise it returns 1.
         """
         send_to_sharedir = []
-        for name,item in self._schema.allItems():
+        for name, item in self._schema.allItems():
             if item['preparable']:
-                logger.debug('Found preparable %s' %(name))
-                logger.debug('adding to sharedir %s' %(self.__getattribute__(name)))
+                logger.debug('Found preparable %s' % (name))
+                logger.debug('adding to sharedir %s' %
+                             (self.__getattribute__(name)))
                 send_to_sharedir.append(self.__getattribute__(name))
-
         shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                    'shared', getConfig('Configuration')['user'])
-
-    
         for prepitem in send_to_sharedir:
-            logger.debug('working on %s' %(prepitem))
-            #we may have a list of files/strings
-            if type(prepitem) is list or type(prepitem) is GangaList:
+            logger.debug('working on %s' % (prepitem))
+            # we may have a list of files/strings
+            if isinstance(prepitem, (list, GangaList)):
                 logger.debug('found a list')
                 for subitem in prepitem:
                     if isType(subitem, str):
-                    #we have a file. if it's an absolute path, copy it to the shared dir
+                        # we have a file. if it's an absolute path, copy it to
+                        # the shared dir
                         if os.path.abspath(subitem) == subitem:
-                            logger.info('Sending file %s to shared directory.'%(subitem))
+                            logger.info(
+                                'Sending file %s to shared directory.' % (subitem))
                             try:
-                                shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                                if not os.path.isidr( shr_dir ):
-                                    os.makedirs( shr_dir )
-                                shutil.copy2(subitem, shr_dir )
-                            except IOError, e:
+                                shr_dir = os.path.join(
+                                    shared_path, self.is_prepared.name)
+                                if not os.path.isidr(shr_dir):
+                                    os.makedirs(shr_dir)
+                                shutil.copy2(subitem, shr_dir)
+                            except IOError as e:
                                 logger.error(e)
                                 return 0
-                    elif type(subitem) is File and subitem.name is not '':
-                        logger.info('Sending file object %s to shared directory'%subitem.name)
+                    elif isinstance(subitem, File) and subitem.name is not '':
+                        logger.info(
+                            'Sending file object %s to shared directory' % subitem.name)
                         try:
-                            shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                            if not os.path.isdir( shr_dir ):
-                                os.makedirs( shr_dir )
+                            shr_dir = os.path.join(
+                                shared_path, self.is_prepared.name)
+                            if not os.path.isdir(shr_dir):
+                                os.makedirs(shr_dir)
                             shutil.copy2(subitem.name, shr_dir)
-                        except IOError, e:
+                        except IOError as e:
                             logger.error(e)
                             return 0
-            elif type(prepitem) is str:
+            elif isinstance(prepitem, str):
                 logger.debug('found a string')
-                #we have a file. if it's an absolute path, copy it to the shared dir
+                # we have a file. if it's an absolute path, copy it to the
+                # shared dir
                 if os.path.abspath(prepitem) == prepitem:
-                    logger.info('Sending file %s to shared directory.'%(prepitem))
+                    logger.info(
+                        'Sending file %s to shared directory.' % (prepitem))
                     try:
-                        shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                        if not os.path.isdir( shr_dir ):
-                            os.makedirs( shr_dir )
+                        shr_dir = os.path.join(
+                            shared_path, self.is_prepared.name)
+                        if not os.path.isdir(shr_dir):
+                            os.makedirs(shr_dir)
                         shutil.copy2(prepitem, shr_dir)
-                    except IOError, e:
+                    except IOError as e:
                         logger.error(e)
                         return 0
-            elif type(prepitem) is File and prepitem.name is not '':
+            elif isinstance(prepitem, File) and prepitem.name is not '':
                 logger.debug('found a file')
-                logger.info('Sending file object %s to shared directory'%prepitem.name)
+                logger.info(
+                    'Sending file object %s to shared directory' % prepitem.name)
                 try:
-                    shr_dir = os.path.join(shared_path,self.is_prepared.name)
-                    if not os.path.isdir( shr_dir ):
-                        os.makedirs( shr_dir )
+                    shr_dir = os.path.join(shared_path, self.is_prepared.name)
+                    if not os.path.isdir(shr_dir):
+                        os.makedirs(shr_dir)
                     shutil.copy2(prepitem.name, shr_dir)
-                except IOError, e:
+                except IOError as e:
                     logger.error(e)
                     return 0
             else:
-                logger.debug('Nothing worth copying found in %s' %(prepitem))
+                logger.debug('Nothing worth copying found in %s' % (prepitem))
         return 1
 
     def calc_hash(self, verify=False):
@@ -158,23 +165,24 @@ class IPrepareApp(IApplication):
         post-preparation.
         """
         from Ganga.GPIDev.Base.Proxy import runProxyMethod
-        import StringIO
+        import cStringIO
         try:
-            import hashlib 
+            import hashlib
             digest = hashlib.new('md5')
         except:
             import md5
             digest = md5.new()
-        
-        sio = StringIO.StringIO()
-        runProxyMethod(self,'printPrepTree',sio)
+
+        sio = cStringIO.StringIO()
+        runProxyMethod(self, 'printPrepTree', sio)
         digest.update(str(sio.getvalue()))
-        tmp=sio.getvalue()
+        tmp = sio.getvalue()
         if verify == False:
             self.hash = digest.hexdigest()
         else:
-            #we return true if this is called with verify=True and the current hash is the same as that stored in the schema.
-            #this is checked immediately prior to (re)writing the object to the repository
+            # we return true if this is called with verify=True and the current hash is the same as that stored in the schema.
+            # this is checked immediately prior to (re)writing the object to
+            # the repository
             return digest.hexdigest() == self.hash
 
     def incrementShareCounter(self, shared_directory_name):
@@ -184,7 +192,7 @@ class IPrepareApp(IApplication):
         shareref.increase(shared_directory_name)
 
     def decrementShareCounter(self, shared_directory_name, remove=0):
-        remove=remove
+        remove = remove
         logger.debug('Decrementing shared directory reference counter')
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.decrease(shared_directory_name, remove)
@@ -193,7 +201,7 @@ class IPrepareApp(IApplication):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref
 
-    def listShareDirContents(self,shared_directory_name):
+    def listShareDirContents(self, shared_directory_name):
         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         shareref.ls(shared_directory_name)
 
@@ -201,11 +209,13 @@ class IPrepareApp(IApplication):
         if prepared_object._getRegistry() is None:
             self.incrementShareCounter(prepared_object.is_prepared.name)
             self.decrementShareCounter(prepared_object.is_prepared.name)
-            logger.info('Application is not currently associated with a persisted Ganga object')
-            logger.debug('(e.g. box, job, task). Both the prepared application and the contents of')
+            logger.info(
+                'Application is not currently associated with a persisted Ganga object')
+            logger.debug(
+                '(e.g. box, job, task). Both the prepared application and the contents of')
             logger.debug('its shared directory will be lost when Ganga exits.')
-            logger.debug('Shared directory location: %s' %(self.is_prepared.name))
-            #logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
+            logger.debug('Shared directory location: %s' %
+                         (self.is_prepared.name))
+            # logger.error(self.listShareDirContents(prepared_object.is_prepared.name))
         else:
             self.incrementShareCounter(prepared_object.is_prepared.name)
-

@@ -50,7 +50,7 @@ def findReferences( infile ):
 
         # check the cache first
         for name in _refCache:
-            if _refCache[name].has_key(ref_guid):
+            if ref_guid in _refCache[name]:
 
                 ref_name = _refCache[name][ref_guid]['lfn']
                 ref_dataset = name
@@ -86,7 +86,7 @@ def findReferences( infile ):
 
         # store useful stuff
         ref_files = _dq.listFilesInDataset(ref_name)
-        if ref_files[0].has_key(ref_guid):
+        if ref_guid in ref_files[0]:
             refs.append([ ref_files[0][ref_guid]['lfn'], ref_name, ref_guid ] )
             #print "Found dataset ref: %s, %s" % (ref_name, ref_files[0][ref_guid]['lfn'])
 
@@ -154,7 +154,7 @@ def findReferences2( infile ):
         
         # check the cache first
         for name in _refCache:
-            if _refCache[name].has_key(ref_guid):
+            if ref_guid in _refCache[name]:
 
                 ref_name = _refCache[name][ref_guid]['lfn']
                 ref_dataset = name
@@ -193,7 +193,7 @@ def findReferences2( infile ):
         
         # store useful stuff
         ref_files = _dq.listFilesInDataset(ref_name)
-        if ref_files[0].has_key(ref_guid):
+        if ref_guid in ref_files[0]:
             #refs.append([ ref_files[0][ref_guid]['lfn'], ref_name, ref_guid ] )
             tag_info[ref_files[0][ref_guid]['lfn']] = {}
             tag_info[ref_files[0][ref_guid]['lfn']]['dataset'] = ref_name
@@ -220,7 +220,7 @@ def findReferences2( infile ):
 
             # check the cache first
             for name in _refCache:
-                if _refCache[name].has_key(ref_guid):
+                if ref_guid in _refCache[name]:
 
                     ref_name = _refCache[name][ref_guid]['lfn']
                     ref_dataset = name
@@ -255,7 +255,7 @@ def findReferences2( infile ):
 
             # store useful stuff
             ref_files = _dq.listFilesInDataset(ref_name)
-            if ref_files[0].has_key(ref_guid):
+            if ref_guid in ref_files[0]:
                 tag_info[tag_name]['refs'].append( [_refCache[name][ref_guid]['lfn'], name, ref_guid ] )
 
                 print "Found dataset ref: %s, %s" % (ref_name, ref_files[0][ref_guid]['lfn'])
@@ -372,7 +372,7 @@ if __name__ == "__main__":
 
     taglfns = [ line.strip() for line in file('input_files') ]
 
-    if os.environ.has_key('STREAM_REF'):
+    if 'STREAM_REF' in os.environ:
         taginfo = createTagInfo( os.environ['STREAM_REF'], taglfns )
     else:
         taginfo = createTagInfo( 'AOD', taglfns )

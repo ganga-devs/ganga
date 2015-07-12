@@ -1,3 +1,5 @@
+from __future__ import print_function
+
 import sys, socket
 import collections
 from pprint                   import pformat
@@ -28,12 +30,12 @@ def runClient():
         if out !='###BROKEN###':
             out = out.replace(end_trans,'')
             if out == '':
-                print ''
+                print('')
             else:
                 try:
-                    print getColour('fg.red')+'diracAPI_env > '+getColour('fg.normal') + pformat(eval(out))+'\n'
+                    print(getColour('fg.red')+'diracAPI_env > '+getColour('fg.normal') + pformat(eval(out))+'\n')
                 except:
-                    print getColour('fg.red')+'diracAPI_env > '+getColour('fg.normal') + out
+                    print(getColour('fg.red')+'diracAPI_env > '+getColour('fg.normal') + out)
         client_socket.shutdown(socket.SHUT_RDWR)
         client_socket.close()
 

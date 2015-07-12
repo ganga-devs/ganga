@@ -5,7 +5,6 @@
 ## GPI - as the user sees the config
 
 c = config['TestConfig2']
-print c
 
 assert(c['str1'] == '1')
 assert(c['str2'] == "3*3")

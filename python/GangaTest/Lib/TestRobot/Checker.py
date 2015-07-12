@@ -89,24 +89,23 @@ class Checker(IAction):
             f = open(filename)
             self.LastVersionData = f.readline()
             f.close()
-        except IOError, e:
+        except IOError as e:
             logger.info(e)
             pass
-        #print self.LastVersionData
         #dirs below will have been deleted on clean up
         config = Ganga.Utility.Config.getConfig('TestRobot')
         #Set Install path with new directory  
         dirname = os.path.join(gangadirname, "Releases")
         try:
             os.mkdir(dirname)
-        except OSError, e:
+        except OSError as e:
             logger.info(e)
         config.setSessionValue('InstallPath',dirname)
         #Sets job path
         dirname = os.path.join(gangadirname,'Jobs')
         try:
             os.mkdir(dirname)
-        except OSError, e:
+        except OSError as e:
             logger.info(e)
         config.setSessionValue('JobDir',dirname)
         #return last version data
@@ -142,7 +141,6 @@ class Checker(IAction):
         match = -1
         for data in VersionList:
             i += 1
-            #print "i = "+str(i)
             if (data == self.LastVersionData) :
                 match = i
                 break
@@ -191,7 +189,7 @@ class Checker(IAction):
         Date = VersionData[(EqualsPoint+1):].strip()
         try:
             Date = time.strptime(Date,"%d %b %Y %H:%M:%S")
-        except ValueError, e:
+        except ValueError as e:
            raise GangaRobotFatalError(" Incorrect format of file", ValueError)
         Date = datetime.datetime(*(Date[0:6]))
         Data = [Number, Date]
@@ -215,7 +213,7 @@ class Checker(IAction):
                     shutil.move(heartbeattmpfile,heartbeatfile)
                 except:
                     raise GangaRobotContinueError("Failed to move heartbeat file")            
-        except IOError, e:
+        except IOError as e:
             f  = open(heartbeatfile, 'w')
             f.write(datetime.datetime.now().strftime("%H:%M:%S %j %y")+" - "+str(os.getpid()))
             f.close()

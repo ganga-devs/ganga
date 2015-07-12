@@ -113,7 +113,7 @@ def formatVar(var):
     try:
         float(var)
         return str(var)
-    except ValueError, v:
+    except ValueError as v:
         return '\\\\\"%s\\\\\"'% var
     
 del sys.argv[sys.argv.index('script_wrapper.py')]

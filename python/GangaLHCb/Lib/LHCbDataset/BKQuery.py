@@ -123,7 +123,7 @@ RecoToDST-07/90000000/DST" ,
         files = []
         metadata = {}
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         if not type(files) is list: # i.e. a dict of LFN:Metadata
             #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
             metadata = files.copy()
@@ -156,7 +156,7 @@ RecoToDST-07/90000000/DST" ,
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         if not type(files) is list: # i.e. a dict of LFN:Metadata
             #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
             files = files.keys()
@@ -228,10 +228,10 @@ class BKQueryDict(GangaObject):
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         metadata = {}
         if not type(files) is list:
-            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            if 'LFNs' in files: # i.e. a dict of LFN:Metadata
                 metadata = files['LFNs'].copy()
         
         if metadata:
@@ -245,9 +245,9 @@ class BKQueryDict(GangaObject):
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         if not type(files) is list:
-            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            if 'LFNs' in files: # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
     
         from Ganga.GPI import DiracFile

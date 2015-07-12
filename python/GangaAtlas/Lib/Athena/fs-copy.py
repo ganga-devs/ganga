@@ -129,13 +129,13 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
         ## resetting essential env. variables
         my_env = os.environ
 
-        if my_env.has_key('LD_LIBRARY_PATH_ORIG'):
+        if 'LD_LIBRARY_PATH_ORIG' in my_env:
             my_env['LD_LIBRARY_PATH'] = my_env['LD_LIBRARY_PATH_ORIG']
 
-        if my_env.has_key('PATH_ORIG'):
+        if 'PATH_ORIG' in my_env:
             my_env['PATH'] = my_env['PATH_ORIG']
 
-        if my_env.has_key('PYTHONPATH_ORIG'):
+        if 'PYTHONPATH_ORIG' in my_env:
             my_env['PYTHONPATH'] = my_env['PYTHONPATH_ORIG']
         
         child = subprocess.Popen(cmd, cwd=wdir, env=my_env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -153,7 +153,7 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 def resolveTURL(surl, protocol, outfile, errfile, timeout=300):
 
     ## default lcg-gt timeout: 5 minutes
-    if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+    if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
         cmd = "lcg-gt -v --connect-timeout %d --sendreceive-timeout %d --srm-timeout %d --bdii-timeout %d %s %s" % (timeout, timeout, timeout, timeout, surl, protocol) 
     else:
         cmd = 'lcg-gt -v -t %d %s %s' % (timeout, surl, protocol)
@@ -176,7 +176,7 @@ def resolveTURL(surl, protocol, outfile, errfile, timeout=300):
             printInfo(mystdout, outfile)
             printError(mystderr, errfile)
 
-    except ImportError,err:
+    except ImportError as err:
         # otherwise, use separate threads to control process IO pipes
         printError('Not able to load subprocess module', errfile)
 
@@ -212,7 +212,7 @@ if __name__ == '__main__':
 
     ## a workaround to avoid passing protocol as a argument to this script
     ## this should be disabled when the bug in Athena/FileStager is fixed
-    if os.environ.has_key('FILE_STAGER_PROTOCOL'):
+    if 'FILE_STAGER_PROTOCOL' in os.environ:
         if os.environ['FILE_STAGER_PROTOCOL'] in supported_protocols:
             protocol = os.environ['FILE_STAGER_PROTOCOL']
 
@@ -284,7 +284,7 @@ if __name__ == '__main__':
         else:
             raise getopt.GetoptError('missing source or destination SURL in command arguments.')
 
-    except getopt.GetoptError, err:
+    except getopt.GetoptError as err:
         ## close stdout/err and exit the program
         printError(str(err), errfile)
         outfile.close()
@@ -341,7 +341,7 @@ if __name__ == '__main__':
                 printInfo(mystdout, outfile)
                 printError(mystderr, errfile)
 
-        except ImportError,err:
+        except ImportError as err:
             # otherwise, use separate threads to control process IO pipes
             printError('Not able to load subprocess module', errfile)
             break
@@ -352,7 +352,7 @@ if __name__ == '__main__':
             ## try to get the checksum type/value stored in LFC
             ## - the checksum dictionary is produced by 'make_filestager_joption.py'
             ##   and stored in a pickle file.
-            if csum and csum.has_key(src_surl):
+            if csum and src_surl in csum:
 
                 csum_type  = csum[src_surl]['csumtype']
                 csum_value = csum[src_surl]['csumvalue']

@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 # This import exists for backward-compatibility. Do not copy this anti-pattern.
 #
 # It is in a try/except so that users of modules in the MSGMS package are not
@@ -5,6 +6,6 @@
 # are not forced to add the MSGMS module to the sandbox modules copied to the
 # worker node.
 try:
-    from MSGMS import *
+    from .MSGMS import *
 except ImportError:
     pass

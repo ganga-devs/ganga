@@ -1,6 +1,9 @@
 import sys
 import os
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 def assert_cannot_submit(j):
     from Ganga.GPI import JobError
     try:
@@ -43,7 +46,7 @@ def sleep_until_state(j,timeout=None,state='completed', break_states=None,sleep_
             monitoring_component.__updateTimeStamp = 0
             monitoring_component.__sleepCounter = -0.5
         if verbose and j.status != current_status:    
-            print j.id,j.status
+            logger.info(j.id,j.status)
         if current_status is None:
             current_status = j.status
         if type(break_states) == type([]) and j.status in break_states:

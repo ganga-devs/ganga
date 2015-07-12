@@ -2,6 +2,10 @@ from LHCbAnalysisTransform import *
 from Ganga.GPIDev.Lib.Tasks.Task import Task
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Core.exceptions import GangaException
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 ## to do...
 ##1) Multi threading, even with multi threads, bottle neck at the server while updating.
 ##2) Check prepared works(looks like does because of application.clone())
@@ -118,18 +122,18 @@ class LHCbAnalysisTask(Task):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def help(self):
         """Brief description of the LHCbAnalysisTask object."""
-        print "This is an LHCbTask, Which simplifies the query driven analysis of data"
+        logger.info("This is an LHCbTask, Which simplifies the query driven analysis of data")
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def overview(self):
         """ Get an ascii art overview over task status."""
-        print "Partition Colours: " + ", ".join([markup(key, partition_colours[key])
-            for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]])
-        print "Job Colours: " + ", ".join([markup(job, job_colours[job])
-            for job in ["new", "submitting", "submitted", "running", "completing", "completed", "failed", "killed", "incomplete", "unknown"]])
-        print "Lists the transforms, their partitions and partition subjobs, as well as the number of failures."
-        print "Format: (partition/subjob number)[:(number of failures)]"
-        print
+        logger.info("Partition Colours: " + ", ".join([markup(key, partition_colours[key])
+            for key in ["hold", "ready", "running", "completed", "attempted", "failed", "bad", "unknown"]]))
+        logger.info("Job Colours: " + ", ".join([markup(job, job_colours[job])
+            for job in ["new", "submitting", "submitted", "running", "completing", "completed", "failed", "killed", "incomplete", "unknown"]]))
+        logger.info("Lists the transforms, their partitions and partition subjobs, as well as the number of failures.")
+        logger.info("Format: (partition/subjob number)[:(number of failures)]")
+        logger.info('')
         for t in self.transforms:
             t.overview()
 
@@ -143,7 +147,7 @@ class LHCbAnalysisTask(Task):
         for t in self.transforms:
             try:
                 t.update(resubmit)
-            except GangaException, e:
+            except GangaException as e:
                 logger.warning(e.__str__())
                 continue
 

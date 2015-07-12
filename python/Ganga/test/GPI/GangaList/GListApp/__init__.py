@@ -1,1 +1,2 @@
-from GListApp import GListApp
+from __future__ import absolute_import
+from .GListApp import GListApp

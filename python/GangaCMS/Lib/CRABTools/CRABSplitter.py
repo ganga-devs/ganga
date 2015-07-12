@@ -36,7 +36,7 @@ class CRABSplitter(ISplitter):
             arguments_path = os.path.join(job.inputdata.ui_working_dir,
                                           'share/arguments.xml')
             splittingData = self.parseArguments(arguments_path)
-        except IOError, e:
+        except IOError as e:
             raise SplitterError(e)
 
         subjobs = []

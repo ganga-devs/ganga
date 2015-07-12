@@ -41,7 +41,7 @@ for name in os.listdir(dir):
         pass
 
 counter_file_name = this_repo+"/repository/"+this_user+"/LocalXML/6.0/box/cnt"
-print classNameDict
+logger.info(classNameDict)
 
 f = open(counter_file_name, 'r') 
 #read_data should hold a single integer value representing the total number of objects in the box repo.
@@ -87,7 +87,7 @@ assert len(incompleteClassIDs) == 0, "There were some objects " + str(classNameL
 
 box
 
-print box
+logger.info(box)
 index = 0
 exc_counter = 0
 for thing in box:
@@ -95,7 +95,7 @@ for thing in box:
     try:
         b=box[index].__str__()
         logger.info('Box object #' + str(index) + ' read successfully.')
-    except Exception, e:
+    except Exception as e:
         logger.error('Exception for object #' + str(index) + ' in box.')
         logger.error(box[index])
         logger.error(e)

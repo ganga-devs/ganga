@@ -20,7 +20,6 @@ def find_random_site( original_SE_list, banned_SE ):
     while chosen_element == "" and len(input_list) > 0:
         global global_random
         this_element = global_random.sample( input_list, 1 )[0]
-        #print this_element
         if not this_element in banned_SE:
             chosen_element = this_element
             break
@@ -82,10 +81,9 @@ def getLFNReplicas( allLFNs, index ):
 ##  For a given site select 'wanted_common_site' many site from a given Set
 ##  If uniqueSE is requestd the site selected will NOT share a common SE
 def generate_site_selection( input_site, wanted_common_site, uniqueSE=False ):
-    from sets import Set
-    req_sitez = Set([])
+    req_sitez = set([])
     if len(input_site) > wanted_common_site:
-        used_site = Set([])
+        used_site = set([])
         for se in range( wanted_common_site ):
             this_site = find_random_site( input_site, used_site )
             req_sitez.add( this_site )
@@ -190,7 +188,7 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
         try:
             results = output.get('Value')
             values = results.get('Successful')
-        except Exception, err:
+        except Exception as err:
             logger.error( "Unknown error in parsing Dirac LFN Successful output" )
             raise
 
@@ -244,13 +242,12 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     global site_to_SE_mapping
     global SE_to_site_mapping
 
-    from sets import Set
     SE_dict = dict()
     maps_size = 0
     found = []
     ## First find the SE for each site
     for lfn, repz in file_replicas.iteritems():
-        sitez=Set([])
+        sitez=set([])
         for i in repz:
             sitez.add( i )
             if not i in found:
@@ -273,7 +270,7 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     for k, v in site_to_SE_mapping.iteritems():
         for i in v:
             if i not in SE_to_site_mapping:
-                SE_to_site_mapping[i] = Set([])
+                SE_to_site_mapping[i] = set([])
             SE_to_site_mapping[i].add(k)
 
     ## These can be used to select the site which know of a given SE
@@ -286,7 +283,7 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     site_dict = {}
     for k, v in SE_dict.iteritems():
-        site_dict[k] = Set([])
+        site_dict[k] = set([])
         for i in v:
             for j in site_to_SE_mapping[i]:
                 site_dict[k].add( j )
@@ -335,7 +332,7 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
                 if req_sitez.issubset( site_dict[this_LFN] ):
                     if len(_this_subset) >= filesPerJob:
                         break
-                    _this_subset.append( str(this_LFN) )
+                    _this_subset.append(str(this_LFN))
 
             limit = int(math.floor( float(filesPerJob) * good_fraction ))
 

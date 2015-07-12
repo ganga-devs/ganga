@@ -39,9 +39,9 @@ from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 class JobExecutionMonitorMS(IMonitoringService):
 
     def __init__(self, job_info):
-        IMonitoringService.__init__(self,job_info)
+        IMonitoringService.__init__(self, job_info)
 
-    def prepare(self,**opts):
+    def prepare(self, **opts):
         try:
             handler = self.__getJEMobject()
             if handler:
@@ -49,48 +49,41 @@ class JobExecutionMonitorMS(IMonitoringService):
         except:
             self.__handleError()
 
-
-    def submitting(self,**opts):
+    def submitting(self, **opts):
         try:
             self.__getJEMobject().submitting()
         except:
             self.__handleError()
 
-
-    def submit(self,**opts):
+    def submit(self, **opts):
         try:
             self.__getJEMobject().submit()
         except:
             self.__handleError()
 
-
-    def complete(self,**opts):
+    def complete(self, **opts):
         try:
             self.__getJEMobject().complete('finished')
         except:
             self.__handleError()
 
-
-    def fail(self,**opts):
+    def fail(self, **opts):
         try:
             self.__getJEMobject().complete('failed')
         except:
             self.__handleError()
 
-
-    def kill(self,**opts):
+    def kill(self, **opts):
         try:
             self.__getJEMobject().complete('failed')
         except:
             self.__handleError()
 
-
-    def rollback(self,**opts):
+    def rollback(self, **opts):
         try:
             self.__getJEMobject().rollback()
         except:
             self.__handleError()
-
 
     def getSandboxModules(self):
         import Ganga.Lib.MonitoringServices.JobExecutionMonitorMS
@@ -100,17 +93,16 @@ class JobExecutionMonitorMS(IMonitoringService):
             Ganga.Lib.MonitoringServices,
             Ganga.Lib.MonitoringServices.JobExecutionMonitorMS,
             Ganga.Lib.MonitoringServices.JobExecutionMonitorMS.JobExecutionMonitorMS
-            ]
-
+        ]
 
     def __handleError(self):
-        import sys, traceback
+        import sys
+        import traceback
         from Ganga.Utility.logging import getLogger
         l = getLogger()
         ei = sys.exc_info()
         l.error(str(ei[0]) + ": " + str(ei[1]))
-        l.error(str(traceback.format_tb(ei[2])))        
-
+        l.error(str(traceback.format_tb(ei[2])))
 
     def __getJEMobject(self):
         """
@@ -118,7 +110,7 @@ class JobExecutionMonitorMS(IMonitoringService):
         in IMonitoringService on a per-job basis
         """
         from GangaJEM.Lib.JEM.JEMMonitoringServiceHandler import JEMMonitoringServiceHandler
-        
+
         # with the static method getInstance, passing a job object as key, the unique
         # instance of the ServiceHandler for the given job is returned.
         return JEMMonitoringServiceHandler.getInstance(self.job_info)

@@ -5,7 +5,7 @@ DiracFileType = DiracFile
 # test constructors/setters
 ds = LHCbDataset(['lfn:a','pfn:b'])
 assert len(ds) == 2
-print ds[0]
+print(ds[0])
 assert isinstance(ds[0],DiracFileType)
 assert isinstance(ds[1],PhysicalFile)
 ds = LHCbDataset()
@@ -24,7 +24,7 @@ assert isinstance(j.inputdata,LHCbDataset)
 j.outputfiles = ['a',DiracFile('b')]
 #assert isinstance(j.outputfiles[0],SandboxFile)
 assert isinstance(j.outputfiles[0],LocalFile)
-print type(j.outputfiles[1])
+print(type(j.outputfiles[1]))
 assert isinstance(j.outputfiles[1],DiracFileType)
 #
 LFN_DATA = ['LFN:/lhcb/LHCb/Collision11/DIMUON.DST/00016768/0000/00016768_00000005_1.dimuon.dst',

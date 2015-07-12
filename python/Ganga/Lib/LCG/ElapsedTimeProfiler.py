@@ -12,12 +12,15 @@
 import time
 from Ganga.Utility.logging import getLogger
 
-class ElapsedTimeProfiler:
+
+class ElapsedTimeProfiler(object):
+
     '''Elapsed time profiler'''
 
     def __init__(self, logger=None):
 
-        if not logger: logger = getLogger(name='Ganga.Lib.LCG.ElapsedTimeProfiler')
+        if not logger:
+            logger = getLogger(name='Ganga.Lib.LCG.ElapsedTimeProfiler')
 
         self.logger = logger
         pass
@@ -27,7 +30,7 @@ class ElapsedTimeProfiler:
 
     def check(self, message):
         etime = time.time() - self.beg
-        self.logger.debug('%s: %f sec.' % (message,etime))
+        self.logger.debug('%s: %f sec.' % (message, etime))
 
     def checkAndStart(self, message):
         self.check(message)

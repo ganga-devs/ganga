@@ -187,7 +187,7 @@ class AthenaMC(IApplication):
         logger.info('Found Working Directory %s' % self.userarea)
         logger.info('Using run directory: %s' % self.user_area_rundir)
         # tmpDir
-        if os.environ.has_key('TMPDIR'):
+        if 'TMPDIR' in os.environ:
             tmpDir = os.environ['TMPDIR']
         else:
             cn = os.path.basename( os.path.expanduser( "~" ) )

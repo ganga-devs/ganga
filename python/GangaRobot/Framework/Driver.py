@@ -75,15 +75,15 @@ class Driver(object):
             for action in self.run:
                 try:
                     self._doaction(action)
-                except GangaRobotContinueError, e:
+                except GangaRobotContinueError as e:
                     logger.warning("Continue Error in Action '%s' with message '%s'. Run continued", action, e)
-                except GangaRobotBreakError, e:
+                except GangaRobotBreakError as e:
                     logger.warning("Break Error in Action '%s' with message '%s'. Run ended", action, e)
                     break
-                except GangaRobotFatalError, e:
+                except GangaRobotFatalError as e:
                     logger.error("Fatal Error in Action '%s' with message '%s'. Run aborted", action, e)
                     raise
-                except Exception, e:
+                except Exception as e:
                     config = getConfig('Robot')
                     if (config['ExceptionBehaviour'] == 'Continue'):
                         logger.error("Error in Action '%s' with message '%s'. Run continued", action, e)
@@ -137,7 +137,7 @@ def _loadclass(fqcn):
     class_ = getattr(module, classname)
     #check type
     if not isinstance(class_, type):
-        raise ValueError, '%s is not a fully-qualified class name.' % fqcn
+        raise ValueError('%s is not a fully-qualified class name.' % fqcn)
     return class_
 
 
@@ -168,14 +168,14 @@ def loaddriver():
             fqcn = config[key]
             try:
                 actions[action] = _loadclass(fqcn)
-            except Exception, e:
+            except Exception as e:
                 raise ApplicationConfigurationError(e, "Cannot load class '%s'." % fqcn)
     #check actions exist for run
     for action in run:
         if not action in actions:
             try:
                 int(action)
-            except ValueError, e:
+            except ValueError as e:
                 raise ApplicationConfigurationError(e, "Unknown action '%s'." % action)
             
             

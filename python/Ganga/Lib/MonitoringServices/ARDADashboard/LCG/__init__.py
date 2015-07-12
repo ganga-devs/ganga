@@ -1,1 +1,2 @@
-from ARDADashboardLCG import *
+from __future__ import absolute_import
+from .ARDADashboardLCG import *

@@ -141,13 +141,13 @@ def resolve_file_locations(dataset, sites=None, cloud=None, token='ATLASDATADISK
                 if replicaInfo:
                     mylock.acquire()
                     for guid in replicaInfo[0]['content']:
-                        if not replicas.has_key(guid):
+                        if guid not in replicas:
                             replicas[guid] = []
                         replicas[guid].append(site)
                     mylock.release()
             except Empty:
                 pass
-            except DQException, err:
+            except DQException as err:
                 logger.warning(str(err))
                 logger.warning('site %s excluded' % site)
                 pass
@@ -185,13 +185,13 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
         ## resetting essential env. variables
         my_env = os.environ
 
-        if my_env.has_key('LD_LIBRARY_PATH_ORIG'):
+        if 'LD_LIBRARY_PATH_ORIG' in my_env:
             my_env['LD_LIBRARY_PATH'] = my_env['LD_LIBRARY_PATH_ORIG']
 
-        if my_env.has_key('PATH_ORIG'):
+        if 'PATH_ORIG' in my_env:
             my_env['PATH'] = my_env['PATH_ORIG']
 
-        if my_env.has_key('PYTHONPATH_ORIG'):
+        if 'PYTHONPATH_ORIG' in my_env:
             my_env['PYTHONPATH'] = my_env['PYTHONPATH_ORIG']
 
         child = subprocess.Popen(cmd, cwd=wdir, env=my_env, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -302,7 +302,7 @@ class StagerDataset(DQ2Dataset):
                     mylock.acquire()
                     datasets[ds] = ds_tmp
                     mylock.release()
-                except DQException, err:
+                except DQException as err:
                     logger.warning(str(err))
                 except Empty:
                     pass
@@ -458,7 +458,7 @@ class StagerDataset(DQ2Dataset):
                         vuid = None
                         try:
                             vuid = locations.keys()[0]
-                        except IndexError, err:
+                        except IndexError as err:
                             pass
          
                         mylock.acquire()
@@ -481,7 +481,7 @@ class StagerDataset(DQ2Dataset):
          
                         mylock.release()
          
-                    except DQException, err:
+                    except DQException as err:
                         logger.warning(str(err))
          
                     except Empty:

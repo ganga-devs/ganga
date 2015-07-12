@@ -3,10 +3,10 @@ try:
 except:
     import pickle
 
+
 def from_file(fobj):
-    return (pickle.load(fobj),[])
+    return (pickle.load(fobj), [])
+
 
 def to_file(obj, fileobj, ignore_subs=''):
-    pickle.dump(obj,fileobj,1)
-
-
+    pickle.dump(obj, fileobj, 1)

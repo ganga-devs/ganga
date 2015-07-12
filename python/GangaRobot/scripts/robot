@@ -1,5 +1,7 @@
 """Script for running GangaRobot."""
 
+from __future__ import print_function
+
 def _usage():
     usage = """
 Usage (default configuration):
@@ -41,21 +43,21 @@ Examples:
 See full GangaRobot API documentation for more details.
 
 """
-    print usage
+    print(usage)
 
 
 def _doc():
     import GangaRobot
-    print ''
-    print GangaRobot.__doc__
+    print('')
+    print(GangaRobot.__doc__)
     
 
 def _run(patterns):
-    if patterns:
-        print 'Setting export file patterns to %s.' % patterns
-        config['Robot']['CoreSubmitter_Patterns'] = patterns
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
+    if patterns:
+        logger.info('Setting export file patterns to %s.' % patterns)
+        config['Robot']['CoreSubmitter_Patterns'] = patterns
     from GangaRobot.Framework import Driver
     logger.info('Loading Ganga Robot Driver.')
     driver = Driver.loaddriver()

@@ -1,23 +1,23 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: JobTree.py,v 1.2.4.4 2009-07-24 13:39:39 ebke Exp $
-################################################################################
+##########################################################################
 import os
-import types
-import atexit
-from Ganga.GPIDev.Base   import GangaObject
+from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Lib.Job import Job
-from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryAccessError, RegistryKeyError
+from Ganga.GPIDev.Lib.Registry.JobRegistry import RegistryKeyError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy, _wrap
 from Ganga.GPIDev.Base.Proxy import GPIProxyObject
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
+
 class TreeError(Exception):
+
     """JobTree class can raise a TreeError exception. 
     Exception numbers:
     1, Directory does not exist;
@@ -25,13 +25,14 @@ class TreeError(Exception):
     3, Attemp to delete the root directory;
     4, Not a job object.
     """
-    
-    def __init__(self, number, msg = None):
+
+    def __init__(self, number, msg=None):
         Exception.__init__(self, msg)
         self.number = number
 
 
 class JobTree(GangaObject):
+
     """The jobtree object in Ganga gives you the possibility to organise jobs
     in a directory structure. Jobs are stored in the jobtree by their index
     and you can think of it as a softlink.
@@ -40,9 +41,9 @@ class JobTree(GangaObject):
     also automatically disappear (because registry calls cleanlinks() method).
     The jobtree is persisted in between Ganga sessions.
     """
-    _schema = Schema(Version(1,2),{ 'name':SimpleItem(''),
-                                    'folders':SimpleItem({os.sep:{}}, protected = 1, copyable = 1, hidden = 1),
-                                    })
+    _schema = Schema(Version(1, 2), {'name': SimpleItem(''),
+                                     'folders': SimpleItem({os.sep: {}}, protected=1, copyable=1, hidden=1),
+                                     })
 
     _category = 'jobtrees'
     _name = 'JobTree'
@@ -52,7 +53,7 @@ class JobTree(GangaObject):
 
     default_registry = 'jobs'
     _cwd = {}
-   
+
     def __init__(self):
         super(JobTree, self).__init__()
         self._setRegistry(None)
@@ -68,7 +69,7 @@ class JobTree(GangaObject):
     def __getstate__(self):
         dict = super(JobTree, self).__getstate__()
         dict['_registry'] = None
-        dict['_counter']    = 0
+        dict['_counter'] = 0
         return dict
 
     def __setstate__(self, dict):
@@ -79,8 +80,8 @@ class JobTree(GangaObject):
             self._setDirty()
         finally:
             self._releaseWriteAccess()
-        
-    def __get_path(self, path = None):
+
+    def __get_path(self, path=None):
         if path == None:
             return self.cwd()[:]
         else:
@@ -90,22 +91,22 @@ class JobTree(GangaObject):
             else:
                 d = path
             d = os.path.normpath(d)
-            while 1:
+            while True:
                 d, fn = os.path.split(d)
                 if fn:
-                    pp.insert(0,fn)
+                    pp.insert(0, fn)
                 else:
-                    pp.insert(0,d)
+                    pp.insert(0, d)
                     break
             return pp
-        
+
     def __make_dir(self, path):
         f = self.folders
         for d in self.__get_path(path):
             if d not in f:
                 f[d] = {}
-            f = f[d]    
-            if type(f) != types.DictionaryType:
+            f = f[d]
+            if not isinstance(f, dict):
                 raise TreeError(2, "%s not a directory" % str(d))
         return f
 
@@ -114,19 +115,19 @@ class JobTree(GangaObject):
         for d in self.__get_path(path):
             if d not in f:
                 raise TreeError(1, "Directory %s does not exist" % str(d))
-            f = f[d]    
-            if type(f) != types.DictionaryType:
+            f = f[d]
+            if not isinstance(f, dict):
                 raise TreeError(2, "%s not a directory" % str(d))
-        return f        
-                
+        return f
+
     def _copy(self):
         reg = self._getRegistry()
         c = self.clone()
         c._setRegistry(reg)
-        return GPIProxyObjectFactory(c)        
+        return GPIProxyObjectFactory(c)
 
-    def _display(self, interactive = 0):
-        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Background, Effects
+    def _display(self, interactive=0):
+        from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup
         if interactive:
             markup = ANSIMarkup()
         else:
@@ -138,8 +139,8 @@ class JobTree(GangaObject):
         if cnt > 0:
             ds += "--------------\n"
         for d in dirs:
-            ds += "%s\n" %d
-            
+            ds += "%s\n" % d
+
         jobs = self.getjobs()
         ds += "[Jobs]: %d\n" % len(jobs)
         if len(jobs) > 0:
@@ -147,9 +148,9 @@ class JobTree(GangaObject):
             ds += jobs._display(interactive)
 
         return ds
-    
-    def _proxy_display(self, interactive = 1):
-        return self._display(interactive = interactive)
+
+    def _proxy_display(self, interactive=1):
+        return self._display(interactive=interactive)
 
     def exists(self, path):
         """Checks wether the path exists or not.
@@ -159,9 +160,10 @@ class JobTree(GangaObject):
             try:
                 f = f[d]
             except:
+                Ganga.Utility.logging.log_unknown_exception()
                 return False
         return True
-        
+
     def isdir(self, path):
         """Checks wether the path points to a folder or not.
         """
@@ -170,8 +172,8 @@ class JobTree(GangaObject):
         except TreeError:
             return False
         return True
-    
-    def add(self, job, path = None):
+
+    def add(self, job, path=None):
         """Adds job to the job tree into the current folder.
         If path to a folder is provided as a parameter than adds job to that folder.
         """
@@ -183,22 +185,23 @@ class JobTree(GangaObject):
                 job = job._impl
 
             if isinstance(job, Job):
-                self.__select_dir(path)[job.getFQID('.')] = job.getFQID('.') #job.id
+                self.__select_dir(
+                    path)[job.getFQID('.')] = job.getFQID('.')  # job.id
                 self._setDirty()
             elif isinstance(job, JobRegistrySlice):
                 for sliceKey in job.objects.iterkeys():
-                   self.__select_dir(path)[sliceKey] = sliceKey
-                   self._setDirty()
+                    self.__select_dir(path)[sliceKey] = sliceKey
+                    self._setDirty()
             elif isinstance(job, list):
                 for element in job:
-                   self.__select_dir(path)[element.id] = element.id
-                   self._setDirty()
+                    self.__select_dir(path)[element.id] = element.id
+                    self._setDirty()
             else:
                 raise TreeError(4, "Not a job/slice/list object")
             self._setDirty()
         finally:
             self._releaseWriteAccess()
-        
+
     def rm(self, path):
         """Removes folder or job in the path.
         To clean all use /* as a path.
@@ -223,7 +226,7 @@ class JobTree(GangaObject):
             self._setDirty()
         finally:
             self._releaseWriteAccess()
-            
+
     def mkdir(self, path):
         """Makes a folder. If any folders in the path are missing they will be created as well.
         """
@@ -234,7 +237,7 @@ class JobTree(GangaObject):
         finally:
             self._releaseWriteAccess()
 
-    def cd(self, path = os.sep):
+    def cd(self, path=os.sep):
         """Changes current directory.
         If path is not provided, than switches to the root folder.
         """
@@ -245,48 +248,50 @@ class JobTree(GangaObject):
             self._setDirty()
         finally:
             self._releaseWriteAccess()
-    
-    def ls(self, path = None):
+
+    def ls(self, path=None):
         """Lists content of current folder or folder in the path if the latter is provided.
         The return value is a dictionary of the format
         {'folders':[<list of folders>], 'jobs':[<list of job ids>]}.
         """
         f = self.__select_dir(path)
-        res = {'folders':[], 'jobs':[]}
+        res = {'folders': [], 'jobs': []}
         for i in f:
-            if type(f[i]) == types.DictionaryType:
+            if isinstance(f[i], dict):
                 res['folders'].append(i)
             else:
                 res['jobs'].append(f[i])
         return res
 
-    def listdirs(self, path = None):
+    def listdirs(self, path=None):
         """Lists all subfolders in current folder or folder in the path if the latter is provided.
-        """        
+        """
         return self.ls(path)['folders']
 
-    def listjobs(self, path = None):
+    def listjobs(self, path=None):
         """Lists ids of all jobs in current folder or folder in the path if the latter is provided.
-        """          
+        """
         return self.ls(path)['jobs']
 
     def pwd(self):
         """Returns current folder"""
         return os.path.join(*self.cwd())
 
-    def getjobs(self, path = None):
+    def getjobs(self, path=None):
         """Gives list of all jobs (objects) referenced in current folder
         or folder in the path if the latter is provided.
-        """        
-        #jobslice
+        """
+        # jobslice
         ##res = []
-        res = JobRegistrySlice("") 
+        res = JobRegistrySlice("")
         registry = self._getRegistry()
         do_clean = False
         if registry is not None:
             try:
                 registry = registry._parent
-            except: pass    
+            except:
+                Ganga.Utility.logging.log_unknown_exception()
+                pass
             path = os.path.join(*self.__get_path(path))
             res.name = "jobs found in %s" % path
             cont = self.ls(path)
@@ -296,7 +301,8 @@ class JobTree(GangaObject):
                         id = int(i)
                         j = registry[id]
                     except ValueError:
-                        j = registry[int(i.split('.')[0])].subjobs[int(i.split('.')[1])]
+                        j = registry[int(i.split('.')[0])].subjobs[
+                            int(i.split('.')[1])]
                 except RegistryKeyError:
                     do_clean = True
                 else:
@@ -305,7 +311,7 @@ class JobTree(GangaObject):
             self.cleanlinks()
         return _wrap(res)
 
-    def find(self, id, path = None):
+    def find(self, id, path=None):
         """For a job with given id tries to find all references in the job tree.
         The return value is a list of found paths.
         """
@@ -323,10 +329,10 @@ class JobTree(GangaObject):
             if id == i:
                 res.append(path)
         for i in cont['folders']:
-            res.extend(self.find(id, os.path.join(path,i)))
+            res.extend(self.find(id, os.path.join(path, i)))
         return res
-        
-    def cleanlinks(self, path = os.sep):
+
+    def cleanlinks(self, path=os.sep):
         """Removes all references for the jobs not present in the registry.
         Normally you don't need to call this method since it is called automatically whenever
         job is deleted from the registry.
@@ -337,15 +343,16 @@ class JobTree(GangaObject):
             f = self.__select_dir(path)
             fc = f.copy()
             for i in fc:
-                if type(fc[i]) == types.DictionaryType:
-                    self.cleanlinks(os.path.join(path,i))
+                if isinstance(fc[i], dict):
+                    self.cleanlinks(os.path.join(path, i))
                 else:
                     try:
                         try:
                             id = int(fc[i])
                             j = registry[id]
                         except ValueError:
-                            j = registry[int(fc[i].split('.')[0])].subjobs[int(fc[i].split('.')[1])]
+                            j = registry[int(fc[i].split('.')[0])].subjobs[
+                                int(fc[i].split('.')[1])]
                     except RegistryKeyError:
                         self._getWriteAccess()
                         try:
@@ -354,40 +361,44 @@ class JobTree(GangaObject):
                         finally:
                             self._releaseWriteAccess()
 
-    def printtree(self, path = None):
+    def printtree(self, path=None):
         """Prints content of the job tree in a well formatted way.
         """
         def printdir(path, indent):
             cont = self.ls(path)
-            ind = '    '*indent
+            ind = '    ' * indent
             ds = ''
             for i in cont['jobs']:
-                ds += ind +'|-%s\n' % i
+                ds += ind + '|-%s\n' % i
             for i in cont['folders']:
-                ds += ind +'|-[%s]\n' % i
-                ds += printdir(os.path.join(path,i), indent+1)
+                ds += ind + '|-[%s]\n' % i
+                ds += printdir(os.path.join(path, i), indent + 1)
             return ds
         path = os.path.join(*self.__get_path(path))
         bn = os.path.basename(path)
         if bn == '':
             bn = os.sep
-        ds = '  [%s]\n' % bn      
-        print ds + printdir(path, 1)     
+        ds = '  [%s]\n' % bn
+        logger.info(ds + printdir(path, 1))
+
 
 class _proxy_display(object):
+
     def __get__(self, obj, cls):
         if obj is None:
             return cls._impl._proxy_display
         return obj._impl._proxy_display
 
+
 class _copy(object):
+
     def __get__(self, obj, cls):
         if obj is None:
             return cls._impl._copy
-        return obj._impl._copy   
+        return obj._impl._copy
 
-    
-JobTree.__str__              = JobTree._display    
+
+JobTree.__str__ = JobTree._display
 JobTree._proxyClass._display = _proxy_display()
-JobTree._proxyClass.__str__  = _proxy_display()
+JobTree._proxyClass.__str__ = _proxy_display()
 JobTree._proxyClass.copy = _copy()

@@ -1,4 +1,4 @@
-################################################################################
+##########################################################################
 # Ganga - a computational task management tool for easy access to Grid resources
 # http://cern.ch/ganga
 #
@@ -6,7 +6,7 @@
 #
 # Copyright (C) 2003-2007 The Ganga Project
 #
-# This file is part of Ganga. 
+# This file is part of Ganga.
 #
 # Ganga is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program; if not, write to the Free Software
 # Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA  02110-1301  USA
-################################################################################
+##########################################################################
 """
 Extend the behaviour of the default *atexit* module to support:
 
@@ -40,8 +40,9 @@ Extend the behaviour of the default *atexit* module to support:
 
 import atexit
 
-from Ganga.Utility.logging import getLogger,log_user_exception
+from Ganga.Utility.logging import getLogger
 logger = getLogger()
+
 
 def _ganga_run_exitfuncs():
     """run any registered exit functions
@@ -49,72 +50,69 @@ def _ganga_run_exitfuncs():
     atexit._exithandlers is traversed based on the priority.
     If no priority was registered for a given function
     than the lowest priority is assumed (LIFO policy)
-    
+
     We keep the same functionality as in *atexit* bare module but
     we run each exit handler inside a try..catch block to be sure all
     the registered handlers are executed
     """
 
     #from Ganga.Core import monitoring_component
-    #if monitoring_component is not None:
+    # if monitoring_component is not None:
     #    monitoring_component.disableMonitoring()
 
     #from Ganga.Core.InternalServices import Coordinator
-    #if Coordinator.servicesEnabled:
+    # if Coordinator.servicesEnabled:
     #    Coordinator.disableInternalServices( shutdown = True )
 
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
     stop_and_free_thread_pool()
-    
 
     from Ganga.GPI import queues
     queues._purge_all()
 
-
-    def priority_cmp(f1,f2):
+    def priority_cmp(f1, f2):
         """
         Sort the exit functions based on priority in reversed order
-        """        
-        #extract the priority number from the function element 
+        """
+        # extract the priority number from the function element
         p1 = f1[0][0]
-        p2 = f2[0][0]        
-        #sort in reversed order
-        return cmp(p2,p1)
-    
+        p2 = f2[0][0]
+        # sort in reversed order
+        return cmp(p2, p1)
+
     def add_priority(x):
         """
         add a default priority to the functions not defining one (default priority=sys.maxint)
         return a list containg ((priority,func),*targs,*kargs) elements
-        """        
+        """
         import sys
         func = x[0]
-        if type(func)==type(()) and len(x[0])==2:
+        if isinstance(func, tuple) and len(x[0]) == 2:
             return x
         else:
-            new = [(sys.maxint,func)]
+            new = [(sys.maxsize, func)]
             new.extend(x[1:])
             return new
 
-    atexit._exithandlers = map(add_priority,atexit._exithandlers)
+    atexit._exithandlers = map(add_priority, atexit._exithandlers)
     atexit._exithandlers.sort(priority_cmp)
-    
-    import time
+
     import inspect
     while atexit._exithandlers:
 
         (priority, func), targs, kargs = atexit._exithandlers.pop()
         try:
-            if hasattr(func,'im_class'):
-                for cls in inspect.getmro(func.im_class):
-                    if func.__name__ in cls.__dict__: 
-                        logger.debug( cls.__name__ + " : " + func.__name__ )
+            if hasattr(func, 'im_class'):
+                for cls in inspect.getmro(func.__self__.__class__):
+                    if func.__name__ in cls.__dict__:
+                        logger.debug(cls.__name__ + " : " + func.__name__)
             else:
-                logger.debug( "noclass : " + func.__name__ )
+                logger.debug("noclass : " + func.__name__)
             func(*targs, **kargs)
-        except Exception, x:
-            #print 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
-            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__,str(x))
+        except Exception as x:
+            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (
+                func.__name__, str(x))
             logger.warning(s)
 
     import Ganga.Utility.logging
@@ -132,24 +130,25 @@ def _ganga_run_exitfuncs():
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
         bootstrap.printOpenFiles()
 
+
 def install():
     """
     Install a new shutdown manager, by overriding methods from atexit module
-    """    
-    #override the atexit exit function
+    """
+    # override the atexit exit function
     atexit._run_exitfuncs = _ganga_run_exitfuncs
     #del atexit
-    
-    #override the default exit function
+
+    # override the default exit function
     import sys
-    sys.exitfunc = atexit._run_exitfuncs 
+    sys.exitfunc = atexit._run_exitfuncs
 
 #
 #$Log: not supported by cvs2svn $
-#Revision 1.2  2007/07/27 14:31:56  moscicki
-#credential and clean shutdown updates from Adrian (from Ganga-4-4-0-dev-branch)
+# Revision 1.2  2007/07/27 14:31:56  moscicki
+# credential and clean shutdown updates from Adrian (from Ganga-4-4-0-dev-branch)
 #
-#Revision 1.1.2.2  2007/07/27 13:03:17  amuraru
+# Revision 1.1.2.2  2007/07/27 13:03:17  amuraru
 #*** empty log message ***
 #
 #
