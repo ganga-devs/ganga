@@ -84,9 +84,10 @@ def Configure():
         user = getConfig('Configuration')['user']
     except ConfigError, err:
         import sys
-        sys.stderr('Configure Error: %s' % str(err) )
+        sys.stderr.write('Configure Error: %s' % str(err) )
         import getpass
         user = getpass.getuser()
+
 
     ## FIXME Sometimes the wrong user is set gere for the unittests, I've added this to correct for it - rcurrie
     try:
