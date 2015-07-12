@@ -561,7 +561,7 @@ class GangaObject(Node):
             _sleep_size = 2.
             try:
                 _timeOut = getConfig('Configuration')['DiskIOTimeout']
-            except ConfigurationError:
+            except ConfigError, err:
                 _timeOut = 5. # 5sec hardcoded default
             while not _haveLocked:
                 err = None
