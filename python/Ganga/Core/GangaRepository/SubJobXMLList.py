@@ -4,7 +4,7 @@ from Ganga.GPIDev.Lib.GangaList import GangaList
 from Ganga.Utility.logging import getLogger
 logger = getLogger()
 
-class SubJobXMLList(GangaList):
+class SubJobXMLList(GangaList.GangaList):
     """
         jobDirectory: Directory of parent job containing subjobs
         from_file: Helper function to read object from disk
@@ -16,7 +16,7 @@ class SubJobXMLList(GangaList):
     _enable_plugin = 1
     _name = 'SubJobXMLList'
 
-    _schema = GangaList._schema.inherit_copy()
+    _schema = GangaList.GangaList._schema.inherit_copy()
     _enable_config = 1
 
     def __init__(self, jobDirectory, registry, dataFileName, load_backup ):

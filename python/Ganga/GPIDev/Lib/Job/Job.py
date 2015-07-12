@@ -39,7 +39,7 @@ import sys
 import copy
 from Ganga.Utility.Config import getConfig
 
-import Ganga.Utility.guid
+import uuid
 from JobTime import JobTime
 
 logger = Ganga.Utility.logging.getLogger()
@@ -846,7 +846,7 @@ class Job(GangaObject):
             logger.debug("Calling unprepare() from Job.py")
             self.application.unprepare()
 
-        self.info.uuid = Ganga.Utility.guid.uuid()
+        self.info.uuid = uuid.uuid()
 
         # increment the shareref counter if the job we're copying is prepared.
         # ALEX added try/if for loading of named job templates
