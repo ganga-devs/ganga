@@ -48,8 +48,10 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 session_lock_last = 0
-session_expiration_timeout = Ganga.Utility.Config.getConfig(
-    'Configuration')['DiskIOTimeout']
+try:
+    session_expiration_timeout = Ganga.Utility.Config.getConfig('Configuration')['DiskIOTimeout']
+except ConfigError, err:
+    session_expiratrion_timeout = 5
 # session_expiration_timeout = 45 # in sec
 session_lock_refresher = None
 
