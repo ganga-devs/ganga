@@ -467,3 +467,6 @@ class GangaList(GangaObject):
     def toString(self):
         """Returns a simple str of the _list."""
         return str(self._list)
+
+from Ganga.Runtime.GPIexport import exportToGPI
+exportToGPI('GangaList', GangaList, 'Classes')

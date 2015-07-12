@@ -12,6 +12,7 @@ import os
 
 from posixpath import curdir, sep, pardir, join, abspath, commonprefix
 
+logger = Ganga.Utility.logging.getLogger()
 
 def relpath(path, start=curdir):
     """Return a relative version of a path"""
@@ -111,8 +112,7 @@ class IMerger(IPostProcessor):
             return self.merge(jobs.subjobs, outputdir=outputdir, ignorefailed=ignorefailed, overwrite=overwrite)
 
         if not len(jobs):
-            logger.warning(
-                'The jobslice given was empty. The merge will not continue.')
+            logger.warning('The jobslice given was empty. The merge will not continue.')
             return self.success
 
         for j in jobs:
@@ -121,8 +121,7 @@ class IMerger(IPostProcessor):
                 # check if we can keep going
                 if j.status == 'failed' or j.status == 'killed':
                     if ignorefailed:
-                        logger.warning(
-                            'Job %s has status %s and is being ignored.', j.fqid, j.status)
+                        logger.warning('Job %s has status %s and is being ignored.', j.fqid, j.status)
                         continue
                     else:
                         raise PostProcessException('Job %s has status %s and so the merge can not continue. '
@@ -156,8 +155,7 @@ class IMerger(IPostProcessor):
 
                 if not len(glob.glob(os.path.join(j.outputdir, f))):
                     if ignorefailed:
-                        logger.warning(
-                            'The file pattern %s in Job %s was not found. The file will be ignored.', str(f), j.fqid)
+                        logger.warning('The file pattern %s in Job %s was not found. The file will be ignored.', str(f), j.fqid)
                         continue
                     else:
                         raise PostProcessException('The file pattern %s in Job %s was not found and so the merge can not continue. '
@@ -183,8 +181,7 @@ class IMerger(IPostProcessor):
 
             # check that we are merging some files
             if not files[k]:
-                logger.warning(
-                    'Attempting to merge with no files. Request will be ignored.')
+                logger.warning('Attempting to merge with no files. Request will be ignored.')
                 continue
 
             # check outputfile != inputfile

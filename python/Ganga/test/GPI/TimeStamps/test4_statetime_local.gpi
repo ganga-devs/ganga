@@ -19,7 +19,7 @@ logger.info("Job 1/6 done.")
 
 j_comp = Job()
 j_comp.application.exe='sleep'
-j_comp.application.args=[10]
+j_comp.application.args=[30]
 
 j_comp.submit()
 
@@ -28,7 +28,7 @@ j_comp.kill()
 assert sleep_until_state(j_comp, 30, 'killed')
 j_comp.resubmit()
 
-assert sleep_until_state(j_comp, 30, 'completed')
+assert sleep_until_state(j_comp, 45, 'completed')
 
 assert isinstance(j_comp.time.new(), datetime.datetime)
 assert isinstance(j_comp.time.submitting(), datetime.datetime)
@@ -45,7 +45,7 @@ j_fail = Job()
 
 j_fail.application.exe='sleep'
 
-j_fail.application.args='60'
+j_fail.application.args='300'
 
 j_fail.submit()
 
@@ -83,7 +83,7 @@ j_comp = Job()
 
 j_comp.application.exe='sleep'
 j_comp.splitter='ArgSplitter'
-j_comp.splitter.args=[[10],[10],[10]]
+j_comp.splitter.args=[[30],[30],[30]]
 
 j_comp.submit()
 assert sleep_until_state(j_comp, 120, 'running')

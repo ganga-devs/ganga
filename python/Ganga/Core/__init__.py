@@ -149,6 +149,8 @@ def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
 global at_exit_should_wait_cb
 at_exit_should_wait_cb = None
 
+global current_shutdown_policy
+current_shutdown_policy = None
 
 def change_atexitPolicy(interactive_session=True, new_policy=None):
 
@@ -182,3 +184,15 @@ def change_atexitPolicy(interactive_session=True, new_policy=None):
             thread_pool.shutdown, should_wait_cb=at_exit_should_wait_cb)
     else:
         at_exit_should_wait_cb = should_wait_cb
+
+
+    global current_shutdown_policy
+    current_shutdown_policy = forced_shutdown_policy
+
+def getCurrentShutdownPolicy():
+    global current_shutdown_policy
+    if current_shutdown_policy is None:
+        current_shutdown_policy = config['forced_shutdown_policy']
+        return config['forced_shutdown_policy']
+    return current_shutdown_policy
+

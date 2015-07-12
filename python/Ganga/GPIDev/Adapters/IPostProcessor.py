@@ -7,6 +7,7 @@ from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 import Ganga.GPI
 
@@ -59,7 +60,7 @@ class MultiPostProcessor(IPostProcessor):
         super(MultiPostProcessor, self).__init__()
 
     def __construct__(self, value):
-        if isinstance(value, list):
+        if isinstance(value, list) or isinstance(value, GangaList):
             for process in value:
                 self.addProcess(process)
         elif isinstance(value._impl, MultiPostProcessor):
@@ -122,7 +123,7 @@ class MultiPostProcessor(IPostProcessor):
         out: An output stream to print to. The last line of output should be printed without a newline.'
         selection: See VPrinter for an explaintion of this.
         """
-        out.write(GPIProxyObjectFactory(self.process_objects))
+        out.write(str(self.process_objects))
 
 
 from Ganga.GPIDev.Base.Filters import allComponentFilters

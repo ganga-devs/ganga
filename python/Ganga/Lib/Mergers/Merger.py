@@ -299,16 +299,14 @@ def findFilesToMerge(jobs):
                 file_map[file_name] = file_map.setdefault(file_name, 0) + 1
         elif j.outputfiles != []:
             for file_name in j.outputfiles:
-                if file_name.__class__.__name__ == 'SandboxFile':
-                    file_map[file_name.namePattern] = file_map.setdefault(
-                        file_name.namePattern, 0) + 1
+                if file_name.__class__.__name__ == 'LocalFile':
+                    file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern, 0) + 1
 
     for file_name, count in file_map.iteritems():
         if count == jobs_len:
             result.append(file_name)
         else:
-            logger.warning(
-                'The file %s was not found in all jobs to be merged and so will be ignored.', file_name)
+            logger.warning('The file %s was not found in all jobs to be merged and so will be ignored.', file_name)
     logger.info('No files specified, so using %s.', str(result))
 
     return result
@@ -402,8 +400,8 @@ class SmartMerger(IMerger):
                              'Check the [Mergers] section of your .gangarc file.', ext)
                 return self.failure
             merge_object.files = type_map[ext]
-            merge_result = merge_object.merge(
-                jobs, outputdir, ignorefailed, overwrite)
+            merge_result = merge_object.merge(jobs, outputdir, ignorefailed, overwrite)
             merge_results.append(merge_result)
 
         return not False in merge_results
+

@@ -65,6 +65,7 @@ def findOutputFileTypeByFileName(filename):
     matchKeys = []
 
     outputfilesConfig = decodeExtensionKeys()
+
     for key in outputfilesConfig.keys():
         for filePattern in outputfilesConfig[key]:
             if fnmatch.fnmatch(filename, filePattern):

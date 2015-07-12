@@ -64,7 +64,7 @@ class Root(IPrepareApp):
     and 10, you would do the following:
 
     r = Root()
-    r.version = '6.02.00'
+    r.version = '6.02.03'
     r.script = '~/abc/analysis.C'
     r.args = ['Minbias', 10]
 
@@ -211,7 +211,7 @@ class Root(IPrepareApp):
     _schema = Schema(Version(1, 1), {
         'script': FileItem(defvalue=File(), preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
         'args': SimpleItem(defvalue=[], typelist=['str', 'int'], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
-        'version': SimpleItem(defvalue='5.18.00', doc="The version of Root to run"),
+        'version': SimpleItem(defvalue='6.02.03', doc="The version of Root to run"),
         'usepython': SimpleItem(defvalue=False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
         'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool'], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
@@ -232,8 +232,9 @@ class Root(IPrepareApp):
     def __init__(self):
         super(Root, self).__init__()
 
-        self.shared_path = os.path.join(expandfilename(getConfig(
-            'Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+        from Ganga.GPIDev.Lib.File import getSharedPath
+
+        self.shared_path = Ganga.GPIDev.Lib.File.getSharedPath()
 
     def configure(self, masterappconfig):
         return (None, None)
@@ -302,19 +303,14 @@ class RootRTHandler(IRuntimeHandler):
         rootenv = {}
         # propagate from localhost
         if 'PATH' in environ:
-            setEnvironment(
-                'PATH', environ['PATH'], update=True, environment=rootenv)
+            setEnvironment('PATH', environ['PATH'], update=True, environment=rootenv)
         if 'LD_LIBRARY_PATH' in environ:
-            setEnvironment(
-                'LD_LIBRARY_PATH', environ['LD_LIBRARY_PATH'], update=True, environment=rootenv)
+            setEnvironment('LD_LIBRARY_PATH', environ['LD_LIBRARY_PATH'], update=True, environment=rootenv)
 
-        setEnvironment(
-            'LD_LIBRARY_PATH', join(rootsys, 'lib'), update=True, environment=rootenv)
-        setEnvironment(
-            'PATH', join(rootsys, 'bin'), update=True, environment=rootenv)
+        setEnvironment('LD_LIBRARY_PATH', join(rootsys, 'lib'), update=True, environment=rootenv)
+        setEnvironment('PATH', join(rootsys, 'bin'), update=True, environment=rootenv)
         setEnvironment('ROOTSYS', rootsys, update=False, environment=rootenv)
-        logger.debug(
-            'Have set Root variables. rootenv is now %s', str(rootenv))
+        logger.debug('Have set Root variables. rootenv is now %s', str(rootenv))
 
         if usepython:
             # first get from config
@@ -322,8 +318,7 @@ class RootRTHandler(IRuntimeHandler):
             try:
                 python_version = getConfig('ROOT')['pythonversion']
             except ConfigError as e:
-                logger.debug(
-                    'There was a problem trying to get [ROOT]pythonversion: %s.', e)
+                logger.debug('There was a problem trying to get [ROOT]pythonversion: %s.', e)
 
             logger.debug('Found version of python: %s', str(python_version))
 
@@ -332,18 +327,16 @@ class RootRTHandler(IRuntimeHandler):
                 python_version = findPythonVersion(rootsys)
 
             if (python_version is None):
-                logger.warn(
-                    'Unable to find the Python version needed for Root version %s. See the [ROOT] section of your .gangarc file.', version)
+                logger.warn('Unable to find the Python version needed for Root version %s. See the [ROOT] section of your .gangarc file.', version)
             else:
                 logger.debug('Python version found was %s', python_version)
             python_home = getpythonhome(pythonversion=python_version)
+            logger.info("Looking in: %s" % python_home)
             logger.debug('PYTHONHOME is being set to %s', python_home)
 
             python_bin = join(python_home, 'bin')
-            setEnvironment(
-                'PATH', python_bin, update=True, environment=rootenv)
-            setEnvironment(
-                'PYTHONPATH', join(rootsys, 'lib'), update=True, environment=rootenv)
+            setEnvironment('PATH', python_bin, update=True, environment=rootenv)
+            setEnvironment('PYTHONPATH', join(rootsys, 'lib'), update=True, environment=rootenv)
             logger.debug('Added PYTHONPATH. rootenv is now %s', str(rootenv))
 
             if join(python_bin, 'python') != sys.executable:
@@ -354,16 +347,12 @@ class RootRTHandler(IRuntimeHandler):
 
                 import os.path
                 if not os.path.exists(python_bin) or not os.path.exists(python_lib):
-                    logger.error(
-                        'The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
+                    logger.error('The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
                     logger.error('PYTHONPATH is: ' + str(os.path))
 
-                setEnvironment(
-                    'LD_LIBRARY_PATH', python_lib, update=True, environment=rootenv)
-                setEnvironment(
-                    'PYTHONHOME', python_home, update=False, environment=rootenv)
-                setEnvironment(
-                    'PYTHONPATH', python_lib, update=True, environment=rootenv)
+                setEnvironment('LD_LIBRARY_PATH', python_lib, update=True, environment=rootenv)
+                setEnvironment('PYTHONHOME', python_home, update=False, environment=rootenv)
+                setEnvironment('PYTHONPATH', python_lib, update=True, environment=rootenv)
 
         return (rootenv, rootsys)
 
@@ -372,6 +361,8 @@ class RootRTHandler(IRuntimeHandler):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         from os.path import join, split
         import string
+
+        from Ganga.GPIDev.Lib.File import getSharedPath
 
         # Arguments to the ROOT script needs to be a comma separated list
         # enclosed in (). Strings should be enclosed in escaped double quotes.
@@ -387,8 +378,7 @@ class RootRTHandler(IRuntimeHandler):
         if script == File():
             script = File(defaultScript())
         else:
-            script = File(os.path.join(os.path.join(
-                self.shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
+            script = File(os.path.join(os.path.join(Ganga.GPIDev.Lib.File.getSharedPath(), app.is_prepared.name), os.path.basename(app.script.name)))
 
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
@@ -407,12 +397,13 @@ class RootRTHandler(IRuntimeHandler):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
         from os.path import join, split
 
+        from Ganga.GPIDev.Lib.File import getSharedPath
+
         script = app.script
         if script == File():
             script = File(defaultPyRootScript())
         else:
-            script = File(os.path.join(os.path.join(
-                self.shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
+            script = File(os.path.join(os.path.join(Ganga.GPIDev.Lib.File.getSharedPath(), app.is_prepared.name), os.path.basename(app.script.name)))
 
         arguments = [join('.', script.subdir, split(script.name)[1])]
         arguments.extend([str(s) for s in app.args])
@@ -493,6 +484,8 @@ def downloadWrapper(app):
     from Ganga.GPIDev.Lib.File import FileBuffer
     import string
 
+    from Ganga.GPIDev.Lib.File import getSharedPath
+
     rootsys = join('.', 'root')
     rootenv = {'ROOTSYS': rootsys}
 
@@ -503,8 +496,7 @@ def downloadWrapper(app):
         else:
             script = File(defaultPyRootScript())
     else:
-        script = File(os.path.join(os.path.join(
-            self.shared_path, app.is_prepared.name), os.path.basename(app.script.name)))
+        script = File(os.path.join(os.path.join(Ganga.GPIDev.Lib.File.getSharedPath(), app.is_prepared.name), os.path.basename(app.script.name)))
 
     commandline = ''
     scriptPath = join('.', script.subdir, split(script.name)[1])
@@ -801,3 +793,5 @@ def randomString():
 
     # seed is set to clock during import
     return join([str(a) for a in sample], '')
+
+

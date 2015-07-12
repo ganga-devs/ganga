@@ -14,11 +14,11 @@ class BackendApplicationMatrix(MultipassTest):
         MultipassTest.__init__(self,2)
         
     def pass1(self):
-        app_backends = [ b for b in plugins('backends') if b in allHandlers.getAllBackends() and b not in ['PBS', 'Condor', 'SGE', 'LSF']]
+        app_backends = [ b for b in plugins('backends') if b in allHandlers.getAllBackends() and b not in ['PBS', 'Condor', 'SGE', 'LSF', 'StoreTestBackend', 'CrashTestBackend' ]]
         logger.info('*'*30+'Submitting jobs'+'*'*30)
         jobs = []
         for backend in app_backends:
-            for app in [a for a in allHandlers.handlers.get(backend) if a in plugins('applications') and a not in ['Gaudi']]: # removed Gaudi from the testmatrix
+            for app in [a for a in allHandlers.handlers.get(backend) if a in plugins('applications') and a not in ['Gaudi', 'CrashTestApplication', 'StoreTestApplication' ]]: # removed Gaudi from the testmatrix
                     j = Job()
                     j.application = app
                     j.backend = backend

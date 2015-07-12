@@ -200,8 +200,7 @@ def load(filename="", returnList=True):
                 objectList.append(object)
             except NameError as x:
                 logger.exception(x)
-                logger.warning(
-                    "Unable to load object with definition %s" % item)
+                logger.warning("Unable to load object with definition %s" % item)
                 logger.warning("Required plug-ins may not be available")
 
     if not objectList:

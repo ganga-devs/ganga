@@ -93,10 +93,21 @@ class ThreadPoolQueueMonitor(object):
                        for i in self._monitoring_threadpool.get_queue()])
         return output
 
-    def purge(self, force=False):
+    def __shouldWaitonShutdown(self):
+        from Ganga.Core import getCurrentShutdownPolicy
+
+        if getCurrentShutdownPolicy() == 'batch':
+            return True
+        else:
+            return False
+
+    def purge(self, force=None):
         """
         Purge the Ganga user thread pool's queue
         """
+        if force is None:
+            force = self.__shouldWaitonShutdown()
+
         _user_queue = [i for i in self._user_threadpool.get_queue()]
         queue_size = len(_user_queue)
         _actually_purge = False
@@ -118,11 +129,15 @@ class ThreadPoolQueueMonitor(object):
         if _actually_purge:
             self._user_threadpool.clear_queue()
 
-    def _purge_all(self, force=False):
+    def _purge_all(self, force=None):
         """
         Purge ALL of the Ganga user AND Worker thread queues!
         """
-        self.purge()
+
+        if force is None:
+            force = self.__shouldWaitonShutdown()
+
+        self.purge(force)
 
         _monitor_queue = [i for i in self._monitoring_threadpool.get_queue()]
 

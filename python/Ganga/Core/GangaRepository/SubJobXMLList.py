@@ -21,10 +21,12 @@ class SubJobXMLList(GangaList.GangaList):
 
     def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False ):
 
+        self.jobDirectory = jobDirectory
+        self.registry = registry
+
         if jobDirectory == '' and registry is None:
             return
 
-        self.jobDirectory = jobDirectory
         from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
         self.to_file = to_file
         self.from_file = from_file
@@ -34,8 +36,6 @@ class SubJobXMLList(GangaList.GangaList):
         self._cachedJobs = {}
         self._definedParent = None
         self._storedList = []
-
-        self.registry = registry
 
         super(SubJobXMLList, self).__init__()
 
@@ -136,7 +136,10 @@ class SubJobXMLList(GangaList.GangaList):
 
     def __len__(self):
         subjob_count = 0
-        from os import listdir
+        from os import listdir, path
+        if not path.isdir( self.jobDirectory ):
+            return 0
+
         jobDirectoryList = listdir( self.jobDirectory )
 
         i=0
@@ -152,6 +155,8 @@ class SubJobXMLList(GangaList.GangaList):
     def __getitem__(self, index):
 
         if not index in self._cachedJobs.keys():
+            if len(self) == 0:
+                raise GangaException("Subjob: %s does NOT exist" % str(index))
             subjob_data = self.__get_dataFile(str(index))
             try:
                 # For debugging where this was called from to try and push it to as high a level as possible at runtime
