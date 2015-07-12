@@ -846,7 +846,7 @@ class Job(GangaObject):
             logger.debug("Calling unprepare() from Job.py")
             self.application.unprepare()
 
-        self.info.uuid = uuid.uuid4()
+        self.info.uuid = str(uuid.uuid4())
 
         # increment the shareref counter if the job we're copying is prepared.
         # ALEX added try/if for loading of named job templates
@@ -1414,7 +1414,7 @@ class Job(GangaObject):
                 #self.subjobs = subjobs
                 # for j in self.subjobs:
                 for j in subjobs:
-                    j.info.uuid = uuid.uuid4()
+                    j.info.uuid = str(uuid.uuid4())
                     j.status = 'new'
                     #j.splitter = None
                     j.time.timenow('new')
