@@ -21,6 +21,8 @@ except ImportError:
 
 import Ganga.Utility.logging
 
+from Ganga.Utility.Config.Config import ConfigError
+
 try:
     from Ganga.Core.GangaThread import GangaThread
     from Ganga.Core.GangaRepository import RepositoryError
