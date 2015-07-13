@@ -4,21 +4,23 @@
    LHCb. This is common to these jobs but relies on the LHCb output information.'''
 
 # Required for post-processing script
-import os, sys
+import os
+import sys
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 def _XMLJobFiles():
-    return ['summary.xml','__parsedxmlsummary__']
+    return ['summary.xml', '__parsedxmlsummary__']
 
 #Post-Processing script taken from AppBase to be shared among multiple Job types
-def postprocess(self,logger):
+def postprocess(self, logger):
+
     j = self.getJobObject()
-    parsedXML = os.path.join(j.outputdir,'__parsedxmlsummary__')
+    parsedXML = os.path.join(j.outputdir, '__parsedxmlsummary__')
     metadataItems={} # use to avoid replacing 'lumi' etc as return value and not the method pointer
     if os.path.exists(parsedXML):
-        execfile(parsedXML,{},metadataItems)
+        execfile(parsedXML, {}, metadataItems)
 
     # Combining subjobs XMLSummaries.
     if j.subjobs:
@@ -29,9 +31,13 @@ def postprocess(self,logger):
 
         summaries = []
         for sj in j.subjobs:
-            outputxml = os.path.join(sj.outputdir,'summary.xml')
+            outputxml = os.path.join(sj.outputdir, 'summary.xml')
             if not os.path.exists(outputxml):
                 logger.warning("XMLSummary for job %s subjobs will not be merged as 'summary.xml' not present in job %s outputdir" % (j.fqid,sj.fqid))
+                return
+            elif os.path.getsize(outputxml) == 0 or os.stat(outputxml).st_size == 0:
+                logger.warning("XMLSummary fro job %s subjobs will not be merged as %s appears to be an empty file" % (j.fqid, outputxml))
+                logger.warning("Please try to recreate this file by either resubmitting your job or re-downloading the data from the backend")
                 return
             summaries.append(outputxml)
 
@@ -40,14 +46,14 @@ def postprocess(self,logger):
              #logger.debug('None of the subjobs of job %s produced the output XML summary file "summary.xml". Merging will therefore not happen' % j.fqid)
              #return
 
-        schemapath  = os.path.join(env['XMLSUMMARYBASEROOT'],'xml/XMLSummary.xsd')
-        summarypath = os.path.join(env['XMLSUMMARYBASEROOT'],'python/XMLSummaryBase')
+        schemapath  = os.path.join(env['XMLSUMMARYBASEROOT'], 'xml/XMLSummary.xsd')
+        summarypath = os.path.join(env['XMLSUMMARYBASEROOT'], 'python/XMLSummaryBase')
         sys.path.append(summarypath)
         import summary
 
         try:
-            XMLSummarydata = summary.Merge(summaries,schemapath)
-        except:
+            XMLSummarydata = summary.Merge(summaries, schemapath)
+        except Exception, err:
             logger.error('Problem while merging the subjobs XML summaries')
             raise
 
