@@ -34,6 +34,7 @@ def safe_save(fn, obj, to_file, ignore_subs=''):
     if hasattr(obj, 'application') and hasattr(obj.application, 'hash') and obj.application.hash is not None:
         if not obj.application.calc_hash(verify=True):
             try:
+                logger.warning("%s" % str(obj.application))
                 logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (obj.application._name, obj._name, obj._registry_id))
             except AttributeError, err:
                 logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (obj.application._name, obj._name))
@@ -46,6 +47,7 @@ def safe_save(fn, obj, to_file, ignore_subs=''):
             hasattr(obj.analysis.application, 'hash') and obj.analysis.application.hash is not None:
         if not obj.analysis.application.calc_hash(verify=True):
             try:
+                logger.warning("%s" % str(obj.analysis))
                 logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (obj.analysis.application._name, obj._name, obj._registry_id))
             except AttributeError, err:
                 logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (obj.analysis.application._name, obj._name))

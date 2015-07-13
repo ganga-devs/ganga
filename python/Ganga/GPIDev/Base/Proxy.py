@@ -305,9 +305,16 @@ class ProxyMethodDescriptor(object):
 # helper to create a wrapper for an existing ganga object
 
 
-def GPIProxyObjectFactory(obj):
-    if not hasattr(obj, '_proxyObject'):
-        raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(obj)))
+def GPIProxyObjectFactory(_obj):
+
+    if not hasattr(_obj, '_proxyObject'):
+        if hasattr(stripProxy(_obj), '_proxyObject'):
+            obj = stripProxy(_obj)
+        else:
+            raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(_obj)))
+    else:
+        obj = _obj
+
     if obj._proxyObject is None:
         cls = obj._proxyClass
         proxy = super(cls, cls).__new__(cls)
@@ -537,8 +544,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             try:
                 return object.__getattribute__(self, name)
             except AttributeError as x:
-                logger.debug(
-                    "Attribute: %s NOT found for object %s" % (name, str(self)))
+                logger.debug("Attribute: %s NOT found for object %s" % (name, str(self)))
                 raise GangaAttributeError("%s" % str(x))
 
     # but at the class level _impl is a ganga plugin class
