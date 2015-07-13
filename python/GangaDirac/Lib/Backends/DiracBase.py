@@ -222,16 +222,15 @@ class DiracBase(IBackend):
         """Resubmit a DIRAC job"""
         j=self.getJobObject()
         parametric = False
-        script_path = os.path.join(j.getInputWorkspace().getPath(),
-                                       'dirac-script.py')
+        script_path = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         ## Check old script
         if j.master is None and not os.path.exists(script_path):
              raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir')
+
         if j.master is not None and not os.path.exists(script_path):
-             script_path = os.path.join(j.master.getInputWorkspace().getPath(),
-                                        'dirac-script.py')
+             script_path = os.path.join(j.master.getInputWorkspace().getPath(), 'dirac-script.py')
              if not os.path.exists(script_path):
-                  raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir or j.master.inputdir')
+                  raise BackendError('Dirac', 'No "dirac-script.py" found in j.inputdir or j.master.inputdir')
              parametric = True
 
         ## Read old script
@@ -244,12 +243,12 @@ class DiracBase(IBackend):
             parametric_datasets = get_parametric_datasets(script.split('\n'))
             if j.master:
                 if len(parametric_datasets) != len(j.master.subjobs):
-                    raise BackendError('Dirac','number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
+                    raise BackendError('Dirac', 'number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
             if set(parametric_datasets[j.id]).symmetric_difference(set([f.name for f in j.inputdata.files])):
-                raise BackendError('Dirac','Mismatch between dirac-script and job attributes.')
+                raise BackendError('Dirac', 'Mismatch between dirac-script and job attributes.')
             script = script.replace('.setParametricInputData(%s)' % str(parametric_datasets),
                                     '.setInputData(%s)' % str(parametric_datasets[j.id]))
-            script = script.replace('%n',str(j.id)) #name
+            script = script.replace('%n', str(j.id)) #name
 
         start_user_settings = '# <-- user settings\n'
         new_script = script[:script.find(start_user_settings) + len(start_user_settings)]
@@ -264,8 +263,7 @@ class DiracBase(IBackend):
              
 
         ## Save new script
-        new_script_filename = os.path.join(j.getInputWorkspace().getPath(),
-                              'dirac-script.py')
+        new_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         f = open(new_script_filename, 'w')
         f.write(new_script)
         f.close()
