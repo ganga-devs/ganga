@@ -170,10 +170,17 @@ class IBackend(GangaObject):
                 #from Ganga.GPIDev.Base.Proxy import stripProxy
                 #all_queues = stripProxy(queues)
                 #all_queues._addSystem( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
-                queues.add(
-                    self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
+                queues._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
 
-            while queues.totalNumUserThreads() != 0:
+            def subjob_status_check(rjobs):
+                has_submitted = True
+                for sj in rjobs:
+                    if sj.status not in ["Submitted","Failed","Completed","Running","Completing"]:
+                        has_submitted = False
+                        break
+                return has_submitted
+
+            while not subjob_status_check(rjobs):
                 import time
                 time.sleep(1.)
 
@@ -185,8 +192,7 @@ class IBackend(GangaObject):
         for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
-            logger.info(
-                "submitting job %s to %s backend", fqid, sj.backend._name)
+            logger.info("submitting job %s to %s backend", fqid, sj.backend._name)
             try:
                 b = sj.backend
                 sj.updateStatus('submitting')

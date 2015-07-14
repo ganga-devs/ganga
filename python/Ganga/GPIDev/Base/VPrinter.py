@@ -35,7 +35,8 @@ def quoteValue(value, selection):
 
 
 def indent(level):
-    return ' ' * (level - 1) * 3
+    return ' ' * int((level - 1) * 3)
+
 
 # A visitor to print the object tree.
 
@@ -78,16 +79,15 @@ class VPrinter(object):
         self.empty_body = 1
 
     def nodeEnd(self, node):
+
         if self.empty_body:
-            print(self.indent(), ')', end=' ', file=self.out)
+            print(self.indent(), ' )', end=' ', file=self.outi, sep='')
             self.nocomma = 0
         else:
             if self.nocomma:
-                #print >> self.out, 'NOCOMMA',
                 print(')', end=' ', file=self.out)
             else:
-                #print >> self.out, 'COMMA',
-                print('\n', self.indent(), ')', end=' ', file=self.out)
+                print('\n', self.indent(), ' )', end=' ', file=self.out, sep='')
 
         self.level -= 1
         if self.level == 0:
@@ -124,8 +124,7 @@ class VPrinter(object):
             #    print 'into',repr(value)
             # else:
             #    print 'no transformation'
-            print(self.indent(), name, '=', self.quote(
-                value), end=' ', file=self.out)
+            print(self.indent(), name, '=', self.quote(value), end=' ', file=self.out)
 
     def sharedAttribute(self, node, name, value, sequence):
         if self.showAttribute(node, name):
@@ -139,8 +138,7 @@ class VPrinter(object):
             #    print 'into',repr(value)
             # else:
             #    print 'no transformation'
-            print(self.indent(), name, '=', self.quote(
-                value), end=' ', file=self.out)
+            print(self.indent(), name, '=', self.quote(value), end=' ', file=self.out)
 
     def acceptOptional(self, s):
         if s is None:
@@ -190,16 +188,14 @@ class VSummaryPrinter(VPrinter):
             str_val = fp(value, self.verbosity_level)
             self.empty_body = 0
             self.comma()
-            print(self.indent(), name, '=', self.quote(
-                str_val), end=' ', file=self.out)
+            print(self.indent(), name, '=', self.quote(str_val), end=' ', file=self.out)
             function_pointer_available = True
         return function_pointer_available
 
     def _CallPrintSummaryTree(self, obj):
         import cStringIO
         sio = cStringIO.StringIO()
-        runProxyMethod(obj, 'printSummaryTree', self.level,
-                       self.verbosity_level, self.indent(), sio, self.selection)
+        runProxyMethod(obj, 'printSummaryTree', self.level, self.verbosity_level, self.indent(), sio, self.selection)
         result = sio.getvalue()
         if result.endswith('\n'):
             result = result[0:-1]

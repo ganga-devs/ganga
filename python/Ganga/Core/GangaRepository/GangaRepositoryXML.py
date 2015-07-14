@@ -24,13 +24,16 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository import SubJobXMLList
 
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
 logger = Ganga.Utility.logging.getLogger()
 
 printed_explanation = False
 
 
-def safe_save(fn, obj, to_file, ignore_subs=''):
+def safe_save(fn, _obj, to_file, ignore_subs=''):
     """Writes a file safely, raises IOError on error"""
+    obj = stripProxy(_obj)
     if hasattr(obj, 'application') and hasattr(obj.application, 'hash') and obj.application.hash is not None:
         if not obj.application.calc_hash(verify=True):
             try:

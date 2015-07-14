@@ -303,8 +303,7 @@ class Job(GangaObject):
         c.outputfiles = []
         for f in self.outputfiles:
             if hasattr(f, '_on_attribute__set__'):
-                c.outputfiles.append(
-                    f._on_attribute__set__(self, 'outputfiles'))
+                c.outputfiles.append(f._on_attribute__set__(self, 'outputfiles'))
                 continue
             c.outputfiles.append(copy.deepcopy(f))
 
@@ -400,8 +399,7 @@ class Job(GangaObject):
         if name == 'outputfiles':
 
             currentOutputFiles = object.__getattribute__(self, name)
-            currenUnCopyableOutputFiles = object.__getattribute__(
-                self, 'non_copyable_outputfiles')
+            currenUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
             import re
             regex = re.compile('[*?\[\]]')
@@ -2184,13 +2182,11 @@ class Job(GangaObject):
             if value != []:
 
                 if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error(
-                        'Use of job.outputsandbox is forbidden, please use job.outputfiles')
+                    logger.error('Use of job.outputsandbox is forbidden, please use job.outputfiles')
                     return
 
                 if self.outputfiles != []:
-                    logger.error(
-                        'job.outputfiles is set, you can\'t set job.outputsandbox')
+                    logger.error('job.outputfiles is set, you can\'t set job.outputsandbox')
                     return
 
             super(Job, self).__setattr__(attr, value)
@@ -2202,10 +2198,8 @@ class Job(GangaObject):
             if value != []:
 
                 if getConfig('Output')['ForbidLegacyInput']:
-                    logger.error(
-                        'Use of job.inputsandbox is forbidden, please use job.inputfiles')
-                    raise GangaException(
-                        'Use of job.inputsandbox is forbidden, please use job.inputfiles')
+                    logger.error('Use of job.inputsandbox is forbidden, please use job.inputfiles')
+                    raise GangaException('Use of job.inputsandbox is forbidden, please use job.inputfiles')
 
             super(Job, self).__setattr__(attr, value)
 
@@ -2214,13 +2208,11 @@ class Job(GangaObject):
             if value is not None:
 
                 if getConfig('Output')['ForbidLegacyOutput']:
-                    logger.error(
-                        'Use of job.outputdata is forbidden, please use job.outputfiles')
+                    logger.error('Use of job.outputdata is forbidden, please use job.outputfiles')
                     return
 
                 if self.outputfiles != []:
-                    logger.error(
-                        'job.outputfiles is set, you can\'t set job.outputdata')
+                    logger.error('job.outputfiles is set, you can\'t set job.outputdata')
                     return
             super(Job, self).__setattr__(attr, value)
 

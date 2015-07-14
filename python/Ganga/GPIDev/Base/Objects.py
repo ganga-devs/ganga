@@ -129,18 +129,15 @@ class Node(object):
 
         for (name, item) in self._schema.simpleItems():
             if item['visitable']:
-                visitor.simpleAttribute(
-                    self, name, getdata(name), item['sequence'])
+                visitor.simpleAttribute(self, name, getdata(name), item['sequence'])
 
         for (name, item) in self._schema.sharedItems():
             if item['visitable']:
-                visitor.sharedAttribute(
-                    self, name, getdata(name), item['sequence'])
+                visitor.sharedAttribute(self, name, getdata(name), item['sequence'])
 
         for (name, item) in self._schema.componentItems():
             if item['visitable']:
-                visitor.componentAttribute(
-                    self, name, getdata(name), item['sequence'])
+                visitor.componentAttribute(self, name, getdata(name), item['sequence'])
 
         visitor.nodeEnd(self)
 
@@ -180,11 +177,11 @@ class Node(object):
         from .VPrinter import VPrinter
         self.accept(VPrinter(f, sel))
 
-    # printPrepTree is only ever run on applications, from within IPrepareApp.py
-    # if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
-    # see the relevant code in VPrinter to understand why
-    def printPrepTree(self, f=None, sel='preparable'):
-        from .VPrinter import VPrinter
+    #printPrepTree is only ever run on applications, from within IPrepareApp.py
+    #if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
+    #see the relevant code in VPrinter to understand why
+    def printPrepTree(self, f=None, sel='preparable' ):
+        from Ganga.GPIDev.Base.VPrinter import VPrinter
         self.accept(VPrinter(f, sel))
 
     def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection=''):
