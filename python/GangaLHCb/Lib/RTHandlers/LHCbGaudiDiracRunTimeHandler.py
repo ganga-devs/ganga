@@ -5,6 +5,7 @@ from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTime
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils                 import result_ok
+from GangaDirac.Lib.Files.DiracFile                     import DiracFile
 from GangaDirac.Lib.Utilities.DiracUtilities            import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
@@ -71,7 +72,6 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         job=app.getJobObject()
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
-        from Ganga.GPI import DiracFile
         outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
 
         data_str  = 'import os\n'
@@ -118,12 +118,6 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
            f.close()
 
            outbox, outdata = parser.get_output(job)
-
-           from Ganga.GPIDev.Lib.File.FileUtils import doesFileExist
-
-           for file in outbox:
-              if not doesFileExist( file, job.outputfiles ):
-                 job.non_copyable_outputfiles.extend([])
 
            #outputfiles.update(set(outdata[:]))
            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
@@ -187,7 +181,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         )
         logger.debug( "prepare: LHCbGaudiDiracRunTimeHandler" )
 
-        #print(inputsandbox)
+        #print inputsandbox
 
         thisenv = None
         #if appmasterconfig:
