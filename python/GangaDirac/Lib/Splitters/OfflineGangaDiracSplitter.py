@@ -103,6 +103,63 @@ def generate_site_selection( input_site, wanted_common_site, uniqueSE=False ):
             req_sitez.add( s )
     return req_sitez
 
+def calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE ):
+
+    global site_to_SE_mapping
+    global SE_to_site_mapping
+
+    SE_dict = dict()
+    maps_size = 0
+    found = []
+
+    ## First find the SE for each site
+    for lfn, repz in file_replicas.iteritems():
+        sitez=set([])
+        for i in repz:
+            sitez.add( i )
+            if not i in found:
+
+                from Ganga.GPI import queues
+                queues._monitoring_threadpool.add_function( addToMapping, ( str(i), ) )
+
+                maps_size = maps_size + 1
+                found.append( i )
+
+        SE_dict[ lfn ] = sitez
+
+    ## Doing this in parallel so wait for it to finish
+    while len( site_to_SE_mapping ) != maps_size:
+        import time
+        time.sleep( 0.5 )
+
+    ## Now calculate the inverse dictionary of site for each SE
+    for k, v in site_to_SE_mapping.iteritems():
+        for i in v:
+            if i not in SE_to_site_mapping:
+                SE_to_site_mapping[i] = set([])
+            SE_to_site_mapping[i].add(k)
+
+    ## These can be used to select the site which know of a given SE
+    ## Or vice versa
+
+
+    ## Now lets generate a dictionary of some chosen site vs LFN to use in constructing subsets
+    allSubSets = []
+    allChosenSets = {}
+
+    site_dict = {}
+    for k, v in SE_dict.iteritems():
+        site_dict[k] = set([])
+        for i in v:
+            for j in site_to_SE_mapping[i]:
+                site_dict[k].add( j )
+
+    ##  Now select a set of site to use as a seed for constructing a subset of LFN
+    for lfn in site_dict.keys():
+        allChosenSets[ lfn ] = generate_site_selection( site_dict[lfn], wanted_common_site, uniqueSE )
+
+    return site_dict, allSubSets, allChosenSets
+
 ##  Actually Do the work of the splitting
 def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
@@ -141,7 +198,7 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
         from Ganga.GPI import queues
 
-        queues.add( getLFNReplicas, ( allLFNs, i ) )
+        queues._monitoring_threadpool.add_function( getLFNReplicas, ( allLFNs, i ) )
 
     global allLFNData
 
@@ -239,61 +296,11 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
 
     logger.info( "Calculating site<->SE Mapping" )
-    global site_to_SE_mapping
-    global SE_to_site_mapping
-
-    SE_dict = dict()
-    maps_size = 0
-    found = []
-    ## First find the SE for each site
-    for lfn, repz in file_replicas.iteritems():
-        sitez=set([])
-        for i in repz:
-            sitez.add( i )
-            if not i in found:
-
-                from Ganga.GPI import queues
-
-                queues.add( addToMapping, ( str(i), ) ) 
-
-                maps_size = maps_size + 1
-                found.append( i )
-
-        SE_dict[ lfn ] = sitez
-
-    ## Doing this in parallel so wait for it to finish
-    while len( site_to_SE_mapping ) != maps_size:
-        import time
-        time.sleep( 0.5 )
-
-    ## Now calculate the inverse dictionary of site for each SE
-    for k, v in site_to_SE_mapping.iteritems():
-        for i in v:
-            if i not in SE_to_site_mapping:
-                SE_to_site_mapping[i] = set([])
-            SE_to_site_mapping[i].add(k)
-
-    ## These can be used to select the site which know of a given SE
-    ## Or vice versa
-
 
     ## Now lets generate a dictionary of some chosen site vs LFN to use in constructing subsets
-    allSubSets = []
-    allChosenSets = {}
-
-    site_dict = {}
-    for k, v in SE_dict.iteritems():
-        site_dict[k] = set([])
-        for i in v:
-            for j in site_to_SE_mapping[i]:
-                site_dict[k].add( j )
-
-    ##  Now select a set of site to use as a seed for constructing a subset of LFN
-    for lfn in site_dict.keys():
-        allChosenSets[ lfn ] = generate_site_selection( site_dict[lfn], wanted_common_site, uniqueSE )
+    site_dict, allSubSets, allChosenSets = calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE ) 
 
     logger.debug( "Found all SE in use" )
-
 
 
 

@@ -119,6 +119,12 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
            outbox, outdata = parser.get_output(job)
 
+           from Ganga.GPIDev.Lib.File.FileUtils import doesFileExist
+
+           for file in outbox:
+              if not doesFileExist( file, job.outputfiles ):
+                 job.non_copyable_outputfiles.extend([])
+
            #outputfiles.update(set(outdata[:]))
            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
            job.non_copyable_outputfiles.extend([addProxy(DiracFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])

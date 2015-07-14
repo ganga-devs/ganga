@@ -244,7 +244,8 @@ class DiracBase(IBackend):
             if j.master:
                 if len(parametric_datasets) != len(j.master.subjobs):
                     raise BackendError('Dirac', 'number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
-            if set(parametric_datasets[j.id]).symmetric_difference(set([f.name for f in j.inputdata.files])):
+            _input_files = [ f for f in j.inputdata if not isinstance(f, DiracFile) ]
+            if set(parametric_datasets[j.id]).symmetric_difference(set([ f.namePattern for f in _input_files ])):
                 raise BackendError('Dirac', 'Mismatch between dirac-script and job attributes.')
             script = script.replace('.setParametricInputData(%s)' % str(parametric_datasets),
                                     '.setInputData(%s)' % str(parametric_datasets[j.id]))
