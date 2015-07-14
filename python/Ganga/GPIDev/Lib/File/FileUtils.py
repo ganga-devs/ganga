@@ -25,7 +25,7 @@ def safeTransformFile(input_file):
 
     return None
 
-def doesFileExist( input_fileName='some.file', input_list = [] )
+def doesFileExist( input_fileName='some.file', input_list = [] ):
 
     import fnmatch
 
