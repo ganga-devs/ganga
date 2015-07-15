@@ -119,12 +119,21 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
            outbox, outdata = parser.get_output(job)
 
+           from Ganga.GPIDev.Lib.FileUtils import doesFileExist
+           from Ganga.GPIDev.Base.Filters import allComponentFilters
+
+           fileTransform = allComponentFilters['gangafiles']
+           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outdata if not doesFileExist(file, job.outputfiles) ] )
+           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outbox if not doesFileExist(file, job.outputfiles) ] )
+
+           outputsandbox = [ f.namePattern for f in job.non_copyable_outputfiles ]
+
            #outputfiles.update(set(outdata[:]))
            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-           job.non_copyable_outputfiles.extend([addProxy(DiracFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-           job.non_copyable_outputfiles.extend([addProxy(LocalFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
-           outputfiles = unique(outputfiles + [f.namePattern for f in job.non_copyable_outputfiles if isinstance(f, DiracFile)])
-           outputsandbox  = unique(outputsandbox  + outbox[:]) 
+           #job.non_copyable_outputfiles.extend([addProxy(DiracFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
+           #job.non_copyable_outputfiles.extend([addProxy(LocalFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
+           #outputfiles = unique(outputfiles + [f.namePattern for f in job.non_copyable_outputfiles if isinstance(f, DiracFile)])
+           outputsandbox  = unique(outputsandbox)#  + outbox[:]) 
         #######################################################################
 
         input_data,   parametricinput_data = dirac_inputdata(new_job.application)

@@ -34,16 +34,21 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                                   env = thisenv )
 
 
-    def prepare(self,app,appsubconfig,appmasterconfig,jobmasterconfig):
+    def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         
+        logger.debug("Prepare")
+
         inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
+
+        logger.debug("Loading pickle files")
+
         #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
         ## Cant wait to get rid of this when people no-longer specify
         ## inputdata in options file
         #######################################################################
-        new_job = copy.deepcopy(job)
+        #new_job = copy.deepcopy(job)
         ## splitters ensure that subjobs pick up inputdata from job over that in
         ## optsfiles but need to take sare of unsplit jobs
         if not job.master:
@@ -54,17 +59,19 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
             if not job.inputdata:
                 if os.path.exists(share_path):
                     f=open(share_path,'r+b')
-                    new_job.inputdata = pickle.load(f)
+                    job.inputdata = pickle.load(f)
                     f.close()
-        
-        ########################################################################
 
+
+        ########################################################################
         ## Cant wait to get rid of this when people no-longer specify
         ## outputsandbox or outputdata in options file
         #######################################################################
         share_path = os.path.join(get_share_path(app),
                                   'output',
                                   'options_parser.pkl')
+
+        logger.debug("Adding info from pickle files")
 
         if os.path.exists(share_path):
 #        if not os.path.exists(share_path):
@@ -83,38 +90,48 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
            outputsandbox  = unique(outputsandbox  + outbox[:]) 
         #######################################################################
 
-        data = new_job.inputdata
+        logger.debug("Doing XML Catalog stuff")
+
+        data = job.inputdata
         data_str=''
         if data:
+            logger.debug("Returning options String")
             data_str = data.optionsString()
             if data.hasLFNs():
-                inputsandbox.append(FileBuffer('catalog.xml',data.getCatalog()))           
+                logger.debug("Returning Catalogue")
+                inputsandbox.append(FileBuffer('catalog.xml', data.getCatalog()))           
                 cat_opts='\nfrom Gaudi.Configuration import FileCatalog\nFileCatalog().Catalogs = ["xmlcatalog_file:catalog.xml"]\n'
                 data_str += cat_opts
 
+        logger.debug("Doing splitter_data stuff")
         if hasattr(job,'_splitter_data'):
             data_str += job._splitter_data
         inputsandbox.append(FileBuffer('data.py',data_str))
 
+        logger.debug("Doing GaudiPython stuff")
+
         cmd='python ./gaudipython-wrapper.py'
         opts=''
-        if is_gaudi_child(new_job.application):
+        if is_gaudi_child(job.application):
             opts = 'options.pkl'
-            cmd='gaudirun.py ' + ' '.join(new_job.application.args) + ' %s data.py' % opts
+            cmd='gaudirun.py ' + ' '.join(job.application.args) + ' %s data.py' % opts
+
+        logger.debug("Setting up script")
 
         script = script_generator(create_runscript(),
                                   remove_unreplaced = False,
                                   OPTS              = opts,
-                                  PROJECT_OPTS      = new_job.application.setupProjectOptions,
-                                  APP_NAME          = new_job.application.appname,
-                                  APP_VERSION       = new_job.application.version,
-                                  APP_PACKAGE       = new_job.application.package,
-                                  PLATFORM          = new_job.application.platform,
+                                  PROJECT_OPTS      = job.application.setupProjectOptions,
+                                  APP_NAME          = job.application.appname,
+                                  APP_VERSION       = job.application.version,
+                                  APP_PACKAGE       = job.application.package,
+                                  PLATFORM          = job.application.platform,
                                   CMDLINE           = cmd,
                                   XMLSUMMARYPARSING = getXMLSummaryScript())#,
 #                                  OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
        
         thisenv = None
+        logger.debug("Returning StandardJobConfig")
         #if appmasterconfig:
         #    if hasattr( appmasterconfig, 'env' ):
         #        thisenv = appmasterconfig.env
