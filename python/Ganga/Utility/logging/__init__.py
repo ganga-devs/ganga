@@ -382,7 +382,7 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
 # NOTE: the additional message buffering handler is available only for the
 # default handler
 
-def bootstrap(internal=0, handler=None):
+def bootstrap(internal=False, handler=None):
 
     global private_logger, main_logger
     private_logger = getLogger('Ganga.Utility.logging')
@@ -421,22 +421,23 @@ def bootstrap(internal=0, handler=None):
 
         _set_log_level(getLogger(opt), config[opt])
 
-    class NoErrorFilter(logging.Filter):
+    if internal:
+        class NoErrorFilter(logging.Filter):
 
-        """
-        A filter which only allow messages which are WARNING or lower to be logged
-        """
+            """
+            A filter which only allow messages which are WARNING or lower to be logged
+            """
 
-        def filter(self, record):
-            return record.levelno <= 30
-    # Make the default handler not print ERROR and CRITICAL
-    direct_screen_handler.addFilter(NoErrorFilter())
+            def filter(self, record):
+                return record.levelno <= 30
+        # Make the default handler not print ERROR and CRITICAL
+        direct_screen_handler.addFilter(NoErrorFilter())
 
-    # Add a new handler for ERROR and CRITICAL which prints to stderr
-    error_logger = logging.StreamHandler(sys.stderr)
-    error_logger.setLevel(logging.ERROR)
-    _set_formatter(error_logger)
-    main_logger.addHandler(error_logger)
+        # Add a new handler for ERROR and CRITICAL which prints to stderr
+        error_logger = logging.StreamHandler(sys.stderr)
+        error_logger.setLevel(logging.ERROR)
+        _set_formatter(error_logger)
+        main_logger.addHandler(error_logger)
 
     # if internal:
     #    import atexit
@@ -455,7 +456,7 @@ def shutdown():
 
 # do the initial bootstrap automatically at import -> this will bootstrap
 # the main and private loggers
-bootstrap(internal=1)
+bootstrap(internal=True)
 
 # force all loggers to use the same level
 
