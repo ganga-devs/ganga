@@ -421,7 +421,7 @@ def bootstrap(internal=False, handler=None):
 
         _set_log_level(getLogger(opt), config[opt])
 
-    if internal:
+    if not internal:
         class NoErrorFilter(logging.Filter):
 
             """
