@@ -44,13 +44,15 @@ def isProxy(obj):
 def isType(obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
     clean_list = []
-    if type(type_or_seq) == type([]):
+    if type(type_or_seq) == type(()) or type(type_or_seq) == type([]):
         for obj in type_or_seq:
             if type(obj) != type(type('')):
                 clean_list.extend(stripProxy(obj))
             else:
                 clean_list.extend(obj)
-    return isinstance(stripProxy(obj), clean_list)
+        return isinstance(stripProxy(obj), tuple(clean_list))
+    else:
+        return isinstance( stripProxy(obj), stripProxy(type_or_seq))
 
 def typeCheck(obj, myClass):
     """Checks the given object against a known class instance, stripping the proxy as appropriate"""
