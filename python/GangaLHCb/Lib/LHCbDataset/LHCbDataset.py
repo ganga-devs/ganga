@@ -60,7 +60,8 @@ class LHCbDataset(GangaDataset):
             else:
                 new_files.append( this_file )
         super(LHCbDataset, self).__init__()
-        logger.debug( "Creating dataset with:\n%s" % files )
+        ## Feel free to turn this on again for debugging but it's potentially quite expensive
+        #logger.debug( "Creating dataset with:\n%s" % files )
         self.files = new_files
         self.persistency=persistency
         self.depth = depth
@@ -88,7 +89,9 @@ class LHCbDataset(GangaDataset):
                 else:
                     this_file = file_arg
                 self.files.append(file_arg)
-        logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
+        ##  Equally as expensive
+        #logger.debug( "Constructing dataset len: %s\n%s" % (str(len(self.files)), str(self.files) ) )
+        logger.debug( "Constructing dataset len: %s" % str(len(self.files)) )
 
     def __len__(self):
         """The number of files in the dataset."""
@@ -214,7 +217,8 @@ class LHCbDataset(GangaDataset):
                     for file in subfiles:
                         lfns.append( file.lfn )
 
-        logger.debug( "Returning LFNS:\n%s" % str(lfns) )
+        #logger.debug( "Returning LFNS:\n%s" % str(lfns) )
+        logger.debug( "Returning #%s LFNS" % str(len(lfns)))
         return lfns
 
     def getPFNs(self): 
