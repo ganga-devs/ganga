@@ -40,16 +40,19 @@ def isProxy(obj):
     #    traceback.print_stack()
     #    return issubclass(obj.__class__, GPIProxyObject)
 
-
+from inspect import isclass
 def isType(obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
-    clean_list = []
     if type(type_or_seq) == type(()) or type(type_or_seq) == type([]):
+        clean_list = []
         for obj in type_or_seq:
-            if type(obj) != type(type('')):
-                clean_list.extend(stripProxy(obj))
+            if obj != type(type('')):
+                if isclass( obj ):
+                    clean_list.append(obj)
+                else:
+                    clean_list.append(type(stripProxy(obj)))
             else:
-                clean_list.extend(obj)
+                clean_list.append(obj)
         return isinstance(stripProxy(obj), tuple(clean_list))
     else:
         return isinstance( stripProxy(obj), stripProxy(type_or_seq))
