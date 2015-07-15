@@ -175,7 +175,7 @@ class IBackend(GangaObject):
             def subjob_status_check(rjobs):
                 has_submitted = True
                 for sj in rjobs:
-                    if sj.status not in ["Submitted","Failed","Completed","Running","Completing"]:
+                    if sj.status not in ["submitted","failed","completed","running","completing"]:
                         has_submitted = False
                         break
                 return has_submitted

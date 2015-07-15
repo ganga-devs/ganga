@@ -156,7 +156,7 @@ class Node(object):
         for name, item in self._schema.allItems():
             if name in _ignore_atts:
                 continue
-            logger.debug("Copying: %s : %s" % (str(name), str(item)))
+            #logger.debug("Copying: %s : %s" % (str(name), str(item)))
             if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
                 if srcobj.application.is_prepared is not None and srcobj.application.is_prepared is not True:
                     srcobj.application.incrementShareCounter(srcobj.application.is_prepared.name)

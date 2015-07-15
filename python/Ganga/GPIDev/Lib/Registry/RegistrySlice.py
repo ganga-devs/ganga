@@ -186,8 +186,7 @@ class RegistrySlice(object):
                                 if item.isA('ComponentItem'):
                                     from Ganga.GPIDev.Base.Filters import allComponentFilters
 
-                                    cfilter = allComponentFilters[
-                                        item['category']]
+                                    cfilter = allComponentFilters[item['category']]
                                     filtered_value = cfilter(attrs[a], item)
                                     if not filtered_value is None:
                                         attrvalue = filtered_value._name

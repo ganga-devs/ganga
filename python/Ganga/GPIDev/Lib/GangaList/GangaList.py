@@ -131,8 +131,7 @@ class GangaList(GangaObject):
             filter = allComponentFilters[category]
             filter_obj = filter(obj, item)
             if filter_obj is None:
-                raise TypeMismatchError(
-                    '%s is not of type %s.' % (str(obj), category))
+                raise TypeMismatchError('%s is not of type %s.' % (str(obj), category))
             return filter_obj
 
         obj = stripProxy(obj)

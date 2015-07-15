@@ -2145,12 +2145,10 @@ class Job(GangaObject):
 
             if value != []:
                 if self.outputdata is not None:
-                    logger.error(
-                        'job.outputdata is set, you can\'t set job.outputfiles')
+                    logger.error('job.outputdata is set, you can\'t set job.outputfiles')
                     return
                 elif self.outputsandbox != []:
-                    logger.error(
-                        'job.outputsandbox is set, you can\'t set job.outputfiles')
+                    logger.error('job.outputsandbox is set, you can\'t set job.outputfiles')
                     return
 
             # reduce duplicate values here, leave only duplicates for LCG,

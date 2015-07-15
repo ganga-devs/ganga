@@ -43,7 +43,18 @@ def isProxy(obj):
 
 def isType(obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
-    return isinstance(stripProxy(obj), type_or_seq)
+    clean_list = []
+    if type(type_or_seq) == type([]):
+        for obj in type_or_seq:
+            if type(obj) != type(type('')):
+                clean_list.extend(stripProxy(obj))
+            else:
+                clean_list.extend(obj)
+    return isinstance(stripProxy(obj), clean_list)
+
+def typeCheck(obj, myClass):
+    """Checks the given object against a known class instance, stripping the proxy as appropriate"""
+    return type(obj) in [type(myClass), type(stripProxy(myClass))]
 
 
 def stripProxy(obj):
@@ -123,8 +134,7 @@ class ProxyDataDescriptor(object):
             def getProxy(v):
                 from Ganga.GPIDev.Base import GangaObject
                 if not isinstance(v, GangaObject):
-                    raise GangaAttributeError(
-                        "invalid type: cannot assign '%s' to attribute '%s'" % (repr(v), self._name))
+                    raise GangaAttributeError("invalid type: cannot assign '%s' to attribute '%s'" % (repr(v), self._name))
                 return GPIProxyObjectFactory(v)
 
             # convert implementation object to GPI value according to the
@@ -189,8 +199,7 @@ class ProxyDataDescriptor(object):
         if item['preparable']:
             if obj.is_prepared is not None:
                 if obj.is_prepared is not True:
-                    raise ProtectedAttributeError(
-                        'AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (self._name,))
+                    raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (self._name,))
 
         # if we set is_prepared to None in the GPI, that should effectively
         # unprepare the application
@@ -205,8 +214,7 @@ class ProxyDataDescriptor(object):
         if self._name == 'is_prepared' and isType(val, ShareDir):
             if hasattr(obj._impl, '_getRegistry'):
                 if obj._impl._getRegistry() is not None:
-                    logger.debug(
-                        'Overwriting is_prepared attribute with a ShareDir object')
+                    logger.debug('Overwriting is_prepared attribute with a ShareDir object')
                     # it's safe to unprepare 'not-prepared' applications.
                     obj.unprepare()
                     from Ganga.Core.GangaRepository import getRegistry
@@ -221,8 +229,7 @@ class ProxyDataDescriptor(object):
                 if obj.application.is_prepared is not None and\
                     obj.application.is_prepared is not True and\
                         val.is_prepared is None:
-                    logger.debug(
-                        'Overwriting a prepared application with one that is unprepared')
+                    logger.debug('Overwriting a prepared application with one that is unprepared')
                     obj.application.unprepare()
                 #a=Job(); b=Executable(); b.prepare(); a.application=b
                 elif obj.application.is_prepared is not True:
@@ -275,8 +282,7 @@ class ProxyDataDescriptor(object):
             else:
                 # val is not iterable
                 if item['strict_sequence']:
-                    raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (
-                        repr(val), obj._impl._schema.name, self._name))
+                    raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), obj._impl._schema.name, self._name))
                 val = makeGangaList(stripper(val))
         else:
             val = stripper(val)
@@ -321,9 +327,10 @@ def GPIProxyObjectFactory(_obj):
         # FIXME: NEW STYLE CLASS CAN DO __DICT__??
         proxy.__dict__['_impl'] = obj
         obj._proxyObject = proxy
-        logger.debug('generated the proxy ' + repr(proxy))
+        #logger.debug('generated the proxy ' + repr(proxy))
     else:
-        logger.debug('reusing the proxy ' + repr(obj._proxyObject))
+        #logger.debug('reusing the proxy ' + repr(obj._proxyObject))
+        pass
     return obj._proxyObject  # FIXED
 
 # this class serves only as a 'tag' for all generated GPI proxy classes
