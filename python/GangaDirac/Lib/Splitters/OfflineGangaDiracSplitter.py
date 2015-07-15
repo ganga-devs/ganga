@@ -160,6 +160,112 @@ def calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE ):
 
     return site_dict, allSubSets, allChosenSets
 
+def lookUpLFNReplicas(inputs):
+    ##  Build a useful dictionary and list
+    allLFNs = []
+    LFNdict = {}
+    for i in inputs:
+        allLFNs.append( i.lfn )
+        LFNdict[i.lfn] = i
+
+    ##  Request the replicas for all LFN 500 at a time to not overload the
+    ##  server and give some feedback as this is going on
+    from GangaDirac.Lib.Utilities.DiracUtilities import execute
+    import math
+    for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
+
+        from Ganga.GPI import queues
+        queues._monitoring_threadpool.add_function( getLFNReplicas, ( allLFNs, i ) )
+
+    global allLFNData
+
+    while len(allLFNData) != int(math.ceil( float(len(allLFNs))*0.002 )):
+        import time
+        time.sleep(1.)
+        ## This can take a while so lets protect any repo locks
+        import Ganga.Runtime.Repository_runtime
+        Ganga.Runtime.Repository_runtime.updateLocksNow()
+
+    return allLFNs, LFNdict
+
+def sortLFNreplicas( bad_lfns, allLFNs, LFNdict ):
+    import math
+
+    global allLFNData
+
+    ## FIXME here to keep the repo settings as they were before we changed the flush count
+    original_write_perm = {}
+
+    for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
+        logger.info( "%s of %s" % (str(i), str(int(math.ceil( float(len(allLFNs))*0.002 )))) )
+        output = allLFNData[i]
+
+        if output == None:
+            logger.error( "Error getting Replica information from Dirac: [%s,%s]" % ( str(i*500), str((i+1)*500) ) )
+            raise Exception('Error from DIRAC')
+
+        try:
+            results = output.get('Value')
+            if len(results.get('Failed').keys()) > 0:
+                if ignoremissing is False:
+                    values = results.get('Failed')
+                    raise SplittingError( "Error getting LFN Replica information:\n%s" % str(values) )
+                else:
+                    for this_lfn in results.get('Failed').keys():
+                        bad_lfns.append( this_lfn )
+        except SplittingError, split_Err:
+            raise split_Err
+        except Exception, err:
+            try:
+                error = output
+                logger.error("%s" % str(output) )
+            except:
+                pass
+            logger.error("Unknown error ion Dirac LFN Failed output")
+            raise
+
+        try:
+            results = output.get('Value')
+            values = results.get('Successful')
+        except Exception as err:
+            logger.error( "Unknown error in parsing Dirac LFN Successful output" )
+            raise
+
+        logger.info( "Updating URLs: %s of %s" % (str(i*500), str(len(allLFNs)) ) )
+
+        for this_lfn in values.keys():
+            logger.debug( "LFN: %s" % str(this_lfn) )
+            this_dict = {}
+            this_dict[this_lfn] = values.get(this_lfn)
+
+            ## FIXME HORRIBLE HACK BUT THERE ARE LYTERALLY THOUSANDS OF I/O
+            ## OPERATIONS HAPPENING DUE TO THIS, LETS MINIMISE IT
+
+            from Ganga.GPIDev.Base.Proxy import stripProxy
+            original_write_perm[this_lfn] = stripProxy(LFNdict[this_lfn])._getRegistry().dirty_flush_counter
+            stripProxy(LFNdict[this_lfn])._getRegistry().dirty_flush_counter = 1000
+
+            logger.debug( "Updating RemoteURLs" )
+            LFNdict[this_lfn]._updateRemoteURLs( this_dict )
+            logger.debug( "This_dict: %s" % str( this_dict) )
+            ##  If we find NO replicas
+            if this_dict[this_lfn].keys() == []:
+                bad_lfns.append( this_lfn )
+
+
+        for this_lfn in bad_lfns:
+            logger.warning( "LFN: %s was either unknown to DIRAC or unavailable, Ganga is ignoring it!" % str(this_lfn) )
+            del LFNdict[ this_lfn ]
+            allLFNs.remove( this_lfn )
+
+    ## FIXME AS ABOVE THIS IS HERE TO RESTORE NORMALITY
+    for k, v in original_write_perm.iteritems():
+        if k in bad_lfns:
+            continue
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        stripProxy(LFNdict[k])._getRegistry().dirty_flush_counter  = v
+
+
 ##  Actually Do the work of the splitting
 def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     """
@@ -183,107 +289,18 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.info( "Requesting LFN replica info" )
 
-    ##  Build a useful dictionary and list
-    allLFNs = []
-    LFNdict = {}
-    for i in inputs:
-        allLFNs.append( i.lfn )
-        LFNdict[i.lfn] = i
-
-    ##  Request the replicas for all LFN 500 at a time to not overload the
-    ##  server and give some feedback as this is going on
-    from GangaDirac.Lib.Utilities.DiracUtilities import execute
-    import math
-    for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
-
-        from Ganga.GPI import queues
-
-        queues._monitoring_threadpool.add_function( getLFNReplicas, ( allLFNs, i ) )
-
-    global allLFNData
-
-    while len(allLFNData) != int(math.ceil( float(len(allLFNs))*0.002 )):
-        import time
-        time.sleep(1.)
-        ## This can take a while so lets protect any repo locks
-        import Ganga.Runtime.Repository_runtime
-        Ganga.Runtime.Repository_runtime.updateLocksNow()
-
-    ## FIXME here to keep the repo settings as they were before we changed the flush count
-    original_write_perm = {}
+    ## Perform a lookup of where LFNs are all stored
+    allLFNs, LFNdict = lookUpLFNReplicas( inputs )
 
     bad_lfns = []
 
-    for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
-        logger.info( "%s of %s" % (str(i), str(int(math.ceil( float(len(allLFNs))*0.002 )))) )
-        output = allLFNData[i]
+    ## Sort this information and store is in the relevant Ganga objects
+    sortLFNreplicas( bad_lfns, allLFNs, LFNdict)
 
-        if output == None:
-            logger.error( "Error getting Replica information from Dirac: [%s,%s]" % ( str(i*500), str((i+1)*500) ) )
-            raise Exception('Error from Dirac')
-
-        try:
-            results = output.get('Value')
-            if len(results.get('Failed').keys()) > 0:
-                if ignoremissing is False:
-                    values = results.get('Failed')
-                    raise SplittingError( "Error getting LFN Replica information:\n%s" % str(values) )
-                else:
-                    for this_lfn in results.get('Failed').keys():
-                        bad_lfns.append( this_lfn )
-        except SplittingError, split_Err:
-            raise split_Err
-        except Exception, err:
-            try:
-                error = output
-                logger.error( "%s" % str(output) )
-            except:
-                pass
-            logger.error( "Unknown error in parsing Dirac LFN Failed output" )
-            raise
-
-        try:
-            results = output.get('Value')
-            values = results.get('Successful')
-        except Exception as err:
-            logger.error( "Unknown error in parsing Dirac LFN Successful output" )
-            raise
-
-        logger.info( "Updating URLs: %s of %s" % (str(i*500), str(len(allLFNs)) ) )
-
-        for this_lfn in values.keys():
-            logger.debug( "LFN: %s" % str(this_lfn) )
-            this_dict = {}
-            this_dict[this_lfn] = values.get(this_lfn)
-
-            ## FIXME HORRIBLE HACK BUT THERE ARE LYTERALLY THOUSANDS OF I/O
-            ## OPERATIONS HAPPENING DUE TO THIS, LETS MINIMISE IT
-            from Ganga.GPIDev.Base.Proxy import stripProxy
-            original_write_perm[this_lfn] = stripProxy(LFNdict[this_lfn])._getRegistry().dirty_flush_counter
-            stripProxy(LFNdict[this_lfn])._getRegistry().dirty_flush_counter = 1000
-
-            logger.debug( "Updating RemoteURLs" )
-            LFNdict[this_lfn]._updateRemoteURLs( this_dict )
-            logger.debug( "This_dict: %s" % str( this_dict) )
-            ##  If we find NO replicas
-            if this_dict[this_lfn].keys() == []:
-                bad_lfns.append( this_lfn )
-
-
-    for this_lfn in bad_lfns:
-        logger.warning( "LFN: %s was either unknown to DIRAC or unavailable, Ganga is ignoring it!" % str(this_lfn) )
-        del LFNdict[ this_lfn ]
-        allLFNs.remove( this_lfn )
-
-    ## FIXME AS ABOVE THIS IS HERE TO RESTORE NORMALITY
-    for k, v in original_write_perm.iteritems():
-        if k in bad_lfns:
-            continue
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-        stripProxy(LFNdict[k])._getRegistry().dirty_flush_counter  = v
 
     ## This finds all replicas for all LFNs...
     ## This will probably struggle for LFNs which don't exist
+    ## Bad LFN should have been removed by this point however
     all_lfns = [ LFNdict[this_lfn].locations for this_lfn in LFNdict if this_lfn not in bad_lfns ]
 
     logger.info( "Got replicas" )
@@ -306,10 +323,11 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     ## BELOW IS WHERE THE ACTUAL SPLITTING IS DONE
 
-
     logger.info( "Calculating best data subsets" )
 
+    import math
     iterations = 0
+    ## Loop over all LFNs
     while len( site_dict.keys() ) > 0:
 
         ## LFN left to be used
