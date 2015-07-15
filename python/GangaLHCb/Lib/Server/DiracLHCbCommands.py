@@ -32,14 +32,14 @@ def checkSites(): output( diraclhcb.checkSites() )
 
 def bkMetaData(files): output( diraclhcb.bkMetadata(files) )
 
-def getLHCbInputDataCatalog(lfns,depth,site,xml_file):
+def getLHCbInputDataCatalog(lfns, depth, site, xml_file):
     if depth > 0:
-        result = diraclhcb.getBKAncestors(lfns,depth)
+        result = diraclhcb.getBKAncestors(lfns, depth)
         if not result or not result.get('OK',False): 
             output( result )
             return
         lfns = result['Value']
-    output( diraclhcb.getInputDataCatalog(lfns,site,xml_file) )
+    output( diraclhcb.getInputDataCatalog(lfns, site, xml_file) )
 
 def bookkeepingGUI(file):
     print(os.system('dirac-bookkeeping-gui %s' % file))

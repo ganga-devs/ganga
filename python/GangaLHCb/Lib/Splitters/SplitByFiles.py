@@ -61,8 +61,8 @@ class SplitByFiles(GaudiInputDataSplitter):
         #    logger.debug( "dataset len: %s" % str(len(dataset)) )
         #except:
         #    pass
-        #from Ganga.GPI import GangaList
-        from Ganga.GPIDev.Lib.GangaList import GangaList
+        from Ganga.GPIDev.Base.Proxy import typeCheck
+        from Ganga.GPI import GangaList
         from Ganga.GPI import DiracFile
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
@@ -72,15 +72,17 @@ class SplitByFiles(GaudiInputDataSplitter):
                     logger.error( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
-        elif type(dataset) == type( [] ) or type(dataset) == type(GangaList()):
-            for i in dataset:
-                if type(i) == type(''):
-                    datatmp.append( DiracFile( lfn=i ) )
-                elif type(i) == type( DiracFile() ):
-                    datatmp.append( i )
+        elif type(dataset) == type( [] ) or typeCheck(dataset, GangaList()):
+            for file in dataset:
+                if type(file) == type(''):
+                    datatmp.append( DiracFile( lfn=file ) )
+                elif typeCheck(file, DiracFile()):
+                    datatmp.append( file )
                 else:
+                    logger.error("Unexpected type: %s" % str(type(file)))
+                    logger.error("Wanted type: %s, or: %s" % (str(type(DiracFile())), str(type(stripProxy(DiracFile())))))
                     from Ganga.Core.exceptions import GangaException
-                    x = GangaException( "Unknown(unexpected) DiracFile object: %s" % i )
+                    x = GangaException( "Unknown(unexpected) file object: %s" % file )
                     raise x
         elif type(dataset) == type( '' ):
             datatmp.append( DiracFile( lfn=dataset ) )
