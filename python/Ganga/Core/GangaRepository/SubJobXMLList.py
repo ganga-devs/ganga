@@ -1,10 +1,13 @@
 # This, although inheriting from GangaList should be here as the class has to know about on-disk structure of the XML repo
 
-from Ganga.GPIDev.Lib.GangaList import GangaList
+from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
+#from Ganga.GPIDev.Lib.GangaList import GangaList
+from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
+from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
 logger = getLogger()
 
-class SubJobXMLList(GangaList.GangaList):
+class SubJobXMLList(GangaObject):
     """
         jobDirectory: Directory of parent job containing subjobs
         from_file: Helper function to read object from disk
@@ -12,37 +15,61 @@ class SubJobXMLList(GangaList.GangaList):
 
     _category = 'internal'
     _exportmethods = ['__getitem__', '__len__', '__iter__', 'getAllCachedData']
-    _hidden = 1
-    _enable_plugin = 1
+    _hidden = True
     _name = 'SubJobXMLList'
 
-    _schema = GangaList.GangaList._schema.inherit_copy()
-    _enable_config = 1
+    #_schema = GangaList.GangaList._schema.inherit_copy()
+    _schema = Schema(Version(1, 0), {}) 
 
     def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False ):
 
+        super(SubJobXMLList, self).__init__()
+
         self.jobDirectory = jobDirectory
         self.registry = registry
+        self._cachedJobs = {}
 
-        if jobDirectory == '' and registry is None:
-            return
-
-        from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
         self.to_file = to_file
         self.from_file = from_file
         self.dataFileName = dataFileName
         self.load_backup = load_backup
 
-        self._cachedJobs = {}
         self._definedParent = None
         self._storedList = []
 
-        super(SubJobXMLList, self).__init__()
+        self._list = []
 
         self.subjob_master_index_name = "subjobs.idx"
 
+        if jobDirectory == '' and registry is None:
+            return
+
         self.subjobIndexData = {}
         self.load_subJobIndex()
+
+    def __deepcopy__(self, memo=None):
+
+        _copy = super(SubJobXMLList, self).__deepcopy__(memo)
+
+        _copy.jobDirectory = ''
+        _copy.registry = None
+        _copy._cachedJobs = {}
+
+        _copy.to_file = to_file
+        _copy.from_file = from_file
+        _copy.dataFileName = 'data'
+        _copy.load_backup = False
+
+        _copy._definedParent = None
+        _copy._storedList = []
+
+        _copy._list = []
+
+        _copy.subjob_master_index_name = "subjobs.idx"
+
+
+        return _copy
+
 
     def load_subJobIndex(self):
 
@@ -186,10 +213,12 @@ class SubJobXMLList(GangaList.GangaList):
         return self._cachedJobs[index]
 
     def _setParent(self, parentObj):
+        super(SubJobXMLList, self)._setParent( parentObj )
+        if not hasattr(self, 'cachedJobs'):
+            return
         for k in self._cachedJobs.keys():
             self._cachedJobs[k]._setParent( parentObj )
         self._definedParent = parentObj
-        super(SubJobXMLList, self)._setParent( parentObj )
 
     def getCachedData(self, index):
 
