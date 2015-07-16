@@ -8,10 +8,7 @@ import GangaPlotHelper
 from pylab import *
 
 import sys
-if sys.hexversion >= 0x020600F0:
-    Set = set
-else:
-    from sets import Set
+from functools import reduce
 
 from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.logging import getLogger
@@ -34,7 +31,7 @@ class GetJobAttrException(Exception):
 ## this function could be put in Ganga.Utility.util
 def isNumeric(myValue):
     '''checks via type() if myVar is numeric or not'''
-    if type(myValue)==type(1) or type(myValue)==type(1L) or \
+    if type(myValue)==type(1) or type(myValue)==type(1) or \
        type(myValue)==type(1.1) or type(myValue)==type(1+1j) :
        return 1
     else:
@@ -51,7 +48,7 @@ def __getJobAttribute__(job,attrName):
         if not re.match(r'^\_\_.*\_\_$',attr):
             try:
                 attrValue = getattr(attrValue,attr)
-            except Exception,x:
+            except Exception as x:
                 errMsg = 'Cannot select attribute %s: %s!' % (attr,str(x))
                 raise GetJobAttrException(errMsg)
         else:
@@ -79,7 +76,7 @@ def __makeJobInfo__(job,attrNameList):
             else:
                 attrValue, attrClass = attrName(job), None
             jobInfo.append(attrValue)
-        except Exception,x:
+        except Exception as x:
             logger.warning('Ignoring job %d: %s'%(job.id,str(x)))
             jobInfo.append(NOT_APPLICABLE)
 
@@ -120,7 +117,7 @@ def getJobInfoTable(jobs,attrNameList,deep=True):
                 jobInfoTable.append(__makeJobInfo__(j,attrNameList))
                 id += 1
 
-    except Exception, e:
+    except Exception as e:
         raise e
 
     return jobInfoTable
@@ -140,7 +137,7 @@ class GangaPlotter:
         ## savefile if requested
         if self.output != None:
             savefig(self.output)
-            print 'the plot has been saved in %s' % self.output
+            logger.info('the plot has been saved in %s' % self.output)
 
         ## force to plot if interactive mode is not activated
         if not isinteractive():
@@ -149,10 +146,10 @@ class GangaPlotter:
 
     def __unionLists__(self,lists):
 
-        unionSet = Set(lists[0])
+        unionSet = set(lists[0])
 
         for i in range(1,len(lists)):
-            newSet   = Set(lists[i])
+            newSet   = set(lists[i])
             unionSet.update(newSet)
 
         unionList = []
@@ -252,7 +249,7 @@ class GangaPlotter:
         elif canLoopOver(titleAttr): ## a list
             return self.__defaultSubtitle__(titleAttr[0])
         elif inspect.isfunction(titleAttr): ## other things: function, object ...
-            return 'user function %s' % titleAttr.func_name
+            return 'user function %s' % titleAttr.__name__
 
     def __procPltData__(self,value,pltDataProc):
 
@@ -261,7 +258,7 @@ class GangaPlotter:
         if not pltDataProc is None:
             try:
                 value = pltDataProc(value)
-            except Exception, x:
+            except Exception as x:
                 logger.warning('Ignoring data processing on %s: %s'%(str(value),str(x)))
         else:
             value = value
@@ -290,7 +287,7 @@ class GangaPlotter:
         i = 0
         for data in dataTable:
 
-            print 'processing data row %d' % i
+            logger.info('processing data row %d' % i)
 
             i+=1
 
@@ -368,9 +365,6 @@ class GangaPlotter:
         for i in range(len(pltYDataProcs),len(pltYColIds)):
             pltYDataProcs.append(None)
 
-        #print pltYColIds
-        #print pltYDataProcs
-
         ##----- 
         ## extract the given data for pie chart 
         ##----- 
@@ -396,15 +390,14 @@ class GangaPlotter:
                     yvalue = 1
                     yLabel = str(yLabel)
              
-                if pltData.has_key(xLabel):
-                    if pltData[xLabel].has_key(yLabel):
+                if xLabel in pltData:
+                    if yLabel in pltData[xLabel]:
                         pltData[xLabel][yLabel] = pltData[xLabel][yLabel] + yvalue
                     else:
                         pltData[xLabel][yLabel] = yvalue
                 else:
                     pltData[xLabel] = {}
                     pltData[xLabel][yLabel] = yvalue
-        #print pltData
 
         ##----- 
         ## Mapping the extracted data to the columns for bar chart plot 
@@ -422,18 +415,14 @@ class GangaPlotter:
 
         valueLists = self.__unionLists__(valueLists)
 
-        #print valueLists
-
         for v in valueLists:
             barValues = []
             for l in bar_xlabels:
-                if pltData[l].has_key(v):
+                if v in pltData[l]:
                     barValues.append(pltData[l][v])
                 else:
                     barValues.append(0)
             bars[v] = barValues
-
-        #print bars
 
         # the pltColorMap
         bar_cmap = self.__setColormap__( pltColorMap, len(bars.keys()) )
@@ -590,7 +579,7 @@ class GangaPlotter:
             # should make sure all the values are represented in String type
             value = str(value)
 
-            if pltData.has_key(value):
+            if value in pltData:
                 pltData[value] = pltData[value] + 1
             else:
                 pltData[value] = 1
@@ -730,17 +719,17 @@ class GangaPlotter:
         deep      = True        # deep looping over all the subjob levels 
 
         # update keyword arguments with the given values
-        if keywords.has_key('title'):    subtitle   = keywords['title']
-        if keywords.has_key('xlabel'):   xlabel     = keywords['xlabel']
-        if keywords.has_key('ylabel'):   ylabel     = keywords['ylabel']
-        if keywords.has_key('colormap'): colormap   = keywords['colormap']
-        if keywords.has_key('output'):   output     = keywords['output']
-        if keywords.has_key('xattrext'): xattrext   = keywords['xattrext']
-        if keywords.has_key('yattrext'): yattrext   = keywords['yattrext']
-        if keywords.has_key('xdataproc'): xdataproc = keywords['xdataproc']
-        if keywords.has_key('ydataproc'): ydataproc = keywords['ydataproc']
-        if keywords.has_key('stacked'):   stacked   = keywords['stacked']
-        if keywords.has_key('deep'):       deep     = keywords['deep']
+        if 'title' in keywords:    subtitle   = keywords['title']
+        if 'xlabel' in keywords:   xlabel     = keywords['xlabel']
+        if 'ylabel' in keywords:   ylabel     = keywords['ylabel']
+        if 'colormap' in keywords: colormap   = keywords['colormap']
+        if 'output' in keywords:   output     = keywords['output']
+        if 'xattrext' in keywords: xattrext   = keywords['xattrext']
+        if 'yattrext' in keywords: yattrext   = keywords['yattrext']
+        if 'xdataproc' in keywords: xdataproc = keywords['xdataproc']
+        if 'ydataproc' in keywords: ydataproc = keywords['ydataproc']
+        if 'stacked' in keywords:   stacked   = keywords['stacked']
+        if 'deep' in keywords:       deep     = keywords['deep']
 
         jlist = []
         for j in jobs:
@@ -833,19 +822,19 @@ class GangaPlotter:
         deep      = True        # deep looping over all the subjob levels
 
         # update keyword arguments with the given values
-        if keywords.has_key('cattr'):     cattr     = keywords['cattr']
-        if keywords.has_key('title'):    subtitle   = keywords['title']
-        if keywords.has_key('xlabel'):   xlabel     = keywords['xlabel']
-        if keywords.has_key('ylabel'):   ylabel     = keywords['ylabel']
-        if keywords.has_key('colormap'): colormap   = keywords['colormap']
-        if keywords.has_key('output'):   output     = keywords['output']
-        if keywords.has_key('xattrext'): xattrext   = keywords['xattrext']
-        if keywords.has_key('yattrext'): yattrext   = keywords['yattrext']
-        if keywords.has_key('cattrext'): cattrext   = keywords['cattrext']
-        if keywords.has_key('xdataproc'): xdataproc = keywords['xdataproc']
-        if keywords.has_key('ydataproc'): ydataproc = keywords['ydataproc']
-        if keywords.has_key('cdataproc'): cdataproc = keywords['cdataproc']
-        if keywords.has_key('deep'):       deep     = keywords['deep']
+        if 'cattr' in keywords:     cattr     = keywords['cattr']
+        if 'title' in keywords:    subtitle   = keywords['title']
+        if 'xlabel' in keywords:   xlabel     = keywords['xlabel']
+        if 'ylabel' in keywords:   ylabel     = keywords['ylabel']
+        if 'colormap' in keywords: colormap   = keywords['colormap']
+        if 'output' in keywords:   output     = keywords['output']
+        if 'xattrext' in keywords: xattrext   = keywords['xattrext']
+        if 'yattrext' in keywords: yattrext   = keywords['yattrext']
+        if 'cattrext' in keywords: cattrext   = keywords['cattrext']
+        if 'xdataproc' in keywords: xdataproc = keywords['xdataproc']
+        if 'ydataproc' in keywords: ydataproc = keywords['ydataproc']
+        if 'cdataproc' in keywords: cdataproc = keywords['cdataproc']
+        if 'deep' in keywords:       deep     = keywords['deep']
 
         jlist = []
         for j in jobs:
@@ -919,12 +908,12 @@ class GangaPlotter:
         deep     = True        # deep looping over all the subjob levels 
 
         # update keyword arguments with the given values
-        if keywords.has_key('title'):    subtitle = keywords['title']
-        if keywords.has_key('colormap'): colormap = keywords['colormap']
-        if keywords.has_key('output'):   output   = keywords['output']
-        if keywords.has_key('attrext'):  attrext  = keywords['attrext']
-        if keywords.has_key('dataproc'): dataproc = keywords['dataproc']
-        if keywords.has_key('deep'):       deep   = keywords['deep']
+        if 'title' in keywords:    subtitle = keywords['title']
+        if 'colormap' in keywords: colormap = keywords['colormap']
+        if 'output' in keywords:   output   = keywords['output']
+        if 'attrext' in keywords:  attrext  = keywords['attrext']
+        if 'dataproc' in keywords: dataproc = keywords['dataproc']
+        if 'deep' in keywords:       deep   = keywords['deep']
 
         jlist = []
         for j in jobs:
@@ -1001,17 +990,17 @@ class GangaPlotter:
         xmax      = -1          # upper bound of the histogram
 
         # update keyword arguments with the given values
-        if keywords.has_key('title'):    subtitle  = keywords['title']
-        if keywords.has_key('colormap'): colormap  = keywords['colormap']
-        if keywords.has_key('xlabel'):    xlabel   = keywords['xlabel']
-        if keywords.has_key('label'):     label    = keywords['label']
-        if keywords.has_key('output'):   output    = keywords['output']
-        if keywords.has_key('dataproc'): dataproc  = keywords['dataproc']
-        if keywords.has_key('deep'):       deep    = keywords['deep']
-        if keywords.has_key('normalize'): normalize= keywords['normalize']
-        if keywords.has_key('numbins'):   numbins  = keywords['numbins']
-        if keywords.has_key('xmin'):      xmin     = keywords['xmin']
-        if keywords.has_key('xmax'):      xmax     = keywords['xmax']
+        if 'title' in keywords:    subtitle  = keywords['title']
+        if 'colormap' in keywords: colormap  = keywords['colormap']
+        if 'xlabel' in keywords:    xlabel   = keywords['xlabel']
+        if 'label' in keywords:     label    = keywords['label']
+        if 'output' in keywords:   output    = keywords['output']
+        if 'dataproc' in keywords: dataproc  = keywords['dataproc']
+        if 'deep' in keywords:       deep    = keywords['deep']
+        if 'normalize' in keywords: normalize= keywords['normalize']
+        if 'numbins' in keywords:   numbins  = keywords['numbins']
+        if 'xmin' in keywords:      xmin     = keywords['xmin']
+        if 'xmax' in keywords:      xmax     = keywords['xmax']
 
         jlist = []
         for j in jobs:

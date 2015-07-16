@@ -2,7 +2,6 @@
 import datetime
 from Ganga.GPIDev.Base import GangaObject
 from LHCbDataset import *
-from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -124,7 +123,7 @@ RecoToDST-07/90000000/DST" ,
         files = []
         metadata = {}
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         if not type(files) is list: # i.e. a dict of LFN:Metadata
             #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
             metadata = files.copy()
@@ -157,15 +156,20 @@ RecoToDST-07/90000000/DST" ,
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         if not type(files) is list: # i.e. a dict of LFN:Metadata
             #if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
             files = files.keys()
-        
-        ds = LHCbDataset()
+       
+        from Ganga.GPI import DiracFile
+        #ds = LHCbDataset()
+        new_files = []
         for f in files:
-            ds.files.append(DiracFile(lfn = f))
-        
+            new_files.append('LFN:'+str(f))
+            #ds.extend([DiracFile(lfn = f)])
+
+        ds = LHCbDataset( new_files )
+
         return GPIProxyObjectFactory(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -224,10 +228,10 @@ class BKQueryDict(GangaObject):
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         metadata = {}
         if not type(files) is list:
-            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            if 'LFNs' in files: # i.e. a dict of LFN:Metadata
                 metadata = files['LFNs'].copy()
         
         if metadata:
@@ -241,15 +245,20 @@ class BKQueryDict(GangaObject):
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         value = result['Value']
-        if value.has_key('LFNs'): files = value['LFNs']
+        if 'LFNs' in value: files = value['LFNs']
         if not type(files) is list:
-            if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            if 'LFNs' in files: # i.e. a dict of LFN:Metadata
                 files = files['LFNs'].keys()
-        
-        ds = LHCbDataset()
+    
+        from Ganga.GPI import DiracFile
+        #ds = LHCbDataset()
+        new_files=[]
         for f in files:
-            ds.files.append(DiracFile(lfn = f))
-         
+            new_files.append('LFN:'+str(f))
+            #ds.extend([DiracFile(lfn = f)])
+
+        ds = LHCbDataset( new_files )
+
         return GPIProxyObjectFactory(ds)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

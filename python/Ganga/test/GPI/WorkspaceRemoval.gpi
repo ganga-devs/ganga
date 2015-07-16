@@ -1,9 +1,8 @@
 import os.path
 j = Job()
-ind,outd = j.inputdir,j.outputdir
+ind, outd = j.inputdir, j.outputdir
 assert(os.path.exists(ind))
 assert(os.path.exists(outd))
-print j
 j.remove()
 # should have removed the workspace directories
 assert(not os.path.exists(ind))

@@ -1,6 +1,9 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 from GangaTest.Framework.utils import sleep_until_completed
 
-print 'submit original job'
+logger.info('submit original job')
 j = Job()
 j.backend = TestSubmitter()
 j.backend.time = 2
@@ -8,17 +11,17 @@ j.submit()
 assert(sleep_until_completed(j,15))
 
 # this should not have any special effect and be equivalent to specifying None
-print 'resubmit with the same backend (no parameters have changed)'
+logger.info('resubmit with the same backend (no parameters have changed)')
 j.resubmit(backend = j.backend)
 assert(sleep_until_completed(j,15))
 
 # change a parameter
-print 'resubmit and change a backend parameter'
+logger.info('resubmit and change a backend parameter')
 b = j.backend.copy()
 b.time = 3
 
-print b
-print j.backend
+logger.info(b)
+logger.info(j.backend)
 
 j.resubmit(backend = b)
 assert(j.status != 'completed')
@@ -26,7 +29,7 @@ assert(sleep_until_completed(j,15))
 
 assert(j.backend.time == 3)
 
-print 'resubmit and force fail'
+logger.info('resubmit and force fail')
 
 b = j.backend.copy()
 b.fail = 'resubmit'
@@ -38,4 +41,4 @@ else:
   assert('resubmit has not raised an exception as expected')
 
 
-print 'passed OK'
+logger.info('passed OK')

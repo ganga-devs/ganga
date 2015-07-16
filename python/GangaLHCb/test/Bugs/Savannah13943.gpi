@@ -27,6 +27,6 @@ except:
 status=j.status
 os.remove(optsfile)
 os.remove(fname)
-print j
+print(j)
 j.remove()
 assert(status!='new')

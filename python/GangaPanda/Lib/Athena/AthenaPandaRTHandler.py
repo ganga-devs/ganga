@@ -75,7 +75,7 @@ def getDBDatasets(jobO,trf,dbrelease):
                         dbrFiles[tmpLFN] = tmpVal
                     dbrDsList.append(tmpDbrDS)
                 # check
-                if not dbrFiles.has_key(tmpDbrLFN):
+                if tmpDbrLFN not in dbrFiles:
                     raise ApplicationConfigurationError(None,"ERROR : %s is not in %s"%(tmpDbrLFN,tmpDbrDS))
     return dbrFiles,dbrDsList
 
@@ -274,7 +274,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         if self.inputdatatype=='DQ2':
             if not job.splitter:
                 runPandaBrokerage(job)
-            elif job.splitter._name <> 'DQ2JobSplitter' and job.splitter._name <> 'AnaTaskSplitterJob':
+            elif job.splitter._name != 'DQ2JobSplitter' and job.splitter._name != 'AnaTaskSplitterJob':
                 raise ApplicationConfigurationError(None,'Splitting with Panda+DQ2Dataset requires DQ2JobSplitter')
         elif self.inputdatatype=='Tier3':
             if job.splitter and job.splitter._name != 'ATLASTier3Splitter':
@@ -294,7 +294,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         
         # handle the output dataset
         if job.outputdata:
-            if job.outputdata._name <> 'DQ2OutputDataset':
+            if job.outputdata._name != 'DQ2OutputDataset':
                 raise ApplicationConfigurationError(None,'Panda backend supports only DQ2OutputDataset')
         else:
             logger.info('Adding missing DQ2OutputDataset')
@@ -498,7 +498,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
                 jspec = JobSpec()
                 jspec.jobDefinitionID   = job.id
 
-                if job.backend.jobSpec.has_key('provenanceID'):
+                if 'provenanceID' in job.backend.jobSpec:
                     jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
                 
                 jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')
@@ -635,7 +635,7 @@ class AthenaPandaRTHandler(IRuntimeHandler):
         jspec = JobSpec()
         jspec.jobDefinitionID   = masterjob.id
 
-        if job.backend.jobSpec.has_key('provenanceID'):
+        if 'provenanceID' in job.backend.jobSpec:
             jspec.jobExecutionID =  job.backend.jobSpec['provenanceID']
         
         jspec.jobName           = commands.getoutput('uuidgen 2> /dev/null')

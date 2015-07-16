@@ -14,7 +14,6 @@ class TestSplitter(ISplitter):
     _schema = Schema(Version(1,0), {
         'backs' : ComponentItem('backends',defvalue=[],sequence=1,doc='a list of Backend objects'),
         'fail' : SimpleItem(defvalue='',doc='Define the artificial runtime failures: "exception"'),
-        'raw_string_exception' : SimpleItem(defvalue=False,doc='If true use strings as exceptions.')
         } )
 
     def split(self,job):
@@ -22,9 +21,7 @@ class TestSplitter(ISplitter):
         subjobs = []
         if self.fail == 'exception':
             x = 'triggered failure during splitting'
-            if not self.raw_string_exception:
-                x = Exception(x)
-            raise x
+            raise Exception(x)
         for b in self.backs:
             j = Job()
             j.copyFrom(job)

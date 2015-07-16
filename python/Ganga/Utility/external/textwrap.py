@@ -7,7 +7,8 @@
 
 __revision__ = "$Id: textwrap.py,v 1.1 2008-07-17 16:41:02 moscicki Exp $"
 
-import string, re
+import string
+import re
 
 # Do the right thing with boolean values for all known Python versions
 # (so this module can be copied to projects that don't depend on Python
@@ -29,7 +30,7 @@ __all__ = ['TextWrapper', 'wrap', 'fill']
 # since 0xa0 is not in range(128).
 _whitespace = '\t\n\x0b\x0c\r '
 
-class TextWrapper:
+class TextWrapper(object):
     """
     Object for wrapping/filling text.  The public interface consists of
     the wrap() and fill() methods; the other methods are just there for
@@ -331,8 +332,8 @@ def dedent(text):
             hello
               world
             '''
-            print repr(s)          # prints '    hello\n      world\n    '
-            print repr(dedent(s))  # prints 'hello\n  world\n'
+            print(repr(s))          # prints '    hello\n      world\n    '
+            print(repr(dedent(s)))  # prints 'hello\n  world\n'
     """
     lines = text.expandtabs().split('\n')
     margin = None

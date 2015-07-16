@@ -141,7 +141,7 @@ class DiracBase(IBackend):
 #        return True
 
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
-        if not result_ok(result) or not result.has_key('Value'):
+        if not result_ok(result) or 'Value' not in result:
             logger.error(err_msg)
             raise BackendError('Dirac',err_msg)
         
@@ -205,7 +205,7 @@ class DiracBase(IBackend):
                         incomplete = 1
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
-                except Exception,x:
+                except Exception as x:
                     log_user_exception(logger,debug=isinstance(x,GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid,str(x)))
         finally:
@@ -222,16 +222,15 @@ class DiracBase(IBackend):
         """Resubmit a DIRAC job"""
         j=self.getJobObject()
         parametric = False
-        script_path = os.path.join(j.getInputWorkspace().getPath(),
-                                       'dirac-script.py')
+        script_path = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         ## Check old script
         if j.master is None and not os.path.exists(script_path):
              raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir')
+
         if j.master is not None and not os.path.exists(script_path):
-             script_path = os.path.join(j.master.getInputWorkspace().getPath(),
-                                        'dirac-script.py')
+             script_path = os.path.join(j.master.getInputWorkspace().getPath(), 'dirac-script.py')
              if not os.path.exists(script_path):
-                  raise BackendError('Dirac','No "dirac-script.py" found in j.inputdir or j.master.inputdir')
+                  raise BackendError('Dirac', 'No "dirac-script.py" found in j.inputdir or j.master.inputdir')
              parametric = True
 
         ## Read old script
@@ -244,12 +243,13 @@ class DiracBase(IBackend):
             parametric_datasets = get_parametric_datasets(script.split('\n'))
             if j.master:
                 if len(parametric_datasets) != len(j.master.subjobs):
-                    raise BackendError('Dirac','number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
-            if set(parametric_datasets[j.id]).symmetric_difference(set([f.name for f in j.inputdata.files])):
-                raise BackendError('Dirac','Mismatch between dirac-script and job attributes.')
+                    raise BackendError('Dirac', 'number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
+            _input_files = [ f for f in j.inputdata if not isinstance(f, DiracFile) ]
+            if set(parametric_datasets[j.id]).symmetric_difference(set([ f.namePattern for f in _input_files ])):
+                raise BackendError('Dirac', 'Mismatch between dirac-script and job attributes.')
             script = script.replace('.setParametricInputData(%s)' % str(parametric_datasets),
                                     '.setInputData(%s)' % str(parametric_datasets[j.id]))
-            script = script.replace('%n',str(j.id)) #name
+            script = script.replace('%n', str(j.id)) #name
 
         start_user_settings = '# <-- user settings\n'
         new_script = script[:script.find(start_user_settings) + len(start_user_settings)]
@@ -264,8 +264,7 @@ class DiracBase(IBackend):
              
 
         ## Save new script
-        new_script_filename = os.path.join(j.getInputWorkspace().getPath(),
-                              'dirac-script.py')
+        new_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         f = open(new_script_filename, 'w')
         f.write(new_script)
         f.close()
@@ -311,7 +310,7 @@ class DiracBase(IBackend):
         """Peek at the output of a job (Note: filename/command are ignored)."""
         dirac_cmd = 'peek(%d)' % self.id
         result = execute(dirac_cmd)
-        if result_ok(result): print result['Value']
+        if result_ok(result): logger.info(result['Value'])
         else: logger.error("No peeking available for Dirac job '%i'.", self.id)
 
     def getOutputSandbox(self,dir=None):
@@ -368,7 +367,7 @@ class DiracBase(IBackend):
             try:
                 dirac_file.get()
                 return dirac_file.lfn
-            except GangaException, e: # should really make the get method throw if doesn't suceed. todo
+            except GangaException as e: # should really make the get method throw if doesn't suceed. todo
                 logger.warning(e)
 
         suceeded=[]
@@ -425,7 +424,7 @@ class DiracBase(IBackend):
                 except: pass
             msg = 'OK.'
             if not result_ok(result): msg = '%s' % result['Message']
-            print '%s: %s' %  (category,msg)
+            logger.info('%s: %s' %  (category,msg))
         # get pilot info for this job
         if type(self.id) != int: return
         j = self.getJobObject()
@@ -434,11 +433,10 @@ class DiracBase(IBackend):
         cmd = "getJobPilotOutput(%d,'%s')" % \
               (self.id, debug_dir)
         result = execute(cmd)
-        #print 'result =', result
         if result_ok(result):
-            print 'Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id)
+            logger.info('Pilot Info: %s/pilot_%d/std.out.'%(debug_dir,self.id))
         else:
-            print result.get('Message','')
+            logger.error(result.get('Message',''))
 
     def _getStateTime(job, status):
         """Returns the timestamps for 'running' or 'completed' by extracting

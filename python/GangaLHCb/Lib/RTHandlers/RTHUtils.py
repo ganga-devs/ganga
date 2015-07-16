@@ -37,7 +37,6 @@ def lhcbdiracAPI_script_template():
     DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()' )
     DiracScript = DiracScript.replace('###OUTPUT_SE###','###OUTPUT_SE###,replicate=\'###REPLICATE###\'' )
 
-    #print DiracScript
     return DiracScript
 
 

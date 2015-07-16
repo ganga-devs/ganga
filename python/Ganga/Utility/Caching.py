@@ -12,51 +12,56 @@ except ImportError:
 NOT_INITIALIZED = object()
 
 log = getLogger()
-config = makeConfig('Caching','Caching for DQ2 dataset')
+config = makeConfig('Caching', 'Caching for DQ2 dataset')
 config.addOption('CacheLifeTime', 150, 'Cache refresh time in seconds')
-config.addOption('CacheMaxEntry', 10, 'For CacheMaxEntry == 0,  the cache is unbounded, otherwise  the Least Recently Used (LRU) entry is discarded.')
+config.addOption('CacheMaxEntry', 10,
+                 'For CacheMaxEntry == 0,  the cache is unbounded, otherwise  the Least Recently Used (LRU) entry is discarded.')
 
 
 class Entry(object):
+
     """ A cache entry, mostly an internal object. """
+
     def __init__(self, key):
         object.__init__(self)
-        self._key=key
+        self._key = key
         self._timestamp = time.time()
-        self._value=NOT_INITIALIZED
-        self._lock=Lock()
+        self._value = NOT_INITIALIZED
+        self._lock = Lock()
+
 
 class Cache(object):
+
     """ An abstract, multi-threaded cache object. """
 
     cacheDict = {}
-    
+
     def __init__(self, dset, max_size=0):
         """ Builds a cache with a limit of max_size entries.
             If this limit is exceeded, the Least Recently Used entry is discarded.
             if max_size==0, the cache is unbounded (no LRU rule is applied).
         """
         object.__init__(self)
-        self._maxsize=max_size
-        self._dict=self.cacheDict
-        self._dset=dset
-        self._lock=Lock()
-        
+        self._maxsize = max_size
+        self._dict = self.cacheDict
+        self._dset = dset
+        self._lock = Lock()
+
         # Header of the access list
         if self._maxsize:
-            self._head=Entry(None)
-            self._head._previous=self._head
-            self._head._next=self._head
+            self._head = Entry(None)
+            self._head._previous = self._head
+            self._head._next = self._head
 
     def __setitem__(self, name, value):
         """ Populates the cache with a given name and value. """
         key = self.key(name)
-        
+
         entry = self._get_entry(key)
-        
+
         entry._lock.acquire()
         try:
-            self._pack(entry,value)
+            self._pack(entry, value)
             self.commit()
         finally:
             entry._lock.release()
@@ -74,14 +79,14 @@ class Cache(object):
         finally:
             self._lock.release()
 
-    def _get_entry(self,key):
+    def _get_entry(self, key):
         self._lock.acquire()
         try:
             key = str(key)
             entry = self._dict.get(key)
             if not entry:
                 entry = Entry(key)
-                self._dict[key]=entry
+                self._dict[key] = entry
                 if self._maxsize:
                     entry._next = entry._previous = None
                     self._access(entry)
@@ -117,10 +122,12 @@ class Cache(object):
                     is_new = True
                     self._pack(entry, value)
                     self.commit()
-                    log.debug("Cache is being refreshed for dataset %s" % str(key))
-                
-                log.debug("Value is reading from cache for its key %s" % str(key))
-            
+                    log.debug(
+                        "Cache is being refreshed for dataset %s" % str(key))
+
+                log.debug(
+                    "Value is reading from cache for its key %s" % str(key))
+
             return is_new, key[1:], value, entry
         finally:
             entry._lock.release()
@@ -150,13 +157,13 @@ class Cache(object):
     def key(self, name):
         """ Override this method to extract a key from the name passed to the [] operator """
         dsetN = self._dset
-        
+
         if (dsetN.__class__.__name__ == 'GangaList'):
             dataset = tuple(dsetN)
         else:
             dataset = (dsetN,)
-        
-        parg = dataset + name 
+
+        parg = dataset + name
         return parg
 
     def commit(self):
@@ -169,8 +176,8 @@ class Cache(object):
         try:
             self._dict.clear()
             if self._maxsize:
-                self._head._next=self._head
-                self._head._previous=self._head
+                self._head._next = self._head
+                self._head._previous = self._head
         finally:
             self._lock.release()
 
@@ -187,44 +194,47 @@ class Cache(object):
              Don't worry about multiple threads accessing the same name, as this method is properly isolated.
         """
         raise NotImplementedError()
-           
+
     def _access(self, entry):
         " Internal use only, must be invoked within a cache lock. Updates the access list. """
         if entry._next is not self._head:
             if entry._previous is not None:
                 # remove the entry from the access list
-                entry._previous._next=entry._next
-                entry._next._previous=entry._previous
+                entry._previous._next = entry._next
+                entry._next._previous = entry._previous
             # insert the entry at the end of the access list
-            entry._previous=self._head._previous
-            entry._previous._next=entry
-            entry._next=self._head
-            entry._next._previous=entry
+            entry._previous = self._head._previous
+            entry._previous._next = entry
+            entry._next = self._head
+            entry._next._previous = entry
             if self._head._next is self._head:
-                self._head._next=entry
+                self._head._next = entry
 
     def _checklru(self):
         " Internal use only, must be invoked within a cache lock. Removes the LRU entry if needed. """
-        if len(self._dict)>self._maxsize:
-            lru=self._head._next
-            lru._previous._next=lru._next
-            lru._next._previous=lru._previous
+        if len(self._dict) > self._maxsize:
+            lru = self._head._next
+            lru._previous._next = lru._next
+            lru._next._previous = lru._previous
             del self._dict[lru._key]
-            log.debug("Old entry %s in cache is being deleted for creating space for new one" %str(lru._key))
+            log.debug(
+                "Old entry %s in cache is being deleted for creating space for new one" % str(lru._key))
 
     def _pack(self, entry, value):
         """ Store the value in the entry. """
-        entry._value=value
+        entry._value = value
 
     def _unpack(self, entry):
         """ Recover the value from the entry, returns NOT_INITIALIZED if it is not OK. """
         return entry._value
 
+
 class FunctionCache(Cache):
+
     def __init__(self, function, dset, max_size=config['CacheMaxEntry']):
         Cache.__init__(self, dset, max_size)
-        self.function=function
-    
+        self.function = function
+
     def __call__(self, *args, **kw):
         if kw:
             # a dict is not hashable so we build a tuple of (key, value) pairs
@@ -234,17 +244,17 @@ class FunctionCache(Cache):
             return self[args, ()]
 
     def check(self, key, name, entry):
-        
+
         if entry._value is NOT_INITIALIZED:
             return None
         else:
             timediff = time.time() - entry._timestamp
             if timediff > config['CacheLifeTime']:
                 entry._timestamp = time.time()
-                return "Replacement of  key in cache" 
+                return "Replacement of  key in cache"
             else:
                 return None
-    
+
     def build(self, key, name, opened, entry):
         args, kw = key
         return self.function(*args, **dict(kw))
@@ -258,8 +268,7 @@ def compute(n):
         return "Done ........"
 
 func =  FunctionCache(compute)
-print func(2)   
-print func(3)   
-print func(2)   
+print(func(2))
+print(func(3))
+print(func(2))
 """
-

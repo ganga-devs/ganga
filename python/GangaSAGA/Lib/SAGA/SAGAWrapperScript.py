@@ -90,12 +90,7 @@ import tarfile
 
 if os.path.exists(inputsandboxfile): 
     tar = tarfile.open(inputsandboxfile)
-    if sys.version_info[0] == 2 and sys.version_info[1] < 5 :
-        for tarinfo in tar:
-            tar.extract(tarinfo)
-    else:
-        # New in Python 2.5
-        tar.extractall()
+    tar.extractall()
     tar.close()
 
 ## Try to import the subprocess library. If it's not in the 
@@ -103,7 +98,7 @@ if os.path.exists(inputsandboxfile):
 ##
 try:
     import subprocess
-except ImportError,x:
+except ImportError as x:
     sys.path.insert(0, PYTHON_DIR)
     import subprocess
     
@@ -112,8 +107,6 @@ except ImportError,x:
 #sysout2 = os.dup(sys.stdout.fileno())
 #syserr2 = os.dup(sys.stderr.fileno())
 
-#print >>sys.stdout,"--- GANGA APPLICATION OUTPUT BEGIN ---"
-#print >>sys.stderr,"--- GANGA APPLICATION ERROR BEGIN ---"
 #sys.stdout.flush()
 #sys.stderr.flush()
 
@@ -145,8 +138,7 @@ try:
     #flush_file(heartbeatfile)
     time.sleep(30)
     
-except Exception,x:
-  print 'ERROR: %s'%str(x)
+except Exception as x:
   outfile.close()
   errfile.close()
   sys.stdout = sys.__stdout__

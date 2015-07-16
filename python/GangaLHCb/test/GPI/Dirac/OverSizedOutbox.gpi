@@ -29,7 +29,7 @@ jscript.outputfiles=['output.txt']
 jscript.submit()
 
 sleep_until_completed(jscript)
-print 'j =', jscript
+print('j =', jscript)
 assert jscript.status == 'completed', 'Job should complete'
 
 output_file = join(jscript.outputdir,'output.txt')

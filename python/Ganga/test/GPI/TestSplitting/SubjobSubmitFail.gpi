@@ -15,7 +15,6 @@ j.submit()
 assert j.subjobs[0].status != 'new'
 assert j.subjobs[1].status == 'new'
 assert j.subjobs[2].status == 'new'
-print len(j.subjobs)
 assert(len(j.subjobs)==3)
 
 #the first subjob fails (this used to have different behaviour in Ganga4)
@@ -23,5 +22,4 @@ j = j.copy()
 j.splitter.backs = 3*[TestSubmitter()]
 j.splitter.backs[0].fail = 'submit'
 assert_cannot_submit(j)
-print len(j.subjobs)
 assert(len(j.subjobs)==0)

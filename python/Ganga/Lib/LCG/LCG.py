@@ -1,3 +1,4 @@
+from __future__ import absolute_import
 ###############################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -12,27 +13,22 @@
 
 import os
 import re
-import time
 import math
-#import tempfile
-from types import *
 
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
-from Ganga.GPIDev.Adapters.IBackend import IBackend 
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Lib.File import FileBuffer
+from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import makeConfig, getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
-from Ganga.Lib.LCG.Utility import *
-
-# for runtime stdout/stderr inspection
-from Ganga.Lib.MonitoringServices.Octopus import Octopus,ProtocolException
+from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
+from Ganga.Utility.logic import implies
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -40,12 +36,13 @@ except KeyError:
     simulator_enabled = False
 
 if simulator_enabled:
-    from GridSimulator import GridSimulator as Grid
+    from .GridSimulator import GridSimulator as Grid
 else:
-    from Grid import Grid
+    from .Grid import Grid
 
 global lcg_output_downloader
 lcg_output_downloader = None
+
 
 def get_lcg_output_downloader():
     global lcg_output_downloader
@@ -59,22 +56,24 @@ def get_lcg_output_downloader():
 
     return lcg_output_downloader
 
-## helper routines
+# helper routines
+
+
 def __fail_missing_jobs__(missing_glite_jids, jobdict):
     '''failing the Ganga jobs if the associated glite job id is appearing in missing_glite_jids'''
 
     for glite_jid in missing_glite_jids:
-        if jobdict.has_key( glite_jid ):
+        if glite_jid in jobdict:
             j = jobdict[glite_jid]
 
             if j.master:
-                ## this is a subjob
+                # this is a subjob
                 j.backend.status = 'Removed'
                 j.backend.reason = 'job removed from WMS'
                 j.updateStatus('failed')
 
             else:
-                ## this is a master job
+                # this is a master job
                 for sj in j.subjobs:
                     if sj.backend.parent_id == glite_jid:
                         sj.backend.status = 'Removed'
@@ -82,8 +81,10 @@ def __fail_missing_jobs__(missing_glite_jids, jobdict):
                         sj.updateStatus('failed')
 
                 j.updateStatus('failed')
-    
+
+
 class LCG(IBackend):
+
     '''LCG backend - submit jobs to the EGEE/LCG Grid using gLite/EDG middleware.
 
     The middleware type (EDG/gLite) may be selected with the middleware
@@ -105,49 +106,51 @@ class LCG(IBackend):
     # internal usage of the flag:
     #  - 0: job without the need of special control
     #  - 1: job (normally a subjob) resubmitted individually. The monitoring of those jobs should be separated.
-    _schema = Schema(Version(1,9), {
-        'CE'                  : SimpleItem(defvalue='',doc='Request a specific Computing Element'),
-        'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
-        'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
-        'sandboxcache'        : ComponentItem('GridSandboxCache',copyable=1,doc='Interface for handling oversized input sandbox'),
-        'parent_id'           : SimpleItem(defvalue='',protected=1,copyable=0,hidden=1,doc='Middleware job identifier for its parent job'),
-        'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
-        'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
-        'middleware'          : SimpleItem(defvalue='GLITE',protected=0,copyable=1,doc='Middleware type',checkset='__checkset_middleware__'),
-        'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
-        'exitcode_lcg'        : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
-        'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
-        'perusable'           : SimpleItem(defvalue=False,protected=0,copyable=1,checkset='__checkset_perusable__',doc='Enable the job perusal feature of GLITE'),
-        'actualCE'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Computing Element where the job actually runs.'),
-        'monInfo'             : SimpleItem(defvalue={},protected=1,copyable=0,hidden=1,doc='Hidden information of the monitoring service.'),
-        'octopus'             : SimpleItem(defvalue=None,typelist=['type(None)', 'Ganga.Lib.MonitoringServices.Octopus.Octopus'],protected=1,copyable=0,transient=1,hidden=1,doc='Hidden transient object for Octopus connection.'),
-        'flag'                : SimpleItem(defvalue=0,protected=1,copyable=0,hidden=1,doc='Hidden flag for internal control.')
+    _schema = Schema(Version(1, 9), {
+        'CE': SimpleItem(defvalue='', doc='Request a specific Computing Element'),
+        'jobtype': SimpleItem(defvalue='Normal', doc='Job type: Normal, MPICH'),
+        'requirements': ComponentItem('LCGRequirements', doc='Requirements for the resource selection'),
+        'sandboxcache': ComponentItem('GridSandboxCache', copyable=1, doc='Interface for handling oversized input sandbox'),
+        'parent_id': SimpleItem(defvalue='', protected=1, copyable=0, hidden=1, doc='Middleware job identifier for its parent job'),
+        'id': SimpleItem(defvalue='', typelist=['str', 'list'], protected=1, copyable=0, doc='Middleware job identifier'),
+        'status': SimpleItem(defvalue='', typelist=['str', 'dict'], protected=1, copyable=0, doc='Middleware job status'),
+        'middleware': SimpleItem(defvalue='GLITE', protected=0, copyable=1, doc='Middleware type', checkset='__checkset_middleware__'),
+        'exitcode': SimpleItem(defvalue='', protected=1, copyable=0, doc='Application exit code'),
+        'exitcode_lcg': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
+        'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
+        'perusable': SimpleItem(defvalue=False, protected=0, copyable=1, checkset='__checkset_perusable__', doc='Enable the job perusal feature of GLITE'),
+        'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Computing Element where the job actually runs.'),
+        'monInfo': SimpleItem(defvalue={}, protected=1, copyable=0, hidden=1, doc='Hidden information of the monitoring service.'),
+        'octopus': SimpleItem(defvalue=None, typelist=['type(None)', 'Ganga.Lib.MonitoringServices.Octopus.Octopus'], protected=1, copyable=0, transient=1, hidden=1, doc='Hidden transient object for Octopus connection.'),
+        'flag': SimpleItem(defvalue=0, protected=1, copyable=0, hidden=1, doc='Hidden flag for internal control.')
     })
 
     _category = 'backends'
-    _name =  'LCG'
-    _exportmethods = ['check_proxy', 'loginfo', 'inspect', 'match', 'get_wms_list', 'get_ce_list', 'get_se_list']
+    _name = 'LCG'
+    _exportmethods = ['check_proxy', 'loginfo', 'inspect',
+                      'match', 'get_wms_list', 'get_ce_list', 'get_se_list']
 
-    _GUIPrefs = [ { 'attribute' : 'CE', 'widget' : 'String' },
-                  { 'attribute' : 'jobtype', 'widget' : 'String_Choice', 'choices' : ['Normal', 'MPICH'] },
-                  { 'attribute' : 'middleware', 'widget' : 'String_Choice', 'choices' : [ 'EDG', 'GLITE' ] } ]
+    _GUIPrefs = [{'attribute': 'CE', 'widget': 'String'},
+                 {'attribute': 'jobtype', 'widget': 'String_Choice',
+                     'choices': ['Normal', 'MPICH']},
+                 {'attribute': 'middleware', 'widget': 'String_Choice', 'choices': ['EDG', 'GLITE']}]
 
-    _final_ganga_states = ['completing','completed','failed']
+    _final_ganga_states = ['completing', 'completed', 'failed']
 
     def __init__(self):
-        super(LCG,self).__init__()
+        super(LCG, self).__init__()
         if not self.middleware:
             self.middleware = 'EDG'
 
         # Disable GLITE perusal by default, since it can be dangerous
-        self.perusable=False
-        
-        # dynamic requirement object loading 
+        self.perusable = False
+
+        # dynamic requirement object loading
         try:
-            reqName1  = config['Requirements']
-            reqName   = config['Requirements'].split('.').pop()
+            reqName1 = config['Requirements']
+            reqName = config['Requirements'].split('.').pop()
             reqModule = __import__(reqName1, globals(), locals(), [reqName1])
-            reqClass  = vars(reqModule)[reqName]
+            reqClass = vars(reqModule)[reqName]
             self.requirements = reqClass()
 
             logger.debug('load %s as LCGRequirements' % reqName)
@@ -155,12 +158,12 @@ class LCG(IBackend):
             logger.debug('load default LCGRequirements')
             pass
 
-        # dynamic sandbox cache object loading 
+        # dynamic sandbox cache object loading
         try:
-            scName1  = config['SandboxCache']
-            scName   = config['SandboxCache'].split('.').pop()
+            scName1 = config['SandboxCache']
+            scName = config['SandboxCache'].split('.').pop()
             scModule = __import__(scName1, globals(), locals(), [scName1])
-            scClass  = vars(scModule)[scName]
+            scClass = vars(scModule)[scName]
             self.sandboxcache = scClass()
             logger.debug('load %s as SandboxCache' % scName)
         except:
@@ -168,13 +171,13 @@ class LCG(IBackend):
             pass
 
     def __checkset_middleware__(self, value):
-        if value and not value.upper() in ['GLITE','EDG']:
-            raise AttributeError('middleware value must be either \'GLITE\' or \'EDG\'')
+        if value and not value.upper() in ['GLITE', 'EDG']:
+            raise AttributeError(
+                'middleware value must be either \'GLITE\' or \'EDG\'')
 
     def __checkset_perusable__(self, value):
-        if value!=False and self.middleware.upper()!='GLITE':
+        if value != False and self.middleware.upper() != 'GLITE':
             raise AttributeError("perusable can only be set for GLITE jobs")
-
 
     def __setup_sandboxcache__(self, job):
         '''Sets up the sandbox cache object to adopt the runtime configuration of the LCG backend'''
@@ -183,37 +186,39 @@ class LCG(IBackend):
 
         self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.middleware = self.middleware.upper()
-        self.sandboxcache.timeout    = config['SandboxTransferTimeout']
+        self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids[self.middleware.upper()].__get_lfc_host__()
+                self.sandboxcache.lfc_host = grids[
+                    self.middleware.upper()].__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
-                token   = '' 
+                token = ''
                 se_host = config['DefaultSE']
                 m = re_token.match(se_host)
                 if m:
-                    token   = m.group(1)
+                    token = m.group(1)
                     se_host = m.group(2)
 
                 self.sandboxcache.se = se_host
 
                 if token:
                     self.sandboxcache.srm_token = token
-         
+
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
         elif self.sandboxcache._name == 'DQ2SandboxCache':
 
-            ## generate a new dataset name if not given
+            # generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name,unused = dq2outputdatasetname("%s.input"%get_uuid(), 0, False, '')
+                self.sandboxcache.dataset_name, unused = dq2outputdatasetname(
+                    "%s.input" % get_uuid(), 0, False, '')
 
-            ## subjobs inherits the dataset name from the master job
+            # subjobs inherits the dataset name from the master job
             for sj in job.subjobs:
                 sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
 
@@ -233,47 +238,48 @@ class LCG(IBackend):
                      }
 
            If prestaging failed, None object is returned.
-           
+
            If the file has been previously uploaded (according to md5sum),
            the prestaging is ignored and index to the previously uploaded file
            is returned.
            '''
 
-        idx = {'lfc_host':'', 'local':[], 'remote':{}}
+        idx = {'lfc_host': '', 'local': [], 'remote': {}}
 
         job = self.getJobObject()
 
-        ## read-in the previously uploaded files
+        # read-in the previously uploaded files
         uploadedFiles = []
 
-        ## getting the uploaded file list from the master job
+        # getting the uploaded file list from the master job
         if job.master:
             uploadedFiles += job.master.backend.sandboxcache.get_cached_files()
 
-        ## set and get the $LFC_HOST for uploading oversized sandbox
+        # set and get the $LFC_HOST for uploading oversized sandbox
         self.__setup_sandboxcache__(job)
 
         uploadedFiles += self.sandboxcache.get_cached_files()
 
         lfc_host = None
-        
-        ## for LCGSandboxCache, take the one specified in the sansboxcache object.
-        ## the value is exactly the same as the one from the local grid shell env. if
-        ## it is not specified exclusively.
+
+        # for LCGSandboxCache, take the one specified in the sansboxcache object.
+        # the value is exactly the same as the one from the local grid shell env. if
+        # it is not specified exclusively.
         if self.sandboxcache._name == 'LCGSandboxCache':
             lfc_host = self.sandboxcache.lfc_host
-            
-        ## or in general, query it from the Grid object
+
+        # or in general, query it from the Grid object
         if not lfc_host:
-            lfc_host = grids[self.sandboxcache.middleware.upper()].__get_lfc_host__()
+            lfc_host = grids[
+                self.sandboxcache.middleware.upper()].__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 
         abspath = os.path.abspath(file)
-        fsize   = os.path.getsize(abspath)
+        fsize = os.path.getsize(abspath)
         if fsize > config['BoundSandboxLimit']:
 
-            md5sum  = get_md5sum(abspath, ignoreGzipTimestamp=True)
+            md5sum = get_md5sum(abspath, ignoreGzipTimestamp=True)
 
             doUpload = True
             for uf in uploadedFiles:
@@ -284,43 +290,42 @@ class LCG(IBackend):
                     break
 
             if doUpload:
-                
-                logger.warning('The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file,config['BoundSandboxLimit']) )
 
-                if self.sandboxcache.upload( [abspath] ):
+                logger.warning(
+                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file, config['BoundSandboxLimit']))
+
+                if self.sandboxcache.upload([abspath]):
                     remote_sandbox = self.sandboxcache.get_cached_files()[-1]
                     idx['remote'][remote_sandbox.name] = remote_sandbox.id
                 else:
-                    logger.error('Oversized sandbox not successfully pre-staged')
+                    logger.error(
+                        'Oversized sandbox not successfully pre-staged')
                     return None
         else:
             idx['local'].append(abspath)
 
         return idx
 
-    def __refresh_jobinfo__(self,job):
+    def __refresh_jobinfo__(self, job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
-        job.backend.status   = '' 
-        job.backend.reason   = '' 
-        job.backend.actualCE = '' 
-        job.backend.exitcode = '' 
-        job.backend.exitcode_lcg = '' 
-        job.backend.flag     = 0
+        job.backend.status = ''
+        job.backend.reason = ''
+        job.backend.actualCE = ''
+        job.backend.exitcode = ''
+        job.backend.exitcode_lcg = ''
+        job.backend.flag = 0
 
     def __print_no_resource_error__(self, jdl):
         '''Prints out the error message when no matched resource'''
 
         logger.error('No matched resource: check/report the JDL below')
 
-        f = open( jdl, 'r')
-        lines = f.readlines()
-        f.close()
-
-        logger.error('=== JDL ===\n' + '\n'.join( map(lambda l:l.strip(), lines) ) )
+        logger.error('=== JDL ===\n' + '\n'.join(l.strip()
+                                                 for l in open(jdl, 'r')))
 
         return
 
-    def master_auto_resubmit(self,rjobs):
+    def master_auto_resubmit(self, rjobs):
         """
         Resubmit each subjob individually as bulk resubmission will overwrite
         previous master job statuses
@@ -334,10 +339,10 @@ class LCG(IBackend):
         for j in rjobs:
             if not j.backend.master_resubmit([j]):
                 return False
-            
+
         return True
-                    
-    def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
+
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''Submit the master job to the grid'''
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
@@ -354,12 +359,15 @@ class LCG(IBackend):
         if not config['%s_ENABLE' % mt]:
             #logger.warning('Operations of %s middleware are disabled.' % mt)
             #ick = False
-            raise GangaException('Operations of %s middleware not enabled' % mt)
+            raise GangaException(
+                'Operations of %s middleware not enabled' % mt)
         else:
             if mt == 'EDG' or len(job.subjobs) == 0:
-                ick = IBackend.master_submit(self,rjobs,subjobconfigs,masterjobconfig)
+                ick = IBackend.master_submit(
+                    self, rjobs, subjobconfigs, masterjobconfig)
             else:
-                ick = self.master_bulk_submit(rjobs,subjobconfigs,masterjobconfig)
+                ick = self.master_bulk_submit(
+                    rjobs, subjobconfigs, masterjobconfig)
                 if not ick:
                     raise GangaException('GLITE bulk submission failure')
 
@@ -367,10 +375,10 @@ class LCG(IBackend):
 
 #        if config['DrySubmit']:
 #            ick = False
-            
+
         return ick
 
-    def master_resubmit(self,rjobs):
+    def master_resubmit(self, rjobs):
         '''Resubmit the master job to the grid'''
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
@@ -387,25 +395,27 @@ class LCG(IBackend):
         if not config['%s_ENABLE' % mt]:
             #logger.warning('Operations of %s middleware are disabled.' % mt)
             #ick = False
-            raise GangaException('Operations of %s middleware not enabled' % mt)
+            raise GangaException(
+                'Operations of %s middleware not enabled' % mt)
         else:
             if mt == 'EDG':
-                ick = IBackend.master_resubmit(self,rjobs)
+                ick = IBackend.master_resubmit(self, rjobs)
 
             if mt == 'GLITE':
                 if not job.master and len(job.subjobs) == 0:
                     # case 1: master job normal resubmission
                     logger.debug('rjobs: %s' % str(rjobs))
                     logger.debug('mode: master job normal resubmission')
-                    ick = IBackend.master_resubmit(self,rjobs)
-                    
+                    ick = IBackend.master_resubmit(self, rjobs)
+
                 elif job.master:
                     # case 2: individual subjob resubmission
                     logger.debug('mode: individual subjob resubmission')
-                    status = IBackend.master_resubmit(self,rjobs)
+                    status = IBackend.master_resubmit(self, rjobs)
                     if status:
                         # set the backend flag to 1 if the job is individually submitted
-                        # the monitoring loop on the master job shouldn't taken into account this job
+                        # the monitoring loop on the master job shouldn't taken
+                        # into account this job
                         job.backend.flag = 1
                     ick = status
 
@@ -444,56 +454,62 @@ class LCG(IBackend):
     def __mt_bulk_submit__(self, node_jdls, max_node):
         '''submitting bulk jobs in multiple threads'''
 
-        job = self.getJobObject() 
-        mt  = self.middleware.upper()
+        job = self.getJobObject()
+        mt = self.middleware.upper()
 
-        logger.info('submitting %d subjobs ... it may take a while' % len(node_jdls))
-        
+        logger.info('submitting %d subjobs ... it may take a while' %
+                    len(node_jdls))
+
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
             def __init__(self, gridObj, masterInputWorkspace):
                 Algorithm.__init__(self)
-                self.inpw    = masterInputWorkspace
+                self.inpw = masterInputWorkspace
                 self.gridObj = gridObj
 
             def process(self, node_info):
                 my_node_offset = node_info['offset']
-                my_node_jdls   = node_info['jdls']
-                coll_jdl_name  = '__jdlfile__%d_%d__' % (my_node_offset, my_node_offset + len(my_node_jdls))
+                my_node_jdls = node_info['jdls']
+                coll_jdl_name = '__jdlfile__%d_%d__' % (
+                    my_node_offset, my_node_offset + len(my_node_jdls))
                 # compose master JDL for collection job
-                jdl_cnt  = self.__make_collection_jdl__(my_node_jdls, offset=my_node_offset)
-                jdl_path = self.inpw.writefile( FileBuffer(coll_jdl_name, jdl_cnt) )
+                jdl_cnt = self.__make_collection_jdl__(
+                    my_node_jdls, offset=my_node_offset)
+                jdl_path = self.inpw.writefile(
+                    FileBuffer(coll_jdl_name, jdl_cnt))
 
-                master_jid = self.gridObj.submit(jdl_path,ce=None)
+                master_jid = self.gridObj.submit(jdl_path, ce=None)
                 if not master_jid:
-                    return False 
+                    return False
                 else:
-                    self.__appendResult__( my_node_offset, master_jid )
+                    self.__appendResult__(my_node_offset, master_jid)
                     return True
 
-            def __make_collection_jdl__(self,nodeJDLFiles=[], offset=0):
+            def __make_collection_jdl__(self, nodeJDLFiles=[], offset=0):
                 '''Compose the collection JDL for the master job'''
-   
-                nodes = ',\n'.join(map(lambda x:'[file = "%s";]' % x, nodeJDLFiles))
-   
+
+                nodes = ',\n'.join(
+                    map(lambda x: '[file = "%s";]' % x, nodeJDLFiles))
+
                 jdl = {
-                    'Type'  : 'collection',
-                    'VirtualOrganisation'  : config['VirtualOrganisation'],
-                    'Nodes' : ''
+                    'Type': 'collection',
+                    'VirtualOrganisation': config['VirtualOrganisation'],
+                    'Nodes': ''
                 }
-   
+
                 # specification of the node jobs
                 node_cnt = offset
                 node_str = ''
-                jdl ['Nodes'] = '{\n';
+                jdl['Nodes'] = '{\n'
                 for f in nodeJDLFiles:
-                    node_str += '[NodeName = "gsj_%d"; file="%s";],\n' % (node_cnt, f)
+                    node_str += '[NodeName = "gsj_%d"; file="%s";],\n' % (
+                        node_cnt, f)
                     node_cnt += 1
                 if node_str:
                     jdl['Nodes'] += node_str.strip()[:-1]
-                jdl['Nodes'] += '\n}';
-   
+                jdl['Nodes'] += '\n}'
+
                 jdlText = Grid.expandjdl(jdl)
                 logger.debug('master job JDL: %s' % jdlText)
                 return jdlText
@@ -508,22 +524,26 @@ class LCG(IBackend):
         for i in range(num_chunks):
             data = {}
             ibeg = i * max_node
-            iend = min(ibeg + max_node, len(node_jdls) )
+            iend = min(ibeg + max_node, len(node_jdls))
             data['offset'] = ibeg
-            data['jdls']   = node_jdls[ibeg:iend]
+            data['jdls'] = node_jdls[ibeg:iend]
             mt_data.append(data)
 
-        myAlg  = MyAlgorithm(gridObj=grids[mt],masterInputWorkspace=job.getInputWorkspace())
+        myAlg = MyAlgorithm(
+            gridObj=grids[mt], masterInputWorkspace=job.getInputWorkspace())
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(name='lcg_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
+        runner = MTRunner(name='lcg_jsubmit', algorithm=myAlg,
+                          data=myData, numThread=config['SubmissionThread'])
         runner.start()
         runner.join(timeout=-1)
 
         if len(runner.getDoneList()) < num_chunks:
-            ## not all bulk jobs are successfully submitted. canceling the submitted jobs on WMS immediately
-            logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            grids[mt].cancelMultiple( runner.getResults().values() )
+            # not all bulk jobs are successfully submitted. canceling the
+            # submitted jobs on WMS immediately
+            logger.error(
+                'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
+            grids[mt].cancelMultiple(runner.getResults().values())
             return None
         else:
             return runner.getResults()
@@ -531,16 +551,17 @@ class LCG(IBackend):
     def __mt_job_prepare__(self, rjobs, subjobconfigs, masterjobconfig):
         '''preparing jobs in multiple threads'''
 
-        logger.info('preparing %d subjobs ... it may take a while' % len(rjobs))
+        logger.info('preparing %d subjobs ... it may take a while' %
+                    len(rjobs))
 
         mt = self.middleware.upper()
 
         job = self.getJobObject()
 
         # prepare the master job (i.e. create shared inputsandbox, etc.)
-        master_input_sandbox=IBackend.master_prepare(self,masterjobconfig)
+        master_input_sandbox = IBackend.master_prepare(self, masterjobconfig)
 
-        ## uploading the master job if it's over the WMS sandbox limitation
+        # uploading the master job if it's over the WMS sandbox limitation
         for f in master_input_sandbox:
             master_input_idx = self.__check_and_prestage_inputfile__(f)
 
@@ -560,26 +581,28 @@ class LCG(IBackend):
 
                 try:
                     logger.debug("preparing job %s" % my_sj.getFQID('.'))
-                    jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
+                    jdlpath = my_sj.backend.preparejob(
+                        my_sc, master_input_sandbox)
 
                     if (not jdlpath) or (not os.path.exists(jdlpath)):
-                        raise GangaException('job %s not properly prepared' % my_sj.getFQID('.'))
+                        raise GangaException(
+                            'job %s not properly prepared' % my_sj.getFQID('.'))
 
-                    self.__appendResult__( my_sj.id, jdlpath )
+                    self.__appendResult__(my_sj.id, jdlpath)
                     return True
-                except Exception,x:
+                except Exception as x:
                     log_user_exception()
                     return False
 
-
         mt_data = []
-        for sc,sj in zip(subjobconfigs,rjobs):
-            mt_data.append( [sc, sj] )
+        for sc, sj in zip(subjobconfigs, rjobs):
+            mt_data.append([sc, sj])
 
-        myAlg  = MyAlgorithm()
+        myAlg = MyAlgorithm()
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
+        runner = MTRunner(
+            name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
         runner.start()
         runner.join(-1)
 
@@ -588,27 +611,26 @@ class LCG(IBackend):
         else:
             # the result should be sorted
             results = runner.getResults()
-            sc_ids  = results.keys()
-            sc_ids.sort()
+            sc_ids = sorted(results.keys())
 
             node_jdls = []
             for id in sc_ids:
                 node_jdls.append(results[id])
             return node_jdls
 
-    def master_bulk_submit(self,rjobs,subjobconfigs,masterjobconfig):
+    def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''GLITE bulk submission'''
 
-        from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
         profiler.start()
 
-        assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
+        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
 
         # prepare the subjobs, jdl repository before bulk submission
-        node_jdls = self.__mt_job_prepare__(rjobs, subjobconfigs, masterjobconfig)
+        node_jdls = self.__mt_job_prepare__(
+            rjobs, subjobconfigs, masterjobconfig)
 
         if not node_jdls:
             logger.error('Some jobs not successfully prepared')
@@ -629,19 +651,19 @@ class LCG(IBackend):
         for sj in rjobs:
             sj.updateStatus('submitting')
 
-        profiler.checkAndStart('job state transition (submitting) elapsed time')
+        profiler.checkAndStart(
+            'job state transition (submitting) elapsed time')
 
         max_node = config['GliteBulkJobSize']
-        results  = self.__mt_bulk_submit__(node_jdls, max_node=max_node)
+        results = self.__mt_bulk_submit__(node_jdls, max_node=max_node)
 
         profiler.checkAndStart('job submission elapsed time')
 
         status = False
         if results:
-            offsets = results.keys()
-            offsets.sort()
-         
-            self.id     = []
+            offsets = sorted(results.keys())
+
+            self.id = []
             self.status = {}
             for ibeg in offsets:
                 mid = results[ibeg]
@@ -653,15 +675,14 @@ class LCG(IBackend):
                     sj.backend.parent_id = mid
                     sj.updateStatus('submitted')
                     sj.info.submit_counter += 1
-         
-            status = True 
 
-        return status 
+            status = True
 
-    def master_bulk_resubmit(self,rjobs):
+        return status
+
+    def master_bulk_resubmit(self, rjobs):
         '''GLITE bulk resubmission'''
 
-        from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
         job = self.getJobObject()
@@ -669,7 +690,7 @@ class LCG(IBackend):
         # compose master JDL for collection job
         node_jdls = []
         for sj in rjobs:
-            jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
+            jdlpath = os.path.join(sj.inputdir, '__jdlfile__')
             node_jdls.append(jdlpath)
 
         if config['MatchBeforeSubmit']:
@@ -685,9 +706,8 @@ class LCG(IBackend):
 
         status = False
         if results:
-            offsets = results.keys()
-            offsets.sort()
-         
+            offsets = sorted(results.keys())
+
             self.__refresh_jobinfo__(job)
             self.id = []
             self.status = {}
@@ -708,45 +728,47 @@ class LCG(IBackend):
             #       that turns the master job's status from 'submitted' to 'submitting'.
             #       As this transition should be allowed to simulate a lock mechanism in Ganga 4, the workaround
             #       is to set all subjobs' status to 'submitted' so that the transition can be avoided.
-            #       A more clear solution should be implemented with the lock mechanism introduced in Ganga 5.  
+            # A more clear solution should be implemented with the lock
+            # mechanism introduced in Ganga 5.
             for sj in rjobs:
                 sj.updateStatus('submitted')
                 sj.info.submit_counter += 1
-         
-            status = True 
 
-        return status 
+            status = True
+
+        return status
 
     def master_bulk_kill(self):
         '''GLITE bulk resubmission'''
 
         job = self.getJobObject()
-        mt  = self.middleware.upper()
+        mt = self.middleware.upper()
 
-        ## killing the individually re-submitted subjobs
+        # killing the individually re-submitted subjobs
         logger.debug('cancelling individually resubmitted subjobs.')
 
-        ## 1. collect job ids 
+        # 1. collect job ids
         ids = []
         for sj in job.subjobs:
-            if sj.backend.flag == 1 and sj.status in ['submitted','running']:
+            if sj.backend.flag == 1 and sj.status in ['submitted', 'running']:
                 ids.append(sj.backend.id)
 
-        ## 2. cancel the collected jobs
+        # 2. cancel the collected jobs
         ck = grids[mt].cancelMultiple(ids)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
         else:
             for sj in job.subjobs:
-                if sj.backend.flag == 1 and sj.status in ['submitted','running']:
+                if sj.backend.flag == 1 and sj.status in ['submitted', 'running']:
                     sj.updateStatus('killed')
-        
-        ## killing the master job
+
+        # killing the master job
         logger.debug('cancelling the master job.')
 
-        ## avoid killing master jobs in the final state
-        final_states = ['Aborted','Cancelled','Cleared','Done (Success)','Done (Failed)','Done (Exit Code !=0)', 'Done(Success)','Done(Failed)','Done(Exit Code !=0)']
+        # avoid killing master jobs in the final state
+        final_states = ['Aborted', 'Cancelled', 'Cleared',
+                        'Done (Success)', 'Done (Failed)', 'Done (Exit Code !=0)', 'Done(Success)', 'Done(Failed)', 'Done(Exit Code !=0)']
         myids = []
         if isStringLike(self.id):
             if job.backend.status not in final_states:
@@ -766,11 +788,11 @@ class LCG(IBackend):
             return False
         else:
             for sj in job.subjobs:
-                if sj.backend.flag != 1 and sj.status in ['submitted','running']:
+                if sj.backend.flag != 1 and sj.status in ['submitted', 'running']:
                     sj.updateStatus('killed')
             return True
 
-    def loginfo(self,verbosity=1):
+    def loginfo(self, verbosity=1):
         """Get the job's logging info"""
 
         job = self.getJobObject()
@@ -781,53 +803,48 @@ class LCG(IBackend):
 
         if not config['%s_ENABLE' % mt]:
             logger.warning('Operations of %s middleware are disabled.' % mt)
-            return None 
+            return None
 
         if not self.id:
             logger.warning('Job %s is not running.' % job.getFQID('.'))
-            return None 
+            return None
 
         if isStringLike(self.id):
-            my_ids = [ self.id ]
+            my_ids = [self.id]
         else:
             my_ids = self.id
 
-        # successful logging info fetching returns a file path to the information
-        loginfo_output = grids[self.middleware.upper()].get_loginfo(my_ids,job.outputdir,verbosity)
+        # successful logging info fetching returns a file path to the
+        # information
+        loginfo_output = grids[self.middleware.upper()].get_loginfo(
+            my_ids, job.outputdir, verbosity)
 
         if loginfo_output:
 
             # returns the name of the file where the logging info is saved
             return loginfo_output
-
-            #f = open(loginfo_output,'r')
-            #info = map(lambda x:x.strip(),f.readlines())
-            #f.close()
-            # returns the logging info as an array of strings
-            #return info 
         else:
-            logger.debug('Getting logging info of job %s failed.' % job.getFQID('.'))
+            logger.debug('Getting logging info of job %s failed.' %
+                         job.getFQID('.'))
             return None
 
     def match(self):
         '''Match the job against available grid resources'''
 
-        ## - grabe the existing __jdlfile__ for failed/completed jobs
-        ## - simulate the job preparation procedure (for jobs never been submitted)
-        ## - subjobs from job splitter are not created (as its not essential for match-making)
-        ## - create a temporary JDL file for match making
-        ## - call job list match
-        ## - clean up the job's inputdir
+        # - grabe the existing __jdlfile__ for failed/completed jobs
+        # - simulate the job preparation procedure (for jobs never been submitted)
+        # - subjobs from job splitter are not created (as its not essential for match-making)
+        # - create a temporary JDL file for match making
+        # - call job list match
+        # - clean up the job's inputdir
 
         job = self.getJobObject()
 
-        ## check job status
-        if job.status not in ['new','submitted','failed','completed']:
+        # check job status
+        if job.status not in ['new', 'submitted', 'failed', 'completed']:
             msg = 'only jobs in \'new\', \'failed\', \'submitted\' or \'completed\' state can do match'
             logger.warning(msg)
             return
-
-        from Ganga.Core import ApplicationConfigurationError, JobManagerError, IncompleteJobSubmissionError
 
         doPrepareEmulation = False
 
@@ -835,7 +852,7 @@ class LCG(IBackend):
 
         mt = self.middleware.upper()
 
-        ## catch the files that are already in inputdir
+        # catch the files that are already in inputdir
         existing_files = os.listdir(job.inputdir)
 
         app = job.application
@@ -843,9 +860,10 @@ class LCG(IBackend):
         # select the runtime handler
         from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
         try:
-            rtHandler = allHandlers.get(app._name,'LCG')()
+            rtHandler = allHandlers.get(app._name, 'LCG')()
         except KeyError:
-            msg = 'runtime handler not found for application=%s and backend=%s'%(app._name,'LCG')
+            msg = 'runtime handler not found for application=%s and backend=%s' % (
+                app._name, 'LCG')
             logger.warning(msg)
             return
 
@@ -854,72 +872,82 @@ class LCG(IBackend):
 
             jdlpath = ''
 
-            ## try to pick up the created jdlfile in a failed job
-            if job.status in ['submitted','failed','completed']:
+            # try to pick up the created jdlfile in a failed job
+            if job.status in ['submitted', 'failed', 'completed']:
 
                 logger.debug('picking up existing JDL')
 
-                ## looking for existing jdl file
-                if job.master:  ## this is a subjob, take the __jdlfile__ in the job's dir
-                    jdlpath = os.path.join(job.inputdir,'__jdlfile__')
+                # looking for existing jdl file
+                # this is a subjob, take the __jdlfile__ in the job's dir
+                if job.master:
+                    jdlpath = os.path.join(job.inputdir, '__jdlfile__')
                 else:
-                    if len(job.subjobs) > 0: ## there are subjobs
-                        jdlpath = os.path.join(job.subjobs[0].inputdir, '__jdlfile__')
+                    if len(job.subjobs) > 0:  # there are subjobs
+                        jdlpath = os.path.join(
+                            job.subjobs[0].inputdir, '__jdlfile__')
                     else:
-                        jdlpath = os.path.join(job.inputdir,'__jdlfile__')
+                        jdlpath = os.path.join(job.inputdir, '__jdlfile__')
 
-            if not os.path.exists( jdlpath ):
+            if not os.path.exists(jdlpath):
                 jdlpath = ''
 
-            ## simulate the job preparation procedure
+            # simulate the job preparation procedure
             if not jdlpath:
 
-                logger.debug('emulating the job preparation procedure to create JDL')
+                logger.debug(
+                    'emulating the job preparation procedure to create JDL')
 
                 doPrepareEmulation = True
 
-                appmasterconfig = app.master_configure()[1] # FIXME: obsoleted "modified" flag
+                # FIXME: obsoleted "modified" flag
+                appmasterconfig = app.master_configure()[1]
 
-                ## here we don't do job splitting - presuming the JDL for non-splitted job is the same as the splitted jobs
+                # here we don't do job splitting - presuming the JDL for
+                # non-splitted job is the same as the splitted jobs
                 rjobs = [job]
 
                 # configure the application of each subjob
-                appsubconfig = [ j.application.configure(appmasterconfig)[1] for j in rjobs ] #FIXME: obsoleted "modified" flag
+                # FIXME: obsoleted "modified" flag
+                appsubconfig = [
+                    j.application.configure(appmasterconfig)[1] for j in rjobs]
 
                 # prepare the master job with the runtime handler
-                jobmasterconfig = rtHandler.master_prepare(app,appmasterconfig)
+                jobmasterconfig = rtHandler.master_prepare(
+                    app, appmasterconfig)
 
                 # prepare the subjobs with the runtime handler
-                jobsubconfig = [ rtHandler.prepare(j.application,s,appmasterconfig,jobmasterconfig) for (j,s) in zip(rjobs,appsubconfig) ]
+                jobsubconfig = [rtHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig) for (
+                    j, s) in zip(rjobs, appsubconfig)]
 
                 # prepare masterjob's inputsandbox
                 master_input_sandbox = self.master_prepare(jobmasterconfig)
 
                 # prepare JDL
-                jdlpath = self.preparejob(jobsubconfig[0], master_input_sandbox)
+                jdlpath = self.preparejob(
+                    jobsubconfig[0], master_input_sandbox)
 
             logger.debug('JDL used for match-making: %s' % jdlpath)
 
             # If GLITE, tell it whether to enable perusal
-            if mt=="GLITE":
-                grids[mt].perusable=self.perusable
+            if mt == "GLITE":
+                grids[mt].perusable = self.perusable
 
             matches = grids[mt].list_match(jdlpath, ce=self.CE)
 
-        except Exception, x:
-            logger.warning('job match failed: %s', str(x) )
+        except Exception as x:
+            logger.warning('job match failed: %s', str(x))
 
-        ## clean up the job's inputdir
+        # clean up the job's inputdir
         if doPrepareEmulation:
             logger.debug('clean up job inputdir')
             files = os.listdir(job.inputdir)
             for f in files:
                 if f not in existing_files:
-                    os.remove( os.path.join(job.inputdir, f) )
+                    os.remove(os.path.join(job.inputdir, f))
 
         return matches
 
-    def submit(self,subjobconfig,master_job_sandbox):
+    def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
         mt = self.middleware.upper()
@@ -928,10 +956,10 @@ class LCG(IBackend):
             logger.warning('Operations of %s middleware are disabled.' % mt)
             return None
 
-        jdlpath = self.preparejob(subjobconfig,master_job_sandbox)
+        jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
         # If GLITE, tell it whether to enable perusal
-        if mt=="GLITE":
-            grids[mt].perusable=self.perusable
+        if mt == "GLITE":
+            grids[mt].perusable = self.perusable
 
         if config['MatchBeforeSubmit']:
             matches = grids[mt].list_match(jdlpath, ce=self.CE)
@@ -948,12 +976,12 @@ class LCG(IBackend):
     def resubmit(self):
         '''Resubmit the job'''
         job = self.getJobObject()
-      
+
         mt = self.middleware.upper()
 
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
-        #fix for savannah 76289, update the excludedCEs in jdl file
+        # fix for savannah 76289, update the excludedCEs in jdl file
         self.updateExcudedCEsInJdl(jdlpath)
 
         if config['MatchBeforeSubmit']:
@@ -974,7 +1002,7 @@ class LCG(IBackend):
     def kill(self):
         '''Kill the job'''
 
-        job   = self.getJobObject()
+        job = self.getJobObject()
 
         logger.info('Killing job %s' % job.getFQID('.'))
 
@@ -982,7 +1010,7 @@ class LCG(IBackend):
 
         if not config['%s_ENABLE' % mt]:
             logger.warning('Operations of %s middleware are disabled.' % mt)
-            return False 
+            return False
 
         if not self.id:
             logger.warning('Job %s is not running.' % job.getFQID('.'))
@@ -1050,7 +1078,7 @@ def lcg_file_download(vo,guid,localFilePath,timeout=60,maxRetry=3):
             else:
                 raise IOError("Download file %s from iocache failed with error code: %d, trial %d." % (os.path.basename(localFilePath), status, i))
 
-        except IOError, e:
+        except IOError as e:
             isDone = False
             printError(str(e))
 
@@ -1217,7 +1245,7 @@ if scratchdir:
     try:
         os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stdout'), os.path.join(wdir, 'stdout')))
         os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stderr'), os.path.join(wdir, 'stderr')))
-    except Exception,e:
+    except Exception as e:
         printError(sys.exc_info()[0])
         printError(sys.exc_info()[1])
         str_traceback = traceback.format_tb(sys.exc_info()[2])
@@ -1235,7 +1263,7 @@ try:
 #   download inputsandbox from remote cache
     for f,guid in input_sandbox['remote'].iteritems():
         if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
-            raise Exception('Download remote input %s:%s failed.' % (guid,f) )
+            raise IOError('Download remote input %s:%s failed.' % (guid,f) )
         else:
             getPackedInputSandbox(f)
 
@@ -1305,7 +1333,7 @@ try:
         status = execSyscmdSubprocess('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
         printInfo('source %s; %s %s' % (env_setup_script, appexec, appargs))
         printInfo(wdir)
-    except ImportError,err:
+    except ImportError as err:
         # otherwise, use separate threads to control process IO pipes 
         printInfo('Load application executable with separate threads')
         status = execSyscmdEnhanced('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
@@ -1322,7 +1350,7 @@ try:
     os.system("mv stderr.1.gz %s/stderr.gz" % orig_wdir)
 
     if not status:
-        raise Exception('Application execution failed.')
+        raise OSError('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)                 
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
@@ -1341,7 +1369,7 @@ try:
     if scratchdir:
         os.chdir(orig_wdir)
         os.system("rm %s -rf" % wdir)
-except Exception,e:
+except Exception as e:
     printError(sys.exc_info()[0])
     printError(sys.exc_info()[1])
     str_traceback = traceback.format_tb(sys.exc_info()[2])
@@ -1366,97 +1394,104 @@ sys.exit(0)
         Return value: None
         """
         if filename and filename != 'stdout':
-            logger.warning('Arbitrary file peeking not supported for a running LCG job')
+            logger.warning(
+                'Arbitrary file peeking not supported for a running LCG job')
         else:
             self.inspect(command)
 
-    def inspect( self, cmd=None):
+    def inspect(self, cmd=None):
         """
         Allow viewing of this job's stdout on the WN
         (i.e. while job is in 'running' state)
-                                                                                  
+
         Return value: None
         """
 
         job = self.getJobObject()
 
         # Use GLITE's job perusal feature if enabled
-        if self.middleware.upper()=="GLITE" and self.status=="Running" and self.perusable:
-            fname = os.path.join(job.outputdir,'_peek.dat')
-            #f    = open(fname,'w')
+        if self.middleware.upper() == "GLITE" and self.status == "Running" and self.perusable:
+            fname = os.path.join(job.outputdir, '_peek.dat')
 
             sh = grids[self.middleware.upper()].shell
-            re, output, m = sh.cmd("glite-wms-job-perusal --get --all -f stdout %s" % self.id, fname)
-            job.viewFile(fname,cmd)
+            re, output, m = sh.cmd(
+                "glite-wms-job-perusal --get --all -f stdout %s" % self.id, fname)
+            job.viewFile(fname, cmd)
 
         return None
 
-    def preparejob(self,jobconfig,master_job_sandbox):
+    def preparejob(self, jobconfig, master_job_sandbox):
         '''Prepare the JDL'''
 
         script = self.__jobWrapperTemplate__()
 
         job = self.getJobObject()
         inpw = job.getInputWorkspace()
-        
+
         wrapperlog = '__jobscript__.log'
 
         import Ganga.Core.Sandbox as Sandbox
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
-        
-        script = script.replace('###OUTPUTSANDBOX###',repr(jobconfig.outputbox + getOutputSandboxPatterns(job))) #FIXME: check what happens if 'stdout','stderr' are specified here
 
-        script = script.replace('###APPLICATION_NAME###',job.application._name)
-        script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
-        script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
+        # FIXME: check what happens if 'stdout','stderr' are specified here
+        script = script.replace('###OUTPUTSANDBOX###', repr(
+            jobconfig.outputbox + getOutputSandboxPatterns(job)))
+
+        script = script.replace(
+            '###APPLICATION_NAME###', job.application._name)
+        script = script.replace(
+            '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
+        script = script.replace(
+            '###APPLICATIONARGS###', repr(jobconfig.getArguments()))
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
 
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
+        script = script.replace(
+            '###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, '    '))
 
-        script = script.replace('###DOWNLOADINPUTFILES###',getWNCodeForDownloadingInputFiles(job, '    '))
+        script = script.replace(
+            '###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, '    '))
 
         if jobconfig.env:
-            script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
+            script = script.replace(
+                '###APPLICATIONENVS###', repr(jobconfig.env))
         else:
-            script = script.replace('###APPLICATIONENVS###',repr({}))
-            
-        script = script.replace('###WRAPPERLOG###',repr(wrapperlog))
+            script = script.replace('###APPLICATIONENVS###', repr({}))
+
+        script = script.replace('###WRAPPERLOG###', repr(wrapperlog))
         import inspect
-        script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
+        script = script.replace(
+            '###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
         mon = job.getMonitoringService()
-
-#        # catch the monitoring service information of OctopusMS
-#        if mon.getJobInfo().has_key('Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS'):
-#            self.monInfo = mon.getJobInfo()['Ganga.Lib.MonitoringServices.Octopus.OctopusMS.OctopusMS']
-#        else:
-#            self.monInfo = None
 
         self.monInfo = None
 
         # set the monitoring file by default to the stdout
-        if type(self.monInfo) is type({}):
+        if isinstance(self.monInfo, dict):
             self.monInfo['remotefile'] = 'stdout'
 
         # try to print out the monitoring service information in debug mode
         try:
-            logger.debug('job info of monitoring service: %s' % str(self.monInfo))
+            logger.debug('job info of monitoring service: %s' %
+                         str(self.monInfo))
         except:
             pass
 
-        script = script.replace('###MONITORING_SERVICE###',mon.getWrapperScriptConstructorText())
+        script = script.replace(
+            '###MONITORING_SERVICE###', mon.getWrapperScriptConstructorText())
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
+        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(
+            Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
-        ## sandbox of child jobs should include master's sandbox
+        # sandbox of child jobs should include master's sandbox
         sandbox_files.extend(master_job_sandbox)
 
-        ## check the input file size and pre-upload larger inputs to the iocache
-        inputs   = {'remote':{},'local':[]}
+        # check the input file size and pre-upload larger inputs to the iocache
+        inputs = {'remote': {}, 'local': []}
         lfc_host = ''
 
         ick = True
@@ -1476,7 +1511,7 @@ sys.exit(0)
 
                 if idx['remote']:
                     abspath = os.path.abspath(f)
-                    fsize   = os.path.getsize(abspath)
+                    fsize = os.path.getsize(abspath)
 
                     if fsize > max_prestaged_fsize:
                         max_prestaged_fsize = fsize
@@ -1490,12 +1525,13 @@ sys.exit(0)
             logger.error('stop job submission')
             return None
         else:
-            logger.debug('LFC: %s, input file indices: %s' % (lfc_host, repr(inputs)) )
+            logger.debug('LFC: %s, input file indices: %s' %
+                         (lfc_host, repr(inputs)))
 
-        ## determin the lcg-cp timeout according to the max_prestaged_fsize
-        ##  - using the assumption of 1 MB/sec.
+        # determin the lcg-cp timeout according to the max_prestaged_fsize
+        # - using the assumption of 1 MB/sec.
         transfer_timeout = config['SandboxTransferTimeout']
-        predict_timeout  = int( math.ceil( max_prestaged_fsize/1000000.0 ) )
+        predict_timeout = int(math.ceil(max_prestaged_fsize / 1000000.0))
 
         if predict_timeout > transfer_timeout:
             transfer_timeout = predict_timeout
@@ -1503,74 +1539,85 @@ sys.exit(0)
         if transfer_timeout < 60:
             transfer_timeout = 60
 
-        script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
+        script = script.replace(
+            '###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
 
-        ## update the job wrapper with the inputsandbox list
-        script = script.replace('###INPUTSANDBOX###',repr({'remote':inputs['remote'],'local':[ os.path.basename(f) for f in inputs['local'] ]}))
+        # update the job wrapper with the inputsandbox list
+        script = script.replace('###INPUTSANDBOX###', repr(
+            {'remote': inputs['remote'], 'local': [os.path.basename(f) for f in inputs['local']]}))
 
-        ## write out the job wrapper and put job wrapper into job's inputsandbox
-        scriptPath = inpw.writefile(FileBuffer('__jobscript_%s__' % job.getFQID('.'),script),executable=1)
-        input_sandbox  = inputs['local'] + [scriptPath]
+        # write out the job wrapper and put job wrapper into job's inputsandbox
+        scriptPath = inpw.writefile(
+            FileBuffer('__jobscript_%s__' % job.getFQID('.'), script), executable=1)
+        input_sandbox = inputs['local'] + [scriptPath]
 
-        ## compose output sandbox to include by default the following files:
-        ##  - gzipped stdout (transferred only when the JobLogHandler is WMS)
-        ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
-        ##  - __jobscript__.log (job wrapper's log)
+        # compose output sandbox to include by default the following files:
+        # - gzipped stdout (transferred only when the JobLogHandler is WMS)
+        # - gzipped stderr (transferred only when the JobLogHandler is WMS)
+        # - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
 
         if config['JobLogHandler'] == 'WMS':
-            output_sandbox += ['stdout.gz','stderr.gz']
+            output_sandbox += ['stdout.gz', 'stderr.gz']
 
         if len(jobconfig.outputbox + getOutputSandboxPatterns(job)):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
-        ## compose LCG JDL
+        # compose LCG JDL
         jdl = {
-            'VirtualOrganisation' : config['VirtualOrganisation'],
-            'Executable' : os.path.basename(scriptPath),
+            'VirtualOrganisation': config['VirtualOrganisation'],
+            'Executable': os.path.basename(scriptPath),
             'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
-            'StdOutput' : 'stdout',
-            'StdError' : 'stderr',
-            'InputSandbox' : input_sandbox,
-            'OutputSandbox' : output_sandbox
+            'StdOutput': 'stdout',
+            'StdError': 'stderr',
+            'InputSandbox': input_sandbox,
+            'OutputSandbox': output_sandbox
         }
 
         if config['GLITE_WMS_WMPROXY_ENDPOINT'] != '':
-            jdl['Environment']['GLITE_WMS_WMPROXY_ENDPOINT'] = config['GLITE_WMS_WMPROXY_ENDPOINT']     
+            jdl['Environment']['GLITE_WMS_WMPROXY_ENDPOINT'] = config[
+                'GLITE_WMS_WMPROXY_ENDPOINT']
 
         if self.middleware.upper() == 'GLITE':
 
-            # workaround of glite WMS bug: https://savannah.cern.ch/bugs/index.php?32345
-            jdl['AllowZippedISB']='false'
+            # workaround of glite WMS bug:
+            # https://savannah.cern.ch/bugs/index.php?32345
+            jdl['AllowZippedISB'] = 'false'
 
             if self.perusable:
                 logger.debug("Adding persual info to JDL")
                 # remove the ExpiryTime attribute as it's absolute timestamp that will cause the re-submitted job being
                 # ignored by the WMS. TODO: fix it in a better way.
                 # jdl['ExpiryTime'] = time.time() + config['JobExpiryTime']
-                jdl['PerusalFileEnable']='true'
-                jdl['PerusalTimeInterval']=120
+                jdl['PerusalFileEnable'] = 'true'
+                jdl['PerusalTimeInterval'] = 120
 
         if self.CE:
-            jdl['Requirements'] = ['other.GlueCEUniqueID=="%s"' % self.CE ]
+            jdl['Requirements'] = ['other.GlueCEUniqueID=="%s"' % self.CE]
             # send the CE name as an environmental variable of the job if CE is specified
             # this is basically for monitoring purpose
             jdl['Environment'].update({'GANGA_LCG_CE': self.CE})
         else:
-            jdl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
-            #Set DataRequirements directly from the input information in requirements.datarequirements
+            jdl['Requirements'] = self.requirements.merge(
+                jobconfig.requirements).convert()
+            # Set DataRequirements directly from the input information in
+            # requirements.datarequirements
             if self.requirements.datarequirements:
                 jdl['DataRequirements'] = self.requirements.datarequirements
             elif jobconfig.inputdata:
-                #If we have no DataRequirements then fall back to the deprecated method of InputData
+                # If we have no DataRequirements then fall back to the
+                # deprecated method of InputData
                 jdl['InputData'] = jobconfig.inputdata
-            jdl['DataAccessProtocol'] = self.requirements.dataaccessprotocol #This must be set and will have a sensible default
+            # This must be set and will have a sensible default
+            jdl['DataAccessProtocol'] = self.requirements.dataaccessprotocol
 
-        if self.jobtype.upper() in ['MPICH','NORMAL','INTERACTIVE']:
+        if self.jobtype.upper() in ['MPICH', 'NORMAL', 'INTERACTIVE']:
             jdl['JobType'] = self.jobtype.upper()
             if self.jobtype.upper() == 'MPICH':
-                jdl['Requirements'].append('(other.GlueCEInfoTotalCPUs >= NodeNumber)')
-                jdl['Requirements'].append('Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
+                jdl['Requirements'].append(
+                    '(other.GlueCEInfoTotalCPUs >= NodeNumber)')
+                jdl['Requirements'].append(
+                    'Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
                 jdl['NodeNumber'] = self.requirements.nodenumber
         else:
             logger.warning('JobType "%s" not supported' % self.jobtype)
@@ -1585,43 +1632,45 @@ sys.exit(0)
 #        if jobconfig.args: jdl['Arguments'] = jobconfig.getArguments()
 
 #       additional settings from the configuration
-        ## !!note!! StorageIndex is not defined in EDG middleware
-        for name in [ 'ShallowRetryCount', 'RetryCount' ]:
+        # !!note!! StorageIndex is not defined in EDG middleware
+        for name in ['ShallowRetryCount', 'RetryCount']:
             if config[name] >= 0:
                 jdl[name] = config[name]
 
-        for name in [ 'Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer' ]:
+        for name in ['Rank', 'ReplicaCatalog', 'StorageIndex', 'MyProxyServer']:
             if config[name]:
                 jdl[name] = config[name]
 
         jdlText = Grid.expandjdl(jdl)
         logger.debug('subjob JDL: %s' % jdlText)
-        return inpw.writefile(FileBuffer('__jdlfile__',jdlText))
+        return inpw.writefile(FileBuffer('__jdlfile__', jdlText))
 
-    def updateGangaJobStatus(job,status):
+    def updateGangaJobStatus(job, status):
         '''map backend job status to Ganga job status'''
 
         if status == 'Running':
             job.updateStatus('running')
-     
+
         elif status == 'Done (Success)' or status == 'Done(Success)':
             job.updateStatus('completed')
-      
-        elif status in ['Aborted','Cancelled','Done (Exit Code !=0)', 'Done(Exit Code !=0)']:
-            job.updateStatus('failed') 
-     
+
+        elif status in ['Aborted', 'Cancelled', 'Done (Exit Code !=0)', 'Done(Exit Code !=0)']:
+            job.updateStatus('failed')
+
         elif status == 'Cleared':
             if job.status in LCG._final_ganga_states:
-                # do nothing in this case as it's in the middle of the corresponding job downloading task
-                return 
-            logger.warning('The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.',job.getFQID('.'))
+                # do nothing in this case as it's in the middle of the
+                # corresponding job downloading task
+                return
+            logger.warning(
+                'The job %d has reached unexpected the Cleared state and Ganga cannot retrieve the output.', job.getFQID('.'))
             job.updateStatus('failed')
-     
-        elif status in ['Submitted','Waiting','Scheduled','Ready','Done (Failed)', 'Done(Failed)']:
+
+        elif status in ['Submitted', 'Waiting', 'Scheduled', 'Ready', 'Done (Failed)', 'Done(Failed)']:
             pass
-     
+
         else:
-            logger.warning('Unexpected job status "%s"',status)
+            logger.warning('Unexpected job status "%s"', status)
 
     updateGangaJobStatus = staticmethod(updateGangaJobStatus)
 
@@ -1632,7 +1681,7 @@ sys.exit(0)
         profiler.start()
 
         emulated_bulk_jobs = []
-        native_bulk_jobs   = []
+        native_bulk_jobs = []
 
         for j in jobs:
 
@@ -1645,68 +1694,76 @@ sys.exit(0)
                 # put the individually submitted subjobs into the emulated_bulk_jobs list
                 # those jobs should be checked individually as a single job
                 for sj in j.subjobs:
-                    if sj.backend.flag == 1 and sj.status in ['submitted','running']:
-                        logger.debug('job %s submitted individually. separate it in a different monitoring loop.' % sj.getFQID('.'))
+                    if sj.backend.flag == 1 and sj.status in ['submitted', 'running']:
+                        logger.debug(
+                            'job %s submitted individually. separate it in a different monitoring loop.' % sj.getFQID('.'))
                         emulated_bulk_jobs.append(sj)
 
         # involk normal monitoring method for normal jobs
         for j in emulated_bulk_jobs:
-            logger.debug('emulated bulk job to be monitored: %s' % j.getFQID('.'))
+            logger.debug('emulated bulk job to be monitored: %s' %
+                         j.getFQID('.'))
         IBackend.master_updateMonitoringInformation(emulated_bulk_jobs)
 
         # involk special monitoring method for glite bulk jobs
         for j in native_bulk_jobs:
-            logger.debug('native bulk job to be monitored: %s' % j.getFQID('.'))
+            logger.debug('native bulk job to be monitored: %s' %
+                         j.getFQID('.'))
         LCG.master_bulk_updateMonitoringInformation(native_bulk_jobs)
-        
-        ## should went through all jobs to update overall master job status
+
+        # should went through all jobs to update overall master job status
         for j in jobs:
-            if ( len(j.subjobs) > 0 ) and j.backend.id:
-                logger.debug('updating overall master job status: %s' % j.getFQID('.'))
+            if (len(j.subjobs) > 0) and j.backend.id:
+                logger.debug(
+                    'updating overall master job status: %s' % j.getFQID('.'))
                 j.updateMasterJobStatus()
 
         profiler.check('==> master_updateMonitoringInformation() elapsed time')
 
-    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
+    master_updateMonitoringInformation = staticmethod(
+        master_updateMonitoringInformation)
 
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
-      
-        jobdict   = dict([ [job.backend.id,job] for job in jobs if job.backend.id ])
 
-        ## divide jobs into classes based on the middleware type
-        jobclass  = {}
+        jobdict = dict([[job.backend.id, job]
+                        for job in jobs if job.backend.id])
+
+        # divide jobs into classes based on the middleware type
+        jobclass = {}
         for key in jobdict:
             mt = jobdict[key].backend.middleware.upper()
-            if not jobclass.has_key(mt):
+            if mt not in jobclass:
                 jobclass[mt] = [key]
             else:
                 jobclass[mt].append(key)
 
-        ## loop over the job classes
+        # loop over the job classes
         cnt_new_download_task = 0
         for mt in jobclass.keys():
 
             if not config['%s_ENABLE' % mt]:
-                continue 
+                continue
 
-            ## loop over the jobs in each class
+            # loop over the jobs in each class
             status_info, missing_glite_jids = grids[mt].status(jobclass[mt])
 
             __fail_missing_jobs__(missing_glite_jids, jobdict)
-            
+
             for info in status_info:
 
                 create_download_task = False
 
                 job = jobdict[info['id']]
-         
+
                 if job.backend.actualCE != info['destination']:
-                    logger.info('job %s has been assigned to %s',job.getFQID('.'),info['destination'])
+                    logger.info(
+                        'job %s has been assigned to %s', job.getFQID('.'), info['destination'])
                     job.backend.actualCE = info['destination']
-        
+
                 if job.backend.status != info['status']:
-                    logger.info('job %s has changed status to %s',job.getFQID('.'),info['status'])
+                    logger.info(
+                        'job %s has changed status to %s', job.getFQID('.'), info['status'])
                     job.backend.status = info['status']
                     job.backend.reason = info['reason']
                     job.backend.exitcode_lcg = info['exit']
@@ -1714,14 +1771,14 @@ sys.exit(0)
                         create_download_task = True
                     else:
                         LCG.updateGangaJobStatus(job, info['status'])
-                elif ( info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and ( job.status not in LCG._final_ganga_states ):
+                elif (info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and (job.status not in LCG._final_ganga_states):
                     create_download_task = True
 
                 if create_download_task:
                     # update to 'running' before changing to 'completing'
                     if job.status == 'submitted':
                         job.updateStatus('running')
-                
+
                     downloader = get_lcg_output_downloader()
                     downloader.addTask(grids[mt], job, False)
 
@@ -1729,7 +1786,8 @@ sys.exit(0)
 
         if cnt_new_download_task > 0:
             downloader = get_lcg_output_downloader()
-            logger.debug('%d new downloading tasks; %d alive downloading agents' % ( cnt_new_download_task, downloader.countAliveAgent() ) )
+            logger.debug('%d new downloading tasks; %d alive downloading agents' % (
+                cnt_new_download_task, downloader.countAliveAgent()))
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
@@ -1742,53 +1800,56 @@ sys.exit(0)
         if not grid:
             return
 
-        ## split up the master job into severl LCG bulk job ids
-        ##  - checking subjob status and excluding the master jobs with all subjobs in a final state)
-        ##  - excluding the resubmitted jobs
-        ##  - checking master jobs with the status not being properly updated while all subjobs are in final states
+        # split up the master job into severl LCG bulk job ids
+        # - checking subjob status and excluding the master jobs with all subjobs in a final state)
+        # - excluding the resubmitted jobs
+        # - checking master jobs with the status not being properly updated while all subjobs are in final states
         jobdict = {}
         #mjob_status_updatelist = []
         for j in jobs:
             #cnt_sj_final = 0
             if j.backend.id:
-                
-                ## collect master jobs need to be updated by polling the status from gLite WMS
+
+                # collect master jobs need to be updated by polling the status
+                # from gLite WMS
                 for sj in j.subjobs:
-                    #if (sj.status in ['completed','failed']):
+                    # if (sj.status in ['completed','failed']):
                     #    cnt_sj_final += 1
-                        
+
                     if (sj.status not in LCG._final_ganga_states) and \
                             (sj.backend.parent_id in j.backend.id) and \
-                            (not jobdict.has_key(sj.backend.parent_id)):
+                            (sj.backend.parent_id not in jobdict):
                         jobdict[sj.backend.parent_id] = j
-                        
+
                     #    if j not in mjob_status_updatelist:
                     #        mjob_status_updatelist.append(j)
-                        
-            ## collect master jobs with status not being updated even when all subjobs are in final states
-            #if (j.status not in ['completed','failed']) and (cnt_sj_final == len(j.subjobs)):
+
+            # collect master jobs with status not being updated even when all subjobs are in final states
+            # if (j.status not in ['completed','failed']) and (cnt_sj_final == len(j.subjobs)):
             #    if j not in mjob_status_updatelist:
             #        mjob_status_updatelist.append(j)
-                        
-        job        = None
+
+        job = None
         subjobdict = {}
 
-        ## make sure all the status information is available
-        ## if not ... wait for a while and fetch the status again
+        # make sure all the status information is available
+        # if not ... wait for a while and fetch the status again
         def check_info(status):
             for info in status:
                 if info['is_node'] and not info['name']:
                     return False
             return True
 
-        (status_info, missing_glite_jids) = grid.status(jobdict.keys(),is_collection=True)
+        (status_info, missing_glite_jids) = grid.status(
+            jobdict.keys(), is_collection=True)
 
         __fail_missing_jobs__(missing_glite_jids, jobdict)
 
-        ## update GANGA job repository according to the available job information
+        # update GANGA job repository according to the available job
+        # information
         cnt_new_download_task = 0
         for info in status_info:
-            if not info['is_node']: # this is the info for the master job
+            if not info['is_node']:  # this is the info for the master job
 
                 cachedParentId = info['id']
                 master_jstatus = info['status']
@@ -1798,18 +1859,21 @@ sys.exit(0)
                 # update master job's status if needed
                 if cachedParentId not in job.backend.status.keys():
                     # if this happens, something must be seriously wrong
-                    logger.warning('job id not found in the submitted master job: %s' % cachedParentId)
+                    logger.warning(
+                        'job id not found in the submitted master job: %s' % cachedParentId)
                 elif master_jstatus != job.backend.status[cachedParentId]:
                     job.backend.status[cachedParentId] = master_jstatus
 
-                subjobdict = dict([ [str(subjob.id),subjob] for subjob in job.subjobs ])
+                subjobdict = dict([[str(subjob.id), subjob]
+                                   for subjob in job.subjobs])
 
-            else: # this is the info for the node job
+            else:  # this is the info for the node job
 
-                # subjob's node name is not available 
-                if not info['name']: continue
+                # subjob's node name is not available
+                if not info['name']:
+                    continue
 
-                subjob = subjobdict[info['name'].replace('gsj_','')]
+                subjob = subjobdict[info['name'].replace('gsj_', '')]
 
                 create_download_task = False
 
@@ -1817,18 +1881,23 @@ sys.exit(0)
                 #  - the subjob's parent job id
                 #  - the parent id returned from status
                 if cachedParentId != subjob.backend.parent_id:
-                    logger.debug('job %s has been resubmitted, ignore the status update.' % subjob.getFQID('.'))
+                    logger.debug(
+                        'job %s has been resubmitted, ignore the status update.' % subjob.getFQID('.'))
                     continue
 
                 # skip updating the cleared jobs
-                if info['status'] == 'Cleared' and subjob.status in LCG._final_ganga_states: continue
+                if info['status'] == 'Cleared' and subjob.status in LCG._final_ganga_states:
+                    continue
 
-                # skip updating the jobs that are individually resubmitted after the original bulk submission
+                # skip updating the jobs that are individually resubmitted
+                # after the original bulk submission
                 if subjob.backend.flag == 1:
-                    logger.debug('job %s was resubmitted individually. skip updating it from the monitoring of its master job.' % subjob.getFQID('.'))
+                    logger.debug(
+                        'job %s was resubmitted individually. skip updating it from the monitoring of its master job.' % subjob.getFQID('.'))
                 # skip updating the jobs that are individually killed
                 elif subjob.status == 'killed':
-                    logger.debug('job %s was killed individually. skip updating it from the monitoring of its master job.' % subjob.getFQID('.'))
+                    logger.debug(
+                        'job %s was killed individually. skip updating it from the monitoring of its master job.' % subjob.getFQID('.'))
                 else:
                     if not subjob.backend.id:
                         # send out the subjob's id which is becoming available at the first time.
@@ -1840,19 +1909,22 @@ sys.exit(0)
                         #       This issue linked to the temporary workaround of setting subjob's status to 'submitted'
                         #       in the master_bulk_(re)submit() methods. In Ganga 5, a clear implementation should be
                         #       applied with the new lock mechanism.
-                        logger.debug('job %s obtained backend id, transmit it to monitoring service.' % subjob.getFQID('.'))
+                        logger.debug(
+                            'job %s obtained backend id, transmit it to monitoring service.' % subjob.getFQID('.'))
                         subjob.backend.id = info['id']
                         subjob.getMonitoringService().submit()
 
                         # in the temporary workaround, there is no need to set job status to 'submitted'
-                        #subjob.updateStatus('submitted')
-                 
+                        # subjob.updateStatus('submitted')
+
                     if subjob.backend.actualCE != info['destination']:
-                        logger.info('job %s has been assigned to %s',subjob.getFQID('.'),info['destination'])
+                        logger.info(
+                            'job %s has been assigned to %s', subjob.getFQID('.'), info['destination'])
                         subjob.backend.actualCE = info['destination']
-                 
+
                     if subjob.backend.status != info['status']:
-                        logger.info('job %s has changed status to %s',subjob.getFQID('.'),info['status'])
+                        logger.info(
+                            'job %s has changed status to %s', subjob.getFQID('.'), info['status'])
                         subjob.backend.status = info['status']
                         subjob.backend.reason = info['reason']
                         subjob.backend.exitcode_lcg = info['exit']
@@ -1860,7 +1932,7 @@ sys.exit(0)
                             create_download_task = True
                         else:
                             LCG.updateGangaJobStatus(subjob, info['status'])
-                    elif ( info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and ( subjob.status not in LCG._final_ganga_states ):
+                    elif (info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and (subjob.status not in LCG._final_ganga_states):
                         create_download_task = True
 
                     if create_download_task:
@@ -1874,15 +1946,17 @@ sys.exit(0)
 
         if cnt_new_download_task > 0:
             downloader = get_lcg_output_downloader()
-            logger.debug('%d new downloading tasks; %d alive downloading agents' % ( cnt_new_download_task, downloader.countAliveAgent() ) )
+            logger.debug('%d new downloading tasks; %d alive downloading agents' % (
+                cnt_new_download_task, downloader.countAliveAgent()))
 
         # update master job status
-        #if updateMasterStatus:
+        # if updateMasterStatus:
         #    for mj in mjob_status_updatelist:
         #        logger.debug('updating overall master job status: %s' % mj.getFQID('.'))
         #        mj.updateMasterJobStatus()
 
-    master_bulk_updateMonitoringInformation = staticmethod(master_bulk_updateMonitoringInformation)
+    master_bulk_updateMonitoringInformation = staticmethod(
+        master_bulk_updateMonitoringInformation)
 
     def check_proxy(self):
         '''Update the proxy'''
@@ -1890,30 +1964,30 @@ sys.exit(0)
         mt = self.middleware.upper()
         return grids[mt].check_proxy()
 
-    def get_requirement_matches(self, jdl_file = None, spec_ce = ''):
+    def get_requirement_matches(self, jdl_file=None, spec_ce=''):
         """Return any matches using the requirements or given jdlfile"""
 
         jdl_file2 = jdl_file
         if not jdl_file:
             # create a dummy jdl file from the given requirements
             import tempfile
-            jdl = {'VirtualOrganisation'  : config['VirtualOrganisation'],
-                   'Executable' : os.path.basename(__file__),
-                   'InputSandbox' : [__file__],
-                   'Requirements' : self.requirements.convert()}
+            jdl = {'VirtualOrganisation': config['VirtualOrganisation'],
+                   'Executable': os.path.basename(__file__),
+                   'InputSandbox': [__file__],
+                   'Requirements': self.requirements.convert()}
 
             jdl_file_txt = Grid.expandjdl(jdl)
-            
+
             jdl_file2 = tempfile.mktemp('.jdl')
             file(jdl_file2, 'w').write(jdl_file_txt)
-            
+
         mt = self.middleware.upper()
         matches = grids[mt].list_match(jdl_file2, ce=spec_ce)
 
         # clean up
         if not jdl_file:
             os.remove(jdl_file2)
-            
+
         return matches
 
     def get_wms_list(self):
@@ -1924,7 +1998,7 @@ sys.exit(0)
         if out == "":
             logger.warning("get_wms_list returned no results!")
             return []
-        
+
         # parse the output
         # assume:  WMSNAME
         wms_list = []
@@ -1942,19 +2016,21 @@ sys.exit(0)
         if out == "":
             logger.warning("get_ce_list returned no results!")
             return {}
-        
+
         # parse the output
         # assume: CPU    Free Total Jobs      Running Waiting ComputingElement
-        #         360       4        289          289       0 abaddon.hec.lancs.ac.uk:8443/cream-lsf-hex
-        
+        # 360       4        289          289       0
+        # abaddon.hec.lancs.ac.uk:8443/cream-lsf-hex
+
         ce_list = {}
         for ce in out.split("\n"):
             if len(ce) > 0 and ce.find("Running") == -1:
                 toks = ce.split()
                 if len(toks) != 6:
                     continue
-                ce_list[toks[5]] = {'CPU':int(toks[0]), 'Free':int(toks[1]), 'Total Jobs':int(toks[2]), 'Running':int(toks[3]), 'Waiting':int(toks[4]) }
-                
+                ce_list[toks[5]] = {'CPU': int(toks[0]), 'Free': int(toks[1]), 'Total Jobs': int(
+                    toks[2]), 'Running': int(toks[3]), 'Waiting': int(toks[4])}
+
         return ce_list
 
     def get_se_list(self):
@@ -1965,11 +2041,11 @@ sys.exit(0)
         if out == "":
             logger.warning("get_se_list returned no results!")
             return {}
-        
+
         # parse the output
         # assume: Avail Space(kB)  Used Space(kB)  Type  SE
         #         2713301090      2082969419  gftp  AGLT2_TEST_classicSE
-        
+
         se_list = {}
         for se in out.split("\n"):
             if len(se) > 0 and se.find("Used Space") == -1:
@@ -1990,103 +2066,105 @@ sys.exit(0)
                     used = -1
                 else:
                     used = int(toks[1])
-                    
-                se_list[toks[3]].append({'Avail':avail, 'Used':used, 'Type':toks[2] })
-                
+
+                se_list[toks[3]].append(
+                    {'Avail': avail, 'Used': used, 'Type': toks[2]})
+
         return se_list
-        
-        
+
     def updateExcudedCEsInJdl(self, jdlpath):
 
         import re
         configexcludedCEs = getConfig('LCG')['ExcludedCEs']
 
-        jdlFileRead = open(jdlpath, 'r')
-        jdlText = jdlFileRead.read()
-        hasRequirements = jdlText.find("Requirements =") > -1
-        jdlFileRead.close()
+        with open(jdlpath, 'r') as jdlFileRead:
+            jdlText = jdlFileRead.read()
+            hasRequirements = jdlText.find("Requirements =") > -1
 
         if hasRequirements == False:
-    
+
             if configexcludedCEs != '':
 
                 linesToAppend = []
 
-                jdlFileAppend = open(jdlpath, 'a')
-                linesToAppend.append("Requirements = \n")
-                excludedCEs = re.split('\s+', configexcludedCEs)        
-                index = 1
+                with open(jdlpath, 'a') as jdlFileAppend:
+                    linesToAppend.append("Requirements = \n")
+                    excludedCEs = re.split('\s+', configexcludedCEs)
+                    index = 1
 
-                for excludedCE in excludedCEs:
-                    #if not the last one
-                    if index != len(excludedCEs):               
-                        linesToAppend.append('   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
-                    else:
-                        linesToAppend.append('   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
+                    for excludedCE in excludedCEs:
+                        # if not the last one
+                        if index != len(excludedCEs):
+                            linesToAppend.append(
+                                '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                        else:
+                            linesToAppend.append(
+                                '   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
 
-                    index += 1 
-        
-                jdlFileAppend.writelines(linesToAppend)
-                jdlFileAppend.close()   
+                        index += 1
+
+                    jdlFileAppend.writelines(linesToAppend)
         else:
-    
-            jdlFileRead = open(jdlpath, 'r')
-            originalLines = jdlFileRead.readlines()
-            jdlFileRead.close()
+
+            with open(jdlpath, 'r') as jdlFileRead:
+                originalLines = jdlFileRead.readlines()
 
             index = 0
             thereAreExcudedCEs = False
             for line in originalLines:
-  
-                #find the index of the first line with excludedCE  
+
+                # find the index of the first line with excludedCE
                 if line.find('!RegExp') > -1 and line.find('other.GlueCEUniqueID') > -1:
                     thereAreExcudedCEs = True
                     break
-        
-                index += 1      
 
-            if (thereAreExcudedCEs == False):   
+                index += 1
+
+            if (thereAreExcudedCEs == False):
                 index = 2
                 for line in originalLines:
-  
+
                     if line == "Requirements = \n":
                         break
-        
-                index += 1      
+
+                index += 1
 
             newLines = []
             removedLines = []
 
             for line in originalLines:
-   
+
                 if line.find('!RegExp') > -1 and line.find('other.GlueCEUniqueID') > -1:
                     removedLines.append(line)
                     continue
-        
+
                 newLines.append(line)
 
-            endOfRequirements = False   
+            endOfRequirements = False
 
             for line in removedLines:
                 if line.endswith(';\n'):
                     endOfRequirements = True
-                    break               
+                    break
 
             if configexcludedCEs != '':
-                excludedCEs = re.split('\s+', configexcludedCEs)        
-                innerIndex = 1  
+                excludedCEs = re.split('\s+', configexcludedCEs)
+                innerIndex = 1
                 for excludedCE in excludedCEs:
-                    if innerIndex != len(excludedCEs):          
-                        newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                    if innerIndex != len(excludedCEs):
+                        newLines.insert(
+                            index + innerIndex - 1, '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
                     else:
-                        if endOfRequirements and thereAreExcudedCEs:    
-                            newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
+                        if endOfRequirements and thereAreExcudedCEs:
+                            newLines.insert(
+                                index + innerIndex - 1, '   (!RegExp("%s",other.GlueCEUniqueID));\n' % excludedCE)
                         else:
-                            newLines.insert(index + innerIndex - 1,'   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
+                            newLines.insert(
+                                index + innerIndex - 1, '   (!RegExp("%s",other.GlueCEUniqueID)) &&\n' % excludedCE)
 
-                    innerIndex += 1 
+                    innerIndex += 1
 
-            i = 0       
+            i = 0
             for line in newLines:
                 if line == 'Requirements = \n':
                     break
@@ -2094,7 +2172,7 @@ sys.exit(0)
 
             if newLines[-1] == 'Requirements = \n':
                 newLines.remove('Requirements = \n')
-            elif (not newLines[i+1].startswith('   ')):
+            elif (not newLines[i + 1].startswith('   ')):
                 newLines.remove('Requirements = \n')
             else:
                 i += 1
@@ -2104,57 +2182,58 @@ sys.exit(0)
                     else:
                         break
 
-            if newLines[i-1].endswith(' &&\n'):
-                newLines[i-1] = newLines[i-1][:-4] + ';\n'
-                        
-            jdlFileWrite = open(jdlpath, 'w')
-            jdlFileWrite.writelines(newLines)
-            jdlFileWrite.close()
-        
-        
-class LCGJobConfig(StandardJobConfig):
-    '''Extends the standard Job Configuration with additional attributes'''
-   
-    def __init__(self,exe=None,inputbox=[],args=[],outputbox=[],env={},inputdata=[],requirements=None):
-   
-        self.inputdata=inputdata
-        self.requirements=requirements
+            if newLines[i - 1].endswith(' &&\n'):
+                newLines[i - 1] = newLines[i - 1][:-4] + ';\n'
 
-        StandardJobConfig.__init__(self,exe,inputbox,args,outputbox,env)
+            with open(jdlpath, 'w') as jdlFileWrite:
+                jdlFileWrite.writelines(newLines)
+
+
+class LCGJobConfig(StandardJobConfig):
+
+    '''Extends the standard Job Configuration with additional attributes'''
+
+    def __init__(self, exe=None, inputbox=[], args=[], outputbox=[], env={}, inputdata=[], requirements=None):
+
+        self.inputdata = inputdata
+        self.requirements = requirements
+
+        StandardJobConfig.__init__(self, exe, inputbox, args, outputbox, env)
 
     def getArguments(self):
-    
+
         return ' '.join(self.getArgStrings())
-    
+
     def getExecutable(self):
-    
-        exe=self.getExeString()
+
+        exe = self.getExeString()
         if os.path.dirname(exe) == '.':
             return os.path.basename(exe)
         else:
             return exe
 
-        
+
 # initialisation
 
 # function for parsing VirtualOrganisation from ConfigVO
 def __getVOFromConfigVO__(file):
     re_vo = re.compile(r'.*VirtualOrganisation\s*=\s*"(.*)"')
     try:
-        f = open(file)
-        for l in f.readlines():
+        for l in open(file):
             m = re_vo.match(l.strip())
             if m:
-                f.close()
                 return m.groups()[0]
     except:
-        raise Ganga.Utility.Config.ConfigError('ConfigVO %s does not exist.' % file )
+        raise Ganga.Utility.Config.ConfigError(
+            'ConfigVO %s does not exist.' % file)
 
 # configuration preprocessor : avoid VO switching
-def __avoidVOSwitch__(opt,val):
 
-    if not opt in ['VirtualOrganisation','ConfigVO']:
-        # bypass everything irrelevant to the VO 
+
+def __avoidVOSwitch__(opt, val):
+
+    if not opt in ['VirtualOrganisation', 'ConfigVO']:
+        # bypass everything irrelevant to the VO
         return val
     elif opt == 'ConfigVO' and val == '':
         # accepting '' to disable the ConfigVO
@@ -2171,17 +2250,20 @@ def __avoidVOSwitch__(opt,val):
             vo_2 = __getVOFromConfigVO__(val)
         else:
             vo_2 = val
- 
+
         # if the new VO is not the same as the existing one, raise ConfigError
         if vo_2 != vo_1:
-            raise Ganga.Utility.Config.ConfigError('Changing VirtualOrganisation is not allowed in GANGA session.')
+            raise Ganga.Utility.Config.ConfigError(
+                'Changing VirtualOrganisation is not allowed in GANGA session.')
 
     return val
 
-# configuration preprocessor : enabling middleware 
-def __enableMiddleware__(opt,val):
+# configuration preprocessor : enabling middleware
 
-    if opt in ['EDG_ENABLE','GLITE_ENABLE'] and val:
+
+def __enableMiddleware__(opt, val):
+
+    if opt in ['EDG_ENABLE', 'GLITE_ENABLE'] and val:
         mt = opt.split('_')[0]
         try:
             if config[opt]:
@@ -2190,35 +2272,43 @@ def __enableMiddleware__(opt,val):
                 grids[mt] = Grid(mt)
                 return grids[mt].active
         except:
-            raise Ganga.Utility.Config.ConfigError('Failed to enable LCG-%s.' % mt)
+            raise Ganga.Utility.Config.ConfigError(
+                'Failed to enable LCG-%s.' % mt)
 
     return val
 
-# configuration preprocessor : disabling middleware 
-def __disableMiddleware__(opt,val):
+# configuration preprocessor : disabling middleware
 
-    if opt in ['EDG_ENABLE','GLITE_ENABLE'] and not val:
+
+def __disableMiddleware__(opt, val):
+
+    if opt in ['EDG_ENABLE', 'GLITE_ENABLE'] and not val:
         mt = opt.split('_')[0]
         grids[mt] = None
         if not config['EDG_ENABLE'] and not config['GLITE_ENABLE']:
-            logger.warning('No middleware is enabled. LCG handler is disabled.')
+            logger.warning(
+                'No middleware is enabled. LCG handler is disabled.')
 
     return
 
-# configuration postprocessor : updating the configuration of the cached Grid objects 
-def __updateGridObjects__(opt,val):
+# configuration postprocessor : updating the configuration of the cached
+# Grid objects
 
-    ## update the config binded with the grid objects
+
+def __updateGridObjects__(opt, val):
+
+    # update the config binded with the grid objects
     for mt in grids.keys():
-        try: 
-            ## NB. grids[mt] is None if the corresponding
-            ## middleware is not enabled before
+        try:
+            # NB. grids[mt] is None if the corresponding
+            # middleware is not enabled before
             grids[mt].config = getConfig('LCG')
             logger.debug('update grid configuration for %s' % mt)
         except AttributeError:
             pass
 
-    ## when user changes the 'DefaultLFC', change the env. variable, LFC_HOST, of the cached grid shells
+    # when user changes the 'DefaultLFC', change the env. variable, LFC_HOST,
+    # of the cached grid shells
     if opt == 'DefaultLFC' and val != None:
         for mt in grids.keys():
             try:
@@ -2228,17 +2318,21 @@ def __updateGridObjects__(opt,val):
                 pass
     return
 
-# configuration preprocessor 
-def __preConfigHandler__(opt,val):
-    val = __avoidVOSwitch__(opt,val)
-    val = __enableMiddleware__(opt,val)
+# configuration preprocessor
+
+
+def __preConfigHandler__(opt, val):
+    val = __avoidVOSwitch__(opt, val)
+    val = __enableMiddleware__(opt, val)
     return val
 
-# configuration postprocessor 
-def __postConfigHandler__(opt,val):
-    logger.info('%s has been set to %s' % (opt,val))
-    __disableMiddleware__(opt,val)
-    __updateGridObjects__(opt,val)
+# configuration postprocessor
+
+
+def __postConfigHandler__(opt, val):
+    logger.info('%s has been set to %s' % (opt, val))
+    __disableMiddleware__(opt, val)
+    __updateGridObjects__(opt, val)
     return
 
 # global variables
@@ -2246,84 +2340,109 @@ logger = getLogger()
 
 logger.debug('LCG module initialization: begin')
 
-config = makeConfig('LCG','LCG/gLite/EGEE configuration parameters')
+import Ganga.Utility.Config
+
+config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
 #gproxy_config = getConfig('GridProxy_Properties')
 
 # set default values for the configuration parameters
-config.addOption('EDG_ENABLE',False,'enables/disables the support of the EDG middleware')
+config.addOption(
+    'EDG_ENABLE', False, 'enables/disables the support of the EDG middleware')
 
-config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
-                 'sets the LCG-UI environment setup script for the EDG middleware', \
+config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
+                 'sets the LCG-UI environment setup script for the EDG middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
+config.addOption(
+    'GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
 
-config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh', \
-                 'sets the LCG-UI environment setup script for the GLITE middleware', \
+config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
+                 'sets the LCG-UI environment setup script for the GLITE middleware',
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('VirtualOrganisation','dteam','sets the name of the grid virtual organisation')
+config.addOption('VirtualOrganisation', 'dteam',
+                 'sets the name of the grid virtual organisation')
 
-config.addOption('ConfigVO','','sets the VO-specific LCG-UI configuration script for the EDG resource broker', \
+config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('Config','','sets the generic LCG-UI configuration script for the GLITE workload management system', \
+config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
                  filter=Ganga.Utility.Config.expandvars)
 
-config.addOption('AllowedCEs','','sets allowed computing elements by a regular expression')
-config.addOption('ExcludedCEs','','sets excluded computing elements by a regular expression')
+config.addOption(
+    'AllowedCEs', '', 'sets allowed computing elements by a regular expression')
+config.addOption(
+    'ExcludedCEs', '', 'sets excluded computing elements by a regular expression')
 
-config.addOption('GLITE_WMS_WMPROXY_ENDPOINT','','sets the WMProxy service to be contacted')
-config.addOption('GLITE_ALLOWED_WMS_LIST',[],'')
+config.addOption(
+    'GLITE_WMS_WMPROXY_ENDPOINT', '', 'sets the WMProxy service to be contacted')
+config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
 
-config.addOption('MyProxyServer','myproxy.cern.ch','sets the myproxy server')
-config.addOption('RetryCount',3,'sets maximum number of job retry')
-config.addOption('ShallowRetryCount',10,'sets maximum number of job shallow retry')
+config.addOption('MyProxyServer', 'myproxy.cern.ch', 'sets the myproxy server')
+config.addOption('RetryCount', 3, 'sets maximum number of job retry')
+config.addOption(
+    'ShallowRetryCount', 10, 'sets maximum number of job shallow retry')
 
-config.addOption('Rank','','sets the ranking rule for picking up computing element')
-config.addOption('ReplicaCatalog','','sets the replica catalogue server')
-config.addOption('StorageIndex','','sets the storage index')
+config.addOption(
+    'Rank', '', 'sets the ranking rule for picking up computing element')
+config.addOption('ReplicaCatalog', '', 'sets the replica catalogue server')
+config.addOption('StorageIndex', '', 'sets the storage index')
 
-config.addOption('DefaultSE','srm.cern.ch','sets the default storage element')
-config.addOption('DefaultSRMToken','','sets the space token for storing temporary files (e.g. oversized input sandbox)')
-config.addOption('DefaultLFC','prod-lfc-shared-central.cern.ch','sets the file catalogue server')
-config.addOption('BoundSandboxLimit',10 * 1024 * 1024,'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
+config.addOption(
+    'DefaultSE', 'srm.cern.ch', 'sets the default storage element')
+config.addOption('DefaultSRMToken', '',
+                 'sets the space token for storing temporary files (e.g. oversized input sandbox)')
+config.addOption(
+    'DefaultLFC', 'prod-lfc-shared-central.cern.ch', 'sets the file catalogue server')
+config.addOption('BoundSandboxLimit', 10 * 1024 * 1024,
+                 'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
 
-config.addOption('Requirements','Ganga.Lib.LCG.LCGRequirements','sets the full qualified class name for other specific LCG job requirements')
+config.addOption('Requirements', 'Ganga.Lib.LCG.LCGRequirements',
+                 'sets the full qualified class name for other specific LCG job requirements')
 
-config.addOption('SandboxCache','Ganga.Lib.LCG.LCGSandboxCache','sets the full qualified class name for handling the oversized input sandbox')
+config.addOption('SandboxCache', 'Ganga.Lib.LCG.LCGSandboxCache',
+                 'sets the full qualified class name for handling the oversized input sandbox')
 
-config.addOption('GliteBulkJobSize', 50, 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
+config.addOption('GliteBulkJobSize', 50,
+                 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
 
-config.addOption('SubmissionThread', 10, 'sets the number of concurrent threads for job submission to gLite WMS')
+config.addOption('SubmissionThread', 10,
+                 'sets the number of concurrent threads for job submission to gLite WMS')
 
-config.addOption('SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
+config.addOption(
+    'SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
 
-config.addOption('StatusPollingTimeout', 300, 'sets the gLite job status polling timeout in seconds')
+config.addOption('StatusPollingTimeout', 300,
+                 'sets the gLite job status polling timeout in seconds')
 
-config.addOption('OutputDownloaderThread', 10, 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
+config.addOption('OutputDownloaderThread', 10,
+                 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
 
-config.addOption('SandboxTransferTimeout', 60, 'sets the transfer timeout of the oversized input sandbox')
+config.addOption('SandboxTransferTimeout', 60,
+                 'sets the transfer timeout of the oversized input sandbox')
 
-config.addOption('JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
+config.addOption(
+    'JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
 
-config.addOption('MatchBeforeSubmit', False, 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
+config.addOption('MatchBeforeSubmit', False,
+                 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
 
-config.addOption('IgnoreGliteScriptHeader', False, 'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
+config.addOption('IgnoreGliteScriptHeader', False,
+                 'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
 
 #config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
 
 # apply preconfig and postconfig handlers
-config.attachUserHandler(__preConfigHandler__,__postConfigHandler__)
+config.attachUserHandler(__preConfigHandler__, __postConfigHandler__)
 
 # startup two independent middleware environments for LCG
-grids = {'EDG':None,'GLITE':None}
+grids = {'EDG': None, 'GLITE': None}
 
 if config['GLITE_ENABLE']:
     grids['GLITE'] = Grid('GLITE')
 #    if grids['GLITE'].shell:
 #        config.setSessionValue('DefaultLFC',grids['GLITE'].shell.env['LFC_HOST'])
-    config.setSessionValue('GLITE_ENABLE',grids['GLITE'].active)
+    config.setSessionValue('GLITE_ENABLE', grids['GLITE'].active)
 
 if config['EDG_ENABLE']:
     grids['EDG'] = Grid('EDG')
@@ -2898,7 +3017,7 @@ logger.debug('LCG module initialization: end')
 #  - more virtual organisation checks
 #  - the function will be called everytime the submit() function is called
 #
-# Revision 1.27  2006/07/03 13:55:30  hclee 
+# Revision 1.27  2006/07/03 13:55:30  hclee
 # Add internal function in Grid object for setting up the edg-job-submit options
 #  - effective configurations are used in composing the options
 #  - more virtual organisation checks

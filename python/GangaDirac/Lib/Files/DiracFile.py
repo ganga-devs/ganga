@@ -88,7 +88,7 @@ class DiracFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "DiracFile"
-    _exportmethods = [ "get", "getMetadata", "getReplicas", 'remove', "replicate", 'put', 'locations', 'location', 'accessURL' ]
+    _exportmethods = [ "get", "getMetadata", "getReplicas", 'getSubFiles', 'remove', "replicate", 'put', 'locations', 'location', 'accessURL', '_updateRemoteURLs' ]
     _remoteURLs = {}
     _storedReplicas = {}
 
@@ -99,7 +99,7 @@ class DiracFile(IGangaFile):
 
         #logger.debug( "DiracFile" )
 
-        super(DiracFile, self).__init__( **kwds )
+        super(DiracFile, self).__init__()
         self.locations   = []
 
         if str(namePattern).upper()[0:4] == "LFN:" and lfn=='':
@@ -200,12 +200,18 @@ class DiracFile(IGangaFile):
                 logger.warning( "Do NOT have an LFN, for file: %s" % self.namePattern )
                 logger.warning( "If file exists locally try first using the method put()" )
             return object.__getattribute__(self, 'lfn')
-        elif name is 'guid' or name is 'locations':
+        elif name in [ 'guid', 'locations' ]:
             if configDirac[ 'DiracFileAutoGet' ]:
-                if self.guid is None or self.guid == '' or self.locations == []:
-                    if self.lfn != "":
-                        self.getMetadata()
-                        return object.__getattribute__(self, 'guid')
+                if name is 'guid':
+                    if self.guid is None or self.guid == '':
+                        if self.lfn != "":
+                            self.getMetadata()
+                            return object.__getattribute__(self, 'guid')
+                if name is 'locations':
+                    if self.locations == []:
+                        if self.lfn != "":
+                            self.getMetadata()
+                            return object.__getattribute__(self, 'locations')
 
         return object.__getattribute__(self, name )
 
@@ -420,12 +426,13 @@ class DiracFile(IGangaFile):
             if (self._storedReplicas == {} and len(self.subfiles) == 0 ) or forceRefresh:
 
                 self._storedReplicas =  execute('getReplicas("%s")' % self.lfn)
-                if self._storedReplicas.get( 'OK', False ):
+                if self._storedReplicas.get( 'OK', False ) is True:
                     self._storedReplicas = self._storedReplicas['Value']['Successful']
                 else:
                     logger.error( "Couldn't find replicas for: %s" % str( self.lfn ) )
                     raise GangaError( "Couldn't find replicas for: %s" % str( self.lfn ) )
                 logger.debug( "getReplicas: %s" % str(self._storedReplicas) )
+
                 self._updateRemoteURLs( self._storedReplicas )
 
                 these_replicas = [ self._storedReplicas[self.lfn] ]
@@ -442,13 +449,15 @@ class DiracFile(IGangaFile):
             for i in self.subfiles:
                 i._updateRemoteURLs( reps )
         else:
+            if self.lfn not in reps.keys():
+                return
             if self.locations != reps[self.lfn].keys():
                 self.locations = reps[self.lfn].keys()
             #logger.debug( "locations: %s" % str( self.locations ) )
             for site in self.locations:
                 #logger.debug( "site: %s" % str( site ) )
                 self._remoteURLs[site] = reps[self.lfn][site]
-                #logger.debug( "_remoteURLs[site]: %s" % str(self._remoteURLs[site] ) )
+                logger.debug( "Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site] ) )
 
     def location(self):
         """
@@ -799,7 +808,7 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
     for se in storage_elements:
         try:
             result = dirac.addFile(lfn, file_name, se)
-        except Exception,x:
+        except Exception as x:
             print 'Exception running dirac.addFile command:',x
             break
         if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:

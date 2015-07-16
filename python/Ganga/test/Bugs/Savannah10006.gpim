@@ -20,7 +20,6 @@ class Savannah10006(MultipassTest):
         return j.id
 
     def pass2(self):
-        print self.data
         j = jobs(self.data[1])
 
         assert(j.application.modified)

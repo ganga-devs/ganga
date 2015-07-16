@@ -28,7 +28,7 @@ Test driver used to executed GPI, GPIM and PyUnit tests
 This file is executed as a Ganga script so we can access to all GPI objects
 """
 
-import os,os.path,sys,new,types
+import os,os.path,sys,new
 
 from Ganga.Utility.Config import getConfig
 myconfig = getConfig('TestingFramework')
@@ -69,9 +69,10 @@ class GPIRunner:
                 
         def tearDown(self):
                 """
-                NOP: .cleanup file is ran in a different session
+                RUNNING CLEANUP IN THE NEXT SESSION CAUSES MONITORING ERRORS!!!!!
+                let's NEVER, NEVER, EVER! rely on this - rcurrie
                 """
-                pass
+                cleanup()
         
                 
 class UnitRunner:
@@ -90,8 +91,8 @@ class UnitRunner:
                         testClass=os.path.splitext(os.path.basename(self.testPath))[0]
                         clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass)                  
                         self.__instance = clazz()
-                except Exception,e:
-                        print >>sys.stderr, "Cannot load test"
+                except Exception as e:
+                        logger.error("Cannot load test")
                         import traceback
                         traceback.print_exc(file=sys.stderr)
                         self.__instance=None
@@ -111,8 +112,8 @@ class UnitRunner:
                 try:
                         if hasattr(self.__instance,"tearDown") and "tearDown" in sys.argv:
                                 getattr(self.__instance,"tearDown")()
-                except Exception,e:
-                        print >>sys.stderr, "Cannot tear down gracefully the test (%s)" % str(e)
+                except Exception as e:
+                        logger.error("Cannot tear down gracefully the test (%s)" % str(e))
                         import traceback
                         traceback.print_exc()
 
@@ -130,7 +131,6 @@ from GangaTest.Framework.tests import GPIPPreparationTestCase, SimpleRunnerContr
 
 class GPIPRunner:
         def __init__(self, testPath, outputPath,timeout,description,releaseTest,report_outputpath,parent_report_name):
-                #print '%s %s %s %s %s %s %s' % (testPath, outputPath,timeout,description,releaseTest,report_outputpath,parent_report_name)
                 self.testPath = testPath
                 #self.testName = testName
                 self.outputPath = outputPath
@@ -143,21 +143,18 @@ class GPIPRunner:
                 self.gpiptest_prefix = self.pytest_name.replace('.', '/')
                 self._testinstances = []
                 self._xml_report_ext = '%s.xml_merged'
-                #print 'Path : %s, NAME : %s, REPORT : %s' %(testPath, 'ALL', self.parent_report_name)
 
         def load(self):
                 self.__instance = None
                 try:
                         exec_module_code(self.testPath,Ganga.Runtime._prog.local_ns)
                         testClass=os.path.splitext(os.path.basename(self.testPath))[0]
-                        clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass) 
-                        #print clazz
+                        clazz = Ganga.Runtime._prog.local_ns[testClass]# getattr(Ganga.Runtime._prog.local_ns.__dict__, testClass)
                         self.clazz = clazz
                         self.__instance = clazz()
                         self.testsuite = self._getTestSuite()
-                        #print self.__instance
-                except Exception,e:
-                        print >>sys.stderr, "Cannot load test"
+                except Exception as e:
+                        logger.error("Cannot load test")
                         import traceback
                         traceback.print_exc(file=sys.stderr)
                         self.__instance=None
@@ -213,7 +210,6 @@ class GPIPRunner:
 
                 while not all_done and not (duration > self.timeout):
                     all_done = True
-                    #print 'duration : %d, timeout : %d' % (duration, self.timeout)
                     for run_control in runners_control:
                         if not run_control.isReadyForCheck() and not run_control.isFinished():
                             all_done = False
@@ -239,7 +235,7 @@ class GPIPRunner:
                             else:
                                 failedTests.append(["%s:%s" % (self.gpiptest_prefix, run_control.testName), 'Failed in running check test somehow.'])
 
-                print "[%d failed tests]" % len(failedTests)
+                logger.info("[%d failed tests]" % len(failedTests))
                 if len(failedTests) > 0:
                     failedTestsException = FailedTestsException(failedTests)
                     import traceback
@@ -282,7 +278,6 @@ class GPIPRunner:
         def _getTestSuite(self):
                 attrs = dir(self.clazz)
                 testcase = None
-                #print attrs
                 testcases = []
                 for test in attrs:
                         stest = str(test)
@@ -301,13 +296,13 @@ class GPIPRunner:
                         if hasattr(self.__instance,"tearDown") and "tearDown" in sys.argv:
                             for instance in self._testinstances:
                                 getattr(instance,"tearDown")()
-                except Exception,e:
-                        print >>sys.stderr, "Cannot tear down gracefully the test (%s)" % str(e)
+                except Exception as e:
+                        logger.error("Cannot tear down gracefully the test (%s)" % str(e))
                         import traceback
                         traceback.print_exc()
 
 #utils 
-def cleanup():    
+def cleanup():   
     if myconfig['AutoCleanup'] == True:
         logger.info("[TestingFramework]AutoCleanup=True")
         logger.info("cleaning up job repository...")
@@ -321,7 +316,7 @@ def cleanup():
                 templates(id).remove()
             templates.remove()
             logger.info("regular cleanup done.")
-        except Exception,e:
+        except Exception as e:
             logger.exception("Cleanup failed (%s)... will delete repository and workspace dirs manually "%str(e))
 
         logger.info('performing "hard" cleanup')
@@ -380,7 +375,7 @@ def exec_module_code(path,ns=None ):
         code_str = read_file(filename)
         code     = compile(code_str,filename,'exec')
         (name,ext) = os.path.splitext(filename)
-        if sys.modules.has_key(name):
+        if name in sys.modules:
                 mod = sys.modules[name] # necessary for reload()
         else:
                 mod = new.module(name)
@@ -388,9 +383,9 @@ def exec_module_code(path,ns=None ):
         mod.__name__ = name
         mod.__file__ = filename
         if ns is None:
-                exec code in mod.__dict__
+                exec(code, mod.__dict__)
         else:
-                exec code in ns
+                exec(code, ns)
         
         #restore cwd
         os.chdir(cwd)       
@@ -416,7 +411,7 @@ def parse_args(sys_argv):
 if __name__=="__main__":
         
         if len(sys.argv)<4:
-                print >> sys.stderr, "Invalid usage of program. At least three parameters are required"
+                logger.error("Invalid usage of program. At least three parameters are required")
                 sys.exit(1)     
         
         param,opt = parse_args(sys.argv[1:])    
@@ -457,7 +452,7 @@ if __name__=="__main__":
                                 pass
                 #4. TEAR-DOWN
                 testRunner.tearDown()   
-        except Exception,e:
+        except Exception as e:
                 import traceback
                 traceback.print_exc(file=sys.stderr)
                 success = False
@@ -475,7 +470,7 @@ if __name__=="__main__":
         #                Coordinator.disableInternalServices()
 
                 from Ganga.Core.InternalServices import ShutdownManager
-        #        ShutdownManager._ganga_run_exitfuncs()
+                ShutdownManager._ganga_run_exitfuncs()
 
         except:
                 pass

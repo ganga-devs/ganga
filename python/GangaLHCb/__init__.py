@@ -160,6 +160,10 @@ def loadPlugins( config = {} ):
 #from Ganga.GPIDev.Credentials import getCredential
 #proxy = getCredential('GridProxy', '')
 
+from Ganga.GPIDev.Lib.File.Configure import outputconfig
+
+outputconfig.overrideDefaultValue( 'FailJobIfNoOutputMatched', 'False' )
+
 ## This is being dropped from 6.1.0 due to causing some bus in loading large numbers of jobs
 #
 #from Ganga.GPIDev.Lib.Registry.JobRegistry import config as display_config

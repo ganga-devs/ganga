@@ -79,7 +79,7 @@ def guess_version(appname):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def lumi(xmlsummary):
   '''given an XMLSummary object, will return the integrated luminosity'''
-  #  print xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2]
+  #  print(xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[0],'+/-',xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()[2])
 
   lumiDict = dict( zip( xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].attrib('format'),
                         xmlsummary.counter_dict()['lumiCounters']['IntegrateBeamCrossing/Luminosity'].value()
@@ -96,9 +96,8 @@ def events(xmlsummary):
       evts[type]=0
     for file in ad[type].keys():
       if type=='input' and ad[type][file].attrib('status')=='mult':
-        print 'Warning, processed file ', ad[type][file].attrib('name'), 'multiple times'
+        logger.warning('Warning, processed file ' + ad[type][file].attrib('name') + 'multiple times')
       if ad[type][file].attrib('GUID')==file:
-        #print 'ignoring'
         continue
       else:
         evts[type]+=ad[type][file].value()

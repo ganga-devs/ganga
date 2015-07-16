@@ -94,7 +94,6 @@ def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
     """    
     import os
     #rtconfig = getConfig('TestingFramework')
-    #print rtconfig['Config']
     my_full_path =  os.path.abspath(os.path.dirname(__file__))
     #sys.stdout = UnbufferedStdout(sys.stdout)
     #sys.stderr = UnbufferedStdout(sys.stderr)    
@@ -142,7 +141,6 @@ def start( config = myConfig , test_selection='Ganga.test.*', logger=myLogger):
     runner_args.extend(['--loader-path=%s' % pytf_loader_path])
     runner_args.extend(pytf_loader_args)
     runner_args.extend([test_selection])
-    #print runner_args
 
     try:
         rc = runTests.main(logger,runner_args)

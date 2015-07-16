@@ -1,3 +1,4 @@
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform

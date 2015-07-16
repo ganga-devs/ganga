@@ -66,10 +66,10 @@ def dirac_inputdata(app):
         else: # master job with no splitter or subjob already split proceed as normal
             input_data = job.inputdata.getLFNs()
 
-    elif not job.backend.settings.has_key('Destination'):
+    elif 'Destination' not in job.backend.settings:
         t1_sites = getConfig('DIRAC')['noInputDataBannedSites']
         logger.info('Job has no inputdata (T1 sites will be banned to help avoid overloading them).')
-        if job.backend.settings.has_key('BannedSites'):
+        if 'BannedSites' in job.backend.settings:
             job.backend.settings['BannedSites'].extend(t1_sites)
             job.backend.settings['BannedSites'] = unique(job.backend.settings['BannedSites'])
         else:
@@ -77,7 +77,6 @@ def dirac_inputdata(app):
 
     #import traceback
     #traceback.print_stack()
-    #print "input_data:\n%s" % input_data
 
     return input_data, parametricinput_data
 
@@ -93,8 +92,6 @@ def dirac_parametric_split(app):
 ##         split_data.append([f.name for f in dataset])
     if len(split_data) > 0:
         return split_data
-
-    #print  "dirac_parametric_split: %s" % str( split_data )
 
     return None
 

@@ -7,8 +7,6 @@ Job()
 
 s = jobs.copy()
 
-print s
-
 assert(len(jobs) == 2 * len(s))
 
 # make sure you can do something with the copy

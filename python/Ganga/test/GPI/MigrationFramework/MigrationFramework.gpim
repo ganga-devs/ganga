@@ -13,7 +13,6 @@ class MigrationFramework(MultipassTest):
 
     def pass1(self):
         j = Job(application=TestApplicationMigration())
-        print j
         version = j.application._impl._schema.version
         assert((version.major, version.minor) == (1,0))
         version = j.application.testAttribute._impl._schema.version
@@ -23,7 +22,6 @@ class MigrationFramework(MultipassTest):
 
     def pass2(self):
         j = jobs(self.data[1])
-        print j
         assert(j.status == 'new')
         version = j.application._impl._schema.version
         assert((version.major, version.minor) == (2,0))
@@ -34,7 +32,6 @@ class MigrationFramework(MultipassTest):
         assert((version.major, version.minor) == (2,0))
         version = j2.application.testAttribute._impl._schema.version
         assert((version.major, version.minor) == (2,0))
-        print j2
         #from Ganga.GPIDev.Streamers.MigrationControl import migrated_jobs
         #assert(len(migrated_jobs)==1)
         #assert(j.id in map(lambda j:j.id, migrated_jobs))

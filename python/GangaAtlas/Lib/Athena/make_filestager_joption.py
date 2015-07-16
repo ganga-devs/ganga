@@ -17,7 +17,7 @@ import time
 io_type = os.environ['DATASETTYPE']
 io_mode = 'local'
 
-if os.environ.has_key( 'FILE_STAGER_IOMODE' ):
+if 'FILE_STAGER_IOMODE' in os.environ:
     io_mode = os.environ[ 'FILE_STAGER_IOMODE' ];
 
 dq2tracertime = []
@@ -32,7 +32,7 @@ if os.path.exists('input_guids'):
 
 ## get dataset locations from os.environ['DATASETLOCATION']:
 ds_locations = []
-if os.environ.has_key('DATASETLOCATION'):
+if 'DATASETLOCATION' in os.environ:
     ds_locations = os.environ['DATASETLOCATION'].split(':')
 
 if (io_type in ['FILE_STAGER']):
@@ -69,7 +69,7 @@ if (io_type in ['FILE_STAGER']):
                                 force_siteid_domain=force_siteid_domain, \
                                 force_siteid_se=force_siteid_se)
 
-    if not dq2_site_id and os.environ.has_key('DQ2_LOCAL_SITE_ID'):
+    if not dq2_site_id and 'DQ2_LOCAL_SITE_ID' in os.environ:
         dq2_site_id = os.environ['DQ2_LOCAL_SITE_ID']
 
     print >> sys.stdout, 'detected DQ2_LOCAL_SITE_ID: %s' % dq2_site_id
@@ -94,7 +94,7 @@ if (io_type in ['FILE_STAGER']):
     my_protocol = 'lcgcp'
 
     # check if DQ2_LOCAL_PROTOCOL is given: use the given protocol forcely
-    if os.environ.has_key('DQ2_LOCAL_PROTOCOL') and os.environ['DQ2_LOCAL_PROTOCOL']:
+    if 'DQ2_LOCAL_PROTOCOL' in os.environ and os.environ['DQ2_LOCAL_PROTOCOL']:
         my_protocol = os.environ['DQ2_LOCAL_PROTOCOL']
 
         # just to convert the protocol name into FileStager convention
@@ -151,7 +151,7 @@ if (io_type in ['FILE_STAGER']):
     print >> sys.stdout, 'LFC checksum pickle: %s' % os.path.join(os.getcwd(), 'lfc_checksum.pickle')
 
     try:
-        if os.environ.has_key('ATHENA_MAX_EVENTS'):
+        if 'ATHENA_MAX_EVENTS' in os.environ:
             evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
         else:
             evtmax = -1
@@ -160,7 +160,7 @@ if (io_type in ['FILE_STAGER']):
 
     
     try:
-        if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+        if 'ATHENA_SKIP_EVENTS' in os.environ:
                 skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
         else:
                 skipevt = 0

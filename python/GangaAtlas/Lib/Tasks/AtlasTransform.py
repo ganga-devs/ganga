@@ -1,7 +1,6 @@
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
-from sets import Set
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -77,9 +76,9 @@ class AtlasTransform(ITransform):
 
          except DQContainerDoesNotHaveDataset:
             pass
-         except Exception, x:
+         except Exception as x:
             logger.error("Problem cleaning out Transform container: %s %s", x.__class__, x)
-         except DQException, x:
+         except DQException as x:
             logger.error('DQ2 Problem cleaning out Transform container: %s %s' %( x.__class__, x))
       finally:
          dq2_lock.release()
@@ -100,6 +99,12 @@ class AtlasTransform(ITransform):
       # call parent for chaining
       super(AtlasTransform,self).createUnits()
       
+      # if there is no input data, just create a single unit given the application
+      if len(self.inputdata) == 0 and len(self.units) == 0:
+         unit = AtlasUnit()
+         unit.name = "Unit %d" % len(self.units)
+         self.addUnitToTRF( unit )
+      
       # loop over input data and see if we need to create any more units
       for inds in self.inputdata:
          
@@ -111,6 +116,13 @@ class AtlasTransform(ITransform):
             for unit in self.units:
                if unit.inputdata.dataset == inds.dataset:
                   ok = True
+
+            if not ok:
+               # new unit required for this dataset
+               unit = AtlasUnit()
+               unit.name = "Unit %d" % len(self.units)
+               self.addUnitToTRF( unit )
+               unit.inputdata = inds
 
          elif inds._name == "ATLASLocalDataset":
 
@@ -181,12 +193,22 @@ class AtlasTransform(ITransform):
    def createChainUnit( self, parent_units, use_copy_output = True ):
       """Create an output unit given this output data"""
       
-      # we need a parent job
+      # we need valid parent jobs
       for parent in parent_units:
+         # need datasetname filled for Panda jobs
          if len(parent.active_job_ids) == 0 or \
                 (GPI.jobs(parent.active_job_ids[0]).application._impl._name != "TagPrepare" and \
                  GPI.jobs(parent.active_job_ids[0]).outputdata and \
+                 GPI.jobs(parent.active_job_ids[0]).backend._impl._name == "Panda" and \
                  GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname == ""):
+            return None
+
+         # need datasetList filled for Jedi jobs
+         if len(parent.active_job_ids) == 0 or \
+                (GPI.jobs(parent.active_job_ids[0]).application._impl._name != "TagPrepare" and \
+                 GPI.jobs(parent.active_job_ids[0]).outputdata and \
+                 GPI.jobs(parent.active_job_ids[0]).backend._impl._name == "Jedi" and \
+                 len(GPI.jobs(parent.active_job_ids[0]).outputdata.datasetList) == 0):
             return None
 
       # should we use the copy_output (ie. local output). Special case for TagPrepare
@@ -205,7 +227,14 @@ class AtlasTransform(ITransform):
          unit.inputdata = DQ2Dataset()
          ds_list = []
          for parent in parent_units:
-            unit.inputdata.dataset.append( GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname )
+            
+            # Don't just use the main datasetname as Jedi introduces separate containers for logs and output files
+            if GPI.jobs(parent.active_job_ids[0]).backend._impl._name == "Jedi":
+               for ds in GPI.jobs(parent.active_job_ids[0]).outputdata.datasetList:
+                  if not ds.endswith(".log/"):
+                     unit.inputdata.dataset.append( ds )
+            else:
+               unit.inputdata.dataset.append( GPI.jobs(parent.active_job_ids[0]).outputdata.datasetname )
          
       else:
 

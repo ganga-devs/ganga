@@ -69,9 +69,7 @@ class TestRepository(MultipassTest):
         assert j.application.gList._impl._getParent(), 'Parent must be set'
         
         #make sure mutable methods are committed
-        print "extend..."
         j.application.gList.extend([self._makeRandomString() for _ in range(10)])
-        print "extended!"
         
         pickle.dump(((j.id),len(j.application.gList)),open(self.fileName,'w'))
         disableServices()

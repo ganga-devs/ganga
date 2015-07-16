@@ -28,7 +28,6 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
     w.start('testsuites')
     #Now we have two dicts - now to match keys
     for test in newtests:
-        #print test
         testcase_new = newtests[test]
         try: testcase_old = oldtests[test]
         except KeyError: 
@@ -98,9 +97,6 @@ def writeXMLDifferenceFile(newtests, oldtests, filename):
     
 #======================================================================
 def comparetestfiles(newfiledict, oldfiledict):
-    #print newfiledict
-    #print oldfiledict
-    #print filelist
     #go through list of tests
     for filename in newfiledict:
 
@@ -118,14 +114,11 @@ def comparetestfiles(newfiledict, oldfiledict):
         testcases = newdoc.getElementsByTagName("testcase")
         for testcase in testcases:
            if testcase.nodeType == testcase.ELEMENT_NODE:
-                #print testcase.attributes.items()
                 for (name, value) in testcase.attributes.items():
-                    #print name+"= "+value
                     if name == 'name':
                         #testcase_name=value.split()[0].split("/")
                         ind = value.find("[")
                         test = value[:ind].strip()
-                        #print test
                 #add to dictionary
                 newtests[test] = testcase
         # Go through old report
@@ -133,14 +126,11 @@ def comparetestfiles(newfiledict, oldfiledict):
         testcases = olddoc.getElementsByTagName("testcase")
         for testcase in testcases:
            if testcase.nodeType == testcase.ELEMENT_NODE:
-                #print testcase.attributes.items()
                 for (name, value) in testcase.attributes.items():
-                    #print name+"= "+value
                     if name == 'name':
                         #testcase_name=value.split()[0].split("/")
                         ind = value.find("[")
                         test = value[:ind].strip()
-                        #print test
                 #add to dictionary
                 oldtests[test] = testcase
         #        
@@ -205,7 +195,7 @@ def start(cmd_args=None):
     #
     config = getConfig('System')
     if cmd_args:
-        print cmd_args
+        logger.info(cmd_args)
     else:
         logger.error("no args passed")
         return
@@ -294,22 +284,17 @@ def start(cmd_args=None):
     for newfile in os.listdir(newreportdir):
         if newfile.find("Schema"):
             continue
-        #print newfile
         ind = newfile.find("__")
         fileconfig = newfile[ind+2:-4].strip()
-        #print fileconfig
         #if fileconfig.find("Diff_"):
         #    pass
         if fileconfig == newconfig:
-            reportfile = os.path.join(newreportdir, newfile)    
-            #print reportfile
+            reportfile = os.path.join(newreportdir, newfile)
             try:
                 newdoc = xml.dom.minidom.parse(reportfile)
             except IOError:
                 newdoc = None
                 logger.warning("attempted to parse directory in "+newreportdir)
-        #    print newfiles
-        #    print newdoc
         elif str(newfile).endswith( ".xml" ):
             reportfile = os.path.join(newreportdir, newfile)
             try:
@@ -321,8 +306,6 @@ def start(cmd_args=None):
         if newdoc:
             newfiles[str(newfile)] = newdoc
             filelist += [newfile]
-        #    print newfile
-        #    print newfiles
     #go through old fir
 
     # Correct for looking for -pre-pre folders
@@ -336,12 +319,9 @@ def start(cmd_args=None):
     for oldfile in os.listdir(oldreportdir):
         if oldfile.find("Schema"):
             continue
-        #print oldfile
         reportfile = os.path.join(oldreportdir,oldfile)
         ind = oldfile.find("__")
         fileconfig = oldfile[ind+2:-4].strip()
-        #print fileconfig
-        #print fileconfig + "   " + oldconfig
         if fileconfig == oldconfig:
             try:
                 olddoc = xml.dom.minidom.parse(reportfile)
@@ -357,13 +337,13 @@ def start(cmd_args=None):
         if olddoc is not None:
             oldfiles[str(oldfile)] = olddoc
 
-    print "newfiles: " + str(newfiles)
-    print "oldfiles: " + str(oldfiles)
+    logger.info("newfiles: " + str(newfiles))
+    logger.info("oldfiles: " + str(oldfiles))
 
     #go through dictionaries and compare files and then compare tests
     comparetestfiles(newfiles, oldfiles)
 
-    print 'Tests finished.'
+    logger.info('Tests finished.')
     
 
 def main(cmd_args):

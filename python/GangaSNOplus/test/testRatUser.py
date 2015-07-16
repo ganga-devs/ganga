@@ -17,6 +17,8 @@ from Ganga import Core
 from GangaSNOplus.Lib.RTHandlers.RTRATUser import UserRTHandler
 from GangaSNOplus.Lib.Applications.RATUser import RATUser
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 class TestRatUser(unittest.TestCase):
 
@@ -55,7 +57,7 @@ class TestRatUser(unittest.TestCase):
         Should only be run on systems with GangaSNOplus configured correctly.
         '''
         self._clean_application()
-        print "Running final test; may take a while"
+        logger.info("Running final test; may take a while")
         j = Job(backend=Local(), application=self.rat_user)
         j.submit()
         # Wait for 2 mins

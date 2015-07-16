@@ -10,6 +10,9 @@ try:
 except ImportError:
     loadRootHandler=False
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 from Ganga.GPI import *
 import os.path
 DAVINCI_VERSION=None
@@ -68,13 +71,13 @@ def checkFolderExists(folder):
 def checkFileInTar(tf, file):
     import tarfile
     tar1=tarfile.open(tf, "r")
-    print "%s files in %s" % ( str(len(tar1.getnames())), tf )
+    logger.info("%s files in %s" % ( str(len(tar1.getnames())), tf ))
     for fileName in tar1.getnames():
         if str(fileName[:2]) == str('./'):
-            print "found file: %s" % str(fileName[2:])
+            logger.info("found file: %s" % str(fileName[2:]))
             testFileName = str(fileName[2:])
         else:
-            print "found file: %s" % fileName
+            logger.info("found file: %s" % fileName)
             testFileName = fileName
         if file == testFileName:
             return True
@@ -92,7 +95,7 @@ def checkFileInSandbox(job, file):
     tarFile2=os.path.join(job.inputdir, '_input_sandbox_%d_master.tgz' % job.id)
     tarFile1=os.path.join(job.inputdir, '_input_sandbox_%d.tgz' % job.id)
 
-    print "Checking: %s and %s" %( tarFile1, tarFile2 )
+    logger.info("Checking: %s and %s" %( tarFile1, tarFile2 ))
 
     if checkFileExists(tarFile2):
         masterTest = checkFileInTar(tarFile2,file)

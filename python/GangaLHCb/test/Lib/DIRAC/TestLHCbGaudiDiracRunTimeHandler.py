@@ -11,7 +11,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -25,13 +25,12 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         j.prepare()
         from Ganga.Utility.Config import getConfig
         if getConfig('Output')['ForbidLegacyInput']: 
-            j.inputfiles = [LocalFile(name='dummy.in')]
+            j.inputfiles = [LocalFile(namePattern='dummy.in')]
         else:
             j.inputsandbox = [File(name='dummy.in')]
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
-        from GangaLHCb.test import *
         self.app.platform = getDiracAppPlatform()
         #self.extra = GaudiExtras()
         #self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'
@@ -47,8 +46,10 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         #app.extra = self.extra
         stdjobconfig = self.rth.master_prepare(self.app,self.appmasterconfig)
         # should have master.buffer, master.in and options.pkl
-        print 'sandbox =', stdjobconfig.getSandboxFiles()
-        assert len(stdjobconfig.getSandboxFiles()) == 4
+        # shouldn't that now be master.buffer master.in and inputsandbox? rcurrie
+        logger = Ganga.Utility.logging.getLogger()
+        logger.info( 'sandbox = %s'% str(stdjobconfig.getSandboxFiles()) )
+        assert len(stdjobconfig.getSandboxFiles()) == 3
 
     def test_LHCbGaudiDiracRunTimeHandler_prepare(self):
         #app = self.app
@@ -58,11 +59,11 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         jobmasterconfig.outputdata=[]
         stdjobconfig = self.rth.prepare(self.app,sjc,self.appmasterconfig,jobmasterconfig)
         # should have subjob.in(buffer), data.opts and gaudiscript.py
-        print "sandbox =",stdjobconfig.getSandboxFiles()
-        print "sandbox =",[file.name for file in stdjobconfig.getSandboxFiles()]       
+        print("sandbox =",stdjobconfig.getSandboxFiles())
+        print("sandbox =",[file.name for file in stdjobconfig.getSandboxFiles()]    )   
         assert len(stdjobconfig.getSandboxFiles()) == 3, 'inputsandbox error'
         l = len(stdjobconfig.getOutputSandboxFiles())
-        print "outputsandbox =",stdjobconfig.getOutputSandboxFiles()
+        print("outputsandbox =",stdjobconfig.getOutputSandboxFiles())
         assert  l == 4, 'outputsandbox error'
 
     # not sure what's testable here

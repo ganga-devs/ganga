@@ -31,7 +31,7 @@ if __name__ == '__main__':
     accessType = 'DQ2_LOCAL'
     accessProtocol = ''
 
-    if os.environ.has_key('DQ2_LOCAL_SITE_ID'):
+    if 'DQ2_LOCAL_SITE_ID' in os.environ:
         dq2localsiteid = os.environ['DQ2_LOCAL_SITE_ID']
         site_info = ToACache.sites[dq2localsiteid]
         alternateName = site_info['alternateName'][-1].upper()

@@ -90,7 +90,7 @@ def retrieveMergeJobs(job, pandaJobDefId):
         except KeyError:
             logger.error('unexpected job information: %s' % repr(info))
 
-        except Exception, e:
+        except Exception as e:
             logger.error('general merge job information retrieval error')
             raise e
 
@@ -390,7 +390,7 @@ class Jedi(IBackend):
             logger.debug("jID = %s, pandaJobIDs = %s" % (jID, pandaJobIDs))
 
             # Fill the output data dataset list
-            if jediTaskDict.has_key('outDS') and jediTaskDict['outDS'] != '':
+            if 'outDS' in jediTaskDict and jediTaskDict['outDS'] != '':
                 for ds in jediTaskDict['outDS'].split(','):
                     if not ds in job.outputdata.datasetList:
                         job.outputdata.datasetList.append(ds)
@@ -477,7 +477,7 @@ class Jedi(IBackend):
                             elif status.jobStatus == 'failed':
                                 logger.debug('Panda job %s %s '% (pjob.id, status.jobStatus))
                                 # check for server side retry
-                                if pjob.jobSpec.has_key('taskBufferErrorDiag') and pjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
+                                if 'taskBufferErrorDiag' in pjob.jobSpec and pjob.jobSpec['taskBufferErrorDiag'].find("PandaID=") != -1:
                                     # grab the new panda ID
                                     newPandaID = long(pjob.jobSpec['taskBufferErrorDiag'].split("=")[1])
                                     pjob.id = newPandaID
@@ -485,7 +485,7 @@ class Jedi(IBackend):
                                     pjob.url = 'http://panda.cern.ch/?job=%d'%newPandaID
                             elif status.jobStatus == 'cancelled' and pjob.status not in ['completed','failed']: # bug 67716
                                 logger.debug('Panda job %s cancelled'%pjob.id)
-                                if pjob.jobSpec.has_key('taskBufferErrorDiag') and "rebrokerage" in pjob.jobSpec['taskBufferErrorDiag']:
+                                if 'taskBufferErrorDiag' in pjob.jobSpec and "rebrokerage" in pjob.jobSpec['taskBufferErrorDiag']:
                                     newPandaID = checkForRebrokerage(pjob.jobSpec['taskBufferErrorDiag'])
                                     logger.warning("Subjob rebrokered by Panda server. Job %d moved to %d."%(pjob.id, newPandaID))
                                     pjob.id = newPandaID

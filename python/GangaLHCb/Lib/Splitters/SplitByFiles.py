@@ -1,7 +1,6 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
 #from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
 #from SplitterUtils import DiracSplitter
-from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
@@ -45,6 +44,7 @@ class SplitByFiles(GaudiInputDataSplitter):
                                                      doc='name of the backend algorithm to use for splitting',
                                                      typelist=['str'], protected =1, visitable=0)
 
+    _exportmethods = ['split']
 
     def _attribute_filter__set__(self, name, value):
         if name is 'filesPerJob':
@@ -61,9 +61,9 @@ class SplitByFiles(GaudiInputDataSplitter):
         #    logger.debug( "dataset len: %s" % str(len(dataset)) )
         #except:
         #    pass
-        #from Ganga.GPI import GangaList
-        from Ganga.GPIDev.Lib.GangaList import GangaList
-
+        from Ganga.GPIDev.Base.Proxy import typeCheck
+        from Ganga.GPI import GangaList
+        from Ganga.GPI import DiracFile
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
                 if isinstance( i, DiracFile ):
@@ -72,14 +72,17 @@ class SplitByFiles(GaudiInputDataSplitter):
                     logger.error( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
-        elif type(dataset) == type( [] ) or type(dataset) == type(GangaList()):
-            for i in dataset:
-                if type(i) == type(''):
-                    datatmp.append( DiracFile( lfn=i ) )
-                elif type(i) == type( DiracFile() ):
-                    datatmp.append( i )
+        elif type(dataset) == type( [] ) or typeCheck(dataset, GangaList()):
+            for file in dataset:
+                if type(file) == type(''):
+                    datatmp.append( DiracFile( lfn=file ) )
+                elif typeCheck(file, DiracFile()):
+                    datatmp.append( file )
                 else:
-                    x = GangaException( "Unknown(unexpected) file object: %s" % i )
+                    logger.error("Unexpected type: %s" % str(type(file)))
+                    logger.error("Wanted type: %s, or: %s" % (str(type(DiracFile())), str(type(stripProxy(DiracFile())))))
+                    from Ganga.Core.exceptions import GangaException
+                    x = GangaException( "Unknown(unexpected) file object: %s" % file )
                     raise x
         elif type(dataset) == type( '' ):
             datatmp.append( DiracFile( lfn=dataset ) )
@@ -91,16 +94,20 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         logger.debug( "Creating new Job in Splitter" )
         j=Job()
-        j.copyFrom(stripProxy(job))
+        logger.debug( "Copying From Job" )
+        j.copyFrom(stripProxy(job), ['inputdata', 'inputsandbox', 'inputfiles'])
+        logger.debug( "Unsetting Splitter" )
         j.splitter = None
+        logger.debug( "Unsetting Merger" )
         j.merger = None
-        j.inputsandbox = [] ## master added automatically
-        j.inputfiles = []
+        #j.inputsandbox = [] ## master added automatically
+        #j.inputfiles = []
+        logger.debug( "Setting InputData" )
         j.inputdata = LHCbDataset( files             = datatmp[:],
                                    persistency       = self.persistency,
                                    depth             = self.depth )
-        j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
-
+        #j.inputdata.XMLCatalogueSlice = self.XMLCatalogueSlice
+        logger.debug( "Returning new subjob" )
         return j
 
 
@@ -111,10 +118,10 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         indata = inputdata
 
-        try:
-            logger.debug( "indata length: %s" % str( len(indata) ) )
-        except:
-            pass
+        #try:
+        #    logger.debug( "indata length: %s" % str( len(indata) ) )
+        #except:
+        #    pass
 
         #if not job.inputdata or not inputdata:
         #    logger.debug( "no job.inputdata" )
@@ -134,6 +141,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         self.depth             = indata.depth
         self.persistency       = indata.persistency
+
         self.XMLCatalogueSlice = indata.XMLCatalogueSlice
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
@@ -171,9 +179,6 @@ class SplitByFiles(GaudiInputDataSplitter):
                                      self.ignoremissing)
             else:
                 raise SplitterError( "Backend algorithm not selected!" )
-
-            #print outdata
-            #exit(0)
 
             logger.debug( "outdata: %s " % str( outdata ) )
             return outdata

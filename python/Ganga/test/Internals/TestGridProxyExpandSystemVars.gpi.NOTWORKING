@@ -3,7 +3,7 @@ import Ganga.Utility.util
 #this is stolen from bootstrap.py
 try:
     hostname = Ganga.Utility.util.hostname()
-except Exception,x:
+except Exception as x:
     hostname = 'localhost'
 
 option = '@{GANGA_HOSTNAME}'

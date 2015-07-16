@@ -100,7 +100,6 @@ LHCbApp().EvtMax = -1
         if not os.path.exists(opts_file_name):
             msg = "Failed to write temporary options file '%s' during merge"
             raise PostProcessException(msg % opts_file_name)
-        print output_opts
 
         import EnvironFunctions
         script_file_name = EnvironFunctions.construct_merge_script( self.version,

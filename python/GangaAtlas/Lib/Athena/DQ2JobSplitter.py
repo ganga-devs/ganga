@@ -6,6 +6,7 @@
 # Athena DQ2JobSplitter
 
 import math, socket, operator, copy, os, StringIO
+from functools import reduce
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
@@ -13,9 +14,6 @@ from Ganga.GPIDev.Lib.Job import Job
 from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.logging import getLogger
-
-import Ganga.Utility.external.ARDAMDClient.mdclient as mdclient
-import Ganga.Utility.external.ARDAMDClient.mdinterface as mdinterface
 
 from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
@@ -198,7 +196,7 @@ class DQ2JobSplitter(ISplitter):
             else:
                 raise ApplicationConfigurationError(None,'DQ2JobSplitter specifed but no input dataset and no splitter options (%SKIPEVENTS and/or %RNDM) in job.application.options')            
 
-        if job.inputdata._name <> 'DQ2Dataset'  and job.inputdata._name <> 'AMIDataset' and job.inputdata._name <> 'EventPicking':
+        if job.inputdata._name != 'DQ2Dataset'  and job.inputdata._name != 'AMIDataset' and job.inputdata._name != 'EventPicking':
             raise ApplicationConfigurationError(None,'DQ2 Job Splitter requires a DQ2Dataset or AMIDataset or EventPicking as input')
 
         if not job.backend._name in [ 'LCG', 'CREAM', 'Panda', 'NG' ] and not ( job.backend._name in ['SGE'] and config['ENABLE_SGE_DQ2JOBSPLITTER'] ):
@@ -207,7 +205,7 @@ class DQ2JobSplitter(ISplitter):
         if (self.numevtsperjob <= 0 and self.numfiles <=0 and self.numsubjobs <=0 and self.filesize <=0):
             raise ApplicationConfigurationError(None,"Specify one of the parameters of DQ2JobSplitter for job splitting: numsubjobs, numfiles, numevtsperjob")
  
-        if (self.numevtsperjob > 0 and job.inputdata._name <> 'AMIDataset'):
+        if (self.numevtsperjob > 0 and job.inputdata._name != 'AMIDataset'):
             raise ApplicationConfigurationError(None,"Event based splitting is supported only for AMIDataset as input dataset type")
         # split options are mutually exclusive
         if ( (self.numfiles > 0 or self.numsubjobs > 0) and self.numevtsperjob > 0):
@@ -262,7 +260,7 @@ class DQ2JobSplitter(ISplitter):
 
                 from pandatools import countGuidsClient
                 streamRef = 'StreamAOD_ref'
-                if job.application.atlas_run_config['input'].has_key('collRefName'):
+                if 'collRefName' in job.application.atlas_run_config['input']:
                     streamRef = job.application.atlas_run_config['input']['collRefName']
                 elif job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
                     streamRef = "Stream%s_ref" % job.inputdata.tag_coll_ref
@@ -366,7 +364,7 @@ class DQ2JobSplitter(ISplitter):
                     raise ApplicationConfigurationError(None, "Couldn't find tag file '%s'." % f)
 
                 ref = ''
-                if not app.atlas_run_config['input'].has_key('collRefName') or not app.atlas_run_config['input']['collRefName'] in ['StreamAOD_ref', 'StreamESD_ref', 'StreamRAW_ref']:
+                if 'collRefName' not in app.atlas_run_config['input'] or not app.atlas_run_config['input']['collRefName'] in ['StreamAOD_ref', 'StreamESD_ref', 'StreamRAW_ref']:
                     if job.inputdata.tag_coll_ref in ['AOD', 'ESD', 'RAW']:
                         ref = job.inputdata.tag_coll_ref
                     else:
@@ -442,7 +440,7 @@ class DQ2JobSplitter(ISplitter):
 
                         # add to additional datasets list
                         for tag_ref in job.inputdata.tag_info[tag_file]['refs']:
-                            if not additional_datasets.has_key(job.inputdata.tag_info[tag_file]['dataset']):
+                            if job.inputdata.tag_info[tag_file]['dataset'] not in additional_datasets:
                                 additional_datasets[job.inputdata.tag_info[tag_file]['dataset']] = []
 
                             if not tag_ref[1] in additional_datasets[job.inputdata.tag_info[tag_file]['dataset']]:
@@ -693,15 +691,11 @@ class DQ2JobSplitter(ISplitter):
 
                 # perform logical AND to find a cloud that has all data
                 import sys
-                if sys.hexversion >= 0x020600F0:
-                    Set = set
-                else:
-                    from sets import Set
             
-                cloud_set = Set(job.backend.requirements.list_clouds())
+                cloud_set = set(job.backend.requirements.list_clouds())
             
                 for key in avail_clouds:
-                    cloud_set = cloud_set & Set(avail_clouds[key])
+                    cloud_set = cloud_set & set(avail_clouds[key])
 
                 # find users cloud and submit there by preference
                 fav_cloud = ''
@@ -762,7 +756,7 @@ class DQ2JobSplitter(ISplitter):
                 else:
                     udays = 10000
                     skipReplicaLookup = True
-                if locations and locations.has_key(dataset):
+                if locations and dataset in locations:
                     #cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, indata_buf.getvalue().replace('\n', '') + dataset)
                     #siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites)
                     siteinfo = dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites, skipReplicaLookup)

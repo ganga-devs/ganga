@@ -5,21 +5,22 @@
 ###############################################################################
 
 from Ganga.Utility.Config import getConfig, ConfigError
-from commands import getstatusoutput    
+from commands import getstatusoutput
 import Ganga.Utility.logging
 import os
 
 #
 #       MOVED to Ganga/Lib/Root/Root.py
 #
-#config.setDefaultOptions({'location':'/afs/cern.ch/sw/lcg/external/root',
+# config.setDefaultOptions({'location':'/afs/cern.ch/sw/lcg/external/root',
 #                          'version':'5.14.00d',
 #                          'arch':'slc3_ia32_gcc323',
 #                          'path':'',
 #                          'pythonhome':sys.prefix,
 #                          'pythonversion':''})
 
-def getrootsys(version = None, arch = None):
+
+def getrootsys(version=None, arch=None):
     rootsys = ""
     try:
         configroot = getConfig('ROOT')
@@ -31,17 +32,18 @@ def getrootsys(version = None, arch = None):
             rootarch = configroot['arch']
         else:
             rootarch = str(arch)
-        if configroot['path']!="":
-            rootsys = configroot['path']+"/"
+        if configroot['path'] != "":
+            rootsys = configroot['path'] + "/"
         else:
-            rootsys = configroot['location']+"/"+rootver+"/"+rootarch
-            if os.path.exists( rootsys+"/root/" ):
-                rootsys = rootsys+"/root/"
+            rootsys = configroot['location'] + "/" + rootver + "/" + rootarch
+            if os.path.exists(rootsys + "/root/"):
+                rootsys = rootsys + "/root/"
     except ConfigError:
         pass
     logger.debug("ROOTSYS: %s", rootsys)
-        
+
     return rootsys
+
 
 def getenvrootsys():
     """Determine and return $ROOTSYS environment variable"""
@@ -49,33 +51,35 @@ def getenvrootsys():
     try:
         rootsys = os.environ['ROOTSYS']
     except KeyError:
-        rootsys=""
+        rootsys = ""
     return rootsys
 
-def getpythonhome(arch = None, pythonversion=None):
+
+def getpythonhome(arch=None, pythonversion=None):
     """Looks for the PYTHONHOME for the particular version and arch"""
     pythonhome = ''
     try:
-        #returns a copy
+        # returns a copy
         configroot = getConfig('ROOT').getEffectiveOptions()
         if arch != None:
             configroot['arch'] = arch
         if pythonversion != None:
             configroot['pythonversion'] = pythonversion
-        #allow other Root variables to be used in the definition
+        # allow other Root variables to be used in the definition
         pythonhome = configroot['pythonhome']
-        #supports ${foo} type variable expansion
+        # supports ${foo} type variable expansion
         for k in configroot.keys():
             pythonhome = pythonhome.replace('${%s}' % k, configroot[k])
     except ConfigError:
         pass
     import os
-    if not os.path.exists( pythonhome ):
+    if not os.path.exists(pythonhome):
         pythonhome2 = pythonhome.replace('../../external', '../external')
-        if os.path.exists( pythonhome2 ):
+        if os.path.exists(pythonhome2):
             pythonhome = pythonhome2
     logger.debug('PYTHONHOME: %s', pythonhome)
     return pythonhome
+
 
 def getenvpythonhome():
     """Deterimin the PYTHONHOME environment variable"""
@@ -87,11 +91,13 @@ def getenvpythonhome():
         pass
     return pythonhome
 
+
 def getconfrootsys():
     """Determine and return ROOTSYS from ganga configuration"""
     return Ganga.Utility.root.getrootsys()
-    
-def getrootprefix(rootsys = None):
+
+
+def getrootprefix(rootsys=None):
     """Determine ROOT path and return prefix,
     emtpy if ROOT is not found in path or ERROR,
     else ROOTSYS+LD_LIBRARY_PATH+prefix
@@ -99,25 +105,27 @@ def getrootprefix(rootsys = None):
     rc = 0
     if rootsys == None:
         rootsys = Ganga.Utility.root.getconfrootsys()
-        if rootsys=="":
+        if rootsys == "":
             rootsys = Ganga.Utility.root.getenvrootsys()
-            if rootsys=="":
+            if rootsys == "":
                 logger.error("No proper ROOT setup")
                 rc = 1
-                
-    rootprefix = "ROOTSYS="+rootsys+" LD_LIBRARY_PATH="+rootsys+"/lib:$LD_LIBRARY_PATH "+rootsys+"/bin/"
+
+    rootprefix = "ROOTSYS=" + rootsys + " LD_LIBRARY_PATH=" + \
+        rootsys + "/lib:$LD_LIBRARY_PATH " + rootsys + "/bin/"
     logger.debug("ROOTPREFIX: %s", rootprefix)
 
     return rc, rootprefix
 
-def checkrootprefix(rootsys = None):
+
+def checkrootprefix(rootsys=None):
     """Check if rootprefix variable holds valid values"""
 
     rc, rootprefix = Ganga.Utility.root.getrootprefix(rootsys)
-    
+
     cmdtest = rootprefix + "root-config --version"
     rc, out = getstatusoutput(cmdtest)
-    if (rc!=0):
+    if (rc != 0):
         logger.error("No proper ROOT setup")
         logger.error("%s", out)
         return 1

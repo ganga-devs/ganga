@@ -1,26 +1,22 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: Merger.py,v 1.5 2009-03-18 10:46:01 wreece Exp $
-################################################################################
+##########################################################################
 
-from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, IPostProcessor
+from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IMerger import IMerger
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import GPIProxyObject
-from Ganga.GPIDev.Schema import ComponentItem, FileItem, Schema, SimpleItem, Version
+from Ganga.GPIDev.Schema import FileItem, SimpleItem
 
-from Ganga.Utility.Config import makeConfig, ConfigError, getConfig
+from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logging import getLogger
 import commands
 import os
 import string
 import copy
 
 logger = getLogger()
-
-
 
 
 def getMergerObject(file_ext):
@@ -30,11 +26,11 @@ def getMergerObject(file_ext):
     try:
         config = getConfig('Mergers')
         if file_ext == 'std_merge':
-            result = allPlugins.find('postprocessor',config[file_ext])()
+            result = allPlugins.find('postprocessor', config[file_ext])()
         else:
-            #load the dictionary of file assocaitions
+            # load the dictionary of file assocaitions
             file_types = eval(config['associate'])
-            result = allPlugins.find('postprocessor',file_types[file_ext])()
+            result = allPlugins.find('postprocessor', file_types[file_ext])()
     except ConfigError:
         pass
     except KeyError:
@@ -43,14 +39,13 @@ def getMergerObject(file_ext):
         pass
     except SyntaxError:
         pass
-    except TypeError:#TypeError as we may not be able to call ()
-        pass #just return None
+    except TypeError:  # TypeError as we may not be able to call ()
+        pass  # just return None
     return result
 
 
-
-            
 class TextMerger(IMerger):
+
     """Merger class for text
 
     TextMerger will append specified text files in the order that they are
@@ -76,7 +71,7 @@ class TextMerger(IMerger):
     the job completes. If the ignorefailed flag has been set
     then the merge will also be run as the job enters the
     killed or failed states.
-    
+
     The above merger object can also be used independently
     to merge a list of jobs or the subjobs of an single job.
 
@@ -105,23 +100,21 @@ class TextMerger(IMerger):
     _category = 'postprocessor'
     _name = 'TextMerger'
     _schema = IMerger._schema.inherit_copy()
-    _schema.datadict['compress'] = SimpleItem(defvalue = False, doc='Output should be compressed with gzip.')
-        
-
-
+    _schema.datadict['compress'] = SimpleItem(
+        defvalue=False, doc='Output should be compressed with gzip.')
 
     def mergefiles(self, file_list, output_file):
 
         import time
 
         if self.compress or output_file.lower().endswith('.gz'):
-            #use gzip
+            # use gzip
             import gzip
             if not output_file.lower().endswith('.gz'):
                 output_file += '.gz'
-            out_file = gzip.GzipFile(output_file,'w')
+            out_file = gzip.GzipFile(output_file, 'w')
         else:
-            out_file = open(output_file,'w')
+            out_file = open(output_file, 'w')
 
         out_file.write('# Ganga TextMergeTool - %s #\n' % time.asctime())
         for f in file_list:
@@ -142,7 +135,9 @@ class TextMerger(IMerger):
         out_file.flush()
         out_file.close()
 
+
 class RootMerger(IMerger):
+
     """Merger class for ROOT files
 
     RootMerger will use the version of ROOT configured in the .gangarc file to
@@ -190,129 +185,135 @@ class RootMerger(IMerger):
     in the [Mergers] section of the .gangarc file will be used.
 
     """
-    
+
     _category = 'postprocessor'
     _name = 'RootMerger'
     _schema = IMerger._schema.inherit_copy()
-    _schema.datadict['args'] = SimpleItem(defvalue = None, doc='Arguments to be passed to hadd.',\
-                                          typelist=['str','type(None)'])
-
+    _schema.datadict['args'] = SimpleItem(defvalue=None, doc='Arguments to be passed to hadd.',
+                                          typelist=['str', 'type(None)'])
 
     def mergefiles(self, file_list, output_file):
 
         from Ganga.Utility.root import getrootprefix, checkrootprefix
-        rc, rootprefix =  getrootprefix()
+        rc, rootprefix = getrootprefix()
 
         if rc != 0:
-            raise PostProcessException('ROOT has not been properly configured. Check your .gangarc file.')
+            raise PostProcessException(
+                'ROOT has not been properly configured. Check your .gangarc file.')
 
         if checkrootprefix():
-            raise PostProcessException('Can not run ROOT correctly. Check your .gangarc file.')
+            raise PostProcessException(
+                'Can not run ROOT correctly. Check your .gangarc file.')
 
-        #we always force as the overwrite is handled by our parent
+        # we always force as the overwrite is handled by our parent
         default_arguments = '-f'
         merge_cmd = rootprefix + 'hadd '
-        if self.args: #pass any args on
+        if self.args:  # pass any args on
             merge_cmd += ' %s ' % self.args
-      
-        #don't add a -f unless needed  
+
+        # don't add a -f unless needed
         if not default_arguments in merge_cmd:
             merge_cmd += ' %s ' % default_arguments
 
-        #add the list of files, output file first
+        # add the list of files, output file first
         arg_list = [output_file]
         arg_list.extend(file_list)
-        merge_cmd += string.join(arg_list,' ')
+        merge_cmd += string.join(arg_list, ' ')
 
         rc, out = commands.getstatusoutput(merge_cmd)
 
         log_file = '%s.hadd_output' % output_file
-        log = open(log_file,'w')
-        try:
+        with open(log_file, 'w') as log:
             log.write('# -- Hadd output -- #\n')
             log.write('%s\n' % out)
-        finally:
-            log.close()
-        
+
         if rc:
             logger.error(out)
-            raise PostProcessException('The ROOT merge failed to complete. The command used was %s.' % merge_cmd)
+            raise PostProcessException(
+                'The ROOT merge failed to complete. The command used was %s.' % merge_cmd)
+
 
 class CustomMerger(IMerger):
+
     """User tool for writing custom merging tools with Python
-    
+
     Allows a script to be supplied that performs the merge of some custom file type.
     The script must be a python file which defines the following function:
-    
+
     def merge(file_list, output_file):
-    
+
         #perform the merge
         if not success:
             return -1
         else:
             return 0
-            
+
     This module will be imported and used by the CustomMerger. The file_list is a
     list of paths to the files to be merged. output_file is a string path for
     the output of the merge. This file must exist by the end of the merge or the
     merge will fail. If the merge cannot proceed, then the function should return a 
     non-zero integer.
-    
+
     Clearly this tool is provided for advanced ganga usage only, and should be used with
     this in mind.
-    
+
     """
     _category = 'postprocessor'
     _name = 'CustomMerger'
     _schema = IMerger._schema.inherit_copy()
-    _schema.datadict['module'] = FileItem(defvalue = None, doc='Path to a python module to perform the merge.')
-        
+    _schema.datadict['module'] = FileItem(
+        defvalue=None, doc='Path to a python module to perform the merge.')
 
     def mergefiles(self, file_list, output_file):
 
         import os
         if not os.path.exists(self.module.name):
-            raise PostProcessException("The module '&s' does not exist and so merging will fail.",self.module.name)
+            raise PostProcessException(
+                "The module '&s' does not exist and so merging will fail.", self.module.name)
         result = False
         try:
-            ns = {'file_list':copy.copy(file_list),
-                  'output_file':copy.copy(output_file)}
+            ns = {'file_list': copy.copy(file_list),
+                  'output_file': copy.copy(output_file)}
             execfile(self.module.name, ns)
-            exec('_result = mergefiles(file_list,output_file)',ns)
-            result = ns.get('_result',result)
-        except Exception,e:
-            raise PostProcessException('There was a problem executing the custom merge: %s. Merge will fail.'%e)
+            exec('_result = mergefiles(file_list,output_file)', ns)
+            result = ns.get('_result', result)
+        except Exception as e:
+            raise PostProcessException(
+                'There was a problem executing the custom merge: %s. Merge will fail.' % e)
         if result is not True:
-            raise PostProcessException('The custom merge did not return True, merge will fail.')
+            raise PostProcessException(
+                'The custom merge did not return True, merge will fail.')
         return self.success
 
 
 def findFilesToMerge(jobs):
     """Look at a list of jobs and find a set of files present in each job that can be merged together"""
-    
+
     result = []
-    
+
     file_map = {}
     jobs_len = len(jobs)
     for j in jobs:
         if j.outputsandbox != []:
             for file_name in j.outputsandbox:
-                file_map[file_name] = file_map.setdefault(file_name,0) + 1
+                file_map[file_name] = file_map.setdefault(file_name, 0) + 1
         elif j.outputfiles != []:
             for file_name in j.outputfiles:
-                if file_name.__class__.__name__ == 'SandboxFile':
-                    file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern,0) + 1
-    
+                if file_name.__class__.__name__ == 'LocalFile':
+                    file_map[file_name.namePattern] = file_map.setdefault(file_name.namePattern, 0) + 1
+
     for file_name, count in file_map.iteritems():
-        if count == jobs_len: result.append(file_name)
+        if count == jobs_len:
+            result.append(file_name)
         else:
             logger.warning('The file %s was not found in all jobs to be merged and so will be ignored.', file_name)
     logger.info('No files specified, so using %s.', str(result))
-        
+
     return result
-    
+
 
 class SmartMerger(IMerger):
+
     """Allows the different types of merge to be run according to file extension in an automatic way.
 
     SmartMerger accepts a list of files which it will delegate to individual Merger objects based on
@@ -329,7 +330,7 @@ class SmartMerger(IMerger):
 
     If outputdir is not specified, the default location specfied in the [Mergers]
     section of the .gangarc file will be used.
-    
+
     If files is not specified, then it will be taken from the list of jobs given to
     the merge method. Only files which appear in all jobs will be merged.
 
@@ -341,24 +342,23 @@ class SmartMerger(IMerger):
     j.splitter = SomeSplitter()
     j.merger = sm
     j.submit() 
-    
+
     """
-    
+
     _category = 'postprocessor'
     _exportmethods = ['merge']
     _name = 'SmartMerger'
     _schema = IMerger._schema.inherit_copy()
 
-        
-    def merge(self, jobs, outputdir = None, ignorefailed = None, overwrite = None):
+    def merge(self, jobs, outputdir=None, ignorefailed=None, overwrite=None):
 
         if ignorefailed == None:
             ignorefailed = self.ignorefailed
-            
+
         if overwrite == None:
             overwrite = self.overwrite
 
-        #make a guess of what to merge if nothing is specified
+        # make a guess of what to merge if nothing is specified
         if not self.files:
             self.files = findFilesToMerge(jobs)
 
@@ -367,57 +367,41 @@ class SmartMerger(IMerger):
 
             if not getMergerObject(f):
 
-                #find the file extension and check
+                # find the file extension and check
                 file_ext = os.path.splitext(f)[1].lstrip('.')
 
                 # default to txt
                 if not file_ext:
-                    if f in ['stdout','stderr']:
+                    if f in ['stdout', 'stderr']:
                         file_ext = 'std_merge'
                     elif ignorefailed:
-                        logger.warning('File extension not found for file %s and so the file will be ignored. '\
-                                       'Check the name of the file.',f)
+                        logger.warning('File extension not found for file %s and so the file will be ignored. '
+                                       'Check the name of the file.', f)
                         continue
                     else:
-                        logger.warning('File extension not found for file %s and so the merge will fail. '\
-                                       'Check the name of the file or set the ignorefailed flag.',f)
+                        logger.warning('File extension not found for file %s and so the merge will fail. '
+                                       'Check the name of the file or set the ignorefailed flag.', f)
                         return self.failure
 
-                file_ext = file_ext.lower()#treat as lowercase
+                file_ext = file_ext.lower()  # treat as lowercase
 
             else:
-                #allow per file config
+                # allow per file config
                 file_ext = f
-            
-            #store the file association
+
+            # store the file association
             type_map.setdefault(file_ext, []).append(f)
 
         merge_results = []
         for ext in type_map.keys():
-            merge_object = getMergerObject(ext) # returns an instance
+            merge_object = getMergerObject(ext)  # returns an instance
             if merge_object == None:
-                logger.error('Extension %s not recognized and so the merge will fail. '\
-                            'Check the [Mergers] section of your .gangarc file.', ext)
+                logger.error('Extension %s not recognized and so the merge will fail. '
+                             'Check the [Mergers] section of your .gangarc file.', ext)
                 return self.failure
             merge_object.files = type_map[ext]
-            merge_result = merge_object.merge(jobs,outputdir,ignorefailed,overwrite)
+            merge_result = merge_object.merge(jobs, outputdir, ignorefailed, overwrite)
             merge_results.append(merge_result)
 
         return not False in merge_results
-    
-            
-        
-
-
-    
-
-
-#configure the plugins
-allPlugins.add(SmartMerger,'mergers','SmartMerger') 
-allPlugins.add(TextMerger,'mergers','TextMerger')
-allPlugins.add(RootMerger,'mergers','RootMerger')        
-allPlugins.add(CustomMerger,'mergers','CustomMerger')        
-
-
-
 

@@ -55,5 +55,3 @@ sj_stamplist.sort()
 assert j.time.timestamps['final'] == sj_stamplist[len(sj_stamplist)-1]
 
 #end
-
-print "test6_sjstamporder_local passed."

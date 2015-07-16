@@ -11,7 +11,6 @@ for j in jobs:
 # many items in slice
 mine_jobs = jobs.select(name='mine')
 
-print mine_jobs, repr(mine_jobs), dir(mine_jobs)
 assert(m1 in mine_jobs)
 assert(m2 in mine_jobs)
 
@@ -21,7 +20,6 @@ assert(y1 is jobs['yours'])
 
 mine_jobs.remove() # delete all my jobs...
 
-print jobs
 assert len(jobs) == 1
 assert jobs[-1].name == 'yours'
 

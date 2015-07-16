@@ -15,7 +15,7 @@ class CMTVersion(object):
             if index >= 0:
                 try:
                     self.version[index] = int(num)
-                except ValueError, e:
+                except ValueError as e:
                     logger.error("Malformed version string: Error was '%s'.", str(e))
                     self.version[index] = None
                 index += 1

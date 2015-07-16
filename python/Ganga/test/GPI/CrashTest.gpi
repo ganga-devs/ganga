@@ -1,6 +1,9 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 import sys
 def p(*args):
-    print >> sys.stderr, ' '.join(map(str,args))
+    logger.error(' '.join(map(str,args)))
     
 t = Job()
 t.application = CrashTestApplication()
@@ -49,7 +52,7 @@ for e in [BackendException, AnyException]:
                 assert(j2.status == 'submitted')
                 for s in j2.subjobs:
                     if not s.status in ['new','submitted']:
-                        print s
+                        p(s)
                         assert(0)
             else:
                 assert_cannot_submit(j2)

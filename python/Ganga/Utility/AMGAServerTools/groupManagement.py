@@ -8,34 +8,38 @@
 # Created:      21/03/2006
 #----------------------------------------------------------------------------
 
+from __future__ import absolute_import
 import sys
 import os
 import re
-from certificate import getGridProxyPath
-from mdclient import MDClient
-from mdinterface import CommandException
+from .certificate import getGridProxyPath
+from .mdclient import MDClient
+from .mdinterface import CommandException
 
 DEBUG = False
 #DEBUG = True
 
 #---------------------------------------------------------------------------
+
+
 class Groups:
+
     """Represents interface for manipulating user groups"""
 
     def __init__(self,
-                 host      = 'gangamd.cern.ch',
-                 port      = 8822,
-                 login     = 'root',
-                 password  = '',
-                 keepalive = False,
-                 reqSSL    = True,
+                 host='gangamd.cern.ch',
+                 port=8822,
+                 login='root',
+                 password='',
+                 keepalive=False,
+                 reqSSL=True,
                  **kwds):
-        
-        self._client = MDClient(host = host,
-                                port = port,
-                                login = login,
-                                password = password,
-                                keepalive = keepalive)
+
+        self._client = MDClient(host=host,
+                                port=port,
+                                login=login,
+                                password=password,
+                                keepalive=keepalive)
 
         if reqSSL:
             fn = getGridProxyPath()
@@ -48,7 +52,7 @@ class Groups:
 
             self._client.requireSSL(key, cert)
             self._client.connect()
-        
+
     #-----------------------------------------------------------------------
     def grpCreate(self, groupname):
         """Creates a new group with name groupname.
@@ -56,7 +60,7 @@ class Groups:
         res = []
         cmd = 'grp_create ' + groupname
         self._client.execute(cmd)
-        
+
     #-----------------------------------------------------------------------
     def grpDelete(self, groupname):
         """Deletes a group with name groupname (user:groupname).
@@ -92,7 +96,7 @@ class Groups:
         self._client.execute(cmd)
 
     #-----------------------------------------------------------------------
-    def grpMember(self, user = ''):
+    def grpMember(self, user=''):
         """Shows to which groups a user belongs"""
         res = []
         cmd = 'grp_member'
@@ -107,7 +111,7 @@ class Groups:
         return res
 
     #-----------------------------------------------------------------------
-    def grpList(self, user = ''):
+    def grpList(self, user=''):
         """Shows the groups owned by user, by default the current user"""
         res = []
         cmd = 'grp_list'
@@ -122,6 +126,6 @@ class Groups:
         return res
 
 
-################################################################################
+##########################################################################
 usage = """
 """

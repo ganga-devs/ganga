@@ -1,3 +1,4 @@
+from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
@@ -76,7 +77,7 @@ class LHCbTask(ITask):
         for t in self.transforms:
             try:
                 t.updateQuery(resubmit)
-            except GangaException, e:
+            except GangaException as e:
                 logger.warning(e.__str__())
                 continue
 

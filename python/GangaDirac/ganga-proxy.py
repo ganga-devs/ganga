@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+from __future__ import print_function
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import sys
@@ -13,11 +16,11 @@ argv = sys.argv[2:]
 commands = {'init':'voms-proxy-init','info':'voms-proxy-info',
             'destroy':'voms-proxy-destroy'}
 
-if not os.environ.has_key("GANGADIRACENVIRONMENT"):
-    raise 'DIRAC env cache file does not exist.'
+if "GANGADIRACENVIRONMENT" not in os.environ:
+    raise LookupError('DIRAC env cache file does not exist.')
 dirac_env_cache_file = os.environ["GANGADIRACENVIRONMENT"]
 if not os.path.exists(dirac_env_cache_file):
-    raise 'DIRAC env cache file does not exist.'
+    raise IOError('DIRAC env cache file does not exist.')
 env_file = open(dirac_env_cache_file)
 for line in env_file.readlines():
     varval = line.strip().split('=')
@@ -111,12 +114,12 @@ elif option == 'info':
             if not create_proxy_cache():
                 rc = 1
                 display = False
-        if display: print get_proxy_info()        
+        if display: print(get_proxy_info())
 elif option == 'destroy':
     destroy_proxy_cache()
     rc = exec_command(commands[option],argv)
 else:
-    raise 'Error! Option "%s" no recognized.' % option
+    raise LookupError('Error! Option "%s" no recognized.' % option)
 #
 sys.exit(rc)
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

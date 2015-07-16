@@ -35,7 +35,7 @@ class CRABServer(GangaObject):
             if p.returncode != 0:
                 raise CRABServerError('CRAB %s returned %s' % (operation,
                                                                p.returncode))
-        except OSError, e:
+        except OSError as e:
             logger.error(stdout)
             logger.error(stderr)
             raise CRABServerError(e, 'OSError %s crab job(s).' % operation)
@@ -125,7 +125,7 @@ class CRABServer(GangaObject):
         for root, _, files in os.walk(os.path.join(job.inputdata.ui_working_dir,
                                                    'res')): # Just 'res'.
             for f in files:
-                os.chmod(os.path.join(root, f), 0644)
+                os.chmod(os.path.join(root, f), 0o644)
         return True
 
     def postMortem(self, job):

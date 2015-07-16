@@ -6,6 +6,9 @@ from socket import *
 import time
 from commands import getstatusoutput
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 # Ganga Service class that provides the interface to the server
 class GangaService:
     
@@ -48,7 +51,7 @@ class GangaService:
 
             if (time.time() - os.path.getmtime(os.path.join(self.gangadir, "server", "server.info") )) < 60:
                 if hostname != os.uname()[1]:
-                    print "Active server running on host '%s' - creating kill file" % hostname
+                    logger.info("Active server running on host '%s' - creating kill file" % hostname)
                     open(os.path.join(self.gangadir, "server", "server.kill"), "w").write("")
                     wait = 0
                     while os.path.exists(os.path.join(self.gangadir, "server", "server.info")) and wait < 30:
@@ -56,13 +59,13 @@ class GangaService:
                         wait += 1
 
                     if wait > 29:
-                        print "Could not kill server. Please kill manually on host '%s'" % hostname
+                        logger.info("Could not kill server. Please kill manually on host '%s'" % hostname)
                         return False
 
                     # wait a little longer for the process to finish completely...
                     time.sleep(10)
                     
-                    print "Server kill signals sent though you should check the process has exited on host '%s'." % hostname
+                    logger.info("Server kill signals sent though you should check the process has exited on host '%s'." % hostname)
                     return True
                 else:
                     # try and connect to this port
@@ -71,7 +74,7 @@ class GangaService:
                     try:
                         sock.connect(addr)
                     except:
-                        print "Could not connect to server on port %d" % port
+                        logger.info("Could not connect to server on port %d" % port)
                         return False
 
                     sock.send("###STOP###")
@@ -81,7 +84,7 @@ class GangaService:
                     sock.close()
 
                     # check the process has gone away
-                    print "Stop signal sent. Waiting for Ganga process to finish..."
+                    logger.info("Stop signal sent. Waiting for Ganga process to finish...")
                     wait = 0
                     ret, out = getstatusoutput("ps -Af | grep ganga -i | grep %d" % port)
                     while ret == 0 and wait < 120:
@@ -90,18 +93,18 @@ class GangaService:
                         ret, out = getstatusoutput('ps -Af | grep ganga -i | grep -v "sh -c" | grep %d' % port)
                         
                     if wait > 119:
-                        print "Signals sent but ganga still running. Retry killServer or kill process manually."
+                        logger.info("Signals sent but ganga still running. Retry killServer or kill process manually.")
                         return False
                     
-                    print "Local server stopped"
+                    logger.info("Local server stopped")
                     return True
                                                                                                 
             else:
-                print "Stale server file around. Removing..."
+                logger.info("Stale server file around. Removing...")
                 os.system("rm %s" % os.path.join(self.gangadir, "server", "server.info"))
                 return True
         else:
-             print "No Server running"
+            logger.info("No Server running")
              return True
 
     def startServer(self):
@@ -117,13 +120,13 @@ class GangaService:
             # watchdog file there so check timestamp
             if (time.time() - os.path.getmtime(os.path.join(self.gangadir, "server", "server.info"))) < 60:
                 if hostname != os.uname()[1]:
-                    print "Active server running on host '%s'" % hostname
+                    logger.info("Active server running on host '%s'" % hostname)
                     return False
                 else:
-                    print "Active server running on this machine."
+                    logger.info("Active server running on this machine.")
                     return True
             else:
-                print "Stale server file around. Removing..."
+                logger.info("Stale server file around. Removing...")
                 os.system("rm %s" % os.path.join(self.gangadir, "server", "server.info"))
 
         # try to get an unsued port
@@ -142,10 +145,10 @@ class GangaService:
             
             # final port number
             self.port = base_port + base_num + proc_offset + add_offset
-            print "Trying port %d..." % self.port
+            logger.info("Trying port %d..." % self.port)
 
         # No, so start it
-        print "Starting server..."
+        logger.info("Starting server...")
         if self.userscript:
             cmd = "%s --daemon -o[PollThread]forced_shutdown_timeout=300 -o[Configuration]ServerPort=%d -o[Configuration]ServerTimeout=%d -o[Configuration]gangadir=%s -o[Configuration]ServerUserScript=%s -o[Configuration]ServerUserScriptWaitTime=%d %s/server-script.py" % (self.gangacmd, self.port, self.timeout, self.gangadir, 
                                                                                                                                                                                                                                                                                  self.userscript, self.userscriptwaittime,
@@ -157,23 +160,23 @@ class GangaService:
         if self.prerun != "":
             cmd = "%s && %s" % (self.prerun, cmd)
 
-        print "\nSettings: "
-        print "  - port:               %d" % self.port
-        print "  - timeout:            %d" % self.timeout
-        print "  - gangadir:           %s" % self.gangadir
-        print "  - prerun:             %s" % self.prerun
-        print "  - gangacmd:           %s" % self.gangacmd
+        logger.info("\nSettings: ")
+        logger.info("  - port:               %d" % self.port)
+        logger.info("  - timeout:            %d" % self.timeout)
+        logger.info("  - gangadir:           %s" % self.gangadir)
+        logger.info("  - prerun:             %s" % self.prerun)
+        logger.info("  - gangacmd:           %s" % self.gangacmd)
         if self.userscript:
-            print "  - userscript:         %s" % self.userscript
-            print "  - userscriptwaittime: %d" % self.userscriptwaittime
+            logger.info("  - userscript:         %s" % self.userscript)
+            logger.info("  - userscriptwaittime: %d" % self.userscriptwaittime)
         else:
-            print "  - default user script specified from .gangarc"
+            logger.info("  - default user script specified from .gangarc")
         
-        print "\nStarting server using command:\n%s" % cmd
+        logger.info("\nStarting server using command:\n%s" % cmd)
         os.system(cmd)
         
         # wait for the server file to be created
-        print "Waiting for server to initialise..."
+        logger.info("Waiting for server to initialise...")
 
         time_diff = 0
         while True:
@@ -183,7 +186,7 @@ class GangaService:
             time.sleep(1)
             time_diff += 1
             if time_diff > 30:
-                print "Server took too long to start."
+                logger.info("Server took too long to start.")
                 return False
         
         return True
@@ -192,7 +195,7 @@ class GangaService:
 
         # check if server is up
         if not self.startServer():
-            print "Could not start the Ganga Server."
+            logger.info("Could not start the Ganga Server.")
             return ""
         
         # try and connect to this port
@@ -201,11 +204,11 @@ class GangaService:
         try:
             sock.connect(addr)
         except:
-            print "Could not connect to server on port %d" % self.port
+            logger.info("Could not connect to server on port %d" % self.port)
             return ""
 
         sock.send(cmd + "\n###ENDCMD###")
-        print "Command sent. Waiting for output from Ganga..."
+        logger.info("Command sent. Waiting for output from Ganga...")
         data = sock.recv(1024)
         while data.find("###ENDMSG###") == -1:
             data += sock.recv(1024)

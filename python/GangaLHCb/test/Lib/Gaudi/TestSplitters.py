@@ -8,7 +8,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -57,7 +57,7 @@ class TestSplitters(GangaGPITestCase):
         #dataopts = subjobs[0].application.extra.input_buffers['data.py']
         ok = dataopts.rfind('f1.dst') >= 0 and dataopts.rfind('f2.dst') >= 0 \
              and len(subjobs[0].inputdata) == 2
-        print len(subjobs[0].inputdata)
+        print(len(subjobs[0].inputdata))
         assert ok, 'problem w/ subjob 0 input data'
         # job 1
         dataopts = [file for file in jobconfigs[1].inputbox if file.name.find( 'data.py')>=0][0].getContents()
@@ -94,7 +94,7 @@ class TestSplitters(GangaGPITestCase):
         #dataopts = subjobs[0].application.extra.input_buffers['data.py']
         ok = dataopts.rfind('f1.dst') >= 0 and dataopts.rfind('f2.dst') >= 0 \
              and len(subjobs[0].inputdata) == 2
-        print len(subjobs[0].inputdata)
+        print(len(subjobs[0].inputdata))
         assert ok, 'problem w/ subjob 0 input data, for data in optsfile'
         # job 1
         dataopts = [file for file in jobconfigs[1].inputbox if file.name.find( 'data.py')>=0][0].getContents()

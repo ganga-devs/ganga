@@ -8,7 +8,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -61,7 +61,7 @@ class TestGaudiPython(GangaGPITestCase):
 ##         #assert gp.extra.inputdata == self.job.inputdata._impl, 'inputdata err'
 ##         found_script = False
 ##         for f in self.master_config.inputbox:
-##             print 'f.name =', f.name
+##             print('f.name =', f.name)
 ##             if f.name.rfind('dummy.script') >= 0:
 ##                 found_script = True
 ##                 break
@@ -72,7 +72,7 @@ class TestGaudiPython(GangaGPITestCase):
         gp = self.gp
         subconfig = gp.configure(None)[1]
         input_files = [f.name for f in subconfig.inputbox]
-        print 'input_files =',input_files
+        print('input_files =',input_files)
         assert 'gaudipython-wrapper.py' in input_files , 'didnt find gaudipython wrapper'
         f = subconfig.inputbox[input_files.index('gaudipython-wrapper.py')]
         #f=file(path,'r')

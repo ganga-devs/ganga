@@ -8,6 +8,5 @@ if not sleep_until_completed(j,60):
     raise failureException ("Timeout on job submission: job is still not finished")
 import os.path
 p = os.path.join(j.outputdir,j.application.args[0])
-print 'testing path:',p
 
 assert(os.path.exists(p))

@@ -1,6 +1,5 @@
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
-from sets import Set
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.Core.exceptions import ApplicationConfigurationError
@@ -53,10 +52,10 @@ class AtlasUnit(IUnit):
                dq2.registerContainer(trf_container)
                logger.info('Registered container for Unit %i of Transform %i: %s' % (self.getID(), trf.getID(), trf_container))
                
-            except Exception, x:
+            except Exception as x:
                logger.error('Problem registering container for Unit %i of Transform %i, %s : %s %s' % (self.getID(), trf.getID(), trf_container,x.__class__, x))
                fail = True
-            except DQException, x:
+            except DQException as x:
                logger.error('DQ2 Problem registering container for Unit %i of Transform %i, %s : %s %s' % (self.getID(), trf.getID(), trf_container,x.__class__, x))
                fail = True
                
@@ -68,10 +67,10 @@ class AtlasUnit(IUnit):
                dq2.registerDatasetsInContainer(trf_container, [ ds ] )
             except DQContainerAlreadyHasDataset:
                pass
-            except Exception, x:
+            except Exception as x:
                logger.error('Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, trf_container, x.__class__, x))
                fail = True
-            except DQException, x:
+            except DQException as x:
                logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, trf_container, x.__class__, x))
                fail = True
       finally:
@@ -96,11 +95,11 @@ class AtlasUnit(IUnit):
                dq2.registerContainer(task_container)
                logger.info('Registered container for Unit %i of Transform %i: %s' % (self.getID(), trf.getID(), task_container))
                   
-            except Exception, x:
+            except Exception as x:
                logger.error('Problem registering container for Unit %i of Transform %i in Task %i, %s : %s %s' %
                             (self.getID(), trf.getID(), task.getID(), task_container, x.__class__, x))
                fail = True
-            except DQException, x:
+            except DQException as x:
                logger.error('DQ2 Problem registering container for Unit %i of Transform %i in Task %i, %s : %s %s' %
                             (self.getID(), trf.getID(), task.getID(), task_container, x.__class__, x))
                fail = True 
@@ -112,10 +111,10 @@ class AtlasUnit(IUnit):
                dq2.registerDatasetsInContainer(task_container, [ ds ] )
             except DQContainerAlreadyHasDataset:
                pass
-            except Exception, x:
+            except Exception as x:
                logger.error('Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, task_container, x.__class__, x))
                fail = True
-            except DQException, x:
+            except DQException as x:
                logger.error('DQ2 Problem registering dataset %s in container %s: %s %s' %( job.outputdata.datasetname, task_container, x.__class__, x))
                fail = True
       finally:
@@ -145,10 +144,10 @@ class AtlasUnit(IUnit):
                   dq2.deleteDatasetsFromContainer(trf_container, [ ds ] )
                except DQContainerDoesNotHaveDataset:
                   pass
-               except Exception, x:
+               except Exception as x:
                   logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
                   fail = True
-               except DQException, x:
+               except DQException as x:
                   logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, trf_container, x.__class__, x))
                   fail = True
       finally:
@@ -178,10 +177,10 @@ class AtlasUnit(IUnit):
                   dq2.deleteDatasetsFromContainer(task_container, [ ds ] )
                except DQContainerDoesNotHaveDataset:
                   pass
-               except Exception, x:
+               except Exception as x:
                   logger.error('Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
                   fail = True
-               except DQException, x:
+               except DQException as x:
                   logger.error('DQ2 Problem removing dataset %s from container %s: %s %s' %( j.outputdata.datasetname, task_container, x.__class__, x))
                   fail = True
       finally:
@@ -228,7 +227,8 @@ class AtlasUnit(IUnit):
       j = GPI.Job()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
-      j.inputdata = self.inputdata.clone()
+      if self.inputdata:
+         j.inputdata = self.inputdata.clone()
 
       trf = self._getParent()
       task = trf._getParent()
@@ -392,7 +392,8 @@ class AtlasUnit(IUnit):
 
       # register the dataset if applicable
       if status == "completed":
-         if not self.registerDataset():
+         job = GPI.jobs(self.active_job_ids[0])
+         if job.outputdata and job.outputdata._impl._name == "DQ2OutputDataset" and not self.registerDataset():
             return
          
       super(AtlasUnit,self).updateStatus(status)
@@ -404,9 +405,15 @@ class AtlasUnit(IUnit):
       if not super(AtlasUnit,self).checkForSubmission():
          return False
 
+      # check that parent units are complete because otherwise, when we check for submission to do submissions first (ITransform.update)
+      # datasets may not have been created yet
+      if not self.checkParentUnitsAreComplete():
+         return False
+
       # Add a check for chain units to have frozen their input DS
       if len(self.req_units) > 0 and self.inputdata._name == "DQ2Dataset" and not self.inputdata.tag_info:
 
+         # check datasets are frozen
          for uds in self.inputdata.dataset:
             try:
                dq2_lock.acquire()

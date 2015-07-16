@@ -1214,7 +1214,7 @@ class AthenaMCOutputDatasets(Dataset):
             dq2_lock.acquire()
             try:
                 ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum ) 
-            except DQFileExistsInDatasetException, DQInvalidRequestException:
+            except (DQFileExistsInDatasetException, DQInvalidRequestException):
                 logger.debug('Warning, some files already in dataset')
                 pass
         finally:

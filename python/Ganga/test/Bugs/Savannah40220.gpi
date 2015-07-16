@@ -1,9 +1,13 @@
 j = Job(backend=LCG())
 import tempfile
 import os
-f,name = tempfile.mkstemp()
-export(j,name)
+f, name = tempfile.mkstemp()
+export(j, name)
 try:
   load(name)
+except:
+  raise
 finally:
+  with open(name, 'r') as fin:
+    print fin.read()
   os.remove(name)

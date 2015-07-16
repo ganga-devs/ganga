@@ -2,7 +2,6 @@ from GangaTest.Framework.utils import assert_cannot_submit
 
 job = Job(application=Executable(exe=File('x')))
 assert(job.application.exe == File('x'))
-print '*'*30,len(jobs)
 assert(len(jobs) == 1)
 
 job2 = Job(job)

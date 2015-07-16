@@ -2,5 +2,6 @@
 Definition of GPI base objects and proxies.
 """
 
-from Objects import GangaObject
-from Proxy import GangaException, GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.Core.exceptions import GangaException
+from Ganga.GPIDev.Base.Proxy import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError

@@ -6,12 +6,10 @@ def check(exists_flag):
     for fn in ['stdout','stderr']:
         fn = os.path.join(j.outputdir,fn)
         file_exists = os.path.exists(fn)
-        if (exists_flag and not file_exists):
-            print 'file %s should exist but it does not' % fn
-            assert(0)
-        if not exists_flag and file_exists:
-            print 'file %s should not exists but it does' % fn
-            assert(0)
+        if exists_flag:
+            assert file_exists, 'file %s should exist but it does not' % fn
+        else:
+            assert not file_exists, 'file %s should not exist but it does' % fn
 
 j = Job()
 j.application.exe='bash'

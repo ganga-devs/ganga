@@ -6,6 +6,8 @@ import shutil
 import tempfile
 from os.path import join
 
+from GangaLHCb.test import *
+
 #from GangaLHCb.test import *
 
 import Ganga.Utility.Config
@@ -26,13 +28,12 @@ class TestGaudiPython(GangaGPITestCase):
         assert sleep_until_completed(j,600)
 
         fname = join(j.outputdir,'stdout')
-        print 'file =', open(fname).read()
+        print('file =', open(fname).read())
         executionstring = 'Welcome to ApplicationMgr'
         assert file_contains(fname,executionstring),\
                'stdout should contain string: ' + executionstring
 
     def testDirac(self):
-        from GangaLHCb.test import *
         gp = GaudiPython(platform=getDiracAppPlatform())
         gp.version = configDaVinci['version']
         j = Job(application=gp, backend=Dirac())
@@ -54,7 +55,7 @@ class TestGaudiPython(GangaGPITestCase):
 
         
         fname = join(j.outputdir,'stdout')
-        print 'file =', open(fname).read()
+        print('file =', open(fname).read())
         assert file_contains(fname,'ABC'), 'First script file not executed'
         assert file_contains(fname,'DEF'),\
                'Inclusion of second script not working'
@@ -104,7 +105,7 @@ class TestGaudiPython(GangaGPITestCase):
         executionstring = 'SUCCESS Reading Event record 1'
         for js in j.subjobs:
             fname = join(js.outputdir,'stdout')
-            print 'file =', open(fname).read()
+            print('file =', open(fname).read())
             assert file_contains(fname,executionstring),\
                    'stdout should contain string: ' + executionstring
 

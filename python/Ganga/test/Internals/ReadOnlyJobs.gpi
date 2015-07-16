@@ -1,3 +1,5 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
 
 j = Job()
 j.backend = "TestSubmitter"
@@ -7,18 +9,18 @@ j.application.exe = '/usr/bin/env'
 j.submit()
 
 assert(j.status != 'new')
-print '#'*40
-print j.status
-print j._impl._readonly()
+logger.info('#'*40)
+logger.info(j.status)
+logger.info(j._impl._readonly())
 
 try:
     j.application.exe = '3'
     assert('not new job should be read-only' is None)
-except ReadOnlyObjectError,x:
+except ReadOnlyObjectError as x:
     pass
 
 try:
     j.application.exe = '3'
     assert('not new job should be read-only' is None)
-except ReadOnlyObjectError,x:
+except ReadOnlyObjectError as x:
     pass

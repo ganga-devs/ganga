@@ -1,5 +1,4 @@
 #!/usr/bin/env python
 
-import os,time
-print 'aborting application...'
+import os
 os.abort()

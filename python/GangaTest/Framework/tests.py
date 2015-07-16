@@ -2,6 +2,9 @@ import unittest
 import traceback
 import StringIO
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 class GangaGPITestCase(unittest.TestCase):
         """
         Base class for GPI test-cases
@@ -81,10 +84,8 @@ class GangaGPIPTestCase(unittest.TestCase):
         import os
         import sys
         from subprocess import PIPE,Popen,STDOUT
-        print '\n***** %s' % self.description
-        print '\tLog file: %s' % self.output_path
-
-        #print 'test cmd : %s' % self.testCmd
+        logger.info('\n***** %s' % self.description)
+        logger.info('\tLog file: %s' % self.output_path)
 
         output = open(self.output_path,'w')
         pytf_paths = str.split(os.getenv('PYTF_TOP_DIR'),':')
@@ -113,7 +114,7 @@ class GangaGPIPTestCase(unittest.TestCase):
         if start_index > -1:start_index = start_index + 15
         err = "%s" % text[start_index:end_index]
         if len(err) > 0:
-            raise unittest.TestCase.failureException, err
+            raise unittest.TestCase.failureException(err)
 
 import time
 
@@ -132,10 +133,10 @@ class GPIPPreparationTestCase(unittest.TestCase):
         #self.description_org = description
 
     def run_pytest_function(self):
-        print '%s starts to run' % self.method_name 
+        logger.info('%s starts to run' % self.method_name)
         try:
             checkTest = getattr(self.pytest_instance, self.method_name)()
-        except Exception, preparationError:
+        except Exception as preparationError:
             sio = StringIO.StringIO()
             traceback.print_exc(file=sio)
             self.preparationError = sio.getvalue()
@@ -149,7 +150,7 @@ class GPIPPreparationTestCase(unittest.TestCase):
         try:
             return self.checkTest
         except AttributeError:
-            raise Exception, 'Failed to get the instance of "CheckTest".(Should get this after running the testcase.)'
+            raise Exception('Failed to get the instance of "CheckTest".(Should get this after running the testcase.)')
 
     def getDescription(self):
         return self.description
@@ -183,7 +184,7 @@ class GPIPCheckTestCase(unittest.TestCase):
                 raise self.preError
 
             assert(self.checkTest != None), 'No instance of checktest, this should happen while the preparation of test is failed.'
-        except Exception, error:
+        except Exception as error:
             sio = StringIO.StringIO()
             traceback.print_exc(file=sio)
             self.errorTraceback = sio.getvalue()
@@ -192,7 +193,7 @@ class GPIPCheckTestCase(unittest.TestCase):
 
         try:
             self.checkTest.checkTest()
-        except Exception, runCheckError:
+        except Exception as runCheckError:
             self.runCheckError = runCheckError
             sio = StringIO.StringIO()
             traceback.print_exc(file=sio)
@@ -252,11 +253,11 @@ class SimpleRunnerControl(object):
             self.preparationError = self.preparationTestCase.get_fixture().preparationError
         try:
             self.checkTest = self.preparationTestCase.get_fixture().getCheckTest()
-        except Exception, e:
-            print 'WARNING: Failed to get the instance of check test, because of the fail of the preparation of test, won\'t do the check test.'
+        except Exception as e:
+            logger.warning("Failed to get the instance of check test, because of the fail of the preparation of test, won't do the check test.")
             self.checkTest = None 
             if run_status:
-                print 'WARNING: The test preparation is done successfully, did you forget to return the instance of check test?'
+                logger.warning('The test preparation is done successfully, did you forget to return the instance of check test?')
             run_status = False # Mark the run status as fail, in order to set to finish by driver.py.
         self._printEnd('runPreparation')
         return run_status
@@ -275,7 +276,7 @@ class SimpleRunnerControl(object):
                  ready = self.checkTest.isReadyForCheck()
              else:
                  ready = True
-         except Exception, e:
+         except Exception as e:
              #Change to catch generic exception.
              sio = StringIO.StringIO()
              traceback.print_exc(file=sio)
@@ -325,7 +326,7 @@ class SimpleRunnerControl(object):
         return run_status
 
     def _printBegin(self, method):
-        print '@@@@ [%s] BEGIN of %s' % (self.testName, method)
+        logger.info('@@@@ [%s] BEGIN of %s' % (self.testName, method))
 
     def _printEnd(self, method):
-        print '@@@@ [%s] END of %s' % (self.testName, method)
+        logger.info('@@@@ [%s] END of %s' % (self.testName, method))

@@ -43,21 +43,23 @@ class SplitFilesBySize(GaudiInputDataSplitter):
 
     def _create_subjob(self, job, dataset):
         logger.debug( "_create_subjob" )
+
         datatmp = []
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
                 if isinstance( i, DiracFile ):
-                    datatmp.append( i )
+                    datatmp.extend( i )
                 else:
                     logger.error( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
         elif isinstance( dataset, list ):
+            from Ganga.GPIDev.Base.Proxy import isType
             for i in dataset:
                 if type(i) == type(''):
                     datatmp.append( DiracFile( lfn=i ) )
-                elif type(i) == type( DiracFile() ):
-                    datatmp.append( i )
+                elif type(i) == isType( DiracFile() ):
+                    datatmp.extend( i )
                 else:
                     x = GangaException( "Unknown(unexpected) file object: %s" % i )
                     raise x

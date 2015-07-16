@@ -99,7 +99,7 @@ def _downloadCESEInfo():
         retry += 1
         try:
             data = urllib.urlopen(CESEInfoURL).read()
-        except Exception, e:
+        except Exception as e:
             logger.warning(e)
             pass
 
@@ -136,7 +136,7 @@ def _downloadCESEInfo():
         except EOFError:
             result['creamce_info']  = []
         input.close()
-    except Exception, e:
+    except Exception as e:
         logger.error(e)
         logger.error('Cannot read CE-SE association downloaded from the GANGA website..')
         return None
@@ -206,7 +206,7 @@ def getSEsForSites(ids):
 
         for site in sites:
             site_info = ToACache.sites[site]
-            if not site_info.has_key('srm'): 
+            if 'srm' not in site_info: 
                 logger.error('Site %s has no srm info in TiersOfATLAS',site)
                 continue
             sitesrm = site_info['srm']
@@ -259,7 +259,7 @@ def getCEsForSites(ids, excluded_ids = [], CREAM = False, cputime=0 ):
         for site in sites:
             site_info = ToACache.sites[site] 
             ces = []
-            if site_info.has_key('srm'):
+            if 'srm' in site_info:
                 sitesrm = site_info['srm']
                 if sitesrm == '': 
                     logger.debug('Site %s has no srm info in TiersOfATLAS',site)
@@ -403,7 +403,7 @@ def getAccessInfo(sitename=''):
 
     _refreshCESEInfo()
 
-    if CESEInfo['access_info'] and CESEInfo['access_info'].has_key(sitename):
+    if CESEInfo['access_info'] and sitename in CESEInfo['access_info']:
         return CESEInfo['access_info'][sitename]
     else:
         return []

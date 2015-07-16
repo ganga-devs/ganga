@@ -13,6 +13,9 @@ from copy import deepcopy
 import os
 config = Ganga.Utility.Config.getConfig('Configuration')
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 partition_colours = {
     'ignored'    : "",
     'hold'       : fgcol("lgray"),
@@ -141,7 +144,7 @@ class LHCbAnalysisTransform(Transform):
             else:
                 o += markup("Partition %i" % c, overview_colours[s])
                 o+="\n"
-        print o
+        logger.info(o)
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def run(self, check=True):
@@ -378,9 +381,8 @@ class LHCbAnalysisTransform(Transform):
             if not os.path.exists(outputdir):
                os.makedirs(outputdir)
             self.merger.merge(self.getJobs(),outputdir)
-        except Exception, x:
+        except Exception as x:
             logger.error('There was a problem merging the output from all partitions.')
-            print x
 
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     ## Once partition finished, if in state 'partition_status' then resubmit

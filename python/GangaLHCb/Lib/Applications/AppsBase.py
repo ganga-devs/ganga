@@ -191,7 +191,7 @@ class AppName(Gaudi):
        # parser = check_inputs(optsfiles, extraopts, self.env) 
         try:
             parser = PythonOptionsParser(optsfiles,extraopts,self.getenv(False))
-        except Exception, e:
+        except Exception as e:
             msg = 'Unable to parse the job options. Please check options ' \
                   'files and extraopts.'
             raise ApplicationConfigurationError(None,msg)
@@ -202,8 +202,8 @@ class AppName(Gaudi):
         """Performs a getpack on the package given within the environment
            of the application. The unix exit code is returned
         """
-        import FileFunction
-        return FileFunction.getpack( self, options )
+        import FileFunctions
+        return FileFunctions.getpack( self, options )
 
     def make(self, argument=None):
         """Performs a make on the application. The unix exit code is 
@@ -222,7 +222,8 @@ class AppName(Gaudi):
             logger.error( "Cannot use this with cmake enabled!" )
             return -1
         command = '###CMT### ' + command
-        return CMTscript.CMTscript(self,command)
+        from GangaLHCb.Lib.Applications.CMTscript import CMTscript
+        return CMTscript(self,command)
 
     def _getshell(self):
         import EnvironFunctions
@@ -247,7 +248,7 @@ class AppName(Gaudi):
             
         try:
             parser = PythonOptionsParser(optsfiles,extraopts,self.getenv(False))
-        except ApplicationConfigurationError, e:
+        except ApplicationConfigurationError as e:
             # fix this when preparing not attached to job
             
             msg2=''
@@ -285,7 +286,7 @@ class AppName(Gaudi):
     def _parse_options(self):
         try:
             parser = self._get_parser()
-        except ApplicationConfigurationError, e:
+        except ApplicationConfigurationError as e:
             raise e
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),

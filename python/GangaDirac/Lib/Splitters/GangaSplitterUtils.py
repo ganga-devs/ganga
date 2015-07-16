@@ -53,10 +53,9 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.debug( "found all replicas" )
 
-    from sets import Set
     super_dict = dict()
     for lfn, repz in file_replicas.iteritems():
-        sitez=Set([])
+        sitez=set([])
         for i in repz:
             #print i
             sitez.add( i )
@@ -72,13 +71,13 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
         ## Randomly Select 2 SE as the starting point for spliting jobs
         if len(super_dict[i]) > 2:
-            req_sitez = Set([])
+            req_sitez = set([])
             chosen = random.sample( super_dict[i], 2 )
             for s in chosen:
                 req_sitez.add( s )
         ## Keep the 2 or less SE as the SE of choice
         else:
-            req_sitez = Set([])
+            req_sitez = set([])
             for s in super_dict[i]:
                 req_sitez.add( s )
 
@@ -86,7 +85,7 @@ def GangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.debug( "Found all SE in use" )
 
-    Tier1Sites = Set([ ])
+    Tier1Sites = set([ ])
 
     for i in super_dict.keys():
 

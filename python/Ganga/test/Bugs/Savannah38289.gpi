@@ -26,13 +26,13 @@ b = makeGangaList(10,100)
 assert len(a) == len(b), 'Lists should have the same length'
 assert a == b, 'Lists should be the same'
 
-assert type(a) == type([])
+assert isinstance(a, list)
 assert isType(b,glist)
 
 assert len(a + b) == 2*len(a), 'Lengths should add'
 assert isinstance(a + b,list)
 
-assert type(a) == type([])
+assert isinstance(a, list)
 a += b
 assert isinstance(a,list)
 assert isType(b,glist)

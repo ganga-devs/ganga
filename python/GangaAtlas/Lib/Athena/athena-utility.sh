@@ -154,7 +154,14 @@ cmt_setup () {
     if [ ! -z `echo $ATLAS_RELEASE | grep 11.` ]; then
         source $ATLAS_RELEASE_DIR/setup.sh
     # New athena v16 AtlasSetup #################
-    elif [ $ATHENA_MAJOR_RELEASE -gt 15 ]; then
+    elif [ $ATHENA_MAJOR_RELEASE -gt 15 ] || [ -z $ATLAS_RELEASE ]; then
+	# special case for AthAnalysisBase - must use 'here' in asetup
+	if [[ $ATLAS_PROJECT == AthAnalysisBase ]]; then
+	    export EXTRAOPTS=here
+	    mkdir work
+	    cd work
+	fi
+
 	# ##### CVMFS setup ###########################################
 	if [[ $ATLAS_RELEASE_DIR == /cvmfs/* ]]; then
 	    export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
@@ -162,23 +169,30 @@ cmt_setup () {
 	    if [[ $ATLAS_RELEASE_DIR == /cvmfs/* ]]; then
 		export ATLAS_LOCAL_ROOT_BASE=/cvmfs/atlas.cern.ch/repo/ATLASLocalRootBase
 		source ${ATLAS_LOCAL_ROOT_BASE}/user/atlasLocalSetup.sh
+
 		if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_PRODUCTION,$ATLAS_ARCH --cmtconfig=$ATLAS_CMTCONFIG
+		    echo $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_PRODUCTION,$ATLAS_ARCH,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_PRODUCTION,$ATLAS_ARCH,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
 		elif [ ! -z $ATLAS_PROJECT ]; then
-		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_RELEASE,$ATLAS_ARCH --cmtconfig=$ATLAS_CMTCONFIG
+		    echo $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_RELEASE,$ATLAS_ARCH,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_PROJECT,$ATLAS_RELEASE,$ATLAS_ARCH,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
 		else
-		    source $AtlasSetup/scripts/asetup.sh $ATLAS_RELEASE,$ATLAS_ARCH --cmtconfig=$ATLAS_CMTCONFIG
+		    echo $AtlasSetup/scripts/asetup.sh $ATLAS_RELEASE,$ATLAS_ARCH,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
+		    source $AtlasSetup/scripts/asetup.sh $ATLAS_RELEASE,$ATLAS_ARCH,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
 		fi
 	    fi
 
 	elif [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_PRODUCTION,$ATLAS_PROJECT,$ATLAS_ARCH,setup,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
 	elif [ ! -z $ATLAS_PROJECT ]; then
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh $ATLAS_RELEASE,$ATLAS_PROJECT,$ATLAS_ARCH,setup,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
 	else
-	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup --cmtconfig=$ATLAS_CMTCONFIG
+	    source $ATLAS_RELEASE_DIR/cmtsite/asetup.sh AtlasOffline,$ATLAS_RELEASE,$ATLAS_ARCH,setup,$EXTRAOPTS --cmtconfig=$ATLAS_CMTCONFIG
 	fi
 
+	if [[ $ATLAS_PROJECT == AthAnalysisBase ]]; then
+	    cd ../
+	fi
     else 
         #if [ n$ATLAS_PROJECT = n'AtlasPoint1' ]; then
         if [ ! -z $ATLAS_PROJECT ] && [ ! -z $ATLAS_PRODUCTION ]; then

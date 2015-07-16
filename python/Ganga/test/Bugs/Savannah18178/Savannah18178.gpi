@@ -10,11 +10,9 @@ fn = j.outputdir+'/proc_stat'
 cnt = 10
 
 while cnt>0:
-    print 'trying to read file',fn
     time.sleep(5)
     if os.path.exists(fn):
         proc_num = int(file(fn).read())
-        print 'internal process number',proc_num
         break
     cnt -= 1
 
@@ -29,7 +27,6 @@ sleep_until_state(j,10,'killed')
 try:
     os.kill(proc_num,0)
     assert(0) # process not killed
-except OSError,x:
-    print 'got',x
+except OSError as x:
     pass
 

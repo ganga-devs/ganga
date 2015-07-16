@@ -1,8 +1,8 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: PACKAGE.py,v 1.7 2009-07-27 15:15:56 moscicki Exp $
-################################################################################
+##########################################################################
 
 """ PACKAGE modules describe the installation and setup of the Ganga runtime packages.
 Purpose: automatic initialization of Ganga environment setup and software distribution tools.
@@ -16,11 +16,11 @@ The standardSetup() function is used to perform automatic initialization of the 
 """
 
 # Default minimum Python version number asked for by Ganga
-_defaultMinVersion = "2.2"
-_defaultMinHexVersion = 0x20200f0
+_defaultMinVersion = "2.6"
+_defaultMinHexVersion = 0x20600f0
 
 # The default values will be guessed but you may override them here
-_defaultPlatform = None #'slc3_gcc323'
+_defaultPlatform = None  # 'slc3_gcc323'
 _defaultExternalHome = None
 #_defaultExternalHome = "/afs/cern.ch/sw/ganga/external/"
 
@@ -29,7 +29,7 @@ _defaultExternalHome = None
 # dependencies go in here
 #
 # The layout of the external tree is fixed. The package top is:
-#  externalHome/name/version/platf 
+#  externalHome/name/version/platf
 #
 # This layout is similar to  LCG external software repository and thus
 # may be profitable in the long term.
@@ -41,41 +41,43 @@ _defaultExternalHome = None
 # value specified in the dictionary may be either string or a list of strings (they will be separated by colons ':').
 #
 _externalPackages = {
-    'ipython': {'version' : '0.6.13_ganga_patch1',
-                'noarch':True,
-                'PYTHONPATH' : 'lib/python'},
-    'uuid' : {'version' : '1.30', 
-              'noarch':True,
-              'syspath' : 'python'},
-    'ApMon' : {'version' : '2.2.11', 
-               'noarch':True,
-               'syspath' : 'python'},
-    'subprocess':{'version' : '2.4.2',
-                  'syspath' : 'lib/python2.2/site-packages',
-                  'maxHexVersion' : '0x20501f0', # in 2.5.0 subprocess is broken, bugfix: http://savannah.cern.ch/bugs/?36178
-                  'noarch':True},
-    'tarfile' : {'version' : '2.4.2',
-                 'syspath': 'lib/python2.2/site-packages',
-                 'maxHexVersion' : '0x20300f0',
-                 'noarch':True},
-    'paramiko' : {'version' : '1.7.3',
-                  'noarch':True,
-                  'syspath':'lib/python2.3/site-packages'},
-    'pycrypto' : {'version' : '2.0.1',
-                  'syspath':'lib/python2.3/site-packages'},
-    'stomputil' : {'version' : '2.4',
-                   'noarch': True,
-                   'syspath' : 'python'},
-    'httplib2' : {'version' : '0.8',
-                  'noarch'  : True,
-                  'syspath' : 'python'},
-    'python-gflags' : {'version' : '2.0',
-                       'noarch'  : True,
-                       'syspath' : 'python'},
-    'google-api-python-client' : {'version' : '1.1',
-                                  'noarch'  : True,
-                                  'syspath' : 'python'}
-    }
+    'ipython': {'version': '0.6.13_ganga_patch1',
+                'noarch': True,
+                'PYTHONPATH': 'lib/python'},
+    'uuid': {'version': '1.30',
+             'noarch': True,
+             'syspath': 'python'},
+    'ApMon': {'version': '2.2.11',
+              'noarch': True,
+              'syspath': 'python'},
+    'subprocess': {'version': '2.4.2',
+                   'syspath': 'lib/python2.2/site-packages',
+                   # in 2.5.0 subprocess is broken, bugfix:
+                   # http://savannah.cern.ch/bugs/?36178
+                   'maxHexVersion': '0x20501f0',
+                   'noarch': True},
+    'tarfile': {'version': '2.4.2',
+                'syspath': 'lib/python2.2/site-packages',
+                'maxHexVersion': '0x20300f0',
+                'noarch': True},
+    'paramiko': {'version': '1.7.3',
+                 'noarch': True,
+                 'syspath': 'lib/python2.3/site-packages'},
+    'pycrypto': {'version': '2.0.1',
+                 'syspath': 'lib/python2.3/site-packages'},
+    'stomputil': {'version': '2.4',
+                  'noarch': True,
+                  'syspath': 'python'},
+    'httplib2': {'version': '0.8',
+                 'noarch': True,
+                 'syspath': 'python'},
+    'python-gflags': {'version': '2.0',
+                      'noarch': True,
+                      'syspath': 'python'},
+    'google-api-python-client': {'version': '1.1',
+                                 'noarch': True,
+                                 'syspath': 'python'}
+}
 
 
 def detectPlatform():
@@ -96,23 +98,24 @@ def detectPlatform():
     We assume that 32 bit python implies the slc4, ia32 system.
 
     We ignore IA64 architecture (Opteron) as not frequently used.
-    
+
     """
 
     # assume INTEL processors (i386, i686,x64), ignore IA64 architecture
-    platf4 = { 32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
-    platf5 = { 32: 'i686-slc5-gcc43-opt', 64: 'x86_64-slc5-gcc43-opt'}
+    platf4 = {32: 'slc4_ia32_gcc34', 64: 'slc4_amd64_gcc34'}
+    platf5 = {32: 'i686-slc5-gcc43-opt', 64: 'x86_64-slc5-gcc43-opt'}
 
     # for older python versions use some tricks
     import sys
-    bits = sys.maxint >> 32
+    bits = sys.maxsize >> 32
 
-    if bits: arch = 64
+    if bits:
+        arch = 64
     else:
         arch = 32
 
     platfstring = platf4
-    
+
     try:
         import platform
         import re
@@ -120,7 +123,8 @@ def detectPlatform():
         r = c.match(platform.platform())
         if r and r.group('ver').split('.')[0] == '5':
             platfstring = platf5
-    except ImportError:
+    except ImportError, err:
+        logger.debug("Ganga PACKAGE Import Exception: %s" % str(err))
         pass
 
     return platfstring[arch]
@@ -131,35 +135,19 @@ if not _defaultExternalHome:
     import os.path
     import Ganga
     from Ganga.Utility.files import fullpath
-    p =  fullpath(Ganga.__file__)
+    p = fullpath(Ganga.__file__)
     for i in range(5):
         p = os.path.dirname(p)
-    _defaultExternalHome = os.path.join(p,'external')
+    _defaultExternalHome = os.path.join(p, 'external')
 
 if not _defaultPlatform:
     _defaultPlatform = detectPlatform()
 
 
-## BEGIN horrid hack as ganga core still supports python 2.4!!
-import sys
-try:
-    from email.mime.multipart import MIMEMultipart
-except:
-    import email
-    import email.MIMEMultipart
-    import email.MIMENonMultipart
-    import email.Generator
-    import email.Parser
-    sys.modules['email.mime'] = email
-    sys.modules['email.mime.multipart'] = email.MIMEMultipart
-    sys.modules['email.mime.nonmultipart'] = email.MIMENonMultipart
-    sys.modules['email.generator'] = email.Generator
-    sys.modules['email.parser'] = email.Parser
-## END horrid hack
-
 from Ganga.Utility.Setup import PackageSetup
 # The setup object
 setup = PackageSetup(_externalPackages)
+
 
 def standardSetup(setup=setup):
     """ Perform automatic initialization of the environment of the package.
@@ -168,26 +156,26 @@ def standardSetup(setup=setup):
 
     from Ganga.Utility.Setup import checkPythonVersion
     import sys
-    
-    # here we assume that the Ganga has been already prepended to sys.path by the caller
-    if checkPythonVersion(_defaultMinVersion,_defaultMinHexVersion):
+
+    # here we assume that the Ganga has been already prepended to sys.path by
+    # the caller
+    if checkPythonVersion(_defaultMinVersion, _defaultMinHexVersion):
         for name in setup.packages:
             if name == 'pycrypto' and sys.hexversion > 0x2050000:
                 # hack the pycrypto path for 2.5
-                setup.packages['pycrypto']['syspath'] = setup.packages['pycrypto']['syspath'].replace('2.3', '2.5')
-                
+                setup.packages['pycrypto']['syspath'] = setup.packages[
+                    'pycrypto']['syspath'].replace('2.3', '2.5')
+
             if name == 'paramiko' and sys.hexversion > 0x2050000:
                 # hack the paramiko path for 2.5
-                setup.packages['paramiko']['syspath'] = setup.packages['paramiko']['syspath'].replace('2.3', '2.5')
-
+                setup.packages['paramiko']['syspath'] = setup.packages[
+                    'paramiko']['syspath'].replace('2.3', '2.5')
 
             setup.setSysPath(name)
-            setup.prependPath(name,'PYTHONPATH')
-            
+            setup.prependPath(name, 'PYTHONPATH')
+
             # if other PATH variable must be defined, e.g. LD_LIBRARY_PATH, then
             # you should do it this way:
-            #setup.prependPath(name,'LD_LIBRARY_PATH')
+            # setup.prependPath(name,'LD_LIBRARY_PATH')
     else:
         sys.exit()
-
-

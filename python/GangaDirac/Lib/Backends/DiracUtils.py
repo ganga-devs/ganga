@@ -32,7 +32,7 @@ def get_result( command,
                     raise GangaException(exception_message)          
                 raise GangaException("Failed to return result of '%s': %s"% (command, result))
             return result
-        except Exception, x:
+        except Exception as x:
             if retries == retry_limit-1:
                 raise x
             retries = retries+1

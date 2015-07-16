@@ -36,7 +36,7 @@ class NA62LCGRequirements(GangaObject):
 
          try:
              attr = getattr(other,name)
-         except KeyError,e:
+         except KeyError as e:
              pass
 
          if not attr: attr = getattr(self,name)

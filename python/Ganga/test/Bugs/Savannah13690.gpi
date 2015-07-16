@@ -1,3 +1,6 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 j = Job()
 j.backend = TestSubmitter(time=15,update_delay=5)
 
@@ -10,12 +13,12 @@ for i in range(10):
     j2.submit()
     all.append(j2)
 
-print 'waiting for a monitoring loop to run'
+logger.info('waiting for a monitoring loop to run')
 import time
 time.sleep(30) # assuming the poll runs every 30 seconds or more often
-print "monitoring loop should go over the jobs now, so let's delete them"
+logger.info("monitoring loop should go over the jobs now, so let's delete them")
 for j in all:
     j.remove()
-print "wait for the monitoring loop to try to update status about removed jobs"
+logger.info("wait for the monitoring loop to try to update status about removed jobs")
 #time.sleep(30) # not needed!
 

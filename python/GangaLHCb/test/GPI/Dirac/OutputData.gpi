@@ -38,15 +38,15 @@ if os.path.exists(output_file):
 
 if os.path.exists(join(jscript.outputdir,'std.out')):
     file = open(join(jscript.outputdir,'std.out'))
-    print 'std.out =', file.read()
+    print('std.out =', file.read())
     file.close()
 if os.path.exists(join(jscript.outputdir,'stdout')):
     file = open(join(jscript.outputdir,'stdout'))
-    print 'stdout =', file.read()
+    print('stdout =', file.read())
     file.close()
 
 downloadedFiles = jscript.backend.getOutputData()
-print 'downloadedFiles',downloadedFiles
+print('downloadedFiles',downloadedFiles)
 
 #assert 'output.txt' in downloadedFiles, 'output.txt must be downloaded - %s' \
 #    % str(downloadedFiles)
@@ -59,7 +59,7 @@ assert exists(output_file), 'File must exist'
 assert(file_contains(output_file,'This is a test'))
 lfns = jscript.backend.getOutputDataLFNs()
 assert len(lfns) == 1, 'We only expect one LFN'
-print 'lfns',lfns
+print('lfns',lfns)
 assert basename(lfns[0].name) == 'outputs.txt', 'Check the LFN is as expected'
 
 jscript.outputfiles[0].remove()

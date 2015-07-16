@@ -4,7 +4,7 @@ try:
     import Ganga.Utility.Config.Config
     doConfig = not Ganga.Utility.Config.Config._after_bootstrap
 except x:
-    print x
+    print(x)
     doConfig = True
 
 if doConfig:
@@ -13,7 +13,7 @@ if doConfig:
 class TestPhysicalFile(GangaGPITestCase):
 
     def test_full_expand_filename(self):
-        from GangaLHCb.Lib.Files.PhysicalFile import *
+        from GangaLHCb.Lib.Files.PhysicalFile import full_expand_filename
         import os.path
         pwd = os.path.abspath('.')
         name = 'test.txt'
@@ -21,7 +21,7 @@ class TestPhysicalFile(GangaGPITestCase):
         assert full_expand_filename(name) == full_name, 'name not expanded'
         try:            
             full_expand_filename('lfn:'+name)
-            raise 'using lfn should have raised exception'
+            raise RuntimeError('using lfn should have raised exception')
         except:
             pass
 

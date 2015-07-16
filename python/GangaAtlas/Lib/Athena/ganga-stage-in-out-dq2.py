@@ -283,13 +283,13 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     turl = []    
                     
                     if not 'gfal' in configLOCALPROTOCOL \
-                       and not stUrlMap.has_key(sURLHost) \
+                       and sURLHost not in stUrlMap \
                        and usedProtocol!='file' \
                        and not 'ccsrm.in2p3.fr' in defaultSE:
 
                         print 'Using lcg-gt for turl retrieval ...'
                         # check which version of lcg-utils we're on
-                        if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                        if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
                             cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + protocols
                         else:
                             cmd = "lcg-gt -t 60 " + surl + " " + protocols
@@ -382,11 +382,11 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                         sURLHost = defaultSE[0]
                     turl = []
                     if not 'gfal' in configLOCALPROTOCOL \
-                           and not stUrlMap.has_key(sURLHost) \
+                           and sURLHost not in stUrlMap \
                            and not 'ccsrm.in2p3.fr' in defaultSE:
                         print 'Using lcg-gt for turl retrieval ...'
                         # check which version of lcg-utils we're on
-                        if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                        if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
                             cmd = "lcg-gt --connect-timeout 60 --sendreceive-timeout 60 --srm-timeout 60 --bdii-timeout 60 " + surl + " " + protocols
                         else:
                             cmd = "lcg-gt -t 60 " + surl + " " + protocols
@@ -474,7 +474,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     timeout = int(60 * 2**attempt)
                     if timeout<60:
                         timeout = 60
-                    if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                    if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
                         cmd = "lcg-getturls --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s -p %s %s" %(timeout, timeout, timeout, timeout, bulkprotocols, surls)
                     else:
                         cmd = "lcg-getturls -t %s -p %s %s" %(timeout, bulkprotocols, surls)
@@ -496,7 +496,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
             print 'Using lcg-gt for turl retrieval ...'
             for lfn, surl in guidReplicas.iteritems():                
                 # check which version of lcg-utils we're on
-                if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+                if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
                     cmd = "lcg-gt --connect-timeout %s --sendreceive-timeout %s --srm-timeout %s --bdii-timeout %s " %(timeout, timeout, timeout, timeout) + surl + " " + protocols
                 else:
                     cmd = "lcg-gt -t %s " %(timeout) + surl + " " + protocols
@@ -547,7 +547,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     sURLHost = match.group(1)
                 except:
                     sURLHost = defaultSE[0]
-                if stUrlMap.has_key(sURLHost):
+                if sURLHost in stUrlMap:
                     pfn = re.sub(sURLHost,stUrlMap[sURLHost],surl)
                 else:
                     if not 'ccsrm.in2p3.fr' in defaultSE:
@@ -555,7 +555,7 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                     else:
                         pfn = surl
 
-                if usedProtocol == "dcap" and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
+                if usedProtocol == "dcap" and (sURLHost in stUrlMap or 'ccsrm.in2p3.fr' in defaultSE):
                     pfn = re.sub('srm://','dcap://',pfn)
                     # Hack for ccin2p3
                     pfn = re.sub('ccsrm','ccdcapatlas',pfn)
@@ -571,17 +571,17 @@ def _getPFNsLFC(guidMap, defaultSE, localsitesrm):
                         pfn = re.sub('/atlas/users/','//pnfs/sfu.ca/data/atlas/users/',pfn)
                         pfn = re.sub('22125/atlas/','22125//pnfs/sfu.ca/data/atlas/',pfn)
 
-                elif usedProtocol in [ "root", "Xrootd" ] and (stUrlMap.has_key(sURLHost) or 'ccsrm.in2p3.fr' in defaultSE):
+                elif usedProtocol in [ "root", "Xrootd" ] and (sURLHost in stUrlMap or 'ccsrm.in2p3.fr' in defaultSE):
                     pfn = re.sub('srm://','root://',pfn)
                     # Hack for ccin2p3
                     pfn = re.sub('ccsrm','ccxroot',pfn)
                     pfn = re.sub('ccdcamli01','ccxroot',pfn)
                     pfn = re.sub(':1094',':1094/',pfn)
                     # Hack for LSF CERN
-                    if os.environ.has_key('GANGA_ATHENA_WRAPPER_MODE') and os.environ['GANGA_ATHENA_WRAPPER_MODE']!='' and os.environ['GANGA_ATHENA_WRAPPER_MODE']=='local':
+                    if 'GANGA_ATHENA_WRAPPER_MODE' in os.environ and os.environ['GANGA_ATHENA_WRAPPER_MODE']!='' and os.environ['GANGA_ATHENA_WRAPPER_MODE']=='local':
                         pfn = re.sub('root://castoratlas.cern.ch/castor','root://castoratlas//castor',pfn)
 
-                elif usedProtocol == "gsidcap" and stUrlMap.has_key(sURLHost):
+                elif usedProtocol == "gsidcap" and sURLHost in stUrlMap:
                     #pfn = re.sub('srm://','gfal:gsidcap://',pfn)
                     pfn = re.sub('srm://','gsidcap://',pfn)
                     pfn = re.sub('22128/pnfs','22128//pnfs',pfn)
@@ -756,7 +756,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         inputFileList = []
         inputFileListPeeker = []
         for lfn in lfns:
-            if (configSETYPE == 'dpm') and files[lfn].has_key('surl'):
+            if (configSETYPE == 'dpm') and 'surl' in files[lfn]:
                 surl = files[lfn]['surl']
                 # remove protocol and host
                 pfn = re.sub('^gfal:','',surl)
@@ -774,10 +774,10 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         outFilePre.write(preJobO)
         outFilePre.close()
 
-    if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
+    if 'RECEXTYPE' not in os.environ or os.environ['RECEXTYPE'] == '':
 
         try:
-            if os.environ.has_key('ATHENA_MAX_EVENTS'):
+            if 'ATHENA_MAX_EVENTS' in os.environ:
                 evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
             else:
                 evtmax = -1
@@ -787,13 +787,13 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
 
         skipevt = 0
         try:
-            if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+            if 'ATHENA_SKIP_EVENTS' in os.environ:
                 skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
             else:
                 skipevt = 0
         except:
             skipevt = 0
-        if skipevt<>0:
+        if skipevt != 0:
             outFile.write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
 
         outFile.write('try:\n')
@@ -824,7 +824,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         outFile.write('ganga_input_files = [')
 
         try:
-            if os.environ.has_key('ATHENA_MAX_EVENTS'):
+            if 'ATHENA_MAX_EVENTS' in os.environ:
                 evtmax = int(os.environ['ATHENA_MAX_EVENTS'])
             else:
                 evtmax = -1
@@ -833,7 +833,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
 
         skipevt = 0
         try:
-            if os.environ.has_key('ATHENA_SKIP_EVENTS'):
+            if 'ATHENA_SKIP_EVENTS' in os.environ:
                 skipevt = int(os.environ['ATHENA_SKIP_EVENTS'])
             else:
                 skipevt = 0
@@ -845,7 +845,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         else:
             outFileEvtMax = open('evtmax.py','w').write('theApp.EvtMax = %d\n' %evtmax)
 
-        if skipevt<>0:
+        if skipevt != 0:
             outFileEvtMax = open('evtmax.py','w').write('ServiceMgr.EventSelector.SkipEvents = %d\n' %skipevt)
             
     # loop over all files
@@ -864,7 +864,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         outFile.write('"%s",' % filename)
         outFlatFile.write('%s\n' %filename)
         
-    if not os.environ.has_key('RECEXTYPE') or os.environ['RECEXTYPE'] == '':
+    if 'RECEXTYPE' not in os.environ or os.environ['RECEXTYPE'] == '':
         outFile.write(']\n')
         outFile.write('except:\n')
         outFile.write('    pass\n')
@@ -877,7 +877,7 @@ def _makeJobO(files, tag=False, type='TAG', version=12, dtype='MC', usePrependJo
         outFile.write('athenaCommonFlags.EvtMax.set_Value_and_Lock(%d)\n' % evtmax)
 
     ## setting for event picking
-    if os.environ.has_key('ATHENA_RUN_EVENTS'):
+    if 'ATHENA_RUN_EVENTS' in os.environ:
         revt = eval(os.environ['ATHENA_RUN_EVENTS'])
         run_evt = []
         for i in range(len(revt)):
@@ -958,7 +958,7 @@ def hexify(str):
 def __adler32(filename):
     import zlib
     #adler starting value is _not_ 0L
-    adler=1L
+    adler=1
 
     try:
         openFile = open(filename, 'rb')
@@ -1076,7 +1076,7 @@ def save_file(count, griddir, dest, gridlfn, output_lfn, filename, poolguid, sit
         return -1, -1, -1
 
     # check which version of lcg-utils we're on
-    if os.environ.has_key('lcgutil_num') and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
+    if 'lcgutil_num' in os.environ and os.environ['lcgutil_num']!='' and eval(os.environ['lcgutil_num']) >= 1007002:
         t = timeout / 2
         cmd = "lcg-cr --connect-timeout %i --sendreceive-timeout %i --srm-timeout %i --bdii-timeout %i " % ( t, t, t, t )
     else:
@@ -1189,7 +1189,7 @@ def register_dataset_location(datasetname, siteID):
         except KeyError:
             print 'Dataset %s not found' %datasetname
             return -1
-        if not locations.has_key(datasetvuid):
+        if datasetvuid not in locations:
             print 'Dataset %s not found' %datasetname
             return -1
         alllocations = locations[datasetvuid][0] + locations[datasetvuid][1]
@@ -1199,7 +1199,7 @@ def register_dataset_location(datasetname, siteID):
         if not siteID in alllocations:
             try:
                 dq2.registerDatasetLocation(datasetname, siteID)
-            except DQInvalidRequestException, Value:
+            except DQInvalidRequestException as Value:
                 print 'Error registering location %s of dataset %s: %s' %(datasetname, siteID, Value) 
     finally:
         dq2_lock.release()
@@ -1245,7 +1245,7 @@ def register_file_in_dataset(datasetname,lfn,guid, size, checksum):
         try:
             ret = dq2.registerFilesInDataset(datasetname, lfn, guid, size, checksum) 
             val = 0
-        except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFileExistsInDatasetException), Value:
+        except (DQInvalidFileMetadataException, DQInvalidRequestException, DQFileExistsInDatasetException) as Value:
             print 'Warning, some files already in dataset: %s' %Value
             pass
     finally:
@@ -1292,7 +1292,7 @@ def register_datasets_details(datasets,outdata):
                     dq2_lock.acquire()
                     try:
                         datasetinfo = dq2.registerNewDataset(dataset)
-                    except (DQDatasetExistsException,Exception), Value:
+                    except (DQDatasetExistsException,Exception) as Value:
                         print 'Error registering new dataset %s: %s' %(dataset,Value)
                 finally:
                     dq2_lock.release()
@@ -1618,7 +1618,7 @@ if __name__ == '__main__':
         tag_files = {}
         
         # TAG DATASET ###########################################################
-        if os.environ.has_key('TAG_TYPE'):
+        if 'TAG_TYPE' in os.environ:
             
             print "Preparing TAG Datasets..."
             files = {}
@@ -1666,7 +1666,7 @@ if __name__ == '__main__':
                     tagdatasetnames = os.environ['DATASETNAME'].split(":")
 
                 except:
-                    raise NameError, "ERROR: DATASETNAME not defined"
+                    raise NameError("ERROR: DATASETNAME not defined")
 
                 # compose dq2 command
                 dq2setuppath = '$VO_ATLAS_SW_DIR/ddm/latest/setup.sh'
@@ -1794,7 +1794,7 @@ if __name__ == '__main__':
 
                             # check the cache first
                             for lkup_name in ref_lkup:
-                                if ref_lkup[lkup_name][0].has_key(ref_guid):
+                                if ref_guid in ref_lkup[lkup_name][0]:
                                     ref_name = ref_lkup[lkup_name][0][ref_guid]['lfn']
                                     ref_dataset = lkup_name
                                     new_add_files[ref_dataset].append([ref_name, ref_guid])
@@ -1825,9 +1825,9 @@ if __name__ == '__main__':
 
                             # store useful stuff
                             ref_files = dq2.listFilesInDataset(ref_name)
-                            if ref_files[0].has_key(ref_guid):
+                            if ref_guid in ref_files[0]:
 
-                                if not new_add_files.has_key(ref_name):
+                                if ref_name not in new_add_files:
                                     new_add_files[ref_name] = []
 
                                 new_add_files[ref_name].append([ref_files[0][ref_guid]['lfn'], ref_guid])
@@ -1963,7 +1963,7 @@ if __name__ == '__main__':
             pythoncmd = ''
         else:
             pythoncmd = out.strip()
-        if os.environ.has_key('pybin'):
+        if 'pybin' in os.environ:
             pythoncmd = os.environ['pybin']
 
         # compose dq2 command
@@ -2084,7 +2084,7 @@ if __name__ == '__main__':
         dq2tracertime.append(time.time())
         
         # Check md5sum
-        if len(tUrlMap)>0 and os.environ.has_key('GANGA_CHECKMD5SUM') and os.environ['GANGA_CHECKMD5SUM']=='1':
+        if len(tUrlMap)>0 and 'GANGA_CHECKMD5SUM' in os.environ and os.environ['GANGA_CHECKMD5SUM']=='1':
             tUrlMapTemp = tUrlMap
             for lfn, turl in tUrlMap.iteritems():
 
@@ -2152,7 +2152,7 @@ if __name__ == '__main__':
             surl = sUrlMap[lfn]
 
             # change the PFN for TAG-referenced files
-            if os.environ.has_key('TAG_TYPE') and add_lfns:
+            if 'TAG_TYPE' in os.environ and add_lfns:
                 if lfn in add_lfns:
                     if (configSETYPE == 'dpm'):
                         # remove protocol and host
@@ -2184,7 +2184,7 @@ if __name__ == '__main__':
 
             # remove any tag-referenced files (not the tag files themselves
             tag_flag=False
-            if os.environ.has_key('TAG_TYPE'):
+            if 'TAG_TYPE' in os.environ:
                 
                 if add_lfns:
                     tag_flag = True
@@ -2276,7 +2276,7 @@ if __name__ == '__main__':
                     output_files.append(output_files_orig[i])
                     renameflag = True
                 except IOError:
-                    raise NameError, "ERROR: problems in output stage-out. Could not read output file: '%s'" % output_files_orig[i]
+                    raise NameError("ERROR: problems in output stage-out. Could not read output file: '%s'" % output_files_orig[i])
                     sys.exit(EC_STAGEOUT)
 
         if len(output_files)==0:
@@ -2287,7 +2287,7 @@ if __name__ == '__main__':
         try:
             datasetname = os.environ['OUTPUT_DATASETNAME']
         except:
-            raise NameError, "ERROR: OUTPUT_DATASETNAME not defined"
+            raise NameError("ERROR: OUTPUT_DATASETNAME not defined")
             sys.exit(EC_Configuration)
 
         if not len(output_files):
@@ -2407,14 +2407,14 @@ if __name__ == '__main__':
         try:
             output_lfn = os.environ['OUTPUT_LFN']
         except:
-            raise NameError, "ERROR: OUTPUT_LFN not defined"
+            raise NameError("ERROR: OUTPUT_LFN not defined")
             sys.exit(EC_Configuration)
 
         # Get output jobid
         try:
             output_jobid = os.environ['OUTPUT_JOBID']
         except:
-            raise NameError, "ERROR: OUTPUT_JOBID not defined"
+            raise NameError("ERROR: OUTPUT_JOBID not defined")
             sys.exit(EC_Configuration)
 
         try:
@@ -2429,7 +2429,7 @@ if __name__ == '__main__':
         try:
             use_short_filename = os.environ['GANGA_SHORTFILENAME']
         except:
-            raise NameError, "ERROR: GANGA_SHORTFILENAME not defined"
+            raise NameError("ERROR: GANGA_SHORTFILENAME not defined")
             sys.exit(EC_STAGEOUT)
     
         guids = []

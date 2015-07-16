@@ -1,4 +1,7 @@
 #!/usr/bin/env python
+
+from __future__ import print_function
+
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import sys
@@ -15,10 +18,10 @@ try:
   option = sys.argv[1]
   argv = sys.argv[2:]
 except:
-  print "No options passed, options are:"
+  print("No options passed, options are:")
   for k in commands:
-      print k
-  print ""
+      print(k)
+  print("")
   e=Exception()
   raise e
 
@@ -44,7 +47,7 @@ def get_env():
 
     return global_env
 
-if not get_env().has_key("GANGADIRACENVIRONMENT"):
+if "GANGADIRACENVIRONMENT" not in get_env():
     e = Exception()
     e.args = ('DIRAC env cache file does not exist.',)
     raise e
@@ -152,7 +155,7 @@ elif option == 'info':
             if not create_proxy_cache():
                 rc = 1
                 display = False
-        if display: print get_proxy_info()        
+        if display: print(get_proxy_info())
 elif option == 'destroy':
     destroy_proxy_cache()
     rc = exec_command(commands[option],argv)

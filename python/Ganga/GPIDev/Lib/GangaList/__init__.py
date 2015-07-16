@@ -1,1 +1,1 @@
-from GangaList import GangaList
+import Ganga.GPIDev.Lib.GangaList

@@ -71,6 +71,7 @@ import time
 import types
 import xml.dom.minidom
 from cStringIO import StringIO
+from functools import reduce
 
 #
 # stomp.py version number
@@ -78,43 +79,45 @@ from cStringIO import StringIO
 _version = 1.8
 
 
-def _uuid( *args ):
+def _uuid(*args):
     """
     uuid courtesy of Carl Free Jr:
     (http://aspn.activestate.com/ASPN/Cookbook/Python/Recipe/213761)
     """
-    
-    t = long( time.time() * 1000 )
-    r = long( random.random() * 100000000000000000L )
-  
+
+    t = time.time() * 1000
+    r = random.random() * 100000000000000000
+
     try:
-        a = socket.gethostbyname( socket.gethostname() )
+        a = socket.gethostbyname(socket.gethostname())
     except:
         # if we can't get a network address, just imagine one
-        a = random.random() * 100000000000000000L
+        a = random.random() * 100000000000000000
     data = str(t) + ' ' + str(r) + ' ' + str(a) + ' ' + str(args)
     data = md5.md5(data).hexdigest()
-  
+
     return data
 
 
 class DevNullLogger(object):
+
     """
     dummy logging class for environments without the logging module
     """
+
     def log(self, msg):
         print msg
-        
+
     def devnull(self, msg):
         pass
-    
+
     debug = devnull
     info = devnull
     warning = log
     error = log
     critical = log
     exception = log
-        
+
     def isEnabledFor(self, lvl):
         return False
 
@@ -124,12 +127,13 @@ class DevNullLogger(object):
 #
 try:
     import logging
-    log = DevNullLogger() 
+    log = DevNullLogger()
 except ImportError:
     log = DevNullLogger()
 
-    
+
 class ConnectionClosedException(Exception):
+
     """
     Raised in the receiver thread when the connection has been closed
     by the server.
@@ -138,6 +142,7 @@ class ConnectionClosedException(Exception):
 
 
 class NotConnectedException(Exception):
+
     """
     Raised by Connection.__send_frame when there is currently no server
     connection.
@@ -146,10 +151,12 @@ class NotConnectedException(Exception):
 
 
 class ConnectionListener(object):
+
     """
     This class should be used as a base class for objects registered
     using Connection.add_listener().
     """
+
     def on_connecting(self, host_and_port):
         """
         Called by the STOMP connection once a TCP/IP connection to the
@@ -226,20 +233,21 @@ class ConnectionListener(object):
 
 
 class Connection(object):
+
     """
     Represents a STOMP client connection.
     """
 
-    def __init__(self, 
-                 host_and_ports = [ ('localhost', 61613) ], 
-                 user = None,
-                 passcode = None,
-                 prefer_localhost = True,
-                 try_loopback_connect = True,
-                 reconnect_sleep_initial = 0.1,
-                 reconnect_sleep_increase = 0.5,
-                 reconnect_sleep_jitter = 0.1,
-                 reconnect_sleep_max = 60.0):
+    def __init__(self,
+                 host_and_ports=[('localhost', 61613)],
+                 user=None,
+                 passcode=None,
+                 prefer_localhost=True,
+                 try_loopback_connect=True,
+                 reconnect_sleep_initial=0.1,
+                 reconnect_sleep_increase=0.5,
+                 reconnect_sleep_jitter=0.1,
+                 reconnect_sleep_max=60.0):
         """
         Initialize and start this connection.
 
@@ -293,7 +301,7 @@ class Connection(object):
             def is_local_host(host):
                 return host in Connection.__localhost_names
 
-            sorted_host_and_ports.sort(lambda x, y: (int(is_local_host(y[0])) 
+            sorted_host_and_ports.sort(lambda x, y: (int(is_local_host(y[0]))
                                                      - int(is_local_host(x[0]))))
 
         # If the user wishes to attempt connecting to local ports
@@ -305,8 +313,8 @@ class Connection(object):
             for host_and_port in sorted_host_and_ports:
                 if is_local_host(host_and_port[0]):
                     port = host_and_port[1]
-                    if (not ("127.0.0.1", port) in sorted_host_and_ports 
-                        and not ("localhost", port) in sorted_host_and_ports):
+                    if (not ("127.0.0.1", port) in sorted_host_and_ports
+                            and not ("localhost", port) in sorted_host_and_ports):
                         loopback_host_and_ports.append(("127.0.0.1", port))
 
         # Assemble the final, possibly sorted list of (host, port) tuples
@@ -316,13 +324,13 @@ class Connection(object):
 
         self.__recvbuf = ''
 
-        self.__listeners = [ ]
+        self.__listeners = []
 
         self.__reconnect_sleep_initial = reconnect_sleep_initial
         self.__reconnect_sleep_increase = reconnect_sleep_increase
         self.__reconnect_sleep_jitter = reconnect_sleep_jitter
         self.__reconnect_sleep_max = reconnect_sleep_max
-        
+
         self.__connect_headers = {}
         if user is not None and passcode is not None:
             self.__connect_headers['login'] = user
@@ -368,20 +376,20 @@ class Connection(object):
         connection.
         """
         return self.__current_host_and_port
-        
+
     def is_connected(self):
         try:
             return self.__socket is not None and self.__socket.getsockname()[1] != 0
         except socket.error:
             return False
-        
+
     #
     # Manage objects listening to incoming frames
     #
 
     def add_listener(self, listener):
         self.__listeners.append(listener)
-        
+
     def remove_listener(self, listener):
         self.__listeners.remove(listener)
 
@@ -390,44 +398,52 @@ class Connection(object):
     #
 
     def subscribe(self, headers={}, **keyword_headers):
-        self.__send_frame_helper('SUBSCRIBE', '', self.__merge_headers([headers, keyword_headers]), [ 'destination' ])
+        self.__send_frame_helper('SUBSCRIBE', '', self.__merge_headers(
+            [headers, keyword_headers]), ['destination'])
 
     def unsubscribe(self, headers={}, **keyword_headers):
-        self.__send_frame_helper('UNSUBSCRIBE', '', self.__merge_headers([headers, keyword_headers]), [ ('destination', 'id') ])
-        
+        self.__send_frame_helper('UNSUBSCRIBE', '', self.__merge_headers(
+            [headers, keyword_headers]), [('destination', 'id')])
+
     def send(self, message='', headers={}, **keyword_headers):
         if '\x00' in message:
             content_length_headers = {'content-length': len(message)}
         else:
             content_length_headers = {}
-        self.__send_frame_helper('SEND', message, self.__merge_headers([headers, 
+        self.__send_frame_helper('SEND', message, self.__merge_headers([headers,
                                                                         keyword_headers,
-                                                                        content_length_headers]), [ 'destination' ])
-    
+                                                                        content_length_headers]), ['destination'])
+
     def ack(self, headers={}, **keyword_headers):
-        self.__send_frame_helper('ACK', '', self.__merge_headers([headers, keyword_headers]), [ 'message-id' ])
-        
+        self.__send_frame_helper(
+            'ACK', '', self.__merge_headers([headers, keyword_headers]), ['message-id'])
+
     def begin(self, headers={}, **keyword_headers):
         use_headers = self.__merge_headers([headers, keyword_headers])
-        if not 'transaction' in use_headers.keys(): 
+        if not 'transaction' in use_headers.keys():
             use_headers['transaction'] = _uuid()
-        self.__send_frame_helper('BEGIN', '', use_headers, [ 'transaction' ])
+        self.__send_frame_helper('BEGIN', '', use_headers, ['transaction'])
         return use_headers['transaction']
 
     def abort(self, headers={}, **keyword_headers):
-        self.__send_frame_helper('ABORT', '', self.__merge_headers([headers, keyword_headers]), [ 'transaction' ])
-        
+        self.__send_frame_helper(
+            'ABORT', '', self.__merge_headers([headers, keyword_headers]), ['transaction'])
+
     def commit(self, headers={}, **keyword_headers):
-        self.__send_frame_helper('COMMIT', '', self.__merge_headers([headers, keyword_headers]), [ 'transaction' ])
+        self.__send_frame_helper('COMMIT', '', self.__merge_headers(
+            [headers, keyword_headers]), ['transaction'])
 
     def connect(self, headers={}, **keyword_headers):
-        if keyword_headers.has_key('wait') and keyword_headers['wait']:
-            while not self.is_connected(): time.sleep(0.1)
+        if 'wait' in keyword_headers and keyword_headers['wait']:
+            while not self.is_connected():
+                time.sleep(0.1)
             del keyword_headers['wait']
-        self.__send_frame_helper('CONNECT', '', self.__merge_headers([self.__connect_headers, headers, keyword_headers]), [ ])
-        
+        self.__send_frame_helper('CONNECT', '', self.__merge_headers(
+            [self.__connect_headers, headers, keyword_headers]), [])
+
     def disconnect(self, headers={}, **keyword_headers):
-        self.__send_frame_helper('DISCONNECT', '', self.__merge_headers([self.__connect_headers, headers, keyword_headers]), [ ])
+        self.__send_frame_helper('DISCONNECT', '', self.__merge_headers(
+            [self.__connect_headers, headers, keyword_headers]), [])
         self.__running = False
         if hasattr(socket, 'SHUT_RDWR'):
             self.__socket.shutdown(socket.SHUT_RDWR)
@@ -437,25 +453,25 @@ class Connection(object):
 
     # ========= PRIVATE MEMBERS =========
 
-
     # List of all host names (unqualified, fully-qualified, and IP
     # addresses) that refer to the local host (both loopback interface
     # and external interfaces).  This is used for determining
     # preferred targets.
-    __localhost_names = [ "localhost",
-                          "127.0.0.1",
-                          socket.gethostbyname(socket.gethostname()),
-                          socket.gethostname(),
-                          socket.getfqdn(socket.gethostname()) ]
+    __localhost_names = ["localhost",
+                         "127.0.0.1",
+                         socket.gethostbyname(socket.gethostname()),
+                         socket.gethostname(),
+                         socket.getfqdn(socket.gethostname())]
     #
     # Used to parse STOMP header lines in the format "key:value",
     #
-    __header_line_re = re.compile('(?P<key>[^:]+)[:](?P<value>.*)')    
+    __header_line_re = re.compile('(?P<key>[^:]+)[:](?P<value>.*)')
 
     #
     # Used to parse the STOMP "content-length" header lines,
     #
-    __content_length_re = re.compile('^content-length[:]\\s*(?P<value>[0-9]+)', re.MULTILINE)
+    __content_length_re = re.compile(
+        '^content-length[:]\\s*(?P<value>[0-9]+)', re.MULTILINE)
 
     def __merge_headers(self, header_map_list):
         """
@@ -468,7 +484,7 @@ class Connection(object):
             for header_key in header_map.keys():
                 headers[header_key] = header_map[header_key]
         return headers
-        
+
     def __convert_dict(self, payload):
         """
         Encode python dictionary as <map>...</map> structure.
@@ -504,31 +520,35 @@ class Connection(object):
         not present in the header map.
         """
         for required_header_key in required_header_keys:
-            if type(required_header_key) == tuple:
+            if isinstance(required_header_key, tuple):
                 found_alternative = False
                 for alternative in required_header_key:
                     if alternative in headers.keys():
                         found_alternative = True
                 if not found_alternative:
-                    raise KeyError("Command %s requires one of the following headers: %s" % (command, str(required_header_key)))
+                    raise KeyError("Command %s requires one of the following headers: %s" % (
+                        command, str(required_header_key)))
             elif not required_header_key in headers.keys():
-                raise KeyError("Command %s requires header %r" % (command, required_header_key))
+                raise KeyError("Command %s requires header %r" %
+                               (command, required_header_key))
         self.__send_frame(command, headers, payload)
 
     def __send_frame(self, command, headers={}, payload=''):
         """
         Send a STOMP frame.
         """
-        if type(payload) == dict:
+        if isinstance(payload, dict):
             headers["transformation"] = "jms-map-xml"
-            payload = self.__convert_dict(payload)        
-        
+            payload = self.__convert_dict(payload)
+
         if self.__socket is not None:
             frame = '%s\n%s\n%s\x00' % (command,
-                                        reduce(lambda accu, key: accu + ('%s:%s\n' % (key, headers[key])), headers.keys(), ''),
-                                        payload)  
+                                        reduce(
+                                            lambda accu, key: accu + ('%s:%s\n' % (key, headers[key])), headers.keys(), ''),
+                                        payload)
             self.__socket.sendall(frame)
-            log.debug("Sent frame: type=%s, headers=%r, body=%r" % (command, headers, payload))
+            log.debug("Sent frame: type=%s, headers=%r, body=%r" %
+                      (command, headers, payload))
         else:
             raise NotConnectedException()
 
@@ -549,31 +569,38 @@ class Connection(object):
                         try:
                             for listener in self.__listeners:
                                 if hasattr(listener, 'on_connecting'):
-                                    listener.on_connecting(self.__current_host_and_port)
-                            
+                                    listener.on_connecting(
+                                        self.__current_host_and_port)
+
                             while self.__running:
                                 frames = self.__read()
-                                
+
                                 for frame in frames:
-                                    (frame_type, headers, body) = self.__parse_frame(frame)
-                                    log.debug("Received frame: result=%r, headers=%r, body=%r" % (frame_type, headers, body))
+                                    (frame_type, headers, body) = self.__parse_frame(
+                                        frame)
+                                    log.debug(
+                                        "Received frame: result=%r, headers=%r, body=%r" % (frame_type, headers, body))
                                     frame_type = frame_type.lower()
-                                    if frame_type in [ 'connected', 
-                                                       'message', 
-                                                       'receipt', 
-                                                       'error' ]:
+                                    if frame_type in ['connected',
+                                                      'message',
+                                                      'receipt',
+                                                      'error']:
                                         for listener in self.__listeners:
                                             if hasattr(listener, 'on_%s' % frame_type):
-                                                eval('listener.on_%s(headers, body)' % frame_type)
+                                                eval(
+                                                    'listener.on_%s(headers, body)' % frame_type)
                                             else:
-                                                log.debug('listener %s has no such method on_%s' % (listener, frame_type)) 
+                                                log.debug(
+                                                    'listener %s has no such method on_%s' % (listener, frame_type))
                                     else:
-                                        log.warning('Unknown response frame type: "%s" (frame length was %d)' % (frame_type, len(frame)))
+                                        log.warning('Unknown response frame type: "%s" (frame length was %d)' % (
+                                            frame_type, len(frame)))
                         finally:
                             try:
                                 self.__socket.close()
                             except:
-                                pass # ignore errors when attempting to close socket
+                                # ignore errors when attempting to close socket
+                                pass
                             self.__socket = None
                             self.__current_host_and_port = None
                     except ConnectionClosedException:
@@ -583,13 +610,15 @@ class Connection(object):
                             for listener in self.__listeners:
                                 if hasattr(listener, 'on_disconnected'):
                                     listener.on_disconnected()
-                            # Clear out any half-received messages after losing connection
+                            # Clear out any half-received messages after losing
+                            # connection
                             self.__recvbuf = ''
                             continue
                         else:
                             break
             except:
-                log.exception("An unhandled exception was encountered in the stomp receiver loop")
+                log.exception(
+                    "An unhandled exception was encountered in the stomp receiver loop")
 
         finally:
             self.__receiver_thread_exit_condition.acquire()
@@ -613,9 +642,9 @@ class Connection(object):
             if '\x00' in c:
                 break
         self.__recvbuf += fastbuf.getvalue()
-        fastbuf.close() 
+        fastbuf.close()
         result = []
-        
+
         if len(self.__recvbuf) > 0 and self.__running:
             while True:
                 pos = self.__recvbuf.find('\x00')
@@ -623,9 +652,11 @@ class Connection(object):
                     frame = self.__recvbuf[0:pos]
                     preamble_end = frame.find('\n\n')
                     if preamble_end >= 0:
-                        content_length_match = Connection.__content_length_re.search(frame[0:preamble_end])
+                        content_length_match = Connection.__content_length_re.search(
+                            frame[0:preamble_end])
                         if content_length_match:
-                            content_length = int(content_length_match.group('value'))
+                            content_length = int(
+                                content_length_match.group('value'))
                             content_offset = preamble_end + 2
                             frame_size = content_offset + content_length
                             if frame_size > len(frame):
@@ -640,11 +671,10 @@ class Connection(object):
                                     # arrive
                                     break
                     result.append(frame)
-                    self.__recvbuf = self.__recvbuf[pos+1:]
+                    self.__recvbuf = self.__recvbuf[pos + 1:]
                 else:
                     break
         return result
-    
 
     def __transform(self, body, transType):
         """
@@ -677,15 +707,15 @@ class Connection(object):
             for entryElem in rootElem.getElementsByTagName("entry"):
                 pair = []
                 for node in entryElem.childNodes:
-                    if not isinstance(node, xml.dom.minidom.Element): continue
+                    if not isinstance(node, xml.dom.minidom.Element):
+                        continue
                     pair.append(node.firstChild.nodeValue)
                 assert len(pair) == 2
                 entries[pair[0]] = pair[1]
             return entries
-        except Exception, ex:
+        except Exception as ex:
             # unable to parse message. return original
             return body
-        
 
     def __parse_frame(self, frame):
         """
@@ -697,7 +727,7 @@ class Connection(object):
         preamble_end = frame.find('\n\n')
         preamble = frame[0:preamble_end]
         preamble_lines = preamble.split('\n')
-        body = frame[preamble_end+2:]
+        body = frame[preamble_end + 2:]
 
         # Skip any leading newlines
         first_line = 0
@@ -709,10 +739,11 @@ class Connection(object):
 
         # Put headers into a key/value map
         headers = {}
-        for header_line in preamble_lines[first_line+1:]:
+        for header_line in preamble_lines[first_line + 1:]:
             header_match = Connection.__header_line_re.match(header_line)
             if header_match:
-                headers[header_match.group('key')] = header_match.group('value')
+                headers[header_match.group('key')] = header_match.group(
+                    'value')
 
         if 'transformation' in headers:
             body = self.__transform(body, headers['transformation'])
@@ -728,27 +759,32 @@ class Connection(object):
         while self.__running and self.__socket is None:
             for host_and_port in self.__host_and_ports:
                 try:
-                    log.debug("Attempting connection to host %s, port %s" % host_and_port)
-                    self.__socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                    log.debug(
+                        "Attempting connection to host %s, port %s" % host_and_port)
+                    self.__socket = socket.socket(
+                        socket.AF_INET, socket.SOCK_STREAM)
                     self.__socket.connect(host_and_port)
                     self.__current_host_and_port = host_and_port
-                    log.info("Established connection to host %s, port %s" % host_and_port)
+                    log.info(
+                        "Established connection to host %s, port %s" % host_and_port)
                     break
                 except socket.error:
                     self.__socket = None
-                    if type(sys.exc_info()[1]) == types.TupleType:
+                    if isinstance(sys.exc_info()[1], types.TupleType):
                         exc = sys.exc_info()[1][1]
                     else:
                         exc = sys.exc_info()[1]
-                    log.warning("Could not connect to host %s, port %s: %s" % (host_and_port[0], host_and_port[1], exc))
+                    log.warning("Could not connect to host %s, port %s: %s" % (
+                        host_and_port[0], host_and_port[1], exc))
 
             if self.__socket is None:
-                sleep_duration = (min(self.__reconnect_sleep_max, 
-                                      ((self.__reconnect_sleep_initial / (1.0 + self.__reconnect_sleep_increase)) 
+                sleep_duration = (min(self.__reconnect_sleep_max,
+                                      ((self.__reconnect_sleep_initial / (1.0 + self.__reconnect_sleep_increase))
                                        * math.pow(1.0 + self.__reconnect_sleep_increase, sleep_exp)))
                                   * (1.0 + random.random() * self.__reconnect_sleep_jitter))
                 sleep_end = time.time() + sleep_duration
-                log.debug("Sleeping for %.1f seconds before attempting reconnect" % sleep_duration)
+                log.debug(
+                    "Sleeping for %.1f seconds before attempting reconnect" % sleep_duration)
                 while self.__running and time.time() < sleep_end:
                     time.sleep(0.2)
 
@@ -762,12 +798,13 @@ if __name__ == '__main__':
     # If the readline module is available, make command input easier
     try:
         import readline
+
         def stomp_completer(text, state):
-            commands = [ 'subscribe', 'unsubscribe', 
-                         'send',  'ack', 
-                         'begin', 'abort', 'commit', 
-                         'connect', 'disconnect'
-                       ]
+            commands = ['subscribe', 'unsubscribe',
+                        'send',  'ack',
+                        'begin', 'abort', 'commit',
+                        'connect', 'disconnect'
+                        ]
             for command in commands[state:]:
                 if command.startswith(text):
                     return "%s " % command
@@ -777,9 +814,10 @@ if __name__ == '__main__':
         readline.set_completer(stomp_completer)
         readline.set_completer_delims("")
     except ImportError:
-        pass # ignore unavailable readline module
+        pass  # ignore unavailable readline module
 
     class StompTester(object):
+
         def __init__(self, host='localhost', port=61613, user='', passcode=''):
             self.c = Connection([(host, port)], user, passcode)
             self.c.add_listener(self)
@@ -812,44 +850,45 @@ if __name__ == '__main__':
 
         def on_connected(self, headers, body):
             self.__print_async("CONNECTED", headers, body)
-            
+
         def ack(self, args):
             if len(args) < 3:
                 self.c.ack(message_id=args[1])
             else:
                 self.c.ack(message_id=args[1], transaction=args[2])
-            
+
         def abort(self, args):
             self.c.abort(transaction=args[1])
-            
+
         def begin(self, args):
             print 'transaction id: %s' % self.c.begin()
-            
+
         def commit(self, args):
             if len(args) < 2:
                 print 'expecting: commit <transid>'
             else:
                 print 'committing %s' % args[1]
                 self.c.commit(transaction=args[1])
-       
+
         def disconnect(self, args):
             try:
                 self.c.disconnect()
             except NotConnectedException:
-                pass # ignore if no longer connected
-            
+                pass  # ignore if no longer connected
+
         def send(self, args):
             if len(args) < 3:
                 print 'expecting: send <destination> <message>'
             else:
                 self.c.send(destination=args[1], message=' '.join(args[2:]))
-            
+
         def sendtrans(self, args):
             if len(args) < 3:
                 print 'expecting: sendtrans <destination> <transid> <message>'
             else:
-                self.c.send(destination=args[1], message="%s\n" % ' '.join(args[3:]), transaction=args[2])
-            
+                self.c.send(
+                    destination=args[1], message="%s\n" % ' '.join(args[3:]), transaction=args[2])
+
         def subscribe(self, args):
             if len(args) < 2:
                 print 'expecting: subscribe <destination> [ack]'
@@ -859,7 +898,7 @@ if __name__ == '__main__':
             else:
                 print 'subscribing to "%s" with auto acknowledge' % args[1]
                 self.c.subscribe(destination=args[1], ack='auto')
-            
+
         def unsubscribe(self, args):
             if len(args) < 2:
                 print 'expecting: unsubscribe <destination>'
@@ -879,14 +918,14 @@ if __name__ == '__main__':
         port = int(sys.argv[2])
     else:
         port = 61613
-    
+
     if len(sys.argv) >= 5:
         user = sys.argv[3]
         passcode = sys.argv[4]
     else:
         user = None
         passcode = None
-    
+
     st = StompTester(host, port, user, passcode)
     try:
         while True:
@@ -903,5 +942,3 @@ if __name__ == '__main__':
                 print 'unrecognized command'
     finally:
         st.disconnect(None)
-
-

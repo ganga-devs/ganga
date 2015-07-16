@@ -1,8 +1,8 @@
-import types
-from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool  import WorkerThreadPool
-from Ganga.Utility.Config                                   import getConfig
-from Ganga.Utility.logging                                  import getLogger
-from Ganga.Utility.ColourText                               import getColour
+import collections
+from Ganga.Core.GangaThread.WorkerThreads.WorkerThreadPool import WorkerThreadPool
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.ColourText import getColour
 logger = getLogger()
 
 _user_threadpool = None
@@ -10,6 +10,7 @@ _monitoring_threadpool = None
 
 
 class ThreadPoolQueueMonitor(object):
+
     '''
     This class displays the user and monitor thread pools and associated queues
 
@@ -18,8 +19,9 @@ class ThreadPoolQueueMonitor(object):
     '''
 
     def __init__(self,
-                 user_threadpool       = WorkerThreadPool( worker_thread_prefix = "User_Worker_" ),
-                 monitoring_threadpool = WorkerThreadPool( worker_thread_prefix = "Ganga_Worker_" ) ):
+                 user_threadpool=WorkerThreadPool(
+                     worker_thread_prefix="User_Worker_"),
+                 monitoring_threadpool=WorkerThreadPool(worker_thread_prefix="Ganga_Worker_")):
 
         global _user_threadpool
         global _monitoring_threadpool
@@ -44,58 +46,125 @@ class ThreadPoolQueueMonitor(object):
         _user_threadpool = self._user_threadpool
         _monitoring_threadpool = self._monitoring_threadpool
 
+    def _display_element(self, item):
+        if hasattr(item, 'name') and item.name != None:
+            return item.name
+        elif type(item.command_input[0]) != str:
+            return item.command_input[0].__name__
+        else:
+            return item.command_input[0]
 
     def _display(self, i):
         '''Return the current status of the thread pools and queues.'''
-        output=''
-        output+= '{0:^67} | {1:^50}\n'.format('Ganga user threads:','Ganga monitoring threads:')
-        output+= '{0:^67} | {1:^50}\n'.format('------------------', '------------------------')
-        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('Name', 'Command', 'Timeout')
-        output+= '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('----', '-------', '-------')
-        for u, m in zip( self._user_threadpool.worker_status(),
-                         self._monitoring_threadpool.worker_status() ):
-            # name has extra spaces as colour characters are invisible but still count
-            name_user    = getColour('fg.red') + u[0] + getColour('fg.normal')
+        output = ''
+        output += '{0:^67} | {1:^50}\n'.format('Ganga user threads:', 'Ganga monitoring threads:')
+        output += '{0:^67} | {1:^50}\n'.format('------------------', '------------------------')
+        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('Name', 'Command', 'Timeout')
+        output += '{0:<26} {1:<26} {2:<13} | {0:<26} {1:<28} {2:<10}\n'.format('----', '-------', '-------')
+        for u, m in zip(self._user_threadpool.worker_status(),
+                        self._monitoring_threadpool.worker_status()):
+            # name has extra spaces as colour characters are invisible but
+            # still count
+            if u[0] is not None:
+                # User task has no ganga name
+                name_user = getColour('fg.red') + u[0] + getColour('fg.normal')
+            else:
+                # User task has a ganga name
+                name_user = getColour('fg.red') + u[1] + getColour('fg.normal')
             name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
             if u[1] == 'idle':
-                name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
+                name_user = name_user.replace(
+                    getColour('fg.red'), getColour('fg.green'))
             if m[1] == 'idle':
-                name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
-            output+= '{0:<35} {1:<26} {2:<15} | {3:<35} {4:<28} {5:<10}\n'.format(name_user, u[1][:30].replace("\n","\\n"), u[2], name_monitor, m[1][:30].replace("\n","\\n"), m[2])
+                name_monitor = name_monitor.replace(
+                    getColour('fg.red'), getColour('fg.green'))
+            output += '{0:<35} {1:<26} {2:<15} | {3:<35} {4:<28} {5:<10}\n'.format(
+                name_user, u[1][:30].replace("\n", "\\n"), u[2], name_monitor, m[1][:30].replace("\n", "\\n"), m[2])
 
-        def display_element(item):
-            if hasattr( item, 'name' ) and item.name != None:
-                return item.name
-            if type(item.command_input[0]) != str:
-                return item.command_input[0].__name__
-            return item.command_input[0]
-        output+= '\n'
-        output+= "Ganga user queue:\n"
-        output+= "----------------\n"
-        output+= str([display_element(i) for i in self._user_threadpool.get_queue()])
-        output+= '\n'
-        output+= "Ganga monitoring queue:\n"
-        output+= "----------------------\n"
-        output+= str([display_element(i) for i in self._monitoring_threadpool.get_queue()])
+        output += '\n'
+        output += "Ganga user queue:\n"
+        output += "----------------\n"
+        output += str([self._display_element(i)
+                       for i in self._user_threadpool.get_queue()])
+        output += '\n'
+        output += "Ganga monitoring queue:\n"
+        output += "----------------------\n"
+        output += str([self._display_element(i)
+                       for i in self._monitoring_threadpool.get_queue()])
         return output
 
-    def purge(self):
+    def __shouldWaitonShutdown(self):
+        from Ganga.Core import getCurrentShutdownPolicy
+
+        if getCurrentShutdownPolicy() == 'batch':
+            return True
+        else:
+            return False
+
+    def purge(self, force=None):
         """
         Purge the Ganga user thread pool's queue
         """
-        self._user_threadpool.clear_queue()
+        if force is None:
+            force = self.__shouldWaitonShutdown()
 
-    def _purge_all(self):
+        _user_queue = [i for i in self._user_threadpool.get_queue()]
+        queue_size = len(_user_queue)
+        _actually_purge = False
+        if force == True:
+            _actually_purge = True
+        if queue_size > 0 and not force:
+            keyin = None
+            while keyin == None:
+                print "User queue contains unfinished tasks:"
+                print str([self._display_element(i) for i in _user_queue])
+                keyin = raw_input("Do you want to Purge the user queue [y/n] ")
+                if keyin == 'y':
+                    _actually_purge = True
+                elif keyin == 'n':
+                    _actually_purge = False
+                else:
+                    print "y/n please!"
+                    keyin = None
+        if _actually_purge:
+            self._user_threadpool.clear_queue()
+
+    def _purge_all(self, force=None):
         """
         Purge ALL of the Ganga user AND Worker thread queues!
         """
-        self._user_threadpool.clear_queue()
-        self._monitoring_threadpool.clear_queue()
 
-    def add(self, worker_code, args=(), kwargs={}, priority = 5):
+        if force is None:
+            force = self.__shouldWaitonShutdown()
+
+        self.purge(force)
+
+        _monitor_queue = [i for i in self._monitoring_threadpool.get_queue()]
+
+        queue_size = len(_monitor_queue)
+        _actually_purge = False
+        if force == True:
+            _actually_purge = True
+        if queue_size > 0 and not force:
+            keyin = None
+            while keyin == None:
+                print "Monitoring queue contains unfinished tasks:"
+                print str([self._display_element(i) for i in _monitor_queue])
+                keyin = raw_input("Do you want to Purge the monitoring queue [y/n] ")
+                if keyin == 'y':
+                    _actually_purge = True
+                elif keyin == 'n':
+                    _actually_purge = False
+                else:
+                    print "y/n please"
+                    keyin = None
+        if _actually_purge:
+            self._monitoring_threadpool.clear_queue()
+
+    def add(self, worker_code, args=(), kwargs={}, priority=5):
         """
         Run any python callable object asynchronously through the user thread pool
-        
+
         Code added to the queue will remain there until a free worker becomes
         available and picks it from the list. At this point the code will run
         asynchronously leaving the interpreter prompt unblocked and ready for user
@@ -125,43 +194,43 @@ class ThreadPoolQueueMonitor(object):
                                  queue with lower number = higher priority.
                                  This then should be an int normally 0-9
         """
-        if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
+        if not isinstance(worker_code, collections.Callable):
             logger.error('Only python callable objects can be added to the queue using queues.add()')
             logger.error('Did you perhaps try to add the return value of the function/method rather than the function/method itself')
             logger.error('e.g. Incorrect:     queues.add(myfunc()) *NOTE the brackets*')
             logger.error('e.g. Correct  :     queues.add(myfunc)')
             return
         self._user_threadpool.add_function(worker_code,
-                                            args           = args,
-                                            kwargs         = kwargs,
-                                            priority       = priority)
+                                           args=args,
+                                           kwargs=kwargs,
+                                           priority=priority)
 
-    def _addSystem(self, worker_code, args = (), kwargs = {}, priority = 5 ):
+    def _addSystem(self, worker_code, args=(), kwargs={}, priority=5):
 
-        if not isinstance(worker_code, types.FunctionType) and not isinstance(worker_code, types.MethodType):
-            logger.error( "Error Adding internal task!! please report this to the Ganga developers!" )
+        if not isinstance(worker_code, collections.Callable):
+            logger.error("Error Adding internal task!! please report this to the Ganga developers!")
             return
 
         self._monitoring_threadpool.add_function(worker_code,
-                                                 args = args,
-                                                 kwargs = kwargs,
-                                                 priority = priority )
+                                                 args=args,
+                                                 kwargs=kwargs,
+                                                 priority=priority)
 
-    def addProcess(self, 
-                   command, 
-                   timeout         = getConfig('Queues')['Timeout'],
-                   env             = None,
-                   cwd             = None,
-                   shell           = False,
-                   eval_includes   = None,
-                   update_env      = False,
-                   priority        = 5,
-                   callback_func   = None,
-                   callback_args   = (),
-                   callback_kwargs = {},
-                   fallback_func   = None,
-                   fallback_args   = (),
-                   fallback_kwargs = {}):
+    def addProcess(self,
+                   command,
+                   timeout=getConfig('Queues')['Timeout'],
+                   env=None,
+                   cwd=None,
+                   shell=False,
+                   eval_includes=None,
+                   update_env=False,
+                   priority=5,
+                   callback_func=None,
+                   callback_args=(),
+                   callback_kwargs={},
+                   fallback_func=None,
+                   fallback_args=(),
+                   fallback_kwargs={}):
         """
         Run a command asynchronously in a new process monitored by the user thread pool.
 
@@ -217,33 +286,33 @@ class ThreadPoolQueueMonitor(object):
                    fallback_kwargs = kwargs for the fallback_func are given here
                                      as a dict.
         """
-        if type(command)!= str:
+        if type(command) != type(''):
             logger.error("Input command must be of type 'string'")
             return
 
-        self._user_threadpool.add_process( command,
-                                            timeout          = timeout,
-                                            env              = env,
-                                            cwd              = cwd,
-                                            shell            = shell,
-                                            eval_includes    = eval_includes,
-                                            update_env       = update_env,
-                                            priority         = priority,
-                                            callback_func    = callback_func,
-                                            callback_args    = callback_args,
-                                            callback_kwargs  = callback_kwargs,
-                                            fallback_func    = fallback_func,
-                                            fallback_args    = fallback_args,
-                                            fallback_kwargs  = fallback_kwargs )
+        self._user_threadpool.add_process(command,
+                                          timeout=timeout,
+                                          env=env,
+                                          cwd=cwd,
+                                          shell=shell,
+                                          eval_includes=eval_includes,
+                                          update_env=update_env,
+                                          priority=priority,
+                                          callback_func=callback_func,
+                                          callback_args=callback_args,
+                                          callback_kwargs=callback_kwargs,
+                                          fallback_func=fallback_func,
+                                          fallback_args=fallback_args,
+                                          fallback_kwargs=fallback_kwargs)
 
     def threadStatus(self):
         statuses = []
         for t in self._user_threadpool.worker_status():
             if t[1] != "idle":
-                statuses.append( t[0] )
+                statuses.append(t[0])
         for t in self._monitoring_threadpool.worker_status():
             if t[1] != "idle":
-                statuses.append( t[0] )
+                statuses.append(t[0])
         return statuses
 
     def totalNumUserThreads(self):
@@ -256,7 +325,7 @@ class ThreadPoolQueueMonitor(object):
         return num + len(self._user_threadpool.get_queue())
 
     def totalNumIntThreads(self):
-        num=0
+        num = 0
         for t in self._monitoring_threadpool.worker_status():
             if t[1] != "idle":
                 num += 1
@@ -265,8 +334,7 @@ class ThreadPoolQueueMonitor(object):
 
     def totalNumAllThreads(self):
         """Return the total number of ALL user and worker threads currently running and queued"""
-        num=0
-
+        num = 0
         num = num + self.totalNumUserThreads()
         num = num + self.totalNumIntThreads()
 
@@ -281,4 +349,3 @@ class ThreadPoolQueueMonitor(object):
         self._user_threadpool._start_worker_threads()
         self._monitoring_threadpool._start_worker_threads()
         return
-

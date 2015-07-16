@@ -33,7 +33,7 @@ try:
  assert Job().submit() == 0
  #PENDING: 
  #assert 'Should fail!' is None
-except GangaException,x:
+except GangaException as x:
  pass
 
 # specify a non-existing module (and non-existing object)
@@ -41,7 +41,7 @@ config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.MonitoringServices
 try:
  assert Job().submit() == 0
  #assert 'Should fail!' is None
-except GangaException,x:
+except GangaException as x:
  pass
 
 
@@ -50,7 +50,7 @@ config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.MonitoringServices
 try:
  assert Job().submit() == 0
  #assert 'Should fail!' is None
-except GangaException,x:
+except GangaException as x:
  pass
 
 
@@ -59,7 +59,7 @@ config['MonitoringServices']['Executable/Local'] = "Ganga.Lib.Localhost.Localhos
 try:
  assert Job().submit() == 0
  #assert 'Should fail!' is None
-except GangaException,x:
+except GangaException as x:
  pass
 
 

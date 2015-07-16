@@ -24,7 +24,6 @@ assert(j.submit())
 
 assert(j.subjobs[0].id == 0)
 
-print j
 full_print(j)
 
 # this assertiion is not valid anymore when Oracle backend is used

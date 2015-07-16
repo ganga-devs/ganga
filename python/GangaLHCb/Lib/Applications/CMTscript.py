@@ -27,7 +27,7 @@ def parse_master_package(mstrpckg):
          list.insert(0,'')
          return list
       else:
-         raise ValueError,"wrongly formatted masterpackage"
+         raise ValueError("wrongly formatted masterpackage")
    elif mstrpckg.find(' ')>=0:
       list=mstrpckg.split()
       if len(list)==3:
@@ -37,9 +37,9 @@ def parse_master_package(mstrpckg):
          list=('',list[0],list[1])
          return list
       else:
-         raise ValueError,"wrongly formatted masterpackage"
+         raise ValueError("wrongly formatted masterpackage")
    else:
-      raise ValueError,"wrongly formatted masterpackage"
+      raise ValueError("wrongly formatted masterpackage")
 
 def CMTscript(app,command=''):
    """Function to execute a cmt command for a specific job. Returns the unix
@@ -85,7 +85,7 @@ def CMTscript(app,command=''):
       tmppath = tempfile.mkdtemp()
       fn = os.path.join(tmppath, 'cmtcommand_script')
       file1 = open(fn, 'w')
-   except Exception, e:
+   except Exception as e:
       logger.error("Can not create temporary file %s", fn)
       return
    else:
@@ -95,7 +95,7 @@ def CMTscript(app,command=''):
          file1.close()
 
    # make file executable
-   os.chmod(fn, 0777)
+   os.chmod(fn, 0o777)
    shell = Shell()  
    rc=shell.system(fn)
    if os.path.exists(tmppath): shutil.rmtree(tmppath)

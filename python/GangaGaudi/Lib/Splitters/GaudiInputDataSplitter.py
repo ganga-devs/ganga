@@ -1,8 +1,9 @@
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter, SplittingError
 from Ganga.GPIDev.Lib.Job import Job
 from SplitterUtils import DatasetSplitter
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 #import copy
+import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 class GaudiInputDataSplitter(ISplitter):
@@ -60,11 +61,14 @@ class GaudiInputDataSplitter(ISplitter):
         logger.debug( "Creating all_jobs" )
         all_jobs = self._splitter(job, job.inputdata)
 
+        logger.info( "Constructing subjobs" )
         logger.debug( "Filling DataSet" )
         for dataset in all_jobs:
-            logger.debug( "Creating Subjobs with dataset: %s" % str(dataset) )
+            logger.debug("Creating Subjobs with dataset of size: %s" % str(len(dataset)))
+            #logger.debug( "Creating Subjobs with dataset: %s" % str(dataset) )
             subjobs.append( self._create_subjob(job, dataset) )
 
+        logger.info( "Finished Splitting" )
         logger.debug( "Returning all subjobs" )
         return subjobs
 

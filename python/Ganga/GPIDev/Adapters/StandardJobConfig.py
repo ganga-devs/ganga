@@ -1,14 +1,17 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: StandardJobConfig.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
-################################################################################
+##########################################################################
 
 from Ganga.Utility.logging import getLogger
-import os, copy
+import os
+import copy
 logger = getLogger()
 
-class StandardJobConfig:
+
+class StandardJobConfig(object):
+
     """
     StandardJobConfig defines a standard input for many of the handlers: LSF, Localhost,LCG.
     It corresponds to a simplified JDL definition: specification of executable, arguments and input sandbox.
@@ -18,7 +21,7 @@ class StandardJobConfig:
     If you modify attributes of the StandardJobConfig object after the initialization, the you should
     do processValues() which perfomes a validation of the attributes and updates internal cache which is
     used by getter methods.
-    
+
     """
 
     def __init__(self, exe='', inputbox=[], args=[], outputbox=[], env=copy.deepcopy(os.environ)):
@@ -39,14 +42,14 @@ class StandardJobConfig:
         self.args = args
         self.outputbox = outputbox[:]
         if not env:
-            self.env={}
+            self.env = {}
         else:
             self.env = env
         self.__all_inputbox = []
         self.__args_strings = []
         self.__exe_string = ""
         self.__sandbox_check = {}
-        
+
         self.processValues()
 
 #    def addSandBoxFiles(self, inputFiles=[] ):
@@ -76,31 +79,29 @@ class StandardJobConfig:
         '''Get a command string including the quoted arguments which may be passed to os.system().
         This method is provided for the convenience'''
 
-        logger.warning('INTERNAL METHOD JobConfig.getExeCmdString() IS OBSOLETED, backend should be updated to use getExeString() and shell=False in a call to subprocess.Popen()')
+        logger.warning(
+            'INTERNAL METHOD JobConfig.getExeCmdString() IS OBSOLETED, backend should be updated to use getExeString() and shell=False in a call to subprocess.Popen()')
         # reduce the args list into the quoted string: "arg1" "arg2" "arg3"
         # FIXME: quoting should rather be moved to utility functions
+
         def quote_arguments(args):
             quoted = ""
             for a in args:
-                quoted += '"'+a+'" '
+                quoted += '"' + a + '" '
             return quoted
 
-        return self.__exe_string+' '+quote_arguments(self.__args_strings)
+        return self.__exe_string + ' ' + quote_arguments(self.__args_strings)
 
     def processValues(self):
         '''Process original exe,args and inputbox values and extract strings suitable for the further processing.
         If the exe property is a File then this method will check if it has executable attributes.
         You do not have to call this method unless you explicitly modify some of the original values.
         '''
-            
-
-        from Ganga.GPIDev.Lib.File import File
 
         self.__all_inputbox = self.inputbox[:]
         self.__args_strings = []
         self.__exe_string = ""
         self.__sandbox_check = {}
-
 
         def _get_path_in_sandbox(f):
             ''' A helper which checks conflicts in sandbox.
@@ -108,41 +109,46 @@ class StandardJobConfig:
             '''
 
             fn = f.getPathInSandbox()
-            if self.__sandbox_check.has_key(fn):
-                logger.warning('File %s already in the sandbox (source=%s). Overriding from source=%s',fn,self.__sandbox_check[fn],f.name)
+            if fn in self.__sandbox_check:
+                logger.warning(
+                    'File %s already in the sandbox (source=%s). Overriding from source=%s', fn, self.__sandbox_check[fn], f.name)
             self.__sandbox_check[fn] = f.name
             return fn
 
-        #to check for double file
+        # to check for double file
         for f in self.inputbox:
             fn = _get_path_in_sandbox(f)
 
         # convert all args into strings (some of args may be FileItems)
-        # make an assumption that all File Items go to the sandbox (thus convert to basename)
+        # make an assumption that all File Items go to the sandbox (thus
+        # convert to basename)
         for a in self.args:
-            if type(a) is type(''):
+            if isinstance(a, str):
                 self.__args_strings.append(a)
             else:
                 try:
                     fn = _get_path_in_sandbox(a)
                     self.__args_strings.append(fn)
                     self.__all_inputbox.append(a)
-                except AttributeError,x:
-                    s = "cannot process argument %s, it is neither File nor string" % repr(a)
+                except AttributeError as x:
+                    s = "cannot process argument %s, it is neither File nor string" % repr(
+                        a)
                     logger.error(s)
                     raise ValueError(s)
 
-        if type(self.exe) is type(''):
+        if isinstance(self.exe, str):
             self.__exe_string = self.exe
         else:
             try:
                 self.__exe_string = _get_path_in_sandbox(self.exe)
                 if not self.exe.isExecutable():
-                    logger.warning('file %s is not executable, overriding executable permissions in the input sandbox'%self.exe.name)
+                    logger.warning(
+                        'file %s is not executable, overriding executable permissions in the input sandbox' % self.exe.name)
                     self.exe.executable = True
                 self.__all_inputbox.append(self.exe)
-            except AttributeError,x:
-                s = "cannot process exe property %s, it is neither File nor string (%s)" % (repr(self.exe),str(x))
+            except AttributeError as x:
+                s = "cannot process exe property %s, it is neither File nor string (%s)" % (
+                    repr(self.exe), str(x))
                 logger.error(s)
                 raise ValueError(s)
 

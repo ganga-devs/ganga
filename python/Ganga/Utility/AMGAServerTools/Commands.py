@@ -8,13 +8,14 @@
 # Created:      05/02/2003
 #----------------------------------------------------------------------------
 
+from __future__ import absolute_import
 import os
 import sys
 import time
 import threading
 import popen2
 import signal
-import PipeReader
+from . import PipeReader
 
 MIN_TIMEOUT = 0.01
 
@@ -33,12 +34,16 @@ if sys.platform == 'win32':
         WIN_EXT = 0
     else:
         WIN_EXT = 1
-        MIN_TIMEOUT = 0.1 # on Win32 IsRunning command is slow! 
-    
-################################################################################
+        MIN_TIMEOUT = 0.1  # on Win32 IsRunning command is slow!
+
+##########################################################################
+
+
 class winPopen:
+
     """Class to emulate popen2.Popen3 object on Windows"""
-    def __init__(self, cmd, capturestderr = False, bufsize = None):
+
+    def __init__(self, cmd, capturestderr=False, bufsize=None):
         try:
             if WIN_EXT:
                 # security attributes for pipes
@@ -46,21 +51,21 @@ class winPopen:
                 sAttrs.bInheritHandle = 1
 
                 # create pipes
-                hStdin_r,  self.hStdin_w  = win32pipe.CreatePipe(sAttrs, 0)
+                hStdin_r,  self.hStdin_w = win32pipe.CreatePipe(sAttrs, 0)
                 self.hStdout_r, hStdout_w = win32pipe.CreatePipe(sAttrs, 0)
                 if capturestderr:
                     self.hStderr_r, hStderr_w = win32pipe.CreatePipe(sAttrs, 0)
 
                 # set the info structure for the new process.
                 StartupInfo = win32process.STARTUPINFO()
-                StartupInfo.hStdInput  = hStdin_r
+                StartupInfo.hStdInput = hStdin_r
                 StartupInfo.hStdOutput = hStdout_w
                 if capturestderr:
-                    StartupInfo.hStdError  = hStderr_w
+                    StartupInfo.hStdError = hStderr_w
                 else:
-                    StartupInfo.hStdError  = hStdout_w
+                    StartupInfo.hStdError = hStdout_w
                 StartupInfo.dwFlags = win32process.STARTF_USESTDHANDLES
-                StartupInfo.dwFlags = (StartupInfo.dwFlags|
+                StartupInfo.dwFlags = (StartupInfo.dwFlags |
                                        win32process.STARTF_USESHOWWINDOW)
                 StartupInfo.wShowWindow = win32con.SW_HIDE
 
@@ -69,7 +74,7 @@ class winPopen:
                 # the these handles; resulting in non-closeable handles to the pipes
                 # being created.
                 pid = win32api.GetCurrentProcess()
-                pp = ['hStdin_w','hStdout_r']
+                pp = ['hStdin_w', 'hStdout_r']
                 if capturestderr:
                     pp.append('hStderr_r')
                 for hh in pp:
@@ -87,52 +92,53 @@ class winPopen:
 
                 # start the process.
                 hProcess, hThread, dwPid, dwTid = win32process.CreateProcess(
-                        None,   # program
-                        cmd,    # command line
-                        None,   # process security attributes
-                        None,   # thread attributes
-                        1,      # inherit handles, or USESTDHANDLES won't work.
-                                # creation flags. Don't access the console.
-                        0,      # Don't need anything here.
-                                # If you're in a GUI app, you should use
-                                # CREATE_NEW_CONSOLE here, or any subprocesses
-                                # might fall victim to the problem described in:
-                                # KB article: Q156755, cmd.exe requires
-                                # an NT console in order to perform redirection..
-                                # win32process.CREATE_NEW_CONSOLE,
-                        None,   # no new environment
-                        None,   # current directory (stay where we are)
-                        StartupInfo)
+                    None,   # program
+                    cmd,    # command line
+                    None,   # process security attributes
+                    None,   # thread attributes
+                    1,      # inherit handles, or USESTDHANDLES won't work.
+                    # creation flags. Don't access the console.
+                    0,      # Don't need anything here.
+                    # If you're in a GUI app, you should use
+                    # CREATE_NEW_CONSOLE here, or any subprocesses
+                    # might fall victim to the problem described in:
+                    # KB article: Q156755, cmd.exe requires
+                    # an NT console in order to perform redirection..
+                    # win32process.CREATE_NEW_CONSOLE,
+                    None,   # no new environment
+                    None,   # current directory (stay where we are)
+                    StartupInfo)
                 # normally, we would save the pid etc. here...
                 self._hProcess = hProcess
-                self._hThread  = hThread
-                self._dwTid    = dwTid
-                self.pid       = dwPid
+                self._hThread = hThread
+                self._dwTid = dwTid
+                self.pid = dwPid
 
                 # Child is launched. Close the parents copy of those pipe handles
                 # that only the child should have open.
                 # You need to make sure that no handles to the write end of the
                 # output pipe are maintained in this process or else the pipe will
-                # not close when the child process exits and the ReadFile will hang.
+                # not close when the child process exits and the ReadFile will
+                # hang.
                 if capturestderr:
                     win32file.CloseHandle(hStderr_w)
                 win32file.CloseHandle(hStdout_w)
                 win32file.CloseHandle(hStdin_r)
-                
+
                 cfd_fun = msvcrt.open_osfhandle
                 md = os.O_TEXT
-                self.tochild   = os.fdopen(cfd_fun(self.hStdin_w, md),"w")
-                self.fromchild = os.fdopen(cfd_fun(self.hStdout_r, md),"r")
+                self.tochild = os.fdopen(cfd_fun(self.hStdin_w, md), "w")
+                self.fromchild = os.fdopen(cfd_fun(self.hStdout_r, md), "r")
                 if capturestderr:
-                    self.childerr  = os.fdopen(cfd_fun(self.hStderr_r, md),"r")
+                    self.childerr = os.fdopen(cfd_fun(self.hStderr_r, md), "r")
 
             else:
                 raise Exception("Error using Windows extensions")
-            
+
         except:
             self._hProcess = None
-            self._hThread  = None
-            self._dwTid    = None
+            self._hThread = None
+            self._dwTid = None
             self.pid = None
             if capturestderr:
                 pfactory = popen2.popen3
@@ -146,7 +152,7 @@ class winPopen:
                 (self.fromchild, self.tochild, self.childerr) = pipes
             else:
                 (self.fromchild, self.tochild) = pipes
-            
+
 #---------------------------------------------------------------------------
     def poll(self):
         if self.pid:
@@ -157,23 +163,26 @@ class winPopen:
                     return win32process.GetExitCodeProcess(self._hProcess)
                 except:
                     return
-                    
+
 #---------------------------------------------------------------------------
     def wait(self):
-        while 1:
+        while True:
             status = self.poll()
             if status == -1:
                 time.sleep(MIN_TIMEOUT)
             else:
                 return status
-        
-################################################################################
+
+##########################################################################
 # Wrapper for command
+
+
 class Command:
+
     """Class to submit a command to the operative system"""
-    
-    def __init__(self, cmd, std_in = None, timeout = 30,
-                 pipesize=0, blocksize=1024, capturestderr = False):
+
+    def __init__(self, cmd, std_in=None, timeout=30,
+                 pipesize=0, blocksize=1024, capturestderr=False):
         """
         cmd       = command to be executed.
         std_in    = input for the command.
@@ -192,7 +201,7 @@ class Command:
             self._std_in = []
         self._timeout = timeout
         self._capturestderr = capturestderr
-            
+
         if sys.platform == 'win32':
             self._pipe_obj = winPopen(self._cmd, capturestderr)
         else:
@@ -200,14 +209,14 @@ class Command:
                 self._pipe_obj = popen2.Popen3(self._cmd, 1)
             else:
                 self._pipe_obj = popen2.Popen4(self._cmd)
-            
-        if capturestderr:    
+
+        if capturestderr:
             out_pipes = [self._pipe_obj.fromchild, self._pipe_obj.childerr]
         else:
             out_pipes = [self._pipe_obj.fromchild]
-        pipe_in   = self._pipe_obj.tochild
+        pipe_in = self._pipe_obj.tochild
         self._pid = self._pipe_obj.pid
- 
+
         # write std_in
         try:
             try:
@@ -225,11 +234,11 @@ class Command:
         for pipe in out_pipes:
             self._nbpipes.append(PipeReader.PipeReader(pipe, timeout,
                                                        pipesize, blocksize))
-            
-#---------------------------------------------------------------------------            
+
+#---------------------------------------------------------------------------
     def __del__(self):
         self.finalize()
-                 
+
 #---------------------------------------------------------------------------
     def submit(self):
         """Legacy method. Deprecated."""
@@ -239,11 +248,11 @@ class Command:
     def getInput(self):
         """Return list of input strings."""
         return self._std_in
-    
+
 #---------------------------------------------------------------------------
     def getStatus(self):
         return self._pipe_obj.poll()
-    
+
 #---------------------------------------------------------------------------
     def isRunning(self):
         """Shows is command running or not.
@@ -253,7 +262,7 @@ class Command:
             return 1
         else:
             return 0
-        
+
 #---------------------------------------------------------------------------
     def _readlines(self, output):
         lines = []
@@ -267,7 +276,7 @@ class Command:
                 lines.append(rest)
                 rest = ''
         return lines
-        
+
 #---------------------------------------------------------------------------
     def readOutput(self, pipe_ind, maxblocks=0, timeout=None):
         """Read no more than maxblocks from out pipe i.
@@ -276,7 +285,7 @@ class Command:
         If maxblocks = 0 (default) read till the end of data or timeout
         between blocks arrival"""
         pobj = self._nbpipes[pipe_ind]
-        data = pobj.read(maxblocks, timeout, condition = self.isRunning)
+        data = pobj.read(maxblocks, timeout, condition=self.isRunning)
         return self._readlines(data)
 
 #---------------------------------------------------------------------------
@@ -311,14 +320,14 @@ class Command:
             else:
                 output.append(outlines)
 
-        # try to close files and stop threads    
+        # try to close files and stop threads
         self.finalize()
-                   
+
         if self._capturestderr:
             return tuple(output)
-        
+
         return output[0]
-                  
+
 #---------------------------------------------------------------------------
     def getStatusOutput(self, maxblocks=0):
         """getStatusOutput([maxblocks]) --> (status, getOutput())"""
@@ -327,9 +336,9 @@ class Command:
         return (status, output)
 
 
-################################################################################
+##########################################################################
 # Command to kill a process
-def Kill(pid, exitCode = 0):
+def Kill(pid, exitCode=0):
     """Wrapper for os.kill() to kill a process
     Kill(pid [, exitCode]) --> status.
     exitCode is relevant only for win32 platform"""
@@ -337,7 +346,8 @@ def Kill(pid, exitCode = 0):
         if sys.platform == 'win32':
             if WIN_EXT:
                 try:
-                    h = win32api.OpenProcess(win32con.PROCESS_TERMINATE,0,pid)
+                    h = win32api.OpenProcess(
+                        win32con.PROCESS_TERMINATE, 0, pid)
                     win32api.TerminateProcess(h, exitCode)
                 finally:
                     win32api.CloseHandle(h)
@@ -350,24 +360,26 @@ def Kill(pid, exitCode = 0):
     else:
         return 1
 
-################################################################################
+##########################################################################
 # returns performance attributes on windows for all processes
-def winAllProcesses(object   = "Process",
-                    format   = None,
-                    machine  = None,
-                    bRefresh = 1):
+
+
+def winAllProcesses(object="Process",
+                    format=None,
+                    machine=None,
+                    bRefresh=1):
     """Return a tuple of a list of process attributes and a
     list with the requested attributes for all processes.
     Run only on win32 with windows extensions.
     """
     if not format:
-            format = win32pdh.PDH_FMT_LONG
-            
-    if bRefresh: # PDH docs say this is how you do a refresh.
+        format = win32pdh.PDH_FMT_LONG
+
+    if bRefresh:  # PDH docs say this is how you do a refresh.
         win32pdh.EnumObjects(None, machine, 0, 1)
-        
-    counter  = "ID Process"
-    items, instances = win32pdh.EnumObjectItems(None,None,object, -1)
+
+    counter = "ID Process"
+    items, instances = win32pdh.EnumObjectItems(None, None, object, -1)
     # Track multiple instances.
     instance_dict = {}
     for instance in instances:
@@ -375,12 +387,12 @@ def winAllProcesses(object   = "Process",
             instance_dict[instance] += 1
         except KeyError:
             instance_dict[instance] = 0
-            
-    items = [counter] + items[:5]        
-    all_pr_attr = []    
+
+    items = [counter] + items[:5]
+    all_pr_attr = []
     get_attr = win32pdhutil.GetPerformanceAttributes
     for instance, max_instances in instance_dict.items():
-        for inum in xrange(max_instances+1):
+        for inum in xrange(max_instances + 1):
             try:
                 attr_list = []
                 for item in items:
@@ -388,18 +400,20 @@ def winAllProcesses(object   = "Process",
                                               inum, format, machine))
             except:
                 continue
-            all_pr_attr.append(attr_list)         
-        
+            all_pr_attr.append(attr_list)
+
     return (items, all_pr_attr)
 
-################################################################################
+##########################################################################
+
+
 def ListAllProcesses():
     """List attributes for all running processes."""
     try:
         if sys.platform == 'win32':
             if WIN_EXT:
-                items, attr = winAllProcesses() 
-                items_str = ' \t'.join(map(lambda x: str(x), items))+'\n'
+                items, attr = winAllProcesses()
+                items_str = ' \t'.join(map(lambda x: str(x), items)) + '\n'
                 return (items_str, attr)
         else:
             uid = os.getuid()
@@ -411,12 +425,14 @@ def ListAllProcesses():
                 for line in output[1:]:
                     stat_fields = line.split()
                     attr.append(stat_fields)
-                return  (output[0], attr)
+                return (output[0], attr)
     except:
         pass
     return ('', [])
 
-################################################################################
+##########################################################################
+
+
 def GetProcessAttributes(pid):
     proc_list = ListAllProcesses()[1]
     for attr in proc_list:
@@ -430,8 +446,10 @@ def GetProcessAttributes(pid):
         return []
     return attr
 
-################################################################################
+##########################################################################
 # Command to get process status
+
+
 def IsRunning(pid):
     """IsRunning(pid) --> status
     pid = pricess ID.
@@ -445,10 +463,12 @@ def IsRunning(pid):
             if attr[1] != 'Z':
                 return 1
     return 0
- 
-################################################################################
+
+##########################################################################
 # helper function
-def submitCmd(cmd_line, std_in = [],  timeout = 120.0):
+
+
+def submitCmd(cmd_line, std_in=[],  timeout=120.0):
     command = Command(cmd_line, std_in, timeout)
     status, output = command.getStatusOutput()
     if status:
@@ -458,4 +478,4 @@ def submitCmd(cmd_line, std_in = [],  timeout = 120.0):
         executed = 1
     return (executed, output)
 
-################################################################################
+##########################################################################

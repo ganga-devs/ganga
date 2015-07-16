@@ -36,7 +36,7 @@ def get_app_and_make_libs():
 
     top_dir = get_topdir(app)
     if not os.path.exists('%s/DaVinci_%s' % (ura, app.version)):
-        print "### Building the Libs ###"
+        print("### Building the Libs ###")
         app.getpack( "Tutorial/Analysis v8r0" )
         sol_dir = '%s/solutions/DaVinci1/' % top_dir
         os.system('cp %s/DVTutorial_1.py %s/options/.' % (sol_dir, top_dir))
@@ -138,9 +138,9 @@ def remove_ura():
 ##        return is_job_finished(self.j)
 
 ##    def checkTest(self):
-##        print '### JOB Finished ###'
+##        print('### JOB Finished ###')
 ##        file = open(join(self.j.outputdir,'stdout'))
-##        print 'stdout: ', file.read()
+##        print('stdout: ', file.read())
 ##        file.close()
 ##        fname = join(self.j.outputdir,'stdout')
 ##        file = open(fname)
@@ -149,7 +149,7 @@ def remove_ura():
 ##            if line.find('# muons n@, Go Steelers!') >= 0:
 ##                found_line = True
 ##                assert int(line.split('|')[3]) > 0, 'problem reading data'
-##                print '# muons =', int(line.split('|')[3])
+##                print('# muons =', int(line.split('|')[3]))
 ##                break
 ##        file.close()
 ##        assert found_line, 'special string not found'

@@ -1,3 +1,6 @@
+from Ganga.Utility.logging import getLogger
+logger = getLogger(modulename=True)
+
 t1 = TestAdvancedFileProperties()
 t2 = t1.copy()
 t3 = t1.copy()
@@ -8,10 +11,10 @@ t2.file_or_files = ['abc']
 t3.file_or_files = File('abc')
 t4.file_or_files = [File('abc')]
 
-print 't1',t1
-print 't2',t2
-print 't3',t3
-print 't4',t4
+logger.info('t1 '+str(t1))
+logger.info('t2 '+str(t2))
+logger.info('t3 '+str(t3))
+logger.info('t4 '+str(t4))
 
 assert(t1 == t2)
 assert(t2 == t3)
@@ -22,6 +25,6 @@ t5 = TestAdvancedFileProperties()
 t6 = t5.copy()
 t5.file_or_files = ['abc','abc']
 t6.file_or_files = [File('abc'),'abc']
-print 't5',t5
-print 't6',t6
+logger.info('t5 '+str(t5))
+logger.info('t6 '+str(t6))
 assert(t5 == t6)

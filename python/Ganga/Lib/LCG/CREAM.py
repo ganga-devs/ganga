@@ -9,17 +9,18 @@ from urlparse import urlparse
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
 from Ganga.Core import GangaException
 
-from Ganga.GPIDev.Schema import *
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
-from Ganga.Lib.LCG.Utility import *
+from Ganga.Lib.LCG.Utility import get_md5sum
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
 from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.LCG import grids
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
+
 
 def __cream_resolveOSBList__(job, jdl):
 
@@ -28,51 +29,54 @@ def __cream_resolveOSBList__(job, jdl):
     re_osb = re.compile('^.*OutputSandbox\s+\=\s+\{(.*)\}\s?\]?$')
 
     for l in jdl.split(';'):
-        m = re_osb.match( l )
+        m = re_osb.match(l)
         if m:
             osb = m.group(1)
             osb = re.sub(r'\s?\"\s?', '', osb)
 
             for f in osb.split(','):
                 if not urlparse(f)[0]:
-                    osbURIList.append('%s/%s' % ( job.backend.osbURI, os.path.basename(f)) )
+                    osbURIList.append(
+                        '%s/%s' % (job.backend.osbURI, os.path.basename(f)))
                 else:
                     osbURIList.append(f)
             break
 
     return osbURIList
 
+
 class CREAM(IBackend):
+
     '''CREAM backend - direct job submission to gLite CREAM CE'''
-    _schema = Schema(Version(1,0), {
-        'CE'                  : SimpleItem(defvalue='',doc='CREAM CE endpoint'),
-        'jobtype'             : SimpleItem(defvalue='Normal',doc='Job type: Normal, MPICH'),
-        'requirements'        : ComponentItem('LCGRequirements',doc='Requirements for the resource selection'),
-        'sandboxcache'        : ComponentItem('GridSandboxCache',copyable=1,doc='Interface for handling oversized input sandbox'),
-        'id'                  : SimpleItem(defvalue='',typelist=['str','list'],protected=1,copyable=0,doc='Middleware job identifier'),
-        'status'              : SimpleItem(defvalue='',typelist=['str','dict'], protected=1,copyable=0,doc='Middleware job status'),
-        'exitcode'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='Application exit code'),
-        'exitcode_cream'      : SimpleItem(defvalue='',protected=1,copyable=0,doc='Middleware exit code'),
-        'actualCE'            : SimpleItem(defvalue='',protected=1,copyable=0,doc='The CREAM CE where the job actually runs.'),
-        'reason'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='Reason of causing the job status'),
-        'workernode'          : SimpleItem(defvalue='',protected=1,copyable=0,doc='The worker node on which the job actually runs.'),
-        'isbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The input sandbox URI on CREAM CE'),
-        'osbURI'              : SimpleItem(defvalue='',protected=1,copyable=0,doc='The output sandbox URI on CREAM CE')
+    _schema = Schema(Version(1, 0), {
+        'CE': SimpleItem(defvalue='', doc='CREAM CE endpoint'),
+        'jobtype': SimpleItem(defvalue='Normal', doc='Job type: Normal, MPICH'),
+        'requirements': ComponentItem('LCGRequirements', doc='Requirements for the resource selection'),
+        'sandboxcache': ComponentItem('GridSandboxCache', copyable=1, doc='Interface for handling oversized input sandbox'),
+        'id': SimpleItem(defvalue='', typelist=['str', 'list'], protected=1, copyable=0, doc='Middleware job identifier'),
+        'status': SimpleItem(defvalue='', typelist=['str', 'dict'], protected=1, copyable=0, doc='Middleware job status'),
+        'exitcode': SimpleItem(defvalue='', protected=1, copyable=0, doc='Application exit code'),
+        'exitcode_cream': SimpleItem(defvalue='', protected=1, copyable=0, doc='Middleware exit code'),
+        'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='The CREAM CE where the job actually runs.'),
+        'reason': SimpleItem(defvalue='', protected=1, copyable=0, doc='Reason of causing the job status'),
+        'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
+        'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on CREAM CE'),
+        'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on CREAM CE')
     })
 
     _category = 'backends'
 
-    _name =  'CREAM'
+    _name = 'CREAM'
 
     def __init__(self):
         super(CREAM, self).__init__()
 
         # dynamic requirement object loading
         try:
-            reqName1  = config['Requirements']
-            reqName   = config['Requirements'].split('.').pop()
+            reqName1 = config['Requirements']
+            reqName = config['Requirements'].split('.').pop()
             reqModule = __import__(reqName1, globals(), locals(), [reqName1])
-            reqClass  = vars(reqModule)[reqName]
+            reqClass = vars(reqModule)[reqName]
             self.requirements = reqClass()
 
             logger.debug('load %s as LCGRequirements' % reqName)
@@ -81,23 +85,23 @@ class CREAM(IBackend):
             pass
 
         # dynamic sandbox cache object loading
-        ## force to use GridftpSandboxCache
+        # force to use GridftpSandboxCache
         self.sandboxcache = GridftpSandboxCache()
         try:
-            scName1  = config['SandboxCache']
-            scName   = config['SandboxCache'].split('.').pop()
+            scName1 = config['SandboxCache']
+            scName = config['SandboxCache'].split('.').pop()
             scModule = __import__(scName1, globals(), locals(), [scName1])
-            scClass  = vars(scModule)[scName]
+            scClass = vars(scModule)[scName]
             self.sandboxcache = scClass()
             logger.debug('load %s as SandboxCache' % scName)
         except:
             logger.debug('load default SandboxCache')
             pass
 
-    def __refresh_jobinfo__(self,job):
+    def __refresh_jobinfo__(self, job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
-        job.backend.status   = ''
-        job.backend.reason   = ''
+        job.backend.status = ''
+        job.backend.reason = ''
         job.backend.actualCE = ''
         job.backend.exitcode = ''
         job.backend.exitcode_cream = ''
@@ -112,19 +116,20 @@ class CREAM(IBackend):
 
         self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.middleware = 'GLITE'
-        self.sandboxcache.timeout    = config['SandboxTransferTimeout']
+        self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
             if not self.sandboxcache.lfc_host:
-                self.sandboxcache.lfc_host = grids[ self.sandboxcache.middleware ].__get_lfc_host__()
+                self.sandboxcache.lfc_host = grids[
+                    self.sandboxcache.middleware].__get_lfc_host__()
 
             if not self.sandboxcache.se:
 
-                token   = ''
+                token = ''
                 se_host = config['DefaultSE']
                 m = re_token.match(se_host)
                 if m:
-                    token   = m.group(1)
+                    token = m.group(1)
                     se_host = m.group(2)
 
                 self.sandboxcache.se = se_host
@@ -137,24 +142,26 @@ class CREAM(IBackend):
 
         elif self.sandboxcache._name == 'DQ2SandboxCache':
 
-            ## generate a new dataset name if not given
+            # generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name,unused = dq2outputdatasetname("%s.input"%get_uuid(), 0, False, '')
+                self.sandboxcache.dataset_name, unused = dq2outputdatasetname(
+                    "%s.input" % get_uuid(), 0, False, '')
 
-            ## subjobs inherits the dataset name from the master job
+            # subjobs inherits the dataset name from the master job
             for sj in job.subjobs:
                 sj.backend.sandboxcache.dataset_name = self.sandboxcache.dataset_name
 
         elif self.sandboxcache._name == 'GridftpSandboxCache':
-                if config['CreamInputSandboxBaseURI']:
-                    self.sandboxcache.baseURI = config['CreamInputSandboxBaseURI']
-                elif self.CE:
-                    ce_host = re.sub(r'\:[0-9]+','',self.CE.split('/cream')[0])
-                    self.sandboxcache.baseURI = 'gsiftp://%s/opt/glite/var/cream_sandbox/%s' % ( ce_host, self.sandboxcache.vo )
-                else:
-                    logger.error('baseURI not available for GridftpSandboxCache')
-                    return False
+            if config['CreamInputSandboxBaseURI']:
+                self.sandboxcache.baseURI = config['CreamInputSandboxBaseURI']
+            elif self.CE:
+                ce_host = re.sub(r'\:[0-9]+', '', self.CE.split('/cream')[0])
+                self.sandboxcache.baseURI = 'gsiftp://%s/opt/glite/var/cream_sandbox/%s' % (
+                    ce_host, self.sandboxcache.vo)
+            else:
+                logger.error('baseURI not available for GridftpSandboxCache')
+                return False
 
         return True
 
@@ -178,42 +185,43 @@ class CREAM(IBackend):
            is returned.
            '''
 
-        idx = {'lfc_host':'', 'local':[], 'remote':{}}
+        idx = {'lfc_host': '', 'local': [], 'remote': {}}
 
         job = self.getJobObject()
 
-        ## read-in the previously uploaded files
+        # read-in the previously uploaded files
         uploadedFiles = []
 
-        ## getting the uploaded file list from the master job
+        # getting the uploaded file list from the master job
         if job.master:
             uploadedFiles += job.master.backend.sandboxcache.get_cached_files()
 
-        ## set and get the $LFC_HOST for uploading oversized sandbox
+        # set and get the $LFC_HOST for uploading oversized sandbox
         self.__setup_sandboxcache__(job)
 
         uploadedFiles += self.sandboxcache.get_cached_files()
 
         lfc_host = None
 
-        ## for LCGSandboxCache, take the one specified in the sansboxcache object.
-        ## the value is exactly the same as the one from the local grid shell env. if
-        ## it is not specified exclusively.
+        # for LCGSandboxCache, take the one specified in the sansboxcache object.
+        # the value is exactly the same as the one from the local grid shell env. if
+        # it is not specified exclusively.
         if self.sandboxcache._name == 'LCGSandboxCache':
             lfc_host = self.sandboxcache.lfc_host
 
-        ## or in general, query it from the Grid object
+        # or in general, query it from the Grid object
         if not lfc_host:
-            lfc_host = grids[self.sandboxcache.middleware.upper()].__get_lfc_host__()
+            lfc_host = grids[
+                self.sandboxcache.middleware.upper()].__get_lfc_host__()
 
         idx['lfc_host'] = lfc_host
 
         abspath = os.path.abspath(file)
-        fsize   = os.path.getsize(abspath)
+        fsize = os.path.getsize(abspath)
 
         if fsize > config['BoundSandboxLimit']:
 
-            md5sum  = get_md5sum(abspath, ignoreGzipTimestamp=True)
+            md5sum = get_md5sum(abspath, ignoreGzipTimestamp=True)
 
             doUpload = True
             for uf in uploadedFiles:
@@ -225,13 +233,15 @@ class CREAM(IBackend):
 
             if doUpload:
 
-                logger.warning('The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file,config['BoundSandboxLimit']) )
+                logger.warning(
+                    'The size of %s is larger than the sandbox limit (%d byte). Please wait while pre-staging ...' % (file, config['BoundSandboxLimit']))
 
-                if self.sandboxcache.upload( [abspath] ):
+                if self.sandboxcache.upload([abspath]):
                     remote_sandbox = self.sandboxcache.get_cached_files()[-1]
                     idx['remote'][remote_sandbox.name] = remote_sandbox.id
                 else:
-                    logger.error('Oversized sandbox not successfully pre-staged')
+                    logger.error(
+                        'Oversized sandbox not successfully pre-staged')
                     return None
         else:
             idx['local'].append(abspath)
@@ -241,12 +251,13 @@ class CREAM(IBackend):
     def __mt_job_prepare__(self, rjobs, subjobconfigs, masterjobconfig):
         '''preparing jobs in multiple threads'''
 
-        logger.warning('preparing %d subjobs ... it may take a while' % len(rjobs))
+        logger.warning(
+            'preparing %d subjobs ... it may take a while' % len(rjobs))
 
         # prepare the master job (i.e. create shared inputsandbox, etc.)
-        master_input_sandbox=IBackend.master_prepare(self,masterjobconfig)
+        master_input_sandbox = IBackend.master_prepare(self, masterjobconfig)
 
-        ## uploading the master job if it's over the WMS sandbox limitation
+        # uploading the master job if it's over the WMS sandbox limitation
         for f in master_input_sandbox:
             master_input_idx = self.__check_and_prestage_inputfile__(f)
 
@@ -266,32 +277,36 @@ class CREAM(IBackend):
 
                 try:
                     logger.debug("preparing job %s" % my_sj.getFQID('.'))
-                    jdlpath = my_sj.backend.preparejob(my_sc, master_input_sandbox)
+                    jdlpath = my_sj.backend.preparejob(
+                        my_sc, master_input_sandbox)
 
                     if (not jdlpath) or (not os.path.exists(jdlpath)):
-                        raise GangaException('job %s not properly prepared' % my_sj.getFQID('.'))
+                        raise GangaException(
+                            'job %s not properly prepared' % my_sj.getFQID('.'))
 
-                    self.__appendResult__( my_sj.id, jdlpath )
+                    self.__appendResult__(my_sj.id, jdlpath)
                     return True
-                except Exception,x:
+                except Exception as x:
                     log_user_exception()
                     return False
 
         mt_data = []
-        for sc,sj in zip(subjobconfigs,rjobs):
-            mt_data.append( [sc, sj] )
+        for sc, sj in zip(subjobconfigs, rjobs):
+            mt_data.append([sc, sj])
 
-        myAlg  = MyAlgorithm()
+        myAlg = MyAlgorithm()
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
+        runner = MTRunner(
+            name='lcg_jprepare', algorithm=myAlg, data=myData, numThread=10)
         runner.start()
         runner.join(-1)
 
         if len(runner.getDoneList()) < len(mt_data):
             return None
         else:
-            # return a JDL file dictionary with subjob ids as keys, JDL file paths as values
+            # return a JDL file dictionary with subjob ids as keys, JDL file
+            # paths as values
             return runner.getResults()
 
     def __mt_bulk_submit__(self, node_jdls):
@@ -299,19 +314,20 @@ class CREAM(IBackend):
 
         job = self.getJobObject()
 
-        logger.warning('submitting %d subjobs ... it may take a while' % len(node_jdls))
+        logger.warning(
+            'submitting %d subjobs ... it may take a while' % len(node_jdls))
 
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
             def __init__(self, gridObj, masterInputWorkspace, ce):
                 Algorithm.__init__(self)
-                self.inpw    = masterInputWorkspace
+                self.inpw = masterInputWorkspace
                 self.gridObj = gridObj
-                self.ce      = ce
+                self.ce = ce
 
             def process(self, jdl_info):
-                my_sj_id  = jdl_info[0]
+                my_sj_id = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
                 my_sj_jid = self.gridObj.cream_submit(my_sj_jdl, self.ce)
@@ -319,24 +335,28 @@ class CREAM(IBackend):
                 if not my_sj_jid:
                     return False
                 else:
-                    self.__appendResult__( my_sj_id, my_sj_jid )
+                    self.__appendResult__(my_sj_id, my_sj_jid)
                     return True
 
         mt_data = []
         for id, jdl in node_jdls.items():
-            mt_data.append( (id, jdl) )
-            
-        myAlg  = MyAlgorithm(gridObj=grids['GLITE'],masterInputWorkspace=job.getInputWorkspace(), ce=self.CE)
+            mt_data.append((id, jdl))
+
+        myAlg = MyAlgorithm(
+            gridObj=grids['GLITE'], masterInputWorkspace=job.getInputWorkspace(), ce=self.CE)
         myData = Data(collection=mt_data)
 
-        runner = MTRunner(name='cream_jsubmit', algorithm=myAlg, data=myData, numThread=config['SubmissionThread'])
+        runner = MTRunner(name='cream_jsubmit', algorithm=myAlg,
+                          data=myData, numThread=config['SubmissionThread'])
         runner.start()
         runner.join(timeout=-1)
 
         if len(runner.getDoneList()) < len(mt_data):
-            ## not all bulk jobs are successfully submitted. canceling the submitted jobs on WMS immediately
-            logger.error('some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            grids['GLITE'].cancelMultiple( runner.getResults().values() )
+            # not all bulk jobs are successfully submitted. canceling the
+            # submitted jobs on WMS immediately
+            logger.error(
+                'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
+            grids['GLITE'].cancelMultiple(runner.getResults().values())
             return None
         else:
             return runner.getResults()
@@ -400,7 +420,7 @@ def lcg_file_download(vo,guid,localFilePath,timeout=60,maxRetry=3):
             else:
                 raise IOError("Download file %s from iocache failed with error code: %d, trial %d." % (os.path.basename(localFilePath), status, i))
 
-        except IOError, e:
+        except IOError as e:
             isDone = False
             printError(str(e))
 
@@ -567,7 +587,7 @@ if scratchdir:
     try:
         os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stdout'), os.path.join(wdir, 'stdout')))
         os.system("ln -s %s %s" % (os.path.join(orig_wdir, 'stderr'), os.path.join(wdir, 'stderr')))
-    except Exception,e:
+    except Exception as e:
         printError(sys.exc_info()[0])
         printError(sys.exc_info()[1])
         str_traceback = traceback.format_tb(sys.exc_info()[2])
@@ -585,7 +605,7 @@ try:
 #   download inputsandbox from remote cache
     for f,guid in input_sandbox['remote'].iteritems():
         if not lcg_file_download(vo, guid, os.path.join(wdir,f), timeout=int(timeout)):
-            raise Exception('Download remote input %s:%s failed.' % (guid,f) )
+            raise IOError('Download remote input %s:%s failed.' % (guid,f) )
         else:
             getPackedInputSandbox(f)
 
@@ -653,7 +673,7 @@ try:
         import subprocess
         printInfo('Load application executable with subprocess module')
         status = execSyscmdSubprocess('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
-    except ImportError,err:
+    except ImportError as err:
         # otherwise, use separate threads to control process IO pipes
         printInfo('Load application executable with separate threads')
         status = execSyscmdEnhanced('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
@@ -670,7 +690,7 @@ try:
     os.system("mv stderr.1.gz %s/stderr.gz" % orig_wdir)
 
     if not status:
-        raise Exception('Application execution failed.')
+        raise OSError('Application execution failed.')
     printInfo('Application execution passed with exit code %d.' % exitcode)      
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
@@ -693,7 +713,7 @@ try:
     if scratchdir:
         os.chdir(orig_wdir)
         os.system("rm %s -rf" % wdir)
-except Exception,e:
+except Exception as e:
     printError(sys.exc_info()[0])
     printError(sys.exc_info()[1])
     str_traceback = traceback.format_tb(sys.exc_info()[2])
@@ -710,7 +730,7 @@ sys.exit(0)
 """
         return script
 
-    def preparejob(self,jobconfig,master_job_sandbox):
+    def preparejob(self, jobconfig, master_job_sandbox):
         '''Prepare the JDL'''
 
         script = self.__jobWrapperTemplate__()
@@ -722,54 +742,66 @@ sys.exit(0)
 
         import Ganga.Core.Sandbox as Sandbox
 
-        script = script.replace('###OUTPUTSANDBOX###',repr(jobconfig.outputbox)) #FIXME: check what happens if 'stdout','stderr' are specified here
+        # FIXME: check what happens if 'stdout','stderr' are specified here
+        script = script.replace(
+            '###OUTPUTSANDBOX###', repr(jobconfig.outputbox))
 
-        script = script.replace('###APPLICATION_NAME###',job.application._name)
-        script = script.replace('###APPLICATIONEXEC###',repr(jobconfig.getExeString()))
-        script = script.replace('###APPLICATIONARGS###',repr(jobconfig.getArguments()))
+        script = script.replace(
+            '###APPLICATION_NAME###', job.application._name)
+        script = script.replace(
+            '###APPLICATIONEXEC###', repr(jobconfig.getExeString()))
+        script = script.replace(
+            '###APPLICATIONARGS###', repr(jobconfig.getArguments()))
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
 
-        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###',getWNCodeForOutputPostprocessing(job, '    '))
+        script = script.replace(
+            '###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, '    '))
 
-        script = script.replace('###DOWNLOADINPUTFILES###',getWNCodeForDownloadingInputFiles(job, '    '))
+        script = script.replace(
+            '###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, '    '))
 
         if jobconfig.env:
-            script = script.replace('###APPLICATIONENVS###',repr(jobconfig.env))
+            script = script.replace(
+                '###APPLICATIONENVS###', repr(jobconfig.env))
         else:
-            script = script.replace('###APPLICATIONENVS###',repr({}))
+            script = script.replace('###APPLICATIONENVS###', repr({}))
 
-        script = script.replace('###WRAPPERLOG###',repr(wrapperlog))
+        script = script.replace('###WRAPPERLOG###', repr(wrapperlog))
         import inspect
-        script = script.replace('###INLINEMODULES###',inspect.getsource(Sandbox.WNSandbox))
+        script = script.replace(
+            '###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
         mon = job.getMonitoringService()
 
         self.monInfo = None
 
         # set the monitoring file by default to the stdout
-        if type(self.monInfo) is type({}):
+        if isinstance(self.monInfo, dict):
             self.monInfo['remotefile'] = 'stdout'
 
         # try to print out the monitoring service information in debug mode
         try:
-            logger.debug('job info of monitoring service: %s' % str(self.monInfo))
+            logger.debug('job info of monitoring service: %s' %
+                         str(self.monInfo))
         except:
             pass
 
-        script = script.replace('###MONITORING_SERVICE###',mon.getWrapperScriptConstructorText())
+        script = script.replace(
+            '###MONITORING_SERVICE###', mon.getWrapperScriptConstructorText())
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
+        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(
+            Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
-        ## sandbox of child jobs should include master's sandbox
+        # sandbox of child jobs should include master's sandbox
         sandbox_files.extend(master_job_sandbox)
 
-        ## check the input file size and pre-upload larger inputs to the iocache
+        # check the input file size and pre-upload larger inputs to the iocache
         lfc_host = ''
 
-        input_sandbox_uris  = []
+        input_sandbox_uris = []
         input_sandbox_names = []
 
         ick = True
@@ -790,29 +822,31 @@ sys.exit(0)
 
                 if idx['remote']:
                     abspath = os.path.abspath(f)
-                    fsize   = os.path.getsize(abspath)
+                    fsize = os.path.getsize(abspath)
 
                     if fsize > max_prestaged_fsize:
                         max_prestaged_fsize = fsize
 
-                    input_sandbox_uris.append( idx['remote'][ os.path.basename(f) ] )
+                    input_sandbox_uris.append(
+                        idx['remote'][os.path.basename(f)])
 
-                    input_sandbox_names.append( os.path.basename( urlparse(f)[2] ) )
+                    input_sandbox_names.append(
+                        os.path.basename(urlparse(f)[2]))
 
                 if idx['local']:
                     input_sandbox_uris += idx['local']
-                    input_sandbox_names.append( os.path.basename(f) )
+                    input_sandbox_names.append(os.path.basename(f))
 
         if not ick:
             logger.error('stop job submission')
             return None
 
-        ## determin the lcg-cp timeout according to the max_prestaged_fsize
-        ##  - using the assumption of 1 MB/sec.
+        # determin the lcg-cp timeout according to the max_prestaged_fsize
+        # - using the assumption of 1 MB/sec.
         max_prestaged_fsize = 0
         lfc_host = ''
         transfer_timeout = config['SandboxTransferTimeout']
-        predict_timeout  = int( math.ceil( max_prestaged_fsize/1000000.0 ) )
+        predict_timeout = int(math.ceil(max_prestaged_fsize / 1000000.0))
 
         if predict_timeout > transfer_timeout:
             transfer_timeout = predict_timeout
@@ -820,22 +854,25 @@ sys.exit(0)
         if transfer_timeout < 60:
             transfer_timeout = 60
 
-        script = script.replace('###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
+        script = script.replace(
+            '###TRANSFERTIMEOUT###', '%d' % transfer_timeout)
 
-        ## update the job wrapper with the inputsandbox list
-        script = script.replace('###INPUTSANDBOX###',repr({'remote':{}, 'local': input_sandbox_names }))
+        # update the job wrapper with the inputsandbox list
+        script = script.replace(
+            '###INPUTSANDBOX###', repr({'remote': {}, 'local': input_sandbox_names}))
 
-        ## write out the job wrapper and put job wrapper into job's inputsandbox
-        scriptPath = inpw.writefile(FileBuffer('__jobscript_%s__' % job.getFQID('.'),script),executable=1)
-        input_sandbox  = input_sandbox_uris + [scriptPath]
+        # write out the job wrapper and put job wrapper into job's inputsandbox
+        scriptPath = inpw.writefile(
+            FileBuffer('__jobscript_%s__' % job.getFQID('.'), script), executable=1)
+        input_sandbox = input_sandbox_uris + [scriptPath]
 
         for isb in input_sandbox:
             logger.debug('ISB URI: %s' % isb)
 
-        ## compose output sandbox to include by default the following files:
-        ##  - gzipped stdout (transferred only when the JobLogHandler is WMS)
-        ##  - gzipped stderr (transferred only when the JobLogHandler is WMS)
-        ##  - __jobscript__.log (job wrapper's log)
+        # compose output sandbox to include by default the following files:
+        # - gzipped stdout (transferred only when the JobLogHandler is WMS)
+        # - gzipped stderr (transferred only when the JobLogHandler is WMS)
+        # - __jobscript__.log (job wrapper's log)
         output_sandbox = [wrapperlog]
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
@@ -843,31 +880,33 @@ sys.exit(0)
             output_sandbox.append(outputSandboxPattern)
 
         if config['JobLogHandler'] in ['WMS']:
-            output_sandbox += ['stdout.gz','stderr.gz']
+            output_sandbox += ['stdout.gz', 'stderr.gz']
 
         if len(jobconfig.outputbox):
             output_sandbox += [Sandbox.OUTPUT_TARBALL_NAME]
 
-        ## compose LCG JDL
+        # compose LCG JDL
         jdl = {
-            'VirtualOrganisation' : config['VirtualOrganisation'],
-            'Executable' : os.path.basename(scriptPath),
+            'VirtualOrganisation': config['VirtualOrganisation'],
+            'Executable': os.path.basename(scriptPath),
             'Environment': {'GANGA_LCG_VO': config['VirtualOrganisation'], 'GANGA_LOG_HANDLER': config['JobLogHandler'], 'LFC_HOST': lfc_host},
-            'StdOutput'               : 'stdout',
-            'StdError'                : 'stderr',
-            'InputSandbox'            : input_sandbox,
-            'OutputSandbox'           : output_sandbox,
+            'StdOutput': 'stdout',
+            'StdError': 'stderr',
+            'InputSandbox': input_sandbox,
+            'OutputSandbox': output_sandbox,
             'OutputSandboxBaseDestURI': 'gsiftp://localhost'
         }
 
         jdl['Environment'].update({'GANGA_LCG_CE': self.CE})
-        jdl['Requirements'] = self.requirements.merge(jobconfig.requirements).convert()
+        jdl['Requirements'] = self.requirements.merge(
+            jobconfig.requirements).convert()
 
-        if self.jobtype.upper() in ['NORMAL','MPICH']:
+        if self.jobtype.upper() in ['NORMAL', 'MPICH']:
             jdl['JobType'] = self.jobtype.upper()
             if self.jobtype.upper() == 'MPICH':
                 #jdl['Requirements'].append('(other.GlueCEInfoTotalCPUs >= NodeNumber)')
-                jdl['Requirements'].append('Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
+                jdl['Requirements'].append(
+                    'Member("MPICH",other.GlueHostApplicationSoftwareRunTimeEnvironment)')
                 jdl['NodeNumber'] = self.requirements.nodenumber
         else:
             logger.warning('JobType "%s" not supported' % self.jobtype)
@@ -879,11 +918,11 @@ sys.exit(0)
 
         jdlText = Grid.expandjdl(jdl)
         logger.debug('subjob JDL: %s' % jdlText)
-        return inpw.writefile(FileBuffer('__jdlfile__',jdlText))
+        return inpw.writefile(FileBuffer('__jdlfile__', jdlText))
 
     def kill(self):
         '''Kill the job'''
-        job   = self.getJobObject()
+        job = self.getJobObject()
 
         logger.info('Killing job %s' % job.getFQID('.'))
 
@@ -910,16 +949,16 @@ sys.exit(0)
 
         job = self.getJobObject()
 
-        ## killing the individually re-submitted subjobs
+        # killing the individually re-submitted subjobs
         logger.debug('cancelling running/submitted subjobs.')
 
-        ## 1. collect job ids
+        # 1. collect job ids
         ids = []
         for sj in job.subjobs:
-            if sj.status in ['submitted','running'] and sj.backend.id:
+            if sj.status in ['submitted', 'running'] and sj.backend.id:
                 ids.append(sj.backend.id)
 
-        ## 2. cancel the collected jobs
+        # 2. cancel the collected jobs
         ck = grids['GLITE'].cream_cancelMultiple(ids)
         if not ck:
             logger.warning('Job cancellation failed')
@@ -934,21 +973,22 @@ sys.exit(0)
     def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''submit multiple subjobs in parallel, by default using 10 concurrent threads'''
 
-        assert(implies(rjobs,len(subjobconfigs)==len(rjobs)))
-        
+        assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
+
         # prepare the subjobs, jdl repository before bulk submission
-        node_jdls = self.__mt_job_prepare__(rjobs, subjobconfigs, masterjobconfig)
-        
+        node_jdls = self.__mt_job_prepare__(
+            rjobs, subjobconfigs, masterjobconfig)
+
         if not node_jdls:
             logger.error('Some jobs not successfully prepared')
             return False
-        
+
         # set all subjobs to submitting status
         for sj in rjobs:
             sj.updateStatus('submitting')
-        
-        node_jids  = self.__mt_bulk_submit__(node_jdls)
-        
+
+        node_jids = self.__mt_bulk_submit__(node_jdls)
+
         status = False
 
         if node_jids:
@@ -960,16 +1000,16 @@ sys.exit(0)
                     sj.updateStatus('submitted')
                     sj.info.submit_counter += 1
                 else:
-                    logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
-                    
+                    logger.warning(
+                        'subjob %s not successfully submitted' % sj.getFQID('.'))
+
             status = True
 
         return status
 
-    def master_bulk_resubmit(self,rjobs):
+    def master_bulk_resubmit(self, rjobs):
         '''CREAM bulk resubmission'''
 
-        from Ganga.Core import IncompleteJobSubmissionError
         from Ganga.Utility.logging import log_user_exception
 
 #        job = self.getJobObject()
@@ -977,14 +1017,14 @@ sys.exit(0)
         # compose master JDL for collection job
         node_jdls = {}
         for sj in rjobs:
-            jdlpath = os.path.join(sj.inputdir,'__jdlfile__')
+            jdlpath = os.path.join(sj.inputdir, '__jdlfile__')
             node_jdls[sj.id] = jdlpath
 
         # set all subjobs to submitting status
         for sj in rjobs:
             sj.updateStatus('submitting')
 
-        node_jids  = self.__mt_bulk_submit__(node_jdls)
+        node_jids = self.__mt_bulk_submit__(node_jdls)
 
         status = False
 
@@ -998,8 +1038,9 @@ sys.exit(0)
                     sj.updateStatus('submitted')
                     sj.info.submit_counter += 1
                 else:
-                    logger.warning('subjob %s not successfully submitted' % sj.getFQID('.'))
-                    
+                    logger.warning(
+                        'subjob %s not successfully submitted' % sj.getFQID('.'))
+
             status = True
 
 #            # set all subjobs to submitted status
@@ -1014,7 +1055,7 @@ sys.exit(0)
 
         return status
 
-    def master_submit(self,rjobs,subjobconfigs,masterjobconfig):
+    def master_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''Submit the master job to the grid'''
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
@@ -1022,46 +1063,50 @@ sys.exit(0)
 
         job = self.getJobObject()
 
-        ## finding CREAM CE endpoint for job submission
+        # finding CREAM CE endpoint for job submission
         allowed_celist = []
         try:
             allowed_celist = self.requirements.getce()
             if not self.CE and allowed_celist:
                 self.CE = allowed_celist[0]
         except:
-            logger.warning('CREAM CE assigment from AtlasCREAMRequirements failed.')
+            logger.warning(
+                'CREAM CE assigment from AtlasCREAMRequirements failed.')
 
         if self.CE and allowed_celist:
             if self.CE not in allowed_celist:
-                logger.warning('submission to CE not allowed: %s, use %s instead' % ( self.CE, allowed_celist[0] ) )
+                logger.warning('submission to CE not allowed: %s, use %s instead' % (
+                    self.CE, allowed_celist[0]))
                 self.CE = allowed_celist[0]
 
         if not self.CE:
             raise GangaException('CREAM CE endpoint not set')
 
-        ## delegate proxy to CREAM CE
+        # delegate proxy to CREAM CE
         if not grids['GLITE'].cream_proxy_delegation(self.CE):
             logger.warning('proxy delegation to %s failed' % self.CE)
 
-        ## doing massive job preparation
+        # doing massive job preparation
         if len(job.subjobs) == 0:
-            ick = IBackend.master_submit(self,rjobs,subjobconfigs,masterjobconfig)
+            ick = IBackend.master_submit(
+                self, rjobs, subjobconfigs, masterjobconfig)
         else:
-            ick = self.master_bulk_submit(rjobs,subjobconfigs,masterjobconfig)
-        
+            ick = self.master_bulk_submit(
+                rjobs, subjobconfigs, masterjobconfig)
+
         profiler.check('==> master_submit() elapsed time')
 
         return ick
 
-    def submit(self,subjobconfig,master_job_sandbox):
+    def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
         ick = False
 
-        jdlpath = self.preparejob(subjobconfig,master_job_sandbox)
+        jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if jdlpath:
-            self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
+            self.id = grids['GLITE'].cream_submit(jdlpath, self.CE)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1069,7 +1114,7 @@ sys.exit(0)
 
         return ick
 
-    def master_auto_resubmit(self,rjobs):
+    def master_auto_resubmit(self, rjobs):
         """
         Resubmit each subjob individually as bulk resubmission will overwrite
         previous master job statuses
@@ -1086,7 +1131,7 @@ sys.exit(0)
 
         return True
 
-    def master_resubmit(self,rjobs):
+    def master_resubmit(self, rjobs):
         '''Resubmit the master job to the grid'''
 
         profiler = ElapsedTimeProfiler(getLogger(name='Profile.LCG'))
@@ -1096,7 +1141,7 @@ sys.exit(0)
 
         ick = False
 
-        ## delegate proxy to CREAM CE
+        # delegate proxy to CREAM CE
         if not grids['GLITE'].cream_proxy_delegation(self.CE):
             logger.warning('proxy delegation to %s failed' % self.CE)
 
@@ -1104,17 +1149,17 @@ sys.exit(0)
             # case 1: master job normal resubmission
             logger.debug('rjobs: %s' % str(rjobs))
             logger.debug('mode: master job normal resubmission')
-            ick = IBackend.master_resubmit(self,rjobs)
+            ick = IBackend.master_resubmit(self, rjobs)
 
         elif job.master:
             # case 2: individual subjob resubmission
             logger.debug('mode: individual subjob resubmission')
-            ick = IBackend.master_resubmit(self,rjobs)
+            ick = IBackend.master_resubmit(self, rjobs)
 
         else:
             # case 3: master job bulk resubmission
             logger.debug('mode: master job resubmission')
-            
+
             ick = self.master_bulk_resubmit(rjobs)
             if not ick:
                 raise GangaException('CREAM bulk submission failure')
@@ -1133,7 +1178,7 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = grids['GLITE'].cream_submit(jdlpath,self.CE)
+            self.id = grids['GLITE'].cream_submit(jdlpath, self.CE)
 
             if self.id:
                 # refresh the lcg job information
@@ -1146,79 +1191,86 @@ sys.exit(0)
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
 
-        jobdict   = dict([ [job.backend.id,job] for job in jobs if job.backend.id ])
+        jobdict = dict([[job.backend.id, job]
+                        for job in jobs if job.backend.id])
 
         jobInfoDict = grids['GLITE'].cream_status(jobdict.keys())
 
         jidListForPurge = []
 
-        ## update job information for those available in jobInfoDict
+        # update job information for those available in jobInfoDict
         for id, info in jobInfoDict.items():
 
             if info:
 
                 job = jobdict[id]
 
-                if job.backend.status != info['Current Status'] and (not info.has_key('ExitCode') or (info.has_key('ExitCode') and info['ExitCode'].isdigit())):
+                if job.backend.status != info['Current Status'] and ('ExitCode' not in info or ('ExitCode' in info and info['ExitCode'].isdigit())):
 
-                    if info.has_key('Worker Node'):
+                    if 'Worker Node' in info:
                         job.backend.workernode = info['Worker Node']
 
-                    if info.has_key('CREAM ISB URI'):
+                    if 'CREAM ISB URI' in info:
                         job.backend.isbURI = info['CREAM ISB URI']
 
-                    if info.has_key('CREAM OSB URI'):
+                    if 'CREAM OSB URI' in info:
                         job.backend.osbURI = info['CREAM OSB URI']
 
                     doStatusUpdate = True
 
-                    ## no need to update Ganga job status if backend status is not changed
+                    # no need to update Ganga job status if backend status is
+                    # not changed
                     if info['Current Status'] == job.backend.status:
                         doStatusUpdate = False
 
-                    ## download output sandboxes if final status is reached
-                    elif info['Current Status'] in ['DONE-OK','DONE-FAILED']:
+                    # download output sandboxes if final status is reached
+                    elif info['Current Status'] in ['DONE-OK', 'DONE-FAILED']:
 
-                        ## resolve output sandbox URIs based on the JDL information
+                        # resolve output sandbox URIs based on the JDL
+                        # information
                         osbURIList = __cream_resolveOSBList__(job, info['JDL'])
-                        
+
                         logger.debug('OSB list:')
                         for f in osbURIList:
                             logger.debug(f)
 
                         if osbURIList:
 
-                            if grids['GLITE'].cream_get_output( osbURIList, job.getOutputWorkspace( create = True ) ):
-                                (ick, app_exitcode)  = grids['GLITE'].__get_app_exitcode__(job.getOutputWorkspace( create = True ))
+                            if grids['GLITE'].cream_get_output(osbURIList, job.getOutputWorkspace(create=True)):
+                                (ick, app_exitcode) = grids['GLITE'].__get_app_exitcode__(
+                                    job.getOutputWorkspace(create=True))
                                 job.backend.exitcode = app_exitcode
 
-                                jidListForPurge.append( job.backend.id )
+                                jidListForPurge.append(job.backend.id)
 
                             else:
-                                logger.error('fail to download job output: %s' % jobdict[id].getFQID('.'))
+                                logger.error(
+                                    'fail to download job output: %s' % jobdict[id].getFQID('.'))
 
                     if doStatusUpdate:
                         job.backend.status = info['Current Status']
-                        if info.has_key('ExitCode') and info['ExitCode'] != "W":
+                        if 'ExitCode' in info and info['ExitCode'] != "W":
                             try:
-                                job.backend.exitcode_cream = int( info['ExitCode'] )
+                                job.backend.exitcode_cream = int(
+                                    info['ExitCode'])
                             except:
                                 job.backend.exitcode_cream = 1
 
-                        if info.has_key('FailureReason'):
-                            try:        
+                        if 'FailureReason' in info:
+                            try:
                                 job.backend.reason = info['FailureReason']
                             except:
-                                pass    
+                                pass
 
                         job.backend.updateGangaJobStatus()
             else:
-                logger.warning('fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
+                logger.warning(
+                    'fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
 
-            ## purging the jobs the output has been fetched locally
+            # purging the jobs the output has been fetched locally
             if jidListForPurge:
                 grids['GLITE'].cream_purgeMultiple(jidListForPurge)
-                
+
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
     def updateGangaJobStatus(self):
@@ -1226,26 +1278,28 @@ sys.exit(0)
 
         job = self.getJobObject()
 
-        if self.status in ['RUNNING','REALLY-RUNNING']:
+        if self.status in ['RUNNING', 'REALLY-RUNNING']:
             job.updateStatus('running')
 
         elif self.status == 'DONE-OK':
             if job.backend.exitcode and job.backend.exitcode != 0:
-                job.backend.reason = 'non-zero app. exit code: %s' % repr(job.backend.exitcode)
+                job.backend.reason = 'non-zero app. exit code: %s' % repr(
+                    job.backend.exitcode)
                 job.updateStatus('failed')
             elif job.backend.exitcode_cream and job.backend.exitcode_cream != 0:
-                job.backend.reason = 'non-zero CREAM job exit code: %s' % repr(job.backend.exitcode_cream)
+                job.backend.reason = 'non-zero CREAM job exit code: %s' % repr(
+                    job.backend.exitcode_cream)
                 job.updateStatus('failed')
             else:
                 job.updateStatus('completed')
 
-        elif self.status in ['DONE-FAILED','ABORTED','UNKNOWN']:
+        elif self.status in ['DONE-FAILED', 'ABORTED', 'UNKNOWN']:
             job.updateStatus('failed')
 
         elif self.status in ['CANCELLED']:
             job.updateStatus('killed')
 
-        elif self.status in ['REGISTERED','PENDING','IDLE','HELD']:
+        elif self.status in ['REGISTERED', 'PENDING', 'IDLE', 'HELD']:
             pass
 
         else:
@@ -1255,8 +1309,10 @@ logger = getLogger()
 
 config = getConfig('LCG')
 
-## add CREAM specific configuration options
-config.addOption('CreamInputSandboxBaseURI', '', 'sets the baseURI for getting the input sandboxes for the job')
-config.addOption('CreamOutputSandboxBaseURI', '', 'sets the baseURI for putting the output sandboxes for the job')
+# add CREAM specific configuration options
+config.addOption('CreamInputSandboxBaseURI', '',
+                 'sets the baseURI for getting the input sandboxes for the job')
+config.addOption('CreamOutputSandboxBaseURI', '',
+                 'sets the baseURI for putting the output sandboxes for the job')
 #config.addOption('CreamPrologue','','sets the prologue script')
 #config.addOption('CreamEpilogue','','sets the epilogue script')

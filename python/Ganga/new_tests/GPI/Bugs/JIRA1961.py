@@ -1,41 +1,41 @@
 
-from GangaUnitTest import *
+from GangaUnitTest import GangaUnitTest
+
 
 class JIRA1961(GangaUnitTest):
 
     def test_unprepareTrue(self):
 
-        from Ganga.GPI import Job, Executable
         from Ganga.Utility.Config import setConfigOption
-        setConfigOption( 'Preparable', 'unprepare_on_copy', 'True' )
-        j = Job( application=Executable(exe='/bin/echo',args=['hello']) )
+        from Ganga.GPI import Job, Executable
+        setConfigOption('Preparable', 'unprepare_on_copy', 'True')
+        j = Job(application=Executable(exe='/bin/echo', args=['hello']))
         j.submit()
 
-        assert( j.application.is_prepared != None )
+        assert(j.application.is_prepared != None)
 
         j2 = j.copy()
 
-        assert( j2.application.is_prepared == None )
+        assert(j2.application.is_prepared == None)
 
-        j3 = Job( j )
+        j3 = Job(j)
 
-        assert( j3.application.is_prepared == None )
+        assert(j3.application.is_prepared == None)
 
     def test_unprepareFalse(self):
 
-        from Ganga.GPI import Job, Executable
         from Ganga.Utility.Config import setConfigOption
-        setConfigOption( 'Preparable', 'unprepare_on_copy', 'False' )
-        k = Job( application=Executable(exe='/bin/echo',args=['hello']) )
+        from Ganga.GPI import Job, Executable
+        setConfigOption('Preparable', 'unprepare_on_copy', 'False')
+        k = Job(application=Executable(exe='/bin/echo', args=['hello']))
         k.submit()
 
-        assert( k.application.is_prepared != None )
+        assert(k.application.is_prepared != None)
 
         k2 = k.copy()
 
-        assert( k2.application.is_prepared != None )
+        assert(k2.application.is_prepared != None)
 
-        k3 = Job( k )
+        k3 = Job(k)
 
-        assert( k.application.is_prepared != None )
-
+        assert(k.application.is_prepared != None)

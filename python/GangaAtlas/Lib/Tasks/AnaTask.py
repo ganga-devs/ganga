@@ -101,7 +101,7 @@ class AnaTask(Task):
                      logger.error("Found no tid dataset but multiple datasets match %s*!" % dset)
                      return
                   tid_datasets = [dslist[0]]
-         except Exception, e:
+         except Exception as e:
             logger.error('DQ2 Error while listing dataset %s*! %s' % (dset, e))
             return
          logger.info("Found %i datasets matching %s..." % (len(tid_datasets), dset))

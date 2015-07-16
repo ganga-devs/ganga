@@ -1,19 +1,21 @@
-################################################################################
+##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
 # $Id: IApplication.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
-################################################################################
+##########################################################################
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 
 class PostprocessStatusUpdate(Exception):
+
     """ This exception may be raised by postprocess hooks to change the job status."""
-    def __init__(self,status):
+
+    def __init__(self, status):
         Exception.__init__(self)
         self.status = status
 
@@ -27,7 +29,7 @@ class IApplication(GangaObject):
      phase of job submission.
 
      General rules for implementing the configure methods:
-     
+
      In  general the  configure() and  master_configure()  methods are
      called always in  the context of job submission,  so in principle
      you may navigate to  the associated job object (including backend
@@ -35,7 +37,7 @@ class IApplication(GangaObject):
      sandbox  information at this  point.  Code  which depends  on the
      backend  should be  put in  application-specific  runtime handler
      which is the next step of job submission.
-     
+
      The input/output dataset information may be used if neccessary.
      Objects in the job object tree should not be modified.
 
@@ -64,12 +66,11 @@ class IApplication(GangaObject):
      try to  modify the application  parameters which are used  in the
      common master_configure().  """
 
-    _schema =  Schema(Version(0,0), {})
-    _category='applications'
+    _schema = Schema(Version(0, 0), {})
+    _category = 'applications'
     _hidden = 1
 
     def master_configure(self):
-
         """ Configure the shared/master  aspect of the application.
         Return a tuple (modified_flag,  appconfig).
 
@@ -87,12 +88,10 @@ class IApplication(GangaObject):
 
         If this method is not implemented in the derived class then it
         is ignored.  """
-        
-        return (0,None)
 
+        return (0, None)
 
-    def  configure(self,master_appconfig):
-
+    def configure(self, master_appconfig):
         """ Configure  the specific aspect of the  application .  This
         method has a similar  meaning as master_configure() method and
         it should return a tuple (modified_flag,appconfig).
@@ -107,7 +106,7 @@ class IApplication(GangaObject):
         In  case of  splitting this  method  will be  called for  each
         subjob  object  exactly  once  which  means that  it  will  be
         executed as many times as there are subjobs.
-            
+
         If there  is no splitting  this method will be  called exactly
         once, after  master_configure().
 
@@ -126,8 +125,8 @@ class IApplication(GangaObject):
     def postprocess_failed(self):
         """ Postprocessing after the job was reported as failed. By default do nothing."""
         pass
-    
-    def transition_update(self,new_status):
+
+    def transition_update(self, new_status):
         """
         This method will be called just before the status of the parent Job changes to new_status.
         The default it to do nothing.

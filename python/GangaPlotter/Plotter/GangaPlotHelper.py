@@ -275,6 +275,6 @@ def tld_country(tld):
     }
  
     country = None
-    if tld_countries.has_key(tld):
+    if tld in tld_countries:
         country = tld_countries[tld]
     return country

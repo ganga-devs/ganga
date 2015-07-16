@@ -56,7 +56,7 @@ class Installer(IAction):
         """ Calls the ganga installation script """
         try: 
             f, inf = urllib.urlretrieve("http://ganga.web.cern.ch/ganga/download/ganga-install")
-        except IOError, e:
+        except IOError as e:
             raise GangaRobotBreakError(e, IOError)
             
         config = Ganga.Utility.Config.getConfig('IndependantTest')
@@ -67,7 +67,7 @@ class Installer(IAction):
             os.system(cmd)
             logger.debug('Ganga installed')
 
-        except Exception, e:
+        except Exception as e:
             logger.error('ganga installation failed')
             raise GangaRobotBreakError(Exception, e) # breaks the run and starts again
             

@@ -80,8 +80,8 @@ class LogicalFile(DiracFile):
             self.remoteDir = os.path.dirname( value )
         super( LogicalFile, self ).__setattr__( name, value )
 
-    def _attribute_filter__set__(self, obj_type, attrib_name):
+    def _attribute_filter__set__(self, attrib_name, value):
         if attrib_name == "name":
-            self._setLFNnamePattern( lfn=self.name, namePattern='' )
-        return super( LogicalFile, self )._attribute_filter__set__( obj_type, attrib_name )
+            self._setLFNnamePattern( lfn = value, namePattern = '' )
+        return super( LogicalFile, self )._attribute_filter__set__( attrib_name, value )
 

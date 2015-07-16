@@ -9,27 +9,27 @@ def checkCommandArgs(job):
     f=open(fname)
     lines = [line for line in f.readlines() if line.find('gaudirun.py') >=0]
     if len(lines)!=1:
-        print '********************************************************************************************'
-        print '* Zero or More than one line with gaudiscript.py/gaudi-script.py may cause error... Check! *'
-        print '********************************************************************************************'
-        print lines
+        print('********************************************************************************************')
+        print('* Zero or More than one line with gaudiscript.py/gaudi-script.py may cause error... Check! *')
+        print('********************************************************************************************')
+        print(lines)
 
 ##    for line in lines:
     if type(job.backend)==type(Local()) and lines[0][lines[0].find('gaudirun.py'):]!="gaudirun.py -T -v options.pkl data.py'''\n":
-        print '*******************************************************'
-        print '* Local backend job failed - Problem with RTHUtils.py *'
-        print '*******************************************************'
-        print r"* Expected: gaudirun.py -T -v options.pkl data.py'''*"
-        print '* Located :', lines[0][lines[0].find('gaudirun.py'):].strip() + '*'
-        print '*******************************************************'
+        print('*******************************************************')
+        print('* Local backend job failed - Problem with RTHUtils.py *')
+        print('*******************************************************')
+        print(r"* Expected: gaudirun.py -T -v options.pkl data.py'''*")
+        print('* Located :', lines[0][lines[0].find('gaudirun.py'):].strip() + '*')
+        print('*******************************************************')
         raise JobError('Command line args wrong for Local() job')
     elif type(job.backend)==type(Dirac()) and lines[0][lines[0].find('gaudirun.py'):]!="gaudirun.py -T -v options.pkl data-wrapper.py''')/256\n":
-        print '******************************************************************'
-        print '* Dirac backend job failed - Problem with GaudiDiracRTHandler.py *'
-        print '******************************************************************'
-        print r"* Expected: gaudirun.py -T -v options.pkl data-wrapper.py''')/256*"
-        print '* Located :', lines[0][lines[0].find('gaudirun.py'):].strip() + '*'
-        print '******************************************************************'
+        print('******************************************************************')
+        print('* Dirac backend job failed - Problem with GaudiDiracRTHandler.py *')
+        print('******************************************************************')
+        print(r"* Expected: gaudirun.py -T -v options.pkl data-wrapper.py''')/256*")
+        print('* Located :', lines[0][lines[0].find('gaudirun.py'):].strip() + '*')
+        print('******************************************************************')
         raise JobError('Command line args wrong for Dirac() job')
     f.close()
     job.kill()

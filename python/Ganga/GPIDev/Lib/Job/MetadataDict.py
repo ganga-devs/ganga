@@ -1,47 +1,51 @@
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.Core.exceptions import *
-from Ganga.GPIDev.Schema import *
+from Ganga.Core.exceptions import GangaAttributeError
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import addProxy
-import copy
+
 
 class MetadataDict(GangaObject):
+
     '''MetadataDict class
 
     Class that represents the dictionary of metadata.
     '''
-    _schema = Schema(Version(1,0),{
-        'data':SimpleItem(defvalue={},doc='dict data',hidden=1, protected=1)
-        })
-    _name='MetadataDict'
-    _category='metadata'
-    _exportmethods = ['__getitem__']#,'__str__']
-
+    _schema = Schema(Version(1, 0), {
+        'data': SimpleItem(defvalue={}, doc='dict data', hidden=1, protected=1)
+    })
+    _name = 'MetadataDict'
+    _category = 'metadata'
+    _exportmethods = ['__getitem__']  # ,'__str__']
 
     def __init__(self):
-        super(MetadataDict,self).__init__()
+        super(MetadataDict, self).__init__()
 
-##    def __str__(self):
-##        return str(self.data)
-    
+# def __str__(self):
+# return str(self.data)
+
     def __getitem__(self, key):
+        import copy
         return addProxy(copy.deepcopy(self.data[key]))
 
     def __setitem__(self, key, value):
         from Ganga.GPIDev.Lib.Job.Job import Job
         if key in Job._schema.datadict.keys():
-            raise GangaAttributeError('\'%s\' is a reserved key name and cannot be used in the metadata' % key)
-        if type(key) is not type(''):
-            raise GangaAttributeError('Metadata key must be of type \'str\' not %s'%type(key))
+            raise GangaAttributeError(
+                '\'%s\' is a reserved key name and cannot be used in the metadata' % key)
+        if not isinstance(key, str):
+            raise GangaAttributeError(
+                'Metadata key must be of type \'str\' not %s' % type(key))
         if isinstance(value, GangaObject):
-            raise GangaAttributeError('Metadata doesn\'t support nesting of GangaObjects at the moment')
-##         if type(value) is not type(''):
+            raise GangaAttributeError(
+                'Metadata doesn\'t support nesting of GangaObjects at the moment')
+# if type(value) is not type(''):
 ##             raise GangaAttributeError('Metadata only supports string values at the moment')
-##         if type(value) is list or type(value) is tuple or type(value) is dict:
+# if type(value) is list or type(value) is tuple or type(value) is dict:
 ##             raise GangaAttributeError('Metadata doesn\'t support nesting data structures at the moment, values of type \'list\', \'tuple\' or \'dict\' are forbidden')
-            
-        self.data[key]=value
+
+        self.data[key] = value
         self._setDirty()
-        
+
     def update(self, dict):
 
         # this way pick up the checking for free
@@ -49,8 +53,7 @@ class MetadataDict(GangaObject):
             self.__setitem__(key, value)
 #        self.data.update(dict)
 
-
-    def printSummaryTree(self,level = 0, verbosity_level = 0, whitespace_marker = '', out = None, selection = ''):
+    def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection=''):
         """If this method is overridden, the following should be noted:
 
         level: the hierachy level we are currently at in the object tree.
@@ -61,10 +64,9 @@ class MetadataDict(GangaObject):
         selection: See VPrinter for an explaintion of this.
         """
         if len(self.data) == 0:
-            print >> out, '{}'
+            out.write('{}\n')
             return
-        print >> out, '{'
+        out.write('{\n')
         for key, value in self.data.iteritems():
-            print >> out, whitespace_marker, '   ', key, '=', value
-        print >> out, whitespace_marker, '   }'
-        
+            out.write(whitespace_marker + '     ' + key + ' = ' + value + '\n')
+        out.write(whitespace_marker + '    }\n')

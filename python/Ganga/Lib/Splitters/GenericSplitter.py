@@ -4,12 +4,14 @@
 # $Id: GenericSplitter.py,v 1.2 2008-09-09 15:11:35 moscicki Exp $
 ###############################################################################
 
-import inspect
-
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
 
 class GenericSplitter(ISplitter):
 
@@ -50,29 +52,31 @@ class GenericSplitter(ISplitter):
     Known issues of this generic splitter:
       - it will not work if specifying different backends for the subjobs
 
-    """    
+    """
     _name = "GenericSplitter"
-    _schema = Schema(Version(1,0), {
-        'attribute' : SimpleItem(defvalue='',doc='The attribute on which the job is splitted'),
-        'values' : SimpleItem(defvalue=[],typelist=None,checkset="_checkset_values",sequence=1,doc='A list of the values corresponding to the attribute of the subjobs'),
-        'multi_attrs' : SimpleItem(defvalue={},doc='Dictionary to specify multiple attributes to split over'),
-        } )
+    _schema = Schema(Version(1, 0), {
+        'attribute': SimpleItem(defvalue='', doc='The attribute on which the job is splitted'),
+        'values': SimpleItem(defvalue=[], typelist=None, checkset="_checkset_values", sequence=1, doc='A list of the values corresponding to the attribute of the subjobs'),
+        'multi_attrs': SimpleItem(defvalue={}, doc='Dictionary to specify multiple attributes to split over'),
+    })
 
     def _checkset_values(self, value):
         self._checksetNestedLists(value)
-        # TODO: here we may implement advanced validation of type against the type of selected attribute
+        # TODO: here we may implement advanced validation of type against the
+        # type of selected attribute
         pass
-    
-    def split(self,job):
-        
+
+    def split(self, job):
+
         subjobs = []
-        
+
         # sort out multiple arg splitting
         if (self.attribute != '' or len(self.values) > 0) and len(self.multi_attrs) > 0:
-            raise ApplicationConfigurationError(None,"Setting both 'attribute'/'values' and 'multi_attrs' is unsupported")
+            raise ApplicationConfigurationError(
+                None, "Setting both 'attribute'/'values' and 'multi_attrs' is unsupported")
 
         if self.attribute != '':
-            attrlist = [ self.attribute ]
+            attrlist = [self.attribute]
             values = []
             for v in self.values:
                 values.append([v])
@@ -85,7 +89,8 @@ class GenericSplitter(ISplitter):
                     numjobs = len(self.multi_attrs[attr])
                 else:
                     if len(self.multi_attrs[attr]) != numjobs:
-                        raise ApplicationConfigurationError(None,"Number of values for '%s' doesn't equal others '%d'" % (attr, numjobs))
+                        raise ApplicationConfigurationError(
+                            None, "Number of values for '%s' doesn't equal others '%d'" % (attr, numjobs))
 
                 attrlist.append(attr)
 
@@ -95,12 +100,13 @@ class GenericSplitter(ISplitter):
                 valtmp = []
                 for attr in attrlist:
                     valtmp.append(self.multi_attrs[attr][i])
-                values.append( valtmp )
+                values.append(valtmp)
 
         # check we have enough values to cover the attributes
         for vallist in values:
             if len(attrlist) != len(vallist):
-                raise ApplicationConfigurationError(None,"Number of attributes to split over doesn't equal number of values in list '%s'" % vallist)
+                raise ApplicationConfigurationError(
+                    None, "Number of attributes to split over doesn't equal number of values in list '%s'" % vallist)
 
         # now perform the split
         for vallist in values:
@@ -112,10 +118,11 @@ class GenericSplitter(ISplitter):
                 attrs = attrlist[i].split('.')
                 obj = j
                 for attr in attrs[:-1]:
-                    obj = getattr(obj,attr)
+                    obj = getattr(obj, attr)
                 attr = attrs[-1]
-                setattr(obj,attr,vallist[i])
-                logger.debug('set %s = %s to subjob.' % (attrlist[i],getattr(obj,attr)))
+                setattr(obj, attr, vallist[i])
+                logger.debug('set %s = %s to subjob.' %
+                             (attrlist[i], getattr(obj, attr)))
 
             subjobs.append(stripProxy(j))
 

@@ -52,7 +52,7 @@ def download_snapshot(fork, version, filename, username=None, password=None, ret
     url_request.add_header("Authorization", "Basic %s" % b64string)
     try:
         remote_file = urllib2.urlopen(url_request)
-    except urllib2.URLError, e:
+    except urllib2.URLError as e:
         print "Cannot connect to GitHub: ", e
         raise
     try:

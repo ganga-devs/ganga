@@ -96,18 +96,18 @@ class TestExeDiracRTHandler(GangaGPITestCase):
             self.assertEqual(odiff, set(), 'jobconfig.outputbox != job.outputsandbox + appconfig.outputbox: sym_diff = %s'%odiff)
 
         # check that the proper exception is raised in case of the exe file not existing
-        print "Checking that Exception raised if file doesn't exist"
         self.assertRaises( ApplicationConfigurationError,
                            self._rthandler.master_prepare,
                            j_fail.application._impl,
-                           self.appmasterconfig )
+                           self.appmasterconfig,
+                           msg="Checking that Exception raised if file doesn't exist")
 
         # check that the proper exception is raised in case of the app not being prepared.
-        print "Checking exception raised if app not prepared"
         self.assertRaises( GangaException,
                            self._rthandler.master_prepare,
                            j_prep_fail.application._impl,
-                           self.appmasterconfig )
+                           self.appmasterconfig,
+                           msg="Checking exception raised if app not prepared")
 
     def test_prepare(self):
         appsubconfig = StandardJobConfig(inputbox=[File('file1.txt')._impl,File('file2.txt')._impl],
