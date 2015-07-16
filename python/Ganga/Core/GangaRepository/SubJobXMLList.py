@@ -192,9 +192,6 @@ class SubJobXMLList(GangaObject):
     def _setParent(self, parentObj):
         logger.debug('Setting Parent: %s' % str(parentObj))
 
-        import traceback
-        traceback.print_stack()
-
         super(SubJobXMLList, self)._setParent( parentObj )
         if not hasattr(self, '_cachedJobs'):
             return
