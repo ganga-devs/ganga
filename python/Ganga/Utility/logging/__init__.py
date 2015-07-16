@@ -41,7 +41,7 @@ requires_shutdown = False
 private_logger = None  # private logger of this module
 
 # main logger corresponds to the root of the hierarchy
-main_logger = logging.Logger.root
+main_logger = logging.getLogger()
 
 # this is the handler used to print on screen directly
 direct_screen_handler = main_logger.handlers[0]  # get default StreamHandler
@@ -82,12 +82,9 @@ The log level may be one of: CRITICAL ERROR WARNING INFO DEBUG
 config.addOption('Ganga', "INFO", "top-level logger")
 config.addOption('Ganga.Runtime.bootstrap', "INFO", 'FIXME')
 config.addOption('Ganga.GPIDev', "INFO", "logger of Ganga.GPIDev.* packages")
-config.addOption('Ganga.Utility.logging', "WARNING",
-                 "logger of the Ganga logging package itself (use with care!)")
-config.addOption(
-    '_format', "NORMAL", "format of logging messages: TERSE,NORMAL,VERBOSE,DEBUG")
-config.addOption(
-    '_colour', True, "enable ASCII colour formatting of messages e.g. errors in red")
+config.addOption('Ganga.Utility.logging', "WARNING", "logger of the Ganga logging package itself (use with care!)")
+config.addOption('_format', "NORMAL", "format of logging messages: TERSE,NORMAL,VERBOSE,DEBUG")
+config.addOption('_colour', True, "enable ASCII colour formatting of messages e.g. errors in red")
 config.addOption('_logfile', "~/.ganga.log", "location of the logfile")
 config.addOption('_logfile_size', 100000,
                  "the size of the logfile (in bytes), the rotating log will never exceed this file size")  # 100 K
@@ -102,17 +99,17 @@ class ColourFormatter(logging.Formatter):
         import Ganga.Utility.ColourText as ColourText
         fg = ColourText.Foreground()
         fx = ColourText.Effects()
-        ColourFormatter.colours = {logging.INFO: fx.normal,
-                                   logging.WARNING: fg.orange,
-                                   logging.ERROR: fg.red,
-                                   logging.CRITICAL: fg.red,
-                                   logging.DEBUG: fx.normal}
+        self.colours = {logging.INFO: fx.normal,
+                        logging.WARNING: fg.orange,
+                        logging.ERROR: fg.red,
+                        logging.CRITICAL: fg.red,
+                        logging.DEBUG: fx.normal}
         self.markup = ColourText.ANSIMarkup()
 
     def format(self, record):
         s = logging.Formatter.format(self, record)
         try:
-            code = ColourFormatter.colours[record.levelno]
+            code = self.colours[record.levelno]
             return self.markup(s, code)
         except KeyError:
             return s
@@ -132,7 +129,6 @@ def _set_formatter(handler):
 
 
 def _make_file_handler(logfile, logfile_size):
-    import traceback
     import os.path
     logfile = os.path.expanduser(logfile)
     global file_handler
@@ -211,7 +207,7 @@ config.attachSessionHandler(None, post_config_handler)
 
 def _set_log_level(logger, value):
 
-    if not _global_level is None:
+    if _global_level is not None:
         value = _global_level
 
     # convert a string "DEBUG" into enum object logging.DEBUG
@@ -395,7 +391,7 @@ def bootstrap(internal=False, handler=None):
     else:
         # override main_logger handler
         global default_handler
-        if not handler is None and not handler is default_handler:
+        if handler is not None and handler is not default_handler:
             main_logger.removeHandler(default_handler)
             main_logger.addHandler(handler)
             default_handler = handler
@@ -423,13 +419,12 @@ def bootstrap(internal=False, handler=None):
 
     if not internal:
         class NoErrorFilter(logging.Filter):
-
             """
             A filter which only allow messages which are WARNING or lower to be logged
             """
-
             def filter(self, record):
                 return record.levelno <= 30
+
         # Make the default handler not print ERROR and CRITICAL
         direct_screen_handler.addFilter(NoErrorFilter())
 
@@ -462,7 +457,7 @@ bootstrap(internal=True)
 
 
 def force_global_level(level):
-    if not level is None:
+    if level is not None:
         for l in _allLoggers:
             _set_log_level(_allLoggers[l], level)
         global _global_level
