@@ -81,7 +81,7 @@ class VPrinter(object):
     def nodeEnd(self, node):
 
         if self.empty_body:
-            print(self.indent(), ' )', end=' ', file=self.outi, sep='')
+            print(self.indent(), ' )', end=' ', file=self.out, sep='')
             self.nocomma = 0
         else:
             if self.nocomma:

@@ -484,8 +484,10 @@ class GangaObject(Node):
         self._dirty = False
 
         super(GangaObject, self).__init__(None)
-        for attr, item in self._schema.allItems():
-            setattr(self, attr, self._schema.getDefaultValue(attr))
+
+        if self._schema is not None and hasattr(self._schema, 'allItems'):
+            for attr, item in self._schema.allItems():
+                setattr(self, attr, self._schema.getDefaultValue(attr))
 
         self._lock_count = {}
         # Overwrite default values with any config values specified
@@ -502,8 +504,7 @@ class GangaObject(Node):
         elif len(args) == 1:
             self.copyFrom(args[0])
         else:
-            raise TypeMismatchError(
-                "Constructor expected one or zero non-keyword arguments, got %i" % len(args))
+            raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__

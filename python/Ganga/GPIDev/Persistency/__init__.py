@@ -116,9 +116,14 @@ def stripped_export(item=None, filename="", mode="w"):
                           % (name, category))
             object.printTree(outFile, "copyable")
             nObject = nObject + 1
-        except AttributeError:
+        except AttributeError, err:
             logger.info("Unable to save item - not a GangaObject")
-            logger.debug("Problem item: %s" % (repr(object)))
+            logger.info("Problem item: %s" % (repr(object)))
+            logger.warning("Error: %s" % str(err))
+            raise err
+        except Exception, err:
+            logger.error("Unknown export error!")
+            raise err
 
     if nObject:
         returnValue = True
@@ -196,7 +201,7 @@ def load(filename="", returnList=True):
         item = item.strip()
         if item:
             try:
-                object = eval(item, Ganga.GPI.__dict__)
+                object = eval(str(item), Ganga.GPI.__dict__)
                 objectList.append(object)
             except NameError as x:
                 logger.exception(x)
