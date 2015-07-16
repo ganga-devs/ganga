@@ -11,7 +11,8 @@ import time
 import errno
 import fcntl
 import random
-import datetime
+
+import sys
 
 try:
     import cPickle as pickle
@@ -20,7 +21,7 @@ except ImportError:
 
 import Ganga.Utility.logging
 
-from Ganga.Utility.Config.Config import getConfig, ConfigError
+from Ganga.Utility.Config.Config import ConfigError
 
 try:
     from Ganga.Core.GangaThread import GangaThread
@@ -49,9 +50,8 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 session_lock_last = 0
-session_expiration_timeout = 0
 try:
-    session_expiration_timeout = getConfig('Configuration')['DiskIOTimeout']
+    session_expiration_timeout = Ganga.Utility.Config.getConfig('Configuration')['DiskIOTimeout']
 except ConfigError, err:
     session_expiratrion_timeout = 5
 # session_expiration_timeout = 45 # in sec
@@ -290,6 +290,7 @@ class SessionLockManager(object):
         # TODO: Perhaps put the username here?
         global session_lock_refresher
         if session_lock_refresher is None:
+            import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
             session_name = ".".join(
@@ -481,6 +482,7 @@ class SessionLockManager(object):
 
                 def clean_path():
                     oldtime = os.stat(lock_file).st_ctime
+                    import time
                     nowtime = time.time()
                     if abs(int(nowtime) - oldtime) > 10:
                         #logger.debug( "cleaning global lock" )
@@ -494,6 +496,7 @@ class SessionLockManager(object):
                         break
                     except Exception as err:
                         logger.debug("Global Lock aquire Exception: %s" % str(err))
+                        import time
                         time.sleep(0.01)
 
                 os.system("fs setacl %s $USER rliwka" % (lock_path))
@@ -501,6 +504,7 @@ class SessionLockManager(object):
                 while not os.path.isfile(lock_file):
                     lock_file_hand = open(lock_file, "w")
                     lock_file_hand.close()
+                    import time
                     time.sleep(0.01)
 
             else:
@@ -726,6 +730,7 @@ class SessionLockManager(object):
 
     def safe_LockCheck(self):
         global session_lock_last
+        import time
         this_time = time.time()
         if session_lock_last == 0:
             session_lock_last = this_time
@@ -938,6 +943,7 @@ def test2():
         logger.debug("get {0} ids --- {1}".format(n, slm.make_new_ids(n)))
         slm.check()
 
+import random
 if __name__ == "__main__":
     import sys
     if len(sys.argv) == 1:

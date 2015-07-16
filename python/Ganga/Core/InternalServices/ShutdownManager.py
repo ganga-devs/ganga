@@ -64,10 +64,6 @@ def _ganga_run_exitfuncs():
     # if Coordinator.servicesEnabled:
     #    Coordinator.disableInternalServices( shutdown = True )
 
-    # Set the disk timeout to 3 sec, sacrifice stability for quick-er exit
-    from Ganga.Utility.Config import setConfigOption
-    setConfigOption('Configuration', 'DiskIOTimeout', 3)
-
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
     stop_and_free_thread_pool()

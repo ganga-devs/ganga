@@ -15,12 +15,10 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.GPIDev.Lib.File import FileBuffer
 
 import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 import re
 import os
-import os.path
-
-logger = Ganga.Utility.logging.getLogger()
 
 regex = re.compile('[*?\[\]]')
 
@@ -49,10 +47,12 @@ class LocalFile(IGangaFile):
         if isinstance(namePattern, str):
             self.namePattern = namePattern
         elif isinstance(namePattern, File):
+            import os.path
             self.namePattern = os.path.basename(namePattern.name)
             self.localDir = os.path.dirname(namePattern.name)
         elif isinstance(namePattern, FileBuffer):
             namePattern.create()
+            import os.path
             self.namePattern = os.path.basename(namePattern.name)
             self.localDir = os.path.dirname(namePattern.name)
         else:
@@ -63,7 +63,8 @@ class LocalFile(IGangaFile):
             if localDir != '':
                 self.localDir = localDir
             else:
-                this_pwd = os.path.abspath('.')
+                from os.path import abspath
+                this_pwd = abspath('.')
                 self.tmp_pwd = this_pwd
         else:
             logger.error(
@@ -91,6 +92,7 @@ class LocalFile(IGangaFile):
     def accessURL(self):
         URLs = []
         for file in self.location():
+            import os
             URLs.append('file://' + os.path.join(os.sep, file))
         return URLs
 
@@ -148,7 +150,8 @@ class LocalFile(IGangaFile):
                     self.localDir = self.tmp_pwd
                     logger.debug("File: %s found, Setting localDir: %s" % (str(self.namePattern), self.localDir))
                 else:
-                    this_pwd = os.path.abspath('.')
+                    from os.path import abspath
+                    this_pwd = abspath('.')
                     now_tmp_pwd = this_pwd
                     if os.path.exists(os.path.join(now_tmp_pwd, self.namePattern)):
                         self.localDir = now_tmp_pwd

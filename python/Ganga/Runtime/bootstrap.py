@@ -20,23 +20,11 @@
 #
 ##########################################################################
 
-import re
-import os.path
-import Ganga
-import sys
-import time
-from Ganga.Utility.logging import getLogger
-from Ganga.Utility.files import fullpath
-
-from Ganga.Utility.Config import getConfig, makeConfig, expandvars, expandConfigPath, ConfigError
-
-from optparse import OptionParser
-
-import itertools
 
 # store Ganga version based on CVS sticky tag for this file
 _gangaVersion = "$Name: Ganga-SVN $"
 
+import re
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
 if r:
@@ -46,8 +34,16 @@ else:
 
 # store a path to Ganga libraries
 
+import os.path
+import Ganga
 _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 
+from Ganga.Utility.files import fullpath
+
+import sys
+import time
+
+from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 
 # This code can help debugging when files aren't closed correctly and
@@ -139,6 +135,7 @@ under certain conditions; type license() for details.
         # by default enter interactive mode
         self.interactive = True
 
+        import os.path
         self.default_config_file = os.path.expanduser('~/.gangarc')
 
         # this is a TEMPORARY hack to enable some GUI-specific parts of the core such as monitoring
@@ -153,6 +150,7 @@ under certain conditions; type license() for details.
     # parse the options
 
     def parseOptions(self):
+        from optparse import OptionParser
 
         usage = self.hello_string + \
             """\nusage: %prog [options] [script] [args] ..."""
@@ -231,8 +229,8 @@ under certain conditions; type license() for details.
                 'GANGA_CONFIG_FILE', None)
 
         if self.options.config_file:
-            from Ganga.Utility.files import expandfilename
-            self.options.config_file = expandfilename(
+            import Ganga.Utility.files
+            self.options.config_file = Ganga.Utility.files.expandfilename(
                 self.options.config_file)
             open_file = file_opens(
                 self.options.config_file, 'reading configuration file')
@@ -305,6 +303,7 @@ under certain conditions; type license() for details.
                     config_directory, '.gangarc_backups')
                 if not os.path.exists(config_backupdir):
                     os.makedirs(config_backupdir)
+                import time
                 datestr = "_" + time.strftime("%d.%m.%y")
                 i = 0
                 logger.info('Copying backup config files to %s' %
@@ -364,6 +363,9 @@ under certain conditions; type license() for details.
                 new_config_file.close()
 
     def print_release_notes(self):
+        from Ganga.Utility.logging import getLogger
+        from Ganga.Utility.Config.Config import getConfig
+        import itertools
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] == True:
             packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(
@@ -418,8 +420,13 @@ under certain conditions; type license() for details.
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
     def new_user_wizard(self):
+        import os
+        from Ganga.Utility.logging import getLogger
+        from Ganga.Utility.Config.Config import load_user_config, getConfig, ConfigError
+
         logger = getLogger('NewUserWizard')
-        specified_gangadir = os.path.expanduser(os.path.expandvars(getConfig('Configuration')['gangadir']))
+        specified_gangadir = os.path.expanduser(
+            os.path.expandvars(getConfig('Configuration')['gangadir']))
         specified_config = self.options.config_file
         default_gangadir = os.path.expanduser('~/gangadir')
         default_config = self.default_config_file
@@ -432,21 +439,21 @@ under certain conditions; type license() for details.
 
         if not os.path.exists(specified_gangadir) \
                 and not os.path.exists(default_gangadir):
-            logger.info('Making default gangadir: %s' % default_gangadir)
+            logger.info('Making default gangadir: %s' % gangadir)
             try:
-                os.makedirs(default_gangadir)
+                os.makedirs(gangadir)
             except OSError as err:
-                logger.error("Failed to create default gangadir '%s': %s" % (default_gangadir, err.message))
+                logger.error("Failed to create default gangadir '%s': %s" % (gangadir, err.message))
                 raise
         if self.options.generate_config:
             logger = getLogger('ConfigUpdater')
             logger.info('re-reading in old config for updating...')
-            from Ganga.Utility.Config.Config import load_user_config
             load_user_config(specified_config, {})
             self.generate_config_file(specified_config)
             sys.exit(0)
         if not os.path.exists(specified_config) \
                 and not os.path.exists(default_config):
+            import time
             # Sleep for 1 sec to allow for most of the bootstrap to finish so
             # the user actually sees this message last
             time.sleep(3.)
@@ -486,6 +493,7 @@ under certain conditions; type license() for details.
         """ Parse a list of command line config options and return a list of triplets (section,option,value).
         In case of parsing errors, raise ConfigError exception.
         """
+        import re
         mpat = re.compile(
             r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._/]+)=(?P<value>.+)')
         section = None
@@ -494,11 +502,13 @@ under certain conditions; type license() for details.
         for o in cmdline_options:
             rpat = mpat.match(o)
             if rpat is None:
+                from Ganga.Utility.Config import ConfigError
                 raise ConfigError('syntax error: "%s"' % o)
             else:
                 if rpat.group('section'):
                     section = rpat.group('section')
                 if section is None:
+                    from Ganga.Utility.Config import ConfigError
                     raise ConfigError('section not specified: %s' % o)
                 else:
                     opts.append(
@@ -508,6 +518,11 @@ under certain conditions; type license() for details.
     # configuration procedure: read the configuration files, configure and
     # bootstrap logging subsystem
     def configure(self, logLevel=None):
+        import os
+        import os.path
+
+        import Ganga.Utility.Config
+        from Ganga.Utility.Config import ConfigError
 
         def set_cmdline_config_options(sects=None):
             try:
@@ -536,6 +551,7 @@ under certain conditions; type license() for details.
             if logLevel:
                 self.options.force_loglevel = logLevel
             if self.options.force_loglevel in (None, 'DEBUG'):
+                import sys
                 sys.stdout.write(str(self.hello_string)+'\n')
 #                self.new_user_wizard()
 
@@ -545,14 +561,16 @@ under certain conditions; type license() for details.
         # initialize logging for the initial phase of the bootstrap
         # will use the default, hardcoded log level in the module until
         # pre-configuration procedure is complete
-        from Ganga.Utility.logging import force_global_level
-        force_global_level(self.options.force_loglevel)
+        import Ganga.Utility.logging
+
+        Ganga.Utility.logging.force_global_level(self.options.force_loglevel)
 
         try:
             with open(self.options.config_file) as cf:
                 first_line = cf.readline()
+                import re
                 r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
-                this_logger = getLogger("Configure")
+                this_logger = Ganga.Utility.logging.getLogger("Configure")
                 if not r:
                     this_logger.error(
                         'file %s does not seem to be a Ganga config file', self.options.config_file)
@@ -592,11 +610,11 @@ under certain conditions; type license() for details.
             if self.options.config_path is None:
                 self.options.config_path = ''
 
-        from Ganga.Utility.files import expandfilename
-        self.options.config_path = expandfilename(self.options.config_path)
+        import Ganga.Utility.files
+        import Ganga.Utility.util
+        self.options.config_path = Ganga.Utility.files.expandfilename(self.options.config_path)
 
         try:
-            from Ganga.Utility.util import hostname
             hostname = Ganga.Utility.util.hostname()
         except Exception as x:  # fixme: use OSError instead?
             hostname = 'localhost'
@@ -605,7 +623,8 @@ under certain conditions; type license() for details.
         # so you can refer to them in the config file
         # additionally they will be visible in the (write protected) [System]
         # config module
-        syscfg = makeConfig('System', "parameters of this ganga session (read-only)", cfile=False)
+        syscfg = Ganga.Utility.Config.makeConfig(
+            'System', "parameters of this ganga session (read-only)", cfile=False)
         syscfg.addOption('GANGA_VERSION', _gangaVersion, '')
         syscfg.addOption(
             'GANGA_PYTHONPATH', _gangaPythonPath, 'location of the ganga core packages')
@@ -617,13 +636,16 @@ under certain conditions; type license() for details.
             'GANGA_HOSTNAME', hostname, 'local hostname where ganga is running')
 
         def deny_modification(name, x):
-            raise ConfigError('Cannot modify [System] settings (attempted %s=%s)' % (name, x))
+            raise Ganga.Utility.Config.ConfigError(
+                'Cannot modify [System] settings (attempted %s=%s)' % (name, x))
         syscfg.attachUserHandler(deny_modification, None)
         syscfg.attachSessionHandler(deny_modification, None)
+        import Ganga.Utility.Config
 
         # the SCRIPTS_PATH must be initialized before the config files are loaded
         # for the path to be correctly prepended
 
+        from Ganga.Utility.Config import makeConfig
         config = makeConfig(
             "Configuration", "global configuration parameters.\nthis is a catch all section.")
         config.addOption('SCRIPTS_PATH', 'Ganga/scripts', """the search path to scripts directory.
@@ -645,8 +667,8 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
             'StartupGPI', '', 'block of GPI commands executed at startup')
         config.addOption(
             'ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
-        config.addOption('gangadir', expandvars(
-            None, '~/gangadir'), 'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=expandvars)
+        config.addOption('gangadir', Ganga.Utility.Config.expandvars(
+            None, '~/gangadir'), 'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=Ganga.Utility.Config.expandvars)
         config.addOption(
             'repositorytype', 'LocalXML', 'Type of the repository.', examples='LocalXML')
         config.addOption('workspacetype', 'LocalFilesystem',
@@ -681,24 +703,25 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
                          "Time in seconds between executions of the user script")
 
         # detect default user (equal to unix user name)
+        import getpass
         try:
-            from getpass import getuser
-            config.options['user'].default_value = getuser()
+            config.options['user'].default_value = getpass.getuser()
         except Exception as x:
-            raise ConfigError('Cannot get default user name' + str(x))
+            raise Ganga.Utility.Config.ConfigError(
+                'Cannot get default user name' + str(x))
 
         config.addOption(
-            'DiskIOTimeout', 30, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
+            'DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
 
-        gpiconfig = makeConfig('GPI_Semantics',
-                'Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface (what may result in a different behaviour of scripts and commands).')
+        gpiconfig = Ganga.Utility.Config.makeConfig(
+            'GPI_Semantics', 'Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface (what may result in a different behaviour of scripts and commands).')
 
         gpiconfig.addOption('job_submit_keep_going', False,
                             'Keep on submitting as many subjobs as possible. Option to j.submit(), see Job class for details')
         gpiconfig.addOption('job_submit_keep_on_fail', False,
                             'Do not revert job to new status even if submission failed. Option to j.submit(), see Job class for details')
 
-        ipconfig = makeConfig('TextShell_IPython', '''IPython shell configuration
+        ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython', '''IPython shell configuration
 See IPython manual for more details:
 http://ipython.scipy.org/doc/manual''')
         try:
@@ -743,7 +766,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
         # because the user config file is put at the end it always may override
         # everything else
-        config_files = expandConfigPath(self.options.config_path, _gangaPythonPath)
+        config_files = Ganga.Utility.Config.expandConfigPath(
+            self.options.config_path, _gangaPythonPath)
         config_files.reverse()
 
         # read-in config files
@@ -765,6 +789,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                          _accept(os.path.join(dir, f))]
             return string.join(files, os.pathsep)
 
+        import re
 
         def _versionsort(s, p=re.compile(r'^v(\d+)r(\d+)p*(\d*)')):
             m = p.match(s)
@@ -880,6 +905,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         from Ganga.Core.InternalServices import ShutdownManager
         ShutdownManager.install()
 
+        import os
+        import os.path
+        import Ganga.Utility.Config
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
         from Ganga.Core import GangaException
 
@@ -895,6 +923,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         # dictionary automatically
         try:
             import Ganga.Utility.files
+            from Ganga.Utility.Config.Config import getConfig
             config = getConfig('Configuration')
 
             # runtime warnings issued by the interpreter may be suppresed
@@ -958,14 +987,15 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
     # bootstrap all system and user-defined runtime modules
     def bootstrap(self):
-        config = getConfig('Configuration')
+        import Ganga.Utility.Config
+        config = Ganga.Utility.Config.getConfig('Configuration')
 
         from Ganga.Core import GangaException
         from Ganga.Utility.Runtime import allRuntimes
+        import Ganga.Utility.logging
 
         for n, r in zip(allRuntimes.keys(), allRuntimes.values()):
             try:
-                import Ganga
                 r.bootstrap(Ganga.GPI.__dict__)
             except Exception as err:
                 logger.error('problems with bootstrapping %s -- ignored', n)
@@ -980,11 +1010,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 logger.error('Reason: %s' % str(err))
         # load user-defined plugins...
 
-        my_globals = globals()
-        my_locals = locals()
         for r in allRuntimes.values():
             try:
-                r.loadPlugins(my_globals, my_locals)
+                r.loadPlugins()
             except Exception as err:
                 logger.error("problems with loading plugins for %s -- ignored" % r.name)
                 logger.error('Reason: %s' % str(err))
@@ -1001,7 +1029,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         # set the default value for the plugins
 
-        default_plugins_cfg = makeConfig('Plugins', '''General control of plugin mechanism.
+        default_plugins_cfg = Ganga.Utility.Config.makeConfig('Plugins', '''General control of plugin mechanism.
 Set the default plugin in a given category.
 For example:
 default_applications = DaVinci
@@ -1026,11 +1054,12 @@ default_backends = LCG
         # set alias for default Batch plugin (it will not appear in the
         # configuration)
 
-        batch_default_name = getConfig('Configuration').getEffectiveOption('Batch')
+        batch_default_name = Ganga.Utility.Config.getConfig(
+            'Configuration').getEffectiveOption('Batch')
         try:
             batch_default = allPlugins.find('backends', batch_default_name)
         except Exception as x:
-            raise ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
+            raise Ganga.Utility.Config.ConfigError('Check configuration. Unable to set default Batch backend alias (%s)' % str(x))
         else:
             allPlugins.add(batch_default, 'backends', 'Batch')
             exportToGPI('Batch', batch_default._proxyClass, 'Classes')
@@ -1163,6 +1192,7 @@ default_backends = LCG
         def backends():
             'return a list of all available backends, OBSOLETE: use plugins("backends")'
             return list_plugins('backends')
+        from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 
         def convert_merger_to_postprocessor(j):
             if len(j.postprocessors._impl.process_objects):
@@ -1171,7 +1201,6 @@ default_backends = LCG
                 logger.info(
                     'job(%s) does not have a merger to convert' % j.fqid)
             if not len(j.postprocessors._impl.process_objects) and j._impl.merger is not None:
-                from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
                 mp = MultiPostProcessor()
                 mp.process_objects.append(j._impl.merger)
                 j._impl.postprocessors = mp
@@ -1248,7 +1277,8 @@ default_backends = LCG
         import Ganga.GPIDev.Lib.Config
         exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
                     'Objects', 'access to Ganga configuration')
-        exportToGPI('ConfigError', ConfigError, 'Exceptions')
+        exportToGPI(
+            'ConfigError', Ganga.GPIDev.Lib.Config.ConfigError, 'Exceptions')
 
         from Ganga.Utility.feedback_report import report
 
@@ -1266,7 +1296,6 @@ default_backends = LCG
         # run post bootstrap hooks
         for r in allRuntimes.values():
             try:
-                import Ganga
                 r.postBootstrapHook()
             except Exception as err:
                 logger.error("problems with post bootstrap hook for %s" % r.name)
@@ -1320,6 +1349,7 @@ default_backends = LCG
     # if namespace is not specified then run in __main__
     def run(self, local_ns=None):
 
+        from Ganga.Utility.logging import getLogger
         logger = getLogger("run")
         logger.debug("Entering run")
 
@@ -1351,6 +1381,7 @@ default_backends = LCG
                 logger.error(
                     'Failed to source %s (Error was "%s"). Check your file for syntax errors.', fileName, str(x))
         # exec StartupGPI code
+        from Ganga.Utility.Config import getConfig
         config = getConfig('Configuration')
         if config['StartupGPI']:
             # ConfigParser trims the lines and escape the space chars
@@ -1391,8 +1422,6 @@ default_backends = LCG
         if runs_script:
             if not self.interactive:
                 session_type = 'batch'
-                from Ganga.Core import change_atexitPolicy
-                change_atexitPolicy(False,'batch')
             else:
                 session_type += 'startup_script'
 
@@ -1462,8 +1491,9 @@ default_backends = LCG
         shell = config['TextShell']
 
         if shell == 'IPython':
-            ipconfig = getConfig('TextShell_IPython')
-#            ipconfig = makeConfig('TextShell_IPython','IPython shell configuration')
+            import Ganga.Utility.Config
+            ipconfig = Ganga.Utility.Config.getConfig('TextShell_IPython')
+#            ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython','IPython shell configuration')
 #            ipconfig.addOption('args',"['-colors','LightBG', '-noautocall']",'FIXME')
             args = eval(ipconfig['args'])
 
@@ -1484,8 +1514,8 @@ default_backends = LCG
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
 
-            from Ganga.Utility.logging import enableCaching
-            enableCaching()
+            import Ganga.Utility.logging
+            Ganga.Utility.logging.enableCaching()
 
             def ganga_prompt():
                 if Ganga.Utility.logging.cached_screen_handler:
@@ -1584,6 +1614,7 @@ def exit( value=None ):
 
     def log(self, x):
 
+        import sys
         # FIXME: for some reason self.logger.critical does not print any
         # messages here
         if self.options.force_loglevel == 'DEBUG':

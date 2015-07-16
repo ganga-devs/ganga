@@ -15,6 +15,7 @@ regex = re.compile('[*?\[\]]')
 import os
 import pickle
 import stat
+import webbrowser
 import httplib2
 from apiclient.discovery import build
 from apiclient import errors
@@ -98,19 +99,15 @@ class GoogleFile(IGangaFile):
                 CLIENT_ID, CLIENT_SECRET, OAUTH_SCOPE, REDIRECT_URI)
             authorize_url = flow.step1_get_authorize_url()
             try:
-                import webbrowser
                 webbrowser.get('macosx').open(authorize_url, 0, True)
             except:
                 try:
-                    import webbrowser
                     webbrowser.get(
                         'windows-default').open(authorize_url, 0, True)
                 except:
                     try:
-                        import webbrowser
                         webbrowser.get('firefox').open(authorize_url, 0, True)
-                    except Exception, err:
-                        logger.error("Error: %s" % str(err))
+                    except:
                         pass
             logger.info(
                 'Go to the following link in your browser: ' + authorize_url)

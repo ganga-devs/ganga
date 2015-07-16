@@ -653,7 +653,7 @@ class Job(GangaObject):
         """Return a 'live' version of the output post processing map.
         Can't be done at load/global namespace because then user modules are ignored."""
 
-        from Ganga.Utility.Config import ConfigError
+        from Ganga.Utility.Config import getConfig, ConfigError
 
         backend_output_postprocess = {}
 
@@ -1078,7 +1078,7 @@ class Job(GangaObject):
         '''
 
         import os
-        from Ganga.Utility.Config import ConfigError
+        from Ganga.Utility.Config import ConfigError, getConfig
         from exceptions import IndexError
         config = getConfig("File_Associations")
 
@@ -1457,7 +1457,7 @@ class Job(GangaObject):
 
         logger.debug("Submitting Job %s" % str(self.getFQID('.')))
 
-        from Ganga.Utility.Config import ConfigError
+        from Ganga.Utility.Config import ConfigError, getConfig
         gpiconfig = getConfig('GPI_Semantics')
 
         if keep_going is None:

@@ -53,18 +53,13 @@ class Node(object):
 
     def __getstate__(self):
         dict = self.__dict__.copy()
-        if '_data' in dict.keys():
-            dict['_data'] = dict['_data'].copy()
-        else:
-            dict['_data'] = None
+        dict['_data'] = dict['_data'].copy()
         dict['_parent'] = None
         dict['_registry'] = None
         dict['_index_cache'] = None
         return dict
 
     def __setstate__(self, dict):
-        if not '_data' in dict.keys() or dict['_data'] is None:
-            return
         for n, v in dict['_data'].items():
             if isinstance(v, Node):
                 v._setParent(self)
@@ -295,12 +290,8 @@ class Descriptor(object):
                                 GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                 result = obj._data[self._name]
                 else:
-                    try:
-                        result = obj[self._name]
-                    except Exception, err_orig:
-                        logger.error("Error: %s" % str(err_orig))
-                        err = GangaException("Error finding parameter %s in object %s" % (self._name, obj._name))
-                        raise err
+                    err = GangaException("Error finding parameter %s in object %s" % (str(self._name, obj._name)))
+                    raise err
 
             return result
 
@@ -423,7 +414,8 @@ class ObjectMetaclass(type):
 
         # sanity checks for schema...
         if not '_schema' in dict.keys():
-            s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
+            s = "Class %s must _schema (it cannot be silently inherited)" % (
+                name,)
             logger.error(s)
             raise ValueError(s)
 
@@ -451,18 +443,12 @@ class ObjectMetaclass(type):
         # store generated proxy class
         cls._proxyClass = proxyClass
 
-        is_hidden = cls._declared_property('hidden')
-        is_plugin_enabled = cls._declared_property('enable_plugin')
-        is_config_enabled = cls._declared_property('enable_config')
-
         # register plugin class
-        if not is_hidden or is_plugin_enabled:
-            logger.debug("Plugins adding: %s hidden: %s enable_plugin: %s" % (cls._name, is_hidden, is_plugin_enabled))
+        if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
             allPlugins.add(cls, cls._category, cls._name)
 
         # create a configuration unit for default values of object properties
-        if not is_hidden or is_config_enabled:
-            logger.debug("Configuration adding: %s hidden: %s enable_config: %s" % (cls._name, is_hidden, is_config_enabled))
+        if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
             cls._schema.createDefaultConfig()
 
 

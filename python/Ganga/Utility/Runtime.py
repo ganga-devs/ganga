@@ -14,13 +14,11 @@
 #                    to be passed as arument
 
 from Ganga.Utility.util import importName
-from Ganga.Utility.Config import getConfig
-
-import Ganga.Utility.logging
 
 from Ganga.Utility.external.ordereddict import oDict
 allRuntimes = oDict()
 
+import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 
@@ -69,7 +67,7 @@ def getSearchPath(configPar="SCRIPTS_PATH"):
        Return value: Search path"""
 
     import os
-    from Ganga.Utility.Config import ConfigError
+    from Ganga.Utility.Config import ConfigError, getConfig
 
     config = getConfig("Configuration")
 
@@ -167,12 +165,13 @@ class RuntimePackage(object):
                 "no environment defined for runtime package %s", self.name)
             return {}
 
-    def loadPlugins(self, my_globals=globals(), my_locals=locals()):
-        g = importName(self.name, 'loadPlugins', my_globals, my_locals)
+    def loadPlugins(self):
+        g = importName(self.name, 'loadPlugins')
         if g:
             g(self.config)
         else:
-            logger.debug("no plugins defined for runtime package %s", self.name)
+            logger.debug(
+                "no plugins defined for runtime package %s", self.name)
 
     def bootstrap(self, globals):
         try:

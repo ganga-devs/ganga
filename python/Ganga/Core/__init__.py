@@ -14,8 +14,6 @@ from .exceptions import GangaException, ApplicationConfigurationError, \
     ReadOnlyObjectError, TypeMismatchError, SchemaError, ApplicationPrepareError, \
     GangaIOError
 
-from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
-
 monitoring_component = None
 
 
@@ -25,9 +23,7 @@ def set_autostart_policy(interactive_session):
     The autostart value may be overriden in the config file, so warn if it differs from the default.
     This function should be called
     """
-    #from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
-
-    change_atexitPolicy(interactive_session)
+    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
 
 # internal helper variable for interactive shutdown
 t_last = None
@@ -76,11 +72,13 @@ def bootstrap(reg, interactive_session):
     monitoring_component.start()
 
     # register the MC shutdown hook
+
     change_atexitPolicy(interactive_session)
 
     # export to GPI
     from Ganga.Runtime.GPIexport import exportToGPI
-    exportToGPI('runMonitoring', monitoring_component.runMonitoring, 'Functions')
+    exportToGPI(
+        'runMonitoring', monitoring_component.runMonitoring, 'Functions')
 
     autostart_default = interactive_session
     config.overrideDefaultValue('autostart', bool(autostart_default))
