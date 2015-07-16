@@ -1,12 +1,13 @@
 ##################################################
 # retrieve and cache monitoring classes by name
-_mon_classes = {}
 
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
 from Ganga.Lib.MonitoringServices.Composite import CompositeMonitoringService
 
-from Ganga.Utility.Config import makeConfig
+from Ganga.Utility.Config import getConfig, makeConfig
+
+_mon_classes = {}
 
 c = makeConfig('MonitoringServices', """External monitoring systems are used
 to follow the submission and execution of jobs. Each entry in this section
@@ -70,7 +71,7 @@ def findMonitoringClassesName(job):
     a gived job based on its backend and application names.
     """
 
-    from Ganga.Utility.Config import getConfig, ConfigError
+    from Ganga.Utility.Config import ConfigError
     mc = getConfig('MonitoringServices')
 
     def _getMonClasses(option):
