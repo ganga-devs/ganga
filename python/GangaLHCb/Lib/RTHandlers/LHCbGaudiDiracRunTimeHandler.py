@@ -123,7 +123,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
            from Ganga.GPIDev.Base.Filters import allComponentFilters
 
            fileTransform = allComponentFilters['gangafiles']
-           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outdata if not FiltUtils.doesFileExist(file, job.outputfiles) ] )
+           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outdata if not FileUtils.doesFileExist(file, job.outputfiles) ] )
            job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outbox if not FileUtils.doesFileExist(file, job.outputfiles) ] )
 
            outputsandbox = [ f.namePattern for f in job.non_copyable_outputfiles ]
