@@ -119,7 +119,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
            outbox, outdata = parser.get_output(job)
 
-           from Ganga.GPIDev.Lib.FileUtils import doesFileExist
+           from Ganga.GPIDev.Lib.File.FileUtils import doesFileExist
            from Ganga.GPIDev.Base.Filters import allComponentFilters
 
            fileTransform = allComponentFilters['gangafiles']

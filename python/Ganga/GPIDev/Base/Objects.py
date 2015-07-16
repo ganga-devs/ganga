@@ -270,24 +270,28 @@ class Descriptor(object):
                     lookup_result = None
                     pass
 
-                if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
-                    result = lookup_result
-                else:
-                    obj._getReadAccess()
-                    if self._name in obj._data:
-                        result = obj._data[self._name]
+                if hasattr(obj, '_data'):
+                    if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
+                        result = lookup_result
                     else:
-                        if '_impl' in obj._data:
-                            if self._name in self._data._impl:
-                                result = obj._data._impl[self._name]
+                        obj._getReadAccess()
+                        if self._name in obj._data:
+                            result = obj._data[self._name]
+                        else:
+                            if '_impl' in obj._data:
+                                if self._name in self._data._impl:
+                                    result = obj._data._impl[self._name]
+                                else:
+                                    logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                                    GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                                    result = obj._data[self._name]
                             else:
                                 logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                 GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                 result = obj._data[self._name]
-                        else:
-                            logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
-                            GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
-                            result = obj._data[self._name]
+                else:
+                    err = GangaException("Error finding parameter %s in object %s" % (str(self._name, obj._name)))
+                    raise err
 
             return result
 
