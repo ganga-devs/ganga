@@ -592,7 +592,7 @@ class Job(GangaObject):
                 state = Job.State(newstatus)
             else:
                 raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (
-                    self.getFQID('.'), self.status, newstatus))
+                    fqid, self.status, newstatus))
 
         self._getWriteAccess()
 

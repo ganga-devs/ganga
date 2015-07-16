@@ -37,8 +37,6 @@ class SubJobXMLList(GangaObject):
         self._definedParent = None
         self._storedList = []
 
-        self._list = []
-
         self.subjob_master_index_name = "subjobs.idx"
 
         if jobDirectory == '' and registry is None:
@@ -46,29 +44,6 @@ class SubJobXMLList(GangaObject):
 
         self.subjobIndexData = {}
         self.load_subJobIndex()
-
-    def __deepcopy__(self, memo=None):
-
-        _copy = super(SubJobXMLList, self).__deepcopy__(memo)
-
-        _copy.jobDirectory = ''
-        _copy.registry = None
-        _copy._cachedJobs = {}
-
-        _copy.to_file = to_file
-        _copy.from_file = from_file
-        _copy.dataFileName = 'data'
-        _copy.load_backup = False
-
-        _copy._definedParent = None
-        _copy._storedList = []
-
-        _copy._list = []
-
-        _copy.subjob_master_index_name = "subjobs.idx"
-
-
-        return _copy
 
 
     def load_subJobIndex(self):
@@ -131,19 +106,19 @@ class SubJobXMLList(GangaObject):
             logger.debug( "cache write error: %s" % str(err) )
             pass
 
-    def _attribute_filter__get__(self, name ):
+    #def _attribute_filter__get__(self, name ):
 
-        if name == "_list":
-            if len(self._cachedJobs.keys()) != len(self):
-                if self._storedList != []:
-                    self._storedList = []
-                i=0
-                for i in range( len(self) ):
-                    self._storedList.append( self.__getitem__(i) )
-                    i+=1
-            return self._storedList
-        else:
-            self.__getattribute__(self, name )
+    #    if name == "_list":
+    #        if len(self._cachedJobs.keys()) != len(self):
+    #            if self._storedList != []:
+    #                self._storedList = []
+    #            i=0
+    #            for i in range( len(self) ):
+    #                self._storedList.append( self.__getitem__(i) )
+    #                i+=1
+    #        return self._storedList
+    #    else:
+    #        self.__getattribute__(self, name )
 
     def __iter__(self):
         if self._storedList == []:
@@ -208,13 +183,20 @@ class SubJobXMLList(GangaObject):
                 else:
                     raise RepositoryError(self,"IOError on loading subobject %i.%i: %s" % (id,i,x))
             self._cachedJobs[index] = self.from_file(sj_file)[0]
-            if self._definedParent:
-                self._cachedJobs[index]._setParent( self._definedParent )
+
+        logger.debug('Setting Parent: "%s"' % str(self._definedParent))
+        if self._definedParent:
+            self._cachedJobs[index]._setParent( self._definedParent )
         return self._cachedJobs[index]
 
     def _setParent(self, parentObj):
+        logger.debug('Setting Parent: %s' % str(parentObj))
+
+        import traceback
+        traceback.print_stack()
+
         super(SubJobXMLList, self)._setParent( parentObj )
-        if not hasattr(self, 'cachedJobs'):
+        if not hasattr(self, '_cachedJobs'):
             return
         for k in self._cachedJobs.keys():
             self._cachedJobs[k]._setParent( parentObj )

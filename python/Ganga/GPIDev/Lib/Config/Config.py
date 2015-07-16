@@ -81,8 +81,6 @@ class ConfigProxy(object):
         fg = Foreground()
         fx = Effects()
 
-        from Ganga.Utility.Config import getConfig
-
         display_config = getConfig('Display')
 
         name_colour = getColour(display_config['config_name_colour'])
