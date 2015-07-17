@@ -4,12 +4,10 @@ from .CredentialStore import CredentialStore
 
 from .VomsProxy import VomsProxy
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
 from .exceptions import CredentialsError
 
 from functools import wraps
+
 
 def RequireCredential(function):
     """
@@ -30,14 +28,15 @@ def RequireCredential(function):
         except CredentialsError:
             raise CredentialsError('Cannot get proxy which matches requirements')
         
-        if not proxy.isValid():
+        if not proxy.is_valid():
             raise CredentialsError('Proxy is invalid')
         
-        #Set the object member attribute
+        # Set the object member attribute
         functions_class_object.credential_filename = proxy.location
-        #TODO Or maybe something like:
-        # function.__globals__['credential_filename'] = proxy.location
-        # which will restrict the variable to being available inside the function's global scope which would enforce the strict usage of this decorator.
+        # TODO Or maybe something like:
+        #  function.__globals__['credential_filename'] = proxy.location
+        #  which will restrict the variable to being available inside the function's global scope which would enforce
+        #  the strict usage of this decorator.
             
         return function(*args, **kwargs)
     return wrapped_function

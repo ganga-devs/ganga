@@ -3,6 +3,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 
 from abc import abstractmethod, abstractproperty
 
+
 class ICredentialRequirement(GangaObject):
     """
     Requirements objects specify what is needed by a particular object in Ganga
@@ -12,7 +13,7 @@ class ICredentialRequirement(GangaObject):
     __metaclass__ = ObjectMetaABC
     
     _schema = Schema(Version(1, 0), {
-        'location' : SimpleItem(defvalue = None, typelist = ['str', 'None'], doc = "Path to the proxy file"),
+        'location': SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Path to the proxy file"),
     })
     
     _category = "credentials2"
@@ -32,14 +33,14 @@ class ICredentialRequirement(GangaObject):
         pass
     
     @abstractmethod
-    def setDefaultsFromConfig(self):
+    def set_defaults_from_config(self):
         """
         Fill this object's parameters with values from the user's default config
         """
         pass
     
     @abstractmethod
-    def defaultLocation(self):
+    def default_location(self):
         """
         Returns the default location for the credential file.
         This is the location that most tools will look for the file or where the file is created without specifying anything.
@@ -49,7 +50,7 @@ class ICredentialRequirement(GangaObject):
         pass
 
     @abstractmethod
-    def isEmpty(self):
+    def is_empty(self):
         """
         Returns:
         ``True`` if no explicit requirements were specified (ignoring the ``location``)
