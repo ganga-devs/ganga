@@ -48,7 +48,7 @@ class LCGSEFile(IGangaFile):
         'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
         'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-        'credential_requirements' : SimpleItem(defvalue=None,typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None'],protected=0,setter='setCredentialRequirements',getter='getCredentialRequirements',doc=''),  # TODO Add getter to return VomsProxy() if None.
+        'credential_requirements': SimpleItem(defvalue=None,typelist=[Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement, None], protected=0, setter='setCredentialRequirements', getter='getCredentialRequirements', doc=''),  # TODO Add getter to return VomsProxy() if None.
     })
     _category = 'gangafiles'
     _name = "LCGSEFile"
