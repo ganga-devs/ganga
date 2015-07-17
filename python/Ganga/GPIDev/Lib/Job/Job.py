@@ -1277,8 +1277,33 @@ class Job(GangaObject):
                 appsubconfig = self._getAppSubConfig(subjobs)
                 logger.debug("Job %s Calling rtHandler.prepare %s times" % (
                     str(self.getFQID('.')), str(len(self.subjobs))))
-                jobsubconfig = [rtHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig) for (
-                    j, s) in zip(subjobs, appsubconfig)]
+                logger.info("Preparing subjobs")
+
+                jobsubconfig = []
+
+                if self.parallel_submit is False:
+                    jobsubconfig = [rtHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig) for (j, s) in zip(subjobs, appsubconfig)]
+                else:
+
+                    finished = {}
+
+                    def _prepare_sj( i, app, sub_c, app_master_c, job_master_c):
+                        finished[i] = rtHandler.prepare(app, sub_c, app_master_c, job_master_c)
+                        return
+
+                    from Ganga.GPI import queues
+                    index=0
+                    for j, s in zip(subjobs, appsubconfig):
+                        queues._monitoring_threadpool.add_function( _prepare_sj, (index, j.application, s, appmasterconfig, jobmasterconfig) )
+                        index += 1
+
+                    while len(finished) != len(subjobs):
+                        import time
+                        time.sleep(0.25)
+
+                    for index in finished.keys():
+                        jobsubconfig.insert(index, finished[index])
+
         else:
             #   I am a sub-job, lets calculate my config
             rtHandler = self._getRuntimeHandler()
@@ -1558,8 +1583,7 @@ class Job(GangaObject):
             logger.debug("# jobsubconfig: %s" % len(jobsubconfig))
 
             # Submission
-            logger.debug("Submitting to a backend, Job %s:" %
-                         str(self.getFQID('.')))
+            logger.debug("Submitting to a backend, Job %s:" % str(self.getFQID('.')))
 
             # notify monitoring-services
             self.monitorPrepare_hook(jobsubconfig)
