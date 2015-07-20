@@ -1,1 +1,2 @@
-from LHCbRootDiracRunTimeHandler import *
+from LHCbRootDiracRunTimeHandler import LHCbRootDiracRunTimeHandler
+from LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler

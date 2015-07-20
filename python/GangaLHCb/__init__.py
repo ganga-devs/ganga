@@ -148,14 +148,23 @@ def getEnvironment( config = {} ):
    return
 
 def loadPlugins( config = {} ):
+    logger.debug("Importing Backends")
     import Lib.Backends
+    logger.debug("Importing Applications")
     import Lib.Applications
+    logger.debug("Importing LHCbDataset")
     import Lib.LHCbDataset
+    logger.debug("Importing Mergers")
     import Lib.Mergers
+    logger.debug("Importing RTHandlers")
     import Lib.RTHandlers
+    logger.debug("Importing Splitters")
     import Lib.Splitters
+    logger.debug("Importing Tasks")
     import Lib.Tasks
+    logger.debug("Importing Files")
     import Lib.Files
+    logger.debug("Finished Importing")
 
 #from Ganga.GPIDev.Credentials import getCredential
 #proxy = getCredential('GridProxy', '')

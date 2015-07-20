@@ -46,7 +46,7 @@ class LHCbDataset(GangaDataset):
     _category = 'datasets'
     _name = "LHCbDataset"
     _exportmethods = ['getReplicas', '__len__', '__getitem__', 'replicate',
-                      'hasLFNs', 'extend', 'getCatalog', 'optionsString',
+                      'hasLFNs', 'append', 'extend', 'getCatalog', 'optionsString',
                       'getLFNs', 'getFileNames', 'getFullFileNames',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata',
@@ -166,7 +166,10 @@ class LHCbDataset(GangaDataset):
                 logger.warning(msg)
                 logger.warning(str(result))
 
-    def extend(self, files,unique=False):
+    def append(self, input_file):
+        self.extend([input_file])
+
+    def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
         #logger.debug( "extending Dataset" )
@@ -182,6 +185,8 @@ class LHCbDataset(GangaDataset):
 
         if type( files ) == type(''):
             _external_files = [ files ]
+        elif type( files ) == type([]):
+            _external_files = files
 
         if not hasattr(files,"__getitem__"):
             _external_files = [ files ]

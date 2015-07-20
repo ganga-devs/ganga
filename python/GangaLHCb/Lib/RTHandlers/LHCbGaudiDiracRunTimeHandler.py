@@ -1,6 +1,5 @@
 import copy, os, pickle
 from GangaLHCb.Lib.LHCbDataset.OutputData               import OutputData
-from GangaLHCb.Lib.RTHandlers.RTHUtils                  import getXMLSummaryScript,is_gaudi_child,lhcbdiracAPI_script_template
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
@@ -139,7 +138,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         input_data,   parametricinput_data = dirac_inputdata(new_job.application)
 #        outputdata,   outputdata_path      = dirac_ouputdata(new_job.application)
 
-
+        from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript, is_gaudi_child, lhcbdiracAPI_script_template
 
         commandline = "python ./gaudipython-wrapper.py"
         if is_gaudi_child(app):

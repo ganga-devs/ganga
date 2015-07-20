@@ -27,11 +27,12 @@ print('j = ', jscript)
 tmpdir = tempfile.mktemp()
 os.mkdir(tmpdir)
 
-output = jscript.backend.getOutputData(dir=tmpdir)
+output_data = jscript.backend.getOutputData(dir=tmpdir)
 
-assert len(output) == 1, 'Only one file should have been downloaded - %s' % output
+assert len(output_data) == 1, 'Only one file should have been downloaded - %s' % output_data
 
 outfile = os.path.join(tmpdir,'outputs.txt')
+print os.listdir(tmpdir)
 assert os.path.exists(outfile), 'File should exist'
 
 #clean up

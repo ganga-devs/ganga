@@ -188,10 +188,12 @@ def lookUpLFNReplicas(inputs):
 
     return allLFNs, LFNdict
 
-def sortLFNreplicas( bad_lfns, allLFNs, LFNdict ):
+def sortLFNreplicas( bad_lfns, allLFNs, LFNdict, ignoremissing ):
     import math
 
     global allLFNData
+
+    errors = []
 
     ## FIXME here to keep the repo settings as they were before we changed the flush count
     original_write_perm = {}
@@ -207,12 +209,11 @@ def sortLFNreplicas( bad_lfns, allLFNs, LFNdict ):
         try:
             results = output.get('Value')
             if len(results.get('Failed').keys()) > 0:
-                if ignoremissing is False:
-                    values = results.get('Failed')
-                    raise SplittingError( "Error getting LFN Replica information:\n%s" % str(values) )
-                else:
-                    for this_lfn in results.get('Failed').keys():
-                        bad_lfns.append( this_lfn )
+                values = results.get('Failed')
+                errors.append(str(values))
+                #raise SplittingError( "Error getting LFN Replica information:\n%s" % str(values) )
+                for this_lfn in results.get('Failed').keys():
+                    bad_lfns.append( this_lfn )
         except SplittingError, split_Err:
             raise split_Err
         except Exception, err:
@@ -265,6 +266,7 @@ def sortLFNreplicas( bad_lfns, allLFNs, LFNdict ):
         from Ganga.GPIDev.Base.Proxy import stripProxy
         stripProxy(LFNdict[k])._getRegistry().dirty_flush_counter  = v
 
+    return errors
 
 ##  Actually Do the work of the splitting
 def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
@@ -295,8 +297,12 @@ def OfflineGangaDiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     bad_lfns = []
 
     ## Sort this information and store is in the relevant Ganga objects
-    sortLFNreplicas( bad_lfns, allLFNs, LFNdict)
+    errors = sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing)
 
+    if len(bad_lfns) != 0:
+        if ignoremissing is False:
+            logger.error("Errors found getting LFNs:\n%s" % str(errors))
+            raise SplittingError("Error trying to split dataset with invalid LFN and ignoreMissing = False")
 
     ## This finds all replicas for all LFNs...
     ## This will probably struggle for LFNs which don't exist
