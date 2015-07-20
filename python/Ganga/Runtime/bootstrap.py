@@ -915,8 +915,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             # load Ganga system plugins...
             from Ganga.Runtime import plugins
         except Exception as x:
-            logger.critical('Ganga system plugins could not be loaded due to the following reason: %s', str(x))
-            logger.exception(x)
+            logger.critical('Ganga system plugins could not be loaded due to the following reason')
+            import traceback
+            logger.critical(traceback.format_exc())
             raise GangaException(x)
 
         # initialize runtime packages, they are registered in allRuntimes
