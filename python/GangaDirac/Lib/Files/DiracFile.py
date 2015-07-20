@@ -536,9 +536,11 @@ class DiracFile(IGangaFile):
             to_location = self.localDir
 
             if self.localDir is None:
-                to_location = os.getcwd()
-            if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
-                to_location = self.getJobObject().outputdir
+                #to_location = os.getcwd()
+                if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
+                    to_location = self.getJobObject().outputdir
+                else:
+                    to_location = os.getcwd()
         else:
             to_location = localPath
 
@@ -897,3 +899,5 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
 import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['DiracFile'] = DiracFile
 
+from Ganga.Runtime.GPIexport import exportToGPI
+exportToGPI('GangaDirac', GangaList, 'Classes')

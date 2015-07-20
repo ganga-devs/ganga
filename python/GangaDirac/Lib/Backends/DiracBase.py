@@ -338,7 +338,7 @@ class DiracBase(IBackend):
         else:
             outputfiles_foreach(j, DiracFile, lambda x: x.remove())
 
-    def getOutputData(self,dir=None,names=None, force=False):
+    def getOutputData(self, dir=None, names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
         be a list of files to download. If force=True then data will be redownloaded
@@ -351,8 +351,8 @@ class DiracBase(IBackend):
         will avoid overwriting files with the same name from each subjob.
         """
         j = self.getJobObject()
-        if dir is not None and not os.path.exists(dir) :
-            raise GangaException("Designated outupt path '%s' must exist" % dir)
+        if dir is not None and not os.path.isdir(dir):
+            raise GangaException("Designated outupt path '%s' must exist and be a directory" % dir)
 
         def download(dirac_file, job, is_subjob=False):
             dirac_file.localDir = job.getOutputWorkspace().getPath()
@@ -365,7 +365,7 @@ class DiracBase(IBackend):
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
                 return
             try:
-                dirac_file.get()
+                dirac_file.get( localPath = dirac_file.localDir )
                 return dirac_file.lfn
             except GangaException as e: # should really make the get method throw if doesn't suceed. todo
                 logger.warning(e)
