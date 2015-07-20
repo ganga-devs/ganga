@@ -2,12 +2,12 @@ from GangaTest.Framework.utils import sleep_until_completed
 import os
 
 dictConfigM = config.Output.MassStorageFile
-dictConfigM['fileExtensions']=  'fillrandom.root'
+dictConfigM['fileExtensions'].append( 'fillrandom.root' )
 config.Output.MassStorageFile = dictConfigM
 
 dictConfigL = config.Output.LCGSEFile
-dictConfigL['fileExtensions']= 'fillrandom1.root'
-config.Output.MassStorageFile = dictConfigL
+dictConfigL['fileExtensions'].append( 'fillrandom1.root' )
+config.Output.LCGSEFile = dictConfigL
 
 j = Job(application=Root(),backend=Interactive())
 
@@ -15,9 +15,13 @@ j.application.script = File('fillrandom2.py')
 
 j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
 
+print( "%s" % j.outputfiles[0].__class__.__name__)
+print( "%s" % j.outputfiles[1].__class__.__name__)
+print( "%s" % j.outputfiles[2].__class__.__name__)
+
 assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
 assert(j.outputfiles[1].__class__.__name__ == 'LCGSEFile')
-assert(j.outputfiles[2].__class__.__name__ == 'SandboxFile')
+assert(j.outputfiles[2].__class__.__name__ == 'LocalFile')
 
 j.submit()
 
