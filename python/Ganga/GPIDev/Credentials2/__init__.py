@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from .CredentialStore import CredentialStore
+from .CredentialStore import credential_store
 
 from .VomsProxy import VomsProxy
 
@@ -19,12 +19,10 @@ def RequireCredential(function):
     """
     @wraps(function)
     def wrapped_function(*args, **kwargs):
-        from Ganga.GPI import credentialStore
-        
         functions_class_object = args[0]
         
         try:
-            proxy = credentialStore.get(functions_class_object.credential_requirements)
+            proxy = credential_store.get(functions_class_object.credential_requirements)
         except CredentialsError:
             raise CredentialsError('Cannot get proxy which matches requirements')
         
