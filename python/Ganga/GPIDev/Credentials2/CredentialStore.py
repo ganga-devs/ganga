@@ -166,3 +166,6 @@ class CredentialStore(GangaObject):
             # Does it matter since they've only asked for a general proxy? What are the use cases?
             return matches[0]  # TODO For now just return the first one... Though perhaps we should merge them or something?
         return None
+
+# This is a global 'singleton'
+credential_store = CredentialStore()
