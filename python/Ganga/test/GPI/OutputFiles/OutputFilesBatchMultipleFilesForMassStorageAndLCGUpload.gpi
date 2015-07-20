@@ -7,9 +7,9 @@ config.Output.MassStorageFile = dictConfigM
 
 dictConfigL = config.Output.LCGSEFile
 dictConfigL['fileExtensions']= '*.root1'
-config.Output.MassStorageFile = dictConfigL
+config.Output.LCGSEFile = dictConfigL
 
-j = Job(application=Root(),backend=LSF())
+j = Job(application=Root(),backend=Local())
 
 j.application.script = File('fillrandom.py')
 

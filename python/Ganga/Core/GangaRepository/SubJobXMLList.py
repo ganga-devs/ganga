@@ -156,8 +156,10 @@ class SubJobXMLList(GangaObject):
 
     def __getitem__(self, index):
 
+        logger.debug("Requesting: %s" % str(index))
+
         if not index in self._cachedJobs.keys():
-            if len(self) == 0:
+            if len(self) < index:
                 raise GangaException("Subjob: %s does NOT exist" % str(index))
             subjob_data = self.__get_dataFile(str(index))
             try:

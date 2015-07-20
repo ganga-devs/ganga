@@ -218,8 +218,7 @@ class MassStorageFile(IGangaFile):
             if len(job.subjobs) > 0:
                 return
 
-        massStorageConfig = getConfig(
-            'Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
         mkdir_cmd = massStorageConfig['mkdir_cmd']
         cp_cmd = massStorageConfig['cp_cmd']
@@ -417,8 +416,7 @@ class MassStorageFile(IGangaFile):
         """
         massStorageCommands = []
 
-        massStorageConfig = getConfig(
-            'Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
 
         for outputFile in outputFiles:
 

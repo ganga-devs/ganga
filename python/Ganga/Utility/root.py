@@ -38,6 +38,8 @@ def getrootsys(version=None, arch=None):
             rootsys = configroot['location'] + "/" + rootver + "/" + rootarch
             if os.path.exists(rootsys + "/root/"):
                 rootsys = rootsys + "/root/"
+        if not os.path.isdir( rootsys ):
+            rootsys = configroot['location']
     except ConfigError:
         pass
     logger.debug("ROOTSYS: %s", rootsys)
