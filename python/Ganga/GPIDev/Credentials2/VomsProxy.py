@@ -63,7 +63,7 @@ class VomsProxyInfo(ICredentialInfo):
         logger.info(voms_command)
         command = 'voms-proxy-init -pwstdin -out %s %s' % (self.location, voms_command)
         logger.info(command)
-        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) #Use self.shell.system?
         stdoutdata, stderrdata = process.communicate(getpass('Grid password: '))
         if process.returncode == 0:
             logger.info('Grid proxy {path} renewed. Valid for {time}'.format(path=self.location, time=self.time_left()))
@@ -151,7 +151,7 @@ class VomsProxy(ICredentialRequirement):
     def encoded(self):
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
     
-    def isEmpty(self):
+    def is_empty(self):
         return not (self.identity or self.vo or self.role or self.group)
     
     def set_defaults_from_config(self):
