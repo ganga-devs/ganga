@@ -15,7 +15,8 @@ import Ganga.Utility.logging
 
 logger = Ganga.Utility.logging.getLogger()
 
-from Ganga.Utility.external.ordereddict import oDict
+#from Ganga.Utility.external.ordereddict import oDict
+from Ganga.Utility.external.ordereddict_24 import OrderedDict as oDict
 allConverters = oDict()
 
 ##########################################################################

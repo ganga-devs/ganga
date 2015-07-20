@@ -273,8 +273,8 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(self._impl.__getitem__(_unwrap(x)))
 
-from Ganga.Utility.external.ordereddict import oDict
-
+#from Ganga.Utility.external.ordereddict import oDict
+from Ganga.Utility.external.ordereddict_24 import OrderedDict as oDict
 
 def jobSlice(joblist):
     """create a 'JobSlice' from a list of jobs

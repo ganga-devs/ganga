@@ -7,7 +7,8 @@ from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
 import fnmatch
 import collections
-from Ganga.Utility.external.ordereddict import oDict
+#from Ganga.Utility.external.ordereddict import oDict
+from Ganga.Utility.external.ordereddict_24 import OrderedDict as oDict
 
 import Ganga.Utility.Config
 config = Ganga.Utility.Config.makeConfig(
