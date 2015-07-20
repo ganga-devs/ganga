@@ -56,3 +56,9 @@ class ICredentialRequirement(GangaObject):
         ``True`` if no explicit requirements were specified (ignoring the ``location``)
         """
         pass
+
+    def __hash__(self):
+        return hash(self.encoded())
+
+    def __eq__(self, other):
+        return self.encoded() == other.encoded()
