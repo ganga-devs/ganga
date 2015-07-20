@@ -133,8 +133,8 @@ def manualExportToGPI(my_interface=None):
     #exportToInterface(my_interface, 'list_plugins', list_plugins, 'Functions')
     # FIXME: END DEPRECATED
 
-    from Ganga.GPIDev.Credentials2 import CredentialStore
-    exportToInterface(my_interface, 'credentialStore', CredentialStore(), 'Objects', 'Credential management.')
+    from Ganga.GPIDev.Credentials2 import credential_store
+    exportToInterface(my_interface, 'credential_store', credential_store, 'Objects', 'Credential management.')
 
     exportToInterface(my_interface, 'typename', typename, 'Functions')
     exportToInterface(my_interface, 'categoryname', categoryname, 'Functions')
