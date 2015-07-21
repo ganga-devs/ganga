@@ -144,7 +144,7 @@ class CredentialStore(GangaObject):
             iterator: An iterator of all matching objects
         """
 
-        return (cred for cred in self.get_all_matching_type(query) if cred.checkRequirements(query))
+        return (cred for cred in self.get_all_matching_type(query) if cred.check_requirements(query))
     
     def match(self, query):
         """

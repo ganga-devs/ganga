@@ -61,4 +61,6 @@ class ICredentialRequirement(GangaObject):
         return hash(self.encoded())
 
     def __eq__(self, other):
+        if other is None:
+            return False
         return self.encoded() == other.encoded()
