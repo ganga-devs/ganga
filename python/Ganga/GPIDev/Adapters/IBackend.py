@@ -15,6 +15,8 @@ from Ganga.GPIDev.Lib.File import File, ShareDir
 
 from Ganga.Utility.logic import implies
 
+from Ganga.Core.exceptions import GangaException, IncompleteJobSubmissionError
+
 import os
 import itertools
 import time
@@ -133,7 +135,6 @@ class IBackend(GangaObject):
         support for keep_going flag.
 
         """
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
 
         job = self.getJobObject()
@@ -308,7 +309,6 @@ class IBackend(GangaObject):
         If you override this method for bulk optimization then make sure that you call updateMasterJobStatus() on the master job,
         so the master job will be monitored by the monitoring loop.
         """
-        from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
         incomplete = 0
 
