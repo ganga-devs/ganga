@@ -15,7 +15,7 @@ def RequireCredential(function):
     
     Uses the function's object's ``credential_requirements`` attribute
     
-    It also sets the function's object's ``credential_filename`` attribute
+    It also sets the function's object's ``credential`` attribute
     """
     @wraps(function)
     def wrapped_function(*args, **kwargs):
@@ -30,7 +30,7 @@ def RequireCredential(function):
             raise CredentialsError('Proxy is invalid')
         
         # Set the object member attribute
-        functions_class_object.credential_filename = proxy.location
+        functions_class_object.credential = proxy
         # TODO Or maybe something like:
         #  function.__globals__['credential_filename'] = proxy.location
         #  which will restrict the variable to being available inside the function's global scope which would enforce
