@@ -42,7 +42,7 @@ class ICredentialInfo(object):
         if check_file:
             logger.info("Trying to wrap {path}".format(path=self.location))
             if not os.path.exists(self.location):
-                raise IOError("Proxy file {path} not found".format(self.location))
+                raise IOError("Proxy file {path} not found".format(path=self.location))
             logger.info("Wrapping existing file %s", self.location)
             
         if create:
@@ -109,3 +109,6 @@ class ICredentialInfo(object):
             # If this requirementName is unspecified then ignore it
             return True
         return getattr(self,requirement_name) == requirement_value
+
+    def __hash__(self):
+        return hash(self.location)
