@@ -23,12 +23,8 @@ import copy
 
 import Ganga.GPIDev.Schema as Schema
 
-from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError
-from Ganga.Core import GangaValueError
-
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-
-from Ganga.Core import GangaException
+from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError, GPIProxyObjectFactory
+from Ganga.Core import GangaException, GangaValueError
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
