@@ -5,15 +5,8 @@ from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 #from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
 
-try:
-    import Ganga.Utility.Config.Config
-    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except x:
-    print(x)
-    doConfig = True
-
-if doConfig:
-    from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
+import Ganga.Utility.Config.Config
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
 
 class TestGaudiRunTimeHandler(GangaGPITestCase):
 
@@ -33,7 +26,6 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
         self.input_files = [File(name='subjob.in'),File(FileBuffer('subjob.buffer','###SUBJOBBUFFER###').create().name)]        
         self.appmasterconfig = StandardJobConfig(inputbox=[File(name='master.in'),File(FileBuffer('master.buffer','###MASTERBUFFER###').create().name)])
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
-        from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
         self.rth = LHCbGaudiRunTimeHandler()
 
     def test_GaudiRunTimeHandler_master_prepare(self):
@@ -41,7 +33,7 @@ class TestGaudiRunTimeHandler(GangaGPITestCase):
         # should have master.buffer, master.in and options.pkl and dummy.in
         print("sandbox =",stdjobconfig.getSandboxFiles())
         print("sandbox =",[file.name for file in stdjobconfig.getSandboxFiles()])
-        assert len(stdjobconfig.getSandboxFiles()) == 4
+        assert len(stdjobconfig.getSandboxFiles()) == 3
         
 
     def test_GaudiRunTimeHandler_prepare(self):

@@ -6,17 +6,8 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 #from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
-
-try:
-    import Ganga.Utility.Config.Config
-    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except x:
-    print(x)
-    doConfig = True
-
-if doConfig:
-    from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
-    from GangaLHCb.test import *
+import Ganga.Utility.Config.Config
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDiracRunTimeHandler
 
 class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
 
@@ -31,6 +22,7 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         j.outputfiles = ['dummy1.out','dummy2.out','dummy3.out']
         self.j = j
         self.app = j.application._impl
+        from GangaLHCb.test import getDiracAppPlatform
         self.app.platform = getDiracAppPlatform()
         #self.extra = GaudiExtras()
         #self.extra.master_input_buffers['master.buffer'] = '###MASTERBUFFER###'
@@ -64,7 +56,7 @@ class TestLHCbGaudiDiracRunTimeHandler(GangaGPITestCase):
         assert len(stdjobconfig.getSandboxFiles()) == 3, 'inputsandbox error'
         l = len(stdjobconfig.getOutputSandboxFiles())
         print("outputsandbox =",stdjobconfig.getOutputSandboxFiles())
-        assert  l == 4, 'outputsandbox error'
+        assert  l == 3, 'outputsandbox error'
 
     # not sure what's testable here
     #def test_GaudiDiracRTHandler__create_dirac_script(self):
