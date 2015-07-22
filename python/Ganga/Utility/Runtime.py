@@ -16,7 +16,7 @@
 from Ganga.Utility.util import importName
 
 #from Ganga.Utility.external.ordereddict import oDict
-from Ganga.Utility.external.ordereddict_24 import OrderedDict as oDict
+from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 allRuntimes = oDict()
 
 import Ganga.Utility.logging

@@ -874,7 +874,8 @@ def configure(filenames, system_vars):
             try:
                 v = cfg.get(name, o)
             except ConfigParser.InterpolationMissingOptionError, err:
-                print("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
+                logger = getLogger()
+                logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
                 v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
 

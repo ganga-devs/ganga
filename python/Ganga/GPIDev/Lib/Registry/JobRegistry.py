@@ -5,6 +5,19 @@ from __future__ import absolute_import
 # $Id: JobRegistry.py,v 1.1.2.1 2009-07-24 13:39:39 ebke Exp $
 ##########################################################################
 
+#from Ganga.Utility.external.ordereddict import oDict
+from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
+
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
+
+import Ganga.Utility.logging
+
+from Ganga.Runtime.GPIexport import exportToGPI
+
+from .RegistrySlice import RegistrySlice
+
+from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
+
 # display default values for job list
 from .RegistrySlice import config
 config.addOption('jobs_columns',
@@ -34,10 +47,7 @@ config.addOption('jobs_status_colours',
                   'failed': 'fg.red'
                   },
                  'colours for jobs status')
-import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
-
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 
 
 class JobRegistry(Registry):
@@ -79,8 +89,6 @@ class JobRegistry(Registry):
 
     def getJobTree(self):
         return self.jobtree
-
-from .RegistrySlice import RegistrySlice
 
 
 class JobRegistrySlice(RegistrySlice):
@@ -195,9 +203,6 @@ class JobRegistrySlice(RegistrySlice):
         self.do_collective_operation(keep_going, 'remove', force=force)
 
 
-from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
-
-
 class JobRegistrySliceProxy(RegistrySliceProxy):
 
     """This object is an access list of jobs defined in Ganga. 
@@ -273,9 +278,6 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(self._impl.__getitem__(_unwrap(x)))
 
-#from Ganga.Utility.external.ordereddict import oDict
-from Ganga.Utility.external.ordereddict_24 import OrderedDict as oDict
-
 def jobSlice(joblist):
     """create a 'JobSlice' from a list of jobs
     example: jobSlice([j for j in jobs if j.name.startswith("T1:")])"""
@@ -283,6 +285,5 @@ def jobSlice(joblist):
     slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
     return _wrap(slice)
 
-from Ganga.Runtime.GPIexport import exportToGPI
 # , "Create a job slice from a job list")
 exportToGPI("jobSlice", jobSlice, "Functions")
