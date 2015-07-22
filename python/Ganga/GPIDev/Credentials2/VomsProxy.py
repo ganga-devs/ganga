@@ -139,7 +139,7 @@ class VomsProxy(ICredentialRequirement):
     _schema.datadict["role"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Role that the proxy must have")
     _schema.datadict["group"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Group for the proxy - either 'group' or 'group/subgroup'")
                                                                                 
-    _category = "credentials2"
+    _category = "CredentialRequirement"
     _name = "VomsProxy"
     
     _infoClass = VomsProxyInfo
