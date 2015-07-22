@@ -554,8 +554,7 @@ class PackageConfig(object):
 
         self.options[name].setSessionValue(value)
 
-        logger.debug(
-            'sucessfully set session option [%s]%s = %s', self.name, name, value)
+        logger.debug('sucessfully set session option [%s]%s = %s', self.name, name, value)
 
         for h in self._session_handlers:
             h[1](name, value)
@@ -771,7 +770,11 @@ def read_ini_files(filenames, system_vars):
                 main.add_section(sec)
 
             for name in cc.options(sec):
-                value = cc.get(sec, name)
+                try:
+                    value = cc.get(sec, name)
+                except ConfigParser.InterpolationMissingOptionError, err:
+                    #print("Can't expand config %s:%s treating it as raw" % (str(sec),str(name)))
+                    value = cc.get(sec, name, raw=True)
 
                 for localvar in re.finditer('\$\{[^${}]*\}', value):
                     localvarstripped = re.sub(r'[^\w]', '', localvar.group(0))
@@ -868,7 +871,11 @@ def configure(filenames, system_vars):
             # the configuration units!
             if o in cfg.defaults().keys():
                 continue
-            v = cfg.get(name, o)
+            try:
+                v = cfg.get(name, o)
+            except ConfigParser.InterpolationMissingOptionError, err:
+                print("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
+                v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
 
     _configured = True
