@@ -87,6 +87,8 @@ class CredentialStore(GangaObject):
             CredentialsError: If it could not provide a credential
         """
 
+        query = stripProxy(query)
+
         if not query.location and query.is_empty():  # If there's nothing there at all
             query.set_defaults_from_config()
         
