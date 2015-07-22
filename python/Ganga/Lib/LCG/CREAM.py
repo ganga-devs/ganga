@@ -1236,9 +1236,9 @@ sys.exit(0)
 
                         if osbURIList:
 
-                            if grids['GLITE'].cream_get_output(osbURIList, job.getOutputWorkspace(create=True)):
+                            if grids['GLITE'].cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath() ):
                                 (ick, app_exitcode) = grids['GLITE'].__get_app_exitcode__(
-                                    job.getOutputWorkspace(create=True))
+                                    job.getOutputWorkspace(create=True).getPath() )
                                 job.backend.exitcode = app_exitcode
 
                                 jidListForPurge.append(job.backend.id)
