@@ -4,6 +4,8 @@ from .CredentialStore import credential_store
 
 from .VomsProxy import VomsProxy
 
+from .AfsToken import AfsToken
+
 from .exceptions import CredentialsError
 
 from functools import wraps
