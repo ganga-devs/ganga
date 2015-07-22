@@ -16,6 +16,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger, log_user_exception
+from Ganga.Utility.logic import implies
 from Ganga.Lib.LCG.Utility import get_md5sum
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
@@ -43,7 +44,8 @@ class ARC(IBackend):
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on ARC CE'),
         'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on ARC CE'),
-        'verbose': SimpleItem(defvalue=False, doc='Use verbose options for ARC commands')
+        'verbose': SimpleItem(defvalue=False, doc='Use verbose options for ARC commands'),
+        'credential_requirements': SimpleItem(defvalue=None,typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None']),
     })
 
     _category = 'backends'
@@ -79,6 +81,8 @@ class ARC(IBackend):
         except:
             logger.debug('load default SandboxCache')
             pass
+
+        self.grid = Grid(self.credential_requirements)
 
     def __refresh_jobinfo__(self, job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
@@ -1163,8 +1167,7 @@ sys.exit(0)
         if len(jobdict.keys()) == 0:
             return
 
-        jobInfoDict = Grid.arc_status(
-            jobdict.keys(), backenddict.keys())
+        jobInfoDict = Grid.arc_status(jobdict.keys(), backenddict.keys())
         jidListForPurge = []
 
         # update job information for those available in jobInfoDict

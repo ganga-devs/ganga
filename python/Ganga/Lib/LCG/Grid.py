@@ -2,8 +2,10 @@ import os
 import re
 import tempfile
 import time
+import datetime
 
 from Ganga.GPIDev.Credentials import getCredential
+from Ganga.GPIDev.Credentials2 import credential_store
 
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
@@ -63,7 +65,6 @@ def __set_submit_option__():
     if config['Config']:
         submit_option += ' --config %s' % config['Config']
     elif config['GLITE_ALLOWED_WMS_LIST']:
-        # TODO: Cache this file somehow, maybe in a global dict
         wms_conf_path = os.path.join(os.environ['GLITE_WMS_LOCATION'], 'etc', config['VirtualOrganisation'], 'glite_wmsui.conf')
         temp_wms_conf = tempfile.NamedTemporaryFile(suffix='.conf', delete=False)
 
@@ -123,10 +124,13 @@ def __print_gridcmd_log__(regxp_logfname, cmd_output):
         logger.warning('end of output')
 
 
-def __get_proxy_voname__():
+def __get_proxy_voname__(cred_req):
     """Check validity of proxy vo"""
-    logger.debug('voms of credential: %s' % credential().voms)
-    return credential().voms
+
+    vo = credential_store.get(cred_req).vo
+
+    logger.debug('voms of credential: %s' % vo)
+    return vo
 
 
 def __get_lfc_host__():
@@ -145,15 +149,9 @@ def __get_lfc_host__():
 def __get_default_lfc__():
     """Gets the default lfc host from lcg-infosites"""
 
-    cmd = 'lcg-infosites'
+    output = wrap_lcg_infosites('lfc')
 
-    logger.debug('GLITE lfc-infosites called ...')
-
-    rc, output, m = getShell().cmd1(
-        '%s --vo %s lfc' % (cmd, config['VirtualOrganisation']), allowed_exit=[0, 255])
-
-    if rc != 0:
-        # __print_gridcmd_log__('lcg-infosites',output)
+    if output == '':
         return None
     else:
         lfc_list = output.strip().split('\n')
@@ -188,7 +186,7 @@ def __resolve_no_matching_jobs__(cmd_output):
     return glite_ids
 
 
-def list_match(jdlpath, ce=None):
+def list_match(jdlpath, cred_req, ce=None):
     """Returns a list of computing elements can run the job"""
 
     re_ce = re.compile('^\s*\-\s*(\S+:(2119|8443)/\S+)\s*$')
@@ -196,15 +194,6 @@ def list_match(jdlpath, ce=None):
     matched_ces = []
 
     cmd = 'glite-wms-job-list-match -a'
-    exec_bin = True
-
-    if not check_proxy():
-        logger.warning('LCG plugin not active.')
-        return
-
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return
 
     submit_opt = __set_submit_option__()
 
@@ -217,8 +206,7 @@ def list_match(jdlpath, ce=None):
 
     logger.debug('job list match command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     for l in output.split('\n'):
 
@@ -241,20 +229,11 @@ def list_match(jdlpath, ce=None):
     return matched_ces
 
 
-def submit(jdlpath, ce=None, perusable=False):
+def submit(jdlpath, cred_req, ce=None, perusable=False):
     """Submit a JDL file to LCG"""
 
     # doing job submission
     cmd = 'glite-wms-job-submit -a'
-    exec_bin = True
-
-    if not check_proxy():
-        logger.warning('LCG plugin not active.')
-        return
-
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return
 
     submit_opt = __set_submit_option__()
 
@@ -270,9 +249,9 @@ def submit(jdlpath, ce=None, perusable=False):
 
     logger.debug('job submit command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd),
-                                    allowed_exit=[0, 255],
-                                    timeout=config['SubmissionTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['SubmissionTimeout'])
 
     if output:
         output = "%s" % output.strip()
@@ -283,7 +262,8 @@ def submit(jdlpath, ce=None, perusable=False):
         logger.debug('job id: %s' % match.group(1))
         if perusable:
             logger.info("Enabling perusal")
-            getShell().cmd1("glite-wms-job-perusal --set -f stdout %s" % match.group(1))
+            per_rc, per_out, per_m = getShell(cred_req).cmd1(
+                "glite-wms-job-perusal --set -f stdout %s" % match.group(1))
 
         # remove the glite command log if it exists
         __clean_gridcmd_log__('(.*-job-submit.*\.log)', output)
@@ -295,19 +275,10 @@ def submit(jdlpath, ce=None, perusable=False):
         return
 
 
-def native_master_cancel(jobids):
+def native_master_cancel(jobids, cred_req):
     """Native bulk cancellation supported by GLITE middleware."""
 
     cmd = 'glite-wms-job-cancel'
-    exec_bin = True
-
-    if not check_proxy():
-        logger.warning('LCG plugin not active.')
-        return False
-
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
 
     if not __set_submit_option__():
         return False
@@ -320,7 +291,7 @@ def native_master_cancel(jobids):
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     # clean up tempfile
     if os.path.exists(idsfile):
@@ -337,7 +308,7 @@ def native_master_cancel(jobids):
         return True
 
 
-def status(jobids, is_collection=False):
+def status(jobids, cred_req, is_collection=False):
     """Query the status of jobs on the grid"""
 
     if not jobids:
@@ -349,26 +320,15 @@ def status(jobids, is_collection=False):
 
     cmd = 'glite-wms-job-status'
 
-    exec_bin = True
-    if config['IgnoreGliteScriptHeader']:
-        exec_bin = False
-
     if is_collection:
         cmd = '%s -v 3' % cmd
-
-    if not check_proxy():
-        logger.warning('LCG plugin not active.')
-        return [], []
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return [], []
 
     cmd = '%s --noint -i %s' % (cmd, idsfile)
     logger.debug('job status command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd),
-                                    allowed_exit=[0, 255],
-                                    timeout=config['StatusPollingTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['StatusPollingTimeout'])
     os.remove(idsfile)
 
     missing_glite_jids = []
@@ -458,21 +418,10 @@ def status(jobids, is_collection=False):
     return info, missing_glite_jids
 
 
-def get_loginfo(jobids, directory, verbosity=1):
+def get_loginfo(jobids, directory, cred_req, verbosity=1):
     """Fetch the logging info of the given job and save the output in the job's outputdir"""
 
     cmd = 'glite-wms-job-logging-info -v %d' % verbosity
-
-    exec_bin = True
-    if config['IgnoreGliteScriptHeader']:
-        exec_bin = False
-
-    if not check_proxy():
-        logger.warning('LCG plugin not active.')
-        return False
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
 
     log_output = directory + '/__jobloginfo__.log'
 
@@ -484,7 +433,7 @@ def get_loginfo(jobids, directory, verbosity=1):
 
     logger.debug('job logging info command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
     os.remove(idsfile)
 
     if rc != 0:
@@ -498,29 +447,20 @@ def get_loginfo(jobids, directory, verbosity=1):
         return log_output
 
 
-def get_output(jobid, directory, wms_proxy=False):
+def get_output(jobid, directory, cred_req, wms_proxy=False):
     """Retrieve the output of a job on the grid"""
 
     cmd = 'glite-wms-job-output'
-    exec_bin = True
     # general WMS options (somehow used by the glite-wms-job-output
     # command)
     if config['Config']:
         cmd += ' --config %s' % config['Config']
 
-    if not check_proxy():
-        logger.warning('LCG plugin is not active.')
-        return False, None
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False, None
-
     cmd = '%s --noint --dir %s %s' % (cmd, directory, jobid)
 
     logger.debug('job get output command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     match = re.search('directory:\n\s*([^\t\n\r\f\v]+)\s*\n', output)
 
@@ -542,7 +482,7 @@ def get_output(jobid, directory, wms_proxy=False):
     jid_hash = urlparse.urlparse(jobid)[2][1:]
 
     if outdir.count(jid_hash):
-        if getShell().system('mv "%s"/* "%s"' % (outdir, directory)) == 0:
+        if getShell(cred_req).system('mv "%s"/* "%s"' % (outdir, directory)) == 0:
             try:
                 os.rmdir(outdir)
             except Exception as msg:
@@ -557,7 +497,7 @@ def get_output(jobid, directory, wms_proxy=False):
     return __get_app_exitcode__(directory)
 
 
-def cancelMultiple(jobids):
+def cancelMultiple(jobids, cred_req):
     """Cancel multiple jobs in one LCG job cancellation call"""
 
     # compose a temporary file with job ids in it
@@ -566,14 +506,6 @@ def cancelMultiple(jobids):
 
     # do the cancellation using a proper LCG command
     cmd = 'glite-wms-job-cancel'
-    exec_bin = True
-
-    if not check_proxy():
-        logger.warning('LCG plugin is not active.')
-        return False
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
 
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
@@ -584,8 +516,7 @@ def cancelMultiple(jobids):
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     # clean up tempfile
     if os.path.exists(idsfile):
@@ -602,25 +533,16 @@ def cancelMultiple(jobids):
         return False
 
 
-def cancel(jobid):
+def cancel(jobid, cred_req):
     """Cancel a job"""
 
     cmd = 'glite-wms-job-cancel'
-    exec_bin = True
-
-    if not check_proxy():
-        logger.warning('LCG plugin is not active.')
-        return False
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
 
     cmd = '%s --noint %s' % (cmd, jobid)
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
@@ -704,11 +626,8 @@ def __cream_ui_check__():
     return True
 
 
-def cream_proxy_delegation(ce, delid):
+def cream_proxy_delegation(ce, delid, cred_req):
     """CREAM CE proxy delegation"""
-
-    if not __cream_ui_check__():
-        return
 
     if not ce:
         logger.warning('No CREAM CE endpoint specified')
@@ -722,33 +641,30 @@ def cream_proxy_delegation(ce, delid):
 
         cmd += ' -e %s' % ce.split('/cream')[0]
 
-        delid = '%s_%s' % (credential().identity(), get_uuid())
+        delid = '%s_%s' % (credential_store.get(cred_req).identity, get_uuid())
 
         cmd = '%s "%s"' % (cmd, delid)
 
         logger.debug('proxy delegation command: %s' % cmd)
 
-        rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=True), cmd),
-                                        allowed_exit=[0, 255],
-                                        timeout=config['SubmissionTimeout'])
+        rc, output, m = getShell(cred_req).cmd1(cmd,
+                                                allowed_exit=[0, 255],
+                                                timeout=config['SubmissionTimeout'])
         if rc != 0:
             # failed to delegate proxy
             logger.error('proxy delegation error: %s' % output)
             delid = ''
         else:
             # proxy delegated successfully
-            t_expire = time.time() + float(credential().timeleft(units="seconds", force_check=True))
+            t_expire = datetime.datetime.now() + credential_store.get(cred_req).time_left()
 
             logger.debug('new proxy at %s valid until %s' % (ce, t_expire))
 
     return delid
 
 
-def cream_submit(jdlpath, ce, delid):
+def cream_submit(jdlpath, ce, delid, cred_req):
     """CREAM CE direct job submission"""
-
-    if not __cream_ui_check__():
-        return
 
     if not ce:
         logger.warning('No CREAM CE endpoint specified')
@@ -756,7 +672,7 @@ def cream_submit(jdlpath, ce, delid):
 
     cmd = 'glite-ce-job-submit'
 
-    delid = cream_proxy_delegation(ce, delid)
+    delid = cream_proxy_delegation(ce, delid, cred_req)
 
     if delid:
         cmd += ' -D "%s"' % delid
@@ -769,9 +685,9 @@ def cream_submit(jdlpath, ce, delid):
 
     logger.debug('job submit command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=True), cmd),
-                                    allowed_exit=[0, 255],
-                                    timeout=config['SubmissionTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['SubmissionTimeout'])
 
     if output:
         output = "%s" % output.strip()
@@ -786,11 +702,8 @@ def cream_submit(jdlpath, ce, delid):
         return
 
 
-def cream_status(jobids):
+def cream_status(jobids, cred_req):
     """CREAM CE job status query"""
-
-    if not __cream_ui_check__():
-        return [], []
 
     if not jobids:
         return [], []
@@ -800,14 +713,13 @@ def cream_status(jobids):
         ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
     cmd = 'glite-ce-job-status'
-    exec_bin = True
 
     cmd = '%s -L 2 -n -i %s' % (cmd, idsfile)
     logger.debug('job status command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd),
-                                    allowed_exit=[0, 255],
-                                    timeout=config['StatusPollingTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['StatusPollingTimeout'])
     jobInfoDict = {}
     if rc == 0 and output:
         jobInfoDict = __cream_parse_job_status__(output)
@@ -819,25 +731,20 @@ def cream_status(jobids):
     return jobInfoDict
 
 
-def cream_purgeMultiple(jobids):
+def cream_purgeMultiple(jobids, cred_req):
     """CREAM CE job purging"""
-
-    if not __cream_ui_check__():
-        return False
 
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
         ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
     cmd = 'glite-ce-job-purge'
-    exec_bin = True
 
     cmd = '%s -n -N -i %s' % (cmd, idsfile)
 
     logger.debug('job purge command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     logger.debug(output)
 
@@ -851,25 +758,20 @@ def cream_purgeMultiple(jobids):
         return False
 
 
-def cream_cancelMultiple(jobids):
+def cream_cancelMultiple(jobids, cred_req):
     """CREAM CE job cancelling"""
-
-    if not __cream_ui_check__():
-        return False
 
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
         ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
     cmd = 'glite-ce-job-cancel'
-    exec_bin = True
 
     cmd = '%s -n -N -i %s' % (cmd, idsfile)
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     logger.debug(output)
 
@@ -886,9 +788,6 @@ def cream_cancelMultiple(jobids):
 def cream_get_output(osbURIList, directory):
     """CREAM CE job output retrieval"""
 
-    if not __cream_ui_check__():
-        return False, None
-
     gfiles = []
     for uri in osbURIList:
         gf = GridftpFileIndex()
@@ -903,7 +802,6 @@ def cream_get_output(osbURIList, directory):
 
 
 def __get_app_exitcode__(outputdir):
-
     import Ganga.Core.Sandbox as Sandbox
 
     Sandbox.getPackedOutputSandbox(outputdir, outputdir)
@@ -1043,17 +941,9 @@ def wrap_lcg_infosites(opts=""):
     cmd = 'lcg-infosites --vo %s %s' % (
         config['VirtualOrganisation'], opts)
 
-    if not check_proxy():
-        logger.warning('LCG plugin not active.')
-        return
-
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return
-
     logger.debug('lcg-infosites command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s' % (cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell().cmd1('%s' % cmd, allowed_exit=[0, 255])
 
     if rc != 0:
         return ""
@@ -1072,10 +962,6 @@ def __arc_get_config_file_arg__():
 def arc_submit(jdlpath, ce, verbose):
     """ARC CE direct job submission"""
 
-    # use the CREAM UI check as it's the same
-    if not __cream_ui_check__():
-        return
-
     # No longer need to specify CE if available in client.conf
     # if not ce:
     #    logger.warning('No CREAM CE endpoint specified')
@@ -1083,9 +969,7 @@ def arc_submit(jdlpath, ce, verbose):
 
     # write to a temporary XML file as otherwise can't submit in parallel
     tmpstr = '/tmp/' + randomString() + '.arcsub.xml'
-    cmd = 'arcsub %s -S org.nordugrid.gridftpjob -j %s' % (
-        __arc_get_config_file_arg__(), tmpstr)
-    exec_bin = True
+    cmd = 'arcsub %s -S org.nordugrid.gridftpjob -j %s' % (__arc_get_config_file_arg__(), tmpstr)
 
     if verbose:
         cmd += ' -d DEBUG '
@@ -1097,7 +981,7 @@ def arc_submit(jdlpath, ce, verbose):
 
     logger.debug('job submit command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+    rc, output, m = getShell().cmd1(cmd,
                                     allowed_exit=[0, 255],
                                     timeout=config['SubmissionTimeout'])
 
@@ -1109,7 +993,7 @@ def arc_submit(jdlpath, ce, verbose):
     # gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
     match = re.search('(gsiftp://\S+:2811/jobs/[0-9A-Za-z_\.\-]+)$', output)
 
-    # Job submitted with jobid: https://ce2.dur.scotac.uk:8443/arex/..
+    # Job submitted with jobid: https://ce2.dur.scotgrid.ac.uk:8443/arex/..
     if not match:
         match = re.search('(https://\S+:8443/arex/[0-9A-Za-z_\.\-]+)$', output)
 
@@ -1124,9 +1008,6 @@ def arc_submit(jdlpath, ce, verbose):
 def arc_status(jobids, cedict):
     """ARC CE job status query"""
 
-    if not __cream_ui_check__():
-        return [], []
-
     if not jobids:
         return [], []
 
@@ -1135,13 +1016,12 @@ def arc_status(jobids, cedict):
         ids_file.write('\n'.join(jobids) + '\n')
 
     cmd = 'arcstat'
-    exec_bin = True
 
     cmd = '%s %s -i %s -j %s' % (
         cmd, __arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
     logger.debug('job status command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+    rc, output, m = getShell().cmd1(cmd,
                                     allowed_exit=[0, 1, 255],
                                     timeout=config['StatusPollingTimeout'])
     jobInfoDict = {}
@@ -1153,10 +1033,6 @@ def arc_status(jobids, cedict):
 
     if rc == 0 and output:
         jobInfoDict = __arc_parse_job_status__(output)
-
-    # clean up tempfile
-    if os.path.exists(idsfile):
-        os.remove(idsfile)
 
     return jobInfoDict
 
@@ -1218,15 +1094,8 @@ def __arc_sync__(cedict):
         cmd = 'arcsync %s -j %s -f ' % (
             __arc_get_config_file_arg__(), config["ArcJobListFile"])
 
-    if not check_proxy():
-        logger.warning('LCG plugin is not active.')
-        return False
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
-
     logger.debug('sync ARC jobs list with: %s' % cmd)
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=True), cmd),
+    rc, output, m = getShell().cmd1(cmd,
                                     allowed_exit=[0, 255],
                                     timeout=config['StatusPollingTimeout'])
     if rc != 0:
@@ -1236,14 +1105,10 @@ def __arc_sync__(cedict):
 def arc_get_output(jid, directory):
     """ARC CE job output retrieval"""
 
-    if not __cream_ui_check__():
-        return (False, None)
-
     # construct URI list from ID and output from arcls
     cmd = 'arcls %s %s' % (__arc_get_config_file_arg__(), jid)
-    exec_bin = True
     logger.debug('arcls command: %s' % cmd)
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=exec_bin), cmd),
+    rc, output, m = getShell().cmd1(cmd,
                                     allowed_exit=[0, 255],
                                     timeout=config['SubmissionTimeout'])
     if rc:
@@ -1270,29 +1135,20 @@ def arc_get_output(jid, directory):
 def arc_purgeMultiple(jobids):
     """ARC CE job purging"""
 
-    if not __cream_ui_check__():
-        return False
-
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
         ids_file.write('\n'.join(jobids) + '\n')
 
     cmd = 'arcclean'
-    exec_bin = True
 
     cmd = '%s %s -i %s -j %s' % (
         cmd, __arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
 
     logger.debug('job purge command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell().cmd1(cmd, allowed_exit=[0, 255])
 
     logger.debug(output)
-
-    # clean up tempfile
-    if os.path.exists(idsfile):
-        os.remove(idsfile)
 
     if rc == 0:
         return True
@@ -1304,22 +1160,13 @@ def arc_cancel(jobid):
     """Cancel a job"""
 
     cmd = 'arckill'
-    exec_bin = True
-
-    if not check_proxy():
-        logger.warning('LCG plugin is not active.')
-        return False
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
 
     cmd = '%s %s %s -j %s' % (cmd, str(
         jobid)[1:-1], __arc_get_config_file_arg__(), config["ArcJobListFile"])
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+    rc, output, m = getShell().cmd1(cmd, allowed_exit=[0, 255])
 
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
@@ -1340,14 +1187,6 @@ def arc_cancelMultiple(jobids):
         return True
 
     cmd = 'arckill'
-    exec_bin = True
-
-    if not check_proxy():
-        logger.warning('LCG plugin is not active.')
-        return False
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
 
     idsfile = tempfile.mktemp('.jids')
     with open(idsfile, 'w') as ids_file:
@@ -1359,12 +1198,7 @@ def arc_cancelMultiple(jobids):
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (
-        __get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
-
-    # clean up tempfile
-    if os.path.exists(idsfile):
-        os.remove(idsfile)
+    rc, output, m = getShell().cmd1(cmd, allowed_exit=[0, 255])
 
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
@@ -1383,7 +1217,7 @@ def arc_info():
     cmd = 'arcinfo %s > /dev/null' % __arc_get_config_file_arg__()
     logger.debug("Running arcinfo command '%s'" % cmd)
 
-    rc, output, m = getShell().cmd1('%s%s' % (__get_cmd_prefix_hack__(binary=True), cmd),
+    rc, output, m = getShell().cmd1(cmd,
                                     allowed_exit=[0, 1, 255],
                                     timeout=config['StatusPollingTimeout'])
     return rc, output
