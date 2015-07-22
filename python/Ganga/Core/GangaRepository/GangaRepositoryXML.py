@@ -680,7 +680,8 @@ class GangaRepositoryLocal(GangaRepository):
             except Exception as err:
                 if load_backup:
                     logger.debug("Could not load backup object #%i: %s %s", id, err.__class__.__name__, str(err))
-                    raise InaccessibleObjectError(self, id, err)
+                    import traceback
+                    raise InaccessibleObjectError(self, id, err, traceback.format_exc())
 
                 logger.debug("Could not load object #%i: %s %s", id, err.__class__.__name__, str(err))
                 # try loading backup
@@ -700,7 +701,8 @@ class GangaRepositoryLocal(GangaRepository):
                     os.unlink(os.path.dirname(fn) + ".index")
                 except OSError:
                     pass
-                raise InaccessibleObjectError(self, id, err)
+                import traceback
+                raise InaccessibleObjectError(self, id, err, traceback.format_exc())
             finally:
                 fobj.close()
 

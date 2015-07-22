@@ -34,17 +34,18 @@ class SchemaVersionError(GangaException):
 
 class InaccessibleObjectError(GangaException):
 
-    def __init__(self, repo, id, orig):
+    def __init__(self, repo, id, orig, tb):
         GangaException.__init__(self, "Inaccessible Object")
         self.repo = repo
         self.id = id
         self.orig = orig
+        self.tb = tb
 
     def __str__(self):
         if str(self.orig).find('comments') > -1:
             return "Please restart Ganga in order to reload the object"
         else:
-            return "Repository '%s' object #%s is not accessible because of an %s: %s" % (self.repo.registry.name, self.id, self.orig.__class__.__name__, str(self.orig))
+            return "Repository '%s' object #%s is not accessible because of an %s: %s\n%s" % (self.repo.registry.name, self.id, self.orig.__class__.__name__, str(self.orig), self.tb)
 
 
 class RepositoryError(GangaException):
