@@ -33,99 +33,79 @@ from Ganga.Utility.Shell import Shell
 from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
+from Ganga.GPIDev.Credentials2 import credential_store
+from Ganga.GPIDev.Credentials2.exceptions import InvalidCredentialError
+
 _allShells = {}
 
-
-def getShell(middleware='EDG', force=False):
+def getShell(cred_req=None):
     """
     Utility function for getting Grid Shell.
-    Caller should take responsiblity of credential checking if proxy is needed.
+    Caller should take responsibility of credential checking if proxy is needed.
 
-    Argumennts:
+    Arguments:
 
-     middleware - grid m/w used 
-     force      - False : if the shell already exists in local cache return the previous created instance
-                  True  : recreate the shell and if not None update the cache
+     proxy - the credential requirement object
     """
+
+    if cred_req is not None:
+        if not credential_store.get(cred_req).is_valid():
+            raise InvalidCredentialError()
+
+    if cred_req in _allShells.keys():
+        return _allShells[cred_req]
 
     logger = getLogger()
 
-    if not middleware:
-        logger.debug('No middleware specified, assuming default EDG')
-        middleware = 'EDG'
-
-    if middleware in _allShells.keys() and not force:
-        return _allShells[middleware]
-
     values = {}
-    for key in ['X509_USER_PROXY', 'X509_CERT_DIR', 'X509_VOMS_DIR']:
+    for key in ['X509_CERT_DIR', 'X509_VOMS_DIR']:
         try:
             values[key] = os.environ[key]
         except KeyError:
             pass
 
-    configname = ""
-    if middleware == 'EDG' or middleware == 'GLITE':
-        configname = 'LCG'
-    else:
-        configname = middleware
+    config = getConfig('LCG')
 
-    config = None
-    try:
-        config = getConfig(configname)
-    except:
-        logger.warning(
-            '[%s] configuration section not found. Cannot set up a proper grid shell.' % configname)
-        return None
+    key = 'GLITE_SETUP'
 
-    s = None
+    # 1. check if the GLITE_SETUP is changed by user -> take the user's value as session value
+    # 2. else check if GLITE_LOCATION is defined as env. variable -> do nothing (ie. create shell without any lcg setup)
+    # 3. else take the default GLITE_SETUP as session value
 
-    key = '%s_SETUP' % middleware
-
-    # 1. check if the *_SETUP is changed by user -> take the user's value as session value
-    # 2. else check if *_LOCATION is defined as env. variable -> do nothing (ie. create shell without any lcg setup)
-    # 3. else take the default *_SETUP as session value
-
-    MIDDLEWARE_LOCATION = '%s_LOCATION' % middleware
+    MIDDLEWARE_LOCATION = 'GLITE_LOCATION'
 
     if config.getEffectiveLevel(key) == 2 and MIDDLEWARE_LOCATION in os.environ:
         s = Shell()
     else:
         if os.path.exists(config[key]):
-            # FIXME: Hardcoded rule for ARC middleware setup (pass explicitly
-            # the $ARC_LOCATION as argument), this is hardcoded to maintain
-            # backwards compatibility (and avoid any side effects) for EDG and
-            # GLITE setup scripts which did not take any arguments
-            if key.startswith('ARC') and MIDDLEWARE_LOCATION in os.environ:
-                s = Shell(
-                    config[key], setup_args=[os.environ[MIDDLEWARE_LOCATION]])
-            else:
-                s = Shell(config[key])
+            s = Shell(config[key])
         else:
-            logger.warning("Configuration of %s for %s: " %
-                           (middleware, configname))
-            logger.warning("File not found: %s" % config[key])
+            logger.error("Configuration of GLITE:")
+            logger.error("File not found: %s" % config[key])
+            return None
 
-    if s:
-        for key, val in values.items():
-            s.env[key] = val
+    for key, val in values.items():
+        s.env[key] = val
 
-        # check and set env. variables for default LFC setup
-        if 'LFC_HOST' not in s.env:
-            try:
-                s.env['LFC_HOST'] = config['DefaultLFC']
-            except ConfigError:
-                pass
+    # check and set env. variables for default LFC setup
+    if 'LFC_HOST' not in s.env:
+        try:
+            s.env['LFC_HOST'] = config['DefaultLFC']
+        except ConfigError:
+            pass
 
-        if 'LFC_CONNTIMEOUT' not in s.env:
-            s.env['LFC_CONNTIMEOUT'] = '20'
+    if 'LFC_CONNTIMEOUT' not in s.env:
+        s.env['LFC_CONNTIMEOUT'] = '20'
 
-        if 'LFC_CONRETRY' not in s.env:
-            s.env['LFC_CONRETRY'] = '0'
+    if 'LFC_CONRETRY' not in s.env:
+        s.env['LFC_CONRETRY'] = '0'
 
-        if 'LFC_CONRETRYINT' not in s.env:
-            s.env['LFC_CONRETRYINT'] = '1'
+    if 'LFC_CONRETRYINT' not in s.env:
+        s.env['LFC_CONRETRYINT'] = '1'
 
-        _allShells[middleware] = s
+    if cred_req is not None:
+        s.env['X509_USER_PROXY'] = credential_store.get(cred_req).location
+
+    _allShells[cred_req] = s
 
     return s
