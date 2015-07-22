@@ -1,6 +1,6 @@
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from . import Grid
+from Ganga.Lib.LCG import Grid
 
 logger = getLogger()
 
@@ -64,7 +64,7 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         job.updateStatus('completing')
         outw = job.getOutputWorkspace()
 
-        pps_check = Grid.get_output(job.backend.id, outw.getPath(), wms_proxy=wms_proxy)
+        pps_check = Grid.get_output(job.backend.id, outw.getPath(), job.backend.credential_requirements, wms_proxy=wms_proxy)
 
         if pps_check[0]:
             job.updateStatus('completed')
