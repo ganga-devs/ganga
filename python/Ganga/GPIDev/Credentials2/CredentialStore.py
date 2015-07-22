@@ -106,7 +106,7 @@ class CredentialStore(GangaObject):
         if query.location:
             location_list = [query.location] #Just use the specified one if it exists
         else:
-            location_list = [query.default_location(), query.default_location()+":"+query.encoded()] #Otherwise try some default places
+            location_list = [query.default_location(), ':'.join([query.default_location(), query.encoded()])] #Otherwise try some default places
         
         # For each location, try wrapping the file on disk
         for location in location_list:

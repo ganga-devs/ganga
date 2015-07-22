@@ -47,7 +47,7 @@ class ICredentialInfo(object):
             
         if create:
             logger.info("Making a new one")
-            self.renew()
+            self.create()
 
         # If the proxy object does not satisfy the requirements then abort the construction
         if not self.check_requirements(requirements):
@@ -59,23 +59,23 @@ class ICredentialInfo(object):
     @property
     def location(self):
         return self.initialRequirements.location
-    
+
     @abstractmethod
-    def renew(self):
+    def create(self):
         pass
+    
+    def renew(self):
+        self.create()
 
     def is_valid(self):
         # TODO We should check that there's more than some minimum time left on the proxy
-        return self.time_left_in_seconds() > 0
-    
+        return self.time_left() > timedelta()
+
+    @abstractmethod
     def time_left(self):
         """
         Returns the time left in a human readable form
         """
-        return timedelta(seconds=self.time_left_in_seconds())
-    
-    @abstractmethod
-    def time_left_in_seconds(self):
         pass
     
     def check_requirements(self, query):
@@ -109,6 +109,12 @@ class ICredentialInfo(object):
             # If this requirementName is unspecified then ignore it
             return True
         return getattr(self,requirement_name) == requirement_value
+
+    def __eq__(self, other):
+        return self.location == other.location
+
+    def __ne__(self, other):
+        return not self == other
 
     def __hash__(self):
         return hash(self.location)
