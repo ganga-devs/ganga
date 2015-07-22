@@ -11,24 +11,8 @@ from .exceptions import CredentialRenewalError
 import os
 
 import subprocess
+from datetime import timedelta
 from getpass import getpass
-
-
-def _convert_hms_to_seconds(hms_string):
-    """
-    Take a string like '10:32:36' and convert it to ``37956``
-    If it gets something like '8:43' then it assumes that it is is hours and minutes
-    If it only receives '7' then it assumes hours
-    """
-    time_list = hms_string.split(":")
-    total_time = 0
-    if len(time_list) >= 1:
-        total_time += int(time_list[0]) * 60 * 60
-    if len(time_list) >= 2:
-        total_time += int(time_list[1]) * 60
-    if len(time_list) >= 3:
-        total_time += int(time_list[2])
-    return total_time
 
 
 class VomsProxyInfo(ICredentialInfo):
@@ -41,11 +25,9 @@ class VomsProxyInfo(ICredentialInfo):
         
         super(VomsProxyInfo, self).__init__(requirements, check_file, create)
 
-    def renew(self):
+    def create(self):
         """
-        Renew the grid proxy.
-        
-        Really this function creates a brand new proxy file
+        Creates the grid proxy.
         
         Raises:
             CredentialRenewalError: If the renewal process returns a non-zero value
@@ -63,10 +45,10 @@ class VomsProxyInfo(ICredentialInfo):
         logger.info(voms_command)
         command = 'voms-proxy-init -pwstdin -out %s %s' % (self.location, voms_command)
         logger.info(command)
-        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE) #Use self.shell.system?
+        process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdoutdata, stderrdata = process.communicate(getpass('Grid password: '))
         if process.returncode == 0:
-            logger.info('Grid proxy {path} renewed. Valid for {time}'.format(path=self.location, time=self.time_left()))
+            logger.info('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
         else:
             raise CredentialRenewalError(stderrdata)
     
@@ -116,17 +98,11 @@ class VomsProxyInfo(ICredentialInfo):
             return None  # No group specified in command
         return group_role_list[-1].strip()
     
-    def __eq__(self, other):
-        return self.location == other.location
-    
-    def __ne__(self, other):
-        return not self == other
-    
-    def time_left_in_seconds(self):
+    def time_left(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -file %s -timeleft' % self.location)
         if status != 0:
-            return 0
-        return int(output)
+            return timedelta()
+        return timedelta(seconds=int(output))
 
 
 class VomsProxy(ICredentialRequirement):
