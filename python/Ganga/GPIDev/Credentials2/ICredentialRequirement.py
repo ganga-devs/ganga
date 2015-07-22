@@ -16,7 +16,7 @@ class ICredentialRequirement(GangaObject):
         'location': SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Path to the proxy file"),
     })
     
-    _category = "credentials2"
+    _category = "CredentialRequirement"
     _name = "ICredentialRequirement"
     _hidden = 1
 
