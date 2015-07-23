@@ -21,7 +21,6 @@ from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.LCG import grids
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
-
 class ARC(IBackend):
 
     '''ARC backend - direct job submission to an ARC CE'''
@@ -875,7 +874,7 @@ sys.exit(0)
         xrslText = Grid.expandxrsl(xrsl)
         
         # append any additional requirements from the requirements object
-        xrsl += '\n'.join(self.requirements.other)
+        xrslText += '\n'.join(self.requirements.other)
 
         logger.debug('subjob XRSL: %s' % xrslText)
         return inpw.writefile(FileBuffer('__xrslfile__', xrslText))
@@ -933,6 +932,7 @@ sys.exit(0)
     def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''submit multiple subjobs in parallel, by default using 10 concurrent threads'''
 
+        from Ganga.Utility.logic import implies
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
 
         # prepare the subjobs, jdl repository before bulk submission
