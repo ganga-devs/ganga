@@ -74,12 +74,12 @@ class AfsTokenInfo(ICredentialInfo):
 
     def time_left(self):
         info = self.info()
-        matches = re.findall(info_pattern, info)
+        matches = re.finditer(info_pattern, info)
 
         if not matches:
             return datetime.timedelta()
 
-        expires = [match[1] for match in matches if match[0] == 'afs@cern.ch'][0]
+        expires = [match.group('expires') for match in matches if match.group('id') == 'afs@cern.ch'][0]
         expires = datetime.datetime.strptime(expires, '%b %d %H:%M')
         now = datetime.datetime.now()
         expires = expires.replace(year=now.year)
