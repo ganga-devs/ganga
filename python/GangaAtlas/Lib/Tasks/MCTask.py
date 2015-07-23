@@ -2,6 +2,7 @@ from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks import Task
 from MCTransforms import EvgenTransform, SimulTransform, ReconTransform
 from GangaAtlas.Lib.AthenaMC.AthenaMCDatasets import AthenaMCInputDatasets
+from Ganga.GPIDev.Schema import *
 
 from Ganga.GPIDev.Base.Objects import Node
 

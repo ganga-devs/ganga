@@ -11,6 +11,7 @@ from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsExc
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
+from Ganga.GPIDev.Schema import *
 
 #config.addOption('cloudPreference',[],'list of preferred clouds to choose for AnaTask analysis')
 #config.addOption('backendPreference',["LCG","Panda","NG"],'order of preferred backends (LCG, Panda, NG) for AnaTask analysis')

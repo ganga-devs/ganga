@@ -10,6 +10,7 @@ from GangaAtlas.Lib.Credentials.ProxyHelper import getNickname
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from dq2.common.DQException import DQException
+from Ganga.GPIDev.Schema import *
 
 import copy
 

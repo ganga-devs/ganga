@@ -14,11 +14,13 @@ from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
+from Ganga.GPIDev.Schema import *
 
 from Ganga.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')
 
 import os
+import threading
 
 class AtlasUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
@@ -28,6 +30,7 @@ class AtlasUnit(IUnit):
    _category = 'units'
    _name = 'AtlasUnit'
    _exportmethods = IUnit._exportmethods + [ ]
+   _download_lock = threading.Lock()
 
    def __init__(self):
       super(AtlasUnit, self).__init__()
@@ -455,6 +458,23 @@ class AtlasUnit(IUnit):
 
       return True
 
+   def _acquireDownloadLock(self, timeout = 10):
+      """Grab the download lock"""
+      import time
+      t = 0
+      while t < timeout:
+         if self._download_lock.acquire(False):
+            return True
+
+         time.sleep(0.1)
+         t += 0.1
+
+      return False
+
+   def _releaseDownloadLock(self, timeout = 10):
+      """Release the download lock"""
+      self._download_lock.release()
+
    def copyOutput(self):
       """Copy the output data to local storage"""
 
@@ -465,6 +485,7 @@ class AtlasUnit(IUnit):
          return False
 
       # get list of output files
+      self._acquireDownloadLock()
       dq2_list = []
       if len(self.output_file_list) == 0:
          for ds in self.getOutputDatasetList():
@@ -485,6 +506,9 @@ class AtlasUnit(IUnit):
          if self.copy_output.isValid(f) and not self.copy_output.isDownloaded(f):            
             to_download[ f ] = self.output_file_list[f]
 
+      # store download location in case it's changed while downloading
+      download_loc = self.copy_output.local_location
+      self._releaseDownloadLock()
 
       # is everything downloaded?
       if len(to_download.keys()) == 0:
@@ -494,8 +518,8 @@ class AtlasUnit(IUnit):
       thread_array = []
       for fname in to_download.keys()[:self._getParent().num_dq2_threads]:
          dsname = to_download[fname]
-         exe = 'dq2-get -L ROAMING -a -d -H %s -f %s %s' % (self.copy_output.local_location, fname, dsname)
-         logger.info("Downloading '%s' to %s..." % (fname, self.copy_output.local_location))
+         exe = 'dq2-get -L ROAMING -a -d -H %s -f %s %s' % (download_loc, fname, dsname)
+         logger.info("Downloading '%s' to %s..." % (fname, download_loc))
 
          thread = Download.download_dq2(exe)
          thread.start()
@@ -504,6 +528,8 @@ class AtlasUnit(IUnit):
       for t in thread_array:
          t.join()
 
+      self._acquireDownloadLock()
+      
       # check for valid download - SHOULD REALLY BE A HASH CHECK
       for fname in to_download.keys()[:self._getParent().num_dq2_threads]:
          full_path = os.path.join(self.copy_output.local_location, fname)
@@ -514,5 +540,7 @@ class AtlasUnit(IUnit):
          else:
             self.copy_output.files.append(fname)
             logger.info("File '%s' downloaded successfully" % full_path)
-         
+
+      self._releaseDownloadLock()
+
       return False
