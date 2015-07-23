@@ -112,4 +112,7 @@ class AfsToken(ICredentialRequirement):
         pass
 
     def default_location(self):
-        return os.getenv("KRB5CCNAME") or "/tmp/krb5cc_{uid}".format(uid=os.getuid())
+        KRB5CCNAME = os.getenv("KRB5CCNAME", '')
+        if KRB5CCNAME.startswith('FILE:'):
+            KRB5CCNAME = KRB5CCNAME[5:]
+        return KRB5CCNAME or "/tmp/krb5cc_{uid}".format(uid=os.getuid())
