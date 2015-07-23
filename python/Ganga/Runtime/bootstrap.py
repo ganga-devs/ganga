@@ -134,7 +134,7 @@ def manualExportToGPI(my_interface=None):
     # FIXME: END DEPRECATED
 
     from Ganga.GPIDev.Credentials2 import credential_store
-    exportToInterface(my_interface, 'credential_store', credential_store, 'Objects', 'Credential management.')
+    exportToInterface(my_interface, 'credential_store', credential_store, 'Objects', 'Credential store')
 
     exportToInterface(my_interface, 'typename', typename, 'Functions')
     exportToInterface(my_interface, 'categoryname', categoryname, 'Functions')
@@ -144,21 +144,6 @@ def manualExportToGPI(my_interface=None):
     from Ganga.GPIDev.Persistency import export, load
     exportToInterface(my_interface, 'load', load, 'Functions')
     exportToInterface(my_interface, 'export', export, 'Functions')
-
-
-
-    from Ganga.GPIDev.Credentials import getCredential
-    # only the available credentials are exported
-    # At this point we expect to have the GridProxy already created
-    # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
-    # cache
-    credential = getCredential(name='GridProxy')
-    if credential:
-        exportToInterface(my_interface, 'gridProxy', credential, 'Objects', 'Grid proxy management object.')
-
-    credential2 = getCredential('AfsToken')
-    if credential2:
-        exportToInterface(my_interface, 'afsToken', credential2, 'Objects', 'AFS token management object.')
 
     # export full_print
     from Ganga.GPIDev.Base.VPrinter import full_print
@@ -917,6 +902,15 @@ under certain conditions; type license() for details.
         logger = getLogger()
 
         manualExportToGPI()
+
+        from Ganga.Runtime import Workspace_runtime, Repository_runtime
+        from Ganga.GPIDev.Credentials2 import credential_store
+        if Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken():
+            # If the registry or the workspace needs an AFS token then add one to the credential store.
+            # Note that this happens before the monitoring starts so that it gets tracked properly
+
+            from Ganga.GPIDev.Credentials2 import AfsToken
+            credential_store.get(AfsToken())
 
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries
