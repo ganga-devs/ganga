@@ -7,7 +7,7 @@ from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
 
 from Ganga.Utility.threads import SynchronisedObject
 
-import Ganga.GPIDev.Credentials as Credentials
+from Ganga.GPIDev.Credentials2 import credential_store, AfsToken
 from Ganga.Core.InternalServices import Coordinator
 
 # Setup logging ---------------
@@ -374,10 +374,9 @@ class JobRegistry_Monitor(GangaThread):
         self.makeUpdateJobStatusFunction()
 
         # Add credential checking to monitoring loop
-        for _credObj in Credentials._allCredentials.itervalues():
-            log.debug("Setting callback hook for %s" % _credObj._name)
-            self.setCallbackHook(self.makeCredCheckJobInsertor(
-                _credObj), {}, True, timeout=config['creds_poll_rate'])
+        for afsToken in credential_store.get_all_matching_type(AfsToken):
+            log.debug("Setting callback hook for %s" % afsToken._name)
+            self.setCallbackHook(self.makeCredCheckJobInsertor(afsToken), {}, True, timeout=config['creds_poll_rate'])
 
         # Add low disk-space checking to monitoring loop
         log.debug("Setting callback hook for disk space checking")
