@@ -79,14 +79,14 @@ class AfsTokenInfo(ICredentialInfo):
         if not matches:
             return datetime.timedelta()
 
-        expires = [match.group('expires') for match in matches if match.group('id') == 'afs@cern.ch'][0]
+        expires = [match[1] for match in matches if match[0] == 'afs@cern.ch'][0]
         expires = datetime.datetime.strptime(expires, '%b %d %H:%M')
         now = datetime.datetime.now()
-        expires.replace(year=now.year)
+        expires = expires.replace(year=now.year)
 
         # If the expiration date is in the past then assume it should be in the future
         if expires < now:
-            expires.replace(year=now.year+1)
+            expires = expires.replace(year=now.year+1)
 
         return expires - now
 
