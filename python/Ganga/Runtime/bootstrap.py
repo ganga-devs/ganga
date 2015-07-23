@@ -1088,25 +1088,9 @@ default_backends = LCG
         # New credential management
         from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
         from Ganga.GPIDev.Credentials2 import credential_store
-        exportToGPI('credential_store',GPIProxyObjectFactory(credential_store),'Objects','Credential management.')
+        exportToGPI('credential_store', GPIProxyObjectFactory(credential_store), 'Objects', 'Credential store')
         
         from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-        from Ganga.GPIDev.Credentials import getCredential
-
-        # only the available credentials are exported
-
-        # At this point we expect to have the GridProxy already created
-        # by one of the Grid plugins (LCG/NG/etc) so we search for it in creds
-        # cache
-        credential = getCredential(name='GridProxy', create=False)
-        if credential:
-            exportToGPI('gridProxy', GPIProxyObjectFactory(
-                credential), 'Objects', 'Grid proxy management object.')
-
-        credential = getCredential('AfsToken')
-        if credential:
-            exportToGPI('afsToken', GPIProxyObjectFactory(
-                credential), 'Objects', 'AFS token management object.')
 
         # add built-in functions
 
@@ -1267,6 +1251,12 @@ default_backends = LCG
         # bootstrap the workspace
         from Ganga.Runtime import Workspace_runtime
         Workspace_runtime.bootstrap()
+
+        if Workspace_runtime.requiresAfsToken() or Repository_runtime.requiresAfsToken():
+            # If the registry or the workspace needs an ASF token then add one to the credential store.
+            # Note that this happens before the monitoring starts so that it gets tracked properly
+            from Ganga.GPIDev.Credentials2 import AfsToken
+            credential_store.get(AfsToken())
 
         # migration repository
         #from Ganga.Utility.migrate41to42 import JobCheckForV41, JobConvertToV42
