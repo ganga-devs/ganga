@@ -32,7 +32,7 @@ from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 from Ganga.Utility.logic import implies
 from Ganga.Utility.GridShell import getShell
 
-from Ganga.GPIDev.Credentials2 import VomsProxy
+from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -211,6 +211,7 @@ class LCG(IBackend):
 
         return True
 
+    @require_credential
     def __check_and_prestage_inputfile__(self, file):
         """Checks the given input file size and if it's size is
            over "BoundSandboxLimit", prestage it to a grid SE.
@@ -420,6 +421,7 @@ class LCG(IBackend):
         else:
             return self.master_bulk_kill()
 
+    @require_credential
     def __mt_bulk_submit__(self, node_jdls, max_node):
         '''submitting bulk jobs in multiple threads'''
 
@@ -580,6 +582,7 @@ class LCG(IBackend):
                 node_jdls.append(results[id])
             return node_jdls
 
+    @require_credential
     def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''GLITE bulk submission'''
 
@@ -639,6 +642,7 @@ class LCG(IBackend):
 
         return status
 
+    @require_credential
     def master_bulk_resubmit(self, rjobs):
         '''GLITE bulk resubmission'''
 
@@ -696,6 +700,7 @@ class LCG(IBackend):
 
         return status
 
+    @require_credential
     def master_bulk_kill(self):
         '''GLITE bulk resubmission'''
 
@@ -749,6 +754,7 @@ class LCG(IBackend):
                     sj.updateStatus('killed')
             return True
 
+    @require_credential
     def loginfo(self, verbosity=1):
         """Get the job's logging info"""
 
@@ -782,6 +788,7 @@ class LCG(IBackend):
                          job.getFQID('.'))
             return None
 
+    @require_credential
     def match(self):
         '''Match the job against available grid resources'''
 
@@ -895,6 +902,7 @@ class LCG(IBackend):
 
         return matches
 
+    @require_credential
     def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
@@ -916,6 +924,7 @@ class LCG(IBackend):
 
         return not self.id is None
 
+    @require_credential
     def resubmit(self):
         '''Resubmit the job'''
         job = self.getJobObject()
@@ -940,6 +949,7 @@ class LCG(IBackend):
 
         return not self.id is None
 
+    @require_credential
     def kill(self):
         '''Kill the job'''
 
@@ -1632,12 +1642,12 @@ sys.exit(0)
                         logger.debug('job %s submitted individually. separate it in a different monitoring loop.' % sj.getFQID('.'))
                         emulated_bulk_jobs.append(sj)
 
-        # involk normal monitoring method for normal jobs
+        # invoke normal monitoring method for normal jobs
         for j in emulated_bulk_jobs:
             logger.debug('emulated bulk job to be monitored: %s' % j.getFQID('.'))
         IBackend.master_updateMonitoringInformation(emulated_bulk_jobs)
 
-        # involk special monitoring method for glite bulk jobs
+        # invoke special monitoring method for glite bulk jobs
         for j in native_bulk_jobs:
             logger.debug('native bulk job to be monitored: %s' % j.getFQID('.'))
         LCG.master_bulk_updateMonitoringInformation(native_bulk_jobs)
@@ -1876,6 +1886,7 @@ sys.exit(0)
 
         return Grid.check_proxy()
 
+    @require_credential
     def get_requirement_matches(self, jdl_file=None, spec_ce=''):
         """Return any matches using the requirements or given jdlfile"""
 

@@ -84,12 +84,12 @@ class LCGSandboxCache(GridSandboxCache):
             raise AttributeError('invalid se_type: %s' % value)
         super(LCGSandboxCache, self).__setattr__(attr, value)
 
-    def impl_upload(self, files=[], opts=''):
+    def impl_upload(self, cred_req, files=[], opts=''):
         """
         Uploads multiple files to a remote grid storage.
         """
 
-        shell = getShell(self.middleware)
+        shell = getShell(cred_req)
 
         if self.lfc_host:
             shell.env['LFC_HOST'] = self.lfc_host
@@ -173,7 +173,7 @@ class LCGSandboxCache(GridSandboxCache):
 
         return runner.getResults().values()
 
-    def impl_download(self, files=[], dest_dir=None, opts=''):
+    def impl_download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
         Downloads multiple files from remote grid storages to 
         a local directory.
@@ -185,10 +185,10 @@ class LCGSandboxCache(GridSandboxCache):
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm):
 
-            def __init__(self, cacheObj):
+            def __init__(self, cacheObj, cred_req):
                 Algorithm.__init__(self)
                 self.cacheObj = cacheObj
-                self.shell = getShell(self.cacheObj.middleware)
+                self.shell = getShell(cred_req)
 
             def process(self, file):
 
@@ -218,7 +218,7 @@ class LCGSandboxCache(GridSandboxCache):
                     self.__appendResult__(file.id, file)
                     return True
 
-        myAlg = MyAlgorithm(cacheObj=self)
+        myAlg = MyAlgorithm(cacheObj=self, cred_req=cred_req)
         myData = Data(collection=files)
 
         runner = MTRunner(
@@ -228,7 +228,7 @@ class LCGSandboxCache(GridSandboxCache):
 
         return runner.getResults().values()
 
-    def impl_delete(self, files=[], opts=''):
+    def impl_delete(self, cred_req, files=[], opts=''):
         """
         Deletes multiple files from remote grid storages. 
         """
@@ -236,10 +236,10 @@ class LCGSandboxCache(GridSandboxCache):
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm):
 
-            def __init__(self, cacheObj):
+            def __init__(self, cacheObj, cred_req):
                 Algorithm.__init__(self)
                 self.cacheObj = cacheObj
-                self.shell = getShell(self.cacheObj.middleware)
+                self.shell = getShell(cred_req)
 
             def process(self, file):
 
@@ -263,7 +263,7 @@ class LCGSandboxCache(GridSandboxCache):
                     self.__appendResult__(file.id, file)
                     return True
 
-        myAlg = MyAlgorithm(cacheObj=self)
+        myAlg = MyAlgorithm(cacheObj=self, cred_req=cred_req)
         myData = Data(collection=files)
 
         runner = MTRunner(

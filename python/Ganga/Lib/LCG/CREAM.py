@@ -22,7 +22,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.Grid import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
-from Ganga.GPIDev.Credentials2 import VomsProxy
+from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential
 
 
 def __cream_resolveOSBList__(job, jdl):
@@ -312,6 +312,7 @@ class CREAM(IBackend):
             # paths as values
             return runner.getResults()
 
+    @require_credential
     def __mt_bulk_submit__(self, node_jdls):
         '''submitting jobs in multiple threads'''
 
@@ -926,6 +927,7 @@ sys.exit(0)
         logger.debug('subjob JDL: %s' % jdlText)
         return inpw.writefile(FileBuffer('__jdlfile__', jdlText))
 
+    @require_credential
     def kill(self):
         '''Kill the job'''
         job = self.getJobObject()
@@ -936,7 +938,7 @@ sys.exit(0)
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return Grid.cream_cancelMultiple(self.credential_requirements)
+        return Grid.cream_cancelMultiple([self.id], self.credential_requirements)
 
     def master_kill(self):
         '''kill the master job to the grid'''
@@ -950,6 +952,7 @@ sys.exit(0)
         else:
             return self.master_bulk_kill()
 
+    @require_credential
     def master_bulk_kill(self):
         '''GLITE bulk resubmission'''
 
@@ -1061,6 +1064,7 @@ sys.exit(0)
 
         return status
 
+    @require_credential
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''Submit the master job to the grid'''
 
@@ -1105,6 +1109,7 @@ sys.exit(0)
 
         return ick
 
+    @require_credential
     def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
@@ -1138,6 +1143,7 @@ sys.exit(0)
 
         return True
 
+    @require_credential
     def master_resubmit(self, rjobs):
         '''Resubmit the master job to the grid'''
 
@@ -1176,6 +1182,7 @@ sys.exit(0)
 
         return ick
 
+    @require_credential
     def resubmit(self):
         '''Resubmit the job'''
 
@@ -1254,8 +1261,8 @@ sys.exit(0)
 
                         if osbURIList:
 
-                            if job.backend.grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath()):
-                                (ick, app_exitcode) = job.backend.grid.__get_app_exitcode__(
+                            if Grid.cream_get_output(osbURIList, job.getOutputWorkspace(create=True).getPath(), job.backend.credential_requirements):
+                                (ick, app_exitcode) = Grid.__get_app_exitcode__(
                                     job.getOutputWorkspace(create=True).getPath())
                                 job.backend.exitcode = app_exitcode
 

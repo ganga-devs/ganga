@@ -1,5 +1,6 @@
 import os
 import os.path
+import re
 from urlparse import urlparse
 
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -64,12 +65,12 @@ class GridftpSandboxCache(GridSandboxCache):
         super(GridftpSandboxCache, self).__init__()
         self.protocol = 'gsiftp'
 
-    def impl_upload(self, files=[], opts=''):
+    def impl_upload(self, cred_req, files=[], opts=''):
         """
         Uploads multiple files to a remote gridftp server.
         """
 
-        shell = getShell(self.middleware)
+        shell = getShell(cred_req)
 
         # making the directory on remove storage at destURI
         dirname = self.__get_unique_fname__()
@@ -168,7 +169,7 @@ class GridftpSandboxCache(GridSandboxCache):
 
         return runner.getResults().values()
 
-    def impl_download(self, files=[], dest_dir=None, opts=''):
+    def impl_download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
         Downloads multiple files from gridftp server to 
         a local directory.
@@ -177,7 +178,7 @@ class GridftpSandboxCache(GridSandboxCache):
             dest_dir = os.getcwd()
         self.logger.debug('download file to: %s', dest_dir)
 
-        shell = getShell(self.middleware)
+        shell = getShell(cred_req)
 
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm):
@@ -215,12 +216,12 @@ class GridftpSandboxCache(GridSandboxCache):
 
         return runner.getResults().values()
 
-    def impl_delete(self, files=[], opts=''):
+    def impl_delete(self, cred_req, files=[], opts=''):
         """
         Deletes multiple files from remote gridftp server
         """
 
-        shell = getShell(self.middleware)
+        shell = getShell(cred_req)
 
         # the algorithm of downloading one file to a local directory
         class MyAlgorithm(Algorithm):

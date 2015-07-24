@@ -1256,7 +1256,7 @@ default_backends = LCG
             # If the registry or the workspace needs an ASF token then add one to the credential store.
             # Note that this happens before the monitoring starts so that it gets tracked properly
             from Ganga.GPIDev.Credentials2 import AfsToken
-            credential_store.get(AfsToken())
+            credential_store.create(AfsToken())
 
         # migration repository
         #from Ganga.Utility.migrate41to42 import JobCheckForV41, JobConvertToV42

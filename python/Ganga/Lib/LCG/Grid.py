@@ -98,7 +98,7 @@ class Grid(object):
     def __get_proxy_voname__(cred_req):
         '''Check validity of proxy vo'''
 
-        vo = credential_store.get(cred_req).vo
+        vo = credential_store[cred_req].vo
 
         logger.debug('voms of credential: %s' % vo)
         return vo
@@ -655,7 +655,7 @@ class Grid(object):
 
             cmd += ' -e %s' % ce.split('/cream')[0]
 
-            delid = '%s_%s' % (credential_store.get(cred_req).identity, get_uuid())
+            delid = '%s_%s' % (credential_store[cred_req].identity, get_uuid())
 
             cmd = '%s "%s"' % (cmd, delid)
 
@@ -670,7 +670,7 @@ class Grid(object):
                 delid = ''
             else:
                 # proxy delegated successfully
-                t_expire = datetime.datetime.now() + credential_store.get(cred_req).time_left()
+                t_expire = datetime.datetime.now() + credential_store[cred_req].time_left()
 
                 logger.debug('new proxy at %s valid until %s' % (ce, t_expire))
 
@@ -788,7 +788,8 @@ class Grid(object):
         else:
             return False
 
-    def cream_get_output(self, osbURIList, directory):
+    @staticmethod
+    def cream_get_output(osbURIList, directory, cred_req):
         '''CREAM CE job output retrieval'''
 
         gfiles = []
@@ -802,7 +803,7 @@ class Grid(object):
         cache.vo = config['VirtualOrganisation']
         cache.uploaded_files = gfiles
 
-        return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
+        return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
     @staticmethod
     def __get_app_exitcode__(outputdir):
@@ -1113,7 +1114,7 @@ class Grid(object):
         if rc != 0:
             logger.error('Unable to sync ARC jobs. Error: %s' % output)
 
-    def arc_get_output(self, jid, directory):
+    def arc_get_output(self, jid, directory, cred_req):
         '''ARC CE job output retrieval'''
 
         # construct URI list from ID and output from arcls
@@ -1142,7 +1143,7 @@ class Grid(object):
         cache.middleware = 'GLITE'
         cache.vo = config['VirtualOrganisation']
         cache.uploaded_files = gfiles
-        return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
+        return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
     def arc_purgeMultiple(self, jobids):
         '''ARC CE job purging'''

@@ -49,7 +49,8 @@ def getShell(cred_req=None):
     """
 
     if cred_req is not None:
-        if not credential_store.get(cred_req).is_valid():
+        if not credential_store[cred_req].is_valid():
+            logger.info('GridShell.getShell given credential which is invalid')
             raise InvalidCredentialError()
 
     if cred_req in _allShells.keys():
@@ -104,7 +105,7 @@ def getShell(cred_req=None):
         s.env['LFC_CONRETRYINT'] = '1'
 
     if cred_req is not None:
-        s.env['X509_USER_PROXY'] = credential_store.get(cred_req).location
+        s.env['X509_USER_PROXY'] = credential_store[cred_req].location
 
     _allShells[cred_req] = s
 
