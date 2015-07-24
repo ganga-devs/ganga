@@ -125,24 +125,8 @@ class Shell(object):
 
         self.dirname = None
 
-    def pythonCmd(self, cmd, soutfile=None, allowed_exit=None,
-            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
-        """Execute a python command and captures the stderr and stdout which are returned in a file
-        Args:
-            cmd (str): command to be executed in a shell
-            soutfile (str): filename of file to store the output in (optional)
-            allowed_exit (list): list of numerical rc which are deemed to be a success when checking the function output. Def [0]
-            capture_stderr (None): unused, kept for API compatability?
-            timeout (int): length of time (sec) that a command is expected to have finished by
-            mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
-        """
-
-        if allowed_exit is None:
-            allowed_exit = [0]
-        return self.cmd(cmd, soutfile, allowed_exit, capture_stderr, timeout, mention_outputfile_on_errors, python=True)
-
     def cmd(self, cmd, soutfile=None, allowed_exit=None,
-            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True, python=False):
+            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
         """Execute an OS command and captures the stderr and stdout which are returned in a file
         Args:
             cmd (str): command to be executed in a shell
@@ -174,9 +158,6 @@ class Shell(object):
                 this_cwd = os.path.abspath(tempfile.gettempdir())
             logger.debug("Using CWD: %s" % this_cwd)
 
-            #import traceback
-            # traceback.print_stack()
-
             process = subprocess.Popen(command, env=self.env, cwd=this_cwd)
             pid = process.pid
             while True:
@@ -189,8 +170,7 @@ class Shell(object):
                         rc = os.WEXITSTATUS(sts)
                         break
                 if timeout and time.time() - t0 > timeout:
-                    logger.warning(
-                            'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
+                    logger.warning('Command interrupted - timeout %ss reached: %s', timeout0, cmd)
                     if already_killed:
                         sig = signal.SIGKILL
                     else:
@@ -231,7 +211,7 @@ class Shell(object):
 
         return rc, soutfile, m is None
 
-    def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None, python=False):
+    def cmd1(self, cmd, allowed_exit=None, capture_stderr=False, timeout=None):
         """Executes an OS command and captures the stderr and stdout which are returned as a string
         Args:
             cmd (str): command to be executed in a shell
@@ -240,14 +220,13 @@ class Shell(object):
             capture_stderr (None): unused, kept for API compatability?
             timeout (int): length of time (sec) that a command is expected to have finished by
             mention_outputfile_on_errors (bool): Should we print warning pointing to output when something when something goes wrong
-            python (bool): is a Python cmd?
         """
 
         if allowed_exit is None:
             allowed_exit = [0]
 
         rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
-                timeout, mention_outputfile_on_errors=False, python=python)
+                timeout, mention_outputfile_on_errors=False)
 
         from contextlib import closing
         with closing(open(outfile)) as out_file:
