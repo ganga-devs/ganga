@@ -9,34 +9,39 @@ from .AfsToken import AfsToken
 from .exceptions import CredentialsError
 
 from functools import wraps
+import threading
+
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 
-def RequireCredential(function):
+def require_credential(function):
     """
-    A decorator for accessing the credential store
+    A decorator for labelling a function as needed a credential.
+
+    If the decorated function is called directly by the user (checked by looking which thread we are on) then if a
+    credential is not available, a prompt is given to request one. If the function is being called in another thread
+    (monitoring or similar) then a ``CredentialsError`` is raised.
     
     Uses the function's object's ``credential_requirements`` attribute
-    
-    It also sets the function's object's ``credential`` attribute
     """
     @wraps(function)
     def wrapped_function(*args, **kwargs):
-        functions_class_object = args[0]
-        
+        cred_req = args[0].credential_requirements
+
         try:
-            proxy = credential_store.get(functions_class_object.credential_requirements)
-        except CredentialsError:
-            raise CredentialsError('Cannot get proxy which matches requirements')
-        
-        if not proxy.is_valid():
+            cred = credential_store[cred_req]
+            logger.info('got %s', cred)
+        except KeyError:
+            if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
+                logger.warning('Required credential not found in store')
+                cred = credential_store.create(cred_req, create=True)
+                logger.info('created %s', cred)
+            else:
+                raise CredentialsError('Cannot get proxy which matches requirements')
+
+        if not cred.is_valid():
             raise CredentialsError('Proxy is invalid')
-        
-        # Set the object member attribute
-        functions_class_object.credential = proxy
-        # TODO Or maybe something like:
-        #  function.__globals__['credential_filename'] = proxy.location
-        #  which will restrict the variable to being available inside the function's global scope which would enforce
-        #  the strict usage of this decorator.
             
         return function(*args, **kwargs)
     return wrapped_function

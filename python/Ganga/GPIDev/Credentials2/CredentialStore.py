@@ -1,8 +1,12 @@
+from datetime import timedelta
+import json
+
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from .exceptions import CredentialsError
+from .ICredentialRequirement import ICredentialRequirement
 
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
@@ -24,27 +28,13 @@ class CredentialStore(GangaObject):
     _name = "CredentialStore"
     _hidden = 1  # This class is hidden since we want a 'singleton' created in the bootstrap
 
-    _exportmethods = ['get', '__iter__']
+    _exportmethods = ['__getitem__', '__iter__', 'renew', 'create']
 
     def __init__(self):
         super(CredentialStore, self).__init__()
-        self.credentialList = set()
+        self.credentials = set()
     
-    def add(self, credential_object):
-        """
-        Adds ``credential_object`` to the store.
-        
-        Args:
-            credential_object (ICredentialInfo): The object to add to the store
-        
-        Returns:
-            The object passed in
-        """
-
-        self.credentialList.add(credential_object)
-        return credential_object
-    
-    def create(self, query, create=False, check_file=False):
+    def create(self, query, create=True, check_file=False):
         """
         Create an ``ICredentialInfo`` for the query.
         
@@ -57,7 +47,10 @@ class CredentialStore(GangaObject):
             The newly created ICredentialInfo object
         """
 
-        return stripProxy(query)._infoClass(query, create=create, check_file=check_file)
+        cred = stripProxy(query)._infoClass(query, check_file=check_file, create=create)
+        self.credentials.add(cred)
+        logger.info('returning %s', cred)
+        return cred
     
     def remove(self, credential_object):
         """
@@ -65,75 +58,68 @@ class CredentialStore(GangaObject):
             credential_object (ICredentialInfo):
         """
 
-        self.credentialList.remove(credential_object)
+        self.credentials.remove(credential_object)
     
     def __iter__(self):
         """Allow iterating over the store directly"""
         # yield from self.credentialList #In Python 3.3
-        return iter(self.credentialList)
-    
-    def get(self, query):
+        return iter(self.credentials)
+
+    def __getitem__(self, query):
         """
-        This function will try quite hard to create the credential if it doesn't exist yet.
-        If you want to just search the database, use ``match()``.
-        
+        This function will try quite hard to find and wrap any missing credential
+        but will never create a new file on disk
+
         Args:
             query (ICredentialRequirement):
-        
+
         Returns:
             A single ICredentialInfo object which matches the requirements
-        
+
         Raises:
             CredentialsError: If it could not provide a credential
         """
-
         query = stripProxy(query)
 
-        if not query.location and query.is_empty():  # If there's nothing there at all
-            query.set_defaults_from_config()
-        
+        if not isinstance(query, ICredentialRequirement):
+            raise TypeError('Credential store index should be of type ICredentialRequirement')
+
         match = self.match(query)
         if match:
+            logger.info('found match %s', match)
             return match
-        
-        if query.is_empty():
-            query.set_defaults_from_config()
-        
-        # By this point ``query`` definitely contains some options (user-specified or default) but might not have a ``location``
-        
+
         # Assemble the locations to try
-        # The order of this list matters as the last element is the name used to _create_ the proxy file if it cannot be found on disk
         if query.location:
-            location_list = [query.location] #Just use the specified one if it exists
-        else:
-            location_list = [query.default_location(), ':'.join([query.default_location(), query.encoded()])] #Otherwise try some default places
-        
+            location_list = [query.location]  # Just use the specified one if it exists
+        else:  # Otherwise try some default places
+            location_list = [query.default_location(), ':'.join([query.default_location(), query.encoded()])]
+
         # For each location, try wrapping the file on disk
         for location in location_list:
             query.location = location
             try:
-                cred = self.create(query, check_file = True)
+                cred = self.create(query, create=False, check_file=True)
             except IOError as e:
                 logger.info(e.strerror)
             except CredentialsError as e:
                 logger.info(str(e))
             else:
-                return self.add(cred)
-        
-        # By this point both the location and the options are set
-        
-        cred = self.create(query, create=True)
-        return self.add(cred)
+                logger.info('made match %s', cred)
+                self.credentials.add(cred)
+                return cred
+
+        raise KeyError('Matching credential not found in store.')
     
     def get_all_matching_type(self, query):
         """
         Returns all ``ICredentialInfo`` with the type that matches the query
         
         Args:
-        query (ICredentialRequirement): 
+            query (ICredentialRequirement):
         """
 
-        return (cred for cred in self.credentialList if type(cred) == stripProxy(query)._infoClass)
+        return (cred for cred in self.credentials if type(cred) == stripProxy(query)._infoClass)
     
     def matches(self, query):
         """
@@ -168,6 +154,14 @@ class CredentialStore(GangaObject):
             # Does it matter since they've only asked for a general proxy? What are the use cases?
             return matches[0]  # TODO For now just return the first one... Though perhaps we should merge them or something?
         return None
+
+    def renew(self):
+        """
+        Renew all credentails which are invalid or will expire soon
+        """
+        for cred in self.credentials:
+            if not cred.is_valid() or cred.time_left() < timedelta(hours=1):
+                cred.renew()
 
 # This is a global 'singleton'
 credential_store = CredentialStore()

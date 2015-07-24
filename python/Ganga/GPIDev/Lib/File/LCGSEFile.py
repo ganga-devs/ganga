@@ -15,7 +15,7 @@ from Ganga.Utility import GridShell
 
 from .IGangaFile import IGangaFile
 
-from Ganga.GPIDev.Credentials2 import RequireCredential, VomsProxy
+from Ganga.GPIDev.Credentials2 import require_credential, VomsProxy
 
 import re
 import os
@@ -48,7 +48,7 @@ class LCGSEFile(IGangaFile):
         'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
         'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-        'credential_requirements' : SimpleItem(defvalue=None,typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None'],protected=0,getter='getCredentialRequirements',doc=''),
+        #'credential_requirements' : ComponentItem('CredentialRequirement', defvalue=None, typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None'],protected=0,getter='getCredentialRequirements'),
     })
     _category = 'gangafiles'
     _name = "LCGSEFile"
@@ -168,7 +168,7 @@ class LCGSEFile(IGangaFile):
 
         return cmd
 
-    @RequireCredential
+    @require_credential
     def put(self):
         """
         Executes the internally created command for file upload to LCG SE, this method will
@@ -367,7 +367,7 @@ class LCGSEFile(IGangaFile):
 
         return script
 
-    @RequireCredential
+    @require_credential
     def get(self):
         """
         Retrieves locally all files matching this LCGSEFile object pattern
@@ -414,7 +414,7 @@ class LCGSEFile(IGangaFile):
 
         return script
 
-    @RequireCredential
+    @require_credential
     def processWildcardMatches(self):
         if self.subfiles:
             return self.subfiles
