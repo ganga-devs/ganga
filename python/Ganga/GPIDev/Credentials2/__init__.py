@@ -31,12 +31,10 @@ def require_credential(function):
 
         try:
             cred = credential_store[cred_req]
-            logger.info('got %s', cred)
         except KeyError:
             if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
                 logger.warning('Required credential [%s] not found in store', cred_req)
                 cred = credential_store.create(cred_req, create=True)
-                logger.info('created %s', cred)
             else:
                 raise CredentialsError('Cannot get proxy which matches requirements')
 
