@@ -21,6 +21,9 @@ from Ganga.Lib.LCG.Utility import get_uuid
 
 from Ganga.Utility.ColourText import ANSIMarkup, NoMarkup, Foreground, Effects
 
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
+
 
 class GridFileIndex(GangaObject):
 
@@ -77,7 +80,7 @@ class GridSandboxCache(GangaObject):
     def __init__(self):
         super(GridSandboxCache, self).__init__()
 
-    def upload(self, files=[], opts=''):
+    def upload(self, cred_req, files=[], opts=''):
         """
         Uploads multiple files to a remote grid storage.
 
@@ -97,7 +100,7 @@ class GridSandboxCache(GangaObject):
             else:
                 self.logger.warning('unknown file expression: %s' % repr(f))
 
-        uploaded_files = self.impl_upload(files=paths, opts=opts)
+        uploaded_files = self.impl_upload(cred_req=cred_req, files=paths, opts=opts)
 
         if len(uploaded_files) == len(files):
             status = self.impl_bookkeepUploadedFiles(
@@ -113,7 +116,7 @@ class GridSandboxCache(GangaObject):
 
         return status
 
-    def download(self, files=[], dest_dir=None, opts=''):
+    def download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
         Downloads multiple files from remote grid storages to 
         a local directory.
@@ -132,8 +135,7 @@ class GridSandboxCache(GangaObject):
         """
         status = False
         myFiles = self.__get_file_index_objects__(files)
-        downloadedFiles = self.impl_download(
-            files=myFiles, dest_dir=dest_dir, opts=opts)
+        downloadedFiles = self.impl_download(cred_req=cred_req, files=myFiles, dest_dir=dest_dir, opts=opts)
 
         if len(downloadedFiles) == len(myFiles):
             status = True
@@ -142,7 +144,7 @@ class GridSandboxCache(GangaObject):
 
         return status
 
-    def delete(self, files=[], opts=''):
+    def delete(self, cred_req, files=[], opts=''):
         """
         Deletes multiple files from remote grid storages.
 
@@ -154,7 +156,7 @@ class GridSandboxCache(GangaObject):
         """
         status = False
         myFiles = self.__get_file_index_objects__(files)
-        deletedFiles = self.impl_delete(files=myFiles, opts=opts)
+        deletedFiles = self.impl_delete(cred_req=cred_req, files=myFiles, opts=opts)
 
         if len(deletedFiles) == len(myFiles):
             status = True
@@ -163,7 +165,7 @@ class GridSandboxCache(GangaObject):
 
         return status
 
-    def cleanup(self, opts=''):
+    def cleanup(self, cred_req, opts=''):
         """
         Cleans up the uploaded files.
 
@@ -177,7 +179,7 @@ class GridSandboxCache(GangaObject):
         for f in all_files:
             f_ids.append(f.id)
 
-        return self.delete(files=f_ids)
+        return self.delete(cred_req=cred_req, files=f_ids)
 
     def get_cached_files(self, opts=''):
         """
@@ -265,7 +267,7 @@ class GridSandboxCache(GangaObject):
         return ds
 
     # methods to be implemented in the child classes
-    def impl_upload(self, files=[], opts=''):
+    def impl_upload(self, cred_req, files=[], opts=''):
         """
         Uploads multiple files to a remote grid storage.
 
@@ -275,7 +277,7 @@ class GridSandboxCache(GangaObject):
         """
         raise NotImplementedError
 
-    def impl_download(self, files=[], dest_dir=None, opts=''):
+    def impl_download(self, cred_req, files=[], dest_dir=None, opts=''):
         """
         Downloads multiple files from remote grid storages to 
         a local directory.
@@ -287,7 +289,7 @@ class GridSandboxCache(GangaObject):
         """
         raise NotImplementedError
 
-    def impl_delete(self, files=[], opts=''):
+    def impl_delete(self, cred_req, files=[], opts=''):
         """
         Deletes multiple files from remote grid storages. 
 

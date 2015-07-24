@@ -875,7 +875,7 @@ sys.exit(0)
             xrsl['environment'].update(jobconfig.env)
 
         xrslText = Grid.expandxrsl(xrsl)
-        
+
         # append any additional requirements from the requirements object
         xrslText += '\n'.join(self.requirements.other)
 
