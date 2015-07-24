@@ -97,7 +97,6 @@ def __resolve_gridcmd_log_path__(regxp_logfname, cmd_output):
         logfile = match_log.group(1)
     return logfile
 
-
 def __clean_gridcmd_log__(regxp_logfname, cmd_output):
 
     logfile = __resolve_gridcmd_log_path__(regxp_logfname, cmd_output)
@@ -127,7 +126,7 @@ def __print_gridcmd_log__(regxp_logfname, cmd_output):
 def __get_proxy_voname__(cred_req):
     """Check validity of proxy vo"""
 
-    vo = credential_store.get(cred_req).vo
+    vo = credential_store[cred_req].vo
 
     logger.debug('voms of credential: %s' % vo)
     return vo
@@ -641,7 +640,7 @@ def cream_proxy_delegation(ce, delid, cred_req):
 
         cmd += ' -e %s' % ce.split('/cream')[0]
 
-        delid = '%s_%s' % (credential_store.get(cred_req).identity, get_uuid())
+        delid = '%s_%s' % (credential_store[cred_req].identity, get_uuid())
 
         cmd = '%s "%s"' % (cmd, delid)
 
@@ -656,7 +655,7 @@ def cream_proxy_delegation(ce, delid, cred_req):
             delid = ''
         else:
             # proxy delegated successfully
-            t_expire = datetime.datetime.now() + credential_store.get(cred_req).time_left()
+            t_expire = datetime.datetime.now() + credential_store[cred_req].time_left()
 
             logger.debug('new proxy at %s valid until %s' % (ce, t_expire))
 
@@ -672,7 +671,7 @@ def cream_submit(jdlpath, ce, delid, cred_req):
 
     cmd = 'glite-ce-job-submit'
 
-    delid = cream_proxy_delegation(ce, delid, cred_req)
+    delid = '%s_%s' % (credential_store[cred_req].identity, get_uuid())
 
     if delid:
         cmd += ' -D "%s"' % delid
@@ -785,7 +784,7 @@ def cream_cancelMultiple(jobids, cred_req):
         return False
 
 
-def cream_get_output(osbURIList, directory):
+def cream_get_output(osbURIList, directory, cred_req):
     """CREAM CE job output retrieval"""
 
     gfiles = []
@@ -798,7 +797,7 @@ def cream_get_output(osbURIList, directory):
     cache.vo = config['VirtualOrganisation']
     cache.uploaded_files = gfiles
 
-    return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
+    return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
 
 def __get_app_exitcode__(outputdir):
@@ -1102,7 +1101,7 @@ def __arc_sync__(cedict):
         logger.error('Unable to sync ARC jobs. Error: %s' % output)
 
 
-def arc_get_output(jid, directory):
+def arc_get_output(jid, directory, cred_req):
     """ARC CE job output retrieval"""
 
     # construct URI list from ID and output from arcls
@@ -1129,7 +1128,7 @@ def arc_get_output(jid, directory):
     cache = GridftpSandboxCache()
     cache.vo = config['VirtualOrganisation']
     cache.uploaded_files = gfiles
-    return cache.download(files=map(lambda x: x.id, gfiles), dest_dir=directory)
+    return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
 
 def arc_purgeMultiple(jobids):
