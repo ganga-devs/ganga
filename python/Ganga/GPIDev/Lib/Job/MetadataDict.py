@@ -68,5 +68,5 @@ class MetadataDict(GangaObject):
             return
         out.write('{\n')
         for key, value in self.data.iteritems():
-            out.write(whitespace_marker + '     ' + key + ' = ' + value + '\n')
+            out.write(whitespace_marker + '     ' + str(key) + ' = ' + str(value) + '\n')
         out.write(whitespace_marker + '    }\n')

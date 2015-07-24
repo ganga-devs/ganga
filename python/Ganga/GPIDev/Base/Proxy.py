@@ -14,6 +14,8 @@ from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObj
 
 import os
 
+from inspect import isclass
+
 prepconfig = getConfig('Preparable')
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
@@ -40,7 +42,6 @@ def isProxy(obj):
     #    traceback.print_stack()
     #    return issubclass(obj.__class__, GPIProxyObject)
 
-from inspect import isclass
 def isType(_obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
 

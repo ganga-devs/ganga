@@ -55,13 +55,13 @@ OutputFile objects to be copied to all jobs"),
                       'showInfo', 'showUnitInfo', 'pause' ]
     _hidden = 0
 
-   def showInfo(self):
-      """Print out the info in a nice way"""
-      print "\n".join( self.info )
+    def showInfo(self):
+        """Print out the info in a nice way"""
+        print("\n".join( self.info ))
 
-   def showUnitInfo(self, uid):
-      """Print out the given unit info in a nice way"""
-      self.units[uid].showInfo()
+    def showUnitInfo(self, uid):
+        """Print out the given unit info in a nice way"""
+        self.units[uid].showInfo()
 
     def getJobs(self):
         """Return a list of the currently active job ids"""
