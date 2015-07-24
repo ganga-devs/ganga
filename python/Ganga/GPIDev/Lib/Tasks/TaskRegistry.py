@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from .common import overview_colours, status_colours, config, logger, markup, fgcol
 import time
 import traceback
@@ -345,10 +346,10 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
             self.help(short=True)
             Ganga.GPIDev.Lib.Registry.RegistrySlice.config.setUserValue(
                 "tasks_show_help", False)
-            logger.info(
+            print(
                 "To show this help message again, type 'tasks.help()'.")
-            logger.info('')
-            logger.info(
+            print('')
+            print(
                 " The following is the output of " + markup("tasks.table()", fgcol("blue")))
             short = False
 
@@ -403,78 +404,78 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
 
     def help(self, short=False):
         """Print a short introduction and 'cheat sheet' for the Ganga Tasks package"""
-        logger.info('')
-        logger.info(markup(
+        print('')
+        print(markup(
             " *** Ganga Tasks: Short Introduction and 'Cheat Sheet' ***", fgcol("blue")))
-        logger.info('')
-        logger.info(markup("Definitions: ", fgcol(
+        print('')
+        print(markup("Definitions: ", fgcol(
             "red")) + "'Partition' - A unit of processing, for example processing a file or processing some events from a file")
-        logger.info(
+        print(
             "             'Transform' - A group of partitions that have a common Ganga Application and Backend.")
-        logger.info(
+        print(
             "             'Task'      - A group of one or more 'Transforms' that can have dependencies on each other")
-        logger.info('')
-        logger.info(
+        print('')
+        print(
             markup("Possible status values for partitions:", fgcol("red")))
-        logger.info(
+        print(
             ' * "' + markup("ready", overview_colours["ready"]) + '"    - ready to be executed ')
-        logger.info(
+        print(
             ' * "' + markup("hold", overview_colours["hold"]) + '"     - dependencies not completed')
-        logger.info(' * "' + markup("running", overview_colours[
+        print(' * "' + markup("running", overview_colours[
                     "running"]) + '"  - at least one job tries to process this partition')
-        logger.info(' * "' + markup("attempted", overview_colours[
+        print(' * "' + markup("attempted", overview_colours[
                     "attempted"]) + '"- tasks tried to process this partition, but has not yet succeeded')
-        logger.info(' * "' + markup("failed", overview_colours[
+        print(' * "' + markup("failed", overview_colours[
                     "failed"]) + '"   - tasks failed to process this partition several times')
-        logger.info(' * "' + markup("bad", overview_colours[
+        print(' * "' + markup("bad", overview_colours[
                     "bad"]) + '"      - this partition is excluded from further processing and will not be used as input to subsequent transforms')
-        logger.info(
+        print(
             ' * "' + markup("completed", overview_colours["completed"]) + '" ')
-        logger.info('')
+        print('')
 
         def c(s):
             return markup(s, fgcol("blue"))
-        logger.info(markup("Important commands:", fgcol("red")))
-        logger.info(" Get a quick overview     : " + c("tasks") +
+        print(markup("Important commands:", fgcol("red")))
+        print(" Get a quick overview     : " + c("tasks") +
                     "                  Get a detailed view    : " + c("tasks.table()"))
-        logger.info(" Access an existing task  : " + c("t = tasks(id)") +
+        print(" Access an existing task  : " + c("t = tasks(id)") +
                     "          Remove a Task          : " + c("tasks(id).remove()"))
-        logger.info(" Create a new (MC) Task   : " + c("t = MCTask()") +
+        print(" Create a new (MC) Task   : " + c("t = MCTask()") +
                     "           Copy a Task            : " + c("nt = t.copy()"))
-        logger.info(" Show task configuration  : " + c("t.info()") +
+        print(" Show task configuration  : " + c("t.info()") +
                     "               Show processing status : " + c("t.overview()"))
-        logger.info(" Set the float of a Task  : " + c("t.float = 100") +
+        print(" Set the float of a Task  : " + c("t.float = 100") +
                     "          Set the name of a task : " + c("t.name = 'My Own Task v1'"))
-        logger.info(" Start processing         : " + c("t.run()") +
+        print(" Start processing         : " + c("t.run()") +
                     "                Pause processing       : " + c("t.pause()"))
-        logger.info(" Access Transform id N    : " + c("tf = t.transforms[N]") + "   Pause processing of tf : " + c(
+        print(" Access Transform id N    : " + c("tf = t.transforms[N]") + "   Pause processing of tf : " + c(
             "tf.pause()") + "  # This command is reverted by using t.run()")
-        logger.info(" Transform Application    : " + c("tf.application") +
+        print(" Transform Application    : " + c("tf.application") +
                     "         Transform Backend      : " + c("tf.backend"))
-        logger.info('')
-        logger.info(" Set parameter in all applications       : " +
+        print('')
+        print(" Set parameter in all applications       : " +
                     c("t.setParameter(my_software_version='1.42.0')"))
-        logger.info(" Set backend for all transforms          : " +
+        print(" Set backend for all transforms          : " +
                     c("t.setBackend(backend) , p.e. t.setBackend(LCG())"))
-        logger.info(
+        print(
             " Limit on how often jobs are resubmitted : " + c("tf.run_limit = 4"))
-        logger.info(" Manually change the status of partitions: " +
+        print(" Manually change the status of partitions: " +
                     c("tf.setPartitionStatus(partition, 'status')"))
-        logger.info('')
-        logger.info(
+        print('')
+        print(
             " For an ATLAS Monte Carlo Production Example and specific help type: " + c("MCTask?"))
-        logger.info(
+        print(
             " For an ATLAS Analysis Example and help type: " + c("AnaTask?"))
-        logger.info('')
+        print('')
 
         if not True:
             #      if not short:
-            logger.info("ADVANCED COMMANDS:")
-            logger.info(
+            print("ADVANCED COMMANDS:")
+            print(
                 "Add Transform  at position N      : t.insertTransform(N, transform)")
-            logger.info(
+            print(
                 "Remove Transform  at position N   : t.removeTransform(N)")
-            logger.info(
+            print(
                 "Set Transform Application         : tf.application = TaskApp() #This Application must be a 'Task Version' of the usual application")
-            logger.info(
+            print(
                 "   Adding Task Versions of Applications is easy, contact the developers to request an inclusion")

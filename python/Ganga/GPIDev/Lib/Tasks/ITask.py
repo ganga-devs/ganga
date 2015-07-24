@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from .common import logger
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -306,7 +307,7 @@ class ITask(GangaObject):
 
     def table(self):
         from Ganga.GPI import tasks
-        logger.info(tasks[self.id:self.id + 1].table())
+        print(tasks[self.id:self.id + 1].table())
 
     def overview(self, status=''):
         """ Show an overview of the Task """
@@ -315,25 +316,25 @@ class ITask(GangaObject):
                 "Not a valid status for unitOverview. Possible options are: 'bad', 'hold', 'running', 'completed', 'new'.")
             return
 
-        logger.info(
+        print(
             "Lists the units in each transform and give the state of the subjobs")
-        logger.info('')
-        logger.info(" " * 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor")
+        print('')
+        print(" " * 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor")
         for trfid in range(0, len(self.transforms)):
-            logger.info(
+            print(
                 "----------------------------------------------------------------------------------------------------------------------")
-            logger.info("----   Transform %d:  %s" %
+            print("----   Transform %d:  %s" %
                         (trfid, self.transforms[trfid].name))
-            logger.info('')
+            print('')
             self.transforms[trfid].overview(status)
-            logger.info('')
+            print('')
 
     def info(self):
         for t in self.transforms:
             t.info()
 
     def help(self):
-        logger.info("This is a Task without special properties")
+        print("This is a Task without special properties")
 
     def resetUnitsByStatus(self, status='bad'):
         """Reset all units of the given status"""

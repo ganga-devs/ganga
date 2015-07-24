@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
 from .common import logger, markup, overview_colours, status_colours
@@ -7,6 +8,7 @@ from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from .IUnit import IUnit
+import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
@@ -50,7 +52,7 @@ OutputFile objects to be copied to all jobs"),
     _name = 'ITransform'
     _exportmethods = ['addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit',
                       'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus', 'removeUnusedJobs',
-                      'showInfo', 'showUnitInfo' ]
+                      'showInfo', 'showUnitInfo', 'pause' ]
     _hidden = 0
 
    def showInfo(self):
@@ -113,7 +115,7 @@ OutputFile objects to be copied to all jobs"),
             else:
                 o = markup(o, overview_colours["running"])
 
-            logger.info(o)
+            print(o)
 
 
 # Special methods:

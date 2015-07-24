@@ -1,7 +1,9 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
 from .common import markup, overview_colours, logger
+import Ganga.GPI as GPI
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import time
@@ -430,7 +432,7 @@ class IUnit(GangaObject):
         for s in ["submitted", "running", "completed", "failed", "unknown"]:
             o += markup("%i   " % self.n_status(s), overview_colours[s])
 
-        logger.info(o)
+        print(o)
 
     def copyOutput(self):
         """Copy any output to the given dataset"""
