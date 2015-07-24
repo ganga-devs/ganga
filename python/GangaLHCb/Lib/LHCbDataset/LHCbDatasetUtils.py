@@ -27,8 +27,9 @@ def strToDataFile(name, allowNone=True):
         from Ganga.GPI import DiracFile
         return DiracFile(lfn=name[4:])
     elif len(name) >= 4 and name[0:4].upper() == 'PFN:':
-        from GangaLHCb.Lib.Files import PhysicalFile
-        return PhysicalFile(name)
+        logger.warning("PFN is slightly ambiguous, constructing LocalFile")
+        from GangaLHCb.Lib.File import LocalFile
+        return LocalFile(name)
     else:
         if not allowNone:
             msg = 'Can only convert strings that begin w/ PFN: or '\
@@ -39,9 +40,9 @@ def strToDataFile(name, allowNone=True):
 
 def getDataFile(file):
     from Ganga.GPI import DiracFile
-    if isinstance(file,DiracFile): return file
-    from GangaLHCb.Lib.Files import PhysicalFile
-    if isinstance(file,PhysicalFile): return file
+    if isinstance(file, DiracFile): return file
+    from Ganga.GPIDev.Lib.File import LocalFile
+    if isinstance(file, LocalFile): return file
     if type(file) == type(''): return strToDataFile(file)
     return None
 
