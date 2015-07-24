@@ -142,4 +142,6 @@ os.system(cmdline)
 
 ###XMLSUMMARYPARSING###
 """
+        print script
+        print create_runscript()
         assert script == create_runscript()

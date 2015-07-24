@@ -39,4 +39,4 @@ fileName = os.path.join(j.outputdir,'std.out')
 file = open(fileName,'r')
 print(file.read())
 file.close()
-assert file_contains(fileName, 'status 45'), 'Exit code should be returned from DIRAC'
+assert file_contains(fileName, 'Status 45'), 'Exit code should be returned from DIRAC'

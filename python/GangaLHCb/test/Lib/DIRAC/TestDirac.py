@@ -44,12 +44,12 @@ class TestDirac(GangaGPITestCase):
         j = Job(backend=Dirac())
         j.submit()
         sleep_until_state( j, state='running' )
-        print j.state
+        print j.status
         stdout = sys.stdout
         tmpdir = tempfile.mktemp()
         f = tempfile.NamedTemporaryFile()
         sys.stdout = f
-        j.backend._impl.peek()
+        j.backend._impl.peek('stdout')
         sys.stdout = stdout
         j.kill()
         f.flush()

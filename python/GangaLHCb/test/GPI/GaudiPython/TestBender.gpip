@@ -4,20 +4,12 @@ import shutil
 import tempfile
 from os.path import join
 from GangaTest.Framework.tests import GangaGPITestCase, ICheckTest
-from GangaTest.Framework.utils import file_contains, is_job_finished, \
-     write_file
+from GangaTest.Framework.utils import file_contains, is_job_finished, write_file
 
 from GangaLHCb.test import *
 
-try:
-    import Ganga.Utility.Config.Config
-    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except x:
-    print(x)
-    doConfig = True
-
-if doConfig:
-    from GangaLHCb.test import *
+import Ganga.Utility.Config.Config
+from GangaLHCb.test import *
 
 import Ganga.Utility.Config
 
