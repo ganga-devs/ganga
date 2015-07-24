@@ -49,7 +49,6 @@ class CredentialStore(GangaObject):
 
         cred = stripProxy(query)._infoClass(query, check_file=check_file, create=create)
         self.credentials.add(cred)
-        logger.info('returning %s', cred)
         return cred
     
     def remove(self, credential_object):
@@ -86,7 +85,6 @@ class CredentialStore(GangaObject):
 
         match = self.match(query)
         if match:
-            logger.info('found match %s', match)
             return match
 
         # Assemble the locations to try
@@ -105,11 +103,10 @@ class CredentialStore(GangaObject):
             except CredentialsError as e:
                 logger.info(str(e))
             else:
-                logger.info('made match %s', cred)
                 self.credentials.add(cred)
                 return cred
 
-        raise KeyError('Matching credential not found in store.')
+        raise KeyError('Matching credential [{query}] not found in store.'.format(query=query))
     
     def get_all_matching_type(self, query):
         """
@@ -149,7 +146,7 @@ class CredentialStore(GangaObject):
         if len(matches) == 1:
             return matches[0]
         if len(matches) > 1:
-            logger.info("More than one match...")
+            logger.debug("More than one match...")
             # If we have a specific object and a general one. Then we ask for a general one, what should we do.
             # Does it matter since they've only asked for a general proxy? What are the use cases?
             return matches[0]  # TODO For now just return the first one... Though perhaps we should merge them or something?
