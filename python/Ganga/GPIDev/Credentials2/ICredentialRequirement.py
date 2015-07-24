@@ -1,6 +1,8 @@
 from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaABC
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
+from Ganga.GPIDev.Base.Proxy import addProxy
+
 from abc import abstractmethod
 
 
@@ -59,6 +61,9 @@ class ICredentialRequirement(GangaObject):
         ``True`` if no explicit requirements were specified (ignoring the ``location``)
         """
         pass
+
+    def __str__(self):
+        return str(addProxy(self)).replace(' ,\n', ',')
 
     def __hash__(self):
         return hash(self.encoded())

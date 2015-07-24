@@ -43,13 +43,13 @@ class ICredentialInfo(object):
         self.initialRequirements = requirements  # Store the requirements that the object was created with. Used for renewal
         
         if check_file:
-            logger.info("Trying to wrap {path}".format(path=self.location))
+            logger.debug("Trying to wrap {path}".format(path=self.location))
             if not os.path.exists(self.location):
                 raise IOError("Proxy file {path} not found".format(path=self.location))
-            logger.info("Wrapping existing file %s", self.location)
+            logger.debug("Wrapping existing file %s", self.location)
             
         if create:
-            logger.info("Making a new one")
+            logger.debug("Making a new one")
             self.create()
 
         # If the proxy object does not satisfy the requirements then abort the construction
@@ -119,7 +119,7 @@ class ICredentialInfo(object):
             ``True`` if ``self`` matches ``query``'s ``requirement``.
         """
         requirement_value = getattr(query, requirement_name)
-        logger.info('{name}: \t{cred} \t{requested}'.format(name=requirement_name, cred=getattr(self, requirement_name), requested=requirement_value))
+        logger.debug('{name}: \t{cred} \t{requested}'.format(name=requirement_name, cred=getattr(self, requirement_name), requested=requirement_value))
         if requirement_value is None:
             # If this requirementName is unspecified then ignore it
             return True
