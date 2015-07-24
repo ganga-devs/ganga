@@ -797,6 +797,9 @@ def read_ini_files(filenames, system_vars):
                     current_value = main.get(sec, name)
                 except ConfigParser.NoOptionError:
                     current_value = None
+                except ConfigParser.InterpolationMissingOptionError, err:
+                    logger.debug("Failed to expand, Importing value %s:%s as raw" % (str(sec), str(name)))
+                    current_value = main.get(sec, name, raw=True)
 
                 value = transform_PATH_option(name, value, current_value)
 
