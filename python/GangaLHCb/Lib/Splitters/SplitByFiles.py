@@ -6,15 +6,18 @@ from Ganga.GPIDev.Schema import *
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
-logger = Ganga.Utility.logging.getLogger()
 import os
 import copy
 import pickle
 
+from Ganga.GPIDev.Lib.File import IGangaFile
+from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig
+
+logger = Ganga.Utility.logging.getLogger()
 lhcbConfig = getConfig('LHCb')
 
 class SplitByFiles(GaudiInputDataSplitter):
@@ -57,13 +60,7 @@ class SplitByFiles(GaudiInputDataSplitter):
     def _create_subjob(self, job, dataset):
         logger.debug( "_create_subjob" )
         datatmp = []
-        #try:
-        #    logger.debug( "dataset len: %s" % str(len(dataset)) )
-        #except:
-        #    pass
-        from Ganga.GPIDev.Base.Proxy import typeCheck
-        from Ganga.GPI import GangaList
-        from Ganga.GPI import DiracFile
+
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
                 if isinstance( i, DiracFile ):
@@ -75,12 +72,12 @@ class SplitByFiles(GaudiInputDataSplitter):
         elif type(dataset) == type( [] ) or typeCheck(dataset, GangaList()):
             for file in dataset:
                 if type(file) == type(''):
-                    datatmp.append( DiracFile( lfn=file ) )
-                elif typeCheck(file, DiracFile()):
+                    datatmp.append( allComponentFilters['gangafiles']( file, None ) )
+                elif isType(file, IGangaFile):
                     datatmp.append( file )
                 else:
                     logger.error("Unexpected type: %s" % str(type(file)))
-                    logger.error("Wanted type: %s, or: %s" % (str(type(DiracFile())), str(type(stripProxy(DiracFile())))))
+                    logger.error("Wanted object to inherit from type: %s: %s" % (str(type(IGangaFile()))))
                     from Ganga.Core.exceptions import GangaException
                     x = GangaException( "Unknown(unexpected) file object: %s" % file )
                     raise x

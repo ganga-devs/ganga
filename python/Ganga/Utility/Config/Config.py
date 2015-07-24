@@ -906,7 +906,11 @@ def load_user_config(filename, system_vars):
                 logger.warning("Option '[%s] %s' defined in '%s' is not valid and will be removed" % (
                     name, o, filename))
                 continue
-            v = new_cfg.get(name, o)
+            try:
+                v = new_cfg.get(name, o)
+            except ConfigParser.InterpolationMissingOptionError, err:
+                logging.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
+                v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)
 
 
