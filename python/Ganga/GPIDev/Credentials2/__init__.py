@@ -26,15 +26,15 @@ def require_credential(function):
     Uses the function's object's ``credential_requirements`` attribute
     """
     @wraps(function)
-    def wrapped_function(*args, **kwargs):
-        cred_req = args[0].credential_requirements
+    def wrapped_function(self, *args, **kwargs):
+        cred_req = self.credential_requirements
 
         try:
             cred = credential_store[cred_req]
             logger.info('got %s', cred)
         except KeyError:
             if isinstance(threading.current_thread(), threading._MainThread):  # threading.main_thread() in Python 3.4
-                logger.warning('Required credential not found in store')
+                logger.warning('Required credential [%s] not found in store', cred_req)
                 cred = credential_store.create(cred_req, create=True)
                 logger.info('created %s', cred)
             else:
@@ -43,5 +43,5 @@ def require_credential(function):
         if not cred.is_valid():
             raise CredentialsError('Proxy is invalid')
             
-        return function(*args, **kwargs)
+        return function(self, *args, **kwargs)
     return wrapped_function
