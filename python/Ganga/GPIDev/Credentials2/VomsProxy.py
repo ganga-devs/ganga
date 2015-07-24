@@ -136,6 +136,6 @@ class VomsProxy(ICredentialRequirement):
         for param in self._schema.datadict.keys():
             if param in defaults:
                 setattr(self, param, defaults[param])
-    
+
     def default_location(self):
         return os.getenv("X509_USER_PROXY") or "/tmp/x509up_u"+str(os.getuid())
