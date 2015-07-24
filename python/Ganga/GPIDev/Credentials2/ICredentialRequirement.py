@@ -1,7 +1,7 @@
 from Ganga.GPIDev.Base.Objects import GangaObject, ObjectMetaABC
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
-from abc import abstractmethod, abstractproperty
+from abc import abstractmethod
 
 
 class ICredentialRequirement(GangaObject):
@@ -23,6 +23,10 @@ class ICredentialRequirement(GangaObject):
     _exportmethods = ['encoded', 'isEmpty']
     
     _infoClass = None # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
+
+    def __init__(self):
+        super(ICredentialRequirement, self).__init__()
+        self.set_defaults_from_config()  # Maybe this should be optional based on a config option or argument
     
     @abstractmethod
     def encoded(self):
@@ -38,14 +42,13 @@ class ICredentialRequirement(GangaObject):
         Fill this object's parameters with values from the user's default config
         """
         pass
-    
+
     @abstractmethod
     def default_location(self):
         """
         Returns the default location for the credential file.
         This is the location that most tools will look for the file or where the file is created without specifying anything.
         TODO Should this return a list?
-        TODO Should this be in ICredentialInfo?
         """
         pass
 

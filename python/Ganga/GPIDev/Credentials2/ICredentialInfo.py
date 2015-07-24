@@ -33,9 +33,12 @@ class ICredentialInfo(object):
             CredentialsError: If this object cannot satisfy ``requirements``
         """
         super(ICredentialInfo, self).__init__()
+
+        requirements = stripProxy(requirements)
         
         if not requirements.location:
-            raise ValueError('requirements.location must be set')
+            # If we weren't given a location, assume the encoded location
+            requirements.location = ':'.join([requirements.default_location(), requirements.encoded()])
 
         self.initialRequirements = requirements  # Store the requirements that the object was created with. Used for renewal
         
@@ -58,16 +61,28 @@ class ICredentialInfo(object):
     
     @property
     def location(self):
+        """
+        The location of the file on disk
+        """
         return self.initialRequirements.location
 
     @abstractmethod
     def create(self):
+        """
+        Create a new credential file
+        """
         pass
     
     def renew(self):
+        """
+        Renew an existing credential file
+        """
         self.create()
 
     def is_valid(self):
+        """
+        Is the credential valid to be used
+        """
         # TODO We should check that there's more than some minimum time left on the proxy
         return self.time_left() > timedelta()
 
@@ -89,9 +104,9 @@ class ICredentialInfo(object):
             ``True`` if we meet all requirements
             ``False`` if even one requirement is not met or if the credential is not valid
         """
-        if not self.is_valid():
-            logger.info("Credential {file} is not valid.".format(file=self.location))
-            return False
+        #if not self.is_valid():
+        #    logger.info("Credential {file} is not valid.".format(file=self.location))
+        #    return False
         return all(self.check_requirement(query, requirementName) for requirementName in stripProxy(query)._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
