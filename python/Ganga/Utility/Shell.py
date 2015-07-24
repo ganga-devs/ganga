@@ -100,15 +100,14 @@ class Shell(object):
             if not os.path.exists(this_cwd):
                 this_cwd = os.path.abspath(tempfile.gettempdir())
             logger.debug("Using CWD: %s" % this_cwd)
-            logger.debug(
-                'Running:   source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args)))
-            pipe = subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args)),
+            setup_cmd = 'source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args))
+            logger.debug('Running: %s', setup_cmd)
+            pipe = subprocess.Popen(setup_cmd,
                                     env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             output = pipe.communicate()
             rc = pipe.poll()
             if rc:
-                logger.warning(
-                    'Unexpected rc %d from setup command %s', rc, setup)
+                logger.warning('Unexpected rc %d from setup command %s', rc, setup)
 
             # print output
             # print eval(str(output)[0])
@@ -137,19 +136,14 @@ class Shell(object):
 
         self.dirname = None
 
-    def pythonCmd(self, cmd, soutfile=None, allowed_exit=[0],
-                  capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
-        "Execute a python command and captures the stderr and stdout which are returned in a file"
-
-        return self.cmd(cmd, soutfile, allowed_exit, capture_stderr, timeout, mention_outputfile_on_errors, python=True)
-
     def cmd(self, cmd, soutfile=None, allowed_exit=[0],
-            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True, python=False):
-        "Execute an OS command and captures the stderr and stdout which are returned in a file"
+            capture_stderr=False, timeout=None, mention_outputfile_on_errors=True):
+        """
+        Execute an OS command and captures the stderr and stdout which are returned in a file
+        """
 
         if not soutfile:
-            soutfile = tempfile.NamedTemporaryFile(
-                mode='w+t', suffix='.out').name
+            soutfile = tempfile.NamedTemporaryFile(mode='w+t', suffix='.out').name
 
         logger.debug('Running shell command: %s' % cmd)
         try:
@@ -166,9 +160,6 @@ class Shell(object):
                 this_cwd = os.path.abspath(tempfile.gettempdir())
             logger.debug("Using CWD: %s" % this_cwd)
 
-            #import traceback
-            # traceback.print_stack()
-
             process = subprocess.Popen(command, env=self.env, cwd=this_cwd)
             pid = process.pid
             while True:
@@ -181,8 +172,7 @@ class Shell(object):
                         rc = os.WEXITSTATUS(sts)
                         break
                 if timeout and time.time() - t0 > timeout:
-                    logger.warning(
-                        'Command interrupted - timeout %ss reached: %s', timeout0, cmd)
+                    logger.warning('Command interrupted - timeout %ss reached: %s', timeout0, cmd)
                     if already_killed:
                         sig = signal.SIGKILL
                     else:
@@ -198,12 +188,10 @@ class Shell(object):
         except OSError as e:
             if e.errno == 10:
                 rc = process.returncode
-                logger.debug(
-                    "Process has already exitted which will throw a 10")
+                logger.debug("Process has already exitted which will throw a 10")
                 logger.debug("Exit status is: %s" % rc)
             else:
-                logger.warning(
-                    'Problem with shell command: %s, %s', e.errno, e.strerror)
+                logger.warning('Problem with shell command: %s, %s', e.errno, e.strerror)
                 rc = 255
 
         BYTES = 4096
@@ -212,8 +200,7 @@ class Shell(object):
             if mention_outputfile_on_errors:
                 logger.warning('full output is in file: %s', soutfile)
             with open(soutfile) as sout_file:
-                logger.warning(
-                    '<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
+                logger.warning('<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
             logger.warning('<end of first %d bytes of output>', BYTES)
 
         # FIXME /bin/sh might have also other error messages
@@ -226,11 +213,10 @@ class Shell(object):
 
         return rc, soutfile, m is None
 
-    def cmd1(self, cmd, allowed_exit=[0], capture_stderr=False, timeout=None, python=False):
+    def cmd1(self, cmd, allowed_exit=[0], capture_stderr=False, timeout=None):
         "Executes an OS command and captures the stderr and stdout which are returned as a string"
 
-        rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
-                                  timeout, mention_outputfile_on_errors=False, python=python)
+        rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr, timeout, mention_outputfile_on_errors=False)
 
         with open(outfile) as out_file:
             output = out_file.read()
@@ -254,42 +240,9 @@ class Shell(object):
         try:
             rc = subprocess.call(['/bin/sh', '-c', cmd], env=self.env)
         except OSError as e:
-            logger.warning(
-                'Problem with shell command: %s, %s', e.errno, e.strerror)
+            logger.warning('Problem with shell command: %s, %s', e.errno, e.strerror)
             rc = 255
         return rc
-
-    def wrapper(self, cmd, preexecute=None):
-        """Write wrapper script for command
-
-        A wrapper around cmd is written including the setting of the environment.
-        Useful for situations where it is an external Python module that is
-        calling the command. It is callers responsibility to enter
-        new location into PATH as this might have external effects. Full path of
-        wrapper script is returned. Preexecute can contain extra commands to be
-        executed before cmd
-
-        fullpath = s.wrapper('lcg-cp', 'echo lcg-cp called with arguments $*'"""
-
-        from tempfile import mkdtemp
-        from os.path import join
-
-        if not self.dirname:
-            self.dirname = mkdtemp()
-
-        fullpath = join(self.dirname, cmd)
-        with open(fullpath, 'w') as f:
-            f.write("#!/bin/bash\n")
-            for k, v in self.env.iteritems():
-                f.write("export %s='%s'\n" % (k, v))
-            if preexecute:
-                f.write("%s\n" % preexecute)
-            f.write("%s $*\n" % cmd)
-        import stat
-        import os
-        os.chmod(fullpath, stat.S_IRWXU)
-
-        return fullpath
 
 #
 #
