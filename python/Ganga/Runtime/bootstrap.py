@@ -1507,13 +1507,14 @@ default_backends = LCG
                 newpath = os.path.expanduser('~/.ipython-ganga')
                 oldpath = os.path.expanduser('~/.ipython')
                 os.environ['IPYTHONDIR'] = newpath
-                if not os.path.exists(newpath) and os.path.exists(oldpath):
-                    logger.warning(
-                        'Default location of IPython history files has changed.')
-                    logger.warning(
-                        'Ganga will now try to copy your old settings from %s to the new path %s. If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*', oldpath, newpath, newpath)
-                    import shutil
-                    shutil.copytree(oldpath, newpath)
+                if not os.path.exists(newpath):
+                    if os.path.exists(oldpath):
+                        logger.warning('Default location of IPython history files has changed.')
+                        logger.warning('Ganga will now try to copy your old settings from %s to the new path %s. If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*', oldpath, newpath, newpath)
+                        import shutil
+                        shutil.copytree(oldpath, newpath)
+                    else:
+                        os.makedirs(newpath)
 
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
@@ -1531,8 +1532,7 @@ default_backends = LCG
                 if not Coordinator.servicesEnabled:
                     invalidCreds = Coordinator.getMissingCredentials()
                     if invalidCreds:
-                        credentialsWarningPrompt = '[%s required]' % ','.join(
-                            invalidCreds)
+                        credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
                     if credentialsWarningPrompt:  # append newline
                         credentialsWarningPrompt += '\n'
 
