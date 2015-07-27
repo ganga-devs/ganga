@@ -38,6 +38,8 @@ from Ganga.GPIDev.Credentials2.exceptions import InvalidCredentialError
 
 _allShells = {}
 
+logger = getLogger()
+
 def getShell(cred_req=None):
     """
     Utility function for getting Grid Shell.
@@ -55,8 +57,6 @@ def getShell(cred_req=None):
 
     if cred_req in _allShells.keys():
         return _allShells[cred_req]
-
-    logger = getLogger()
 
     values = {}
     for key in ['X509_CERT_DIR', 'X509_VOMS_DIR']:
