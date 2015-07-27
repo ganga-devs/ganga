@@ -15,6 +15,7 @@ from GangaAtlas.Lib.Athena.Athena import AthenaSplitterJob
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from Ganga.GPIDev.Schema import *
+import Ganga.GPI as GPI
 
 from Ganga.Utility.Config import getConfig
 configDQ2 = getConfig('DQ2')

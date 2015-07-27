@@ -15,6 +15,7 @@ from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDo
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
 from Ganga.GPIDev.Schema import *
+import Ganga.GPI as GPI
 import os
 
 from Ganga.Utility.Config import getConfig
