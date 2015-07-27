@@ -120,22 +120,11 @@ class VomsProxy(ICredentialRequirement):
     
     _infoClass = VomsProxyInfo
     
-    _defaults = {'vo': 'lhcb',
-                 'role': None,
-                 'group': None}  # TODO move this to the config file
-    
     def encoded(self):
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
     
     def is_empty(self):
         return not (self.identity or self.vo or self.role or self.group)
-    
-    def set_defaults_from_config(self):
-        defaults = self._defaults  # TODO get these from config file
-        
-        for param in self._schema.datadict.keys():
-            if param in defaults:
-                setattr(self, param, defaults[param])
 
     def default_location(self):
         return os.getenv("X509_USER_PROXY") or "/tmp/x509up_u"+str(os.getuid())

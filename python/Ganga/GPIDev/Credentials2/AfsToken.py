@@ -108,9 +108,6 @@ class AfsToken(ICredentialRequirement):
     def is_empty(self):
         return True
 
-    def set_defaults_from_config(self):
-        pass
-
     def default_location(self):
         KRB5CCNAME = os.getenv("KRB5CCNAME", '')
         if KRB5CCNAME.startswith('FILE:'):

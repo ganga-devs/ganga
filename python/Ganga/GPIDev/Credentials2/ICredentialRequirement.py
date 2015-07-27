@@ -28,20 +28,12 @@ class ICredentialRequirement(GangaObject):
 
     def __init__(self):
         super(ICredentialRequirement, self).__init__()
-        self.set_defaults_from_config()  # Maybe this should be optional based on a config option or argument
     
     @abstractmethod
     def encoded(self):
         """
         Return a string which encoded all the requirements.
         This string will be appended to the filename so it should be filesystem-friendly.
-        """
-        pass
-    
-    @abstractmethod
-    def set_defaults_from_config(self):
-        """
-        Fill this object's parameters with values from the user's default config
         """
         pass
 
