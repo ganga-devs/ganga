@@ -19,7 +19,7 @@ from Ganga.Utility.logic import implies
 from Ganga.Lib.LCG.Utility import get_md5sum
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 
-from Ganga.Lib.LCG.Grid import Grid
+from . import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
 from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential
@@ -96,8 +96,6 @@ class ARC(IBackend):
 
         re_token = re.compile('^token:(.*):(.*)$')
 
-        self.sandboxcache.vo = config['VirtualOrganisation']
-        self.sandboxcache.middleware = 'GLITE'
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':

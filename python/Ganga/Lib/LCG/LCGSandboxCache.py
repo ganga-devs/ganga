@@ -25,8 +25,7 @@ from Ganga.Utility.GridShell import getShell
 from Ganga.Lib.LCG.GridSandboxCache import GridSandboxCache, GridFileIndex
 from Ganga.Lib.LCG.Utility import get_md5sum
 
-lcg_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy(
-).datadict
+lcg_sandbox_cache_schema_datadict = GridSandboxCache._schema.inherit_copy().datadict
 lcg_file_index_schema_datadict = GridFileIndex._schema.inherit_copy().datadict
 
 

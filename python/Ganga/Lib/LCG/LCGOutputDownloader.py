@@ -1,6 +1,6 @@
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaThread.MTRunner import MTRunner, Data, Algorithm
-from Ganga.Lib.LCG.Grid import Grid
+from . import Grid
 
 logger = getLogger()
 

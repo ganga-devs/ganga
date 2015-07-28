@@ -42,7 +42,7 @@ except KeyError:
 if simulator_enabled:
     from .GridSimulator import GridSimulator as Grid
 else:
-    from .Grid import Grid
+    from . import Grid
 
 global lcg_output_downloader
 lcg_output_downloader = None
@@ -173,7 +173,6 @@ class LCG(IBackend):
 
         re_token = re.compile('^token:(.*):(.*)$')
 
-        self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
@@ -988,7 +987,7 @@ import re
 #try to import subprocess from local python installation before an
 #import from PYTHON_DIR is attempted some time later
 try:
-    import subprocess 
+    import subprocess
 except ImportError:
     pass
 
@@ -1047,8 +1046,8 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
 
     global exitcode
 
-    outfile   = file('stdout','w') 
-    errorfile = file('stderr','w') 
+    outfile   = file('stdout','w')
+    errorfile = file('stderr','w')
 
     try:
         child = subprocess.Popen(cmd, cwd=wdir, shell=True, stdout=outfile, stderr=errorfile)
@@ -1088,16 +1087,16 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
 
         child = popen2.Popen3(cmd,1)
         child.tochild.close() # don't need stdin
- 
+
         class PipeThread(threading.Thread):
- 
+
             def __init__(self,infile,outfile,stopcb):
                 self.outfile = outfile
                 self.infile = infile
                 self.stopcb = stopcb
                 self.finished = 0
                 threading.Thread.__init__(self)
- 
+
             def run(self):
                 stop = False
                 while not stop:
@@ -1111,7 +1110,7 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
                 self.finished = 1
 
         def stopcb(poll=False):
-            global exitcode 
+            global exitcode
             if poll:
                 exitcode = child.poll()
             return exitcode != -1
@@ -1166,7 +1165,7 @@ tmpdir = ''
 
 orig_wdir = os.getcwd()
 
-# prepare log file for job wrapper 
+# prepare log file for job wrapper
 out = open(os.path.join(orig_wdir, wrapperlog),'w')
 
 if os.getenv('EDG_WL_SCRATCH'):
@@ -1183,7 +1182,7 @@ if scratchdir:
         printError('Error making ganga job scratch dir: %s' % tmpdir)
         printInfo('Unable to create ganga job scratch dir in %s. Run directly in: %s' % ( scratchdir, os.getcwd() ) )
 
-        ## reset scratchdir and tmpdir to disable the usage of Ganga scratch dir 
+        ## reset scratchdir and tmpdir to disable the usage of Ganga scratch dir
         scratchdir = ''
         tmpdir = ''
 
@@ -1227,17 +1226,17 @@ try:
     #get input files
     ###DOWNLOADINPUTFILES###
 
-    printInfo('Loading Python modules ...')     
+    printInfo('Loading Python modules ...')
 
     sys.path.insert(0,os.path.join(wdir,PYTHON_DIR))
 
-    # check the python library path 
-    try: 
+    # check the python library path
+    try:
         printInfo(' ** PYTHON_DIR: %s' % os.environ['PYTHON_DIR'])
     except KeyError:
         pass
 
-    try: 
+    try:
         printInfo(' ** PYTHONPATH: %s' % os.environ['PYTHONPATH'])
     except KeyError:
         pass
@@ -1283,7 +1282,7 @@ try:
         printInfo('source %s; %s %s' % (env_setup_script, appexec, appargs))
         printInfo(wdir)
     except ImportError as err:
-        # otherwise, use separate threads to control process IO pipes 
+        # otherwise, use separate threads to control process IO pipes
         printInfo('Load application executable with separate threads')
         status = execSyscmdEnhanced('source %s; %s %s' % (env_setup_script, appexec, appargs), wdir)
 
@@ -1300,7 +1299,7 @@ try:
 
     if not status:
         raise OSError('Application execution failed.')
-    printInfo('Application execution passed with exit code %d.' % exitcode)                 
+    printInfo('Application execution passed with exit code %d.' % exitcode)
 
     ###OUTPUTUPLOADSPOSTPROCESSING###
 
@@ -1313,7 +1312,7 @@ try:
 
     printInfo('Pack outputsandbox passed.')
     monitor.stop(exitcode)
-    
+
     # Clean up after us - All log files and packed outputsandbox should be in "wdir"
     if scratchdir:
         os.chdir(orig_wdir)
@@ -1330,7 +1329,7 @@ printInfo('Job Wrapper stop.')
 out.close()
 
 # always return exit code 0 so the in the case of application failure
-# one can always get stdout and stderr back to the UI for debug. 
+# one can always get stdout and stderr back to the UI for debug.
 sys.exit(0)
 """
         return script

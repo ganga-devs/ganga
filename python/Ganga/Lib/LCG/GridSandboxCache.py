@@ -62,7 +62,6 @@ class GridSandboxCache(GangaObject):
     '''
 
     _schema = Schema(Version(1, 1), {
-        'vo': SimpleItem(defvalue='dteam', hidden=1, copyable=0, doc='the Grid virtual organization'),
         'protocol': SimpleItem(defvalue='', copyable=1, doc='file transfer protocol'),
         'max_try': SimpleItem(defvalue=1, doc='max. number of tries in case of failures'),
         'timeout': SimpleItem(defvalue=180, copyable=0, hidden=1, doc='transfer timeout in seconds'),
@@ -84,7 +83,7 @@ class GridSandboxCache(GangaObject):
         Uploads multiple files to a remote grid storage.
 
         @param files is a list of local files to be uploaded to the grid.
-               The elemement can be a file path or a File object.
+               The element can be a file path or a File object.
 
         @return True if files are successfully uploaded; otherwise it returns False
         """
