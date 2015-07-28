@@ -5,6 +5,7 @@ import math
 import re
 import mimetypes
 import shutil
+from collections import defaultdict
 
 from urlparse import urlparse
 
@@ -23,6 +24,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
+from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential
 from Ganga.GPIDev.Base.Proxy import getName
 
 config = getConfig('LCG')
@@ -45,7 +47,7 @@ class ARC(IBackend):
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on ARC CE'),
         'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on ARC CE'),
         'verbose': SimpleItem(defvalue=False, doc='Use verbose options for ARC commands'),
-        'credential_requirements': SimpleItem(defvalue=None,typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None']),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=VomsProxy()),
     })
 
     _category = 'backends'
@@ -81,8 +83,6 @@ class ARC(IBackend):
         except:
             logger.debug('load default SandboxCache')
             pass
-
-        self.grid = Grid(self.credential_requirements)
 
     def __refresh_jobinfo__(self, job):
         '''Refresh the lcg jobinfo. It will be called after resubmission.'''
@@ -269,6 +269,7 @@ class ARC(IBackend):
             # paths as values
             return runner.getResults()
 
+    @require_credential
     def __mt_bulk_submit__(self, node_jdls):
         '''submitting jobs in multiple threads'''
 
@@ -280,9 +281,10 @@ class ARC(IBackend):
         # the algorithm for submitting a single bulk job
         class MyAlgorithm(Algorithm):
 
-            def __init__(self, masterInputWorkspace, ce, arcverbose):
+            def __init__(self, cred_req, masterInputWorkspace, ce, arcverbose):
                 Algorithm.__init__(self)
                 self.inpw = masterInputWorkspace
+                self.cred_req = cred_req
                 self.ce = ce
                 self.arcverbose = arcverbose
 
@@ -290,9 +292,7 @@ class ARC(IBackend):
                 my_sj_id = jdl_info[0]
                 my_sj_jdl = jdl_info[1]
 
-                #my_sj_jid = self.gridObj.arc_submit(my_sj_jdl, self.ce, self.verbose)
-                my_sj_jid = Grid.arc_submit(
-                    my_sj_jdl, self.ce, self.arcverbose)
+                my_sj_jid = Grid.arc_submit(my_sj_jdl, self.ce, self.arcverbose, self.cred_req)
 
                 if not my_sj_jid:
                     return False
@@ -304,7 +304,7 @@ class ARC(IBackend):
         for id, jdl in node_jdls.items():
             mt_data.append((id, jdl))
 
-        myAlg = MyAlgorithm(masterInputWorkspace=job.getInputWorkspace(
+        myAlg = MyAlgorithm(cred_req=self.credential_requirements, masterInputWorkspace=job.getInputWorkspace(
         ), ce=self.CE, arcverbose=self.verbose)
         myData = Data(collection=mt_data)
 
@@ -318,7 +318,7 @@ class ARC(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            Grid.arc_cancelMultiple(runner.getResults().values())
+            Grid.arc_cancelMultiple(runner.getResults().values(), self.credential_requirements)
             return None
         else:
             return runner.getResults()
@@ -882,6 +882,7 @@ sys.exit(0)
         logger.debug('subjob XRSL: %s' % xrslText)
         return inpw.writefile(FileBuffer('__xrslfile__', xrslText))
 
+    @require_credential
     def kill(self):
         '''Kill the job'''
         job = self.getJobObject()
@@ -892,7 +893,7 @@ sys.exit(0)
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return Grid.arc_cancel([self.id])
+        return Grid.arc_cancel([self.id], self.credential_requirements)
 
     def master_kill(self):
         '''kill the master job to the grid'''
@@ -906,6 +907,7 @@ sys.exit(0)
         else:
             return self.master_bulk_kill()
 
+    @require_credential
     def master_bulk_kill(self):
         '''GLITE bulk resubmission'''
 
@@ -921,7 +923,7 @@ sys.exit(0)
                 ids.append(sj.backend.id)
 
         # 2. cancel the collected jobs
-        ck = Grid.arc_cancelMultiple(ids)
+        ck = Grid.arc_cancelMultiple(ids, self.credential_requirements)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
@@ -1018,6 +1020,7 @@ sys.exit(0)
 
         return status
 
+    @require_credential
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''Submit the master job to the grid'''
 
@@ -1041,7 +1044,7 @@ sys.exit(0)
         #        self.CE = allowed_celist[0]
 
         # use arc info to check for any endpoints recorded in the config file
-        rc, output = Grid.arc_info()
+        rc, output = Grid.arc_info(self.credential_requirements)
 
         if not self.CE and rc != 0:
             raise GangaException(
@@ -1064,6 +1067,7 @@ sys.exit(0)
 
         return ick
 
+    @require_credential
     def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
@@ -1072,8 +1076,7 @@ sys.exit(0)
         xrslpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if xrslpath:
-            self.id = Grid.arc_submit(
-                xrslpath, self.CE, self.verbose)
+            self.id = Grid.arc_submit(xrslpath, self.CE, self.verbose, self.credential_requirements)
 
             if self.id:
                 self.actualCE = self.CE
@@ -1131,6 +1134,7 @@ sys.exit(0)
 
         return ick
 
+    @require_credential
     def resubmit(self):
         '''Resubmit the job'''
 
@@ -1141,7 +1145,7 @@ sys.exit(0)
         jdlpath = job.getInputWorkspace().getPath("__jdlfile__")
 
         if jdlpath:
-            self.id = Grid.arc_submit(jdlpath, self.CE, self.verbose)
+            self.id = Grid.arc_submit(jdlpath, self.CE, self.verbose, self.credential_requirements)
 
             if self.id:
                 # refresh the lcg job information
@@ -1157,17 +1161,28 @@ sys.exit(0)
 
         import datetime
 
-        backenddict = {}
-        jobdict = {}
+        ce_list = []  # type: List[str]
+        jobdict = {}  # type: Mapping[str, Job]
         for j in jobs:
             if j.backend.id and ((datetime.datetime.utcnow() - j.time.timestamps["submitted"]).seconds > config["ArcWaitTimeBeforeStartingMonitoring"]):
                 jobdict[j.backend.id] = j
-                backenddict[j.backend.actualCE] = j
+                ce_list.append(j.backend.actualCE)
 
         if len(jobdict.keys()) == 0:
             return
 
-        jobInfoDict = Grid.arc_status(jobdict.keys(), backenddict.keys())
+        # Group jobs by the backend's credential requirements
+        cred_to_backend_id_list = defaultdict(list)  # type: Mapping[ICredentialRequirement, List[str]]
+        for jid, job in jobdict.items():
+            cred_to_backend_id_list[job.backend.credential_requirements].append(jid)
+
+        # Batch the status requests by credential requirement
+        jobInfoDict = {}
+        for cred_req, job_ids in cred_to_backend_id_list.items():
+            # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
+            info = Grid.arc_status(job_ids, ce_list, cred_req)
+            jobInfoDict.update(info)
+
         jidListForPurge = []
 
         # update job information for those available in jobInfoDict
@@ -1193,7 +1208,7 @@ sys.exit(0)
                     elif info['State'] in ['Finished', '(FINISHED)', 'Finished (FINISHED)']:
 
                         # grab output sandbox
-                        if Grid.arc_get_output(job.backend.id, job.getOutputWorkspace(create=True).getPath()):
+                        if Grid.arc_get_output(job.backend.id, job.getOutputWorkspace(create=True).getPath(), job.backend.credential_requirements):
                             (ick, app_exitcode) = Grid.__get_app_exitcode__(
                                 job.getOutputWorkspace(create=True).getPath())
                             job.backend.exitcode = app_exitcode
@@ -1226,8 +1241,9 @@ sys.exit(0)
 
         # purging the jobs the output has been fetched locally
         if jidListForPurge:
-            if not Grid.arc_purgeMultiple(jidListForPurge):
-                logger.warning("Failed to purge all ARC jobs.")
+            for cred_req, job_ids in cred_to_backend_id_list.items():
+                if not Grid.arc_purgeMultiple(set(job_ids) & set(jidListForPurge), cred_req):
+                    logger.warning("Failed to purge all ARC jobs.")
 
 
     def updateGangaJobStatus(self):

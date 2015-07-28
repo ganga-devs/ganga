@@ -611,20 +611,6 @@ def __cream_parse_job_status__(log):
     return jobInfoDict
 
 
-def __cream_ui_check__():
-    """checking if CREAM CE environment is set properly"""
-
-    if not check_proxy():
-        logger.warning('LCG plugin not active.')
-        return False
-
-    if not credential().isValid('01:00'):
-        logger.warning('GRID proxy lifetime shorter than 1 hour')
-        return False
-
-    return True
-
-
 def cream_proxy_delegation(ce, delid, cred_req):
     """CREAM CE proxy delegation"""
 
@@ -958,7 +944,7 @@ def __arc_get_config_file_arg__():
     return ""
 
 
-def arc_submit(jdlpath, ce, verbose):
+def arc_submit(jdlpath, ce, cred_req):
     """ARC CE direct job submission"""
 
     # No longer need to specify CE if available in client.conf
@@ -970,9 +956,6 @@ def arc_submit(jdlpath, ce, verbose):
     tmpstr = '/tmp/' + randomString() + '.arcsub.xml'
     cmd = 'arcsub %s -S org.nordugrid.gridftpjob -j %s' % (__arc_get_config_file_arg__(), tmpstr)
 
-    if verbose:
-        cmd += ' -d DEBUG '
-
     if ce:
         cmd += ' -c %s' % ce
 
@@ -980,9 +963,9 @@ def arc_submit(jdlpath, ce, verbose):
 
     logger.debug('job submit command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1(cmd,
-                                    allowed_exit=[0, 255],
-                                    timeout=config['SubmissionTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['SubmissionTimeout'])
 
     if output:
         output = "%s" % output.strip()
@@ -1004,7 +987,7 @@ def arc_submit(jdlpath, ce, verbose):
         return
 
 
-def arc_status(jobids, cedict):
+def arc_status(jobids, ce_list, cred_req):
     """ARC CE job status query"""
 
     if not jobids:
@@ -1020,15 +1003,14 @@ def arc_status(jobids, cedict):
         cmd, __arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
     logger.debug('job status command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1(cmd,
-                                    allowed_exit=[0, 1, 255],
-                                    timeout=config['StatusPollingTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 1, 255],
+                                            timeout=config['StatusPollingTimeout'])
     jobInfoDict = {}
 
     if rc != 0:
-        logger.warning(
-            'jobs not found in XML file: arcsync will be executed to update the job information')
-        __arc_sync__(cedict)
+        logger.warning('jobs not found in XML file: arcsync will be executed to update the job information')
+        __arc_sync__(ce_list, cred_req)
 
     if rc == 0 and output:
         jobInfoDict = __arc_parse_job_status__(output)
@@ -1043,7 +1025,7 @@ def __arc_parse_job_status__(log):
     # State: Finished (FINISHED)
     # Exit Code: 0
 
-    # Job: https://ce2.dur.scotac.uk:8443/arex/jNxMDmXTj7jnVDJaVq17x81mABFKDmABFKDmhfRKDmjBFKDmLaCRVn
+    # Job: https://ce2.dur.scotgrid.ac.uk:8443/arex/jNxMDmXTj7jnVDJaVq17x81mABFKDmABFKDmhfRKDmjBFKDmLaCRVn
     # State: Finished (terminal:client-stageout-possible)
     # Exit Code: 0
 
@@ -1069,34 +1051,32 @@ def __arc_parse_job_status__(log):
 
         # get info
         if ln.find("State:") != -1:
-            jobInfoDict[jid]['State'] = ln[
-                ln.find("State:") + len("State:"):].strip()
+            jobInfoDict[jid]['State'] = ln[ln.find("State:") + len("State:"):].strip()
 
         if ln.find("Exit Code:") != -1:
-            jobInfoDict[jid]['Exit Code'] = ln[
-                ln.find("Exit Code:") + len("Exit Code:"):].strip()
+            jobInfoDict[jid]['Exit Code'] = ln[ln.find("Exit Code:") + len("Exit Code:"):].strip()
 
         if ln.find("Job Error:") != -1:
-            jobInfoDict[jid]['Job Error'] = ln[
-                ln.find("Job Error:") + len("Job Error:"):].strip()
+            jobInfoDict[jid]['Job Error'] = ln[ln.find("Job Error:") + len("Job Error:"):].strip()
 
     return jobInfoDict
 
 
-def __arc_sync__(cedict):
+def __arc_sync__(ce_list, cred_req):
     """Collect jobs to jobs.xml"""
 
-    if cedict[0]:
-        cmd = 'arcsync %s -j %s -f -c %s' % (__arc_get_config_file_arg__(
-        ), config["ArcJobListFile"], ' -c '.join(cedict))
+    if ce_list[0]:
+        cmd = 'arcsync %s -j %s -f -c h%s' % (__arc_get_config_file_arg__(
+        ), config["ArcJobListFile"], ' -c '.join(ce_list))
     else:
         cmd = 'arcsync %s -j %s -f ' % (
             __arc_get_config_file_arg__(), config["ArcJobListFile"])
 
     logger.debug('sync ARC jobs list with: %s' % cmd)
-    rc, output, m = getShell().cmd1(cmd,
-                                    allowed_exit=[0, 255],
-                                    timeout=config['StatusPollingTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['StatusPollingTimeout'])
+
     if rc != 0:
         logger.error('Unable to sync ARC jobs. Error: %s' % output)
 
@@ -1107,9 +1087,9 @@ def arc_get_output(jid, directory, cred_req):
     # construct URI list from ID and output from arcls
     cmd = 'arcls %s %s' % (__arc_get_config_file_arg__(), jid)
     logger.debug('arcls command: %s' % cmd)
-    rc, output, m = getShell().cmd1(cmd,
-                                    allowed_exit=[0, 255],
-                                    timeout=config['SubmissionTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 255],
+                                            timeout=config['SubmissionTimeout'])
     if rc:
         logger.error(
             "Could not find directory associated with ARC job ID '%s'" % jid)
@@ -1126,12 +1106,11 @@ def arc_get_output(jid, directory, cred_req):
         gfiles.append(gf)
 
     cache = GridftpSandboxCache()
-    cache.vo = config['VirtualOrganisation']
     cache.uploaded_files = gfiles
     return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
 
-def arc_purgeMultiple(jobids):
+def arc_purgeMultiple(jobids, cred_req):
     """ARC CE job purging"""
 
     idsfile = tempfile.mktemp('.jids')
@@ -1145,7 +1124,7 @@ def arc_purgeMultiple(jobids):
 
     logger.debug('job purge command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1(cmd, allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     logger.debug(output)
 
@@ -1210,13 +1189,13 @@ def arc_cancelMultiple(jobids):
         return False
 
 
-def arc_info():
+def arc_info(cred_req):
     """Run the arcinfo command"""
 
     cmd = 'arcinfo %s > /dev/null' % __arc_get_config_file_arg__()
     logger.debug("Running arcinfo command '%s'" % cmd)
 
-    rc, output, m = getShell().cmd1(cmd,
-                                    allowed_exit=[0, 1, 255],
-                                    timeout=config['StatusPollingTimeout'])
+    rc, output, m = getShell(cred_req).cmd1(cmd,
+                                            allowed_exit=[0, 1, 255],
+                                            timeout=config['StatusPollingTimeout'])
     return rc, output
