@@ -24,7 +24,7 @@ class ICredentialRequirement(GangaObject):
 
     _exportmethods = ['encoded', 'isEmpty']
     
-    _infoClass = None # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
+    _infoClass = None  # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
 
     def __init__(self):
         super(ICredentialRequirement, self).__init__()
@@ -41,7 +41,8 @@ class ICredentialRequirement(GangaObject):
     def default_location(self):
         """
         Returns the default location for the credential file.
-        This is the location that most tools will look for the file or where the file is created without specifying anything.
+        This is the location that most tools will look for the file
+        or where the file is created without specifying anything.
         TODO Should this return a list?
         """
         pass
