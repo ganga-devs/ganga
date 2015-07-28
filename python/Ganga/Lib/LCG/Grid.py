@@ -610,33 +610,6 @@ class Grid(object):
 
         return jobInfoDict
 
-    def _cream_check_delegated_proxy(self, ce):
-        '''
-        Checking if the delegation id to given CE is still valid.
-        '''
-
-        id = None
-
-        try:
-            id, t_expire = self.proxy_id[ce]
-
-            # TODO: implement the check of the validity of the delegation id
-            import time
-            now = time.time()
-
-            # check if the lifetime of the existing proxy still longer than
-            # 1800 seconds
-            if t_expire - now <= 1800:
-                logger.debug('existing proxy going to expire in 1800 seconds.')
-                id = None
-            else:
-                logger.debug('reusing valid proxy %s on %s' % (id, ce))
-
-        except KeyError:
-            pass
-
-        return id
-
     @staticmethod
     def cream_proxy_delegation(ce, delid, cred_req):
         '''CREAM CE proxy delegation'''
@@ -799,8 +772,6 @@ class Grid(object):
             gfiles.append(gf)
 
         cache = GridftpSandboxCache()
-        cache.middleware = 'GLITE'
-        cache.vo = config['VirtualOrganisation']
         cache.uploaded_files = gfiles
 
         return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
@@ -971,7 +942,8 @@ class Grid(object):
 
         return ""
 
-    def arc_submit(self, jdlpath, ce, verbose):
+    @staticmethod
+    def arc_submit(jdlpath, ce, verbose, cred_req):
         '''ARC CE direct job submission'''
 
         # No longer need to specify CE if available in client.conf
@@ -994,23 +966,21 @@ class Grid(object):
 
         logger.debug('job submit command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1(cmd,
-                                        allowed_exit=[0, 255],
-                                        timeout=config['SubmissionTimeout'])
+        rc, output, m = getShell(cred_req).cmd1(cmd,
+                                                allowed_exit=[0, 255],
+                                                timeout=config['SubmissionTimeout'])
 
         if output:
             output = "%s" % output.strip()
-        rc = self.shell.system('rm ' + tmpstr)
+        rc = getShell().system('rm ' + tmpstr)
 
         # Job submitted with jobid:
         # gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
-        match = re.search(
-            '(gsiftp:\/\/\S+:2811\/jobs\/[0-9A-Za-z_\.\-]+)$', output)
+        match = re.search('(gsiftp:\/\/\S+:2811\/jobs\/[0-9A-Za-z_\.\-]+)$', output)
 
         # Job submitted with jobid: https://ce2.dur.scotgrid.ac.uk:8443/arex/..
         if not match:
-            match = re.search(
-                '(https:\/\/\S+:8443\/arex\/[0-9A-Za-z_\.\-]+)$', output)
+            match = re.search('(https:\/\/\S+:8443\/arex\/[0-9A-Za-z_\.\-]+)$', output)
 
         if match:
             logger.debug('job id: %s' % match.group(1))
@@ -1019,7 +989,8 @@ class Grid(object):
             logger.warning('Job submission failed.')
             return
 
-    def arc_status(self, jobids, cedict):
+    @staticmethod
+    def arc_status(jobids, ce_list, cred_req):
         '''ARC CE job status query'''
 
         if not jobids:
@@ -1032,26 +1003,25 @@ class Grid(object):
         cmd = 'arcstat'
         exec_bin = True
 
-        cmd = '%s %s -i %s -j %s' % (
-            cmd, Grid.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
+        cmd += ' %s -i %s -j %s' % (Grid.__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
         logger.debug('job status command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1(cmd,
-                                        allowed_exit=[0, 1, 255],
-                                        timeout=config['StatusPollingTimeout'])
+        rc, output, m = getShell(cred_req).cmd1(cmd,
+                                                allowed_exit=[0, 1, 255],
+                                                timeout=config['StatusPollingTimeout'])
         jobInfoDict = {}
 
         if rc != 0:
-            logger.warning(
-                'jobs not found in XML file: arcsync will be executed to update the job information')
-            self.__arc_sync__(cedict)
+            logger.warning('jobs not found in XML file: arcsync will be executed to update the job information')
+            Grid.__arc_sync__(ce_list, cred_req)
 
         if rc == 0 and output:
-            jobInfoDict = self.__arc_parse_job_status__(output)
+            jobInfoDict = Grid.__arc_parse_job_status__(output)
 
         return jobInfoDict
 
-    def __arc_parse_job_status__(self, log):
+    @staticmethod
+    def __arc_parse_job_status__(log):
         '''Parsing job status report from CREAM CE status query'''
 
         # Job: gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/FowMDmswEljnvnizHq7yZUKmABFKDmABFKDmxbGKDmABFKDmlw9pKo
@@ -1097,31 +1067,34 @@ class Grid(object):
 
         return jobInfoDict
 
-    def __arc_sync__(self, cedict):
+    @staticmethod
+    def __arc_sync__(ce_list, cred_req):
         '''Collect jobs to jobs.xml'''
 
-        if cedict[0]:
-            cmd = 'arcsync %s -j %s -f -c %s' % (Grid.__arc_get_config_file_arg__(
-            ), config["ArcJobListFile"], ' -c '.join(cedict))
+        if ce_list[0]:
+            cmd = 'arcsync %s -j %s -f -c h%s' % (Grid.__arc_get_config_file_arg__(
+            ), config["ArcJobListFile"], ' -c '.join(ce_list))
         else:
             cmd = 'arcsync %s -j %s -f ' % (
                 Grid.__arc_get_config_file_arg__(), config["ArcJobListFile"])
 
         logger.debug('sync ARC jobs list with: %s' % cmd)
-        rc, output, m = self.shell.cmd1(cmd,
+        rc, output, m = getShell(cred_req).cmd1(cmd,
                                         allowed_exit=[0, 255],
                                         timeout=config['StatusPollingTimeout'])
+
         if rc != 0:
             logger.error('Unable to sync ARC jobs. Error: %s' % output)
 
-    def arc_get_output(self, jid, directory, cred_req):
+    @staticmethod
+    def arc_get_output(jid, directory, cred_req):
         '''ARC CE job output retrieval'''
 
         # construct URI list from ID and output from arcls
         cmd = 'arcls %s %s' % (Grid.__arc_get_config_file_arg__(), jid)
         exec_bin = True
         logger.debug('arcls command: %s' % cmd)
-        rc, output, m = self.shell.cmd1(cmd,
+        rc, output, m = getShell(cred_req).cmd1(cmd,
                                         allowed_exit=[0, 255],
                                         timeout=config['SubmissionTimeout'])
         if rc:
@@ -1140,12 +1113,11 @@ class Grid(object):
             gfiles.append(gf)
 
         cache = GridftpSandboxCache()
-        cache.middleware = 'GLITE'
-        cache.vo = config['VirtualOrganisation']
         cache.uploaded_files = gfiles
         return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
-    def arc_purgeMultiple(self, jobids):
+    @staticmethod
+    def arc_purgeMultiple(jobids, cred_req):
         '''ARC CE job purging'''
 
         idsfile = tempfile.mktemp('.jids')
@@ -1160,7 +1132,7 @@ class Grid(object):
 
         logger.debug('job purge command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1(cmd, allowed_exit=[0, 255])
+        rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
         logger.debug(output)
 
@@ -1169,7 +1141,8 @@ class Grid(object):
         else:
             return False
 
-    def arc_cancel(self, jobid):
+    @staticmethod
+    def arc_cancel(jobid, cred_req):
         '''Cancel a job'''
 
         cmd = 'arckill'
@@ -1180,7 +1153,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1(cmd, allowed_exit=[0, 255])
+        rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile
@@ -1192,7 +1165,8 @@ class Grid(object):
             Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
-    def arc_cancelMultiple(self, jobids):
+    @staticmethod
+    def arc_cancelMultiple(jobids, cred_req):
         '''Cancel multiple jobs in one LCG job cancellation call'''
 
         # compose a temporary file with job ids in it
@@ -1212,7 +1186,7 @@ class Grid(object):
 
         logger.debug('job cancel command: %s' % cmd)
 
-        rc, output, m = self.shell.cmd1(cmd, allowed_exit=[0, 255])
+        rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile
@@ -1224,13 +1198,14 @@ class Grid(object):
             Grid.__print_gridcmd_log__('(.*-job-cancel.*\.log)', output)
             return False
 
-    def arc_info(self):
+    @staticmethod
+    def arc_info(cred_req):
         '''Run the arcinfo command'''
 
         cmd = 'arcinfo %s > /dev/null' % Grid.__arc_get_config_file_arg__()
         logger.debug("Running arcinfo command '%s'" % cmd)
 
-        rc, output, m = self.shell.cmd1(cmd,
+        rc, output, m = getShell(cred_req).cmd1(cmd,
                                         allowed_exit=[0, 1, 255],
                                         timeout=config['StatusPollingTimeout'])
         return rc, output
