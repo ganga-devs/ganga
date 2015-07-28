@@ -1,4 +1,3 @@
-from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility.Shell import Shell
 
 import Ganga.Utility.logging
@@ -63,7 +62,7 @@ class AfsTokenInfo(ICredentialInfo):
             self.create()
 
     def destroy(self):
-        status, output, message = self.shell.cmd1('unlog')
+        self.shell.cmd1('unlog')
 
         if self.location:
             os.remove(self.location)
@@ -88,6 +87,8 @@ class AfsTokenInfo(ICredentialInfo):
         if expires < now:
             expires = expires.replace(year=now.year+1)
 
+        self.expiry_time = expires
+
         return expires - now
 
 
@@ -109,7 +110,7 @@ class AfsToken(ICredentialRequirement):
         return True
 
     def default_location(self):
-        KRB5CCNAME = os.getenv("KRB5CCNAME", '')
-        if KRB5CCNAME.startswith('FILE:'):
-            KRB5CCNAME = KRB5CCNAME[5:]
-        return KRB5CCNAME or "/tmp/krb5cc_{uid}".format(uid=os.getuid())
+        krb_env_var = os.getenv("KRB5CCNAME", '')
+        if krb_env_var.startswith('FILE:'):
+            krb_env_var = krb_env_var[5:]
+        return krb_env_var or "/tmp/krb5cc_{uid}".format(uid=os.getuid())

@@ -40,7 +40,7 @@ class ICredentialInfo(object):
             # If we weren't given a location, assume the encoded location
             requirements.location = ':'.join([requirements.default_location(), requirements.encoded()])
 
-        self.initialRequirements = requirements  # Store the requirements that the object was created with. Used for renewal
+        self.initialRequirements = requirements  # Store the requirements that the object was created with. Used for creation
         
         if check_file:
             logger.debug("Trying to wrap {path}".format(path=self.location))
@@ -55,6 +55,8 @@ class ICredentialInfo(object):
         # If the proxy object does not satisfy the requirements then abort the construction
         if not self.check_requirements(requirements):
             raise CredentialsError('Proxy object cannot satisfy its own requirements')
+
+        self.expiry_time = None  # cache the expiry time for faster validity lookups
     
     def __str__(self):
         return '{class_name} at {file_path}'.format(class_name=type(self).__name__, file_path=self.location)
@@ -104,9 +106,6 @@ class ICredentialInfo(object):
             ``True`` if we meet all requirements
             ``False`` if even one requirement is not met or if the credential is not valid
         """
-        #if not self.is_valid():
-        #    logger.info("Credential {file} is not valid.".format(file=self.location))
-        #    return False
         return all(self.check_requirement(query, requirementName) for requirementName in stripProxy(query)._schema.datadict)
 
     def check_requirement(self, query, requirement_name):
