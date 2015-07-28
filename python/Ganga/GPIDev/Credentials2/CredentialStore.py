@@ -99,9 +99,9 @@ class CredentialStore(GangaObject):
             try:
                 cred = self.create(query, create=False, check_file=True)
             except IOError as e:
-                logger.info(e.strerror)
+                logger.debug(e.strerror)
             except CredentialsError as e:
-                logger.info(str(e))
+                logger.debug(str(e))
             else:
                 self.credentials.add(cred)
                 return cred

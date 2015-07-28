@@ -33,7 +33,7 @@ class VomsProxyInfo(ICredentialInfo):
             CredentialRenewalError: If the renewal process returns a non-zero value
         """
         voms_command = ""
-        logger.info("require " + self.initialRequirements.vo)
+        logger.debug("require " + self.initialRequirements.vo)
         if self.initialRequirements.vo:
             voms_command = "-voms %s" % self.initialRequirements.vo
             if self.initialRequirements.group or self.initialRequirements.role:
@@ -42,13 +42,13 @@ class VomsProxyInfo(ICredentialInfo):
                     voms_command += "/%s" % self.initialRequirements.group
                 if self.initialRequirements.role:
                     voms_command += "/%s" % self.initialRequirements.role
-        logger.info(voms_command)
+        logger.debug(voms_command)
         command = 'voms-proxy-init -pwstdin -out %s %s' % (self.location, voms_command)
-        logger.info(command)
+        logger.debug(command)
         process = subprocess.Popen(command, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         stdoutdata, stderrdata = process.communicate(getpass('Grid password: '))
         if process.returncode == 0:
-            logger.info('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
+            logger.debug('Grid proxy {path} created. Valid for {time}'.format(path=self.location, time=self.time_left()))
         else:
             raise CredentialRenewalError(stderrdata)
     
