@@ -1292,8 +1292,9 @@ sys.exit(0)
                     'fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
 
         # purging the jobs the output has been fetched locally
-        for cred_req, job_ids in cred_to_backend_id_list.items():
-            Grid.cream_purgeMultiple(job_ids, cred_req)
+        if jidListForPurge:
+            for cred_req, job_ids in cred_to_backend_id_list.items():
+                Grid.cream_purgeMultiple(set(job_ids) & set(jidListForPurge), cred_req)
 
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''
