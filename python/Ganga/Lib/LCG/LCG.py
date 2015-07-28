@@ -122,7 +122,7 @@ class LCG(IBackend):
         'monInfo': SimpleItem(defvalue={}, protected=1, copyable=0, hidden=1, doc='Hidden information of the monitoring service.'),
         'octopus': SimpleItem(defvalue=None, typelist=['type(None)', 'Ganga.Lib.MonitoringServices.Octopus.Octopus'], protected=1, copyable=0, transient=1, hidden=1, doc='Hidden transient object for Octopus connection.'),
         'flag': SimpleItem(defvalue=0, protected=1, copyable=0, hidden=1, doc='Hidden flag for internal control.'),
-        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=VomsProxy(), typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None']),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=VomsProxy()),
     })
 
     _category = 'backends'

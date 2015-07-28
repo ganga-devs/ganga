@@ -65,7 +65,7 @@ class CREAM(IBackend):
         'workernode': SimpleItem(defvalue='', protected=1, copyable=0, doc='The worker node on which the job actually runs.'),
         'isbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The input sandbox URI on CREAM CE'),
         'osbURI': SimpleItem(defvalue='', protected=1, copyable=0, doc='The output sandbox URI on CREAM CE'),
-        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=VomsProxy(), typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None']),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=VomsProxy()),
         'delegation_id': SimpleItem(defvalue='', typelist=['str'], hidden=True),
     })
 
@@ -1293,8 +1293,9 @@ sys.exit(0)
                     'fail to retrieve job informaton: %s' % jobdict[id].getFQID('.'))
 
         # purging the jobs the output has been fetched locally
-        for cred_req, job_ids in cred_to_backend_id_list.items():
-            Grid.cream_purgeMultiple(job_ids, cred_req)
+        if jidListForPurge:
+            for cred_req, job_ids in cred_to_backend_id_list.items():
+                Grid.cream_purgeMultiple(set(job_ids) & set(jidListForPurge), cred_req)
 
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''
