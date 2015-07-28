@@ -1,13 +1,12 @@
 import os
 import re
 import tempfile
-import time
 import datetime
 
 from Ganga.GPIDev.Credentials import getCredential
 from Ganga.GPIDev.Credentials2 import credential_store
 
-from Ganga.Utility.Config import getConfig
+from Ganga.Utility.Config import getConfig, ConfigError
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.GridShell import getShell
@@ -23,43 +22,8 @@ logger = getLogger()
 config = getConfig('LCG')
 
 
-def credential():
-    return getCredential('GridProxy')
-
-
-def check_proxy():
-    """Check the proxy and prompt the user to refresh it"""
-
-    if not credential():
-        return False
-
-    credential().voms = config['VirtualOrganisation']
-    status = credential().renew(maxTry=3)
-
-    if not status:
-        logger.warning("Could not get a proxy, giving up after 3 retries")
-        return False
-
-    return True
-
-
-def __get_cmd_prefix_hack__(binary=False):
-    # this is to work around inconsistency of LCG setup script and commands:
-    # LCG commands require python2.2 but the setup script does not set this version of python
-    # if another version of python is used (like in GUI), then python2.2 runs against wrong python libraries
-    # possibly should be fixed in LCG: either remove python2.2 from command scripts or make setup script force
-    # correct version of python
-    prefix_hack = "${GLITE_LOCATION}/bin/"
-
-    # some script-based glite-wms commands (status and logging-info) requires (#/usr/bin/env python2)
-    # which leads to a python conflict problem.
-    if not binary:
-        prefix_hack = 'python ' + prefix_hack
-
-    return prefix_hack
-
-
 def __set_submit_option__():
+
     submit_option = ''
 
     if config['Config']:
@@ -96,6 +60,7 @@ def __resolve_gridcmd_log_path__(regxp_logfname, cmd_output):
     if match_log:
         logfile = match_log.group(1)
     return logfile
+
 
 def __clean_gridcmd_log__(regxp_logfname, cmd_output):
 
@@ -563,8 +528,7 @@ def __cream_parse_job_status__(log):
     re_log = re.compile('^\s+(\S+.*\S+)\s+=\s+\[(.*)\]$')
 
     re_jts = re.compile('^\s+Job status changes:$')
-    re_ts = re.compile(
-        '^\s+Status\s+=\s+\[(.*)\]\s+\-\s+\[(.*)\]\s+\(([0-9]+)\)$')
+    re_ts = re.compile('^\s+Status\s+=\s+\[(.*)\]\s+\-\s+\[(.*)\]\s+\(([0-9]+)\)$')
     re_cmd = re.compile('^\s+Issued Commands:$')
 
     # in case of status retrival failed
@@ -657,7 +621,7 @@ def cream_submit(jdlpath, ce, delid, cred_req):
 
     cmd = 'glite-ce-job-submit'
 
-    delid = '%s_%s' % (credential_store[cred_req].identity, get_uuid())
+    delid = cream_proxy_delegation(ce, delid, cred_req)
 
     if delid:
         cmd += ' -D "%s"' % delid
@@ -780,7 +744,6 @@ def cream_get_output(osbURIList, directory, cred_req):
         gfiles.append(gf)
 
     cache = GridftpSandboxCache()
-    cache.vo = config['VirtualOrganisation']
     cache.uploaded_files = gfiles
 
     return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
@@ -944,7 +907,7 @@ def __arc_get_config_file_arg__():
     return ""
 
 
-def arc_submit(jdlpath, ce, cred_req):
+def arc_submit(jdlpath, ce, verbose, cred_req):
     """ARC CE direct job submission"""
 
     # No longer need to specify CE if available in client.conf
@@ -955,6 +918,9 @@ def arc_submit(jdlpath, ce, cred_req):
     # write to a temporary XML file as otherwise can't submit in parallel
     tmpstr = '/tmp/' + randomString() + '.arcsub.xml'
     cmd = 'arcsub %s -S org.nordugrid.gridftpjob -j %s' % (__arc_get_config_file_arg__(), tmpstr)
+
+    if verbose:
+        cmd += ' -d DEBUG '
 
     if ce:
         cmd += ' -c %s' % ce
@@ -999,8 +965,7 @@ def arc_status(jobids, ce_list, cred_req):
 
     cmd = 'arcstat'
 
-    cmd = '%s %s -i %s -j %s' % (
-        cmd, __arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
+    cmd += ' %s -i %s -j %s' % (__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
     logger.debug('job status command: %s' % cmd)
 
     rc, output, m = getShell(cred_req).cmd1(cmd,
@@ -1134,7 +1099,7 @@ def arc_purgeMultiple(jobids, cred_req):
         return False
 
 
-def arc_cancel(jobid):
+def arc_cancel(jobid, cred_req):
     """Cancel a job"""
 
     cmd = 'arckill'
@@ -1144,7 +1109,7 @@ def arc_cancel(jobid):
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1(cmd, allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
@@ -1157,7 +1122,7 @@ def arc_cancel(jobid):
         return False
 
 
-def arc_cancelMultiple(jobids):
+def arc_cancelMultiple(jobids, cred_req):
     """Cancel multiple jobs in one LCG job cancellation call"""
 
     # compose a temporary file with job ids in it
@@ -1176,7 +1141,7 @@ def arc_cancelMultiple(jobids):
 
     logger.debug('job cancel command: %s' % cmd)
 
-    rc, output, m = getShell().cmd1(cmd, allowed_exit=[0, 255])
+    rc, output, m = getShell(cred_req).cmd1(cmd, allowed_exit=[0, 255])
 
     if rc == 0:
         # job cancelling succeeded, try to remove the glite command logfile
