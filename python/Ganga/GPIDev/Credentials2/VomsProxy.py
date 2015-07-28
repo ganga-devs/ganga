@@ -7,6 +7,7 @@ logger = Ganga.Utility.logging.getLogger()
 from .ICredentialInfo import ICredentialInfo
 from .ICredentialRequirement import ICredentialRequirement
 from .exceptions import CredentialRenewalError
+from Ganga.Utility.Config import getConfig
 
 import os
 
@@ -21,9 +22,9 @@ class VomsProxyInfo(ICredentialInfo):
     """
     
     def __init__(self, requirements, check_file=False, create=False):
-        self.shell = Shell()
-        
         super(VomsProxyInfo, self).__init__(requirements, check_file, create)
+
+        self.shell = Shell()
 
     def create(self):
         """
@@ -111,7 +112,7 @@ class VomsProxy(ICredentialRequirement):
     """
     _schema = ICredentialRequirement._schema.inherit_copy()
     _schema.datadict["identity"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Identity for the proxy")
-    _schema.datadict["vo"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Virtual Organisation for the proxy")
+    _schema.datadict["vo"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Virtual Organisation for the proxy. Defaults to LGC/VirtualOrganisation")
     _schema.datadict["role"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Role that the proxy must have")
     _schema.datadict["group"] = SimpleItem(defvalue=None, typelist=['str', 'None'], doc="Group for the proxy - either 'group' or 'group/subgroup'")
                                                                                 
@@ -119,6 +120,11 @@ class VomsProxy(ICredentialRequirement):
     _name = "VomsProxy"
     
     _infoClass = VomsProxyInfo
+
+    def __init__(self):
+        super(VomsProxy, self).__init__()
+        if not self.vo:
+            self.vo = getConfig('LCG')['VirtualOrganisation']
     
     def encoded(self):
         return ':'.join(requirement for requirement in [self.identity, self.vo, self.role, self.group] if requirement)  # filter out the empties
