@@ -63,13 +63,13 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
-                if isinstance( i, DiracFile ):
+                if isType( i, DiracFile ):
                     datatmp.append( i )
                 else:
                     logger.error( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException( "Unkown file-type %s, cannot perform split with file %s" % ( type(i), str(i) ) )
-        elif type(dataset) == type( [] ) or typeCheck(dataset, GangaList()):
+        elif type(dataset) == type( [] ) or isType(dataset, GangaList()):
             for file in dataset:
                 if type(file) == type(''):
                     datatmp.append( allComponentFilters['gangafiles']( file, None ) )

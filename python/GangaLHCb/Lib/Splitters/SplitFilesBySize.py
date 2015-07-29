@@ -58,7 +58,7 @@ class SplitFilesBySize(GaudiInputDataSplitter):
             for i in dataset:
                 if type(i) == type(''):
                     datatmp.append( DiracFile( lfn=i ) )
-                elif type(i) == isType( DiracFile() ):
+                elif isType( i, DiracFile() ):
                     datatmp.extend( i )
                 else:
                     x = GangaException( "Unknown(unexpected) file object: %s" % i )

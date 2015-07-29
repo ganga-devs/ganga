@@ -9,8 +9,8 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import *
 from OutputData import *
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-from Ganga.GPIDev.Lib.Job.Job import Job,JobTemplate
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 #from Ganga.GPI import DiracFile
@@ -243,8 +243,7 @@ class LHCbDataset(GangaDataset):
         'Returns a list of the names of all files stored in the dataset.'
         names = []
         for i in self.files:
-            from Ganga.GPI import DiracFile
-            if isinstance( i, DiracFile ):
+            if isType( i, DiracFile ):
                 names.append( i.lfn )
             else:
                 try:
@@ -260,7 +259,7 @@ class LHCbDataset(GangaDataset):
         names = []
         for f in self.files:
             from Ganga.GPI import DiracFile
-            if type(f) is DiracFile: names.append('LFN:%s' % f.lfn)
+            if isType(f, DiracFile): names.append('LFN:%s' % f.lfn)
             else:
                 try:
                     names.append('PFN:%s' % f.namePattern)
@@ -441,7 +440,7 @@ def string_datafile_shortcut_lhcb(name, item):
 
     #   We can do some 'magic' with strings so lets do that here
     if (mainFileOutput is not None):
-        logger.debug( "Core Found: %s" % str( mainFileOutput ) )
+        #logger.debug( "Core Found: %s" % str( mainFileOutput ) )
         if (type(name) is not type('')):
             return mainFileOutput
 
@@ -475,11 +474,10 @@ def string_dataset_shortcut(files, item):
     ## essentially allows for dynamic extensions to JobTemplate
     ## such as LHCbJobTemplate etc.
 
-    inputdataList  = [i._impl._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()\
-                          if hasattr(i, '_impl')\
-                          and isinstance(i._impl, ObjectMetaclass)\
-                          and (issubclass(i._impl, Job) or issubclass(i._impl, LHCbTransform))\
-                          and 'inputdata' in i._impl._schema.datadict]
+    inputdataList  = [stripProxy(i)._schema.datadict['inputdata'] for i in Ganga.GPI.__dict__.values()\
+                          if isinstance(stripProxy(i), ObjectMetaclass)\
+                          and (issubclass( stripProxy(i), Job) or issubclass( stripProxy(i), LHCbTransform))\
+                          and 'inputdata' in stripProxy(i)._schema.datadict]
 #    inputdataList  = [Job._schema['inputdata'],
 #                      LHCbTransform._schema['inputdata'],
 #                      JobTemplate._schema['inputdata']

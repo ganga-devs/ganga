@@ -77,17 +77,15 @@ RecoToDST-07/90000000/DST" ,
     docstr = 'End date string yyyy-mm-dd (only works for type="RunsByDate")'
     schema['endDate'] = SimpleItem(defvalue='' ,doc=docstr)
     docstr = 'Data quality flag (string or list of strings).'
-    schema['dqflag'] = SimpleItem(defvalue='OK',typelist=['str','list'],
-                                  doc=docstr)
+    schema['dqflag'] = SimpleItem(defvalue='OK',typelist=['str','list'], doc=docstr)
     docstr = 'Type of query (Path, RunsByDate, Run, Production)'
     schema['type'] = SimpleItem(defvalue='Path',doc=docstr)
-    docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only \
-    works for type="RunsByDate")'
+    docstr = 'Selection criteria: Runs, ProcessedRuns, NotProcessed (only works for type="RunsByDate")'
     schema['selection'] = SimpleItem(defvalue='',doc=docstr)
     _schema = Schema(Version(1,2), schema)
     _category = 'query'
     _name = "BKQuery"
-    _exportmethods = ['getDataset','getDatasetMetadata']
+    _exportmethods = ['getDataset', 'getDatasetMetadata']
 
     def __init__(self, path=''):
         super(BKQuery, self).__init__()
@@ -114,11 +112,9 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg) 
-        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path,self.dqflag,self.type,self.startDate,self.endDate,
-                  self.selection)
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
         if type(self.dqflag) == type([]):
-            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path,self.dqflag,self.type,self.startDate,
-                     self.endDate,self.selection)
+            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
         result = get_result(cmd,'BK query error.','BK query error.')
         files = []
         metadata = {}

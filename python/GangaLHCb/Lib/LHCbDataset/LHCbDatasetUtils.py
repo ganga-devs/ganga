@@ -5,6 +5,10 @@ import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.Core import GangaException
 from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Base.Proxy import isType
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaLHCb.Lib.Files import LogicalFile, PhysicalFile
+from Ganga.GPIDev.Lib.File import LocalFile
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -14,21 +18,16 @@ def isLFN(file):
     return isDiracFile(file)
 
 def isDiracFile(file):
-    from Ganga.GPI import LogicalFile, DiracFile
-    from GangaDirac.Lib.Files.DiracFile import DiracFile as DiracFile_hard
-    return isinstance(file, DiracFile) or isinstance(file, LogicalFile) or isinstance(file, DiracFile_hard)
+    return isType(file, DiracFile) or isType(file, LogicalFile)
 
 def isPFN(file):
-    from GangaLHCb.Lib.Files import PhysicalFile
-    return isinstance(file, PhysicalFile) or isinstance(file, LocalFile) or isinstance(file, MassStorageFile)
+    return isType(file, PhysicalFile) or isType(file, LocalFile)
 
 def strToDataFile(name, allowNone=True):
     if len(name) >= 4 and name[0:4].upper() == 'LFN:':
-        from Ganga.GPI import DiracFile
         return DiracFile(lfn=name[4:])
     elif len(name) >= 4 and name[0:4].upper() == 'PFN:':
         logger.warning("PFN is slightly ambiguous, constructing LocalFile")
-        from GangaLHCb.Lib.File import LocalFile
         return LocalFile(name)
     else:
         if not allowNone:
@@ -39,10 +38,8 @@ def strToDataFile(name, allowNone=True):
         return None
 
 def getDataFile(file):
-    from Ganga.GPI import DiracFile
-    if isinstance(file, DiracFile): return file
-    from Ganga.GPIDev.Lib.File import LocalFile
-    if isinstance(file, LocalFile): return file
+    if isType(file, DiracFile): return file
+    if isType(file, LocalFile): return file
     if type(file) == type(''): return strToDataFile(file)
     return None
 

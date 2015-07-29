@@ -7,8 +7,10 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-#from GangaLHCb.Lib.Applications.AppsBaseUtils import *
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template
+from Ganga.GPIDev.Base.Proxy import isType
+from GangaGaudi.Lib.Applications.Gaudi import Gaudi
+from Ganga.GPIDev.Lib.Tasks.TaskApplication import TaskApplication
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -56,15 +58,14 @@ def lhcbdiracAPI_script_template():
 ##      return sandbox
 
 def is_gaudi_child(app):
-    if app.__class__.__name__ == 'Gaudi' \
-           or type(app).__bases__[0].__name__ == 'Gaudi':
+    if isType(app, Gaudi):
         return True
-    
-    if type(app).__bases__[0].__name__ == 'TaskApplication':
-        if not app.__class__.__name__ == 'GaudiPythonTask' \
-               and not app.__class__.__name__ == 'BenderTask' :
+
+    if isType( app, TaskApplication):
+        from Ganga.GPI import GaudiPythonTask, BenderTask
+        if not isType( app, GaudiPythonTask) and not isType( app, BenderTask):
             return True
-    
+
     return False
 
 class filenameFilter:
