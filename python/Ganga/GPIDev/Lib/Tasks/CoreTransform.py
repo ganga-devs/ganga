@@ -5,6 +5,7 @@ from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
 from Ganga.GPIDev.Lib.Tasks.CoreUnit import CoreUnit
 from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
 from Ganga.GPIDev.Lib.Job.Job import Job
+from Ganga.GPIDev.Base.Proxy import stripProxy
 import copy
 import re
 
@@ -141,7 +142,8 @@ class CoreTransform(ITransform):
         flist = []
         for sj in self.getParentUnitJobs(parent_units):
             for f in sj.outputfiles:
-                for f2 in stripProxy(f).getSubFiles():
+                temp_flist = stripProxy(f).getSubFiles() if len(stripProxy(f).getSubFiles()) > 0 else [stripProxy(f)]
+                for f2 in temp_flist:
                     if len(incl_pat_list) > 0:
                         for pat in incl_pat_list:
                             if re.search(pat, f2.namePattern):

@@ -1,3 +1,4 @@
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaDirac.Lib.Backends.DiracBase     import DiracBase
 from GangaDirac.Lib.Backends.DiracUtils    import result_ok
 from Ganga.GPIDev.Schema                   import Schema, Version, ComponentItem
@@ -22,7 +23,6 @@ class Dirac(DiracBase):
      def _addition_sandbox_content(self, subjobconfig):
           input_sandbox = []
           j = self.getJobObject()
-          from Ganga.GPI import DiracFile
           for f in j.inputfiles.get(DiracFile):
               if f.lfn == '':
                   raise GangaException('Can not add the lfn of of the DiracFile with name pattern: %s as the lfn property has not been set.' % f.namePattern)
@@ -58,12 +58,12 @@ class Dirac(DiracBase):
           for f in lfns: ds.files.append( DiracFile(lfn=f) )
           return GPIProxyObjectFactory(ds)
 
-     def getOutputData(self,dir=None,names=None, force=False):
+     def getOutputData(self, dir=None, names=None, force=False):
           """Retrieve data stored on SE to dir (default=job output workspace).
           If names=None, then all outputdata is downloaded otherwise names should
           be a list of files to download. If force is True then download performed
           even if data already exists."""
-          downloaded_files = super(Dirac,self).getOutputData(dir, names, force)
+          downloaded_files = super(Dirac, self).getOutputData(dir, names, force)
           ds = LHCbDataset()
           for f in downloaded_files: ds.files.append( DiracFile( lfn=f ) )
           return GPIProxyObjectFactory(ds)

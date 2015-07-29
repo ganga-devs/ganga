@@ -2,12 +2,12 @@ from GangaTest.Framework.utils import sleep_until_completed
 import os
 
 dictConfigM = config.Output.MassStorageFile
-dictConfigM['fileExtensions']=  'fillrandom.root'
+dictConfigM['fileExtensions'].append( 'fillrandom.root' )
 config.Output.MassStorageFile = dictConfigM
 
 dictConfigL = config.Output.LCGSEFile
-dictConfigL['fileExtensions']= 'fillrandom1.root'
-config.Output.MassStorageFile = dictConfigL
+dictConfigL['fileExtensions'].append( 'fillrandom1.root' )
+config.Output.LCGSEFile = dictConfigL
 
 j = Job(application=Root(),backend=LSF())
 

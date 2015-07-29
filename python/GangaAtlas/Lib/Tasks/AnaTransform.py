@@ -3,7 +3,7 @@ from Ganga.GPIDev.Lib.Tasks import Transform
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import DQ2Dataset, DQ2OutputDataset
 from GangaAtlas.Lib.Athena.DQ2JobSplitter import DQ2JobSplitter
 from TaskApplication import AthenaTask, AnaTaskSplitterJob
-
+from Ganga.GPIDev.Schema import *
 
 from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsException, DQFileExistsInDatasetException, DQInvalidRequestException
 from dq2.container.exceptions import DQContainerAlreadyHasDataset

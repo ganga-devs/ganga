@@ -12,6 +12,8 @@ from OutputData import *
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job,JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
+from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
+#from Ganga.GPI import DiracFile
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -46,7 +48,7 @@ class LHCbDataset(GangaDataset):
     _category = 'datasets'
     _name = "LHCbDataset"
     _exportmethods = ['getReplicas', '__len__', '__getitem__', 'replicate',
-                      'hasLFNs', 'extend', 'getCatalog', 'optionsString',
+                      'hasLFNs', 'append', 'extend', 'getCatalog', 'optionsString',
                       'getLFNs', 'getFileNames', 'getFullFileNames',
                       'difference', 'isSubset', 'isSuperset', 'intersection',
                       'symmetricDifference', 'union', 'bkMetadata',
@@ -56,7 +58,7 @@ class LHCbDataset(GangaDataset):
         new_files = GangaList()
         for this_file in files:
             if type(this_file) == type(''):
-                new_files.append( strToDataFile(this_file, False) )
+                new_files.append( string_datafile_shortcut_lhcb(this_file, None) )
             else:
                 new_files.append( this_file )
         super(LHCbDataset, self).__init__()
@@ -80,12 +82,12 @@ class LHCbDataset(GangaDataset):
 
         self.files = []
         if type( args[0] ) == type(''):
-            this_file = strToDataFile(args[0],False)
+            this_file = string_datafile_shortcut_lhcb(args[0], None)
             self.files.append(file_arg)
         else:
             for file_arg in args[0]:
                 if type(file_arg) is type(''):
-                    this_file = strToDataFile(file_arg,False)
+                    this_file = string_datafile_shortcut_lhcb(file_arg, None)
                 else:
                     this_file = file_arg
                 self.files.append(file_arg)
@@ -143,6 +145,7 @@ class LHCbDataset(GangaDataset):
         '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
         ds.replicate().'''
         if not destSE:
+            from Ganga.GPI import DiracFile
             DiracFile().replicate('')
             return
         if not self.hasLFNs():
@@ -166,7 +169,10 @@ class LHCbDataset(GangaDataset):
                 logger.warning(msg)
                 logger.warning(str(result))
 
-    def extend(self, files,unique=False):
+    def append(self, input_file):
+        self.extend([input_file])
+
+    def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
         #logger.debug( "extending Dataset" )
@@ -182,14 +188,18 @@ class LHCbDataset(GangaDataset):
 
         if type( files ) == type(''):
             _external_files = [ files ]
+        elif type( files ) == type([]):
+            _external_files = files
 
-        if not hasattr(files,"__getitem__"):
+        if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
             _external_files = [ files ]
             #raise GangaException('Argument "files" must be a iterable.')
 
         names = self.getFileNames()
         #logger.debug( "names: %s" % str(names) )
-        _external_files.extend( [f for f in files if type(f) != type('')] ) # just in case they extend w/ self
+        #_external_files.extend( [f for f in files if type(f) != type('')] ) # just in case they extend w/ self
+        if hasattr( files, 'subfiles'):
+            _external_files.extend(makeGangaListByRef(files.subfiles))
 
         for this_f in _external_files:
             _file = getDataFile(this_f)
@@ -249,6 +259,7 @@ class LHCbDataset(GangaDataset):
         'Returns all file names w/ PFN or LFN prepended.'
         names = []
         for f in self.files:
+            from Ganga.GPI import DiracFile
             if type(f) is DiracFile: names.append('LFN:%s' % f.lfn)
             else:
                 try:
@@ -317,7 +328,7 @@ class LHCbDataset(GangaDataset):
                 sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
                 sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
-                sdatasetsnew += """ \"PFN:%s\",""" % f.name
+                sdatasetsnew += """ \"PFN:%s\",""" % f.namePattern
                 sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency=='ROOT': sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""
@@ -457,7 +468,7 @@ def string_datafile_shortcut_lhcb(name, item):
 allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
 
 ## Name of this method set in the GPIComponentFilters section of the Core... either overload this default or leave it
-def string_dataset_shortcut(files,item):
+def string_dataset_shortcut(files, item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
     ## This clever change mirrors that in IPostprocessor (see there)

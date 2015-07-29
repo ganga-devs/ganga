@@ -3,10 +3,9 @@ j.submit()
 
 #submit is blocking...
 assert j.status == 'submitted'
-assert len(j.subjobs) == 2, 'I\'m expecting subjobs' 
+assert len(j.subjobs) == 2, "I'm expecting subjobs" 
 #set the job to failed
-j.subjobs[0]._impl.updateStatus('failed')
-j._impl.updateMasterJobStatus()
+j.subjobs[0].force_status('failed')
 assert j.subjobs[0].status == 'failed'
 
 j.subjobs[0].backend.reset()

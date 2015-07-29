@@ -14,6 +14,8 @@ from dq2.clientapi.DQ2 import DQ2, DQUnknownDatasetException, DQDatasetExistsExc
 from dq2.container.exceptions import DQContainerAlreadyHasDataset, DQContainerDoesNotHaveDataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2_lock, dq2
 from dq2.common.DQException import DQException
+from Ganga.GPIDev.Schema import *
+import Ganga.GPI as GPI
 import os
 
 from Ganga.Utility.Config import getConfig
@@ -34,7 +36,7 @@ class AtlasTransform(ITransform):
 
    _category = 'transforms'
    _name = 'AtlasTransform'
-   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers', 'setNumDQ2Threads', 'checkInputDatasets' ]
+   _exportmethods = ITransform._exportmethods + [ 'addUnit', 'getContainerName', 'initializeFromContainer', 'initializeFromDatasets', 'checkOutputContainers', 'setNumDQ2Threads', 'checkInputDatasets', 'changeDownloadLocation' ]
 
    def __init__(self):
       super(AtlasTransform,self).__init__()
@@ -336,5 +338,48 @@ class AtlasTransform(ITransform):
          if site == "NONE":
             print "ERROR: No non-blcklisted, non-Tape, non-excluded sites available for DS '%s'" % unit.inputdata.dataset
               
+   def changeDownloadLocation(self, new_location, move_files = True):
+      """Change the local download area"""
+      import os
+
+      # loop over the units
+      self.local_location = new_location
+      for unit in self.units:
+
+         # do we have a valid local download?
+         if not unit.copy_output or unit.copy_output._name != "TaskLocalCopy":
+            logger.error("No locel copy available for unit %d" % unit.getID())
+            continue
          
+         if unit.copy_output.local_location == new_location:
+            continue
+
+         # grab the download lock
+         if not unit._acquireDownloadLock():
+            logger.error("Could not get download lock after 10s for unit %d - maybe try calling the function again?" % unit.getID())
+            continue
+
+         # move any files that have already been copied
+         if move_files:
+            import shutil
+            os.makedirs(new_location)
+            for fname in unit.copy_output.files:
+               old_path = os.path.join(unit.copy_output.local_location, fname)
+               new_path = os.path.join(new_location, fname)
+               shutil.move(old_path, new_path)
+         else:
+            unit.copy_output.files = []
+
+         # change the location
+         unit.copy_output.local_location = new_location
          
+         # set unit to running so the download is run again
+         if unit.status == "completed":
+            unit.updateStatus("running")
+            
+         if self.status == "completed":
+            self.updateStatus("running")
+
+         # release download lock
+         unit._releaseDownloadLock()
+

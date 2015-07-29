@@ -14,6 +14,8 @@ from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
 
 from Ganga.GPIDev.Schema import SimpleItem
 
+available_lhcb_apps = None
+available_lhcb_packs = None
 logger = getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -30,39 +32,54 @@ def backend_handlers():
             }
   return backends
 
-available_lhcb_apps = ["Gauss", "Boole", "Brunel",
-                       "DaVinci", "Moore", "Vetra",
-                       "Panoptes", "Erasmus", "Alignment",
-                       "Noether", "Urania" ]
+#global available_lhcb_apps
 
 def available_apps():
+    global available_lhcb_apps
+    if available_lhcb_apps is None:
+        available_lhcb_apps = ["Gauss", "Boole", "Brunel",
+                               "DaVinci", "Moore", "MooreOnline",
+                               "Vetra", "Panoptes", "Erasmus",
+                               "Alignment", "Noether", "Urania" ]
+
     return available_lhcb_apps
 
-available_lhcb_packs={
-     'Gauss'     : 'Sim',
-     'Boole'     : 'Digi',
-     'Brunel'    : 'Rec',
-     'DaVinci'   : 'Phys',
-     'Moore'     : 'Hlt',
-     'Vetra'     : 'Tell1',
-     'Panoptes'  : 'Rich',
-     'Bender'    : 'Phys',
-     'Erasmus'   : '',
-     'Noether'   : '',
-     'Urania'    : 'PID',
-     'Alignment' : 'Alignment/Escher'
-     }
+#global available_lhcb_packs
 
-def available_packs(appname):
-    return available_lhcb_packs[appname]
+def available_packs( appname=None ):
+    global available_lhcb_packs
+    if available_lhcb_packs is None:
+        available_lhcb_packs={
+             'Gauss'     : 'Sim',
+             'Boole'     : 'Digi',
+             'Brunel'    : 'Rec',
+             'DaVinci'   : 'Phys',
+             'Moore'     : 'Hlt',
+             'MooreOnline' : 'Hlt',
+             'Vetra'     : 'Tell1',
+             'Panoptes'  : 'Rich',
+             'Bender'    : 'Phys',
+             'Erasmus'   : '',
+             'Noether'   : '',
+             'Urania'    : 'PID',
+             'Alignment' : 'Alignment/Escher'
+             }
+    if appname is None:
+        return available_lhcb_packs
+    else:
+        return available_lhcb_packs[appname]
 
 def addNewLHCbapp( appname, use='' ):
+    temp_apps = available_apps()
+    temp_packs = available_packs()
     assert isinstance( appname, str )
-    if any(str(appname).lower() == val.lower() for val in available_lhcb_apps ):
+    if any(str(appname).lower() == val.lower() for val in temp_apps ):
         logger.warning( "Error: %s is already in the list of supported apps, not adding" % appname )
         return
+    global available_lhcb_apps
+    global available_lhcb_packs
     available_lhcb_apps.append( str(appname) )
-    available_lhcb_packs[ str(appname)] = use
+    available_lhcb_packs[str(appname)] = use
     return
 
 def available_versions(appname):

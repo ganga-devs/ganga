@@ -3,8 +3,7 @@ import os
 
 # Do a standard Root job
 ganga_path = os.path.abspath(os.path.dirname(__file__))
-script_file = ganga_path + '/../python/GangaLHCb/test/GPI/Dirac/test.C'
-j = Job(application=Root(script=script_file),backend=Dirac())
+j = Job(application=DaVinci(),backend=Dirac())
 j.submit()
 
 sleep_until_completed(j)

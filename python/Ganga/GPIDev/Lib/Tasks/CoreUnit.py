@@ -1,6 +1,7 @@
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 import copy
+import Ganga.GPI as GPI
 
 
 class CoreUnit(IUnit):

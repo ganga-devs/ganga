@@ -1,6 +1,5 @@
 import copy, os, pickle
 from GangaLHCb.Lib.LHCbDataset.OutputData               import OutputData
-from GangaLHCb.Lib.RTHandlers.RTHUtils                  import getXMLSummaryScript,is_gaudi_child,lhcbdiracAPI_script_template
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
@@ -119,12 +118,12 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
            outbox, outdata = parser.get_output(job)
 
-           from Ganga.GPIDev.Lib.FileUtils import doesFileExist
+           from Ganga.GPIDev.Lib.File import FileUtils
            from Ganga.GPIDev.Base.Filters import allComponentFilters
 
            fileTransform = allComponentFilters['gangafiles']
-           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outdata if not doesFileExist(file, job.outputfiles) ] )
-           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outbox if not doesFileExist(file, job.outputfiles) ] )
+           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outdata if not FileUtils.doesFileExist(file, job.outputfiles) ] )
+           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outbox if not FileUtils.doesFileExist(file, job.outputfiles) ] )
 
            outputsandbox = [ f.namePattern for f in job.non_copyable_outputfiles ]
 
@@ -139,7 +138,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         input_data,   parametricinput_data = dirac_inputdata(new_job.application)
 #        outputdata,   outputdata_path      = dirac_ouputdata(new_job.application)
 
-
+        from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript, is_gaudi_child, lhcbdiracAPI_script_template
 
         commandline = "python ./gaudipython-wrapper.py"
         if is_gaudi_child(app):

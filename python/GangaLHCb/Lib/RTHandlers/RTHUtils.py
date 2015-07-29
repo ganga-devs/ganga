@@ -7,7 +7,7 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-import GangaLHCb.Lib.Applications.AppsBaseUtils
+#from GangaLHCb.Lib.Applications.AppsBaseUtils import *
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

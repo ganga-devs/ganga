@@ -13,9 +13,10 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
 import Ganga.Utility.logging
 
-logger = Ganga.Utility.logging.getLogger()
+#from Ganga.Utility.external.ordereddict import oDict
+from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
-from Ganga.Utility.external.ordereddict import oDict
+logger = Ganga.Utility.logging.getLogger()
 allConverters = oDict()
 
 ##########################################################################

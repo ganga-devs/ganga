@@ -21,8 +21,8 @@ import os
 import itertools
 import time
 
-import threading
-pSubmitLock = threading.Lock()
+#import threading
+#pSubmitLock = threading.Lock()
 
 
 class IBackend(GangaObject):
@@ -75,8 +75,8 @@ class IBackend(GangaObject):
 
     def _parallel_submit(self, b, sj, sc, master_input_sandbox, fqid, logger):
 
-        global pSubmitLok
-        lock = pSubmitLock
+        #global pSubmitLok
+        #lock = pSubmitLock
         try:
             sj.updateStatus('submitting')
             if b.submit(sc, master_input_sandbox):
@@ -93,11 +93,12 @@ class IBackend(GangaObject):
             else:
                 log_user_exception(logger, debug=False)
         finally:
-            try:
-                lock.release()
-            except:
-                Ganga.Utility.logging.log_unknown_exception()
-                pass
+            pass
+            #try:
+            #    lock.release()
+            #except:
+            #    Ganga.Utility.logging.log_unknown_exception()
+            #    pass
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit   the  master  job  and  all   its  subjobs.   The

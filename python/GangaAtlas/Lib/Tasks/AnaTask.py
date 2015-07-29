@@ -1,6 +1,7 @@
 from Ganga.GPIDev.Lib.Tasks.common import *
 from Ganga.GPIDev.Lib.Tasks import Task
 from AnaTransform import AnaTransform
+from Ganga.GPIDev.Schema import *
 
 from Ganga.Core.exceptions import ApplicationConfigurationError
 

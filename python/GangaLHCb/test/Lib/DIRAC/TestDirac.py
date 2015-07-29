@@ -5,6 +5,7 @@ from GangaTest.Framework.tests import GangaGPITestCase
 from Ganga.GPIDev.Credentials import GridProxy
 from Ganga.Core import BackendError
 import Ganga.Utility.Config 
+from GangaTest.Framework.utils import sleep_until_state
 config = Ganga.Utility.Config.getConfig('DIRAC')
 
 class TestDirac(GangaGPITestCase):
@@ -42,11 +43,13 @@ class TestDirac(GangaGPITestCase):
     def test_Dirac_peek(self):
         j = Job(backend=Dirac())
         j.submit()
+        sleep_until_state( j, state='running' )
+        print j.status
         stdout = sys.stdout
         tmpdir = tempfile.mktemp()
         f = tempfile.NamedTemporaryFile()
         sys.stdout = f
-        j.backend._impl.peek()        
+        j.backend._impl.peek('stdout')
         sys.stdout = stdout
         j.kill()
         f.flush()

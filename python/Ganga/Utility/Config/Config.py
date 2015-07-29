@@ -554,8 +554,7 @@ class PackageConfig(object):
 
         self.options[name].setSessionValue(value)
 
-        logger.debug(
-            'sucessfully set session option [%s]%s = %s', self.name, name, value)
+        logger.debug('sucessfully set session option [%s]%s = %s', self.name, name, value)
 
         for h in self._session_handlers:
             h[1](name, value)
@@ -771,7 +770,11 @@ def read_ini_files(filenames, system_vars):
                 main.add_section(sec)
 
             for name in cc.options(sec):
-                value = cc.get(sec, name)
+                try:
+                    value = cc.get(sec, name)
+                except ConfigParser.InterpolationMissingOptionError, err:
+                    #print("Can't expand config %s:%s treating it as raw" % (str(sec),str(name)))
+                    value = cc.get(sec, name, raw=True)
 
                 for localvar in re.finditer('\$\{[^${}]*\}', value):
                     localvarstripped = re.sub(r'[^\w]', '', localvar.group(0))
@@ -794,6 +797,9 @@ def read_ini_files(filenames, system_vars):
                     current_value = main.get(sec, name)
                 except ConfigParser.NoOptionError:
                     current_value = None
+                except ConfigParser.InterpolationMissingOptionError, err:
+                    logger.debug("Failed to expand, Importing value %s:%s as raw" % (str(sec), str(name)))
+                    current_value = main.get(sec, name, raw=True)
 
                 value = transform_PATH_option(name, value, current_value)
 
@@ -868,7 +874,12 @@ def configure(filenames, system_vars):
             # the configuration units!
             if o in cfg.defaults().keys():
                 continue
-            v = cfg.get(name, o)
+            try:
+                v = cfg.get(name, o)
+            except ConfigParser.InterpolationMissingOptionError, err:
+                logger = getLogger()
+                logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
+                v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
 
     _configured = True
@@ -895,7 +906,11 @@ def load_user_config(filename, system_vars):
                 logger.warning("Option '[%s] %s' defined in '%s' is not valid and will be removed" % (
                     name, o, filename))
                 continue
-            v = new_cfg.get(name, o)
+            try:
+                v = new_cfg.get(name, o)
+            except ConfigParser.InterpolationMissingOptionError, err:
+                logging.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
+                v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)
 
 

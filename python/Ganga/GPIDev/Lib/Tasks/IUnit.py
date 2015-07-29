@@ -1,11 +1,18 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
 from .common import markup, overview_colours, logger
+import Ganga.GPI as GPI
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import time
+from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
+import sys
 
+def formatTraceback():
+   "Helper function to printout a traceback as a string"
+   return "\n %s\n%s\n%s\n" % (''.join( traceback.format_tb(sys.exc_info()[2])), sys.exc_info()[0], sys.exc_info()[1])
 
 class IUnit(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -28,6 +35,7 @@ class IUnit(GangaObject):
         'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
         'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
         'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.OutputFile.OutputFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
+        'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
     })
 
     _category = 'units'
@@ -61,6 +69,7 @@ class IUnit(GangaObject):
 
     def updateStatus(self, status):
         """Update status hook"""
+        addInfoString(self, "Status change from '%s' to '%s'" % (self.status, status))
         self.status = status
 
     def createNewJob(self):
@@ -160,17 +169,22 @@ class IUnit(GangaObject):
         if req_ok and self.checkForSubmission() and maxsub > 0:
 
             # create job and submit
+            addInfoString( self, "Creating Job..." )
             j = self.createNewJob()
             if j.name == '':
                 j.name = "T%i:%i U%i" % (task.id, trf.getID(), self.getID())
 
             try:
                 if trf.submit_with_threads:
+                    addInfoString( self, "Attempting job submission with queues..." )
                     GPI.queues.add(j.submit)
                 else:
+                    addInfoString( self, "Attempting job submission..." )
                     j.submit()
 
             except:
+                addInfoString( self, "Failed Job Submission")
+                addInfoString( self, "Reason: %s" % (formatTraceback()))
                 logger.error("Couldn't submit the job. Deactivating unit.")
                 self.prev_job_ids.append(j.id)
                 self.active = False
@@ -229,6 +243,7 @@ class IUnit(GangaObject):
                 if self.minor_resub_count + self.major_resub_count > trf.run_limit - 1:
                     logger.error("Too many resubmits (%i). Deactivating unit." % (
                         self.minor_resub_count + self.major_resub_count))
+                    addInfoString( self, "Deactivating unit. Too many resubmits (%i)" % ( self.minor_resub_count + self.major_resub_count))
                     self.active = False
                     return 0
 
@@ -240,12 +255,14 @@ class IUnit(GangaObject):
                     else:
                         logger.error(
                             "Too many minor resubmits (%i). Deactivating unit." % self.minor_resub_count)
+                        addInfoString( self, "Deactivating unit. Too many resubmits (%i)" % (self.minor_resub_count + self.minor_resub_count))
                         self.active = False
                         return 0
 
                 if self.major_resub_count > trf.major_run_limit - 1:
                     logger.error(
                         "Too many major resubmits (%i). Deactivating unit." % self.major_resub_count)
+                    addInfoString( self, "Deactivating unit. Too many resubmits (%i)" % (self.minor_resub_count + self.major_resub_count))
                     self.active = False
                     return 0
 
@@ -256,10 +273,13 @@ class IUnit(GangaObject):
                     self.minor_resub_count = 0
 
                     try:
+                        addInfoString( self, "Attempting major resubmit...")
                         self.majorResubmit(job)
                     except:
                         logger.error(
                             "Couldn't resubmit the job. Deactivating unit.")
+                        addInfoString( self, "Failed Job resubmission")
+                        addInfoString( self, "Reason: %s" % (formatTraceback()))
                         self.active = False
 
                     # break the loop now because we've probably changed the
@@ -268,15 +288,19 @@ class IUnit(GangaObject):
                 else:
                     self.minor_resub_count += 1
                     try:
+                        addInfoString( self, "Attempting minor resubmit...")
                         self.minorResubmit(job)
                     except:
                         logger.error(
                             "Couldn't resubmit the job. Deactivating unit.")
+                        addInfoString( self, "Failed Job resubmission")
+                        addInfoString( self, "Reason: %s" % (formatTraceback()))
                         self.active = False
                         return 1
 
     def reset(self):
         """Reset the unit completely"""
+        addInfoString( self, "Reseting Unit...")
         self.minor_resub_count = 0
         self.major_resub_count = 0
         if len(self.active_job_ids) > 0:
@@ -408,7 +432,7 @@ class IUnit(GangaObject):
         for s in ["submitted", "running", "completed", "failed", "unknown"]:
             o += markup("%i   " % self.n_status(s), overview_colours[s])
 
-        logger.info(o)
+        print(o)
 
     def copyOutput(self):
         """Copy any output to the given dataset"""

@@ -24,16 +24,16 @@ logger = Ganga.Utility.logging.getLogger()
 
 import sys
 config = makeConfig('ROOT', "Options for Root backend")
-config.addOption('arch', 'slc4_ia32_gcc34', 'Architecture of ROOT')
+config.addOption('arch', 'x86_64-slc6-gcc48-opt', 'Architecture of ROOT')
 config.addOption(
-    'location', '/afs/cern.ch/sw/lcg/external/root', 'Location of ROOT')
+    'location', '/afs/cern.ch/sw/lcg/releases/LCG_72root6/ROOT/${version}/${arch}/', 'Location of ROOT')
 config.addOption(
     'path', '', 'Set to a specific ROOT version. Will override other options.')
-config.addOption('pythonhome', '${location}/../Python/${pythonversion}/${arch}/',
+config.addOption('pythonhome', '/afs/cern.ch/sw/lcg/releases/LCG_72root6/Python/${pythonversion}/${arch}/',
                  'Location of the python used for execution of PyROOT script')
-config.addOption('pythonversion', '',
+config.addOption('pythonversion', '2.7.6',
                  "Version number of python used for execution python ROOT script")
-config.addOption('version', '6.02.00', 'Version of ROOT')
+config.addOption('version', '6.02.03', 'Version of ROOT')
 
 import os
 from Ganga.Utility.files import expandfilename

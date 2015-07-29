@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from .common import logger
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -7,7 +8,18 @@ from Ganga.GPIDev.Lib.Job import MetadataDict
 import time
 
 ########################################################################
-
+def addInfoString( task_obj, info_str ):
+    """Helper function to add an info string with a timestamp"""
+    if len(task_obj.info) > 0 and task_obj.info[-1].find(info_str) > -1:
+        # repeated string. Add one to instances
+        num_rpts = 1
+        if task_obj.info[-1].find("(rpt ") > -1:
+            num_rpts = int( task_obj.info[-1][ task_obj.info[-1].find("(rpt ") + 5:-1 ] )
+            
+        task_obj.info[-1] = "%s: %s (rpt %i)" % (time.ctime(), info_str, num_rpts + 1)
+        return
+    
+    task_obj.info.append("%s: %s" % (time.ctime(), info_str) )
 
 class ITask(GangaObject):
 
@@ -21,6 +33,7 @@ class ITask(GangaObject):
         'float': SimpleItem(defvalue=0, copyable=1, doc='Number of Jobs run concurrently', typelist=["int"]),
         'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1),
         'creation_date': SimpleItem(defvalue="19700101", copyable=0, protected=1, doc='Creation date of the task', typelist=["str"]),
+        'check_all_trfs': SimpleItem(defvalue=True, doc='Check all Transforms during each monitoring loop cycle'),
     })
 
     _category = 'tasks'
@@ -83,7 +96,7 @@ class ITask(GangaObject):
             if trf.status != "running":
                 continue
 
-            if trf.update():
+            if trf.update() and not self.check_all_trfs:
                 break
 
         # make sure all changes to unit info has been stored
@@ -294,7 +307,7 @@ class ITask(GangaObject):
 
     def table(self):
         from Ganga.GPI import tasks
-        logger.info(tasks[self.id:self.id + 1].table())
+        print(tasks[self.id:self.id + 1].table())
 
     def overview(self, status=''):
         """ Show an overview of the Task """
@@ -303,25 +316,25 @@ class ITask(GangaObject):
                 "Not a valid status for unitOverview. Possible options are: 'bad', 'hold', 'running', 'completed', 'new'.")
             return
 
-        logger.info(
+        print(
             "Lists the units in each transform and give the state of the subjobs")
-        logger.info('')
-        logger.info(" " * 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor")
+        print('')
+        print(" " * 41 + "Active\tSub\tRun\tComp\tFail\tMinor\tMajor")
         for trfid in range(0, len(self.transforms)):
-            logger.info(
+            print(
                 "----------------------------------------------------------------------------------------------------------------------")
-            logger.info("----   Transform %d:  %s" %
+            print("----   Transform %d:  %s" %
                         (trfid, self.transforms[trfid].name))
-            logger.info('')
+            print('')
             self.transforms[trfid].overview(status)
-            logger.info('')
+            print('')
 
     def info(self):
         for t in self.transforms:
             t.info()
 
     def help(self):
-        logger.info("This is a Task without special properties")
+        print("This is a Task without special properties")
 
     def resetUnitsByStatus(self, status='bad'):
         """Reset all units of the given status"""

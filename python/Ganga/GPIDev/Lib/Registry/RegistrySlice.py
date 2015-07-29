@@ -1,15 +1,18 @@
 import sys
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
 import fnmatch
 import collections
-from Ganga.Utility.external.ordereddict import oDict
+#from Ganga.Utility.external.ordereddict import oDict
+from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
 import Ganga.Utility.Config
+
+logger = Ganga.Utility.logging.getLogger()
+
 config = Ganga.Utility.Config.makeConfig(
     'Display', 'control the printing style of the different registries ("jobs","box","tasks"...)')
 

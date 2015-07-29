@@ -19,8 +19,6 @@ import subprocess
 import pickle
 logger = Ganga.Utility.logging.getLogger()
 
-from GangaLHCb.Lib.Applications import XMLPostProcessor
-
 ## The Doc string for the Application classes
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 ## def GaudiDocString(appname):
@@ -146,6 +144,7 @@ class AppName(Gaudi):
         if self.appname is 'Vetra': self.lhcb_release_area = os.path.expandvars("$Vetra_release_area")
 
     def postprocess(self):
+        from GangaLHCb.Lib.Applications import XMLPostProcessor
         XMLPostProcessor.postprocess(self,logger)
 
     def readInputData(self,optsfiles,extraopts=False):

@@ -14,6 +14,8 @@ from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObj
 
 import os
 
+from inspect import isclass
+
 prepconfig = getConfig('Preparable')
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
@@ -40,7 +42,6 @@ def isProxy(obj):
     #    traceback.print_stack()
     #    return issubclass(obj.__class__, GPIProxyObject)
 
-from inspect import isclass
 def isType(_obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
 
@@ -49,7 +50,7 @@ def isType(_obj, type_or_seq):
     else:
         obj = stripProxy(_obj)
 
-    if type(type_or_seq) == type(()) or type(type_or_seq) == type([]):
+    if isinstance(type_or_seq, (tuple, list)):
         clean_list = []
         for type_obj in type_or_seq:
             if type_obj != type(type('')):
@@ -61,10 +62,7 @@ def isType(_obj, type_or_seq):
                 clean_list.append(type_obj)
         return isinstance(obj, tuple(clean_list))
     else:
-        if isclass(type_or_seq):
-            return isinstance( obj, type(stripProxy(type_or_seq())))
-        else:
-            return isinstance( obj, stripProxy(type_or_seq))
+        return isinstance(obj, stripProxy(type_or_seq))
 
 def typeCheck(obj, myClass):
     """Checks the given object against a known class instance, stripping the proxy as appropriate"""
@@ -520,7 +518,7 @@ def GPIProxyClassFactory(name, pluginclass):
                 "Internal implementation object '_impl' cannot be reassigned")
 
         if not self._impl._schema.hasAttribute(x):
-            if True in [isType(self, t) for t in metadata_objects] and\
+            if any(isType(self, t) for t in metadata_objects) and\
                     x in self._impl.metadata.data.keys():
                 raise GangaAttributeError(
                     "Metadata item '%s' cannot be modified" % x)

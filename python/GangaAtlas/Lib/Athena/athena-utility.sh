@@ -1077,6 +1077,11 @@ run_athena () {
 	    EXE_FILELIST=$(tr '\n' ',' < input.txt | sed 's/\//\\\//g' | sed s/,$//)  
 	    echo $EXE_FILELIST
 	    NEW_ATHENA_OPTIONS=`echo $ATHENA_OPTIONS | sed s/%IN/$EXE_FILELIST/`
+	    if [ -z $NEW_ATHENA_OPTIONS ]
+	    then
+		echo "Problem swapping out %IN args, see stderr for actual error. Maybe try using input.txt instead."
+		NEW_ATHENA_OPTIONS=$ATHENA_OPTIONS
+	    fi
 	    echo "New EXE command line: "
 	    echo $NEW_ATHENA_OPTIONS
 	    export PATH=$PATH:.

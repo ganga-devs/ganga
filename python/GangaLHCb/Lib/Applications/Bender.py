@@ -137,19 +137,26 @@ class Bender(GaudiBase):
 
         #self._configure()
         modulename = split(self.module.name)[-1].split('.')[0]
-        script =  "from Gaudi.Configuration import *\n"
-        script += "importOptions('data.py')\n"
-        script += "import %s as USERMODULE\n" % modulename
-        script += "EventSelectorInput = EventSelector().Input\n"
-        script += "FileCatalogCatalogs = FileCatalog().Catalogs\n"
+        script = """
+from copy import deepcopy
+from Gaudi.Configuration import *
+importOptions('data.py')
+import %s as USERMODULE
+EventSelectorInput = deepcopy(EventSelector().Input)
+FileCatalogCatalogs = deepcopy(FileCatalog().Catalogs)
+EventSelector().Input=[]
+FileCatalog().Catalogs=[]\n""" % modulename
+
+        script_configure = "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs%s)\n"
         if self.params:
-          script += \
-                 "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs,params=%s)\n"%self.params
+          param_string = ",params=%s" % self.params
         else:
-          script += \
-                 "USERMODULE.configure(EventSelectorInput,FileCatalogCatalogs)\n"
+          param_string = ""
+
+        script_configure = script_configure % param_string
+        script += script_configure
+
         script += "USERMODULE.run(%d)\n" % self.events
-        script += ""
         script += getXMLSummaryScript()
         #self.extra.input_buffers['gaudipython-wrapper.py'] = script
         #outsb = self.getJobObject().outputsandbox

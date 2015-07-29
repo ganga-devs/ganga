@@ -1,4 +1,5 @@
 from __future__ import absolute_import
+from __future__ import print_function
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem, GangaFileItem
 from .common import logger, markup, overview_colours, status_colours
@@ -7,9 +8,10 @@ from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from .IUnit import IUnit
+import Ganga.GPI as GPI
 import time
 import os
-
+from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -42,14 +44,24 @@ OutputFile objects to be copied to all jobs"),
         'chain_delay': SimpleItem(defvalue=0, doc='Minutes delay between a required/chained unit completing and starting this one', protected=1, typelist=["int"]),
         'submit_with_threads': SimpleItem(defvalue=False, doc='Use Ganga Threads for submission'),
         'max_active_threads': SimpleItem(defvalue=10, doc='Maximum number of Ganga Threads to use. Note that the number of simultaneous threads is controlled by the queue system (default is 5)'),
+        'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
         #'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
     })
 
     _category = 'transforms'
     _name = 'ITransform'
     _exportmethods = ['addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit',
-                      'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus', 'removeUnusedJobs']
+                      'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus', 'removeUnusedJobs',
+                      'showInfo', 'showUnitInfo', 'pause' ]
     _hidden = 0
+
+    def showInfo(self):
+        """Print out the info in a nice way"""
+        print("\n".join( self.info ))
+
+    def showUnitInfo(self, uid):
+        """Print out the given unit info in a nice way"""
+        self.units[uid].showInfo()
 
     def getJobs(self):
         """Return a list of the currently active job ids"""
@@ -103,7 +115,7 @@ OutputFile objects to be copied to all jobs"),
             else:
                 o = markup(o, overview_colours["running"])
 
-            logger.info(o)
+            print(o)
 
 
 # Special methods:
@@ -143,6 +155,8 @@ OutputFile objects to be copied to all jobs"),
 # Public methods
     def resetUnit(self, uid):
         """Reset the given unit"""
+        addInfoString( self, "Reseting Unit %i" % ( uid ) )
+
         for u in self.units:
             if u.getID() == uid:
                 u.reset()
@@ -195,6 +209,17 @@ OutputFile objects to be copied to all jobs"),
             for unit in self.units:
                 unit.start_time = time.time() + self.chain_delay * 60 - 1
 
+        # report the info for this transform
+        unit_status = { "new":0, "hold":0, "running":0, "completed":0, "bad":0, "recreating":0 }
+        for unit in self.units:
+            unit_status[unit.status] += 1
+         
+        info_str = "Unit overview: %i units, %i new, %i hold, %i running, %i completed, %i bad. to_sub %i" % (len(self.units), unit_status["new"], unit_status["hold"],
+                                                                                                              unit_status["running"], unit_status["completed"],
+                                                                                                              unit_status["bad"], self._getParent().n_tosub())
+      
+        addInfoString(self, info_str)
+                
         # ask the unit splitter if we should create any more units given the
         # current data
         self.createUnits()
@@ -356,6 +381,7 @@ OutputFile objects to be copied to all jobs"),
             raise ApplicationConfigurationError(None, "addUnitTOTRF failed for Transform %d (%s): No unit specified" %
                                                 (self.getID(), self.name))
 
+        addInfoString( self, "Adding Unit to TRF...")
         unit.updateStatus("hold")
         unit.active = True
         if prev_unit:

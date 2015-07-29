@@ -872,7 +872,7 @@ sys.exit(0)
             xrsl['environment'].update(jobconfig.env)
 
         xrslText = Grid.expandxrsl(xrsl)
-
+        
         # append any additional requirements from the requirements object
         xrslText += '\n'.join(self.requirements.other)
 
@@ -934,6 +934,7 @@ sys.exit(0)
     def master_bulk_submit(self, rjobs, subjobconfigs, masterjobconfig):
         '''submit multiple subjobs in parallel, by default using 10 concurrent threads'''
 
+        from Ganga.Utility.logic import implies
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
 
         # prepare the subjobs, jdl repository before bulk submission

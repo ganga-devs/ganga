@@ -24,13 +24,22 @@ import logging
 import logging.handlers as handlers
 import sys
 
+# logger configuration
+# settings for new loggers may be added here at will (for example read
+# from the config file)
+import Ganga.Utility.Config
+
+import Ganga.Utility.ColourText as ColourText
+
+import threading
+
 # initialize the root logger for the logger created directly in python
 # executable scripts which have no name starting by "Ganga."
 # By default everything goes to stdout
 logging.basicConfig(stream=sys.stdout)
 
 _formats = {
-    'DEBUG': '%(asctime)s "%(filename)s" at %(lineno)d, %(name)-35s: %(levelname)-8s %(message)s',
+    'DEBUG': '%(asctime)s "%(filename)s":%(funcName)-10s at %(lineno)d, %(threadName)s: %(levelname)-8s %(message)s',
     'VERBOSE': '%(asctime)s %(name)-35s: %(levelname)-8s %(message)s',
     'NORMAL': '%(name)-35s: %(levelname)-8s %(message)s',
     'TERSE': 'Ganga: %(levelname)-8s %(message)s'
@@ -65,11 +74,6 @@ _global_level = None
 # all loggers which are used by all modules
 _allLoggers = {}
 
-# logger configuration
-# settings for new loggers may be added here at will (for example read
-# from the config file)
-import Ganga.Utility.Config
-
 config = Ganga.Utility.Config.makeConfig("Logging", """control the messages printed by Ganga
 The settings are applied hierarchically to the loggers. Ganga is the name of the top-level logger which
 applies by default to all Ganga.* packages unless overriden in sub-packages.
@@ -90,13 +94,13 @@ config.addOption('_logfile_size', 100000,
                  "the size of the logfile (in bytes), the rotating log will never exceed this file size")  # 100 K
 config.addOption('_interactive_cache', True,
                  'if True then the cache used for interactive sessions, False disables caching')
+config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
 
 class ColourFormatter(logging.Formatter):
 
     def __init__(self, *args, **kwds):
         logging.Formatter.__init__(self, *args, **kwds)
-        import Ganga.Utility.ColourText as ColourText
         fg = ColourText.Foreground()
         fx = ColourText.Effects()
         self.colours = {logging.INFO: fx.normal,
@@ -115,7 +119,6 @@ class ColourFormatter(logging.Formatter):
             return s
 
     def setColour(self, yes):
-        import Ganga.Utility.ColourText as ColourText
         if yes:
             self.markup = ColourText.ANSIMarkup()
         else:
@@ -123,7 +126,10 @@ class ColourFormatter(logging.Formatter):
 
 
 def _set_formatter(handler):
-    formatter = ColourFormatter(_formats[config['_format']])
+    if config['_customFormat'] != "":
+        formatter = ColourFormatter(config['_customFormat'])
+    else:
+        formatter = ColourFormatter(_formats[config['_format']])
     formatter.setColour(config['_colour'])
     handler.setFormatter(formatter)
 
@@ -161,24 +167,25 @@ def _make_file_handler(logfile, logfile_size):
         main_logger.addHandler(new_file_handler)
         file_handler = new_file_handler
 
+
 # reflect all user changes immediately
-
-
 def post_config_handler(opt, value):
     format, colour = config['_format'], config['_colour']
 
     if opt == '_format':
         try:
-            format = _formats[value]
-        except KeyError:
-            private_logger.error('illegal name of format string (%s), possible values: %s' % (
-                str(value), _formats.keys()))
+            if config['_customFormat'] != "":
+                format = config['_customFormat']
+            else:
+                format = _formats[value]
+        except KeyError, err:
+            private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), _formats.keys()))
             return
 
     if opt == '_colour':
         colour = value
 
-    if opt in ['_format', '_colour']:
+    if opt in ['_format', '_colour', '_customFormat']:
         fmt = ColourFormatter(format)
         fmt.setColour(colour)
         direct_screen_handler.setFormatter(fmt)
@@ -202,9 +209,8 @@ def post_config_handler(opt, value):
 config.attachUserHandler(None, post_config_handler)
 config.attachSessionHandler(None, post_config_handler)
 
+
 # set the loglevel for a logger to a given string value (example: "DEBUG")
-
-
 def _set_log_level(logger, value):
 
     if _global_level is not None:
@@ -216,11 +222,15 @@ def _set_log_level(logger, value):
 
     try:
         logger.setLevel(_string2level(value))
+        #if value != 'DEBUG':
+        #    return value
+        #    #logging._srcfile = None
+        #    #logging.logThreads = 0
+        #    #logging.logThreads = 0
         return value
     except AttributeError as x:
         logger.error('%s', str(x))
-        logger.warning(
-            'possible configuration error: invalid level value (%s), using default level', value)
+        logger.warning('possible configuration error: invalid level value (%s), using default level', value)
         return None
 
 
@@ -298,9 +308,6 @@ def getLogger(name=None, modulename=None, frame=None):
     return _getLogger(name, modulename, frame=frame)
 
 # Caching will not be done for messages which are generated by the main thread.
-import threading
-
-
 class FlushedMemoryHandler(logging.handlers.MemoryHandler):
 
     def __init__(self, *args, **kwds):
@@ -323,8 +330,7 @@ def enableCaching():
     private_logger.debug('CACHING ENABLED')
     global default_handler, cached_screen_handler
     main_logger.removeHandler(default_handler)
-    cached_screen_handler = FlushedMemoryHandler(
-        1000, target=direct_screen_handler)
+    cached_screen_handler = FlushedMemoryHandler(1000, target=direct_screen_handler)
     default_handler = cached_screen_handler
     main_logger.addHandler(default_handler)
 
@@ -343,8 +349,7 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
         name = 'Ganga.' + name
 
     if private_logger:
-        private_logger.debug(
-            'getLogger: effective_name=%s original_name=%s', name, requested_name)
+        private_logger.debug('getLogger: effective_name=%s original_name=%s', name, requested_name)
 
     if name in _allLoggers:
         return _allLoggers[name]
@@ -360,10 +365,8 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
             _set_log_level(logger, thisConfig)
 
         if private_logger:
-            private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(
-                logger.getEffectiveLevel()))
-            private_logger.debug(
-                'applied %s format string to %s', config['_format'], name)
+            private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()))
+            private_logger.debug('applied %s format string to %s', config['_format'], name)
 
         # print '------------>',logger
         #logger.critical('initialization of logger for module %s',name)

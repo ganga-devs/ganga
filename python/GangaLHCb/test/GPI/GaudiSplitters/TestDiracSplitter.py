@@ -82,6 +82,8 @@ class TestDiracSplitter(GangaGPITestCase):
         myLFNs = BKQuery('/LHCb/Collision12/Beam4000GeV-VeloClosed-MagUp/Real Data/Reco14/Stripping20/90000000/DIMUON.DST', dqflag=['OK']).getDataset()[0:5]
         myLFNs.append( 'LFN:/not/a/file.dst' )
 
+        print( myLFNs )
+
         j.inputdata = myLFNs
 
         ds = SplitByFiles()
@@ -95,7 +97,7 @@ class TestDiracSplitter(GangaGPITestCase):
         threw = False
         try:
             result = ds.split(j)
-            print('result = ', result)
+            print('result = %s' % str(result))
         except:
             threw = True
         assert threw, 'should have thrown exception'

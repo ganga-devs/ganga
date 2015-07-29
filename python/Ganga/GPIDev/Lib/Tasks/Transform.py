@@ -8,6 +8,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Lib.Job.Job import JobError
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem, FileItem
+from Ganga import GPI
 
 
 class Transform(GangaObject):

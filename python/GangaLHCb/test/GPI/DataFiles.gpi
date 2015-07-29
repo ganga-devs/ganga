@@ -5,19 +5,19 @@ full_name = pwd + '/' + name
 #
 # pfn's
 #
-pfn = LocalFile(name)
-assert pfn.location()[0] == full_name
-pfn = PhysicalFile('pfn:'+name)
-assert pfn.location()[0] == full_name
-pfn = PhysicalFile('PFN:'+name)
-assert pfn.location()[0] == full_name
-pfn = PhysicalFile('PFN:'+name)
-assert pfn.name == full_name
-try:
-    pfn = LocalFile('lfn:'+name)
-    raise RuntimeError('Should have got exception trying to create PhysicalFile from lfn.')
-except:
-    pass
+#pfn = LocalFile(name)
+#assert pfn.location()[0] == full_name
+#pfn = PhysicalFile('pfn:'+name)
+#assert pfn.location()[0] == full_name
+#pfn = PhysicalFile('PFN:'+name)
+#assert pfn.location()[0] == full_name
+#pfn = PhysicalFile('PFN:'+name)
+#assert pfn.name == full_name
+#try:
+#    pfn = LocalFile('lfn:'+name)
+#    raise RuntimeError('Should have got exception trying to create PhysicalFile from lfn.')
+#except:
+#    pass
 #
 # lfn's
 #
