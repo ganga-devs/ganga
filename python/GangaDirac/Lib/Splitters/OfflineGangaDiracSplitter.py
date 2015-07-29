@@ -45,9 +45,7 @@ def addToMapping( SE ):
         usable_site = result.get('Value')
         site_to_SE_mapping[ SE ] = usable_site
 
-allLFNData = {}
-
-def getLFNReplicas( allLFNs, index ):
+def getLFNReplicas( allLFNs, index, allLFNData ):
 
     i = index
 
@@ -173,6 +171,8 @@ def lookUpLFNReplicas(inputs):
         allLFNs.append( i.lfn )
         LFNdict[i.lfn] = i
 
+    allLFNData = {}
+
     ##  Request the replicas for all LFN 500 at a time to not overload the
     ##  server and give some feedback as this is going on
     from GangaDirac.Lib.Utilities.DiracUtilities import execute
@@ -180,9 +180,7 @@ def lookUpLFNReplicas(inputs):
     for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
 
         from Ganga.GPI import queues
-        queues._monitoring_threadpool.add_function( getLFNReplicas, ( allLFNs, i ) )
-
-    global allLFNData
+        queues._monitoring_threadpool.add_function( getLFNReplicas, ( allLFNs, i, allLFNData ) )
 
     while len(allLFNData) != int(math.ceil( float(len(allLFNs))*0.002 )):
         import time
@@ -191,13 +189,11 @@ def lookUpLFNReplicas(inputs):
         import Ganga.Runtime.Repository_runtime
         Ganga.Runtime.Repository_runtime.updateLocksNow()
 
-    return allLFNs, LFNdict
+    return allLFNs, LFNdict, allLFNData
 
-def sortLFNreplicas( bad_lfns, allLFNs, LFNdict, ignoremissing ):
+def sortLFNreplicas( bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData ):
     import math
     from Ganga.GPIDev.Base.Proxy import stripProxy
-
-    global allLFNData
 
     errors = []
 
@@ -311,12 +307,12 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     logger.info( "Requesting LFN replica info" )
 
     ## Perform a lookup of where LFNs are all stored
-    allLFNs, LFNdict = lookUpLFNReplicas( inputs )
+    allLFNs, LFNdict, allLFNData = lookUpLFNReplicas( inputs )
 
     bad_lfns = []
 
     ## Sort this information and store is in the relevant Ganga objects
-    errors = sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing)
+    errors = sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
 
     if len(bad_lfns) != 0:
         if ignoremissing is False:
