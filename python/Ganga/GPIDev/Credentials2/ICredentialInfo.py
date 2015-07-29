@@ -5,9 +5,40 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from datetime import timedelta
+from datetime import datetime, timedelta
 import os
+import os.path
 from abc import ABCMeta, abstractmethod
+from functools import wraps
+
+
+def cache(method):
+    """
+    The cache decorator can be applied to any method in an ``ICredentialInfo` subclass.
+    It stores the return value of the function in the ``self.cache`` dictionary
+    with the key being the name of the function.
+    The cache is invalidated if ``os.path.getmtime(self.location)`` returns
+    greater than ``self.cache['mtime']``, i.e. if the file has changed on disk
+
+    Not having to call the external commands comes at the cost of calling ``stat()``
+    every time a parameter is accessed but this is still a saving of many orders of
+    magnitude.
+    """
+    @wraps(method)
+    def wrapped_function(self, *args, **kwargs):
+
+        # If the mtime has been changed, clear the cache
+        mtime = os.path.getmtime(self.location)
+        if mtime > self.cache['mtime']:
+            self.cache = {'mtime': mtime}
+
+        # If entry is missing from cache, repopulate it
+        # This will run if the cache was just cleared
+        if method.func_name not in self.cache:
+            self.cache[method.func_name] = method(self, *args, **kwargs)
+
+        return self.cache[method.func_name]
+    return wrapped_function
 
 
 class ICredentialInfo(object):
@@ -34,6 +65,8 @@ class ICredentialInfo(object):
         """
         super(ICredentialInfo, self).__init__()
 
+        self.cache = {'mtime': 0}
+
         requirements = stripProxy(requirements)
         
         if not requirements.location:
@@ -55,8 +88,6 @@ class ICredentialInfo(object):
         # If the proxy object does not satisfy the requirements then abort the construction
         if not self.check_requirements(requirements):
             raise CredentialsError('Proxy object cannot satisfy its own requirements')
-
-        self.expiry_time = None  # cache the expiry time for faster validity lookups
     
     def __str__(self):
         return '{class_name} at {file_path}'.format(class_name=type(self).__name__, file_path=self.location)
@@ -89,11 +120,18 @@ class ICredentialInfo(object):
         return self.time_left() > timedelta()
 
     @abstractmethod
-    def time_left(self):
+    def expiry_time(self):
         """
-        Returns the time left in a human readable form
+        Returns the expiry time as a datetime.datetime
         """
         pass
+
+    def time_left(self):
+        """
+        Returns the time left as a datetime.timedelta
+        """
+        time_left = self.expiry_time() - datetime.now()
+        return max(time_left, timedelta())
     
     def check_requirements(self, query):
         """

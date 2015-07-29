@@ -3,7 +3,7 @@ from Ganga.Utility.Shell import Shell
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from .ICredentialInfo import ICredentialInfo
+from .ICredentialInfo import ICredentialInfo, cache
 from .ICredentialRequirement import ICredentialRequirement
 from .exceptions import CredentialRenewalError
 
@@ -67,11 +67,14 @@ class AfsTokenInfo(ICredentialInfo):
         if self.location:
             os.remove(self.location)
 
+    @property
+    @cache
     def info(self):
         status, output, message = self.shell.cmd1('tokens')
         return output
 
-    def time_left(self):
+    @cache
+    def expiry_time(self):
         info = self.info()
         matches = re.finditer(info_pattern, info)
 
@@ -87,9 +90,7 @@ class AfsTokenInfo(ICredentialInfo):
         if expires < now:
             expires = expires.replace(year=now.year+1)
 
-        self.expiry_time = expires
-
-        return expires - now
+        return expires
 
 
 class AfsToken(ICredentialRequirement):
