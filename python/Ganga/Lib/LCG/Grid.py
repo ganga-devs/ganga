@@ -3,10 +3,9 @@ import re
 import tempfile
 import datetime
 
-from Ganga.GPIDev.Credentials import getCredential
 from Ganga.GPIDev.Credentials2 import credential_store
 
-from Ganga.Utility.Config import getConfig, ConfigError
+from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 
 from Ganga.Utility.GridShell import getShell
@@ -132,8 +131,8 @@ def __resolve_no_matching_jobs__(cmd_output):
 
     if logfile:
 
-        re_jid = re.compile('^Unable to retrieve the status for: (https:\/\/\S+:9000\/[0-9A-Za-z_\.\-]+)\s*$')
-        re_key = re.compile('^.*(no matching jobs found)\s*$')
+        re_jid = re.compile(r'^Unable to retrieve the status for: (https://\S+:9000/[0-9A-Za-z_.-]+)\s*$')
+        re_key = re.compile(r'^.*(no matching jobs found)\s*$')
 
         myjid = ''
         for line in open(logfile, 'r'):
@@ -226,8 +225,7 @@ def submit(jdlpath, cred_req, ce=None, perusable=False):
         logger.debug('job id: %s' % match.group(1))
         if perusable:
             logger.info("Enabling perusal")
-            per_rc, per_out, per_m = getShell(cred_req).cmd1(
-                "glite-wms-job-perusal --set -f stdout %s" % match.group(1))
+            getShell(cred_req).cmd1("glite-wms-job-perusal --set -f stdout %s" % match.group(1))
 
         # remove the glite command log if it exists
         __clean_gridcmd_log__('(.*-job-submit.*\.log)', output)
@@ -329,6 +327,7 @@ def status(jobids, cred_req, is_collection=False):
 
     info = []
     is_node = False
+
     for line in output.split('\n'):
 
         match = re_master.match(line)
@@ -411,7 +410,7 @@ def get_loginfo(jobids, directory, cred_req, verbosity=1):
         return log_output
 
 
-def get_output(jobid, directory, cred_req, wms_proxy=False):
+def get_output(jobid, directory, cred_req):
     """Retrieve the output of a job on the grid"""
 
     cmd = 'glite-wms-job-output'
@@ -461,7 +460,7 @@ def get_output(jobid, directory, cred_req, wms_proxy=False):
     return __get_app_exitcode__(directory)
 
 
-def cancelMultiple(jobids, cred_req):
+def cancel_multiple(jobids, cred_req):
     """Cancel multiple jobs in one LCG job cancellation call"""
 
     # compose a temporary file with job ids in it
@@ -522,17 +521,17 @@ def cancel(jobid, cred_req):
 def __cream_parse_job_status__(log):
     """Parsing job status report from CREAM CE status query"""
 
-    jobInfoDict = {}
+    job_info_dict = {}
 
-    re_jid = re.compile('^\s+JobID=\[(https://.*[:0-9]?/CREAM.*)\]$')
-    re_log = re.compile('^\s+(\S+.*\S+)\s+=\s+\[(.*)\]$')
+    re_jid = re.compile(r'^\s+JobID=\[(https://.*[:0-9]?/CREAM.*)\]$')
+    re_log = re.compile(r'^\s+(\S+.*\S+)\s+=\s+\[(.*)\]$')
 
-    re_jts = re.compile('^\s+Job status changes:$')
-    re_ts = re.compile('^\s+Status\s+=\s+\[(.*)\]\s+\-\s+\[(.*)\]\s+\(([0-9]+)\)$')
-    re_cmd = re.compile('^\s+Issued Commands:$')
+    re_jts = re.compile(r'^\s+Job status changes:$')
+    re_ts = re.compile(r'^\s+Status\s+=\s+\[(.*)\]\s+\-\s+\[(.*)\]\s+\(([0-9]+)\)$')
+    re_cmd = re.compile(r'^\s+Issued Commands:$')
 
-    # in case of status retrival failed
-    re_jnf = re.compile('^.*job not found.*$')
+    # in case of status retrieval failed
+    re_jnf = re.compile(r'^.*job not found.*$')
 
     jid = None
 
@@ -545,7 +544,7 @@ def __cream_parse_job_status__(log):
 
             if m:
                 jid = m.group(1)
-                jobInfoDict[jid] = {}
+                job_info_dict[jid] = {}
                 continue
 
             if re_jnf.match(l):
@@ -555,24 +554,24 @@ def __cream_parse_job_status__(log):
             if m:
                 att = m.group(1)
                 val = m.group(2)
-                jobInfoDict[jid][att] = val
+                job_info_dict[jid][att] = val
                 continue
 
             if re_jts.match(l):
-                jobInfoDict[jid]['Timestamps'] = {}
+                job_info_dict[jid]['Timestamps'] = {}
                 continue
 
             m = re_ts.match(l)
             if m:
                 s = m.group(1)
                 t = int(m.group(3))
-                jobInfoDict[jid]['Timestamps'][s] = t
+                job_info_dict[jid]['Timestamps'][s] = t
                 continue
 
             if re_cmd.match(l):
                 break
 
-    return jobInfoDict
+    return job_info_dict
 
 
 def cream_proxy_delegation(ce, delid, cred_req):
@@ -641,7 +640,7 @@ def cream_submit(jdlpath, ce, delid, cred_req):
     if output:
         output = "%s" % output.strip()
 
-    match = re.search('^(https://\S+:8443/[0-9A-Za-z_\.\-]+)$', output)
+    match = re.search(r'^(https://\S+:8443/[0-9A-Za-z_\.\-]+)$', output)
 
     if match:
         logger.debug('job id: %s' % match.group(1))
@@ -669,18 +668,18 @@ def cream_status(jobids, cred_req):
     rc, output, m = getShell(cred_req).cmd1(cmd,
                                             allowed_exit=[0, 255],
                                             timeout=config['StatusPollingTimeout'])
-    jobInfoDict = {}
+    job_info_dict = {}
     if rc == 0 and output:
-        jobInfoDict = __cream_parse_job_status__(output)
+        job_info_dict = __cream_parse_job_status__(output)
 
     # clean up tempfile
     if os.path.exists(idsfile):
         os.remove(idsfile)
 
-    return jobInfoDict
+    return job_info_dict
 
 
-def cream_purgeMultiple(jobids, cred_req):
+def cream_purge_multiple(jobids, cred_req):
     """CREAM CE job purging"""
 
     idsfile = tempfile.mktemp('.jids')
@@ -707,7 +706,7 @@ def cream_purgeMultiple(jobids, cred_req):
         return False
 
 
-def cream_cancelMultiple(jobids, cred_req):
+def cream_cancel_multiple(jobids, cred_req):
     """CREAM CE job cancelling"""
 
     idsfile = tempfile.mktemp('.jids')
@@ -734,11 +733,11 @@ def cream_cancelMultiple(jobids, cred_req):
         return False
 
 
-def cream_get_output(osbURIList, directory, cred_req):
+def cream_get_output(osb_uri_list, directory, cred_req):
     """CREAM CE job output retrieval"""
 
     gfiles = []
-    for uri in osbURIList:
+    for uri in osb_uri_list:
         gf = GridftpFileIndex()
         gf.id = uri
         gfiles.append(gf)
@@ -939,11 +938,11 @@ def arc_submit(jdlpath, ce, verbose, cred_req):
 
     # Job submitted with jobid:
     # gsiftp://lcgce01.phy.bris.ac.uk:2811/jobs/vSoLDmvvEljnvnizHq7yZUKmABFKDmABFKDmCTGKDmABFKDmfN955m
-    match = re.search('(gsiftp://\S+:2811/jobs/[0-9A-Za-z_\.\-]+)$', output)
+    match = re.search(r'(gsiftp://\S+:2811/jobs/[0-9A-Za-z_\.\-]+)$', output)
 
     # Job submitted with jobid: https://ce2.dur.scotgrid.ac.uk:8443/arex/..
     if not match:
-        match = re.search('(https://\S+:8443/arex/[0-9A-Za-z_\.\-]+)$', output)
+        match = re.search(r'(https://\S+:8443/arex/[0-9A-Za-z_\.\-]+)$', output)
 
     if match:
         logger.debug('job id: %s' % match.group(1))
@@ -971,16 +970,16 @@ def arc_status(jobids, ce_list, cred_req):
     rc, output, m = getShell(cred_req).cmd1(cmd,
                                             allowed_exit=[0, 1, 255],
                                             timeout=config['StatusPollingTimeout'])
-    jobInfoDict = {}
+    job_info_dict = {}
 
     if rc != 0:
         logger.warning('jobs not found in XML file: arcsync will be executed to update the job information')
         __arc_sync__(ce_list, cred_req)
 
     if rc == 0 and output:
-        jobInfoDict = __arc_parse_job_status__(output)
+        job_info_dict = __arc_parse_job_status__(output)
 
-    return jobInfoDict
+    return job_info_dict
 
 
 def __arc_parse_job_status__(log):
@@ -994,7 +993,7 @@ def __arc_parse_job_status__(log):
     # State: Finished (terminal:client-stageout-possible)
     # Exit Code: 0
 
-    jobInfoDict = {}
+    job_info_dict = {}
     jid = None
 
     for ln in log.split('\n'):
@@ -1008,23 +1007,23 @@ def __arc_parse_job_status__(log):
         elif ln.find("Job:") != -1 and ln.find("gsiftp") != -1:
             # new job info block
             jid = ln[ln.find("gsiftp"):].strip()
-            jobInfoDict[jid] = {}
+            job_info_dict[jid] = {}
         elif ln.find("Job:") != -1 and ln.find("https") != -1:
             # new job info block
             jid = ln[ln.find("https"):].strip()
-            jobInfoDict[jid] = {}
+            job_info_dict[jid] = {}
 
         # get info
         if ln.find("State:") != -1:
-            jobInfoDict[jid]['State'] = ln[ln.find("State:") + len("State:"):].strip()
+            job_info_dict[jid]['State'] = ln[ln.find("State:") + len("State:"):].strip()
 
         if ln.find("Exit Code:") != -1:
-            jobInfoDict[jid]['Exit Code'] = ln[ln.find("Exit Code:") + len("Exit Code:"):].strip()
+            job_info_dict[jid]['Exit Code'] = ln[ln.find("Exit Code:") + len("Exit Code:"):].strip()
 
         if ln.find("Job Error:") != -1:
-            jobInfoDict[jid]['Job Error'] = ln[ln.find("Job Error:") + len("Job Error:"):].strip()
+            job_info_dict[jid]['Job Error'] = ln[ln.find("Job Error:") + len("Job Error:"):].strip()
 
-    return jobInfoDict
+    return job_info_dict
 
 
 def __arc_sync__(ce_list, cred_req):
@@ -1075,7 +1074,7 @@ def arc_get_output(jid, directory, cred_req):
     return cache.download(cred_req=cred_req, files=map(lambda x: x.id, gfiles), dest_dir=directory)
 
 
-def arc_purgeMultiple(jobids, cred_req):
+def arc_purge_multiple(jobids, cred_req):
     """ARC CE job purging"""
 
     idsfile = tempfile.mktemp('.jids')
@@ -1122,7 +1121,7 @@ def arc_cancel(jobid, cred_req):
         return False
 
 
-def arc_cancelMultiple(jobids, cred_req):
+def arc_cancel_multiple(jobids, cred_req):
     """Cancel multiple jobs in one LCG job cancellation call"""
 
     # compose a temporary file with job ids in it
