@@ -4,7 +4,7 @@ from Ganga.Utility.Shell import Shell
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-from .ICredentialInfo import ICredentialInfo
+from .ICredentialInfo import ICredentialInfo, cache
 from .ICredentialRequirement import ICredentialRequirement
 from .exceptions import CredentialRenewalError
 from Ganga.Utility.Config import getConfig
@@ -12,7 +12,7 @@ from Ganga.Utility.Config import getConfig
 import os
 
 import subprocess
-from datetime import timedelta
+from datetime import datetime, timedelta
 from getpass import getpass
 
 
@@ -22,9 +22,9 @@ class VomsProxyInfo(ICredentialInfo):
     """
     
     def __init__(self, requirements, check_file=False, create=False):
-        super(VomsProxyInfo, self).__init__(requirements, check_file, create)
-
         self.shell = Shell()
+
+        super(VomsProxyInfo, self).__init__(requirements, check_file, create)
 
     def create(self):
         """
@@ -59,16 +59,19 @@ class VomsProxyInfo(ICredentialInfo):
         if self.location:
             os.remove(self.location)
     
+    @cache
     def info(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -all -file %s' % self.location)
         return output
     
     @property
+    @cache
     def identity(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -file %s -identity' % self.location)
         return output.strip()
     
     @property
+    @cache
     def vo(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -file %s -vo' % self.location)
         if status != 0:
@@ -76,6 +79,7 @@ class VomsProxyInfo(ICredentialInfo):
         return output.split(":")[0].strip()
        
     @property
+    @cache
     def role(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -file %s -vo' % self.location)
         if status != 0:
@@ -86,6 +90,7 @@ class VomsProxyInfo(ICredentialInfo):
         return vo_list[1].split("/")[-1].split("=")[-1].strip()
     
     @property
+    @cache
     def group(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -file %s -vo' % self.location)
         if status != 0:
@@ -98,12 +103,13 @@ class VomsProxyInfo(ICredentialInfo):
         if len(group_role_list) <= 2:
             return None  # No group specified in command
         return group_role_list[-1].strip()
-    
-    def time_left(self):
+
+    @cache
+    def expiry_time(self):
         status, output, message = self.shell.cmd1('voms-proxy-info -file %s -timeleft' % self.location)
         if status != 0:
-            return timedelta()
-        return timedelta(seconds=int(output))
+            return datetime.now()
+        return datetime.now() + timedelta(seconds=int(output))
 
 
 class VomsProxy(ICredentialRequirement):
