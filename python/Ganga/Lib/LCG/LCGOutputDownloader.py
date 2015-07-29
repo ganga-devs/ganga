@@ -11,11 +11,10 @@ class LCGOutputDownloadTask(object):
     Class for defining a data object for each output downloading task.
     """
 
-    _attributes = ('gridObj', 'jobObj', 'use_wms_proxy')
+    _attributes = ('gridObj', 'jobObj')
 
-    def __init__(self, jobObj, use_wms_proxy):
+    def __init__(self, jobObj):
         self.jobObj = jobObj
-        self.use_wms_proxy = use_wms_proxy
 
     def __eq__(self, other):
         """
@@ -47,7 +46,6 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         pps_check = (True, None)
 
         job = item.jobObj
-        wms_proxy = item.use_wms_proxy
 
         # it is very likely that the job's downloading task has been
         # created and assigned in a previous monitoring loop
@@ -65,7 +63,7 @@ class LCGOutputDownloadAlgorithm(Algorithm):
         outw = job.getOutputWorkspace()
 
         pps_check = Grid.get_output(
-            job.backend.id, outw.getPath(), job.backend.credential_requirements, wms_proxy=wms_proxy)
+            job.backend.id, outw.getPath(), job.backend.credential_requirements)
 
         if pps_check[0]:
             job.updateStatus('completed')
@@ -107,9 +105,9 @@ class LCGOutputDownloader(MTRunner):
 
         return self.__cnt_alive_threads__()
 
-    def addTask(self, job, use_wms_proxy):
+    def addTask(self, job):
 
-        task = LCGOutputDownloadTask(job, use_wms_proxy)
+        task = LCGOutputDownloadTask(job)
 
         logger.debug('add output downloading task: job %s' % job.getFQID('.'))
 

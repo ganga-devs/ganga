@@ -363,7 +363,7 @@ class CREAM(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            Grid.cancelMultiple(runner.getResults().values())
+            Grid.cancel_multiple(runner.getResults().values())
             return None
         else:
             return runner.getResults()
@@ -938,7 +938,7 @@ sys.exit(0)
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return False
 
-        return Grid.cream_cancelMultiple([self.id], self.credential_requirements)
+        return Grid.cream_cancel_multiple([self.id], self.credential_requirements)
 
     def master_kill(self):
         '''kill the master job to the grid'''
@@ -968,7 +968,7 @@ sys.exit(0)
                 ids.append(sj.backend.id)
 
         # 2. cancel the collected jobs
-        ck = Grid.cream_cancelMultiple(ids, self.credential_requirements)
+        ck = Grid.cream_cancel_multiple(ids, self.credential_requirements)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
@@ -1295,7 +1295,7 @@ sys.exit(0)
         # purging the jobs the output has been fetched locally
         if jidListForPurge:
             for cred_req, job_ids in cred_to_backend_id_list.items():
-                Grid.cream_purgeMultiple(set(job_ids) & set(jidListForPurge), cred_req)
+                Grid.cream_purge_multiple(set(job_ids) & set(jidListForPurge), cred_req)
 
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''

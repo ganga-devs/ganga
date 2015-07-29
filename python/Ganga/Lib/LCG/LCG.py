@@ -567,7 +567,7 @@ class LCG(IBackend):
             # submitted jobs on WMS immediately
             logger.error(
                 'some bulk jobs not successfully (re)submitted, canceling submitted jobs on WMS')
-            Grid.cancelMultiple(runner.getResults().values(), self.credential_requirements)
+            Grid.cancel_multiple(runner.getResults().values(), self.credential_requirements)
             return None
         else:
             return runner.getResults()
@@ -774,7 +774,7 @@ class LCG(IBackend):
                 ids.append(sj.backend.id)
 
         # 2. cancel the collected jobs
-        ck = Grid.cancelMultiple(ids, self.credential_requirements)
+        ck = Grid.cancel_multiple(ids, self.credential_requirements)
         if not ck:
             logger.warning('Job cancellation failed')
             return False
@@ -1756,7 +1756,7 @@ sys.exit(0)
                     job.updateStatus('running')
 
                 downloader = get_lcg_output_downloader()
-                downloader.addTask(job, False)
+                downloader.addTask(job)
 
                 cnt_new_download_task += 1
 
@@ -1912,7 +1912,7 @@ sys.exit(0)
                         if subjob.status == 'submitted':
                             subjob.updateStatus('running')
                         downloader = get_lcg_output_downloader()
-                        downloader.addTask(subjob, True)
+                        downloader.addTask(subjob)
 
                         cnt_new_download_task += 1
 
