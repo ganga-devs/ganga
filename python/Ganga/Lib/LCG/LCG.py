@@ -23,7 +23,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from Ganga.Utility.Config import makeConfig, getConfig
+import Ganga.Utility.Config
 from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
@@ -44,21 +44,90 @@ if simulator_enabled:
 else:
     from . import Grid
 
-global lcg_output_downloader
-lcg_output_downloader = None
+
+# global variables
+logger = getLogger()
+
+config = Ganga.Utility.Config.makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
+
+# set default values for the configuration parameters
+
+config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
+                 'sets the LCG-UI environment setup script for the GLITE middleware',
+                 filter=Ganga.Utility.Config.expandvars)
+
+config.addOption('VirtualOrganisation', 'dteam', 'sets the name of the grid virtual organisation')
+
+config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
+                 filter=Ganga.Utility.Config.expandvars)
+
+config.addOption('AllowedCEs', '', 'sets allowed computing elements by a regular expression')
+config.addOption('ExcludedCEs', '', 'sets excluded computing elements by a regular expression')
+
+config.addOption('GLITE_WMS_WMPROXY_ENDPOINT', '', 'sets the WMProxy service to be contacted')
+config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
+
+config.addOption('MyProxyServer', 'myproxy.cern.ch', 'sets the myproxy server')
+config.addOption('RetryCount', 3, 'sets maximum number of job retry')
+config.addOption('ShallowRetryCount', 10, 'sets maximum number of job shallow retry')
+
+config.addOption('Rank', '', 'sets the ranking rule for picking up computing element')
+config.addOption('ReplicaCatalog', '', 'sets the replica catalogue server')
+config.addOption('StorageIndex', '', 'sets the storage index')
+
+config.addOption('DefaultSE', 'srm.cern.ch', 'sets the default storage element')
+config.addOption('DefaultSRMToken', '',
+                 'sets the space token for storing temporary files (e.g. oversized input sandbox)')
+config.addOption('DefaultLFC', 'prod-lfc-shared-central.cern.ch', 'sets the file catalogue server')
+config.addOption('BoundSandboxLimit', 10 * 1024 * 1024,
+                 'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
+
+config.addOption('Requirements', 'Ganga.Lib.LCG.LCGRequirements',
+                 'sets the full qualified class name for other specific LCG job requirements')
+
+config.addOption('SandboxCache', 'Ganga.Lib.LCG.LCGSandboxCache',
+                 'sets the full qualified class name for handling the oversized input sandbox')
+
+config.addOption('GliteBulkJobSize', 50,
+                 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
+
+config.addOption('SubmissionThread', 10,
+                 'sets the number of concurrent threads for job submission to gLite WMS')
+
+config.addOption('SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
+
+config.addOption('StatusPollingTimeout', 300,
+                 'sets the gLite job status polling timeout in seconds')
+
+config.addOption('OutputDownloaderThread', 10,
+                 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
+
+config.addOption('SandboxTransferTimeout', 60,
+                 'sets the transfer timeout of the oversized input sandbox')
+
+config.addOption('JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
+
+config.addOption('MatchBeforeSubmit', False,
+                 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
+
+config.addOption('IgnoreGliteScriptHeader', False,
+                 'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
+
+
+_lcg_output_downloader = None
 
 
 def get_lcg_output_downloader():
-    global lcg_output_downloader
+    global _lcg_output_downloader
 
-    if not lcg_output_downloader:
+    if not _lcg_output_downloader:
 
-        numberOfThreads = getConfig('LCG')['OutputDownloaderThread']
+        number_of_threads = config['OutputDownloaderThread']
 
-        lcg_output_downloader = LCGOutputDownloader(numThread=numberOfThreads)
-        lcg_output_downloader.start()
+        _lcg_output_downloader = LCGOutputDownloader(numThread=number_of_threads)
+        _lcg_output_downloader.start()
 
-    return lcg_output_downloader
+    return _lcg_output_downloader
 
 # helper routines
 
@@ -173,6 +242,7 @@ class LCG(IBackend):
 
         re_token = re.compile('^token:(.*):(.*)$')
 
+        self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         if self.sandboxcache._name == 'LCGSandboxCache':
@@ -340,17 +410,12 @@ class LCG(IBackend):
         job = self.getJobObject()
 
         ick = False
-        if not config['GLITE_ENABLE']:
-            #logger.warning('Operations of %s middleware are disabled.' % mt)
-            #ick = False
-            raise GangaException('Operations of GLITE middleware not enabled')
+        if len(job.subjobs) == 0:
+            ick = IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig)
         else:
-            if len(job.subjobs) == 0:
-                ick = IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig)
-            else:
-                ick = self.master_bulk_submit(rjobs, subjobconfigs, masterjobconfig)
-                if not ick:
-                    raise GangaException('GLITE bulk submission failure')
+            ick = self.master_bulk_submit(rjobs, subjobconfigs, masterjobconfig)
+            if not ick:
+                raise GangaException('GLITE bulk submission failure')
 
         profiler.check('==> master_submit() elapsed time')
 
@@ -371,35 +436,29 @@ class LCG(IBackend):
         job = self.getJobObject()
 
         ick = False
-        if not config['GLITE_ENABLE']:
-            #logger.warning('Operations of %s middleware are disabled.' % mt)
-            #ick = False
-            raise GangaException(
-                'Operations of GLITE middleware not enabled')
+        if not job.master and len(job.subjobs) == 0:
+            # case 1: master job normal resubmission
+            logger.debug('rjobs: %s' % str(rjobs))
+            logger.debug('mode: master job normal resubmission')
+            ick = IBackend.master_resubmit(self, rjobs)
+
+        elif job.master:
+            # case 2: individual subjob resubmission
+            logger.debug('mode: individual subjob resubmission')
+            status = IBackend.master_resubmit(self, rjobs)
+            if status:
+                # set the backend flag to 1 if the job is individually submitted
+                # the monitoring loop on the master job shouldn't taken
+                # into account this job
+                job.backend.flag = 1
+            ick = status
+
         else:
-            if not job.master and len(job.subjobs) == 0:
-                # case 1: master job normal resubmission
-                logger.debug('rjobs: %s' % str(rjobs))
-                logger.debug('mode: master job normal resubmission')
-                ick = IBackend.master_resubmit(self, rjobs)
-
-            elif job.master:
-                # case 2: individual subjob resubmission
-                logger.debug('mode: individual subjob resubmission')
-                status = IBackend.master_resubmit(self, rjobs)
-                if status:
-                    # set the backend flag to 1 if the job is individually submitted
-                    # the monitoring loop on the master job shouldn't taken
-                    # into account this job
-                    job.backend.flag = 1
-                ick = status
-
-            else:
-                # case 3: master job bulk resubmission
-                logger.debug('mode: master job bulk resubmission')
-                ick = self.master_bulk_resubmit(rjobs)
-                if not ick:
-                    raise GangaException('GLITE bulk submission failure')
+            # case 3: master job bulk resubmission
+            logger.debug('mode: master job bulk resubmission')
+            ick = self.master_bulk_resubmit(rjobs)
+            if not ick:
+                raise GangaException('GLITE bulk submission failure')
 
         profiler.check('job re-submission elapsed time')
 
@@ -761,10 +820,6 @@ class LCG(IBackend):
 
         logger.debug('Getting logging info of job %s' % job.getFQID('.'))
 
-        if not config['GLITE_ENABLE']:
-            logger.warning('Operations of GLITE middleware are disabled.')
-            return None
-
         if not self.id:
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return None
@@ -905,10 +960,6 @@ class LCG(IBackend):
     def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
-        if not config['GLITE_ENABLE']:
-            logger.warning('Operations of GLITE middleware are disabled.')
-            return None
-
         jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if config['MatchBeforeSubmit']:
@@ -955,10 +1006,6 @@ class LCG(IBackend):
         job = self.getJobObject()
 
         logger.info('Killing job %s' % job.getFQID('.'))
-
-        if not config['GLITE_ENABLE']:
-            logger.warning('Operations of GLITE middleware are disabled.')
-            return False
 
         if not self.id:
             logger.warning('Job %s is not running.' % job.getFQID('.'))
@@ -1993,7 +2040,7 @@ sys.exit(0)
     def updateExcudedCEsInJdl(self, jdlpath):
 
         import re
-        configexcludedCEs = getConfig('LCG')['ExcludedCEs']
+        configexcludedCEs = config['ExcludedCEs']
 
         with open(jdlpath, 'r') as jdlFileRead:
             jdlText = jdlFileRead.read()
@@ -2130,165 +2177,6 @@ class LCGJobConfig(StandardJobConfig):
         else:
             return exe
 
-
-# initialisation
-
-# function for parsing VirtualOrganisation from ConfigVO
-def __getVOFromConfigVO__(file):
-    re_vo = re.compile(r'.*VirtualOrganisation\s*=\s*"(.*)"')
-    try:
-        for l in open(file):
-            m = re_vo.match(l.strip())
-            if m:
-                return m.groups()[0]
-    except:
-        raise Ganga.Utility.Config.ConfigError(
-            'ConfigVO %s does not exist.' % file)
-
-# configuration preprocessor : avoid VO switching
-
-
-def __avoidVOSwitch__(opt, val):
-
-    if not opt in ['VirtualOrganisation', 'ConfigVO']:
-        # bypass everything irrelevant to the VO
-        return val
-    elif opt == 'ConfigVO' and val == '':
-        # accepting '' to disable the ConfigVO
-        return val
-    else:
-        # try to get current value of VO
-        if config['ConfigVO']:
-            vo_1 = __getVOFromConfigVO__(config['ConfigVO'])
-        else:
-            vo_1 = config['VirtualOrganisation']
-
-        # get the VO that the user trying to switch to
-        if opt == 'ConfigVO':
-            vo_2 = __getVOFromConfigVO__(val)
-        else:
-            vo_2 = val
-
-        # if the new VO is not the same as the existing one, raise ConfigError
-        if vo_2 != vo_1:
-            raise Ganga.Utility.Config.ConfigError(
-                'Changing VirtualOrganisation is not allowed in GANGA session.')
-
-    return val
-
-# configuration preprocessor
-
-
-def __preConfigHandler__(opt, val):
-    val = __avoidVOSwitch__(opt, val)
-    return val
-
-# configuration postprocessor
-
-
-def __postConfigHandler__(opt, val):
-    logger.info('%s has been set to %s' % (opt, val))
-    return
-
-# global variables
-logger = getLogger()
-
-logger.debug('LCG module initialization: begin')
-
-import Ganga.Utility.Config
-
-config = makeConfig('LCG', 'LCG/gLite/EGEE configuration parameters')
-#gproxy_config = getConfig('GridProxy_Properties')
-
-# set default values for the configuration parameters
-config.addOption(
-    'EDG_ENABLE', False, 'enables/disables the support of the EDG middleware')
-
-config.addOption('EDG_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the EDG middleware',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption(
-    'GLITE_ENABLE', True, 'Enables/disables the support of the GLITE middleware')
-
-config.addOption('GLITE_SETUP', '/afs/cern.ch/sw/ganga/install/config/grid_env_auto.sh',
-                 'sets the LCG-UI environment setup script for the GLITE middleware',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption('VirtualOrganisation', 'dteam',
-                 'sets the name of the grid virtual organisation')
-
-config.addOption('ConfigVO', '', 'sets the VO-specific LCG-UI configuration script for the EDG resource broker',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption('Config', '', 'sets the generic LCG-UI configuration script for the GLITE workload management system',
-                 filter=Ganga.Utility.Config.expandvars)
-
-config.addOption(
-    'AllowedCEs', '', 'sets allowed computing elements by a regular expression')
-config.addOption(
-    'ExcludedCEs', '', 'sets excluded computing elements by a regular expression')
-
-config.addOption(
-    'GLITE_WMS_WMPROXY_ENDPOINT', '', 'sets the WMProxy service to be contacted')
-config.addOption('GLITE_ALLOWED_WMS_LIST', [], '')
-
-config.addOption('MyProxyServer', 'myproxy.cern.ch', 'sets the myproxy server')
-config.addOption('RetryCount', 3, 'sets maximum number of job retry')
-config.addOption(
-    'ShallowRetryCount', 10, 'sets maximum number of job shallow retry')
-
-config.addOption(
-    'Rank', '', 'sets the ranking rule for picking up computing element')
-config.addOption('ReplicaCatalog', '', 'sets the replica catalogue server')
-config.addOption('StorageIndex', '', 'sets the storage index')
-
-config.addOption(
-    'DefaultSE', 'srm.cern.ch', 'sets the default storage element')
-config.addOption('DefaultSRMToken', '',
-                 'sets the space token for storing temporary files (e.g. oversized input sandbox)')
-config.addOption(
-    'DefaultLFC', 'prod-lfc-shared-central.cern.ch', 'sets the file catalogue server')
-config.addOption('BoundSandboxLimit', 10 * 1024 * 1024,
-                 'sets the size limitation of the input sandbox, oversized input sandbox will be pre-uploaded to the storage element specified by \'DefaultSE\' in the area specified by \'DefaultSRMToken\'')
-
-config.addOption('Requirements', 'Ganga.Lib.LCG.LCGRequirements',
-                 'sets the full qualified class name for other specific LCG job requirements')
-
-config.addOption('SandboxCache', 'Ganga.Lib.LCG.LCGSandboxCache',
-                 'sets the full qualified class name for handling the oversized input sandbox')
-
-config.addOption('GliteBulkJobSize', 50,
-                 'sets the maximum number of nodes (i.e. subjobs) in a gLite bulk job')
-
-config.addOption('SubmissionThread', 10,
-                 'sets the number of concurrent threads for job submission to gLite WMS')
-
-config.addOption(
-    'SubmissionTimeout', 300, 'sets the gLite job submission timeout in seconds')
-
-config.addOption('StatusPollingTimeout', 300,
-                 'sets the gLite job status polling timeout in seconds')
-
-config.addOption('OutputDownloaderThread', 10,
-                 'sets the number of concurrent threads for downloading job\'s output sandbox from gLite WMS')
-
-config.addOption('SandboxTransferTimeout', 60,
-                 'sets the transfer timeout of the oversized input sandbox')
-
-config.addOption(
-    'JobLogHandler', 'WMS', 'sets the way the job\'s stdout/err are being handled.')
-
-config.addOption('MatchBeforeSubmit', False,
-                 'sets to True will do resource matching before submitting jobs, jobs without any matched resources will fail the submission')
-
-config.addOption('IgnoreGliteScriptHeader', False,
-                 'sets to True will load script-based glite-wms-* commands forcely with current python, a trick for 32/64 bit compatibility issues.')
-
-#config.addOption('JobExpiryTime', 30 * 60, 'sets the job\'s expiry time')
-
-# apply preconfig and postconfig handlers
-config.attachUserHandler(__preConfigHandler__, __postConfigHandler__)
 
 # $Log: not supported by cvs2svn $
 # Revision 1.38  2009/07/15 08:23:29  hclee

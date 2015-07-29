@@ -164,7 +164,6 @@ def list_match(jdlpath, cred_req, ce=None):
     matched_ces = []
 
     cmd = 'glite-wms-job-list-match -a'
-    exec_bin = True
 
     submit_opt = __set_submit_option__()
 
@@ -205,7 +204,6 @@ def submit(jdlpath, cred_req, ce=None, perusable=False):
 
     # doing job submission
     cmd = 'glite-wms-job-submit -a'
-    exec_bin = True
 
     submit_opt = __set_submit_option__()
 
@@ -255,7 +253,6 @@ def native_master_cancel(jobids, cred_req):
         ids_file.write('\n'.join(jobids) + '\n')
 
     cmd = 'glite-wms-job-cancel'
-    exec_bin = True
 
     if not __set_submit_option__():
         return False
@@ -288,10 +285,6 @@ def status(jobids, cred_req, is_collection=False):
         ids_file.write('\n'.join(jobids) + '\n')
 
     cmd = 'glite-wms-job-status'
-
-    exec_bin = True
-    if config['IgnoreGliteScriptHeader']:
-        exec_bin = False
 
     if is_collection:
         cmd = '%s -v 3' % cmd
@@ -410,10 +403,6 @@ def get_loginfo(jobids, directory, cred_req, verbosity=1):
 
     cmd = 'glite-wms-job-logging-info -v %d' % verbosity
 
-    exec_bin = True
-    if config['IgnoreGliteScriptHeader']:
-        exec_bin = False
-
     log_output = directory + '/__jobloginfo__.log'
 
     cmd = '%s --noint -o %s -i %s' % (cmd, log_output, idsfile)
@@ -438,7 +427,6 @@ def get_output(jobid, directory, cred_req, wms_proxy=False):
     '''Retrieve the output of a job on the grid'''
 
     cmd = 'glite-wms-job-output'
-    exec_bin = True
     # general WMS options (somehow used by the glite-wms-job-output
     # command)
     if config['Config']:
@@ -498,7 +486,6 @@ def cancelMultiple(jobids, cred_req):
 
     # do the cancellation using a proper LCG command
     cmd = 'glite-wms-job-cancel'
-    exec_bin = True
 
     # compose the cancel command
     cmd = '%s --noint -i %s' % (cmd, idsfile)
@@ -522,7 +509,6 @@ def cancel(jobid, cred_req):
     '''Cancel a job'''
 
     cmd = 'glite-wms-job-cancel'
-    exec_bin = True
 
     cmd = '%s --noint %s' % (cmd, jobid)
 
@@ -694,7 +680,6 @@ def cream_status(jobids, cred_req):
         ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
     cmd = 'glite-ce-job-status'
-    exec_bin = True
 
     cmd = '%s -L 2 -n -i %s' % (cmd, idsfile)
     logger.debug('job status command: %s' % cmd)
@@ -717,7 +702,6 @@ def cream_purgeMultiple(jobids, cred_req):
         ids_file.write('##CREAMJOBS##\n' + '\n'.join(jobids) + '\n')
 
     cmd = 'glite-ce-job-purge'
-    exec_bin = True
 
     cmd = '%s -n -N -i %s' % (cmd, idsfile)
 
@@ -948,7 +932,6 @@ def arc_submit(jdlpath, ce, verbose, cred_req):
     # write to a temporary XML file as otherwise can't submit in parallel
     tmpstr = '/tmp/' + randomString() + '.arcsub.xml'
     cmd = 'arcsub %s -S org.nordugridftpjob -j %s' % (__arc_get_config_file_arg__(), tmpstr)
-    exec_bin = True
 
     if verbose:
         cmd += ' -d DEBUG '
@@ -995,7 +978,6 @@ def arc_status(jobids, ce_list, cred_req):
         ids_file.write('\n'.join(jobids) + '\n')
 
     cmd = 'arcstat'
-    exec_bin = True
 
     cmd += ' %s -i %s -j %s' % (__arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
     logger.debug('job status command: %s' % cmd)
@@ -1086,7 +1068,6 @@ def arc_get_output(jid, directory, cred_req):
 
     # construct URI list from ID and output from arcls
     cmd = 'arcls %s %s' % (__arc_get_config_file_arg__(), jid)
-    exec_bin = True
     logger.debug('arcls command: %s' % cmd)
     rc, output, m = getShell(cred_req).cmd1(cmd,
                                     allowed_exit=[0, 255],
@@ -1119,7 +1100,6 @@ def arc_purgeMultiple(jobids, cred_req):
         ids_file.write('\n'.join(jobids) + '\n')
 
     cmd = 'arcclean'
-    exec_bin = True
 
     cmd = '%s %s -i %s -j %s' % (
         cmd, __arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
@@ -1140,7 +1120,6 @@ def arc_cancel(jobid, cred_req):
     '''Cancel a job'''
 
     cmd = 'arckill'
-    exec_bin = True
 
     cmd = '%s %s %s -j %s' % (cmd, str(
         jobid)[1:-1], __arc_get_config_file_arg__(), config["ArcJobListFile"])
@@ -1172,7 +1151,6 @@ def arc_cancelMultiple(jobids, cred_req):
         ids_file.write('\n'.join(jobids) + '\n')
 
     cmd = 'arckill'
-    exec_bin = True
 
     # compose the cancel command
     cmd = '%s %s -i %s -j %s' % (
