@@ -37,7 +37,7 @@ def get_result( command,
                 raise x
             retries = retries+1
             logger.error( "An Error Occured: %s" % str(x) )
-            logger.error( "Retrying: %s / %s " % ( str(retries), str(retry_limit) ) )
+            logger.error( "Retrying: %s / %s " % ( str(retries+1), str(retry_limit) ) )
 
 
 def get_job_ident(dirac_script_lines):

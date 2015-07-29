@@ -10,6 +10,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv, execute
 from Ganga.GPI                                import queues
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
+from Ganga.GPIDev.Base.Proxy import isType
 configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
@@ -113,7 +114,14 @@ class DiracFile(IGangaFile):
             self.remoteDir = remoteDir
 
     def __construct__( self, args ):
-        #logger.debug( "__construct__" )
+
+        if len(args) == 1 and isType(args[0], DiracFile):
+            self.lfn = args[0].lfn
+            self.namePattern = args[0].namePattern
+            self.remoteDir = args[0].remoteDir
+            self.localDir = args[0].localDir
+            return
+
         if len(args) == 1 and type(args[0]) == type(''):
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
                 self._setLFNnamePattern( _lfn = args[0][4:], _namePattern="" )

@@ -143,6 +143,11 @@ class DiracBase(IBackend):
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
         if not result_ok(result) or 'Value' not in result:
             logger.error(err_msg)
+            logger.error("\n\n===\n%s\n===\n"% dirac_script)
+            logger.error("\n\n====\n")
+            with open(dirac_script, 'r') as file_in:
+                logger.error("%s" % file_in.read())
+            logger.error("\n====\n")
             raise BackendError('Dirac',err_msg)
         
         idlist = result['Value']
