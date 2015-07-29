@@ -26,6 +26,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Utility.Config import getConfig
+import Ganga.Utility.Config
 from Ganga.Utility.logging import getLogger, log_user_exception
 from Ganga.Utility.util import isStringLike
 from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
@@ -42,20 +43,20 @@ from . import Grid
 logger = getLogger()
 config = getConfig('LCG')
 
-lcg_output_downloader = None
+_lcg_output_downloader = None
 
 
 def get_lcg_output_downloader():
-    global lcg_output_downloader
+    global _lcg_output_downloader
 
-    if not lcg_output_downloader:
+    if not _lcg_output_downloader:
 
-        numberOfThreads = getConfig('LCG')['OutputDownloaderThread']
+        number_of_threads = config['OutputDownloaderThread']
 
-        lcg_output_downloader = LCGOutputDownloader(numThread=numberOfThreads)
-        lcg_output_downloader.start()
+        _lcg_output_downloader = LCGOutputDownloader(numThread=number_of_threads)
+        _lcg_output_downloader.start()
 
-    return lcg_output_downloader
+    return _lcg_output_downloader
 
 # helper routines
 
@@ -163,6 +164,7 @@ class LCG(IBackend):
 
         re_token = re.compile('^token:(.*):(.*)$')
 
+        self.sandboxcache.vo = config['VirtualOrganisation']
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
         # Should this __really__ be in Core?
@@ -338,17 +340,12 @@ class LCG(IBackend):
         job = self.getJobObject()
 
         ick = False
-        if not config['GLITE_ENABLE']:
-            #logger.warning('Operations of %s middleware are disabled.' % mt)
-            #ick = False
-            raise GangaException('Operations of GLITE middleware not enabled')
+        if len(job.subjobs) == 0:
+            ick = IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig)
         else:
-            if len(job.subjobs) == 0:
-                ick = IBackend.master_submit(self, rjobs, subjobconfigs, masterjobconfig)
-            else:
-                ick = self.master_bulk_submit(rjobs, subjobconfigs, masterjobconfig)
-                if not ick:
-                    raise GangaException('GLITE bulk submission failure')
+            ick = self.master_bulk_submit(rjobs, subjobconfigs, masterjobconfig)
+            if not ick:
+                raise GangaException('GLITE bulk submission failure')
 
         profiler.check('==> master_submit() elapsed time')
 
@@ -369,32 +366,29 @@ class LCG(IBackend):
         job = self.getJobObject()
 
         ick = False
-        if not config['GLITE_ENABLE']:
-            raise GangaException('Operations of GLITE middleware not enabled')
+        if not job.master and len(job.subjobs) == 0:
+            # case 1: master job normal resubmission
+            logger.debug('rjobs: %s' % str(rjobs))
+            logger.debug('mode: master job normal resubmission')
+            ick = IBackend.master_resubmit(self, rjobs)
+
+        elif job.master:
+            # case 2: individual subjob resubmission
+            logger.debug('mode: individual subjob resubmission')
+            status = IBackend.master_resubmit(self, rjobs)
+            if status:
+                # set the backend flag to 1 if the job is individually submitted
+                # the monitoring loop on the master job shouldn't taken
+                # into account this job
+                job.backend.flag = 1
+            ick = status
+
         else:
-            if not job.master and len(job.subjobs) == 0:
-                # case 1: master job normal resubmission
-                logger.debug('rjobs: %s' % str(rjobs))
-                logger.debug('mode: master job normal resubmission')
-                ick = IBackend.master_resubmit(self, rjobs)
-
-            elif job.master:
-                # case 2: individual subjob resubmission
-                logger.debug('mode: individual subjob resubmission')
-                status = IBackend.master_resubmit(self, rjobs)
-                if status:
-                    # set the backend flag to 1 if the job is individually submitted
-                    # the monitoring loop on the master job shouldn't taken
-                    # into account this job
-                    job.backend.flag = 1
-                ick = status
-
-            else:
-                # case 3: master job bulk resubmission
-                logger.debug('mode: master job bulk resubmission')
-                ick = self.master_bulk_resubmit(rjobs)
-                if not ick:
-                    raise GangaException('GLITE bulk submission failure')
+            # case 3: master job bulk resubmission
+            logger.debug('mode: master job bulk resubmission')
+            ick = self.master_bulk_resubmit(rjobs)
+            if not ick:
+                raise GangaException('GLITE bulk submission failure')
 
         profiler.check('job re-submission elapsed time')
 
@@ -755,10 +749,6 @@ class LCG(IBackend):
 
         logger.debug('Getting logging info of job %s' % job.getFQID('.'))
 
-        if not config['GLITE_ENABLE']:
-            logger.warning('Operations of GLITE middleware are disabled.')
-            return None
-
         if not self.id:
             logger.warning('Job %s is not running.' % job.getFQID('.'))
             return None
@@ -899,10 +889,6 @@ class LCG(IBackend):
     def submit(self, subjobconfig, master_job_sandbox):
         '''Submit the job to the grid'''
 
-        if not config['GLITE_ENABLE']:
-            logger.warning('Operations of GLITE middleware are disabled.')
-            return None
-
         jdlpath = self.preparejob(subjobconfig, master_job_sandbox)
 
         if config['MatchBeforeSubmit']:
@@ -949,10 +935,6 @@ class LCG(IBackend):
         job = self.getJobObject()
 
         logger.info('Killing job %s' % job.getFQID('.'))
-
-        if not config['GLITE_ENABLE']:
-            logger.warning('Operations of GLITE middleware are disabled.')
-            return False
 
         if not self.id:
             logger.warning('Job %s is not running.' % job.getFQID('.'))
@@ -1985,7 +1967,7 @@ sys.exit(0)
     def updateExcudedCEsInJdl(self, jdlpath):
 
         import re
-        configexcludedCEs = getConfig('LCG')['ExcludedCEs']
+        configexcludedCEs = config['ExcludedCEs']
 
         with open(jdlpath, 'r') as jdlFileRead:
             jdlText = jdlFileRead.read()
@@ -2121,21 +2103,6 @@ class LCGJobConfig(StandardJobConfig):
             return os.path.basename(exe)
         else:
             return exe
-
-
-# global variables
-
-logger.debug('LCG module initialization: begin')
-
-if config['GLITE_ENABLE'] and not config['VirtualOrganisation']:
-    logger.info('LCG config is not set. Please set [LCG]VirtualOrganisation to your VO (e.g. "gridpp") or disable LCG with [LCG]GLITE_ENABLE=False')
-    config.setSessionValue('GLITE_ENABLE', False)
-
-if config['GLITE_ENABLE']:
-    active = Grid.check_proxy()
-    config.setSessionValue('GLITE_ENABLE', active)
-
-logger.debug('LCG module initialization: end')
 
 # $Log: not supported by cvs2svn $
 # Revision 1.38  2009/07/15 08:23:29  hclee

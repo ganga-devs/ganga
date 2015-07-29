@@ -1135,7 +1135,7 @@ def arc_cancelMultiple(jobids, cred_req):
     with open(idsfile, 'w') as ids_file:
         ids_file.write('\n'.join(jobids) + '\n')
 
-    # compose the cancel command
+    # compose the cancel comman
     cmd = '%s %s -i %s -j %s' % (
         cmd, __arc_get_config_file_arg__(), idsfile, config["ArcJobListFile"])
 
