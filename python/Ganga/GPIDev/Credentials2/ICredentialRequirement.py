@@ -22,8 +22,6 @@ class ICredentialRequirement(GangaObject):
     _name = "ICredentialRequirement"
     _hidden = 1
 
-    _exportmethods = ['encoded', 'isEmpty']
-    
     _infoClass = None  # This attribute refers to the ICredentialInfo subclass which can satisfy the requirements
 
     def __init__(self):
