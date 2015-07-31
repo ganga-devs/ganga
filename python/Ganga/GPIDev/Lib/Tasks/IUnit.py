@@ -33,8 +33,8 @@ class IUnit(GangaObject):
         'splitter': ComponentItem('splitters', defvalue=None, optional=1, load_default=False, doc='Splitter used on each unit of the Transform.'),
         'postprocessors': ComponentItem('postprocessor', defvalue=None, doc='list of postprocessors to run after job has finished'),
         'inputsandbox': FileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File'], sequence=1, doc="list of File objects shipped to the worker node "),
-        'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IOutputFile.IOutputFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
-        'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.OutputFile.OutputFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
+        'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
+        'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
         'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
     })
 
