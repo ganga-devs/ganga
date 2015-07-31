@@ -76,12 +76,13 @@ class CredentialStore(GangaObject):
             A single ICredentialInfo object which matches the requirements
 
         Raises:
-            CredentialsError: If it could not provide a credential
+            KeyError: If it could not provide a credential
+            TypeError: If query is of the wrong type
         """
         query = stripProxy(query)
 
         if not isinstance(query, ICredentialRequirement):
-            raise TypeError('Credential store index should be of type ICredentialRequirement')
+            raise TypeError('Credential store query should be of type ICredentialRequirement')
 
         match = self.match(query)
         if match:
@@ -107,6 +108,23 @@ class CredentialStore(GangaObject):
                 return cred
 
         raise KeyError('Matching credential [{query}] not found in store.'.format(query=query))
+
+    def get(self, query, default=None):
+        """
+        Return the value for ``query`` if ``query`` is in the store, else default.
+        If ``default`` is not given, it defaults to ``None``, so that this method never raises a ``KeyError``.
+
+        Args:
+            query (ICredentialRequirement):
+            default (ICredentialRequirement):
+
+        Returns:
+            A single ICredentialInfo object which matches the requirements or ``default``
+        """
+        try:
+            return self[query]
+        except KeyError:
+            return default
     
     def get_all_matching_type(self, query):
         """
