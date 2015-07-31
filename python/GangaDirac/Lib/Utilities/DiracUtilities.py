@@ -2,10 +2,9 @@ import os, base64, subprocess, threading, pickle, signal
 from Ganga.Utility.Config  import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
-from Ganga.GPIDev.Credentials import getCredential
+from Ganga.GPIDev.Credentials2 import credential_store
 import Ganga.Utility.execute as gexecute
 logger = getLogger()
-proxy = getCredential('GridProxy', '')
 
 ## Cache
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -69,6 +68,7 @@ def getValidDiracFiles(job, names=None):
                 if df.lfn!='' and (names is None or df.namePattern in names):
                     yield df
 
+
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def execute(command,
             timeout       = getConfig('DIRAC')['Timeout'],
@@ -77,7 +77,8 @@ def execute(command,
             shell         = False,
             python_setup  = '',
             eval_includes = None,
-            update_env    = False):
+            update_env    = False,
+            cred_req      = None):
     """
     Execute a command on the local DIRAC server.
     
@@ -89,13 +90,9 @@ def execute(command,
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
-    ## This will move/change when new credential system in place
-    ############################
-    if not proxy.isValid(): 
-        proxy.create()
-        if not proxy.isValid():
-            raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')   
-    ############################
+    if cred_req is not None:
+        env = env or {}
+        env['X509_USER_PROXY'] = credential_store[cred_req].location
 
     return gexecute.execute(command,
                             timeout       = timeout,
