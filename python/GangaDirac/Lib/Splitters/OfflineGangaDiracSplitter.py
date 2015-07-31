@@ -28,13 +28,9 @@ def find_random_site( original_SE_list, banned_SE ):
 
     return chosen_element
 
-##  These are global and used to Store the site which use a given SE or vice versa
-site_to_SE_mapping = {}
-SE_to_site_mapping = {}
-
 ##  This function is used for adding all of the known site for a given SE
-##  The output is stored in th global dictionary site_to_SE_mapping
-def addToMapping( SE ):
+##  The output is stored in the dictionary site_to_SE_mapping
+def addToMapping( SE, site_to_SE_mapping ):
 
     from GangaDirac.Lib.Utilities.DiracUtilities import execute
     result = execute('getSitesForSE( "%s" )' % str( SE ) )
@@ -83,7 +79,7 @@ def getLFNReplicas( allLFNs, index, allLFNData ):
 
 ##  For a given site select 'wanted_common_site' many site from a given Set
 ##  If uniqueSE is requestd the site selected will NOT share a common SE
-def generate_site_selection( input_site, wanted_common_site, uniqueSE=False ):
+def generate_site_selection( input_site, wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping ):
     req_sitez = set([])
     if len(input_site) > wanted_common_site:
         used_site = set([])
@@ -92,11 +88,9 @@ def generate_site_selection( input_site, wanted_common_site, uniqueSE=False ):
             req_sitez.add( this_site )
             if uniqueSE:
 
-                global SE_to_site_mapping
                 these_SE = SE_to_site_mapping[this_site]
                 for this_SE in these_SE:
 
-                    global site_to_SE_mapping
                     for site in site_to_SE_mapping[this_SE]:
                         used_site.add( site )
             else:
@@ -106,10 +100,7 @@ def generate_site_selection( input_site, wanted_common_site, uniqueSE=False ):
             req_sitez.add( s )
     return req_sitez
 
-def calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE ):
-
-    global site_to_SE_mapping
-    global SE_to_site_mapping
+def calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping ):
 
     SE_dict = dict()
     maps_size = 0
@@ -123,7 +114,7 @@ def calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE ):
             if not i in found:
 
                 from Ganga.GPI import queues
-                queues._monitoring_threadpool.add_function( addToMapping, ( str(i), ) )
+                queues._monitoring_threadpool.add_function( addToMapping, ( str(i), site_to_SE_mapping ) )
 
                 maps_size = maps_size + 1
                 found.append( i )
@@ -159,7 +150,7 @@ def calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE ):
 
     ##  Now select a set of site to use as a seed for constructing a subset of LFN
     for lfn in site_dict.keys():
-        allChosenSets[ lfn ] = generate_site_selection( site_dict[lfn], wanted_common_site, uniqueSE )
+        allChosenSets[ lfn ] = generate_site_selection( site_dict[lfn], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping )
 
     return site_dict, allSubSets, allChosenSets
 
@@ -335,8 +326,11 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.info( "Calculating site<->SE Mapping" )
 
+    site_to_SE_mapping = {}
+    SE_to_site_mapping = {}
+
     ## Now lets generate a dictionary of some chosen site vs LFN to use in constructing subsets
-    site_dict, allSubSets, allChosenSets = calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE ) 
+    site_dict, allSubSets, allChosenSets = calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping ) 
 
     logger.debug( "Found all SE in use" )
 
@@ -386,7 +380,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
             ##  If subset is too small throw it away
             if len( _this_subset ) < limit:
                 logger.debug( "%s < %s" % ( str( len( _this_subset )), str( limit) ) )
-                allChosenSets[ iterating_LFN ] = generate_site_selection( site_dict[iterating_LFN], wanted_common_site )
+                allChosenSets[ iterating_LFN ] = generate_site_selection( site_dict[iterating_LFN], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping )
                 continue
             else:
                 logger.debug( "%s > %s" % ( str( len( _this_subset )), str( limit) ) )
