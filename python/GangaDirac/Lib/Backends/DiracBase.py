@@ -517,6 +517,10 @@ class DiracBase(IBackend):
             wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
 
             with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
+                if not hasattr(file_info_dict, 'keys'):
+                    logger.error("Error understanding OutputDataInfo: %s" % str(file_info_dict))
+                    from Ganga.Core.exceptions import GangaException
+                    raise GangaException("Error understanding OutputDataInfo: %s" % str(file_info_dict))
                 for file_name in file_info_dict.keys():
                     info = file_info_dict.get( file_name )
                     logger.debug( "file_name: %s,\tinfo: %s" % (str(file_name), str(info)) )
