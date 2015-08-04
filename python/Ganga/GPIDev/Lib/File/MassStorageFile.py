@@ -9,7 +9,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.Utility import Shell
-
+from Ganga.Utility.logging import getLogger
 from .IGangaFile import IGangaFile
 
 import re
@@ -17,7 +17,7 @@ import os
 import copy
 
 regex = re.compile('[*?\[\]]')
-
+logger = getLogger()
 
 class MassStorageFile(IGangaFile):
 
