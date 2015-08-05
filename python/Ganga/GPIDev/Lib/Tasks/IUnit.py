@@ -9,6 +9,7 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 import time
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
 import sys
+import traceback
 
 def formatTraceback():
    "Helper function to printout a traceback as a string"
