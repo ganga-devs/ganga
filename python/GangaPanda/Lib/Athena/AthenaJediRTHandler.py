@@ -538,7 +538,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
                             'param_type':'number',
                             'value':'${RNDMSEED}',
                             'hidden':True,
-                            'offset':runConfig.other.G4RandomSeeds,
+                            'offset':self.runConfig.other.G4RandomSeeds,
                             }
                 taskParamMap['jobParameters'] += [dictItem]
         elif app.atlas_exetype in ["TRF"]:
