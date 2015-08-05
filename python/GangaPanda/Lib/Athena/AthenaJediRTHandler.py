@@ -576,8 +576,14 @@ class AthenaJediRTHandler(IRuntimeHandler):
 
         if job.inputdata and job.inputdata._name == 'DQ2Dataset' and job.inputdata.number_of_files != 0:
             taskParamMap['nFiles'] = job.inputdata.number_of_files
+        elif job.backend.requirements.nFilesPerJob > 0:
+            # pathena does this for some reason even if there is no input files
+            taskParamMap['nFiles'] = job.backend.requirements.nFilesPerJob * job.backend.requirements.split
         if job.backend.requirements.nFilesPerJob > 0:    
             taskParamMap['nFilesPerJob'] = job.backend.requirements.nFilesPerJob
+            
+        if job.backend.requirements.nEventsPerFile > 0:    
+            taskParamMap['nEventsPerFile'] = job.backend.requirements.nEventsPerFile
 
         if not job.backend.requirements.nGBPerJob in [ 0,'MAX']:
             try:
