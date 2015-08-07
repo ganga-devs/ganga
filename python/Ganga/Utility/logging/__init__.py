@@ -315,8 +315,9 @@ class FlushedMemoryHandler(logging.handlers.MemoryHandler):
 
     def shouldFlush(self, record):
         return threading.currentThread().getName().find("GANGA_Update_Thread") == -1 or \
-            logging.handlers.MemoryHandler.shouldFlush(self, record)
-
+                logging.handlers.MemoryHandler.shouldFlush(self, record)
+        #        #threading.currentThread().getName().find("Main") == -1
+        #return False#logging.handlers.MemoryHandler.shouldFlush(self, record)
 
 def enableCaching():
     """

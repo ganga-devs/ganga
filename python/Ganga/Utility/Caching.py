@@ -3,6 +3,8 @@ import time
 import new
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
+from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 try:
     from threading import Lock
@@ -158,7 +160,7 @@ class Cache(object):
         """ Override this method to extract a key from the name passed to the [] operator """
         dsetN = self._dset
 
-        if (dsetN.__class__.__name__ == 'GangaList'):
+        if isType(dsetN, GangaList):
             dataset = tuple(dsetN)
         else:
             dataset = (dsetN,)
