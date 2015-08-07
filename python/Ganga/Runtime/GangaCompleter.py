@@ -80,7 +80,8 @@ def current_class_method_and_arg(text, namespace=globals()):
         class_label = split_match[0]
         class_name = eval('%s.__class__.__name__' % class_label, namespace)
         tmp = '.'.join([class_label, method_name])
-        if eval('type(%s) != types.FunctionType and type(%s) != types.MethodType' % (tmp, tmp), namespace):
+        type_obj = eval('type(%s)' % tmp, namespace)
+        if eval('%s != types.FunctionType and %s != types.MethodType' % (type_obj, type_obj), namespace):
             # constructor
             class_label = tmp
             class_name = eval('%s.__class__.__name__' % tmp, namespace)
@@ -102,7 +103,6 @@ class GangaCompleter(object):
         self.func = func
         self.ns = ns
         self.ns['inspect'] = inspect
-#        self.ns['types']   = types
 
     def shell_size(self):
         '''
@@ -155,13 +155,11 @@ class GangaCompleter(object):
             schema_items = {}
             if eval('hasattr(%s, "_schema") and hasattr(%s, "_readonly")' % (split_text[0], split_text[0]), self.ns):
                 read_only = eval('%s._readonly()' % split_text[0], self.ns)
-                schema_items = eval(
-                    'dict(%s._schema.allItems())' % split_text[0], self.ns)
+                schema_items = eval('dict(%s._schema.allItems())' % split_text[0], self.ns)
+
             elif eval('hasattr(%s,"_impl") and hasattr(%s._impl, "_schema") and hasattr(%s._impl, "_readonly")' % (split_text[0], split_text[0], split_text[0]), self.ns):
-                read_only = eval('%s._impl._readonly()' %
-                                 split_text[0], self.ns)
-                schema_items = eval(
-                    'dict(%s._impl._schema.allItems())' % split_text[0], self.ns)
+                read_only = eval('%s._impl._readonly()' % split_text[0], self.ns)
+                schema_items = eval('dict(%s._impl._schema.allItems())' % split_text[0], self.ns)
 
             # if schema_items is not None and split_text[1] in schema_items:
             current_item = schema_items.get(split_text[1], None)
@@ -230,8 +228,7 @@ class GangaCompleter(object):
 
             user_input = user_input.replace(','.join(tmp), ','.join(new))
             if wrong:
-                logger.warning(
-                    'Only one positional arg allowed which must be an object of the same type to copy from')
+                logger.warning('Only one positional arg allowed which must be an object of the same type to copy from')
                 #user_input = user_input.replace(','.join(tmp), ','.join(new))
             if unrecognised:
                 for a, c in unrecognised:

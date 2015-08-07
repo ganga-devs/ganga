@@ -2,8 +2,8 @@ import time
 import os.path
 from Ganga.Utility.Config import getConfig
 config = getConfig('Configuration')
-config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",
-                 'MonALISA configuration file used to setup the destination of usage messages')
+#config.addOption('UsageMonitoringURL', "http://gangamon.cern.ch:8888/apmon/ganga.conf",
+#                 'MonALISA configuration file used to setup the destination of usage messages')
 config.addOption('UsageMonitoringMSG', True,
                  "enable usage monitoring through MSG server defined in MSGMS configuration")
 
@@ -33,11 +33,11 @@ def ganga_started(session_type, **extended_attributes):
 
     usage_message.update(extended_attributes)
 
-    if config['UsageMonitoringURL']:
-        from Ganga.GPI import queues
-        # Lets move the actual monitoring out of the main thread for some performance
-        msg = '%s@%s_%s' % (user, host, start)
-        queues.add( _setupMonitor, (config['UsageMonitoringURL'], msg, usage_message) )
+    #if config['UsageMonitoringURL']:
+    #    from Ganga.GPI import queues
+    #    # Lets move the actual monitoring out of the main thread for some performance
+    #    msg = '%s@%s_%s' % (user, host, start)
+    #    queues.add( _setupMonitor, (config['UsageMonitoringURL'], msg, usage_message) )
 
     if config['UsageMonitoringMSG']:
         from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil
