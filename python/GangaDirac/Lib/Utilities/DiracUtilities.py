@@ -4,6 +4,12 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials import getCredential
 import Ganga.Utility.execute as gexecute
+
+
+import time
+import math
+import copy
+
 logger = getLogger()
 proxy = getCredential('GridProxy', '')
 
@@ -69,6 +75,17 @@ def getValidDiracFiles(job, names=None):
                 if df.lfn!='' and (names is None or df.namePattern in names):
                     yield df
 
+last_modified_time = None
+
+## This will move/change when new credential system in place
+############################
+def _dirac_check_proxy():
+    if not proxy.isValid():
+        proxy.create()
+        if not proxy.isValid():
+            raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
+############################
+
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def execute(command,
             timeout       = getConfig('DIRAC')['Timeout'],
@@ -89,15 +106,19 @@ def execute(command,
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
-    ## This will move/change when new credential system in place
-    ############################
-    if not proxy.isValid(): 
-        proxy.create()
-        if not proxy.isValid():
-            raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')   
-    ############################
+    global last_modified_time
+    if last_modified_time is None:
+        ## This will move/change when new credential system in place
+        ############################
+        _dirac_check_proxy()
+        ############################
+        last_modified_time = time.time()
 
-    return gexecute.execute(command,
+    if abs(last_modified_time - time.time()) > 60:
+        _dirac_check_proxy()
+        last_modified_time = time.time()
+
+    returnable = gexecute.execute(command,
                             timeout       = timeout,
                             env           = env,
                             cwd           = cwd,
@@ -105,3 +126,22 @@ def execute(command,
                             python_setup  = python_setup,
                             eval_includes = eval_includes,
                             update_env    = update_env)
+
+    ##  rcurrie I've seen problems with just returning this raw object, expanding it to be sure that an instance remains in memory
+    myObject = {}
+    if hasattr(returnable, 'keys'):
+        myObject = _expand_object( returnable )
+
+    return myObject
+
+def _expand_object(myobj):
+    new_obj = {}
+    if hasattr(myobj, 'keys'):
+        for key in myobj.keys():
+            value = myobj.get(key)
+            if hasattr(value, 'keys'):
+                new_obj[key] = _expand_object(value)
+            else:
+                new_obj[key] = copy.deepcopy(value)
+    return new_obj
+

@@ -49,17 +49,6 @@ def getLFNReplicas( allLFNs, index, allLFNData ):
 
     toy_num = 0
 
-    for toy_num in range(5):
-
-        try:
-            from GangaDirac.Lib.Utilities.DiracUtilities import execute
-            output = execute( 'getReplicas(%s)' % str( allLFNs[(i*500):((i+1)*500)] ) )
-            these_values = output.get( 'Values' ).get('Successful')
-            break
-        except Exception, err:
-            #catch 'Successful' not found and others
-            pass
-
     min = i*500
 
     if (i+1)*500 > len(allLFNs):
@@ -67,12 +56,24 @@ def getLFNReplicas( allLFNs, index, allLFNData ):
     else:
         max = (i+1)*500
 
+    for toy_num in range(5):
+
+        try:
+            from GangaDirac.Lib.Utilities.DiracUtilities import execute
+            output = execute( 'getReplicas(%s)' % str( allLFNs[min:max] ) )
+            these_values = output.get( 'Value' ).get('Successful')
+            break
+        except Exception, err:
+            logger.error("Dirac Error: %s" % str(err))
+            #catch 'Successful' not found and others
+            pass
+
     import Ganga.Runtime.Repository_runtime
     Ganga.Runtime.Repository_runtime.updateLocksNow()
 
     allLFNData[i] = output
 
-    if toy_num == 5:
+    if toy_num == 4:
         logger.error("Failed to Get Replica Info: [%s:%s] of %s" ( str(min), str(max), len(allLFNs) ) )
     else:
         logger.info( "Got Replica Info: [%s:%s] of %s" % ( str(min), str(max), len(allLFNs) ) )
@@ -154,15 +155,13 @@ def calculateSiteSEMapping( file_replicas, wanted_common_site, uniqueSE, site_to
 
     return site_dict, allSubSets, allChosenSets
 
-def lookUpLFNReplicas(inputs):
+def lookUpLFNReplicas(inputs, allLFNData):
     ##  Build a useful dictionary and list
     allLFNs = []
     LFNdict = {}
     for i in inputs:
         allLFNs.append( i.lfn )
         LFNdict[i.lfn] = i
-
-    allLFNData = {}
 
     ##  Request the replicas for all LFN 500 at a time to not overload the
     ##  server and give some feedback as this is going on
@@ -180,7 +179,7 @@ def lookUpLFNReplicas(inputs):
         import Ganga.Runtime.Repository_runtime
         Ganga.Runtime.Repository_runtime.updateLocksNow()
 
-    return allLFNs, LFNdict, allLFNData
+    return allLFNs, LFNdict
 
 def sortLFNreplicas( bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData ):
     import math
@@ -193,10 +192,11 @@ def sortLFNreplicas( bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData ):
 
     for i in range( int(math.ceil( float(len(allLFNs))*0.002 )) ):
         #logger.info( "%s of %s" % (str(i), str(int(math.ceil( float(len(allLFNs))*0.002 )))) )
-        output = allLFNData[i]
+        output = allLFNData.get(i)
 
         if output == None:
             logger.error( "Error getting Replica information from Dirac: [%s,%s]" % ( str(i*500), str((i+1)*500) ) )
+            logger.error( "%s" % str(allLFNData) )
             raise Exception('Error from DIRAC')
 
         ## Identify files which have Failed to be found by DIRAC
@@ -297,8 +297,15 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.info( "Requesting LFN replica info" )
 
+    allLFNData = {}
+
     ## Perform a lookup of where LFNs are all stored
-    allLFNs, LFNdict, allLFNData = lookUpLFNReplicas( inputs )
+    allLFNs, LFNdict = lookUpLFNReplicas( inputs, allLFNData )
+
+    for i in allLFNData:
+        if allLFNData[i] is None:
+            logger.error("Error in Getting LFN Replica information, aborting split")
+            raise SplittingError("Error in Getting LFN Replica information, aborting split")
 
     bad_lfns = []
 
