@@ -12,7 +12,8 @@ def getSharedPath():
     # Required to be initialized for ShareDir object
     from Ganga.Utility.files import expandfilename
     import os.path
-    root_default = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+    Conf_config = getConfig('Configuration')
+    root_default = os.path.join(expandfilename(Conf_config['gangadir']), 'shared', Conf_config['user'])
     return root_default
 
 def Configure():
@@ -80,12 +81,12 @@ def Configure():
 
     import pwd
     import grp
-    from Ganga.Utility.Config import ConfigError
-    try:
-        user = getConfig('Configuration')['user']
-    except ConfigError, err:
-        import sys
-        sys.stderr.write('Configure Error: %s' % str(err) )
+    Conf_config = getConfig('Configuration')
+    if 'user' in Conf_config:
+        user = Conf_config ['user']
+    else:
+        #import sys
+        #sys.stderr.write('Configure Error: %s' % str(err) )
         import getpass
         user = getpass.getuser()
 

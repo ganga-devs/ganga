@@ -8,7 +8,7 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Core.GangaRepository import getRegistry
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 import os
 import shutil
 import uuid
@@ -119,7 +119,7 @@ def string_file_shortcut_file(v, item):
     if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
-        return File._proxyClass(v)._impl
+        return stripProxy(File._proxyClass(v))
     return None
 
 allComponentFilters['files'] = string_file_shortcut_file
@@ -273,7 +273,7 @@ def string_sharedfile_shortcut(v, item):
     if isinstance(v, str):
         # use proxy class to enable all user conversions on the value itself
         # but return the implementation object (not proxy)
-        return ShareDir._proxyClass(v)._impl
+        return stripProxy(ShareDir._proxyClass(v))
     return None
 
 allComponentFilters['shareddirs'] = string_sharedfile_shortcut
