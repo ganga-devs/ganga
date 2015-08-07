@@ -119,12 +119,12 @@ class UnitRunner:
 
 # Use the modules from testoob for GPIPRunner.
 sys.path.append(os.path.join(os.getenv('PYTF_TOP_DIR','').split(':')[0],'pytf'))
-from testoob.extracting import full_extractor as _full_extractor
-from testoob.running.convenience import _create_reporter_proxy
-from testoob.running.simplerunner import SimpleRunner
-from testoob.running.convenience import apply_decorators
-from testoob.reporting.colored import ColoredTextReporter
-from testoob.reporting import XMLFileReporter
+from pytf.testoob.extracting import full_extractor as _full_extractor
+from pytf.testoob.running.convenience import _create_reporter_proxy
+from pytf.testoob.running.simplerunner import SimpleRunner
+from pytf.testoob.running.convenience import apply_decorators
+from pytf.testoob.reporting.colored import ColoredTextReporter
+from pytf.testoob.reporting import XMLFileReporter
 
 import unittest
 from GangaTest.Framework.tests import GPIPPreparationTestCase, SimpleRunnerControl, FailedTestsException
@@ -174,7 +174,7 @@ class GPIPRunner:
                 """
                 import time
 
-                from testoob.running.fixture_decorators import BaseFixture
+                from pytf.testoob.running.fixture_decorators import BaseFixture
                 fixture_decorators = [BaseFixture]
 
                 test_extractor = apply_decorators(_full_extractor, [])
@@ -244,7 +244,7 @@ class GPIPRunner:
 
 
         def _generate_runner(self, testName):
-            from testoob.running.simplerunner import SimpleRunner
+            from pytf.testoob.running.simplerunner import SimpleRunner
             runner = SimpleRunner()
 
             verbosity = 1

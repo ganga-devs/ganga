@@ -225,8 +225,8 @@ class ICheckTest(object):
         """This check method will be invoked by the driver"""
         return is_job_completed(self.j)
 
-from testoob.running.convenience import apply_decorators
-from testoob.extracting import full_extractor as _full_extractor
+from pytf.testoob.running.convenience import apply_decorators
+from pytf.testoob.extracting import full_extractor as _full_extractor
 
 class SimpleRunnerControl(object):
     """
