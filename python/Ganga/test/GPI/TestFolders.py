@@ -27,14 +27,14 @@ class TestFolders(GangaGPITestCase):
         # make sure the job may be deleted
         jobtree.rm(j.id)
 
+        jobtree.rm('/*')
+
     def test_clean(self):  # asaroka
-        # KUBA: BUG: this procedure does not empty the tree completely
         jobtree.cd()
         jobtree.mkdir('testdir')
         jobtree.add(Job())
         jobtree.add(Job(), 'testdir')
-        jobtree.rm('testdir/*')
-        assert(jobtree.listjobs('testdir') == [])
+
         jobtree.rm('/*')
         assert(jobtree.listjobs('/') == [])
         assert(jobtree.listdirs('/') == [])
@@ -62,7 +62,10 @@ class TestFolders(GangaGPITestCase):
         assert(jobtree.pwd() == '/')
 
         assert(str(j.id) in jobtree.ls('/testdir')['jobs'])
-        assert(not str(j.id) in jobtree.ls()['jobs'])
+
+        assert(str(j.id) not in jobtree.ls()['jobs'])
+
+        jobtree.rm('/*')
 
     def test_find(self):  # uegede
         jobtree.cd()
@@ -72,6 +75,7 @@ class TestFolders(GangaGPITestCase):
         j1 = Job(name='j1')
         j2 = Job(name='j2')
 
+        jobtree.listdirs()
         jobtree.add(j1, 'a')
         jobtree.add(j2, 'a')
         jobtree.add(j2, 'b')
@@ -83,6 +87,11 @@ class TestFolders(GangaGPITestCase):
 
         # Look for rubbish
         assert(jobtree.find(-1) == [])
+
+        jobtree.rm('b')
+        jobtree.rm('a')
+
+        jobtree.rm('/*')
 
     def test_find_job(self):  # asaroka
         jobtree.cd()
@@ -104,6 +113,11 @@ class TestFolders(GangaGPITestCase):
         # Look for rubbish
         assert(jobtree.find(j1.application) == [])
 
+        jobtree.rm('b')
+        jobtree.rm('a')
+
+        jobtree.rm('/*')
+
     def test_faults(self):
 
         try:
@@ -119,3 +133,4 @@ class TestFolders(GangaGPITestCase):
         assert(jobtree_copy is not jobtree)
         del jobtree_copy
     # -------------
+

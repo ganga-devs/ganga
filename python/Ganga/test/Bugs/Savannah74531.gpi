@@ -14,3 +14,7 @@ jobtree.mkdir('testTreeOne')
 jobtree.add(testSlice, 'testTreeOne')
 jobtree.add(testList1, 'testTreeOne')
 jobtree.add(testList2, 'testTreeOne')
+
+jobtree.rm('testTreeOne')
+
+
