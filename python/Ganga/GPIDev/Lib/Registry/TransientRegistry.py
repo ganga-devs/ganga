@@ -104,23 +104,23 @@ class TransientRegistrySlice(RegistrySlice):
 
 class TransientRegistrySliceProxy(RegistrySliceProxy):
 
-    def __init__(self, _impl):
-        super(TransientRegistrySliceProxy, self).__init__(_impl)
+    def __init__(self, impl):
+        super(TransientRegistrySliceProxy, self).__init__(impl)
 
     def __call__(self, x):
         """
         Access individual object. Examples:
         """
-        return _wrap(self._impl.__call__(x))
+        return _wrap(stripProxy(self).__call__(x))
 
     def __getitem__(self, x):
         """
         Get an item by positional index. Examples:
         """
-        return _wrap(self._impl.__getitem__(x))
+        return _wrap(stripProxy(self).__getitem__(x))
 
     def __getslice__(self, i1, i2):
         """
         Get a slice. Examples:
         """
-        return _wrap(self._impl.__getslice__(i1, i2))
+        return _wrap(stripProxy(self).__getslice__(i1, i2))

@@ -101,6 +101,10 @@ class TaskRegistry(Registry):
                 self[tid].startup()
             except RegistryError:
                 continue
+            except Exception, err:
+                logger.error("Unknown/Unexpected Error in starting up tasks main loop")
+                logger.error("Exiting: err=%s" % str(err))
+                return
 
         logger.debug("Entering main loop")
 
@@ -170,8 +174,7 @@ class TaskRegistry(Registry):
                 if self._main_thread.should_stop():
                     break
 
-            logger.debug("TaskRegistry Sleeping for: %s seconds" %
-                         str(config['TaskLoopFrequency']))
+            logger.debug("TaskRegistry Sleeping for: %s seconds" % str(config['TaskLoopFrequency']))
 
             # Sleep interruptible for 10 seconds
             for i in range(0, int(config['TaskLoopFrequency'] * 100)):
@@ -183,8 +186,7 @@ class TaskRegistry(Registry):
         """ Start a background thread that periodically run()s"""
         super(TaskRegistry, self).startup()
         from Ganga.Core.GangaThread import GangaThread
-        self._main_thread = GangaThread(
-            name="GangaTasks", target=self._thread_main)
+        self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
         self._main_thread.start()
 
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
