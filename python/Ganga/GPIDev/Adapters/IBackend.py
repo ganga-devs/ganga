@@ -85,6 +85,7 @@ class IBackend(GangaObject):
         except Exception as x:
             from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('new')
+            from Ganga.Core.exceptions import GangaException
             if isinstance(x, GangaException):
                 logger.error(str(x))
                 log_user_exception(logger, debug=True)

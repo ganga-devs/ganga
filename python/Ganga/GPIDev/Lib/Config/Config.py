@@ -1,12 +1,17 @@
+
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.Config import ConfigError
+
+from Ganga.GPIDev.Base.Proxy import stripProxy, proxyRef
+
+from Ganga.Utility.Config import getConfig
+
+logger = Ganga.Utility.logging.getLogger()
 
 # GPI Proxy to manipulate configuration of all configuration units.
 # The interface of this class should resemble the regular dictionary
 # interface.
-
 
 class ConfigDescriptor(object):
 
@@ -15,12 +20,10 @@ class ConfigDescriptor(object):
 
     def __get__(self, obj, cls):
         assert(obj)
-        return obj._impl.getEffectiveOption(self._name)
+        return stripProxy(obj).getEffectiveOption(self._name)
 
     def __set__(self, obj, val):
-        obj._impl.setUserValue(self._name, val)
-
-from Ganga.Utility.Config import getConfig
+        stripProxy(obj).setUserValue(self._name, val)
 
 display_config = getConfig('Display')
 
@@ -41,7 +44,7 @@ class ConfigProxy(object):
     """
 
     def __init__(self, impl):
-        self.__dict__['_impl'] = impl
+        self.__dict__[proxyRef] = impl
 
     def __getitem__(self, o):
         try:
@@ -51,20 +54,20 @@ class ConfigProxy(object):
 
     def __setattr__(self, o, v):
         if o in dir(self.__class__):
-            self._impl.setUserValue(o, v)
+            stripProxy(self).setUserValue(o, v)
         else:
-            if not self._impl.is_open:
+            if not stripProxy(self).is_open:
                 raise ConfigError(
-                    'Cannot set undefined option [%s]%s' % (self._impl.name, o))
+                    'Cannot set undefined option [%s]%s' % (stripProxy(self).name, o))
             else:
-                self._impl._addOpenOption(o, v)
-                self._impl.setUserValue(o, v)
+                stripProxy(self)._addOpenOption(o, v)
+                stripProxy(self).setUserValue(o, v)
                 setattr(self.__class__, o, ConfigDescriptor(o))
 
     __setitem__ = __setattr__
 
     def __iter__(self):
-        return self._impl.__iter__()
+        return stripProxy(self).__iter__()
 
     def __str__(self):
         return self._display(False)
@@ -93,31 +96,31 @@ class ConfigProxy(object):
         levels = map(lambda x: markup(x, fg.red), levels)
         from cStringIO import StringIO
         sio = StringIO()
-        sio.write('%s' % markup(self._impl.name, name_colour) +
-                  ' : ' + markup(self._impl.docstring, docstring_colour) + '\n')
-        opts = sorted(self._impl.options.keys())
+        sio.write('%s' % markup(stripProxy(self).name, name_colour) +
+                  ' : ' + markup(stripProxy(self).docstring, docstring_colour) + '\n')
+        opts = sorted(stripProxy(self).options.keys())
         INDENT = '     ' * 2
         for o in opts:
-            sio.write(levels[self._impl.getEffectiveLevel(
-                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(repr(self._impl[o]), value_colour) + '\n')
-            sio.write(textwrap.fill(markup(self._impl.options[o].docstring.strip(
+            sio.write(levels[stripProxy(self).getEffectiveLevel(
+                o)] + '   ' + markup(o, name_colour) + ' = ' + markup(repr(stripProxy(self)[o]), value_colour) + '\n')
+            sio.write(textwrap.fill(markup(stripProxy(self).options[o].docstring.strip(
             ), docstring_colour), width=80, initial_indent=INDENT, subsequent_indent=INDENT) + '\n')
-            typelist = self._impl.options[o].typelist
+            typelist = stripProxy(self).options[o].typelist
             if not typelist:
                 typedesc = 'Type: ' + \
-                    str(type(self._impl.options[o].default_value))
+                    str(type(stripProxy(self).options[o].default_value))
             else:
                 typedesc = 'Allowed types: ' + \
                     str([t.split('.')[-1] for t in typelist])
             sio.write(markup(INDENT + typedesc, docstring_colour) + '\n')
-            filter = self._impl.options[o].filter
+            filter = stripProxy(self).options[o].filter
             if filter:
                 filter_doc = filter.__doc__
                 if not filter_doc:
                     filter_doc = "undocumented"
                 sio.write(
                     markup(INDENT + "Filter: " + filter_doc, docstring_colour) + '\n')
-            examples = self._impl.options[o].examples
+            examples = stripProxy(self).options[o].examples
             if examples:
                 sio.write(
                     markup(INDENT + "Examples:", docstring_colour) + '\n')
@@ -137,7 +140,7 @@ class MainConfigProxy(object):
 
     def __init__(self):
         import Ganga.Utility.Config
-        self.__dict__['_impl'] = Ganga.Utility.Config.allConfigs
+        self.__dict__[proxyRef] = Ganga.Utility.Config.allConfigs
 
     def __getitem__(self, p):
         try:
@@ -155,7 +158,7 @@ class MainConfigProxy(object):
     __setitem__ = __setattr__
 
     def __iter__(self):
-        return self._impl.__iter__()
+        return stripProxy(self).__iter__()
 
     def __str__(self):
         return self._display(False)
@@ -173,7 +176,7 @@ class MainConfigProxy(object):
         from cStringIO import StringIO
         sio = StringIO()
         sio.write("Ganga Configuration" + '\n')
-        sections = sorted(self._impl.keys())
+        sections = sorted(stripProxy(self).keys())
         maxcol = 0
         for p in sections:
             if len(p) > maxcol:
@@ -182,7 +185,7 @@ class MainConfigProxy(object):
             maxcol = 50
         for p in sections:
             sio.write(
-                '%-*s : %s' % (maxcol, p, markup(self._impl[p].docstring.split('\n')[0], fg.boldgrey)) + '\n')
+                '%-*s : %s' % (maxcol, p, markup(stripProxy(self)[p].docstring.split('\n')[0], fg.boldgrey)) + '\n')
         return sio.getvalue()
 
 # GPI config singleton.
@@ -190,14 +193,14 @@ config = MainConfigProxy()
 
 
 def print_config_file():
-    sections = sorted(config._impl.keys())
+    sections = sorted(stripProxy(config).keys())
 
     def print_doc_text(text):
         for line in text.splitlines():
             sio.write('# ' + line + '\n')
 
     for p in sections:
-        sect = config._impl[p]
+        sect = stripProxy(config)[p]
         if not sect.cfile:
             continue
         sio.write('\n')
@@ -222,12 +225,12 @@ def config_file_as_text():
 
     text = ''
 
-    sections = sorted(config._impl.keys())
+    sections = sorted(stripProxy(config).keys())
     INDENT = "#  "
     INDENT_value = "# "
     for p in sections:
 
-        sect = config._impl[p]
+        sect = stripProxy(config)[p]
         if not sect.cfile:
             continue
 
@@ -277,7 +280,7 @@ def config_file_as_text():
 def createSectionProxy(name):
     """ Create a class derived from ConfigProxy with all option descriptors and insert it into MainConfigProxy class.
     """
-    cfg = config._impl[name]
+    cfg = stripProxy(config)[name]
     if not cfg.hidden:
         d = {}
         for opt in cfg:
@@ -296,13 +299,13 @@ def createSectionProxy(name):
         cfg.deleteUndefinedOptions()
 
         proxy_class = type(name, (ConfigProxy,), d)
-        setattr(MainConfigProxy, name, proxy_class(config._impl[name]))
+        setattr(MainConfigProxy, name, proxy_class(stripProxy(config)[name]))
 
 
 def createOptionProxy(section_name, option_name):
     """ Create an option description in an existing ConfigProxy class - an attribute of MainConfigProxy class.
     """
-    if not config._impl[section_name].options[option_name].hidden:
+    if not stripProxy(config)[section_name].options[option_name].hidden:
         setattr(getattr(MainConfigProxy, section_name).__class__,
                 option_name, ConfigDescriptor(option_name))
 
@@ -310,24 +313,24 @@ def createOptionProxy(section_name, option_name):
 def bootstrap():
     """ Create GPI proxies for all configuration sections.
     """
-    for name in config._impl:
+    for name in stripProxy(config):
         createSectionProxy(name)
     import Ganga.Utility.Config.Config
     Ganga.Utility.Config.Config._after_bootstrap = True
     Ganga.Utility.Config.Config.sanityCheck()
 
 # def bootstrap():
-# for name in config._impl:
-# if config._impl[name].hidden:
+# for name in stripProxy(config):
+# if stripProxy(config)[name].hidden:
 # continue
 ##         d = {}
-##         cfg = config._impl[name]
+##         cfg = stripProxy(config)[name]
 # for opt in cfg:
 # if not cfg.options[opt].hidden:
 ##                 d[opt] = ConfigDescriptor(opt)
 
 ##         proxy_class = type(name,(ConfigProxy,), d)
-# setattr(MainConfigProxy,name,proxy_class(config._impl[name]))
+# setattr(MainConfigProxy,name,proxy_class(stripProxy(config)name]))
 
 ##     import Ganga.Utility.Config.Config
 

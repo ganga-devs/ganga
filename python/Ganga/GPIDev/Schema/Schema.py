@@ -90,6 +90,7 @@ class Schema(object):
     name = property(lambda self: self._pluginclass._name)
 
     def allItems(self):
+        if self.datadict is None: return zip()
         return zip(self.datadict.keys(), self.datadict.values())
 
     def simpleItems(self):
@@ -108,8 +109,10 @@ class Schema(object):
         return self.__getitem__(name)
 
     def _filter(self, klass):
-        r = []
+        if self.datadict is None:
+            return []
 
+        r = []
         for n, c in zip(self.datadict.keys(), self.datadict.values()):
             if issubclass(c.__class__, klass):
                 r.append((n, c))

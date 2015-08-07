@@ -10,6 +10,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 import Ganga.Utility.logging
 import os
 
+from Ganga.GPIDev.Base.Proxy import isType
 from posixpath import curdir, sep, pardir, join, abspath, commonprefix
 
 logger = Ganga.Utility.logging.getLogger()
@@ -98,7 +99,7 @@ class IMerger(IPostProcessor):
         if not outputdir:
             outputdir = getDefaultMergeDir()
         else:
-            if isinstance(outputdir, GPIProxyObject) and isinstance(outputdir._impl, Job):
+            if isType(outputdir, Job):
                 # use info from job
                 outputdir = outputdir.outputdir
             else:
@@ -106,7 +107,7 @@ class IMerger(IPostProcessor):
 
         files = {}
 
-        if isinstance(jobs, GPIProxyObject) and isinstance(jobs._impl, Job):
+        if isType(jobs, Job):
             if outputdir is None:
                 outputdir = jobs.outputdir
             return self.merge(jobs.subjobs, outputdir=outputdir, ignorefailed=ignorefailed, overwrite=overwrite)
