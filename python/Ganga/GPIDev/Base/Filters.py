@@ -29,6 +29,7 @@
 # Void filter does nothing. This is the default filter if no other default
 # has been defined.
 
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.Utility.Config import makeConfig
 from Ganga.Utility.Config.Config import ConfigError
 
@@ -62,7 +63,7 @@ class _ComponentFilterManager(object):
         # the filter can be registered as a tuple: ('filtername',filterfunction)
         # or just as a function in which case the function name is used as an
         # alias
-        if isinstance(filter, tuple) and len(filter) >= 2:
+        if isType(filter, tuple) and len(filter) >= 2:
             filtername = filter[0]
             filterfunc = filter[1]
         else:
