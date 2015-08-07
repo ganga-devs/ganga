@@ -1,5 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+from copy import deepcopy
 import tempfile
 import fnmatch
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
@@ -68,6 +69,19 @@ class LHCbDataset(GangaDataset):
         self.persistency=persistency
         self.depth = depth
         logger.debug( "Dataset Created" )
+
+    def __deepcopy__(self, memo):
+        cls = type(stripProxy(self))
+        obj = super(cls, cls).__new__(cls)
+        dict = stripProxy(self).__getstate__()
+        for n in dict:
+            dict[n] = deepcopy(dict[n], memo)
+            if n == 'files':
+                for file in dict['files']:
+                    stripProxy(file)._setParent(obj)
+        obj.__setstate__(dict)
+        return obj
+
 
     def __construct__(self, args):
         logger.debug( "__construct__" )
