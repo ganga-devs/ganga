@@ -132,8 +132,9 @@ class GaudiXMLSummaryMerger(IMerger):
 
     def mergefiles(self, file_list, output_file, jobs):
         from Ganga.GPIDev.Lib.Job import Job
+        from Ganga.GPIDev.Base.Proxy import isType
         gaudi_env = {}
-        if isinstance(jobs,GPIProxyObject) and isinstance(jobs._impl,Job):
+        if isType(jobs, Job):
             gaudi_env = jobs.application.getenv()
         elif len(jobs) > 0:
             gaudi_env = jobs[0].application.getenv()

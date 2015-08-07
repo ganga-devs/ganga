@@ -4,7 +4,7 @@ from Ganga.Core import GangaException
 class SplitterError(GangaException):
     """Splitting errors."""
 
-    def __init__(self, message):
+    def __init__(self, message=''):
         GangaException.__init__(self, message)
         self.message = message
 

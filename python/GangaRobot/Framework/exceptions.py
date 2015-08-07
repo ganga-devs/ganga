@@ -1,7 +1,7 @@
 from Ganga.Core.exceptions import GangaException
 
 class GangaRobotFatalError(GangaException):
-    def __init__(self,excpt,message):
+    def __init__(self, excpt=None, message=''):
         GangaException.__init__(self,excpt,message)
         self.message = message
         self.excpt = excpt
@@ -14,7 +14,7 @@ class GangaRobotFatalError(GangaException):
         return "GangaRobotFatalError: %s %s"%(self.message,e)
 
 class GangaRobotBreakError(GangaException):
-    def __init__(self,excpt,message):
+    def __init__(self, excpt=None, message=''):
         GangaException.__init__(self,excpt,message)
         self.message = message
         self.excpt = excpt
@@ -27,7 +27,7 @@ class GangaRobotBreakError(GangaException):
         return "GangaRobotBreakError: %s %s"%(self.message,e)
 
 class GangaRobotContinueError(GangaException):
-    def __init__(self,excpt,message):
+    def __init__(self, excpt=None, message=''):
         GangaException.__init__(self,excpt,message)
         self.message = message
         self.excpt = excpt
