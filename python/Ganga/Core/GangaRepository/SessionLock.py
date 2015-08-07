@@ -12,6 +12,7 @@ import errno
 import fcntl
 import random
 import datetime
+import getpass
 
 try:
     import cPickle as pickle
@@ -484,7 +485,7 @@ class SessionLockManager(object):
                     nowtime = time.time()
                     if abs(int(nowtime) - oldtime) > 10:
                         #logger.debug( "cleaning global lock" )
-                        os.system("fs setacl %s $USER rlidwka" % (lock_path))
+                        os.system("fs setacl %s %s rlidwka" % (lock_path, getpass.getuser()))
 
                 while True:
                     try:
@@ -496,7 +497,7 @@ class SessionLockManager(object):
                         logger.debug("Global Lock aquire Exception: %s" % str(err))
                         time.sleep(0.01)
 
-                os.system("fs setacl %s $USER rliwka" % (lock_path))
+                os.system("fs setacl %s %s rliwka" % (lock_path, getpass.getuser()))
 
                 while not os.path.isfile(lock_file):
                     lock_file_hand = open(lock_file, "w")
@@ -514,7 +515,7 @@ class SessionLockManager(object):
         try:
             if self.afs:
                 lock_path = str(self.lockfn) + '.afs'
-                os.system("fs setacl %s $USER rlidwka" % (lock_path))
+                os.system("fs setacl %s %s rlidwka" % (lock_path, getpass.getuser()))
             else:
                 self.delay_lock_mod(fcntl.LOCK_UN)
 

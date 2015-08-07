@@ -48,7 +48,8 @@ class GangaRepositoryImmutableTransient(GangaRepository):
                 if self.pickle_files:
                     obj = pickle.load(open(f, 'rb'))
                 else:
-                    obj = load(f)[0]._impl
+                    from Ganga.GPIDev.Base.Proxy import proxyRef
+                    obj = getattr(load(f)[0], proxyRef)
             except:
                 logger.error("Unable to load file '%s'" % f)
                 setattr(

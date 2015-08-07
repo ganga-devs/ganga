@@ -367,9 +367,10 @@ class Loader:
 # JUNK
 
 def p(j, f=None):
+    from Ganga.GPIDev.Base.Proxy import stripProxy
     vstreamer = VStreamer(out=f)
     vstreamer.begin_root()
-    j._impl.accept(vstreamer)
+    stripProxy(j).accept(vstreamer)
     vstreamer.end_root()
 
 

@@ -1,5 +1,4 @@
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository import InaccessibleObjectError
@@ -7,10 +6,13 @@ from Ganga.Core.GangaRepository import InaccessibleObjectError
 import time
 import threading
 
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+
+logger = Ganga.Utility.logging.getLogger()
 
 class RegistryError(GangaException):
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         super(RegistryError, self).__init__(self, what)
         self.what = what
 
@@ -23,7 +25,7 @@ class RegistryAccessError(RegistryError):
     """ This error is raised if the request is valid in principle, 
         but the Registry cannot be accessed at the moment."""
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         super(RegistryAccessError, self).__init__(what)
 
     def __str__(self):
@@ -35,7 +37,7 @@ class RegistryLockError(RegistryError):
     """ This error is raised if the request is valid in principle,
         but the object is locked by another Ganga session"""
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         super(RegistryLockError, self).__init__(what)
 
     def __str__(self):
@@ -47,7 +49,7 @@ class ObjectNotInRegistryError(RegistryError):
     """ This error is raised if an object has been associated to this registry,
         but is not actually in the registry. This most probably indicates an internal Ganga error."""
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         super(ObjectNotInRegistryError, self).__init__(what)
 
     def __str__(self):
@@ -58,7 +60,7 @@ class RegistryKeyError(RegistryError, KeyError):
 
     """ This error is raised if the given id is not found in the registry """
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         super(RegistryKeyError, self).__init__(what)
 
     def __str__(self):
@@ -69,7 +71,7 @@ class RegistryIndexError(RegistryError, IndexError):
 
     """ This error is raised if the given id is not found in the registry """
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         super(RegistryIndexError, self).__init__(what)
 
     def __str__(self):
@@ -225,27 +227,30 @@ class Registry(object):
     def __iter__(self):
         return iter(self.values())
 
-    def find(self, obj):
+    def find(self, _obj):
         """Returns the id of the given object in this registry, or 
         Raise ObjectNotInRegistryError if the Object is not found"""
+        obj = stripProxy(_obj)
         try:
             if hasattr(obj, '_registry_id'):
                 assert obj == self._objects[obj._registry_id]
                 return obj._registry_id
             else:
-                raise ObjectNotInRegistryError(
-                    "Object %s does not seem to be in this registry!" % obj)
+                raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj.__class__.__name__)
         except AttributeError, err:
             logger.debug("%s" % str(err))
-            raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj)
+            raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj.__class__.__name__)
         except AssertionError, err:
-            logger.debug("%s" % str(err))
-            #import traceback
-            # traceback.print_stack()
-            raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % obj)
+            logger.info("%s" % str(err))
+            from Ganga.GPIDev.Lib.JobTree import JobTree
+            if isType(obj, JobTree):
+                return obj._registry_id
+            import traceback
+            traceback.print_stack()
+            raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % obj.__class__.__name__)
         except KeyError, err:
             logger.debug("%s", str(err))
-            raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj)
+            raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj.__class__.__name__)
 
     def clean(self, force=False):
         """Deletes all elements of the registry, if no other sessions are present.
@@ -414,12 +419,14 @@ class Registry(object):
             finally:
                 self._lock.release()
 
-    def _write_access(self, obj):
+    def _write_access(self, _obj):
         """Obtain write access on a given object.
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError
         Raise ObjectNotInRegistryError (via self.find())"""
+
+        obj = stripProxy(_obj)
 
         #logger.debug("Reg: %s _write_access(%s)" % (self.name, str(obj)))
 
@@ -428,8 +435,7 @@ class Registry(object):
         #    traceback.print_stack()
 
         if not self._started:
-            raise RegistryAccessError(
-                "Cannot get write access to a disconnected repository!")
+            raise RegistryAccessError("Cannot get write access to a disconnected repository!")
         if not hasattr(obj, '_registry_locked') or not obj._registry_locked:
             with self._lock:
                 id = self.find(obj)
