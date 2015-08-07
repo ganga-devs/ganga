@@ -54,8 +54,9 @@ def isCredentialRequired(credObj):
         if Repository_runtime.requiresGridProxy() or Workspace_runtime.requiresGridProxy():
             return True
         from Ganga.GPI import jobs, typename
+        from Ganga.GPIDev.Base.Proxy import stripProxy
         for j in jobs:
-            ji = j._impl
+            ji = stripProxy(j)
             if ji.status in ['submitted', 'running', 'completing'] and typename(ji.backend) == 'LCG':
                 return True
         return False
@@ -80,8 +81,7 @@ def notifyInvalidCredential(credObj):
                   "Disabling internal services ..." % credObj._name)
         _tl = credObj.timeleft()
         if _tl == "-1":
-            log.error(
-                '%s has been destroyed! Could not shutdown internal services.' % credObj._name)
+            log.error('%s has been destroyed! Could not shutdown internal services.' % credObj._name)
             return
         disableInternalServices()
         log.warning('%s is about to expire! '

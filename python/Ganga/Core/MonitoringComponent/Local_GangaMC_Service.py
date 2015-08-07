@@ -10,6 +10,8 @@ from Ganga.Utility.threads import SynchronisedObject
 import Ganga.GPIDev.Credentials as Credentials
 from Ganga.Core.InternalServices import Coordinator
 
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
 # Setup logging ---------------
 import Ganga.Utility.logging
 log = Ganga.Utility.logging.getLogger()
@@ -549,7 +551,7 @@ class JobRegistry_Monitor(GangaThread):
 
             if jobs:
                 try:
-                    m_jobs = jobs._impl
+                    m_jobs = stripProxy(jobs)
                 except AttributeError:
                     m_jobs = jobs
 
@@ -922,7 +924,7 @@ class JobRegistry_Monitor(GangaThread):
 
             def cb_Failure():
                 self.enableCallbackHook(credCheckJobInsertor)
-                self._handleError('%s checking failed!' % credObj._name, credObj._name, 1)
+                self._handleError('%s checking failed!' % credObj._name, credObj._name, False)
 
             log.debug('Inserting %s checking function to Qin.' % credObj._name)
             _action = JobAction(function=self.makeCredChecker(credObj),
@@ -932,7 +934,7 @@ class JobRegistry_Monitor(GangaThread):
             try:
                 Qin.put(_action)
             except:
-                cb_Failure()
+                cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
         return credCheckJobInsertor
 
     def makeCredChecker(self, credObj):
@@ -980,8 +982,11 @@ class JobRegistry_Monitor(GangaThread):
     def _handleError(self, x, backend_name, show_traceback):
         def log_error():
             log.error('Problem in the monitoring loop: %s', str(x))
-            #import traceback
-            # traceback.print_stack()
+            #if show_traceback:
+            #    log.error("exception: ", exc_info=1)
+            #    #Ganga.Utility.logging.log_unknown_exception()
+            #    import traceback
+            #    traceback.print_stack()
             if show_traceback:
                 Ganga.Utility.logging.log_user_exception(log)
         bn = backend_name
