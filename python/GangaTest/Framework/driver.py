@@ -309,12 +309,12 @@ def cleanup():
         # explicit removal of jobs is not required but makes one test more
         try:
             for id in jobs.ids():
-                jobs(id).remove()
-            jobs.remove()
+                jobs(id).remove(force=True)
+            jobs.remove(force=True)
 
             for id in templates.ids():
-                templates(id).remove()
-            templates.remove()
+                templates(id).remove(force=True)
+            templates.remove(force=True)
             logger.info("regular cleanup done.")
         except Exception as e:
             logger.exception("Cleanup failed (%s)... will delete repository and workspace dirs manually "%str(e))
