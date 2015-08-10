@@ -646,7 +646,7 @@ class DiracBase(IBackend):
  
         result = execute( 'status(%s)' % str(dirac_job_ids) )
         if type(result) != type([]):
-            logger.warning('DIRAC monitoring failed: %s' % str(result))
+            logger.warning('DIRAC monitoring failed for %s reason: %s' % (str(dirac_job_ids), str(result)))
             return
                 
 
