@@ -54,7 +54,7 @@ class VomsProxyInfo(ICredentialInfo):
             raise CredentialRenewalError(stderrdata)
     
     def destroy(self):
-        status, output, message = self.shell.cmd1("voms-proxy-destroy -file %s" % self.location, allowed_exit=[0, 1])
+        self.shell.cmd1("voms-proxy-destroy -file %s" % self.location, allowed_exit=[0, 1])
         
         if self.location:
             os.remove(self.location)
