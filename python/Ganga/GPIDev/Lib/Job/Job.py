@@ -288,9 +288,14 @@ class Job(GangaObject):
         super(Job, c).__init__()
 
         c.time.newjob()
-        c.backend = self.backend
-        c.application = self.application
-        c.inputdata = self.inputdata
+        c.backend = copy.deepcopy(self.backend)
+        c.application = copy.deepcopy(self.application)
+        c.inputdata = copy.deepcopy(self.inputdata)
+        c.name = self.name
+        c.comment = self.comment
+        c.postprocessors = copy.deepcopy(self.postprocessors)
+        c.splitter = copy.deepcopy(self.splitter)
+        c.parallel_submit = self.parallel_submit
 
         # Continue as before
 
