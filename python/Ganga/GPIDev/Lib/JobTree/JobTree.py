@@ -105,24 +105,53 @@ class JobTree(GangaObject):
                     break
             return pp
 
+    def __folder_cd(self, path):
+
+        folders = self.__get_folders()
+
+        if path == []:
+            return folders
+
+        returnable_folder = folders
+        top_level = ''
+
+        ##  loop through elements in the path to get to the requested path from the user
+        for _dir in path:
+            ## catch thie exception
+            if _dir not in returnable_folder.keys():
+                clean_path = os.path.join(*path)
+                raise TreeError(1, "Directory %s does not exist in folder %s, accessing: %s" % (str(_dir), str(top_level), str(clean_path)))
+
+            ## 'cd' into the folder of interest
+            returnable_folder = returnable_folder[_dir]
+
+            if not isType(returnable_folder, type({})):
+                clean_path = os.path.join(*path)
+                raise TreeError(2, "%s not a directory, accessing: %s" % (str(_dir), str(clean_path)))
+
+            top_level = _dir
+
+        return returnable_folder
+
     def __make_dir(self, path):
-        f = self.__get_folders()
-        pp = self.__get_path(self.pwd())
 
-        top_level = f
-        for _dir in pp:
-            top_level = top_level[_dir]
+        _path = self.__get_path(path)
 
-        if path not in top_level:
-            top_level[path] = {}
-            return top_level[path]
-        f2 = top_level[path]
-        if not isType(f2, dict):
-            raise TreeError(2, "%s not a directory" % str(path))
+        returnable_folder = self.__folder_cd(_path[:-1])
 
-        return f2
+        local_dir = _path[-1]
 
-    def __get_folders(self, path=None):
+        if local_dir not in returnable_folder.keys():
+            returnable_folder[local_dir] = {}
+
+        if not isType(returnable_folder[local_dir], type({})):
+            clean_path = os.path.join(*_path)
+            raise TreeError(2, "%s not a directory, accessing: %s" % (str(local_dir), str(clean_path)))
+
+        return returnable_folder[local_dir]
+
+        ##  Perform some anity checking before returning the local folder structure
+    def __get_folders(self):
         f = self.folders
         if os.sep not in f.keys():
             f[os.sep] = {}
@@ -131,17 +160,12 @@ class JobTree(GangaObject):
 
     def __select_dir(self, path):
 
-        return self.__get_folders(path)
-        #f = self.__get_folders(path)
-        #f2 = copy.deepcopy(f)
+        ## sanitise the path and get an ordered list of the path directories
+        _path = self.__get_path(path)
 
-        #for d in self.__get_path(path):
-        #    if d not in f:
-        #        raise TreeError(1, "Directory %s does not exist" % str(d))
-        #    f2 = f[d]
-        #    if not isType(f2, dict):
-        #        raise TreeError(2, "%s not a directory" % str(d))
-        #return f2
+        returnable_folder = self.__folder_cd(_path)
+
+        return returnable_folder
 
     def __remove_dir(self, path=None, dir=None):
         if dir is None:
@@ -197,13 +221,19 @@ class JobTree(GangaObject):
     def exists(self, path):
         """Checks wether the path exists or not.
         """
-        f = self.__get_folders()
-        for d in self.__get_path(path):
-            try:
-                f = f[d]
-            except:
-                Ganga.Utility.logging.log_unknown_exception()
+        _path = self.__get_path(path)
+        try:
+            folder = self.__folder_cd(_path[:-1])
+            local_dir = path[-1]
+            if local_dir in path.keys():
+                return True
+            else:
                 return False
+        except Exception, err:
+            clean_path = os.path.join(*path)
+            logger.debug('Error getting path: %s' % str(clean_path))
+            logger.debug('%s' % str(err))
+            return False
         return True
 
     def isdir(self, path):
@@ -221,17 +251,9 @@ class JobTree(GangaObject):
         """
         self._getWriteAccess()
         try:
-            #from Ganga.GPIDev.Base.Proxy import stripProxy
-            #if isType(job, GPIProxyObject):
-            #    job = stripProxy(job)
-            #if isType(job, JobRegistrySliceProxy):
-            #    job = stripProxy(job)
             job = stripProxy(job)
 
-            mydir = self.__get_folders()
-            pp = self.__get_path(path)
-            for _dir in pp:
-                mydir = mydir[_dir]
+            mydir = self.__select_dir(path)
 
             if isType(job, Job):
                 mydir[job.getFQID('.')] = job.getFQID('.')  # job.id
@@ -303,11 +325,8 @@ class JobTree(GangaObject):
         The return value is a dictionary of the format
         {'folders':[<list of folders>], 'jobs':[<list of job ids>]}.
         """
-        f = self.__get_folders()
-        pp = self.__get_path(path)
-        top_level = f
-        for _dir in pp:
-            top_level = top_level[_dir]
+        _path = self.__get_path(path)
+        top_level = self.__folder_cd(_path)
         res = {'folders': [], 'jobs': []}
         for i in top_level:
             if isType(top_level[i], dict):
@@ -373,15 +392,10 @@ class JobTree(GangaObject):
         if isType(id, GPIProxyObject):
             id = stripProxy(id)
 
-        f = self.__get_folders()
         pp = self.__get_path(path)
-        tp = ''
-        for p in pp:
-            tp = os.path.join(tp, p)
+        tp = os.path.join(*pp)
 
-        top_level = f
-        for _dir in pp:
-            top_level = top_level[_dir]
+        top_level = self.__folder_cd(pp)
 
         search_dirs = []
         found_items = []
@@ -404,25 +418,6 @@ class JobTree(GangaObject):
 
         return result
 
-        #
-        #res = []
-        #from Ganga.GPIDev.Base.Proxy import stripProxy
-        #if isType(id, GPIProxyObject):
-        #    id = stripProxy(id)
-        #if isType(id, GangaObject):
-        #    if isType(id, Job):
-        #        id = stripProxy(id).getFQID('.')
-        #    else:
-        #        return res
-        #path = os.path.join(*self.__get_path(path))
-        #cont = self.ls(path)
-        #for i in cont['jobs']:
-        #    if id == i:
-        #        res.append(path)
-        #for i in cont['folders']:
-        #    res.extend(self.find(id, os.path.join(path, i)))
-        #return res
-
     def cleanlinks(self, path=os.sep):
         """Removes all references for the jobs not present in the registry.
         Normally you don't need to call this method since it is called automatically whenever
@@ -431,16 +426,13 @@ class JobTree(GangaObject):
         registry = self._getRegistry()
         if registry is not None:
             registry = registry._parent
-            f = self.__get_folders()
             pp = self.__get_path(path)
-            for _dir in pp:
-                f=f[_dir]
-            fc = f.copy()
+            fc = self.__folder_cd(pp)
 
-            for i in fc:
-                if isType(fc[i], dict):
+            for i in fc.keys():
+                if isType(fc[i], type({})):
                     pass
-                    #self.cleanlinks(os.path.join(path, i))
+                    self.cleanlinks(os.path.join(path, i))
                 else:
                     try:
                         try:
