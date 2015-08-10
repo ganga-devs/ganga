@@ -116,8 +116,7 @@ class GangaRepositoryLocal(GangaRepository):
         super(GangaRepositoryLocal, self).__init__(registry)
         self.dataFileName = "data"
         self.sub_split = "subjobs"
-        self.root = os.path.join(
-            self.registry.location, "6.0", self.registry.name)
+        self.root = os.path.join(self.registry.location, "6.0", self.registry.name)
         self.lockroot = os.path.join(self.registry.location, "6.0")
         self.saved_paths = {}
         self.saved_idxpaths = {}
@@ -142,10 +141,8 @@ class GangaRepositoryLocal(GangaRepository):
             self.to_file = pickle_to_file
             self.from_file = pickle_from_file
         else:
-            raise RepositoryError(
-                self.repo, "Unknown Repository type: %s" % self.registry.type)
-        self.sessionlock = SessionLockManager(
-            self, self.lockroot, self.registry.name)
+            raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
+        self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors
