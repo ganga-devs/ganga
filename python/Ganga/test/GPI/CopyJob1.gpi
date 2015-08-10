@@ -12,8 +12,8 @@ assert(j2.id != j.id)
 assert(j2.id > j.id) # internal assumption (implementation dependent)
 
 # make sure interface objects ARE the same or equivalent! rcurrie
-assert(j.application is j2.application)
-assert(j.backend is j2.backend)
+assert(j.application == j2.application)
+assert(j.backend == j2.backend)
 
 # make sure properties are not shared between the copies
 j.name = '1'

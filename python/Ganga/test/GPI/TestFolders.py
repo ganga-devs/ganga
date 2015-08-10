@@ -33,6 +33,7 @@ class TestFolders(GangaGPITestCase):
         jobtree.cd()
         jobtree.mkdir('testdir')
         jobtree.add(Job())
+        print jobtree
         jobtree.add(Job(), 'testdir')
 
         jobtree.rm('/*')
