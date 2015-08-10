@@ -43,7 +43,7 @@ def isType(_obj, type_or_seq):
 
     if isclass(_obj):
         try:
-            obj = stripProxy(_obj())
+            obj = stripProxy(_obj.__class__)
         except:
             obj = stripProxy(_obj)
     else:
@@ -55,7 +55,7 @@ def isType(_obj, type_or_seq):
             if type(type_obj) != type(type('')) and type_obj != type(''):
                 if isclass(type_obj):
                     try:
-                        clean_list.append(type(stripProxy(type_obj())))
+                        clean_list.append(stripProxy(type_obj.__class__))
                     except:
                         clean_list.append(type(stripProxy(type_obj)))
                 else:
@@ -66,7 +66,7 @@ def isType(_obj, type_or_seq):
     else:
         if isclass(type_or_seq):
             try:
-                return isinstance(obj, stripProxy(type_or_seq()))
+                return isinstance(obj, stripProxy(type_of_seq.__class__))
             except:
                 return isinstance(obj, stripProxy(type_or_seq))
         else:
