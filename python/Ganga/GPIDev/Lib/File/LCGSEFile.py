@@ -11,7 +11,7 @@ from Ganga.Utility.Config import getConfig
 import Ganga.Utility.logging
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 logger = Ganga.Utility.logging.getLogger()
-from Ganga.Utility import GridShell
+from Ganga.Utility.GridShell import getShell
 
 from .IGangaFile import IGangaFile
 
@@ -48,7 +48,7 @@ class LCGSEFile(IGangaFile):
         'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LCGSEFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
         'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-        #'credential_requirements' : ComponentItem('CredentialRequirement', defvalue=None, typelist=['Ganga.GPIDev.Credentials2.ICredentialRequirement.ICredentialRequirement', 'None'],protected=0,getter='getCredentialRequirements'),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=None),
     })
     _category = 'gangafiles'
     _name = "LCGSEFile"
@@ -62,8 +62,6 @@ class LCGSEFile(IGangaFile):
         self.localDir = localDir
 
         self.locations = []
-
-        self.shell = GridShell.getShell(self.credential_requirements)
 
     def __setattr__(self, attr, value):
         if attr == 'se_type' and value not in ['', 'srmv1', 'srmv2', 'se']:
@@ -200,11 +198,10 @@ class LCGSEFile(IGangaFile):
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
                 cmd = self.getUploadCmd()
-                cmd = 'X509_USER_PROXY={proxy} '.format(proxy=self.credential.location) + cmd
                 cmd = cmd.replace('filename', currentFile)
                 cmd = cmd + ' file:%s' % currentFile
 
-                (exitcode, output, m) = self.shell.cmd1(
+                (exitcode, output, m) = getShell(self.credential_requirements).cmd1(
                     cmd, capture_stderr=True)
 
                 d = LCGSEFile(namePattern=os.path.basename(currentFile))
@@ -246,13 +243,12 @@ class LCGSEFile(IGangaFile):
                 logger.debug("currentFile: %s DOES NOT exist!" % currentFile)
 
             cmd = self.getUploadCmd()
-            cmd = 'X509_USER_PROXY={proxy} '.format(proxy=self.credential.location) + cmd
             cmd = cmd.replace('filename', currentFile)
             cmd = cmd + ' file:%s' % currentFile
 
             logger.debug("cmd is: %s" % cmd)
 
-            (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
+            (exitcode, output, m) = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             if exitcode == 0:
 
@@ -389,8 +385,8 @@ class LCGSEFile(IGangaFile):
 
         for location in self.locations:
             destFileName = os.path.join(to_location, self.namePattern)
-            cmd = 'X509_USER_PROXY={proxy} lcg-cp --vo {vo} {remote_path} file:{local_path}'.format(proxy=self.credential.location, vo=vo, remote_path=location, local_path=destFileName)
-            (exitcode, output, m) = self.shell.cmd1(cmd, capture_stderr=True)
+            cmd = 'lcg-cp --vo {vo} {remote_path} file:{local_path}'.format(vo=vo, remote_path=location, local_path=destFileName)
+            (exitcode, output, m) = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             if exitcode != 0:
                 logger.error('command %s failed to execute , reason for failure is %s' % (cmd, output))
@@ -424,7 +420,7 @@ class LCGSEFile(IGangaFile):
         if regex.search(self.namePattern):
             #TODO namePattern shouldn't contain slashes and se_rpath should not contain wildcards
             cmd = 'lcg-ls lfn:/grid/{vo}/{se_rpath}'.format(vo=getConfig('LCG')['VirtualOrganisation'], se_rpath=self.se_rpath)
-            exitcode,output,m = self.shell.cmd1(cmd, capture_stderr=True)
+            exitcode,output,m = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):
