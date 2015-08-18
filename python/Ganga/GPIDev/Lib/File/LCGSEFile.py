@@ -48,7 +48,7 @@ class LCGSEFile(IGangaFile):
         'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
         'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
         'compressed': SimpleItem(defvalue=False, typelist=[bool], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
-        'credential_requirements': ComponentItem('CredentialRequirement', defvalue=None),
+        'credential_requirements': ComponentItem('CredentialRequirement', defvalue='VomsProxy'),
     })
     _category = 'gangafiles'
     _name = "LCGSEFile"
@@ -143,7 +143,7 @@ class LCGSEFile(IGangaFile):
 
     def getUploadCmd(self):
 
-        vo = getConfig('LCG')['VirtualOrganisation']
+        vo = self.credential_requirements.vo
 
         cmd = 'lcg-cr --vo %s ' % vo
         if self.se != '':
@@ -306,7 +306,7 @@ class LCGSEFile(IGangaFile):
         # set lfc host
         os.environ['LFC_HOST'] = self.lfc_host
 
-        vo = getConfig('LCG')['VirtualOrganisation']
+        vo = self.credential_requirements.vo
 
         for location in self.locations:
             destFileName = os.path.join(to_location, self.namePattern)
@@ -329,7 +329,7 @@ class LCGSEFile(IGangaFile):
         script = script.replace('###INDENT###', indent)
         script = script.replace('###LFC_HOST###', self.lfc_host)
         script = script.replace(
-            '###VO###', getConfig('LCG')['VirtualOrganisation'])
+            '###VO###', self.credential_requirements.vo)
         script = script.replace('###LOCATION###', self.se_rpath)
         script = script.replace('###NAMEPATTERN###', self.namePattern)
 
@@ -344,7 +344,7 @@ class LCGSEFile(IGangaFile):
 
         if regex.search(self.namePattern):
             #TODO namePattern shouldn't contain slashes and se_rpath should not contain wildcards
-            cmd = 'lcg-ls lfn:/grid/{vo}/{se_rpath}'.format(vo=getConfig('LCG')['VirtualOrganisation'], se_rpath=self.se_rpath)
+            cmd = 'lcg-ls lfn:/grid/{vo}/{se_rpath}'.format(vo=self.credential_requirements.vo, se_rpath=self.se_rpath)
             exitcode,output,m = getShell(self.credential_requirements).cmd1(cmd, capture_stderr=True)
 
             for filename in output.split('\n'):
