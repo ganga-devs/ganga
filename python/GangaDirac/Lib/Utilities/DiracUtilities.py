@@ -57,10 +57,9 @@ def getDiracCommandIncludes(force=False):
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def getValidDiracFiles(job, names=None):
     from GangaDirac.Lib.Files.DiracFile import DiracFile
-    from Ganga.GPIDev.Base.Proxy import isType
     if job.subjobs:
         for sj in job.subjobs:
-            for df in (f for f in sj.outputfiles if isType(f, DiracFile)):
+            for df in (f for f in sj.outputfiles if isinstance(f, DiracFile)):
                 if df.subfiles:
                     for valid_sf in (sf for sf in df.subfiles if sf.lfn!='' and (names is None or sf.namePattern in names)):
                         yield valid_sf
@@ -68,7 +67,7 @@ def getValidDiracFiles(job, names=None):
                     if df.lfn!='' and (names is None or df.namePattern in names):
                         yield df
     else:
-        for df in (f for f in job.outputfiles if isType(f, DiracFile)):
+        for df in (f for f in job.outputfiles if isinstance(f, DiracFile)):
             if df.subfiles:
                 for valid_sf in (sf for sf in df.subfiles if sf.lfn!='' and (names is None or sf.namePattern in names)):
                     yield valid_sf
@@ -131,14 +130,7 @@ def execute(command,
     ##  rcurrie I've seen problems with just returning this raw object, expanding it to be sure that an instance remains in memory
     myObject = {}
     if hasattr(returnable, 'keys'):
-        # Expand object(s) in dictionaries
         myObject = _expand_object( returnable )
-    elif type(returnable) == type([]):
-        # Expand object(s) in lists
-        myObject = _expand_list( returnable )
-    else:
-        # Copy object(s) so thet they definately are in memory
-        myObject = copy.deepcopy( returnable )
 
     return myObject
 
@@ -153,8 +145,3 @@ def _expand_object(myobj):
                 new_obj[key] = copy.deepcopy(value)
     return new_obj
 
-def _expand_list(mylist):
-    new_list = []
-    for element in mylist:
-        new_list.append(copy.deepcopy(element))
-    return new_list

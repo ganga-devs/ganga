@@ -14,7 +14,6 @@ from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 from Ganga.GPIDev.Credentials                import getCredential
-from Ganga.GPIDev.Base.Proxy                 import stripProxy
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
 
@@ -210,10 +209,10 @@ class DiracBase(IBackend):
                         #sj._commit() # PENDING: TEMPORARY DISABLED
                         incomplete = 1
                     else:
-                        return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
+                        return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
                 except Exception as x:
-                    log_user_exception(logger, debug=isinstance(x, GangaException))
-                    return handleError(IncompleteJobSubmissionError(fqid, str(x)))
+                    log_user_exception(logger,debug=isinstance(x,GangaException))
+                    return handleError(IncompleteJobSubmissionError(fqid,str(x)))
         finally:
             master = self.getJobObject().master
             if master:
@@ -577,15 +576,13 @@ class DiracBase(IBackend):
     job_finalisation = staticmethod(job_finalisation)
 
 
-    def updateMonitoringInformation(_jobs):
+    def updateMonitoringInformation(jobs):
         """Check the status of jobs and retrieve output sandboxes"""
         ## Only those jobs in 'submitted','running' are passed in here for checking
         ## if however they have already completed in Dirac they may have been put on queue
         ## for processing from last time. These should be put back on queue without 
         ## querying dirac again. Their signature is status = running and job.backend.status
         ## already set to Done or Failed etc.
-
-        jobs = [ stripProxy(j) for j in _jobs ]
 
         logger = getLogger()
 
@@ -646,17 +643,12 @@ class DiracBase(IBackend):
 
         ganga_job_status = [ j.status     for j in monitor_jobs if j.backend.id is not None ]
         dirac_job_ids    = [ j.backend.id for j in monitor_jobs if j.backend.id is not None ]
-
-        #logger.debug("GangaStatus: %s" % str(ganga_job_status))
-        #logger.debug("diracJobIDs: %s" % str(dirac_job_ids))
-
+ 
         result = execute( 'status(%s)' % str(dirac_job_ids) )
-
-        if len(result) != len(ganga_job_status):
-            logger.warning('Dirac monitoring failed fro %s, result = %s' % (str(dirac_job_ids), str(result)))
+        if type(result) != type([]):
+            logger.warning('DIRAC monitoring failed for %s reason: %s' % (str(dirac_job_ids), str(result)))
             return
-
-        #logger.debug("%s, %s, %s" % (str(len(ganga_job_status)), str(len(dirac_job_ids)), str(len(result))))
+                
 
         thread_handled_states = ['completed', 'failed']
         for job, state, old_state in zip(monitor_jobs, result, ganga_job_status):

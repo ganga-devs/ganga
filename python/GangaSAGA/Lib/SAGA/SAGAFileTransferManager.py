@@ -84,7 +84,16 @@ class SAGAFileTransferAlgorithm(Algorithm):
                 
                 ## Unpack the output sandbox and delete the archive
                 osbpath = job.getOutputWorkspace().getPath()+"_output_sandbox.tgz"
-                if os.path.exists(osbpath):
+                if os.path.exists(osbpath): 
+                #    tar = tarfile.open(osbpath)
+                #    if sys.version_info[0] == 2 and sys.version_info[1] < 5 :
+                #        for tarinfo in tar:
+                #            tar.extract(tarinfo)
+                #    else:
+                #        # New in Python 2.5
+                #        tar.extractall()
+                #        
+                #   tar.close()
                     if os.system("tar -C %s -xzf %s"%(job.getOutputWorkspace().getPath(),job.getOutputWorkspace().getPath()+"/_output_sandbox.tgz")) != 0:
                         job.updateStatus('failed')
                         raise Exception('cannot upack output sandbox')
@@ -92,7 +101,7 @@ class SAGAFileTransferAlgorithm(Algorithm):
 
             job.updateStatus('completed')
         
-        except saga.exception as e:
+        except saga.exception, e:
             logger.error('exception caught while poststaging: %s', e.get_full_message())
             job.updateStatus('failed')
         
