@@ -1,5 +1,5 @@
 from datetime import timedelta
-import json
+from copy import deepcopy
 
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
@@ -95,6 +95,7 @@ class CredentialStore(GangaObject):
             location_list = [query.default_location(), ':'.join([query.default_location(), query.encoded()])]
 
         # For each location, try wrapping the file on disk
+        query = deepcopy(query)  # Make a copy so we don't edit the passed-in object
         for location in location_list:
             query.location = location
             try:
