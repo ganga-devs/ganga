@@ -24,20 +24,19 @@ def jobid_as_string(job):
 def lhcbdiracAPI_script_template():
 
     DiracScript = diracAPI_script_template()
+
+    DiracLHCb_Options = 'j.setRootMacro(\'###ROOT_VERSION###\', \'###ROOT_MACRO###\', ###ROOT_ARGS###, \'###ROOT_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
+    DiracLHCb_Options += 'j.setRootPythonScript(\'###ROOTPY_VERSION###\', \'###ROOTPY_SCRIPT###\', ###ROOTPY_ARGS###, \'###ROOTPY_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
+    DiracLHCb_Options += 'j.setApplicationScript(\'###APP_NAME###\',\'###APP_VERSION###\',\'###APP_SCRIPT###\',logFile=\'###APP_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
+    DiracLHCb_Options += 'j.setAncestorDepth(###ANCESTOR_DEPTH###)\n'
+
     DiracScript = DiracScript.replace('outputPath','OutputPath').replace('outputSE','OutputSE')
-
-    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
-                  'j.setName(\'###NAME###\')\nj.setRootMacro(\'###ROOT_VERSION###\', \'###ROOT_MACRO###\', ###ROOT_ARGS###, \'###ROOT_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
-
-    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
-                  'j.setName(\'###NAME###\')\nj.setRootPythonScript(\'###ROOTPY_VERSION###\', \'###ROOTPY_SCRIPT###\', ###ROOTPY_ARGS###, \'###ROOTPY_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
-
-    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
-                  'j.setName(\'###NAME###\')\nj.setApplicationScript(\'###APP_NAME###\',\'###APP_VERSION###\',\'###APP_SCRIPT###\',logFile=\'###APP_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
-
     DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'','\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
     DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()' )
     DiracScript = DiracScript.replace('###OUTPUT_SE###','###OUTPUT_SE###,replicate=\'###REPLICATE###\'' )
+
+    setName_str = 'j.setName(\'###NAME###\')'
+    DiracScript = DiracScript.replace(setName_str, "%s\n%s" % (setName_str, DiracLHCb_Options) )
 
     return DiracScript
 

@@ -262,10 +262,11 @@ class DiracBase(IBackend):
 
         job_ident = get_job_ident(script.split('\n'))
         for key, value in self.settings.iteritems():
-             if type(value)is type(''):
-                  new_script += '%s.set%s("%s")\n' % (job_ident, key, value)
-             else:
-                  new_script += '%s.set%s(%s)\n' % (job_ident, key, str(value))
+            if str(key).startswith('set'):
+                _key = key[3:]
+            else:
+                _key = key
+            new_script += '%s.set%s("%s")\n' % (job_ident, str(_key), str(value))
         new_script += script[script.find('# user settings -->'):]
              
 

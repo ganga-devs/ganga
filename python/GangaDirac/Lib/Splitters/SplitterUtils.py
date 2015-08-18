@@ -35,6 +35,7 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
     #logger.debug( "Looping over all_files" )
     #logger.debug( "%s" % str( all_files ) )
 
+    from Ganga.GPI import DiracFile
 
     for files in all_files:
 
@@ -73,6 +74,9 @@ def DiracSplitter(inputs, filesPerJob, maxFiles, ignoremissing):
 
     logger.debug( "Split Files: %s" % str(split_files) )
 
-    for dataset in split_files:
+    for _dataset in split_files:
+        dataset = []
+        for _lfn in _dataset:
+            dataset.append(DiracFile(lfn=_lfn))
         yield dataset
 

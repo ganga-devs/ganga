@@ -18,7 +18,12 @@ from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig
 
 logger = Ganga.Utility.logging.getLogger()
-lhcbConfig = getConfig('LHCb')
+
+def getBackend():
+
+    lhcbConfig = getConfig('LHCb')
+    return lhcbConfig['SplitByFilesBackend']
+
 
 class SplitByFiles(GaudiInputDataSplitter):
     """Splits a job into sub-jobs by partitioning the input data
@@ -31,21 +36,25 @@ class SplitByFiles(GaudiInputDataSplitter):
                 'filesPerJob' : SimpleItem(defvalue=10,
                                            doc='Number of files per subjob',
                                            typelist=['int']),
+
                 'maxFiles'    : SimpleItem(defvalue=None,
                                            doc='Maximum number of files to use in a masterjob (None = all files)',
-                                           typelist=['int','type(None)'])
-             })
-    _schema.datadict['bulksubmit']    = SimpleItem(defvalue=False,
+                                           typelist=['int','type(None)']),
+
+                'bulksubmit'  : SimpleItem(defvalue=False,
                                                    doc='determines if subjobs are split '\
                                                    'server side in a "bulk" submission or '\
-                                                   'split locally and submitted individually')
-    _schema.datadict['ignoremissing'] = SimpleItem(defvalue=False,
+                                                   'split locally and submitted individually'),
+
+                'ignoremissing' : SimpleItem(defvalue=False,
                                                    doc='Skip LFNs if they are not found ' \
                                                    'in the LFC. This option is only used if' \
-                                                   'jobs backend is Dirac')
-    _schema.datadict['splitterBackend'] = SimpleItem(defvalue=lhcbConfig['SplitByFilesBackend'],
+                                                   'jobs backend is Dirac'),
+
+                'splitterBackend' : SimpleItem(defvalue=getBackend(),
                                                      doc='name of the backend algorithm to use for splitting',
                                                      typelist=['str'], protected =1, visitable=0)
+                })
 
     _exportmethods = ['split']
 
@@ -60,6 +69,8 @@ class SplitByFiles(GaudiInputDataSplitter):
     def _create_subjob(self, job, dataset):
         logger.debug( "_create_subjob" )
         datatmp = []
+
+        logger.debug( "dataset: %s" % str(dataset) )
 
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
@@ -148,7 +159,6 @@ class SplitByFiles(GaudiInputDataSplitter):
             if self.filesPerJob > 100: self.filesPerJob = 100 # see above warning
             logger.debug( "indata: %s " % str( indata ) )
 
-            from Ganga.Utility.Config import getConfig
             if self.splitterBackend == "GangaDiracSplitter":
                 from GangaDirac.Lib.Splitters.GangaSplitterUtils import GangaDiracSplitter
                 outdata = GangaDiracSplitter(indata,
