@@ -1561,7 +1561,6 @@ sys.exit(0)
                 jdl[name] = config[name]
 
         jdlText = Grid.expandjdl(jdl)
-        print(jdlText)
         logger.debug('subjob JDL: %s' % jdlText)
         return inpw.writefile(FileBuffer('__jdlfile__', jdlText))
 
