@@ -118,7 +118,7 @@ def _store_dirac_environment():
     if not os.path.exists(fdir):
         os.makedirs(fdir)
     fname = os.path.join(fdir,diracversion)
-    if not os.path.exists(fname):
+    if not os.path.exists(fname) or not os.path.getsize(fname):
         file = open(fname,'w+')
         cmd = '/usr/bin/env bash -c \"source %s LHCBDIRAC %s ROOT>& /dev/null && '\
             'printenv > %s\"' % (setup_script,diracversion,fname)
