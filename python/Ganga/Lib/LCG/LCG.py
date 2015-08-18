@@ -196,7 +196,7 @@ class LCG(IBackend):
 
     _category = 'backends'
     _name = 'LCG'
-    _exportmethods = ['check_proxy', 'loginfo', 'inspect',
+    _exportmethods = ['loginfo', 'inspect',
                       'match', 'get_wms_list', 'get_ce_list', 'get_se_list']
 
     _GUIPrefs = [{'attribute': 'CE', 'widget': 'String'},
@@ -1748,11 +1748,11 @@ sys.exit(0)
                 job.backend.status = info['status']
                 job.backend.reason = info['reason']
                 job.backend.exitcode_lcg = info['exit']
-                if info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)':
+                if info['status'] in ['Done (Success)', 'Done(Success)']:
                     create_download_task = True
                 else:
                     LCG.updateGangaJobStatus(job, info['status'])
-            elif (info['status'] == 'Done (Success)' or info['status'] == 'Done(Success)') and (job.status not in LCG._final_ganga_states):
+            elif (info['status'] in ['Done (Success)', 'Done(Success)']) and (job.status not in LCG._final_ganga_states):
                 create_download_task = True
 
             if create_download_task:
@@ -1937,11 +1937,6 @@ sys.exit(0)
         #    for mj in mjob_status_updatelist:
         #        logger.debug('updating overall master job status: %s' % mj.getFQID('.'))
         #        mj.updateMasterJobStatus()
-
-    def check_proxy(self):
-        '''Update the proxy'''
-
-        return Grid.check_proxy()
 
     @require_credential
     def get_requirement_matches(self, jdl_file=None, spec_ce=''):
