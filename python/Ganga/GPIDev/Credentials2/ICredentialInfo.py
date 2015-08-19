@@ -28,7 +28,7 @@ def cache(method):
     def wrapped_function(self, *args, **kwargs):
 
         # If the mtime has been changed, clear the cache
-        mtime = os.path.getmtime(self.location)
+        mtime = os.path.getmtime(self.location)  # TODO If file doesn't exist, do the right thing.
         if mtime > self.cache['mtime']:
             self.cache = {'mtime': mtime}
 
