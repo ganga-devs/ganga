@@ -14,7 +14,8 @@ from GangaDirac.Lib.Utilities.DiracUtilities import execute
 from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
-from Ganga.GPIDev.Credentials2               import VomsProxy, require_credential, credential_store
+from Ganga.GPIDev.Credentials2               import VomsProxy, require_credential, credential_store, needed_credentials
+
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
 
@@ -637,11 +638,10 @@ class DiracBase(IBackend):
         monitor_job_status_dict = {}  # type: Mapping[int, List[str]]
         for cred_req, job_ids in cred_to_backend_id_list.items():
             # If the credential is not valid or doesn't exist then skip it
-            try:
-                if not credential_store[cred_req].is_valid():
+            cred = credential_store.get(cred_req)
+            if not cred or not cred.is_valid():
+                    needed_credentials.add(cred_req)
                     continue
-            except KeyError:
-                continue
             statuses = execute('status(%s)' % str(job_ids), cred_req=cred_req)
             monitor_job_status_dict.update(dict(zip(job_ids, statuses)))
 

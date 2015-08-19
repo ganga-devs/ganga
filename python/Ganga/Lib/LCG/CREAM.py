@@ -22,7 +22,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from . import Grid
 from Ganga.Lib.LCG.GridftpSandboxCache import GridftpSandboxCache
 
-from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential, credential_store
+from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential, credential_store, needed_credentials
 
 
 def __cream_resolveOSBList__(job, jdl):
@@ -1218,11 +1218,10 @@ sys.exit(0)
         jobInfoDict = {}
         for cred_req, job_ids in cred_to_backend_id_list.items():
             # If the credential is not valid or doesn't exist then skip it
-            try:
-                if not credential_store[cred_req].is_valid():
+            cred = credential_store.get(cred_req)
+            if not cred or not cred.is_valid():
+                    needed_credentials.add(cred_req)
                     continue
-            except KeyError:
-                continue
             # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
             info = Grid.cream_status(job_ids, cred_req)
             jobInfoDict.update(info)
