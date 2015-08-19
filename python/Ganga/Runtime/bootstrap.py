@@ -1291,17 +1291,28 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def ganga_prompt(dummy=None):
-        credentialsWarningPrompt = ''
-        # alter the prompt only when the internal services are disabled
-        from Ganga.Core.InternalServices import Coordinator
-        if not Coordinator.servicesEnabled:
-            invalidCreds = Coordinator.getMissingCredentials()
-            if invalidCreds:
-                credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
-            if credentialsWarningPrompt:  # append newline
-                 credentialsWarningPrompt += '\n'
+        # Filter out any credentials which are valid
 
-        return credentialsWarningPrompt
+        from Ganga.GPIDev.Credentials2 import credential_store, needed_credentials
+
+        now_valid_creds = set()
+        for cred_req in needed_credentials:
+            cred = credential_store.get(cred_req)
+            if cred and cred.is_valid():
+                now_valid_creds.add(cred_req)
+
+        # Remove the valid credentials from needed_credentials
+        needed_credentials.difference_update(now_valid_creds)
+
+        # Add still-needed credentials to the prompt
+        if needed_credentials:
+            prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
+            for cred_req in needed_credentials:
+                prompt += str(cred_req).replace('\n ', '') + '\n'
+            prompt += 'Call `credential_store.renew()` to update them.\n'
+            return prompt
+
+        return ''
 
 
 

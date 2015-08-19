@@ -173,11 +173,20 @@ class CredentialStore(GangaObject):
 
     def renew(self):
         """
-        Renew all credentails which are invalid or will expire soon
+        Renew all credentials which are invalid or will expire soon.
+        It also uses the entries in `needed_credentials` and adds and renews those
+        TODO Should this function be standalone?
         """
         for cred in self.credentials:
             if not cred.is_valid() or cred.time_left() < timedelta(hours=1):
                 cred.renew()
+        for cred_req in needed_credentials - self.credentials:
+            try:
+                self[cred_req].renew()
+            except KeyError:
+                self.create(cred_req)
 
 # This is a global 'singleton'
 credential_store = CredentialStore()
+
+needed_credentials = set()  # type: Set[ICredentialRequirement]
