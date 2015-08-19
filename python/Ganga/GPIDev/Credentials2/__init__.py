@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 
-from .CredentialStore import credential_store, needed_credentials
+from .CredentialStore import credential_store, needed_credentials, get_needed_credentials
 
 from .VomsProxy import VomsProxy
 
