@@ -767,13 +767,7 @@ class DiracBase(IBackend):
                     job.updateStatus('running')
                 if job.status in ['completed', 'killed', 'removed']:
                     break
-                # make sure proxy is valid
-                if DiracBase.checkDiracProxy():
-                    # perform finalisation
-                    DiracBase._internal_job_finalisation(job, updated_dirac_status)
-                else:
-                    # exit gracefully
-                    logger.warning("Cannot process job: %s. DIRAC monitoring has been disabled. To activate your grid proxy type: \'gridProxy.renew()\'" % job.fqid)
+                DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
             except Exception as err:
 
@@ -849,10 +843,13 @@ class DiracBase(IBackend):
 
         statusmapping = configDirac['statusmapping']
 
-        result, bulk_state_result = execute('monitorJobs(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements)  # TODO split jobs by cred_req
+        # TODO split jobs by cred_req and check each for validity
+        # cred = credential_store.get(cred_req)
+        # if not cred or not cred.is_valid():
+        #     needed_credentials.add(cred_req)
+        #     continue
 
-        if not DiracBase.checkDiracProxy():
-            return
+        result, bulk_state_result = execute('monitorJobs(%s, %s)' %( repr(dirac_job_ids), repr(statusmapping)), cred_req=monitor_jobs[0].backend.credential_requirements)
 
         #result = results[0]
         #bulk_state_result = results[1]
@@ -932,18 +929,6 @@ class DiracBase(IBackend):
         DiracBase.requeue_dirac_finished_jobs(requeue_job_list, finalised_statuses)
 
     @staticmethod
-    def checkDiracProxy():
-        # make sure proxy is valid
-        if not _proxyValid(shouldRenew = False, shouldRaise = False):
-            if DiracBase.dirac_monitoring_is_active is True:
-                logger.warning('DIRAC monitoring inactive (no valid proxy found).')
-                logger.warning('Type: \'gridProxy.renew()\' to (re-)activate')
-            DiracBase.dirac_monitoring_is_active = False
-        else:
-            DiracBase.dirac_monitoring_is_active = True
-        return DiracBase.dirac_monitoring_is_active
-
-    @staticmethod
     def updateMonitoringInformation(jobs_):
         """Check the status of jobs and retrieve output sandboxesi
         Args:
@@ -956,10 +941,6 @@ class DiracBase(IBackend):
         # already set to Done or Failed etc.
 
         jobs = [stripProxy(j) for j in jobs_]
-
-        # make sure proxy is valid
-        if not DiracBase.checkDiracProxy():
-            return
 
         # remove from consideration any jobs already in the queue. Checking this non persisted attribute
         # is better than querying the queue as cant tell if a job has just been taken off queue and is being processed
