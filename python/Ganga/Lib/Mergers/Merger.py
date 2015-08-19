@@ -8,6 +8,7 @@ from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
 from Ganga.GPIDev.Adapters.IMerger import IMerger
 from Ganga.GPIDev.Schema import FileItem, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.Utility.Config import ConfigError, getConfig
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Utility.logging import getLogger
@@ -28,18 +29,24 @@ def getMergerObject(file_ext):
         if file_ext == 'std_merge':
             result = allPlugins.find('postprocessor', config[file_ext])()
         else:
-            # load the dictionary of file assocaitions
-            file_types = eval(config['associate'])
-            result = allPlugins.find('postprocessor', file_types[file_ext])()
-    except ConfigError:
+            # load the dictionary of file assocaitions # Why was there _ever_ an eval statement here? rcurrie
+            file_types = config['associate']
+            associate_merger = file_types[file_ext]
+            result = allPlugins.find('postprocessor', associate_merger)()
+    except ConfigError, err:
+        logger.debug("ConfError %s" % str(err))
         pass
-    except KeyError:
+    except KeyError, err:
+        logger.debug("KeyError %s" % str(err))
         pass
-    except PluginManagerError:
+    except PluginManagerError, err:
+        logger.debug("PluginError %s" % str(err))
         pass
-    except SyntaxError:
+    except SyntaxError, err:
+        logger.debug("SyntaxError %s" % str(err))
         pass
-    except TypeError:  # TypeError as we may not be able to call ()
+    except TypeError, err:  # TypeError as we may not be able to call ()
+        logger.debug("TypeError %s" % str(err))
         pass  # just return None
     return result
 
@@ -399,6 +406,8 @@ class SmartMerger(IMerger):
                 logger.error('Extension %s not recognized and so the merge will fail. '
                              'Check the [Mergers] section of your .gangarc file.', ext)
                 return self.failure
+            else:
+                logger.debug('Extension %s matched and using appropriate object: %s' % (str(ext), str(merge_object)))
             merge_object.files = type_map[ext]
             merge_result = merge_object.merge(jobs, outputdir, ignorefailed, overwrite)
             merge_results.append(merge_result)

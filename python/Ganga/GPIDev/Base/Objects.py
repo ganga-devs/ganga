@@ -442,7 +442,7 @@ class ObjectMetaclass(type):
                         logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (str(internal_name), str(d)))
                         logger.debug("ObjectMetaClass Error: %s" % str(err))
 
-                    if not isType(method, types.FunctionType):
+                    if not isinstance(method, types.FunctionType):
                         continue
                     f = ProxyMethodDescriptor(k, internal_name)
                     f.__doc__ = method.__doc__

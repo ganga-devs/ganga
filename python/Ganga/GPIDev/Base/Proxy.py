@@ -38,7 +38,7 @@ def isProxy(obj):
 def isType(_obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
 
-    ## This isclass check appears to be needed for GangaList and maybe others!!! rcurrie
+    ## A fair amount of isclass checks are needed for GangaList and maybe others!!! rcurrie
     ## If this is taken out then the GangaList class needs to be fixed as do others!!!
 
     if isclass(_obj):
@@ -49,10 +49,13 @@ def isType(_obj, type_or_seq):
     else:
         obj = stripProxy(_obj)
 
-    if isinstance(type_or_seq, (tuple, list)):
+    ## Here to avoid circular GangaObject dependencies
+    from Ganga.GPIDev.Lib.GangaList import GangaList
+    ## is type_or_seq iterable?
+    if isinstance(type_or_seq, (tuple, list)) or (isinstance(stripProxy(type_or_seq), GangaList.GangaList) and stripProxy(type_or_seq) != GangaList.GangaList):
         clean_list = []
         for type_obj in type_or_seq:
-            if type(type_obj) != type(type('')) and type_obj != type(''):
+            if not isclass(type_obj) and type(type_obj) != type(type('')) and type_obj != type(''):
                 if isclass(type_obj):
                     try:
                         clean_list.append(stripProxy(type_obj.__class__))
@@ -63,6 +66,11 @@ def isType(_obj, type_or_seq):
             else:
                 clean_list.append(type_obj)
         return isinstance(obj, tuple(clean_list))
+
+        #for this_type in clean_list:
+        #    if isinstance(obj, this_type):
+        #        return True
+        #return False
     else:
         if isclass(type_or_seq):
             try:
@@ -291,7 +299,7 @@ class ProxyDataDescriptor(object):
         if item['sequence']:
             # we need to explicitly check for the list type, because simple
             # values (such as strings) may be iterable
-            if isType(val, (GangaList, list, type([]))):
+            if isType(val, [GangaList, list, type([])]):
                 # create GangaList
                 val = makeGangaList(val, stripper)
             else:
@@ -378,7 +386,9 @@ def GPIProxyClassFactory(name, pluginclass):
         # at the object level _impl is a ganga plugin object
         self.__dict__[proxyRef] = pluginclass()
 
-        getattr(self, proxyRef).__construct__(map(stripProxy, args))
+        clean_args = [stripProxy(arg) for arg in args]
+
+        getattr(self, proxyRef).__construct__(tuple(clean_args))
 
         # initialize all properties from keywords of the constructor
         for k in kwds:
