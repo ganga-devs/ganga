@@ -71,7 +71,9 @@ class ICredentialInfo(object):
         
         if not requirements.location:
             # If we weren't given a location, assume the encoded location
-            requirements.location = ':'.join([requirements.default_location(), requirements.encoded()])
+            requirements.location = requirements.default_location()
+            if requirements.encoded():
+                requirements.location += ':'+requirements.encoded()
 
         self.initialRequirements = requirements  # Store the requirements that the object was created with. Used for creation
         
