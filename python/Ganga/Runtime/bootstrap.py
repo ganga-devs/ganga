@@ -1655,7 +1655,7 @@ default_backends = LCG
         ipshell(local_ns=local_ns, global_ns=local_ns)
 
         return
-        
+
 
     def ganga_prompt(self, dummy=None):
         """
@@ -1663,6 +1663,9 @@ default_backends = LCG
         This is currently just the expired credentials warnings.
         It returns either a custom prompt or an empty string.
         """
+
+        from Ganga.GPIDev.Credentials2 import get_needed_credentials
+
         if Ganga.Utility.logging.cached_screen_handler:
             Ganga.Utility.logging.cached_screen_handler.flush()
 
