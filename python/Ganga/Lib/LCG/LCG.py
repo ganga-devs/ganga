@@ -36,7 +36,7 @@ from Ganga.Utility.logic import implies
 from Ganga.GPIDev.Base.Proxy import isType, getName
 from Ganga.Utility.GridShell import getShell
 
-from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential, credential_store
+from Ganga.GPIDev.Credentials2 import VomsProxy, require_credential, credential_store, needed_credentials
 
 from . import Grid
 
@@ -1648,11 +1648,10 @@ sys.exit(0)
         missing_glite_jids = []
         for cred_req, job_ids in cred_to_backend_id_list.items():
             # If the credential is not valid or doesn't exist then skip it
-            try:
-                if not credential_store[cred_req].is_valid():
+            cred = credential_store.get(cred_req)
+            if not cred or not cred.is_valid():
+                    needed_credentials.add(cred_req)
                     continue
-            except KeyError:
-                continue
             status, missing = Grid.status(job_ids, cred_req)
             status_info += status
             missing_glite_jids += missing
@@ -1743,11 +1742,10 @@ sys.exit(0)
         missing_glite_jids = []
         for cred_req, job_list in cred_to_job_list.items():
             # If the credential is not valid or doesn't exist then skip it
-            try:
-                if not credential_store[cred_req].is_valid():
+            cred = credential_store.get(cred_req)
+            if not cred or not cred.is_valid():
+                    needed_credentials.add(cred_req)
                     continue
-            except KeyError:
-                continue
             # Create a ``Grid`` for each credential requirement and request the relevant jobs through it
             status, missing = Grid.status(job_list, cred_req, is_collection=True)
             status_info += status
