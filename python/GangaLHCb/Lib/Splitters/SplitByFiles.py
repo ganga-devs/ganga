@@ -70,7 +70,8 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug( "_create_subjob" )
         datatmp = []
 
-        logger.debug( "dataset: %s" % str(dataset) )
+        logger.debug("dataset size: %s" % str(len(dataset)))
+        #logger.debug( "dataset: %s" % str(dataset) )
 
         if isinstance( dataset, LHCbDataset ):
             for i in dataset:
