@@ -7,7 +7,7 @@ from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
 
 from Ganga.Utility.threads import SynchronisedObject
 
-from Ganga.GPIDev.Credentials2 import credential_store, AfsToken
+from Ganga.GPIDev.Credentials2 import credential_store, AfsToken, get_needed_credentials
 from Ganga.Core.InternalServices import Coordinator
 
 # Setup logging ---------------
@@ -534,10 +534,9 @@ class JobRegistry_Monitor(GangaThread):
         if not self.enabled:
             # and there are some required cred which are missing
             # (the monitoring loop does not monitor the credentials so we need to check 'by hand' here)
-            _missingCreds = Coordinator.getMissingCredentials()
+            _missingCreds = get_needed_credentials()
             if _missingCreds:
-                log.error(
-                    "Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
+                log.error("Cannot run the monitoring loop. The following credentials are required: %s" % _missingCreds)
                 return False
 
         with self.__mainLoopCond:

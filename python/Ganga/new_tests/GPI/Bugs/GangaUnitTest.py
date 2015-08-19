@@ -108,14 +108,13 @@ def startGanga():
 
     # Adapted from the Coordinator class, check for the required credentials and stop if not found
     # Hopefully stops us falling over due to no AFS access of something similar
-    from Ganga.Core.InternalServices import Coordinator
-    missing_cred = Coordinator.getMissingCredentials()
+    from Ganga.GPIDev.Credentials2 import get_needed_credentials
+    missing_cred = get_needed_credentials()
 
     logger.info("Checking Credentials")
 
     if missing_cred:
-        raise Exception("Failed due to missing credentials %s" %
-                        str(missing_cred))
+        raise Exception("Failed due to missing credentials %s" % missing_cred)
 
     logger.info("Passing to Unittest")
 

@@ -2,7 +2,6 @@ import os
 import sys
 import tempfile
 from GangaTest.Framework.tests import GangaGPITestCase
-from Ganga.GPIDev.Credentials import GridProxy
 from Ganga.Core import BackendError
 import Ganga.Utility.Config 
 from GangaTest.Framework.utils import sleep_until_state

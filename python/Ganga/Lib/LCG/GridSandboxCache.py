@@ -13,7 +13,6 @@ import re
 
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.GPIDev.Credentials import getCredential
 
 from Ganga.Utility.logging import getLogger
 from Ganga.Lib.LCG.Utility import get_uuid
@@ -339,9 +338,7 @@ class GridSandboxCache(GangaObject):
 
     def __get_unique_fname__(self):
         '''gets an unique filename'''
-        cred = getCredential('GridProxy')
-        uid = re.sub(r'[\:\-\(\)]{1,}', '', cred.identity()).lower()
-        fname = 'user.%s.%s' % (uid, get_uuid())
+        fname = 'user.%s' % (get_uuid())
         return fname
 
     def __cmd_retry_loop__(self, shell, cmd, maxRetry=3):
