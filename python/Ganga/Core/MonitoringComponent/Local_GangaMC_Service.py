@@ -377,7 +377,7 @@ class JobRegistry_Monitor(GangaThread):
 
         # Add credential checking to monitoring loop
         for afsToken in credential_store.get_all_matching_type(AfsToken):
-            log.debug("Setting callback hook for %s" % afsToken._name)
+            log.debug("Setting callback hook for %s" % afsToken.location)
             self.setCallbackHook(self.makeCredCheckJobInsertor(afsToken), {}, True, timeout=config['creds_poll_rate'])
 
         # Add low disk-space checking to monitoring loop
