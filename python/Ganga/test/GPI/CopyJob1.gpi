@@ -11,9 +11,9 @@ assert(j2.application.exe == File('my.exe'))
 assert(j2.id != j.id)
 assert(j2.id > j.id) # internal assumption (implementation dependent)
 
-# make sure interface objects are not shared
-assert(j.application is not j2.application)
-assert(j.backend is not j2.backend)
+# make sure interface objects ARE the same or equivalent! rcurrie
+assert(j.application == j2.application)
+assert(j.backend == j2.backend)
 
 # make sure properties are not shared between the copies
 j.name = '1'

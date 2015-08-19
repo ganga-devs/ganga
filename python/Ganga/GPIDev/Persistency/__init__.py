@@ -91,8 +91,7 @@ def stripped_export(item=None, filename="", mode="w"):
     elif isinstance(item, tuple):
         objectList = item
     elif isinstance(item, RegistrySliceProxy):
-        # cant use stripProxy as not a subclass of GPIProxyObject
-        objectList = item._impl
+        objectList = stripProxy(item)
     else:
         objectList = [item]
 
@@ -215,3 +214,4 @@ def load(filename="", returnList=True):
         returnValue = objectList
 
     return returnValue
+

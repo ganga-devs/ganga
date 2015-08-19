@@ -1,9 +1,23 @@
 from __future__ import absolute_import
+
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
+
+from Ganga.Core import GangaException
+
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError
+
+from .RegistrySlice import RegistrySlice, config
+
+from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
+
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
 # add display default values for the box
-from .RegistrySlice import config
 config.addOption('box_columns',
                  ("id", "type", "name", "application"),
                  'list of job attributes to be printed in separate columns')
@@ -20,22 +34,15 @@ config.addOption('box_columns_show_empty',
                  ['id'],
                  'with exception of columns mentioned here, hide all values which evaluate to logical false (so 0,"",[],...)')
 
-from Ganga.Core import GangaException
-
 
 class BoxTypeError(GangaException, TypeError):
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         GangaException.__init__(self, what)
         self.what = what
 
     def __str__(self):
         return "BoxTypeError: %s" % self.what
-
-from Ganga.GPIDev.Base.Objects import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
-
 
 class BoxMetadataObject(GangaObject):
 
@@ -46,8 +53,6 @@ class BoxMetadataObject(GangaObject):
     _category = "internal"
     _enable_plugin = True
     _hidden = 1
-
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError
 
 
 class BoxRegistry(Registry):
@@ -173,8 +178,6 @@ class BoxRegistry(Registry):
         self._needs_metadata = True
         super(BoxRegistry, self).startup()
 
-from .RegistrySlice import RegistrySlice
-
 
 class BoxRegistrySlice(RegistrySlice):
 
@@ -218,9 +221,6 @@ class BoxRegistrySlice(RegistrySlice):
             return super(BoxRegistrySlice, self).__getitem__(id)
 
 
-from .RegistrySliceProxy import RegistrySliceProxy, _wrap, _unwrap
-
-
 class BoxRegistrySliceProxy(RegistrySliceProxy):
 
     """This object is a list of objects in the box.
@@ -261,7 +261,7 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
         """ Access individual object. Examples:
         box(10) : get object with id 10 or raise exception if it does not exist.
         """
-        return _wrap(self._impl.__call__(x))
+        return _wrap(stripProxy(self).__call__(x))
 
     def __getitem__(self, x):
         """ Get an item by positional index. Examples:
@@ -269,22 +269,23 @@ class BoxRegistrySliceProxy(RegistrySliceProxy):
         box[0] : get first object,
         box[1] : get second object.
         """
-        return _wrap(self._impl.__getitem__(x))
+        return _wrap(stripProxy(self).__getitem__(x))
 
     def __getslice__(self, i1, i2):
         """ Get a slice. Examples:
         box[2:] : get first two objects,
         box[:-10] : get last 10 objects.
         """
-        return _wrap(self._impl.__getslice__(i1, i2))
+        return _wrap(stripProxy(self).__getslice__(i1, i2))
 
     def remove_all(self):
         """
         Remove all objects from the box registry.
         """
 
-        items = self._impl.objects.items()
+        items = stripProxy(self).objects.items()
         for id, obj in items:
             reg = obj._getRegistry()
             if not reg is None:
                 reg._remove(obj)
+

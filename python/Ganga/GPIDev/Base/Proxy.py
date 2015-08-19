@@ -16,6 +16,8 @@ import os
 
 from inspect import isclass
 
+proxyRef = '_impl'
+
 prepconfig = getConfig('Preparable')
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
@@ -28,59 +30,60 @@ def isProxy(obj):
 #    return isinstance(obj.__class__, GPIProxyObject)
     # Alex changed for below as doesn't check class objects, only instances
     # e.g. isProxy(DiracFile) fails at the Ganga prompt
-    import inspect
-    if inspect.isclass(obj):
-        return issubclass(obj, GPIProxyObject)
+    if isclass(obj):
+        return issubclass(obj, GPIProxyObject) or hasattr(obj, proxyRef)
     else:
-        return issubclass(obj.__class__, GPIProxyObject)
-
-    #try:
-    #    return issubclass(obj, GPIProxyObject)
-    #except TypeError, err:
-    #    logger.debug("isProxy Exception: %s" % str(err))
-    #    import traceback
-    #    traceback.print_stack()
-    #    return issubclass(obj.__class__, GPIProxyObject)
+        return issubclass(obj.__class__, GPIProxyObject) or hasattr(obj.__class__, proxyRef)
 
 def isType(_obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
 
+    ## This isclass check appears to be needed for GangaList and maybe others!!! rcurrie
+    ## If this is taken out then the GangaList class needs to be fixed as do others!!!
+
     if isclass(_obj):
-        obj = stripProxy(_obj())
+        try:
+            obj = stripProxy(_obj.__class__)
+        except:
+            obj = stripProxy(_obj)
     else:
         obj = stripProxy(_obj)
 
     if isinstance(type_or_seq, (tuple, list)):
         clean_list = []
         for type_obj in type_or_seq:
-            if type_obj != type(type('')):
-                if isclass( type_obj ):
-                    clean_list.append(type(stripProxy(type_obj())))
+            if type(type_obj) != type(type('')) and type_obj != type(''):
+                if isclass(type_obj):
+                    try:
+                        clean_list.append(stripProxy(type_obj.__class__))
+                    except:
+                        clean_list.append(type(stripProxy(type_obj)))
                 else:
                     clean_list.append(type(stripProxy(type_obj)))
             else:
                 clean_list.append(type_obj)
         return isinstance(obj, tuple(clean_list))
     else:
-        return isinstance(obj, stripProxy(type_or_seq))
-
-def typeCheck(obj, myClass):
-    """Checks the given object against a known class instance, stripping the proxy as appropriate"""
-    return type(obj) in [type(myClass), type(stripProxy(myClass))]
-
+        if isclass(type_or_seq):
+            try:
+                return isinstance(obj, stripProxy(type_of_seq.__class__))
+            except:
+                return isinstance(obj, stripProxy(type_or_seq))
+        else:
+            return isinstance(obj, stripProxy(type_or_seq))
 
 def stripProxy(obj):
     """Removes the proxy if there is one"""
-    result = obj
-    if isProxy(obj):
-        result = obj._impl
-    return result
+    if hasattr(obj, proxyRef):
+        return getattr(obj, proxyRef)
+    else:
+        return obj
 
 
 def addProxy(obj):
     """Adds a proxy to a GangaObject"""
     from Ganga.GPIDev.Base.Objects import GangaObject
-    if isinstance(obj, GangaObject):
+    if isType(obj, GangaObject):
         return GPIProxyObjectFactory(obj)
     return obj
 
@@ -109,12 +112,12 @@ def stripComponentObject(v, cfilter, item):
                 raise TypeMismatchError(
                     None, 'component is mandatory and None may not be used')
             return v
-        if isinstance(v, GangaObject):
+        if isType(v, GangaObject):
             return v
         if not isinstance(v, GPIProxyObject):
             raise TypeMismatchError(
                 "cannot assign value '%s', expected a '%s' object " % (repr(v), item['category']))
-        return v._impl
+        return getattr(v, proxyRef)
 
     vv = cfilter(v, item)
     if vv is None:
@@ -135,17 +138,17 @@ class ProxyDataDescriptor(object):
     def __get__(self, obj, cls):
         # at class level return a helper object (for textual description)
         if obj is None:
-            # return Schema.make_helper(getattr(cls._impl,self._name))
-            return getattr(cls._impl, self._name)
+            # return Schema.make_helper(getattr(getattr(cls, proxyRef),self._name))
+            return getattr( getattr(cls, proxyRef), self._name)
 
-        val = getattr(obj._impl, self._name)
+        val = getattr( getattr(obj, proxyRef), self._name)
 
         # apply object conversion or if it failes, make the wrapper proxy
         def disguiseComponentObject(v):
             # get the proxy for implementation object
             def getProxy(v):
                 from Ganga.GPIDev.Base import GangaObject
-                if not isinstance(v, GangaObject):
+                if not isType(v, GangaObject):
                     raise GangaAttributeError("invalid type: cannot assign '%s' to attribute '%s'" % (repr(v), self._name))
                 return GPIProxyObjectFactory(v)
 
@@ -168,15 +171,15 @@ class ProxyDataDescriptor(object):
         def disguiseAttribute(v):
             # FIXME: this is obsoleted method
             from Ganga.GPIDev.Base import GangaObject
-            if isinstance(v, GangaObject):
+            if isType(v, GangaObject):
                 return GPIProxyObjectFactory(v)
             return v
 
         # wrap proxy
-        item = obj._impl._schema[self._name]
+        item = getattr(obj, proxyRef)._schema[self._name]
 
         if item['proxy_get']:
-            return getattr(obj._impl, item['proxy_get'])()
+            return getattr(getattr(obj, proxyRef), item['proxy_get'])()
 
         if item.isA(Schema.ComponentItem):
             disguiser = disguiseComponentObject
@@ -184,13 +187,13 @@ class ProxyDataDescriptor(object):
             disguiser = disguiseAttribute
 
         from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
-        if item['sequence'] and isinstance(val, list):
+        if item['sequence'] and isType(val, list):
             val = makeGangaList(val, disguiser)
 
         return disguiser(val)
 
     def _check_type(self, obj, val):
-        item = obj._impl._schema[self._name]
+        item = getattr(obj, proxyRef)._schema[self._name]
         return item._check_type(val, self._name)
 
     def __set__(self, obj, val):
@@ -198,12 +201,12 @@ class ProxyDataDescriptor(object):
         # obj is the object we're about to make the change in
         # val is the value we're setting the attribute to.
         # item is the schema entry of the attribute we're about to change
-        item = obj._impl._schema[self._name]
+        item = getattr(obj, proxyRef)._schema[self._name]
         if item['protected']:
             raise ProtectedAttributeError(
                 '"%s" attribute is protected and cannot be modified' % (self._name,))
-        if obj._impl._readonly():
-            if not (self._name == 'comment' and obj._impl._name == 'Job'):
+        if getattr(obj, proxyRef)._readonly():
+            if not (self._name == 'comment' and getattr(obj, proxyRef)._name == 'Job'):
                 raise ReadOnlyObjectError(
                     'object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), self._name))
 
@@ -222,63 +225,63 @@ class ProxyDataDescriptor(object):
                     obj.unprepare()
 
         # Replace is_prepared on an application for another ShareDir object
-        from Ganga.GPIDev.Lib.File import ShareDir
-        if self._name == 'is_prepared' and isType(val, ShareDir):
-            if hasattr(obj._impl, '_getRegistry'):
-                if obj._impl._getRegistry() is not None:
+        if self._name == 'is_prepared':
+            if hasattr( getattr(obj, proxyRef), '_getRegistry'):
+                from Ganga.GPIDev.Lib.File import ShareDir
+                if obj._impl._getRegistry() is not None and isType(val, ShareDir):
                     logger.debug('Overwriting is_prepared attribute with a ShareDir object')
                     # it's safe to unprepare 'not-prepared' applications.
                     obj.unprepare()
                     from Ganga.Core.GangaRepository import getRegistry
-                    shareref = GPIProxyObjectFactory(
-                        getRegistry("prep").getShareRef())
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                     shareref.increase(val.name)
 
         # catch assignment of 'something'  to a preparable application
         if self._name == 'application':
             if hasattr(obj.application, 'is_prepared'):
+
                 #a=Job(); a.prepare(); a.application=Executable()
-                if obj.application.is_prepared is not None and\
-                    obj.application.is_prepared is not True and\
-                        val.is_prepared is None:
+                if obj.application.is_prepared not in [None, True] and\
+                    hasattr(val, 'is_prepared') and val.is_prepared is None:
                     logger.debug('Overwriting a prepared application with one that is unprepared')
                     obj.application.unprepare()
+
                 #a=Job(); b=Executable(); b.prepare(); a.application=b
                 elif obj.application.is_prepared is not True:
                     if hasattr(val, 'is_prepared'):
-                        if val.is_prepared is not None:
-                            if val.is_prepared is not True:
-                                from Ganga.Core.GangaRepository import getRegistry
-                                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                                logger.debug('Overwriting application with a prepared one')
+                        if val.is_prepared not in [None, True]:
+                            from Ganga.Core.GangaRepository import getRegistry
+                            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                            logger.debug('Overwriting application with a prepared one')
+                            if obj.application != val:
                                 obj.application.unprepare()
                                 shareref.increase(val.is_prepared.name)
 
                 # check that the shared directory actually exists before
                 # assigning the (prepared) application to a job
                 if hasattr(val, 'is_prepared'):
-                    if val.is_prepared is not None:
-                        if val.is_prepared is not True:
-                            if hasattr(val.is_prepared, 'name'):
-                                from Ganga.Utility.files import expandfilename
-                                shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
-                                if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
-                                    logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
+                    if val.is_prepared not in [None, True]:
+                        if hasattr(val.is_prepared, 'name'):
+                            from Ganga.Utility.files import expandfilename
+                            Config_conf = getConfig('Configuration')
+                            shared_path = os.path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
+                            if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
+                                logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
 
         # apply attribute conversion
         def stripAttribute(v):
             # just warn
             # print '**** checking',v,v.__class__,
             # isinstance(val,GPIProxyObject)
-            if isinstance(v, GPIProxyObject):
-                v = v._impl
-                logger.debug('%s property: assigned a component object (_impl used)', self._name)
-            return obj._impl._attribute_filter__set__(self._name, v)
+            if isinstance(v, GPIProxyObject) or hasattr(v, proxyRef):
+                v = getattr(v, proxyRef)
+                logger.debug('%s property: assigned a component object (%s used)' % (self._name, proxyRef))
+            return getattr(obj, proxyRef)._attribute_filter__set__(self._name, v)
 
         # unwrap proxy
         if item.isA(Schema.ComponentItem):
             from .Filters import allComponentFilters
-            item = obj._impl._schema.getItem(self._name)
+            item = getattr(obj, proxyRef)._schema.getItem(self._name)
             cfilter = allComponentFilters[item['category']]
             stripper = lambda v: stripComponentObject(v, cfilter, item)
         else:
@@ -288,13 +291,13 @@ class ProxyDataDescriptor(object):
         if item['sequence']:
             # we need to explicitly check for the list type, because simple
             # values (such as strings) may be iterable
-            if isType(val, (GangaList, list)):
+            if isType(val, (GangaList, list, type([]))):
                 # create GangaList
                 val = makeGangaList(val, stripper)
             else:
                 # val is not iterable
                 if item['strict_sequence']:
-                    raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), obj._impl._schema.name, self._name))
+                    raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyRef)._schema.name, self._name))
                 val = makeGangaList(stripper(val))
         else:
             val = stripper(val)
@@ -304,7 +307,7 @@ class ProxyDataDescriptor(object):
             val = stripAttribute(val)
 
         self._check_type(obj, val)
-        setattr(obj._impl, self._name, val)
+        setattr(getattr(obj, proxyRef), self._name, val)
 
 
 class ProxyMethodDescriptor(object):
@@ -315,8 +318,8 @@ class ProxyMethodDescriptor(object):
 
     def __get__(self, obj, cls):
         if obj is None:
-            return getattr(cls._impl, self._internal_name)
-        return getattr(obj._impl, self._internal_name)
+            return getattr(getattr(cls, proxyRef), self._internal_name)
+        return getattr(getattr(obj, proxyRef), self._internal_name)
 
 ##########################################################################
 
@@ -337,7 +340,7 @@ def GPIProxyObjectFactory(_obj):
         cls = obj._proxyClass
         proxy = super(cls, cls).__new__(cls)
         # FIXME: NEW STYLE CLASS CAN DO __DICT__??
-        proxy.__dict__['_impl'] = obj
+        proxy.__dict__[proxyRef] = obj
         obj._proxyObject = proxy
         #logger.debug('generated the proxy ' + repr(proxy))
     else:
@@ -359,7 +362,11 @@ class GPIProxyObject(object):
 def GPIProxyClassFactory(name, pluginclass):
 
     def helptext(f, s):
-        f.__doc__ = s % {'classname': name, 'objname': name.lower(), 'shortvarname': name[0].lower()}
+        if name == '' or name is None:
+            _name = ' '
+        else:
+            _name = name
+        f.__doc__ = s % {'classname': _name, 'objname': _name.lower(), 'shortvarname': _name[0].lower()}
 
     # construct the class on-the-fly using the functions below as methods for
     # the new class
@@ -369,19 +376,19 @@ def GPIProxyClassFactory(name, pluginclass):
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
         # at the object level _impl is a ganga plugin object
-        self.__dict__['_impl'] = pluginclass()
+        self.__dict__[proxyRef] = pluginclass()
 
-        self._impl.__construct__(map(stripProxy, args))
+        getattr(self, proxyRef).__construct__(map(stripProxy, args))
 
         # initialize all properties from keywords of the constructor
         for k in kwds:
-            if self._impl._schema.hasAttribute(k):
+            if getattr(self, proxyRef)._schema.hasAttribute(k):
                 setattr(self, k, kwds[k])
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
-        self._impl._proxyObject = self
-        self._impl._auto__init__()
+        getattr(self, proxyRef)._proxyObject = self
+        getattr(self, proxyRef)._auto__init__()
 
     from Ganga.Utility.strings import ItemizedTextParagraph
 
@@ -410,15 +417,15 @@ def GPIProxyClassFactory(name, pluginclass):
     def _str(self):
         import cStringIO
         sio = cStringIO.StringIO()
-        self._impl.printSummaryTree(0, 0, '', out=sio)
+        getattr(self, proxyRef).printSummaryTree(0, 0, '', out=sio)
         return str(sio.getvalue()).rstrip()
     helptext(_str, """Return a printable string representing %(classname)s object as a tree of properties.""")
 
     def _repr(self):
-        if hasattr(self._impl, '_repr'):
-            return self._impl._repr()
+        if hasattr(getattr(self, proxyRef), '_repr'):
+            return getattr(self, proxyRef)._repr()
         else:
-            return '<' + repr(self._impl) + ' PROXY at ' + hex(abs(id(self))) + '>'
+            return '<' + repr(getattr(self, proxyRef)) + ' PROXY at ' + hex(abs(id(self))) + '>'
         #try:
         #    return self._impl._repr()
         #except AttributeError, err:
@@ -428,19 +435,20 @@ def GPIProxyClassFactory(name, pluginclass):
 
     def _eq(self, x):
         result = False
-        if isinstance(x, GPIProxyObject):
-            result = self._impl.__eq__(x._impl)
+        if isType(x, GPIProxyObject) or hasattr(x, proxyRef):
+            result = getattr(self, proxyRef).__eq__(getattr(x, proxyRef))
         else:
-            result = self._impl.__eq__(x)
-
+            result = getattr(self, proxyRef).__eq__(x)
         return result
     helptext(_eq, "Equality operator (==), compare the %(classname)s properties which are declared as [comparable].")
 
     def _ne(self, x):
-        if isinstance(x, GPIProxyObject):
-            return self._impl.__ne__(x._impl)
+        result = True
+        if isType(x, GPIProxyObject) or hasattr(x, proxyRef):
+            result = getattr(self, proxyRef).__ne__(getattr(x, proxyRef))
         else:
-            return self._impl.__ne__(x)
+            result = getattr(self, proxyRef).__ne__(x)
+        return result
     helptext(_ne, "Non-equality operator (!=).")
 
     def _copy(self, unprepare=None):
@@ -451,57 +459,50 @@ def GPIProxyClassFactory(name, pluginclass):
                     unprepare = True
 
         def _getSharedPath():
-            return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+            Config_conf = getConfig('Configuration')
+            return os.path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
 
         if hasattr(self, 'application'):
             if hasattr(self.application, 'is_prepared'):
                 from Ganga.Utility.files import expandfilename
-                shared_path = _getSharedPath()
-                if self.application.is_prepared is not None and\
-                        self.application.is_prepared is not True:
+                if self.application.is_prepared not in [None, True]:
                     if hasattr(self.application.is_prepared, 'name'):
+                        shared_path = _getSharedPath()
                         if os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
                             from Ganga.Core.GangaRepository import getRegistry
-                            shareref = GPIProxyObjectFactory(
-                                getRegistry("prep").getShareRef())
+                            shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                             logger.debug('increasing counter from proxy.py')
                             shareref.increase(self.application.is_prepared.name)
                             logger.debug('Found ShareDir directory: %s' % self.application.is_prepared.name)
-                elif self.application.is_prepared is not None:
-                    if self.application.is_prepared is not True:
-                        if not os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
-                            logger.error('ShareDir directory not found: %s' % self.application.is_prepared.name)
-                            logger.error('Unpreparing Job #%s' % self.id)
-                            from Ganga.Core.GangaRepository import getRegistry
-                            shareref = GPIProxyObjectFactory(
-                                getRegistry("prep").getShareRef())
-                            shareref.increase(
-                                self.application.is_prepared.name)
-                            self.unprepare()
+                elif self.application.is_prepared not in [None, True]:
+                    shared_path = _getSharedPath()
+                    if not os.path.isdir(os.path.join(shared_path, self.application.is_prepared.name)):
+                        logger.error('ShareDir directory not found: %s' % self.application.is_prepared.name)
+                        logger.error('Unpreparing Job #%s' % self.id)
+                        from Ganga.Core.GangaRepository import getRegistry
+                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                        shareref.increase(self.application.is_prepared.name)
+                        self.unprepare()
 
         if unprepare is True:
             if hasattr(self, 'is_prepared'):
                 from Ganga.Utility.files import expandfilename
-                shared_path = _getSharedPath()
-                if self.is_prepared is not None:
-                    if self.is_prepared is not True:
-                        if hasattr(self.is_prepared, 'name'):
-                            if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
-                                logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
-                                logger.error(
-                                    'Unpreparing %s application' % self._impl._name)
-                                self.unprepare()
+                if self.is_prepared not in [None, True]:
+                    if hasattr(self.is_prepared, 'name'):
+                        shared_path = _getSharedPath()
+                        if not os.path.isdir(os.path.join(shared_path, self.is_prepared.name)):
+                            logger.error('ShareDir directory not found: %s' % self.is_prepared.name)
+                            logger.error('Unpreparing %s application' % getattr(self, proxyRef)._name)
+                            self.unprepare()
 
-        if unprepare is True:
-            c = self._impl.clone()
+            c = getattr(self, proxyRef).clone()
             if hasattr(c, 'is_prepared') and c._getRegistry() is None:
                 from Ganga.Core.GangaRepository import getRegistry
-                shareref = GPIProxyObjectFactory(
-                    getRegistry("prep").getShareRef())
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 shareref.increase(self.is_prepared.name)
             c._auto__init__(unprepare=True)
         else:
-            c = self._impl.clone()
+            c = getattr(self, proxyRef).clone()
             c._auto__init__()
         return GPIProxyObjectFactory(c)
 
@@ -511,19 +512,15 @@ def GPIProxyClassFactory(name, pluginclass):
         'something'
         # need to know about the types that require metadata attribute checking
         # this allows derived types to get same behaviour for free.
-        from Ganga.GPIDev.Lib.Job.Job import Job
-        metadata_objects = [Job]
-        if x == '_impl':
-            raise AttributeError(
-                "Internal implementation object '_impl' cannot be reassigned")
+        if x == proxyRef:
+            raise AttributeError("Internal implementation object '%s' cannot be reassigned" % proxyRef )
 
-        if not self._impl._schema.hasAttribute(x):
-            if any(isType(self, t) for t in metadata_objects) and\
-                    x in self._impl.metadata.data.keys():
-                raise GangaAttributeError(
-                    "Metadata item '%s' cannot be modified" % x)
-            raise GangaAttributeError(
-                "'%s' has no attribute '%s'" % (self._impl._name, x))
+        if not getattr(self, proxyRef)._schema.hasAttribute(x):
+
+            if hasattr(getattr(self, proxyRef), 'metadata') and x in getattr(self, proxyRef).metadata.data.keys():
+                raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)
+
+            raise GangaAttributeError("'%s' has no attribute '%s'" % (getattr(self, proxyRef)._name, x))
 
         object.__setattr__(self, x, v)
     helptext(_setattr, """Set a property of %(classname)s with consistency and safety checks.
@@ -553,7 +550,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
         if name.startswith('__') or name in d.keys():
             return object.__getattribute__(self, name)
 
-        pluginclass = object.__getattribute__(self, '_impl')
+        pluginclass = object.__getattribute__(self, proxyRef)
         if '_attribute_filter__get__' in dir(pluginclass) and \
             pluginclass.__class__.__name__ != 'ObjectMetaclass' and \
                 name in dict(pluginclass._schema.allItems()).keys() and \
@@ -563,11 +560,12 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             try:
                 return object.__getattribute__(self, name)
             except AttributeError as x:
-                logger.debug("Attribute: %s NOT found for object %s" % (name, str(self)))
-                raise GangaAttributeError("%s" % str(x))
+                #logger.debug("Attribute: %s NOT found for object %s" % (name, str(self)))
+                #raise GangaAttributeError("%s" % str(x))
+                raise
 
     # but at the class level _impl is a ganga plugin class
-    d = {'_impl': pluginclass,
+    d = {proxyRef: pluginclass,
          '__init__': _init,
          '__str__': _str,
          '__repr__': _repr,

@@ -7,8 +7,10 @@ from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
 from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-#from GangaLHCb.Lib.Applications.AppsBaseUtils import *
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template
+from Ganga.GPIDev.Base.Proxy import isType
+from GangaGaudi.Lib.Applications.Gaudi import Gaudi
+from Ganga.GPIDev.Lib.Tasks.TaskApplication import TaskApplication
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -22,20 +24,19 @@ def jobid_as_string(job):
 def lhcbdiracAPI_script_template():
 
     DiracScript = diracAPI_script_template()
+
+    DiracLHCb_Options = 'j.setRootMacro(\'###ROOT_VERSION###\', \'###ROOT_MACRO###\', ###ROOT_ARGS###, \'###ROOT_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
+    DiracLHCb_Options += 'j.setRootPythonScript(\'###ROOTPY_VERSION###\', \'###ROOTPY_SCRIPT###\', ###ROOTPY_ARGS###, \'###ROOTPY_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
+    DiracLHCb_Options += 'j.setApplicationScript(\'###APP_NAME###\',\'###APP_VERSION###\',\'###APP_SCRIPT###\',logFile=\'###APP_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
+    DiracLHCb_Options += 'j.setAncestorDepth(###ANCESTOR_DEPTH###)\n'
+
     DiracScript = DiracScript.replace('outputPath','OutputPath').replace('outputSE','OutputSE')
-
-    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
-                  'j.setName(\'###NAME###\')\nj.setRootMacro(\'###ROOT_VERSION###\', \'###ROOT_MACRO###\', ###ROOT_ARGS###, \'###ROOT_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
-
-    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
-                  'j.setName(\'###NAME###\')\nj.setRootPythonScript(\'###ROOTPY_VERSION###\', \'###ROOTPY_SCRIPT###\', ###ROOTPY_ARGS###, \'###ROOTPY_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
-
-    DiracScript = DiracScript.replace('j.setName(\'###NAME###\')',
-                  'j.setName(\'###NAME###\')\nj.setApplicationScript(\'###APP_NAME###\',\'###APP_VERSION###\',\'###APP_SCRIPT###\',logFile=\'###APP_LOG_FILE###\', systemConfig=\'###PLATFORM###\')' )
-
     DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'','\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
     DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()' )
     DiracScript = DiracScript.replace('###OUTPUT_SE###','###OUTPUT_SE###,replicate=\'###REPLICATE###\'' )
+
+    setName_str = 'j.setName(\'###NAME###\')'
+    DiracScript = DiracScript.replace(setName_str, "%s\n%s" % (setName_str, DiracLHCb_Options) )
 
     return DiracScript
 
@@ -56,15 +57,14 @@ def lhcbdiracAPI_script_template():
 ##      return sandbox
 
 def is_gaudi_child(app):
-    if app.__class__.__name__ == 'Gaudi' \
-           or type(app).__bases__[0].__name__ == 'Gaudi':
+    if isType(app, Gaudi):
         return True
-    
-    if type(app).__bases__[0].__name__ == 'TaskApplication':
-        if not app.__class__.__name__ == 'GaudiPythonTask' \
-               and not app.__class__.__name__ == 'BenderTask' :
+
+    if isType( app, TaskApplication):
+        from Ganga.GPI import GaudiPythonTask, BenderTask
+        if not isType( app, GaudiPythonTask) and not isType( app, BenderTask):
             return True
-    
+
     return False
 
 class filenameFilter:

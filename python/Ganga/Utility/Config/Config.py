@@ -100,7 +100,7 @@ class ConfigError(GangaException):
     """ ConfigError indicates that an option does not exist or it cannot be set.
     """
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         # GangaException.__init__(self)
         super(ConfigError, self).__init__()
         self.what = what
@@ -237,6 +237,11 @@ class ConfigOption(object):
 
     def __init__(self, name):
         self.name = name
+        self.hidden = False
+        self.cfile = True
+        self.examples = None
+        self.filter = None
+        self.typelist = None
 
     def defineOption(self, default_value, docstring, **meta):
 
@@ -482,8 +487,7 @@ class PackageConfig(object):
 
         if _configured and self.is_open:
             logger = getLogger()
-            logger.error(
-                'cannot define open configuration section %s after configure() step', self.name)
+            logger.error('cannot define open configuration section %s after configure() step', self.name)
 
     def _addOpenOption(self, name, value):
         self.addOption(name, value, "", override=True)
@@ -961,8 +965,7 @@ def sanityCheck():
     logger = getLogger()
     for c in allConfigs.values():
         if not c._config_made:
-            logger.error(
-                "sanity check failed: %s: no makeConfig() found in the code", c.name)
+            logger.error("sanity check failed: %s: no makeConfig() found in the code", c.name)
 
     for name in allConfigFileValues:
         opts = allConfigFileValues[name]

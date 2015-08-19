@@ -10,6 +10,8 @@ from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
 
 from Ganga.Core.GangaRepository.Registry import Registry, RegistryKeyError, RegistryAccessError
 
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
 import Ganga.Utility.logging
 
 from Ganga.Runtime.GPIexport import exportToGPI
@@ -90,6 +92,12 @@ class JobRegistry(Registry):
     def getJobTree(self):
         return self.jobtree
 
+    def _remove(self, obj, auto_removed=0):
+        super(JobRegistry, self)._remove(obj, auto_removed)
+        try:
+            self.jobtree.cleanlinks()
+        except:
+            pass
 
 class JobRegistrySlice(RegistrySlice):
 
@@ -229,31 +237,31 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
 
     def submit(self, keep_going=True):
         """ Submit all jobs."""
-        self._impl.submit(keep_going=keep_going)
+        stripProxy(self).submit(keep_going=keep_going)
 
     def resubmit(self, keep_going=True):
         """ Resubmit all jobs."""
-        return self._impl.resubmit(keep_going=keep_going)
+        return stripProxy(self).resubmit(keep_going=keep_going)
 
     def kill(self, keep_going=True):
         """ Kill all jobs."""
-        return self._impl.kill(keep_going=keep_going)
+        return stripProxy(self).kill(keep_going=keep_going)
 
     def remove(self, keep_going=True, force=False):
         """ Remove all jobs."""
-        return self._impl.remove(keep_going=keep_going, force=force)
+        return stripProxy(self).remove(keep_going=keep_going, force=force)
 
     def fail(self, keep_going=True, force=False):
         """ Fail all jobs."""
-        return self._impl.fail(keep_going=keep_going, force=force)
+        return stripProxy(self).fail(keep_going=keep_going, force=force)
 
     def force_status(self, status, keep_going=True, force=False):
         """ Force status of all jobs to 'completed' or 'failed'."""
-        return self._impl.force_status(status, keep_going=keep_going, force=force)
+        return stripProxy(self).force_status(status, keep_going=keep_going, force=force)
 
     def copy(self, keep_going=True):
         """ Copy all jobs. """
-        return JobRegistrySliceProxy(self._impl.copy(keep_going=keep_going))
+        return JobRegistrySliceProxy(stripProxy(self).copy(keep_going=keep_going))
 
     def __call__(self, x):
         """ Access individual job. Examples:
@@ -261,14 +269,14 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         jobs((10,2)) : get subjobs number 2 of job 10 if exist or raise exception.
         jobs('10.2')) : same as above
         """
-        return _wrap(self._impl.__call__(x))
+        return _wrap(stripProxy(self).__call__(x))
 
     def __getslice__(self, i1, i2):
         """ Get a slice. Examples:
         jobs[2:] : get first two jobs,
         jobs[-10:] : get last 10 jobs.
         """
-        return _wrap(self._impl.__getslice__(i1, i2))
+        return _wrap(stripProxy(self).__getslice__(i1, i2))
 
     def __getitem__(self, x):
         """ Get a job by positional index. Examples:
@@ -276,7 +284,7 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
         jobs[0] : get first job,
         jobs[1] : get second job.
         """
-        return _wrap(self._impl.__getitem__(_unwrap(x)))
+        return _wrap(stripProxy(self).__getitem__(_unwrap(x)))
 
 def jobSlice(joblist):
     """create a 'JobSlice' from a list of jobs
@@ -287,3 +295,4 @@ def jobSlice(joblist):
 
 # , "Create a job slice from a job list")
 exportToGPI("jobSlice", jobSlice, "Functions")
+

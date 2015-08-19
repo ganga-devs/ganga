@@ -24,6 +24,10 @@ Executable/* = Ganga.Lib.MonitoringServices.DummyMS.DummyMS
 
 
 class MonitoringServiceError(GangaException):
+
+    def __init__(self):
+        super(MonitoringServiceError, self).__init__()
+
     pass
 
 

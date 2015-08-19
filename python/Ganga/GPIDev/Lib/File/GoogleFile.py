@@ -15,7 +15,6 @@ regex = re.compile('[*?\[\]]')
 import os
 import pickle
 import stat
-import httplib2
 from apiclient.discovery import build
 from apiclient import errors
 
@@ -480,6 +479,7 @@ class GoogleFile(IGangaFile):
         """
         Sets up the GoogleDrive service for other methods
         """
+        import httplib2
         http = httplib2.Http()
         if self.__initialized == False:
             self.__initializeCred()

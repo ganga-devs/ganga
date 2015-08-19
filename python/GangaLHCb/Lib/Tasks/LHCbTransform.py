@@ -11,6 +11,7 @@ from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaLHCb.Lib.Files.LogicalFile import LogicalFile
+import Ganga.GPI as GPI
 
 class LHCbTransform(ITransform):
    _schema = Schema(Version(1,0), dict(ITransform._schema.datadict.items() + {

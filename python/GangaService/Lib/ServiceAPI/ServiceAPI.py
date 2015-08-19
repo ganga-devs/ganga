@@ -105,7 +105,7 @@ class GangaService:
                 return True
         else:
             logger.info("No Server running")
-             return True
+            return True
 
     def startServer(self):
         """Start the server if required"""

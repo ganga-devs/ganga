@@ -12,6 +12,7 @@ import errno
 import fcntl
 import random
 import datetime
+import getpass
 
 try:
     import cPickle as pickle
@@ -169,8 +170,11 @@ class SessionLockRefresher(GangaThread):
         try:
             # os.stat(self.fn).st_ctime
             oldnow = self.delayread(self.fns[index])
-            os.utime(self.fns[index], None)
-            now = self.delayread(self.fns[index])  # os.stat(self.fn).st_ctime
+            #os.utime(self.fns[index], None)
+            #print('touch -am %s' % str(self.fns[index]))
+            #print("%s" % str(os.stat(self.fns[index]).st_mtime))
+            os.system('touch %s' % str(self.fns[index]))
+            now = self.delayread(self.fns[index]) # os.stat(self.fn).st_ctime
             # print str(now-oldnow)
             # if now - oldnow  > session_expiration_timeout/2:
             #    logger.warning("%s: This session can only update its session file every %s seconds - this can cause problems with other sessions!" % (time.time(), now - oldnow))
@@ -196,25 +200,23 @@ class SessionLockRefresher(GangaThread):
         try:
             # Make list of sessions that are "alive"
             ls_sdir = os.listdir(self.sdir)
-            session_files = [f for f in ls_sdir if f.endswith(
-                ".session") and f.find(str(os.getpid())) == -1]
+            session_files = [f for f in ls_sdir if f.endswith(".session") and f.find(str(os.getpid())) == -1]
             #metadata_lock_files = [f for f in ls_sdir if f.endswith("metadata.locks") and not f.find( str(os.getpid()) ) ]
             #all_lock_files = [f for f in ls_sdir if f.endswith(".locks") and not f.find( str(os.getpid()) ) ]
             # lock_files = [ s for s in all_lock_files and not in
             # metadata_lock_files ]
-            lock_files = [f for f in ls_sdir if f.endswith(
-                ".locks") and f.find(str(os.getpid())) == -1]
+            lock_files = [f for f in ls_sdir if f.endswith(".locks") and f.find(str(os.getpid())) == -1]
             for sf in session_files:
                 joined_path = os.path.join(self.sdir, sf)
+                #print("join: %s" % str(joined_path))
                 if joined_path in self.fns:
                     continue
-                mtm = os.stat(joined_path).st_ctime
+                mtm = os.stat(joined_path).st_mtime
                 # print "%s: session %s delta is %s seconds" % (time.time(),
                 # sf, now - mtm)
                 global session_expiration_timeout
                 if (now - mtm) > session_expiration_timeout:
-                    logger.warning(
-                        "Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
+                    logger.warning("Removing session %s because of inactivity (no update since %s seconds)" % (sf, now - mtm))
                     os.unlink(joined_path)
                     session_files.remove(sf)
                 # elif now - mtm  > session_expiration_timeout/2:
@@ -372,8 +374,7 @@ class SessionLockManager(object):
                 except OSError as err:
                     logger.debug("Startup Lock Refresher Exception: %s" % str(err))
                     raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, err))
-                session_lock_refresher = SessionLockRefresher(
-                    self.session_name, self.sdir, self.gfn, None, self.afs)
+                session_lock_refresher = SessionLockRefresher(self.session_name, self.sdir, self.gfn, None, self.afs)
                 session_lock_refresher.start()
 
             session_lock_refresher.addRepo(self.fn, self.repo)
@@ -484,7 +485,7 @@ class SessionLockManager(object):
                     nowtime = time.time()
                     if abs(int(nowtime) - oldtime) > 10:
                         #logger.debug( "cleaning global lock" )
-                        os.system("fs setacl %s $USER rlidwka" % (lock_path))
+                        os.system("fs setacl %s %s rlidwka" % (lock_path, getpass.getuser()))
 
                 while True:
                     try:
@@ -496,7 +497,7 @@ class SessionLockManager(object):
                         logger.debug("Global Lock aquire Exception: %s" % str(err))
                         time.sleep(0.01)
 
-                os.system("fs setacl %s $USER rliwka" % (lock_path))
+                os.system("fs setacl %s %s rliwka" % (lock_path, getpass.getuser()))
 
                 while not os.path.isfile(lock_file):
                     lock_file_hand = open(lock_file, "w")
@@ -514,7 +515,7 @@ class SessionLockManager(object):
         try:
             if self.afs:
                 lock_path = str(self.lockfn) + '.afs'
-                os.system("fs setacl %s $USER rlidwka" % (lock_path))
+                os.system("fs setacl %s %s rlidwka" % (lock_path, getpass.getuser()))
             else:
                 self.delay_lock_mod(fcntl.LOCK_UN)
 

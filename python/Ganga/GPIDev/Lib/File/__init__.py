@@ -17,6 +17,7 @@ import Ganga.Utility.logging
 
 from Ganga.GPIDev.Lib.File.GoogleFile import GoogleFile
 
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig, ConfigError
 
@@ -72,15 +73,15 @@ def findOutputFileTypeByFileName(filename):
                 matchKeys.append(key)
 
     if len(matchKeys) == 1:
-        logger.debug("File name pattern %s matched %s, assigning to %s" % (
-            filename, str(matchKeys), matchKeys[-1]))
+        #logger.debug("File name pattern %s matched %s, assigning to %s" % (
+        #    filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     elif len(matchKeys) > 1:
-        logger.warning("file name pattern %s matched %s, assigning to %s" % (
-            filename, str(matchKeys), matchKeys[-1]))
+        #logger.warning("file name pattern %s matched %s, assigning to %s" % (
+        #    filename, str(matchKeys), matchKeys[-1]))
         return matchKeys[-1]
     else:
-        logger.debug("File name pattern %s is not matched" % filename)
+        #logger.debug("File name pattern %s is not matched" % filename)
         return None
 
 
@@ -92,19 +93,19 @@ def string_file_shortcut(v, item):
         if key is not None:
             if key == 'MassStorageFile':
                 from .MassStorageFile import MassStorageFile
-                return MassStorageFile._proxyClass(v)._impl
+                return stripProxy(MassStorageFile._proxyClass(v))
             elif key == 'LCGSEFile':
                 from .LCGSEFile import LCGSEFile
-                return LCGSEFile._proxyClass(v)._impl
+                return stripProxy(LCGSEFile._proxyClass(v))
             elif key == 'DiracFile':
                 try:
                     from GangaDirac.Lib.Files.DiracFile import DiracFile
-                    return DiracFile._proxyClass(v)._impl
+                    return stripProxy(DiracFile._proxyClass(v))
                 except:
                     Ganga.Utility.logging.log_unknown_exception()
                     pass
 
-        return LocalFile._proxyClass(v)._impl
+        return stripProxy(LocalFile._proxyClass(v))
 
     return None
 

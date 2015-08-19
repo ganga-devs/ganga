@@ -25,6 +25,7 @@ from Ganga.Lib.Executable.Executable import Executable
 from Ganga.Core.JobRepository.ARDA import repositoryFactory
 from Ganga.GPIDev.Streamers.SimpleStreamer import SimpleJobStreamer
 import Ganga.Runtime.plugins
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
@@ -64,7 +65,7 @@ def _writerep(n, m, bunch=100):
         j.application.args = [m * 'x' + str(i)]
         jj.append(j)
     from Ganga.GPI import jobs
-    rep = jobs._impl.repository
+    rep = stripProxy(jobs).repository
     t1 = time.time()
     for i in range(n):
         rep.registerJobs(jj)
@@ -89,7 +90,8 @@ def _readrep(bunch=100):
     def _co(ii):
         jj = rep.checkoutJobs(ii)
     from Ganga.GPI import jobs
-    rep = jobs._impl.repository
+    from Ganga.GPIDev.Base.Proxy import stripProxy
+    rep = stripPRoxy(jobs).repository
     ids = rep.getJobIds({})
     start = 0
     ii = ids[start: start + bunch]
@@ -115,7 +117,8 @@ def readallrep():
 
 def _readallrep():
     from Ganga.GPI import jobs
-    rep = jobs._impl.repository
+    from Ganga.GPIDev.Base.Proxy import stripProxy
+    rep = stripProxy(jobs).repository
     t1 = time.time()
     jj = rep.checkoutJobs({})
     t2 = time.time()
@@ -137,7 +140,8 @@ def delrep(n, bunch=100):
 
 def _delrep(n, bunch=100):
     from Ganga.GPI import jobs
-    rep = jobs._impl.repository
+    from Ganga.GPIDev.Base.Proxy import stripProxy
+    rep = stripProxy(jobs).repository
     ids = rep.getJobIds({})
     start = 0
     ids = ids[start:n * bunch]

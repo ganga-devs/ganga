@@ -20,11 +20,11 @@ from Ganga.Core.GangaRepository.PickleStreamer import from_file as pickle_from_f
 from Ganga.Core.GangaRepository.VStreamer import to_file as xml_to_file
 from Ganga.Core.GangaRepository.VStreamer import from_file as xml_from_file
 
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -116,8 +116,7 @@ class GangaRepositoryLocal(GangaRepository):
         super(GangaRepositoryLocal, self).__init__(registry)
         self.dataFileName = "data"
         self.sub_split = "subjobs"
-        self.root = os.path.join(
-            self.registry.location, "6.0", self.registry.name)
+        self.root = os.path.join(self.registry.location, "6.0", self.registry.name)
         self.lockroot = os.path.join(self.registry.location, "6.0")
         self.saved_paths = {}
         self.saved_idxpaths = {}
@@ -142,10 +141,8 @@ class GangaRepositoryLocal(GangaRepository):
             self.to_file = pickle_to_file
             self.from_file = pickle_from_file
         else:
-            raise RepositoryError(
-                self.repo, "Unknown Repository type: %s" % self.registry.type)
-        self.sessionlock = SessionLockManager(
-            self, self.lockroot, self.registry.name)
+            raise RepositoryError(self.repo, "Unknown Repository type: %s" % self.registry.type)
+        self.sessionlock = SessionLockManager(self, self.lockroot, self.registry.name)
         self.sessionlock.startup()
         # Load the list of files, this time be verbose and print out a summary
         # of errors
@@ -527,6 +524,7 @@ class GangaRepositoryLocal(GangaRepository):
                             tempSubJList = SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, False)
                             tempSubJList._setParent(obj)
                             tempSubJList.write_subJobIndex()
+                            del tempSubJList
 
                         safe_save(fn, obj, self.to_file, self.sub_split)
                         # clean files not in subjobs anymore... (bug 64041)
@@ -630,13 +628,13 @@ class GangaRepositoryLocal(GangaRepository):
                         obj._data = tmpobj._data
                         # Fix parent for objects in _data (necessary!)
                         for n, v in obj._data.items():
-                            if isinstance(v, Node):
+                            if isType(v, Node):
                                 v._setParent(obj)
-                            if (isinstance(v, list) or v.__class__.__name__ == "GangaList"):
+                            if (isType(v, list) or isType(v, GangaList)):
                                 # set the parent of the list or dictionary (or
                                 # other iterable) items
                                 for i in v:
-                                    if isinstance(i, Node):
+                                    if isType(i, Node):
                                         i._setParent(obj)
 
                         # Check if index cache; if loaded; was valid:

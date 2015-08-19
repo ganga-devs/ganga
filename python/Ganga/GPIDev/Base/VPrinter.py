@@ -5,14 +5,13 @@ from __future__ import absolute_import
 #
 # $Id: VPrinter.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
-from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod
 
 
 def quoteValue(value, selection):
     """A quoting function. Used to get consistent formatting"""
     # print "Quoting",repr(value),selection
-    if isinstance(value, str):
+    if isType(value, type('')):
         if selection == 'copyable':
 
             value = value.replace('"', R'\"')
@@ -74,7 +73,10 @@ class VPrinter(object):
 
     def nodeBegin(self, node):
         self.level += 1
-        print(node._schema.name, '(', file=self.out)
+        if node._schema is not None:
+            print(node._schema.name, '(', file=self.out)
+        else:
+            print('(', file=self.out)
         self.nocomma = 1
         self.empty_body = 1
 
@@ -242,7 +244,7 @@ class VSummaryPrinter(VPrinter):
             return
         if self._CallSummaryPrintMember(node, name, subnode):
             return
-        from .Objects import GangaObject
+        from Ganga.GPIDev.Base.Objects import GangaObject
         if isType(subnode, GangaObject):
             self.empty_body = 0
             self.comma()
@@ -266,16 +268,17 @@ def full_print(obj, out=None):
     from Ganga.GPIDev.Base.Proxy import stripProxy
     obj = stripProxy(obj)
 
-    if isinstance(obj, GangaList.GangaList):
+    if isType(obj, GangaList.GangaList):
         obj_len = len(obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
         else:
             import cStringIO
+            from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             count = 0
             for x in obj:
-                if isinstance(x, GangaObject):
+                if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
                     x.printTree(sio)
                     result = sio.getvalue()
@@ -314,10 +317,11 @@ def summary_print(obj, out=None):
             print('[]', end=' ', file=out)
         else:
             import cStringIO
+            from Ganga.GPIDev.Base.Objects import GangaObject
             outString = '['
             count = 0
             for x in obj:
-                if isinstance(x, GangaObject):
+                if isType(x, GangaObject):
                     sio = cStringIO.StringIO()
                     x.printSummaryTree(0, 0, '', out=sio)
                     result = sio.getvalue()

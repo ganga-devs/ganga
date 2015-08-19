@@ -7,6 +7,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from Ganga.GPIDev.Base.Proxy import addProxy
+import Ganga.GPI as GPI
 
 class LHCbUnit(IUnit):
    _schema = Schema(Version(1,0), dict(IUnit._schema.datadict.items() + {
@@ -18,18 +19,20 @@ class LHCbUnit(IUnit):
    _exportmethods = IUnit._exportmethods + [ ]
    
    def createNewJob(self):
-      """Create any jobs required for this unit"""      
+      """Create any jobs required for this unit"""
+      import copy
       j = GPI.Job()
       j._impl.backend = self._getParent().backend.clone()
       j._impl.application = self._getParent().application.clone()
       if self.inputdata:
          j.inputdata = self.inputdata.clone()
 
+      j._impl.inputfiles = copy.deepcopy(self._getParent().inputfiles)
+
       trf = self._getParent()
       task = trf._getParent()
       j.inputsandbox = self._getParent().inputsandbox
 
-      import copy
       j.outputfiles = copy.deepcopy(self._getParent().outputfiles)
       if len(self._getParent().postprocessors.process_objects) > 0:
          j.postprocessors = copy.deepcopy( addProxy(self._getParent()).postprocessors )

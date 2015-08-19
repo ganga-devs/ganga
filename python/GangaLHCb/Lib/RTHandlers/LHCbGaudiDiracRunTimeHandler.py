@@ -1,4 +1,5 @@
 import copy, os, pickle
+from GangaLHCb.Lib.LHCbDataset                          import LHCbDataset
 from GangaLHCb.Lib.LHCbDataset.OutputData               import OutputData
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
@@ -9,7 +10,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities            import execute
 from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
 from Ganga.GPIDev.Lib.File                              import FileBuffer, LocalFile
-from Ganga.GPIDev.Base.Proxy                            import addProxy
+from Ganga.GPIDev.Base.Proxy                            import addProxy, isType
 from Ganga.Utility.Config                               import getConfig
 from Ganga.Utility.logging                              import getLogger
 from Ganga.Utility.util                                 import unique
@@ -86,7 +87,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         ## Cant wait to get rid of this when people no-longer specify
         ## inputdata in options file
         #######################################################################
-        new_job = copy.deepcopy(job)
+        new_job = job
         ## splitters ensure that subjobs pick up inputdata from job over that in
         ## optsfiles but need to take sare of unsplit jobs
         if not job.master:
@@ -157,7 +158,19 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                          #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
                          )
 
-        logger.debug( "input_data %s" % str( input_data ) )
+        #logger.debug( "input_data %s" % str( input_data ) )
+
+        ## We want to propogate the ancestor depth to DIRAC when we have inputdata set
+        if new_job.inputdata is not None and isType(new_job.inputdata, LHCbDataset):
+
+            ## As the RT Handler we already know we have a Dirac backend
+            if type(new_job.backend.settings) is not dict:
+                raise ApplicationConfigurationError(None, 'backend.settings should be a dict')
+
+            if 'AncestorDepth' in new_job.backend.settings:
+                ancestor_depth = new_job.backend.settings['AncestorDepth']
+            else:
+                ancestor_depth = new_job.inputdata.depth
 
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
@@ -182,6 +195,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         DIRAC_OPTS           = job.backend.diracOpts,
                                         PLATFORM             = app.platform,
                                         REPLICATE            = 'True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
+                                        ANCESTOR_DEPTH       = ancestor_depth,
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3

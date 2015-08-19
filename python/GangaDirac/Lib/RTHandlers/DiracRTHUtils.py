@@ -150,10 +150,11 @@ def diracAPI_script_settings(app):
     if type(job.backend.settings) is not dict:
         raise ApplicationConfigurationError(None, 'backend.settings should be a dict')
     for setting, setting_val in job.backend.settings.iteritems():
-        if type(setting_val) is type(''):
-            diracAPI_line += setting_line.replace('###SETTING###',str(setting)).replace('###VALUE###',"'%s'" % setting_val)
+        if str(setting).startswith('set'):
+            _setting = str(setting)[3:]
         else:
-            diracAPI_line += setting_line.replace('###SETTING###',str(setting)).replace('###VALUE###',str(setting_val))
+            _setting = str(setting)
+        diracAPI_line += setting_line.replace('###SETTING###', _setting).replace('###VALUE###', str(setting_val))
     if diracAPI_line =='':
         diracAPI_line = None
 

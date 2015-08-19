@@ -59,6 +59,8 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 # config_scope is namespace used for evaluating simple objects (e.g. File)
 from Ganga.Utility.Config import config_scope
 
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
 # An experimental, fast way to print a tree of Ganga Objects to file
 # Unused at the moment
 
@@ -90,7 +92,7 @@ def fastXML(obj, indent='', ignore_subs=''):
         sl.append('</class>')
         return sl
     else:
-        return ["<value>", escape(repr(obj)), "</value>"]
+        return ["<value>", escape(repr(stripProxy(obj))), "</value>"]
 
 ##########################################################################
 # A visitor to print the object tree into XML.
@@ -134,7 +136,7 @@ class VStreamer(object):
 
     def print_value(self, x):
         # FIXME: also quote % characters (to allow % operator later)
-        print('<value>%s</value>' % escape(repr(x)), file=self.out)
+        print('<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
 
     def showAttribute(self, node, name):
         return not node._schema.getItem(name)['transient'] and (self.level > 1 or name != self.selection)

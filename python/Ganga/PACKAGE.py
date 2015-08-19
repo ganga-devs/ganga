@@ -41,7 +41,8 @@ _defaultExternalHome = None
 # value specified in the dictionary may be either string or a list of strings (they will be separated by colons ':').
 #
 _externalPackages = {
-    'ipython': {'version': '0.6.13_ganga_patch1',
+    'ipython': {#'version': '3.2.1',
+                'version' : '0.6.13_ganga_patch1',
                 'noarch': True,
                 'PYTHONPATH': 'lib/python'},
     'uuid': {'version': '1.30',

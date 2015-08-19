@@ -16,6 +16,7 @@ from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 from Ganga.GPIDev.Credentials2               import VomsProxy, require_credential, credential_store, needed_credentials
 
+from Ganga.GPIDev.Base.Proxy                 import stripProxy
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
 
@@ -147,6 +148,11 @@ class DiracBase(IBackend):
         err_msg = 'Error submitting job to Dirac: %s' % str(result)
         if not result_ok(result) or 'Value' not in result:
             logger.error(err_msg)
+            logger.error("\n\n===\n%s\n===\n"% dirac_script)
+            logger.error("\n\n====\n")
+            with open(dirac_script, 'r') as file_in:
+                logger.error("%s" % file_in.read())
+            logger.error("\n====\n")
             raise BackendError('Dirac',err_msg)
         
         idlist = result['Value']
@@ -208,10 +214,10 @@ class DiracBase(IBackend):
                         #sj._commit() # PENDING: TEMPORARY DISABLED
                         incomplete = 1
                     else:
-                        return handleError(IncompleteJobSubmissionError(fqid,'resubmission failed'))
+                        return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
-                    log_user_exception(logger,debug=isinstance(x,GangaException))
-                    return handleError(IncompleteJobSubmissionError(fqid,str(x)))
+                    log_user_exception(logger, debug=isinstance(x, GangaException))
+                    return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
             if master:
@@ -260,10 +266,11 @@ class DiracBase(IBackend):
 
         job_ident = get_job_ident(script.split('\n'))
         for key, value in self.settings.iteritems():
-             if type(value)is type(''):
-                  new_script += '%s.set%s("%s")\n' % (job_ident, key, value)
-             else:
-                  new_script += '%s.set%s(%s)\n' % (job_ident, key, str(value))
+            if str(key).startswith('set'):
+                _key = key[3:]
+            else:
+                _key = key
+            new_script += '%s.set%s("%s")\n' % (job_ident, str(_key), str(value))
         new_script += script[script.find('# user settings -->'):]
              
 
@@ -521,6 +528,10 @@ class DiracBase(IBackend):
             wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
 
             with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']),'wb') as postprocesslocationsfile:
+                if not hasattr(file_info_dict, 'keys'):
+                    logger.error("Error understanding OutputDataInfo: %s" % str(file_info_dict))
+                    from Ganga.Core.exceptions import GangaException
+                    raise GangaException("Error understanding OutputDataInfo: %s" % str(file_info_dict))
                 for file_name in file_info_dict.keys():
                     info = file_info_dict.get( file_name )
                     logger.debug( "file_name: %s,\tinfo: %s" % (str(file_name), str(info)) )
@@ -575,13 +586,15 @@ class DiracBase(IBackend):
             logger.error("Unexpected dirac status '%s' encountered"%updated_dirac_status)
 
     @staticmethod
-    def updateMonitoringInformation(jobs):
+    def updateMonitoringInformation(_jobs):
         """Check the status of jobs and retrieve output sandboxes"""
         ## Only those jobs in 'submitted','running' are passed in here for checking
         ## if however they have already completed in Dirac they may have been put on queue
         ## for processing from last time. These should be put back on queue without 
         ## querying dirac again. Their signature is status = running and job.backend.status
         ## already set to Done or Failed etc.
+
+        jobs = [ stripProxy(j) for j in _jobs ]
 
         # remove from consideration any jobs already in the queue. Checking this non persisted attribute
         # is better than querying the queue as cant tell if a job has just been taken off queue and is being processed

@@ -1,5 +1,5 @@
 import copy, os, datetime, hashlib, re
-from Ganga.GPIDev.Base.Proxy                  import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy                  import stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.GangaList.GangaList     import GangaList
 from Ganga.GPIDev.Schema                      import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.File.IGangaFile         import IGangaFile
@@ -10,6 +10,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities  import getDiracEnv, execute
 from Ganga.GPI                                import queues
 from Ganga.Utility.Config                     import getConfig
 from Ganga.Utility.logging                    import getLogger
+from Ganga.GPIDev.Base.Proxy import isType
 configDirac = getConfig('DIRAC')
 logger      = getLogger()
 regex       = re.compile('[*?\[\]]')
@@ -91,6 +92,7 @@ class DiracFile(IGangaFile):
     _exportmethods = [ "get", "getMetadata", "getReplicas", 'getSubFiles', 'remove', "replicate", 'put', 'locations', 'location', 'accessURL', '_updateRemoteURLs' ]
     _remoteURLs = {}
     _storedReplicas = {}
+    _have_copied = False
 
     def __init__(self, namePattern='', localDir=None, lfn='', remoteDir=None, **kwds):
         """
@@ -113,7 +115,21 @@ class DiracFile(IGangaFile):
             self.remoteDir = remoteDir
 
     def __construct__( self, args ):
-        #logger.debug( "__construct__" )
+
+        if len(args) == 1 and isType(args[0], DiracFile):
+            self.lfn = args[0].lfn
+            self.namePattern = args[0].namePattern
+            self.remoteDir = args[0].remoteDir
+            self.localDir = args[0].localDir
+            self.guid = args[0].guid
+            self.compressed = args[0].compressed
+            self._storedReplicas = args[0]._storedReplicas
+            self._remoteURLs = args[0]._remoteURLs
+            self.failureReason = args[0].failureReason
+            self._have_copied = True
+            self.subfiles = copy.deepcopy(args[0].subfiles)
+            return
+
         if len(args) == 1 and type(args[0]) == type(''):
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
                 self._setLFNnamePattern( _lfn = args[0][4:], _namePattern="" )
@@ -138,6 +154,29 @@ class DiracFile(IGangaFile):
         else:
              super( DiracFile, self ).__construct__( args )
         return
+
+    def __deepcopy__(self, memo):
+
+        cls = type(stripProxy(self))
+        c = super(cls, cls).__new__(cls)
+        super(DiracFile, c).__init__()
+
+        c.lfn = self.lfn
+        c.localDir = self.lfn
+        c.remoteDir = self.remoteDir
+        c.namePattern = self.namePattern
+        c.compressed = self.compressed
+        c.locations = self.locations
+        c.guid = self.guid
+        c._storedReplicas = self._storedReplicas
+        c._remoteURLs = self._remoteURLs
+        #c._storedReplicas = copy.deepcopy(self._storedReplicas)
+        #c._remoteURLs = copy.deepcopy(self._remoteURLs)
+        c.failureReason = self.failureReason
+
+        c.subfiles = copy.deepcopy(self.subfiles)
+        c._have_copied = True
+        return c
 
     def _attribute_filter__set__(self, name, value):
 
@@ -173,6 +212,7 @@ class DiracFile(IGangaFile):
             self.remoteDir = os.path.dirname( _lfn )
             self.namePattern = os.path.basename( _namePattern )
             self.localDir = os.path.dirname( expandfilename(_namePattern) )
+
 
         if _lfn != "" and _namePattern == "":
             self.lfn = _lfn
@@ -423,6 +463,9 @@ class DiracFile(IGangaFile):
             these_replicas = allReplicas
 
         else:
+            ## deep copy just before wer change it incase we're pointing to the data stored in original from a copy
+            if self._have_copied:
+                self._storedReplicas = copy.deepcopy(_storedReplicas)
             if (self._storedReplicas == {} and len(self.subfiles) == 0 ) or forceRefresh:
 
                 self._storedReplicas =  execute('getReplicas("%s")' % self.lfn)
@@ -454,6 +497,9 @@ class DiracFile(IGangaFile):
             if self.locations != reps[self.lfn].keys():
                 self.locations = reps[self.lfn].keys()
             #logger.debug( "locations: %s" % str( self.locations ) )
+            ## deep copy just before wer change it incase we're pointing to the data stored in original from a copy
+            if self._have_copied:
+                self._remoteURLs = copy.deepcopy(self._remoteURLs)
             for site in self.locations:
                 #logger.debug( "site: %s" % str( site ) )
                 self._remoteURLs[site] = reps[self.lfn][site]

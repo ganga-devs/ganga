@@ -8,7 +8,7 @@ import Ganga.Utility.logging
 import Ganga.Utility.Config
 from optparse import OptionParser, OptionValueError
 configLHCb=Ganga.Utility.Config.makeConfig('LHCb','Parameters for LHCb')
-#configDirac=Ganga.Utility.Config.makeConfig('DIRAC','Parameters for DIRAC')
+configDirac=Ganga.Utility.Config.getConfig('DIRAC')
 logger=Ganga.Utility.logging.getLogger()
 #config=Ganga.Utility.Config.getConfig('Configuration')
 
@@ -118,7 +118,7 @@ def _store_dirac_environment():
     if not os.path.exists(fdir):
         os.makedirs(fdir)
     fname = os.path.join(fdir,diracversion)
-    if not os.path.exists(fname):
+    if not os.path.exists(fname) or not os.path.getsize(fname):
         file = open(fname,'w+')
         cmd = '/usr/bin/env bash -c \"source %s LHCBDIRAC %s ROOT>& /dev/null && '\
             'printenv > %s\"' % (setup_script,diracversion,fname)
@@ -138,6 +138,8 @@ def _store_dirac_environment():
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
 _store_dirac_environment()
+configDirac.setSessionValue('DiracEnvFile',os.environ['GANGADIRACENVIRONMENT'])
+
 _store_root_version()
 def getEnvironment( config = {} ):
    import sys

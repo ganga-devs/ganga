@@ -1,6 +1,7 @@
 import os
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
-from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
+from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify, task_map
+from Ganga.Runtime.GPIexport import exportToGPI
+from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 import GangaLHCb.Lib.Applications.AppsBaseUtils
@@ -16,17 +17,18 @@ for app in user_apps:
     if len(app) > 0:
         AppsBaseUtils.addNewLHCbapp( app )
 
-f = open(os.path.join(os.path.dirname(__file__),'AppsBase.py'),'r')
+f = open(os.path.join(os.path.dirname(__file__),'AppsBase.py'), 'r')
 cls = f.read()
 f.close()
 for app in AppsBaseUtils.available_apps():
     if app in dir(): continue
     exec(cls.replace('AppName',app))
 ##     # dont seem necessary
-    exec('%sTask = taskify(%s,"%sTask")' %(app,app,app))
-    exec('task_map["%s"] = %sTask' %(app,app))
+    exec('%sTask = taskify(%s,"%sTask")' %(app, app, app))
+    exec('task_map["%s"] = %sTask' %(app, app))
 ##    exec('task_map["%s"] = %s' %(app,app))
-
+#    obj_class = GPIProxyClassFactory( "%s" % app, locals()[app] )
+#    exportToGPI( "%s" % app, obj_class(), '' )
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 from GaudiPython import *

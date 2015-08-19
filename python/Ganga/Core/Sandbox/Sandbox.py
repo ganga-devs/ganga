@@ -10,7 +10,7 @@ from Ganga.Core import GangaException, GangaIOError
 
 class SandboxError(GangaException):
 
-    def __init__(self, message):
+    def __init__(self, message=''):
         GangaException.__init__(self, message)
         self.message = message
 

@@ -1,26 +1,27 @@
 from __future__ import absolute_import
 
+from Ganga.GPIDev.Base.Proxy import stripProxy, proxyRef
 
 class RegistrySliceProxy(object):
 
     """This object is an access list to registry slices"""
 
-    def __init__(self, _impl):
-        self.__dict__['_impl'] = _impl
+    def __init__(self, impl):
+        self.__dict__[proxyRef] = impl
 
     def ids(self, minid=None, maxid=None):
         """ Return a list of ids of all objects.
         """
-        return self._impl.ids(minid, maxid)
+        return stripProxy(self).ids(minid, maxid)
 
     def clean(self, confirm=False, force=False):
         """ Cleans this registry completely.
         Returns True on success, False on failure"""
-        return self._impl.clean(confirm, force)
+        return stripProxy(self).clean(confirm, force)
 
     def incomplete_ids(self):
         try:
-            return self._impl.objects._incomplete_objects
+            return stripProxy(self).objects._incomplete_objects
         except Exception as x:
             return []
 
@@ -32,7 +33,7 @@ class RegistrySliceProxy(object):
         class Iterator(object):
 
             def __init__(self, reg):
-                self.it = reg._impl.__iter__()
+                self.it = stripProxy(reg).__iter__()
 
             def __iter__(self): return self
 
@@ -41,10 +42,10 @@ class RegistrySliceProxy(object):
         return Iterator(self)
 
     def __contains__(self, j):
-        return self._impl.__contains__(j._impl)
+        return stripProxy(self).__contains__(stripProxy(j))
 
     def __len__(self):
-        return self._impl.__len__()
+        return stripProxy(self).__len__()
 
     def select(self, minid=None, maxid=None, **attrs):
         """ Select a subset of objects. Examples for jobs:
@@ -58,10 +59,10 @@ class RegistrySliceProxy(object):
         unwrap_attrs = {}
         for a in attrs:
             unwrap_attrs[a] = _unwrap(attrs[a])
-        return self.__class__(self._impl.select(minid, maxid, **unwrap_attrs))
+        return self.__class__(stripProxy(self).select(minid, maxid, **unwrap_attrs))
 
     def _display(self, interactive=0):
-        return self._impl._display(interactive)
+        return stripProxy(self)._display(interactive)
 
     __str__ = _display
 
@@ -72,13 +73,14 @@ from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Base.Objects import GangaObject
 from .RegistrySlice import RegistrySlice
 
+from Ganga.GPIDev.Base.Proxy import isType
 
 def _wrap(obj):
-    if isinstance(obj, GangaObject):
+    if isType(obj, GangaObject):
         return GPIProxyObjectFactory(obj)
-    if isinstance(obj, RegistrySlice):
+    if isType(obj, RegistrySlice):
         return obj._proxyClass(obj)
-    if isinstance(obj, list):
+    if isType(obj, list):
         return map(GPIProxyObjectFactory, obj)
     return obj
 
@@ -86,7 +88,5 @@ def _wrap(obj):
 
 
 def _unwrap(obj):
-    try:
-        return obj._impl
-    except AttributeError:
-        return obj
+    return stripProxy(obj)
+

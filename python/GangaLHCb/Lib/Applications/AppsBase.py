@@ -85,7 +85,7 @@ class AppName(Gaudi):
     # Construct and submit job object
     j=Job(application=app,backend=Dirac())
     j.submit()
-"""
+    """
     _name = 'AppName'
     _category = 'applications'
     #__doc__ = GaudiDocString('AppName')

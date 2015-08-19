@@ -482,8 +482,7 @@ under certain conditions; type license() for details.
                 # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
                 # (not the session value but the user value has precedence)
                 try:
-                    opts = self.parse_cmdline_config_options(
-                        self.options.cmdline_options)
+                    opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                     for section, option, val in opts:
                         config = getConfig(section).setUserValue(option, val)
                 except ConfigError as x:
@@ -494,8 +493,7 @@ under certain conditions; type license() for details.
         In case of parsing errors, raise ConfigError exception.
         """
         import re
-        mpat = re.compile(
-            r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._/]+)=(?P<value>.+)')
+        mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._/]+)=(?P<value>.+)')
         section = None
 
         opts = []
@@ -511,8 +509,7 @@ under certain conditions; type license() for details.
                     from Ganga.Utility.Config import ConfigError
                     raise ConfigError('section not specified: %s' % o)
                 else:
-                    opts.append(
-                        (section, rpat.group('option'), rpat.group('value')))
+                    opts.append((section, rpat.group('option'), rpat.group('value')))
         return opts
 
     # configuration procedure: read the configuration files, configure and
@@ -526,15 +523,13 @@ under certain conditions; type license() for details.
 
         def set_cmdline_config_options(sects=None):
             try:
-                opts = self.parse_cmdline_config_options(
-                    self.options.cmdline_options)
+                opts = self.parse_cmdline_config_options(self.options.cmdline_options)
                 for section, option, val in opts:
                     should_set = True
                     if not sects is None and not section in sects:
                         should_set = False
                     if should_set:
-                        config = Ganga.Utility.Config.setSessionValue(
-                            section, option, val)
+                        config = Ganga.Utility.Config.setSessionValue(section, option, val)
             except ConfigError as x:
                 self.exit('command line option error: %s' % str(x))
 
@@ -735,8 +730,7 @@ http://ipython.scipy.org/doc/manual''')
         else:
             noautocall = "'-autocall','0'"
 
-        ipconfig.addOption(
-            'args', "['-colors','LightBG', %s]" % noautocall, 'FIXME')
+        ipconfig.addOption('args', "['-colors','LightBG', %s]" % noautocall, 'FIXME')
 
         # import configuration from spyware
         from Ganga.Runtime import spyware
@@ -1100,9 +1094,10 @@ default_backends = LCG
 
         def typename(obj):
             'Return a name of Ganga object as a string, example: typename(j.application) -> "DaVinci"'
-            if hasattr(obj, '_impl'):
-                if hasattr(obj._impl, '_name'):
-                    return obj._impl._name
+            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
+            if isProxy(obj):
+                if hasattr(stripProxy(obj), '_name'):
+                    return stripProxy(obj)._name
                 else:
                     logger = Ganga.Utility.logging.getLogger()
                     logger.error(
@@ -1112,22 +1107,22 @@ default_backends = LCG
                     return ""
             else:
                 #logger = Ganga.Utility.logging.getLogger()
-                #logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
+                #logger.debug( "OBJECT %s DOES NOT HAVE %s DEFINED!!!" % (str(obj), proxyRef) )
                 if hasattr(obj, '_name'):
                     return obj._name
                 else:
                     logger = Ganga.Utility.logging.getLogger()
-                    logger.error(
-                        "Object %s DOES NOT have the _impl or _name parameter set" % (str(obj)))
+                    logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(proxyRef)))
                     import traceback
                     traceback.print_stack()
                     return ""
 
         def categoryname(obj):
             'Return a category of Ganga object as a string, example: categoryname(j.application) -> "applications"'
-            if hasattr(obj, '_impl'):
-                if hasattr(obj._impl, '_category'):
-                    return obj._impl._category
+            from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
+            if isProxy(obj):
+                if hasattr(stripProxy(obj), '_category'):
+                    return stripProxy(obj)._category
                 else:
                     logger = Ganga.Utility.logging.getLogger()
                     logger.error(
@@ -1137,13 +1132,12 @@ default_backends = LCG
                     return ""
             else:
                 #logger = Ganga.Utility.logging.getLogger()
-                #logger.debug( "OBJECT %s DOES NOT HAVE _impl DEFINED!!!" % str(obj) )
+                #logger.debug( "OBJECT %s DOES NOT HAVE %s DEFINED!!!" % (str(obj), proxyRef) )
                 if hasattr(obj, '_category'):
                     return obj._category
                 else:
                     logger = Ganga.Utility.logging.getLogger()
-                    logger.error(
-                        "Object %s DOES NOT have the _impl or _category parameter set" % (str(obj)))
+                    logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(proxyRef)))
                     import traceback
                     traceback.print_stack()
                     return ""
@@ -1185,15 +1179,16 @@ default_backends = LCG
         from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 
         def convert_merger_to_postprocessor(j):
-            if len(j.postprocessors._impl.process_objects):
+            from Ganga.GPIDev.Base.Proxy import stripProxy
+            if len(stripProxy(j.postprocessors).process_objects):
                 logger.info('job(%s) already has postprocessors' % j.fqid)
-            if j._impl.merger is None:
+            if stripProxy(j).merger is None:
                 logger.info(
                     'job(%s) does not have a merger to convert' % j.fqid)
-            if not len(j.postprocessors._impl.process_objects) and j._impl.merger is not None:
+            if not len(stripProxy(j.postprocessors).process_objects) and stripProxy(j).merger is not None:
                 mp = MultiPostProcessor()
-                mp.process_objects.append(j._impl.merger)
-                j._impl.postprocessors = mp
+                mp.process_objects.append(stripProxy(j).merger)
+                stripProxy(j).postprocessors = mp
         exportToGPI('applications', applications, 'Functions')
         exportToGPI('backends', backends, 'Functions')
         exportToGPI('list_plugins', list_plugins, 'Functions')
@@ -1268,7 +1263,8 @@ default_backends = LCG
         exportToGPI('full_print', full_print, 'Functions')
 
         # bootstrap core modules
-        Ganga.Core.bootstrap(Ganga.GPI.jobs._impl, self.interactive)
+        from Ganga.GPIDev.Base.Proxy import proxyRef
+        Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), self.interactive)
 
         import Ganga.GPIDev.Lib.Config
         exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
@@ -1336,8 +1332,7 @@ default_backends = LCG
                 rc = xmldifferencer.main(self.args)
             return rc
         except ImportError as e:
-            logger.error(
-                "You need GangaTest external package in order to invoke Ganga test-runner.")
+            logger.error("You need GangaTest external package in order to invoke Ganga test-runner.")
             logger.error(e)
             return -1
 
@@ -1352,10 +1347,6 @@ default_backends = LCG
         if self.options.webgui == True:
             from Ganga.Runtime.http_server import start_server
             start_server()
-
-        def override_credits():
-            credits._Printer__data += '\n\nGanga: The Ganga Developers (http://cern.ch/ganga)\n'
-            copyright._Printer__data += '\n\nCopyright (c) 2000-2008 The Ganga Developers (http://cern.ch/ganga)\n'
 
         if local_ns is None:
             import __main__
@@ -1468,26 +1459,6 @@ default_backends = LCG
 
         # interactive python shell
 
-        # customized display hook -- take advantage of coloured text etc. if
-        # possible.
-        def _display(obj):
-            if isinstance(obj, type):
-                sys.stdout.write(str(obj)+'\n')
-                return
-            # if hasattr(obj,'_display'):
-            #   print
-            #   print obj._display(1)
-            #   return
-            elif hasattr(obj, '_impl') and hasattr(obj._impl, '_display'):
-                sys.stdout.write(str(obj._display(1))+'\n')
-                return
-            elif hasattr(obj, '_display'):
-                sys.stdout.write(str(obj._display(1))+'\n')
-                return
-            else:
-                sys.stdout.write(str(obj)+'\n')
-            return
-
         shell = config['TextShell']
 
         if shell == 'IPython':
@@ -1497,20 +1468,7 @@ default_backends = LCG
 #            ipconfig.addOption('args',"['-colors','LightBG', '-noautocall']",'FIXME')
             args = eval(ipconfig['args'])
 
-            try:
-                logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', os.environ['IPYTHONDIR'])
-            except KeyError:
-                newpath = os.path.expanduser('~/.ipython-ganga')
-                oldpath = os.path.expanduser('~/.ipython')
-                os.environ['IPYTHONDIR'] = newpath
-                if not os.path.exists(newpath):
-                    if os.path.exists(oldpath):
-                        logger.warning('Default location of IPython history files has changed.')
-                        logger.warning('Ganga will now try to copy your old settings from %s to the new path %s. If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*', oldpath, newpath, newpath)
-                        import shutil
-                        shutil.copytree(oldpath, newpath)
-                    else:
-                        os.makedirs(newpath)
+            self.check_IPython()
 
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
@@ -1518,96 +1476,21 @@ default_backends = LCG
             import Ganga.Utility.logging
             Ganga.Utility.logging.enableCaching()
 
-            from Ganga.GPIDev.Credentials2 import credential_store, get_needed_credentials
+            from IPython import __version__ as ipver
 
-            def ganga_prompt():
-                """
-                Create the text to be displayed on the Python prompt.
-                This is currently just the expired credentials warnings.
-                It returns either a custom prompt or an empty string.
-                """
-                if Ganga.Utility.logging.cached_screen_handler:
-                    Ganga.Utility.logging.cached_screen_handler.flush()
+            if ipver == "0.6.13":
 
-                needed_credentials = get_needed_credentials()
+                self.launch_OldIPython(local_ns, args)
 
-                # Add still-needed credentials to the prompt
-                if needed_credentials:
-                    prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
-                    for cred_req in needed_credentials:
-                        prompt += str(cred_req).replace('\n ', '') + '\n'
-                    prompt += 'Call `credential_store.renew()` to update them.\n'
-                    return prompt
+            elif ipver == "3.2.1":
 
-                return ''
+                self.launch_NewIPython(local_ns, args)
 
-            try:
-                from IPython.Shell import IPShellEmbed
-            except ImportError:
-                logger.error("Error Loading the IPython modules required for ganga..."
-                             "Please check your system configuration or try running:\n"
-                             "   ''SetupProject ganga''\n\n"
-                             "before re-launching ganga. Now Exiting! Goodybye!\n")
-                sys.exit(0)
+            else:
+                print("Unknown IPython version: %s" % str(ipver))
+                return
 
-            # override ipothonrc configuration
-            ipopts = {'prompt_in1': '${ganga_prompt()}In [\#]: ',
-                      # disable automatic tab completion for attributes
-                      # starting with _ or __
-                      'readline_omit__names': 2
-                      }
-            ipshell = IPShellEmbed(argv=args, rc_override=ipopts)
-            # setting displayhook like this is definitely undocumented sort of
-            # a hack
-            ipshell.IP.outputcache.display = _display
 
-            # Initializing the user_ns in a way that runlines will not cause it
-            # to be regenerated
-            for i in local_ns.keys():
-                ipshell.IP.user_ns[i] = local_ns[i]
-
-            ipshell.IP.user_ns['ganga_prompt'] = ganga_prompt
-
-            # attach magic functions
-            py_version = float(sys.version.split()[0].rsplit('.', 1)[0])
-            if py_version >= 2.6:
-                import readline
-                from Ganga.Runtime.GangaCompleter import GangaCompleter
-                from IPython.iplib import MagicCompleter
-                t = GangaCompleter(readline.get_completer(),
-                                   ipshell.IP.user_ns)
-                setattr(MagicCompleter, 'complete', t.complete)
-                # readline.set_completer(t.complete)
-                readline.parse_and_bind('tab: complete')
-                #readline.parse_and_bind('set input-meta on')
-                #readline.parse_and_bind('set output-meta on')
-                #readline.parse_and_bind('set convert-meta off')
-                readline.set_completion_display_matches_hook(t.displayer)
-
-            system_exit_script = """\
-def exit( value=None ):
-  import IPython
-  if __IP.rc.confirm_exit:
-    if IPython.genutils.ask_yes_no('Do you really want to exit ([y]/n)?','y'):
-      __IP.exit_now = True
-  else:
-    __IP.exit_now = True
-"""
-
-            ipshell.IP.runlines(system_exit_script)
-
-            # set a custom exception handler wich disables printing of errors' traceback for
-            # all exceptions inheriting from GangaException
-            def ganga_exc_handler(self, etype, value, tb):
-                # print str(etype).split('.')[-1],':', # FIXME: sys.stderr ?
-                logger.error(value)  # FIXME: sys.stderr ?
-
-            from Ganga.Core import GangaException
-            ipshell.IP.set_custom_exc((GangaException,), ganga_exc_handler)
-
-            override_credits()
-            # global_ns: FIX required by ipython 0.8.4+
-            ret = ipshell(local_ns=local_ns, global_ns=local_ns)
         elif shell == 'GUI':
             override_credits()
             import GangaGUI.Ganga_GUI
@@ -1618,6 +1501,272 @@ def exit( value=None ):
             sys.displayhook = _display
             c = code.InteractiveConsole(locals=local_ns)
             c.interact()
+
+        return
+
+
+    def check_IPython(self):
+
+        import os
+
+        try:
+            logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', os.environ['IPYTHONDIR'])
+        except KeyError:
+            newpath = os.path.expanduser('~/.ipython-ganga')
+            oldpath = os.path.expanduser('~/.ipython')
+            os.environ['IPYTHONDIR'] = newpath
+            if not os.path.exists(newpath):
+                if os.path.exists(oldpath):
+                    logger.warning('Default location of IPython history files has changed.')
+                    logger.warning('Ganga will now try to copy your old settings from %s to the new path %s. If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*', oldpath, newpath, newpath)
+                    import shutil
+                    shutil.copytree(oldpath, newpath)
+                else:
+                    os.makedirs(newpath)
+
+        return None
+
+
+    def launch_NewIPython(self, local_ns, args):
+
+        ## Taken from: http://ipython.org/ipython-doc/rel-0.13.2/interactive/reference.html 30/06/2015 rcurrie
+
+        """Quick code snippets for embedding IPython into other programs.
+
+        See embed_class_long.py for full details, this file has the bare minimum code for
+        cut and paste use once you understand how to use the system."""
+
+        #---------------------------------------------------------------------------
+        # This code loads IPython but modifies a few things if it detects it's running
+        # embedded in another IPython session (helps avoid confusion)
+
+        # First import the embed function
+        from IPython.terminal.embed import InteractiveShellEmbed
+        ipshell = InteractiveShellEmbed(argv=args, local_ns=local_ns)
+
+        from IPython.config.loader import Config
+        try:
+            get_ipython
+        except NameError:
+            banner=exit_msg=''
+            cfg = Config()
+            prompt_config = cfg.PromptManager
+            prompt_config.in_template = '[{time}]\nGanga-in <\\#>: '
+            prompt_config.in2_template = '         .\\D.: '
+            prompt_config.out_template = 'Ganga-out<\\#>: '
+        else:
+            banner = '*** Nested interpreter ***'
+            exit_msg = '*** Back in main IPython ***'
+
+        # First import the embed function
+        from IPython.terminal.embed import InteractiveShellEmbed
+        # Now create the IPython shell instance. Put ipshell() anywhere in your code
+        # where you want it to open.
+
+        from IPython.core.displayhook import DisplayHook
+        from IPython.utils import io
+        import sys
+        class myDisplayHook(DisplayHook):
+
+            def __call__(self, result=None):
+                """Printing with history cache management.
+
+                This is invoked everytime the interpreter needs to print, and is
+                activated by setting the variable sys.displayhook to it.
+                """
+                self.check_for_underscore()
+                if result is not None and not self.quiet():
+                    ## This part forms the input data format
+                    self.start_displayhook()
+                    self.write_output_prompt()
+                    #format_dict, md_dict = self.compute_format_data(result)
+                    #self.update_user_ns(result)
+                    #self.fill_exec_result(result)
+                    #
+                    ## This part forms the actual output
+                    ## If we ever want to use more than just 
+                    ## text on the console, i.e. fancy graphs/pics/etc then we
+                    ## should make use of compute_fomat_data and either
+                    ## intercept this or add our own formatter
+                    #if format_dict:
+                    #    self.write_format_data(format_dict, md_dict)
+                    #    self.log_output(format_dict)
+                    sys.stdout.write( self._display( result ) )
+                    self.finish_displayhook()
+
+            def _display(self, data):
+                from Ganga.GPIDev.Base.Proxy import stripProxy
+
+                if hasattr(data, '_display'):
+                    return '\n' + data._display(1) + '\n'
+                elif hasattr(stripProxy(data), '_display'):
+                    return '\n' + stripProxy(data)._display(1) + '\n'
+
+                elif hasattr(data, '__str__'):
+                    return '\n' + data.__str__() + '\n'
+                elif hasattr(stripProxy(data), '__str__'):
+                    return '\n'+ stripProxy(data).__str__() + '\n'
+
+                else:
+                    return '\n' + str(data) + '\n'
+
+
+        #ipshell.display_hook = None
+        #import readline
+        #from Ganga.Runtime.GangaCompleter import GangaCompleter
+        #t = GangaCompleter(readline.get_completer(), local_ns)
+        #readline.parse_and_bind('tab: complete')
+        #readline.set_completion_display_matches_hook(t.displayer)
+
+        InteractiveShellEmbed.displayhook_class = myDisplayHook
+        ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
+
+        ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html
+        def ganga_Handler(self, etype, value, tb, tb_offset=None):
+            from Ganga.Utility.logging import getLogger
+            logger = getLogger(modulename=True)
+            logger.error("%s" % str(value))
+            ## Probably don't want to enable this as the debug built into Core.exceptions works for Ipython and not
+            #try:
+            #    import Ganga.Utility.external.logging as logging
+            #except ImportError:
+            #    import logging
+            #if logger.isEnabledFor(logging.DEBUG):
+            #    self.showtraceback((etype, value, tb), tb_offset=tb_offset)
+            from Ganga.Core.exceptions import GangaException
+            if not isinstance(etype(), GangaException):
+                logger.error("Unknown/Unexpected ERROR!!")
+                logger.error("If you're able to reproduce this please report this to the Ganga developers!")
+                logger.error("%s" % str(value))
+                self.showtraceback((etype, value, tb), tb_offset=tb_offset)
+            return None
+
+        ipshell.set_custom_exc((Exception,), ganga_Handler)
+        #ipshell.logstart=False
+
+        # buffering of log messages from all threads called "GANGA_Update_Thread"
+        # the logs are displayed at the next IPython prompt
+
+        import Ganga.Utility.logging
+        Ganga.Utility.logging.enableCaching()
+
+        ipshell.set_hook("pre_prompt_hook", self.ganga_prompt)
+
+        ipshell(local_ns=local_ns, global_ns=local_ns)
+
+        return
+        
+
+    def ganga_prompt(self, dummy=None):
+        """
+        Create the text to be displayed on the Python prompt.
+        This is currently just the expired credentials warnings.
+        It returns either a custom prompt or an empty string.
+        """
+        if Ganga.Utility.logging.cached_screen_handler:
+            Ganga.Utility.logging.cached_screen_handler.flush()
+
+        needed_credentials = get_needed_credentials()
+
+        # Add still-needed credentials to the prompt
+        if needed_credentials:
+            prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
+            for cred_req in needed_credentials:
+                prompt += str(cred_req).replace('\n ', '') + '\n'
+            prompt += 'Call `credential_store.renew()` to update them.\n'
+            return prompt
+
+        return ''
+
+    def launch_OldIPython(self, local_ns, args):
+
+        def override_credits():
+            credits._Printer__data += '\n\nGanga: The Ganga Developers (http://cern.ch/ganga)\n'
+            copyright._Printer__data += '\n\nCopyright (c) 2000-2008 The Ganga Developers (http://cern.ch/ganga)\n'
+
+        # customized display hook -- take advantage of coloured text etc. if
+        # possible.
+        def _display(obj):
+            from Ganga.GPIDev.Base.Proxy import stripProxy
+            if isinstance(obj, type):
+                sys.stdout.write(str(obj)+'\n')
+                return
+            # if hasattr(obj,'_display'):
+            #   print
+            #   print obj._display(1)
+            #   return
+            elif hasattr(stripProxy(obj), '_display'):
+                sys.stdout.write(str(stripProxy(obj)._display(1))+'\n')
+                return
+            else:
+                sys.stdout.write(str(obj)+'\n')
+                return
+                                                                      
+        try:
+            from IPython.Shell import IPShellEmbed
+        except ImportError, err:
+            logger.error("Error Loading IPython")
+            raise
+
+        # override ipothonrc configuration
+        ipopts = {'prompt_in1': '${ganga_prompt()}In [\#]:',
+                  # disable automatic tab completion for attributes
+                  # starting with _ or __
+                  'readline_omit__names': 2
+                  }
+
+        ipshell = IPShellEmbed(argv=args, rc_override=ipopts)
+        ipshell.IP.user_ns['ganga_prompt'] = self.ganga_prompt
+
+        # setting displayhook like this is definitely undocumented sort of
+        # a hack
+        ipshell.IP.outputcache.display = _display
+
+        # Initializing the user_ns in a way that runlines will not cause it
+        # to be regenerated
+        for i in local_ns.keys():
+            ipshell.IP.user_ns[i] = local_ns[i]
+
+        # attach magic functions
+        py_version = float(sys.version.split()[0].rsplit('.', 1)[0])
+        if py_version >= 2.6:
+            import readline
+            from Ganga.Runtime.GangaCompleter import GangaCompleter
+            from IPython.iplib import MagicCompleter
+            t = GangaCompleter(readline.get_completer(), local_ns)
+            setattr(MagicCompleter, 'complete', t.complete)
+            # readline.set_completer(t.complete)
+            readline.parse_and_bind('tab: complete')
+            #readline.parse_and_bind('set input-meta on')
+            #readline.parse_and_bind('set output-meta on')
+            #readline.parse_and_bind('set convert-meta off')
+            readline.set_completion_display_matches_hook(t.displayer)
+        system_exit_script = """\
+def exit( value=None ):
+  import IPython
+  if __IP.rc.confirm_exit:
+    if IPython.genutils.ask_yes_no('Do you really want to exit ([y]/n)?','y'):
+      __IP.exit_now = True
+  else:
+    __IP.exit_now = True
+"""
+
+        ipshell.IP.runlines(system_exit_script)
+
+        # set a custom exception handler wich disables printing of errors' traceback for
+        # all exceptions inheriting from GangaException
+        def ganga_exc_handler(self, etype, value, tb):
+            # print str(etype).split('.')[-1],':', # FIXME: sys.stderr ?
+            logger.error(value)  # FIXME: sys.stderr ?
+
+        from Ganga.Core import GangaException
+        ipshell.IP.set_custom_exc((GangaException,), ganga_exc_handler)
+
+        override_credits()
+        # global_ns: FIX required by ipython 0.8.4+
+        ret = ipshell(local_ns=local_ns, global_ns=local_ns)
+
+        return
 
     def log(self, x):
 

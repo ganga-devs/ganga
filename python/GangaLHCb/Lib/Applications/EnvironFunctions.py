@@ -1,6 +1,9 @@
 
 import Ganga.Core.exceptions
 
+import copy
+import tempfile
+
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.logging import getLogger
 
@@ -125,7 +128,6 @@ exit $?
 def available_versions_SP(appname):
     """Provide a list of the available Gaudi application versions"""
     s = Shell()
-    import tempfile
     tmp = tempfile.NamedTemporaryFile(suffix='.log')
     command = 'SetupProject.sh --ask %s' % appname
     rc, output, m=s.cmd1("echo 'q\n' | %s >& %s; echo" % (command,tmp.name))
@@ -137,7 +139,6 @@ def available_versions_SP(appname):
 def guess_version_SP(appname):
     """Guess the default Gaudi application version"""
     s = Shell()
-    import tempfile
     tmp = tempfile.NamedTemporaryFile(suffix='.log')
     command = 'SetupProject.sh --ask %s' % appname
     rc, output, m=s.cmd1("echo 'q\n' | %s >& %s; echo" % (command, tmp.name))
@@ -187,7 +188,6 @@ def _getshell_SP(self):
     opts = ''
     if self.setupProjectOptions: opts = self.setupProjectOptions
 
-    import tempfile
     fd = tempfile.NamedTemporaryFile()
     script = '#!/bin/sh\n'
     if self.user_release_area:
@@ -206,13 +206,13 @@ def _getshell_SP(self):
     script += '%s \n' % cmd
     fd.write(script)
     fd.flush()
-    logger.debug(script)
+    #logger.debug(script)
 
     self.shell = Shell(setup=fd.name)
     if (not self.shell): raise ApplicationConfigurationError(None,'Shell not created.')
 
-    import pprint
-    logger.debug(pprint.pformat(self.shell.env))
+    #import pprint
+    #logger.debug(pprint.pformat(self.shell.env))
 
     fd.close()
 
@@ -228,7 +228,6 @@ def _getshell_SP(self):
         from Ganga.Core.exceptions import ApplicationConfigurationError
         raise ApplicationConfigurationError(None,msg)
 
-    import copy
     self.env = copy.deepcopy( self.shell.env )
 
     return self.shell.env

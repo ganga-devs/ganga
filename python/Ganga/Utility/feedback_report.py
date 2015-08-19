@@ -685,12 +685,11 @@ def report(job=None):
         # make typecheck of the param passed
         if job is not None:
             isJob = isinstance(job, Job)
-            if (hasattr(job, '_impl') and hasattr(job._impl, '_category') and (job._impl._category == 'tasks')):
+            if hasattr(stripProxy(job), '_category') and (stripProxy(job)._category == 'tasks'):
                 isTask = True
 
             if not (isJob or isTask):
-                logger.error(
-                    "report() function argument should be reference to a job or task object")
+                logger.error("report() function argument should be reference to a job or task object")
                 return
 
         resultArchive, uploadFileServer, tempDir = report_inner(

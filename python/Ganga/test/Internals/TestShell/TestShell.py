@@ -33,14 +33,14 @@ def command(cmd, timeout=None):
 
 
 # no timeout
-command('./kill_test.py 5 0')
+#command('./kill_test.py 5 0')
 
 # timeout and command gets killed by sigterm
-command('./kill_test.py 10 0', timeout=3)
+#command('./kill_test.py 10 0', timeout=3)
 
 # timeout and command does not get killed by sigterm but finished before
 # sigkill
-command('./kill_test.py 10 1', timeout=7)
+#command('./kill_test.py 10 1', timeout=7)
 
 # tmeout and sigkill forced
-command('./kill_test.py 10 1', timeout=3)
+#command('./kill_test.py 10 1', timeout=3)

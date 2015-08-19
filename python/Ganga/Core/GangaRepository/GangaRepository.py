@@ -24,7 +24,7 @@ from Ganga.Core import GangaException
 
 class SchemaVersionError(GangaException):
 
-    def __init__(self, what):
+    def __init__(self, what=''):
         GangaException.__init__(self, what)
         self.what = what
 
@@ -34,7 +34,7 @@ class SchemaVersionError(GangaException):
 
 class InaccessibleObjectError(GangaException):
 
-    def __init__(self, repo, id, orig, tb):
+    def __init__(self, repo=None, id='', orig=None):
         GangaException.__init__(self, "Inaccessible Object")
         self.repo = repo
         self.id = id
@@ -52,14 +52,15 @@ class RepositoryError(GangaException):
 
     """ This error is raised if there is a fatal error in the repository."""
 
-    def __init__(self, repo, what):
+    def __init__(self, repo=None, what=''):
         self.what = what
         self.repository = repo
-        logger.error("A severe error occurred in the Repository '%s': %s" % (
-            repo.registry.name, what))
-        logger.error(
-            'If you believe the problem has been solved, type "reactivate()" to re-enable ')
-        disableInternalServices()
+        logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
+        logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
+        try:
+            disableInternalServices()
+        except:
+            logger.error("Unable to disable Internal services, they may have already been disabled!")
         GangaException.__init__(self, what)
 
 

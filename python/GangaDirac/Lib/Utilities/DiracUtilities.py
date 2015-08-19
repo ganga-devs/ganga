@@ -4,6 +4,12 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Credentials2 import credential_store
 import Ganga.Utility.execute as gexecute
+
+
+import time
+import math
+import copy
+
 logger = getLogger()
 
 ## Cache
@@ -50,9 +56,10 @@ def getDiracCommandIncludes(force=False):
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def getValidDiracFiles(job, names=None):
     from GangaDirac.Lib.Files.DiracFile import DiracFile
+    from Ganga.GPIDev.Base.Proxy import isType
     if job.subjobs:
         for sj in job.subjobs:
-            for df in (f for f in sj.outputfiles if isinstance(f, DiracFile)):
+            for df in (f for f in sj.outputfiles if isType(f, DiracFile)):
                 if df.subfiles:
                     for valid_sf in (sf for sf in df.subfiles if sf.lfn!='' and (names is None or sf.namePattern in names)):
                         yield valid_sf
@@ -60,14 +67,13 @@ def getValidDiracFiles(job, names=None):
                     if df.lfn!='' and (names is None or df.namePattern in names):
                         yield df
     else:
-        for df in (f for f in job.outputfiles if isinstance(f, DiracFile)):
+        for df in (f for f in job.outputfiles if isType(f, DiracFile)):
             if df.subfiles:
                 for valid_sf in (sf for sf in df.subfiles if sf.lfn!='' and (names is None or sf.namePattern in names)):
                     yield valid_sf
             else:
                 if df.lfn!='' and (names is None or df.namePattern in names):
                     yield df
-
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 def execute(command,
@@ -94,7 +100,11 @@ def execute(command,
         env = env or {}
         env['X509_USER_PROXY'] = credential_store[cred_req].location
 
-    return gexecute.execute(command,
+    if abs(last_modified_time - time.time()) > 60:
+        _dirac_check_proxy()
+        last_modified_time = time.time()
+
+    returnable = gexecute.execute(command,
                             timeout       = timeout,
                             env           = env,
                             cwd           = cwd,
@@ -102,3 +112,34 @@ def execute(command,
                             python_setup  = python_setup,
                             eval_includes = eval_includes,
                             update_env    = update_env)
+
+    ##  rcurrie I've seen problems with just returning this raw object, expanding it to be sure that an instance remains in memory
+    myObject = {}
+    if hasattr(returnable, 'keys'):
+        # Expand object(s) in dictionaries
+        myObject = _expand_object( returnable )
+    elif type(returnable) == type([]):
+        # Expand object(s) in lists
+        myObject = _expand_list( returnable )
+    else:
+        # Copy object(s) so thet they definately are in memory
+        myObject = copy.deepcopy( returnable )
+
+    return myObject
+
+def _expand_object(myobj):
+    new_obj = {}
+    if hasattr(myobj, 'keys'):
+        for key in myobj.keys():
+            value = myobj.get(key)
+            if hasattr(value, 'keys'):
+                new_obj[key] = _expand_object(value)
+            else:
+                new_obj[key] = copy.deepcopy(value)
+    return new_obj
+
+def _expand_list(mylist):
+    new_list = []
+    for element in mylist:
+        new_list.append(copy.deepcopy(element))
+    return new_list

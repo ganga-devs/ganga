@@ -5,6 +5,7 @@
 ##########################################################################
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -14,7 +15,8 @@ import Ganga.GPI
 
 class PostProcessException(GangaException):
 
-    def __init__(self, x): Exception.__init__(self, x)
+    def __init__(self, x=''):
+        GangaException.__init__(self, x)
 
 
 class IPostProcessor(GangaObject):
@@ -63,8 +65,8 @@ class MultiPostProcessor(IPostProcessor):
         if isinstance(value, list) or isinstance(value, GangaList):
             for process in value:
                 self.addProcess(process)
-        elif isinstance(value._impl, MultiPostProcessor):
-            for process in value._impl.process_objects:
+        elif isType(value, MultiPostProcessor):
+            for process in stripProxy(value).process_objects:
                 self.addProcess(process)
         else:
             self.addProcess(value)
@@ -81,7 +83,7 @@ class MultiPostProcessor(IPostProcessor):
 
     def remove(self, value):
         for process in self.process_objects:
-            if (isinstance(value._impl, type(process)) == True):
+            if (isType(value, type(process)) == True):
                 self.process_objects.remove(process)
                 break
 
@@ -134,11 +136,12 @@ def postprocessor_filter(value, item):
     from Ganga.GPIDev.Lib.Tasks.ITransform import ITransform
     from Ganga.GPIDev.Base.Objects import ObjectMetaclass
 
-    valid_jobtypes = [i._impl._schema.datadict['postprocessors'] for i in Ganga.GPI.__dict__.values()
-                      if hasattr(i, '_impl')
-                      and isinstance(i._impl, ObjectMetaclass)
-                      and (issubclass(i._impl, Job) or issubclass(i._impl, ITransform))
-                      and 'postprocessors' in i._impl._schema.datadict]
+    #from Ganga.GPIDev.Base.Proxy import stripProxy
+
+    valid_jobtypes = [stripProxy(i)._schema.datadict['postprocessors'] for i in Ganga.GPI.__dict__.values()
+                      if isinstance(stripProxy(i), ObjectMetaclass)
+                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), ITransform))
+                      and 'postprocessors' in stripProxy(i)._schema.datadict]
 
  # Alex modified this line to that from above to allow for arbitrary dynamic LHCbJobTemplate etc types
 #    if item is Job._schema['postprocessors']:
