@@ -12,6 +12,7 @@ import os
 import subprocess
 import datetime
 from getpass import getpass
+from glob import glob
 
 import re
 info_pattern = re.compile(r"^User's \(AFS ID \d*\) tokens for (?P<id>\w*@\S*) \[Expires (?P<expires>.*)\]$", re.MULTILINE)
@@ -114,4 +115,11 @@ class AfsToken(ICredentialRequirement):
         krb_env_var = os.getenv("KRB5CCNAME", '')
         if krb_env_var.startswith('FILE:'):
             krb_env_var = krb_env_var[5:]
-        return krb_env_var or "/tmp/krb5cc_{uid}".format(uid=os.getuid())
+
+        default_name_prefix = '/tmp/krb5cc_{uid}'.format(uid=os.getuid())
+        matches = glob(default_name_prefix+'*')  # Check for partial matches on disk
+        if len(matches) == 1:  # If one then use it
+            filename_guess = matches[0]
+        else: # Otherwise use the default
+            filename_guess = default_name_prefix
+        return krb_env_var or filename_guess
