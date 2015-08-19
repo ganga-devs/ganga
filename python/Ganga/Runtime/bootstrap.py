@@ -910,7 +910,7 @@ under certain conditions; type license() for details.
             # Note that this happens before the monitoring starts so that it gets tracked properly
 
             from Ganga.GPIDev.Credentials2 import AfsToken
-            credential_store.create(AfsToken())
+            credential_store.create(AfsToken(), create=False)
 
         import Ganga.Core
         from Ganga.Runtime.Repository_runtime import startUpRegistries

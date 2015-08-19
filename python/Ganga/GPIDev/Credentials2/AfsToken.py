@@ -76,7 +76,7 @@ class AfsTokenInfo(ICredentialInfo):
 
     @cache
     def expiry_time(self):
-        info = self.info()
+        info = self.info
         matches = re.finditer(info_pattern, info)
 
         if not matches:
