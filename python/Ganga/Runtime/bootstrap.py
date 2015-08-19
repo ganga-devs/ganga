@@ -1518,21 +1518,36 @@ default_backends = LCG
             import Ganga.Utility.logging
             Ganga.Utility.logging.enableCaching()
 
+            from Ganga.GPIDev.Credentials2 import credential_store, needed_credentials
+
             def ganga_prompt():
+                """
+                Create the text to be displayed on the Python prompt.
+                This is currently just the expired credentials warnings.
+                It returns either a custom prompt or an empty string.
+                """
                 if Ganga.Utility.logging.cached_screen_handler:
                     Ganga.Utility.logging.cached_screen_handler.flush()
 
-                credentialsWarningPrompt = ''
-                # alter the prompt only when the internal services are disabled
-                from Ganga.Core.InternalServices import Coordinator
-                if not Coordinator.servicesEnabled:
-                    invalidCreds = Coordinator.getMissingCredentials()
-                    if invalidCreds:
-                        credentialsWarningPrompt = '[%s required]' % ','.join(invalidCreds)
-                    if credentialsWarningPrompt:  # append newline
-                        credentialsWarningPrompt += '\n'
+                # Filter out any credentials which are valid
+                now_valid_creds = set()
+                for cred_req in needed_credentials:
+                    cred = credential_store.get(cred_req)
+                    if cred and cred.is_valid():
+                        now_valid_creds.add(cred_req)
 
-                return credentialsWarningPrompt
+                # Remove the valid credentials from needed_credentials
+                needed_credentials.difference_update(now_valid_creds)
+
+                # Add still-needed credentials to the prompt
+                if needed_credentials:
+                    prompt = 'Warning, some credentials needed by the monitoring are missing or invalid:\n'
+                    for cred_req in needed_credentials:
+                        prompt += str(cred_req).replace('\n ', '') + '\n'
+                    prompt += 'Call `credential_store.renew()` to update them.\n'
+                    return prompt
+
+                return ''
 
             try:
                 from IPython.Shell import IPShellEmbed
@@ -1544,7 +1559,7 @@ default_backends = LCG
                 sys.exit(0)
 
             # override ipothonrc configuration
-            ipopts = {'prompt_in1': '${ganga_prompt()}In [\#]:',
+            ipopts = {'prompt_in1': '${ganga_prompt()}In [\#]: ',
                       # disable automatic tab completion for attributes
                       # starting with _ or __
                       'readline_omit__names': 2
