@@ -33,6 +33,8 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import getName
 
+from Ganga.GPIDev.Credentials2 import credential_store, AfsToken
+
 log = getLogger()
 
 # the overall state of Ganga internal services
@@ -234,10 +236,10 @@ def enableInternalServices():
     Repository_runtime.bootstrap()
 
     # make sure all required credentials are valid
-    missing_cred = getMissingCredentials()
-    if missing_cred:
-        log.error("The following credentials are still required: %s."
-                  "Make sure you renew them before reactivating this session" % ','.join(missing_cred))
+    invalid_afs = [afsToken for afsToken in credential_store.get_all_matching_type(AfsToken) if not afsToken.is_valid()]
+
+    if invalid_afs:
+        log.error('No valid AFS token was found. Please re-authorise before reactivating this session.')
         return
 
     log.debug("Enabling the internal services")
@@ -260,20 +262,6 @@ def checkInternalServices(errMsg='Internal services disabled. Job registry is re
     if not servicesEnabled:
         raise ReadOnlyObjectError(errMsg)
 
-
-def getMissingCredentials():
-    """
-    get a list of missing credentials
-    i.e:  invalid credentials that are needed by the internal services to run
-    """
-    from Ganga.Utility.Config import getConfig
-    if getConfig('PollThread')['autoCheckCredentials']:
-        from Ganga.GPIDev.Credentials import _allCredentials as availableCreds
-        return [name for name in availableCreds
-                if not availableCreds[name].isValid() and
-                isCredentialRequired(availableCreds[name])]
-    else:
-        return []
 
 def bootstrap():
 
