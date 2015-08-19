@@ -237,6 +237,11 @@ class ConfigOption(object):
 
     def __init__(self, name):
         self.name = name
+        self.hidden = False
+        self.cfile = True
+        self.examples = None
+        self.filter = None
+        self.typelist = None
 
     def defineOption(self, default_value, docstring, **meta):
 
