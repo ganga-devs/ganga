@@ -1518,7 +1518,7 @@ default_backends = LCG
             import Ganga.Utility.logging
             Ganga.Utility.logging.enableCaching()
 
-            from Ganga.GPIDev.Credentials2 import credential_store, needed_credentials
+            from Ganga.GPIDev.Credentials2 import credential_store, get_needed_credentials
 
             def ganga_prompt():
                 """
@@ -1529,15 +1529,7 @@ default_backends = LCG
                 if Ganga.Utility.logging.cached_screen_handler:
                     Ganga.Utility.logging.cached_screen_handler.flush()
 
-                # Filter out any credentials which are valid
-                now_valid_creds = set()
-                for cred_req in needed_credentials:
-                    cred = credential_store.get(cred_req)
-                    if cred and cred.is_valid():
-                        now_valid_creds.add(cred_req)
-
-                # Remove the valid credentials from needed_credentials
-                needed_credentials.difference_update(now_valid_creds)
+                needed_credentials = get_needed_credentials()
 
                 # Add still-needed credentials to the prompt
                 if needed_credentials:

@@ -190,3 +190,17 @@ class CredentialStore(GangaObject):
 credential_store = CredentialStore()
 
 needed_credentials = set()  # type: Set[ICredentialRequirement]
+
+
+def get_needed_credentials():
+    # Filter out any credentials which are valid
+    now_valid_creds = set()
+    for cred_req in needed_credentials:
+        cred = credential_store.get(cred_req)
+        if cred and cred.is_valid():
+            now_valid_creds.add(cred_req)
+
+    # Remove the valid credentials from needed_credentials
+    needed_credentials.difference_update(now_valid_creds)
+
+    return needed_credentials
