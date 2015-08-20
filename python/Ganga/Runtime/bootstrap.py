@@ -517,6 +517,7 @@ under certain conditions; type license() for details.
     def configure(self, logLevel=None):
         import os
         import os.path
+        import sys
 
         import Ganga.Utility.Config
         from Ganga.Utility.Config import ConfigError
