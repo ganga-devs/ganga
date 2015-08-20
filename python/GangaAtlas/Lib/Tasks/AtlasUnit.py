@@ -308,9 +308,8 @@ class AtlasUnit(IUnit):
             if trf.subjobs_per_unit > 0:
                j.splitter.numsubjobs = trf.subjobs_per_unit
             else:
-               import math
-                  
-               j.splitter.numsubjobs = math.ceil(len(j.inputdata.names) / nfiles)
+               import math 
+               j.splitter.numsubjobs = int( math.ceil( len(j.inputdata.names) / float(nfiles) ) )
          else:
             j.splitter = DQ2JobSplitter()
             if trf.MB_per_job > 0:
