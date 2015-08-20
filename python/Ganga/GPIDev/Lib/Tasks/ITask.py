@@ -5,6 +5,8 @@ from .common import logger
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistrySliceProxy
 from Ganga.GPIDev.Lib.Job import MetadataDict
+from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga import GPI
 import time
 
 ########################################################################
