@@ -171,6 +171,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                 ancestor_depth = new_job.backend.settings['AncestorDepth']
             else:
                 ancestor_depth = new_job.inputdata.depth
+        else:
+            ancestor_depth = 0
 
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
