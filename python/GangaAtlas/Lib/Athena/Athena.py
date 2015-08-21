@@ -27,7 +27,7 @@ from GangaAtlas.Lib.ATLASDataset import filecheck
 from Ganga.Lib.Mergers.Merger import *
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir, File
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory, GPIProxyObject
 
 from pandatools import AthenaUtils
 from Ganga.Utility.Plugin import allPlugins
@@ -1725,9 +1725,21 @@ class AthenaOutputMerger(IMerger):
     # set the automerge to *not* use the output dir of the job
     set_outputdir_for_automerge = False
 
+    def execute(self, job, newstatus):
+        """
+        Overload Execute primarily so merge isn't called with an directory specified
+        """
+        if (len(job.subjobs) != 0):
+            try:
+                return self.merge(job.subjobs)
+            except PostProcessException as e:
+                logger.error(str(e))
+                return self.failure
+        else:
+            return True
+
     def merge(self, subjobs = None, sum_outputdir = None, **options ):
         '''Merge local root tuples of subjobs output'''
-
         import os
         from Ganga.GPIDev.Lib.Job import Job
         job = self._getRoot()

@@ -320,6 +320,11 @@ class AtlasUnit(IUnit):
                j.splitter.numfiles = nfiles
       else:
          j.splitter = trf.splitter.clone()
+
+      # postprocessors
+      if len(self._getParent().postprocessors.process_objects) > 0:
+         import copy
+         j.postprocessors = copy.deepcopy( addProxy(self._getParent()).postprocessors )
          
       return j
 
