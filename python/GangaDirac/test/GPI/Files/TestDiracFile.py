@@ -4,6 +4,7 @@ from GangaTest.Framework.tests                     import GangaGPITestCase
 #from Ganga.GPIDev.Adapters.StandardJobConfig       import StandardJobConfig
 #from Ganga.Core.exceptions                         import ApplicationConfigurationError, GangaException
 from Ganga.GPI                                     import *
+from Ganga.test import generateUniqueTempFile
 #import GangaDirac.Lib.Server.DiracServer as DiracServer
 #GangaTest.Framework.utils defines some utility methods
 from GangaTest.Framework.utils import sleep_until_completed,sleep_until_state
@@ -41,18 +42,16 @@ echo "%s" > b.root
         os.remove(self.filepath)
 
     def test_standalone_put(self):
-        tmpf = tempfile.NamedTemporaryFile(delete=False)
-        tmpf.write('TESTFILE')
-        root, filename = os.path.split(tmpf.name)
-        tmpf.close()
-        
+        myTempFile = generateUniqueTempFile('.txt')
+        root, filename = os.path.split(myTempFile)
+
         d1=DiracFile(filename, root)
         d1.put()
         self.assertNotEqual(d1.lfn,'','lfn not set upon return')
         self.assertNotEqual(d1.guid,'','guid not set upon return')
         self.assertNotEqual(d1.locations,[],'location not set upon return')
         d1.remove()
-        os.remove(os.path.join(root, filename))
+        os.remove(myTempFile)
 
     def test_local_job_put_single_file(self):
         j=Job(application=Executable(exe=File(self.filepath),args=[]), outputfiles=[DiracFile('a.root')])
@@ -123,6 +122,7 @@ echo "%s" > b.root
 
         self.assertEqual(len(j.outputfiles),2)
         for df in j.outputfiles:
+            print "Testing: %s" % str(df.namePattern)
             self.assertIn(df.namePattern,['a.root','b.root'])
             self.assertNotEqual(df.lfn,'')
             self.assertNotEqual(df.guid,'')

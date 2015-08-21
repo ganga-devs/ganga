@@ -14,7 +14,7 @@ from Ganga.Utility.ColourText                import getColour
 from Ganga.Utility.Config                    import getConfig
 from Ganga.Utility.logging                   import getLogger
 from Ganga.GPIDev.Credentials                import getCredential
-from Ganga.GPIDev.Base.Proxy                 import stripProxy
+from Ganga.GPIDev.Base.Proxy                 import stripProxy, isType
 logger = getLogger()
 regex  = re.compile('[*?\[\]]')
 
@@ -367,12 +367,16 @@ class DiracBase(IBackend):
                 output_dir = dir
                 if is_subjob:
                     output_dir = os.path.join(dir, job.fqid)
-                    if not os.path.isdir(output_dir): os.mkdir(output_dir) 
+                    if not os.path.isdir(output_dir):
+                        os.mkdir(output_dir) 
                 dirac_file.localDir = output_dir
             if os.path.exists(os.path.join(dirac_file.localDir, os.path.basename(dirac_file.lfn))) and not force:
                 return
             try:
-                dirac_file.get( localPath = dirac_file.localDir )
+                if isType(dirac_file, DiracFile):
+                    dirac_file.get(localPath = dirac_file.localDir)
+                else:
+                    dirac_file.get()
                 return dirac_file.lfn
             except GangaException as e: # should really make the get method throw if doesn't suceed. todo
                 logger.warning(e)

@@ -434,6 +434,9 @@ class DiracFile(IGangaFile):
                 #upload namePattern to grid
                 logger.debug( "Uploading the file first" )
                 self.put()
+            elif decision == 'n':
+                logger.debug("Not uploading now")
+                return
             else:
                 #do Nothing
                 logger.debug( "Continuing without uploading file" )
@@ -703,16 +706,14 @@ class DiracFile(IGangaFile):
             #self.remoteDir = str(uuid.uuid4())
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
-        elif self.remoteDir[:5] == "/lhcb":
-            lfn_base = self.remoteDir
         else:
             lfn_base = os.path.join( configDirac['DiracLFNBase'], self.remoteDir )
 
         storage_elements = all_SE_list()
 
         outputFiles=GangaList()
-        for file in glob.glob(os.path.join(sourceDir, self.namePattern)):
-            name = file
+        for this_file in glob.glob(os.path.join(sourceDir, self.namePattern)):
+            name = this_file
     
             if not os.path.exists(name):
                 if not self.compressed:
@@ -732,12 +733,12 @@ class DiracFile(IGangaFile):
                 lfn = os.path.join(lfn_base, os.path.basename(name))
             
             d=DiracFile()
-            d.namePattern = os.path.basename(file)
+            d.namePattern = os.path.basename(name)
             d.compressed  = self.compressed
             d.localDir    = sourceDir
             stderr=''
             stdout=''
-            logger.info('Uploading file %s to %s' % (name, storage_elements[0]) )
+            logger.info('Uploading file %s to %s as %s' % (name, storage_elements[0], lfn) )
             stdout = execute('uploadFile("%s", "%s", %s)' %(lfn, name, str([storage_elements[0]])))
             if type(stdout)==str: 
                 logger.warning("Couldn't upload file '%s': %s" % (os.path.basename(name), stdout))
@@ -753,9 +754,10 @@ class DiracFile(IGangaFile):
                     d.guid = guid
                     outputFiles.append(GPIProxyObjectFactory(d))
                     continue
-                self.lfn = lfn
-                self.locations = stdout['Value']['Successful'][lfn].get('DiracSE','')
-                self.guid = guid
+                else:
+                    self.lfn = lfn
+                    self.locations = stdout['Value']['Successful'][lfn].get('DiracSE','')
+                    self.guid = guid
                 #return ## WHY?
             else:
                 failureReason = "Error in uploading file %s : %s"% (os.path.basename(name), str(stdout))
@@ -782,7 +784,8 @@ class DiracFile(IGangaFile):
         if len(outputFiles) > 0:
             return GPIProxyObjectFactory(outputFiles)
         else:
-            return None
+            outputFiles.append(self)
+            return GPIProxyObjectFactory(outputFiles)
 
     def getWNScriptDownloadCommand(self, indent):
 
@@ -857,7 +860,8 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
         try:
             result = dirac.addFile(lfn, file_name, se)
         except Exception as x:
-            print 'Exception running dirac.addFile command:',x
+            import sys
+            sys.stdout.write('Exception running dirac.addFile command: %s' % str(x))
             break
         if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
             import datetime
@@ -867,7 +871,8 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
         errmsg+="(%s, %s), " % (se, result)
     else:
         locationsfile.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s):::NotAvailable\\\\n" % (wildcard, file_label, file_name, errmsg))
-        print 'Could not upload file %s' % file_name
+        import sys
+        sys.stdout.write('Could not upload file %s' % file_name)
 '''
 ###INDENT###    upload_script = upload_script.replace('###UPLOAD_FILE###',        file_name)
 ###INDENT###    upload_script = upload_script.replace('###LFN_BASE###',           lfn_base)
@@ -917,10 +922,10 @@ with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
 
         script +="""
 ###INDENT###for p in processes:
-###INDENT###    #print p.communicate()
 ###INDENT###    output = p.communicate()[0]
 ###INDENT###    if output != '':
-###INDENT###        print output
+###INDENT###        import sys
+###INDENT###        sys.stdout.write("%s" % str(output))
 """
         script = script.replace('###STORAGE_ELEMENTS###', str(configDirac['DiracSpaceTokens']))
         script = script.replace('###INDENT###',           indent)
