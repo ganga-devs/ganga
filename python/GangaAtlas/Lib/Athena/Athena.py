@@ -1547,6 +1547,9 @@ class AthenaSplitterJob(ISplitter):
                    (job.inputdata._name == 'ATLASLocalDataset'):
                 inputnames=[]
                 numfiles = len(job.inputdata.get_dataset_filenames())
+                if self.numfiles_subjob > 0:
+                    import math
+                    self.numsubjobs = int( math.ceil( numfiles / float(self.numfiles_subjob) ) )
                 if self.match_subjobs_files:
                     self.numsubjobs = numfiles 
                 for i in xrange(self.numsubjobs):    

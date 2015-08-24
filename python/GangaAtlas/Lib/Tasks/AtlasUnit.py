@@ -239,7 +239,7 @@ class AtlasUnit(IUnit):
       if trf.outputdata:
          j.outputdata = trf.outputdata.clone()
       elif j.inputdata and j.inputdata._impl._name == "ATLASLocalDataset" and j.application._impl._name != "TagPrepare":
-         j.outputdata = GPI.ATLASLocalDataset()
+         j.outputdata = GPI.ATLASOutputDataset()
       elif j.application._impl._name != "TagPrepare":
          j.outputdata = GPI.DQ2OutputDataset()
 

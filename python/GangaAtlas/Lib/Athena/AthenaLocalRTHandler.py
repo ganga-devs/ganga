@@ -455,12 +455,21 @@ class AthenaLocalRTHandler(IRuntimeHandler):
 
         athena_options = ''
         inputbox = [File(os.path.join(os.path.dirname(__file__),'athena-utility.sh'))]
-        for option_file in app.option_file:
-            athena_option = os.path.basename(option_file.name)
-            athena_options += ' ' + athena_option
-            if app.options:
-                athena_options =  app.options + ' ' + athena_options
-            inputbox += [ File(option_file.name) ]
+        if app.atlas_exetype in ['PYARA','ARES','ROOT','EXE']:
+
+            for option_file in app.option_file:
+                athena_options += ' ' + os.path.basename(option_file.name)
+                inputbox += [ File(option_file.name) ]
+
+            athena_options += ' %s ' % app.options
+
+        else:
+            for option_file in app.option_file:
+                athena_option = os.path.basename(option_file.name)
+                athena_options += ' ' + athena_option
+                if app.options:
+                    athena_options =  app.options + ' ' + athena_options
+                inputbox += [ File(option_file.name) ]
 
         athena_usersetupfile = os.path.basename(app.user_setupfile.name)
 
