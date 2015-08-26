@@ -175,7 +175,7 @@ class SAGA(IBackend):
                     sf = saga.filesystem.file(archive_url.url)
                     sf.copy(self.filesystem_url+"/"+self.workdir_uuid+"/", saga.filesystem.Overwrite)
                 
-            except saga.exception as e:
+            except saga.exception, e:
                 logger.error('exception caught while transfering file: %s', e.get_all_exceptions())
                 job.updateStatus("failed")
                 return False
@@ -207,7 +207,7 @@ class SAGA(IBackend):
                         sf = saga.filesystem.file(source) 
                         sf.copy(self.filesystem_url+"/"+self.workdir_uuid+"/", saga.filesystem.Overwrite)
                     
-                except saga.exception as e:
+                except saga.exception, e:
                     logger.error('exception caught while transfering file: %s', 
                     e.get_all_exceptions())
                     job.updateStatus("failed")
@@ -223,7 +223,7 @@ class SAGA(IBackend):
                 sf = saga.filesystem.file(jobscript_path.url)
                 sf.copy(self.filesystem_url+"/"+self.workdir_uuid+"/", saga.filesystem.Overwrite)
         
-        except saga.exception as e:
+        except saga.exception, e:
             logger.error('exception caught while transfering file: %s', e.get_all_exceptions())
             job.updateStatus("failed")
             return False
@@ -254,7 +254,7 @@ class SAGA(IBackend):
                                     
             self.run(self.jobservice_url, jd)
                 
-        except saga.exception as e:
+        except saga.exception, e:
             logger.error('exception caught while submitting job: %s', e.get_all_exceptions())
             self.getJobObject().updateStatus("failed")
             return False
@@ -272,7 +272,7 @@ class SAGA(IBackend):
                   
             self.run(self.jobservice_url, jd)
                 
-        except saga.exception as e:
+        except saga.exception, e:
             logger.error('exception caught while re-submitting job: %s', e.get_all_exceptions())
             self.getJobObject().updateStatus("failed")
             return False
@@ -300,7 +300,7 @@ class SAGA(IBackend):
             self.saga_job_id = saga_job.get_job_id()
             logger.info("job submitted with internal job id: %s", self.saga_job_id)
                   
-        except saga.exception as e:
+        except saga.exception, e:
             logger.error('exception caught while submitting job: %s', e.get_all_messages())
             self.getJobObject().updateStatus("failed")
             return False
@@ -324,7 +324,7 @@ class SAGA(IBackend):
             # KILL KILL KILL
             saga_job.cancel()
                             
-        except saga.exception as e:
+        except saga.exception, e:
             logger.error('exception caught while killing job: %s', 
                          e.get_all_messages())
             return False
@@ -346,8 +346,12 @@ class SAGA(IBackend):
         #else:
         #    wd_uuid +=  job.name + "-"
 
-        import uuid
-        wd_uuid += str(uuid.uuid4()) 
+        if sys.version_info < (2, 5):
+            uuid_str = os.popen("/usr/bin/uuidgen").read()
+            wd_uuid += uuid_str.rstrip("\n") 
+        else:
+            import uuid
+            wd_uuid += str(uuid.uuid4()) 
         
         job.backend.workdir_uuid = wd_uuid
         
@@ -435,7 +439,7 @@ class SAGA(IBackend):
             d = saga.filesystem.directory(path_component, saga.filesystem.Create)
             logger.debug("  * created output/working directory on the remote system: %s", path_component)
         
-        except saga.exception as e:
+        except saga.exception, e:
             logger.error('exception caught while creating output/working directory: %s', e.get_all_messages())
             self.getJobObject().updateStatus("failed")
             
@@ -506,7 +510,7 @@ class SAGA(IBackend):
                         if(j.status != 'failed'): 
                             j.updateStatus('failed')
                 
-            except saga.exception as e:
+            except saga.exception, e:
                 logger.error('exception caught while updating job: %s', e.get_all_messages())
     
     ##########################################################################
@@ -542,7 +546,7 @@ class SAGA(IBackend):
 #            import shutil
 #            try:
 #                shutil.rmtree(self.workdir)
-#            except OSError as x:
+#            except OSError,x:
 #                logger.warning('problem removing the workdir %s: %s',str(self.id),str(x))                        
 
       

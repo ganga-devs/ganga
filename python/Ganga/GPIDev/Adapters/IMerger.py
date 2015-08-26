@@ -172,7 +172,7 @@ class IMerger(IPostProcessor):
 
             # make the directory if it does not exist
             if not os.path.exists(outputdir):
-                os.makedirs(outputdir)
+                os.mkdir(outputdir)
 
             # recreate structure from output sandbox
             outputfile_dirname = os.path.dirname(outputfile)
