@@ -1,4 +1,3 @@
-
 import Ganga.Utility.logging
 
 from Ganga.Utility.Config import ConfigError
