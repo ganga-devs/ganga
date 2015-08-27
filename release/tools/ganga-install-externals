@@ -1,0 +1,94 @@
+#!/usr/bin/env python2
+
+"""
+Given a particular install of Ganga in /afs/cern.ch/sw/ganga/install/$VERSION,
+get all the required packages and install them to /afs/cern.ch/sw/ganga/external
+The packages are sourced from /afs/cern.ch/sw/ganga/tarball
+
+It is only used by the testing and packaging framework
+"""
+
+from __future__ import print_function
+
+import sys
+import os
+import argparse
+
+parser = argparse.ArgumentParser(description="Install Ganga's externals")
+parser.add_argument('version')
+parser.add_argument('--prefix', default='/afs/cern.ch/sw/ganga')
+args = parser.parse_args()
+
+CONFIG = {}
+CONFIG['prefix'] = args.prefix
+CONFIG['tarball_dir'] = '%(prefix)s/tarball' % CONFIG    # all ganga tarballs are stored in this directory
+CONFIG['external_dir'] = '%(prefix)s/external' % CONFIG  # all external packages are unpacked here
+CONFIG['plugin_packages'] = ['GangaLHCb', 'GangaPlotter', 'GangaTest', 'GangaAtlas', 'GangaPanda']
+CONFIG['VERSION'] = args.version
+
+ganga_install = '%(prefix)s/install/%(VERSION)s' % CONFIG
+
+
+def error(what=None):
+    if what:
+        print('\033[1;31mERROR: %s\033[m' % what)
+    sys.exit(2)
+
+
+def untar(tar_file_name, target_dir):
+    print('Extracting {tar} to {dest}'.format(tar=tar_file_name, dest=target_dir))
+    tar_file_name = os.path.join(CONFIG['tarball_dir'], tar_file_name)
+    cmd = 'cd %s; tar xfz %s' % (target_dir, tar_file_name)
+
+    if os.system(cmd) != 0:
+        error('Error untarring file: %s in directory %s' % (tar_file_name, target_dir))
+
+
+def import_name(modulename, name):
+    module = __import__(modulename, globals(), locals(), [name])
+    return vars(module)[name]
+
+
+if not os.path.isdir(ganga_install):
+    error(ganga_install + ' does not exist')
+
+# import setup.py module from bin directory to get the dependency list
+sys.path.insert(0, ganga_install+'/python')
+
+if CONFIG['plugin_packages']:
+    print("Resolving additional external dependencies for: ", ' '.join(CONFIG['plugin_packages']))
+
+import Ganga.PACKAGE
+# we need a tarPath relative to the externalHome
+Ganga.PACKAGE._defaultExternalHome = ''
+
+for pkg in ['Ganga'] + CONFIG['plugin_packages']:
+    print('resolving dependencies for', pkg)
+    try:
+        setup = import_name(pkg+'.PACKAGE', 'setup')
+
+    except Exception as x:
+        print('WARNING: Cannot find dependency information in file '+pkg+'/PACKAGE.py')
+        print(x)
+        continue
+    # the following 3 lines is not needed anymore since 4.3.2 (still required for old versions)
+    setup.externalHome = ''  # we need a tarPath relative to the externalHome
+
+    for name in setup.packages:
+
+        version_list = [setup.packages[name]['version']]
+        if 'allversions' in setup.packages[name]:
+            version_list = setup.packages[name]["allversions"]
+
+        for v in version_list:
+
+            setup.packages[name]['version'] = v
+            print('Checking %-25s ' % name, end='')
+
+            tarPath, tarball = setup.getPackagePath(name)
+
+            if tarball:
+                print(': REQUIRED')
+                untar(tarball, CONFIG['external_dir'])
+            else:
+                print(': NOT REQUIRED')
