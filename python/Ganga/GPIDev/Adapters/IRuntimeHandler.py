@@ -4,10 +4,6 @@
 # $Id: IRuntimeHandler.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-
 class IRuntimeHandler(object):
 
     """ The RuntimeHandler is a connector between the application and the backend.

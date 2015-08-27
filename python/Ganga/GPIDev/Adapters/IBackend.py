@@ -4,23 +4,13 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version
-
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
-from Ganga.GPIDev.Lib.File import File, ShareDir
-
-from Ganga.Utility.logic import implies
-
 import os
 import itertools
 import time
+import logging
 
-#import threading
-#pSubmitLock = threading.Lock()
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema.Schema import Schema, Version
 
 
 class IBackend(GangaObject):
@@ -85,7 +75,6 @@ class IBackend(GangaObject):
         except Exception as x:
             from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('new')
-            from Ganga.Core.exceptions import GangaException
             if isinstance(x, GangaException):
                 logger.error(str(x))
                 log_user_exception(logger, debug=True)
@@ -137,10 +126,11 @@ class IBackend(GangaObject):
         """
         from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
+        from Ganga.Utility.logic import implies
 
         job = self.getJobObject()
-        logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
-        logger.debug("rjobs: %s" % len(rjobs))
+        logging.getLogger(__name__).debug("SubJobConfigs: %s" % len(subjobconfigs))
+        logging.getLogger(__name__).debug("rjobs: %s" % len(rjobs))
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
 
         incomplete = 0
@@ -172,7 +162,7 @@ class IBackend(GangaObject):
                 #from Ganga.GPIDev.Base.Proxy import stripProxy
                 #all_queues = stripProxy(queues)
                 #all_queues._addSystem( self._parallel_submit, ( b, sj, sc, master_input_sandbox, fqid, logger ) )
-                queues._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logger))
+                queues._monitoring_threadpool.add_function(self._parallel_submit, (b, sj, sc, master_input_sandbox, fqid, logging.getLogger(__name__)))
 
             def subjob_status_check(rjobs):
                 has_submitted = True
@@ -194,7 +184,7 @@ class IBackend(GangaObject):
         for sc, sj in zip(subjobconfigs, rjobs):
 
             fqid = sj.getFQID('.')
-            logger.info("submitting job %s to %s backend", fqid, sj.backend._name)
+            logging.getLogger(__name__).info("submitting job %s to %s backend", fqid, sj.backend._name)
             try:
                 b = sj.backend
                 sj.updateStatus('submitting')
@@ -209,10 +199,10 @@ class IBackend(GangaObject):
             except Exception as x:
                 sj.updateStatus('new')
                 if isinstance(x, GangaException):
-                    logger.error(str(x))
-                    log_user_exception(logger, debug=True)
+                    logging.getLogger(__name__).error(str(x))
+                    log_user_exception(logging.getLogger(__name__), debug=True)
                 else:
-                    log_user_exception(logger, debug=False)
+                    log_user_exception(logging.getLogger(__name__), debug=False)
                 if handleError(IncompleteJobSubmissionError(fqid, str(x))):
                     return 0
 
@@ -247,6 +237,9 @@ class IBackend(GangaObject):
         """ Prepare the master job (shared sandbox files). This method is/should be called by master_submit() exactly once.
         The input sandbox is created according to self._packed_input_sandbox flag (a class attribute)
         """
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.GPIDev.Lib.File import File, ShareDir
 
         job = self.getJobObject()
 
@@ -322,7 +315,7 @@ class IBackend(GangaObject):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info(
+                logging.getLogger(__name__).info(
                     "resubmitting job %s to %s backend", fqid, sj.backend._name)
                 try:
                     b = sj.backend
@@ -339,7 +332,7 @@ class IBackend(GangaObject):
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
                     log_user_exception(
-                        logger, debug=isinstance(x, GangaException))
+                        logging.getLogger(__name__), debug=isinstance(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -439,7 +432,7 @@ class IBackend(GangaObject):
             if len(j.subjobs):
                 monitorable_subjobs = [
                     s for s in j.subjobs if s.status in ['submitted', 'running']]
-                logger.debug('Monitoring subjobs: %s', repr(
+                logging.getLogger(__name__).debug('Monitoring subjobs: %s', repr(
                     [jj._repr() for jj in monitorable_subjobs]))
                 j.backend.updateMonitoringInformation(monitorable_subjobs)
                 j.updateMasterJobStatus()
@@ -447,7 +440,7 @@ class IBackend(GangaObject):
                 simple_jobs.append(j)
 
         if simple_jobs:
-            logger.debug(
+            logging.getLogger(__name__).debug(
                 'Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs]))
             simple_jobs[0].backend.updateMonitoringInformation(simple_jobs)
 

@@ -4,12 +4,8 @@
 # $Id: IApplication.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
 
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version
-
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema.Schema import Schema, Version
 
 class PostprocessStatusUpdate(Exception):
 

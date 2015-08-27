@@ -13,21 +13,11 @@
 #   and followed by
 #    obj._setDirty()
 
-import Ganga.Utility.logging
-
+import logging
 import types
-import inspect
-from copy import deepcopy
+import copy
 
-import Ganga.GPIDev.Schema as Schema
-
-from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError, isType, stripProxy, GPIProxyObjectFactory
-from Ganga.Core.exceptions import GangaValueError, GangaException
-
-from Ganga.GPIDev.Base.Proxy import stripProxy
-from Ganga.GPIDev.Base.VPrinter import VPrinter, VSummaryPrinter
-
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+from Ganga.Core.exceptions import GangaException
 
 class PreparedStateError(GangaException):
 
@@ -136,7 +126,7 @@ class Node(object):
             try:
                 return getattr(self, name)
             except AttributeError, err:
-                logger.debug("accept visitor error: %s" % str(err))
+                logging.getLogger(__name__).debug("accept visitor error: %s" % str(err))
                 return self._data[name]
 
         for (name, item) in self._schema.simpleItems():
@@ -155,12 +145,14 @@ class Node(object):
 
     # clone self and return a properly initialized object
     def clone(self):
-        return deepcopy(self)
+        return copy.deepcopy(self)
 
     # copy all the properties recursively from the srcobj
     # if schema of self and srcobj are not compatible raises a ValueError
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
     def copyFrom(self, srcobj, _ignore_atts=[]):
+        from Ganga.Core import GangaValueError
+
         # Check if this object is derived from the source object, then the copy
         # will not throw away information
         if not isType(self, srcobj.__class__) and not isType(srcobj, self.__class__):
@@ -179,7 +171,7 @@ class Node(object):
         for name, item in self._schema.allItems():
             if name in _ignore_atts:
                 continue
-            #logger.debug("Copying: %s : %s" % (str(name), str(item)))
+            #logging.getLogger(__name__).debug("Copying: %s : %s" % (str(name), str(item)))
             if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
                 if srcobj.application.is_prepared is not None and srcobj.application.is_prepared is not True:
                     srcobj.application.incrementShareCounter(srcobj.application.is_prepared.name)
@@ -189,7 +181,7 @@ class Node(object):
             elif not item['copyable']:
                 setattr(self, name, self._schema.getDefaultValue(name))
             else:
-                c = deepcopy(getattr(srcobj, name))
+                c = copy.deepcopy(getattr(srcobj, name))
                 setattr(self, name, c)
 
     def printTree(self, f=None, sel=''):
@@ -199,6 +191,7 @@ class Node(object):
     #if you (manually) try to run printPrepTree on anything other than an application, it will not work as expected
     #see the relevant code in VPrinter to understand why
     def printPrepTree(self, f=None, sel='preparable' ):
+        from Ganga.GPIDev.Base.VPrinter import VPrinter
         self.accept(VPrinter(f, sel))
 
     def printSummaryTree(self, level=0, verbosity_level=0, whitespace_marker='', out=None, selection=''):
@@ -211,6 +204,7 @@ class Node(object):
         out: An output stream to print to. The last line of output should be printed without a newline.'
         selection: See VPrinter for an explaintion of this.
         """
+        from .VPrinter import VSummaryPrinter
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection))
 
     def __eq__(self, node):
@@ -298,7 +292,7 @@ class Descriptor(object):
                         if self._name in obj._index_cache.keys():
                             lookup_result = obj._index_cache[self._name]
                 except Exception, err:
-                    logger.debug("Lazy Loading Exception: %s" % str(err))
+                    logging.getLogger(__name__).debug("Lazy Loading Exception: %s" % str(err))
                     lookup_result = None
                     pass
 
@@ -315,11 +309,11 @@ class Descriptor(object):
                                 if self._name in stripProxy(self._data):
                                     result = stripProxy(obj._data)[self._name]
                                 else:
-                                    logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                                    logging.getLogger(__name__).debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                     GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                     result = obj._data[self._name]
                             else:
-                                logger.debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
+                                logging.getLogger(__name__).debug("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                 GangaException("Error, cannot find %s parameter in %s" % (self._name, obj._name))
                                 result = obj._data[self._name]
                 else:
@@ -331,6 +325,8 @@ class Descriptor(object):
     def __set__(self, obj, val):
 
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
+        from Ganga.Core.exceptions import GangaAttributeError
+        import Ganga.GPIDev.Schema.Schema as Schema
 
         cs = self._bind_method(obj, self._checkset_name)
         if cs:
@@ -406,6 +402,9 @@ class ObjectMetaclass(type):
     _descriptor = Descriptor
 
     def __init__(cls, name, bases, dict):
+        from Ganga.GPIDev.Base.Proxy import ProxyDataDescriptor, GPIProxyClassFactory, ProxyMethodDescriptor
+        from Ganga.Utility.Plugin import allPlugins
+
         super(ObjectMetaclass, cls).__init__(name, bases, dict)
 
         # ignore the 'abstract' base class
@@ -413,7 +412,8 @@ class ObjectMetaclass(type):
         if name == 'GangaObject':
             return
 
-        logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
+        logging.getLogger(__name__).debug(
+            "Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
 
         # all Ganga classes must have (even empty) schema
         #assert(cls._schema is not None)
@@ -439,8 +439,8 @@ class ObjectMetaclass(type):
                     try:
                         method = d[internal_name]
                     except Exception, err:
-                        logger.debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (str(internal_name), str(d)))
-                        logger.debug("ObjectMetaClass Error: %s" % str(err))
+                        logging.getLogger(__name__).debug("ObjectMetaClass Error internal_name: %s,\t d: %s" % (str(internal_name), str(d)))
+                        logging.getLogger(__name__).debug("ObjectMetaClass Error: %s" % str(err))
 
                     if not isinstance(method, types.FunctionType):
                         continue
@@ -451,11 +451,11 @@ class ObjectMetaclass(type):
         # sanity checks for schema...
         if not '_schema' in dict.keys():
             s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
-            logger.error(s)
+            logging.getLogger(__name__).error(s)
             raise ValueError(s)
 
         if not cls._schema._pluginclass is None:
-            logger.warning('Possible schema clash in class %s between %s and %s',
+            logging.getLogger(__name__).warning('Possible schema clash in class %s between %s and %s',
                            name, cls._name, cls._schema._pluginclass._name)
 
         # export visible properties... do not export hidden properties
@@ -538,6 +538,8 @@ class GangaObject(Node):
     # construct an object of this type from the arguments. Defaults to copy
     # constructor.
     def __construct__(self, args):
+        from Ganga.GPIDev.Base.Proxy import TypeMismatchError
+
         self._lock_count = {}
         # act as a copy constructor applying the object conversion at the same
         # time (if applicable)
@@ -566,6 +568,9 @@ class GangaObject(Node):
     # on the deepcopy reset all non-copyable properties as defined in the
     # schema
     def __deepcopy__(self, memo=None):
+        import Ganga.GPIDev.Schema.Schema as Schema
+        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+
         self._getReadAccess()
         c = super(GangaObject, self).__deepcopy__(memo)
         if self._schema is not None:
@@ -577,10 +582,10 @@ class GangaObject(Node):
                     try:
                         from Ganga.Core.GangaRepository import getRegistry
                         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                        logger.debug("Increasing shareref")
+                        logging.getLogger(__name__).debug("Increasing shareref")
                         shareref.increase(shared_dir.name)
                     except AttributeError, err:
-                        logger.debug("__deepcopy__ Exception: %s" % str(err))
+                        logging.getLogger(__name__).debug("__deepcopy__ Exception: %s" % str(err))
                         pass
         c.lock_count = {}
         return c
@@ -603,7 +608,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            #logger.debug( "Locking: %s for job %s" % (reg.name, str(self.getJobObject().getFQID('.'))) )
+            #logging.getLogger(__name__).debug( "Locking: %s for job %s" % (reg.name, str(self.getJobObject().getFQID('.'))) )
             _haveLocked = False
             _counter = 1
             _sleep_size = 2.
@@ -617,13 +622,14 @@ class GangaObject(Node):
                 except (RegistryLockError, RegistryAccessError) as x:
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
-                    logger.info("Waiting on Write access to registry: %s" % reg.name)
-                    logger.debug("%s" % str(x))
+                    logging.getLogger(__name__).info("Waiting on Write access to registry: %s" % reg.name)
+                    logging.getLogger(__name__).debug("%s" % str(x))
                     err = x
                 _counter = _counter + 1
                 # Sleep 5 sec longer than the time taken to bail out
                 if _counter * _sleep_size >= _timeOut + 5:
-                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, str(x)))
+                    logging.getLogger(__name__).error(
+                        "Failed to get access to registry: %s. Reason: %s" % (reg.name, str(x)))
                     raise x
 
     def _releaseWriteAccess(self):
@@ -633,7 +639,7 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            logger.debug("Releasing: %s" % (reg.name))
+            logging.getLogger(__name__).debug("Releasing: %s" % (reg.name))
             reg._release_lock(root)
 
     def _getReadAccess(self):
@@ -673,14 +679,14 @@ class GangaObject(Node):
         try:
             return r._registry
         except AttributeError, err:
-            logger.debug("_getRegistry Exception: %s" % str(err))
+            logging.getLogger(__name__).debug("_getRegistry Exception: %s" % str(err))
             return None
 
     def _getRegistryID(self):
         try:
             return self._registry.find(self)
         except AttributeError, err:
-            logger.debug("_getRegistryID Exception: %s" % str(err))
+            logging.getLogger(__name__).debug("_getRegistryID Exception: %s" % str(err))
             return None
 
     # mark object as "dirty" and inform the registry about it
@@ -757,7 +763,7 @@ def string_type_shortcut_filter(val, item):
             obj._auto__init__()
             return obj
         except PluginManagerError as err:
-            logger.debug("string_type_shortcut_filter Exception: %s" % str(err))
+            logging.getLogger(__name__).debug("string_type_shortcut_filter Exception: %s" % str(err))
             raise ValueError(err)
     return None
 
@@ -767,7 +773,7 @@ def string_type_shortcut_filter(val, item):
 # TestNativeSpecific.testFileSequence
 
 
-from .Filters import allComponentFilters
+from Ganga.GPIDev.Base.Filters import allComponentFilters
 allComponentFilters.setDefault(string_type_shortcut_filter)
 
 #
