@@ -505,7 +505,7 @@ class SetVerCommand:
     "SETVER: Mark relevant files with the release version number."
 
     def do(self):
-        toolcmd('ganga-set-version %(tag)s'%CONFIG)
+        toolcmd('ganga-git-set-version %(version)s' % CONFIG)
         print
         print ''
 
@@ -695,6 +695,9 @@ class PrepareNextRelease:
     "PREPARE NEXT development cycle: prepare tags dir for the next releases"
 
     def do(self):
+        print 'No need to prepare next release with Git'
+        return
+
         print 'Closing tag form for current release:',CONFIG['version']
         fh = open('%(tagsdir_top)s/open_releases' % CONFIG)
         next_releases = [line.strip() for line in fh.readlines() if line.strip()!=CONFIG['version']]
