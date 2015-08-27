@@ -11,12 +11,13 @@ fi
 VERSION=$1
 STAGING_DIR=$HOME/ganga_release_staging/
 INSTALL_DIR=/afs/cern.ch/sw/ganga/install/
+GIT_URL=git@github.com:ganga-devs/ganga-git-testing.git
 
 echo "-------------"
 echo "Fetching repo"
 echo "-------------"
 cd $STAGING_DIR
-git clone git@github.com:ganga-devs/ganga-git-testing.git $VERSION-pre
+git clone $GIT_URL $VERSION-pre
 cd $VERSION-pre
 git flow init -d
 git config gitflow.prefix.versiontag v
@@ -33,6 +34,25 @@ echo "--------------------"
 echo "Installing externals"
 echo "--------------------"
 $INSTALL_DIR/$VERSION-pre/release/tools/ganga-install-externals $VERSION-pre
+
+echo "-------------------------------"
+echo "Creating release notes template"
+echo "-------------------------------"
+cat << EOF > release/ReleaseNotes-$VERSION
+**************************************************************************************************************
+$VERSION (`date "+%Y/%m/%d"`)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* ...
+
+**************************************************************************************************************
+EOF
+
+git add release/ReleaseNotes-$VERSION
+git commit -m"Adding release notes template"
 
 echo "----------------------"
 echo "Pushing release branch"

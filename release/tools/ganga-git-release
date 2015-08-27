@@ -288,8 +288,8 @@ def send_mail(key, receiver=''):
     try:
         smtpObj = smtplib.SMTP('cernmx.cern.ch')
         smtpObj.sendmail(sender, receivers, string_message)         
-        
-    except SMTPException:
+
+    except smtplib.SMTPException:
         print "Can not send %s notification email" % key
 
 class CollectTags:
@@ -297,6 +297,7 @@ class CollectTags:
 
     def do(self):
         print 'Collect tags not needed for Git release'
+        print 'Instead edit the release notes file in Git'
         return
 
         print 'Collecting tags from %(tagsdir)s' % CONFIG
