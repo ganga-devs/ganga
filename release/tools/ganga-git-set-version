@@ -1,0 +1,31 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+if [ -z "$1" ]
+then
+    echo "No version number specified"
+    exit
+fi
+
+VERSION=$1
+STAGING_DIR=$HOME/ganga_release_staging/
+INSTALL_DIR=/afs/cern.ch/sw/ganga/install/
+
+echo "-------------"
+echo "Updating repo"
+echo "-------------"
+cd $STAGING_DIR
+cd $VERSION-pre
+git pull
+
+echo "-----------------------"
+echo "Setting release number"
+echo "-----------------------"
+sed --in-place "s/^_gangaVersion = .*/_gangaVersion = '\$Name: $VERSION \$'/g" python/Ganga/Runtime/bootstrap.py
+
+echo "----------"
+echo "Committing"
+echo "----------"
+git add python/Ganga/Runtime/bootstrap.py
+git commit -m"Setting release number"

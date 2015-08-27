@@ -1,0 +1,37 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+if [ -z "$1" ]
+then
+    echo "No version number specified"
+    exit
+fi
+
+VERSION=$1
+STAGING_DIR=$HOME/ganga_release_staging/
+INSTALL_DIR=/afs/cern.ch/sw/ganga/install/
+
+echo "-------------"
+echo "Updating repo"
+echo "-------------"
+cd $STAGING_DIR
+cd $VERSION-pre
+git pull
+
+echo "------------------"
+echo "Installing release"
+echo "------------------"
+git archive --prefix=$VERSION/ --format=tar HEAD | gzip >Ganga-$VERSION.tar.gz
+cp Ganga-$VERSION.tar.gz $INSTALL_DIR/tarball/
+tar xf $INSTALL_DIR/tarball/Ganga-$VERSION.tar.gz --directory $INSTALL_DIR
+
+echo "--------------------"
+echo "Installing externals"
+echo "--------------------"
+$INSTALL_DIR/$VERSION/release/tools/ganga-install-externals $VERSION
+
+echo "------------------------"
+echo "Finishing release branch"
+echo "------------------------"
+git flow release finish -F -p -m"Tagging Ganga version $VERSION" $VERSION

@@ -1789,6 +1789,9 @@ class AthenaOutputMerger(IMerger):
             elif job.outputdata._name=='ATLASOutputDataset':
                 outputlocation = job.outputdir
 
+        if not sum_outputdir and self.sum_outputdir:
+            sum_outputdir = self.sum_outputdir
+            
         if sum_outputdir:
             try:
                 if not os.path.exists(sum_outputdir):
@@ -1888,6 +1891,9 @@ class AthenaOutputMerger(IMerger):
 
         igfailed = False
         igfailedoption = options.get('ignorefailed')
+        if igfailedoption == None:
+            igfailedoption = self.ignorefailed
+        
         if igfailedoption == True:
             igfailed = True
         else:
