@@ -4,6 +4,8 @@
 # $Id: exceptions.py,v 1.2 2008-09-09 14:37:16 moscicki Exp $
 ##########################################################################
 
+import logging
+import traceback
 
 class GangaException(Exception):
 
@@ -22,15 +24,9 @@ class GangaException(Exception):
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
         if self.logger is None:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
-        try:
-            import logging
-        except ImportError:
-            import Ganga.Utility.external.logging as logging
+            self.logger = logging.getLogger(__name__)
 
         if self.logger.isEnabledFor(logging.DEBUG):
-            import traceback
             traceback.print_stack()
 
     def __str__(self):
@@ -150,16 +146,10 @@ class GangaAttributeError(AttributeError, GangaException):
         # This makes debugging what's going on much easier whilst hiding mess
         # from users
         if self.logger is None:
-            import Ganga.Utility.logging
-            self.logger = Ganga.Utility.logging.getLogger()
-            try:
-                import logging
-            except ImportError:
-                import Ganga.Utility.external.logging as logging
+            self.logger = logging.getLogger(__name__)
 
-            if self.logger.isEnabledFor(logging.DEBUG):
-                import traceback
-                traceback.print_stack()
+        if self.logger.isEnabledFor(logging.DEBUG):
+            traceback.print_stack()
 
 
 class GangaValueError(ValueError, GangaException):
