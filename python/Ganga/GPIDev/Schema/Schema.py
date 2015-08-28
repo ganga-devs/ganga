@@ -5,11 +5,6 @@ from __future__ import absolute_import
 # $Id: Schema.py,v 1.3 2009-05-20 13:40:22 moscicki Exp $
 ##########################################################################
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-from Ganga.Utility.logic import implies
-
 
 #
 # Ganga Public Interface Schema
@@ -17,7 +12,9 @@ from Ganga.Utility.logic import implies
 
 # Version of the schema.
 
-
+from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
+valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(
+    val, valTypeList, logger)
 class Version(object):
 
     def __init__(self, major, minor):
@@ -81,8 +78,7 @@ class Schema(object):
         try:
             return self.datadict[name]
         except Exception as x:
-            logger.error("Ganga Cannot find: %s in Object: %s" %
-                         (name, self.name))
+            logging.getLogger(__name__).error("Ganga Cannot find: %s in Object: %s" % (name, self.name))
             from Ganga.Core.exceptions import GangaAttributeError
             raise GangaAttributeError(x)
 
@@ -113,6 +109,7 @@ class Schema(object):
             return []
 
         r = []
+
         for n, c in zip(self.datadict.keys(), self.datadict.values()):
             if issubclass(c.__class__, klass):
                 r.append((n, c))
@@ -388,7 +385,7 @@ class Item(object):
         # copyable==0
         if 'copyable' not in kwds and (not forced or 'copyable' not in forced):
             if self._meta['protected']:
-                #logger.debug('applied implicit conditional rule: protected==1 => copyable==0')
+                #logging.getLogger(__name__).debug('applied implicit conditional rule: protected==1 => copyable==0')
                 self._meta['copyable'] = 0
 
     # return a description of the property including a docstring
@@ -424,7 +421,7 @@ class Item(object):
         return txt
 
     def _check_type(self, val, name, enableGangaList=True):
-        from Ganga.Core import GangaAttributeError, TypeMismatchError, SchemaError
+        from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError
 
         if enableGangaList:
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -486,11 +483,11 @@ class Item(object):
 
         # typelist is not defined, use the type of the default value
         if item._meta['defvalue'] is None:
-            logger.warning(
+            logging.getLogger(__name__).warning(
                 'type-checking disabled: type information not provided for %s, contact plugin developer', name)
         else:
             if item._meta['sequence']:
-                logger.warning(
+                logging.getLogger(__name__).warning(
                     'type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
             else:
                 check(isinstance(val, type(item._meta['defvalue'])))
@@ -501,6 +498,8 @@ class ComponentItem(Item):
     _forced = {}
 
     def __init__(self, category, optional=0, load_default=1, **kwds):
+        from Ganga.Utility.logic import implies
+
         Item.__init__(self)
         kwds['category'] = category
         kwds['optional'] = optional
@@ -515,10 +514,6 @@ class ComponentItem(Item):
 
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
-
-from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
-valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(
-    val, valTypeList, logger)
 
 
 class SimpleItem(Item):
@@ -644,8 +639,7 @@ if __name__ == '__main__':
     assert(not schema['id']['comparable'])
     assert(schema['id']['type'] == 'string')
 
-    logger.info(schema['application']['category'] +
-                ' ' + schema['application']['defvalue'])
+    logging.getLogger(__name__).info(schema['application']['category'] + ' ' + schema['application']['defvalue'])
 
     import copy
     schema2 = copy.deepcopy(schema)
@@ -664,7 +658,7 @@ if __name__ == '__main__':
     assert(schema['id']['copyable'] == 0)
     assert(schema['application']['copyable'] == 1)
 
-    logger.info('Schema tested OK.')
+    logging.getLogger(__name__).info('Schema tested OK.')
 
 
 #
