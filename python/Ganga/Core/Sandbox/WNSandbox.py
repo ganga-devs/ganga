@@ -123,7 +123,7 @@ def createPackedOutputSandbox(output_patterns, filter, dest_dir):
     outputlist = multi_glob(output_patterns, filter)
 
     if outputlist:
-        with tarfile.open(tgzfile, "w:gz") as tf:
+        with closing(tarfile.open(tgzfile, "w:gz")) as tf:
             tf.dereference = True
             for f in outputlist:
                 tf.add(f)
