@@ -67,17 +67,15 @@ class ThreadPoolQueueMonitor(object):
             # still count
             if u[0] is not None:
                 # User task has no ganga name
-                name_user = getColour('fg.red') + u[0] + getColour('fg.normal')
+                name_user = getColour('fg.red') + str(u[0]) + getColour('fg.normal')
             else:
                 # User task has a ganga name
-                name_user = getColour('fg.red') + u[1] + getColour('fg.normal')
-            name_monitor = getColour('fg.red') + m[0] + getColour('fg.normal')
+                name_user = getColour('fg.red') + str(u[1]) + getColour('fg.normal')
+            name_monitor = getColour('fg.red') + str(m[0]) + getColour('fg.normal')
             if u[1] == 'idle':
-                name_user = name_user.replace(
-                    getColour('fg.red'), getColour('fg.green'))
+                name_user = name_user.replace(getColour('fg.red'), getColour('fg.green'))
             if m[1] == 'idle':
-                name_monitor = name_monitor.replace(
-                    getColour('fg.red'), getColour('fg.green'))
+                name_monitor = name_monitor.replace(getColour('fg.red'), getColour('fg.green'))
             output += '{0:<35} {1:<26} {2:<15} | {3:<35} {4:<28} {5:<10}\n'.format(
                 name_user, u[1][:30].replace("\n", "\\n"), u[2], name_monitor, m[1][:30].replace("\n", "\\n"), m[2])
 

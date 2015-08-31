@@ -607,7 +607,7 @@ class Job(GangaObject):
                 # we call this even if there was a hook
                 newstatus = self.transition_update(newstatus)
 
-                if newstatus == 'completed' and ignore_failures is not True:
+                if (newstatus == 'completed') and (self.status != 'completed') and (ignore_failures is not True):
                     if self.outputFilesFailures():
                         logger.info("Job %s outputfile Failure" % str(self.getFQID('.')))
                         self.updateStatus('failed')
@@ -736,15 +736,18 @@ class Job(GangaObject):
         if getConfig('Output')['FailJobIfNoOutputMatched'] and not self.subjobs:
             for outputfile in self.outputfiles:
                 if not outputfile.hasMatchedFiles():
+                    logger.info("OutputFile failed to match file: %s" % str(outputfile.namePattern))
                     postprocessFailure = True
 
         # check for failure reasons
         for outputfile in self.outputfiles:
             if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''):
+                logger.info("OutputFile failed for file: %s" % str(outputfile.namePattern))
                 postprocessFailure = True
             else:
                 for subfile in outputfile.subfiles:
                     if (hasattr(subfile, 'failureReason') and subfile.failureReason != ''):
+                        logger.info("OutputFile failed due to reason: %s" % str(outputfile.namePattern))
                         postprocessFailure = True
 
         return postprocessFailure
@@ -760,8 +763,7 @@ class Job(GangaObject):
 
         # ignore non-split jobs
         if not stats:
-            logger.warning(
-                'ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
+            logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
             return
 
         new_stat = None

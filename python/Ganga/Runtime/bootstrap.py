@@ -997,8 +997,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 logger.error('Reason: %s' % str(err))
             try:
                 r.loadNamedTemplates(Ganga.GPI.__dict__,
-                                     Ganga.Utility.Config.getConfig(
-                                         'Configuration')['namedTemplates_ext'],
+                                     Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
                                      Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_pickle'])
             except Exception as err:
                 logger.error('problems with loading Named Templates for %s', n)
@@ -1487,7 +1486,7 @@ default_backends = LCG
 
                 self.launch_OldIPython(local_ns, args)
 
-            elif ipver == "3.2.1":
+            elif ipver in [ "3.1.0", "3.2.0", "3.2.1" ]:
 
                 self.launch_NewIPython(local_ns, args)
 

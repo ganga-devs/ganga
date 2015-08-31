@@ -118,8 +118,7 @@ class RuntimePackage(object):
 
         if self.name in allRuntimes:
             if allRuntimes[self.name].path != self.path:
-                logger.warning(
-                    'possible clash: runtime "%s" already exists at path "%s"', self.name, allRuntimes[self.name].path)
+                logger.warning('possible clash: runtime "%s" already exists at path "%s"', self.name, allRuntimes[self.name].path)
 
         allRuntimes[self.name] = self
 
@@ -153,8 +152,7 @@ class RuntimePackage(object):
             __import__(self.name + ".PACKAGE")
 
         except ImportError as x:
-            logger.warning(
-                "cannot import runtime package %s: %s", self.name, str(x))
+            logger.warning("cannot import runtime package %s: %s", self.name, str(x))
 
     def getEnvironment(self):
         # FIXME: pass the configuration object
@@ -162,17 +160,17 @@ class RuntimePackage(object):
         if g:
             return g(self.config)
         else:
-            logger.debug(
-                "no environment defined for runtime package %s", self.name)
+            logger.debug("no environment defined for runtime package %s", self.name)
             return {}
 
     def loadPlugins(self):
+        logger.debug("Loading Plugin: %s" % self.name)
         g = importName(self.name, 'loadPlugins')
         if g:
             g(self.config)
         else:
-            logger.debug(
-                "no plugins defined for runtime package %s", self.name)
+            logger.debug("no plugins defined for runtime package %s", self.name)
+        logger.debug("Finished Plugin: %s" % self.name)
 
     def bootstrap(self, globals):
         try:
@@ -182,12 +180,10 @@ class RuntimePackage(object):
             # exportToGPI() function explicitly
             exec("import %s.BOOT" % self.name)
         except ImportError as x:
-            logger.debug(
-                "problems with bootstrap of runtime package %s", self.name)
+            logger.debug("problems with bootstrap of runtime package %s", self.name)
             logger.debug(x)
         except IOError as x:
-            logger.debug(
-                "problems with bootstrap of runtime package %s", self.name)
+            logger.debug("problems with bootstrap of runtime package %s", self.name)
             logger.debug(x)
 
     def loadNamedTemplates(self, globals, file_ext='tpl', pickle_files=False):
