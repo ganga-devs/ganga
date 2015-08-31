@@ -4,23 +4,27 @@ from Ganga.Utility.Config import getConfig
 configGaudi = getConfig('GAUDI')
 
 
-def getpack( self, options='' ):
+def getpack(self, options=''):
     if configGaudi['useCMakeApplications']:
-        return getpack_cmake( self, options )
+        return getpack_cmake(self, options)
     else:
-        return getpack_CMT( self, options )
+        return getpack_CMT(self, options)
 
-def make( self, argument=None ):
+
+def make(self, argument=None):
     if configGaudi['useCMakeApplications']:
-        return make_cmake( self, argument )
+        return make_cmake(self, argument)
     else:
-        return make_CMT( self, argument )
+        return make_CMT(self, argument)
+
 
 def getpack_cmake(appname):
     raise NotImplementedError
 
-def make_cmake( self, argument=None ):
+
+def make_cmake(self, argument=None):
     raise NotImplementedError
+
 
 def getpack_CMT(self, options=''):
     """Performs a getpack on the package given within the environment
@@ -32,6 +36,7 @@ def getpack_CMT(self, options=''):
     from GangaLHCb.Lib.Applications.CMTscript import CMTscript
     return CMTscript(self, command)
 
+
 def make_CMT(self, argument=None):
     """Performs a CMT make on the application. The unix exit code is
        returned. Any arguments given are passed onto CMT as in
@@ -39,7 +44,6 @@ def make_CMT(self, argument=None):
     """
     command = configGaudi['make_cmd']
     if argument:
-        command+=' '+argument
+        command += ' ' + argument
     from GangaLHCb.Lib.Applications.CMTscript import CMTscript
     return CMTscript(self, command)
-

@@ -4,6 +4,7 @@ import os
 
 logger = Ganga.Utility.logging.getLogger()
 
+
 def get_user_platform(env=os.environ):
     if 'CMTCONFIG' in env:
         return env['CMTCONFIG']
@@ -12,46 +13,50 @@ def get_user_platform(env=os.environ):
         logger.info(msg)
         return ''
 
-def update_project_path(user_release_area,env=os.environ):
+
+def update_project_path(user_release_area, env=os.environ):
 
     if user_release_area:
         if 'CMTPROJECTPATH' in env:
-            cmtpp=env['CMTPROJECTPATH'].split(':')
+            cmtpp = env['CMTPROJECTPATH'].split(':')
             if cmtpp[0] != user_release_area:
                 cmtpp = [user_release_area] + cmtpp
-                env['CMTPROJECTPATH']=':'.join(cmtpp)
+                env['CMTPROJECTPATH'] = ':'.join(cmtpp)
+
 
 def get_user_dlls(appname, version, user_release_area, platform, env):
 
     user_ra = user_release_area
     update_project_path(user_release_area)
     from Ganga.Utility.files import fullpath
-    full_user_ra = fullpath(user_ra) # expand any symbolic links
+    full_user_ra = fullpath(user_ra)  # expand any symbolic links
 
     # Work our way through the CMTPROJECTPATH until we find a cmt directory
-    if 'CMTPROJECTPATH' not in env: return [], [], []
+    if 'CMTPROJECTPATH' not in env:
+        return [], [], []
     projectdirs = env['CMTPROJECTPATH'].split(os.pathsep)
-    appveruser = os.path.join(appname + '_' + version,'cmt')
-    appverrelease = os.path.join(appname.upper(), appname.upper() + '_' + version, 'cmt')
+    appveruser = os.path.join(appname + '_' + version, 'cmt')
+    appverrelease = os.path.join(
+        appname.upper(), appname.upper() + '_' + version, 'cmt')
 
     for projectdir in projectdirs:
-        dir = fullpath(os.path.join(projectdir,appveruser))
+        dir = fullpath(os.path.join(projectdir, appveruser))
         logger.debug('Looking for projectdir %s' % dir)
         if os.path.exists(dir):
             break
-        dir = fullpath(os.path.join(projectdir,appverrelease))
+        dir = fullpath(os.path.join(projectdir, appverrelease))
         logger.debug('Looking for projectdir %s' % dir)
         if os.path.exists(dir):
             break
     logger.debug('Using the CMT directory %s for identifying projects' % dir)
-    ##   rc, showProj, m = shell.cmd1('cd ' + dir +';cmt show projects',
-    ##                                capture_stderr=True)
+    # rc, showProj, m = shell.cmd1('cd ' + dir +';cmt show projects',
+    # capture_stderr=True)
     from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
     rc, showProj, m = shellEnv_cmd('cmt show projects', env, dir)
 
     logger.debug(showProj)
 
-    libs=[]
+    libs = []
     merged_pys = []
     subdir_pys = {}
     project_areas = []
@@ -59,18 +64,19 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
 
     for line in showProj.split('\n'):
         for entry in line.split():
-             if entry.startswith(user_ra) or entry.startswith(full_user_ra):
-                 tmp = entry.rstrip('\)')
-                 libpath = fullpath(os.path.join(tmp, 'InstallArea', platform, 'lib' ))
-                 logger.debug(libpath)
-                 project_areas.append(libpath)
-                 pypath = fullpath(os.path.join(tmp, 'InstallArea', 'python'  ))
-                 logger.debug(pypath)
-                 py_project_areas.append(pypath)
-                 pypath = fullpath(os.path.join(tmp, 'InstallArea', platform, 'python'))
-                 logger.debug(pypath)
-                 py_project_areas.append(pypath)
-
+            if entry.startswith(user_ra) or entry.startswith(full_user_ra):
+                tmp = entry.rstrip('\)')
+                libpath = fullpath(
+                    os.path.join(tmp, 'InstallArea', platform, 'lib'))
+                logger.debug(libpath)
+                project_areas.append(libpath)
+                pypath = fullpath(os.path.join(tmp, 'InstallArea', 'python'))
+                logger.debug(pypath)
+                py_project_areas.append(pypath)
+                pypath = fullpath(
+                    os.path.join(tmp, 'InstallArea', platform, 'python'))
+                logger.debug(pypath)
+                py_project_areas.append(pypath)
 
     # savannah 47793 (remove multiple copies of the same areas)
     from Ganga.Utility.util import unique
@@ -83,13 +89,13 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
         project_areas_dict = {}
     for area in project_areas:
         if area in ld_lib_path:
-             project_areas_dict[area] = ld_lib_path.index(area)
+            project_areas_dict[area] = ld_lib_path.index(area)
         else:
-             project_areas_dict[area] = 666
+            project_areas_dict[area] = 666
     from operator import itemgetter
     sorted_project_areas = []
-    for item in sorted(project_areas_dict.items(), key = itemgetter(1)):
-           sorted_project_areas.append(item[0])
+    for item in sorted(project_areas_dict.items(), key=itemgetter(1)):
+        sorted_project_areas.append(item[0])
 
     lib_names = []
     for libpath in sorted_project_areas:
@@ -102,21 +108,24 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
                     lib_names.append(f)
                     libs.append(fpath)
                 else:
-                    logger.warning("File %s in %s does not exist. Skipping...", str(f), str(libpath))
+                    logger.warning(
+                        "File %s in %s does not exist. Skipping...", str(f), str(libpath))
 
     for pypath in py_project_areas:
         if os.path.exists(pypath):
             from GangaGaudi.Lib.Applications.GaudiUtils import pyFileCollector
             from Ganga.Utility.Config import getConfig
             configGaudi = getConfig('GAUDI')
-            pyFileCollector(pypath, merged_pys, subdir_pys, configGaudi['pyFileCollectionDepth'])
+            pyFileCollector(
+                pypath, merged_pys, subdir_pys, configGaudi['pyFileCollectionDepth'])
 
     import pprint
-    logger.debug("%s",pprint.pformat( libs ))
-    logger.debug("%s",pprint.pformat( merged_pys ))
-    logger.debug("%s",pprint.pformat( subdir_pys ))
+    logger.debug("%s", pprint.pformat(libs))
+    logger.debug("%s", pprint.pformat(merged_pys))
+    logger.debug("%s", pprint.pformat(subdir_pys))
 
     return libs, merged_pys, subdir_pys
+
 
 def make(self, argument=''):
     """Build the code in the release area the application object points
@@ -126,11 +135,12 @@ def make(self, argument=''):
     from Ganga.Utility.Config import getConfig
     config = getConfig('GAUDI')
 
-    execute('cmt broadcast %s %s' % (config['make_cmd'],argument),
+    execute('cmt broadcast %s %s' % (config['make_cmd'], argument),
             shell=True,
             timeout=None,
             env=self.getenv(False),
             cwd=self.user_release_area)
+
 
 def cmt(self, command):
     """Execute a cmt command in the cmt user area pointed to by the
@@ -142,5 +152,3 @@ def cmt(self, command):
             timeout=None,
             env=self.getenv(False),
             cwd=self.user_release_area)
-
-

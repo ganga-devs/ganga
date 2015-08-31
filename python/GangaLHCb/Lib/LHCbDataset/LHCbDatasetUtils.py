@@ -14,14 +14,18 @@ logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 def isLFN(file):
     return isDiracFile(file)
+
 
 def isDiracFile(file):
     return isType(file, DiracFile) or isType(file, LogicalFile)
 
+
 def isPFN(file):
     return isType(file, PhysicalFile) or isType(file, LocalFile)
+
 
 def strToDataFile(name, allowNone=True):
     if len(name) >= 4 and name[0:4].upper() == 'LFN:':
@@ -37,10 +41,14 @@ def strToDataFile(name, allowNone=True):
             raise GangaException(msg)
         return None
 
+
 def getDataFile(file):
-    if isType(file, DiracFile): return file
-    if isType(file, LocalFile): return file
-    if type(file) == type(''): return strToDataFile(file)
+    if isType(file, DiracFile):
+        return file
+    if isType(file, LocalFile):
+        return file
+    if type(file) == type(''):
+        return strToDataFile(file)
     return None
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

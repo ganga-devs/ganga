@@ -5,11 +5,11 @@ import os
 import tempfile
 import gzip
 import shutil
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import Ganga.Utility.logging
 from Ganga.Utility.files import expandfilename, fullpath
-from GaudiUtils import *
+from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
@@ -22,68 +22,74 @@ logger = Ganga.Utility.logging.getLogger()
 
 
 class GaudiBase(IPrepareApp):
+
     '''Parent for all Gaudi and GaudiPython applications, should not be used
     directly.'''
 
     schema = {}
     docstr = 'The version of the application (like "v19r2")'
-    schema['version'] = SimpleItem(preparable=1,defvalue=None,
-                                   typelist=['str','type(None)'],doc=docstr)
+    schema['version'] = SimpleItem(preparable=1, defvalue=None,
+                                   typelist=['str', 'type(None)'], doc=docstr)
     docstr = 'The platform the application is configured for (e.g. ' \
              '"slc4_ia32_gcc34")'
-    schema['platform'] = SimpleItem(preparable=1,defvalue=None,
-                                    typelist=['str','type(None)'],doc=docstr)
+    schema['platform'] = SimpleItem(preparable=1, defvalue=None,
+                                    typelist=['str', 'type(None)'], doc=docstr)
     docstr = 'The user path to be used. After assigning this'  \
              ' you can do j.application.getpack(\'Phys DaVinci v19r2\') to'  \
              ' check out into the new location. This variable is used to '  \
              'identify private user DLLs by parsing the output of "cmt '  \
              'show projects".'
-    schema['user_release_area'] = SimpleItem(preparable=1,defvalue=None,
-                                             typelist=['str','type(None)'],
+    schema['user_release_area'] = SimpleItem(preparable=1, defvalue=None,
+                                             typelist=['str', 'type(None)'],
                                              doc=docstr)
     docstr = 'The name of the Gaudi application (e.g. "DaVinci", "Gauss"...)'
-    schema['appname'] = SimpleItem(preparable=1,defvalue=None,typelist=['str','type(None)'],
-                                   hidden=1,doc=docstr)
+    schema['appname'] = SimpleItem(preparable=1, defvalue=None, typelist=['str', 'type(None)'],
+                                   hidden=1, doc=docstr)
     docstr = 'Location of shared resources. Presence of this attribute implies'\
              'the application has been prepared.'
     schema['is_prepared'] = SimpleItem(defvalue=None,
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,
-                                       typelist=['type(None)','str'],
+                                       typelist=['type(None)', 'str'],
                                        protected=1,
                                        doc=docstr)
     docstr = 'The env'
-    schema['env'] = SimpleItem(preparable=1,transient=1,defvalue=None,
-                                   hidden=1,doc=docstr,typelist=['type(None)','dict'])
+    schema['env'] = SimpleItem(preparable=1, transient=1, defvalue=None,
+                               hidden=1, doc=docstr, typelist=['type(None)', 'dict'])
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
-    schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
+    schema['hash'] = SimpleItem(
+        defvalue=None, typelist=['type(None)', 'str'], hidden=1)
 
     _name = 'GaudiBase'
-    _exportmethods = [ 'getenv', 'getpack', 'make', 'projectCMD', 'cmt' ]
+    _exportmethods = ['getenv', 'getpack', 'make', 'projectCMD', 'cmt']
     _schema = Schema(Version(0, 1), schema)
     _hidden = 1
-    
-    def _get_default_version(self,gaudi_app):
+
+    def _get_default_version(self, gaudi_app):
         raise NotImplementedError
 
     def _get_default_platform(self):
         return get_user_platform()
-        
-    def _init(self,set_ura):
+
+    def _init(self, set_ura):
         if self.appname is None:
-            raise ApplicationConfigurationError(None,"appname is None")
-        if (not self.version): self.version = self._get_default_version(self.appname)
-        if (not self.platform): self.platform = self._get_default_platform()
-        if not set_ura: return
+            raise ApplicationConfigurationError(None, "appname is None")
+        if (not self.version):
+            self.version = self._get_default_version(self.appname)
+        if (not self.platform):
+            self.platform = self._get_default_platform()
+        if not set_ura:
+            return
         if not self.user_release_area:
             expanded = os.path.expandvars("$User_release_area")
-            if expanded == "$User_release_area": self.user_release_area = ""
+            if expanded == "$User_release_area":
+                self.user_release_area = ""
             else:
                 self.user_release_area = expanded.split(os.pathsep)[0]
 
         from Ganga.Utility.Shell import expand_vars
-        env = expand_vars( os.environ )
+        env = expand_vars(os.environ)
 
         env['User_release_area'] = self.user_release_area
         env['CMTCONFIG'] = self.platform
@@ -93,25 +99,26 @@ class GaudiBase(IPrepareApp):
         '''Returns a copy of the environment used to flatten the options, e.g.
         env = DaVinci().getenv(), then calls like env[\'DAVINCIROOT\'] return
         the values.
-        
+
         Note: Editing this does not affect the options processing.
         '''
         if self.env is None:
-            shell=None
+            shell = None
             try:
                 job = self.getJobObject()
             except:
                 pass
             else:
-                env_file_name = job.getDebugWorkspace().getPath() + '/gaudi-env.py.gz'
+                env_file_name = job.getDebugWorkspace().getPath() + \
+                    '/gaudi-env.py.gz'
                 if os.path.exists(env_file_name):
-                    in_file = gzip.GzipFile(env_file_name,'rb')
+                    in_file = gzip.GzipFile(env_file_name, 'rb')
                     exec(in_file.read())
                     in_file.close()
-                    shell=gaudi_env
+                    shell = gaudi_env
 
             if shell is None:
-                shell=self._getshell()
+                shell = self._getshell()
             if cache_env:
                 self.env = copy.deepcopy(shell)
             return shell
@@ -120,7 +127,7 @@ class GaudiBase(IPrepareApp):
 
     def _export_getenv(self):
         return self.getenv(False)
-        
+
     def getpack(self, options=''):
         """Execute a getpack command. If as an example dv is an object of
         type DaVinci, the following will check the Analysis package out in
@@ -135,7 +142,8 @@ class GaudiBase(IPrepareApp):
                 try:
                     os.makedirs(project_path)
                 except Exception as e:
-                    logger.error("Can not create project user directory: "+project_path)
+                    logger.error(
+                        "Can not create project user directory: " + project_path)
                     return
 
         execute('getpack %s' % options,
@@ -143,27 +151,20 @@ class GaudiBase(IPrepareApp):
                 timeout=None,
                 env=self.getenv(False),
                 cwd=self.user_release_area)
-           
+
     def make(self, argument=''):
         """Build the code in the release area the application object points to."""
+        from GangaGaudi.Lib.Application.GaudiUtils import make
+        make(self, arguments)
 
-        configGaudi = Ganga.Utility.Config.getConfig('GAUDI')
-
-        if not configGaudi['useCMakeApplications']:
-            import GangaGaudi.Lib.Application.CMTUtils
-            GangaGaudi.Lib.Application.CMTUtils.make( self, arguments )
-        else:
-            import GangaGaudi.Lib.Application.cmakeUtils
-            GangaGaudi.Lib.Application.cmakeUtils.make( self, arguments )
-
-    def projectCMD( self, command ):
+    def projectCMD(self, command):
         """Eecute a given command at the top level of a requested project."""
 
         execute('%s' % command,
-                shell = True,
-                timeout = None,
-                env = selfg.getenv(False),
-                cwd = self.user_release_area)
+                shell=True,
+                timeout=None,
+                env=selfg.getenv(False),
+                cwd=self.user_release_area)
 
     def cmt(self, command):
         """Execute a cmt command in the cmt user area pointed to by the
@@ -173,7 +174,7 @@ class GaudiBase(IPrepareApp):
         configGaudi = Ganga.Utility.Config.getConfig('GAUDI')
 
         if configGaudi['useCMakeApplications']:
-            logger.warning( "Cannot Use this in combination with cmake!" )
+            logger.warning("Cannot Use this in combination with cmake!")
             return
 
         execute('cmt %s' % command,
@@ -186,7 +187,7 @@ class GaudiBase(IPrepareApp):
         self._unregister()
 
     def _unregister(self):
-        if self.is_prepared is not None:          
+        if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
         self.hash = None
@@ -197,20 +198,27 @@ class GaudiBase(IPrepareApp):
         self._register(force)
         try:
             # Try to prepare the application fully
-            self._really_prepare( force )
-        except :
-            # Cleanup after self on fail as self.is_prepared is used as test to see if I'm prepared
+            self._really_prepare(force)
+        except:
+            # Cleanup after self on fail as self.is_prepared is used as test to
+            # see if I'm prepared
             self._unregister()
             raise
 
     def _really_prepare(self, force=False):
-        if (not self.is_prepared): raise ApplicationConfigurationError(None,"Could not establish sharedir")
+        if (not self.is_prepared):
+            raise ApplicationConfigurationError(
+                None, "Could not establish sharedir")
 
-        if (not self.user_release_area): return #GaudiPython and Bender dont need the following.
-        if (not self.appname): raise ApplicationConfigurationError(None,"appname is None")
-        if (not self.version): raise ApplicationConfigurationError(None,"version is None")
-        if (not self.platform): raise ApplicationConfigurationError(None,"platform is None")
-  
+        if (not self.user_release_area):
+            return  # GaudiPython and Bender dont need the following.
+        if (not self.appname):
+            raise ApplicationConfigurationError(None, "appname is None")
+        if (not self.version):
+            raise ApplicationConfigurationError(None, "version is None")
+        if (not self.platform):
+            raise ApplicationConfigurationError(None, "platform is None")
+
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                  'shared',
                                  getConfig('Configuration')['user'],
@@ -219,39 +227,41 @@ class GaudiBase(IPrepareApp):
         dlls, pys, subpys = get_user_dlls(self.appname, self.version,
                                           self.user_release_area, self.platform,
                                           self.getenv(True))
-        InstallArea=[]
+        InstallArea = []
 
         for f in dlls:
-            logger.debug( "UserDLLs DLLs: %s" % expandfilename(f) )
-            InstallArea.append(File(name=expandfilename(f),subdir='lib'))
+            logger.debug("UserDLLs DLLs: %s" % expandfilename(f))
+            InstallArea.append(File(name=expandfilename(f), subdir='lib'))
         for f in pys:
             tmp = f.split('InstallArea')[-1]
-            subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-            logger.debug( "UserDLLs PYS: %s" % expandfilename(f) )
-            InstallArea.append(File(name=expandfilename(f),subdir=subdir))
+            subdir = 'InstallArea' + tmp[:tmp.rfind('/') + 1]
+            logger.debug("UserDLLs PYS: %s" % expandfilename(f))
+            InstallArea.append(File(name=expandfilename(f), subdir=subdir))
 
         for dir, files in subpys.iteritems():
             for f in files:
                 tmp = f.split('InstallArea')[-1]
-                subdir = 'InstallArea' + tmp[:tmp.rfind('/')+1]
-                logger.debug( "UserDLLs SUBPYS: %s" % expandfilename(f) )
-                InstallArea.append(File(name=expandfilename(f),subdir=subdir))
+                subdir = 'InstallArea' + tmp[:tmp.rfind('/') + 1]
+                logger.debug("UserDLLs SUBPYS: %s" % expandfilename(f))
+                InstallArea.append(File(name=expandfilename(f), subdir=subdir))
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         # also call post_prepare for hashing
-        # commented out here as inherrited from this class with extended perpare
-        
-        #self.checkPreparedHasParent(self)
-        #self.post_prepare()
+        # commented out here as inherrited from this class with extended
+        # perpare
+
+        # self.checkPreparedHasParent(self)
+        # self.post_prepare()
         fillPackedSandbox(InstallArea,
-                          os.path.join( share_dir,
-                                        'inputsandbox',
-                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
+                          os.path.join(share_dir,
+                                       'inputsandbox',
+                                       '_input_sandbox_%s.tar' % self.is_prepared.name))
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.'%(self._name))
+            raise Exception(
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
 
-        logger.info('Preparing %s application.'%(self._name))
+        logger.info('Preparing %s application.' % (self._name))
         self.is_prepared = ShareDir()
 
     def master_configure(self):
@@ -260,4 +270,3 @@ class GaudiBase(IPrepareApp):
 
     def configure(self, appmasterconfig):
         raise NotImplementedError
-

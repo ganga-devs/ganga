@@ -8,34 +8,39 @@ from Ganga.Utility.Shell import Shell
 from Ganga.Utility.logging import getLogger
 
 import Ganga.Utility.Config
-##  Cannot configure LHCb without Gaudi changing underneath
-gaudiConfig = Ganga.Utility.Config.getConfig( 'GAUDI' )
+# Cannot configure LHCb without Gaudi changing underneath
+gaudiConfig = Ganga.Utility.Config.getConfig('GAUDI')
 
 #---------------------------------------
 
+
 def available_versions(appname):
     if gaudiConfig['useCMakeApplications']:
-        return available_versions_cmake( appname )
+        return available_versions_cmake(appname)
     else:
-        return available_versions_SP( appname )
+        return available_versions_SP(appname)
+
 
 def guess_version(appname):
     if gaudiConfig['useCMakeApplications']:
-        return guess_version_cmake( appname )
+        return guess_version_cmake(appname)
     else:
-        return guess_version_SP( appname )
+        return guess_version_SP(appname)
 
-def _getshell( self ):
-    if gaudiConfig['useCMakeApplications']:
-        return _getshell_cmake( self )
-    else:
-        return _getshell_SP( self )
 
-def construct_merge_script( DaVinci_version, scriptName ):
+def _getshell(self):
     if gaudiConfig['useCMakeApplications']:
-        return construct_merge_script_cmake( DaVinci_version, scriptName )
+        return _getshell_cmake(self)
     else:
-        return construct_merge_script_SP( DaVinci_version, scriptName )
+        return _getshell_SP(self)
+
+
+def construct_merge_script(DaVinci_version, scriptName):
+    if gaudiConfig['useCMakeApplications']:
+        return construct_merge_script_cmake(DaVinci_version, scriptName)
+    else:
+        return construct_merge_script_SP(DaVinci_version, scriptName)
+
 
 def construct_run_environ():
     if gaudiConfig['useCMakeApplications']:
@@ -44,28 +49,24 @@ def construct_run_environ():
         return construct_run_environ_SP()
 
 
-
-
-
-
 def available_versions_cmake(appname):
     raise NotImplementedError
+
 
 def guess_version_cmake(appname):
     raise NotImplementedError
 
-def _getshell_cmake( self ):
+
+def _getshell_cmake(self):
     raise NotImplementedError
 
-def construct_merge_script( DaVinci_version, scriptName ):
+
+def construct_merge_script(DaVinci_version, scriptName):
     raise NotImplementedError
+
 
 def construct_run_environ_cmake():
     raise NotImplementedError
-
-
-
-
 
 
 def construct_run_environ_SP():
@@ -73,7 +74,7 @@ def construct_run_environ_SP():
     This chunk of code has to run the SetupProject or equivalent at the start of
     a local/batch job's execution to setup the gaudi environment
     """
-    script="""
+    script = """
 # check that SetupProject.sh script exists, then execute it
 os.environ['User_release_area'] = ''
 #os.environ['CMTCONFIG'] = platform
@@ -94,13 +95,13 @@ printenv > env.tmp' ''' % (platform, setup_script,project_opts,app,version))
                 os.environ[varval[0]] = content
     os.system('rm -f env.tmp')
 else:
-    print 'Could not find %s. Your job will probably fail.' % setup_script
+    sys.stdout.write('Could not find %s. Your job will probably fail.' % setup_script)
     sys.stdout.flush()
 """
     return script
 
 
-def construct_merge_script_SP( DaVinci_version, scriptName ):
+def construct_merge_script_SP(DaVinci_version, scriptName):
 
     shell_script = """#!/bin/sh
 SP=`which SetupProject.sh`
@@ -115,7 +116,7 @@ exit $?
 
     script_file_name = tempfile.mktemp('.sh')
     try:
-        script_file = file(script_file_name,'w')
+        script_file = file(script_file_name, 'w')
         script_file.write(shell_script)
         script_file.close()
     except:
@@ -130,25 +131,26 @@ def available_versions_SP(appname):
     s = Shell()
     tmp = tempfile.NamedTemporaryFile(suffix='.log')
     command = 'SetupProject.sh --ask %s' % appname
-    rc, output, m=s.cmd1("echo 'q\n' | %s >& %s; echo" % (command,tmp.name))
+    rc, output, m = s.cmd1("echo 'q\n' | %s >& %s; echo" % (command, tmp.name))
     output = tmp.read()
     tmp.close()
-    versions = output[output.rfind('(')+1:output.rfind('q[uit]')].split()
+    versions = output[output.rfind('(') + 1:output.rfind('q[uit]')].split()
     return versions
+
 
 def guess_version_SP(appname):
     """Guess the default Gaudi application version"""
     s = Shell()
     tmp = tempfile.NamedTemporaryFile(suffix='.log')
     command = 'SetupProject.sh --ask %s' % appname
-    rc, output, m=s.cmd1("echo 'q\n' | %s >& %s; echo" % (command, tmp.name))
+    rc, output, m = s.cmd1("echo 'q\n' | %s >& %s; echo" % (command, tmp.name))
     output = tmp.read()
     tmp.close()
-    version = output[output.rfind('[')+1:output.rfind(']')]
+    version = output[output.rfind('[') + 1:output.rfind(']')]
     return version
 
-## 'Simpler' but doesn't always work
-#def _getshell_SP(self):
+# 'Simpler' but doesn't always work
+# def _getshell_SP(self):
 #    from Ganga.Utility.Shell import expand_vars
 #    import os
 #    env = expand_vars( os.environ )
@@ -164,7 +166,7 @@ def guess_version_SP(appname):
 #    if self.masterpackage:
 #        (mpack, malg, mver) = CMTscript.parse_master_package( self.masterpackage )
 #        useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-#    cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version) 
+#    cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version)
 #
 #    Ganga.Utility.execute.execute( cmd, env=env, shell=True, update_env=True)
 #
@@ -186,14 +188,15 @@ def guess_version_SP(appname):
 def _getshell_SP(self):
     logger = getLogger()
     opts = ''
-    if self.setupProjectOptions: opts = self.setupProjectOptions
+    if self.setupProjectOptions:
+        opts = self.setupProjectOptions
 
     fd = tempfile.NamedTemporaryFile()
     script = '#!/bin/sh\n'
     if self.user_release_area:
         from Ganga.Utility.files import expandfilename
         script += 'User_release_area=%s; export User_release_area\n' % \
-        expandfilename(self.user_release_area)
+            expandfilename(self.user_release_area)
     if self.platform:
         script += '. `which LbLogin.sh` -c %s\n' % self.platform
         #script += 'export CMTCONFIG=%s\n' % self.platform
@@ -202,33 +205,35 @@ def _getshell_SP(self):
         from GangaLHCb.Lib.Applications.CMTscript import parse_master_package
         (mpack, malg, mver) = parse_master_package(self.masterpackage)
         useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-    cmd = '. SetupProject.sh %s %s %s %s' % (useflag, opts, self.appname, self.version)
+    cmd = '. SetupProject.sh %s %s %s %s' % (
+        useflag, opts, self.appname, self.version)
     script += '%s \n' % cmd
     fd.write(script)
     fd.flush()
-    #logger.debug(script)
+    # logger.debug(script)
 
     self.shell = Shell(setup=fd.name)
-    if (not self.shell): raise ApplicationConfigurationError(None,'Shell not created.')
+    if (not self.shell):
+        raise ApplicationConfigurationError(None, 'Shell not created.')
 
     #import pprint
-    #logger.debug(pprint.pformat(self.shell.env))
+    # logger.debug(pprint.pformat(self.shell.env))
 
     fd.close()
-
 
     app_ok = False
     ver_ok = False
     for var in self.shell.env:
-        if var.find(self.appname) >= 0: app_ok = True
-        if self.shell.env[var].find(self.version) >= 0: ver_ok = True
+        if var.find(self.appname) >= 0:
+            app_ok = True
+        if self.shell.env[var].find(self.version) >= 0:
+            ver_ok = True
     if not app_ok or not ver_ok:
         msg = 'Command "%s" failed to properly setup environment.' % cmd
         logger.error(msg)
         from Ganga.Core.exceptions import ApplicationConfigurationError
-        raise ApplicationConfigurationError(None,msg)
+        raise ApplicationConfigurationError(None, msg)
 
-    self.env = copy.deepcopy( self.shell.env )
+    self.env = copy.deepcopy(self.shell.env)
 
     return self.shell.env
-

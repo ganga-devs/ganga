@@ -1,95 +1,63 @@
-import copy, os, pickle
-from GangaLHCb.Lib.LHCbDataset                          import LHCbDataset
-from GangaLHCb.Lib.LHCbDataset.OutputData               import OutputData
+import copy
+import os
+import pickle
+from GangaLHCb.Lib.LHCbDataset import LHCbDataset
+from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from GangaGaudi.Lib.RTHandlers.GaudiDiracRunTimeHandler import GaudiDiracRunTimeHandler
-from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils      import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils            import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
-from GangaDirac.Lib.Backends.DiracUtils                 import result_ok
-from GangaDirac.Lib.Files.DiracFile                     import DiracFile
-from GangaDirac.Lib.Utilities.DiracUtilities            import execute
-from Ganga.GPIDev.Lib.File.OutputFileManager            import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
-from Ganga.GPIDev.Adapters.StandardJobConfig            import StandardJobConfig
-from Ganga.GPIDev.Lib.File                              import FileBuffer, LocalFile
-from Ganga.GPIDev.Base.Proxy                            import addProxy, isType
-from Ganga.Utility.Config                               import getConfig
-from Ganga.Utility.logging                              import getLogger
-from Ganga.Utility.util                                 import unique
-from Ganga.Core.exceptions                              import ApplicationConfigurationError
+from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.Backends.DiracUtils import result_ok
+from GangaDirac.Lib.Files.DiracFile import DiracFile
+from GangaDirac.Lib.Utilities.DiracUtilities import execute
+from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
+from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile
+from Ganga.GPIDev.Base.Proxy import addProxy, isType
+from Ganga.Utility.Config import getConfig
+from Ganga.Utility.logging import getLogger
+from Ganga.Utility.util import unique
+from Ganga.Core.exceptions import ApplicationConfigurationError
 logger = getLogger()
 
+
 class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
-## we dont do this anymore
-#    gaudiSoftwareVersionsCache = None
-#
-#    def __check_versions_against_dirac(self, app):
-#        ## cache versions dict
-#        if not LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
-#            result = execute('getSoftwareVersions()')
-#            if not result_ok(result):
-#                logger.error('Could not obtain available versions: %s' \
-#                             % str(result))
-#                logger.error('Version/platform will not be validated.')
-#            else:
-#                LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache = result['Value']
-#
-#        ## check version
-#        if LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
-#            if app.appname in LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache:
-#                soft_info = LHCbGaudiDiracRunTimeHandler.gaudiSoftwareVersionsCache[app.appname]
-#                if not app.version in soft_info:
-#                    msg = 'Invalid version: %s.  Valid versions: %s' \
-#                          % (app.version, str(soft_info.keys()))
-#                    raise ApplicationConfigurationError(None,msg)
-#                platforms = soft_info[app.version]
-#                if not app.platform in platforms:
-#                    msg = 'Invalid platform: %s. Valid platforms: %s' % \
-#                          (app.platform,str(platforms))
-#                    raise ApplicationConfigurationError(None,msg)
 
+    def master_prepare(self, app, appmasterconfig):
 
-    def master_prepare(self,app,appmasterconfig):
-        #self.__check_versions_against_dirac(app)
-        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig,['inputsandbox'])
+        inputsandbox, outputsandbox = master_sandbox_prepare(
+            app, appmasterconfig, ['inputsandbox'])
 
         # add summary.xml
-        outputsandbox += ['summary.xml','__parsedxmlsummary__']
+        outputsandbox += ['summary.xml', '__parsedxmlsummary__']
 
-        logger.debug( "Master Prepare LHCbGaudiDiracRunTimeHandler" )
+        logger.debug("Master Prepare LHCbGaudiDiracRunTimeHandler")
 
-        thisenv = None
-        #if appmasterconfig:
-        #    if hasattr( appmasterconfig, 'env' ):
-        #        thisenv = appmasterconfig.env
-
-        return StandardJobConfig( inputbox  = unique(inputsandbox),
-                                  outputbox = unique(outputsandbox),
-                                  env = thisenv )
-
+        return StandardJobConfig(inputbox=unique(inputsandbox),
+                                 outputbox=unique(outputsandbox),
+                                 env=None)
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
-        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
+        inputsandbox, outputsandbox = sandbox_prepare(
+            app, appsubconfig, appmasterconfig, jobmasterconfig)
 
-        job=app.getJobObject()
-        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
-        outputfiles=[file.namePattern for file in job.outputfiles if isinstance(file,DiracFile)]
+        job = app.getJobObject()
+        outputfiles = [file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
 
-        data_str  = 'import os\n'
+        data_str = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
 
-        if hasattr(job,'_splitter_data'):
+        if hasattr(job, '_splitter_data'):
             data_str += job._splitter_data
-        inputsandbox.append(FileBuffer('data-wrapper.py',data_str))
+        inputsandbox.append(FileBuffer('data-wrapper.py', data_str))
 
+        input_data = []
 
-      
- 
-        ## Cant wait to get rid of this when people no-longer specify
-        ## inputdata in options file
+        # Cant wait to get rid of this when people no-longer specify
+        # inputdata in options file
         #######################################################################
-        new_job = job
-        ## splitters ensure that subjobs pick up inputdata from job over that in
-        ## optsfiles but need to take sare of unsplit jobs
+        # splitters ensure that subjobs pick up inputdata from job over that in
+        # optsfiles but need to take care of unsplit jobs
         if not job.master:
             share_path = os.path.join(get_share_path(app),
                                       'inputdata',
@@ -97,126 +65,122 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             if not job.inputdata:
                 if os.path.exists(share_path):
-                    f=open(share_path,'r+b')
-                    new_job.inputdata = pickle.load(f)
+                    f = open(share_path, 'r+b')
+                    ob.inputdata = pickle.load(f)
                     f.close()
-        
-        ########################################################################
 
-        ## Cant wait to get rid of this when people no-longer specify
-        ## outputsandbox or outputdata in options file
+        #######################################################################
+
+        # Cant wait to get rid of this when people no-longer specify
+        # outputsandbox or outputdata in options file
         #######################################################################
         share_path = os.path.join(get_share_path(app),
                                   'output',
                                   'options_parser.pkl')
 
         if os.path.exists(share_path):
-#        if not os.path.exists(share_path):
-           # raise GangaException('could not find the parser')
-           f=open(share_path,'r+b')
-           parser = pickle.load(f)
-           f.close()
+            #        if not os.path.exists(share_path):
+            # raise GangaException('could not find the parser')
+            f = open(share_path, 'r+b')
+            parser = pickle.load(f)
+            f.close()
 
-           outbox, outdata = parser.get_output(job)
+            outbox, outdata = parser.get_output(job)
 
-           from Ganga.GPIDev.Lib.File import FileUtils
-           from Ganga.GPIDev.Base.Filters import allComponentFilters
+            from Ganga.GPIDev.Lib.File import FileUtils
+            from Ganga.GPIDev.Base.Filters import allComponentFilters
 
-           fileTransform = allComponentFilters['gangafiles']
-           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outdata if not FileUtils.doesFileExist(file, job.outputfiles) ] )
-           job.non_copyable_outputfiles.extend( [fileTransform(file, None) for file in outbox if not FileUtils.doesFileExist(file, job.outputfiles) ] )
+            fileTransform = allComponentFilters['gangafiles']
+            job.non_copyable_outputfiles.extend([fileTransform(file, None) for file in outdata if not FileUtils.doesFileExist(file, job.outputfiles)])
+            job.non_copyable_outputfiles.extend([fileTransform(file, None) for file in outbox if not FileUtils.doesFileExist(file, job.outputfiles)])
 
-           outputsandbox = [ f.namePattern for f in job.non_copyable_outputfiles ]
+            outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
 
-           #outputfiles.update(set(outdata[:]))
-           #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-           #job.non_copyable_outputfiles.extend([addProxy(DiracFile(namePattern=f))  for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-           #job.non_copyable_outputfiles.extend([addProxy(LocalFile(namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
-           #outputfiles = unique(outputfiles + [f.namePattern for f in job.non_copyable_outputfiles if isinstance(f, DiracFile)])
-           outputsandbox  = unique(outputsandbox)#  + outbox[:]) 
+            outputsandbox.extend(f.namePattern for f in job.outputfiles)
+            outputsandbox = unique(outputsandbox)  # + outbox[:])
         #######################################################################
 
-        input_data,   parametricinput_data = dirac_inputdata(new_job.application)
-#        outputdata,   outputdata_path      = dirac_ouputdata(new_job.application)
+        input_data_dirac, parametricinput_data = dirac_inputdata(job.application)
+
+        if input_data_dirac:
+            for f in input_data_dirac:
+                if isType(f, DiracFile):
+                    input_data.extend(f)
 
         from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript, is_gaudi_child, lhcbdiracAPI_script_template
 
         commandline = "python ./gaudipython-wrapper.py"
         if is_gaudi_child(app):
-            commandline  = 'gaudirun.py '
+            commandline = 'gaudirun.py '
             commandline += ' '.join([str(arg) for arg in app.args])
             commandline += ' options.pkl data-wrapper.py'
         logger.debug('Command line: %s: ', commandline)
 
         gaudi_script_path = os.path.join(job.getInputWorkspace().getPath(), "gaudi-script.py")
+
         script_generator(gaudi_script_template(),
                          #remove_unreplaced = False,
-                         outputfile_path   = gaudi_script_path,
-                         PLATFORM          = app.platform,
-                         COMMAND           = commandline,
-                         XMLSUMMARYPARSING = getXMLSummaryScript()#,
+                         outputfile_path=gaudi_script_path,
+                         PLATFORM=app.platform,
+                         COMMAND=commandline,
+                         XMLSUMMARYPARSING=getXMLSummaryScript()  # ,
                          #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
                          )
 
         #logger.debug( "input_data %s" % str( input_data ) )
 
-        ## We want to propogate the ancestor depth to DIRAC when we have inputdata set
-        if new_job.inputdata is not None and isType(new_job.inputdata, LHCbDataset):
+        # We want to propogate the ancestor depth to DIRAC when we have
+        # inputdata set
+        if job.inputdata is not None and isType(job.inputdata, LHCbDataset):
 
-            ## As the RT Handler we already know we have a Dirac backend
-            if type(new_job.backend.settings) is not dict:
-                raise ApplicationConfigurationError(None, 'backend.settings should be a dict')
+            # As the RT Handler we already know we have a Dirac backend
+            if type(job.backend.settings) is not dict:
+                raise ApplicationConfigurationError(
+                    None, 'backend.settings should be a dict')
 
-            if 'AncestorDepth' in new_job.backend.settings:
-                ancestor_depth = new_job.backend.settings['AncestorDepth']
+            if 'AncestorDepth' in job.backend.settings:
+                ancestor_depth = job.backend.settings['AncestorDepth']
             else:
-                ancestor_depth = new_job.inputdata.depth
+                ancestor_depth = job.inputdata.depth
         else:
             ancestor_depth = 0
 
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
-        # NOTE special case for replicas: replicate string must be empty for no replication
+        # NOTE special case for replicas: replicate string must be empty for no
+        # replication
         dirac_script = script_generator(lhcbdiracAPI_script_template(),
-                                        DIRAC_IMPORT         = 'from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
-                                        DIRAC_JOB_IMPORT     = 'from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
-                                        DIRAC_OBJECT         = 'DiracLHCb()',
-                                        JOB_OBJECT           = 'LHCbJob()',
-                                        NAME                 = mangle_job_name(app),
-                                        APP_NAME             = app.appname,
-                                        APP_VERSION          = app.version,
-                                        APP_SCRIPT           = gaudi_script_path, 
-                                        APP_LOG_FILE         = 'Ganga_%s_%s.log' % (app.appname, app.version),
-                                        INPUTDATA            = input_data,
-                                        PARAMETRIC_INPUTDATA = parametricinput_data,
-                                        OUTPUT_SANDBOX       = API_nullifier(outputsandbox),
-                                        OUTPUTDATA           = API_nullifier(list(outputfiles)),
-                                        OUTPUT_PATH          = "", # job.fqid,#outputdata_path,
-                                        OUTPUT_SE            = getConfig('DIRAC')['DiracOutputDataSE'],
-                                        SETTINGS             = diracAPI_script_settings(new_job.application),
-                                        DIRAC_OPTS           = job.backend.diracOpts,
-                                        PLATFORM             = app.platform,
-                                        REPLICATE            = 'True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
-                                        ANCESTOR_DEPTH       = ancestor_depth,
-                                        # leave the sandbox for altering later as needs
-                                        # to be done in backend.submit to combine master.
-                                        # Note only using 2 #s as auto-remove 3
-                                        INPUT_SANDBOX        = '##INPUT_SANDBOX##'
+                                        DIRAC_IMPORT='from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
+                                        DIRAC_JOB_IMPORT='from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
+                                        DIRAC_OBJECT='DiracLHCb()',
+                                        JOB_OBJECT='LHCbJob()',
+                                        NAME=mangle_job_name(app),
+                                        APP_NAME=app.appname,
+                                        APP_VERSION=app.version,
+                                        APP_SCRIPT=gaudi_script_path,
+                                        APP_LOG_FILE='Ganga_%s_%s.log' % (app.appname, app.version),
+                                        INPUTDATA=input_data,
+                                        PARAMETRIC_INPUTDATA=parametricinput_data,
+                                        OUTPUT_SANDBOX=API_nullifier(outputsandbox),
+                                        OUTPUTDATA=API_nullifier(list(outputfiles)),
+                                        # job.fqid,#outputdata_path,
+                                        OUTPUT_PATH="",
+                                        OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
+                                        SETTINGS=diracAPI_script_settings(job.application),
+                                        DIRAC_OPTS=job.backend.diracOpts,
+                                        PLATFORM=app.platform,
+                                        REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
+                                        ANCESTOR_DEPTH=ancestor_depth,
+                                        ## This is to be modified in the final 'submit' function in the backend
+                                        ## The backend also handles the inputfiles DiracFiles ass appropriate
+                                        INPUT_SANDBOX='##INPUT_SANDBOX##'
                                         )
-        logger.debug( "prepare: LHCbGaudiDiracRunTimeHandler" )
+        logger.debug("prepare: LHCbGaudiDiracRunTimeHandler")
 
-        #print inputsandbox
-
-        thisenv = None
-        #if appmasterconfig:
-        #    if hasattr( appmasterconfig, 'env' ):
-        #        thisenv = appmasterconfig.env
-
-        return StandardJobConfig( dirac_script,
-                                  inputbox  = unique(inputsandbox ),
-                                  outputbox = unique(outputsandbox),
-                                  env = thisenv )
-
+        return StandardJobConfig(dirac_script,
+                                 inputbox=unique(inputsandbox),
+                                 outputbox=unique(outputsandbox),
+                                 env=None)
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

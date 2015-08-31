@@ -14,10 +14,13 @@ from Ganga.GPIDev.Lib.Tasks.TaskApplication import TaskApplication
 logger = Ganga.Utility.logging.getLogger()
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
+
 def jobid_as_string(job):
-    jstr=''
-    if job.master: jstr=str(job.master.id)+os.sep+str(job.id)
-    else: jstr=str(job.id)
+    jstr = ''
+    if job.master:
+        jstr = str(job.master.id) + os.sep + str(job.id)
+    else:
+        jstr = str(job.id)
     return jstr
 
 
@@ -30,44 +33,51 @@ def lhcbdiracAPI_script_template():
     DiracLHCb_Options += 'j.setApplicationScript(\'###APP_NAME###\',\'###APP_VERSION###\',\'###APP_SCRIPT###\',logFile=\'###APP_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
     DiracLHCb_Options += 'j.setAncestorDepth(###ANCESTOR_DEPTH###)\n'
 
-    DiracScript = DiracScript.replace('outputPath','OutputPath').replace('outputSE','OutputSE')
-    DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'','\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
-    DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()' )
-    DiracScript = DiracScript.replace('###OUTPUT_SE###','###OUTPUT_SE###,replicate=\'###REPLICATE###\'' )
+    DiracScript = DiracScript.replace(
+        'outputPath', 'OutputPath').replace('outputSE', 'OutputSE')
+    DiracScript = DiracScript.replace(
+        '\'###EXE_LOG_FILE###\'', '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
+    DiracScript = DiracScript.replace(
+        'j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()')
+    DiracScript = DiracScript.replace(
+        '###OUTPUT_SE###', '###OUTPUT_SE###,replicate=\'###REPLICATE###\'')
 
     setName_str = 'j.setName(\'###NAME###\')'
-    DiracScript = DiracScript.replace(setName_str, "%s\n%s" % (setName_str, DiracLHCb_Options) )
+    DiracScript = DiracScript.replace(
+        setName_str, "%s\n%s" % (setName_str, DiracLHCb_Options))
 
     return DiracScript
 
 
-## def get_master_input_sandbox(job,extra):
+# def get_master_input_sandbox(job,extra):
 ##     sandbox = job.inputsandbox[:]
 ##     sandbox += extra.master_input_files[:]
 ##     buffers = extra.master_input_buffers
 ##     sandbox += [FileBuffer(n,s) for (n,s) in buffers.items()]
 ##     logger.debug("Master input sandbox: %s",str(sandbox))
-##     return sandbox
+# return sandbox
 
-## def get_input_sandbox(extra):
+# def get_input_sandbox(extra):
 ##      sandbox = []
 ##      sandbox += extra.input_files[:]
 ##      sandbox += [FileBuffer(n,s) for (n,s) in extra.input_buffers.items()]
 ##      logger.debug("Input sandbox: %s",str(sandbox))
-##      return sandbox
+# return sandbox
 
 def is_gaudi_child(app):
     if isType(app, Gaudi):
         return True
 
-    if isType( app, TaskApplication):
+    if isType(app, TaskApplication):
         from Ganga.GPI import GaudiPythonTask, BenderTask
-        if not isType( app, GaudiPythonTask) and not isType( app, BenderTask):
+        if not isType(app, GaudiPythonTask) and not isType(app, BenderTask):
             return True
 
     return False
 
+
 class filenameFilter:
+
     def __init__(self, filename):
         self.filename = filename
 
@@ -76,18 +86,20 @@ class filenameFilter:
 
 
 def getXMLSummaryScript(indent=''):
-  '''Returns the necessary script to parse and make sense of the XMLSummary data'''
-  import inspect
-  from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
-  script  = "###INDENT#### Parsed XMLSummary data extraction methods\n"
-  
-  for summaryItem in activeSummaryItems().values():
-    script += ''.join(['###INDENT###'+line for line in inspect.getsourcelines(summaryItem)[0]])
-  script += ''.join(['###INDENT###'+line for line in inspect.getsourcelines(activeSummaryItems)[0]])
+    '''Returns the necessary script to parse and make sense of the XMLSummary data'''
+    import inspect
+    from GangaLHCb.Lib.Applications.AppsBaseUtils import activeSummaryItems
+    script = "###INDENT#### Parsed XMLSummary data extraction methods\n"
+
+    for summaryItem in activeSummaryItems().values():
+        script += ''.join(['###INDENT###' +
+                           line for line in inspect.getsourcelines(summaryItem)[0]])
+    script += ''.join(['###INDENT###' +
+                       line for line in inspect.getsourcelines(activeSummaryItems)[0]])
 ##     script += inspect.getsource(summaryItem)
 ##   script += inspect.getsource(activeSummaryItems)
 
-  script += """
+    script += """
 ###INDENT#### XMLSummary parsing
 ###INDENT###import os, sys
 ###INDENT###if 'XMLSUMMARYBASEROOT' not in os.environ:
@@ -125,14 +137,15 @@ def getXMLSummaryScript(indent=''):
 ###INDENT###        finally:
 ###INDENT###            fn.close()  
 """
-  return script.replace('###INDENT###',indent)
+    return script.replace('###INDENT###', indent)
+
 
 def create_runscript():
 
-  from GangaLHCb.Lib.Applications.EnvironFunctions import construct_run_environ
-  environ_script = construct_run_environ()
+    from GangaLHCb.Lib.Applications.EnvironFunctions import construct_run_environ
+    environ_script = construct_run_environ()
 
-  script = str("""#!/usr/bin/env python
+    script = str("""#!/usr/bin/env python
 
 import os,sys
 opts = '###OPTS###'
@@ -158,7 +171,7 @@ else:
                                             version,
                                             'options',
                                             'job.opts')
-    print 'Using the master optionsfile:', opts
+    sys.stdout.write('Using the master optionsfile: %s' % opts)
     sys.stdout.flush()
 
 # # # # # Code to Setup Environment # # # # #
@@ -184,6 +197,6 @@ os.system(cmdline)
 ###XMLSUMMARYPARSING###
 """).replace( '###CONSTRUCT_ENVIRON###', environ_script )
 
-  return script
+    return script
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

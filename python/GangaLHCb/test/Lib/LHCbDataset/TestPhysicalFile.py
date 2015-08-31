@@ -10,6 +10,7 @@ except x:
 if doConfig:
     from GangaLHCb.Lib.Files.PhysicalFile import *
 
+
 class TestPhysicalFile(GangaGPITestCase):
 
     def test_full_expand_filename(self):
@@ -19,10 +20,10 @@ class TestPhysicalFile(GangaGPITestCase):
         name = 'test.txt'
         full_name = pwd + '/' + name
         assert full_expand_filename(name) == full_name, 'name not expanded'
-        try:            
-            full_expand_filename('lfn:'+name)
+        try:
+            full_expand_filename('lfn:' + name)
             raise RuntimeError('using lfn should have raised exception')
         except:
             pass
 
-    #test the rest in GPI tests
+    # test the rest in GPI tests

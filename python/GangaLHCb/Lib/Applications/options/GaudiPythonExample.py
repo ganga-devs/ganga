@@ -1,10 +1,10 @@
 from ROOT import TCanvas
 from LHCbAlgs.Configuration import *
 
-lhcbApp = LHCbApp(DDDBtag = 'default',
-                  CondDBtag = 'default',
-                  DataType = '2010',
-                  Simulation = False)
+lhcbApp = LHCbApp(DDDBtag='default',
+                  CondDBtag='default',
+                  DataType='2010',
+                  Simulation=False)
 
 from AnalysisPython import Dir, Functors
 from GaudiPython.Bindings import gbl, AppMgr, Helper
@@ -21,4 +21,3 @@ evt.dump()
 
 import atexit
 atexit.register(appMgr.exit)
-
