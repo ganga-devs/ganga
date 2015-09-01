@@ -59,6 +59,9 @@ _externalPackages = {
     'httplib2': {'version': '0.8',
                  'noarch': True,
                  'syspath': 'python'},
+    'python-gflags': {'version': '2.0',
+                      'noarch': True,
+                      'syspath': 'python'},
     'google-api-python-client': {'version': '1.1',
                                  'noarch': True,
                                  'syspath': 'python'}
