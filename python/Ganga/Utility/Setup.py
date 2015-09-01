@@ -39,7 +39,7 @@ class PackageSetup(object):
         if not package_required:
             return ('', '')
 
-        platfdir = getPlaftorm()
+        platfdir = getPlatform()
 
         if 'noarch' in package and package['noarch']:
             platfdir = 'noarch'
@@ -163,7 +163,7 @@ def setPlatform(platform):
     Ganga.PACKAGE._defaultPlatform = _new_platform = platform
 
 
-def getPlaftorm():
+def getPlatform():
     """
     Returns the current platform string set for Ganga
     """
