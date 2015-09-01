@@ -17,6 +17,7 @@ import argparse
 parser = argparse.ArgumentParser(description="Install Ganga's externals")
 parser.add_argument('version')
 parser.add_argument('--prefix', default='/afs/cern.ch/sw/ganga')
+parser.add_argument('--platform', default='x86_64-slc6-gcc48-opt')
 args = parser.parse_args()
 
 CONFIG = {}
@@ -25,6 +26,7 @@ CONFIG['tarball_dir'] = '%(prefix)s/tarball' % CONFIG    # all ganga tarballs ar
 CONFIG['external_dir'] = '%(prefix)s/external' % CONFIG  # all external packages are unpacked here
 CONFIG['plugin_packages'] = ['GangaLHCb', 'GangaPlotter', 'GangaTest', 'GangaAtlas', 'GangaPanda']
 CONFIG['VERSION'] = args.version
+CONFIG['platform'] = args.platform
 
 ganga_install = '%(prefix)s/install/%(VERSION)s' % CONFIG
 
@@ -59,6 +61,7 @@ if CONFIG['plugin_packages']:
     print("Resolving additional external dependencies for: ", ' '.join(CONFIG['plugin_packages']))
 
 import Ganga.PACKAGE
+Ganga.PACKAGE._defaultPlatform = CONFIG['platform']
 # we need a tarPath relative to the externalHome
 Ganga.PACKAGE._defaultExternalHome = ''
 
