@@ -402,6 +402,14 @@ class Descriptor(object):
         del obj._data[self._name]
 
 
+def export(method):
+    """
+    Decorate a GangaObject method to be exported to the GPI
+    """
+    method.exported = True
+    return method
+
+
 class ObjectMetaclass(type):
     _descriptor = Descriptor
 
@@ -436,7 +444,7 @@ class ObjectMetaclass(type):
         dicts = (b.__dict__ for b in reversed(cls.__mro__))
         for d in dicts:
             for k in d:
-                if k in cls._exportmethods:
+                if k in cls._exportmethods or getattr(d[k], 'exported', False):
 
                     internal_name = "_export_" + k
                     if internal_name not in d.keys():
