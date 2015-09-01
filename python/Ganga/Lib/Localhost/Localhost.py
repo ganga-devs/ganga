@@ -273,16 +273,8 @@ import sys
 sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
-try:
-    import subprocess
-except ImportError as x:
-    sys.path.insert(0,###SUBPROCESS_PYTHONPATH###)
-    import subprocess
-try:
-    import tarfile
-except ImportError as x:
-    sys.path.insert(0,###TARFILE_PYTHONPATH###)
-    import tarfile
+import subprocess
+import tarfile
 
 
 fullenvironment = os.environ.copy()
@@ -404,12 +396,6 @@ sys.exit()
 
         script = script.replace(
             '###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
-
-        import Ganga.PACKAGE
-        script = script.replace('###SUBPROCESS_PYTHONPATH###', repr(
-            Ganga.PACKAGE.setup.getPackagePath2('subprocess', 'syspath', force=True)))
-        script = script.replace('###TARFILE_PYTHONPATH###', repr(
-            Ganga.PACKAGE.setup.getPackagePath2('tarfile', 'syspath', force=True)))
 
         wrkspace = job.getInputWorkspace()
         scriptPath = wrkspace.writefile(

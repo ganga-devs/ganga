@@ -465,11 +465,7 @@ except:
 statusfile.writelines(line)
 flush_file(statusfile)
 
-try:
-    import tarfile
-except ImportError as x:
-    sys.path.insert(0,###TARFILE_PYTHONPATH###)
-    import tarfile
+import tarfile
 
 # -- WARNING: get the input files including the python modules BEFORE sys.path.insert()
 # -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
@@ -486,11 +482,7 @@ import sys
 sys.path.insert(0, ###GANGADIR###)
 sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
 
-try:
-    import subprocess
-except ImportError as x:
-    sys.path.insert(0,###SUBPROCESS_PYTHONPATH###)
-    import subprocess
+import subprocess
 
 fullenvironment = os.environ.copy()
 for key,value in environment.iteritems():
@@ -618,12 +610,6 @@ sys.exit(result)
 
         text = text.replace(
             '###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
-
-        import Ganga.PACKAGE
-        text = text.replace('###SUBPROCESS_PYTHONPATH###', repr(
-            Ganga.PACKAGE.setup.getPackagePath2('subprocess', 'syspath', force=True)))
-        text = text.replace('###TARFILE_PYTHONPATH###', repr(
-            Ganga.PACKAGE.setup.getPackagePath2('tarfile', 'syspath', force=True)))
 
         from Ganga.GPIDev.Lib.File import FileBuffer
 
