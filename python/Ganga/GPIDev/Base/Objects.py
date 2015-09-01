@@ -623,7 +623,7 @@ class GangaObject(Node):
             #logger.debug( "Locking: %s for job %s" % (reg.name, str(self.getJobObject().getFQID('.'))) )
             _haveLocked = False
             _counter = 1
-            _sleep_size = 2.
+            _sleep_size = 1
             _timeOut = self._getIOTimeOut()
             while not _haveLocked:
                 err = None
@@ -635,13 +635,14 @@ class GangaObject(Node):
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
                     logger.info("Waiting on Write access to registry: %s" % reg.name)
-                    logger.debug("%s" % str(x))
+                    logger.debug("err: %s" % str(x))
                     err = x
                 _counter = _counter + 1
-                # Sleep 5 sec longer than the time taken to bail out
-                if _counter * _sleep_size >= _timeOut + 5:
-                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, str(x)))
-                    raise x
+                # Sleep 2 sec longer than the time taken to bail out
+                if _counter * _sleep_size >= _timeOut + 2:
+                    logger.error("Failed to get access to registry: %s. Reason: %s" % (reg.name, str(err)))
+                    if err is not None:
+                        raise err
 
     def _releaseWriteAccess(self):
         """ releases write access to the object.

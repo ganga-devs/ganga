@@ -55,12 +55,11 @@ try:
     session_expiration_timeout = getConfig('Configuration')['DiskIOTimeout']
 except ConfigError, err:
     session_expiratrion_timeout = 5
-# session_expiration_timeout = 45 # in sec
+
 session_lock_refresher = None
 
 sessionFiles = []
 sessionFileHandlers = []
-
 
 def registerGlobalSessionFile(thisSessionFile):
     global sessionFiles
@@ -107,6 +106,7 @@ class SessionLockRefresher(GangaThread):
         self.fns = [fn]
         self.repos = [repo]
         self.afs = afs
+        self.FileCheckTimes = {}
 
     # This function attempts to grab the ctime from a file which should exist
     # As we don't want this to fail outright it attempts to re-read every 1s
@@ -167,33 +167,36 @@ class SessionLockRefresher(GangaThread):
             logger.warning("Internal exception in Updating session lock thread: %s %s" % ( x.__class__.__name__, str(x)))
 
     def updateLocks(self, index):
+
+        this_index_file = self.fns[index]
+        if this_index_file in self.FileCheckTimes.keys():
+            if abs(self.FileCheckTimes[this_index_file]-time.time()) >= 3:
+                now = self._reallyUpdateLocks(index)
+                self.FileCheckTimes[this_index_file] = now
+        else:
+            now = self._reallyUpdateLocks(index)
+            self.FileCheckTimes[this_index_file] = now
+
+        return self.FileCheckTimes[this_index_file]
+
+    def _reallyUpdateLocks(self, index):
+        this_index_file = self.fns[index]
         try:
-            # os.stat(self.fn).st_ctime
-            oldnow = self.delayread(self.fns[index])
-            #os.utime(self.fns[index], None)
-            #print('touch -am %s' % str(self.fns[index]))
-            #print("%s" % str(os.stat(self.fns[index]).st_mtime))
-            os.system('touch %s' % str(self.fns[index]))
-            now = self.delayread(self.fns[index]) # os.stat(self.fn).st_ctime
-            # print str(now-oldnow)
-            # if now - oldnow  > session_expiration_timeout/2:
-            #    logger.warning("%s: This session can only update its session file every %s seconds - this can cause problems with other sessions!" % (time.time(), now - oldnow))
-            # print "%s: Delta is %i seconds" % (time.time(), now - oldnow)
+            oldnow = self.delayread(this_index_file)
+            os.system('touch %s' % str(this_index_file))
+            now = self.delayread(this_index_file) # os.stat(self.fn).st_ctime
         except OSError as x:
             if x.errno != errno.ENOENT:
-                logger.debug(
-                    "Session file timestamp could not be updated! Locks could be lost!")
+                logger.debug("Session file timestamp could not be updated! Locks could be lost!")
             else:
-                #import traceback
-                # traceback.print_stack()
                 if self.repos[index] != None:
-                    raise RepositoryError(self.repos[index], "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
-                                                              Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
-                                                              On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (self.fns[index], x))
+                    raise RepositoryError(self.repos[index],
+                    "[SessionFileUpdate] Run: Own session file not found! Possibly deleted by another ganga session.\n\
+                    Possible reasons could be that this computer has a very high load, or that the system clocks on computers running Ganga are not synchronized.\n\
+                    On computers with very high load and on network filesystems, try to avoid running concurrent ganga sessions for long.\n '%s' : %s" % (this_index_file, x))
                 else:
                     from Ganga.Core import GangaException
-                    raise GangaException(
-                        "Error Opening global .session file for this session: %s" % self.fns[index])
+                    raise GangaException("Error Opening global .session file for this session: %s" % this_index_file)
         return now
 
     def clearDeadLocks(self, now):
