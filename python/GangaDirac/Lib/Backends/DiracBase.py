@@ -188,7 +188,7 @@ class DiracBase(IBackend):
                 input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
         if j.master:
             for this_file in j.master.inputfiles:
-                if isType(this_file, DiracFiles):
+                if isType(this_file, DiracFile):
                     input_sandbox_userFiles.append('LFN:'+str(this_file.lfn))
 
         for this_file in input_sandbox_userFiles:
