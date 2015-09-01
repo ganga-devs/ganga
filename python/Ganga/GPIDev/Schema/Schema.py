@@ -69,11 +69,11 @@ class Schema(object):
     # Ganga will automatically set a reference to the plugin class which corresponds to this schema, hence
     # defining the schema's name and category.
     #
-    # datadict: dictionary of properties (schema items)
+    # datadict: dictionary of properties (schema items) Defaults to '{}'
     # version: the version information
 
-    def __init__(self, version, datadict):
-        self.datadict = datadict
+    def __init__(self, version, datadict=None):
+        self.datadict = datadict or {}
         self.version = version
         self._pluginclass = None
 

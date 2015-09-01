@@ -420,6 +420,11 @@ class ObjectMetaclass(type):
         if not hasattr(cls, '_schema') or cls._schema is None:
             cls._schema = Schema.Schema(None,None)
 
+        # Add all class members of type `Schema.Item` to the _schema object
+        for member_name, member in dict.items():
+            if isinstance(member, Schema.Item):
+                cls._schema.datadict[member_name] = member
+
         # produce a GPI class (proxy)
         proxyClass = GPIProxyClassFactory(name, cls)
 
