@@ -467,6 +467,10 @@ class ObjectMetaclass(type):
             logger.error(s)
             raise ValueError(s)
 
+        # If a class has not specified a '_name' then default to using the class '__name__'
+        if not cls.__dict__.get('_name'):
+            cls._name = name
+
         if not cls._schema._pluginclass is None:
             logger.warning('Possible schema clash in class %s between %s and %s',
                            name, cls._name, cls._schema._pluginclass._name)
