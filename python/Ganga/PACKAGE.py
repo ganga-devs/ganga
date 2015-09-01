@@ -101,16 +101,12 @@ def detectPlatform():
 
     platfstring = platf4
 
-    try:
-        import platform
-        import re
-        c = re.compile('\S+-redhat-(?P<ver>\S+)-\S+')
-        r = c.match(platform.platform())
-        if r and r.group('ver').split('.')[0] == '5':
-            platfstring = platf5
-    except ImportError, err:
-        logger.debug("Ganga PACKAGE Import Exception: %s" % str(err))
-        pass
+    import platform
+    import re
+    c = re.compile('\S+-redhat-(?P<ver>\S+)-\S+')
+    r = c.match(platform.platform())
+    if r and r.group('ver').split('.')[0] == '5':
+        platfstring = platf5
 
     return platfstring[arch]
 
