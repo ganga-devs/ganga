@@ -38,47 +38,28 @@ def isProxy(obj):
 def isType(_obj, type_or_seq):
     """Checks whether on object is of the specified type, stripping proxies as needed."""
 
-    ## A fair amount of isclass checks are needed for GangaList and maybe others!!! rcurrie
-    ## If this is taken out then the GangaList class needs to be fixed as do others!!!
-
-    if isclass(_obj):
-        try:
-            obj = stripProxy(_obj.__class__)
-        except:
-            obj = stripProxy(_obj)
-    else:
-        obj = stripProxy(_obj)
+    obj = stripProxy(_obj)
+    #print("obj: %s" % str(obj))
 
     ## Here to avoid circular GangaObject dependencies
     from Ganga.GPIDev.Lib.GangaList import GangaList
     ## is type_or_seq iterable?
-    if isinstance(type_or_seq, (tuple, list)) or (isinstance(stripProxy(type_or_seq), GangaList.GangaList) and stripProxy(type_or_seq) != GangaList.GangaList):
+    if isinstance(type_or_seq, (tuple, list)) or\
+            (isinstance(stripProxy(type_or_seq), GangaList.GangaList) and stripProxy(type_or_seq) != GangaList.GangaList):
         clean_list = []
         for type_obj in type_or_seq:
-            if not isclass(type_obj) and type(type_obj) != type(type('')) and type_obj != type(''):
-                if isclass(type_obj):
-                    try:
-                        clean_list.append(stripProxy(type_obj.__class__))
-                    except:
-                        clean_list.append(type(stripProxy(type_obj)))
-                else:
-                    clean_list.append(type(stripProxy(type_obj)))
+            if (not isclass(type_obj)) and (type(type_obj) != type(type('')) and type_obj != type('')):
+                clean_list.append(type(stripProxy(type_obj)))
+            elif isclass(type_obj):
+                clean_list.append(type_obj)
             else:
                 clean_list.append(type_obj)
+
+        #print("%s" % str(tuple(clean_list)))
         return isinstance(obj, tuple(clean_list))
 
-        #for this_type in clean_list:
-        #    if isinstance(obj, this_type):
-        #        return True
-        #return False
     else:
-        if isclass(type_or_seq):
-            try:
-                return isinstance(obj, stripProxy(type_of_seq.__class__))
-            except:
-                return isinstance(obj, stripProxy(type_or_seq))
-        else:
-            return isinstance(obj, stripProxy(type_or_seq))
+        return isinstance(obj, stripProxy(type_or_seq))
 
 def stripProxy(obj):
     """Removes the proxy if there is one"""
