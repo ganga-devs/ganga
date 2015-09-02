@@ -261,8 +261,7 @@ def config_file_as_text():
                         if len(lines) > 1:
                             value = "\n# ".join(lines)
                             def_value = "\n# ".join(def_lines)
-                    except:
-                        Ganga.Utility.logging.log_unknown_exception()
+                    except AttributeError:
                         pass
                     text += '#%s = %s\n' % (o, def_value)
                     text += '%s = %s\n\n' % (o, value)
