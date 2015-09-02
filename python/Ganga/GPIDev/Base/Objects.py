@@ -607,7 +607,7 @@ class GangaObject(Node):
         super(GangaObject, self).accept(visitor)
 
     def _getIOTimeOut(self):
-        from Ganga.Utility.Config.Config import getConfig
+        from Ganga.Utility.Config.Config import getConfig, ConfigError
         try:
             _timeOut = getConfig('Configuration')['DiskIOTimeout']
         except ConfigError, err:
