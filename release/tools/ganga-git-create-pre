@@ -16,6 +16,7 @@ GIT_URL=git@github.com:ganga-devs/ganga-git-testing.git
 echo "-------------"
 echo "Fetching repo"
 echo "-------------"
+mkdir -p $STAGING_DIR
 cd $STAGING_DIR
 git clone $GIT_URL $VERSION-pre
 cd $VERSION-pre
