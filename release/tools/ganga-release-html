@@ -170,37 +170,6 @@ class ReleaseHTML:
         self.str += '\n <h2> Testing report </h2> \n'
 
         self.str += report
-        
-
-    def addCVSTags(self):
-        '''Create CVS Tag with references and add it's reference to doccument
-        '''
-        
-        print "INFO:  Adding CVS Tags"
-
-        import re
-        configfilename  = "%s/release/config/PACKAGES-###VERSION###"%self.gangadir
-        lines = file(configfilename.replace('###VERSION###',self.version)).readlines()
-
-        newlines = ['<table>\n']
-
-        for line in lines:
-            match = re.compile(r'^(.*ganga\S*)(\s+)(.+)\S*',re.M).search(line)
-            if match:
-                if match.group(1).find("#")==0:
-                    newlines.append('<tr><td> <i style="color:red">%s</i></td><td><i style="color:DodgerBlue ">%s</i></td></tr>'%(match.group(1),match.group(3)))
-                else:
-                    refstr = "http://isscvs.cern.ch/cgi-bin/cvsweb.cgi/%s?cvsroot=ganga;only_with_tag=%s"%(match.group(1),match.group(3))
-                    newlines.append("<tr><td>%s</td><td>%s</td></tr>"%(match.group(1),'<a href = %s> %s </a>'%(refstr,match.group(3))))
-            else:
-                newlines.append('<tr><td><i style="color:DodgerBlue ">%s</i></td><td></td></tr>'%line)
-
-        newlines.append("</table>")
-
-        file("%s/cvstags.html"%self.htmldir,'w').writelines(newlines)
-
-        self.str += '\n <h2> CVS Tags </h2> \n'
-        self.str += ' <a  href= "cvstags.html"> Tags html </a> <br>'
             
 def main():     
 
@@ -216,7 +185,6 @@ def main():
    Relhtml.beginDocument()
 
    Relhtml.addReleaseNotes()
-   Relhtml.addCVSTags()      
    Relhtml.addDocumentation()
    Relhtml.addTestingReport()   
 
