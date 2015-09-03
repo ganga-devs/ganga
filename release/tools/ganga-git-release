@@ -581,5 +581,5 @@ while True:
     for i, command in enumerate(commands):
         print "  %d   - %s" % (i, command.__doc__)
     print
-    c = raw_input('Enter your choice:')
+    c = raw_input('Enter your choice: ')
     commands[int(c)]()
