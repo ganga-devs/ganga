@@ -113,7 +113,7 @@ def convertDQ2NamesToQueueName(locations):
     #     for location in locations:
     #         if location in tokens:
     #             #queuename = [ i for i in queuename if i.startswith("ANALY") ]
-    #             if not info.has_key(location):
+    #             if location not in info:
     #                 info[location] = queuename
     #             else:
     #                 info[location] = append(queuename)

@@ -673,11 +673,17 @@ class PackageConfig(object):
             if not self.options[o].check_defined():
                 del self.options[o]
 
-import ConfigParser
+try:
+    import ConfigParser
+    GangaConfigParser = ConfigParser.SafeConfigParser
+except ImportError:
+    # For Python 3
+    import configparser as ConfigParser
+    GangaConfigParser = ConfigParser.ConfigParser
 
 
 def make_config_parser(system_vars):
-    cfg = ConfigParser.ConfigParser()
+    cfg = GangaConfigParser()
     cfg.optionxform = str  # case sensitive
     cfg.defaults().update(system_vars)
     return cfg
@@ -776,8 +782,7 @@ def read_ini_files(filenames, system_vars):
             for name in cc.options(sec):
                 try:
                     value = cc.get(sec, name)
-                except ConfigParser.InterpolationMissingOptionError, err:
-                    #print("Can't expand config %s:%s treating it as raw" % (str(sec),str(name)))
+                except ConfigParser.InterpolationMissingOptionError:
                     value = cc.get(sec, name, raw=True)
 
                 for localvar in re.finditer('\$\{[^${}]*\}', value):
@@ -801,7 +806,7 @@ def read_ini_files(filenames, system_vars):
                     current_value = main.get(sec, name)
                 except ConfigParser.NoOptionError:
                     current_value = None
-                except ConfigParser.InterpolationMissingOptionError, err:
+                except ConfigParser.InterpolationMissingOptionError:
                     logger.debug("Failed to expand, Importing value %s:%s as raw" % (str(sec), str(name)))
                     current_value = main.get(sec, name, raw=True)
 
@@ -880,7 +885,7 @@ def configure(filenames, system_vars):
                 continue
             try:
                 v = cfg.get(name, o)
-            except ConfigParser.InterpolationMissingOptionError, err:
+            except ConfigParser.InterpolationMissingOptionError:
                 logger = getLogger()
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
                 v = cfg.get(name, o, raw=True)
@@ -912,7 +917,7 @@ def load_user_config(filename, system_vars):
                 continue
             try:
                 v = new_cfg.get(name, o)
-            except ConfigParser.InterpolationMissingOptionError, err:
+            except ConfigParser.InterpolationMissingOptionError:
                 logging.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
                 v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)

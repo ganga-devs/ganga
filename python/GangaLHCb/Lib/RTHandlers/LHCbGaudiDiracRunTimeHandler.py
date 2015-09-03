@@ -197,7 +197,7 @@ from os.path import join
 import sys
 
 def prependEnv(key, value):
-    if environ.has_key(key): value += (pathsep + environ[key])
+    if key in environ: value += (pathsep + environ[key])
     environ[key] = value
 
 # Main

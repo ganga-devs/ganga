@@ -556,7 +556,7 @@ def setEnvironment(key, value, update=False):
     '''Sets an environment variable. If update=True, it preends it to
     the current value with os.pathsep as the seperator.'''
     from os import environ,pathsep
-    if update and environ.has_key(key):
+    if update and key in environ:
         value += (pathsep + environ[key])#prepend
     environ[key] = value
             

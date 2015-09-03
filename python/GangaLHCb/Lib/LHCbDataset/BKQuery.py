@@ -128,7 +128,7 @@ RecoToDST-07/90000000/DST" ,
         if 'LFNs' in value:
             files = value['LFNs']
         if not type(files) is list:  # i.e. a dict of LFN:Metadata
-            # if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             metadata = files.copy()
 
         if metadata:
@@ -163,7 +163,7 @@ RecoToDST-07/90000000/DST" ,
         if 'LFNs' in value:
             files = value['LFNs']
         if not type(files) is list:  # i.e. a dict of LFN:Metadata
-            # if files.has_key('LFNs'): # i.e. a dict of LFN:Metadata
+            # if 'LFNs' in files: # i.e. a dict of LFN:Metadata
             files = files.keys()
 
         from Ganga.GPI import DiracFile

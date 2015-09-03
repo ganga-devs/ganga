@@ -82,7 +82,7 @@ class Shell(object):
 
         os.environ['FOO'] = '$NO_BAR'
         s = Shell()
-        if os.environ.not has_key('NO_BAR'):
+        if 'NO_BAR' not in os.environ:
            assert s.env['FOO'] == '$NO_BAR'
 
         """

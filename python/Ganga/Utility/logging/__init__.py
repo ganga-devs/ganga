@@ -178,7 +178,7 @@ def post_config_handler(opt, value):
                 format = config['_customFormat']
             else:
                 format = _formats[value]
-        except KeyError, err:
+        except KeyError:
             private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), _formats.keys()))
             return
 
