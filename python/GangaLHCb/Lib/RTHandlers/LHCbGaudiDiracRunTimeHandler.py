@@ -33,8 +33,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         logger.debug("Master Prepare LHCbGaudiDiracRunTimeHandler")
 
         return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox),
-                                 env=None)
+                                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
@@ -91,8 +90,8 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
             from Ganga.GPIDev.Base.Filters import allComponentFilters
 
             fileTransform = allComponentFilters['gangafiles']
-            job.non_copyable_outputfiles.extend([fileTransform(file, None) for file in outdata if not FileUtils.doesFileExist(file, job.outputfiles)])
-            job.non_copyable_outputfiles.extend([fileTransform(file, None) for file in outbox if not FileUtils.doesFileExist(file, job.outputfiles)])
+            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])
+            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)])
 
             outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
 
@@ -102,10 +101,14 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         input_data_dirac, parametricinput_data = dirac_inputdata(job.application)
 
-        if input_data_dirac:
+        if input_data_dirac is not None:
             for f in input_data_dirac:
                 if isType(f, DiracFile):
-                    input_data.extend(f)
+                    input_data.append(f.lfn)
+                elif isType(f, str):
+                    input_data.append(f)
+                else:
+                    raise ApplicationConfigurationError("Don't know How to handle anythig other than DiracFiles or strings to LFNs!")
 
         from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript, is_gaudi_child, lhcbdiracAPI_script_template
 
@@ -179,8 +182,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
         return StandardJobConfig(dirac_script,
                                  inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox),
-                                 env=None)
+                                 outputbox=unique(outputsandbox))
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
