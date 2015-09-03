@@ -129,18 +129,7 @@ class VPrinter(object):
             print(self.indent(), name, '=', self.quote(value), end=' ', file=self.out)
 
     def sharedAttribute(self, node, name, value, sequence):
-        if self.showAttribute(node, name):
-            self.empty_body = 0
-            self.comma()
-            # DISABLED
-            # print '*'*20,name
-            # if sequence:
-            #    print 'transformation:',repr(value)
-            #    value = value.toString()
-            #    print 'into',repr(value)
-            # else:
-            #    print 'no transformation'
-            print(self.indent(), name, '=', self.quote(value), end=' ', file=self.out)
+        self.simpleAttribute(node, name, value, sequence)
 
     def acceptOptional(self, s):
         if s is None:
