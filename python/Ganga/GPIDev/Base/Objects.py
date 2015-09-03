@@ -16,7 +16,6 @@
 import Ganga.Utility.logging
 
 import types
-import inspect
 from copy import deepcopy
 
 import Ganga.GPIDev.Schema as Schema
@@ -24,10 +23,10 @@ import Ganga.GPIDev.Schema as Schema
 from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError, isType, stripProxy, GPIProxyObjectFactory
 from Ganga.Core.exceptions import GangaValueError, GangaException
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.VPrinter import VPrinter, VSummaryPrinter
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
+
 
 class PreparedStateError(GangaException):
 
@@ -50,11 +49,11 @@ class Node(object):
         super(Node, self).__init__()
 
     def __getstate__(self):
-        dict = self.__dict__.copy()
-        dict['_data'] = dict['_data'].copy()
+        d = self.__dict__.copy()
+        d['_data'] = d['_data'].copy()
         for r in self._ref_list:
-            dict[r] = None
-        return dict
+            d[r] = None
+        return d
 
     def __setstate__(self, dict):
         for n, v in dict['_data'].items():
@@ -73,21 +72,21 @@ class Node(object):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         # FIXME: this is different than for deepcopy... is this really correct?
-        dict = self.__dict__.copy()
-        obj.__dict__ = dict
+        d = self.__dict__.copy()
+        obj.__dict__ = d
         return obj
 
     def __deepcopy__(self, memo=None):
         cls = type(stripProxy(self))
         obj = super(cls, cls).__new__(cls)
-        dict = stripProxy(self).__getstate__()
-        for n in dict:
+        d = stripProxy(self).__getstate__()
+        for n in d:
             #print "%s::%s" % (str(self.__class__.__name__), str(n))
             if n not in self._ref_list:
-                dict[n] = deepcopy(dict[n], memo)  # FIXED
+                d[n] = deepcopy(d[n], memo)  # FIXED
             else:
-                dict[n] = None
-        obj.__setstate__(dict)
+                d[n] = None
+        obj.__setstate__(d)
         obj._parent = None
         obj._index_cache = None
         obj._registry = stripProxy(self)._registry
@@ -113,7 +112,7 @@ class Node(object):
             return self
         root = None
         obj = self
-        while not obj is None:
+        while obj is not None:
             root = obj
             if cond and cond(root):
                 break
@@ -217,7 +216,7 @@ class Node(object):
 
         if self is node:
             return 1
-        if not node:# or not self._schema.isEqual(node._schema):
+        if not node:  # or not self._schema.isEqual(node._schema):
             return 0
 
         if not isType(node, type(self)):
@@ -345,9 +344,6 @@ class Descriptor(object):
         # self._check_getter()
 
         def cloneVal(v):
-            # print
-            # 'cloneVal:',self._name,v,item['optional'],item['load_default'],
-            # item['defvalue']
             if v is None:
                 assert(item['optional'])
                 return None
@@ -379,13 +375,6 @@ class Descriptor(object):
             else:
                 val = cloneVal(val)
 
-# if val is None:
-# assert(item['optional'])
-# else:
-##                     assert(isinstance(val, Node))
-# if val._category != item['category']:
-##                         raise AttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' %(self._name, val,item['category']))
-##                     val = cloneVal(val)
         else:
             if item['sequence']:
                 if item['preparable']:
@@ -406,7 +395,7 @@ def export(method):
     """
     Decorate a GangaObject method to be exported to the GPI
     """
-    method.exported = True
+    method.exported_method = True
     return method
 
 
@@ -424,11 +413,11 @@ class ObjectMetaclass(type):
         logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
 
         # all Ganga classes must have (even empty) schema
-        #assert(cls._schema is not None)
         if not hasattr(cls, '_schema') or cls._schema is None:
-            cls._schema = Schema.Schema(None,None)
+            cls._schema = Schema.Schema(None, None)
 
         # Add all class members of type `Schema.Item` to the _schema object
+        # TODO: We _could_ add base class's Items here by going through `bases` as well.
         for member_name, member in dict.items():
             if isinstance(member, Schema.Item):
                 cls._schema.datadict[member_name] = member
@@ -444,7 +433,7 @@ class ObjectMetaclass(type):
         dicts = (b.__dict__ for b in reversed(cls.__mro__))
         for d in dicts:
             for k in d:
-                if k in cls._exportmethods or getattr(d[k], 'exported', False):
+                if k in cls._exportmethods or getattr(d[k], 'exported_method', False):
 
                     internal_name = "_export_" + k
                     if internal_name not in d.keys():
@@ -462,7 +451,7 @@ class ObjectMetaclass(type):
                     setattr(proxyClass, k, f)
 
         # sanity checks for schema...
-        if not '_schema' in dict.keys():
+        if '_schema' not in dict.keys():
             s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
             logger.error(s)
             raise ValueError(s)
@@ -471,7 +460,7 @@ class ObjectMetaclass(type):
         if not cls.__dict__.get('_name'):
             cls._name = name
 
-        if not cls._schema._pluginclass is None:
+        if cls._schema._pluginclass is not None:
             logger.warning('Possible schema clash in class %s between %s and %s',
                            name, cls._name, cls._schema._pluginclass._name)
 
@@ -620,7 +609,6 @@ class GangaObject(Node):
         root = self._getRoot()
         reg = root._getRegistry()
         if reg is not None:
-            #logger.debug( "Locking: %s for job %s" % (reg.name, str(self.getJobObject().getFQID('.'))) )
             _haveLocked = False
             _counter = 1
             _sleep_size = 1
@@ -661,12 +649,6 @@ class GangaObject(Node):
         reg = root._getRegistry()
         if reg is not None:
             reg._read_access(root, self)
-#            Uncomment to debug the lazy loading
-#            print "excepting because of access to ", self._name
-#            import traceback
-#            for line in traceback.format_stack():
-#                print line.strip()
-#                print
 
     # define when the object is read-only (for example a job is read-only in
     # the states other than new)
