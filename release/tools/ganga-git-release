@@ -386,17 +386,6 @@ def ReleaseCommand():
             print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
             return
 
-    print 'Copying all reports from the pre-release area'
-
-    acmd('cp -r %(prereldir)s/reports %(reldir)s' % CONFIG)
-
-    print 'Regenerating reports'
-    toolcmd('ganga-release-html %(version)s %(reldir)s' % CONFIG)
-
-    print 'Cleaning any junk left by report generation scripts'
-
-    toolcmd('prepdist %(reldir)s clean' % CONFIG)
-
     print 'Making installation tarballs'
 
     toolcmd('ganga-git-create-final %(version)s' % CONFIG)
@@ -405,19 +394,31 @@ def ReleaseCommand():
 
     toolcmd('prepdist %(reldir)s compile' % CONFIG)
 
+    print 'Copying all reports from the pre-release area'
+
+    acmd('cp -r %(prereldir)s/reports %(reldir)s' % CONFIG)
+
+    print 'Regenerating reports'
+
+    toolcmd('ganga-release-html %(version)s %(reldir)s' % CONFIG)
+
+    print 'Cleaning any junk left by report generation scripts'
+
+    toolcmd('prepdist %(reldir)s clean' % CONFIG)
+
     print 'Fix the coverage report symlink'
 
-    acmd('ln -s ../latest/html/coverage %(reldir)s/reports/html/coverage' % CONFIG)
+    #acmd('ln -s ../latest/html/coverage %(reldir)s/reports/html/coverage' % CONFIG)
 
     print 'Protecting the release area'
 
     toolcmd('acl protect %(reldir)s' % CONFIG)
 
     print 'Protecting the tags dir'
-    ReleaseCommand._protectTagsDir()
+    _protectTagsDir()
 
     print 'Updating web pages'
-    ReleaseCommand._updateWebPages()
+    #_updateWebPages()
 
     print 'Release sucesfully made in the %(reldir)s' % CONFIG
 

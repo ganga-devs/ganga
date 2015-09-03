@@ -31,6 +31,8 @@ echo "--------------"
 git archive --prefix=$VERSION-pre/ --format=tar HEAD | gzip >Ganga-$VERSION-pre.tar.gz
 cp Ganga-$VERSION-pre.tar.gz $INSTALL_DIR/tarball/
 tar xf $INSTALL_DIR/tarball/Ganga-$VERSION-pre.tar.gz --directory $INSTALL_DIR
+echo "Copied tarball to $INSTALL_DIR/tarball/Ganga-$VERSION-pre.tar.gz"
+echo "Installed pre to $INSTALL_DIR"
 
 echo "--------------------"
 echo "Installing externals"
