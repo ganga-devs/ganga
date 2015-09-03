@@ -20,6 +20,7 @@ mkdir -p $STAGING_DIR
 cd $STAGING_DIR
 git clone $GIT_URL $VERSION-pre
 cd $VERSION-pre
+git branch master origin/master #Track the master branch too
 git flow init -d
 git config gitflow.prefix.versiontag v
 git flow release start $VERSION
