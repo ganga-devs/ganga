@@ -1,50 +1,50 @@
 import Ganga.Utility.logging
 logger = Ganga.Utility.logging.getLogger()
 
-logger.info("IApp")
+logger.debug("IApp")
 import Ganga.GPIDev.Adapters.IApplication
-logger.info("IBack")
+logger.debug("IBack")
 import Ganga.GPIDev.Adapters.IBackend
-logger.info("ISplit")
+logger.debug("ISplit")
 import Ganga.GPIDev.Adapters.ISplitter
-logger.info("IMerge")
+logger.debug("IMerge")
 import Ganga.GPIDev.Adapters.IMerger
 
-logger.info("GangaList")
+logger.debug("GangaList")
 import Ganga.GPIDev.Lib.GangaList
-logger.info("Job")
+logger.debug("Job")
 import Ganga.GPIDev.Lib.Job
-logger.info("File")
+logger.debug("File")
 import Ganga.GPIDev.Lib.File
 
-logger.info("Merger")
+logger.debug("Merger")
 import Ganga.Lib.Mergers
-logger.info("Splitter")
+logger.debug("Splitter")
 import Ganga.Lib.Splitters
 
-logger.info("Execut")
+logger.debug("Execut")
 import Ganga.Lib.Executable
-logger.info("Root")
+logger.debug("Root")
 import Ganga.Lib.Root
 
-logger.info("LocalH")
+logger.debug("LocalH")
 import Ganga.Lib.Localhost
-logger.info("LCG")
+logger.debug("LCG")
 import Ganga.Lib.LCG
-logger.info("Condor")
+logger.debug("Condor")
 import Ganga.Lib.Condor
-logger.info("Interact")
+logger.debug("Interact")
 import Ganga.Lib.Interactive
-logger.info("Batch")
+logger.debug("Batch")
 import Ganga.Lib.Batch
-logger.info("Remote")
+logger.debug("Remote")
 import Ganga.Lib.Remote
-logger.info("MSGMS")
+logger.debug("MSGMS")
 import Ganga.Lib.MonitoringServices.MSGMS
-logger.info("DashB")
+logger.debug("DashB")
 import Ganga.Lib.MonitoringServices.Dashboard.DashboardMS
 
-logger.info("Task")
+logger.debug("Task")
 import Ganga.GPIDev.Lib.Tasks
 
-logger.info("Fin")
+logger.debug("Fin")
