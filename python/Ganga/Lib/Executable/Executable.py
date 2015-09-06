@@ -232,7 +232,7 @@ class RTHandler(IRuntimeHandler):
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
 
         c = StandardJobConfig(prepared_exe, app._getParent().inputsandbox, convertIntToStringArgs(
-            app.args), app._getParent().outputsandbox, app.env)
+            app.args), app._getParent().outputsandbox)
         return c
 
 

@@ -397,11 +397,9 @@ class ConfigOption(object):
         if isinstance(value, str) and cast_type is not str:
             try:
                 new_value = eval(value, config_scope)
-                logger.debug(
-                    'applied eval(%s) -> %s (%s)', value, new_value, optdesc)
+                logger.debug('applied eval(%s) -> %s (%s)', value, new_value, optdesc)
             except Exception as x:
-                logger.debug(
-                    'ignored failed eval(%s): %s (%s)', value, x, optdesc)
+                logger.debug('ignored failed eval(%s): %s (%s)', value, x, optdesc)
 
         # check the type of the value unless the cast_type is not NoneType
         logger.debug('checking value type: %s (%s)', str(cast_type), optdesc)
@@ -675,7 +673,7 @@ class PackageConfig(object):
 
 try:
     import ConfigParser
-    GangaConfigParser = ConfigParser.SafeConfigParser
+    GangaConfigParser = ConfigParser.RawConfigParser
 except ImportError:
     # For Python 3
     import configparser as ConfigParser

@@ -12,9 +12,12 @@ from Ganga.Utility import Shell
 from Ganga.Utility.logging import getLogger
 from .IGangaFile import IGangaFile
 
+from Ganga.GPIDev.Lib.File import FileUtils
+
 import re
 import os
 import copy
+import Ganga.Utility.Config
 
 regex = re.compile('[*?\[\]]')
 logger = getLogger()
@@ -427,111 +430,14 @@ class MassStorageFile(IGangaFile):
             massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat, massStorageConfig[
                                        'mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
-        script = """\n
-###INDENT###import subprocess
-###INDENT####system command executor with subprocess
-###INDENT###def execSyscmdSubprocessAndReturnOutputMAS(cmd):
+        script_location = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + 'scripts/MassStorageFileWNScript.py'
 
-###INDENT###    exitcode = -999
-###INDENT###    mystdout = ''
-###INDENT###    mystderr = ''
+        script = FileUtils.loadScript(script_location, '###INDENT###')
 
-###INDENT###    try:
-###INDENT###        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-###INDENT###        (mystdout, mystderr) = child.communicate()
-###INDENT###        exitcode = child.returncode
-###INDENT###    finally:
-###INDENT###        pass
-
-###INDENT###    return (exitcode, mystdout, mystderr)
-        
-###INDENT###for massStorageList in ###MASSSTORAGECOMMANDS###:
-
-###INDENT###    filenameWildChar = massStorageList[1]
-###INDENT###    outputfilenameformat = massStorageList[2]
-###INDENT###    cm_mkdir = massStorageList[3]
-###INDENT###    cm_cp = massStorageList[4]
-###INDENT###    cm_ls = massStorageList[5]
-###INDENT###    path = massStorageList[6]
-
-###INDENT###    pathToDirName = os.path.dirname(path)
-###INDENT###    dirName = os.path.basename(path)
-
-###INDENT###    (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
-###INDENT###    if exitcode != 0:
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###        continue
-
-###INDENT###    directoryExists = False 
-###INDENT###    for directory in mystdout.split('\\n'):
-###INDENT###        if directory.strip() == dirName:
-###INDENT###            directoryExists = True
-###INDENT###            break
-
-###INDENT###    if not directoryExists:
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
-###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###            continue
-
-###INDENT###    folderStructure = ''
-###INDENT###    filenameStructure = ''
-###INDENT###
-###INDENT###    jobid = '###JOBDIR###'
-###INDENT###    subjobid = '###SUBJOBDIR###'
-###INDENT###        
-###INDENT###    if outputfilenameformat == 'None':
-###INDENT###        filenameStructure = '{fname}'
-###INDENT###        folderStructure = jobid
-###INDENT###        if subjobid != '':
-###INDENT###            folderStructure = os.path.join(jobid, subjobid)
-###INDENT###                
-###INDENT###    else:
-###INDENT###        filenameStructure = os.path.basename(outputfilenameformat)
-###INDENT###        filenameStructure = filenameStructure.replace('{jid}', jobid)
-###INDENT###
-###INDENT###        folderStructure = os.path.dirname(outputfilenameformat)
-###INDENT###        folderStructure = folderStructure.replace('{jid}', jobid)
-###INDENT###
-###INDENT###        if subjobid != '':
-###INDENT###            filenameStructure = filenameStructure.replace('{sjid}', subjobid)
-###INDENT###            folderStructure = folderStructure.replace('{sjid}', subjobid)
-###INDENT###
-###INDENT###    if folderStructure != '':               
-###INDENT###        folderStructure = folderStructure.strip('/')
-###INDENT###        path = os.path.join(path, folderStructure)
-###INDENT###        command = '%s -p %s' % (cm_mkdir, path)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS(command)
-###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s  command, check if the ganga user has rights for creating ###INDENT###directories in this folder' % command + os.linesep + mystderr)
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###            continue
-
-
-###INDENT###    filenameWildCharZipped = filenameWildChar
-###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
-###INDENT###        filenameWildCharZipped = '%s.gz' % filenameWildChar
-
-###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),filenameWildCharZipped)):
-###INDENT###        currentFileBaseName = os.path.basename(currentFile)
-###INDENT###        finalFilename = filenameStructure.replace('{fname}', currentFileBaseName)
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, finalFilename)))
-###INDENT###        if exitcode != 0:
-###INDENT###            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading ###INDENT###files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, finalFilename)) + os.linesep ###INDENT### + mystderr)
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
-###INDENT###        else:
-###INDENT###            ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, finalFilename)))
-###INDENT###            #remove file from output dir
-###INDENT###            os.system('rm %s' % currentFile)
-"""
-
-        script = script.replace(
-            '###MASSSTORAGECOMMANDS###', repr(massStorageCommands))
+        script = script.replace('###MASSSTORAGECOMMANDS###', repr(massStorageCommands))
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
-        script = script.replace(
-            '###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
+        script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
 
         jobfqid = self.getJobObject().fqid
 
@@ -542,8 +448,7 @@ class MassStorageFile(IGangaFile):
             jobid = jobfqid.split('.')[0]
             subjobid = jobfqid.split('.')[1]
 
-        script = script.replace(
-            '###FULLJOBDIR###', str(jobfqid.replace('.', os.path.sep)))
+        script = script.replace('###FULLJOBDIR###', str(jobfqid.replace('.', os.path.sep)))
         script = script.replace('###JOBDIR###', str(jobid))
         script = script.replace('###SUBJOBDIR###', str(subjobid))
 
@@ -661,5 +566,4 @@ class MassStorageFile(IGangaFile):
 
 # add MassStorageFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate MassStorageFile() objects via config file)
-import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['MassStorageFile'] = MassStorageFile

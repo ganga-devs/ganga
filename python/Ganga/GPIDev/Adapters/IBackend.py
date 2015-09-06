@@ -8,10 +8,6 @@ from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
-from Ganga.GPIDev.Lib.File import File, ShareDir
 
 from Ganga.Utility.logic import implies
 
@@ -19,9 +15,7 @@ import os
 import itertools
 import time
 
-#import threading
-#pSubmitLock = threading.Lock()
-
+logger = Ganga.Utility.logging.getLogger()
 
 class IBackend(GangaObject):
 
@@ -51,17 +45,6 @@ class IBackend(GangaObject):
 
     def __init__(self):
         super(IBackend, self).__init__()
-##         import sys
-##         frame = sys._getframe(1)
-##         logger = Ganga.Utility.logging.getLogger(frame=frame)
-##         del frame
-##         from Ganga.Utility.util import GenericWrapper, wrap_callable_filter
-# def before(args,kwargs):
-##             args[0] = 'hello'+args[0]
-# return args,kwargs
-# def after():
-# pass
-##         self.logger = GenericWrapper(logger,before,after, forced = ['info','error','warning','critical', 'debug'], wrapper_function=wrap_callable_filter)
 
     def setup(self):
         """ This is a hook called for each job when Ganga.Core services are
@@ -247,6 +230,8 @@ class IBackend(GangaObject):
         """ Prepare the master job (shared sandbox files). This method is/should be called by master_submit() exactly once.
         The input sandbox is created according to self._packed_input_sandbox flag (a class attribute)
         """
+        from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
+        from Ganga.GPIDev.Lib.File.File import File, ShareDir
 
         job = self.getJobObject()
 

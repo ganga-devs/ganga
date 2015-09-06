@@ -1,19 +1,40 @@
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
 from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 
+import Ganga.Utility.logging
+
+import fnmatch
+
+logger = Ganga.Utility.logging.getLogger()
+
 transformDictionary = {}
 
+def loadScript(scriptFilePath, indentation):
+
+    if not os.path.exists(scriptFilePath):
+        from Ganga.Core.exceptions import GangaError
+        raise GangaError("Error Finding script file: %s" % str(scriptFilePath))
+
+    with open(scriptFilePath) as this_file:
+        file_data = this_file.read()
+
+    return indentScript(file_data, indentation)
+
+def indentScript(script, indenting):
+
+    script_lines = script.split('\n')
+    output_script = []
+    for this_line in script_lines:
+        output_script.append(str(indenting) + str(this_line))
+
+    return '\n'.join(output_script)
 
 def __populate():
     if len(transformDictionary) == 0:
         transformDictionary[type(File())] = LocalFile
         # transformDictionary[ ] =
 __populate()
-
 
 def safeTransformFile(input_file):
 
@@ -26,8 +47,6 @@ def safeTransformFile(input_file):
     return None
 
 def doesFileExist( input_file='some.file', input_list = [] ):
-
-    import fnmatch
 
     test_fileName = ''
     if type(input_file) == type(''):

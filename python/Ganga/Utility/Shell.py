@@ -34,6 +34,7 @@
 
 import os
 import re
+import stat
 import tempfile
 import time
 import signal
@@ -100,15 +101,13 @@ class Shell(object):
             if not os.path.exists(this_cwd):
                 this_cwd = os.path.abspath(tempfile.gettempdir())
             logger.debug("Using CWD: %s" % this_cwd)
-            logger.debug(
-                'Running:   source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args)))
-            pipe = subprocess.Popen('source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args)),
-                                    env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            command = 'source %s %s > /dev/null 2>&1; python -c "from __future__ import print_function; import os; print(os.environ)"' % (setup, " ".join(setup_args))
+            logger.debug('Running:   %s' % command )
+            pipe = subprocess.Popen(command, env=env, cwd=this_cwd, shell=True, stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             output = pipe.communicate()
             rc = pipe.poll()
             if rc:
-                logger.warning(
-                    'Unexpected rc %d from setup command %s', rc, setup)
+                logger.warning('Unexpected rc %d from setup command %s', rc, setup)
 
             # print output
             # print eval(str(output)[0])
@@ -148,8 +147,7 @@ class Shell(object):
         "Execute an OS command and captures the stderr and stdout which are returned in a file"
 
         if not soutfile:
-            soutfile = tempfile.NamedTemporaryFile(
-                mode='w+t', suffix='.out').name
+            soutfile = tempfile.NamedTemporaryFile(mode='w+t', suffix='.out').name
 
         logger.debug('Running shell command: %s' % cmd)
         try:
@@ -198,12 +196,10 @@ class Shell(object):
         except OSError as e:
             if e.errno == 10:
                 rc = process.returncode
-                logger.debug(
-                    "Process has already exitted which will throw a 10")
+                logger.debug("Process has already exitted which will throw a 10")
                 logger.debug("Exit status is: %s" % rc)
             else:
-                logger.warning(
-                    'Problem with shell command: %s, %s', e.errno, e.strerror)
+                logger.warning('Problem with shell command: %s, %s', e.errno, e.strerror)
                 rc = 255
 
         BYTES = 4096
@@ -212,8 +208,7 @@ class Shell(object):
             if mention_outputfile_on_errors:
                 logger.warning('full output is in file: %s', soutfile)
             with open(soutfile) as sout_file:
-                logger.warning(
-                    '<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
+                logger.warning('<first %d bytes of output>\n%s', BYTES, sout_file.read(BYTES))
             logger.warning('<end of first %d bytes of output>', BYTES)
 
         # FIXME /bin/sh might have also other error messages
@@ -234,7 +229,6 @@ class Shell(object):
 
         with open(outfile) as out_file:
             output = out_file.read()
-        import os
         os.unlink(outfile)
 
         return rc, output, m
@@ -271,13 +265,10 @@ class Shell(object):
 
         fullpath = s.wrapper('lcg-cp', 'echo lcg-cp called with arguments $*'"""
 
-        from tempfile import mkdtemp
-        from os.path import join
-
         if not self.dirname:
-            self.dirname = mkdtemp()
+            self.dirname = tempfile.mkdtemp()
 
-        fullpath = join(self.dirname, cmd)
+        fullpath = os.path.join(self.dirname, cmd)
         with open(fullpath, 'w') as f:
             f.write("#!/bin/bash\n")
             for k, v in self.env.iteritems():
@@ -285,8 +276,6 @@ class Shell(object):
             if preexecute:
                 f.write("%s\n" % preexecute)
             f.write("%s $*\n" % cmd)
-        import stat
-        import os
         os.chmod(fullpath, stat.S_IRWXU)
 
         return fullpath

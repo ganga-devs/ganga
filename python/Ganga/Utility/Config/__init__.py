@@ -1,5 +1,6 @@
 from __future__ import absolute_import
 from .Config import getConfig, makeConfig, ConfigError, configure, allConfigs, setConfigOption, expandConfigPath, config_scope, setSessionValue, getFlavour
+import os.path
 
 ## from Config import getConfigDict
 
@@ -8,7 +9,6 @@ from .Config import getConfig, makeConfig, ConfigError, configure, allConfigs, s
 
 def expandvars(c, v):
     """The ~ and $VARS are automatically expanded. """
-    import os.path
     return os.path.expanduser(os.path.expandvars(v))
 
 

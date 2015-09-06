@@ -5,39 +5,40 @@
 ##########################################################################
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
-from MetadataDict import *
+from Ganga.GPIDev.Schema import Version, Schema, FileItem, ComponentItem, SimpleItem, GangaFileItem
+from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
 
 import Ganga.Utility.logging
-from Ganga.Lib.Notifier import Notifier
-from Ganga.Lib.Checkers import FileChecker, CustomChecker
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException, MultiPostProcessor
 
-from Ganga.Utility.util import isStringLike
 from Ganga.Utility.logging import log_user_exception
 
-import Ganga.Utility.Config
-from Ganga.Utility.files import expandfilename
+from Ganga.Utility.Config import getConfig, ConfigError
 
 from Ganga.Core import GangaException
-from Ganga.Core.GangaRepository import RegistryKeyError
+from Ganga.Core.GangaRepository import RegistryKeyError, getRegistry
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
-from Ganga.GPIDev.Lib.Registry import *
-from Ganga.Core.GangaRepository import *
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
 
 from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory, addProxy, stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
+import copy
+import glob
 import os
+import re
 import shutil
 import sys
-import copy
-from Ganga.Utility.Config import getConfig
+import time
 
 import uuid
 from JobTime import JobTime
+
+import Ganga.GPIDev.Lib.File.FileUtils
+from Ganga.GPIDev.Lib.File import getFileConfigKeys
+import Ganga.Core.Sandbox as Sandbox
 
 logger = Ganga.Utility.logging.getLogger()
 config = Ganga.Utility.Config.getConfig('Configuration')
@@ -320,7 +321,6 @@ class Job(GangaObject):
                         c.inputfiles.append(copy.deepcopy(i))
 
             # Apply needed transform to move Sandbox item to the
-            import Ganga.GPIDev.Lib.File.FileUtils
             if self.inputsandbox != []:
                 for i in self.inputsandbox:
                     c.inputfiles.append(Ganga.GPIDev.Lib.File.FileUtils.safeTransformFile(i))
@@ -400,7 +400,6 @@ class Job(GangaObject):
             currentOutputFiles = object.__getattribute__(self, name)
             currenUnCopyableOutputFiles = object.__getattribute__(self, 'non_copyable_outputfiles')
 
-            import re
             regex = re.compile('[*?\[\]]')
             files = GangaList()
             files2 = GangaList()
@@ -437,7 +436,6 @@ class Job(GangaObject):
             #currentInputFiles = object.__getattribute__(self, name)
             #currentInputFiles = self.__getattribute__(name)
             #
-            #import re
             #regex = re.compile('[*?\[\]]')
             #files = GangaList()
             #
@@ -481,7 +479,7 @@ class Job(GangaObject):
 
         logger.debug(
             'job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
-        #import inspect,os
+        #import inspect
         #frame = inspect.stack()[2]
         # if not frame[0].f_code.co_name == 'updateStatus' and
         # if frame[0].f_code.co_filename.find('/Ganga/GPIDev/')==-1 and frame[0].f_code.co_filename.find('/Ganga/Core/')==-1:
@@ -652,11 +650,7 @@ class Job(GangaObject):
         """Return a 'live' version of the output post processing map.
         Can't be done at load/global namespace because then user modules are ignored."""
 
-        from Ganga.Utility.Config import getConfig, ConfigError
-
         backend_output_postprocess = {}
-
-        from Ganga.GPIDev.Lib.File import getFileConfigKeys
 
         keys = getFileConfigKeys()
 
@@ -678,8 +672,6 @@ class Job(GangaObject):
         # if this option is True, don't use the new outputfiles mechanism
         # if getConfig('Output')['ProvideLegacyCode']:
             # return
-
-        import glob
 
         if len(outputfiles) == 0:
             return
@@ -838,7 +830,6 @@ class Job(GangaObject):
 
     def _auto__init__(self, registry=None, unprepare=None):
         if registry is None:
-            from Ganga.Core.GangaRepository import getRegistry
             registry = getRegistry(self.default_registry)
 
         if unprepare is True:
@@ -877,7 +868,6 @@ class Job(GangaObject):
         import Ganga.Core.FileWorkspace
         Workspace = getattr(Ganga.Core.FileWorkspace, what)
         w = Workspace()
-        import os
         w.jobid = self.getFQID(os.sep)
         if create:
             w.create(w.jobid)
@@ -888,8 +878,6 @@ class Job(GangaObject):
         'master' flag is used to make a difference between the master and shared input sandbox which is important
         if the job is not split (subjob and masterjob are the same object)
         """
-
-        import Ganga.Core.Sandbox as Sandbox
 
         name = '_input_sandbox_' + self.getFQID('_') + '%s.tgz'
 
@@ -939,7 +927,6 @@ class Job(GangaObject):
         """
 
         logger.debug("Creating InputSandbox")
-        import Ganga.Core.Sandbox as Sandbox
         files = [f for f in files if hasattr(
             f, 'name') and not f.name.startswith('.nfs')]
 
@@ -1046,7 +1033,6 @@ class Job(GangaObject):
         Return value: None
         '''
 
-        import os
         pathStart = filename.split(os.sep)[0]
         if (("running" == self.status) and (pathStart != "..")):
             subjob_num = len(self.subjobs)
@@ -1078,13 +1064,11 @@ class Job(GangaObject):
         Return value: None
         '''
 
-        import os
         from Ganga.Utility.Config import ConfigError, getConfig
         from exceptions import IndexError
         config = getConfig("File_Associations")
 
         if not os.path.exists(path):
-            import glob
             if len(glob.glob(path)) is 1:
                 path = glob.glob(path)[0]
 
@@ -1298,7 +1282,6 @@ class Job(GangaObject):
                         index += 1
 
                     while len(finished) != len(subjobs):
-                        import time
                         time.sleep(0.25)
 
                     for index in finished.keys():
@@ -1348,11 +1331,9 @@ class Job(GangaObject):
 
         def delay_check(somepath):
             for i in range(100):
-                import os.path
                 if os.path.exists(somepath):
                     return True
                 else:
-                    import time
                     time.sleep(0.1)
             return False
 
@@ -1423,7 +1404,6 @@ class Job(GangaObject):
             subjobs = self.splitter.validatedSplit(self)
             if subjobs:
                 # print "*"*80
-                #import sys
                 # subjobs[0].printTree(sys.stdout)
 
                 # EBKE changes
@@ -2135,7 +2115,6 @@ class Job(GangaObject):
 # return tuple(index)
 
     def _subjobs_proxy(self):
-        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
         subjobs = JobRegistrySlice('jobs(%d).subjobs' % self.id)
         for j in self.subjobs:
             subjobs.objects[j.id] = j

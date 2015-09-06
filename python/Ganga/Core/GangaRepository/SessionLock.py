@@ -139,7 +139,7 @@ class SessionLockRefresher(GangaThread):
 
                 sleeptime = 1  # +random.random()
 
-                for i in range(int(sleeptime * 20)):
+                for i in range(int(sleeptime * 200)):
                     if not self.should_stop():
                         time.sleep(0.05 + random.random() * 0.05)
         finally:

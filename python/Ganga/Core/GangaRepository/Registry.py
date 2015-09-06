@@ -92,8 +92,7 @@ def makeRepository(registry):
         from Ganga.Core.GangaRepository.GangaRepositoryImmutableTransient import GangaRepositoryImmutableTransient
         return GangaRepositoryImmutableTransient(registry, registry.location, registry.file_ext, registry.pickle_files)
     else:
-        raise RegistryError(
-            "Repository %s: Unknown repository type %s" % (registry.name, registry.type))
+        raise RegistryError("Repository %s: Unknown repository type %s" % (registry.name, registry.type))
 
 
 class IncompleteObject(object):
@@ -241,7 +240,7 @@ class Registry(object):
             logger.debug("%s" % str(err))
             raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj.__class__.__name__)
         except AssertionError, err:
-            logger.info("%s" % str(err))
+            logger.warning("%s" % str(err))
             from Ganga.GPIDev.Lib.JobTree import JobTree
             if isType(obj, JobTree):
                 return obj._registry_id
@@ -517,22 +516,24 @@ class Registry(object):
             self._incomplete_objects = self.repository.incomplete_objects
 
             if self._needs_metadata:
+                t2 = time.time()
                 if self.metadata is None:
                     self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name,
-                                             dirty_flush_counter=self.dirty_flush_counter, update_index_time=self.update_index_time)
+                            dirty_flush_counter=self.dirty_flush_counter, update_index_time=self.update_index_time)
                     self.metadata.type = self.type
                     self.metadata.location = self.location
                     self.metadata._parent = self
                 logger.debug("metadata startup")
                 self.metadata.startup()
+                t3 = time.time()
+                logger.debug("Startup of %s.metadata took %s sec" % (str(self.name), str(t3-t2)))
 
             logger.debug("repo startup")
             self.repository.startup()
             # All Ids could have changed
             self.changed_ids = {}
             t1 = time.time()
-            logger.debug(
-                "Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
+            logger.debug("Registry '%s' [%s] startup time: %s sec" % (self.name, self.type, t1 - t0))
             self._started = True
         finally:
             self._lock.release()

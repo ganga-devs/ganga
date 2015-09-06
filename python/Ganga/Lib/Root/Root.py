@@ -390,7 +390,7 @@ class RootRTHandler(IRuntimeHandler):
         logger.debug("ROOT environment:\n %s: ", str(rootenv))
 
         return StandardJobConfig('root.exe', inputsandbox, arguments,
-                                 app._getParent().outputsandbox, rootenv)
+                                 app._getParent().outputsandbox)
 
     def _preparePyRootJobConfig(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """JobConfig for executing a Root script using CINT."""
@@ -415,7 +415,7 @@ class RootRTHandler(IRuntimeHandler):
         logger.debug("PyRoot environment:\n %s: ", str(rootenv))
 
         return StandardJobConfig('python', inputsandbox, arguments,
-                                 app._getParent().outputsandbox, rootenv)
+                                 app._getParent().outputsandbox)
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """The default prepare method. Used to select scripting backend."""
@@ -445,7 +445,7 @@ class RootDownloadHandler(IRuntimeHandler):
         argList = [str(s) for s in app.args]
 
         return StandardJobConfig(runScript, inputsandbox, argList,
-                                 app._getParent().outputsandbox, rootenv)
+                                 app._getParent().outputsandbox)
 
 
 class RootLCGRTHandler(IRuntimeHandler):

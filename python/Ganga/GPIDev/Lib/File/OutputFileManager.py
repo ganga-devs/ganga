@@ -4,6 +4,7 @@ import tempfile
 import copy
 
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Lib.File import FileUtils
 
 """
 Checks if the output files of a given job(we are interested in the backend) 
@@ -183,10 +184,8 @@ for fn in final_list_to_copy:
         print('ERROR: (job'+###JOBID###+')',x)
 """
     insertScript = insertScript.replace('###FILES###', str(files))
-    insertScript = insertScript.replace(
-        '###PATTERNSTOSANDBOX###', str(patternsToSandbox))
-    insertScript = insertScript.replace(
-        '###PATTERNSTOZIP###', str(patternsToZip))
+    insertScript = insertScript.replace('###PATTERNSTOSANDBOX###', str(patternsToSandbox))
+    insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
     insertScript = insertScript.replace('###JOBID###', jobid)
 
     return insertScript
@@ -213,13 +212,16 @@ def getWNCodeForDownloadingInputFiles(job, indent):
                 # special case for LocalFile
                 if job.backend.__class__.__name__ in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
                     # create symlink
-                    insertScript += """
-###INDENT#### create symbolic links for LocalFiles
-###INDENT###for f in ###FILELIST###:
-###INDENT###   os.symlink(f, os.path.basename(f)) 
+                    shortScript += """
+# create symbolic links for LocalFiles
+for f in ###FILELIST###:
+   os.symlink(f, os.path.basename(f)) 
 """
-                    insertScript = insertScript.replace(
-                        '###FILELIST###', "%s" % inputFile.getFilenameList())
+                    shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
+
+                    insertScript += shortScript
+
+                    insertScript = insertScript.replace('###FILELIST###', "%s" % inputFile.getFilenameList())
 
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = copy.deepcopy(job.inputfiles)
@@ -273,26 +275,27 @@ def getWNCodeForOutputPostprocessing(job, indent):
                 outputFilesProcessedOnWN[
                     outputfileClassName].append(outputFile)
 
-    insertScript = """\n
-###INDENT###import os, glob
-###INDENT###for patternToZip in ###PATTERNSTOZIP###:
-###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
-###INDENT###        os.system("gzip %s" % currentFile)
+    shortScript = """\n
+import os, glob
+for patternToZip in ###PATTERNSTOZIP###:
+    for currentFile in glob.glob(os.path.join(os.getcwd(),patternToZip)):
+        os.system("gzip %s" % currentFile)
 
-###INDENT###postprocesslocations = file(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'w')  
+postprocesslocations = file(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'w')  
 """
 
-    insertScript = insertScript.replace(
-        '###PATTERNSTOZIP###', str(patternsToZip))
-    insertScript = insertScript.replace('###POSTPROCESSLOCATIONSFILENAME###', getConfig(
-        'Output')['PostProcessLocationsFileName'])
+    shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
+
+    insertScript = shortScript
+
+    insertScript = insertScript.replace('###PATTERNSTOZIP###', str(patternsToZip))
+    insertScript = insertScript.replace('###POSTPROCESSLOCATIONSFILENAME###', getConfig('Output')['PostProcessLocationsFileName'])
 
     for outputFileName in outputFilesProcessedOnWN.keys():
 
         if len(outputFilesProcessedOnWN[outputFileName]) > 0:
 
-            insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript(
-                outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
+            insertScript += outputFilesProcessedOnWN[outputFileName][0].getWNInjectedScript(outputFilesProcessedOnWN[outputFileName], indent, patternsToZip, 'postprocesslocations')
 
     insertScript += """\n
 ###INDENT###postprocesslocations.close()
@@ -340,3 +343,4 @@ def getWNCodeForInputdataListCreation(job, indent):
         insertScript = insertScript.replace('###FILELIST###', "[]")
 
     return insertScript
+

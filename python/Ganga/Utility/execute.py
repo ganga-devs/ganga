@@ -6,20 +6,22 @@ import pickle
 import signal
 from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
+from Ganga.GPIDev.Lib.File.FileUtils import indentScript
 logger = getLogger()
-
 
 def env_update_script(indent=''):
     fdread, fdwrite = os.pipe()
-    script = '''
-###INDENT###import os, pickle
-###INDENT###os.close(###FD_READ###)
-###INDENT###with os.fdopen(###FD_WRITE###,'wb') as envpipe:
-###INDENT###    pickle.dump(os.environ, envpipe)
-'''\
-        .replace('###INDENT###'  , indent      )\
-        .replace('###FD_READ###' , str(fdread) )\
-        .replace('###FD_WRITE###', str(fdwrite))
+    this_script = '''
+import os, pickle
+os.close(###FD_READ###)
+with os.fdopen(###FD_WRITE###,'wb') as envpipe:
+    pickle.dump(os.environ, envpipe)
+'''
+    script = indentScript(this_script, '###INDENT###')
+
+    script =  script.replace('###INDENT###'  , indent      )\
+                    .replace('###FD_READ###' , str(fdread) )\
+                    .replace('###FD_WRITE###', str(fdwrite))
     return script, fdread, fdwrite
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -27,27 +29,30 @@ def env_update_script(indent=''):
 
 def python_wrapper(command, python_setup='', update_env=False, indent=''):
     fdread, fdwrite = os.pipe()
-    script = '''
-###INDENT###from __future__ import print_function
-###INDENT###import os, sys, pickle, traceback
-###INDENT###os.close(###PKL_FDREAD###)
-###INDENT###with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
-###INDENT###    def output(data):
-###INDENT###        print(pickle.dumps(data), file=PICKLE_STREAM)
-###INDENT###    local_ns = {'pickle'        : pickle,
-###INDENT###                'PICKLE_STREAM' : PICKLE_STREAM,
-###INDENT###                'output'        : output}
-###INDENT###    try:
-###INDENT###        exec("""###SETUP### """,   local_ns)
-###INDENT###        exec("""###COMMAND### """, local_ns)
-###INDENT###    except:
-###INDENT###        print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
-'''\
-        .replace('###INDENT###'     , indent              )\
-        .replace('###SETUP###'      , python_setup.strip())\
-        .replace('###COMMAND###'    , command.strip()     )\
-        .replace('###PKL_FDREAD###' , str(fdread)         )\
-        .replace('###PKL_FDWRITE###', str(fdwrite))
+    this_script = '''
+from __future__ import print_function
+import os, sys, pickle, traceback
+os.close(###PKL_FDREAD###)
+with os.fdopen(###PKL_FDWRITE###, 'wb') as PICKLE_STREAM:
+    def output(data):
+        print(pickle.dumps(data), file=PICKLE_STREAM)
+    local_ns = {'pickle'        : pickle,
+                'PICKLE_STREAM' : PICKLE_STREAM,
+                'output'        : output}
+    try:
+        full_command = """###SETUP### """
+        full_command += """ \n###COMMAND### """
+        exec(full_command, local_ns)
+    except:
+        print(pickle.dumps(traceback.format_exc()), file=PICKLE_STREAM)
+'''
+    script = indentScript(this_script, '###INDENT###')
+
+    script =  script.replace('###INDENT###'     , indent              )\
+                    .replace('###SETUP###'      , python_setup.strip())\
+                    .replace('###COMMAND###'    , command.strip()     )\
+                    .replace('###PKL_FDREAD###' , str(fdread)         )\
+                    .replace('###PKL_FDWRITE###', str(fdwrite))
     envread = None,
     envwrite = None
     if update_env:
@@ -105,8 +110,7 @@ def execute(command,
         # note the exec gets around the problem of indent and base64 gets
         # around the \n
         command_update, envread, envwrite = env_update_script()
-        command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(
-            command_update)
+        command += ''';python -c "import base64;exec(base64.b64decode('%s'))"''' % base64.b64encode(command_update)
 
     if env is None and not update_env:
         pipe = subprocess.Popen('python -c "from __future__ import print_function; import os; print(os.environ)"',
@@ -164,6 +168,8 @@ def execute(command,
         ev.start()
         started_threads.append(ev)
 
+    #logger.debug("Executing Command:\n'%s'" % str(command))
+
     stdout, stderr = p.communicate(command)
     timer.cancel()
 
@@ -197,3 +203,4 @@ def execute(command,
 
     return_code = p.returncode
     return stdout
+

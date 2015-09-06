@@ -6,6 +6,7 @@
 
 from Ganga.Utility.util import importName
 
+found_types = {}
 
 def _valueTypeAllowed(val, valTypeList, logger=None):
     for _t in valTypeList:
@@ -18,7 +19,14 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
             _val = val
         else:  # Native Python type
             try:
-                _type = eval(_t)  # '_type' is actually the class name
+                if type(_t) == str:
+                    global found_types
+                    if not _t in found_types.keys():
+                        found_types[_t] = eval(_t)
+                    _type = found_types[_t]
+                    #_type = eval(_t)  # '_type' is actually the class name
+                else:
+                    _type = _t
             except NameError:
                 logger.error("Invalid native Python type: '%s'" % _t)
                 continue

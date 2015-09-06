@@ -16,25 +16,27 @@ def __task__init__(self):
     #self._name = baseclass._name
 
 
+_app_schema = {  'id': SimpleItem(defvalue=-1, protected=1, copyable=1, splitable=1, doc='number of this application in the transform.', typelist=["int"]),
+                'tasks_id': SimpleItem(defvalue="-1:-1", protected=1, copyable=1, splitable=1, doc='id of this task:transform', typelist=["str"])}.items()
+
+_splitter_schema = { 'task_partitions': SimpleItem(defvalue=[], copyable=1, doc='task partition numbers.', typelist=["list"]),}.items()
+
 def taskify(baseclass, name):
     smajor = baseclass._schema.version.major
     sminor = baseclass._schema.version.minor
 
-    if baseclass._category == "applications":
-        schema_items = {
-            'id': SimpleItem(defvalue=-1, protected=1, copyable=1, splitable=1, doc='number of this application in the transform.', typelist=["int"]),
-            'tasks_id': SimpleItem(defvalue="-1:-1", protected=1, copyable=1, splitable=1, doc='id of this task:transform', typelist=["str"]),
-        }.items()
+    cat = baseclass._category
+
+    if cat == "applications":
+        schema_items = _app_schema
         taskclass = TaskApplication
-    elif baseclass._category == "splitters":
-        schema_items = {
-            'task_partitions': SimpleItem(defvalue=[], copyable=1, doc='task partition numbers.', typelist=["list"]),
-        }.items()
+    elif cat == "splitters":
+        schema_items = _splitter_schema
         taskclass = TaskSplitter
 
     classdict = {
         "_schema": Schema(Version(smajor, sminor), dict(baseclass._schema.datadict.items() + schema_items)),
-        "_category": baseclass._category,
+        "_category": cat,
         "_name": name,
         "__init__": __task__init__,
     }
@@ -44,6 +46,7 @@ def taskify(baseclass, name):
             classdict[var] = baseclass.__dict__[var]
     cls = classobj(name, (taskclass, baseclass), classdict)
 
+    global handler_map
     # Use the same handlers as for the base class
     handler_map.append((baseclass.__name__, name))
 
@@ -140,8 +143,7 @@ def taskApp(app):
         b = task_map[a._name]()
 
     else:
-        logger.error(
-            "The application '%s' cannot be used with the tasks package yet!" % a._name)
+        logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
         raise AttributeError()
     for k in a._data:
         b._data[k] = a._data[k]
@@ -152,7 +154,6 @@ def taskApp(app):
         try:
             b.calc_hash()
         except:
-            logger.warn(
-                'Non fatal error recalculating the task application hash value')
+            logger.warn('Non fatal error recalculating the task application hash value')
 
     return b

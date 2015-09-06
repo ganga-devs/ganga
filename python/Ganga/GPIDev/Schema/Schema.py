@@ -6,9 +6,27 @@ from __future__ import absolute_import
 ##########################################################################
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
+
+import copy
 
 from Ganga.Utility.logic import implies
+
+import Ganga.Utility.Config
+
+from Ganga.Core.exceptions import GangaAttributeError
+
+from Ganga.Utility.Plugin import allPlugins
+
+import types
+
+#from . import Schema
+
+from Ganga.Core import GangaAttributeError, TypeMismatchError, SchemaError
+
+from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
+
+logger = Ganga.Utility.logging.getLogger()
+
 
 
 #
@@ -83,7 +101,6 @@ class Schema(object):
         except Exception as x:
             logger.error("Ganga Cannot find: %s in Object: %s" %
                          (name, self.name))
-            from Ganga.Core.exceptions import GangaAttributeError
             raise GangaAttributeError(x)
 
     category = property(lambda self: self._pluginclass._category)
@@ -136,11 +153,9 @@ class Schema(object):
 
     # make a schema copy for a derived class, does not copy the pluginclass
     def inherit_copy(self):
-        import copy
         return Schema(copy.deepcopy(self.version), copy.deepcopy(self.datadict))
 
     def createDefaultConfig(self):
-        import Ganga.Utility.Config
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
         config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(
@@ -213,7 +228,6 @@ class Schema(object):
         """ Get the default value of a schema item, both simple and component.
         If check is True then val is used instead of default value: this is used to check if the val may be used as a default value (e.g. if it is OK to use it as a value in the config file)
         """
-        import Ganga.Utility.Config
         config = Ganga.Utility.Config.getConfig(
             defaultConfigSectionName(self.name))
 
@@ -251,12 +265,10 @@ class Schema(object):
                 # otherwise do a lookup via plugin registry
 
                 if isinstance(defvalue, str) or defvalue is None:
-                    from Ganga.Utility.Plugin import allPlugins
                     return allPlugins.find(item['category'], defvalue)()
 
         # make a copy of the default value (to avoid strange effects if the
         # original modified)
-        import copy
         return copy.deepcopy(defvalue)
 
 
@@ -349,7 +361,6 @@ class Item(object):
     def isA(self, what):
 
         this_type = type(what)
-        import types
 
         try:
             # for backwards compatibility with Ganga3 CLIP: if a string --
@@ -357,7 +368,6 @@ class Item(object):
             if isinstance(what, str):
                 # get access to all Item classes defined in this module
                 # (schema)
-                from . import Schema
                 what = getattr(Schema, what)
             elif isinstance(what, types.InstanceType):
                 what = what.__class__
@@ -424,7 +434,6 @@ class Item(object):
         return txt
 
     def _check_type(self, val, name, enableGangaList=True):
-        from Ganga.Core import GangaAttributeError, TypeMismatchError, SchemaError
 
         if enableGangaList:
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
@@ -516,7 +525,6 @@ class ComponentItem(Item):
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
 
-from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(
     val, valTypeList, logger)
 
@@ -647,7 +655,6 @@ if __name__ == '__main__':
     logger.info(schema['application']['category'] +
                 ' ' + schema['application']['defvalue'])
 
-    import copy
     schema2 = copy.deepcopy(schema)
 
     assert(schema2 is not schema)

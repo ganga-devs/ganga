@@ -10,12 +10,11 @@ from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 from Ganga.GPIDev.Lib.File.MassStorageFile import MassStorageFile
 from Ganga.GPIDev.Lib.File.LCGSEFile import LCGSEFile
 from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
+from Ganga.GPIDev.Lib.File.GoogleFile import GoogleFile
 
 from Ganga.GPIDev.Lib.File import FileUtils
 
 import Ganga.Utility.logging
-
-from Ganga.GPIDev.Lib.File.GoogleFile import GoogleFile
 
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Base.Filters import allComponentFilters
@@ -23,8 +22,6 @@ from Ganga.Utility.Config import getConfig, ConfigError
 
 
 import fnmatch
-
-
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -108,6 +105,5 @@ def string_file_shortcut(v, item):
         return stripProxy(LocalFile._proxyClass(v))
 
     return None
-
 
 allComponentFilters['gangafiles'] = string_file_shortcut

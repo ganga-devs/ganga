@@ -2198,7 +2198,7 @@ class LCGJobConfig(StandardJobConfig):
         self.inputdata = inputdata
         self.requirements = requirements
 
-        StandardJobConfig.__init__(self, exe, inputbox, args, outputbox, env)
+        StandardJobConfig.__init__(self, exe, inputbox, args, outputbox)
 
     def getArguments(self):
 

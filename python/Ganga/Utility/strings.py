@@ -2,6 +2,8 @@ from __future__ import print_function
 
 'Utilities for string manipulation'
 
+import Ganga.Utility.external.textwrap as textwrap
+
 import re
 _ident_expr = re.compile('^[a-zA-Z_][a-zA-Z0-9_]*$')
 
@@ -60,8 +62,6 @@ class ItemizedTextParagraph(object):
         indent = ' ' * int(self.head_size*0.5)
 
         buf = self.head + '\n'
-
-        import Ganga.Utility.external.textwrap as textwrap
 
         for it, d in zip(self.items, self.desc):
             if self.linesep is not None:

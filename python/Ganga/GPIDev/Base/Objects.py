@@ -25,6 +25,8 @@ from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.GPIDev.Base.VPrinter import VPrinter, VSummaryPrinter
 
+from Ganga.Utility.Plugin import allPlugins
+
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 
@@ -402,8 +404,8 @@ def export(method):
 class ObjectMetaclass(type):
     _descriptor = Descriptor
 
-    def __init__(cls, name, bases, dict):
-        super(ObjectMetaclass, cls).__init__(name, bases, dict)
+    def __init__(cls, name, bases, this_dict):
+        super(ObjectMetaclass, cls).__init__(name, bases, this_dict)
 
         # ignore the 'abstract' base class
         # FIXME: this mechanism should be based on explicit cls._name or alike
@@ -416,11 +418,13 @@ class ObjectMetaclass(type):
         if not hasattr(cls, '_schema') or cls._schema is None:
             cls._schema = Schema.Schema(None, None)
 
+        this_schema = cls._schema
+
         # Add all class members of type `Schema.Item` to the _schema object
         # TODO: We _could_ add base class's Items here by going through `bases` as well.
-        for member_name, member in dict.items():
+        for member_name, member in this_dict.items():
             if isinstance(member, Schema.Item):
-                cls._schema.datadict[member_name] = member
+                this_schema.datadict[member_name] = member
 
         # produce a GPI class (proxy)
         proxyClass = GPIProxyClassFactory(name, cls)
@@ -428,12 +432,14 @@ class ObjectMetaclass(type):
         if not hasattr(cls, '_exportmethods'):
             cls._exportmethods = []
 
+        this_export = cls._exportmethods
+
         # export public methods of this class and also of all the bases
         # this class is scanned last to extract the most up-to-date docstring
         dicts = (b.__dict__ for b in reversed(cls.__mro__))
         for d in dicts:
             for k in d:
-                if k in cls._exportmethods or getattr(d[k], 'exported_method', False):
+                if k in this_export or getattr(d[k], 'exported_mes_thod', False):
 
                     internal_name = "_export_" + k
                     if internal_name not in d.keys():
@@ -451,7 +457,7 @@ class ObjectMetaclass(type):
                     setattr(proxyClass, k, f)
 
         # sanity checks for schema...
-        if '_schema' not in dict.keys():
+        if '_schema' not in this_dict.keys():
             s = "Class %s must _schema (it cannot be silently inherited)" % (name,)
             logger.error(s)
             raise ValueError(s)
@@ -460,12 +466,11 @@ class ObjectMetaclass(type):
         if not cls.__dict__.get('_name'):
             cls._name = name
 
-        if cls._schema._pluginclass is not None:
-            logger.warning('Possible schema clash in class %s between %s and %s',
-                           name, cls._name, cls._schema._pluginclass._name)
+        if this_schema._pluginclass is not None:
+            logger.warning('Possible schema clash in class %s between %s and %s', name, cls._name, this_schema._pluginclass._name)
 
         # export visible properties... do not export hidden properties
-        for attr, item in cls._schema.allItems():
+        for attr, item in this_schema.allItems():
             setattr(cls, attr, cls._descriptor(attr, item))
             if not item['hidden']:
                 setattr(proxyClass, attr, ProxyDataDescriptor(attr))
@@ -473,13 +478,12 @@ class ObjectMetaclass(type):
         # additional check of type
         # bugfix #40220: Ensure that default values satisfy the declared types
         # in the schema
-        for attr, item in cls._schema.simpleItems():
+        for attr, item in this_schema.simpleItems():
             if not item['getter']:
-                item._check_type(
-                    item['defvalue'], '.'.join([name, attr]), enableGangaList=False)
+                item._check_type(item['defvalue'], '.'.join([name, attr]), enableGangaList=False)
 
         # create reference in schema to the pluginclass
-        cls._schema._pluginclass = cls
+        this_schema._pluginclass = cls
 
         # store generated proxy class
         cls._proxyClass = proxyClass
@@ -488,12 +492,11 @@ class ObjectMetaclass(type):
         if hasattr(cls, '_declared_property'):
             # if we've not even declared this we don't want to use it!
             if not cls._declared_property('hidden') or cls._declared_property('enable_plugin'):
-                from Ganga.Utility.Plugin import allPlugins
                 allPlugins.add(cls, cls._category, cls._name)
 
             # create a configuration unit for default values of object properties
             if not cls._declared_property('hidden') or cls._declared_property('enable_config'):
-                cls._schema.createDefaultConfig()
+                this_schema.createDefaultConfig()
 
 
 class GangaObject(Node):

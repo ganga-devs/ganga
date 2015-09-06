@@ -279,84 +279,14 @@ class LCGSEFile(IGangaFile):
             logger.debug("OutputFile (%s) cmd for WN script is: %s" %
                          (outputFile.namePattern, outputFile.getUploadCmd()))
 
-        script = """\n
+        script_location = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + 'scripts/LCGSEFileWNScript.py'
 
-###INDENT####system command executor with subprocess
-###INDENT###def execSyscmdSubprocessAndReturnOutputLCG(cmd):
-###INDENT###    import subprocess
-
-###INDENT###    exitcode = -999
-###INDENT###    mystdout = ''
-###INDENT###    mystderr = ''
-
-###INDENT###    try:
-###INDENT###        child = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-###INDENT###        (mystdout, mystderr) = child.communicate()
-###INDENT###        exitcode = child.returncode
-###INDENT###    finally:
-###INDENT###        pass
-
-###INDENT###    return (exitcode, mystdout, mystderr)
-        
-###INDENT###def uploadToSE(lcgseItem):
-        
-###INDENT###    import re
-
-###INDENT###    lcgseItems = lcgseItem.split(' ')
-
-###INDENT###    filenameWildChar = lcgseItems[1]
-###INDENT###    lfc_host = lcgseItems[2]
-
-###INDENT###    cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-
-###INDENT###    os.environ['LFC_HOST'] = lfc_host
-        
-###INDENT###    guidResults = {}
-
-###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
-###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
-
-###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
-###INDENT###        cmd = lcgseItem[lcgseItem.find('lcg-cr'):]
-###INDENT###        cmd = cmd.replace('filename', currentFile)
-###INDENT###        cmd = cmd + ' file:%s' % currentFile
-###INDENT###        printInfo(cmd)  
-###INDENT###        (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputLCG(cmd)
-###INDENT###        if exitcode == 0:
-###INDENT###            printInfo('result from cmd %s is %s' % (cmd,str(mystdout)))
-###INDENT###            match = re.search('(guid:\S+)',mystdout)
-###INDENT###            if match:
-###INDENT###                guidResults[mystdout] = os.path.basename(currentFile)
-
-###INDENT###        else:
-###INDENT###            guidResults['ERROR ' + mystderr] = ''
-###INDENT###            printError('cmd %s failed' % cmd + os.linesep + mystderr)   
-
-###INDENT###    return guidResults    
-
-###INDENT###for lcgseItem in ###LCGCOMMANDS###:
-###INDENT###    guids = uploadToSE(lcgseItem)
-###INDENT###    for guid in guids.keys():
-###INDENT###        ###POSTPROCESSLOCATIONSFP###.write('%s %s %s ->%s\\n' % (lcgseItem.split(' ')[0], lcgseItem.split(' ')[1], guids[guid], guid)) 
-
-###INDENT####lets clear after us    
-###INDENT###for lcgseItem in ###LCGCOMMANDS###:
-###INDENT###    lcgseItems = lcgseItem.split(' ')
-
-###INDENT###    filenameWildChar = lcgseItems[1]
-
-###INDENT###    if filenameWildChar in ###PATTERNSTOZIP###:
-###INDENT###        filenameWildChar = '%s.gz' % filenameWildChar
-
-###INDENT###    for currentFile in glob.glob(os.path.join(os.getcwd(), filenameWildChar)):
-###INDENT###        os.system('rm %s' % currentFile)
-"""
+        script = FileUtils.loadScript(script_location, '###INDENT###')
 
         script = script.replace('###LCGCOMMANDS###', str(lcgCommands))
         script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
         script = script.replace('###INDENT###', indent)
-        script = script.replace(
-            '###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
+        script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
 
         return script
 
@@ -370,8 +300,7 @@ class LCGSEFile(IGangaFile):
             if self._parent is not None:
                 to_location = self.getJobObject().outputdir
             else:
-                logger.info(
-                    "%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
+                logger.info("%s is not a valid directory.... Please set the localDir attribute" % self.localDir)
                 return
 
         # set lfc host

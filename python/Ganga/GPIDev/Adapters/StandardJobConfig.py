@@ -24,13 +24,12 @@ class StandardJobConfig(object):
 
     """
 
-    def __init__(self, exe='', inputbox=[], args=[], outputbox=[], env=copy.deepcopy(os.environ)):
+    def __init__(self, exe='', inputbox=[], args=[], outputbox=[], env=None):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
         inputbox - list of additional File or FileBuffer objects which go to the sandbox
         outputbox - list of additional files which should be returned by the sandbox
-        env - environment to be set for execution of the job
 
         The constructor does processValues() automatically so the construction of the object may failed with exceptions raised by that method.
         Notes for derived classes:
@@ -41,21 +40,12 @@ class StandardJobConfig(object):
         self.inputbox = inputbox[:]
         self.args = args
         self.outputbox = outputbox[:]
-        if not env:
-            self.env = {}
-        else:
-            self.env = env
         self.__all_inputbox = []
         self.__args_strings = []
         self.__exe_string = ""
         self.__sandbox_check = {}
 
         self.processValues()
-
-#    def addSandBoxFiles(self, inputFiles=[] ):
-#        for file in inputFiles:
-#            if file not in self.inputbox:
-#                self.inputbox.append( file )
 
     def getSandboxFiles(self):
         '''Get all input sandbox files'''

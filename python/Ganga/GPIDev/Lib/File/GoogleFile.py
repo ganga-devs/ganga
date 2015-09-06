@@ -5,19 +5,17 @@ from .IGangaFile import IGangaFile
 import logging
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
-#from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.Utility.Config import getConfig
 import re
 import copy
 import glob
-logger = getLogger()
-regex = re.compile('[*?\[\]]')
 import os
 import pickle
 import stat
-from apiclient.discovery import build
-from apiclient import errors
+import Ganga.Utility.Config
 
+logger = getLogger()
+regex = re.compile('[*?\[\]]')
 badlogger = logging.getLogger('oauth2client.util')
 badlogger.setLevel(logging.ERROR)
 
@@ -371,6 +369,8 @@ class GoogleFile(IGangaFile):
         """
         service = self._setup_service()
 
+        from apiclient import errors
+
         # Wildcard procedure
         if regex.search(self.namePattern) is not None:
             for f in self.subfiles:
@@ -479,6 +479,7 @@ class GoogleFile(IGangaFile):
         """
         Sets up the GoogleDrive service for other methods
         """
+        from apiclient.discovery import build
         import httplib2
         http = httplib2.Http()
         if self.__initialized == False:
@@ -506,5 +507,4 @@ class GoogleFile(IGangaFile):
             return isinstance(self, to_match._impl)
         return to_match == self
 
-import Ganga.Utility.Config
 Ganga.Utility.Config.config_scope['GoogleFile'] = GoogleFile
