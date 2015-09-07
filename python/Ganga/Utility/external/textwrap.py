@@ -10,14 +10,6 @@ __revision__ = "$Id: textwrap.py,v 1.1 2008-07-17 16:41:02 moscicki Exp $"
 import string
 import re
 
-# Do the right thing with boolean values for all known Python versions
-# (so this module can be copied to projects that don't depend on Python
-# 2.3, e.g. Optik and Docutils).
-try:
-    True, False
-except NameError:
-    (True, False) = (1, 0)
-
 __all__ = ['TextWrapper', 'wrap', 'fill']
 
 # Hardcode the recognized whitespace characters to the US-ASCII
