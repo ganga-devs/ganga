@@ -279,8 +279,11 @@ class LCGSEFile(IGangaFile):
             logger.debug("OutputFile (%s) cmd for WN script is: %s" %
                          (outputFile.namePattern, outputFile.getUploadCmd()))
 
-        script_location = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + 'scripts/LCGSEFileWNScript.py'
+        import inspect
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                                        'scripts/LCGSEFileWNScript.py')
 
+        from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
 
         script = script.replace('###LCGCOMMANDS###', str(lcgCommands))

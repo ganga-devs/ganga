@@ -39,8 +39,7 @@ class MassStorageFile(IGangaFile):
 
     _category = 'gangafiles'
     _name = "MassStorageFile"
-    _exportmethods = [
-        "location", "get", "put", "setLocation", "remove", "accessURL"]
+    _exportmethods = ["location", "get", "put", "setLocation", "remove", "accessURL"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ namePattern is the pattern of the output file that has to be written into mass storage
@@ -200,8 +199,7 @@ class MassStorageFile(IGangaFile):
                 if os.path.isfile(os.path.join(_CWD, self.namePattern)):
                     sourceDir = _CWD
                 else:
-                    logger.warning(
-                        'localDir attribute is empty, don\'t know from which dir to take the file')
+                    logger.warning('localDir attribute is empty, don\'t know from which dir to take the file')
                     return
             else:
                 sourceDir = self.localDir
@@ -427,11 +425,15 @@ class MassStorageFile(IGangaFile):
             if outputFile.outputfilenameformat != None and outputFile.outputfilenameformat != '':
                 outputfilenameformat = outputFile.outputfilenameformat
 
-            massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat, massStorageConfig[
-                                       'mkdir_cmd'],  massStorageConfig['cp_cmd'], massStorageConfig['ls_cmd'], massStorageConfig['path']])
+            massStorageCommands.append(['massstorage', outputFile.namePattern, outputfilenameformat,
+                                        massStorageConfig['mkdir_cmd'],  massStorageConfig['cp_cmd'],
+                                        massStorageConfig['ls_cmd'], massStorageConfig['path']])
 
-        script_location = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))) + 'scripts/MassStorageFileWNScript.py'
+        import inspect
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                                        'scripts/MassStorageFileWNScript.py')
 
+        from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
 
         script = script.replace('###MASSSTORAGECOMMANDS###', repr(massStorageCommands))
