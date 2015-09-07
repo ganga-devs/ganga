@@ -93,8 +93,7 @@ def dirac_inputdata(app):
         logger.info('Job has no inputdata (T1 sites will be banned to help avoid overloading them).')
         if 'BannedSites' in job.backend.settings:
             job.backend.settings['BannedSites'].extend(t1_sites)
-            job.backend.settings['BannedSites'] = unique(
-                job.backend.settings['BannedSites'])
+            job.backend.settings['BannedSites'] = unique(job.backend.settings['BannedSites'])
         else:
             job.backend.settings['BannedSites'] = t1_sites[:]
 
@@ -141,38 +140,14 @@ def dirac_ouputdata(app):
 def diracAPI_script_template():
     # NOTE setOutputData(replicate) replicate keyword only for LHCbDirac. must
     # move there when get a chance.
-    script_template = """
-# dirac job created by ganga
-from DIRAC.Core.Base.Script import parseCommandLine
-parseCommandLine()
-###DIRAC_IMPORT###
-###DIRAC_JOB_IMPORT###
-dirac = ###DIRAC_OBJECT###
-j = ###JOB_OBJECT###
 
-# default commands added by ganga
-j.setName('###NAME###')
-j.setExecutable('###EXE###','###EXE_ARG_STR###','###EXE_LOG_FILE###')
-j.setExecutionEnv(###ENVIRONMENT###)
-j.setInputSandbox(###INPUT_SANDBOX###)
-j.setOutputSandbox(###OUTPUT_SANDBOX###)
-j.setInputData(###INPUTDATA###)
-j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
+    import inspect
+    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                                    'DiracRTHScript.py')
 
-j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
+    from Ganga.GPIDev.Lib.File import FileUtils
+    script_template = FileUtils.loadScript(script_location, '')
 
-# <-- user settings
-###SETTINGS###
-# user settings -->
-
-# diracOpts added by user
-###DIRAC_OPTS###
-
-# submit the job to dirac
-j.setPlatform( 'ANY' )
-result = dirac.submit(j)
-output(result)
-"""
     return script_template
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -180,7 +155,6 @@ output(result)
 
 def diracAPI_script_settings(app):
     job = app.getJobObject()
-    setting_line = 'j.set###SETTING###(###VALUE###)\n'
     diracAPI_line = ''
     if type(job.backend.settings) is not dict:
         raise ApplicationConfigurationError(
@@ -190,10 +164,14 @@ def diracAPI_script_settings(app):
             _setting = str(setting)[3:]
         else:
             _setting = str(setting)
-        diracAPI_line += setting_line.replace(
-            '###SETTING###', _setting).replace('###VALUE###', str(setting_val))
+        if type(setting_value) == type(''):
+            setting_line = 'j.set###SETTING###("###VALUE###")\n'
+        else:
+            setting_line = 'j.set###SETTING###(###VALUE###)\n'
+        diracAPI_line += setting_line.replace('###SETTING###', _setting).replace('###VALUE###', str(setting_val))
     if diracAPI_line == '':
         diracAPI_line = None
 
     return diracAPI_line
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
