@@ -90,6 +90,7 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 
 """
 
+import sys
 from functools import reduce
 
 from Ganga.Core.exceptions import GangaException
@@ -671,17 +672,17 @@ class PackageConfig(object):
             if not self.options[o].check_defined():
                 del self.options[o]
 
-try:
-    import ConfigParser
-    GangaConfigParser = ConfigParser.RawConfigParser
-except ImportError:
-    # For Python 3
+if sys.version_info[0] == 3:
     import configparser as ConfigParser
-    GangaConfigParser = ConfigParser.ConfigParser
+else:
+    import ConfigParser
 
 
 def make_config_parser(system_vars):
-    cfg = GangaConfigParser()
+    if sys.version_info[0] == 3:
+        cfg = ConfigParser.ConfigParser(interpolation=None)
+    else:
+        cfg = ConfigParser.ConfigParser()
     cfg.optionxform = str  # case sensitive
     cfg.defaults().update(system_vars)
     return cfg
