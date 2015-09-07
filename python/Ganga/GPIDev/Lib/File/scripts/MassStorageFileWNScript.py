@@ -27,6 +27,10 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
     pathToDirName = os.path.dirname(path)
     dirName = os.path.basename(path)
 
+    import sys
+    sys.stdout.write("Path: %s" % pathToDirName)
+    sys.stdout.write("DirN: %s" % dirName)
+
     (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
     if exitcode != 0:
         ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
@@ -34,14 +38,14 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
 
     directoryExists = False
     for directory in mystdout.split('\\n'):
-        if directory.strip() == dirName:
+        if directory.strip() == dirName.strip():
             directoryExists = True
             break
 
     if not directoryExists:
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
         if exitcode != 0:
-            printError('Error while executing %s %s command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
+            printError('Error while executing "%s %s" command, check if the ganga user has rights for creating directories in this folder' % (cm_mkdir, path) + os.linesep + mystderr)
             ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
             continue
 
@@ -74,7 +78,7 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
         command = '%s -p %s' % (cm_mkdir, path)
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS(command)
         if exitcode != 0:
-            printError('Error while executing %s  command, check if the ganga user has rights for creating directories in this folder' % command + os.linesep + mystderr)
+            printError('Error while executing "%s" command, check if the ganga user has rights for creating directories in this folder' % command + os.linesep + mystderr)
             ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
             continue
 
@@ -88,7 +92,7 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
         finalFilename = filenameStructure.replace('{fname}', currentFileBaseName)
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s %s' % (cm_cp, currentFile, os.path.join(path, finalFilename)))
         if exitcode != 0:
-            printError('Error while executing %s %s %s command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, finalFilename)) + os.linesep  + mystderr)
+            printError('Error while executing "%s %s %s" command, check if the ganga user has rights for uploading files to this mass storage folder' % (cm_cp, currentFile, os.path.join(path, finalFilename)) + os.linesep  + mystderr)
             ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
         else:
             ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, finalFilename)))
