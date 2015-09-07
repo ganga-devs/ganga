@@ -20,37 +20,8 @@ logger = getLogger()
 class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
 
     """The runtime handler to run ROOT jobs on the Dirac backend"""
-# we dont do this anymore
-#    rootSoftwareVersionsCache = None
-#
-#    def __check_versions_against_dirac(self, app):
-#        ## cache versions dict
-#        if not LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
-#            result = execute('getRootVersions()')
-#            if not result_ok(result):
-#                logger.error('Could not obtain available ROOT versions: %s' \
-#                             % str(result))
-#                logger.error('ROOT version will not be validated.')
-#            else:
-#                LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache = result['Value']
-#
-#        ## check version and platform
-#        if LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache and (not getConfig('LHCb')['ignore_version_check']):
-#            if not app.version in LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache:
-#                msg = 'Invalid version: %s.  Valid versions: %s' \
-#                      % (app.version, str(LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache.keys()))
-#                raise ApplicationConfigurationError(None,msg)
-#
-#            valid_davinci = LHCbRootDiracRunTimeHandler.rootSoftwareVersionsCache[app.version][8:]
-#            valid_platforms = execute('getSoftwareVersions()')['Value']['DaVinci'][valid_davinci]
-#            platform = getConfig('ROOT')['arch']
-#            if not platform in valid_platforms:
-#                msg = 'Invalid root architecture/platform: %s.  Valid architectures/platforms: %s' \
-#                          % (platform, ", ".join(valid_arch))
-#                raise ApplicationConfigurationError(None,msg)
 
     def master_prepare(self, app, appmasterconfig):
-        # self.__check_versions_against_dirac(app)
         inputsandbox, outputsandbox = master_sandbox_prepare(
             app, appmasterconfig)
         # check file is set OK
@@ -73,12 +44,9 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
             app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
         logger.debug("input_data: " + str(input_data))
-#        outputdata,   outputdata_path      = dirac_ouputdata(app)
         job = app.getJobObject()
-        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
         from Ganga.GPI import DiracFile
-        outputfiles = [
-            file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
+        outputfiles = [this_file.namePattern for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -140,10 +108,6 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
                                               )
 
 
-# params.update({'ROOTPY_SCRIPT'   : wrapper_path,
-# 'ROOTPY_VERSION'  : app.version,
-# 'ROOTPY_LOG_FILE' : 'Ganga_Root.log',
-# 'ROOTPY_ARGS'     : app.args, })
         else:
             python_wrapper = script_generator(python_wrapper,
                                               remove_unreplaced=False,
@@ -153,11 +117,6 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
                                               JOINER=',',
                                               #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
                                               )
-
-# params.update({'ROOT_MACRO'    : wrapper_path,
-# 'ROOT_VERSION'  : app.version,
-# 'ROOT_LOG_FILE' : 'Ganga_Root.log',
-# 'ROOT_ARGS'     : app.args, })
 
         f.write(python_wrapper)
         f.close()

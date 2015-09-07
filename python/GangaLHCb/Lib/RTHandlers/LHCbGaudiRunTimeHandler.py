@@ -23,27 +23,19 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
     using the local, interactive and LSF backends."""
 
     def master_prepare(self, app, appmasterconfig):
-        inputsandbox, outputsandbox = master_sandbox_prepare(
-            app, appmasterconfig, ['inputsandbox'])
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
 
         # add summary.xml
         outputsandbox += ['summary.xml', '__parsedxmlsummary__']
 
-        thisenv = None
-        # if appmasterconfig:
-        #    if hasattr( appmasterconfig, 'env' ):
-        #        thisenv = appmasterconfig.env
-
         return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox),
-                                 env=thisenv)
+                                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
         logger.debug("Prepare")
 
-        inputsandbox, outputsandbox = sandbox_prepare(
-            app, appsubconfig, appmasterconfig, jobmasterconfig)
+        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
 
@@ -53,7 +45,6 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         # Cant wait to get rid of this when people no-longer specify
         # inputdata in options file
         #######################################################################
-        #new_job = copy.deepcopy(job)
         # splitters ensure that subjobs pick up inputdata from job over that in
         # optsfiles but need to take sare of unsplit jobs
         if not job.master:
@@ -78,22 +69,23 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
         logger.debug("Adding info from pickle files")
 
         if os.path.exists(share_path):
-            #        if not os.path.exists(share_path):
-            # raise GangaException('could not find the parser')
             f = open(share_path, 'r+b')
             parser = pickle.load(f)
             f.close()
 
             outbox, outdata = parser.get_output(job)
 
-            # outputfiles.update(set(outdata[:]))
-            #from Ganga.GPI import DiracFile
-            #job.outputfiles.extend([addProxy(DiracFile(namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-            job.non_copyable_outputfiles.extend([addProxy(MassStorageFile(
-                namePattern=f)) for f in outdata if f not in [j.namePattern for j in job.outputfiles]])
-            job.non_copyable_outputfiles.extend([addProxy(LocalFile(
-                namePattern=f)) for f in outbox if f not in [j.namePattern for j in job.outputfiles]])
-            outputsandbox = unique(outputsandbox + outbox[:])
+            from Ganga.GPIDev.Lib.File import FileUtils
+            from Ganga.GPIDev.Base.Filters import allComponentFilters
+
+            fileTransform = allComponentFilters['gangafiles']
+            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])
+            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)])
+
+            outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
+
+            outputsandbox.extend([f.namePattern for f in job.outputfiles])
+            outputsandbox = unique(outputsandbox)
         #######################################################################
 
         logger.debug("Doing XML Catalog stuff")
@@ -136,17 +128,13 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
                                   PLATFORM=job.application.platform,
                                   CMDLINE=cmd,
                                   XMLSUMMARYPARSING=getXMLSummaryScript())  # ,
-# OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
+                                  # OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, ''))
 
-        thisenv = None
         logger.debug("Returning StandardJobConfig")
-        # if appmasterconfig:
-        #    if hasattr( appmasterconfig, 'env' ):
-        #        thisenv = appmasterconfig.env
+
         return StandardJobConfig(FileBuffer('gaudi-script.py', script, executable=1),
                                  inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox),
-                                 env=thisenv)
+                                 outputbox=unique(outputsandbox))
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

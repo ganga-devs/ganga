@@ -95,7 +95,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
             outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
 
-            outputsandbox.extend(f.namePattern for f in job.outputfiles)
+            outputsandbox.extend([f.namePattern for f in job.outputfiles])
             outputsandbox = unique(outputsandbox)  # + outbox[:])
         #######################################################################
 
@@ -189,31 +189,13 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
 
 def gaudi_script_template():
     '''Creates the script that will be executed by DIRAC job. '''
-    script_template = """#!/usr/bin/env python
-'''Script to run Gaudi application'''
 
-from os import curdir, system, environ, pathsep, sep, getcwd
-from os.path import join
-import sys
+    import inspect
+    script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                                   'GaudiTemplate.py')
 
-def prependEnv(key, value):
-    if key in environ: value += (pathsep + environ[key])
-    environ[key] = value
-
-# Main
-if __name__ == '__main__':
-
-    prependEnv('LD_LIBRARY_PATH', getcwd() + '/lib')
-    prependEnv('PYTHONPATH', getcwd() + '/InstallArea/python')
-    prependEnv('PYTHONPATH', getcwd() + '/InstallArea/###PLATFORM###/python')
-
-    rc = system('''###COMMAND###''')/256
-
-    ###XMLSUMMARYPARSING###
-
-    ###OUTPUTFILESINJECTEDCODE###
-    sys.exit(rc)
-"""
+    from Ganga.GPIDev.Lib.File import FileUtils
+    script_template = FileUtils.loadScript(script_location, '')
 
     return script_template
 
