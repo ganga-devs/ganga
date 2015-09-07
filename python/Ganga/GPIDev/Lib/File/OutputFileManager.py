@@ -284,7 +284,7 @@ for patternToZip in ###PATTERNSTOZIP###:
 postprocesslocations = file(os.path.join(os.getcwd(), '###POSTPROCESSLOCATIONSFILENAME###'), 'w')  
 """
 
-    shortScript = FileUtils.indentScript(shortScript, '###INDENT####')
+    shortScript = FileUtils.indentScript(shortScript, '###INDENT###')
 
     insertScript = shortScript
 
