@@ -75,3 +75,4 @@ class GaussSplitter(ISplitter):
             subjobs.append(j)
 
         return subjobs
+

@@ -16,7 +16,7 @@ diraclhcb = DiracLHCb()
 # Write to output pipe
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 
-# def output(object):
+#def output(object):
 #    print(pickle.dumps(object), file=sys.stdout)
 
 # DiracLHCb commands
@@ -50,15 +50,15 @@ def bookkeepingGUI(file):
     print(os.system('dirac-bookkeeping-gui %s' % file))
 
 
-def getDataset(path, dqflag, type, start, end, sel):
-    if type is 'Path':
+def getDataset(path, dqflag, this_type, start, end, sel):
+    if this_type is 'Path':
         result = diraclhcb.bkQueryPath(path, dqflag)  # diraclhcb
-    elif type is 'RunsByDate':
+    elif this_type is 'RunsByDate':
         result = diraclhcb.bkQueryRunsByDate(path, start, end,
                                              dqflag, sel)  # diraclhcb
-    elif type is 'Run':
+    elif this_type is 'Run':
         result = diraclhcb.bkQueryRun(path, dqflag)  # diraclhcb
-    elif type is 'Production':
+    elif this_type is 'Production':
         result = diraclhcb.bkQueryProduction(path, dqflag)  # diraclhcb
     else:
         result = {'OK': False, 'Message': 'Unsupported type!'}
@@ -156,14 +156,6 @@ def uploadFile(lfn, file, diracSEs, guid=None):
         outerr.update({se: result})
     else:
         output(outerr)
-# def uploadFile(lfn, file, diracSE, guid=None):
-#    result = diraclhcb.addFile(lfn,file,diracSE,guid)
-#    if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
-#        md = diraclhcb.getMetadata(lfn)
-#        if md.get('OK',False) and lfn in md.get('Value',{'Successful':{}})['Successful']:
-#            guid=md['Value']['Successful'][lfn]['GUID']
-#            result['Value']['Successful'][lfn].update({'GUID':guid})
-#    print(result)
 
 
 def addFile(lfn, file, diracSE, guid):
@@ -301,21 +293,6 @@ def status(job_ids):
 
     output(status_list)
 
-# def getFile(lfn,dir):
-#    result = diraclhcb.getFile(lfn)
-#    if not result or not result.get('OK',False):
-#        print(result)
- #       return
- ##   f = result['Value']['Successful'][lfn]
- #   fname = f.split('/')[-1]
- #   fdir = f.split('/')[0:-2]
- # #  new_f = os.path.join(dir,fname)
- #   os.system('mv -f %s %s' % (f,new_f))
- #   os.system('rmdir %s' % fdir)
- #   result['Value'] = new_f
- #   print(result)
-
-
 def getStateTime(id, status):
     log = diraclhcb.loggingInfo(id)
     if 'Value' not in log:
@@ -383,3 +360,5 @@ def getSEsForSite(site):
     from DIRAC.Core.Utilities.SiteSEMapping import getSEsForSite
     result = getSEsForSite(site)
     output(result)
+
+
