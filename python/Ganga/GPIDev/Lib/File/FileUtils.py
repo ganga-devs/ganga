@@ -3,8 +3,9 @@ from Ganga.GPIDev.Lib.File.File import File
 from Ganga.GPIDev.Lib.File.LocalFile import LocalFile
 
 import Ganga.Utility.logging
-
 import fnmatch
+
+import os
 
 logger = Ganga.Utility.logging.getLogger()
 
