@@ -5,6 +5,7 @@ from __future__ import absolute_import
 # $Id: Schema.py,v 1.3 2009-05-20 13:40:22 moscicki Exp $
 ##########################################################################
 
+import logging
 
 #
 # Ganga Public Interface Schema
@@ -14,7 +15,7 @@ from __future__ import absolute_import
 
 from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(
-    val, valTypeList, logger)
+    val, valTypeList, logging.getLogger(__name__))
 class Version(object):
 
     def __init__(self, major, minor):
@@ -137,10 +138,11 @@ class Schema(object):
         return Schema(copy.deepcopy(self.version), copy.deepcopy(self.datadict))
 
     def createDefaultConfig(self):
-        import Ganga.Utility.Config
+        from Ganga.Utility.Config.Config import makeConfig
+
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
-        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(
+        config =  makeConfig(defaultConfigSectionName(
             self.name), "default attribute values for %s objects" % self.name)  # self._pluginclass._proxyClass.__doc__ )
 
         for name, item in self.allItems():
@@ -210,9 +212,8 @@ class Schema(object):
         """ Get the default value of a schema item, both simple and component.
         If check is True then val is used instead of default value: this is used to check if the val may be used as a default value (e.g. if it is OK to use it as a value in the config file)
         """
-        import Ganga.Utility.Config
-        config = Ganga.Utility.Config.getConfig(
-            defaultConfigSectionName(self.name))
+        from Ganga.Utility.Config.Config import getConfig
+        config = getConfig(defaultConfigSectionName(self.name))
 
         #item = self.getItem(attr)
         item = None

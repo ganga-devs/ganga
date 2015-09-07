@@ -47,6 +47,8 @@ class Node(object):
         return dict
 
     def __setstate__(self, dict):
+        from Ganga.GPIDev.Base.Proxy import isType
+
         for n, v in dict['_data'].items():
             if isType(v, Node):
                 v._setParent(self)
@@ -68,13 +70,14 @@ class Node(object):
         return obj
 
     def __deepcopy__(self, memo=None):
+        from Ganga.GPIDev.Base.Proxy import stripProxy
         cls = type(stripProxy(self))
         obj = super(cls, cls).__new__(cls)
         dict = stripProxy(self).__getstate__()
         for n in dict:
             #print "%s::%s" % (str(self.__class__.__name__), str(n))
             if n not in self._ref_list:
-                dict[n] = deepcopy(dict[n], memo)  # FIXED
+                dict[n] = copy.deepcopy(dict[n], memo)  # FIXED
             else:
                 dict[n] = None
         obj.__setstate__(dict)
@@ -152,6 +155,7 @@ class Node(object):
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
     def copyFrom(self, srcobj, _ignore_atts=[]):
         from Ganga.Core import GangaValueError
+        from Ganga.GPIDev.Base.Proxy import isType
 
         # Check if this object is derived from the source object, then the copy
         # will not throw away information
@@ -208,6 +212,7 @@ class Node(object):
         self.accept(VSummaryPrinter(level, verbosity_level, whitespace_marker, out, selection))
 
     def __eq__(self, node):
+        from Ganga.GPIDev.Base.Proxy import isType
 
         if self is node:
             return 1
@@ -276,6 +281,8 @@ class Descriptor(object):
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % self._name)
 
     def __get__(self, obj, cls):
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+
         if obj is None:
             return cls._schema[self._name]
         else:
@@ -327,6 +334,8 @@ class Descriptor(object):
         from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
         from Ganga.Core.exceptions import GangaAttributeError
         import Ganga.GPIDev.Schema.Schema as Schema
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+        from Ganga.GPIDev.Base.Proxy import isType
 
         cs = self._bind_method(obj, self._checkset_name)
         if cs:
@@ -719,6 +728,8 @@ class GangaObject(Node):
     # the FIRST PARENT Job is returned...
     # this method is for convenience and may well be moved to some subclass
     def getJobObject(self):
+        from Ganga.GPIDev.Base.Proxy import isType
+        
         from Ganga.GPIDev.Lib.Job import Job
         r = self._getRoot(cond=lambda o: isType(o, Job))
         if not isType(r, Job):

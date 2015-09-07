@@ -19,13 +19,6 @@ from Ganga.Lib.Executable.Executable import Executable
 from Ganga.Lib.Localhost.Localhost import Localhost
 from Ganga.GPIDev.Lib.Job.JobTime import JobTime
 
-#from MetadataDict import *
-
-#from Ganga.GPIDev.Lib.Registry import *
-#from Ganga.Core.GangaRepository import *
-
-
-
 class JobStatusError(GangaException):
 
     def __init__(self, *args):
@@ -198,8 +191,8 @@ class Job(GangaObject):
     _storedRTHandler = None
     _storedJobSubConfig = None
     _storedAppSubConfig = None
-    _storedJobMasterConfig = None
-    _storedAppMasterConfig = None
+
+    _storedAppMasterConfig = None_storedJobMasterConfig = None
 
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed

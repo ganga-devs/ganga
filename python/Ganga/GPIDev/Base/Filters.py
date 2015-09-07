@@ -29,9 +29,7 @@
 # Void filter does nothing. This is the default filter if no other default
 # has been defined.
 
-from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Utility.Config import makeConfig
-from Ganga.Utility.Config.Config import ConfigError
+from Ganga.Utility.Config.Config import makeConfig, ConfigError
 
 # test configuration properties
 config = makeConfig('GPIComponentFilters', """Customization of GPI component object assignment
@@ -57,6 +55,7 @@ class _ComponentFilterManager(object):
 
     def __setitem__(self, category, filter):
 
+        from Ganga.GPIDev.Base.Proxy import isType
         if category not in self._dict:
             self._dict[category] = {}
 

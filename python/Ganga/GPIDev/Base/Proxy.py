@@ -9,11 +9,13 @@ import logging
 import os
 from inspect import isclass
 
+from Ganga.Utility.Config.Config import getConfig
+
 proxyRef = '_impl'
 
 prepconfig = getConfig('Preparable')
 
-logger = Ganga.Utility.logging.getLogger(modulename=1)
+logger = logging.getLogger(__name__)
 
 # some proxy related convieniance methods
 
