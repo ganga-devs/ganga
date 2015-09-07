@@ -35,9 +35,11 @@ def get_result(command,
                 if logger_message is not None:
                     logger.warning('%s: %s' % (logger_message, str(result)))
                 if exception_message is not None:
+                    logger.warning("Failed to run: %s" % str(command))
+                    logger.warning("includes:\n%s" % str(eval_includes))
+                    logger.warning("Result: '%s'" % str(result))
                     raise GangaException(exception_message)
-                raise GangaException(
-                    "Failed to return result of '%s': %s" % (command, result))
+                raise GangaException("Failed to return result of '%s': %s" % (command, result))
             return result
         except Exception as x:
             if retries == retry_limit - 1:
@@ -97,24 +99,6 @@ def outputfiles_iterator(job, file_type, selection_pred=None,
         else:
             if combined_pred(f):
                 yield f
-
-#    import itertools
-#    for f in itertools.chain(job.outputfiles, job.non_copyable_outputfiles):
-#        if include_subfiles and and hasattr(f, 'subfiles') and f.subfiles:
-#            for sf in f.subfiles:
-#                if combined_pred(sf):
-#                    yield sf
-#        else:
-#            if cobmined_pred(f):
-#                yield f
-
-
-#    for f in job.outputfiles:
-#        if issubclass(f.__class__, file_type):
-#            yield f
-#    for f in job.non_copyable_outputfiles:
-#        if issubclass(f.__class__, file_type):
-#            yield f
 
 def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs={},
                         selection_pred=None, include_subfiles=True):

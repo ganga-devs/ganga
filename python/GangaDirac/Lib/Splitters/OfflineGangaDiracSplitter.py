@@ -37,7 +37,7 @@ def find_random_site(original_SE_list, banned_SE):
 def addToMapping(SE, site_to_SE_mapping):
 
     from GangaDirac.Lib.Utilities.DiracUtilities import execute
-    result = execute('getSitesForSE( "%s" )' % str(SE))
+    result = execute('getSitesForSE("%s")' % str(SE))
     if result.get('OK') != True:
         logger.error("Error getting SE's for site: %s" % str(SE))
         site_to_SE_mapping[SE] = []
@@ -48,24 +48,22 @@ def addToMapping(SE, site_to_SE_mapping):
 
 def getLFNReplicas(allLFNs, index, allLFNData):
 
-    i = index
-
     output = None
 
     toy_num = 0
 
-    min = i * 500
+    this_min = index * 500
 
-    if (i + 1) * 500 > len(allLFNs):
-        max = len(allLFNs)
+    if (index + 1) * 500 > len(allLFNs):
+        this_max = len(allLFNs)
     else:
-        max = (i + 1) * 500
+        this_max = (index + 1) * 500
 
     for toy_num in range(5):
 
         try:
             from GangaDirac.Lib.Utilities.DiracUtilities import execute
-            output = execute('getReplicas(%s)' % str(allLFNs[min:max]))
+            output = execute('getReplicas(%s)' % str(allLFNs[this_min:this_max]))
             these_values = output.get('Value').get('Successful')
             break
         except Exception, err:
@@ -76,14 +74,14 @@ def getLFNReplicas(allLFNs, index, allLFNData):
     import Ganga.Runtime.Repository_runtime
     Ganga.Runtime.Repository_runtime.updateLocksNow()
 
-    allLFNData[i] = output
+    allLFNData[index] = output
 
     if toy_num == 4:
         logger.error("Failed to Get Replica Info: [%s:%s] of %s" (
-            str(min), str(max), len(allLFNs)))
+            str(this_min), str(this_max), len(allLFNs)))
     else:
         logger.info("Got Replica Info: [%s:%s] of %s" % (
-            str(min), str(max), len(allLFNs)))
+            str(this_min), str(this_max), len(allLFNs)))
 
 # For a given site select 'wanted_common_site' many site from a given Set
 # If uniqueSE is requestd the site selected will NOT share a common SE
@@ -120,30 +118,30 @@ def calculateSiteSEMapping(file_replicas, wanted_common_site, uniqueSE, site_to_
     # First find the SE for each site
     for lfn, repz in file_replicas.iteritems():
         sitez = set([])
-        for i in repz:
-            sitez.add(i)
-            if not i in found:
+        for replica in repz:
+            sitez.add(replica)
+            if not replica in found:
 
                 from Ganga.GPI import queues
-                queues._monitoring_threadpool.add_function(
-                    addToMapping, (str(i), site_to_SE_mapping))
+                queues._monitoring_threadpool.add_function(addToMapping, (str(replica), site_to_SE_mapping))
 
                 maps_size = maps_size + 1
-                found.append(i)
+                found.append(replica)
 
         SE_dict[lfn] = sitez
 
     # Doing this in parallel so wait for it to finish
     while len(site_to_SE_mapping) != maps_size:
         import time
-        time.sleep(0.5)
+        time.sleep(0.1)
 
-    # Now calculate the inverse dictionary of site for each SE
-    for k, v in site_to_SE_mapping.iteritems():
-        for i in v:
-            if i not in SE_to_site_mapping:
-                SE_to_site_mapping[i] = set([])
-            SE_to_site_mapping[i].add(k)
+    # Now calculate the 'inverse' dictionary of site for each SE
+    for _SE, _sites in site_to_SE_mapping.iteritems():
+        for site_i in _sites:
+            if site_i not in SE_to_site_mapping:
+                SE_to_site_mapping[site_i] = set([])
+            if _SE not in SE_to_site_mapping[site_i]:
+                SE_to_site_mapping[site_i].add(_SE)
 
     # These can be used to select the site which know of a given SE
     # Or vice versa
@@ -154,11 +152,11 @@ def calculateSiteSEMapping(file_replicas, wanted_common_site, uniqueSE, site_to_
     allChosenSets = {}
 
     site_dict = {}
-    for k, v in SE_dict.iteritems():
-        site_dict[k] = set([])
-        for i in v:
-            for j in site_to_SE_mapping[i]:
-                site_dict[k].add(j)
+    for _lfn, sites in SE_dict.iteritems():
+        site_dict[_lfn] = set([])
+        for _site in sites:
+            for _SE in site_to_SE_mapping[_site]:
+                site_dict[_lfn].add(_SE)
 
     # Now select a set of site to use as a seed for constructing a subset of
     # LFN
@@ -173,9 +171,9 @@ def lookUpLFNReplicas(inputs, allLFNData):
     # Build a useful dictionary and list
     allLFNs = []
     LFNdict = {}
-    for i in inputs:
-        allLFNs.append(i.lfn)
-        LFNdict[i.lfn] = i
+    for _lfn in inputs:
+        allLFNs.append(_lfn.lfn)
+        LFNdict[_lfn.lfn] = _lfn
 
     # Request the replicas for all LFN 500 at a time to not overload the
     # server and give some feedback as this is going on
@@ -184,8 +182,7 @@ def lookUpLFNReplicas(inputs, allLFNData):
     for i in range(int(math.ceil(float(len(allLFNs)) * 0.002))):
 
         from Ganga.GPI import queues
-        queues._monitoring_threadpool.add_function(
-            getLFNReplicas, (allLFNs, i, allLFNData))
+        queues._monitoring_threadpool.add_function(getLFNReplicas, (allLFNs, i, allLFNData))
 
     while len(allLFNData) != int(math.ceil(float(len(allLFNs)) * 0.002)):
         import time
@@ -257,11 +254,11 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
             # OPERATIONS HAPPENING DUE TO THIS, LETS MINIMISE IT
 
             if this_lfn in LFNdict:
-                reg = stripProxy(LFNdict[this_lfn])._getRegistry()
-                if reg is not None:
-                    original_write_perm[this_lfn] = reg.dirty_flush_counter
-                    reg.dirty_flush_counter = 1000
-
+#                reg = stripProxy(LFNdict[this_lfn])._getRegistry()
+#                if reg is not None:
+#                    original_write_perm[this_lfn] = reg.dirty_flush_counter
+#                    reg.dirty_flush_counter = 1000
+#
                 logger.debug("Updating RemoteURLs")
                 LFNdict[this_lfn]._updateRemoteURLs(this_dict)
                 logger.debug("This_dict: %s" % str(this_dict))
@@ -279,11 +276,11 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
             allLFNs.remove(this_lfn)
 
     # FIXME AS ABOVE THIS IS HERE TO RESTORE NORMALITY
-    for k, v in original_write_perm.iteritems():
-        if k in bad_lfns:
-            continue
-        from Ganga.GPIDev.Base.Proxy import stripProxy
-        stripProxy(LFNdict[k])._getRegistry().dirty_flush_counter = v
+#    for k, v in original_write_perm.iteritems():
+#        if k in bad_lfns:
+#            continue
+#        from Ganga.GPIDev.Base.Proxy import stripProxy
+#        stripProxy(LFNdict[k])._getRegistry().dirty_flush_counter = v
 
     return errors
 
@@ -326,12 +323,10 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     # Perform a lookup of where LFNs are all stored
     allLFNs, LFNdict = lookUpLFNReplicas(inputs, allLFNData)
 
-    for i in allLFNData:
-        if allLFNData[i] is None:
-            logger.error(
-                "Error in Getting LFN Replica information, aborting split")
-            raise SplittingError(
-                "Error in Getting LFN Replica information, aborting split")
+    for _lfn in allLFNData:
+        if allLFNData[_lfn] is None:
+            logger.error("Error in Getting LFN Replica information, aborting split")
+            raise SplittingError("Error in Getting LFN Replica information, aborting split")
 
     bad_lfns = []
 
@@ -342,8 +337,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     if len(bad_lfns) != 0:
         if ignoremissing is False:
             logger.error("Errors found getting LFNs:\n%s" % str(errors))
-            raise SplittingError(
-                "Error trying to split dataset with invalid LFN and ignoreMissing = False")
+            raise SplittingError("Error trying to split dataset with invalid LFN and ignoreMissing = False")
 
     # This finds all replicas for all LFNs...
     # This will probably struggle for LFNs which don't exist

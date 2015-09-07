@@ -5,7 +5,6 @@
 import os
 import re
 import fnmatch
-from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException

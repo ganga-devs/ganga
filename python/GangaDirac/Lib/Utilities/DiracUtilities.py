@@ -137,6 +137,10 @@ def execute(command,
         _dirac_check_proxy()
         last_modified_time = time.time()
 
+    #logger.debug("Executing command:\n'%s'" % str(command))
+    #logger.debug("python_setup:\n'%s'" % str(python_setup))
+    #logger.debug("eval_includes:\n'%s'" % str(eval_includes))
+
     returnable = gexecute.execute(command,
                                   timeout=timeout,
                                   env=env,
