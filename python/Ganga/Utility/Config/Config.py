@@ -90,7 +90,6 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 
 """
 
-import sys
 from functools import reduce
 
 from Ganga.Core.exceptions import GangaException
@@ -672,17 +671,17 @@ class PackageConfig(object):
             if not self.options[o].check_defined():
                 del self.options[o]
 
-if sys.version_info[0] == 3:
-    import configparser as ConfigParser
-else:
+try:
     import ConfigParser
+    GangaConfigParser = ConfigParser.SafeConfigParser
+except ImportError:
+    # For Python 3
+    import configparser as ConfigParser
+    GangaConfigParser = ConfigParser.ConfigParser
 
 
 def make_config_parser(system_vars):
-    if sys.version_info[0] == 3:
-        cfg = ConfigParser.ConfigParser(interpolation=None)
-    else:
-        cfg = ConfigParser.ConfigParser()
+    cfg = GangaConfigParser()
     cfg.optionxform = str  # case sensitive
     cfg.defaults().update(system_vars)
     return cfg
@@ -808,6 +807,7 @@ def read_ini_files(filenames, system_vars):
                 except ConfigParser.InterpolationMissingOptionError:
                     logger.debug("Failed to expand, Importing value %s:%s as raw" % (str(sec), str(name)))
                     current_value = main.get(sec, name, raw=True)
+                    current_value = current_value.replace('%', '%%')
 
                 value = transform_PATH_option(name, value, current_value)
 
@@ -824,21 +824,22 @@ def read_ini_files(filenames, system_vars):
 
                     # is env variable
                     envval = ''
-                    logger.debug(
-                        'looking for ' + str(envvarclean) + ' in the shell environment')
+                    logger.debug('looking for ' + str(envvarclean) + ' in the shell environment')
                     if envvarclean in os.environ:
                         envval = os.environ[envvarclean]
-                        logger.debug(
-                            str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
+                        logger.debug(str(envvarclean) + ' is set as ' + envval + ' in the shell environment')
                         value = value.replace(envvar, envval)
                     else:
-                        logger.debug(
-                            'The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
+                        logger.debug('The configuration file ' + f + ' references an unset environment variable: ' + str(envvarclean))
 
                 # FIXME: strip trailing whitespaces -- SHOULD BE DONE BEFORE IF
                 # AT ALL?
                 value = value.rstrip()
-                main.set(sec, name, value)
+                value = value.replace('%', '%%')
+                try:
+                    main.set(sec, name, value)
+                except ValueError, err:
+                    logger.error("Error Setting %s" % str(err))
 
     return main
 
