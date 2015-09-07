@@ -1,6 +1,3 @@
-from __future__ import absolute_import
-from .Config import getConfig, makeConfig, ConfigError, configure, allConfigs, setConfigOption, expandConfigPath, config_scope, setSessionValue, getFlavour
-
 ## from Config import getConfigDict
 
 # here are some useful option filters
@@ -14,7 +11,7 @@ def expandvars(c, v):
 
 def expandgangasystemvars(c, v):
     """Expands vars with the syntax '@{VAR}' from the System config item."""
-    system = getConfig('System')
+    system = Ganga.Utility.Config.getConfig('System')
     for key in system.options.iterkeys():
         option = '@{%s}' % key
         if option in v:

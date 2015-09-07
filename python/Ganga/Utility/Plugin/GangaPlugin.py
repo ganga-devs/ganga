@@ -1,6 +1,6 @@
-import Ganga.Utility.logging
+import logging
+
 from Ganga.Core.exceptions import GangaValueError
-logger = Ganga.Utility.logging.getLogger()
 
 
 class PluginManagerError(GangaValueError):
@@ -30,7 +30,7 @@ class PluginManager(object):
         Typically the default plugin is the first added.
         If plugin not found raise PluginManagerError.
         """
-        #logger.debug( "Attempting to Find Plugin: %s" % name )
+        #logging.getLogger(__name__).debug( "Attempting to Find Plugin: %s" % name )
         #import traceback
         # traceback.print_stack()
 
@@ -42,8 +42,8 @@ class PluginManager(object):
         try:
             if name is not None:
                 if category in self.first:
-                    logger.debug("Returning based upon Category and Name")
-                    logger.debug("name: %s cat: %s" %
+                    logging.getLogger(__name__).debug("Returning based upon Category and Name")
+                    logging.getLogger(__name__).debug("name: %s cat: %s" %
                                  (str(name), str(category)))
                     if name in self.all_dict[category]:
                         self._prev_found[key] = self.all_dict[category][name]
@@ -51,8 +51,8 @@ class PluginManager(object):
 
             if (name is None) and category is not None:
                 if (category in self.first):
-                    logger.debug("Returning based upon Category ONLY")
-                    logger.debug("name: %s cat: %s" %
+                    logging.getLogger(__name__).debug("Returning based upon Category ONLY")
+                    logging.getLogger(__name__).debug("name: %s cat: %s" %
                                  (str(name), str(category)))
                     self._prev_found[key] = self.first[category]
                     return self.first[category]
@@ -65,9 +65,9 @@ class PluginManager(object):
                             message2 = "Category Requested: %s,   Category in which plugin was found: %s" % (
                                 category, category_i)
                             message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
-                            logger.debug(message1)
-                            logger.debug(message2)
-                            logger.debug(message3)
+                            logging.getLogger(__name__).debug(message1)
+                            logging.getLogger(__name__).debug(message2)
+                            logging.getLogger(__name__).debug(message3)
                             self._prev_found[key] = self.all_dict[
                                 category_i][name]
                             return self.all_dict[category_i][name]
@@ -75,7 +75,7 @@ class PluginManager(object):
         except KeyError:
             pass
         except:
-            logger.error("Some Other unexpected ERROR!")
+            logging.getLogger(__name__).error("Some Other unexpected ERROR!")
             raise
 
         if name is None:
@@ -87,7 +87,7 @@ class PluginManager(object):
         if name is None and category is None:
             s = "Serious Plugin Error has occured"
 
-        logger.debug(s)
+        logging.getLogger(__name__).debug(s)
         raise PluginManagerError(s)
 
     def add(self, pluginobj, category, name):
@@ -97,7 +97,7 @@ class PluginManager(object):
         cat = self.all_dict.setdefault(category, {})
         self.first.setdefault(category, pluginobj)
         cat[name] = pluginobj
-        logger.debug('adding plugin %s (category "%s") ' % (name, category))
+        logging.getLogger(__name__).debug('adding plugin %s (category "%s") ' % (name, category))
 
     def setDefault(self, category, name):
         """ Make the plugin 'name' be default in a given 'category'.

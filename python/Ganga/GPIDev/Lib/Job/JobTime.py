@@ -1,14 +1,10 @@
 import datetime
 
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema.Schema import Schema, Version, SimpleItem
 
 import Ganga.Utility.Config
-Ganga.Utility.Config.config_scope['datetime'] = datetime
-
-from Ganga.Utility.logging import getLogger
-logger = getLogger(modulename=True)
-
+Ganga.Utility.Config.Config.config_scope['datetime'] = datetime
 
 class JobTime(GangaObject):
 
@@ -115,7 +111,7 @@ class JobTime(GangaObject):
         id = j.id
         if id is None:
             id = str("unknown")
-        logger.debug("Job %s called timenow('%s')", str(id), status)
+        loggerlogging.getLogger(__name__).debug("Job %s called timenow('%s')", str(id), status)
 
         # standard method:
         if not j.subjobs:
@@ -126,48 +122,48 @@ class JobTime(GangaObject):
                     if be_statetime != None:
                         if childstatus in backend_final:
                             self.timestamps["backend_final"] = be_statetime
-                            logger.debug(
+                            logging.getLogger(__name__).debug(
                                 "Wrote 'backend_final' to timestamps.")
                         else:
                             self.timestamps[
                                 "backend_" + childstatus] = be_statetime
-                            logger.debug(
+                            logging.getLogger(__name__).debug(
                                 "Wrote 'backend_%s' to timestamps.", childstatus)
                     if childstatus == status:
                         break
             # ganga stamps
             if status in final:
                 self.timestamps["final"] = t_now
-                logger.debug("Wrote 'final' to timestamps.")
+                logging.getLogger(__name__).debug("Wrote 'final' to timestamps.")
             else:
                 self.timestamps[status] = t_now
-                logger.debug("Wrote '%s' to timestamps.", status)
+                logging.getLogger(__name__).debug("Wrote '%s' to timestamps.", status)
 
         # subjobs method:
         if j.master:  # identifies subjobs
-            logger.debug(
+            logging.getLogger(__name__).debug(
                 "j.time.timenow() caught subjob %d.%d in the '%s' status", j.master.id, j.id, status)
 
             for written_status in j.time.timestamps.keys():
                 if written_status not in j.master.time.sj_statlist:
                     j.master.time.sj_statlist.append(written_status)
-                    logger.debug(
+                    logging.getLogger(__name__).debug(
                         "written_status: '%s' written to sj_statlist", written_status)
 
         # master job method
         if j.subjobs:  # identifies master job
-            logger.debug(
+            logging.getLogger(__name__).debug(
                 "j.time.timenow() caught master job %d in the '%s' status", j.id, status)
             if status in ganga_master:  # don't use subjob stamp for these
                 self.timestamps[status] = t_now
-                logger.debug(
+                logging.getLogger(__name__).debug(
                     "status: '%s' in ganga_master written to master timestamps.", status)
             else:
                 for state in self.sj_statlist:
                     if state not in ganga_master:
                         j.time.timestamps[
                             state] = self.sjStatList_return(state)
-                        logger.debug(
+                        logging.getLogger(__name__).debug(
                             "state: '%s' from sj_statlist to written to master timestamps.", state)
                     else:
                         pass
@@ -181,10 +177,10 @@ class JobTime(GangaObject):
                 if isinstance(sjs.time.timestamps[status], datetime.datetime):
                     list.append(sjs.time.timestamps[status])
                 else:
-                    logger.debug(
+                    logging.getLogger(__name__).debug(
                         'Attempt to add a non datetime object in the timestamp, job=%d, subjob=%d', j.id, sjs.id)
             except KeyError:
-                logger.debug(
+                logging.getLogger(__name__).debug(
                     "Status '%s' not found in timestamps of job %d.%d.", status, sjs.master.id, sjs.id)
         list.sort()
         try:
@@ -193,7 +189,7 @@ class JobTime(GangaObject):
             return list[0]
         except IndexError:
             # change this to a more appropriate debug.
-            logger.debug(
+            logging.getLogger(__name__).debug(
                 "IndexError: ID: %d, Status: '%s', length of list: %d", j.id, status, len(list))
             pass
 
@@ -260,7 +256,7 @@ class JobTime(GangaObject):
         # If job is SUBJOB do the normal procedure. Not sure this clause is
         # neccessary as subjobs will be caught normally
         if j.master:
-            logger.debug(
+            logging.getLogger(__name__).debug(
                 "j.time.details(): subjob %d.%d caught.", j.master.id, j.id)
             detdict = j.backend.timedetails()
             return detdict
@@ -268,7 +264,7 @@ class JobTime(GangaObject):
         # If job is MASTER iterate over subjobs and do normal method. This
         # isn't going to be ideal for a large number of subjobs
         if j.subjobs:
-            logger.debug("j.time.details(): master job %d caught.", j.id)
+            logging.getLogger(__name__).debug("j.time.details(): master job %d caught.", j.id)
             idstr = str(j.id)
 
             # User wants 'all'
@@ -289,20 +285,20 @@ class JobTime(GangaObject):
                         return None
                     # if something else - asks again
                     else:
-                        logger.info("y/n please!")
+                        logging.getLogger(__name__).info("y/n please!")
                         keyin = None
 
                 for jobs in j.subjobs:
                     subidstr = idstr + '.' + str(jobs.id)
                     # String needs more info if it is going to stay in.
-                    logger.debug(
+                    logging.getLogger(__name__).debug(
                         "Subjob: %d, Backend ID: %d", jobs.id, jobs.backend.id)
                     detdict[subidstr] = jobs.backend.timedetails()
                 return detdict
 
             # no arguement specified
             elif subjob == None:
-                logger.debug(
+                logging.getLogger(__name__).debug(
                     "j.time.details(): no subjobs specified for this master job.")
                 return None
 
@@ -314,18 +310,18 @@ class JobTime(GangaObject):
                 # subjob id supplied
                 for sj in j.subjobs:
                     if sj.id == subjob:
-                        logger.debug(
+                        logging.getLogger(__name__).debug(
                             "Subjob: %d, Backend ID: %d", sj.id, sj.backend.id)
                         detdict = sj.backend.timedetails()
                         return detdict
                     else:
                         pass
                 if subjob >= len(j.subjobs):
-                    logger.warning(
+                    logging.getLogger(__name__).warning(
                         "Index '%s' is out of range. Corresponding subjob does not exist.", str(subjob))
                     return None
 
-            logger.debug(
+            logging.getLogger(__name__).debug(
                 "subjob arguement '%s' has failed to be caught and dealt with.", subjob)
             return None
 
@@ -340,12 +336,12 @@ class JobTime(GangaObject):
             # the warning and action taken below are pretty annoying, but I was
             # unsure how to deal with the request to print the details for all
             # n subjobs, which seems unlikely to be made.
-            logger.warning(
+            logging.getLogger(__name__).warning(
                 "It might be unwise to print all subjobs details. Use details() and extract relevant info from dictionary.")
             return None
         pd = self.details(subjob)
         for key in pd.keys():
-            logger.info(key, '\t', pd[key])
+            logging.getLogger(__name__).info(key, '\t', pd[key])
 
     def runtime(self):
         """Method which returns the 'runtime' of the specified job.
@@ -426,10 +422,10 @@ class JobTime(GangaObject):
                 dur = td  # datetime.timedelta(days=ds, seconds=secs)
                 return dur
             else:
-                logger.warning(
+                logging.getLogger(__name__).warning(
                     "Could not calculate duration: '%s' not found.", end)
         else:
-            logger.warning(
+            logging.getLogger(__name__).warning(
                 "Could not calculate duration: '%s' not found.", start)
         return None
 
@@ -437,7 +433,7 @@ class JobTime(GangaObject):
         """General method for obtaining the specified timestamp in specified format.
         """
         if status not in self.timestamps:
-            logger.debug("Timestamp '%s' not available.", status)
+            logging.getLogger(__name__).debug("Timestamp '%s' not available.", status)
             return None
         if format != None:
             return self.timestamps[status].strftime(format)

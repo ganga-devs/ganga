@@ -91,6 +91,7 @@ There is a GPI wrapper in Ganga.GPIDev.Lib.Config which:
 """
 
 from functools import reduce
+import logging
 
 from Ganga.Core.exceptions import GangaException
 
@@ -107,36 +108,6 @@ class ConfigError(GangaException):
 
     def __str__(self):
         return "ConfigError: %s " % (self.what)
-
-# WARNING: avoid importing logging at the module level in this file
-# for example, do not do here: from Ganga.Utility.logging import logger
-# use getLogger() function defined below:
-
-logger = None
-
-import Ganga.Utility.logging
-
-
-def getLogger():
-    global logger
-    if not logger is None:
-        return logger
-
-    # for the configuration of the logging package itself (in the initial
-    # phases) the logging may be disabled
-    try:
-        logger = Ganga.Utility.logging.getLogger()
-        return logger
-    except AttributeError:
-        # in such a case we return a mock proxy object which ignore all calls
-        # such as logger.info()...
-        class X(object):
-
-            def __getattr__(self, name):
-                def f(*args, **kwds):
-                    pass
-                return f
-        return X()
 
 
 # All configuration units
@@ -164,7 +135,7 @@ def _migrate_name(name):
             raise ValueError(
                 'config name %s is not a valid python identifier' % name)
         else:
-            logger = getLogger()
+            logger = logging.getLogger(__name__)
             logger.warning(
                 'obsolete config name found: replaced "%s" -> "%s"' % (name, name2))
             logger.warning(
@@ -265,7 +236,7 @@ class ConfigOption(object):
             session_value = self.filter(self, session_value)
         # except Exception as x:
         #    import  Ganga.Utility.logging
-        #    logger = Ganga.Utility.logging.getLogger()
+        #    logger = logging.getLogger(__name__)
         #    logger.warning('problem with option filter: %s: %s',self.name,x)
 
         try:
@@ -288,7 +259,7 @@ class ConfigOption(object):
             if self.filter:
                 user_value = self.filter(self, user_value)
         except Exception as x:
-            logger = getLogger()
+            logger = logging.getLogger(__name__)
             logger.warning('problem with option filter: %s: %s', self.name, x)
 
         try:
@@ -373,7 +344,7 @@ class ConfigOption(object):
         except AttributeError:
             return
 
-        logger = getLogger()
+        logger = logging.getLogger(__name__)
 
         # calculate the cast type, if it cannot be done then the option has not been yet defined (setDefaultValue)
         # in this case do not modify the value
@@ -486,7 +457,7 @@ class PackageConfig(object):
         self._config_made = False
 
         if _configured and self.is_open:
-            logger = getLogger()
+            logger = logging.getLogger(__name__)
             logger.error('cannot define open configuration section %s after configure() step', self.name)
 
     def _addOpenOption(self, name, value):
@@ -513,7 +484,7 @@ class PackageConfig(object):
             option = ConfigOption(name)
 
         if option.check_defined() and not override:
-            logger = getLogger()
+            logger = logging.getLogger(__name__)
             #import traceback
             # traceback.print_stack()
             logger.warning(
@@ -545,7 +516,7 @@ class PackageConfig(object):
         default).  The special treatment  applies to the session level
         values only (and not the default one!).  """
 
-        logger = getLogger()
+        logger = logging.getLogger(__name__)
 
         logger.debug(
             'trying to set session option [%s]%s = %s', self.name, name, value)
@@ -569,7 +540,7 @@ class PackageConfig(object):
         the  default  type  of  the  option  is  not  string,  then  the
         expression will be evaluated. """
 
-        logger = getLogger()
+        logger = logging.getLogger(__name__)
 
         logger.debug(
             'trying to set user option [%s]%s = %s', self.name, name, value)
@@ -620,7 +591,7 @@ class PackageConfig(object):
         try:
             return self.options[name].value
         except KeyError:
-            logger = getLogger()
+            logger = logging.getLogger(__name__)
             logger.debug(
                 "Effective Option %s NOT FOUND, Effective Options are:" % (name))
             opts = self.getEffectiveOptions()
@@ -746,7 +717,7 @@ def read_ini_files(filenames, system_vars):
 
     import re
     import os
-    logger = getLogger()
+    logger = logging.getLogger(__name__)
 
     logger.debug('reading ini files: %s', str(filenames))
 
@@ -881,7 +852,7 @@ def configure(filenames, system_vars):
             try:
                 v = cfg.get(name, o)
             except ConfigParser.InterpolationMissingOptionError, err:
-                logger = getLogger()
+                logger = logging.getLogger(__name__)
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
                 v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
@@ -891,7 +862,7 @@ def configure(filenames, system_vars):
 
 def load_user_config(filename, system_vars):
     import os
-    logger = getLogger()
+    logger = logging.getLogger(__name__)
     if not os.path.exists(filename):
         return
     new_cfg = read_ini_files(filename, system_vars)
@@ -962,7 +933,7 @@ def expandConfigPath(path, top):
 
 def sanityCheck():
 
-    logger = getLogger()
+    logger = logging.getLogger(__name__)
     for c in allConfigs.values():
         if not c._config_made:
             logger.error("sanity check failed: %s: no makeConfig() found in the code", c.name)

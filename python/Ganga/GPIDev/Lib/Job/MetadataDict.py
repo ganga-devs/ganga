@@ -1,7 +1,5 @@
-from Ganga.GPIDev.Base import GangaObject
-from Ganga.Core.exceptions import GangaAttributeError
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-from Ganga.GPIDev.Base.Proxy import addProxy
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema.Schema import Schema, Version, SimpleItem
 
 
 class MetadataDict(GangaObject):
@@ -25,10 +23,14 @@ class MetadataDict(GangaObject):
 
     def __getitem__(self, key):
         import copy
+        from Ganga.GPIDev.Base.Proxy import addProxy
+
         return addProxy(copy.deepcopy(self.data[key]))
 
     def __setitem__(self, key, value):
         from Ganga.GPIDev.Lib.Job.Job import Job
+        from Ganga.Core.exceptions import GangaAttributeError
+
         if key in Job._schema.datadict.keys():
             raise GangaAttributeError(
                 '\'%s\' is a reserved key name and cannot be used in the metadata' % key)

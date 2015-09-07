@@ -1,34 +1,22 @@
+import logging
+import os
+import re
+import errno
+import subprocess
+import datetime
+import time
+
 from Ganga.GPIDev.Adapters.IBackend import IBackend
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
+from Ganga.GPIDev.Schema.Schema import Schema, Version, SimpleItem
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-import Ganga.Utility.Config
-config = Ganga.Utility.Config.makeConfig(
+from Ganga.Utility.Config.Config import makeConfig
+config = makeConfig(
     'Local', 'parameters of the local backend (jobs in the background on localhost)')
 
 config.addOption('remove_workdir', True,
                  'remove automatically the local working directory when the job completed')
 config.addOption(
     'location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
-
-import Ganga.Utility.logic
-import Ganga.Utility.util
-
-from Ganga.GPIDev.Lib.File import FileBuffer
-
-import os
-import os.path
-import re
-import errno
-
-import subprocess
-
-import datetime
-import time
-
-import re
 
 
 class Localhost(IBackend):
@@ -72,25 +60,27 @@ class Localhost(IBackend):
         except OSError as x:
             import errno
             if x.errno != errno.ENOENT:
-                logger.error(
+                logging.getLogger(__name__).error(
                     'problem cleaning the workdir %s, %s', self.workdir, str(x))
                 return 0
         try:
             os.mkdir(self.workdir)
         except Exception as x:
-            logger.error(
+            logging.getLogger(__name__).error(
                 'cannot make the workdir %s, %s', self.workdir, str(x))
             return 0
         return self.run(job.getInputWorkspace().getPath('__jobscript__'))
 
     def run(self, scriptpath):
+        from Ganga.Utility import util
+
         try:
             process = subprocess.Popen(["python", scriptpath, 'subprocess'])
         except OSError as x:
-            logger.error('cannot start a job process: %s', str(x))
+            logging.getLogger(__name__).error('cannot start a job process: %s', str(x))
             return 0
         self.wrapper_pid = process.pid
-        self.actualCE = Ganga.Utility.util.hostname()
+        self.actualCE = util.hostname()
         return 1
 
     def peek(self, filename="", command=""):
@@ -132,15 +122,15 @@ class Localhost(IBackend):
             checkstr = ''
 
         if checkstr == '':
-            logger.debug("In getStateTime(): checkstr == ''")
+            logging.getLogger(__name__).debug("In getStateTime(): checkstr == ''")
             return None
 
         try:
             p = os.path.join(j.outputdir, '__jobstatus__')
-            logger.debug("Opening output file at: %s", p)
+            logging.getLogger(__name__).debug("Opening output file at: %s", p)
             f = open(p)
         except IOError:
-            logger.debug('unable to open file %s', p)
+            logging.getLogger(__name__).debug('unable to open file %s', p)
             return None
 
         for l in f:
@@ -151,13 +141,13 @@ class Localhost(IBackend):
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
                 except ValueError:
-                    logger.debug(
+                    logging.getLogger(__name__).debug(
                         "Value Error in file: '%s': string does not match required format.", p)
                     return None
                 return t
 
         f.close()
-        logger.debug(
+        logging.getLogger(__name__).debug(
             "Reached the end of getStateTime('%s'). Returning None.", status)
         return None
 
@@ -169,7 +159,7 @@ class Localhost(IBackend):
         # (twice!)
         p = os.path.join(j.outputdir, '__jobstatus__')
         if not os.path.isfile(p):
-            logger.error('unable to open file %s', p)
+            logging.getLogger(__name__).error('unable to open file %s', p)
             return None
 
         r = self.getStateTime('running')
@@ -194,7 +184,7 @@ class Localhost(IBackend):
         if self.nice:
             appscriptpath = ['nice', '-n %d' % self.nice] + appscriptpath
         if self.nice < 0:
-            logger.warning(
+            logging.getLogger(__name__).warning(
                 'increasing process priority is often not allowed, your job may fail due to this')
 
         sharedoutputpath = job.getOutputWorkspace().getPath()
@@ -430,7 +420,7 @@ sys.exit()
             # group, we can use this to kill all processes in the group
             os.kill(-self.wrapper_pid, signal.SIGKILL)
         except OSError as x:
-            logger.warning(
+            logging.getLogger(__name__).warning(
                 'while killing wrapper script for job %d: pid=%d, %s', job.id, self.wrapper_pid, str(x))
             ok = False
 
@@ -438,7 +428,7 @@ sys.exit()
         try:
             ws = os.waitpid(self.wrapper_pid, 0)
         except OSError as x:
-            logger.warning('problem while waitpid %d: %s', job.id, x)
+            logging.getLogger(__name__).warning('problem while waitpid %d: %s', job.id, x)
 
         from Ganga.Utility.files import recursive_copy
 
@@ -447,7 +437,7 @@ sys.exit()
                 recursive_copy(
                     os.path.join(self.workdir, fn), job.getOutputWorkspace().getPath())
             except Exception as x:
-                logger.info('problem retrieving %s: %s', fn, x)
+                logging.getLogger(__name__).info('problem retrieving %s: %s', fn, x)
 
         self.remove_workdir()
         return 1
@@ -458,10 +448,12 @@ sys.exit()
             try:
                 shutil.rmtree(self.workdir)
             except OSError as x:
-                logger.warning(
+                logging.getLogger(__name__).warning(
                     'problem removing the workdir %s: %s', str(self.id), str(x))
 
     def updateMonitoringInformation(jobs):
+
+        from Ganga.Utility.logic import implies
 
         def get_exit_code(f):
             import re
@@ -486,7 +478,7 @@ sys.exit()
             else:
                 return int(m.group('pid'))
 
-        logger.debug('local ping: %s', str(jobs))
+        logging.getLogger(__name__).debug('local ping: %s', str(jobs))
 
         for j in jobs:
             outw = j.getOutputWorkspace()
@@ -498,18 +490,18 @@ sys.exit()
                     pid = get_pid(statusfile)
                     if pid:
                         j.backend.id = pid
-                        #logger.info('Local job %d status changed to running, pid=%d',j.id,pid)
+                        #logging.getLogger(__name__).info('Local job %d status changed to running, pid=%d',j.id,pid)
                         j.updateStatus('running')  # bugfix: 12194
                 exitcode = get_exit_code(statusfile)
                 with open(statusfile) as status_file:
-                    logger.debug(
+                    logging.getLogger(__name__).debug(
                         'status file: %s %s', statusfile, status_file.read())
             except IOError as x:
-                logger.debug(
+                logging.getLogger(__name__).debug(
                     'problem reading status file: %s (%s)', statusfile, str(x))
                 exitcode = None
             except Exception as x:
-                logger.critical('problem during monitoring: %s', str(x))
+                logging.getLogger(__name__).critical('problem during monitoring: %s', str(x))
                 import traceback
                 traceback.print_exc()
                 raise x
@@ -518,18 +510,18 @@ sys.exit()
             # if the wrapper script exited with non zero this is an error
             try:
                 ws = os.waitpid(j.backend.wrapper_pid, os.WNOHANG)
-                if not Ganga.Utility.logic.implies(ws[0] != 0, ws[1] == 0):
+                if not implies(ws[0] != 0, ws[1] == 0):
                     # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
-                    # print 'logger problem', logger.name
-                    # print 'logger',logger.getEffectiveLevel()
-                    logger.critical(
+                    # print 'logger problem', logging.getLogger(__name__).name
+                    # print 'logger',logging.getLogger(__name__).getEffectiveLevel()
+                    logging.getLogger(__name__).critical(
                         'wrapper script for job %s exit with code %d', str(j.id), ws[1])
-                    logger.critical(
+                    logging.getLogger(__name__).critical(
                         'report this as a bug at https://its.cern.ch/jira/browse/GANGA')
                     j.updateStatus('failed')
             except OSError as x:
                 if x.errno != errno.ECHILD:
-                    logger.warning(
+                    logging.getLogger(__name__).warning(
                         'cannot do waitpid for %d: %s', j.backend.wrapper_pid, str(x))
 
             # if the exit code was collected for the application get the exit
@@ -544,7 +536,7 @@ sys.exit()
                 else:
                     j.updateStatus('failed')
 
-                #logger.info('Local job %d finished with exitcode %d',j.id,exitcode)
+                #logging.getLogger(__name__).info('Local job %d finished with exitcode %d',j.id,exitcode)
 
                 # if j.outputdata:
                 # j.outputdata.fill()

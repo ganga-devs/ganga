@@ -4,20 +4,11 @@
 # $Id: Executable.py,v 1.1 2008-07-17 16:40:57 moscicki Exp $
 ##########################################################################
 
+import os
+
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
-
-from Ganga.Utility.Config import getConfig
-
-from Ganga.GPIDev.Lib.File import File, ShareDir
-from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
-
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
-
-import os
-from Ganga.Utility.files import expandfilename
+from Ganga.GPIDev.Schema.Schema import Schema, Version, SimpleItem
 
 
 class Executable(IPrepareApp):
@@ -72,7 +63,7 @@ class Executable(IPrepareApp):
         """
         Revert an Executable() application back to it's unprepared state.
         """
-        logger.debug('Running unprepare in Executable app')
+        logging.getLogger(__name__).debug('Running unprepare in Executable app')
         if self.is_prepared is not None:
             self.decrementShareCounter(self.is_prepared.name)
             self.is_prepared = None
@@ -101,6 +92,9 @@ class Executable(IPrepareApp):
         See help(shareref) for further information.
         """
 
+        from Ganga.GPIDev.Lib.File import ShareDir
+        from Ganga.Core import ApplicationPrepareError
+
         if (self.is_prepared is not None) and (force is not True):
             raise ApplicationPrepareError(
                 '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
@@ -109,9 +103,9 @@ class Executable(IPrepareApp):
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
         # file is unspecified, has a space or is a relative path
         self.configure(self)
-        logger.info('Preparing %s application.' % (self._name))
+        logging.getLogger(__name__).info('Preparing %s application.' % (self._name))
         self.is_prepared = ShareDir()
-        logger.info('Created shared directory: %s' % (self.is_prepared.name))
+        logging.getLogger(__name__).info('Created shared directory: %s' % (self.is_prepared.name))
 
         try:
             # copy any 'preparable' objects into the shared directory
@@ -181,9 +175,9 @@ class Executable(IPrepareApp):
 # disable type checking for 'exe' property (a workaround to assign File() objects)
 # FIXME: a cleaner solution, which is integrated with type information in
 # schemas should be used automatically
-config = getConfig('defaults_Executable')  # _Properties
+####config = getConfig('defaults_Executable')  # _Properties
 #config.setDefaultOption('exe',Executable._schema.getItem('exe')['defvalue'], type(None),override=True)
-config.options['exe'].type = type(None)
+####config.options['exe'].type = type(None)
 
 # not needed anymore:
 #   the backend is also required in the option name
@@ -209,6 +203,9 @@ class RTHandler(IRuntimeHandler):
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
+        from Ganga.Utility.Config import getConfig
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.Utility.files import expandfilename
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
@@ -217,7 +214,7 @@ class RTHandler(IRuntimeHandler):
             if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (
+                    logging.getLogger(__name__).info("Submitting a prepared application; taking any input files from %s" % (
                         app.is_prepared.name))
                     prepared_exe = File(os.path.join(os.path.join(
                         shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
@@ -226,7 +223,7 @@ class RTHandler(IRuntimeHandler):
                 else:
                     prepared_exe = app.exe
             elif isinstance(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (
+                logging.getLogger(__name__).info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
@@ -240,6 +237,9 @@ class LCGRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         from Ganga.Lib.LCG import LCGJobConfig
+        from Ganga.Utility.Config import getConfig
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.Utility.files import expandfilename
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
@@ -248,7 +248,7 @@ class LCGRTHandler(IRuntimeHandler):
             if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (
+                    logging.getLogger(__name__).info("Submitting a prepared application; taking any input files from %s" % (
                         app.is_prepared.name))
                     prepared_exe = File(os.path.join(os.path.join(
                         shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
@@ -257,7 +257,7 @@ class LCGRTHandler(IRuntimeHandler):
                 else:
                     prepared_exe = app.exe
             elif isinstance(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (
+                logging.getLogger(__name__).info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
@@ -269,6 +269,9 @@ class gLiteRTHandler(IRuntimeHandler):
 
     def prepare(self, app, appconfig, appmasterconfig, jobmasterconfig):
         from Ganga.Lib.gLite import gLiteJobConfig
+        from Ganga.Utility.Config import getConfig
+        from Ganga.GPIDev.Lib.File import File
+        from Ganga.Utility.files import expandfilename
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
@@ -277,7 +280,7 @@ class gLiteRTHandler(IRuntimeHandler):
             if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (
+                    logging.getLogger(__name__).info("Submitting a prepared application; taking any input files from %s" % (
                         app.is_prepared.name))
                     prepared_exe = File(os.path.join(os.path.join(
                         shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
@@ -286,12 +289,14 @@ class gLiteRTHandler(IRuntimeHandler):
                 else:
                     prepared_exe = app.exe
             elif isinstance(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (
+                logging.getLogger(__name__).info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(os.path.join(
                     shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
 
         return gLiteJobConfig(prepared_exe, app._getParent().inputsandbox, convertIntToStringArgs(app.args), app._getParent().outputsandbox, app.env)
+
+
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 
 allHandlers.add('Executable', 'LSF', RTHandler)
