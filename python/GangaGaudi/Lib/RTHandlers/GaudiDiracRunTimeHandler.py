@@ -2,12 +2,12 @@
 import os
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings
-#from GangaDirac.Lib.Files.DiracFile                import DiracFile
 from GangaGaudi.Lib.RTHandlers.GaudiRunTimeHandler import GaudiRunTimeHandler
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.util import unique
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
@@ -15,25 +15,13 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
 
     """The runtime handler to run Gaudi jobs on the Dirac backend"""
 
-# def master_prepare(self,app,appmasterconfig):
-# this whole method can be removed once I update the gaudirun time handler
-# to use the below setup method
-##         inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig,['inputsandbox'])
-
-# return StandardJobConfig( inputbox  = unique(inputsandbox),
-# outputbox = unique(outputsandbox) )
-
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
         inputsandbox, outputsandbox = sandbox_prepare(
             app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
-        #outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = app.getJobObject()
-        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
-        from Ganga.GPI import DiracFile
-        outputfiles = [
-            file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
+        outputfiles = [this_file.namePattern for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
 
         gaudi_script_path = os.path.join(
             job.getInputWorkspace().getPath(), "gaudi-script.py")
@@ -80,7 +68,6 @@ class GaudiDiracRunTimeHandler(GaudiRunTimeHandler):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 def gaudi_script_template(self):
     '''Creates the script that will be executed by DIRAC job. '''
-    #         logger.debug('Command line: %s: ', commandline)
 
     script_template = """#!/usr/bin/env python
 '''Script to run Gaudi application'''

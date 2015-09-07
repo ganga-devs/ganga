@@ -5,11 +5,9 @@ from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import Ganga.Utility.Config
-#from RTHUtils import *
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
-from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-#from GangaLHCb.Lib.Gaudi.GaudiJobConfig import GaudiJobConfig
-from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
+#from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+#from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
+#from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 from Ganga.Core import TypeMismatchError
@@ -27,11 +25,9 @@ class GaudiRunTimeHandler(IRuntimeHandler):
     using the local, interactive and LSF backends."""
 
     def master_prepare(self, app, appmasterconfig):
-        inputsandbox, outputsandbox = master_sandbox_prepare(
-            app, appmasterconfig, ['inputsandbox'])
+        inputsandbox, outputsandbox = master_sandbox_prepare(app, appmasterconfig, ['inputsandbox'])
         return StandardJobConfig(inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox),
-                                 env=None)
+                                 outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
 
@@ -46,8 +42,7 @@ class GaudiRunTimeHandler(IRuntimeHandler):
                                               outputsandbox)
         return StandardJobConfig(FileBuffer('gaudi-script.py', run_script, executable=1),
                                  inputbox=unique(inputsandbox),
-                                 outputbox=unique(outputsandbox),
-                                 env=None)
+                                 outputbox=unique(outputsandbox))
 
     def __create_run_script(self,
                             app,
