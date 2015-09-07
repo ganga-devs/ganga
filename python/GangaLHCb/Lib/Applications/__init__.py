@@ -45,18 +45,9 @@ exec(all_apps)
 
 logger.debug("Fin")
 
-#    exec(cls.replace('AppName', app))
-# dont seem necessary
-#    exec('%sTask = taskify(%s,"%sTask")' %(app, app, app))
-#    exec('task_map["%s"] = %sTask' %(app, app))
-###    exec('task_map["%s"] = %s' %(app,app))
-##    obj_class = GPIProxyClassFactory( "%s" % app, locals()[app] )
-##    exportToGPI( "%s" % app, obj_class(), '' )
-
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 GaudiPythonTask = taskify(GaudiPython, "GaudiPythonTask")
 task_map["GaudiPython"] = GaudiPythonTask
-#task_map["GaudiPython"] = GaudiPython
 
 #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/
 BenderTask = taskify(Bender, "BenderTask")

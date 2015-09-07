@@ -17,7 +17,6 @@ def _XMLJobFiles():
 # Post-Processing script taken from AppBase to be shared among multiple
 # Job types
 
-
 def postprocess(self, logger):
 
     j = self.getJobObject()
@@ -40,26 +39,21 @@ def postprocess(self, logger):
         for sj in j.subjobs:
             outputxml = os.path.join(sj.outputdir, 'summary.xml')
             if not os.path.exists(outputxml):
-                logger.warning(
-                    "XMLSummary for job %s subjobs will not be merged as 'summary.xml' not present in job %s outputdir" % (j.fqid, sj.fqid))
+                logger.warning("XMLSummary for job %s subjobs will not be merged as 'summary.xml' not present in job %s outputdir" % (j.fqid, sj.fqid))
                 return
             elif os.path.getsize(outputxml) == 0 or os.stat(outputxml).st_size == 0:
-                logger.warning("XMLSummary fro job %s subjobs will not be merged as %s appears to be an empty file" % (
-                    j.fqid, outputxml))
-                logger.warning(
-                    "Please try to recreate this file by either resubmitting your job or re-downloading the data from the backend")
+                logger.warning("XMLSummary fro job %s subjobs will not be merged as %s appears to be an empty file" % (j.fqid, outputxml))
+                logger.warning("Please try to recreate this file by either resubmitting your job or re-downloading the data from the backend")
                 return
             summaries.append(outputxml)
 
         # Not needed now that we dont merge if ANY of subjobs have missing summary.xml
-        # if not summaries:
-            #logger.debug('None of the subjobs of job %s produced the output XML summary file "summary.xml". Merging will therefore not happen' % j.fqid)
-            # return
+        #if not summaries:
+        #    logger.debug('None of the subjobs of job %s produced the output XML summary file "summary.xml". Merging will therefore not happen' % j.fqid)
+        #    return
 
-        schemapath = os.path.join(
-            env['XMLSUMMARYBASEROOT'], 'xml/XMLSummary.xsd')
-        summarypath = os.path.join(
-            env['XMLSUMMARYBASEROOT'], 'python/XMLSummaryBase')
+        schemapath = os.path.join(env['XMLSUMMARYBASEROOT'], 'xml/XMLSummary.xsd')
+        summarypath = os.path.join(env['XMLSUMMARYBASEROOT'], 'python/XMLSummaryBase')
         sys.path.append(summarypath)
         import summary
 
@@ -74,11 +68,11 @@ def postprocess(self, logger):
                 metadataItems[name] = method(XMLSummarydata)
             except:
                 metadataItems[name] = None
-                logger.debug(
-                    'Problem running "%s" method on merged xml output.' % name)
+                logger.debug('Problem running "%s" method on merged xml output.' % name)
 
     for key, value in metadataItems.iteritems():
         if value is None:  # Has to be explicit else empty list counts
             j.metadata[key] = 'Not Available.'
         else:
             j.metadata[key] = value
+

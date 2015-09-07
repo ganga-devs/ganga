@@ -1,8 +1,6 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 import sys
-#from PythonOptionsParser import PythonOptionsParser
-#from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.Shell import Shell
 from Ganga.Utility.logging import getLogger
 from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
@@ -33,9 +31,6 @@ def backend_handlers():
                 }
     return backends
 
-#global available_lhcb_apps
-
-
 def available_apps():
     global available_lhcb_apps
     if available_lhcb_apps is None:
@@ -45,8 +40,6 @@ def available_apps():
                                "Alignment", "Noether", "Urania"]
 
     return available_lhcb_apps
-
-#global available_lhcb_packs
 
 
 def available_packs(appname=None):
@@ -172,3 +165,4 @@ def activeSummaryItems():
                    'xmlskippedfiles': xmlskippedfiles
                    }
     return activeItems
+

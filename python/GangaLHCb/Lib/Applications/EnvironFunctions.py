@@ -149,41 +149,6 @@ def guess_version_SP(appname):
     version = output[output.rfind('[') + 1:output.rfind(']')]
     return version
 
-# 'Simpler' but doesn't always work
-# def _getshell_SP(self):
-#    from Ganga.Utility.Shell import expand_vars
-#    import os
-#    env = expand_vars( os.environ )
-#
-#    import Ganga.Utility.execute
-#    Ganga.Utility.execute.execute('. `which LbLogin.sh` -c %s' % self.platform, env=env, shell=True, update_env=True)
-#    env['User_release_area'] = self.user_release_area
-#
-#    opts = ''
-#    if self.setupProjectOptions: opts = self.setupProjectOptions
-#
-#    useflag = ''
-#    if self.masterpackage:
-#        (mpack, malg, mver) = CMTscript.parse_master_package( self.masterpackage )
-#        useflag = '--use \"%s %s %s\"' % (malg, mver, mpack)
-#    cmd = '. SetupProject.sh %s %s %s %s' % (useflag,opts,self.appname,self.version)
-#
-#    Ganga.Utility.execute.execute( cmd, env=env, shell=True, update_env=True)
-#
-#    app_ok = False
-#    ver_ok = False
-#    for var in env:
-#        if var.find(self.appname) >= 0: app_ok = True
-#        if env[var].find(self.version) >= 0: ver_ok = True
-#    if not app_ok or not ver_ok:
-#        msg = 'Command "%s" failed to properly setup environment.' % cmd
-#        logger.error(msg)
-#        raise ApplicationConfigurationError(None,msg)
-#
-#    import copy
-#    self.env = copy.deepcopy( env )
-#    return env
-
 
 def _getshell_SP(self):
     logger = getLogger()
@@ -210,14 +175,10 @@ def _getshell_SP(self):
     script += '%s \n' % cmd
     fd.write(script)
     fd.flush()
-    # logger.debug(script)
 
     self.shell = Shell(setup=fd.name)
     if (not self.shell):
         raise ApplicationConfigurationError(None, 'Shell not created.')
-
-    #import pprint
-    # logger.debug(pprint.pformat(self.shell.env))
 
     fd.close()
 
@@ -237,3 +198,4 @@ def _getshell_SP(self):
     self.env = copy.deepcopy(self.shell.env)
 
     return self.shell.env
+

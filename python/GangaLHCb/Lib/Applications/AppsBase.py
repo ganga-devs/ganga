@@ -7,8 +7,6 @@ import sys
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
 from GangaLHCb.Lib.Applications.AppsBaseUtils import available_apps, guess_version, available_packs
-# app_postprocess#lumi, events, xmldatafiles, xmldatanumbers,
-# xmlskippedfiles#,get_parser
 from GangaLHCb.Lib.Applications.AppsBaseUtils import backend_handlers, activeSummaryItems
 from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
 from Ganga.GPIDev.Schema import SimpleItem
@@ -24,45 +22,6 @@ import Ganga.Utility.logging
 import subprocess
 import pickle
 logger = Ganga.Utility.logging.getLogger()
-
-# The Doc string for the Application classes
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
-# def GaudiDocString(appname):
-##     "Provide the documentation string for each of the Gaudi based applications"
-
-# doc="""The Gaudi Application handler
-
-# The Gaudi application handler is for running LHCb GAUDI framework
-# jobs. For its configuration it needs to know the version of the application
-# and what options file to use. More detailed configuration options are
-# described in the schema below.
-
-# An example of submitting a Gaudi job to Dirac could be:
-
-##     app = Gaudi(version='v99r0')
-
-# Give absolute path to options file. If several files are given, they are
-# just appended to each other.
-##     app.optsfile = ['/afs/...../myopts.opts']
-
-# Append two extra lines to the python options file
-# app.extraopts=\"\"\"
-##     ApplicationMgr.HistogramPersistency ="ROOT"
-##     ApplicationMgr.EvtMax = 100
-# \"\"\"
-
-# Define dataset
-##     ds = LHCbDataset(['LFN:foo','LFN:bar'])
-
-# Construct and submit job object
-# j=Job(application=app,backend=Dirac())
-# j.submit()
-
-# """
-# return doc.replace( "Gaudi", appname )
-
-# Application class template
-#/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 
 class AppName(Gaudi):
@@ -97,7 +56,6 @@ class AppName(Gaudi):
     """
     _name = 'AppName'
     _category = 'applications'
-    #__doc__ = GaudiDocString('AppName')
     _schema = Gaudi._schema.inherit_copy()
     docstr = 'The package the application belongs to (e.g. "Sim", "Phys")'
     _schema.datadict['package'] = SimpleItem(defvalue=None,
@@ -120,10 +78,6 @@ class AppName(Gaudi):
                                                          typelist=[
                                                              'str', 'type(None)'],
                                                          doc=docstr)
-##     docstr = 'Data/sandbox items defined in prepare can ditch when no-longer define data or outputdata/box in optsfiles'
-##     _schema.datadict['prep_outputbox']  = SimpleItem(preparable=1,defvalue=[],hidden=1,doc=docstr)
-##     _schema.datadict['prep_inputdata']  = ComponentItem(category='datasets', preparable=1,defvalue=LHCbDataset(),typelist=['GangaLHCb.Lib.LHCbDataset.LHCbDataset'],hidden=1,doc=docstr)
-##     _schema.datadict['prep_outputdata'] = ComponentItem(category='datasets', preparable=1,defvalue=OutputData(),typelist=['GangaLHCb.Lib.LHCbDataset.OutputData'],hidden=1,doc=docstr)
 
     _schema.version.major += 2
     _schema.version.minor += 0
@@ -133,20 +87,6 @@ class AppName(Gaudi):
 
     def _get_default_version(self, gaudi_app):
         return guess_version(gaudi_app)
-
-
-#    def master_configure(self):
-#        # pick up the outputbox
-#        import copy
-# return (None, StandardJobConfig( env = copy.deepcopy( self._getshell() )
-# ) )
-
-# def unprepare(self):
-##         super(type(self), self).unprepare()
-# self.prep_outputbox=[]
-# self.prep_inputdata=LHCbDataset()
-# self.prep_outputdata=OutputData()
-##        self.hash = None
 
     def _auto__init__(self):
         self.appname = 'AppName'
@@ -199,13 +139,12 @@ class AppName(Gaudi):
         if len(optsfiles) == 0:
             optsfiles.append(dummyfile())
 
-#        if self.env is None: self._getshell()
         if extraopts:
             extraopts = self.extraopts
         else:
             extraopts = ""
 
-       # parser = check_inputs(optsfiles, extraopts, self.env)
+        # parser = check_inputs(optsfiles, extraopts, self.env)
         try:
             parser = PythonOptionsParser(
                 optsfiles, extraopts, self.getenv(False))
@@ -314,15 +253,15 @@ class AppName(Gaudi):
                                  self.is_prepared.name)
         # Need to remember to create the buffer as the perpare methods returns
         # are merely copied to the inputsandbox so must alread exist.
-##         share_path = os.path.join(share_dir,'inputsandbox')
-##         if not os.path.isdir(share_path): os.makedirs(share_path)
+        #   share_path = os.path.join(share_dir,'inputsandbox')
+        #   if not os.path.isdir(share_path): os.makedirs(share_path)
 
         fillPackedSandbox([FileBuffer('options.pkl', parser.opts_pkl_str)],
                           os.path.join(share_dir,
                                        'inputsandbox',
                                        '_input_sandbox_%s.tar' % self.is_prepared.name))
-# FileBuffer(os.path.join(share_path,'options.pkl'),
-# parser.opts_pkl_str).create()
+        # FileBuffer(os.path.join(share_path,'options.pkl'),
+        # parser.opts_pkl_str).create()
         # self.prep_inputbox.append(File(os.path.join(share_dir,'options.pkl')))
 
         # Check in any input datasets defined in optsfiles and allow them to be
@@ -357,12 +296,6 @@ class AppName(Gaudi):
         # must change this as prepare should be seperate from the jpb.inputdata
 
 
-# try:
-##             job = self.getJobObject()
-##             outputsandbox, outputdata = parser.get_output(job)
-# except:
-##             outputsandbox, outputdata = parser.get_output_files()
-
         share_path = os.path.join(share_dir, 'output')
         if not os.path.isdir(share_path):
             os.makedirs(share_path)
@@ -370,12 +303,6 @@ class AppName(Gaudi):
         pickle.dump(parser, f)
         f.close()
 
-
-##         self.prep_outputbox += outputsandbox[:]
-##         self.prep_inputdata.files += inputdata.files[:]
-##         self.prep_outputdata.files += outputdata[:]
-
-    # End of class template
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers

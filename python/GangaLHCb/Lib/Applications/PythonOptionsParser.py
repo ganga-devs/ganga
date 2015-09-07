@@ -9,9 +9,7 @@ from Ganga.GPIDev.Lib.File import FileBuffer
 import Ganga.Utility.logging
 from Ganga.Utility.util import unique
 import Ganga.Utility.Config
-#from GangaGaudi.Lib.Datasets.GaudiInputDataset import GaudiInputDataset
 from GangaLHCb.Lib.LHCbDataset import *
-#from GangaLHCb.Lib.LHCbDataset import *
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
@@ -52,17 +50,8 @@ class PythonOptionsParser:
             msg = 'The version of gaudirun.py required for your application is\
             not supported.'
             raise ValueError(None, msg)
-            # really old version of gaudirun.py
-            # gaudirun = 'gaudirun.py -c -v -p %s %s' \
-            #           % (tmp_pkl.name, opyd_opts.name)
-            #rc, stdout, m = self.shell.cmd1(gaudirun)
-            # if stdout and rc == 0:
-            #    opts_str = stdout
-            #    err_msg = 'Please check gaudirun.py -c -v %s' % py_opts.name
-            #    err_msg += ' returns valid python syntax'
 
         elif stdout.find('no such option: -o') >= 0:
-            # old version of gaudirun.py
             gaudirun = 'gaudirun.py -n -v -p %s %s' \
                        % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = shellEnv_cmd(gaudirun, self.env)
@@ -74,7 +63,6 @@ class PythonOptionsParser:
                 err_msg += ' returns valid python syntax'
 
         else:
-            # new version of gaudirun.py
             cmd = 'gaudirun.py -n -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = shellEnv_cmd(cmd, self.env)
             if rc == 0 and stdout:
@@ -113,10 +101,10 @@ class PythonOptionsParser:
         joined_py_opts = ''
         for name in self.optsfiles:
             try:
-                file = open(expandfilename(name), 'r')
+                this_file = open(expandfilename(name), 'r')
                 import os.path
                 if os.path.splitext(name)[1] == '.py':
-                    joined_py_opts += file.read()
+                    joined_py_opts += this_file.read()
                 elif os.path.splitext(name)[1] == '.opts':
                     joined_py_opts += 'from Gaudi.Configuration import *\n'
                     joined_py_opts += 'importOptions(\'' + name + '\')\n'
@@ -142,18 +130,15 @@ class PythonOptionsParser:
             logger.debug('No inputdata has been defined in the options file.')
 
         ds = LHCbDataset()
-        #ds = GaudiInputDataset()
         for d in data:
             p1 = d.find('DATAFILE=') + len('DATAFILE=')
             quote = d[p1]
             p2 = d.find(quote, p1 + 1)
             f = d[p1 + 1:p2]
-            file = strToDataFile(f)
-            if file is None:
-                file = PhysicalFile(name=f)
-            ds.files.append(file)
-            #dtype_str = d.replace('DATAFILE=%s%s%s' % (quote,f,quote),'')
-            #dtype_str = dtype_str.strip()
+            this_file = strToDataFile(f)
+            if this_file is None:
+                this_file = PhysicalFile(name=f)
+            ds.files.append(this_file)
         return ds
 
     def get_output_files(self):
@@ -172,14 +157,14 @@ class PythonOptionsParser:
                     outputdata.append(f)
 
         datatypes = ['NTupleSvc', 'EvtTupleSvc']
-        for type in datatypes:
-            if type in self.opts_dict:
-                if 'Output' in self.opts_dict[type]:
-                    tuples = self.opts_dict[type]['Output']
+        for this_type in datatypes:
+            if this_type in self.opts_dict:
+                if 'Output' in self.opts_dict[this_type]:
+                    tuples = self.opts_dict[this_type]['Output']
                     # tuple output is returned as a list
                     for t in tuples:
                         f = t.split('\'')[1]
-                        if sbtypes.count(type) > 0:
+                        if sbtypes.count(this_type) > 0:
                             outsandbox.append(f)
                         else:
                             outputdata.append(f)
@@ -193,17 +178,17 @@ class PythonOptionsParser:
                     outputdata.append(f)
 
         datatypes = ['MicroDSTStream', 'DstWriter', 'GaussTape', 'DigiWriter']
-        for type in datatypes:
-            if(type in self.opts_dict):
-                if('Output' in self.opts_dict[type]):
+        for this_type in datatypes:
+            if(this_type in self.opts_dict):
+                if('Output' in self.opts_dict[this_type]):
                     # get just the file name
-                    file = self.opts_dict[type]['Output'].split('\'')[1]
-                    if file.startswith('PFN:') or file.startswith('pfn:'):
-                        file = file[4:]
-                    if sbtypes.count(type) > 0:
-                        outsandbox.append(file)
+                    this_file = self.opts_dict[type]['Output'].split('\'')[1]
+                    if this_file.startswith('PFN:') or this_file.startswith('pfn:'):
+                        this_file = this_file[4:]
+                    if sbtypes.count(this_type) > 0:
+                        outsandbox.append(this_file)
                     else:
-                        outputdata.append(file)
+                        outputdata.append(this_file)
 
         return outsandbox, outputdata
 

@@ -9,11 +9,9 @@ from os.path import split, join
 from Ganga.GPIDev.Schema.Schema import FileItem, SimpleItem
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import File
-#from GangaLHCb.Lib.Gaudi.Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.File import ShareDir
-#from GaudiJobConfig import *
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
@@ -87,22 +85,13 @@ class Bender(GaudiBase):
         defvalue={}, typelist=['dict', 'str', 'int', 'bool', 'float'], doc=docstr)
     _schema.version.major += 2
     _schema.version.minor += 0
-# _schema.datadict['is_prepared'] = SimpleItem(defvalue=None,
-# strict_sequence=0,
-# visitable=1,
-# copyable=1,
-# typelist=['type(None)','str'],
-# protected=1,
-# doc=docstr)
 
     def _get_default_version(self, gaudi_app):
         return guess_version(gaudi_app)
 
     def _auto__init__(self):
-        #if (not self.project): self.project = 'Bender'
         if (not self.appname) and (not self.project):
             self.project = 'Bender'  # default
-            #raise ApplicationConfigurationError(None,"no appname/project")
         if (not self.appname):
             self.appname = self.project
         self._init(False)
@@ -120,8 +109,6 @@ class Bender(GaudiBase):
                                  'shared',
                                  getConfig('Configuration')['user'],
                                  self.is_prepared.name)
-##         if not os.path.isdir(share_path): os.makedirs(share_path)
-# shutil.copy(expandfilename(self.module.name),share_path)
         fillPackedSandbox([self.module],
                           os.path.join(share_dir,
                                        'inputsandbox',
@@ -131,6 +118,7 @@ class Bender(GaudiBase):
                  os.path.join(
                      share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
                  True)
+
         # add the newly created shared directory into the metadata system if
         # the app is associated with a persisted object
         self.checkPreparedHasParent(self)
@@ -138,12 +126,6 @@ class Bender(GaudiBase):
         logger.debug("Finished Preparing Application in %s" % share_dir)
 
     def master_configure(self):
-        # self._master_configure()
-        # self._check_inputs()
-        # master_input_files=self.prep_inputbox[:]
-        ##         master_input_files += [self.module]
-        #self.extra.master_input_files += [self.module]
-        # return (None,self.extra)
         return (None, StandardJobConfig())
 
     def configure(self, master_appconfig):
@@ -171,19 +153,13 @@ FileCatalog().Catalogs=[]\n""" % modulename
 
         script += "USERMODULE.run(%d)\n" % self.events
         script += getXMLSummaryScript()
-        #self.extra.input_buffers['gaudipython-wrapper.py'] = script
-        #outsb = self.getJobObject().outputsandbox
         # add summary.xml
         outputsandbox_temp = XMLPostProcessor._XMLJobFiles()
         outputsandbox_temp += unique(self.getJobObject().outputsandbox)
         outputsandbox = unique(outputsandbox_temp)
 
-        #input_dir = self.getJobObject().getInputWorkspace().getPath()
         input_files = []
-        #input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
         input_files += [FileBuffer('gaudipython-wrapper.py', script)]
-        #self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
-        # return (None,self.extra)
         logger.debug("Returning StandardJobConfig")
         return (None, StandardJobConfig(inputbox=input_files,
                                         outputbox=outputsandbox))
@@ -203,7 +179,6 @@ FileCatalog().Catalogs=[]\n""" % modulename
             if not os.path.isfile(self.module.name):
                 msg = 'Module file %s not found.' % self.module.name
                 raise ApplicationConfigurationError(None, msg)
-        # self._check_gaudi_inputs([self.module],self.project)
 
     def postprocess(self):
         XMLPostProcessor.postprocess(self, logger)

@@ -7,10 +7,8 @@ import inspect
 from Ganga.GPIDev.Schema import FileItem, SimpleItem
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.File import File
-#from Francesc import *
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Lib.File import ShareDir
-#from GaudiJobConfig import *
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
 from GangaGaudi.Lib.Applications.GaudiBase import GaudiBase
 from GangaGaudi.Lib.Applications.GaudiUtils import fillPackedSandbox, gzipFile
@@ -113,13 +111,10 @@ class GaudiPython(GaudiBase):
         return v
 
     def _auto__init__(self):
-        #if (not self.project): self.project = 'DaVinci'
         if (not self.appname) and (not self.project):
             self.project = 'DaVinci'  # default
-            #raise ApplicationConfigurationError(None,"no appname/project")
         if (not self.appname):
             self.appname = self.project
-        #self.appname = self.project
         self._init(False)
 
     def _getshell(self):
@@ -134,9 +129,6 @@ class GaudiPython(GaudiBase):
                                  'shared',
                                  getConfig('Configuration')['user'],
                                  self.is_prepared.name)
-##         if not os.path.isdir(share_path): os.makedirs(share_path)
-# for f in self.script:
-# shutil.copy(expandfilename(f.name),share_path)
 
         fillPackedSandbox(self.script,
                           os.path.join(share_dir,
@@ -152,14 +144,7 @@ class GaudiPython(GaudiBase):
         self.post_prepare()
 
     def master_configure(self):
-        # self._master_configure()
-        # self._check_inputs()
-        #self.extra.master_input_files += self.script[:]
-        # master_input_files=self.prep_inputbox[:]
-        #master_input_files += self.script[:]
-        # return (None,self.extra)
-        # return (None,GaudiJobConfig(inputbox=master_input_files))
-        return (None, StandardJobConfig(env=None))  # self._getshell() ))
+        return (None, StandardJobConfig())
 
     def configure(self, master_appconfig):
         # self._configure()
@@ -169,29 +154,20 @@ class GaudiPython(GaudiBase):
             script += 'import sys\nsys.argv += %s\n' % str(self.args)
         script += "importOptions('data.py')\n"
         script += "execfile(\'%s\')\n" % name
-        #self.extra.input_buffers['gaudipython-wrapper.py'] = script
 
-        #outsb = self.getJobObject().outputsandbox
-        #outputsandbox = unique(self.getJobObject().outputsandbox)
         # add summary.xml
         outputsandbox_temp = XMLPostProcessor._XMLJobFiles()
         outputsandbox_temp += unique(self.getJobObject().outputsandbox)
         outputsandbox = unique(outputsandbox_temp)
 
-        #input_dir = self.getJobObject().getInputWorkspace().getPath()
         input_files = []
-        #input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
         input_files += [FileBuffer('gaudipython-wrapper.py', script)]
-        #self.extra.input_files += [FileBuffer(os.path.join(input_dir,'gaudipython-wrapper.py'),script).create()]
-        # return (None,self.extra)
         logger.debug("Returning Job Configuration")
         return (None, StandardJobConfig(inputbox=input_files,
-                                        outputbox=outputsandbox,
-                                        env=None))  # self._getshell()))
+                                        outputbox=outputsandbox))
 
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
-        # self._check_gaudi_inputs(self.script,self.project)
         if len(self.script) == 0:
             logger.warning("No script defined. Will use a default "
                            'script which is probably not what you want.')
