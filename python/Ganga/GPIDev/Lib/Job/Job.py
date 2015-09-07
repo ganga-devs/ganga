@@ -769,8 +769,7 @@ class Job(GangaObject):
             return
 
         if not new_stat:
-            logger.critical(
-                'undefined state for job %d, stats=%s', j.id, str(stats))
+            logger.critical('undefined state for job %d, status=%s', j.id, str(stats))
         j.updateStatus(new_stat)
 
     def getMonitoringService(self):
