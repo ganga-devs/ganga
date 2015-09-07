@@ -14,7 +14,7 @@ from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute
 from Ganga.GPI import queues
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -55,17 +55,6 @@ def all_SE_list():
     stored_list_of_sites = all_storage_elements
 
     return all_storage_elements
-
-# def upload_ok(lfn):
-#    import datetime
-#    retcode, stdout, stderr = dirac_ganga_server.execute('dirac-dms-lfn-metadata %s' % lfn, shell=True)
-#    try:
-#        r = eval(stdout)
-#    except: pass
-#    if type(r) == dict:
-#        if r.get('Successful', False) and type(r.get('Successful', False)) == dict:
-#            return lfn in r['Successful']
-#    return stdout.find("'Successful': {'%s'" % lfn) >=0
 
 
 class DiracFile(IGangaFile):
@@ -268,16 +257,6 @@ class DiracFile(IGangaFile):
 
         return object.__getattribute__(self, name)
 
-#    def _on_attribute__set__(self, obj_type, attrib_name):
-#        r = copy.deepcopy(self)
-        # if isinstance(obj_type, Job) and attrib_name == 'outputfiles':
-        #    r.lfn=''
-        #    r.guid=''
-        #    r.locations=[]
-#        #    r.localDir=None
-#        #    r.failureReason=''
-#        return r
-
     def __repr__(self):
         """Get the representation of the file."""
 
@@ -372,11 +351,6 @@ class DiracFile(IGangaFile):
             postprocesslocations.close()
         except:
             pass
-
-#    def _getEnv(self):
-#        if not self._env:
-#            self._env=getDiracEnv()
-#        return self._env
 
     def _auto_remove(self):
         """
@@ -845,169 +819,118 @@ class DiracFile(IGangaFile):
 
     def getWNScriptDownloadCommand(self, indent):
 
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.py')
+
+        download_script = FileUtils.loadScript(script_location, '')
+
         script = """\n
-
-###INDENT###upload_script='''
-from DIRAC.Core.Base.Script import parseCommandLine
-parseCommandLine()
-from DIRAC.Interfaces.API.Dirac import Dirac
-dirac=Dirac()
-import os
-dirac.getFile('###LFN###', os.getcwd())
-'''
-
-###INDENT###import subprocess
-###INDENT###dirac_env=###DIRAC_ENV###
-###INDENT###subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(upload_script)
+download_script='''\n###DOWNLOAD_SCRIPT###'''
+import subprocess
+dirac_env=###DIRAC_ENV###
+subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=True, env=dirac_env, stdin=subprocess.PIPE).communicate(download_script)
 """
-        script = script.replace(
-            '###DIRAC_ENV###', "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))" % configDirac['DiracEnvFile'])
+        script = '\n'.join([ str(indent+str(line)) for line in script.split('\n')])
 
-        script = script.replace('###INDENT###', indent)
+        script = script.replace('###DOWNLOAD_SCRIPT###', download_script)
+
+        script = script.replace('###DIRAC_ENV###', self._getDiracEnvStr())
+
         script = script.replace('###LFN###', self.lfn)
         return script
+
+    def _getDiracEnvStr(self):
+        ##FIXME use the sanitised Dirac env from within the Dirac scripts rather than read in this file separately as this could have unsave env vars
+        ## rcurrie
+        return "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))" % configDirac['DiracEnvFile']
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
         def wildcard_script(namePattern, lfnBase, compressed):
-            return """
-###INDENT###import glob, hashlib
-###INDENT###for f in glob.glob('###NAME_PATTERN###'):
-###INDENT###    processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
-""".replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', str(compressed))
+            wildcard_str =  """
+import glob, hashlib
+for f in glob.glob('###NAME_PATTERN###'):
+    processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
+"""
+            wildcard_str = wildcard_str.join([str('###INDENT###'+str(line)) for line in wildcard_str.split('\n')])
+
+            wildcard_str = wildcard_str.replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', str(compressed))
+
+            return wildcard_str
+
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'uploadScript.py')
+
+        upload_script = FileUtils.loadScript(script_location, '')
 
         script = """
-###INDENT###import os, sys
-###INDENT###dirac_env=###DIRAC_ENV###
-###INDENT###processes=[]    
-###INDENT###storage_elements = ###STORAGE_ELEMENTS###
-###INDENT###           
-###INDENT###def uploadFile(file_name, lfn_base, compress=False, wildcard=''):
-###INDENT###    import sys, os, datetime, subprocess
-###INDENT###    if not os.path.exists(os.path.join(os.getcwd(),file_name)):
-###INDENT###        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\\n" % (wildcard, file_label, file_name))
-###INDENT###        return
-###INDENT###   
-###INDENT###    upload_script='''
-import os
-from DIRAC.Core.Base.Script import parseCommandLine
-parseCommandLine()
-from DIRAC.Interfaces.API.Dirac import Dirac
-dirac=Dirac()
-errmsg=''
-file_name='###UPLOAD_FILE###'
-file_label=file_name
-compressed = ###COMPRESSED###
-if compressed:
-    import gzip
-    file_name += '.gz'
-    f_in = open(file_label, 'rb')
-    f_out = gzip.open(file_name, 'wb')
-    f_out.writelines(f_in)
-    f_out.close()
-    f_in.close()
-lfn= os.path.join('###LFN_BASE###', file_name)
-wildcard='###WILDCARD###'
-storage_elements=###SEs###
+import os, sys
+dirac_env=###DIRAC_ENV###
+processes=[]    
+storage_elements = ###STORAGE_ELEMENTS###
+           
+def uploadFile(file_name, lfn_base, compress=False, wildcard=''):
+    import sys, os, datetime, subprocess
+    if not os.path.exists(os.path.join(os.getcwd(),file_name)):
+        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\\n" % (wildcard, file_label, file_name))
+        return
+   
+    upload_script = '''\n###UPLOAD_SCRIPT###'''
+    upload_script = upload_script.replace('###UPLOAD_FILE###',        file_name)
+    upload_script = upload_script.replace('###LFN_BASE###',           lfn_base)
+    upload_script = upload_script.replace('###COMPRESSED###',         str(compress))
+    upload_script = upload_script.replace('###WILDCARD###',           wildcard)
+    upload_script = upload_script.replace('###SEs###',                str(storage_elements))
+    upload_script = upload_script.replace('###LOCATIONSFILE_NAME###', ###LOCATIONSFILE###.name)
 
-with open('###LOCATIONSFILE_NAME###','ab') as locationsfile:
-    for se in storage_elements:
-        try:
-            result = dirac.addFile(lfn, file_name, se)
-        except Exception as x:
-            import sys
-            sys.stdout.write('Exception running dirac.addFile command: %s' % str(x))
-            break
-        if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
-            import datetime
-            guid = dirac.getMetadata(lfn)['Value']['Successful'][lfn]['GUID']
-            locationsfile.write("DiracFile:::%s&&%s->%s:::['%s']:::%s\\\\n" % (wildcard, file_label, lfn, se, guid))
-            break
-        errmsg+="(%s, %s), " % (se, result)
-    else:
-        locationsfile.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s):::NotAvailable\\\\n" % (wildcard, file_label, file_name, errmsg))
-        import sys
-        sys.stdout.write('Could not upload file %s' % file_name)
-'''
-###INDENT###    upload_script = upload_script.replace('###UPLOAD_FILE###',        file_name)
-###INDENT###    upload_script = upload_script.replace('###LFN_BASE###',           lfn_base)
-###INDENT###    upload_script = upload_script.replace('###COMPRESSED###',         str(compress))
-###INDENT###    upload_script = upload_script.replace('###WILDCARD###',           wildcard)
-###INDENT###    upload_script = upload_script.replace('###SEs###',                str(storage_elements))
-###INDENT###    upload_script = upload_script.replace('###LOCATIONSFILE_NAME###', ###LOCATIONSFILE###.name)
-###INDENT###
-###INDENT###    inread, inwrite = os.pipe()
-###INDENT###    p = subprocess.Popen('''python -c "import os\\nos.close(%i)\\nexec(os.fdopen(%s,'rb'))"'''%(inwrite,inread), shell=True, env=dirac_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-###INDENT###    os.close(inread)
-###INDENT###    with os.fdopen(inwrite, 'wb') as instream:
-###INDENT###        instream.write(upload_script)
-###INDENT###    return p
+    inread, inwrite = os.pipe()
+    p = subprocess.Popen('''python -c "import os\\nos.close(%i)\\nexec(os.fdopen(%s,'rb'))"'''%(inwrite,inread), shell=True, env=dirac_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    os.close(inread)
+    with os.fdopen(inwrite, 'wb') as instream:
+        instream.write(upload_script)
+    return p
 """
+        script = '\n'.join([str('###INDENT###'+str(line)) for line in script.split('\n')])
+
 
         if self.remoteDir == '':
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
             self.remoteDir = 'GangaFiles_%s' % this_date
-            #import uuid
-            #self.remoteDir = str(uuid.uuid4())
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir
         else:
-            lfn_base = os.path.join(
-                configDirac['DiracLFNBase'], self.remoteDir)
+            lfn_base = os.path.join(configDirac['DiracLFNBase'], self.remoteDir)
 
-        for file in outputFiles:
-            if regex.search(file.namePattern) is not None:
-                script += wildcard_script(file.namePattern,
-                                          lfn_base, str(file.namePattern in patternsToZip))
+
+        for this_file in outputFiles:
+            if regex.search(this_file.namePattern) is not None:
+                script += wildcard_script(this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
             else:
-                #                lfn = file.lfn
-                #                 guid = file.guid
-                #                if file.lfn=='':
-                #                    lfn = os.path.join(lfn_base, name)
-                # if file.guid == '':
-                #    md5 = hashlib.md5(open(name,'rb').read()).hexdigest()
-                #    guid = (md5[:8]+'-'+md5[8:12]+'-'+md5[12:16]+'-'+md5[16:20]+'-'+md5[20:]).upper()
+                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' %\
+                                (this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
 
-                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (
-                    file.namePattern, lfn_base, str(file.namePattern in patternsToZip))
 
-        if self._parent and self._parent.backend._name != 'Dirac':
-            script = script.replace(
-                '###DIRAC_ENV###', "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))" % configDirac['DiracEnvFile'])
+        if stripProxy(self)._parent and stripProxy(self)._parent.backend._name != 'Dirac':
+            script = script.replace('###DIRAC_ENV###', self._getDiracEnvStr())
         else:
             script = script.replace('###DIRAC_ENV###', str(None))
 
         script += """
-###INDENT###for p in processes:
-###INDENT###    output = p.communicate()[0]
-###INDENT###    if output != '':
-###INDENT###        import sys
-###INDENT###        sys.stdout.write("%s" % str(output))
+for p in processes:
+    output = p.communicate()[0]
+    if output != '':
+        import sys
+        sys.stdout.write("%s" % str(output))
 """
-        script = script.replace(
-            '###STORAGE_ELEMENTS###', str(configDirac['DiracSpaceTokens']))
-        script = script.replace('###INDENT###',           indent)
-        script = script.replace(
-            '###LOCATIONSFILE###',    postProcessLocationsFP)
 
-#        if self._parent and self._parent.backend._name=='Dirac':
-#            script = script.replace('###SETUP###', '')
-#        elif self._parent and self._parent.backend._name=='Local' and self._parent.application._name=='Root' and self._parent.application.usepython:
-#            # THIS WHOLE IF STATEMENT IS A HORRIBLE HACK AS THE LOCAL ROOT RTHANDLER OVERWRITES THE PYTHONPATH ENV VAR
-#            # WITH A REDUCED PATH
-#            extra_setup=''
-# if 'LHCBPROJECTPATH' in os.environ:
-##                extra_setup+='export LHCBPROJECTPATH=%s && ' % os.environ['LHCBPROJECTPATH']
-# if 'CMTCONFIG' in os.environ:
-#                 extra_setup+='export PYTHONPATH=%s && ' % os.environ['PYTHONPATH']
-#            script = script.replace('###SETUP###', extra_setup + '. SetupProject.sh LHCbDirac &&')#&>/dev/null && ')
-#        else:
-# script = script.replace('###SETUP###', '. SetupProject.sh LHCbDirac
-# &>/dev/null && ')
+        script = '\n'.join([str('###INDENT###' + str(line)) for line in script.split('\n')])
+
+        script = script.replace('###STORAGE_ELEMENTS###', str(configDirac['DiracSpaceTokens']))
+        script = script.replace('###INDENT###',           indent)
+        script = script.replace('###LOCATIONSFILE###',    postProcessLocationsFP)
+
         return script
 
 # add DiracFile objects to the configuration scope (i.e. it will be
@@ -1017,3 +940,4 @@ Ganga.Utility.Config.config_scope['DiracFile'] = DiracFile
 
 from Ganga.Runtime.GPIexport import exportToGPI
 exportToGPI('GangaDirac', GangaList, 'Classes')
+
