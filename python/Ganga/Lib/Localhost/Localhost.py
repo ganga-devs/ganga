@@ -1,18 +1,6 @@
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 
-import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-import Ganga.Utility.Config
-config = Ganga.Utility.Config.makeConfig(
-    'Local', 'parameters of the local backend (jobs in the background on localhost)')
-
-config.addOption('remove_workdir', True,
-                 'remove automatically the local working directory when the job completed')
-config.addOption(
-    'location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
-
 import Ganga.Utility.logic
 import Ganga.Utility.util
 
@@ -29,6 +17,16 @@ import datetime
 import time
 
 import re
+
+import Ganga.Utility.logging
+
+import Ganga.Utility.Config
+
+logger = Ganga.Utility.logging.getLogger()
+
+config = Ganga.Utility.Config.makeConfig('Local', 'parameters of the local backend (jobs in the background on localhost)')
+config.addOption('remove_workdir', True, 'remove automatically the local working directory when the job completed')
+config.addOption('location', None, 'The location where the workdir will be created. If None it defaults to the value of $TMPDIR')
 
 
 class Localhost(IBackend):
@@ -194,208 +192,49 @@ class Localhost(IBackend):
         if self.nice:
             appscriptpath = ['nice', '-n %d' % self.nice] + appscriptpath
         if self.nice < 0:
-            logger.warning(
-                'increasing process priority is often not allowed, your job may fail due to this')
+            logger.warning('increasing process priority is often not allowed, your job may fail due to this')
 
         sharedoutputpath = job.getOutputWorkspace().getPath()
         outputpatterns = jobconfig.outputbox
-        environment = jobconfig.env
+        environment = dict() if jobconfig.env is None else jobconfig.env
 
         import tempfile
         workdir = tempfile.mkdtemp(dir=config['location'])
 
-        script = """#!/usr/bin/env python
-from __future__ import print_function
-
-import os,os.path,shutil,tempfile
-import sys,time
-import glob
-import sys
-
-# FIXME: print as DEBUG: to __syslog__ file
-#print(sys.path)
-#print(os.environ['PATH'])
-#print(sys.version)
-
-# bugfix #13314 : make sure that the wrapper (spawned process) is detached from Ganga session
-# the process will not receive Control-C signals
-# using fork  and doing setsid() before  exec would probably  be a bit
-# better (to avoid  slim chance that the signal  is propagated to this
-# process before setsid is reached)
-# this is only enabled if the first argument is 'subprocess' in order to enable
-# running this script by hand from outside ganga (which is sometimes useful)
-if len(sys.argv)>1 and sys.argv[1] == 'subprocess':
- os.setsid()
-
-############################################################################################
-
-###INLINEMODULES###
-
-############################################################################################
-
-input_sandbox = ###INPUT_SANDBOX###
-sharedoutputpath= ###SHAREDOUTPUTPATH###
-outputpatterns = ###OUTPUTPATTERNS###
-appscriptpath = ###APPSCRIPTPATH###
-environment = ###ENVIRONMENT###
-workdir = ###WORKDIR###
-
-statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
-
-try:
-  statusfile=open(statusfilename,'w')
-except IOError as x:
-  print('ERROR: not able to write a status file: ', statusfilename)
-  print('ERROR: ',x)
-  raise
-  
-line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
-statusfile.writelines(line)
-statusfile.flush()
-
-os.chdir(workdir)
-
-# -- WARNING: get the input files including the python modules BEFORE sys.path.insert()
-# -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
-
-for f in input_sandbox:
-  getPackedInputSandbox(f)
-
-# -- END OF MOVED CODE BLOCK
-
-#get input files
-###DOWNLOADINPUTFILES###
-
-# create inputdata list
-###CREATEINPUTDATALIST###
-
-import sys
-sys.path.insert(0, ###GANGADIR###)
-sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
-
-import subprocess
-import tarfile
-
-
-fullenvironment = os.environ.copy()
-for key,value in environment.iteritems():
-    fullenvironment[key] = value
-
-outfile=open('stdout','w')
-errorfile=open('stderr','w')
-
-sys.stdout=open('./__syslog__','w')
-sys.stderr=sys.stdout
-
-###MONITORING_SERVICE###
-monitor = createMonitoringObject()
-monitor.start()
-
-import subprocess
-
-import time #datetime #disabled for python2.2 compatiblity
-
-try:
- child = subprocess.Popen(appscriptpath, shell=False, stdout=outfile, stderr=errorfile, env=fullenvironment)
-except OSError as x:
- errfile = open( 'tt', 'w' )
- errfile.close()
- print('EXITCODE: %d'%-9999, file=statusfile)
- print('FAILED: %s'%time.strftime('%a %b %d %H:%M:%S %Y'), file=statusfile) #datetime.datetime.utcnow().strftime('%a %b %d %H:%M:%S %Y')
- print('PROBLEM STARTING THE APPLICATION SCRIPT: %s %s'%(appscriptpath,str(x)), file=statusfile)
- statusfile.close()
- sys.exit()
- 
-print('PID: %d'%child.pid, file=statusfile)
-statusfile.flush()
-
-result = -1
-
-try:
-  while 1:
-    result = child.poll()
-    if result is not None:
-        break
-    outfile.flush()
-    errorfile.flush()
-    monitor.progress()
-    time.sleep(0.3)
-finally:
-    monitor.progress()
-    sys.stdout=sys.__stdout__
-    sys.stderr=sys.__stderr__
-
-monitor.stop(result)
-
-outfile.flush()
-errorfile.flush()
-
-createOutputSandbox(outputpatterns,None,sharedoutputpath)
-
-def printError(message):
-    errorfile.write(message + os.linesep)
-    errorfile.flush()  
-
-def printInfo(message):
-    outfile.write(message + os.linesep)
-    outfile.flush()  
-
-
-###OUTPUTUPLOADSPOSTPROCESSING###
-
-outfile.close()
-errorfile.close()
-
-###OUTPUTSANDBOXPOSTPROCESSING###
-
-line="EXITCODE: " + repr(result) + os.linesep
-line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
-statusfile.writelines(line)
-statusfile.close()
-sys.exit()
-
-"""
-
         import inspect
-        script = script.replace(
-            '###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                                                        'LocalHostExec.py')
+
+        from Ganga.GPIDev.Lib.File import FileUtils
+        script = FileUtils.loadScript(script_location, '')
+
+        script = script.replace('###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
 
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles, getWNCodeForInputdataListCreation
         from Ganga.Utility.Config import getConfig
         jobidRepr = repr(job.getFQID('.'))
-        script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(
-            job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
 
-        script = script.replace(
-            '###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
 
-        script = script.replace(
-            '###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
+        script = script.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(job, ['stdout', 'stderr', '__syslog__'], jobidRepr))
+        script = script.replace('###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
+        script = script.replace('###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
+        script = script.replace('###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
 
-        script = script.replace(
-            '###CREATEINPUTDATALIST###', getWNCodeForInputdataListCreation(job, ''))
-
-        script = script.replace(
-            '###APPLICATION_NAME###', repr(job.application._name))
-        script = script.replace(
-            '###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
-        script = script.replace(
-            '###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
+        script = script.replace('###APPLICATION_NAME###', repr(job.application._name))
+        script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
+        script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
         script = script.replace('###OUTPUTPATTERNS###', repr(outputpatterns))
         script = script.replace('###JOBID###', jobidRepr)
         script = script.replace('###ENVIRONMENT###', repr(environment))
         script = script.replace('###WORKDIR###', repr(workdir))
-        script = script.replace(
-            '###INPUT_DIR###', repr(job.getStringInputDir()))
+        script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
 
-        script = script.replace('###MONITORING_SERVICE###', job.getMonitoringService(
-        ).getWrapperScriptConstructorText())
+        script = script.replace('###MONITORING_SERVICE###', job.getMonitoringService().getWrapperScriptConstructorText())
 
         self.workdir = workdir
 
-        script = script.replace(
-            '###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
+        script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
 
         wrkspace = job.getInputWorkspace()
         scriptPath = wrkspace.writefile(
@@ -538,3 +377,4 @@ sys.exit()
                 j.backend.remove_workdir()
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
+
