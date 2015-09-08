@@ -548,12 +548,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
             not dict(pluginclass._schema.allItems())[name]['hidden']:
             return addProxy(pluginclass._attribute_filter__get__(name))
         else:
-            try:
-                return object.__getattribute__(self, name)
-            except AttributeError as x:
-                #logger.debug("Attribute: %s NOT found for object %s" % (name, str(self)))
-                #raise GangaAttributeError("%s" % str(x))
-                raise
+            return object.__getattribute__(self, name)
 
     # but at the class level _impl is a ganga plugin class
     d = {proxyRef: pluginclass,
