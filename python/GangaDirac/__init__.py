@@ -40,9 +40,11 @@ configDirac.addOption('failed_sandbox_download', True,
 configDirac.addOption('load_default_Dirac_backend', True,
                       'Whether or not to load the default dirac backend. This allows packages to load a modified version if necessary')
 
-configDirac.addOption('DiracLFNBase', '/lhcb/user/%s/%s' % (config['user'][0],
-                                                            config['user']),
-                      "Base dir appended to create LFN name from DiracFile('name')")
+# Problem if installing Ganga as config isn't setup properly
+if 'user' in config:
+    configDirac.addOption('DiracLFNBase', '/lhcb/user/%s/%s' % (config['user'][0],
+                                                                config['user']),
+                          "Base dir appended to create LFN name from DiracFile('name')")
 
 configDirac.addOption('ReplicateOutputData', False,
                       'Determines whether outputdata stored on Dirac is replicated')
