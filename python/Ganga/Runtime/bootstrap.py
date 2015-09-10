@@ -995,6 +995,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             except Exception as err:
                 logger.error('problems with bootstrapping %s -- ignored', n)
                 logger.error('Reason: %s' % str(err))
+                raise err
             try:
                 r.loadNamedTemplates(Ganga.GPI.__dict__,
                                      Ganga.Utility.Config.getConfig('Configuration')['namedTemplates_ext'],
@@ -1062,8 +1063,7 @@ default_backends = LCG
         from Ganga.GPIDev.Lib.Job.Job import JobError
 
         exportToGPI('GangaAttributeError', GangaAttributeError, 'Exceptions')
-        exportToGPI(
-            'ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
+        exportToGPI('ProtectedAttributeError', ProtectedAttributeError, 'Exceptions')
         exportToGPI('ReadOnlyObjectError', ReadOnlyObjectError, 'Exceptions')
         exportToGPI('JobError', JobError, 'Exceptions')
 
@@ -1253,6 +1253,7 @@ default_backends = LCG
         exportToGPI('shareref', shareref, 'Objects',
                     'Mechanism for tracking use of shared directory resources')
 
+        logger.debug("Bootstrap Workspace")
         # bootstrap the workspace
         from Ganga.Runtime import Workspace_runtime
         Workspace_runtime.bootstrap()
@@ -1266,6 +1267,7 @@ default_backends = LCG
         from Ganga.GPIDev.Base.VPrinter import full_print
         exportToGPI('full_print', full_print, 'Functions')
 
+        logger.debug("Bootstrap Core Modules")
         # bootstrap core modules
         from Ganga.GPIDev.Base.Proxy import proxyRef
         Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), self.interactive)
@@ -1288,6 +1290,8 @@ default_backends = LCG
         # the bootstrap then the defaults_* config options will also be loaded.
         self.new_user_wizard()
 
+
+        logger.debug("Post-Bootstrap hooks")
         ###########
         # run post bootstrap hooks
         for r in allRuntimes.values():

@@ -3,15 +3,14 @@ Internal initialization of the repositories.
 """
 
 import Ganga.Utility.Config
-config = Ganga.Utility.Config.getConfig('Configuration')
-
 from Ganga.Utility.logging import getLogger
-logger = getLogger()
-
 import os.path
 from Ganga.Utility.files import expandfilename
 from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
+
+config = Ganga.Utility.Config.getConfig('Configuration')
+logger = getLogger()
 
 
 def requiresAfsToken():
@@ -29,11 +28,17 @@ def getLocalRoot():
     else:
         return ''
 
+def getLocalWorkspace():
+    if config['repositorytype'] in ['LocalXML', 'LocalAMGA', 'LocalPickle', 'SQLite']:
+        return os.path.join(expandfilename(config['gangadir']), 'workspace', config['user'], config['repositorytype'])
+    else:
+        return ''
+
 
 def getOldJobs():
     salvaged_jobs = {'jobs': [], 'templates': []}
     basepath = os.path.join(
-        expandfilename(config['gangadir']), 'repository', config['user'])
+            expandfilename(config['gangadir']), 'repository', config['user'])
     names = ['jobs', 'templates']
 
     path = os.path.join(basepath, "LocalAMGA")
@@ -48,7 +53,7 @@ def getOldJobs():
                 rep.releaseAllLocks()
                 if len(co_jobs) > 0:
                     logger.warning(
-                        "Converted %i jobs from old AMGA repository" % len(co_jobs))
+                            "Converted %i jobs from old AMGA repository" % len(co_jobs))
             except Exception as x:
                 logger.error("Could not load old AMGA repository: %s" % x)
                 raise
@@ -65,7 +70,7 @@ def getOldJobs():
                 rep.releaseAllLocks()
                 if len(co_jobs) > 0:
                     logger.warning(
-                        "Converted %i jobs from old XML repository" % len(co_jobs))
+                            "Converted %i jobs from old XML repository" % len(co_jobs))
             except Exception as x:
                 logger.error("Could not load old XML repository: %s" % x)
                 raise
@@ -75,9 +80,46 @@ def getOldJobs():
 started_registries = []
 
 
+def checkDiskQuota():
+
+    import subprocess
+    from Ganga.Utility.files import fullpath
+
+    repo_partition = getLocalRoot()
+    repo_partition = os.path.realpath(repo_partition)
+
+    work_partition = getLocalWorkspace()
+    work_partition = os.path.realpath(work_partition)
+
+    for data_partition in [repo_partition, work_partition]:
+
+        if fullpath(data_partition).find('/afs') == 0:
+            quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
+            output = quota.communicate()[0]
+            logger.debug("fs quota %s:\t%s" % (str(data_partition), str(output)))
+
+        else:
+            df = subprocess.Popen(["df", data_partition], stdout=subprocess.PIPE)
+            output = df.communicate()[0]
+            device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
+
+            quota_percent = percent
+
+        try:
+            quota_percent = output.split('%')[0]
+            if int(quota_percent) >= 95:
+                logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
+                logger.warning("WARNING: Please free some disk space on: %s" % str(data_partition))
+        except Exception, err:
+            logger.debug("Error checking disk partition: %s" % str(err))
+
+    return
+
 def bootstrap():
     oldJobs = getOldJobs()
     retval = []
+
+    checkDiskQuota()
 
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
@@ -107,7 +149,7 @@ def bootstrap():
                     registry._add(j, force_index=j.id)
                 else:
                     logger.warning(
-                        "Import Collision at id %i, appending job to the end...", j.id)
+                            "Import Collision at id %i, appending job to the end...", j.id)
                     registry._add(j)
     import atexit
     atexit.register(shutdown)
@@ -136,7 +178,7 @@ def shutdown():
             started_registries.remove(registry.name)
     except:
         logger.error(
-            "Failed to Shutdown prep Repository!!! please check for stale lock files")
+                "Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
         pass
 
@@ -150,7 +192,7 @@ def shutdown():
             registry.shutdown()  # flush and release locks
         except Exception as x:
             logger.error(
-                "Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
+                    "Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
             logger.error("%s" % str(x))
             logger.error("Trying to Shutdown cleanly regardless")
             pass
