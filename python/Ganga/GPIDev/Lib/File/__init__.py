@@ -107,3 +107,4 @@ def string_file_shortcut(v, item):
     return None
 
 allComponentFilters['gangafiles'] = string_file_shortcut
+

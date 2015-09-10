@@ -7,7 +7,6 @@
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Base.Proxy import isType
-from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
 import os
 import shutil
@@ -185,28 +184,23 @@ class ShareDir(GangaObject):
 #            self.add(self.addfile)
 
     def add(self, input):
+        from Ganga.Core.GangaRepository import getRegistry
         if not isType(input, list):
             input = [input]
         for item in input:
             if isType(item, str):
                 if os.path.isfile(expandfilename(item)):
-                    logger.info(
-                        'Copying file %s to shared directory %s' % (item, self.name))
-                    shutil.copy2(
-                        expandfilename(item), os.path.join(getSharedPath(), self.name))
-                    shareref = GPIProxyObjectFactory(
-                        getRegistry("prep").getShareRef())
+                    logger.info('Copying file %s to shared directory %s' % (item, self.name))
+                    shutil.copy2(expandfilename(item), os.path.join(getSharedPath(), self.name))
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                     shareref.increase(self.name)
                     shareref.decrease(self.name)
                 else:
                     logger.error('File %s not found' % expandfilename(item))
             elif isType(item, File) and item.name is not '' and os.path.isfile(expandfilename(item.name)):
-                logger.info(
-                    'Copying file object %s to shared directory %s' % (item.name, self.name))
-                shutil.copy2(
-                    expandfilename(item.name), os.path.join(getSharedPath(), self.name))
-                shareref = GPIProxyObjectFactory(
-                    getRegistry("prep").getShareRef())
+                logger.info('Copying file object %s to shared directory %s' % (item.name, self.name))
+                shutil.copy2(expandfilename(item.name), os.path.join(getSharedPath(), self.name))
+                shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                 shareref.increase(self.name)
                 shareref.decrease(self.name)
             else:
