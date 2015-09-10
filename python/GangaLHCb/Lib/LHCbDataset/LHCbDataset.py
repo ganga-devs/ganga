@@ -4,12 +4,12 @@ from copy import deepcopy
 import tempfile
 import fnmatch
 from Ganga.GPIDev.Lib.Dataset import GangaDataset
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import GangaFileItem, SimpleItem, Schema, Version
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
-from LHCbDatasetUtils import *
-from OutputData import *
+from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
+from OutputData import OutputData
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
@@ -37,8 +37,6 @@ class LHCbDataset(GangaDataset):
     '''
     schema = {}
     docstr = 'List of PhysicalFile and DiracFile objects'
-    # schema['files'] = ComponentItem(category='gangafiles',defvalue=[],
-    #                                sequence=1,doc=docstr)
     schema['files'] = GangaFileItem(defvalue=[], typelist=[
                                     'str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc=docstr)
     docstr = 'Ancestor depth to be queried from the Bookkeeping'

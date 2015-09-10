@@ -1,8 +1,7 @@
-from LHCbAnalysisTransform import *
+from LHCbAnalysisTransform import LHCbAnalysisTransform
 from Ganga.GPIDev.Lib.Tasks.Task import Task
 from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.Core.exceptions import GangaException
-
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
 

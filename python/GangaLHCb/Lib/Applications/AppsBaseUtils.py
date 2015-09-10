@@ -8,6 +8,7 @@ from GangaLHCb.Lib.RTHandlers.LHCbGaudiDiracRunTimeHandler import LHCbGaudiDirac
 import Ganga.Utility.Config
 
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
+
 from Ganga.GPIDev.Lib.Tasks.TaskApplication import taskify
 from Ganga.GPIDev.Lib.Tasks.TaskApplication import task_map
 
@@ -81,16 +82,16 @@ def addNewLHCbapp(appname, use=''):
     return
 
 
-def available_versions(appname):
+def available_versions(self, appname):
     """Provide a list of the available Gaudi application versions"""
     import EnvironFunctions
-    return EnvironFunctions.available_versions(appname)
+    return EnvironFunctions.available_versions(self, appname)
 
 
-def guess_version(appname):
+def guess_version(self, appname):
     """Guess the default Gaudi application version"""
     import EnvironFunctions
-    return EnvironFunctions.guess_version(appname)
+    return EnvironFunctions.guess_version(self, appname)
 
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#

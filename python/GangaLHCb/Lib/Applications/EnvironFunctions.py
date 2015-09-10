@@ -14,36 +14,36 @@ gaudiConfig = Ganga.Utility.Config.getConfig('GAUDI')
 #---------------------------------------
 
 
-def available_versions(appname):
-    if gaudiConfig['useCMakeApplications']:
+def available_versions(self, appname):
+    if self.newStyleApp is True:
         return available_versions_cmake(appname)
     else:
         return available_versions_SP(appname)
 
 
-def guess_version(appname):
-    if gaudiConfig['useCMakeApplications']:
+def guess_version(self, appname):
+    if self.newStyleApp is True:
         return guess_version_cmake(appname)
     else:
         return guess_version_SP(appname)
 
 
 def _getshell(self):
-    if gaudiConfig['useCMakeApplications']:
+    if self.newStyleApp is True:
         return _getshell_cmake(self)
     else:
         return _getshell_SP(self)
 
 
-def construct_merge_script(DaVinci_version, scriptName):
-    if gaudiConfig['useCMakeApplications']:
+def construct_merge_script(self, DaVinci_version, scriptName):
+    if self.newStyleApp is True:
         return construct_merge_script_cmake(DaVinci_version, scriptName)
     else:
         return construct_merge_script_SP(DaVinci_version, scriptName)
 
 
-def construct_run_environ():
-    if gaudiConfig['useCMakeApplications']:
+def construct_run_environ(self):
+    if self.newStyleApp is True:
         return construct_run_environ_cmake()
     else:
         return construct_run_environ_SP()
@@ -82,8 +82,7 @@ f=os.popen('which SetupProject.sh')
 setup_script=f.read()[:-1]
 f.close()
 if os.path.exists(setup_script):
-    os.system('''/usr/bin/env bash -c '. `which LbLogin.sh` -c %s && source %s %s %s %s &&\
-printenv > env.tmp' ''' % (platform, setup_script,project_opts,app,version))
+    os.system('''/usr/bin/env bash -c '. `which LbLogin.sh` -c %s && source %s %s %s %s && printenv > env.tmp' ''' % (platform, setup_script,project_opts,app,version))
     for line in open('env.tmp').readlines():
         varval = line.strip().split('=')
         if len(varval) < 2:

@@ -1,8 +1,6 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
-#from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
-#from SplitterUtils import DiracSplitter
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
@@ -136,28 +134,7 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         indata = inputdata
 
-        # try:
-        #    logger.debug( "indata length: %s" % str( len(indata) ) )
-        # except:
-        #    pass
-
-        # if not job.inputdata or not inputdata:
-        #    logger.debug( "no job.inputdata" )
-        #    share_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-        #                              'shared',
-        #                              getConfig('Configuration')['user'],
-        #                              job.application.is_prepared.name,
-        #                              'inputdata',
-        #                              'options_data.pkl')
-        #    if os.path.exists(share_path):
-        #        f=open(share_path,'r+b')
-        #        indata = pickle.load(f)
-        #        f.close()
-        #    else:
-        #        logger.error('Cannot split if no inputdata given!')
-        #        raise SplittingError('job.inputdata is None and no inputdata found in optsfile')
-
-        self.depth = indata.depth
+        self.depth = indata.depth if indata is not None else 0
         self.persistency = indata.persistency
 
         self.XMLCatalogueSlice = indata.XMLCatalogueSlice
@@ -215,3 +192,4 @@ class SplitByFiles(GaudiInputDataSplitter):
         split_return = super(SplitByFiles, self).split(job)
         logger.debug("split_return: %s" % split_return)
         return split_return
+

@@ -46,41 +46,6 @@ configLHCb.addOption(
 configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs, options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
 
-## dscrpt = 'Automatically download sandbox for failed jobs?'
-# configLHCb.addOption('failed_sandbox_download',True,dscrpt)
-# dscrpt = 'List of SEs where Dirac ouput data should be placed (empty means '\
-##          'let DIRAC decide where to put the data).'
-# configLHCb.addOption('DiracOutputDataSE',[],dscrpt)
-# dscrpt = 'List of sites to ban when a user job has no input data (this is '\
-##          'meant to reduce the load on these sites)'
-# sites = ['LCG.CERN.ch','LCG.CNAF.it','LCG.GRIDKA.de','LCG.IN2P3.fr',
-# 'LCG.NIKHEF.nl','LCG.PIC.es','LCG.RAL.uk','LCG.SARA.nl']
-# configLHCb.addOption('noInputDataBannedSites',sites,dscrpt)
-# tokens = ['CERN-USER','CNAF-USER','GRIDKA-USER','IN2P3-USER','SARA-USER',
-# 'PIC-USER','RAL-USER']
-## dscrpt = 'Space tokens allowed for replication, etc.'
-# configLHCb.addOption('DiracSpaceTokens',tokens,dscrpt)
-#dscrpt = 'Switch whether or not a check that the required app version/platform is valid for the backend'
-# configLHCb.addOption('ignore_version_check',True,dscrpt)
-#dscrpt = 'The Maximum allowed number of bulk submitted jobs before Ganga intervenes'
-# configLHCb.addOption('MaxDiracBulkJobs',500,dscrpt)
-
-# Set default values for the Dirac section.
-#dscrpt = 'Display DIRAC API stdout to the screen in Ganga?'
-# configDirac.addOption('ShowDIRACstdout',False,dscrpt)
-#dscrpt = 'Global timeout (seconds) for Dirac commands'
-# configDirac.addOption('Timeout',1000,dscrpt)
-#dscrpt = 'Wait time (seconds) prior to first poll of Dirac child proc'
-# configDirac.addOption('StartUpWaitTime',3,dscrpt)
-## dscrpt = 'Base dir appended to create LFN name from DiracFile(\'name\')'
-# configDirac.addOption('DiracLFNBase','/lhcb/user/%s/%s'%(config['user'][0],config['user']),dscrpt)
-
-# This is now done for all plugin packages automatically by the bootstrap
-# but leave here to remind how to set up another registry if needed.
-#from Ganga.GPIDev.Lib.Registry.RegistryUtils import establishNamedTemplates
-#establishNamedTemplates('templatesLHCb', os.path.join(os.path.dirname(__file__),'templates'), file_ext='tpl', pickle_files=True)
-
-
 def _guess_version(name):
     import subprocess
     import os
@@ -88,8 +53,7 @@ def _guess_version(name):
     try:
         gangasys = os.environ['GANGASYSROOT']
     except KeyError:
-        raise OptionValueError(
-            "Can't guess %s version if GANGASYSROOT is not defined" % name)
+        raise OptionValueError("Can't guess %s version if GANGASYSROOT is not defined" % name)
     tmp = tempfile.NamedTemporaryFile(suffix='.txt')
     cmd = 'cd %s && cmt show projects > %s' % (gangasys, tmp.name)
     rc = subprocess.Popen([cmd], shell=True).wait()
@@ -150,8 +114,7 @@ def _store_dirac_environment():
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
 _store_dirac_environment()
-configDirac.setSessionValue(
-    'DiracEnvFile', os.environ['GANGADIRACENVIRONMENT'])
+configDirac.setSessionValue('DiracEnvFile', os.environ['GANGADIRACENVIRONMENT'])
 
 _store_root_version()
 
@@ -191,9 +154,12 @@ from Ganga.GPIDev.Lib.File.Configure import outputconfig
 
 outputconfig.overrideDefaultValue('FailJobIfNoOutputMatched', 'False')
 
-# This is being dropped from 6.1.0 due to causing some bus in loading large numbers of jobs
+# This is being dropped from 6.1.0 due to causing some bug in loading large numbers of jobs
+#
+# This will be nice to re-add once there is lazy loading support passed to the display for the 'jobs' command 09/2015 rcurrie
 #
 #from Ganga.GPIDev.Lib.Registry.JobRegistry import config as display_config
 #display_config.overrideDefaultValue( 'jobs_columns', ('fqid', 'status', 'name', 'subjobs', 'application', 'backend', 'backend.actualCE', 'backend.extraInfo', 'comment') )
 #display_config.overrideDefaultValue( 'jobs_columns_functions', {'comment': 'lambda j: j.comment', 'backend.extraInfo': 'lambda j : j.backend.extraInfo ', 'subjobs': 'lambda j: len(j.subjobs)', 'backend.actualCE': 'lambda j:j.backend.actualCE', 'application': 'lambda j: j.application._name', 'backend': 'lambda j:j.backend._name'} )
 #display_config.overrideDefaultValue('jobs_columns_width', {'fqid': 8, 'status': 10, 'name': 10, 'application': 15, 'backend.extraInfo': 30, 'subjobs': 8, 'backend.actualCE': 17, 'comment': 20, 'backend': 15} )
+

@@ -3,7 +3,7 @@ import copy
 import os
 import pickle
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
-from RTHUtils import *
+from RTHUtils import is_gaudi_child, getXMLSummaryScript, create_runscript
 from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Lib.File import FileBuffer, LocalFile, MassStorageFile

@@ -1,5 +1,5 @@
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.Job import Job

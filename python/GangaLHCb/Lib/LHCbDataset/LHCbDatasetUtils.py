@@ -4,7 +4,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.Core import GangaException
-from Ganga.GPIDev.Lib.File import *
+from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaLHCb.Lib.Files import LogicalFile, PhysicalFile

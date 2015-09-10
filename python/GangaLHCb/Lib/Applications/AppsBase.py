@@ -86,7 +86,7 @@ class AppName(Gaudi):
     _exportmethods += ['readInputData']
 
     def _get_default_version(self, gaudi_app):
-        return guess_version(gaudi_app)
+        return guess_version(self, gaudi_app)
 
     def _auto__init__(self):
         self.appname = 'AppName'
@@ -175,7 +175,7 @@ class AppName(Gaudi):
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself. The 
         unix exit code is returned."""
-        if configGaudi['useCMakeApplications']:
+        if self.newStyleApp is True:
             logger.error("Cannot use this with cmake enabled!")
             return -1
         command = '###CMT### ' + command

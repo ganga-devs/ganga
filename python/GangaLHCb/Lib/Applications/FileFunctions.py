@@ -5,14 +5,14 @@ configGaudi = getConfig('GAUDI')
 
 
 def getpack(self, options=''):
-    if configGaudi['useCMakeApplications']:
+    if self.newStyleApp is True:
         return getpack_cmake(self, options)
     else:
         return getpack_CMT(self, options)
 
 
 def make(self, argument=None):
-    if configGaudi['useCMakeApplications']:
+    if self.newStyleApp is True:
         return make_cmake(self, argument)
     else:
         return make_CMT(self, argument)

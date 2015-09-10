@@ -2,7 +2,7 @@ from Ganga import GPI
 from Ganga.GPIDev.Lib.Tasks.common import status_colours, overview_colours, markup, fgcol, col
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.GPIDev.Lib.Tasks.Transform import Transform
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from LHCbTaskDummySplitter import LHCbTaskDummySplitter
@@ -11,10 +11,9 @@ from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 import Ganga.Utility.Config
 from copy import deepcopy
 import os
+from Ganga.Utility.logging import getLogger
 config = Ganga.Utility.Config.getConfig('Configuration')
 
-from Ganga.Utility.logging import getLogger
-logger = getLogger(modulename=True)
 
 partition_colours = {
     'ignored': "",

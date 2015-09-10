@@ -6,7 +6,7 @@ import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
-from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
+#from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi

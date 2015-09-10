@@ -4,9 +4,9 @@
 import os
 import sys
 from GangaDirac.Lib.Utilities.DiracUtilities import execute
-from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 import Ganga.Utility.logging
 
 logger = Ganga.Utility.logging.getLogger()

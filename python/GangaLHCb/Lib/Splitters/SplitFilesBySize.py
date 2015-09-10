@@ -1,10 +1,8 @@
 from GangaGaudi.Lib.Splitters.GaudiInputDataSplitter import GaudiInputDataSplitter
-#from GangaGaudi.Lib.Splitters.SplitterUtils import DatasetSplitter
 from GangaDirac.Lib.Splitters.SplitterUtils import DiracSplitter
-#from SplitterUtils import DiracSplitter
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Adapters.ISplitter import SplittingError
-from Ganga.GPIDev.Schema import *
+from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename

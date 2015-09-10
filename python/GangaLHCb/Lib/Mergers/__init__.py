@@ -1,1 +1,1 @@
-from LHCbFileMerger import *
+from LHCbFileMerger import LHCbFileMerger
