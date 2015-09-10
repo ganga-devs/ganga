@@ -42,8 +42,8 @@ def construct_merge_script(self, DaVinci_version, scriptName):
         return construct_merge_script_SP(DaVinci_version, scriptName)
 
 
-def construct_run_environ(self):
-    if self.newStyleApp is True:
+def construct_run_environ(useCmake=False):
+    if useCmake is True:
         return construct_run_environ_cmake()
     else:
         return construct_run_environ_SP()

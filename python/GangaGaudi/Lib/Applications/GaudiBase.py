@@ -68,9 +68,8 @@ class GaudiBase(IPrepareApp):
     _hidden = 1
 
     
-    def __init__(self):
-        logger.debug("HI THERE!")
-        super(self.appname, self).__init__(None)
+    #def __init__(self):
+    #    super(GaudiBase, self).__init__(None)
 
     def _get_default_version(self, gaudi_app):
         raise NotImplementedError
@@ -83,9 +82,9 @@ class GaudiBase(IPrepareApp):
         if self.appname is None:
             raise ApplicationConfigurationError(None, "appname is None")
         if (not self.version):
-            self.version = self._get_default_version(self, self.appname)
+            self.version = self._get_default_version(self.appname)
         if (not self.platform):
-            self.platform = self._get_default_platform(self)
+            self.platform = self._get_default_platform()
         #if not set_ura:
         #    return
         if not self.user_release_area:
@@ -228,7 +227,7 @@ class GaudiBase(IPrepareApp):
                                  getConfig('Configuration')['user'],
                                  self.is_prepared.name)
 
-        dlls, pys, subpys = get_user_dlls(self, elf.appname, self.version,
+        dlls, pys, subpys = get_user_dlls(self, self.appname, self.version,
                                           self.user_release_area, self.platform,
                                           self.getenv(True))
         InstallArea = []

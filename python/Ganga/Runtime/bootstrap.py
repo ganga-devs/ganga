@@ -798,15 +798,15 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             return None
 
         if "GANGA_SITE_CONFIG_AREA" in os.environ:
-            dir = os.environ['GANGA_SITE_CONFIG_AREA']
-            if os.path.exists(dir) and os.path.isdir(dir):
-                dirlist = sorted(os.listdir(dir), key=_versionsort)
+            this_dir = os.environ['GANGA_SITE_CONFIG_AREA']
+            if os.path.exists(this_dir) and os.path.isdir(this_dir):
+                dirlist = sorted(os.listdir(this_dir), key=_versionsort)
                 dirlist.reverse()
                 gangaver = _versionsort(_gangaVersion.lstrip('Ganga-'))
                 for d in dirlist:
                     vsort = _versionsort(d)
                     if vsort and ((vsort <= gangaver) or (gangaver is 'SVN')):
-                        select = os.path.join(dir, d)
+                        select = os.path.join(this_dir, d)
                         config_files.append(_createpath(select))
                         break
         if os.path.exists(self.options.config_file):
@@ -827,8 +827,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             self.options.cmdline_options.append('[PollThread]autostart=False')
 
         logger.debug('default user name is %s', config['user'])
-        logger.debug(
-            'user specified cmdline_options: %s', str(self.options.cmdline_options))
+        logger.debug('user specified cmdline_options: %s', str(self.options.cmdline_options))
 
         # override the config options from the command line arguments
         # the format is [section]option=value OR option=value
@@ -850,8 +849,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         # ensure we're not interactive if daemonised
         if self.options.daemon and self.interactive:
-            logger.warning(
-                "Cannot run as a service in interactive mode. Ignoring.")
+            logger.warning("Cannot run as a service in interactive mode. Ignoring.")
             self.options.daemon = False
 
         # fork ourselves so we a daemon
@@ -927,8 +925,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                              "runtime warnings issued by the interpreter may be suppresed")
             if config['IgnoreRuntimeWarnings']:
                 import warnings
-                warnings.filterwarnings(
-                    action="ignore", category=RuntimeWarning)
+                warnings.filterwarnings(action="ignore", category=RuntimeWarning)
 
             def transform(x):
                 return os.path.normpath(Ganga.Utility.files.expandfilename(x))

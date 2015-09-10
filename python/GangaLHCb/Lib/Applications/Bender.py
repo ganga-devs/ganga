@@ -86,8 +86,8 @@ class Bender(GaudiBase):
     _schema.version.major += 2
     _schema.version.minor += 0
 
-    def __init__(self):
-        super('Bender', self).__init__()
+    #def __init__(self):
+    #    super(Bender, self).__init__()
 
     def _get_default_version(self, gaudi_app):
         return guess_version(gaudi_app)
@@ -97,7 +97,7 @@ class Bender(GaudiBase):
             self.project = 'Bender'  # default
         if (not self.appname):
             self.appname = self.project
-        self._init(False)
+        self._init()
 
     def _getshell(self):
 

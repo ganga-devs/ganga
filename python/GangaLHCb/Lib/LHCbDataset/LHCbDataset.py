@@ -13,7 +13,7 @@ from OutputData import OutputData
 from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 #from Ganga.GPI import DiracFile
 logger = Ganga.Utility.logging.getLogger()
 

@@ -87,10 +87,10 @@ def getXMLSummaryScript(indent=''):
     return script.replace('###INDENT###', indent)
 
 
-def create_runscript():
+def create_runscript(useCmake=False):
 
     from GangaLHCb.Lib.Applications.EnvironFunctions import construct_run_environ
-    environ_script = construct_run_environ()
+    environ_script = construct_run_environ(useCmake)
 
     import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
