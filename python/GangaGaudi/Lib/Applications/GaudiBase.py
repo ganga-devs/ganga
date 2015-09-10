@@ -58,29 +58,36 @@ class GaudiBase(IPrepareApp):
     schema['env'] = SimpleItem(preparable=1, transient=1, defvalue=None,
                                hidden=1, doc=docstr, typelist=['type(None)', 'dict'])
     docstr = 'MD5 hash of the string representation of applications preparable attributes'
-    schema['hash'] = SimpleItem(
-        defvalue=None, typelist=['type(None)', 'str'], hidden=1)
+    schema['hash'] = SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1)
+
+    schema['newStyleApp'] = SimpleItem(defvalue=False, typelist=['bool'], doc="Is this app a 'new Style' CMake app?")
 
     _name = 'GaudiBase'
     _exportmethods = ['getenv', 'getpack', 'make', 'projectCMD', 'cmt']
     _schema = Schema(Version(0, 1), schema)
     _hidden = 1
 
+    
+    def __init__(self):
+        logger.debug("HI THERE!")
+        super(self.appname, self).__init__(None)
+
     def _get_default_version(self, gaudi_app):
         raise NotImplementedError
 
     def _get_default_platform(self):
-        return get_user_platform()
+        return get_user_platform(self)
 
-    def _init(self, set_ura):
+    #def _init(self, set_ura):
+    def _init(self):
         if self.appname is None:
             raise ApplicationConfigurationError(None, "appname is None")
         if (not self.version):
-            self.version = self._get_default_version(self.appname)
+            self.version = self._get_default_version(self, self.appname)
         if (not self.platform):
-            self.platform = self._get_default_platform()
-        if not set_ura:
-            return
+            self.platform = self._get_default_platform(self)
+        #if not set_ura:
+        #    return
         if not self.user_release_area:
             expanded = os.path.expandvars("$User_release_area")
             if expanded == "$User_release_area":
@@ -142,8 +149,7 @@ class GaudiBase(IPrepareApp):
                 try:
                     os.makedirs(project_path)
                 except Exception as e:
-                    logger.error(
-                        "Can not create project user directory: " + project_path)
+                    logger.error("Can not create project user directory: " + project_path)
                     return
 
         execute('getpack %s' % options,
@@ -171,9 +177,7 @@ class GaudiBase(IPrepareApp):
         application. Will execute the command "cmt <command>" after the
         proper configuration. Do not include the word "cmt" yourself."""
 
-        configGaudi = Ganga.Utility.Config.getConfig('GAUDI')
-
-        if configGaudi['useCMakeApplications']:
+        if self.newStyleApp is True:
             logger.warning("Cannot Use this in combination with cmake!")
             return
 
@@ -224,7 +228,7 @@ class GaudiBase(IPrepareApp):
                                  getConfig('Configuration')['user'],
                                  self.is_prepared.name)
 
-        dlls, pys, subpys = get_user_dlls(self.appname, self.version,
+        dlls, pys, subpys = get_user_dlls(self, elf.appname, self.version,
                                           self.user_release_area, self.platform,
                                           self.getenv(True))
         InstallArea = []
@@ -244,17 +248,13 @@ class GaudiBase(IPrepareApp):
                 subdir = 'InstallArea' + tmp[:tmp.rfind('/') + 1]
                 logger.debug("UserDLLs SUBPYS: %s" % expandfilename(f))
                 InstallArea.append(File(name=expandfilename(f), subdir=subdir))
+
         # add the newly created shared directory into the metadata system if the app is associated with a persisted object
         # also call post_prepare for hashing
         # commented out here as inherrited from this class with extended
         # perpare
 
-        # self.checkPreparedHasParent(self)
-        # self.post_prepare()
-        fillPackedSandbox(InstallArea,
-                          os.path.join(share_dir,
-                                       'inputsandbox',
-                                       '_input_sandbox_%s.tar' % self.is_prepared.name))
+        fillPackedSandbox(InstallArea, os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name))
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
@@ -270,3 +270,5 @@ class GaudiBase(IPrepareApp):
 
     def configure(self, appmasterconfig):
         raise NotImplementedError
+
+

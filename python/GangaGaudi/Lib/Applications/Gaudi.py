@@ -7,7 +7,6 @@ import pickle
 from Ganga.GPIDev.Schema import SimpleItem, FileItem
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.logging
-from GaudiUtils import get_user_platform, fillPackedSandbox, get_user_dlls
 from Ganga.Core.GangaRepository import getRegistry
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.GPIDev.Lib.Registry.PrepRegistry import ShareRef

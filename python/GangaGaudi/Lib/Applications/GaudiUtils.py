@@ -13,35 +13,34 @@ import CMTUtils
 import cmakeUtils
 
 logger = Ganga.Utility.logging.getLogger()
-configGaudi = Ganga.Utility.Config.getConfig('GAUDI')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-def make(self, arguments ):
+def make(self, arguments):
 
-    if not configGaudi['useCMakeApplications']:
+    if not self.newStyleApp is True:
         return CMTUtils.make(arguments)
     else:
         return cmakeUtils.make(arguments)
 
-def get_user_platform(env=os.environ):
+def get_user_platform(self, env=os.environ):
 
-    if not configGaudi['useCMakeApplications']:
+    if not self.newStyleApp is True:
         return CMTUtils.get_user_platform(env)
     else:
         return cmakeUtils.get_user_platform(env)
 
 
-def update_project_path(user_release_area, env=os.environ):
+def update_project_path(self, user_release_area, env=os.environ):
 
-    if not configGaudi['useCMakeApplications']:
+    if not self.newStyleApp is True:
         return CMTUtils.update_project_path(user_release_area, env)
     else:
         return cmakeUtils.update_project_path(user_release_area, env)
 
-def get_user_dlls(appname, version, user_release_area, platform, env):
+def get_user_dlls(self, appname, version, user_release_area, platform, env):
 
-    if not configGaudi['useCMakeApplications']:
+    if not self.newStyleApp is True:
         return CMTUtils.get_user_dlls(appname, version, user_release_area, platform, env)
     else:
         return cmakeUtils.get_user_dlls(appname, version, user_release_area, platform, env)

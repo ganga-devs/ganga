@@ -5,9 +5,6 @@ from Ganga.Utility.files import expandfilename
 import Ganga.Utility.logging
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 import Ganga.Utility.Config
-#from GangaLHCb.Lib.LHCbDataset.LHCbDataset import *
-#from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-#from GangaLHCb.Lib.LHCbDataset.OutputData import OutputData
 from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 from Ganga.Core import TypeMismatchError
