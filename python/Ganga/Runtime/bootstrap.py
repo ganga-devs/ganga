@@ -785,8 +785,8 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             return string.join(files, os.pathsep)
 
         import re
-
-        def _versionsort(s, p=re.compile(r'^v(\d+)r(\d+)p*(\d*)')):
+        
+        def _versionsort(s, p=re.compile(r'^(\d+)-(\d+)-*(\d*)')):
             m = p.match(s)
             if m:
                 if m.group(3) == '':
