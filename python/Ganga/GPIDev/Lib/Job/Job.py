@@ -25,6 +25,8 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
 from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory, addProxy, stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
+from Ganga.Lib.Splitters import DefaultSplitter
+
 import copy
 import glob
 import os
@@ -660,8 +662,7 @@ class Job(GangaObject):
                     if configEntry not in backend_output_postprocess.keys():
                         backend_output_postprocess[configEntry] = {}
 
-                    backend_output_postprocess[configEntry][key] = getConfig(
-                        'Output')[key]['backendPostprocess'][configEntry]
+                    backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
             except ConfigError:
                 pass
 
@@ -692,15 +693,13 @@ class Job(GangaObject):
                 if outputfileClass in backend_output_postprocess[backendClass]:
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
                         outputfile.put()
-                        for f in glob.glob(os.path.join(self.outputdir,
-                                                        outputfile.namePattern)):
+                        for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
                             try:
                                 os.remove(f)
                             except IOError:
-                                logger.error(
-                                    'failed to remove temporary/intermediary file: %s' % f)
-                    elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
+                                logger.error('failed to remove temporary/intermediary file: %s' % f)
 
+                    elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
                         outputfile.setLocation()
 
             if outputfileClass == 'LocalFile':
@@ -1665,8 +1664,7 @@ class Job(GangaObject):
             raise JobError(msg)
 
         if self.status == 'completing':
-            msg = 'job %s is completing (may be downloading output), do force_status("failed") and then remove() again' % self.getFQID(
-                '.')
+            msg = 'job %s is completing (may be downloading output), do force_status("failed") and then remove() again' % self.getFQID('.')
             logger.error(msg)
             raise JobError(msg)
 
@@ -1699,8 +1697,7 @@ class Job(GangaObject):
                 log_user_exception(logger, debug=True)
             except Exception, x:
                 log_user_exception(logger)
-                logger.warning(
-                    'unhandled exception in j.kill(), job id=%d', self.id)
+                logger.warning('unhandled exception in j.kill(), job id=%d', self.id)
 
         # incomplete or unknown jobs may not have valid application or backend
         # objects
@@ -1733,8 +1730,7 @@ class Job(GangaObject):
                     try:
                         f()
                     except OSError, err:
-                        logger.warning(
-                            'cannot remove file workspace associated with the sub-job %d : %s', self.getFQID('.'), str(err))
+                        logger.warning('cannot remove file workspace associated with the sub-job %d : %s', self.getFQID('.'), str(err))
 
                 wsp_input = self.getInputWorkspace(create=False)
                 doit_sj(wsp_input.remove)
@@ -2235,7 +2231,10 @@ class Job(GangaObject):
                 super(Job, self).__setattr__('backend', new_value)
             else:
                 super(Job, self).__setattr__('backend', value)
+        #elif attr == 'postprocessors':
+        #    super(Job, self).__setattr__('postprocessors', GangaList())
         else:
+            logger.debug("attr: %s" % str(attr))
             super(Job, self).__setattr__(attr, value)
 
 
