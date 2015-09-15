@@ -124,7 +124,7 @@ def bootstrap():
     try:
         checkDiskQuota()
     except Exception, err:
-        logger.error("Disk quota check failed due to: %s" % str(err)
+        logger.error("Disk quota check failed due to: %s" % str(err))
 
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
