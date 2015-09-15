@@ -195,6 +195,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     """
     Generate the code to be run on the WN to download input files
     """
+
     if len(job.inputfiles) == 0 and (not job.inputdata or job.inputdata._name != "GangaDataset" or not job.inputdata.treat_as_inputfiles):
         return ""
 
@@ -224,13 +225,16 @@ for f in ###FILELIST###:
                     insertScript = insertScript.replace('###FILELIST###', "%s" % inputFile.getFilenameList())
 
     # if GangaDataset is used, check if they want the inputfiles transferred
-    inputfiles_list = copy.deepcopy(job.inputfiles)
+    inputfiles_list = job.inputfiles
     if job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
     for inputFile in inputfiles_list:
 
         inputfileClassName = inputFile.__class__.__name__
+
+        print("name: %s" % inputfileClassName)
+        print("result: %s" % str(outputFilePostProcessingOnWN(job, inputfileClassName)))
 
         if outputFilePostProcessingOnWN(job, inputfileClassName):
             inputFile.processWildcardMatches()

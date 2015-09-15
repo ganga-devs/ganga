@@ -30,9 +30,13 @@ class MassStorageFile(IGangaFile):
                                      'localDir': SimpleItem(defvalue="", copyable=1, doc='local dir where the file is stored, used from get and put methods'),
                                      'joboutputdir': SimpleItem(defvalue="", doc='outputdir of the job with which the outputsandbox file object is associated'),
                                      'locations': SimpleItem(defvalue=[], copyable=1, typelist=['str'], sequence=1, doc="list of locations where the outputfiles are uploaded"),
-                                     'outputfilenameformat': SimpleItem(defvalue=None, typelist=['str', 'type(None)'], protected=0, doc="keyword path to where the output should be uploaded, i.e. /some/path/here/{jid}/{sjid}/{fname}, if this field is not set, the output will go in {jid}/{sjid}/{fname} or in {jid}/{fname} depending on whether the job is split or not"),
+                                     'outputfilenameformat': SimpleItem(defvalue=None, typelist=['str', 'type(None)'], protected=0,\
+                                                    doc="keyword path to where the output should be uploaded, i.e. /some/path/here/{jid}/{sjid}/{fname},\
+                                                        if this field is not set, the output will go in {jid}/{sjid}/{fname} or in {jid}/{fname}\
+                                                        depending on whether the job is split or not"),
                                      'inputremotedirectory': SimpleItem(defvalue=None, typelist=['str', 'type(None)'], protected=0, doc="Directory on mass storage where the file is stored"),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.MassStorageFile'], sequence=1, copyable=0,\
+                                                    doc="collected files from the wildcard namePattern"),
                                      'failureReason': SimpleItem(defvalue="", protected=1, copyable=0, doc='reason for the upload failure'),
                                      'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere')
                                      })
@@ -168,16 +172,19 @@ class MassStorageFile(IGangaFile):
             os.system('%s %s %s' % (cp_cmd, location, targetLocation))
 
     def getWNScriptDownloadCommand(self, indent):
+        ## FIXME fix me for the situation of multiple files?
 
         script = """\n
 
 ###INDENT###os.system(\'###CP_COMMAND###\')
 
 """
-        cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile'][
-                              'uploadOptions']['cp_cmd'], self.locations[0])
-        script = script.replace('###INDENT###', indent)
-        script = script.replace('###CP_COMMAND###', cp_cmd)
+        cp_cmd = '%s %s .' % (getConfig('Output')['MassStorageFile']['uploadOptions']['cp_cmd'], self.locations[0])
+
+        replace_dict = { '###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd }
+
+        for k, v in replace_dict.iteritems():
+            script = script.replace(str(k), str(v))
 
         return script
 
@@ -231,8 +238,7 @@ class MassStorageFile(IGangaFile):
         pathToDirName = os.path.dirname(massStoragePath)
         dirName = os.path.basename(massStoragePath)
 
-        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(
-            '%s %s' % (ls_cmd, pathToDirName))
+        (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (ls_cmd, pathToDirName))
         if exitcode != 0:
             self.handleUploadFailure(mystderr)
             return
@@ -244,8 +250,7 @@ class MassStorageFile(IGangaFile):
                 break
 
         if not directoryExists:
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(
-                '%s %s' % (mkdir_cmd, massStoragePath))
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s' % (mkdir_cmd, massStoragePath))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr)
                 return
@@ -280,10 +285,8 @@ class MassStorageFile(IGangaFile):
                 folderStructure = folderStructure.replace('{jid}', jobid)
 
                 if subjobid != '':
-                    filenameStructure = filenameStructure.replace(
-                        '{sjid}', subjobid)
-                    folderStructure = folderStructure.replace(
-                        '{sjid}', subjobid)
+                    filenameStructure = filenameStructure.replace('{sjid}', subjobid)
+                    folderStructure = folderStructure.replace('{sjid}', subjobid)
         else:
             if self.outputfilenameformat != None:
                 folderStructure = os.path.dirname(self.outputfilenameformat)
@@ -310,10 +313,8 @@ class MassStorageFile(IGangaFile):
 
         if regex.search(fileName) is not None:
             for currentFile in glob.glob(os.path.join(sourceDir, fileName)):
-                finalFilename = filenameStructure.replace(
-                    '{fname}', os.path.basename(currentFile))
-                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(
-                    '%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
+                finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+                (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
 
                 d = MassStorageFile(namePattern=os.path.basename(currentFile))
                 d.compressed = self.compressed
@@ -321,10 +322,8 @@ class MassStorageFile(IGangaFile):
                 if exitcode != 0:
                     self.handleUploadFailure(mystderr)
                 else:
-                    logger.info(
-                        '%s successfully uploaded to mass storage' % currentFile)
-                    d.locations = os.path.join(
-                        massStoragePath, os.path.basename(finalFilename))
+                    logger.info('%s successfully uploaded to mass storage' % currentFile)
+                    d.locations = os.path.join(massStoragePath, os.path.basename(finalFilename))
 
                     # Alex removed this as more general approach in job.py after put() is called
                     # remove file from output dir if this object is attached to a job
@@ -334,17 +333,13 @@ class MassStorageFile(IGangaFile):
                 self.subfiles.append(GPIProxyObjectFactory(d))
         else:
             currentFile = os.path.join(sourceDir, fileName)
-            finalFilename = filenameStructure.replace(
-                '{fname}', os.path.basename(currentFile))
-            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess(
-                '%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
+            finalFilename = filenameStructure.replace('{fname}', os.path.basename(currentFile))
+            (exitcode, mystdout, mystderr) = self.execSyscmdSubprocess('%s %s %s' % (cp_cmd, currentFile, os.path.join(massStoragePath, finalFilename)))
             if exitcode != 0:
                 self.handleUploadFailure(mystderr)
             else:
-                logger.info(
-                    '%s successfully uploaded to mass storage' % currentFile)
-                location = os.path.join(
-                    massStoragePath, os.path.basename(finalFilename))
+                logger.info('%s successfully uploaded to mass storage' % currentFile)
+                location = os.path.join(massStoragePath, os.path.basename(finalFilename))
                 if location not in self.locations:
                     self.locations.append(location)
 
@@ -408,8 +403,7 @@ class MassStorageFile(IGangaFile):
             logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
                 str(self._parent.fqid), self.failureReason))
         else:
-            logger.error(
-                "The file can't be uploaded because of %s" % (self.failureReason))
+            logger.error("The file can't be uploaded because of %s" % (self.failureReason))
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
@@ -436,11 +430,6 @@ class MassStorageFile(IGangaFile):
         from Ganga.GPIDev.Lib.File import FileUtils
         script = FileUtils.loadScript(script_location, '###INDENT###')
 
-        script = script.replace('###MASSSTORAGECOMMANDS###', repr(massStorageCommands))
-        script = script.replace('###PATTERNSTOZIP###', str(patternsToZip))
-        script = script.replace('###INDENT###', indent)
-        script = script.replace('###POSTPROCESSLOCATIONSFP###', postProcessLocationsFP)
-
         jobfqid = self.getJobObject().fqid
 
         jobid = jobfqid
@@ -450,9 +439,16 @@ class MassStorageFile(IGangaFile):
             jobid = jobfqid.split('.')[0]
             subjobid = jobfqid.split('.')[1]
 
-        script = script.replace('###FULLJOBDIR###', str(jobfqid.replace('.', os.path.sep)))
-        script = script.replace('###JOBDIR###', str(jobid))
-        script = script.replace('###SUBJOBDIR###', str(subjobid))
+        replace_dict = {'###MASSSTORAGECOMMANDS###' : repr(massStorageCommands),
+                        '###PATTERNSTOZIP###' : str(patternsToZip),
+                        '###INDENT###' : indent,
+                        '###POSTPROCESSLOCATIONSFP###' : postProcessLocationsFP,
+                        '###FULLJOBDIR###' : str(jobfqid.replace('.', os.path.sep)),
+                        '###JOBDIR###' : str(jobid),
+                        '###SUBJOBDIR###' : str(subjobid)}
+
+        for k, v in replace_dict.iteritems():
+            script = script.replace(str(k), str(v))
 
         return script
 
@@ -463,10 +459,8 @@ class MassStorageFile(IGangaFile):
         from fnmatch import fnmatch
 
         if regex.search(self.namePattern):
-            ls_cmd = getConfig('Output')['MassStorageFile'][
-                'uploadOptions']['ls_cmd']
-            exitcode, output, m = self.shell.cmd1(
-                ls_cmd + ' ' + self.inputremotedirectory, capture_stderr=True)
+            ls_cmd = getConfig('Output')['MassStorageFile']['uploadOptions']['ls_cmd']
+            exitcode, output, m = self.shell.cmd1(ls_cmd + ' ' + self.inputremotedirectory, capture_stderr=True)
 
             for filename in output.split('\n'):
                 if fnmatch(filename, self.namePattern):
@@ -479,8 +473,7 @@ class MassStorageFile(IGangaFile):
         """
         Removes file from remote storage ONLY by default
         """
-        massStorageConfig = getConfig(
-            'Output')['MassStorageFile']['uploadOptions']
+        massStorageConfig = getConfig('Output')['MassStorageFile']['uploadOptions']
         rm_cmd = massStorageConfig['rm_cmd']
 
         if force == True:
@@ -495,8 +488,7 @@ class MassStorageFile(IGangaFile):
                 keyin = None
 
                 while keyin == None:
-                    keyin = raw_input(
-                        "Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
+                    keyin = raw_input("Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
                     if keyin == 'y':
                         _delete_this = True
                     elif keyin == 'n':
@@ -569,3 +561,4 @@ class MassStorageFile(IGangaFile):
 # add MassStorageFile objects to the configuration scope (i.e. it will be
 # possible to write instatiate MassStorageFile() objects via config file)
 Ganga.Utility.Config.config_scope['MassStorageFile'] = MassStorageFile
+

@@ -29,20 +29,33 @@ def Configure():
     outputconfig.addOption('FailJobIfNoOutputMatched', True,
                            'if True, a job will be marked failed if output is asked for but not found.')
 
-    outputconfig.addOption(
-        'ForbidLegacyOutput', True, 'if True, writing to the job outputdata and outputsandbox fields will be forbidden')
+    outputconfig.addOption('ForbidLegacyOutput', True, 'if True, writing to the job outputdata and outputsandbox fields will be forbidden')
 
-    outputconfig.addOption(
-        'ForbidLegacyInput', True, 'if True, writing to the job inputsandbox field will be forbidden')
+    outputconfig.addOption('ForbidLegacyInput', True, 'if True, writing to the job inputsandbox field will be forbidden')
 
-    docstr_Ext = 'fileExtensions:list of output files that will be written to %s, backendPostprocess:defines where postprocessing should be done (WN/client) on different backends, uploadOptions:config values needed for the actual %s upload'
+    docstr_Ext = 'fileExtensions:list of output files that will be written to %s,\
+backendPostprocess:defines where postprocessing should be done (WN/client) on different backends,\
+uploadOptions:config values needed for the actual %s upload'
+
+    # LocalFile
+#    LocalPost = {'Localhost': 'WN', 'Interactive': 'WN', 'CREAM': 'client', 'Dirac': 'client'}
+#    
+#    LocalUpOpt = {}
+#
+#    LocalFileExt = docstr_Ext % ('Local', 'Local')
+#
+#    outputconfig.addOption('LocalFile',
+#                            {'fileExtensions': ['*.txt'],
+#                             'backendPostprocess' : LocalPost,
+#                             'uploadOptions' : LocalUpOpt},
+#                            LocalFileExt)
+
 
     # LCGSEFILE
 
     LCGSEBakPost = {'LSF': 'client', 'LCG': 'WN', 'CREAM': 'WN',
                     'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
-    LCGSEUpOpt = {
-        'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
+    LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
     LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
 
     outputconfig.addOption('LCGSEFile',
@@ -137,5 +150,5 @@ def Configure():
                             'defaultProtocol': defaultMassStorageProto},
                            massStorageFileExt)
 
-
 Configure()
+

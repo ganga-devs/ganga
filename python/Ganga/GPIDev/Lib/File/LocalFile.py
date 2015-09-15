@@ -19,6 +19,7 @@ import Ganga.Utility.logging
 import re
 import os
 import os.path
+import copy
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -31,12 +32,14 @@ class LocalFile(IGangaFile):
     """
     _schema = Schema(Version(1, 1), {'namePattern': SimpleItem(defvalue="", doc='pattern of the file name'),
                                      'localDir': SimpleItem(defvalue="", doc='local dir where the file is stored, used from get and put methods'),
-                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1, typelist=['Ganga.GPIDev.Lib.File.LocalFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
-
-                                     'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere')})
+                                     'subfiles': ComponentItem(category='gangafiles', defvalue=[], hidden=1,
+                                                typelist=['Ganga.GPIDev.Lib.File.LocalFile'], sequence=1, copyable=0, doc="collected files from the wildcard namePattern"),
+                                     'compressed': SimpleItem(defvalue=False, typelist=['bool'], protected=0, doc='wheather the output file should be compressed before sending somewhere'),
+                                     #'output_location': SimpleItem(defvalue=None, typelist=['str', 'type(None)'], hidden=1, copyable=1, doc="path of output location on disk")
+                                     })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL"]
+    _exportmethods = ["location", "remove", "accessURL", "setLocation"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -45,6 +48,7 @@ class LocalFile(IGangaFile):
         super(LocalFile, self).__init__()
 
         self.tmp_pwd = None
+        self.output_location = None
 
         if isinstance(namePattern, str):
             self.namePattern = namePattern
@@ -56,8 +60,7 @@ class LocalFile(IGangaFile):
             self.namePattern = os.path.basename(namePattern.name)
             self.localDir = os.path.dirname(namePattern.name)
         else:
-            logger.error(
-                "Unkown type: %s . Cannot Create LocalFile from this!" % str(type(namePattern)))
+            logger.error("Unkown type: %s . Cannot Create LocalFile from this!" % str(type(namePattern)))
 
         if isinstance(localDir, str):
             if localDir != '':
@@ -209,3 +212,54 @@ class LocalFile(IGangaFile):
                     os.unlink(file)
 
         return
+
+
+## rcurrie Attempted to implement for 6.1.9 but commenting out due to not being able to correctly make use of setLocation
+
+#    def getWNScriptDownloadCommand(self, indent):
+#
+#        script = """
+####INDENT###os.system('###CP_COMMAND')
+#
+#"""
+#        full_path = os.path.join(self.localDir, self.namePattern)
+#        replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : 'cp %s .' % full_path}
+#
+#        for k, v in replace_dict.iteritems():
+#            script = script.replace(str(k), str(v))
+#
+#        return script
+#
+#
+#    def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
+#
+#        cp_template = """
+####INDENT###os.system("###CP_COMMAND###")
+#"""
+#        script = ""
+#
+#        for this_file in outputFiles:
+#            filename = this_file.namePattern
+#            cp_cmd = 'cp %s %s' % ( str(filename), str(self.output_location))
+#
+#            this_cp = str(cp_template)
+#
+#            replace_dict = {'###INDENT###' : indent, '###CP_COMMAND###' : cp_cmd}
+#
+#            for k, v in replace_dict.iteritems():
+#                print("Replace %s : %s" % (str(k), str(v)))
+#                this_cp = this_cp.replace(str(k), str(v))
+#
+#            script = this_cp
+#            break
+#
+#        return script
+#
+#    def setLocation(self):
+#
+#        job = self.getJobObject()
+#
+#        self.output_location = job.getOutputWorkspace(create=True).getPath()
+#
+#        return
+
