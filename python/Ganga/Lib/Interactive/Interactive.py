@@ -54,15 +54,15 @@ class Interactive(IBackend):
 
     _schema = Schema(Version(1, 0), {
         "id": SimpleItem(defvalue=0, protected=1, copyable=0,
-                         doc="Process id"),
+            doc="Process id"),
         "status": SimpleItem(defvalue="new", protected=1, copyable=0,
-                             doc="Backend status"),
+            doc="Backend status"),
         "exitcode": SimpleItem(defvalue=0, protected=1, copyable=0,
-                               doc="Process exit code"),
+            doc="Process exit code"),
         "workdir": SimpleItem(defvalue="", protected=1, copyable=0,
-                              doc="Work directory"),
+            doc="Work directory"),
         "actualCE": SimpleItem(defvalue="", protected=1, copyable=0,
-                               doc="Name of machine where job is run")})
+            doc="Name of machine where job is run")})
 
     _category = "backends"
     _name = 'Interactive'
@@ -70,8 +70,7 @@ class Interactive(IBackend):
     def __init__(self):
         super(Interactive, self).__init__()
 
-    def _getIntFromOutfile\
-            (self, keyword="", outfileName=""):
+    def _getIntFromOutfile(self, keyword="", outfileName=""):
         value = -999
         job = self.getJobObject()
         if keyword and outfileName and hasattr(job, "outputdir"):
@@ -112,11 +111,6 @@ class Interactive(IBackend):
         self.actualCE = util.hostname()
         logger.info('Starting job %d', job.id)
 
-        # print "\n\n\n"
-        # print "Submit!"
-        # print env
-        # print "\n\n\n"
-
         try:
             job.updateStatus("submitted")
             self.status = "submitted"
@@ -145,10 +139,9 @@ class Interactive(IBackend):
         try:
             os.kill(self.id, signal.SIGKILL)
         except OSError as x:
-            logger.warning("Problem killing process %d for job %d: %s",
-                           self.id, job.id, str(x))
+            logger.warning("Problem killing process %d for job %d: %s" % (self.id, job.id, str(x)))
 
-        self.status = "killed"
+            self.status = "killed"
         self.remove_workdir()
 
         return True
@@ -164,9 +157,9 @@ class Interactive(IBackend):
             shutil.rmtree(self.workdir)
         except OSError as x:
             logger.warning("Problem removing workdir %s: %s", self.workdir,
-                           str(x))
+                    str(x))
 
-        return None
+            return None
 
     def preparejob(self, jobconfig, master_input_sandbox):
         """Method for preparing job script"""
@@ -177,11 +170,11 @@ class Interactive(IBackend):
         inbox = job.createPackedInputSandbox(inputfiles)
 
         inbox.extend(master_input_sandbox)
-        inpDir = job.getInputWorkspace().getPath()
-        outDir = job.getOutputWorkspace().getPath()
+        inpDir = job.getInputWorkspace(create=True).getPath()
+        outDir = job.getOutputWorkspace(create=True).getPath()
         workdir = tempfile.mkdtemp()
         self.workdir = workdir
-        exeString = repr(jobconfig.getExeString())
+        exeString = jobconfig.getExeString()
         argList = jobconfig.getArgStrings()
         argString = " ".join(map(lambda x: "' \\'%s\\' '" % x, argList))
 
@@ -194,96 +187,79 @@ class Interactive(IBackend):
 
             from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatternsForInteractive, getWNCodeForOutputPostprocessing
             (outputSandboxPatterns,
-             patternsToZip) = getOutputSandboxPatternsForInteractive(job)
+                    patternsToZip) = getOutputSandboxPatternsForInteractive(job)
             wnCodeForPostprocessing = 'def printError(message):pass\ndef printInfo(message):pass' + \
-                getWNCodeForOutputPostprocessing(job, '')
+                    getWNCodeForOutputPostprocessing(job, '')
+ 
+        all_inputfiles = [this_file for this_file in job.inputfiles]
+        if job.master: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
 
-        if (len(job.inputfiles) > 0):
+        wnCodeToDownloadInputFiles = ''
+
+        if(len(all_inputfiles) > 0):
+
+            from Ganga.GPIDev.Lib.File.OutputFileManager import outputFilePostProcessingOnWN
+
+            for inputFile in all_inputfiles:
+
+                inputfileClassName = inputFile.__class__.__name__
+
+                logger.info("name: %s" % inputfileClassName)
+                logger.info("result: %s" % str(outputFilePostProcessingOnWN(job, inputfileClassName)))
+
+                if outputFilePostProcessingOnWN(job, inputfileClassName):
+                    inputFile.processWildcardMatches()
+                    if inputFile.subfiles:
+                        getfromFile = False
+                        for subfile in inputFile.subfiles:
+                            wnCodeToDownloadInputFiles += subfile.getWNScriptDownloadCommand('')
+                        else:
+                            getfromFile = True
+                    else:
+                        getFromFile = True
+
+                    if getFromFile:
+                        wnCodeToDownloadInputFiles += inputFile.getWNScriptDownloadCommand('')
+
+        wnCodeToDownloadInputData = ''
+
+        if job.inputdata and (len(job.inputdata) > 0):
 
             from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForDownloadingInputFiles
 
-            wnCodeToDownloadInputFiles = getWNCodeForDownloadingInputFiles(
-                job, '')
+            wnCodeToDownloadInputData = getWNCodeForDownloadingInputFiles(job, '')
 
-        commandList = [
-            "#!/usr/bin/env python",
-            "from __future__ import print_function"
-            "# Interactive job wrapper created by Ganga",
-            "# %s" % (time.strftime("%c")),
-            "",
-            inspect.getsource(Sandbox.WNSandbox),
-            "import os",
-            "import sys",
-            "import time",
-            "import glob",
-            "",
-            "sys.path.insert( 0, '%s' )" %
-            getConfig("System")["GANGA_PYTHONPATH"],
-            "",
-            "statfileName = os.path.join( '%s', '__jobstatus__' )" % outDir,
-            "try:",
-            "   statfile = open( statfileName, 'w' )",
-            "except IOError, x:",
-            "   print('ERROR: Unable to write status file: %s' % statfileName)",
-            "   print('ERROR: ',x)",
-            "   raise",
-            "",
-            "idfileName = os.path.join( '%s', '__id__' )" % outDir,
-            "try:",
-            "   idfile = open( idfileName, 'w' )",
-            "except IOError, x:",
-            "   print('ERROR: Unable to write id file: %s' % idfileName)",
-            "   print('ERROR: ',x)",
-            "   raise",
-            "finally:",
-            "   idfile.close()",
-            "",
-            "timeString = time.strftime"
-            + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
-            "statfile.write( 'START: ' + timeString + os.linesep )",
-            "",
-            "os.chdir( '%s' )" % workdir,
-            "for inFile in %s:" % inbox,
-            "   getPackedInputSandbox( inFile )",
-            "",
-            wnCodeToDownloadInputFiles,
-            "for key, value in %s.iteritems():" % jobconfig.env,
-            "   os.environ[ key ] = value",
-            "",
-            "pyCommandList = [",
-            "   'import os',",
-            "   'idfileName = \"%s\"' % idfileName,",
-            "   'idfile = open( idfileName, \"a\" )',",
-            "   'idfile.write( \"PID: \" + str( os.getppid() ) )',",
-            "   'idfile.flush()',",
-            "   'idfile.close()' ]",
-            "pyCommandString = ';'.join( pyCommandList )",
-            "",
-            "commandList = [",
-            "   'python -c \\\'%s\\\'' % pyCommandString,",
-            "   'exec ' " + exeString + " " + argString + "]",
-            "commandString = ';'.join( commandList )",
-            "",
-            "result = os.system( '%s' % commandString )",
-            "",
-            wnCodeForPostprocessing,
-            "for patternToZip in " + str(patternsToZip) + ":",
-            "   for currentFile in glob.glob(patternToZip):",
-            "      os.system('gzip %s' % currentFile)",
-            "",
-            "createOutputSandbox( %s, None, '%s' )" %
-              (outputSandboxPatterns, outDir),
-            "",
-            "statfile.write( 'EXITCODE: ' + str( result >> 8 ) + os.linesep )",
-            "timeString = time.strftime"
-              + "( '%a %d %b %H:%M:%S %Y', time.gmtime( time.time() ) )",
-            "statfile.write( 'STOP: ' + timeString + os.linesep )",
-            "statfile.flush()",
-            "statfile.close()"]
+        
 
-        commandString = "\n".join(commandList)
-        return job.getInputWorkspace().writefile\
-            (FileBuffer("__jobscript__", commandString), executable=1)
+        import inspect
+
+        replace_dict = {
+        '###CONSTRUCT_TIME###' : (time.strftime("%c")),
+        '###WNSANDBOX_SOURCE###' : inspect.getsource(Sandbox.WNSandbox),
+        '###GANGA_PYTHONPATH###' : getConfig("System")["GANGA_PYTHONPATH"],
+        '###OUTPUTDIR###' : outDir,
+        '###WORKDIR###' : workdir,
+        '###IN_BOX###' : inbox,
+        '###WN_INPUTFILES###' : wnCodeToDownloadInputFiles,
+        '###WN_INPUTDATA###' : wnCodeToDownloadInputData,
+        '###JOBCONFIG_ENV###' : jobconfig.env if jobconfig.env is not None else dict(),
+        '###EXE_STRING###' : exeString,
+        '###ARG_STRING###' : argString,
+        '###WN_POSTPROCESSING###' : wnCodeForPostprocessing,
+        '###PATTERNS_TO_ZIP###' : patternsToZip,
+        '###OUTPUT_SANDBOX_PATTERNS###' : outputSandboxPatterns
+        }
+
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                'InteractiveScriptTemplate.py')
+
+        from Ganga.GPIDev.Lib.File import FileUtils
+        commandString = FileUtils.loadScript(script_location, '')
+
+        for k, v in replace_dict.iteritems():
+            commandString = commandString.replace(str(k), str(v))
+
+        return job.getInputWorkspace().writefile(FileBuffer("__jobscript__", commandString), executable=1)
 
     def updateMonitoringInformation(jobs):
 
@@ -305,7 +281,7 @@ class Interactive(IBackend):
 
             if j.backend.status in ["completed", "failed", "killed"]:
                 j.backend.exitcode = j.backend._getIntFromOutfile\
-                    ("EXITCODE:", "__jobstatus__")
+                        ("EXITCODE:", "__jobstatus__")
                # Set job status to failed for non-zero exit code
                 if j.backend.exitcode:
                     if j.backend.exitcode in [2, 9, 256]:
@@ -318,3 +294,4 @@ class Interactive(IBackend):
         return None
 
     updateMonitoringInformation = staticmethod(updateMonitoringInformation)
+

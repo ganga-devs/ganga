@@ -6,25 +6,12 @@ from Ganga.Core import BackendError
 import os.path
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
 
 import Ganga.Utility.Config
 
-# FIXME: experimental code
-# class BatchFilter(Ganga.Utility.logging.logging.Filter):
-# def __init__(self):
-# Ganga.Utility.logging.logging.Filter.__init__(self)
-
-# def filter(self,logrecord):
-# print logrecord
-# for l in dir(logrecord):
-# print l,getattr(logrecord,l)
-# return 1
-
-# logger.addFilter(BatchFilter())
-
 import os
 
+logger = Ganga.Utility.logging.getLogger()
 
 # A trival implementation of shell command with stderr/stdout capture
 # This is a self-contained function (with logging).
@@ -187,8 +174,7 @@ class Batch(IBackend):
         else:
             script_cmd = scriptpath
 
-        command_str = self.config['submit_str'] % (
-            inw.getPath(), queue_option, stderr_option, stdout_option, script_cmd)
+        command_str = self.config['submit_str'] % (inw.getPath(), queue_option, stderr_option, stdout_option, script_cmd)
         self.command_string = command_str
         rc, soutfile = self.command(command_str)
         with open(soutfile) as sout_file:
@@ -196,8 +182,7 @@ class Batch(IBackend):
         import re
         m = re.compile(self.config['submit_res_pattern'], re.M).search(sout)
         if m is None:
-            logger.warning(
-                'could not match the output and extract the Batch job identifier!')
+            logger.warning('could not match the output and extract the Batch job identifier!')
             logger.warning('command output \n %s ', sout)
         else:
             self.id = m.group('id')
@@ -205,8 +190,7 @@ class Batch(IBackend):
                 queue = m.group('queue')
                 if self.queue != queue:
                     if self.queue:
-                        logger.warning(
-                            'you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
+                        logger.warning('you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
                         logger.warning('command output \n %s ', sout)
                     else:
                         logger.info('using default queue "%s"', queue)
@@ -255,8 +239,7 @@ class Batch(IBackend):
                     logger.warning("option %s is forbidden", opt)
                     return False
                 if self.queue and opt == '-q':
-                    logger.warning(
-                        "option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
+                    logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
                     return False
                 if jobnameopt and opt == jobnameopt:
                     jobnameopt = False
@@ -286,8 +269,7 @@ class Batch(IBackend):
             m = re.compile(
                 self.config['submit_res_pattern'], re.M).search(sout)
             if m is None:
-                logger.warning(
-                    'could not match the output and extract the Batch job identifier!')
+                logger.warning('could not match the output and extract the Batch job identifier!')
                 logger.warning('command output \n %s ', sout)
             else:
                 self.id = m.group('id')
@@ -295,15 +277,13 @@ class Batch(IBackend):
                     queue = m.group('queue')
                     if self.queue != queue:
                         if self.queue:
-                            logger.warning(
-                                'you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
+                            logger.warning('you requested queue "%s" but the job was submitted to queue "%s"', self.queue, queue)
                             logger.warning('command output \n %s ', sout)
                         else:
                             logger.info('using default queue "%s"', queue)
                         self.actualqueue = queue
                 except IndexError:
-                    logger.info(
-                        'could not match the output and extract the Batch queue name')
+                    logger.info('could not match the output and extract the Batch queue name')
         else:
             with open(soutfile) as sout_file:
                 logger.warning(sout_file.read())
@@ -315,15 +295,13 @@ class Batch(IBackend):
 
         with open(soutfile) as sout_file:
             sout = sout_file.read()
-        logger.debug(
-            'while killing job %s: rc = %d', self.getJobObject().getFQID('.'), rc)
+        logger.debug('while killing job %s: rc = %d', self.getJobObject().getFQID('.'), rc)
         if rc == 0:
             return True
         else:
             import re
             m = re.compile(self.config['kill_res_pattern'], re.M).search(sout)
-            logger.warning(
-                'while killing job %s: %s', self.getJobObject().getFQID('.'), sout)
+            logger.warning('while killing job %s: %s', self.getJobObject().getFQID('.'), sout)
 
             return not m == None
 
@@ -367,14 +345,12 @@ class Batch(IBackend):
                     t = datetime.datetime(
                         *(time.strptime(timestr, "%a %b %d %H:%M:%S %Y")[0:6]))
                 except ValueError:
-                    logger.debug(
-                        "Value Error in file: '%s': string does not match required format.", p)
+                    logger.debug("Value Error in file: '%s': string does not match required format.", p)
                     return None
                 return t
 
         f.close()
-        logger.debug(
-            "Reached the end of getStateTime('%s'). Returning None.", status)
+        logger.debug("Reached the end of getStateTime('%s'). Returning None.", status)
         return None
 
     def timedetails(self):
@@ -410,206 +386,56 @@ class Batch(IBackend):
         outputpatterns = jobconfig.outputbox
         environment = jobconfig.env
 
-        text = """#!/usr/bin/env python
-from __future__ import print_function
-import shutil
-import os
-import time
-import popen2
-import glob
-
-############################################################################################
-
-###INLINEMODULES###
-###INLINEHOSTNAMEFUNCTION###
-
-############################################################################################
-
-input_sandbox = ###INPUT_SANDBOX###
-sharedoutputpath = ###SHAREDOUTPUTPATH###
-outputpatterns = ###OUTPUTPATTERNS###
-appscriptpath = ###APPSCRIPTPATH###
-environment = ###ENVIRONMENT###
-
-# jobid is a string
-jobid = ###JOBID###
-
-###PREEXECUTE###
-
-def flush_file(f):
-   f.flush()
-   os.fsync(f.fileno()) #this forces a global flush (cache synchronization on AFS)
-
-def open_file(fname):
-  try:
-    filehandle=open(fname,'w')
-  except IOError as x:
-    print('ERROR: not able to write a status file: ', fname)
-    print('ERROR: ',x)
-    raise
-  return filehandle
-
-statusfilename = os.path.join(sharedoutputpath,'__jobstatus__')
-heartbeatfilename = os.path.join(sharedoutputpath,'__heartbeat__')
-
-statusfile=open_file(statusfilename)
-heartbeatfile=open_file(heartbeatfilename)
-
-line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
-try:
-  line+='PID: ' + os.getenv('###JOBIDNAME###') + os.linesep
-  line+='QUEUE: ' + os.getenv('###QUEUENAME###') + os.linesep
-  line+='ACTUALCE: ' + hostname() + os.linesep
-except:
-  pass
-statusfile.writelines(line)
-flush_file(statusfile)
-
-import tarfile
-
-# -- WARNING: get the input files including the python modules BEFORE sys.path.insert()
-# -- SINCE PYTHON 2.6 THERE WAS A SUBTLE CHANGE OF SEMANTICS IN THIS AREA
-
-for f in input_sandbox:
-  getPackedInputSandbox(f)
-
-# -- END OF MOVED CODE BLOCK
-
-#get input files
-###DOWNLOADINPUTFILES###
-
-import sys
-sys.path.insert(0, ###GANGADIR###)
-sys.path.insert(0,os.path.join(os.getcwd(),PYTHON_DIR))
-
-import subprocess
-
-fullenvironment = os.environ.copy()
-for key,value in environment.iteritems():
-    fullenvironment[key] = value
-
-sysout2 = os.dup(sys.stdout.fileno())
-syserr2 = os.dup(sys.stderr.fileno())
-
-print("--- GANGA APPLICATION OUTPUT BEGIN ---", file=sys.stdout)
-print("--- GANGA APPLICATION ERROR BEGIN ---", file=sys.stdout)
-flush_file(sys.stdout)
-flush_file(sys.stderr)
-
-sys.stdout=open('./__syslog__','w')
-sys.stderr=sys.stdout
-
-###MONITORING_SERVICE###
-monitor = createMonitoringObject()
-monitor.start()
-
-result = 255
-
-
-
-try:
-  child = subprocess.Popen(appscriptpath, shell=False, stdout=sysout2, stderr=syserr2, env=fullenvironment)
-
-  while 1:
-    result = child.poll()
-    if result is not None:
-        break
-    monitor.progress()
-    heartbeatfile.write('.')
-    flush_file(heartbeatfile)
-    time.sleep(###HEARTBEATFREQUENCE###)
-except Exception as x:
-  print('ERROR: %s'%str(x))
-
-monitor.progress()
-flush_file(sys.stdout)
-flush_file(sys.stderr)
-sys.stdout=sys.__stdout__
-sys.stderr=sys.__stderr__
-print("--- GANGA APPLICATION OUTPUT END ---", file=sys.stdout)
-
-
-monitor.stop(result)
-
-try:
-    filefilter
-except:
-    filefilter = None
-
-from Ganga.Utility.files import multi_glob, recursive_copy
-
-createOutputSandbox(outputpatterns,filefilter,sharedoutputpath)
-
-def printError(message):
-    print(message, file=sys.stderr)
-
-def printInfo(message):
-    print(message, file=sys.stdout)
-
-###OUTPUTUPLOADSPOSTPROCESSING###
-
-print("--- GANGA APPLICATION ERROR END ---", file=sys.stderr)
-
-###OUTPUTSANDBOXPOSTPROCESSING###
-
-###POSTEXECUTE###
-
-line='EXITCODE: ' + repr(result) + os.linesep
-line+='STOP: '+time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) + os.linesep
-statusfile.writelines(line)
-
-statusfile.close()
-heartbeatfile.close()
-os.unlink(heartbeatfilename)
-
-sys.exit(result)
-"""
 
         import inspect
+        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
+                                                       'BatchScriptTemplate.py')
+
+        from Ganga.GPIDev.Lib.File import FileUtils
+        text = FileUtils.loadScript(script_location, '')
+
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
         from Ganga.Utility.Config import getConfig
         from Ganga.GPIDev.Lib.File.OutputFileManager import getWNCodeForOutputSandbox, getWNCodeForOutputPostprocessing, getWNCodeForDownloadingInputFiles
         jobidRepr = repr(self.getJobObject().getFQID('.'))
-        text = text.replace('###OUTPUTSANDBOXPOSTPROCESSING###', getWNCodeForOutputSandbox(
-            job, ['__syslog__'], jobidRepr))
 
-        text = text.replace(
-            '###OUTPUTUPLOADSPOSTPROCESSING###', getWNCodeForOutputPostprocessing(job, ''))
+        replace_dict = {
 
-        text = text.replace(
-            '###DOWNLOADINPUTFILES###', getWNCodeForDownloadingInputFiles(job, ''))
+        '###OUTPUTSANDBOXPOSTPROCESSING###' : getWNCodeForOutputSandbox(job, ['__syslog__'], jobidRepr),
 
-        text = text.replace(
-            '###INLINEMODULES###', inspect.getsource(Sandbox.WNSandbox))
-        text = text.replace(
-            '###INLINEHOSTNAMEFUNCTION###', inspect.getsource(Utility.util.hostname))
-        text = text.replace('###APPSCRIPTPATH###', repr(appscriptpath))
-        # text = text.replace('###SHAREDINPUTPATH###',repr(sharedinputpath))
+        '###OUTPUTUPLOADSPOSTPROCESSING###' : getWNCodeForOutputPostprocessing(job, ''),
+
+        '###DOWNLOADINPUTFILES###' : getWNCodeForDownloadingInputFiles(job, ''),
+
+        '###INLINEMODULES###' : inspect.getsource(Sandbox.WNSandbox),
+        '###INLINEHOSTNAMEFUNCTION###' : inspect.getsource(Utility.util.hostname),
+        '###APPSCRIPTPATH###' : repr(appscriptpath),
+        #'###SHAREDINPUTPATH###' : repr(sharedinputpath)),
+
+        '###INPUT_SANDBOX###' : repr(subjob_input_sandbox + master_input_sandbox),
+        '###SHAREDOUTPUTPATH###' : repr(sharedoutputpath),
+
+        '###OUTPUTPATTERNS###' : repr(outputpatterns),
+        '###JOBID###' : jobidRepr,
+        '###ENVIRONMENT###' : repr(environment),
+        '###PREEXECUTE###' : self.config['preexecute'],
+        '###POSTEXECUTE###' : self.config['postexecute'],
+        '###JOBIDNAME###' : self.config['jobid_name'],
+        '###QUEUENAME###' : self.config['queue_name'],
+        '###HEARTBEATFREQUENCE###' : self.config['heartbeat_frequency'],
+        '###INPUT_DIR###' : repr(job.getStringInputDir()),
+
+        '###MONITORING_SERVICE###' : job.getMonitoringService().getWrapperScriptConstructorText(),
+
+        '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
+        }
+
+        for k, v in replace_dict.iteritems():
+            text = text.replace(str(k), str(v))
 
         logger.debug('subjob input sandbox %s ', subjob_input_sandbox)
         logger.debug('master input sandbox %s ', master_input_sandbox)
-
-        text = text.replace(
-            '###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
-        text = text.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
-
-        text = text.replace('###OUTPUTPATTERNS###', repr(outputpatterns))
-        text = text.replace('###JOBID###', jobidRepr)
-        text = text.replace('###ENVIRONMENT###', repr(environment))
-        text = text.replace('###PREEXECUTE###', self.config['preexecute'])
-        text = text.replace('###POSTEXECUTE###', self.config['postexecute'])
-        text = text.replace('###JOBIDNAME###', self.config['jobid_name'])
-        text = text.replace('###QUEUENAME###', self.config['queue_name'])
-        text = text.replace(
-            '###HEARTBEATFREQUENCE###', self.config['heartbeat_frequency'])
-        text = text.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
-
-        text = text.replace('###MONITORING_SERVICE###', job.getMonitoringService(
-        ).getWrapperScriptConstructorText())
-
-        text = text.replace(
-            '###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
 
         from Ganga.GPIDev.Lib.File import FileBuffer
 
@@ -712,28 +538,21 @@ sys.exit(result)
 
 #_________________________________________________________________________
 
-config = Ganga.Utility.Config.makeConfig(
-    'LSF', 'internal LSF command line interface')
+config = Ganga.Utility.Config.makeConfig('LSF', 'internal LSF command line interface')
 
 # fix bug #21687
 config.addOption('shared_python_executable', False, "Shared PYTHON")
 
-config.addOption(
-    'jobid_name', 'LSB_BATCH_JID', "Name of environment with ID of the job")
-config.addOption(
-    'queue_name', 'LSB_QUEUE', "Name of environment with queue name of the job")
-config.addOption(
-    'heartbeat_frequency', '30', "Heartbeat frequency config variable")
+config.addOption('jobid_name', 'LSB_BATCH_JID', "Name of environment with ID of the job")
+config.addOption('queue_name', 'LSB_QUEUE', "Name of environment with queue name of the job")
+config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
-config.addOption(
-    'submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit job to queue")
+config.addOption('submit_str', 'cd %s; bsub %s %s %s %s', "String used to submit job to queue")
 config.addOption('submit_res_pattern', '^Job <(?P<id>\d*)> is submitted to .*queue <(?P<queue>\S*)>',
                  "String pattern for replay from the submit command")
 
-config.addOption(
-    'stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-config.addOption(
-    'stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
+config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 config.addOption('kill_str', 'bkill %s', "String used to kill job")
 config.addOption('kill_res_pattern',
@@ -776,27 +595,20 @@ class LSF(Batch):
 
 #_________________________________________________________________________
 
-config = Ganga.Utility.Config.makeConfig(
-    'PBS', 'internal PBS command line interface')
+config = Ganga.Utility.Config.makeConfig('PBS', 'internal PBS command line interface')
 
 config.addOption('shared_python_executable', False, "Shared PYTHON")
 
-config.addOption(
-    'jobid_name', 'PBS_JOBID', "Name of environment with ID of the job")
-config.addOption(
-    'queue_name', 'PBS_QUEUE', "Name of environment with queue name of the job")
-config.addOption(
-    'heartbeat_frequency', '30', "Heartbeat frequency config variable")
+config.addOption('jobid_name', 'PBS_JOBID', "Name of environment with ID of the job")
+config.addOption('queue_name', 'PBS_QUEUE', "Name of environment with queue name of the job")
+config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
-config.addOption(
-    'submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
+config.addOption('submit_str', 'cd %s; qsub %s %s %s %s', "String used to submit job to queue")
 config.addOption('submit_res_pattern', '^(?P<id>\d*)\.pbs\s*',
                  "String pattern for replay from the submit command")
 
-config.addOption(
-    'stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-config.addOption(
-    'stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
+config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 config.addOption('kill_str', 'qdel %s', "String used to kill job")
 config.addOption('kill_res_pattern', '(^$)|(qdel: Unknown Job Id)',
@@ -820,10 +632,9 @@ os.system("rm -rf /tmp/%s/" %jobnumid)
 '''
 config.addOption('postexecute', tempstr,
                  "String contains commands executing before submiting job to queue")
-config.addOption(
-    'jobnameopt', 'N', "String contains option name for name of job in batch system")
-config.addOption(
-    'timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
+config.addOption('timeout', 600,
+                 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 
 class PBS(Batch):
@@ -842,17 +653,13 @@ class PBS(Batch):
 
 #_________________________________________________________________________
 
-config = Ganga.Utility.Config.makeConfig(
-    'SGE', 'internal SGE command line interface')
+config = Ganga.Utility.Config.makeConfig('SGE', 'internal SGE command line interface')
 
 config.addOption('shared_python_executable', False, "Shared PYTHON")
 
-config.addOption(
-    'jobid_name', 'JOB_ID', "Name of environment with ID of the job")
-config.addOption(
-    'queue_name', 'QUEUE', "Name of environment with queue name of the job")
-config.addOption(
-    'heartbeat_frequency', '30', "Heartbeat frequency config variable")
+config.addOption('jobid_name', 'JOB_ID', "Name of environment with ID of the job")
+config.addOption('queue_name', 'QUEUE', "Name of environment with queue name of the job")
+config.addOption('heartbeat_frequency', '30', "Heartbeat frequency config variable")
 
 # the -V options means that all environment variables are transferred to
 # the batch job (ie the same as the default behaviour on LSF at CERN)
@@ -861,10 +668,8 @@ config.addOption('submit_str', 'cd %s; qsub -cwd -V %s %s %s %s',
 config.addOption('submit_res_pattern', 'Your job (?P<id>\d+) (.+)',
                  "String pattern for replay from the submit command")
 
-config.addOption(
-    'stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
-config.addOption(
-    'stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
+config.addOption('stdoutConfig', '-o %s/stdout', "String pattern for defining the stdout")
+config.addOption('stderrConfig', '-e %s/stderr', "String pattern for defining the stderr")
 
 config.addOption('kill_str', 'qdel %s', "String used to kill job")
 config.addOption('kill_res_pattern', '(has registered the job +\d+ +for deletion)|(denied: job +"\d+" +does not exist)',
@@ -883,12 +688,9 @@ config.addOption('kill_res_pattern', '(has registered the job +\d+ +for deletion
 
 config.addOption('preexecute', 'os.chdir(os.environ["TMPDIR"])\nos.environ["PATH"]+=":."',
                  "String contains commands executing before submiting job to queue")
-config.addOption(
-    'postexecute', '', "String contains commands executing before submiting job to queue")
-config.addOption(
-    'jobnameopt', 'N', "String contains option name for name of job in batch system")
-config.addOption(
-    'timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+config.addOption('postexecute', '', "String contains commands executing before submiting job to queue")
+config.addOption('jobnameopt', 'N', "String contains option name for name of job in batch system")
+config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 
 class SGE(Batch):
@@ -903,3 +705,4 @@ class SGE(Batch):
 
     def __init__(self):
         super(SGE, self).__init__()
+
