@@ -91,7 +91,7 @@ class Gaudi(GaudiBase):
     def _auto__init__(self):
         """bootstrap Gaudi applications. If called via a subclass
         set up some basic structure like version platform..."""
-        self._init(True)
+        self._init()
 
     def _parse_options(self):
         raise NotImplementedError
