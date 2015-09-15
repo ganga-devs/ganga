@@ -90,7 +90,7 @@ class Bender(GaudiBase):
     #    super(Bender, self).__init__()
 
     def _get_default_version(self, gaudi_app):
-        return guess_version(gaudi_app)
+        return guess_version(self, gaudi_app)
 
     def _auto__init__(self):
         if (not self.appname) and (not self.project):

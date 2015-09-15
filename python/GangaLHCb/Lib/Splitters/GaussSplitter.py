@@ -6,7 +6,8 @@ from Ganga.GPIDev.Lib.Job import Job
 import pickle
 import os
 import copy
-
+import Ganga.Utility.logging
+logger = Ganga.Utility.logging.getLogger()
 
 class GaussSplitter(ISplitter):
 
@@ -21,8 +22,7 @@ class GaussSplitter(ISplitter):
     """
     _name = "GaussSplitter"
     _schema = Schema(Version(1, 0), {
-        'eventsPerJob': SimpleItem(defvalue=5, doc='Number of '
-                                   'generated events per job'),
+        'eventsPerJob': SimpleItem(defvalue=5, doc='Number of generated events per job'),
         'numberOfJobs': SimpleItem(defvalue=2, doc="No. of jobs to create"),
         'firstEventNumber': SimpleItem(defvalue=0, doc="First event number for first subjob")
     })
@@ -70,8 +70,7 @@ class GaussSplitter(ISplitter):
             #j.application.extra.input_buffers['data.py'] += opts
             j._splitter_data = opts
             # j.inputsandbox.append(File(FileBuffer(path,opts).create().name))
-            logger.debug(
-                "Creating job %d w/ FirstEventNumber = %d" % (i, first))
+            logger.debug("Creating job %d w/ FirstEventNumber = %d" % (i, first))
             subjobs.append(j)
 
         return subjobs

@@ -118,7 +118,7 @@ class LHCbGaudiRunTimeHandler(GaudiRunTimeHandler):
 
         logger.debug("Setting up script")
 
-        script = script_generator(create_runscript(self.newStyleApp),
+        script = script_generator(create_runscript(job.application.newStyleApp),
                                   remove_unreplaced=False,
                                   OPTS=opts,
                                   PROJECT_OPTS=job.application.setupProjectOptions,

@@ -61,8 +61,7 @@ class LHCbDataset(GangaDataset):
         new_files = GangaList()
         for this_file in files:
             if type(this_file) == type(''):
-                new_files.append(
-                    string_datafile_shortcut_lhcb(this_file, None))
+                new_files.append(string_datafile_shortcut_lhcb(this_file, None))
             else:
                 new_files.append(this_file)
         super(LHCbDataset, self).__init__()

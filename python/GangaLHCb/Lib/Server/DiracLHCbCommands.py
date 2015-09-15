@@ -62,8 +62,8 @@ def getDataset(path, dqflag, this_type, start, end, sel):
         result = diraclhcb.bkQueryProduction(path, dqflag)  # diraclhcb
     else:
         result = {'OK': False, 'Message': 'Unsupported type!'}
-    output(result)
 
+    output(result)
 
 def checkTier1s():
     result = diraclhcb.gridWeather()

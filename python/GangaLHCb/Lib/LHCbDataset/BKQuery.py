@@ -117,11 +117,10 @@ RecoToDST-07/90000000/DST" ,
             if self.selection:
                 msg = 'selection not supported for type="%s".' % self.type
                 raise GangaException(msg)
-        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (
-            self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
+        cmd = "getDataset('%s','%s','%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
         if type(self.dqflag) == type([]):
-            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (
-                self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
+            cmd = "getDataset('%s',%s,'%s','%s','%s','%s')" % (self.path, self.dqflag, self.type, self.startDate, self.endDate, self.selection)
+
         result = get_result(cmd, 'BK query error.', 'BK query error.')
         files = []
         metadata = {}
@@ -171,7 +170,7 @@ RecoToDST-07/90000000/DST" ,
         #ds = LHCbDataset()
         new_files = []
         for f in files:
-            new_files.append('LFN:' + str(f))
+            new_files.append(DiracFile(lfn=f))
             #ds.extend([DiracFile(lfn = f)])
 
         ds = LHCbDataset(new_files)
@@ -263,13 +262,13 @@ class BKQueryDict(GangaObject):
                 files = files['LFNs'].keys()
 
         from Ganga.GPI import DiracFile
-        #ds = LHCbDataset()
-        new_files = []
+        ds = LHCbDataset()
+        #new_files = []
         for f in files:
-            new_files.append('LFN:' + str(f))
-            #ds.extend([DiracFile(lfn = f)])
+            #new_files.append('LFN:' + str(f))
+            ds.append([DiracFile(lfn = f)])
 
-        ds = LHCbDataset(new_files)
+        #ds = LHCbDataset(new_files)
 
         return GPIProxyObjectFactory(ds)
 
