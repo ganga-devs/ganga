@@ -97,13 +97,15 @@ def checkDiskQuota():
             quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
             output = quota.communicate()[0]
             logger.debug("fs quota %s:\t%s" % (str(data_partition), str(output)))
+            quote_percent = output
 
         else:
-            df = subprocess.Popen(["df", data_partition], stdout=subprocess.PIPE)
+            df = subprocess.Popen(["df", '-Pk', data_partition], stdout=subprocess.PIPE)
             output = df.communicate()[0]
-            device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
+            #device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
+            output_data = output.split("\n")[1].split()
 
-            quota_percent = percent
+            quota_percent = output_data[5]
 
         try:
             quota_percent = output.split('%')[0]
@@ -119,7 +121,10 @@ def bootstrap():
     oldJobs = getOldJobs()
     retval = []
 
-    checkDiskQuota()
+    try:
+        checkDiskQuota()
+    except Exception, err:
+        logger.error("Disk quota check failed due to: %s" % str(err)
 
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
     # or even named templated registries as the _auto__init from job will require the prep registry to
