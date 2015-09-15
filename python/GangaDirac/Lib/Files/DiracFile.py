@@ -106,7 +106,8 @@ class DiracFile(IGangaFile):
         if str(namePattern).upper()[0:4] == "LFN:" and lfn == '':
             self._setLFNnamePattern(_lfn=namePattern[4:], _namePattern='')
         else:
-            self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
+            if namePattern != '' and lfn != '':
+                self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
 
         if localDir is not None:
             self.localDir = expandfilename(localDir)
@@ -523,8 +524,8 @@ class DiracFile(IGangaFile):
         else:
             # 1 LFN per DiracFile
             LFNS = []
-            for file in self.subfiles:
-                these_LFNs = file.location()
+            for this_file in self.subfiles:
+                these_LFNs = this_file.location()
                 for this_url in these_LFNs:
                     LFNs.append(this_url)
             return LFNs
@@ -610,8 +611,7 @@ class DiracFile(IGangaFile):
             raise GangaException('Can\'t download a file without an LFN.')
 
         logger.info("Getting file %s" % self.lfn)
-        stdout = execute('getFile("%s", destDir="%s")' %
-                         (self.lfn, to_location))
+        stdout = execute('getFile("%s", destDir="%s")' % (self.lfn, to_location))
         if isinstance(stdout, dict) and stdout.get('OK', False) and self.lfn in stdout.get('Value', {'Successful': {}})['Successful']:
             if self.namePattern == "":
                 name = os.path.basename(self.lfn)
@@ -622,8 +622,7 @@ class DiracFile(IGangaFile):
             if self.guid == "" or not self.locations:
                 self.getMetadata()
             return
-        logger.error("Error in getting file '%s' : %s" %
-                     (self.lfn, str(stdout)))
+        logger.error("Error in getting file '%s' : %s" % (self.lfn, str(stdout)))
         return stdout
 
     def replicate(self, destSE):
@@ -819,8 +818,10 @@ class DiracFile(IGangaFile):
 
     def getWNScriptDownloadCommand(self, indent):
 
+        import inspect
         script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'downloadScript.py')
 
+        from Ganga.GPIDev.Lib.File import FileUtils
         download_script = FileUtils.loadScript(script_location, '')
 
         script = """\n
@@ -831,67 +832,50 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
 """
         script = '\n'.join([ str(indent+str(line)) for line in script.split('\n')])
 
-        script = script.replace('###DOWNLOAD_SCRIPT###', download_script)
+        replace_dict = {'###DOWNLOAD_SCRIPT###' : download_script,
+                        '###DIRAC_ENV###' : self._getDiracEnvStr(),
+                        '###LFN###' : self.lfn}
 
-        script = script.replace('###DIRAC_ENV###', self._getDiracEnvStr())
+        for k, v in replace_dict.iteritems():
+            script = script.replace(str(k), str(v))
 
-        script = script.replace('###LFN###', self.lfn)
         return script
 
     def _getDiracEnvStr(self):
         ##FIXME use the sanitised Dirac env from within the Dirac scripts rather than read in this file separately as this could have unsave env vars
         ## rcurrie
-        return "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))" % configDirac['DiracEnvFile']
+        ##return "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))" % configDirac['DiracEnvFile']
+
+        from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
+        diracEnv = str(getDiracEnv())
+        return diracEnv
+
+    def _WN_wildcard_script(namePattern, lfnBase, compressed):
+        wildcard_str =  """
+import glob, hashlib
+for f in glob.glob('###NAME_PATTERN###'):
+    processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
+"""
+        wildcard_str = wildcard_str.join([str('###INDENT###'+str(line)) for line in wildcard_str.split('\n')])
+
+        wildcard_str = wildcard_str.replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', str(compressed))
+
+        return wildcard_str
 
     def getWNInjectedScript(self, outputFiles, indent, patternsToZip, postProcessLocationsFP):
         """
         Returns script that have to be injected in the jobscript for postprocessing on the WN
         """
-        def wildcard_script(namePattern, lfnBase, compressed):
-            wildcard_str =  """
-import glob, hashlib
-for f in glob.glob('###NAME_PATTERN###'):
-    processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
-"""
-            wildcard_str = wildcard_str.join([str('###INDENT###'+str(line)) for line in wildcard_str.split('\n')])
 
-            wildcard_str = wildcard_str.replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', str(compressed))
+        import inspect
+        script_path = os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe())))
+        script_location = os.path.join( script_path, 'uploadScript.py')
 
-            return wildcard_str
-
-        script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'uploadScript.py')
-
+        from Ganga.GPIDev.Lib.File import FileUtils
         upload_script = FileUtils.loadScript(script_location, '')
 
-        script = """
-import os, sys
-dirac_env=###DIRAC_ENV###
-processes=[]    
-storage_elements = ###STORAGE_ELEMENTS###
-           
-def uploadFile(file_name, lfn_base, compress=False, wildcard=''):
-    import sys, os, datetime, subprocess
-    if not os.path.exists(os.path.join(os.getcwd(),file_name)):
-        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\\n" % (wildcard, file_label, file_name))
-        return
-   
-    upload_script = '''\n###UPLOAD_SCRIPT###'''
-    upload_script = upload_script.replace('###UPLOAD_FILE###',        file_name)
-    upload_script = upload_script.replace('###LFN_BASE###',           lfn_base)
-    upload_script = upload_script.replace('###COMPRESSED###',         str(compress))
-    upload_script = upload_script.replace('###WILDCARD###',           wildcard)
-    upload_script = upload_script.replace('###SEs###',                str(storage_elements))
-    upload_script = upload_script.replace('###LOCATIONSFILE_NAME###', ###LOCATIONSFILE###.name)
-
-    inread, inwrite = os.pipe()
-    p = subprocess.Popen('''python -c "import os\\nos.close(%i)\\nexec(os.fdopen(%s,'rb'))"'''%(inwrite,inread), shell=True, env=dirac_env, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    os.close(inread)
-    with os.fdopen(inwrite, 'wb') as instream:
-        instream.write(upload_script)
-    return p
-"""
-        script = '\n'.join([str('###INDENT###'+str(line)) for line in script.split('\n')])
-
+        WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
+        script = FileUtils.loadScript(WNscript_location, '###INDENT###')
 
         if self.remoteDir == '':
             import datetime
@@ -906,16 +890,15 @@ def uploadFile(file_name, lfn_base, compress=False, wildcard=''):
 
         for this_file in outputFiles:
             if regex.search(this_file.namePattern) is not None:
-                script += wildcard_script(this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
+                script += _WN_wildcard_script(this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
             else:
-                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' %\
-                                (this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
+                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
 
 
         if stripProxy(self)._parent and stripProxy(self)._parent.backend._name != 'Dirac':
-            script = script.replace('###DIRAC_ENV###', self._getDiracEnvStr())
+            script_env = self._getDiracEnvStr()
         else:
-            script = script.replace('###DIRAC_ENV###', str(None))
+            script_env = str(None)
 
         script += """
 for p in processes:
@@ -927,9 +910,14 @@ for p in processes:
 
         script = '\n'.join([str('###INDENT###' + str(line)) for line in script.split('\n')])
 
-        script = script.replace('###STORAGE_ELEMENTS###', str(configDirac['DiracSpaceTokens']))
-        script = script.replace('###INDENT###',           indent)
-        script = script.replace('###LOCATIONSFILE###',    postProcessLocationsFP)
+        replace_dict = {'###UPLOAD_SCRIPT###' : upload_script,
+                        '###STORAGE_ELEMENTS###' : str(configDirac['DiracSpaceTokens']),
+                        '###INDENT###' : indent,
+                        '###LOCATIONSFILE###' : postProcessLocationsFP,
+                        '###DIRAC_ENV###' : script_env}
+
+        for k, v in replace_dict.iteritems():
+            script = script.replace(str(k), str(v))
 
         return script
 

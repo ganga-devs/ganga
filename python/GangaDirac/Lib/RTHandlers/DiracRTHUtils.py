@@ -142,6 +142,7 @@ def diracAPI_script_template():
     # move there when get a chance.
 
     import inspect
+    import os.path
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                     'DiracRTHScript.py')
 
@@ -164,7 +165,7 @@ def diracAPI_script_settings(app):
             _setting = str(setting)[3:]
         else:
             _setting = str(setting)
-        if type(setting_value) == type(''):
+        if type(setting_val) == type(''):
             setting_line = 'j.set###SETTING###("###VALUE###")\n'
         else:
             setting_line = 'j.set###SETTING###(###VALUE###)\n'
