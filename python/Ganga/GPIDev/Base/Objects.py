@@ -329,60 +329,63 @@ class Descriptor(object):
 
             return result
 
+    def __cloneVal(self, v, obj):
+
+        item = obj._schema[self._name]
+
+        if v is None:
+            assert(item['optional'])
+            return None
+        else:
+            bare_v = stripProxy(v)
+            assert(isType(v, Node))
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+            if isType(v, GangaList):
+                categories = v.getCategory()
+                len_cat = len(categories)
+                if (len_cat > 1) or ((len_cat == 1) and (catagories[0] != item['category'])):
+                    # we pass on empty lists, as the catagory is yet to be defined
+                    raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (self._name, v, item['category']))
+            else:
+                if bare_v._category != item['category']:
+                    raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (self._name, v, item['category']))
+            v = bare_v.clone()
+            v._setParent(obj)
+            return v
+
     def __set__(self, obj, val):
 
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
+        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
 
         cs = self._bind_method(obj, self._checkset_name)
         if cs:
             cs(val)
-        filter = self._bind_method(obj, self._filter_name)
-        if filter:
-            val = filter(val)
+        this_filter = self._bind_method(obj, self._filter_name)
+        if this_filter:
+            val = this_filter(val)
 
         # LOCKING
         obj._getWriteAccess()
 
         # self._check_getter()
 
-        def cloneVal(v):
-            if v is None:
-                assert(item['optional'])
-                return None
-            else:
-                assert(isType(v, Node))
-                if isType(v, GangaList):
-                    catagories = v.getCategory()
-                    len_cat = len(catagories)
-                    # we pass on empty lists, as the catagory is yet to be
-                    # defined
-                    if (len_cat > 1) or ((len_cat == 1) and (catagories[0] != item['category'])):
-                        raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (
-                            self._name, v, item['category']))
-                else:
-                    if stripProxy(v)._category != item['category']:
-                        raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (self._name, v, item['category']))
-                v = stripProxy(v).clone()
-                v._setParent(obj)
-                return v
-
         item = obj._schema[self._name]
 
-        if item.isA(Schema.ComponentItem):
+        def cloneVal(v):
+            return self.__cloneVal(v, obj)
+
+        if item['sequence']:
+            _preparable = True if item['preparable'] else False
+
+        if isType(item, Schema.ComponentItem):
             if item['sequence']:
-                if item['preparable']:
-                    val = makeGangaList(val, cloneVal, parent=obj, preparable=True)
-                else:
-                    val = makeGangaList(val, cloneVal, parent=obj)
+                val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
             else:
                 val = cloneVal(val)
 
         else:
             if item['sequence']:
-                if item['preparable']:
-                    val = makeGangaList(val, parent=obj, preparable=True)
-                else:
-                    val = makeGangaList(val, parent=obj)
+                val = makeGangaList(val, parent=obj, preparable=_preparable)
 
         obj._data[self._name] = val
 
@@ -538,7 +541,10 @@ class GangaObject(Node):
 
         if self._schema is not None and hasattr(self._schema, 'allItems'):
             for attr, item in self._schema.allItems():
-                setattr(self, attr, self._schema.getDefaultValue(attr))
+                defVal = self._schema.getDefaultValue(attr)
+                if defVal == '':
+                    defVal = None
+                setattr(self, attr, defVal)
 
         self._lock_count = {}
         # Overwrite default values with any config values specified
