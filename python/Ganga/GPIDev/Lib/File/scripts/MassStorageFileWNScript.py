@@ -27,20 +27,18 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
     pathToDirName = os.path.dirname(path)
     dirName = os.path.basename(path)
 
-    import sys
-    sys.stdout.write("Path: %s" % pathToDirName)
-    sys.stdout.write("DirN: %s" % dirName)
-
     (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_ls, pathToDirName))
     if exitcode != 0:
         ###POSTPROCESSLOCATIONSFP###.write('massstorage %s ERROR %s\\n' % (filenameWildChar, mystderr))
         continue
 
     directoryExists = False
-    for directory in mystdout.split('\\n'):
+    for directory in mystdout.split('\n'):
         if directory.strip() == dirName.strip():
             directoryExists = True
             break
+
+    print("Directory, %s found: %s" % (str(path), str(directoryExists)))
 
     if not directoryExists:
         (exitcode, mystdout, mystderr) = execSyscmdSubprocessAndReturnOutputMAS('%s %s' % (cm_mkdir, path))
@@ -98,3 +96,4 @@ for massStorageList in ###MASSSTORAGECOMMANDS###:
             ###POSTPROCESSLOCATIONSFP###.write('massstorage %s %s\\n' % (filenameWildChar, os.path.join(path, finalFilename)))
             #remove file from output dir
             os.system('rm %s' % currentFile)
+
