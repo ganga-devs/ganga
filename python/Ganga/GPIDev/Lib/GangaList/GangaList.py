@@ -28,8 +28,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
     if mapfunction is not None:
         _list = map(mapfunction, _list)
 
-    result = GangaList()
-    result.extend(_list)
+    result = makeGangaListByRef(_list)
 
     result._is_preparable = preparable
 
@@ -38,7 +37,7 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
         result._setParent(parent)
 
         for r in result:
-            if isinstance(r, GangaObject) and r._getParent() is None:
+            if isType(r, GangaObject) and r._getParent() is None:
                 r._setParent(parent)
 
     return result
@@ -163,9 +162,13 @@ class GangaList(GangaObject):
 
         result = []
         for o in self._list:
-            category = o._category
-            if not category in result:
-                result.append(category)
+            if hasattr(o, '_category'):
+                category = o._category
+                if not category in result:
+                    result.append(category)
+            else:
+                result.append(str(None))
+
         return result
 
     def _readonly(self):
