@@ -14,8 +14,8 @@ transformDictionary = {}
 def loadScript(scriptFilePath, indentation):
 
     if not os.path.exists(scriptFilePath):
-        from Ganga.Core.exceptions import GangaError
-        raise GangaError("Error Finding script file: %s" % str(scriptFilePath))
+        from Ganga.Core.exceptions import GangaException
+        raise GangaException("Error Finding script file: %s" % str(scriptFilePath))
 
     with open(scriptFilePath) as this_file:
         file_data = this_file.read()
