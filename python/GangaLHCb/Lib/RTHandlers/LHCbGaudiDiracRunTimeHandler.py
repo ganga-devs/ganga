@@ -41,6 +41,12 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
             app, appsubconfig, appmasterconfig, jobmasterconfig)
 
         job = app.getJobObject()
+
+        if job.inputdata:
+            if not job.splitter:
+                if len(job.inputdata) > 100:
+                    raise BackendError("You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
+
         outputfiles = [file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
 
         data_str = 'import os\n'
