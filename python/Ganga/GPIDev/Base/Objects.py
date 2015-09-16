@@ -89,7 +89,7 @@ class Node(object):
             else:
                 d[n] = None
         obj.__setstate__(d)
-        obj._parent = None
+        obj._parent = self._parent
         obj._index_cache = None
         obj._registry = stripProxy(self)._registry
         return obj
@@ -114,10 +114,12 @@ class Node(object):
             return self
         root = None
         obj = self
-        while obj is not None:
+        cond_test = not cond is None
+        while not obj is None:
             root = obj
-            if cond and cond(root):
-                break
+            if cond_test:
+                if cond(root):
+                    break
             obj = obj._getParent()
         return root
 
@@ -259,7 +261,6 @@ class Descriptor(object):
         self._checkset_name = None
         self._filter_name = None
 
-
         if not hasattr( item, '_meta'):
             return
 
@@ -353,9 +354,12 @@ class Descriptor(object):
             v._setParent(obj)
             return v
 
-    def __set__(self, obj, val):
+    def __set__(self, _obj, _val):
 
-        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
+        obj = stripProxy(_obj)
+        val = stripProxy(_val)
+
+        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList, GangaList
 
         cs = self._bind_method(obj, self._checkset_name)
         if cs:
@@ -374,18 +378,41 @@ class Descriptor(object):
         def cloneVal(v):
             return self.__cloneVal(v, obj)
 
+        obj_reg = obj._getRegistry()
+
+        ### THIS CODE HERE CHANGES THE DIRTY FLUSH COUNTER SUCH THAT GANGALIST OBJECTS ARE WRITTEN TO DISK ATOMICALLY
+        ### THIS COMES WITH A MAJOR PERFORMANCE IMPROVEMENT IN SOME CODE THAT REALLY SHOULDN'T BE SLOW
+        ### Maybe delete this if/when we aren't using XML repo in future as allowing a really dirty repo is probably bad m'kay
+
+        ## NB Should really tie in the default here to defaults from Core
+        old_count = 10
+        if not obj_reg is None:
+            if hasattr(val, '__len__'):
+                old_count = obj_reg.dirty_flush_counter
+                val_len = 2*len(val) + 10
+                obj_reg.dirty_flush_counter = val_len if val_len > old_count else old_count
+
         if item['sequence']:
             _preparable = True if item['preparable'] else False
+            if len(val) > 0:
+                val = makeGangaList(val, parent=obj, preparable=_preparable)
+            else:
+                val = GangaList()
 
         if isType(item, Schema.ComponentItem):
-            if item['sequence']:
-                val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
-            else:
-                val = cloneVal(val)
+            if not item['sequence']:
+                if hasattr(val, '__len__'):
+                    if len(val) > 0:
+                        val = cloneVal(val)
+                    else:
+                        val = GangaList()
 
-        else:
-            if item['sequence']:
-                val = makeGangaList(val, parent=obj, preparable=_preparable)
+        if hasattr(val, '_setParent'):
+            val._setParent(obj)
+        
+        ### RESET DIRTY COUNT
+        if not obj_reg is None:
+            obj_reg.dirty_flush_counter = old_count
 
         obj._data[self._name] = val
 
@@ -529,6 +556,8 @@ class GangaObject(Node):
     # the constructor is directly used by the GPI proxy so the GangaObject
     # must be fully initialized
     def __init__(self):
+
+
         # IMPORTANT: if you add instance attributes like in the line below
         # make sure to update the __getstate__ method as well
         # use cache to help preserve proxy objects identity in GPI
@@ -679,10 +708,10 @@ class GangaObject(Node):
     # the root object (if any)
     def _getRegistry(self):
         r = self._getRoot()
-        try:
+        if hasattr(r, '_registry'):
             return r._registry
-        except AttributeError, err:
-            logger.debug("_getRegistry Exception: %s" % str(err))
+        else:
+            logger.debug("_getRegistry Exception: '_registry not found for object: %s" % str(r))
             return None
 
     def _getRegistryID(self):
@@ -748,7 +777,7 @@ class GangaObject(Node):
     # Returns the attribute value (converted or original)
     #
     def _attribute_filter__set__(self, name, v):
-        if (hasattr(v, '_on_attribute__set__')):
+        if hasattr(v, '_on_attribute__set__'):
             return v._on_attribute__set__(self, name)
         return v
 
