@@ -14,6 +14,7 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
+from Ganga.GPIDev.Lib.File import IGangaFile
 #from Ganga.GPI import DiracFile
 logger = Ganga.Utility.logging.getLogger()
 
@@ -61,9 +62,12 @@ class LHCbDataset(GangaDataset):
         new_files = GangaList()
         for this_file in files:
             if type(this_file) == type(''):
-                new_files.append(string_datafile_shortcut_lhcb(this_file, None))
+                new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+            elif isType(this_file, IGangaFile):
+                new_files.append(this_file, False)
             else:
                 new_files.append(this_file)
+        new_files._setParent(self)
         super(LHCbDataset, self).__init__()
         # Feel free to turn this on again for debugging but it's potentially quite expensive
         #logger.debug( "Creating dataset with:\n%s" % files )

@@ -125,7 +125,7 @@ def getEnvironment(config={}):
     import PACKAGE
 
     PACKAGE.standardSetup()
-    return
+    return {}
 
 
 def loadPlugins(config={}):
