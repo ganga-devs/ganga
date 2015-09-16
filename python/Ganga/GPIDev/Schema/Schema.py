@@ -27,7 +27,9 @@ from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 
 logger = Ganga.Utility.logging.getLogger()
 
-
+## Dictionary for storing data from the Config system which takes a while to lookup
+_found_configs = {}
+_found_attrs = {}
 
 #
 # Ganga Public Interface Schema
@@ -96,12 +98,12 @@ class Schema(object):
         self._pluginclass = None
 
     def __getitem__(self, name):
-        try:
+        if name in self.datadict:
             return self.datadict[name]
-        except Exception as x:
-            logger.error("Ganga Cannot find: %s in Object: %s" %
-                         (name, self.name))
-            raise GangaAttributeError(x)
+        else:
+            err_str = "Ganga Cannot find: %s in Object: %s" % (name, self.name)
+            logger.error(err_str)
+            raise GangaAttributeError(err_str)
 
     category = property(lambda self: self._pluginclass._category)
     name = property(lambda self: self._pluginclass._name)
@@ -158,8 +160,9 @@ class Schema(object):
     def createDefaultConfig(self):
         # create a configuration unit for default values of object properties
         # take the defaults from schema defaults
-        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(
-            self.name), "default attribute values for %s objects" % self.name)  # self._pluginclass._proxyClass.__doc__ )
+        config = Ganga.Utility.Config.makeConfig(defaultConfigSectionName(self.name),\
+                                                "default attribute values for %s objects" % self.name)
+                                                # self._pluginclass._proxyClass.__doc__ )
 
         for name, item in self.allItems():
             # and not item['sequence']: #FIXME: do we need it or not??
@@ -183,30 +186,28 @@ class Schema(object):
                     name, item['defvalue'], item['doc'], override=False, typelist=types)
 
         def prehook(name, x):
-            errmsg = "Cannot set %s=%s in [%s]: " % (
-                name, repr(x), config.name)
+            errmsg = "Cannot set %s=%s in [%s]: " % (name, repr(x), config.name)
 
             try:
                 item = self.getItem(name)
-            except KeyError as x:
-                raise Ganga.Utility.Config.ConfigError(
-                    errmsg + "attribute not defined in the schema")
+            #except KeyError as x:
+            #    raise Ganga.Utility.Config.ConfigError(errmsg + "attribute not defined in the schema")
             except Exception as x:
                 raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
             if item.isA(ComponentItem):
                 if not isinstance(x, str) and not x is None:
-                    raise Ganga.Utility.Config.ConfigError(
-                        errmsg + "only strings and None allowed as a default value of Component Item.")
+                    raise Ganga.Utility.Config.ConfigError(errmsg + "only strings and None allowed as a default value of Component Item.")
                 try:
                     self._getDefaultValueInternal(name, x, check=True)
-                except:
-                    Ganga.Utility.logging.log_unknown_exception()
-                    raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
+                except Exception as err:
+                    logger.info("Unexpected error: %s" % str(err))
+                    raise
+                    #Ganga.Utility.logging.log_unknown_exception()
+                    #raise Ganga.Utility.Config.ConfigError(errmsg + str(x))
 
             if item['protected'] or item['hidden']:
-                raise Ganga.Utility.Config.ConfigError(
-                    errmsg + "protected or hidden property")
+                raise Ganga.Utility.Config.ConfigError(errmsg + "protected or hidden property")
 
             # FIXME: File() == 'x' triggers AttributeError
             # try:
@@ -219,6 +220,7 @@ class Schema(object):
         config.attachUserHandler(prehook, None)
         config.attachSessionHandler(prehook, None)
 
+
     def getDefaultValue(self, attr):
         """ Get the default value of a schema item, both simple and component.
         """
@@ -228,28 +230,33 @@ class Schema(object):
         """ Get the default value of a schema item, both simple and component.
         If check is True then val is used instead of default value: this is used to check if the val may be used as a default value (e.g. if it is OK to use it as a value in the config file)
         """
-        config = Ganga.Utility.Config.getConfig(
-            defaultConfigSectionName(self.name))
+        def_name = defaultConfigSectionName(self.name)
 
-        #item = self.getItem(attr)
-        item = None
+        item = self.getItem(attr)
 
-        # hidden, protected and sequence values are not represented in config
-        try:
+        stored_attr_key = def_name + ':' + str(attr)
+
+        if stored_attr_key in _found_attrs.keys():
+            defvalue = _found_attrs[stored_attr_key]
+        else:
+            global _found_configs
+            if def_name in _found_configs.keys():
+                config = _found_configs[def_name]
+            else:
+                config = Ganga.Utility.Config.getConfig(def_name)
+                _found_configs[def_name] = config
+
+            # hidden, protected and sequence values are not represented in config
             if attr in config:
                 defvalue = config[attr]
             else:
-                item = self.getItem(attr)
                 defvalue = item['defvalue']
-        except Ganga.Utility.Config.ConfigError as x:
-            defvalue = item['defvalue']
+            _found_attrs[stored_attr_key] = defvalue
 
         # in the checking mode, use the provided value instead
         if check:
             defvalue = val
 
-        if item is None:
-            item = self.getItem(attr)
         if item.isA(ComponentItem):
 
             # FIXME: limited support for initializing non-empty sequences (i.e.
@@ -368,9 +375,15 @@ class Item(object):
             if isinstance(what, str):
                 # get access to all Item classes defined in this module
                 # (schema)
-                what = getattr(Schema, what)
+                if hasattr(Schema, what):
+                    what = getattr(Schema, what)
+                else:
+                    return False
             elif isinstance(what, types.InstanceType):
-                what = what.__class__
+                if hasattr(what, '__class__'):
+                    what = what.__class__
+                else:
+                    return False
 
         except AttributeError:
             # class not found
