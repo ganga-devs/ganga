@@ -947,7 +947,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             for r in allRuntimes.values():
                 try:
                     _env = r.getEnvironment()
-                    if type(env) == type({}):
+                    if type(_env) == type({}):
                         os.environ.update(_env)
                 except Exception as err:
                     logger.error("can't get environment for %s, possible problem with the return value of getEvironment()" % r.name)
