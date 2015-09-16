@@ -183,9 +183,9 @@ def getConfig(name):
     be easily shared between different parts of the program."""
 
     name = _migrate_name(name)
-    try:
+    if name in allConfigs:
         return allConfigs[name]
-    except KeyError:
+    else:
         allConfigs[name] = PackageConfig(name, 'Documentation not available')
         return allConfigs[name]
 
@@ -268,15 +268,14 @@ class ConfigOption(object):
         #    logger = Ganga.Utility.logging.getLogger()
         #    logger.warning('problem with option filter: %s: %s',self.name,x)
 
-        try:
-            session_value = self.transform_PATH_option(
-                session_value, self.session_value)
-        except AttributeError:
+        if hasattr(self, 'session_value'):
+            session_value = self.transform_PATH_option(session_value, self.session_value)
+        else:
             pass
 
-        try:
+        if hasattr(self, 'session_value'):
             old_value = self.session_value
-        except AttributeError:
+        else:
             pass
 
         self.session_value = session_value
@@ -291,15 +290,14 @@ class ConfigOption(object):
             logger = getLogger()
             logger.warning('problem with option filter: %s: %s', self.name, x)
 
-        try:
-            user_value = self.transform_PATH_option(
-                user_value, self.user_value)
-        except AttributeError:
+        if hasattr(self, 'user_value'):
+            user_value = self.transform_PATH_option(user_value, self.user_value)
+        else:
             pass
 
-        try:
+        if hasattr(self, 'user_value'):
             old_value = self.user_value
-        except AttributeError:
+        else:
             pass
 
         self.user_value = user_value
@@ -314,39 +312,36 @@ class ConfigOption(object):
             raise x
 
     def overrideDefaultValue(self, default_value):
-        try:
-            default_value = self.transform_PATH_option(
-                default_value, self.default_value)
-        except AttributeError:
+        if hasattr(self, 'default_value'):
+            default_value = self.transform_PATH_option(default_value, self.default_value)
+        else:
             pass
         self.default_value = default_value
         self.convert_type('user_value')
         self.convert_type('session_value')
 
     def __getattr__(self, name):
+
         if name == 'value':
             values = []
 
             for n in ['user', 'session', 'default']:
-                try:
-                    values.append(getattr(self, n + '_value'))
-                except AttributeError:
+                str_val = n+'_value'
+                if hasattr(self, str_val):
+                    values.append(getattr(self, str_val))
+                else:
                     pass
 
-            if values:
+            if values != []:
                 return reduce(self.transform_PATH_option, values)
 
-            # for n in ['user','session','default']:
-            #    try:
-            #        return getattr(self,n+'_value')
-            #    except AttributeError:
-            #        pass
 
         if name == 'level':
 
             for level, name in [(0, 'user'), (1, 'session'), (2, 'default')]:
                 if hasattr(self, name + '_value'):
                     return level
+
         raise AttributeError(name)
 
     def __setattr__(self, name, value):
@@ -505,9 +500,9 @@ class PackageConfig(object):
             raise ConfigError(
                 'attempt to add a new option [%s]%s after bootstrap' % (self.name, name))
 
-        try:
+        if name in self.options:
             option = self.options[name]
-        except KeyError:
+        else:
             option = ConfigOption(name)
 
         if option.check_defined() and not override:
@@ -587,16 +582,22 @@ class PackageConfig(object):
         self.options[name].overrideDefaultValue(val)
 
     def revertToSession(self, name):
-        try:
-            del self.options[name].user_value
-        except AttributeError:
+        if name in self.options:
+            if hasattr(self.options[name], 'user_value'):
+                self.options[name].user_value
+            else:
+                pass
+        else:
             pass
 
     def revertToDefault(self, name):
         self.revertToSession(name)
-        try:
-            del self.options[name].session_value
-        except AttributeError:
+        if name in self.options:
+            if hasattr(self.options[name], 'session_value'):
+                del self.options[name].session_value
+            else:
+                pass
+        else:
             pass
 
     def revertToSessionOptions(self):
@@ -615,26 +616,23 @@ class PackageConfig(object):
         return eff
 
     def getEffectiveOption(self, name):
-        try:
+        if name in self.options:
             return self.options[name].value
-        except KeyError:
+        else:
             logger = getLogger()
-            logger.debug(
-                "Effective Option %s NOT FOUND, Effective Options are:" % (name))
+            logger.debug("Effective Option %s NOT FOUND, Effective Options are:" % (name))
             opts = self.getEffectiveOptions()
             for i in opts:
                 logger.debug("\t%s" % (i))
-            raise ConfigError(
-                'option "%s" does not exist in "%s"' % (name, self.name))
+            raise ConfigError('option "%s" does not exist in "%s"' % (name, self.name))
 
     def getEffectiveLevel(self, name):
         """ Return 0 if option is effectively set at the user level, 1
         if at session level or 2 if at default level """
-        try:
+        if name in self.options:
             return self.options[name].level
-        except KeyError as x:
-            raise ConfigError(
-                'option "%s" does not exist in "%s"' % (x, self.name))
+        else:
+            raise ConfigError('option "%s" does not exist in "%s"' % (x, self.name))
 
     def attachUserHandler(self, pre, post):
         """ Attach a user handler:
@@ -717,24 +715,23 @@ def transform_PATH_option(name, new_value, current_value):
 
     PATH_ITEM = '_PATH'
     if name[-len(PATH_ITEM):] == PATH_ITEM:
-        logger.debug(
-            'PATH-like variable: %s %s %s', name, new_value, current_value)
+        logger.debug('PATH-like variable: %s %s %s', name, new_value, current_value)
         if current_value is None:
             ret_value = new_value
         elif new_value[:3] != ':::':
-            logger.debug(
-                'Prepended %s to PATH-like variable %s', new_value, name)
+            logger.debug('Prepended %s to PATH-like variable %s', new_value, name)
             ret_value = new_value + ':' + current_value
+            new_value = ""
         else:
-            logger.debug(
-                'Resetting PATH-like variable %s to %s', name, new_value)
+            logger.debug('Resetting PATH-like variable %s to %s', name, new_value)
             ret_value = new_value  # [3:]
+            new_value = ":::"
 
         # remove duplicate path entries
-        if ret_value[:3] == ':::':
-            new_value = ":::"
-        else:
-            new_value = ""
+        #if ret_value[:3] == ':::':
+        #    new_value = ":::"
+        #else:
+        #    new_value = ""
 
         for tok in ret_value.strip(":").split(":"):
             if new_value.find(tok) == -1 or tok == "":
@@ -780,7 +777,8 @@ def read_ini_files(filenames, system_vars):
             for name in cc.options(sec):
                 try:
                     value = cc.get(sec, name)
-                except ConfigParser.InterpolationMissingOptionError:
+                except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+                    logger.debug("Parse Error!:\n  %s" % str(err))
                     value = cc.get(sec, name, raw=True)
 
                 for localvar in re.finditer('\$\{[^${}]*\}', value):
@@ -804,7 +802,8 @@ def read_ini_files(filenames, system_vars):
                     current_value = main.get(sec, name)
                 except ConfigParser.NoOptionError:
                     current_value = None
-                except ConfigParser.InterpolationMissingOptionError:
+                except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+                    logger.debug("Parse Error!:\n  %s" % str(err))
                     logger.debug("Failed to expand, Importing value %s:%s as raw" % (str(sec), str(name)))
                     current_value = main.get(sec, name, raw=True)
                     current_value = current_value.replace('%', '%%')
@@ -885,8 +884,9 @@ def configure(filenames, system_vars):
                 continue
             try:
                 v = cfg.get(name, o)
-            except ConfigParser.InterpolationMissingOptionError:
+            except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
                 logger = getLogger()
+                logger.debug("Parse Error!:\n  %s" % str(err))
                 logger.warning("Can't expand the config file option %s:%s, treating it as raw" % (str(name), str(o)))
                 v = cfg.get(name, o, raw=True)
             setSessionValue(name, o, v)
@@ -917,7 +917,8 @@ def load_user_config(filename, system_vars):
                 continue
             try:
                 v = new_cfg.get(name, o)
-            except ConfigParser.InterpolationMissingOptionError:
+            except (ConfigParser.InterpolationMissingOptionError, ConfigParser.InterpolationSyntaxError) as err:
+                logger.debug("Parse Error!:\n  %s" % str(err))
                 logging.debug("Failed to expand %s:%s, loading it as raw" % (str(name), str(o)))
                 v = new_cfg.get(name, o, raw=True)
             current_cfg_section.setUserValue(o, v)
@@ -974,9 +975,9 @@ def sanityCheck():
 
     for name in allConfigFileValues:
         opts = allConfigFileValues[name]
-        try:
+        if name in allConfigs:
             cfg = allConfigs[name]
-        except KeyError:
+        else:
             logger.error("unknown configuration section: [%s]", name)
             continue
 
