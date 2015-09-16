@@ -414,6 +414,13 @@ def GPIProxyClassFactory(name, pluginclass):
         return str(sio.getvalue()).rstrip()
     helptext(_str, """Return a printable string representing %(classname)s object as a tree of properties.""")
 
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text('proxy object...')
+            return
+        p.text(self._display(True))
+    helptext(_repr_pretty_, """Return a nice string to be printed in the IPython termial""")
+
     def _repr(self):
         if hasattr(getattr(self, proxyRef), '_repr'):
             return getattr(self, proxyRef)._repr()
@@ -565,6 +572,9 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
          #          '__getattr__': _getattr,
          '__getattribute__': _getattribute
          }
+
+    if hasattr(pluginclass, '_repr_pretty_'):
+        d['_repr_pretty_'] = _repr_pretty_
 
     # TODO: this makes GangaList inherit from the list
     # this is not tested and specifically the TestGangaList/testAllListMethodsExported should be verified

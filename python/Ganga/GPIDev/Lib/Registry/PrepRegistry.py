@@ -487,6 +487,12 @@ class ShareRef(GangaObject):
 
         return disp_string
 
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text('prep registry...')
+            return
+        p.text(self._display(interactive=True))
+
     # rcurrie Adding this due to strange bug but assuming it should be false
     # due to setRegistry(None)
     def _registry_locked(self):

@@ -1487,7 +1487,7 @@ default_backends = LCG
 
                 self.launch_OldIPython(local_ns, args)
 
-            elif ipver in [ "3.1.0", "3.2.0", "3.2.1" ]:
+            elif ipver in [ "3.1.0", "3.2.0", "3.2.1", '4.0.0' ]:
 
                 self.launch_NewIPython(local_ns, args)
 
@@ -1546,107 +1546,41 @@ default_backends = LCG
         # embedded in another IPython session (helps avoid confusion)
 
         # First import the embed function
-        from IPython.terminal.embed import InteractiveShellEmbed
-        ipshell = InteractiveShellEmbed(argv=args, local_ns=local_ns)
 
         from IPython.config.loader import Config
+        cfg = Config()
         try:
             get_ipython
         except NameError:
-            banner=exit_msg=''
-            cfg = Config()
+            banner = exit_msg = ''
             prompt_config = cfg.PromptManager
-            prompt_config.in_template = '[{time}]\nGanga-in <\\#>: '
+            prompt_config.in_template = '[{time}]\nGanga In [\\#]: '
             prompt_config.in2_template = '         .\\D.: '
-            prompt_config.out_template = 'Ganga-out<\\#>: '
+            prompt_config.out_template = 'Ganga Out [\\#]: '
         else:
             banner = '*** Nested interpreter ***'
             exit_msg = '*** Back in main IPython ***'
 
         # First import the embed function
         from IPython.terminal.embed import InteractiveShellEmbed
-        # Now create the IPython shell instance. Put ipshell() anywhere in your code
-        # where you want it to open.
 
-        from IPython.core.displayhook import DisplayHook
-        from IPython.utils import io
-        import sys
-        class myDisplayHook(DisplayHook):
-
-            def __call__(self, result=None):
-                """Printing with history cache management.
-
-                This is invoked everytime the interpreter needs to print, and is
-                activated by setting the variable sys.displayhook to it.
-                """
-                self.check_for_underscore()
-                if result is not None and not self.quiet():
-                    ## This part forms the input data format
-                    self.start_displayhook()
-                    self.write_output_prompt()
-                    #format_dict, md_dict = self.compute_format_data(result)
-                    #self.update_user_ns(result)
-                    #self.fill_exec_result(result)
-                    #
-                    ## This part forms the actual output
-                    ## If we ever want to use more than just 
-                    ## text on the console, i.e. fancy graphs/pics/etc then we
-                    ## should make use of compute_fomat_data and either
-                    ## intercept this or add our own formatter
-                    #if format_dict:
-                    #    self.write_format_data(format_dict, md_dict)
-                    #    self.log_output(format_dict)
-                    sys.stdout.write( self._display( result ) )
-                    self.finish_displayhook()
-
-            def _display(self, data):
-                from Ganga.GPIDev.Base.Proxy import stripProxy
-
-                if hasattr(data, '_display'):
-                    return '\n' + data._display(1) + '\n'
-                elif hasattr(stripProxy(data), '_display'):
-                    return '\n' + stripProxy(data)._display(1) + '\n'
-
-                elif hasattr(data, '__str__'):
-                    return '\n' + data.__str__() + '\n'
-                elif hasattr(stripProxy(data), '__str__'):
-                    return '\n'+ stripProxy(data).__str__() + '\n'
-
-                else:
-                    return '\n' + str(data) + '\n'
-
-
-        #ipshell.display_hook = None
-        #import readline
-        #from Ganga.Runtime.GangaCompleter import GangaCompleter
-        #t = GangaCompleter(readline.get_completer(), local_ns)
-        #readline.parse_and_bind('tab: complete')
-        #readline.set_completion_display_matches_hook(t.displayer)
-
-        InteractiveShellEmbed.displayhook_class = myDisplayHook
         ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
 
         ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html
-        def ganga_Handler(self, etype, value, tb, tb_offset=None):
+        def ganga_handler(self, etype, value, tb, tb_offset=None):
             from Ganga.Utility.logging import getLogger
             logger = getLogger(modulename=True)
             logger.error("%s" % str(value))
-            ## Probably don't want to enable this as the debug built into Core.exceptions works for Ipython and not
-            #try:
-            #    import Ganga.Utility.external.logging as logging
-            #except ImportError:
-            #    import logging
-            #if logger.isEnabledFor(logging.DEBUG):
-            #    self.showtraceback((etype, value, tb), tb_offset=tb_offset)
+
             from Ganga.Core.exceptions import GangaException
             if not isinstance(etype(), GangaException):
                 logger.error("Unknown/Unexpected ERROR!!")
                 logger.error("If you're able to reproduce this please report this to the Ganga developers!")
-                logger.error("%s" % str(value))
+                logger.error("%s" % value)
                 self.showtraceback((etype, value, tb), tb_offset=tb_offset)
             return None
 
-        ipshell.set_custom_exc((Exception,), ganga_Handler)
+        ipshell.set_custom_exc((Exception,), ganga_handler)
         #ipshell.logstart=False
 
         # buffering of log messages from all threads called "GANGA_Update_Thread"
@@ -1658,9 +1592,6 @@ default_backends = LCG
         ipshell.set_hook("pre_prompt_hook", self.ganga_prompt)
 
         ipshell(local_ns=local_ns, global_ns=local_ns)
-
-        return
-        
 
     def ganga_prompt(self, dummy=None):
         if Ganga.Utility.logging.cached_screen_handler:

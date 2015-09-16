@@ -215,6 +215,12 @@ class JobTree(GangaObject):
 
         return ds
 
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text('jobtree...')
+            return
+        p.text(self._display(interactive=True))
+
     def _proxy_display(self, interactive=1):
         return self._display(interactive=interactive)
 

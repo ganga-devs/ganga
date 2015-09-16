@@ -91,6 +91,12 @@ class ThreadPoolQueueMonitor(object):
                        for i in self._monitoring_threadpool.get_queue()])
         return output
 
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text('tasks...')
+            return
+        p.text(self._display())
+
     def __shouldWaitonShutdown(self):
         from Ganga.Core import getCurrentShutdownPolicy
 

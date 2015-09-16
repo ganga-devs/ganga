@@ -61,10 +61,17 @@ class RegistrySliceProxy(object):
             unwrap_attrs[a] = _unwrap(attrs[a])
         return self.__class__(stripProxy(self).select(minid, maxid, **unwrap_attrs))
 
-    def _display(self, interactive=0):
+    def _display(self, interactive=True):
         return stripProxy(self)._display(interactive)
 
-    __str__ = _display
+    def __str__(self):
+        return self._display(interactive=0)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text('registry...')
+            return
+        p.text(self._display())
 
 
 # wrap Proxy around a ganga object (or a list of ganga objects)
