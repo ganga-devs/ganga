@@ -12,8 +12,6 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Utility.Runtime import getScriptPath
 from Ganga.Utility.Runtime import getSearchPath
 
-from IPython.iplib import InteractiveShell
-
 import sys
 
 logger = getLogger(modulename=1)
@@ -54,5 +52,3 @@ def magic_ganga(self, parameter_s=''):
         logger.info(magic_ganga.__doc__)
 
     return None
-
-InteractiveShell.magic_ganga = magic_ganga

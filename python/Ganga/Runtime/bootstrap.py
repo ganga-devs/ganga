@@ -1591,6 +1591,9 @@ default_backends = LCG
 
         ipshell.set_hook("pre_prompt_hook", self.ganga_prompt)
 
+        from Ganga.Runtime.IPythonMagic import magic_ganga
+        ipshell.define_magic('ganga', magic_ganga)
+
         ipshell(local_ns=local_ns, global_ns=local_ns)
 
     def ganga_prompt(self, dummy=None):
