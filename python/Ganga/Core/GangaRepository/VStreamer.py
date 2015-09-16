@@ -13,7 +13,7 @@ from __future__ import absolute_import
 def to_file(j, f=None, ignore_subs=''):
     vstreamer = VStreamer(out=f, selection=ignore_subs)
     vstreamer.begin_root()
-    j.accept(vstreamer)
+    stripProxy(j).accept(vstreamer)
     vstreamer.end_root()
 
 # Faster, but experimental version of to_file without accept()
@@ -174,7 +174,10 @@ class VStreamer(object):
         if s is None:
             print(self.indent(), '<value>None</value>', file=self.out)
         else:
-            s.accept(self)
+            if type(s) == type(''):
+                print(self.indent(), '<value>%s</value>' % s, file=self.out)
+            else:
+                stripProxy(s).accept(self)
         self.level -= 1
 
     def componentAttribute(self, node, name, subnode, sequence):

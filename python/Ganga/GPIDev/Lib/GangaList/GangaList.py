@@ -37,8 +37,9 @@ def makeGangaList(_list, mapfunction=None, parent=None, preparable=False):
         result._setParent(parent)
 
         for r in result:
-            if isType(r, GangaObject) and r._getParent() is None:
-                r._setParent(parent)
+            bare_r = stripProxy(r)
+            if isType(bare_r, GangaObject) and bare_r._getParent() is None:
+                bare_r._setParent(parent)
 
     return result
 
@@ -133,20 +134,20 @@ class GangaList(GangaObject):
                 raise TypeMismatchError('%s is not of type %s.' % (str(obj), category))
             return filter_obj
 
-        obj = stripProxy(obj)
+        raw_obj = stripProxy(obj)
         # apply a filter if possible
         if filter:
             parent = self._getParent()
             item = self.findSchemaParentSchemaEntry(parent)
             if item and item.isA(ComponentItem):  # only filter ComponentItems
                 category = item['category']
-                if isType(obj, GangaObject):
-                    if obj._category != category:
-                        obj = applyFilter(obj, item)
-                    obj._setParent(parent)
+                if isType(raw_obj, GangaObject):
+                    if raw_obj._category != category:
+                        raw_obj = applyFilter(raw_obj, item)
+                    raw_obj._setParent(parent)
                 else:
-                    obj = applyFilter(obj, item)
-        return obj
+                    raw_obj = applyFilter(raw_obj, item)
+        return raw_obj
 
     def strip_proxy_list(self, obj_list, filter=False):
 
@@ -162,13 +163,9 @@ class GangaList(GangaObject):
 
         result = []
         for o in self._list:
-            if hasattr(o, '_category'):
-                category = o._category
-                if not category in result:
-                    result.append(category)
-            else:
-                result.append(str(None))
-
+            category = o._category
+            if not category in result:
+                result.append(category)
         return result
 
     def _readonly(self):
@@ -365,8 +362,8 @@ class GangaList(GangaObject):
     def __str__(self):
         return self.__repr__()
 
-    def append(self, obj):
-        self._list.append(self.strip_proxy(obj, True))
+    def append(self, obj, my_filter=True):
+        self._list.append(self.strip_proxy(obj, my_filter))
 
     def _export_append(self, obj):
         self.checkReadOnly()

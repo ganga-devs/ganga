@@ -22,7 +22,7 @@ class DefaultSplitter(ISplitter):
         This splitter is not expected to be configurable or to split a dataset based upon any input.
         In order to do this please make use of another splitter.
     """
-    _name = "Default Splitter"
+    _name = "DefaultSplitter"
     ## Don't think we need to configure this
     _schema = Schema(Version(1, 0), {})
 

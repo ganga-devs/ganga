@@ -89,6 +89,7 @@ class JobTime(GangaObject):
 
     def __deepcopy__(self, memo):
         obj = super(JobTime, self).__deepcopy__(memo)
+        obj._setParent(self._getParent())
         # Lets not re-initialize the object as we lose history from previous submissions
         # obj.newjob()
         return obj

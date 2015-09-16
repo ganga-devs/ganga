@@ -230,5 +230,5 @@ class RuntimePackage(object):
         if g:
             g()
         else:
-            logger.debug(
-                "no postBootstrapHook() in runtime package %s", self.name)
+            logger.debug("no postBootstrapHook() in runtime package %s", self.name)
+
