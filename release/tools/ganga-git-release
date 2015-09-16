@@ -1,11 +1,13 @@
 #!/usr/bin/env python
 
 import os
+import os.path
 import sys
 import time
 import re
 import shutil
 import argparse
+import glob
 
 parser = argparse.ArgumentParser(description='interactive release making tool')
 parser.add_argument('version', help='Release version')
@@ -17,47 +19,32 @@ CONFIG = {}
 CONFIG['top'] = '/afs/cern.ch/sw/ganga'
 
 CONFIG['version'] = version
-CONFIG['version-pre'] = version+'-pre'
-CONFIG['prereldir'] = os.path.join(CONFIG['top'], 'install',CONFIG['version-pre'])
-CONFIG['reldir'] = os.path.join(CONFIG['top'],'install',CONFIG['version'])
-CONFIG['installdir'] = os.path.join(CONFIG['top'],'install')
-CONFIG['toolsdir'] = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+CONFIG['version-pre'] = version + '-pre'
+CONFIG['prereldir'] = os.path.join(CONFIG['top'], 'install', CONFIG['version-pre'])
+CONFIG['reldir'] = os.path.join(CONFIG['top'], 'install', CONFIG['version'])
+CONFIG['installdir'] = os.path.join(CONFIG['top'], 'install')
+CONFIG['toolsdir'] = os.path.dirname(os.path.realpath(__file__))
 
-CONFIG['webdir_top'] = os.path.join(CONFIG['top'],'www')
-CONFIG['tagsdir_top'] = os.path.join(CONFIG['webdir_top'],'developers','tags')
-CONFIG['tagsdir'] = os.path.join(CONFIG['top'],'www','developers','tags','data',CONFIG['version'])
+CONFIG['webdir_top'] = os.path.join(CONFIG['top'], 'www')
+CONFIG['tagsdir_top'] = os.path.join(CONFIG['webdir_top'], 'developers', 'tags')
+CONFIG['tagsdir'] = os.path.join(CONFIG['top'], 'www', 'developers', 'tags', 'data', CONFIG['version'])
 
-CONFIG['configdir'] = os.path.join(CONFIG['toolsdir'],'..','config')
-CONFIG['releasenotesdir'] = os.path.join(CONFIG['toolsdir'],'..')
+CONFIG['releasenotesdir'] = os.path.join(CONFIG['toolsdir'], '..')
 
-CONFIG['tag'] = "Ganga-"+version.replace('.','-')
-
-CONFIG['RemoteSites'] = {'Imperial':
-                         {'URL': "http://www.hep.ph.ic.ac.uk/~lhcb/testrobot",
-                          "Tests" : ['Ganga.test_local']}}
+CONFIG['tag'] = "Ganga-" + version.replace('.', '-')
 
 # accounts used for CERN deployment of Ganga
-GANGA_ACCOUNTS = [('Ganga','gangage'),('GangaRobot','gangage'),('GangaLHCb','gangalb'),('GangaAtlas','gangaat'),('GangaNG','gangaat'),('GangaPanda','gangaat')]
+GANGA_ACCOUNTS = [('Ganga', 'gangage'), ('GangaLHCb', 'gangalb'), ('GangaAtlas', 'gangaat')]
 
-#running tests on different accounts
-GANGA_ACCOUNT_TEST = [('gangage', 'test_ganga_generic'),('gangaat', 'test_ganga_atlas'),('gangalb', 'test_ganga_lhcb')]
+# running tests on different accounts
+GANGA_ACCOUNT_TEST = [('gangage', 'test_ganga_generic'), ('gangaat', 'test_ganga_atlas'), ('gangalb', 'test_ganga_lhcb')]
 
-#generation config files
-GANGA_ACCOUNT_CONFIG = {'gangage':'generate_generic_config_files', 'gangaat':'generate_atlas_config_files', 'gangalb':'generate_lhcb_config_files' }
-
-#generation manuals
-GANGA_ACCOUNT_MANUAL = {'gangage':'generate_generic_manual', 'gangaat':'generate_atlas_manual', 'gangalb':'generate_lhcb_manual' }
-
-GANGA_RUNTIME_PACKAGES = {}
-
-for pkg, account in GANGA_ACCOUNTS:
-    GANGA_RUNTIME_PACKAGES.setdefault(account, [])
-    if not pkg in GANGA_RUNTIME_PACKAGES[account]:
-        GANGA_RUNTIME_PACKAGES[account].append(pkg)
+# generation manuals
+GANGA_ACCOUNT_MANUAL = {'gangage': 'generate_generic_manual', 'gangaat': 'generate_atlas_manual', 'gangalb': 'generate_lhcb_manual'}
 
 
 def askYesNo(msg):
-    answer = raw_input(msg+' [yes/NO] ')
+    answer = raw_input(msg + ' [yes/NO] ')
 
     if answer.upper() == 'YES':
         return True
@@ -65,18 +52,18 @@ def askYesNo(msg):
     return False
 
 
-def acmd(cmdpath,ignore_errors=False):
+def acmd(cmdpath, ignore_errors=False):
     print 'doing:', cmdpath
     print
     if os.system(cmdpath):
         if not ignore_errors:
-            print "problem with executing: ",cmdpath
+            print "problem with executing: ", cmdpath
             sys.exit(1)
 
 
 def toolcmd(cmd):
     if CONFIG['toolsdir']:
-        cmdpath = "%s/%s" %(CONFIG['toolsdir'],cmd)
+        cmdpath = "%s/%s"  % (CONFIG['toolsdir'], cmd)
     else:
         cmdpath = cmd
     acmd(cmdpath)
@@ -85,10 +72,10 @@ def toolcmd(cmd):
 def remove_prerelease(prereleaseDir):
 
     acmd('rm -rf %s ' % prereleaseDir)
-    
+
     prerel_basename = os.path.basename(prereleaseDir)   
 
-    #remove the tarball also
+    # remove the tarball also
     pre_tarball = '%s/tarball/Ganga-%s.tar.gz' % (CONFIG['top'], prerel_basename)
     try:
         os.unlink(pre_tarball)
@@ -99,14 +86,14 @@ def remove_prerelease(prereleaseDir):
 
 def get_count_releases(installDir):
 
-    currentDir = os.getcwd()    
+    currentDir = os.getcwd()
 
     os.chdir(installDir)
 
     def isRelease(x):
         return x[1] == '.' and x[3] == '.'
 
-    dirs = filter(isRelease, os.listdir(installDir))
+    dirs = [d for d in os.listdir(installDir) if isRelease(d)]
 
     os.chdir(currentDir)   
 
@@ -119,28 +106,22 @@ def remove_oldest_prereleases(installDir):
 
     os.chdir(installDir)
 
-    def isPre(x):
-        return x.find('-pre') > -1
-
-    dirs = filter(isPre, os.listdir(installDir))
+    dirs = (d for d in os.listdir(installDir) if '-pre' in d)
     dirs = [os.path.join(installDir, d) for d in dirs] # add path to each dir
-    dirs.sort(lambda x,y: cmp(os.path.getmtime(x), os.path.getmtime(y)))
+    dirs.sort(lambda x, y: cmp(os.path.getmtime(x), os.path.getmtime(y)))
 
     num_prereleases = len(dirs)
 
     if num_prereleases == 0:
-
-        os.chdir(currentDir)        
+        os.chdir(currentDir)
         return False
 
     elif num_prereleases == 1:
-        
         print 'Removing oldest prereleases to free space in the install directory' 
 
         remove_prerelease(dirs[0])
-        
-    else:
 
+    else:
         print 'Removing oldest prereleases to free space in the install directory'
 
         remove_prerelease(dirs[0])
@@ -159,7 +140,7 @@ def get_rel_manager_email():
     leftIndex = content.find('"')
     rightIndex = content.rfind('"')
 
-    relManagerEmail = content[leftIndex+1:rightIndex]
+    relManagerEmail = content[leftIndex + 1:rightIndex]
 
     return relManagerEmail
 
@@ -175,7 +156,7 @@ def wait_all_tests_to_finish(outputdir):
     currentDir = os.getcwd()
 
     os.chdir(latestDir)
-        
+
     while True:
 
         files = filter(os.path.isfile, os.listdir(latestDir))
@@ -209,7 +190,6 @@ def wait_all_tests_to_finish(outputdir):
 def send_mail(key, receiver=''):
     import smtplib
     import email
-    import os
 
     releaseToolsDir = os.path.dirname(os.path.abspath(__file__))
 
@@ -227,19 +207,19 @@ def send_mail(key, receiver=''):
     elif key == 'release':
 
         email_file = os.path.join(releaseToolsDir, 'release_tool_emails/release.txt')
-        receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'   
+        receivers = 'project-ganga-developers@cern.ch;project-ganga@cern.ch'
         subject = 'Ganga release %s is ready' % CONFIG['version']
    
     elif key == 'testsfinished':
 
         email_file = os.path.join(releaseToolsDir, 'release_tool_emails/testsfinished.txt')
-        receivers = receiver   
+        receivers = receiver
         subject = 'Ganga tests for %s-pre are finished' % CONFIG['version']        
         
     elif key == 'testreports':
 
         email_file = os.path.join(releaseToolsDir, 'release_tool_emails/testreports.txt')
-        receivers = 'project-ganga-developers@cern.ch'   
+        receivers = 'project-ganga-developers@cern.ch'
         subject = 'Ganga %s-pre test reports are ready' % CONFIG['version']    
 
     with open(email_file, 'rb') as fp:
@@ -255,14 +235,14 @@ def send_mail(key, receiver=''):
         
     if key == 'prerelease' or key == 'testreports':
         string_message = string_message.replace('VER', CONFIG['version'])
-    elif key == 'release':      
+    elif key == 'release':
         string_message = string_message.replace('*version*', CONFIG['version'])
-    elif key == 'testsfinished':      
+    elif key == 'testsfinished':
         string_message = string_message.replace('VER', CONFIG['version'])
 
     try:
         smtpObj = smtplib.SMTP('cernmx.cern.ch')
-        smtpObj.sendmail(sender, receivers, string_message)         
+        smtpObj.sendmail(sender, receivers, string_message)
 
     except smtplib.SMTPException:
         print "Can not send %s notification email" % key
@@ -270,9 +250,8 @@ def send_mail(key, receiver=''):
 
 def PrereleaseCommand():
     """PRE: create the PRE-RELEASE in the prereldir"""
-    import os,glob,re
     if os.path.isdir(CONFIG['prereldir']):
-        print 'the current prerelease is %(prereldir)s'%CONFIG
+        print 'the current prerelease is %(prereldir)s' % CONFIG
         prm = re.compile('(\S)+-pre(?P<num>\d+)')
         maxnum = 0
         for pre_rel in glob.glob(CONFIG['prereldir']+'*'):
@@ -283,14 +262,14 @@ def PrereleaseCommand():
         maxnum += 1
         new_backup_prerelease = CONFIG['prereldir']+str(maxnum)
         #print 'if you answer YES then the current prerelease will be backed up as',new_backup_prerelease
-        if askYesNo('do you want to delete the current prerelease (and back it up as %s)?'%new_backup_prerelease):
-            acmd('mv %s %s'%(CONFIG['prereldir'],new_backup_prerelease))
-            print 'sucessfully moved %s to %s'%(CONFIG['prereldir'],new_backup_prerelease)
+        if askYesNo('do you want to delete the current prerelease (and back it up as %s)?' % new_backup_prerelease):
+            acmd('mv %s %s' % (CONFIG['prereldir'],new_backup_prerelease))
+            print 'sucessfully moved %s to %s' % (CONFIG['prereldir'], new_backup_prerelease)
             pre_tarball = '%(top)s/tarball/Ganga-%(version-pre)s.tar.gz' % CONFIG
             try:
                 os.unlink(pre_tarball)
                 print 'sucessfully removed pre-release tarball %s' % pre_tarball
-            except OSError,e:
+            except OSError as e:
                 print 'Cannot delete pre-release tarball: %s' % str(e)
         else:
             print "Cannot continue...Terminating"
@@ -308,8 +287,7 @@ def PrereleaseCommand():
 
     print 'the prerelease is installed in',CONFIG['prereldir']
 
-    import os.path
-    versionfile=os.path.join(CONFIG['webdir_top'],'download','VERSIONS.txt')
+    versionfile = os.path.join(CONFIG['webdir_top'],'download','VERSIONS.txt')
     print 'Updating file with available releases'
     acmd("touch %s && date +'%s - %%d %%b %%Y %%k:%%m:%%S' >> %s"% (versionfile, CONFIG['version-pre'], versionfile))
 
@@ -342,30 +320,6 @@ def PretestCommand():
 
 def TestReportCommand():
     """TEST REPORT: Create the summary web pages with the test results."""
-    import urllib
-    import tarfile
-    import os
-    from os.path import join
-
-    path = join(CONFIG['prereldir'], 'reports', 'latest')
-    remotelist = CONFIG['RemoteSites']
-    for site in remotelist:
-        print 'Downloading tests from %s.' % site
-        url = remotelist[site]['URL']
-        tests = remotelist[site]['Tests']
-        for test in tests:
-            fname = CONFIG['version'] + '-pre_' + test + '-' + site + '.tgz'
-            urllib.urlretrieve(url + '/' + fname, join(path, fname))
-
-            try:
-                tf = tarfile.open(join(path, fname), 'r:gz')
-            except Exception:
-                print "Test file %s could not be retrieved."
-                print "Will just ignore this and continue without it."
-                continue
-            for f in tf.getnames():
-                tf.extract(f, path)
-            os.remove(join(path, fname))
 
     print "Creating web pages."
     acmd("%(prereldir)s/bin/ganga --test -o\'[TestingFramework]ReleaseTesting=True\' -o\'EnableHTMLReporter=True\' -o\'EnableTestRunner=False\'" % CONFIG)
@@ -406,7 +360,7 @@ def ReleaseCommand():
 
     toolcmd('prepdist %(reldir)s clean' % CONFIG)
 
-    print 'Fix the coverage report symlink'
+    #print 'Fix the coverage report symlink'
 
     #acmd('ln -s ../latest/html/coverage %(reldir)s/reports/html/coverage' % CONFIG)
 
@@ -418,7 +372,7 @@ def ReleaseCommand():
     _protectTagsDir()
 
     print 'Updating web pages'
-    #_updateWebPages()
+    _updateWebPages()
 
     print 'Release sucesfully made in the %(reldir)s' % CONFIG
 
@@ -432,11 +386,11 @@ def _protectTagsDir():
     """
     toolcmd('acl protect %(tagsdir)s' % CONFIG)
 
-    with open('%(tagsdir_top)s/open_releases' % CONFIG,'r') as fh:
-        next_releases = [line.strip() for line in fh.readlines() if line.strip()!=CONFIG['version']]
+    with open('%(tagsdir_top)s/open_releases' % CONFIG, 'r') as fh:
+        next_releases = [line.strip() for line in fh.readlines() if line.strip() != CONFIG['version']]
 
-    with open('%(tagsdir_top)s/open_releases' % CONFIG,'w') as fh:
-        fh.writelines([release+'\n' for release in next_releases])
+    with open('%(tagsdir_top)s/open_releases' % CONFIG, 'w') as fh:
+        fh.writelines([release + '\n' for release in next_releases])
 
 
 def _updateWebPages():
@@ -449,11 +403,10 @@ def _updateWebPages():
         <:GANGA_ALL_VERSIONS:>: comma separated list of all existing versions of Ganga in release area
     """
     import urllib
-    #we do not expose development releases to public
+    # we do not expose development releases to public
     if re.compile('(beta|alpha|pre)').search(CONFIG['version']):
         print 'DEVELOPMENT release detected. The web pages/NEWS are not generated!'
         return
-
 
     # the list of directories in web area to search for templates
     dirs = ['%(webdir_top)s/user/' % CONFIG,
@@ -489,7 +442,6 @@ def _updateWebPages():
                                                  "</item>", True)
                    }
 
-    import glob
     templates=[]
     for dir in dirs:
         templates.extend(glob.glob('%s/*.tpl' % dir))
@@ -524,6 +476,7 @@ def _updateWebPages():
             shutil.move('%s.new' % template, template)
         except Exception,e:
             print 'Warning! Cannot write %s. %s' % (newfile,str(e))
+
 
 def GenerateManuals():
     """GENERATE LHCB MANUAL: generate LHCb reference manuals"""
@@ -564,8 +517,6 @@ def _setlib():
     """
     Add the script directory to python path
     """
-    import os.path
-    import sys
     libdir = os.path.normpath(os.path.dirname(__file__))
     if libdir not in sys.path:
         sys.path.insert(0, libdir)
