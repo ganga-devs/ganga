@@ -171,8 +171,6 @@ class DiracFile(IGangaFile):
         c.guid = self.guid
         c._storedReplicas = self._storedReplicas
         c._remoteURLs = self._remoteURLs
-        #c._storedReplicas = copy.deepcopy(self._storedReplicas)
-        #c._remoteURLs = copy.deepcopy(self._remoteURLs)
         c.failureReason = self.failureReason
 
         c.subfiles = copy.deepcopy(self.subfiles)
@@ -183,10 +181,12 @@ class DiracFile(IGangaFile):
 
         #   Do some checking of the filenames in a subprocess
         if name == "lfn":
-            self._setLFNnamePattern(_lfn=value, _namePattern='')
+            if value != "":
+                self._setLFNnamePattern(_lfn=value, _namePattern='')
             return self.lfn
         elif name == 'namePattern':
-            self._setLFNnamePattern(_lfn='', _namePattern=value)
+            if value != "":
+                self._setLFNnamePattern(_lfn='', _namePattern=value)
             return self.namePattern
 
         if name == 'localDir' and type(value) != type(None):
@@ -231,17 +231,9 @@ class DiracFile(IGangaFile):
         # Attempt to spend too long loading un-needed objects into memory in
         # order to read job status
         if name is 'lfn':
-            # if object.__getattribute__(self, 'lfn') == "":
-            #    self._optionallyUploadLocalFile()
-            # return object.__getattribute__(self, 'lfn')
-            #j = self.getJobObject()
-            # if j:
-            #    j.backend.getOutputDataLFNs()
             if self.lfn == "":
-                logger.warning(
-                    "Do NOT have an LFN, for file: %s" % self.namePattern)
-                logger.warning(
-                    "If file exists locally try first using the method put()")
+                logger.warning("Do NOT have an LFN, for file: %s" % self.namePattern)
+                logger.warning("If file exists locally try first using the method put()")
             return object.__getattribute__(self, 'lfn')
         elif name in ['guid', 'locations']:
             if configDirac['DiracFileAutoGet']:
