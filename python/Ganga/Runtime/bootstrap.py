@@ -785,7 +785,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             return string.join(files, os.pathsep)
 
         import re
-        
+
         def _versionsort(s, p=re.compile(r'^(\d+)-(\d+)-*(\d*)')):
             m = p.match(s)
             if m:
@@ -947,7 +947,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             for r in allRuntimes.values():
                 try:
                     _env = r.getEnvironment()
-                    if type(_env) == type({}):
+                    if isinstance(_env, dict):
                         os.environ.update(_env)
                 except Exception as err:
                     logger.error("can't get environment for %s, possible problem with the return value of getEvironment()" % r.name)
@@ -1635,7 +1635,7 @@ default_backends = LCG
             else:
                 sys.stdout.write(str(obj)+'\n')
                 return
-                                                                      
+
         try:
             from IPython.Shell import IPShellEmbed
         except ImportError, err:
