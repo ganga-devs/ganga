@@ -197,7 +197,7 @@ def makeConfig(name, docstring, **kwds):
 
     if _after_bootstrap:
         #import traceback
-        # traceback.print_stack()
+        #traceback.print_stack()
         raise ConfigError(
             'attempt to create a configuration section [%s] after bootstrap' % name)
 
@@ -508,9 +508,8 @@ class PackageConfig(object):
         if option.check_defined() and not override:
             logger = getLogger()
             #import traceback
-            # traceback.print_stack()
-            logger.warning(
-                'attempt to add again the option [%s]%s (ignored)', self.name, name)
+            #traceback.print_stack()
+            logger.warning('attempt to add again the option [%s]%s (ignored)', self.name, name)
             return
 
         option.defineOption(default_value, docstring, **meta)

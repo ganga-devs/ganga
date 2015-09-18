@@ -91,7 +91,20 @@ def checkDiskQuota():
     work_partition = getLocalWorkspace()
     work_partition = os.path.realpath(work_partition)
 
-    for data_partition in [repo_partition, work_partition]:
+    folders_to_check = [repo_partition, work_partition]
+
+    home_dir = os.environ['HOME']
+    to_remove = []
+    for partition in folders_to_check:
+        if not os.path.exists(partition):
+            if home_dir not in folders_to_check:
+                folders_to_check.append(home_dir)
+            to_remove.append(partition)
+
+    for folder in to_remove:
+        folders_to_check.remove(folder)
+
+    for data_partition in folders_to_check:
 
         if fullpath(data_partition).find('/afs') == 0:
             quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)

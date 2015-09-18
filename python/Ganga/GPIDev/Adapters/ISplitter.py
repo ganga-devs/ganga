@@ -85,3 +85,4 @@ class ISplitter(GangaObject):
             cnt += 1
 
         return subjobs
+

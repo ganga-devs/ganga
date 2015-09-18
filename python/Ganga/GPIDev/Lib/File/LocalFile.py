@@ -39,7 +39,7 @@ class LocalFile(IGangaFile):
                                      })
     _category = 'gangafiles'
     _name = "LocalFile"
-    _exportmethods = ["location", "remove", "accessURL", "setLocation"]
+    _exportmethods = ["location", "remove", "accessURL", "processOutputWildcardMatches", "hasMatchedFiles"]
 
     def __init__(self, namePattern='', localDir='', **kwds):
         """ name is the name of the output file that is going to be processed
@@ -69,8 +69,7 @@ class LocalFile(IGangaFile):
                 this_pwd = os.path.abspath('.')
                 self.tmp_pwd = this_pwd
         else:
-            logger.error(
-                "Unkown type: %s . Cannot set LocalFile localDir using this!" % str(type(localDir)))
+            logger.error("Unkown type: %s . Cannot set LocalFile localDir using this!" % str(type(localDir)))
 
     def __construct__(self, args):
 
@@ -194,8 +193,7 @@ class LocalFile(IGangaFile):
             _actual_delete = False
             keyin = None
             while keyin == None:
-                keyin = raw_input(
-                    "Do you want to remove the LocalFile: %s ? [y/n] " % str(file))
+                keyin = raw_input("Do you want to remove the LocalFile: %s ? [y/n] " % str(file))
                 if keyin == 'y':
                     _actual_delete = True
                 elif keyin == 'n':

@@ -73,6 +73,7 @@ class PluginManager(object):
                             return self.all_dict[category_i][name]
 
         except KeyError:
+            logger.debug("KeyError from Config system!")
             pass
         except:
             logger.error("Some Other unexpected ERROR!")
@@ -81,8 +82,7 @@ class PluginManager(object):
         if name is None:
             s = "cannot find default plugin for category " + category
         else:
-            s = "cannot find '%s' in a category '%s', or elsewhere" % (
-                name, category)
+            s = "cannot find '%s' in a category '%s', or elsewhere" % (name, category)
 
         if name is None and category is None:
             s = "Serious Plugin Error has occured"

@@ -47,4 +47,8 @@ import Ganga.Lib.MonitoringServices.Dashboard.DashboardMS
 logger.debug("Loading Tasks")
 import Ganga.GPIDev.Lib.Tasks
 
+
+logger.debug("Loading Checkers")
+import Ganga.Lib.Checkers
+
 logger.debug("Finished Runtime.plugins")
