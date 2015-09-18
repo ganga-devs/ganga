@@ -373,7 +373,7 @@ class Descriptor(object):
 
         # self._check_getter()
 
-        item = obj._schema[self._name]
+        item = stripProxy(obj._schema[self._name])
 
         def cloneVal(v):
             return self.__cloneVal(v, obj)
@@ -394,18 +394,16 @@ class Descriptor(object):
 
         if item['sequence']:
             _preparable = True if item['preparable'] else False
-            if len(val) > 0:
-                val = makeGangaList(val, parent=obj, preparable=_preparable)
-            else:
+            if len(val) == 0:
                 val = GangaList()
-
-        if isType(item, Schema.ComponentItem):
-            if not item['sequence']:
-                if hasattr(val, '__len__'):
-                    if len(val) > 0:
-                        val = cloneVal(val)
-                    else:
-                        val = GangaList()
+            else:
+                if isType(item, Schema.ComponentItem):
+                        val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
+                else:
+                        val = makeGangaList(val, parent=obj, preparable=_preparable)
+        else:
+            if isType(item, Schema.ComponentItem):
+                val = cloneVal(val)
 
         if hasattr(val, '_setParent'):
             val._setParent(obj)
@@ -571,8 +569,7 @@ class GangaObject(Node):
         if self._schema is not None and hasattr(self._schema, 'allItems'):
             for attr, item in self._schema.allItems():
                 defVal = self._schema.getDefaultValue(attr)
-                if defVal == '':
-                    defVal = None
+                #logger.debug("self._name : attr  =  %s : %s" % (str(self._name), str(attr)))
                 setattr(self, attr, defVal)
 
         self._lock_count = {}
