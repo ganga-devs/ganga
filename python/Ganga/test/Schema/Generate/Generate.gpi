@@ -61,8 +61,8 @@ for category in allPlugins.all_dict:
                         logger.error(str(e))
                         logger.error(traceback.print_exc())
                         numerrors += 1
-                        
-                        #raise
+
+                        raise e
                 else:
                     logger.warn("Already in box: " + str(new_name))
 

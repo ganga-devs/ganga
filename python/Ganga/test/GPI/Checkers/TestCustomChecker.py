@@ -3,7 +3,7 @@
 #
 # $Id: TestRootMerger.py,v 1.2 2009-03-18 10:46:01 wreece Exp $
 ##########################################################################
-from __future__ import division
+from __future__ import print_function
 from GangaTest.Framework.tests import GangaGPITestCase
 from GangaTest.Framework.utils import sleep_until_completed
 from Ganga.GPIDev.Adapters.IPostProcessor import PostProcessException
@@ -32,19 +32,21 @@ class TestCustomChecker(GangaGPITestCase):
             assert False, 'Test timed out'
         assert self.j.status == 'completed'
 
-        tmpdir = tempfile.mktemp()
-        os.mkdir(tmpdir)
+        (file_obj, file_name) = tempfile.mkstemp()
+        os.close(file_obj)
+        os.unlink(file_name)
+        os.mkdir(file_name)
 
-        self.file_name_stdout = os.path.join(tmpdir, 'check_stdout.py')
-        module_stdout = file(self.file_name_stdout, 'w')
+        self.file_name_stdout = os.path.join(file_name, 'check_stdout.py')
+        module_stdout = open(self.file_name_stdout, 'w')
         module_stdout.write("""import os
 def check(j):
         stdout = os.path.join(j.outputdir,'stdout')
         return os.path.exists(stdout)
-        """)
+""")
 
-        self.file_name_fail = os.path.join(tmpdir, 'check_fail.py')
-        module_fail = file(self.file_name_fail, 'w')
+        self.file_name_fail = os.path.join(file_name, 'check_fail.py')
+        module_fail = open(self.file_name_fail, 'w')
         module_fail.write("will not run")
 
     def checkFail(self, message):
@@ -69,5 +71,8 @@ def check(j):
 
     def testCustomChecker_standardCheck(self):
 
+        print("%s" % str(self.file_name_stdout))
+        print("%s" % str(self.file_name_fail))
         self.c.module = self.file_name_stdout
+        print("%s" % type(self.c.module))
         assert self.c.check(self.j)

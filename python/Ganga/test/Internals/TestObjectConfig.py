@@ -15,6 +15,7 @@
 
 from GangaTest.Framework.tests import GangaGPITestCase
 from Ganga.Utility.Config import ConfigError
+from Ganga.Utility.Plugin.GangaPlugin import PluginManagerError
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
@@ -72,6 +73,7 @@ class TestObjectConfig(GangaGPITestCase):
         # Perform checks
         lsf = LSF()
         job = Job()
+        job.backend = lsf
         assert(lsf.queue == testQueue1)
         assert(job.backend._impl._name == "LSF")
         assert(job.backend.queue == testQueue1)
@@ -99,7 +101,7 @@ class TestObjectConfig(GangaGPITestCase):
             jobConfig.setUserValue("backend", "NOT_EXISTING_BACKEND")
             jobConfig.setUserValue("backend.queue", "x")
             assert(0)
-        except ConfigError as x:
+        except (ConfigError,PluginManagerError) as x:
             logger.error(x)
 
         job2 = Job()
