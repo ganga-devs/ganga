@@ -248,27 +248,11 @@ under certain conditions; type license() for details.
                     versions_file.write(version + '\n')
             return True
 
-            # As soon as we ditch slc5 support and get above python 2.4 can put this back
-#       with open(versions_filename,'r+') as versions_file:
-#          if versions_file.read().find(version) < 0:
-#             versions_file.write(version + '\n')
-#             return True
-        try:
-            versions_file = open(versions_filename, 'r+')
-        except Exception, err:
-            logger.debug("Versions file error: %s" % str(err))
-            pass
-        else:
-            try:
-                if versions_file.read().find(version) < 0:
-                    if update:
-                        versions_file.write(version + '\n')
-                    versions_file.close()
-                    return True
-            except Exception, err:
-                logger.debug("Error Reading versions: %s" % str(err))
-                pass
-            versions_file.close()
+        with open(versions_filename, 'r+') as versions_file:
+            if versions_file.read().find(version) < 0:
+                versions_file.write(version + '\n')
+                return True
+
         return False
 
     def generate_config_file(self, config_file):
@@ -314,46 +298,13 @@ under certain conditions; type license() for details.
 
         logger.info('Creating ganga config file %s' % config_file)
         new_config = ''
-        # As soon as we can ditch slc5 and move away from python 2.4 can put this back.
-#       with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__),'HEAD_CONFIG.INI'),'r') as config_head_file:
-#          new_config += config_head_file.read()
-#       new_config += config_file_as_text()
-#       new_config = new_config.replace('Ganga-SVN',_gangaVersion)
-#       with open(config_file, 'w') as new_config_file:
-#          new_config_file.write(new_config)
 
-        try:
-            config_head_file = open(os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r')
-        except Exception, err:
-            logger.debug("Error loading Config Head file: %s" % str(err))
-            pass
-        else:
-            try:
-                new_config += config_head_file.read()
-            except Exception, err:
-                logger.debug("Template File Exception: %s" % str(err))
-                logger.error("failed to read from the config template file")
-                config_head_file.close()
-                raise
-            config_head_file.close()
-
+        with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r') as config_head_file:
+            new_config += config_head_file.read()
         new_config += config_file_as_text()
         new_config = new_config.replace('Ganga-SVN', _gangaVersion)
-
-        try:
-            new_config_file = open(config_file, 'w')
-        except Exception, err:
-            logger.debug("Error opening new config file: %s" % str(err))
-            pass
-        else:
-            try:
-                new_config_file.write(new_config)
-            except Exception, err:
-                logger.error("failed to write to new config file '%s'" % config_file)
-                logger.error('reason: %s;' % str(err))
-                raise
-            finally:
-                new_config_file.close()
+        with open(config_file, 'w') as new_config_file:
+            new_config_file.write(new_config)
 
     def print_release_notes(self):
         from Ganga.Utility.logging import getLogger
@@ -1358,26 +1309,6 @@ default_backends = LCG
             exec code in local_ns
 
         logger.debug("loaded .ganga.py")
-
-        # Find out if ganga version has been used before by writing to a hidden file in the gangadir
-        # Now using Alex's new version above as it avoids an extra call to the shell and is more
-        # streamlined with the other new user functions like updating config.
-#        def new_version(version):
-#            _new_version = True
-#            versionfile_path = config['gangadir']+'/.used_versions'
-#            if os.path.isfile(versionfile_path):
-#                f_version = open(versionfile_path,'r+')
-#                for line in f_version:
-#                    if version == line:
-#                        _new_version = False
-#                if _new_version == True:
-#                    f_version.write(version)
-#                f_version.close()
-#            else:
-#                f_version = open(versionfile_path,'w')
-#                f_version.write(version)
-#                f_version.close()
-#            return _new_version
 
         # monitor the  ganga usage
         from Ganga.Runtime import spyware
