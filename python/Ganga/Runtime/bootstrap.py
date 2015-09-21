@@ -1534,46 +1534,29 @@ default_backends = LCG
 
     def launch_NewIPython(self, local_ns, args):
 
-        ## Taken from: http://ipython.org/ipython-doc/rel-0.13.2/interactive/reference.html 30/06/2015 rcurrie
+        # Based on examples/Embedding/embed_class_long.py from the IPython source tree
 
-        """Quick code snippets for embedding IPython into other programs.
-
-        See embed_class_long.py for full details, this file has the bare minimum code for
-        cut and paste use once you understand how to use the system."""
-
-        #---------------------------------------------------------------------------
-        # This code loads IPython but modifies a few things if it detects it's running
-        # embedded in another IPython session (helps avoid confusion)
-
-        # First import the embed function
-
+        # First we set up the prompt
         from IPython.config.loader import Config
         cfg = Config()
-        try:
-            get_ipython
-        except NameError:
-            banner = exit_msg = ''
-            prompt_config = cfg.PromptManager
-            prompt_config.in_template = '[{time}]\nGanga In [\\#]: '
-            prompt_config.in2_template = '         .\\D.: '
-            prompt_config.out_template = 'Ganga Out [\\#]: '
-        else:
-            banner = '*** Nested interpreter ***'
-            exit_msg = '*** Back in main IPython ***'
+        banner = exit_msg = ''
+        prompt_config = cfg.PromptManager
+        prompt_config.in_template = '[{time}]\nGanga In [\\#]: '
+        prompt_config.in2_template = '         .\\D.: '
+        prompt_config.out_template = 'Ganga Out [\\#]: '
 
-        # First import the embed function
+        # Import the embed function
         from IPython.terminal.embed import InteractiveShellEmbed
-
         ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
 
-        ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html
+        ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         def ganga_handler(self, etype, value, tb, tb_offset=None):
             from Ganga.Utility.logging import getLogger
             logger = getLogger(modulename=True)
             logger.error("%s" % str(value))
 
             from Ganga.Core.exceptions import GangaException
-            if not isinstance(etype(), GangaException):
+            if not issubclass(etype, GangaException):
                 logger.error("Unknown/Unexpected ERROR!!")
                 logger.error("If you're able to reproduce this please report this to the Ganga developers!")
                 logger.error("%s" % value)
@@ -1581,11 +1564,9 @@ default_backends = LCG
             return None
 
         ipshell.set_custom_exc((Exception,), ganga_handler)
-        #ipshell.logstart=False
 
         # buffering of log messages from all threads called "GANGA_Update_Thread"
         # the logs are displayed at the next IPython prompt
-
         import Ganga.Utility.logging
         Ganga.Utility.logging.enableCaching()
 
@@ -1594,6 +1575,7 @@ default_backends = LCG
         from Ganga.Runtime.IPythonMagic import magic_ganga
         ipshell.define_magic('ganga', magic_ganga)
 
+        # Launch embedded shell
         ipshell(local_ns=local_ns, global_ns=local_ns)
 
     def ganga_prompt(self, dummy=None):
