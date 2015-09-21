@@ -344,7 +344,7 @@ class Descriptor(object):
             if isType(v, GangaList):
                 categories = v.getCategory()
                 len_cat = len(categories)
-                if (len_cat > 1) or ((len_cat == 1) and (catagories[0] != item['category'])):
+                if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])):
                     # we pass on empty lists, as the catagory is yet to be defined
                     raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (self._name, v, item['category']))
             else:

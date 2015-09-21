@@ -426,11 +426,6 @@ def GPIProxyClassFactory(name, pluginclass):
             return getattr(self, proxyRef)._repr()
         else:
             return '<' + repr(getattr(self, proxyRef)) + ' PROXY at ' + hex(abs(id(self))) + '>'
-        #try:
-        #    return self._impl._repr()
-        #except AttributeError, err:
-        #    logger.debug("_repr Exception: %s" % str(err))
-        #    return '<' + repr(self._impl) + ' PROXY at ' + hex(abs(id(self))) + '>'
     helptext(_repr, "Return an short representation of %(classname)s object.")
 
     def _eq(self, x):

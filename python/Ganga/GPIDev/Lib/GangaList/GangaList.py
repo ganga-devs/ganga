@@ -55,7 +55,10 @@ def stripGangaList(_list):
 def makeGangaListByRef(_list):
     """Faster version of makeGangaList. Does not make a copy of _list but use it by reference."""
     result = GangaList()
-    result._list = _list
+    _bare_list = []
+    for element in _list:
+        _bare_list.append(stripProxy(element))
+    result._list = _bare_list
     return result
 
 
@@ -465,7 +468,14 @@ class GangaList(GangaObject):
 
     def toString(self):
         """Returns a simple str of the _list."""
-        return str(self._list)
+        returnable_str = "["
+        for element in self._list:
+            returnable_str += str(stripProxy(element))
+            returnable_str += ", "
+        returnable_str += "]"
+        return returnable_str
+
 
 from Ganga.Runtime.GPIexport import exportToGPI
 exportToGPI('GangaList', GangaList, 'Classes')
+

@@ -49,10 +49,10 @@ for e in [BackendException, AnyException]:
             # the submission succeeded (True) and a warning is printed (to be reviewed)
             if c == 'val==3' and l == 'submit':
                 assert(j2.submit())
-                assert(j2.status == 'submitted')
+                assert(j2.status in ['submitted', 'running', 'submitting'], "Status is %s, expected ['submitted', 'running']" % str(j2.status))
                 for s in j2.subjobs:
-                    if not s.status in ['new','submitted']:
-                        p(s)
+                    if not s.status in ['new', 'submitted', 'running', 'submitting']:
+                        print("%s" % str(j2.subjobs))
                         assert(0)
             else:
                 assert_cannot_submit(j2)

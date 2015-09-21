@@ -154,3 +154,4 @@ def postprocessor_filter(value, item):
             "j.postprocessors only takes objects of category 'postprocessor'")
 
 allComponentFilters['postprocessor'] = postprocessor_filter
+

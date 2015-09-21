@@ -368,6 +368,7 @@ class Item(object):
     def isA(self, what):
 
         this_type = type(what)
+        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         try:
             # for backwards compatibility with Ganga3 CLIP: if a string --
@@ -379,7 +380,7 @@ class Item(object):
                     what = getattr(Schema, what)
                 else:
                     return False
-            elif isinstance(what, types.InstanceType):
+            elif isinstance(stripProxy(what), types.InstanceType):
                 if hasattr(what, '__class__'):
                     what = what.__class__
                 else:
@@ -470,25 +471,21 @@ class Item(object):
 
         def check(isAllowedType):
             if not isAllowedType:
-                raise TypeMismatchError(
-                    'Attribute "%s" expects a value of the following types: %s' % (name, validTypes))
+                raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s' % (name, validTypes))
 
         if item._meta['sequence']:
             if not isinstance(item._meta['defvalue'], (list, GangaList)):
-                raise SchemaError(
-                    'Attribute "%s" defined as a sequence but defvalue is not a list.' % name)
+                raise SchemaError('Attribute "%s" defined as a sequence but defvalue is not a list.' % name)
 
             if not isinstance(val, (GangaList, list)):
-                raise TypeMismatchError(
-                    'Attribute "%s" expects a list.' % name)
+                raise TypeMismatchError('Attribute "%s" expects a list.' % name)
 
         if validTypes:
             if item._meta['sequence']:
 
                 for valItem in val:
                     if not valueTypeAllowed(valItem, validTypes):
-                        raise TypeMismatchError(
-                            'List entry %s for %s is invalid. Valid types: %s' % (valItem, name, validTypes))
+                        raise TypeMismatchError('List entry %s for %s is invalid. Valid types: %s' % (valItem, name, validTypes))
 
                 return
             else:  # Non-sequence
@@ -496,11 +493,9 @@ class Item(object):
                     if isinstance(val, dict):
                         for dKey, dVal in val.iteritems():
                             if not valueTypeAllowed(dKey, validTypes) or not valueTypeAllowed(dVal, validTypes):
-                                raise TypeMismatchError(
-                                    'Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
+                                raise TypeMismatchError('Dictionary entry %s:%s for attribute %s is invalid. Valid types for key/value pairs: %s' % (dKey, dVal, name, validTypes))
                     else:  # new value is not a dict
-                        raise TypeMismatchError(
-                            'Attribute "%s" expects a dictionary.' % name)
+                        raise TypeMismatchError('Attribute "%s" expects a dictionary.' % name)
                     return
                 else:  # a 'simple' (i.e. non-dictionary) non-sequence value
                     check(valueTypeAllowed(val, validTypes))
@@ -508,12 +503,10 @@ class Item(object):
 
         # typelist is not defined, use the type of the default value
         if item._meta['defvalue'] is None:
-            logger.warning(
-                'type-checking disabled: type information not provided for %s, contact plugin developer', name)
+            logger.warning('type-checking disabled: type information not provided for %s, contact plugin developer', name)
         else:
             if item._meta['sequence']:
-                logger.warning(
-                    'type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
+                logger.warning('type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
             else:
                 check(isinstance(val, type(item._meta['defvalue'])))
 
