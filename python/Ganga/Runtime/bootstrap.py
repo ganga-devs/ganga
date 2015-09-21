@@ -1337,7 +1337,7 @@ default_backends = LCG
         logger = getLogger("run")
         logger.debug("Entering run")
 
-        if self.options.webgui:
+        if self.options.webgui == True:
             from Ganga.Runtime.http_server import start_server
             start_server()
 
