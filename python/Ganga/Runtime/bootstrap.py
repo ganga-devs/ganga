@@ -20,11 +20,16 @@
 #
 ##########################################################################
 
+import os
+import os.path
+import string
+import sys
+import time
+import re
 
 # store Ganga version based on CVS sticky tag for this file
 _gangaVersion = "$Name: Ganga-SVN $"
 
-import re
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
 if r:
@@ -33,15 +38,10 @@ else:
     _gangaVersion = "SVN_TRUNK"
 
 # store a path to Ganga libraries
-
-import os.path
 import Ganga
 _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 
 from Ganga.Utility.files import fullpath
-
-import sys
-import time
 
 from Ganga.Utility.logging import getLogger
 logger = getLogger(modulename=True)
@@ -135,7 +135,6 @@ under certain conditions; type license() for details.
         # by default enter interactive mode
         self.interactive = True
 
-        import os.path
         self.default_config_file = os.path.expanduser('~/.gangarc')
 
     def exit(self, *msg):
@@ -297,7 +296,7 @@ under certain conditions; type license() for details.
                     config_directory, '.gangarc_backups')
                 if not os.path.exists(config_backupdir):
                     os.makedirs(config_backupdir)
-                import time
+
                 datestr = "_" + time.strftime("%d.%m.%y")
                 i = 0
                 logger.info('Copying backup config files to %s' %
@@ -414,7 +413,6 @@ under certain conditions; type license() for details.
     # this is an option method which runs an interactive wizard which helps new users to start with Ganga
     # the interactive mode is not entered if -c option was used
     def new_user_wizard(self):
-        import os
         from Ganga.Utility.logging import getLogger
         from Ganga.Utility.Config.Config import load_user_config, getConfig, ConfigError
 
@@ -447,7 +445,6 @@ under certain conditions; type license() for details.
             sys.exit(0)
         if not os.path.exists(specified_config) \
                 and not os.path.exists(default_config):
-            import time
             # Sleep for 1 sec to allow for most of the bootstrap to finish so
             # the user actually sees this message last
             time.sleep(3.)
@@ -486,7 +483,6 @@ under certain conditions; type license() for details.
         """ Parse a list of command line config options and return a list of triplets (section,option,value).
         In case of parsing errors, raise ConfigError exception.
         """
-        import re
         mpat = re.compile(r'(\[(?P<section>\S+)\]|)(?P<option>[a-zA-z0-9._/]+)=(?P<value>.+)')
         section = None
 
@@ -509,9 +505,6 @@ under certain conditions; type license() for details.
     # configuration procedure: read the configuration files, configure and
     # bootstrap logging subsystem
     def configure(self, logLevel=None):
-        import os
-        import os.path
-        import sys
 
         import Ganga.Utility.Config
         from Ganga.Utility.Config import ConfigError
@@ -541,7 +534,6 @@ under certain conditions; type license() for details.
             if logLevel:
                 self.options.force_loglevel = logLevel
             if self.options.force_loglevel in (None, 'DEBUG'):
-                import sys
                 sys.stdout.write(str(self.hello_string)+'\n')
 #                self.new_user_wizard()
 
@@ -558,7 +550,6 @@ under certain conditions; type license() for details.
         try:
             with open(self.options.config_file) as cf:
                 first_line = cf.readline()
-                import re
                 r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
                 this_logger = Ganga.Utility.logging.getLogger("Configure")
                 if not r:
@@ -768,7 +759,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             system_vars[opt] = syscfg[opt]
 
         def _createpath(dir):
-            import string
 
             def _accept(fname, p=re.compile('.*\.ini$')):
                 return (os.path.isfile(fname) or os.path.islink(fname)) and p.match(fname)
@@ -777,8 +767,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 files = [os.path.join(dir, f) for f in os.listdir(dir) if
                          _accept(os.path.join(dir, f))]
             return string.join(files, os.pathsep)
-
-        import re
 
         def _versionsort(s, p=re.compile(r'^(\d+)-(\d+)-*(\d*)')):
             m = p.match(s)
@@ -886,8 +874,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         from Ganga.Core.InternalServices import ShutdownManager
         ShutdownManager.install()
 
-        import os
-        import os.path
         import Ganga.Utility.Config
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
         from Ganga.Core import GangaException
@@ -1495,8 +1481,6 @@ default_backends = LCG
 
     def check_IPython(self):
 
-        import os
-
         try:
             logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', os.environ['IPYTHONDIR'])
         except KeyError:
@@ -1669,7 +1653,6 @@ def exit( value=None ):
 
     def log(self, x):
 
-        import sys
         # FIXME: for some reason self.logger.critical does not print any
         # messages here
         if self.options.force_loglevel == 'DEBUG':
