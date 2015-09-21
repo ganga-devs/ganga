@@ -384,7 +384,7 @@ class Batch(IBackend):
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()
         outputpatterns = jobconfig.outputbox
-        environment = jobconfig.env
+        environment = jobconfig.env if not jobconfig.env is None else {}
 
 
         import inspect
