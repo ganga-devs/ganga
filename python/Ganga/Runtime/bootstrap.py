@@ -138,9 +138,6 @@ under certain conditions; type license() for details.
         import os.path
         self.default_config_file = os.path.expanduser('~/.gangarc')
 
-        # this is a TEMPORARY hack to enable some GUI-specific parts of the core such as monitoring
-        # replaced by self.options.GUI
-        #self.gui_enabled_hack = False
     def exit(self, *msg):
         logger.info(self.hello_string)
         for m in msg:
@@ -162,9 +159,6 @@ under certain conditions; type license() for details.
 
         parser.add_option("--webgui", dest="webgui",  action="store_true", default='False',
                           help='starts web GUI monitoring server')
-
-        parser.add_option('--gui', dest="GUI", action='store_true',
-                          default=False, help='Run Ganga in the GUI mode.')
 
         parser.add_option("--config", dest="config_file", action="store", metavar="FILE", default=None,
                           help='read user configuration from FILE, overrides the GANGA_CONFIG_FILE environment variable. Default: ~/.gangarc')
@@ -836,12 +830,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
         set_cmdline_config_options()
 
-        if self.options.GUI:
-            # FIXME: CONFIG CHECK
-            # ??? config['RUNTIME_PATH'] = ''
-            config.setSessionValue('TextShell', 'GUI')
-            config.setSessionValue('RUNTIME_PATH', 'GangaGUI')
-
         if self.options.TEST:
             # FIXME: CONFIG CHECK
             # ?? config['RUNTIME_PATH'] = ''
@@ -1349,7 +1337,7 @@ default_backends = LCG
         logger = getLogger("run")
         logger.debug("Entering run")
 
-        if self.options.webgui == True:
+        if self.options.webgui:
             from Ganga.Runtime.http_server import start_server
             start_server()
 
@@ -1422,7 +1410,7 @@ default_backends = LCG
                 session_type += 'startup_script'
 
         spyware.ganga_started(session_type=session_type, interactive=self.interactive,
-                              GUI=self.options.GUI, webgui=self.options.webgui,
+                              webgui=self.options.webgui,
                               script_file=runs_script, text_shell=config['TextShell'],
                               test_framework=self.options.TEST)
 
@@ -1495,11 +1483,6 @@ default_backends = LCG
                 print("Unknown IPython version: %s" % str(ipver))
                 return
 
-
-        elif shell == 'GUI':
-            override_credits()
-            import GangaGUI.Ganga_GUI
-            GangaGUI.Ganga_GUI.main()
         else:
             override_credits()
             import code
