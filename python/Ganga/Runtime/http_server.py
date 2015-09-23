@@ -622,9 +622,7 @@ class HTTPServerThread(GangaThread):
         fill_jobs_dictionary()
 
         logger.info('Web gui monitoring server started successfully')
-        logger.info()
-        logger.info(
-            'You can monitor your jobs at the following location: ' + getMonitoringLink(port))
+        logger.info('You can monitor your jobs at the following location: ' + getMonitoringLink(port))
 
         # server.serve_forever()
 
