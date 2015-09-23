@@ -213,13 +213,13 @@ def send_mail(key, receiver=''):
 
         email_file = os.path.join(release_tools_dir, 'release_tool_emails/testsfinished.txt')
         receivers = receiver
-        subject = 'Ganga tests for %s-pre are finished' % CONFIG['version']        
+        subject = 'Ganga tests for %s-pre are finished' % CONFIG['version']
         
     elif key == 'testreports':
 
         email_file = os.path.join(release_tools_dir, 'release_tool_emails/testreports.txt')
         receivers = 'project-ganga-developers@cern.ch'
-        subject = 'Ganga %s-pre test reports are ready' % CONFIG['version']    
+        subject = 'Ganga %s-pre test reports are ready' % CONFIG['version']
 
     with open(email_file, 'rb') as fp:
         msg_string = fp.read()
@@ -260,7 +260,6 @@ def prerelease_command():
                 maxnum = max(maxnum, int(r.group('num')))
         maxnum += 1
         new_backup_prerelease = CONFIG['prereldir'] + str(maxnum)
-        # print 'if you answer YES then the current prerelease will be backed up as',new_backup_prerelease
         if ask_yes_no('do you want to delete the current prerelease (and back it up as %s)?' % new_backup_prerelease):
             acmd('mv %s %s' % (CONFIG['prereldir'], new_backup_prerelease))
             print 'sucessfully moved %s to %s' % (CONFIG['prereldir'], new_backup_prerelease)

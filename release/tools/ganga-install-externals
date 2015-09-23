@@ -55,7 +55,7 @@ if not os.path.isdir(ganga_install):
     error(ganga_install + ' does not exist')
 
 # import setup.py module from bin directory to get the dependency list
-sys.path.insert(0, ganga_install+'/python')
+sys.path.insert(0, ganga_install + '/python')
 
 if CONFIG['plugin_packages']:
     print("Resolving additional external dependencies for: ", ' '.join(CONFIG['plugin_packages']))
@@ -68,14 +68,12 @@ Ganga.PACKAGE._defaultExternalHome = ''
 for pkg in ['Ganga'] + CONFIG['plugin_packages']:
     print('resolving dependencies for', pkg)
     try:
-        setup = import_name(pkg+'.PACKAGE', 'setup')
+        setup = import_name(pkg + '.PACKAGE', 'setup')
 
     except Exception as x:
-        print('WARNING: Cannot find dependency information in file '+pkg+'/PACKAGE.py')
+        print('WARNING: Cannot find dependency information in file ' + pkg+'/PACKAGE.py')
         print(x)
         continue
-    # the following 3 lines is not needed anymore since 4.3.2 (still required for old versions)
-    setup.externalHome = ''  # we need a tarPath relative to the externalHome
 
     for name in setup.packages:
 
