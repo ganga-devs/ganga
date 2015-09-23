@@ -836,7 +836,7 @@ def read_ini_files(filenames, system_vars):
                 value = value.replace('%', '%%')
                 try:
                     main.set(sec, name, value)
-                except ValueError, err:
+                except ValueError as err:
                     logger.error("Error Setting %s" % str(err))
 
     return main
