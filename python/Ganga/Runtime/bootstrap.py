@@ -260,7 +260,6 @@ under certain conditions; type license() for details.
 
         # Old backup routine
         if os.path.exists(config_file):
-            i = 0
             for i in range(100):
                 bn = "%s.%.2d" % (config_file, i)
                 if not os.path.exists(bn):
@@ -282,7 +281,6 @@ under certain conditions; type license() for details.
                     os.makedirs(config_backupdir)
 
                 datestr = "_" + time.strftime("%d.%m.%y")
-                i = 0
                 logger.info('Copying backup config files to %s' %
                             config_backupdir)
                 for i in range(100):
@@ -674,18 +672,18 @@ http://ipython.scipy.org/doc/manual''')
 
         import Ganga.Utility.ColourText
 
-        disply_config = makeConfig('Display', """control the content and appearence of printing ganga objects: attributes,colours,etc.
+        makeConfig('Display', """control the content and appearence of printing ganga objects: attributes,colours,etc.
 If ANSI text colours are enabled, then individual colours may be specified like this:
  fg.xxx - Foreground: %s
  bg.xxx - Background: %s
  fx.xxx - Effects: %s
-        """ % (Ganga.Utility.ColourText.Foreground.__doc__, Ganga.Utility.ColourText.Background.__doc__, Ganga.Utility.ColourText.Effects.__doc__ ))
+        """ % (Ganga.Utility.ColourText.Foreground.__doc__, Ganga.Utility.ColourText.Background.__doc__, Ganga.Utility.ColourText.Effects.__doc__))
 
-        #[Shell] section
-        shellconfig = makeConfig(
+        # [Shell] section
+        makeConfig(
             "Shell", "configuration parameters for internal Shell utility.")
 
-        #[Queues] section
+        # [Queues] section
         queuesconfig = makeConfig(
             "Queues", "configuration section for the queues")
         queuesconfig.addOption(
@@ -723,9 +721,9 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             m = p.match(s)
             if m:
                 if m.group(3) == '':
-                    return (int(m.group(1)), int(m.group(2)), 0)
+                    return int(m.group(1)), int(m.group(2)), 0
                 else:
-                    return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
+                    return int(m.group(1)), int(m.group(2)), int(m.group(3))
             if s == 'SVN':
                 return 'SVN'
             return None
@@ -804,8 +802,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             if not os.path.exists(os.path.join(config['gangadir'], "server")):
                 os.makedirs(os.path.join(config['gangadir'], "server"))
 
-            import datetime
-            tstamp = datetime.datetime.now().strftime("%Y-%m-%d")
             si = file("/dev/null", 'r')
             so = file(os.path.join(
                 config['gangadir'], "server", "server-%s.stdout" % (os.uname()[1])), 'a')
@@ -845,7 +841,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             config = getConfig('Configuration')
 
             # runtime warnings issued by the interpreter may be suppresed
-            #config['IgnoreRuntimeWarnings'] = False
             config.addOption('IgnoreRuntimeWarnings', False,
                              "runtime warnings issued by the interpreter may be suppresed")
             if config['IgnoreRuntimeWarnings']:
@@ -1025,7 +1020,7 @@ default_backends = LCG
         exportToGPI('export', export, 'Functions')
 
         def typename(obj):
-            'Return a name of Ganga object as a string, example: typename(j.application) -> "DaVinci"'
+            """Return a name of Ganga object as a string, example: typename(j.application) -> 'DaVinci'"""
             from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
             if isProxy(obj):
                 if hasattr(stripProxy(obj), '_name'):
@@ -1038,8 +1033,6 @@ default_backends = LCG
                     traceback.print_stack()
                     return ""
             else:
-                #logger = Ganga.Utility.logging.getLogger()
-                #logger.debug( "OBJECT %s DOES NOT HAVE %s DEFINED!!!" % (str(obj), proxyRef) )
                 if hasattr(obj, '_name'):
                     return obj._name
                 else:
@@ -1050,7 +1043,7 @@ default_backends = LCG
                     return ""
 
         def categoryname(obj):
-            'Return a category of Ganga object as a string, example: categoryname(j.application) -> "applications"'
+            """Return a category of Ganga object as a string, example: categoryname(j.application) -> 'applications'"""
             from Ganga.GPIDev.Base.Proxy import isProxy, stripProxy, proxyRef
             if isProxy(obj):
                 if hasattr(stripProxy(obj), '_category'):
@@ -1063,8 +1056,6 @@ default_backends = LCG
                     traceback.print_stack()
                     return ""
             else:
-                #logger = Ganga.Utility.logging.getLogger()
-                #logger.debug( "OBJECT %s DOES NOT HAVE %s DEFINED!!!" % (str(obj), proxyRef) )
                 if hasattr(obj, '_category'):
                     return obj._category
                 else:
@@ -1095,18 +1086,18 @@ default_backends = LCG
 
         # FIXME: DEPRECATED
         def list_plugins(category):
-            'List all plugins in a given category, OBSOLETE: use plugins(category)'
+            """List all plugins in a given category, OBSOLETE: use plugins(category)"""
             logger.warning(
                 'This function is deprecated, use plugins("%s") instead', category)
             from Ganga.Utility.Plugin import allPlugins
             return allPlugins.allClasses(category).keys()
 
         def applications():
-            'return a list of all available applications, OBSOLETE: use plugins("applications")'
+            """return a list of all available applications, OBSOLETE: use plugins('applications')"""
             return list_plugins('applications')
 
         def backends():
-            'return a list of all available backends, OBSOLETE: use plugins("backends")'
+            """return a list of all available backends, OBSOLETE: use plugins('backends')"""
             return list_plugins('backends')
         from Ganga.GPIDev.Adapters.IPostProcessor import MultiPostProcessor
 
@@ -1180,11 +1171,6 @@ default_backends = LCG
         from Ganga.Runtime import Workspace_runtime
         Workspace_runtime.bootstrap()
 
-        # migration repository
-        #from Ganga.Utility.migrate41to42 import JobCheckForV41, JobConvertToV42
-        # JobCheckForV41()
-        # exportToGPI('JobConvertToV42',JobConvertToV42,'Functions')
-
         # export full_print
         from Ganga.GPIDev.Base.VPrinter import full_print
         exportToGPI('full_print', full_print, 'Functions')
@@ -1211,7 +1197,6 @@ default_backends = LCG
         # Depending on where this is put more or less of the config will have been loaded. if put after
         # the bootstrap then the defaults_* config options will also be loaded.
         self.new_user_wizard()
-
 
         logger.debug("Post-Bootstrap hooks")
         ###########
@@ -1392,7 +1377,7 @@ default_backends = LCG
 
                 self.launch_OldIPython(local_ns, args)
 
-            elif ipver in [ "3.1.0", "3.2.0", "3.2.1", '4.0.0' ]:
+            elif ipver in ["3.1.0", "3.2.0", "3.2.1", '4.0.0']:
 
                 self.launch_NewIPython(local_ns, args)
 
@@ -1408,7 +1393,6 @@ default_backends = LCG
             c.interact()
 
         return
-
 
     def check_IPython(self):
 
@@ -1428,7 +1412,6 @@ default_backends = LCG
                     os.makedirs(newpath)
 
         return None
-
 
     def launch_NewIPython(self, local_ns, args):
 
@@ -1578,7 +1561,7 @@ def exit( value=None ):
 
         override_credits()
         # global_ns: FIX required by ipython 0.8.4+
-        ret = ipshell(local_ns=local_ns, global_ns=local_ns)
+        ipshell(local_ns=local_ns, global_ns=local_ns)
 
         return
 
