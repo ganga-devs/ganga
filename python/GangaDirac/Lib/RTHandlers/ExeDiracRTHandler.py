@@ -1,7 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_template, diracAPI_script_settings, API_nullifier, dirac_outputfile_jdl
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns, getWNCodeForOutputPostprocessing
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
@@ -11,6 +11,7 @@ from Ganga.GPIDev.Lib.File import File, FileBuffer
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
+from Ganga.GPIDev.Base.Proxy import isType
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -41,9 +42,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
 #        outputdata,   outputdata_path      = dirac_ouputdata(app)
 
         job = app.getJobObject()
-        #outputfiles=set([file.namePattern for file in job.outputfiles]).difference(set(getOutputSandboxPatterns(job)))
-        outputfiles = [
-            file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
+        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
         commandline = app.exe
         if type(app.exe) == File:
@@ -56,8 +55,7 @@ class ExeDiracRTHandler(IRuntimeHandler):
 
         #exe_script_path = os.path.join(job.getInputWorkspace().getPath(), "exe-script.py")
         exe_script_name = 'exe-script.py'
-# script = script_generator(exe_script_template(),
-# COMMAND         = commandline)
+
         inputsandbox.append(FileBuffer(name=exe_script_name,
                                        contents=script_generator(exe_script_template(),
                                                                  #remove_unreplaced = False,
@@ -66,6 +64,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                                                  #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
                                                                  ),
                                        executable=True))
+
+        dirac_outputfiles = dirac_outputfile_jdl(outputfiles)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -83,17 +83,13 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                         ENVIRONMENT=None,  # app.env,
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
-                                        OUTPUT_SANDBOX=API_nullifier(
-                                            outputsandbox),
-                                        OUTPUTDATA=API_nullifier(
-                                            list(outputfiles)),
+                                        OUTPUT_SANDBOX=API_nullifier(outputsandbox),
+                                        OUTPUTFILESSCRIPT=dirac_outputfiles,
                                         OUTPUT_PATH="",  # job.fqid,
-                                        OUTPUT_SE=getConfig(
-                                            'DIRAC')['DiracOutputDataSE'],
+                                        OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],
                                         SETTINGS=diracAPI_script_settings(app),
                                         DIRAC_OPTS=job.backend.diracOpts,
-                                        REPLICATE='True' if getConfig(
-                                            'DIRAC')['ReplicateOutputData'] else '',
+                                        REPLICATE='True' if getConfig('DIRAC')['ReplicateOutputData'] else '',
                                         # leave the sandbox for altering later as needs
                                         # to be done in backend.submit to combine master.
                                         # Note only using 2 #s as auto-remove 3

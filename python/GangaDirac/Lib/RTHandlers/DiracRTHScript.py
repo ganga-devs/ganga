@@ -16,7 +16,7 @@ j.setOutputSandbox(###OUTPUT_SANDBOX###)
 j.setInputData(###INPUTDATA###)
 j.setParametricInputData(###PARAMETRIC_INPUTDATA###)
 
-j.setOutputData(###OUTPUTDATA###,outputPath='###OUTPUT_PATH###',outputSE=###OUTPUT_SE###)
+###OUTPUTFILESSCRIPT###
 
 # <-- user settings
 ###SETTINGS###

@@ -174,9 +174,6 @@ class DiracBase(IBackend):
 
         input_sandbox = master_input_sandbox[:]
         input_sandbox += sboxname
-        #input_sandbox  += self.genTxtFiles()
-        # why send this?
-        #input_sandbox  += [dirac_script_filename]
 
         input_sandbox += self._addition_sandbox_content(subjobconfig)
 
@@ -422,15 +419,9 @@ class DiracBase(IBackend):
         suceeded = []
         if j.subjobs:
             for sj in j.subjobs:
-                #                suceeded.extend(outputfiles_foreach(sj, DiracFile, download,
-                # fargs=(sj, True)))
-                suceeded.extend([download(f, sj, True) for f in outputfiles_iterator(
-                    sj, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+                suceeded.extend([download(f, sj, True) for f in outputfiles_iterator(sj, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
         else:
-            #            suceeded.extend(outputfiles_foreach(j, DiracFile, download,
-            #                                                fargs(j,False)))
-            suceeded.extend([download(f, j, False) for f in outputfiles_iterator(
-                j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
+            suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
 
         return filter(lambda x: x != None, suceeded)
 
@@ -441,15 +432,9 @@ class DiracBase(IBackend):
 
         if j.subjobs:
             for sj in j.subjobs:
-                #                lfns.extend(outputfiles_foreach(sj, DiracFile, lambda x: x.lfn,
-                # selection_pred= lambda x: x.lfn !=''))
-                lfns.extend(
-                    [f.lfn for f in outputfiles_iterator(sj, DiracFile) if f.lfn != ''])
+                lfns.extend([f.lfn for f in outputfiles_iterator(sj, DiracFile) if f.lfn != ''])
         else:
-            #            lfns.extend(outputfiles_foreach(j, DiracFile, lambda x: x.lfn,
-            # selection_pred= lambda x: x.lfn !=''))
-            lfns.extend(
-                [f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != ''])
+            lfns.extend([f.lfn for f in outputfiles_iterator(j, DiracFile) if f.lfn != ''])
         return lfns
 
     def debug(self):

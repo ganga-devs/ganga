@@ -46,6 +46,35 @@ def API_nullifier(item):
         return None
     return item
 
+def dirac_outputfile_jdl(output_files):
+
+    _output_files = [this_file for this_file in output_files if isType(this_file, DiracFile)]
+
+    file_SE_dict = {}
+
+    for this_file in _output_files:
+        if not this_file.defaultSE in file_SE_dict:
+            file_SE_dict[this_file.defaultSE] = []
+        file_SE_dict[this_file.defaultSE].append( this_file.namePattern )
+
+    per_SE_JDL = '''
+j.setOutputData(###OUTPUTDATA###, outputPath='###OUTPUT_PATH###', outputSE=###OUTPUT_SE###)
+'''
+    total_JDL = ''
+
+    for outputSE, namePatterns in file_SE_dict.iteritems():
+
+        myLine = str(per_SE_JDL)
+        myLine = myLine.replace('###OUTPUTDATA###', str(namePatterns))
+        if outputSE != '':
+            myLine = myLine.replace('###OUTPUT_SE###', str([outputSE]))
+        else:
+            myLine = myLine.replace('###OUTPUT_SE###', str([]))
+
+        total_JDL += myLine + "\n"
+
+    return total_JDL
+
 
 def dirac_inputdata(app):
     job = app.getJobObject()
@@ -144,7 +173,7 @@ def diracAPI_script_template():
     import inspect
     import os.path
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
-                                    'DiracRTHScript.py')
+                                   'DiracRTHScript.py')
 
     from Ganga.GPIDev.Lib.File import FileUtils
     script_template = FileUtils.loadScript(script_location, '')
