@@ -97,7 +97,11 @@ class Gaudi(GaudiBase):
         raise NotImplementedError
 
     def prepare(self, force=False):
-        super(Gaudi, self).prepare(force)
+        try:
+            super(Gaudi, self).prepare(force)
+        except Exception, err:
+            logger.debug("Super Prepare Error:\n%s" % str(err))
+            raise err
 
         logger.debug("Prepare")
 
@@ -116,9 +120,10 @@ class Gaudi(GaudiBase):
         # prepared state altered from the readInputData pseudo-static member
         try:
             self._check_inputs()
-        except:
+        except Exception, err:
+            logger.debug("_check_inputs Error:\n%s" % str(err))
             self.unprepare()
-            raise
+            raise err
 
         # write env into input dir and share dir
         share_path = os.path.join(share_dir, 'debug')
@@ -130,13 +135,13 @@ class Gaudi(GaudiBase):
 
         try:
             self._parse_options()
-        except:
+        except Exception, err:
+            logger.debug("_parse_options Error:\n%s" % str(err))
             self.unprepare()
-            raise
+            raise err
 
         gzipFile(os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tar' % self.is_prepared.name),
-                 os.path.join(
-                     share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
+                 os.path.join(share_dir, 'inputsandbox', '_input_sandbox_%s.tgz' % self.is_prepared.name),
                  True)
         # add the newly created shared directory into the metadata system if
         # the app is associated with a persisted object

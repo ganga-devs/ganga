@@ -147,8 +147,9 @@ class GaudiBase(IPrepareApp):
             if not os.path.exists(project_path):
                 try:
                     os.makedirs(project_path)
-                except Exception as e:
+                except Exception as err:
                     logger.error("Can not create project user directory: " + project_path)
+                    logger.debug("%s" % str(err))
                     return
 
         execute('getpack %s' % options,
@@ -202,9 +203,10 @@ class GaudiBase(IPrepareApp):
         try:
             # Try to prepare the application fully
             self._really_prepare(force)
-        except:
+        except Exception, err:
             # Cleanup after self on fail as self.is_prepared is used as test to
             # see if I'm prepared
+            logger.debug("Prepare Error:\n%s" % str(err))
             self._unregister()
             raise
 

@@ -52,11 +52,9 @@ def sharedir_handler(app, root_dir_names, output):
                     if not os.path.isdir(d):
                         os.makedirs(d)
                     for f in files:
-                        shutil.copy(os.path.join(root, f),
-                                    os.path.join(output, subdir, f))
+                        shutil.copy(os.path.join(root, f), os.path.join(output, subdir, f))
             else:
-                raise GangaException(
-                    'output must be either a list to append to or a path string to copy to')
+                raise GangaException('output must be either a list to append to or a path string to copy to')
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
@@ -82,15 +80,13 @@ def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
     else:
         if len(job.inputsandbox) > 0:
             from Ganga.GPIDev.Lib.Job import JobError
-            raise JobError(
-                "InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
+            raise JobError("InputFiles have been requested but there are objects in the inputSandBox... Aborting Job Prepare!")
         inputsandbox = []
         for filepattern in getInputFilesPatterns(job)[0]:
             inputsandbox.append(File(filepattern))
 
     if len(inputsandbox) > 100:
-        logger.warning(
-            'InputSandbox exceeds maximum size (100) supported by the Dirac backend')
+        logger.warning('InputSandbox exceeds maximum size (100) supported by the Dirac backend')
         raise GangaException(None, 'InputSandbox exceed maximum size')
     outputsandbox = getOutputSandboxPatterns(job)  # job.outputsandbox[:]
 
@@ -169,25 +165,3 @@ def script_generator(script_template,
     return script
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
-
-# OLD
-# def sharedir_handler(app, dir_name, output):
-# share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-# 'shared',
-# getConfig('Configuration')['user'],
-# app.is_prepared.name,
-# dir_name)
-# for root, dirs, files in os.walk(share_dir):
-# subdir = root.replace(share_dir,'')[1:] ## [1:] removes the preceeding /
-# if ( type(output) is type([]) ) or ( type(output) is type(GangaList()) ):
-##             output += [File(name=os.path.join(root,f),subdir=subdir) for f in files]
-# for f in files:
-# output += [File(name=os.path.join(root,f),subdir=subdir)]
-# elif type(output) is type(''):
-# for d in dirs:
-##                 if not os.path.isdir(d): os.makedirs(d)
-# for f in files:
-# shutil.copy(os.path.join(root,f),
-# os.path.join(output,subdir,f))
-# else:
-##             raise GangaException('output must be either a list to append to or a path string to copy to')
