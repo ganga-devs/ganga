@@ -8,7 +8,7 @@ assert(load(fname))
 # Two-line parameter
 j.application.exe="""a
 b"""
-export(j,fname)
+export(j, fname)
 assert(load(fname))
 
 os.remove(fname)

@@ -12,13 +12,13 @@ FileWorkspace in a location-independent way.
 """
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 import os
 import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
 
+logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 class FileWorkspace(object):
 
@@ -195,8 +195,7 @@ class InputWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(
-            self, gettop(), subpath='input', splittree=False)
+        FileWorkspace.__init__(self, gettop(), subpath='input', splittree=False)
 
 
 class OutputWorkspace(FileWorkspace):
@@ -205,8 +204,7 @@ class OutputWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(
-            self, gettop(), subpath='output', splittree=False)
+        FileWorkspace.__init__(self, gettop(), subpath='output', splittree=False)
 
 
 class DebugWorkspace(FileWorkspace):
@@ -215,8 +213,7 @@ class DebugWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(
-            self, gettop(), subpath='debug', splittree=False)
+        FileWorkspace.__init__(self, gettop(), subpath='debug', splittree=False)
 
 
 #

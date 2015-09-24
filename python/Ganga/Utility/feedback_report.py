@@ -1,6 +1,7 @@
 from __future__ import print_function
 
 import Ganga.Utility.logging
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -650,8 +651,7 @@ def report(job=None):
         # print the error if there is something
         if os.path.exists(errorLogPath):
             logger.error('')
-            logger.error(
-                'An error occured while collecting report information : ' + open(errorLogPath, 'r').read())
+            logger.error('An error occured while collecting report information : ' + open(errorLogPath, 'r').read())
             logger.error('')
 
         # delete the errorfile from user's pc

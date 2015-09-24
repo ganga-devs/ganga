@@ -470,7 +470,12 @@ class GangaList(GangaObject):
         """Returns a simple str of the _list."""
         returnable_str = "["
         for element in self._list:
-            returnable_str += str(stripProxy(element))
+            if isType( element, GangaObject):
+                returnable_str += repr(stripProxy(element))
+            else:
+                returnable_str += "'"
+                returnable_str += str(stripProxy(element))
+                returnable_str += "'"
             returnable_str += ", "
         returnable_str += "]"
         return returnable_str

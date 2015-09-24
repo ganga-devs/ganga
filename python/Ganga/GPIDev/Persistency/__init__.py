@@ -169,6 +169,8 @@ def load(filename="", returnList=True):
                      of argument returnList
     """
 
+    #logger.info("Loading: %s" % str(filename))
+
     if returnList:
         returnValue = []
     else:
@@ -201,8 +203,8 @@ def load(filename="", returnList=True):
         item = item.strip()
         if item:
             try:
-                object = eval(str(item), Ganga.GPI.__dict__)
-                objectList.append(object)
+                this_object = eval(str(item), Ganga.GPI.__dict__)
+                objectList.append(this_object)
             except NameError as x:
                 logger.exception(x)
                 logger.warning("Unable to load object with definition %s" % item)

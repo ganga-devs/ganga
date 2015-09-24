@@ -76,3 +76,4 @@ def check(j):
         self.c.module = self.file_name_stdout
         print("%s" % type(self.c.module))
         assert self.c.check(self.j)
+

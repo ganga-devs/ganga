@@ -678,8 +678,8 @@ class Job(GangaObject):
             return
 
         for outputfile in outputfiles:
-            backendClass = self.backend.__class__.__name__
-            outputfileClass = outputfile.__class__.__name__
+            backendClass = stripProxy(self.backend).__class__.__name__
+            outputfileClass = stripProxy(outputfile).__class__.__name__
 
             # on Batch backends these files can be compressed only on the
             # client
@@ -692,6 +692,7 @@ class Job(GangaObject):
             if backendClass in backend_output_postprocess:
                 if outputfileClass in backend_output_postprocess[backendClass]:
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
+                        logger.info("Putting File: %s" % str(outputfile.namePattern))
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
                             try:
@@ -700,7 +701,13 @@ class Job(GangaObject):
                                 logger.error('failed to remove temporary/intermediary file: %s' % f)
 
                     elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
+                        logger.info("Setting Location: %s" % str(outputfile.namePattern))
                         outputfile.setLocation()
+                    else:
+                        try:
+                            outputfile.setLocation()
+                        except Exception, err:
+                            logger.debug("Error: %s" % str(err))
 
             if outputfileClass == 'LocalFile':
                 outputfile.processOutputWildcardMatches()
@@ -727,7 +734,7 @@ class Job(GangaObject):
         if getConfig('Output')['FailJobIfNoOutputMatched'] and not self.subjobs:
             for outputfile in self.outputfiles:
                 if not outputfile.hasMatchedFiles():
-                    logger.info("OutputFile failed to match file: %s" % str(outputfile.namePattern))
+                    logger.info("OutputFile failed to match file type %s: %s" % (str(stripProxy(outputfile).__class__.__name__), str(outputfile.namePattern)))
                     postprocessFailure = True
 
         # check for failure reasons
@@ -1032,13 +1039,13 @@ class Job(GangaObject):
         '''
 
         pathStart = filename.split(os.sep)[0]
-        if (("running" == self.status) and (pathStart != "..")):
+        if(self.status in ['running', 'submitted']) and (pathStart != ".."):
             subjob_num = len(self.subjobs)
             if subjob_num == 0:
                 self.backend.peek(filename=filename, command=command)
             elif subjob_num > 0:
                 for sj in self.subjobs:
-                    print "\n  subjob ID: %s" % (str(sj.getFQID('.')))
+                    logger.info("\n  subjob ID: %s" % (str(sj.getFQID('.'))))
                     sj.backend.peek(filename=filename, command=command)
         else:
             topdir = os.path.dirname(self.inputdir.rstrip(os.sep))
@@ -2234,7 +2241,7 @@ class Job(GangaObject):
         #elif attr == 'postprocessors':
         #    super(Job, self).__setattr__('postprocessors', GangaList())
         else:
-            logger.debug("attr: %s" % str(attr))
+            #logger.debug("attr: %s" % str(attr))
             super(Job, self).__setattr__(attr, value)
 
 
