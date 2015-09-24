@@ -18,6 +18,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.execute import execute
 from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+from Ganga.Core.exceptions import ApplicationConfigurationError
 import Ganga.Utility.logging
 import subprocess
 import pickle
@@ -148,9 +149,10 @@ class AppName(Gaudi):
         try:
             parser = PythonOptionsParser(
                 optsfiles, extraopts, self.getenv(False))
-        except Exception as e:
+        except Exception as err:
             msg = 'Unable to parse the job options. Please check options ' \
                   'files and extraopts.'
+            logger.error("PythonOptionsParserError:\n%s" % str(err))
             raise ApplicationConfigurationError(None, msg)
 
         return GPIProxyObjectFactory(parser.get_input_data())
@@ -204,9 +206,9 @@ class AppName(Gaudi):
             extraopts += "\nLHCbApp().XMLSummary='summary.xml'"
 
         try:
-            parser = PythonOptionsParser(
-                optsfiles, extraopts, self.getenv(False))
-        except ApplicationConfigurationError as e:
+            parser = PythonOptionsParser(optsfiles, extraopts, self.getenv(False))
+        except ApplicationConfigurationError as err:
+            logger.error("PythonOptionsParserError:\n%s" % str(err))
             # fix this when preparing not attached to job
 
             msg2 = ''
@@ -214,10 +216,11 @@ class AppName(Gaudi):
                 debug_dir = self.getJobObject().getDebugWorkspace().getPath()
                 msg2 += 'You can also view this from within ganga '\
                     'by doing job.peek(\'../debug/gaudirun.<whatever>\').'
-            except:
+            except Exception, err:
+                logger.debug("path Error:\n%s" % str(err))
                 debug_dir = tempfile.mkdtemp()
 
-            messages = e.message.split('###SPLIT###')
+            messages = err.message.split('###SPLIT###')
             if len(messages) is 2:
                 stdout = open(debug_dir + '/gaudirun.stdout', 'w')
                 stderr = open(debug_dir + '/gaudirun.stderr', 'w')
@@ -227,25 +230,25 @@ class AppName(Gaudi):
                 stderr.close()
                 msg = 'Unable to parse job options! Please check options ' \
                       'files and extraopts. The output and error streams from gaudirun.py can be ' \
-                      'found in %s and %s respectively . ' % (
-                          stdout.name, stderr.name)
+                      'found in %s and %s respectively . ' % (stdout.name, stderr.name)
             else:
                 f = open(debug_dir + '/gaudirun.out', 'w')
-                f.write(e.message)
+                f.write(err.message)
                 f.close()
                 msg = 'Unable to parse job options! Please check options ' \
                       'files and extraopts. The output from gaudirun.py can be ' \
                       'found in %s . ' % f.name
             msg += msg2
-            # logger.error(msg)
+            logger.debug(msg)
             raise ApplicationConfigurationError(None, msg)
         return parser
 
     def _parse_options(self):
         try:
             parser = self._get_parser()
-        except ApplicationConfigurationError as e:
-            raise e
+        except ApplicationConfigurationError as err:
+            logger.debug("_get_parser Error:\n%s" % str(err))
+            raise err
 
         share_dir = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
                                  'shared',
@@ -308,3 +311,4 @@ class AppName(Gaudi):
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 for (backend, handler) in backend_handlers().iteritems():
     allHandlers.add('AppName', backend, handler)
+

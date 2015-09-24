@@ -6,8 +6,7 @@ import Ganga.Utility.Config
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import FileBuffer, File
 import Ganga.Utility.logging
-#from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import *
-from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template
+from GangaDirac.Lib.RTHandlers.DiracRTHUtils import diracAPI_script_template, dirac_outputfile_jdl
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaGaudi.Lib.Applications.Gaudi import Gaudi
 from Ganga.GPIDev.Lib.Tasks.TaskApplication import TaskApplication
@@ -23,20 +22,29 @@ def jobid_as_string(job):
         jstr = str(job.id)
     return jstr
 
+def lhcbdirac_outputfile_jdl(output_files):
+
+    DiracScript = dirac_outputfile_jdl(output_files)
+
+    DiracScript = DiracScript.replace('###OUTPUT_SE###', '###OUTPUT_SE###,replicate=\'###REPLICATE###\'')
+
+    DiracScript = DiracScript.replace('outputPath', 'OutputPath').replace('outputSE', 'OutputSE')
+
+    return DiracScript
 
 def lhcbdiracAPI_script_template():
 
     DiracScript = diracAPI_script_template()
 
-    DiracLHCb_Options = 'j.setRootMacro(\'###ROOT_VERSION###\', \'###ROOT_MACRO###\', ###ROOT_ARGS###, \'###ROOT_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
-    DiracLHCb_Options += 'j.setRootPythonScript(\'###ROOTPY_VERSION###\', \'###ROOTPY_SCRIPT###\', ###ROOTPY_ARGS###, \'###ROOTPY_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
-    DiracLHCb_Options += 'j.setApplicationScript(\'###APP_NAME###\',\'###APP_VERSION###\',\'###APP_SCRIPT###\',logFile=\'###APP_LOG_FILE###\', systemConfig=\'###PLATFORM###\')\n'
-    DiracLHCb_Options += 'j.setAncestorDepth(###ANCESTOR_DEPTH###)\n'
+    DiracLHCb_Options = """
+j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###', systemConfig='###PLATFORM###')
+j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###', systemConfig='###PLATFORM###')
+j.setApplicationScript('###APP_NAME###', '###APP_VERSION###', '###APP_SCRIPT###', logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
+j.setAncestorDepth(###ANCESTOR_DEPTH###)
+"""
 
-    DiracScript = DiracScript.replace('outputPath', 'OutputPath').replace('outputSE', 'OutputSE')
     DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'', '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
     DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()')
-    DiracScript = DiracScript.replace('###OUTPUT_SE###', '###OUTPUT_SE###,replicate=\'###REPLICATE###\'')
 
     setName_str = 'j.setName(\'###NAME###\')'
     DiracScript = DiracScript.replace(setName_str, "%s\n%s" % (setName_str, DiracLHCb_Options))

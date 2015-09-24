@@ -1,7 +1,7 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 import os
 from Ganga.Utility.util import unique
-from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template
+from GangaLHCb.Lib.RTHandlers.RTHUtils import lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 from GangaGaudi.Lib.RTHandlers.RunTimeHandlerUtils import get_share_path, master_sandbox_prepare, sandbox_prepare, script_generator
 from GangaDirac.Lib.RTHandlers.DiracRTHUtils import dirac_inputdata, dirac_ouputdata, mangle_job_name, diracAPI_script_settings, API_nullifier
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
@@ -13,6 +13,7 @@ from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
+from Ganga.GPIDev.Base.Proxy import isType
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -41,13 +42,13 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                                  outputbox=unique(outputsandbox))
 
     def prepare(self, app, appsubconfig, appmasterconfig, jobmasterconfig):
-        inputsandbox, outputsandbox = sandbox_prepare(
-            app, appsubconfig, appmasterconfig, jobmasterconfig)
+        inputsandbox, outputsandbox = sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig)
         input_data,   parametricinput_data = dirac_inputdata(app)
         logger.debug("input_data: " + str(input_data))
         job = app.getJobObject()
-        from Ganga.GPI import DiracFile
-        outputfiles = [this_file.namePattern for this_file in job.outputfiles if isinstance(this_file, DiracFile)]
+        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
+
+        lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
 
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
@@ -59,7 +60,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
                   'INPUTDATA': input_data,
                   'PARAMETRIC_INPUTDATA': parametricinput_data,
                   'OUTPUT_SANDBOX': API_nullifier(outputsandbox),
-                  'OUTPUTDATA': API_nullifier(list(outputfiles)),
+                  'OUTPUTFILESSCRIPT' : lhcb_dirac_outputfiles,
                   'OUTPUT_PATH': "",  # job.fqid,
                   'OUTPUT_SE': getConfig('DIRAC')['DiracOutputDataSE'],
                   'SETTINGS': diracAPI_script_settings(app),
@@ -78,7 +79,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         wrapper_path = os.path.join(job.getInputWorkspace().getPath(),
                                     'script_wrapper.py')
         python_wrapper =\
-            """#!/usr/bin/env python
+"""#!/usr/bin/env python
 import os, sys
 def formatVar(var):
     try:
@@ -102,8 +103,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
             python_wrapper = script_generator(python_wrapper,
                                               remove_unreplaced=False,
                                               FIXARGS='',
-                                              COMMAND='/usr/bin/env python %s %s' % (
-                                                  os.path.basename(app.script.name), '%s'),
+                                              COMMAND='/usr/bin/env python %s %s' % (os.path.basename(app.script.name), '%s'),
                                               JOINER=' ',
                                               #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
                                               )
@@ -113,8 +113,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
             python_wrapper = script_generator(python_wrapper,
                                               remove_unreplaced=False,
                                               FIXARGS='sys.argv=[formatVar(v) for v in sys.argv]',
-                                              COMMAND='export DISPLAY=\"localhoast:0.0\" && root -l -q \"%s(%s)\"' % (
-                                                  os.path.basename(app.script.name), '%s'),
+                                              COMMAND='export DISPLAY=\"localhoast:0.0\" && root -l -q \"%s(%s)\"' % (os.path.basename(app.script.name), '%s'),
                                               JOINER=',',
                                               #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
                                               )
@@ -122,8 +121,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
         f.write(python_wrapper)
         f.close()
 
-        dirac_script = script_generator(lhcbdiracAPI_script_template(),
-                                        **params)
+        dirac_script = script_generator(lhcbdiracAPI_script_template(), **params)
         return StandardJobConfig(dirac_script,
                                  inputbox=unique(inputsandbox),
                                  outputbox=unique(outputsandbox))

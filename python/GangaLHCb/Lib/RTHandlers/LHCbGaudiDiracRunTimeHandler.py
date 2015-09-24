@@ -17,6 +17,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
 from Ganga.Core.exceptions import ApplicationConfigurationError
+from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript, is_gaudi_child, lhcbdiracAPI_script_template, lhcbdirac_outputfile_jdl
 logger = getLogger()
 
 
@@ -47,7 +48,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                 if len(job.inputdata) > 100:
                     raise BackendError("You're submitting a job to Dirac with no splitter and more than 100 files, please add a splitter and try again!")
 
-        outputfiles = [file.namePattern for file in job.outputfiles if isinstance(file, DiracFile)]
+        outputfiles = [this_file for this_file in job.outputfiles if isType(this_file, DiracFile)]
 
         data_str = 'import os\n'
         data_str += 'execfile(\'data.py\')\n'
@@ -96,12 +97,14 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
             from Ganga.GPIDev.Base.Filters import allComponentFilters
 
             fileTransform = allComponentFilters['gangafiles']
-            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)])
-            job.non_copyable_outputfiles.extend([fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)])
+            outdata_files = [fileTransform(this_file, None) for this_file in outdata if not FileUtils.doesFileExist(this_file, job.outputfiles)]
+            job.non_copyable_outputfiles.extend([output_file for output_file in outdata_files if not isType(output_file, DiracFile)])
+            outbox_files = [fileTransform(this_file, None) for this_file in outbox if not FileUtils.doesFileExist(this_file, job.outputfiles)]
+            job.non_copyable_outputfiles.extend([outbox_file for outbox_file in outbox_files if not isType(outbox_file, DiracFile)])
 
             outputsandbox = [f.namePattern for f in job.non_copyable_outputfiles]
 
-            outputsandbox.extend([f.namePattern for f in job.outputfiles])
+            outputsandbox.extend([f.namePattern for f in job.outputfiles if not isType(f, DiracFile)])
             outputsandbox = unique(outputsandbox)  # + outbox[:])
         #######################################################################
 
@@ -115,8 +118,6 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                     input_data.append(f)
                 else:
                     raise ApplicationConfigurationError("Don't know How to handle anythig other than DiracFiles or strings to LFNs!")
-
-        from GangaLHCb.Lib.RTHandlers.RTHUtils import getXMLSummaryScript, is_gaudi_child, lhcbdiracAPI_script_template
 
         commandline = "python ./gaudipython-wrapper.py"
         if is_gaudi_child(app):
@@ -154,11 +155,15 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
         else:
             ancestor_depth = 0
 
+        lhcbdirac_script_template = lhcbdiracAPI_script_template()
+
+        lhcb_dirac_outputfiles = lhcbdirac_outputfile_jdl(outputfiles)
+
         # not necessary to use lhcbdiracAPI_script_template any more as doing our own uploads to Dirac
         # remove after Ganga6 release
         # NOTE special case for replicas: replicate string must be empty for no
         # replication
-        dirac_script = script_generator(lhcbdiracAPI_script_template(),
+        dirac_script = script_generator(lhcbdirac_script_template,
                                         DIRAC_IMPORT='from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb',
                                         DIRAC_JOB_IMPORT='from LHCbDIRAC.Interfaces.API.LHCbJob import LHCbJob',
                                         DIRAC_OBJECT='DiracLHCb()',
@@ -171,7 +176,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
                                         INPUTDATA=input_data,
                                         PARAMETRIC_INPUTDATA=parametricinput_data,
                                         OUTPUT_SANDBOX=API_nullifier(outputsandbox),
-                                        OUTPUTDATA=API_nullifier(list(outputfiles)),
+                                        OUTPUTFILESSCRIPT=lhcb_dirac_outputfiles,
                                         # job.fqid,#outputdata_path,
                                         OUTPUT_PATH="",
                                         OUTPUT_SE=getConfig('DIRAC')['DiracOutputDataSE'],

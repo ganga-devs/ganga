@@ -73,18 +73,15 @@ class PythonOptionsParser:
         if stdout and rc == 0:
             try:
                 options = eval(opts_str)
-            except Exception as e:
-                logger.error(
-                    'Cannot eval() the options file. Exception: %s', e)
+            except Exception as err:
+                logger.error('Cannot eval() the options file. Exception: %s', err)
                 from traceback import print_exc
                 logger.error(' ', print_exc())
-                raise ApplicationConfigurationError(
-                    None, stdout + '###SPLIT###' + m)
+                raise ApplicationConfigurationError(None, stdout + '###SPLIT###' + m)
             try:
                 opts_pkl_string = tmp_pkl.read()
-            except IOError as e:
-                logger.error('Cannot read() the temporary pickle file: %s',
-                             tmp_pkl.name)
+            except IOError as err:
+                logger.error('Cannot read() the temporary pickle file: %s', tmp_pkl.name)
 
         if not rc == 0:
             logger.debug('Failed to run: %s', gaudirun)
@@ -111,10 +108,9 @@ class PythonOptionsParser:
                 else:
                     msg = 'Only extensions of type ".opts" and ".py" allowed'
                     raise TypeError(msg)
-            except IOError as e:
-                logger.error('%s', e)
-                logger.error('There was an IOError with the options file: %s',
-                             name)
+            except IOError as err:
+                logger.error('_join_opts_files Error: %s', str(err))
+                logger.error('There was an IOError with the options file: %s', name)
 
         if self.extraopts:
             joined_py_opts += self.extraopts
@@ -126,8 +122,9 @@ class PythonOptionsParser:
         data = []
         try:
             data = [f for f in self.opts_dict['EventSelector']['Input']]
-        except KeyError as e:
+        except KeyError as err:
             logger.debug('No inputdata has been defined in the options file.')
+            logger.error("%s" % str(err))
 
         ds = LHCbDataset()
         for d in data:
@@ -195,9 +192,6 @@ class PythonOptionsParser:
     def get_output(self, job):
         '''Builds lists of output files and output data.'''
 
-##        outputdata = []
-##        if job.outputdata: outputdata = job.outputdata.files
-##        outsandbox = [f for f in job.outputsandbox]
         outputdata = [
             f.namePattern for f in job.outputfiles if stripProxy(f)._name != 'SandboxFile']
         outsandbox = [
@@ -244,3 +238,4 @@ class PythonOptionsParser:
         return unique(outsandbox), unique(outputdata)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+
