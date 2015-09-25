@@ -19,8 +19,6 @@ from GangaAtlas.Lib.ATLASDataset import DQ2Dataset
 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import *
 from Ganga.Utility.Config import getConfig, makeConfig, ConfigError
 
-from Ganga.Utility import Caching
-
 from Ganga.GPIDev.Credentials import GridProxy
 gridProxy = GridProxy()
 
@@ -477,8 +475,6 @@ class DQ2JobSplitter(ISplitter):
         # use a key of the whole inDS structure for cache
         indata_buf = StringIO.StringIO()
         job.inputdata.printTree(indata_buf)
-        #cache_get_locations = Caching.FunctionCache(job.inputdata.get_locations, indata_buf.getvalue().replace('\n', ''))
-        #locations = cache_get_locations(overlap=False)
         locations = job.inputdata.get_locations(overlap=False)
 
         allowed_sites = []
@@ -629,8 +625,6 @@ class DQ2JobSplitter(ISplitter):
 
         logger.debug('allowed_sites = %s ', allowed_sites)
 
-        #cache_get_contents = Caching.FunctionCache(job.inputdata.get_contents, indata_buf.getvalue().replace('\n', ''))
-        #contents_temp = cache_get_contents(overlap=False, size=True)
         contents_temp = job.inputdata.get_contents(overlap=False, size=True)
 
         if self.numevtsperjob > 0:
@@ -757,8 +751,6 @@ class DQ2JobSplitter(ISplitter):
                     udays = 10000
                     skipReplicaLookup = True
                 if locations and dataset in locations:
-                    #cache_dq2_siteinfo = Caching.FunctionCache(dq2_siteinfo, indata_buf.getvalue().replace('\n', '') + dataset)
-                    #siteinfo = cache_dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites)
                     siteinfo = dq2_siteinfo(dataset, allowed_sites, locations[dataset], udays, faxSites, skipReplicaLookup)
                 else:
                     siteinfo = {}
