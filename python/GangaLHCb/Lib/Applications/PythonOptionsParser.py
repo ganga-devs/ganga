@@ -13,6 +13,7 @@ from GangaLHCb.Lib.LHCbDataset import *
 from Ganga.Core import ApplicationConfigurationError
 from Ganga.Utility.files import expandfilename
 from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
+from Ganga.GPIDev.Lib.File.OutputFileManager import outputFilePostProcessingOnWN
 logger = Ganga.Utility.logging.getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -47,13 +48,11 @@ class PythonOptionsParser:
         rc, stdout, m = shellEnv_cmd(gaudirun, self.env)
 
         if stdout.find('Gaudi.py') >= 0:
-            msg = 'The version of gaudirun.py required for your application is\
-            not supported.'
+            msg = 'The version of gaudirun.py required for your application is not supported.'
             raise ValueError(None, msg)
 
         elif stdout.find('no such option: -o') >= 0:
-            gaudirun = 'gaudirun.py -n -v -p %s %s' \
-                       % (tmp_pkl.name, py_opts.name)
+            gaudirun = 'gaudirun.py -n -v -p %s %s' % (tmp_pkl.name, py_opts.name)
             rc, stdout, m = shellEnv_cmd(gaudirun, self.env)
             rc = 0
 
@@ -82,11 +81,11 @@ class PythonOptionsParser:
                 opts_pkl_string = tmp_pkl.read()
             except IOError as err:
                 logger.error('Cannot read() the temporary pickle file: %s', tmp_pkl.name)
+                raise err
 
         if not rc == 0:
             logger.debug('Failed to run: %s', gaudirun)
-            raise ApplicationConfigurationError(
-                None, stdout + '###SPLIT###' + m)
+            raise ApplicationConfigurationError(None, stdout + '###SPLIT###' + m)
 
         tmp_pkl.close()
         py_opts.close()
@@ -121,10 +120,11 @@ class PythonOptionsParser:
         '''Collects the user specified input data that the job will process'''
         data = []
         try:
-            data = [f for f in self.opts_dict['EventSelector']['Input']]
+            opts_input = self.opts_dict['EventSelector']['Input']
+            data = [f for f in opts_input]
         except KeyError as err:
             logger.debug('No inputdata has been defined in the options file.')
-            logger.error("%s" % str(err))
+            logger.debug("%s" % str(err))
 
         ds = LHCbDataset()
         for d in data:
@@ -179,8 +179,8 @@ class PythonOptionsParser:
             if(this_type in self.opts_dict):
                 if('Output' in self.opts_dict[this_type]):
                     # get just the file name
-                    this_file = self.opts_dict[type]['Output'].split('\'')[1]
-                    if this_file.startswith('PFN:') or this_file.startswith('pfn:'):
+                    this_file = self.opts_dict[this_type]['Output'].split('\'')[1]
+                    if this_file.upper().startswith('PFN:'):
                         this_file = this_file[4:]
                     if sbtypes.count(this_type) > 0:
                         outsandbox.append(this_file)
@@ -192,10 +192,8 @@ class PythonOptionsParser:
     def get_output(self, job):
         '''Builds lists of output files and output data.'''
 
-        outputdata = [
-            f.namePattern for f in job.outputfiles if stripProxy(f)._name != 'SandboxFile']
-        outsandbox = [
-            f.namePattern for f in job.outputfiles if stripProxy(f)._name == 'SandboxFile']
+        outputdata = [f.namePattern for f in job.outputfiles if outputFilePostProcessingOnWN(job, stripProxy(f)._name) ]
+        outsandbox = [f.namePattern for f in job.outputfiles if not outputFilePostProcessingOnWN(job, stripProxy(f)._name) ]
 
         # if user put any files in both, remove them from the sandbox
         for f in outsandbox:

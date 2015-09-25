@@ -4,24 +4,19 @@ import re
 import datetime
 from os.path import exists, isdir, realpath, isfile, islink
 from os import pathsep, listdir, environ, fdopen
+import subprocess
+import tempfile
 import Ganga.Utility.logging
 import Ganga.Utility.Config
 from optparse import OptionParser, OptionValueError
 configLHCb = Ganga.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
 configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 logger = Ganga.Utility.logging.getLogger()
-# config=Ganga.Utility.Config.getConfig('Configuration')
 
 # Set default values for the LHCb config section.
 dscrpt = 'The name of the local site to be used for resolving LFNs into PFNs.'
 configLHCb.addOption('LocalSite', '', dscrpt)
-#dscrpt = 'The place where OutputData should go.'
-# configLHCb.addOption('DataOutput',os.environ['HOME'],dscrpt)
-# dscrpt = 'The command to used to create a directory in the locations of \
-#`DataOutput`'
-# configLHCb.addOption('mkdir_cmd','/bin/mkdir',dscrpt)
-#dscrpt = 'The command used to copy out data to the `DataOutput` locations'
-# configLHCb.addOption('cp_cmd','/bin/cp',dscrpt)
+
 dscrpt = 'Files from these services will go to the output sandbox (unless \
 overridden by the user in a specific job via the Job.outputdata field). Files \
 from all other known handlers will go to output data (unless overridden by \
@@ -40,19 +35,16 @@ dscrpt = 'If a file matches one of these patterns, then the string here '\
          'overrides the datatype_string_default value.'
 defval = {"SVC='LHCb::MDFSelector'": ['*.raw', '*.RAW', '*.mdf', '*.MDF']}
 configLHCb.addOption('datatype_string_patterns', defval, dscrpt)
-configLHCb.addOption(
-    'UserAddedApplications', "", "List of user added LHCb applications split by ':'")
+configLHCb.addOption('UserAddedApplications', "", "List of user added LHCb applications split by ':'")
 
 configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
-                     'Possible SplitByFiles backend algorithms to use to split jobs into subjobs, options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
+                     'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
+                      options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
 
 def _guess_version(name):
-    import subprocess
-    import os
-    import tempfile
-    try:
+    if 'GANGASYSROOT' in os.environ.keys():
         gangasys = os.environ['GANGASYSROOT']
-    except KeyError:
+    else:
         raise OptionValueError("Can't guess %s version if GANGASYSROOT is not defined" % name)
     tmp = tempfile.NamedTemporaryFile(suffix='.txt')
     cmd = 'cd %s && cmt show projects > %s' % (gangasys, tmp.name)
@@ -147,12 +139,10 @@ def loadPlugins(config={}):
     import Lib.Files
     logger.debug("Finished Importing")
 
-#from Ganga.GPIDev.Credentials import getCredential
-#proxy = getCredential('GridProxy', '')
-
 from Ganga.GPIDev.Lib.File.Configure import outputconfig
 
 outputconfig.overrideDefaultValue('FailJobIfNoOutputMatched', 'False')
+
 
 # This is being dropped from 6.1.0 due to causing some bug in loading large numbers of jobs
 #

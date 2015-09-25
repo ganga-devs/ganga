@@ -7,6 +7,7 @@ import datetime
 import glob
 import pickle
 import inspect
+## NB parseCommandLine first then import Dirac!!
 from DIRAC.Core.Base.Script import parseCommandLine
 parseCommandLine()
 from LHCbDIRAC.Interfaces.API.DiracLHCb import DiracLHCb

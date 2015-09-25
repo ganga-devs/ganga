@@ -205,8 +205,7 @@ class LHCbDataset(GangaDataset):
         #logger.debug(" extending by %s" % files )
 
         if self._parent is not None and self._parent._readonly():
-            raise ReadOnlyObjectError(
-                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, self._name))
+            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, self._name))
 
         _external_files = []
 
@@ -214,17 +213,25 @@ class LHCbDataset(GangaDataset):
             _external_files = [files]
         elif type(files) == type([]):
             _external_files = files
-
-        if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
-            _external_files = [files]
-            #raise GangaException('Argument "files" must be a iterable.')
+        elif isType(files, LHCbDataset):
+            _external_files = files.files
+        else:
+            if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
+                _external_files = [files]
 
         names = self.getFileNames()
         #logger.debug( "names: %s" % str(names) )
         # _external_files.extend( [f for f in files if type(f) != type('')] ) #
         # just in case they extend w/ self
-        if hasattr(files, 'subfiles'):
-            _external_files.extend(makeGangaListByRef(files.subfiles))
+        _to_remove = []
+        for this_file in _external_files:
+            if hasattr(this_file, 'subfiles'):
+                if len(this_file.subfiles) > 0:
+                    _external_files = makeGangaListByRef(this_file.subfiles)
+                    _to_remove.append(this_file)
+
+        for _this_file in _to_remove:
+            _external_files.pop(_external_files.index(_this_file))
 
         for this_f in _external_files:
             _file = getDataFile(this_f)
@@ -475,6 +482,7 @@ def string_datafile_shortcut_lhcb(name, item):
     try:
         mainFileOutput = Ganga.GPIDev.Lib.File.string_file_shortcut(name, item)
     except Exception, x:
+        logger.debug("Failed to Construct a default file type: %s" % str(name))
         pass
 
     #   We can do some 'magic' with strings so lets do that here
@@ -489,16 +497,17 @@ def string_datafile_shortcut_lhcb(name, item):
         return None  # used to be c'tor, but shouldn't happen now
     else:  # something else...require pfn: or lfn:
         try:
-            file = strToDataFile(name, False)
-#            if item is Dirac._schema['inputSandboxLFNs']:
-            # if type(file) is PhysicalFile:
-            #    msg = 'Only LFNs can be placed in Dirac.inputSandboxLFNs!'
-            #    raise GangaException(msg)
-            return file
+            this_file = strToDataFile(name, True)
+            if this_file is None:
+                if not mainFileOutput is None:
+                    return mailFileOutput
+                else:
+                    raise GangaException("Failed to find filetype for: %s" % str(name))
+            return this_file
         except Exception, x:
             # if the Core can make a file object from a string then use that,
             # else raise an error
-            if mainFileOutput is not None:
+            if not mainFileOutput is None:
                 return mainFileOutput
             else:
                 raise x
@@ -508,7 +517,6 @@ allComponentFilters['gangafiles'] = string_datafile_shortcut_lhcb
 
 # Name of this method set in the GPIComponentFilters section of the
 # Core... either overload this default or leave it
-
 
 def string_dataset_shortcut(files, item):
     from GangaLHCb.Lib.Tasks.LHCbTransform import LHCbTransform
@@ -521,25 +529,16 @@ def string_dataset_shortcut(files, item):
                      if isinstance(stripProxy(i), ObjectMetaclass)
                      and (issubclass(stripProxy(i), Job) or issubclass(stripProxy(i), LHCbTransform))
                      and 'inputdata' in stripProxy(i)._schema.datadict]
-#    inputdataList  = [Job._schema['inputdata'],
-#                      LHCbTransform._schema['inputdata'],
-#                      JobTemplate._schema['inputdata']
-#                      ]
-#    outputdataList = [Job._schema['outputdata'],
-#                      LHCbTransform._schema['outputdata'],
-#                      JobTemplate._schema['outputdata']
-#                      ]
     if type(files) is not type([]):
         return None
     if item in inputdataList:
         ds = LHCbDataset()
         ds.__construct__([files])
         return ds
-#    elif item in outputdataList: ## job.outputdata not used anymore.
-#        return OutputData(files=files)
     else:
         return None  # used to be c'tors, but shouldn't happen now
 
 allComponentFilters['datasets'] = string_dataset_shortcut
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+

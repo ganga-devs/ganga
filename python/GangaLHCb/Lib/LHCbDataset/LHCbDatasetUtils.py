@@ -35,6 +35,7 @@ def strToDataFile(name, allowNone=True):
         return LocalFile(name)
     else:
         if not allowNone:
+            #return None
             msg = 'Can only convert strings that begin w/ PFN: or '\
                   'LFN: to data files.'\
                   ' Name is: %s' % name
