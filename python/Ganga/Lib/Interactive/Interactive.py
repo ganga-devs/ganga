@@ -176,7 +176,7 @@ class Interactive(IBackend):
         self.workdir = workdir
         exeString = jobconfig.getExeString()
         argList = jobconfig.getArgStrings()
-        argString = " ".join(map(lambda x: "' \\'%s\\' '" % x, argList))
+        argString = " ".join(map(lambda x: " %s " % x, argList))
 
         outputSandboxPatterns = jobconfig.outputbox
         patternsToZip = []
@@ -188,8 +188,9 @@ class Interactive(IBackend):
             from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatternsForInteractive, getWNCodeForOutputPostprocessing
             (outputSandboxPatterns,
                     patternsToZip) = getOutputSandboxPatternsForInteractive(job)
+
             wnCodeForPostprocessing = 'def printError(message):pass\ndef printInfo(message):pass' + \
-                    getWNCodeForOutputPostprocessing(job, '')
+                getWNCodeForOutputPostprocessing(job, '')
  
         all_inputfiles = [this_file for this_file in job.inputfiles]
         if job.master: all_inputfiles.extend([this_file for this_file in job.master.inputfiles])
@@ -204,8 +205,8 @@ class Interactive(IBackend):
 
                 inputfileClassName = inputFile.__class__.__name__
 
-                logger.info("name: %s" % inputfileClassName)
-                logger.info("result: %s" % str(outputFilePostProcessingOnWN(job, inputfileClassName)))
+                logger.debug("name: %s" % inputfileClassName)
+                logger.debug("result: %s" % str(outputFilePostProcessingOnWN(job, inputfileClassName)))
 
                 if outputFilePostProcessingOnWN(job, inputfileClassName):
                     inputFile.processWildcardMatches()
