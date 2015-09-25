@@ -670,10 +670,6 @@ class Job(GangaObject):
 
     def postprocessoutput(self, outputfiles, outputdir):
 
-        # if this option is True, don't use the new outputfiles mechanism
-        # if getConfig('Output')['ProvideLegacyCode']:
-            # return
-
         if len(outputfiles) == 0:
             return
 
@@ -692,16 +688,16 @@ class Job(GangaObject):
             if backendClass in backend_output_postprocess:
                 if outputfileClass in backend_output_postprocess[backendClass]:
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
-                        logger.info("Putting File: %s" % str(outputfile.namePattern))
+                        logger.info("Putting File %s: %s" % (str(stripProxy(outputfile).__class__.__name__), str(outputfile.namePattern)))
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
                             try:
-                                os.remove(f)
+                                os.unlink(f)
                             except IOError:
                                 logger.error('failed to remove temporary/intermediary file: %s' % f)
 
                     elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
-                        logger.info("Setting Location: %s" % str(outputfile.namePattern))
+                        logger.info("Setting Location of %s: %s" % (str(stripProxy(outputfile).__class__.__name__), str(outputfile.namePattern)))
                         outputfile.setLocation()
                     else:
                         try:
@@ -989,12 +985,12 @@ class Job(GangaObject):
     def getDebugWorkspace(self, create=True):
         return self.getWorkspace('DebugWorkspace', create=create)
 
-    def __getstate__(self):
-        dict = super(Job, self).__getstate__()
-        # FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism
-        # in base class
-        dict['_registry'] = None
-        return dict
+    #def __getstate__(self):
+    #    this_dict = super(Job, self).__getstate__()
+    #    # FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism
+    #    # in base class
+    #    this_dict['_registry'] = None
+    #    return this_dict
 
     def peek(self, filename="", command=""):
         '''

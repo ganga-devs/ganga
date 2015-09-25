@@ -108,7 +108,7 @@ class VStreamer(object):
     def __init__(self, out=None, selection=''):
         self.level = 0
         self.selection = selection
-        if out:
+        if out is not None:
             self.out = out
         else:
             import sys
@@ -126,8 +126,7 @@ class VStreamer(object):
     def nodeBegin(self, node):
         self.level += 1
         s = node._schema
-        print(self.indent(), '<class name="%s" version="%d.%d" category="%s">' % (
-            s.name, s.version.major, s.version.minor, s.category), file=self.out)
+        print(self.indent(), '<class name="%s" version="%d.%d" category="%s">' % (s.name, s.version.major, s.version.minor, s.category), file=self.out)
 
     def nodeEnd(self, node):
         print(self.indent(), '</class>', file=self.out)

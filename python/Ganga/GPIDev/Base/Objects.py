@@ -114,8 +114,8 @@ class Node(object):
             return self
         root = None
         obj = self
-        cond_test = not cond is None
-        while not obj is None:
+        cond_test = cond is not None
+        while obj is not None:
             root = obj
             if cond_test:
                 if cond(root):
@@ -128,7 +128,7 @@ class Node(object):
 
         if not hasattr(self, '_schema'):
             return
-        if self._schema is None:
+        elif self._schema is None:
             visitor.nodeBegin(self)
             visitor.nodeEnd(self)
             return
@@ -136,11 +136,18 @@ class Node(object):
         visitor.nodeBegin(self)
 
         def getdata(name):
-            try:
+            if hasattr(self, name):
                 return getattr(self, name)
-            except AttributeError, err:
-                logger.debug("accept visitor error: %s" % str(err))
-                return self._data[name]
+            else:
+                if name in self._data:
+                    return self._data[name]
+                else:
+                    return None
+            #try:
+            #    return getattr(self, name)
+            #except AttributeError, err:
+            #    logger.debug("accept visitor error: %s" % str(err))
+            #    return self._data[name]
 
         for (name, item) in self._schema.simpleItems():
             if item['visitable']:
@@ -184,7 +191,7 @@ class Node(object):
                 continue
             #logger.debug("Copying: %s : %s" % (str(name), str(item)))
             if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
-                if srcobj.application.is_prepared is not None and srcobj.application.is_prepared is not True:
+                if srcobj.application.is_prepared is not None and not srcobj.application.is_prepared is True:
                     srcobj.application.incrementShareCounter(srcobj.application.is_prepared.name)
             if not self._schema.hasAttribute(name):
                 #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(srcobj._name,self._name))
@@ -305,7 +312,7 @@ class Descriptor(object):
                     pass
 
                 if hasattr(obj, '_data'):
-                    if (obj._data is None) and (not obj._index_cache is None) and (lookup_result is not None):
+                    if (obj._data is None) and (obj._index_cache is not None) and (lookup_result is not None):
                         result = lookup_result
                     else:
                         obj._getReadAccess()
@@ -386,11 +393,18 @@ class Descriptor(object):
 
         ## NB Should really tie in the default here to defaults from Core
         old_count = 10
-        if not obj_reg is None:
+        if obj_reg is not None:
             if hasattr(val, '__len__'):
                 old_count = obj_reg.dirty_flush_counter
                 val_len = 2*len(val) + 10
-                obj_reg.dirty_flush_counter = val_len if val_len > old_count else old_count
+                obj_reg.dirty_flush_counter = val_len
+                obj_len = 1
+                if len(val) > 0:
+                    bare_val = stripProxy(val)
+                    if hasattr(bare_val, '_schema'):
+                        obj_len = len(stripProxy(bare_val._schema).datadict.keys())
+                        obj_len = obj_len*2
+                val_len = val_len * obj_len
 
         if item['sequence']:
             _preparable = True if item['preparable'] else False
@@ -409,7 +423,7 @@ class Descriptor(object):
             val._setParent(obj)
         
         ### RESET DIRTY COUNT
-        if not obj_reg is None:
+        if obj_reg is not None:
             obj_reg.dirty_flush_counter = old_count
 
         obj._data[self._name] = val
@@ -608,22 +622,22 @@ class GangaObject(Node):
     # schema
     def __deepcopy__(self, memo=None):
         self._getReadAccess()
-        c = super(GangaObject, self).__deepcopy__(memo)
+        #c = super(GangaObject, self).__deepcopy__(memo)
+        c = super(GangaObject, self).__deepcopy__(None)
         if self._schema is not None:
             for name, item in self._schema.allItems():
                 if not item['copyable']:
                     setattr(c, name, self._schema.getDefaultValue(name))
                 if item.isA(Schema.SharedItem):
                     shared_dir = getattr(c, name)
-                    try:
-                        from Ganga.Core.GangaRepository import getRegistry
-                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                        logger.debug("Increasing shareref")
-                        shareref.increase(shared_dir.name)
-                    except AttributeError, err:
-                        logger.debug("__deepcopy__ Exception: %s" % str(err))
-                        pass
-        c.lock_count = {}
+                    #try:
+                    from Ganga.Core.GangaRepository import getRegistry
+                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+                    logger.debug("Increasing shareref")
+                    shareref.increase(shared_dir.name)
+                    #except AttributeError, err:
+                    #    logger.debug("__deepcopy__ Exception: %s" % str(err))
+                    #    pass
         return c
 
     def accept(self, visitor):

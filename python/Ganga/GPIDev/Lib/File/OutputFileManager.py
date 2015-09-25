@@ -233,9 +233,6 @@ for f in ###FILELIST###:
 
         inputfileClassName = inputFile.__class__.__name__
 
-        print("name: %s" % inputfileClassName)
-        print("result: %s" % str(outputFilePostProcessingOnWN(job, inputfileClassName)))
-
         if outputFilePostProcessingOnWN(job, inputfileClassName):
             inputFile.processWildcardMatches()
             if inputFile.subfiles:
