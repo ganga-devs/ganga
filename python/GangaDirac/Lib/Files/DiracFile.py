@@ -871,7 +871,7 @@ for f in glob.glob('###NAME_PATTERN###'):
         replace_dict = {'###UPLOAD_SCRIPT###' : upload_script,
                         '###STORAGE_ELEMENTS###' : str(configDirac['allDiracSE']),
                         '###INDENT###' : indent,
-                        '###LOCATIONSFILE###' : 'postprocesslocations', ## Given from OutputFileManager code
+                        '###LOCATIONSFILE###' : postProcessLocationsFP,
                         '###DIRAC_ENV###' : script_env}
 
         for k, v in replace_dict.iteritems():
