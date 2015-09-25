@@ -4,3 +4,6 @@ void test() {
     gSystem->Load("libTree");
     gSystem->Exit(0);
 }
+void defaultRootScript(){
+    return test();
+}

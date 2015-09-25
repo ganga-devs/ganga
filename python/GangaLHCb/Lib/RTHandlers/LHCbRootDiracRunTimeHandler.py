@@ -14,6 +14,7 @@ from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import isType
+from GangaDirac.Lib.Files import DiracFile
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
@@ -76,7 +77,7 @@ class LHCbRootDiracRunTimeHandler(IRuntimeHandler):
         scriptpath = os.path.join(get_share_path(app),
                                   os.path.basename(app.script.name))
 
-        wrapper_path = os.path.join(job.getInputWorkspace().getPath(),
+        wrapper_path = os.path.join(job.getInputWorkspace(create=True).getPath(),
                                     'script_wrapper.py')
         python_wrapper =\
 """#!/usr/bin/env python
@@ -86,17 +87,28 @@ def formatVar(var):
         float(var)
         return str(var)
     except ValueError as v:
-        return '\\\\\"%s\\\\\"'% var
-    
+        return '\\\"%s\\\"' % str(var)
+
+script_args = '###SCRIPT_ARGS###'
+
 del sys.argv[sys.argv.index('script_wrapper.py')]
 ###FIXARGS###
-os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
+if script_args == []: script_args = ''
+os.system('###COMMAND###' % script_args)
 ###INJECTEDCODE###
 """
-        params.update({'ROOTPY_SCRIPT': wrapper_path,
-                       'ROOTPY_VERSION': app.version,
-                       'ROOTPY_LOG_FILE': 'Ganga_Root.log',
-                       'ROOTPY_ARGS': [str(a) for a in app.args]})
+
+        python_wrapper = python_wrapper.replace('###SCRIPT_ARGS###', str('###JOINER###'.join([str(a) for a in app.args])))
+
+        params.update({ 'APP_NAME' : 'Root',
+                        'APP_VERSION' : app.version,
+                        'APP_SCRIPT' : wrapper_path,
+                        'APP_LOG_FILE' : 'Ganga_Root.log' })
+
+        #params.update({'ROOTPY_SCRIPT': wrapper_path,
+        #               'ROOTPY_VERSION': app.version,
+        #               'ROOTPY_LOG_FILE': 'Ganga_Root.log',
+        #               'ROOTPY_ARGS': [str(a) for a in app.args]})
 
         f = open(wrapper_path, 'w')
         if app.usepython:
@@ -112,7 +124,7 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
         else:
             python_wrapper = script_generator(python_wrapper,
                                               remove_unreplaced=False,
-                                              FIXARGS='sys.argv=[formatVar(v) for v in sys.argv]',
+                                              FIXARGS='script_args=[formatVar(v) for v in script_args]',
                                               COMMAND='export DISPLAY=\"localhoast:0.0\" && root -l -q \"%s(%s)\"' % (os.path.basename(app.script.name), '%s'),
                                               JOINER=',',
                                               #INJECTEDCODE = getWNCodeForOutputPostprocessing(job,'')
@@ -129,3 +141,4 @@ os.system('###COMMAND###' % str('###JOINER###'.join(sys.argv)))
 
 from Ganga.GPIDev.Adapters.ApplicationRuntimeHandlers import allHandlers
 allHandlers.add('Root', 'Dirac', LHCbRootDiracRunTimeHandler)
+

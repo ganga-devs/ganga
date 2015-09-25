@@ -36,12 +36,15 @@ def lhcbdiracAPI_script_template():
 
     DiracScript = diracAPI_script_template()
 
+##  Old Probably deprecated additionsl options
+#    j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###', systemConfig='###PLATFORM###')
+#    j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###', systemConfig='###PLATFORM###')
+
     DiracLHCb_Options = """
-j.setRootMacro('###ROOT_VERSION###', '###ROOT_MACRO###', ###ROOT_ARGS###, '###ROOT_LOG_FILE###', systemConfig='###PLATFORM###')
-j.setRootPythonScript('###ROOTPY_VERSION###', '###ROOTPY_SCRIPT###', ###ROOTPY_ARGS###, '###ROOTPY_LOG_FILE###', systemConfig='###PLATFORM###')
 j.setApplicationScript('###APP_NAME###', '###APP_VERSION###', '###APP_SCRIPT###', logFile='###APP_LOG_FILE###', systemConfig='###PLATFORM###')
 j.setAncestorDepth(###ANCESTOR_DEPTH###)
 """
+
 
     DiracScript = DiracScript.replace('\'###EXE_LOG_FILE###\'', '\'###EXE_LOG_FILE###\', systemConfig=\'###PLATFORM###\'')
     DiracScript = DiracScript.replace('j.setPlatform( \'ANY\' )', 'j.setDIRACPlatform()')

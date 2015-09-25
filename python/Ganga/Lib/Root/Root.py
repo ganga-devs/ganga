@@ -18,11 +18,13 @@ from Ganga.Utility.root import getrootsys, getpythonhome
 from Ganga.Core import ApplicationPrepareError
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
-
-#config = getConfig('Root_Properties')
-
+import inspect
+import os
 import sys
+import tempfile
+from Ganga.Utility.files import expandfilename
+
+logger = Ganga.Utility.logging.getLogger()
 config = makeConfig('ROOT', "Options for Root backend")
 config.addOption('lcgpath', '/afs/cern.ch/sw/lcg/releases/LCG_79', 'Path of the LCG release that the ROOT project and it\'s externals are taken from')
 config.addOption('arch', 'x86_64-slc6-gcc48-opt', 'Architecture of ROOT')
@@ -32,9 +34,9 @@ config.addOption('pythonhome', '{lcgpath}/Python/${pythonversion}/${arch}/','Loc
 config.addOption('pythonversion', '2.7.9.p1', "Version number of python used for execution python ROOT script")
 config.addOption('version', '6.04.02', 'Version of ROOT')
 
-import os
-from Ganga.Utility.files import expandfilename
-
+def getDefaultScript():
+    name = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'defaultRootScript.C')
+    return File( name )
 
 class Root(IPrepareApp):
 
@@ -206,7 +208,7 @@ class Root(IPrepareApp):
 
     """
     _schema = Schema(Version(1, 1), {
-        'script': FileItem(defvalue=File(), preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
+        'script': FileItem(defvalue=getDefaultScript(), preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
         'args': SimpleItem(defvalue=[], typelist=['str', 'int'], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
         'version': SimpleItem(defvalue='6.02.03', doc="The version of Root to run"),
         'usepython': SimpleItem(defvalue=False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
@@ -342,7 +344,6 @@ class RootRTHandler(IRuntimeHandler):
                 logger.debug('Using a different Python - %s.', python_home)
                 python_lib = join(python_home, 'lib')
 
-                import os.path
                 if not os.path.exists(python_bin) or not os.path.exists(python_lib):
                     logger.error('The PYTHONHOME specified does not have the expected structure. See the [ROOT] section of your .gangarc file.')
                     logger.error('PYTHONPATH is: ' + str(os.path))
@@ -518,7 +519,6 @@ def downloadWrapper(app):
     logger.debug("Command line: %s: ", commandline)
 
     # Write a wrapper script that installs ROOT and runs script
-    import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                                    'wrapperScriptTemplate.py')
     from Ganga.GPIDev.Lib.File import FileUtils
@@ -538,12 +538,9 @@ def downloadWrapper(app):
 
 
 def defaultScript():
-    import tempfile
-    import os
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
     fname = os.path.join(tmpdir, 'test.C')
-    import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                    'defaultRootScript.C')
     from Ganga.GPIDev.Lib.File import FileUtils
@@ -554,12 +551,9 @@ def defaultScript():
 
 
 def defaultPyRootScript():
-    import tempfile
-    import os
     tmpdir = tempfile.mktemp()
     os.mkdir(tmpdir)
     fname = os.path.join(tmpdir, 'test.py')
-    import inspect
     script_location = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))),
                                    'defaultPyRootScript.py')
 
