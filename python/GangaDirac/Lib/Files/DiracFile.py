@@ -3,7 +3,7 @@ import os
 import datetime
 import hashlib
 import re
-from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
@@ -14,7 +14,6 @@ from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv, execute
 from Ganga.GPI import queues
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
@@ -304,16 +303,8 @@ class DiracFile(IGangaFile):
             else:
                 return False
 
-            #logger.error("Could't decipher the outputfiles location entry! %s" % line.strip())
-            #logger.error("Neither '%s' nor '%s' match the namePattern attribute of '%s'" % (pattern, name, dirac_file.namePattern))
-            #dirac_file.failureReason = "Could't decipher the outputfiles location entry!"
-            # return True
-
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
-        # if not os.path.exists(postprocessLocationsPath):
-        #    #logger.warning("Couldn\'t locate the output locations file so couldn't determine the lfn info") ##seems to be called twice (only on Dirac backend... must check) so misleading when second one works??
-        #    return
 
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
@@ -322,9 +313,7 @@ class DiracFile(IGangaFile):
                 if line.startswith('DiracFile'):
                     if dirac_line_processor(line, self, postprocessLocationsPath) and regex.search(self.namePattern) is None:
                         logger.error("Error processing line:\n%\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
-                        #break
 
-            #postprocesslocations.close()
         except Exception, err:
             logger.warning("unexpected Error: %s" % str(err))
         finally:
@@ -379,8 +368,7 @@ class DiracFile(IGangaFile):
 
         try:
             reps = self.getReplicas()
-            ret['Value']['Successful'][self.lfn].update(
-                {'replicas': self.locations})
+            ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
         except:
             pass
 
@@ -450,13 +438,10 @@ class DiracFile(IGangaFile):
 
                 self._storedReplicas = execute('getReplicas("%s")' % self.lfn)
                 if self._storedReplicas.get('OK', False) is True:
-                    self._storedReplicas = self._storedReplicas[
-                        'Value']['Successful']
+                    self._storedReplicas = self._storedReplicas['Value']['Successful']
                 else:
-                    logger.error(
-                        "Couldn't find replicas for: %s" % str(self.lfn))
-                    raise GangaError(
-                        "Couldn't find replicas for: %s" % str(self.lfn))
+                    logger.error("Couldn't find replicas for: %s" % str(self.lfn))
+                    raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
                 logger.debug("getReplicas: %s" % str(self._storedReplicas))
 
                 self._updateRemoteURLs(self._storedReplicas)
@@ -487,8 +472,7 @@ class DiracFile(IGangaFile):
             for site in self.locations:
                 #logger.debug( "site: %s" % str( site ) )
                 self._remoteURLs[site] = reps[self.lfn][site]
-                logger.debug(
-                    "Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site]))
+                logger.debug("Adding _remoteURLs[site]: %s" % str(self._remoteURLs[site]))
 
     def location(self):
         """
@@ -819,23 +803,25 @@ subprocess.Popen('''python -c "import sys\nexec(sys.stdin.read())"''', shell=Tru
         return script
 
     def _getDiracEnvStr(self):
-        ##FIXME use the sanitised Dirac env from within the Dirac scripts rather than read in this file separately as this could have unsave env vars
-        ## rcurrie
-        ##return "dict((tuple(line.strip().split('=',1)) for line in open('%s','r').readlines() if len(line.strip().split('=',1))==2))" % configDirac['DiracEnvFile']
-
         from GangaDirac.Lib.Utilities.DiracUtilities import getDiracEnv
         diracEnv = str(getDiracEnv())
         return diracEnv
 
-    def _WN_wildcard_script(namePattern, lfnBase, compressed):
+    def _WN_wildcard_script(self, namePattern, lfnBase, compressed):
         wildcard_str =  """
 import glob, hashlib
 for f in glob.glob('###NAME_PATTERN###'):
     processes.append(uploadFile(os.path.basename(f), '###LFN_BASE###', ###COMPRESSED###, '###NAME_PATTERN###'))
 """
-        wildcard_str = wildcard_str.join([str('###INDENT###'+str(line)) for line in wildcard_str.split('\n')])
+        from Ganga.GPIDev.Lib.File import FileUtils
+        wildcard_str = FileUtils.indentScript(wildcard_str, '###INDENT###')
 
-        wildcard_str = wildcard_str.replace('###NAME_PATTERN###', namePattern).replace('###LFN_BASE###', lfnBase).replace('###COMPRESSED###', str(compressed))
+        replace_dict = { '###NAME_PATTERN###' : namePattern,
+                         '###LFN_BASE###' : lfnBase,
+                         '###COMPRESSED###' : compressed }
+
+        for k, v in replace_dict.iteritems():
+            wildcard_str = wildcard_str.replace(str(k), str(v))
 
         return wildcard_str
 
@@ -865,11 +851,14 @@ for f in glob.glob('###NAME_PATTERN###'):
             lfn_base = os.path.join(configDirac['DiracLFNBase'], self.remoteDir)
 
 
+
         for this_file in outputFiles:
-            if regex.search(this_file.namePattern) is not None:
-                script += _WN_wildcard_script(this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
+            isCompressed = this_file.namePattern in patternsToZip
+            if not regex.search(this_file.namePattern) is None:
+                script += self._WN_wildcard_script(this_file.namePattern, lfn_base, str(isCompressed))
             else:
-                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(this_file.namePattern in patternsToZip))
+                script += '###INDENT###print("Uploading: %s")\n' % this_file.namePattern
+                script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
         if stripProxy(self)._parent and stripProxy(self)._parent.backend._name != 'Dirac':
@@ -877,20 +866,12 @@ for f in glob.glob('###NAME_PATTERN###'):
         else:
             script_env = str(None)
 
-        script += """
-for p in processes:
-    output = p.communicate()[0]
-    if output != '':
-        import sys
-        sys.stdout.write("%s" % str(output))
-"""
-
         script = '\n'.join([str('###INDENT###' + str(line)) for line in script.split('\n')])
 
         replace_dict = {'###UPLOAD_SCRIPT###' : upload_script,
                         '###STORAGE_ELEMENTS###' : str(configDirac['allDiracSE']),
                         '###INDENT###' : indent,
-                        '###LOCATIONSFILE###' : postProcessLocationsFP,
+                        '###LOCATIONSFILE###' : 'postprocesslocations', ## Given from OutputFileManager code
                         '###DIRAC_ENV###' : script_env}
 
         for k, v in replace_dict.iteritems():
