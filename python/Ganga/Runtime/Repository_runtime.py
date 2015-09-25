@@ -35,48 +35,6 @@ def getLocalWorkspace():
         return ''
 
 
-def getOldJobs():
-    salvaged_jobs = {'jobs': [], 'templates': []}
-    basepath = os.path.join(
-            expandfilename(config['gangadir']), 'repository', config['user'])
-    names = ['jobs', 'templates']
-
-    path = os.path.join(basepath, "LocalAMGA")
-    if os.path.exists(path) and not os.path.exists(os.path.join(path, "converted.to.XML.6.0")):
-        from Ganga.Core.JobRepository.ARDA import repositoryFactory
-        for name in names:
-            try:
-                rep = repositoryFactory(subpath=name)
-                co_jobs = rep.checkoutJobs({})
-                salvaged_jobs[name].extend(co_jobs)
-                file(os.path.join(path, "converted.to.XML.6.0"), "w").close()
-                rep.releaseAllLocks()
-                if len(co_jobs) > 0:
-                    logger.warning(
-                            "Converted %i jobs from old AMGA repository" % len(co_jobs))
-            except Exception as x:
-                logger.error("Could not load old AMGA repository: %s" % x)
-                raise
-
-    from Ganga.Core.JobRepositoryXML import factory, version
-    for name in names:
-        path = os.path.join(basepath, "LocalXML", version, name)
-        if os.path.exists(path) and not os.path.exists(os.path.join(path, "converted.to.XML.6.0")):
-            try:
-                rep = factory(dir=path)
-                co_jobs = rep.checkoutJobs({})
-                salvaged_jobs[name].extend(co_jobs)
-                file(os.path.join(path, "converted.to.XML.6.0"), "w").close()
-                rep.releaseAllLocks()
-                if len(co_jobs) > 0:
-                    logger.warning(
-                            "Converted %i jobs from old XML repository" % len(co_jobs))
-            except Exception as x:
-                logger.error("Could not load old XML repository: %s" % x)
-                raise
-
-    return salvaged_jobs
-
 started_registries = []
 
 
@@ -110,28 +68,22 @@ def checkDiskQuota():
             quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
             output = quota.communicate()[0]
             logger.debug("fs quota %s:\t%s" % (str(data_partition), str(output)))
-            quote_percent = output
 
         else:
             df = subprocess.Popen(["df", '-Pk', data_partition], stdout=subprocess.PIPE)
             output = df.communicate()[0]
-            #device, size, used, available, percent, mountpoint = output.split("\n")[1].split()
-            output_data = output.split("\n")[1].split()
-
-            quota_percent = output_data[5]
 
         try:
             quota_percent = output.split('%')[0]
             if int(quota_percent) >= 95:
                 logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
                 logger.warning("WARNING: Please free some disk space on: %s" % str(data_partition))
-        except Exception, err:
+        except Exception as err:
             logger.debug("Error checking disk partition: %s" % str(err))
 
     return
 
 def bootstrap():
-    oldJobs = getOldJobs()
     retval = []
 
     try:
@@ -160,15 +112,7 @@ def bootstrap():
             registry.print_other_sessions()
         started_registries.append(registry.name)
         retval.append((registry.name, registry.getProxy(), registry.doc))
-        if registry.name in oldJobs:
-            for j in oldJobs[registry.name]:
-                j._index_cache = None
-                if not j.id in registry:
-                    registry._add(j, force_index=j.id)
-                else:
-                    logger.warning(
-                            "Import Collision at id %i, appending job to the end...", j.id)
-                    registry._add(j)
+
     import atexit
     atexit.register(shutdown)
     logger.debug(started_registries)
