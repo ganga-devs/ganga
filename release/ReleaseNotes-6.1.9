@@ -1,5 +1,5 @@
 **************************************************************************************************************
-6.1.9 (2015/9/21)
+6.1.9 (2015/9/25)
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -9,12 +9,16 @@ ganga/python/Ganga
 * Added quota check on startup of ganga
 * Fixed some minor bugs in Interactive backend
 * Changes such that GangaLists are written to disk atomically
+* Fixes for Interactive Backends
+* Fixes for Root Application
 
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/GangaDirac
 --------------------------------------------------------------------------------------------------------------
 * Fixed some bugs in DiracFile, reformatted a lot of code in the class
+* Added defaultSE on a per-DiracFile basis to allow for more granular control of data.
+*   This is the defaultSE for accessing and uploading LFNs to Dirac
 
 
 --------------------------------------------------------------------------------------------------------------
