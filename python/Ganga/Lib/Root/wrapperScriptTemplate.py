@@ -66,7 +66,7 @@ def findPythonVersion(arch,rootsys):
             args = [root_config,'--python-version']
 
             run = subprocess.Popen(' '.join(args), shell = True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-                                   out, err = [ e.splitlines() for e in run.communicate() ]
+            out, err = [ e.splitlines() for e in run.communicate() ]
             code = run.returncode
             if code == 0 and out and not err and len(out) == 1:
                 split = out[0].split('.')
