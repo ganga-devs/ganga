@@ -24,12 +24,13 @@ logger = Ganga.Utility.logging.getLogger()
 
 import sys
 config = makeConfig('ROOT', "Options for Root backend")
+config.addOption('lcgpath', '/afs/cern.ch/sw/lcg/releases/LCG_79', 'Path of the LCG release that the ROOT project and it\'s externals are taken from')
 config.addOption('arch', 'x86_64-slc6-gcc48-opt', 'Architecture of ROOT')
-config.addOption('location', '/afs/cern.ch/sw/lcg/releases/LCG_72root6/ROOT/${version}/${arch}/', 'Location of ROOT')
+config.addOption('location', '${lcgpath}/ROOT/${version}/${arch}/', 'Location of ROOT')
 config.addOption('path', '', 'Set to a specific ROOT version. Will override other options.')
-config.addOption('pythonhome', '/afs/cern.ch/sw/lcg/releases/LCG_72root6/Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
-config.addOption('pythonversion', '2.7.6', "Version number of python used for execution python ROOT script")
-config.addOption('version', '6.02.08', 'Version of ROOT')
+config.addOption('pythonhome', '{lcgpath}/Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
+config.addOption('pythonversion', '2.7.9.p1', "Version number of python used for execution python ROOT script")
+config.addOption('version', '6.04.02', 'Version of ROOT')
 
 import os
 from Ganga.Utility.files import expandfilename
@@ -368,7 +369,7 @@ class RootRTHandler(IRuntimeHandler):
                 arglist.append(self.quoteCintArgString(arg))
             else:
                 arglist.append(arg)
-        rootarg = '(' + string.join([str(s) for s in arglist], ',') + ')'
+        rootarg = '\(' + string.join([str(s) for s in arglist], ',') + '\)'
 
         script = app.script
         if script == File():
@@ -378,8 +379,8 @@ class RootRTHandler(IRuntimeHandler):
 
         # Start ROOT with the -b and -q options to run without a
         # terminal attached.
-        arguments = ['-b', '-q', join('.', script.subdir,
-                                      split(script.name)[1]) + rootarg]
+        arguments = ['-b', '-q', os.path.relpath(join('.', script.subdir,
+                                      split(script.name)[1])) + rootarg]
         inputsandbox = app._getParent().inputsandbox + [script]
 
         (rootenv, _) = self._getRootEnvSys(app.version)
@@ -502,14 +503,13 @@ def downloadWrapper(app):
         arglist = []
         for arg in app.args:
             if isinstance(arg, str):
-                arglist.append('\\\\"' + arg + '\\\\"')
+                arglist.append('\\\'' + arg + '\\\'')
             else:
                 arglist.append(arg)
         rootarg = '\(' + string.join([str(s) for s in arglist], ',') + '\)'
 
         # use root
-        commandline = '\'root.exe -b -q ' + scriptPath + \
-            rootarg + '\''
+        commandline = 'root.exe -b -q ' + scriptPath + rootarg + ''
     else:
         # use python
         pyarg = string.join([str(s) for s in app.args], ' ')
