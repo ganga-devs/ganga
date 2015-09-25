@@ -20,7 +20,7 @@ def assert_cannot_kill(j):
     except JobError:
         pass  
 
-def sleep_until_state(j,timeout=None,state='completed', break_states=None,sleep_period=1, verbose=False):
+def sleep_until_state(j, timeout=None, state='completed', break_states=None, sleep_period=1, verbose=False):
     '''
     Wait until the job reaches the specified state
     Returns:
@@ -45,20 +45,24 @@ def sleep_until_state(j,timeout=None,state='completed', break_states=None,sleep_
             monitoring_component.steps = -1
             monitoring_component.__updateTimeStamp = 0
             monitoring_component.__sleepCounter = -0.5
-        if verbose and j.status != current_status:    
-            logger.info(j.id,j.status)
+        if verbose and j.status != current_status:
+            logger.info(j.id, j.status)
         if current_status is None:
             current_status = j.status
         if type(break_states) == type([]) and j.status in break_states:
+            logger.info("Job finished with status: %s" % j.status )
             return False
         sleep(sleep_period)
         timeout -= sleep_period
+        logger.debug("Status: %s" % j.status)
+    logger.info("Job finished with status: %s" % j.status )
+    logger.info("Timeout: %s" % str(timeout))
     return j.status == state
 
-def sleep_until_completed(j,timeout=None):
-    return sleep_until_state (j,timeout,'completed',['new','killed','failed','unknown','removed'])
+def sleep_until_completed(j, timeout=None, sleep_period=1, verbose=False):
+    return sleep_until_state(j, timeout, 'completed', ['new','killed','failed','unknown','removed'], verbose=verbose, sleep_period=sleep_period)
 
-def is_job_state(j, states=['completed'],break_states=None):
+def is_job_state(j, states=['completed'], break_states=None):
     #Allow the completed state to be a list of status.
     if j.status in states:
         return True
