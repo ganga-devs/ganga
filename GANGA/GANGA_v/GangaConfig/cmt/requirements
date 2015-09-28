@@ -16,7 +16,7 @@ set GANGA_NEVER_REEXEC 1
 # use ipython  v* LCG_Interfaces
 
 use ROOT v* LCG_Interfaces
-#macro ROOT_config_version  "6.02.00"
+#macro ROOT_config_version  "6.04.02"
 
 # macro        pyqt_config_version                 3.17.3
 # macro        Qt_config_version                   3.3.8

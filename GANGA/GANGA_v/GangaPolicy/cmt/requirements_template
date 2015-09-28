@@ -45,8 +45,7 @@ path_prepend PYTHONPATH "$(ext_root)/figleaf/$(figleaf)/noarch"
 
 #########################################################################
 # PYTHONPATH ApMon
-
-path_prepend PYTHONPATH "$(ext_root)/ApMon/$(ApMon)/noarch/python"
+#path_prepend PYTHONPATH "$(ext_root)/ApMon/$(ApMon)/noarch/python"
 
 #########################################################################
 # PYTHONPATH PYTF
