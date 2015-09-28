@@ -8,19 +8,115 @@ from Ganga.Utility.Config import getConfig, ConfigError
 from commands import getstatusoutput
 import Ganga.Utility.logging
 import os
-
-#
-#       MOVED to Ganga/Lib/Root/Root.py
-#
-# config.setDefaultOptions({'location':'/afs/cern.ch/sw/lcg/external/root',
-#                          'version':'5.14.00d',
-#                          'arch':'slc3_ia32_gcc323',
-#                          'path':'',
-#                          'pythonhome':sys.prefix,
-#                          'pythonversion':''})
+from Ganga.Utility.logging import getLogger
+logger = Ganga.Utility.logging.getLogger()
 
 
+##  Walk top-down to find 'directory' within the base_path folder(s) and return the path of this
+##  directory if it does exist. Returns None if it doesn't
+##  If it does the rest of the folder structure is descended and appended to the returned path
+##  This allows for custom root install paths sorted by version and arch
+def _manipulatePath(base_path, directory):
+
+    split_path = base_path.split(os.sep)
+
+    split_path_len = len(split_path)
+
+    found_path = None
+
+    for i in range(split_path_len):
+
+        local_base = str('%s'%os.sep).join(split_path[:i])
+
+        if os.path.isdir(local_base):
+            dir_path = os.path.join(local_base, str(directory))
+
+            if os.path.isdir(dir_path):
+
+                descending_path = str("%s"%os.sep).join(split_path[i+1:])
+
+                if not os.path.isdir(dir_path):
+                    found_path = None
+                    break
+
+                found_path = os.path.join(dir_path, descending_path)
+
+                if not os.path.isdir(found_path):
+                    found_path = dir_path
+                    logger.warning("Unable to descend into ROOT path %s" % str(found_path))
+                    logger.warning("Assuming this is ROOTSYS")
+
+                return found_path
+
+    return found_path
+
+##  Get the ROOTSYS with a given version in the path
+def _getPathVersion( base_path, version):
+
+    found_path = _manipulatePath( base_path, version )
+
+    if found_path is None:
+        logger.error("Cannot find ROOT version: %s from manipulating PATH: %s" % (str(version), str(base_path)))
+        logger.error("Please check your configuration in your .gangarc")
+        logger.error("Attempting to make use of path: %s" % str(base_path) )
+        return base_path
+    else:
+        return found_path
+
+##  Get the ROOTSYS with a given arch in the path
+def _getPathArch( base_path, arch):
+
+    found_path = _manipulatePath( base_path, arch )
+
+    if found_path is None:
+        logger.error("Cannot find ROOT for arch: %s from manipulating PATH: %s" % (str(arch), str(base_path)))
+        logger.error("Pleasde check your configuration in your .gangarc")
+        logger.error("Attempting to make use of path: %s" % str(base_path))
+        return base_path
+    else:
+        return found_path
+
+## Get the rootsys by searching first for the requested version and then the requested arch
 def getrootsys(version=None, arch=None):
+
+    configroot = getConfig('ROOT')
+
+    if configroot['path'] != '':
+        return configroot['path']
+
+    location = configroot.getEffectiveOption('location')
+
+    if arch is None and version is None:
+        if location:
+            if os.path.isdir(location):
+                rootsys = location
+                return rootsys
+
+    elif arch is None and version is not None:
+
+        version_path = _getPathVersion( location, version )
+
+        rootsys = version_path
+
+        return rootsys
+
+    elif arch is not None and version is None:
+
+        arch_path = _getPathArch( location, arch )
+
+        rootsys = arch_path
+
+    else:
+
+        version_path = _getPathVersion( location, version )
+
+        arch_path = _getPathArch( version_path, arch )
+
+        rootsys = arch_path
+
+        return rootsys
+
+
     rootsys = ""
     try:
         configroot = getConfig('ROOT')
@@ -72,7 +168,8 @@ def getpythonhome(arch=None, pythonversion=None):
         # supports ${foo} type variable expansion
         for k in configroot.keys():
             pythonhome = pythonhome.replace('${%s}' % k, configroot[k])
-    except ConfigError:
+    except ConfigError, err:
+        logger.debug("Config Error!\n%s"%str(err))
         pass
     import os
     if not os.path.exists(pythonhome):
