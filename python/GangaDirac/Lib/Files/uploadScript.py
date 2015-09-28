@@ -35,13 +35,13 @@ with closing(open('###LOCATIONSFILE_NAME###','ab')) as locationsfile:
         if result.get('OK',False) and lfn in result.get('Value',{'Successful':{}})['Successful']:
             import datetime
             guid = dirac.getMetadata(lfn)['Value']['Successful'][lfn]['GUID']
-            locationsfile.write("DiracFile:::%s&&%s->%s:::['%s']:::%s\\\\n" % (wildcard, file_label, lfn, se, guid))
+            locationsfile.write("DiracFile:::%s&&%s->%s:::['%s']:::%s\\n" % (wildcard, file_label, lfn, se, guid))
             locationsfile.flush()
             locationsfile.close()
             break
         errmsg+="(%s, %s), " % (se, result)
     else:
-        locationsfile.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s):::NotAvailable\\\\n" % (wildcard, file_label, file_name, errmsg))
+        locationsfile.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' could not be uploaded to any SE (%s):::NotAvailable\\n" % (wildcard, file_label, file_name, errmsg))
         import sys
         sys.stdout.write('Could not upload file %s' % file_name)
 

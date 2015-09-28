@@ -75,8 +75,7 @@ echo "%s" > b.root
         j.outputfiles[0].remove()
 
     def test_local_job_put_multiple_files(self):
-        j = Job(application=Executable(exe=File(self.filepath), args=[]), outputfiles=[
-                DiracFile('a.root'), DiracFile('b.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]), outputfiles=[DiracFile('a.root'), DiracFile('b.root')])
         j.submit()
         sleep_until_completed(j)
 

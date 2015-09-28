@@ -9,7 +9,7 @@ def uploadFile(file_name, lfn_base, compress=False, wildcard=''):
 
     import sys, os, datetime, subprocess
     if not os.path.exists(os.path.join(os.getcwd(),file_name)):
-        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\\n" % (wildcard, file_label, file_name))
+        ###LOCATIONSFILE###.write("DiracFile:::%s&&%s->###FAILED###:::File '%s' didn't exist:::NotAvailable\n" % (wildcard, file_label, file_name))
         return
 
     replace_dict = {
