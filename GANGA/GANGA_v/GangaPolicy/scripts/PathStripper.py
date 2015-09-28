@@ -105,12 +105,14 @@ def _site_configuration(option, opt_str, value, parser):
              parser.values.shell, parser.values.output)
 
 
+def _ipython_fix():
+    import os
     # Protect against slight problem with upgraded version of iPython
-    ffolder = os.path.expandvars(join('$HOME', '.ipython'))
-    fname = os.path.expandvars(join(ffolder,'ipy_user_conf.py'))
+    ffolder = os.path.expandvars(os.path.join('$HOME', '.ipython'))
+    fname = os.path.expandvars(os.path.join(ffolder,'ipy_user_conf.py'))
     if not os.path.isfolder(ffolder):
         os.makedirs(ffolder)
-    if not isfile(fname):
+    if not os.path.isfile(fname):
         try:
             os.system('touch %s' % fname)
         except:
@@ -154,7 +156,9 @@ def _store_root_version(option, opt_str, value, parser):
 if __name__ == '__main__':
 
     import os
-    
+
+    _ipython_fix()
+
     parser = OptionParser()
 
     parser.add_option("-g", "--ganga", action="callback", callback = _site_configuration, help="Setup the site configuration for Ganga")
@@ -195,3 +199,4 @@ if __name__ == '__main__':
 
     for a in args:
         print StripPath(a)
+
