@@ -110,7 +110,7 @@ def _ipython_fix():
     # Protect against slight problem with upgraded version of iPython
     ffolder = os.path.expandvars(os.path.join('$HOME', '.ipython'))
     fname = os.path.expandvars(os.path.join(ffolder,'ipy_user_conf.py'))
-    if not os.path.isfolder(ffolder):
+    if not os.path.isdir(ffolder):
         os.makedirs(ffolder)
     if not os.path.isfile(fname):
         try:
