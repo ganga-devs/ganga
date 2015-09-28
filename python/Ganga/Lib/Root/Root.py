@@ -8,7 +8,6 @@ from __future__ import print_function
 
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 from Ganga.GPIDev.Adapters.IRuntimeHandler import IRuntimeHandler
-#from Ganga.GPIDev.Schema import FileItem, Schema, SimpleItem, Version, SharedItem
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, FileItem
 from Ganga.GPIDev.Lib.File import File, ShareDir
 
@@ -25,18 +24,39 @@ import tempfile
 from Ganga.Utility.files import expandfilename
 
 logger = Ganga.Utility.logging.getLogger()
+
+def getLCGRootPath():
+
+    lcg_release_areas = {'afs' : '/afs/cern.ch/sw/lcg/releases/LCG_79',
+    'cvmfs' : '/cvmfs/lhcb.cern.ch/lib/lcg/releases/LCG_79'}
+
+    ## CAUTION This could be sensitive to mixed AFS/CVMFS running but I doubt this setup is common or likely
+    myCurrentPath = os.path.abspath(inspect.getfile(inspect.currentframe()))
+
+    if myCurrentPath[:4].upper() == '/AFS':
+        return lcg_release_areas['afs']
+    elif myCurrentPath[:6].upper() == '/CVMFS':
+        return lcg_release_areas['cvmfs']
+    else:
+        return ''
+
 config = makeConfig('ROOT', "Options for Root backend")
-config.addOption('lcgpath', '/afs/cern.ch/sw/lcg/releases/LCG_79', 'Path of the LCG release that the ROOT project and it\'s externals are taken from')
+## Not needed when we can't do option substitution internally but support it at the .gangarc level!!!!! 27-09-2015 rcurrie
+#config.addOption('lcgpath', getLCGRootPath(), 'Path of the LCG release that the ROOT project and it\'s externals are taken from')
 config.addOption('arch', 'x86_64-slc6-gcc48-opt', 'Architecture of ROOT')
-config.addOption('location', '${lcgpath}/ROOT/${version}/${arch}/', 'Location of ROOT')
+## Auto-Interporatation doesn't appear to work when setting the default value
+#config.addOption('location', '${lcgpath}/ROOT/${version}/${arch}/', 'Location of ROOT')
+config.addOption('location', '%s/ROOT/6.04.02/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of ROOT')
 config.addOption('path', '', 'Set to a specific ROOT version. Will override other options.')
-config.addOption('pythonhome', '{lcgpath}/Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
+## Doesn't appear to work see above ^^^
+#config.addOption('pythonhome', '${lcgpath}/Python/${pythonversion}/${arch}/','Location of the python used for execution of PyROOT script')
+config.addOption('pythonhome', '%s/Python/2.7.9.p1/x86_64-slc6-gcc48-opt' % getLCGRootPath(), 'Location of the python used for execution of PyROOT script')
 config.addOption('pythonversion', '2.7.9.p1', "Version number of python used for execution python ROOT script")
 config.addOption('version', '6.04.02', 'Version of ROOT')
 
 def getDefaultScript():
     name = os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(inspect.currentframe()))), 'defaultRootScript.C')
-    return File( name )
+    return File(name)
 
 class Root(IPrepareApp):
 
@@ -63,7 +83,7 @@ class Root(IPrepareApp):
     and 10, you would do the following:
 
     r = Root()
-    r.version = '6.02.03'
+    r.version = '6.04.02'
     r.script = '~/abc/analysis.C'
     r.args = ['Minbias', 10]
 
@@ -210,7 +230,7 @@ class Root(IPrepareApp):
     _schema = Schema(Version(1, 1), {
         'script': FileItem(defvalue=getDefaultScript(), preparable=1, doc='A File object specifying the script to execute when Root starts', checkset='_checkset_script'),
         'args': SimpleItem(defvalue=[], typelist=['str', 'int'], sequence=1, doc="List of arguments for the script. Accepted types are numerics and strings"),
-        'version': SimpleItem(defvalue='6.02.03', doc="The version of Root to run"),
+        'version': SimpleItem(defvalue='6.04.02', doc="The version of Root to run"),
         'usepython': SimpleItem(defvalue=False, doc="Execute 'script' using Python. The PyRoot libraries are added to the PYTHONPATH."),
         'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, typelist=['type(None)', 'bool'], protected=0, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
         'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
@@ -298,6 +318,8 @@ class RootRTHandler(IRuntimeHandler):
         from Ganga.Lib.Root.shared import setEnvironment, findPythonVersion
 
         rootsys = getrootsys(version)
+
+        logger.info("rootsys: %s" % str(rootsys))
 
         rootenv = {}
         # propagate from localhost
@@ -387,8 +409,12 @@ class RootRTHandler(IRuntimeHandler):
         (rootenv, _) = self._getRootEnvSys(app.version)
         logger.debug("ROOT environment:\n %s: ", str(rootenv))
 
-        return StandardJobConfig('root.exe', inputsandbox, arguments,
+        returnable = StandardJobConfig('root.exe', inputsandbox, arguments,
                                  app._getParent().outputsandbox)
+
+        logger.debug("root jobconfig: %s" % str(returnable))
+
+        return returnable
 
     def _preparePyRootJobConfig(self, app, appconfig, appmasterconfig, jobmasterconfig):
         """JobConfig for executing a Root script using CINT."""

@@ -139,9 +139,9 @@ class Batch(IBackend):
         if self.queue:
             queue_option = '-q ' + str(self.queue)
 
-        try:
+        if 'jobnameopt' in self.config.keys():
             jobnameopt = "-" + self.config['jobnameopt']
-        except:
+        else:
             jobnameopt = False
 
         if self.extraopts:
@@ -151,8 +151,7 @@ class Batch(IBackend):
                     logger.warning("option %s is forbidden", opt)
                     return False
                 if self.queue and opt == '-q':
-                    logger.warning(
-                        "option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
+                    logger.warning("option %s is forbidden if queue is defined ( queue = '%s')", opt, self.queue)
                     return False
                 if jobnameopt and opt == jobnameopt:
                     jobnameopt = False
@@ -196,8 +195,7 @@ class Batch(IBackend):
                         logger.info('using default queue "%s"', queue)
                     self.actualqueue = queue
             except IndexError:
-                logger.info(
-                    'could not match the output and extract the Batch queue name')
+                logger.info('could not match the output and extract the Batch queue name')
 
         return rc == 0
 
@@ -572,12 +570,9 @@ def filefilter(fn):
   internals = re.compile(r'\d{10}\.\d+.(out|err)')
   return internals.match(fn) or fn == '.Batch.start'
 '''
-config.addOption('postexecute', tempstr,
-                 "String contains commands executing before submiting job to queue")
-config.addOption(
-    'jobnameopt', 'J', "String contains option name for name of job in batch system")
-config.addOption(
-    'timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
+config.addOption('postexecute', tempstr, "String contains commands executing before submiting job to queue")
+config.addOption('jobnameopt', 'J', "String contains option name for name of job in batch system")
+config.addOption('timeout', 600, 'Timeout in seconds after which a job is declared killed if it has not touched its heartbeat file. Heartbeat is touched every 30s so do not set this below 120 or so.')
 
 
 class LSF(Batch):
