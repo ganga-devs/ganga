@@ -105,10 +105,13 @@ def _site_configuration(option, opt_str, value, parser):
              parser.values.shell, parser.values.output)
 
     # Protect against slight problem with upgraded version of iPython
-    fname = os.path.expandvars(join('$HOME','.ipython','ipy_user_conf.py'))
-    if not isfile(fname) and os.path.exists(join('$HOME', '.ipython')):
+    ffolder = os.path.expandvars(join('$HOME', '.ipython'))
+    fname = os.path.expandvars(join(ffolder,'ipy_user_conf.py'))
+    if not os.path.isfolder(ffolder):
+        os.makedirs(ffolder)
+    if not isfile(fname):
         try:
-            os.system('touch %s' %fname)
+            os.system('touch %s' % fname)
         except:
             pass
 
