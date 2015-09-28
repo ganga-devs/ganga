@@ -7,8 +7,9 @@ b.fail = 'submit'
 
 assert(j.status=='new')
 j.submit()
-assert(j.status=='submitted')
-assert(j.subjobs[0].status=='submitted')
+print("%s" % str(j.status))
+assert(j.status in ['submitted', 'running'])
+assert(j.subjobs[0].status in ['submitted','running'])
 assert(j.subjobs[1].status=='new')
 
 assert(j.subjobs[2].status=='new')
