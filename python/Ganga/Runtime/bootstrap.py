@@ -333,8 +333,7 @@ under certain conditions; type license() for details.
                     raise
 
             if notes[0].find(version) < 0:
-                logger.error(
-                    "Release notes version doesn't match the stated version on line 1")
+                logger.error("Release notes version doesn't match the stated version on line 1")
                 logger.error("'%s' does not match '%s'" % (version, notes[0]))
                 return
 
@@ -366,8 +365,7 @@ under certain conditions; type license() for details.
         from Ganga.Utility.Config.Config import load_user_config, getConfig, ConfigError
 
         logger = getLogger('NewUserWizard')
-        specified_gangadir = os.path.expanduser(
-            os.path.expandvars(getConfig('Configuration')['gangadir']))
+        specified_gangadir = os.path.expanduser(os.path.expandvars(getConfig('Configuration')['gangadir']))
         specified_config = self.options.config_file
         default_gangadir = os.path.expanduser('~/gangadir')
         default_config = self.default_config_file
@@ -375,8 +373,7 @@ under certain conditions; type license() for details.
         if not os.path.exists(specified_gangadir) \
                 and not os.path.exists(specified_config):
             logger.info('It seems that you run Ganga for the first time')
-            logger.info(
-                'Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
+            logger.info('Ganga will send a udp packet each time you start it in order to help the development team understand how ganga is used. You can disable this in the config file by resetting [Configuration]UsageMonitoringURL=  ')
 
         if not os.path.exists(specified_gangadir) \
                 and not os.path.exists(default_gangadir):
@@ -397,8 +394,7 @@ under certain conditions; type license() for details.
             # Sleep for 1 sec to allow for most of the bootstrap to finish so
             # the user actually sees this message last
             time.sleep(3.)
-            yes = raw_input(
-                'Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
+            yes = raw_input('Would you like to create default config file ~/.gangarc with standard settings ([y]/n) ?\n')
             if yes == '' or yes[0:1].upper() == 'Y':
                 self.generate_config_file(default_config)
                 raw_input('Press <Enter> to continue.\n')
@@ -411,8 +407,7 @@ under certain conditions; type license() for details.
             # impacts hammercloud if you do?
             if not self.options.config_file_set_explicitly:
                 logger = getLogger('ConfigUpdater')
-                logger.info(
-                    'It appears that this is the first time you have run %s' % _gangaVersion)
+                logger.info('It appears that this is the first time you have run %s' % _gangaVersion)
                 logger.info('Your ganga config file will be updated.')
                 logger.info('re-reading in old config for updating...')
                 load_user_config(specified_config, {})
@@ -484,7 +479,6 @@ under certain conditions; type license() for details.
                 self.options.force_loglevel = logLevel
             if self.options.force_loglevel in (None, 'DEBUG'):
                 sys.stdout.write(str(self.hello_string)+'\n')
-#                self.new_user_wizard()
 
         if self.options.config_file is None or self.options.config_file == '':
             self.options.config_file = self.default_config_file
@@ -502,28 +496,24 @@ under certain conditions; type license() for details.
                 r = re.compile('# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
                 this_logger = Ganga.Utility.logging.getLogger("Configure")
                 if not r:
-                    this_logger.error(
-                        'file %s does not seem to be a Ganga config file', self.options.config_file)
-                    this_logger.error(
-                        'try -g option to create valid ~/.gangarc')
+                    this_logger.error('file %s does not seem to be a Ganga config file', self.options.config_file)
+                    this_logger.error('try -g option to create valid ~/.gangarc')
                 else:
                     cv = r.group('version').split('-')
                     if cv[1] == '4':
-                        this_logger.error(
-                            'file %s is old an Ganga 4 configuration file (%s)', self.options.config_file, r.group('version'))
-                        this_logger.error(
-                            'try -g option to create valid ~/.gangarc')
+                        this_logger.error('file %s is old an Ganga 4 configuration file (%s)', self.options.config_file, r.group('version'))
+                        this_logger.error('try -g option to create valid ~/.gangarc')
                     else:
                         if cv[1] != '5' and cv[1] != '6':
-                            this_logger.error(
-                                'file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
-                            this_logger.error(
-                                'try -g option to create valid ~/.gangarc')
+                            this_logger.error('file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
+                            this_logger.error('try -g option to create valid ~/.gangarc')
         except IOError as x:
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
             logger.debug("Config File Exception: %s" % str(x))
             pass
+
+        self.check_IPythonDir()
 
         #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
         #cf = file(self.options.config_file)
@@ -553,17 +543,12 @@ under certain conditions; type license() for details.
         # so you can refer to them in the config file
         # additionally they will be visible in the (write protected) [System]
         # config module
-        syscfg = Ganga.Utility.Config.makeConfig(
-            'System', "parameters of this ganga session (read-only)", cfile=False)
+        syscfg = Ganga.Utility.Config.makeConfig('System', "parameters of this ganga session (read-only)", cfile=False)
         syscfg.addOption('GANGA_VERSION', _gangaVersion, '')
-        syscfg.addOption(
-            'GANGA_PYTHONPATH', _gangaPythonPath, 'location of the ganga core packages')
-        syscfg.addOption('GANGA_CONFIG_PATH', self.options.config_path,
-                         'site/group specific configuration files as specified by --config-path or GANGA_CONFIG_PATH variable')
-        syscfg.addOption(
-            'GANGA_CONFIG_FILE', self.options.config_file, 'current user config file used')
-        syscfg.addOption(
-            'GANGA_HOSTNAME', hostname, 'local hostname where ganga is running')
+        syscfg.addOption('GANGA_PYTHONPATH', _gangaPythonPath, 'location of the ganga core packages')
+        syscfg.addOption('GANGA_CONFIG_PATH', self.options.config_path,'site/group specific configuration files as specified by --config-path or GANGA_CONFIG_PATH variable')
+        syscfg.addOption('GANGA_CONFIG_FILE', self.options.config_file, 'current user config file used')
+        syscfg.addOption('GANGA_HOSTNAME', hostname, 'local hostname where ganga is running')
 
         def deny_modification(name, x):
             raise Ganga.Utility.Config.ConfigError(
@@ -576,27 +561,22 @@ under certain conditions; type license() for details.
         # for the path to be correctly prepended
 
         from Ganga.Utility.Config import makeConfig
-        config = makeConfig(
-            "Configuration", "global configuration parameters.\nthis is a catch all section.")
+        config = makeConfig("Configuration", "global configuration parameters.\nthis is a catch all section.")
         config.addOption('SCRIPTS_PATH', 'Ganga/scripts', """the search path to scripts directory.
 When running a script from the system shell (e.g. ganga script) this path is used to search for script""")
 
-        config.addOption(
-            'LOAD_PATH', '', "the search path for the load() function")
-        config.addOption('RUNTIME_PATH', '', """path to runtime plugin packages where custom handlers may be added.
+        config.addOption('LOAD_PATH', '', "the search path for the load() function")
+        config.addOption('RUNTIME_PATH', '',
+        """path to runtime plugin packages where custom handlers may be added.
 Normally you should not worry about it.
 If an element of the path is just a name (like in the example below)
 then the plugins will be loaded using current python path. This means that
 some packages such as GangaTest may be taken from the release area.""",
-                         examples="""RUNTIME_PATH = GangaGUI
-RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
+                examples="RUNTIME_PATH = GangaGUIRUNTIME_PATH = /my/SpecialExtensions:GangaTest ")
 
-        config.addOption(
-            'TextShell', 'IPython', """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
-        config.addOption(
-            'StartupGPI', '', 'block of GPI commands executed at startup')
-        config.addOption(
-            'ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
+        config.addOption('TextShell', 'IPython', """ The type of the interactive shell: IPython (cooler) or Console (limited)""")
+        config.addOption('StartupGPI', '', 'block of GPI commands executed at startup')
+        config.addOption('ReleaseNotes', True, 'Flag to print out the relevent subsection of release notes for each experiment at start up')
         config.addOption('gangadir', Ganga.Utility.Config.expandvars(
             None, '~/gangadir'), 'Location of local job repositories and workspaces. Default is ~/gangadir but in somecases (such as LSF CNAF) this needs to be modified to point to the shared file system directory.', filter=Ganga.Utility.Config.expandvars)
         config.addOption(
@@ -604,17 +584,15 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
         config.addOption('workspacetype', 'LocalFilesystem',
                          'Type of workspace. Workspace is a place where input and output sandbox of jobs are stored. Currently the only supported type is LocalFilesystem.')
 
-        config.addOption(
-            'user', '', 'User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
+        config.addOption('user', '',
+            'User name. The same person may have different roles (user names) and still use the same gangadir. Unless explicitly set this option defaults to the real user name.')
         config.addOption('resubmitOnlyFailedSubjobs', True,
                          'If TRUE (default), calling job.resubmit() will only resubmit FAILED subjobs. Note that the auto_resubmit mechanism will only ever resubmit FAILED subjobs.')
-        config.addOption(
-            'SMTPHost', 'localhost', 'The SMTP server for notification emails to be sent, default is localhost')
+        config.addOption('SMTPHost', 'localhost', 'The SMTP server for notification emails to be sent, default is localhost')
         config.addOption('deleteUnusedShareDir', 'always',
                          'If set to ask the user is presented with a prompt asking whether Shared directories not associated with a persisted Ganga object should be deleted upon Ganga exit. If set to never, shared directories will not be deleted upon exit, even if they are not associated with a persisted Ganga object. If set to always (the default), then shared directories will always be deleted if not associated with a persisted Ganga object.')
 
-        config.addOption(
-            'autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
+        config.addOption('autoGenerateJobWorkspace', False, 'Autogenerate workspace dirs for new jobs')
 
         # add named template options
         config.addOption('namedTemplates_ext', 'tpl',
@@ -623,14 +601,12 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
                          'Determines if named template system stores templates in pickle file format (True) or in the Ganga streamed object format (False). By default streamed object format which is human readable is used. If a package sets up their own by calling "establishNamedTemplates" from python/Ganga/GPIDev/Lib/Job/NamedJobTemplate.py in their ini file then they can override this without needing the config option')
 
         # add server options
-        config.addOption(
-            'ServerPort', 434343, 'Port for the Ganga server to listen on')
-        config.addOption(
-            'ServerTimeout', 60, 'Timeout in minutes for auto-server shutdown')
-        config.addOption(
-            'ServerUserScript', "", "Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
-        config.addOption('ServerUserScriptWaitTime', 300,
-                         "Time in seconds between executions of the user script")
+        config.addOption('ServerPort', 434343, 'Port for the Ganga server to listen on')
+        config.addOption('ServerTimeout', 60, 'Timeout in minutes for auto-server shutdown')
+        config.addOption('ServerUserScript', "", "Full path to user script to call periodically. The script will be executed as if called within Ganga by 'execfile'.")
+        config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
+
+        config.addOption('confirm_exit', 1, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
 
         # detect default user (equal to unix user name)
         import getpass
@@ -640,11 +616,10 @@ RUNTIME_PATH = /my/SpecialExtensions:GangaTest """)
             raise Ganga.Utility.Config.ConfigError(
                 'Cannot get default user name' + str(x))
 
-        config.addOption(
-            'DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
+        config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
 
-        gpiconfig = Ganga.Utility.Config.makeConfig(
-            'GPI_Semantics', 'Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface (what may result in a different behaviour of scripts and commands).')
+        gpiconfig = Ganga.Utility.Config.makeConfig('GPI_Semantics',
+                'Customization of GPI behaviour. These options may affect the semantics of the Ganga GPI interface (what may result in a different behaviour of scripts and commands).')
 
         gpiconfig.addOption('job_submit_keep_going', False,
                             'Keep on submitting as many subjobs as possible. Option to j.submit(), see Job class for details')
@@ -680,23 +655,18 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         """ % (Ganga.Utility.ColourText.Foreground.__doc__, Ganga.Utility.ColourText.Background.__doc__, Ganga.Utility.ColourText.Effects.__doc__))
 
         # [Shell] section
-        makeConfig(
-            "Shell", "configuration parameters for internal Shell utility.")
+        makeConfig("Shell", "configuration parameters for internal Shell utility.")
 
         # [Queues] section
-        queuesconfig = makeConfig(
-            "Queues", "configuration section for the queues")
-        queuesconfig.addOption(
-            'Timeout', None, 'default timeout for queue generated processes')
-        queuesconfig.addOption(
-            'NumWorkerThreads', 3, 'default number of worker threads in the queues system')
+        queuesconfig = makeConfig("Queues", "configuration section for the queues")
+        queuesconfig.addOption('Timeout', None, 'default timeout for queue generated processes')
+        queuesconfig.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
 
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
         # because the user config file is put at the end it always may override
         # everything else
-        config_files = Ganga.Utility.Config.expandConfigPath(
-            self.options.config_path, _gangaPythonPath)
+        config_files = Ganga.Utility.Config.expandConfigPath(self.options.config_path, _gangaPythonPath)
         config_files.reverse()
 
         # read-in config files
@@ -744,8 +714,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             config_files.append(self.options.config_file)
         Ganga.Utility.Config.configure(config_files, system_vars)
         # print config["RUNTIME_PATH"]
-
-        # self.new_user_wizard()
 
         # set the system variables to the [System] module
         # syscfg.setDefaultOptions(system_vars,reset=1)
@@ -1027,8 +995,7 @@ default_backends = LCG
                     return stripProxy(obj)._name
                 else:
                     logger = Ganga.Utility.logging.getLogger()
-                    logger.error(
-                        "Object %s DOES NOT have the _name parameter set" % (str(obj)))
+                    logger.error("Object %s DOES NOT have the _name parameter set" % (str(obj)))
                     import traceback
                     traceback.print_stack()
                     return ""
@@ -1050,8 +1017,7 @@ default_backends = LCG
                     return stripProxy(obj)._category
                 else:
                     logger = Ganga.Utility.logging.getLogger()
-                    logger.error(
-                        "Object %s DOES NOT have the _category parameter set" % (str(obj)))
+                    logger.error("Object %s DOES NOT have the _category parameter set" % (str(obj)))
                     import traceback
                     traceback.print_stack()
                     return ""
@@ -1087,8 +1053,7 @@ default_backends = LCG
         # FIXME: DEPRECATED
         def list_plugins(category):
             """List all plugins in a given category, OBSOLETE: use plugins(category)"""
-            logger.warning(
-                'This function is deprecated, use plugins("%s") instead', category)
+            logger.warning('This function is deprecated, use plugins("%s") instead', category)
             from Ganga.Utility.Plugin import allPlugins
             return allPlugins.allClasses(category).keys()
 
@@ -1363,8 +1328,6 @@ default_backends = LCG
 #            ipconfig.addOption('args',"['-colors','LightBG', '-noautocall']",'FIXME')
             args = eval(ipconfig['args'])
 
-            self.check_IPython()
-
             # buffering of log messages from all threads called "GANGA_Update_Thread"
             # the logs are displayed at the next IPython prompt
 
@@ -1394,22 +1357,36 @@ default_backends = LCG
 
         return
 
-    def check_IPython(self):
+    def check_IPythonDir(self):
 
-        try:
-            logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', os.environ['IPYTHONDIR'])
-        except KeyError:
+        not_exist = False
+
+        if 'IPYTHONDIR' in os.environ.keys():
+            ipyth_dir = os.environ['IPYTHONDIR']
+            os.environ['IPYTHONDIR'] = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
+            #logger.warning('Environment variable IPYTHONDIR=%s exists and overrides the default history file for Ganga IPython commands', ipyth_dir)
+            if not os.path.isdir(ipyth_dir):
+                if os.path.exists(ipyth_dir):
+                    ipyth_dir_bak = str(ipyth_dir).append('_bak')
+                    logger.warning('IPYTHONDIR points to: %s which is not a directory, moving it to: %s' % (ipyth_dir, ipyth_dir_bak))
+                    os.rename(ipyth_dir, ipyth_dir_bak)
+                    not_exist = True
+        else:
             newpath = os.path.expanduser('~/.ipython-ganga')
             oldpath = os.path.expanduser('~/.ipython')
             os.environ['IPYTHONDIR'] = newpath
             if not os.path.exists(newpath):
                 if os.path.exists(oldpath):
                     logger.warning('Default location of IPython history files has changed.')
-                    logger.warning('Ganga will now try to copy your old settings from %s to the new path %s. If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*', oldpath, newpath, newpath)
+                    logger.warning('Ganga will now try to copy your old settings from %s to the new path %s.\
+                            If you do not want that, quit Ganga and wipe off the content of new path: rm -rf %s/*', oldpath, newpath, newpath)
                     import shutil
                     shutil.copytree(oldpath, newpath)
                 else:
-                    os.makedirs(newpath)
+                    not_exist = True
+
+        if not_exist:
+            os.makedirs(os.environ['IPYTHONDIR'])
 
         return None
 
@@ -1455,6 +1432,12 @@ default_backends = LCG
 
         from Ganga.Runtime.IPythonMagic import magic_ganga
         ipshell.define_magic('ganga', magic_ganga)
+
+
+        from Ganga.Utility.Config.Config import getConfig
+        config = getConfig('Configuration')
+
+        ipshell.confirm_exit = config['confirm_exit']
 
         # Launch embedded shell
         ipshell(local_ns=local_ns, global_ns=local_ns)
@@ -1538,6 +1521,10 @@ default_backends = LCG
             #readline.parse_and_bind('set output-meta on')
             #readline.parse_and_bind('set convert-meta off')
             readline.set_completion_display_matches_hook(t.displayer)
+
+        from Ganga.Utility.Config.Config import getConfig
+        config = getConfig('Configuration')
+
         system_exit_script = """\
 def exit( value=None ):
   import IPython
@@ -1546,7 +1533,9 @@ def exit( value=None ):
       __IP.exit_now = True
   else:
     __IP.exit_now = True
-"""
+
+__IP.rc.confirm_exit = %s
+""" % config['confirm_exit']
 
         ipshell.IP.runlines(system_exit_script)
 
