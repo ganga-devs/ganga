@@ -104,6 +104,7 @@ def _site_configuration(option, opt_str, value, parser):
     WriteVar("GANGA_CONFIG_PATH",_createpath(select),
              parser.values.shell, parser.values.output)
 
+
     # Protect against slight problem with upgraded version of iPython
     ffolder = os.path.expandvars(join('$HOME', '.ipython'))
     fname = os.path.expandvars(join(ffolder,'ipy_user_conf.py'))
@@ -156,9 +157,9 @@ if __name__ == '__main__':
     
     parser = OptionParser()
 
-    parser.add_option("-d", "--dirac", action="callback", callback = _store_dirac_environment, help="Setup Dirac environment and store result in file pointed to by $GANGADIRACENVIRONMENT")
-
     parser.add_option("-g", "--ganga", action="callback", callback = _site_configuration, help="Setup the site configuration for Ganga")
+
+    parser.add_option("-d", "--dirac", action="callback", callback = _store_dirac_environment, help="Setup Dirac environment and store result in file pointed to by $GANGADIRACENVIRONMENT")
 
     parser.add_option("-r", "--root", action="callback", callback = _store_root_version, help="Store in the environment variable 'ROOTVERSION' the verion number of the release pointed to by 'ROOTSYS'")
 
