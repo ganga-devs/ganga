@@ -386,6 +386,7 @@ class Descriptor(object):
             return self.__cloneVal(v, obj)
 
         obj_reg = obj._getRegistry()
+        full_reg = obj_reg is not None and hasattr(obj_reg, 'dirty_flush_counter')
 
         ### THIS CODE HERE CHANGES THE DIRTY FLUSH COUNTER SUCH THAT GANGALIST OBJECTS ARE WRITTEN TO DISK ATOMICALLY
         ### THIS COMES WITH A MAJOR PERFORMANCE IMPROVEMENT IN SOME CODE THAT REALLY SHOULDN'T BE SLOW
@@ -393,18 +394,17 @@ class Descriptor(object):
 
         ## NB Should really tie in the default here to defaults from Core
         old_count = 10
-        if obj_reg is not None:
-            if hasattr(val, '__len__'):
-                old_count = obj_reg.dirty_flush_counter
-                val_len = 2*len(val) + 10
-                obj_reg.dirty_flush_counter = val_len
-                obj_len = 1
-                if len(val) > 0:
-                    bare_val = stripProxy(val)
-                    if hasattr(bare_val, '_schema'):
-                        obj_len = len(stripProxy(bare_val._schema).datadict.keys())
-                        obj_len = obj_len*2
-                val_len = val_len * obj_len
+        if hasattr(val, '__len__') and full_reg:
+            old_count = obj_reg.dirty_flush_counter
+            val_len = 2*len(val) + 10
+            obj_reg.dirty_flush_counter = val_len
+            obj_len = 1
+            if len(val) > 0:
+                bare_val = stripProxy(val)
+                if hasattr(bare_val, '_schema'):
+                    obj_len = len(stripProxy(bare_val._schema).datadict.keys())
+                    obj_len = obj_len*2
+            val_len = val_len * obj_len
 
         if item['sequence']:
             _preparable = True if item['preparable'] else False
@@ -423,7 +423,7 @@ class Descriptor(object):
             val._setParent(obj)
         
         ### RESET DIRTY COUNT
-        if obj_reg is not None:
+        if full_reg:
             obj_reg.dirty_flush_counter = old_count
 
         obj._data[self._name] = val
