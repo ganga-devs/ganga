@@ -106,7 +106,7 @@ def _site_configuration(option, opt_str, value, parser):
 
     # Protect against slight problem with upgraded version of iPython
     fname = os.path.expandvars(join('$HOME','.ipython','ipy_user_conf.py'))
-    if not isfile(fname):
+    if not isfile(fname) and os.path.exists(join('$HOME', '.ipython')):
         try:
             os.system('touch %s' %fname)
         except:
