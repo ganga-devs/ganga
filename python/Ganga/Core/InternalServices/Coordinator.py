@@ -183,14 +183,15 @@ def disableInternalServices(shutdown=False):
     """
 
     if shutdown is not True:
-        log.info(
-            "Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
+        log.info("Ganga is now attempting to shut down all running processes accessing the repository in a clean manner")
         log.info(" ... Please be patient! ")
 
+
+    ## MOVED TO THE END OF THE SHUTDOWN SO THAT WE NEVER ACCESS A REPO BEFORE WE ARE FINISHED!
     # flush the registries
-    log.debug("Coordinator Shutting Down Repository_runtime")
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.shutdown()
+    #log.debug("Coordinator Shutting Down Repository_runtime")
+    #from Ganga.Runtime import Repository_runtime
+    #Repository_runtime.shutdown()
 
     global servicesEnabled
 
@@ -209,12 +210,10 @@ def disableInternalServices(shutdown=False):
     # getStackTrace()
     # log.info(queues_threadpoolMonitor._display(0))
 
-    log.debug(
-        "Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services")
+    log.debug("Ganga is now about to shutdown the repository, any errors after this are likely due to badly behaved services")
 
     if shutdown is not True:
-        log.info(
-            "Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
+        log.info("Ganga is shutting down the repository, to regain access, type 'reactivate()' at your prompt")
 
     # flush the registries
     #log.debug( "Coordinator Shutting Down Repository_runtime" )

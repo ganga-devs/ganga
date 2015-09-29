@@ -56,18 +56,29 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
-    #from Ganga.Core import monitoring_component
-    # if monitoring_component is not None:
-    #    monitoring_component.disableMonitoring()
+    # Set the disk timeout to 1 sec, sacrifice stability for quick-er exit
+    from Ganga.Utility.Config import setConfigOption
+    setConfigOption('Configuration', 'DiskIOTimeout', 1)
 
+    try:
+        from Ganga.GPI import queues
+        queues.lock()
+    except Exception, err:
+        logger.debug("This should only happen if Ganga filed to initialize correctly")
+
+    ## Stop the Mon loop from iterating further!
+    from Ganga.Core import monitoring_component
+    if monitoring_component is not None:
+        monitoring_component.disableMonitoring()
+
+    ## This will stop the Registries flat but we may still have threads processing data!
     #from Ganga.Core.InternalServices import Coordinator
-    # if Coordinator.servicesEnabled:
+    #if Coordinator.servicesEnabled:
     #    Coordinator.disableInternalServices( shutdown = True )
 
     # Set the disk timeout to 3 sec, sacrifice stability for quick-er exit
-    from Ganga.Utility.Config import setConfigOption
-    setConfigOption('Configuration', 'DiskIOTimeout', 3)
-    
+    #from Ganga.Utility.Config import setConfigOption
+    #setConfigOption('Configuration', 'DiskIOTimeout', 3)
 
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import _purge_actions_queue, stop_and_free_thread_pool
     _purge_actions_queue()
@@ -119,9 +130,12 @@ def _ganga_run_exitfuncs():
                 logger.debug("noclass : " + func.__name__)
             func(*targs, **kargs)
         except Exception as x:
-            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (
-                func.__name__, str(x))
+            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__, str(x))
             logger.warning(s)
+
+    logger.debug("Shutting Down Repository_runtime")
+    from Ganga.Runtime import Repository_runtime
+    Repository_runtime.shutdown()
 
     import Ganga.Utility.logging
     if Ganga.Utility.logging.requires_shutdown is True:
