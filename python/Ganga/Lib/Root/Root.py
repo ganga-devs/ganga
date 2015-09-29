@@ -392,7 +392,7 @@ class RootRTHandler(IRuntimeHandler):
                 arglist.append(self.quoteCintArgString(arg))
             else:
                 arglist.append(arg)
-        rootarg = '\(' + string.join([str(s) for s in arglist], ',') + '\)'
+        rootarg = '\("""' + string.join([str(s) for s in arglist], ',') + '"""\)'
 
         script = app.script
         if script == File():
@@ -533,7 +533,7 @@ def downloadWrapper(app):
                 arglist.append('\\\'' + arg + '\\\'')
             else:
                 arglist.append(arg)
-        rootarg = '\(' + string.join([str(s) for s in arglist], ',') + '\)'
+        rootarg = '\(\"' + string.join([str(s) for s in arglist], ',') + '\"\)'
 
         # use root
         commandline = 'root.exe -b -q ' + scriptPath + rootarg + ''

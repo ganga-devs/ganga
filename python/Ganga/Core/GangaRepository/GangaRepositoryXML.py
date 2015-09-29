@@ -44,7 +44,6 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
                 logger.warning("%s" % str(err))
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
-            # logger.warning('http://savannah.cern.ch/projects/ganga/')
             logger.warning('https://its.cern.ch/jira/browse/GANGA')
     elif hasattr(obj, 'analysis') and hasattr(obj.analysis, 'application') and \
             hasattr(obj.analysis.application, 'hash') and obj.analysis.application.hash is not None:
@@ -57,7 +56,6 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
                 logger.warning("%s" % str(err))
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
-            # logger.warning('http://savannah.cern.ch/projects/ganga/')
             logger.warning('https://its.cern.ch/jira/browse/GANGA')
 
     if not os.path.exists(fn):

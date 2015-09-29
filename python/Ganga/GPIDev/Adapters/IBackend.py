@@ -56,8 +56,6 @@ class IBackend(GangaObject):
 
     def _parallel_submit(self, b, sj, sc, master_input_sandbox, fqid, logger):
 
-        #global pSubmitLok
-        #lock = pSubmitLock
         try:
             sj.updateStatus('submitting')
             if b.submit(sc, master_input_sandbox):
@@ -65,22 +63,18 @@ class IBackend(GangaObject):
                 sj.info.increment()
             else:
                 raise IncompleteJobSubmissionError(fqid, 'submission failed')
-        except Exception as x:
-            from Ganga.Utility.logging import log_user_exception
-            sj.updateStatus('new')
+        except Exception as err:
+            #from Ganga.Utility.logging import log_user_exception
+            sj.updateStatus('failed')
+
             from Ganga.Core.exceptions import GangaException
-            if isinstance(x, GangaException):
-                logger.error(str(x))
+            if isinstance(err, GangaException):
+                logger.error(str(err))
                 log_user_exception(logger, debug=True)
             else:
                 log_user_exception(logger, debug=False)
         finally:
             pass
-            #try:
-            #    lock.release()
-            #except:
-            #    Ganga.Utility.logging.log_unknown_exception()
-            #    pass
 
     def master_submit(self, rjobs, subjobconfigs, masterjobconfig, keep_going=False, parallel_submit=False):
         """  Submit   the  master  job  and  all   its  subjobs.   The

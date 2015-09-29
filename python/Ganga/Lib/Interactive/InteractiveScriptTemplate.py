@@ -54,7 +54,7 @@ pyCommandList = [
 pyCommandString = ';'.join( pyCommandList )
 
 commandStr = '\'' + str('###EXE_STRING### ###ARG_STRING###') + '\''
-commandStr = commandStr.replace('"', '\'')
+#commandStr = commandStr.replace('"', '\'')
 
 commandList = [
    'python -c "%s' % pyCommandString,

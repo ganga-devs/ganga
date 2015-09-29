@@ -139,9 +139,10 @@ class Batch(IBackend):
         if self.queue:
             queue_option = '-q ' + str(self.queue)
 
-        if 'jobnameopt' in self.config.keys():
+        try:
             jobnameopt = "-" + self.config['jobnameopt']
-        else:
+        except Exception, err:
+            logger.debug("Unknown error: %s" % str(err))
             jobnameopt = False
 
         if self.extraopts:

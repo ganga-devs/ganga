@@ -1,10 +1,10 @@
 # This, although inheriting from GangaList should be here as the class has to know about on-disk structure of the XML repo
 
 from Ganga.GPIDev.Schema.Schema import Schema, SimpleItem, Version
-#from Ganga.GPIDev.Lib.GangaList import GangaList
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
+from Ganga.Core.exceptions import GangaException
 logger = getLogger()
 
 class SubJobXMLList(GangaObject):
