@@ -629,15 +629,16 @@ class GangaObject(Node):
                 if not item['copyable']:
                     setattr(c, name, self._schema.getDefaultValue(name))
                 if item.isA(Schema.SharedItem):
+
                     shared_dir = getattr(c, name)
-                    #try:
-                    from Ganga.Core.GangaRepository import getRegistry
-                    shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
-                    logger.debug("Increasing shareref")
-                    shareref.increase(shared_dir.name)
-                    #except AttributeError, err:
-                    #    logger.debug("__deepcopy__ Exception: %s" % str(err))
-                    #    pass
+
+                    if hasattr(shared_dir, 'name'):
+
+                        from Ganga.Core.GangaRepository import getRegistry
+                        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+
+                        logger.debug("Increasing shareref")
+                        shareref.increase(shared_dir.name)
         return c
 
     def accept(self, visitor):
@@ -669,6 +670,8 @@ class GangaObject(Node):
                     reg._write_access(root)
                     _haveLocked = True
                 except (RegistryLockError, RegistryAccessError) as x:
+                    import traceback
+                    traceback.print_stack()
                     from time import sleep
                     sleep(_sleep_size)  # Sleep 2 sec between tests
                     logger.info("Waiting on Write access to registry: %s" % reg.name)
