@@ -46,6 +46,8 @@ class ThreadPoolQueueMonitor(object):
         _user_threadpool = self._user_threadpool
         _monitoring_threadpool = self._monitoring_threadpool
 
+        self._locked = False
+
     def _display_element(self, item):
         if hasattr(item, 'name') and item.name != None:
             return item.name
@@ -215,6 +217,10 @@ class ThreadPoolQueueMonitor(object):
             logger.error("Error Adding internal task!! please report this to the Ganga developers!")
             return
 
+        if self._locked is True:
+            logger.warning("Queue System is locked not adding any more System processes!")
+            return
+
         self._monitoring_threadpool.add_function(worker_code,
                                                  args=args,
                                                  kwargs=kwargs,
@@ -294,6 +300,10 @@ class ThreadPoolQueueMonitor(object):
             logger.error("Input command must be of type 'string'")
             return
 
+        if self._locked is True:
+            logger.warning("Queues system is Locked. Not adding any more processes!")
+            return
+
         self._user_threadpool.add_process(command,
                                           timeout=timeout,
                                           env=env,
@@ -341,8 +351,17 @@ class ThreadPoolQueueMonitor(object):
         num = 0
         num = num + self.totalNumUserThreads()
         num = num + self.totalNumIntThreads()
-
         return num
+
+    def lock(self):
+        self._locked = True
+        self._user_threadpool._locked = True
+        self._monitoring_threadpool._locked = True
+
+    def unlock(self):
+        self._locked = False
+        self._user_threadpool._locked = False
+        self._monitoring_threadpool._locked = False
 
     def _stop_all_threads(self):
         self._user_threadpool._stop_worker_threads()
@@ -353,3 +372,4 @@ class ThreadPoolQueueMonitor(object):
         self._user_threadpool._start_worker_threads()
         self._monitoring_threadpool._start_worker_threads()
         return
+
