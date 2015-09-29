@@ -180,6 +180,7 @@ def getOutputDataInfo(id):
     ret = {}
     result = getOutputDataLFNs(id, pipe_out=False)
     if result.get('OK', False) and 'Value' in result:
+        ret = result
         for lfn in result.get('Value', []):
             file_name = os.path.basename(lfn)
             ret.update({file_name: {'LFN': lfn}})
@@ -199,6 +200,8 @@ def getOutputDataInfo(id):
             if rp.get('OK', False) and lfn in rp.get('Value', {'Successful': {}})['Successful']:
                 ret[file_name].update(
                     {'LOCATIONS': rp['Value']['Successful'][lfn].keys()})
+    else:
+        ret = result
     output(ret)
 
 
