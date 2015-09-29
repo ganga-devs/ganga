@@ -14,27 +14,22 @@ from Ganga.GPIDev.Base.Proxy import stripProxy
 
 # Setup logging ---------------
 import Ganga.Utility.logging
-log = Ganga.Utility.logging.getLogger()
 
 from Ganga.Core import BackendError
 import Ganga.Utility.Config
-config = Ganga.Utility.Config.makeConfig(
-    'PollThread', 'background job status monitoring and output retrieval')
+
+log = Ganga.Utility.logging.getLogger()
+
+config = Ganga.Utility.Config.makeConfig('PollThread', 'background job status monitoring and output retrieval')
 
 # some defaults
-config.addOption('repeat_messages', False,
-                 'if 0 then log only once the errors for a given backend and do not repeat them anymore')
-config.addOption('autostart', True, 'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(
-    True))  # enable monitoring on startup
+config.addOption('repeat_messages', False, 'if 0 then log only once the errors for a given backend and do not repeat them anymore')
+config.addOption('autostart', True, 'enable monitoring automatically at startup, in script mode monitoring is disabled by default, in interactive mode it is enabled', type=type(True))  # enable monitoring on startup
 config.addOption('base_poll_rate', 2, 'internal supervising thread', hidden=1)
-config.addOption('MaxNumResubmits', 5,
-                 'Maximum number of automatic job resubmits to do before giving')
-config.addOption('MaxFracForResubmit', 0.25,
-                 'Maximum fraction of failed jobs before stopping automatic resubmission')
-config.addOption('update_thread_pool_size', 5,
-                 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
-config.addOption('default_backend_poll_rate', 30,
-                 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
+config.addOption('MaxNumResubmits', 5, 'Maximum number of automatic job resubmits to do before giving')
+config.addOption('MaxFracForResubmit', 0.25, 'Maximum fraction of failed jobs before stopping automatic resubmission')
+config.addOption('update_thread_pool_size', 5, 'Size of the thread pool. Each threads monitors a specific backaend at a given time. Minimum value is one, preferably set to the number_of_backends + 1')
+config.addOption('default_backend_poll_rate', 30, 'Default rate for polling job status in the thread pool. This is the default value for all backends.')
 config.addOption('Local', 10, 'Poll rate for Local backend.')
 config.addOption('LCG', 30, 'Poll rate for LCG backend.')
 config.addOption('Condor', 30, 'Poll rate for Condor backend.')
@@ -43,20 +38,15 @@ config.addOption('LSF', 20, 'Poll rate for LSF backend.')
 config.addOption('PBS', 20, 'Poll rate for PBS backend.')
 config.addOption('Dirac', 50, 'Poll rate for Dirac backend.')
 config.addOption('Panda', 50, 'Poll rate for Panda backend.')
-#config.addOption( 'TestSubmitter', 1, 'Poll rate for TestSubmitter')
 
 # Note: the rate of this callback is actually
 # MAX(base_poll_rate,callbacks_poll_rate)
-config.addOption(
-    'creds_poll_rate', 30, "The frequency in seconds for credentials checker")
-config.addOption(
-    'diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
-config.addOption('DiskSpaceChecker', "",
-                 "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
+config.addOption('creds_poll_rate', 30, "The frequency in seconds for credentials checker")
+config.addOption('diskspace_poll_rate', 30, "The frequency in seconds for free disk checker")
+config.addOption('DiskSpaceChecker', "", "disk space checking callback. This function should return False when there is no disk space available, True otherwise")
 
 
-config.addOption(
-    'max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
+config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
 
 
 THREAD_POOL_SIZE = config['update_thread_pool_size']
@@ -396,6 +386,8 @@ class JobRegistry_Monitor(GangaThread):
         self.stopIter = threading.Event()
         self.stopIter.set()
 
+        self._runningNow = False
+
     def isEnabled( self ):
         return self.enabled or self.__isInProgress()
 
@@ -646,6 +638,10 @@ class JobRegistry_Monitor(GangaThread):
             log.debug('Monitoring loop disabled')
             # wake up the monitoring loop
             self.__mainLoopCond.notifyAll()
+
+        while self._runningNow is True:
+            time.sleep(0.5)
+
         return True
 
     def stop(self, fail_cb=None, max_retries=5):
@@ -689,6 +685,10 @@ class JobRegistry_Monitor(GangaThread):
         # join the worker threads
         # stop_and_free_thread_pool(fail_cb,max_retries)
         ###log.info( 'Monitoring component stopped successfully!' )
+
+        while self._runningNow is True:
+            time.sleep(0.5)
+
         return True
 
     def __cleanUp(self):
@@ -783,11 +783,12 @@ class JobRegistry_Monitor(GangaThread):
                 j = self.registry(i)
                 log.debug("Job #%s status: %s" % (str(i), str(j.status)))
                 if j.status in ['submitted', 'running'] or (j.master and (j.status in ['submitting'])):
-                    j._getWriteAccess()
-                    bn = j.backend._name
-                    log.debug("active_backends.setdefault: %s" % str(bn))
-                    active_backends.setdefault(bn, [])
-                    active_backends[bn].append(j)
+                    if self.enabled is True and self.alive is True:
+                        j._getReadAccess()
+                        bn = j.backend._name
+                        log.debug("active_backends.setdefault: %s" % str(bn))
+                        active_backends.setdefault(bn, [])
+                        active_backends[bn].append(j)
             except RegistryKeyError, err:
                 log.debug("RegistryKeyError: The job was most likely removed")
                 log.debug("%s" % str(err))
@@ -809,6 +810,7 @@ class JobRegistry_Monitor(GangaThread):
             currentThread = threading.currentThread()
             # timeout mechanism may have acquired the lock to impose delay.
             lock.acquire()
+            self._runningNow = True
             try:
                 log.debug("[Update Thread %s] Lock acquired for %s" % (currentThread, backendObj._name))
                 #alljobList_fromset = IList(filter(lambda x: x.status in ['submitted', 'running'], jobListSet), self.stopIter)
@@ -818,7 +820,7 @@ class JobRegistry_Monitor(GangaThread):
                 #FIXME We've lost IList and the above method for adding a job which is in a submitted state looks like one that didn't work
                 # Come back and fix this once 6.1.3 is out. We can drop features for functionalist here as the lazy loading is fixed in this release
                 # rcurrie
-                alljobList_fromset = list(filter(lambda x: x.status in ['submitted', 'running'], jobListSet))
+                alljobList_fromset = list(filter(lambda x: x.status in ['submitting', 'submitted', 'running'], jobListSet))
                 masterJobList_fromset = list()
 
                 # print masterJobList_fromset
@@ -833,8 +835,11 @@ class JobRegistry_Monitor(GangaThread):
                         if hasattr(j, 'backend'):
                             if hasattr(j.backend, 'setup'):
                                 j.backend.setup()
-                    backendObj.master_updateMonitoringInformation(
-                        jobList_fromset)
+
+                    if self.enabled is not True or self.alive is not True:
+                        return
+
+                    backendObj.master_updateMonitoringInformation(jobList_fromset)
 
                     # resubmit if required
                     for j in jobList_fromset:
@@ -885,6 +890,7 @@ class JobRegistry_Monitor(GangaThread):
             finally:
                 lock.release()
                 log.debug("[Update Thread %s] Lock released for %s." % (currentThread, backendObj._name))
+                self._runningNow = False
 
         def f(activeBackendsFunc):
             log.debug("calling function f")
