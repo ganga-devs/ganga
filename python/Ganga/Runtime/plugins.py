@@ -50,5 +50,7 @@ import Ganga.GPIDev.Lib.Tasks
 
 logger.debug("Loading Checkers")
 import Ganga.Lib.Checkers
+logger.debug("Loading Notifier")
+import Ganga.Lib.Notifier
 
 logger.debug("Finished Runtime.plugins")
