@@ -1550,7 +1550,13 @@ __IP.rc.confirm_exit = %s
 
         override_credits()
         # global_ns: FIX required by ipython 0.8.4+
-        ipshell(local_ns=local_ns, global_ns=local_ns)
+        try:
+            ipshell(local_ns=local_ns, global_ns=local_ns)
+        except Exception, err:
+            logger.error("FATAL ERROR! IPYTHON SHELL CRASHED")
+            logger.error("this has likely been caused by shutting down with a local ill-defined variable in your namespace")
+            sys.exit(-1)
+
 
         return
 
