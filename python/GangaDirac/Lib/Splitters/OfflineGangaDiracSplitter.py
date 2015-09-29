@@ -250,15 +250,7 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
             this_dict = {}
             this_dict[this_lfn] = values.get(this_lfn)
 
-            # FIXME HORRIBLE HACK BUT THERE ARE LYTERALLY THOUSANDS OF I/O
-            # OPERATIONS HAPPENING DUE TO THIS, LETS MINIMISE IT
-
             if this_lfn in LFNdict:
-#                reg = stripProxy(LFNdict[this_lfn])._getRegistry()
-#                if reg is not None:
-#                    original_write_perm[this_lfn] = reg.dirty_flush_counter
-#                    reg.dirty_flush_counter = 1000
-#
                 logger.debug("Updating RemoteURLs")
                 LFNdict[this_lfn]._updateRemoteURLs(this_dict)
                 logger.debug("This_dict: %s" % str(this_dict))
@@ -270,17 +262,11 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
                 bad_lfns.append(this_lfn)
 
         for this_lfn in bad_lfns:
-            logger.warning(
-                "LFN: %s was either unknown to DIRAC or unavailable, Ganga is ignoring it!" % str(this_lfn))
-            del LFNdict[this_lfn]
-            allLFNs.remove(this_lfn)
-
-    # FIXME AS ABOVE THIS IS HERE TO RESTORE NORMALITY
-#    for k, v in original_write_perm.iteritems():
-#        if k in bad_lfns:
-#            continue
-#        from Ganga.GPIDev.Base.Proxy import stripProxy
-#        stripProxy(LFNdict[k])._getRegistry().dirty_flush_counter = v
+            logger.warning("LFN: %s was either unknown to DIRAC or unavailable, Ganga is ignoring it!" % str(this_lfn))
+            if this_lfn in LFNdict:
+                del LFNdict[this_lfn]
+            if this_lfn in allLFNs:
+                allLFNs.remove(this_lfn)
 
     return errors
 
@@ -331,8 +317,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     bad_lfns = []
 
     # Sort this information and store is in the relevant Ganga objects
-    errors = sortLFNreplicas(
-        bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
+    errors = sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData)
 
     if len(bad_lfns) != 0:
         if ignoremissing is False:
@@ -342,8 +327,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
     # This finds all replicas for all LFNs...
     # This will probably struggle for LFNs which don't exist
     # Bad LFN should have been removed by this point however
-    all_lfns = [
-        LFNdict[this_lfn].locations for this_lfn in LFNdict if this_lfn not in bad_lfns]
+    all_lfns = [LFNdict[this_lfn].locations for this_lfn in LFNdict if this_lfn not in bad_lfns]
 
     logger.info("Got replicas")
 
@@ -390,8 +374,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
             req_sitez = allChosenSets[iterating_LFN]
             _this_subset = []
 
-            logger.debug(
-                "find common LFN for: " + str(allChosenSets[iterating_LFN]))
+            logger.debug("find common LFN for: " + str(allChosenSets[iterating_LFN]))
 
             # Construct subset
             # Starting with i, populate subset with LFNs which have an
@@ -416,8 +399,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
             else:
                 logger.debug("%s > %s" % (str(len(_this_subset)), str(limit)))
                 # else Dataset was large enough to be considered useful
-                logger.info("Generating Dataset of size: %s" %
-                            str(len(_this_subset)))
+                logger.info("Generating Dataset of size: %s" % str(len(_this_subset)))
                 allSubSets.append(_this_subset)
 
                 for lfn in _this_subset:
