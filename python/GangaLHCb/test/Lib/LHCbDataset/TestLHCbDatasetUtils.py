@@ -28,15 +28,15 @@ class TestLHCbDatasetUtils(GangaGPITestCase):
 
     def test_strToDataFile(self):
         from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import strToDataFile
-        assert isinstance(strToDataFile('pfn:a'), PhysicalFile)
+        #assert isinstance(strToDataFile('pfn:a'), PhysicalFile)
         assert isinstance(strToDataFile('lfn:a'), LogicalFile)
         assert strToDataFile('a') is None
 
     def test_getDataFile(self):
         from GangaLHCb.Lib.LHCbDataset.LHCbDatasetUtils import getDataFile
         lfn = LogicalFile('a')
-        pfn = LogicalFile('a')
+        pfn = LocalFile('a')
         assert getDataFile(lfn) == lfn
         assert getDataFile(pfn) == pfn
         assert getDataFile('lfn:a') == strToDataFile('lfn:a')
-        assert getDataFile('pfn:a') == strToDataFile('pfn:a')
+        #assert getDataFile('pfn:a') == strToDataFile('pfn:a')

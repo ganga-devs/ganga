@@ -29,6 +29,7 @@ class TestGaudiUtils(GangaGPITestCase):
         assert type(self.apps) == type([]), 'available_apps must return a list'
         assert len(self.apps) > 0, 'no apps found'
 
+    ## FIXME needsw to be updated
     def test_available_packs(self):
         for app in self.apps:
             try:
@@ -37,12 +38,14 @@ class TestGaudiUtils(GangaGPITestCase):
             except KeyError as err:
                 assert False, 'application %s has no packages' % app
 
+    ## FIXME needs to be updated
     def test_available_versions(self):
         for app in self.apps:
             from GangaLHCb.Lib.Applications.AppsBaseUtils import available_versions
             versions = available_versions(app)
             assert len(versions) > 0, 'application %s has no versions' % app
 
+    ## FIXME needs to be updated
     def test_guess_version(self):
         for app in self.apps:
             from GangaLHCb.Lib.Applications.AppsBaseUtils import guess_version

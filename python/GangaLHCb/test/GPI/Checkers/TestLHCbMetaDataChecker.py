@@ -66,3 +66,4 @@ class TestLHCbMetaDataChecker(GangaGPITestCase):
 
         self.c.expression = 'outputevents > 0'
         assert not self.c.check(self.davinci_job)
+
