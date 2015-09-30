@@ -137,6 +137,8 @@ def loadPlugins(config={}):
     import Lib.Tasks
     logger.debug("Importing Files")
     import Lib.Files
+    logger.debug("Importing Checkers")
+    import Lib.Checkers
     logger.debug("Finished Importing")
 
 from Ganga.GPIDev.Lib.File.Configure import outputconfig

@@ -52,32 +52,28 @@ class LHCbMetaDataChecker(MetaDataChecker):
         if self.expression.find('inputevents') > -1:
             try:
                 inputevents = j.metadata['events']['input']
-            except:
-                raise PostProcessException(
-                    "The metadata value j.events['input'] was not defined")
+            except Exception, err:
+                logger.error("%s" % str(err))
+                raise PostProcessException("The metadata value j.events['input'] was not defined")
         if self.expression.find('outputevents') > -1:
             try:
                 outputevents = j.metadata['events']['output']
             except:
-                raise PostProcessException(
-                    "The metadata value j.events['output'] was not defined")
+                raise PostProcessException("The metadata value j.events['output'] was not defined")
         if self.expression.find('lumi') > -1:
             try:
-                lumi = float(
-                    j.metadata['lumi'][1:j.metadata['lumi'].find(' ')])
+                lumi = float(j.metadata['lumi'][1:j.metadata['lumi'].find(' ')])
             except:
-                raise PostProcessException(
-                    "The metadata value j.lumi was not defined")
+                raise PostProcessException("The metadata value j.lumi was not defined")
         if self.expression.find('nskipped') > -1:
             try:
                 nskipped = len(j.metadata['xmlskippedfiles'])
             except:
-                raise PostProcessException(
-                    "The metadata value j.xmlskippedfiles was not defined")
+                raise PostProcessException("The metadata value j.xmlskippedfiles was not defined")
         if self.expression.find('nfiles') > -1:
             try:
                 nfiles = float(j.metadata['xmldatanumbers']['full'])
             except:
-                raise PostProcessException(
-                    "The metadata value j.xmldatanumbers was not defined")
+                raise PostProcessException("The metadata value j.xmldatanumbers was not defined")
         return eval(self.expression)
+

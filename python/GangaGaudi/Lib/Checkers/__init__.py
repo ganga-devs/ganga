@@ -1,1 +1,1 @@
-from LHCbMetadataChecker import LHCbMetaDataChecker
+from GaudiMetaDataChecker import GaudiMetaDataChecker
