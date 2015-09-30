@@ -126,15 +126,17 @@ class PythonOptionsParser:
             logger.debug('No inputdata has been defined in the options file.')
             logger.debug("%s" % str(err))
 
+        from Ganga.GPIDev.Base.Filters import allComponentFilters
+        file_filter = allComponentFilters['gangafiles']
         ds = LHCbDataset()
         for d in data:
             p1 = d.find('DATAFILE=') + len('DATAFILE=')
             quote = d[p1]
             p2 = d.find(quote, p1 + 1)
             f = d[p1 + 1:p2]
-            this_file = strToDataFile(f)
+            this_file = file_filter(f, None)
             if this_file is None:
-                this_file = PhysicalFile(name=f)
+                this_file = LocalFile(name=f)
             ds.files.append(this_file)
         return ds
 

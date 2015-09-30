@@ -4,24 +4,16 @@ from GangaTest.Framework.tests import GangaGPITestCase
 from Ganga import GPI
 from tempfile import mkdtemp
 
-try:
-    import Ganga.Utility.Config.Config
-    doConfig = not Ganga.Utility.Config.Config._after_bootstrap
-except x:
-    print(x)
-    doConfig = True
-
-if doConfig:
-    from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
-    from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-    from GangaLHCb.Lib.Splitters.OptionsFileSplitter import OptionsFileSplitter
-    from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
+from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHandler
+from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
+from GangaLHCb.Lib.Splitters.OptionsFileSplitter import OptionsFileSplitter
+from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
 
 
 class TestSplitters(GangaGPITestCase):
 
     # def test_copy_app(self):
-    ##         app_orig = DaVinci()._impl
+    ##         app_orig = DaVinci()
     ##         app_orig.user_release_area = 'Geno71'
     # app_orig.extra = GaudiExtras()
     # app_orig.extra.input_buffers['test.buf'] = 'Go Pens!'
@@ -43,13 +35,13 @@ class TestSplitters(GangaGPITestCase):
 
     def test_SplitByFiles_split(self):
         job = Job(application=DaVinci())
-        #job.application._impl.extra = GaudiExtras()
+        #job.application.extra = GaudiExtras()
         job.splitter = GPI.SplitByFiles(filesPerJob=2)
         dummy_files = ['pfn:f1.dst', 'pfn:f2.dst', 'pfn:f3.dst', 'pfn:f4.dst',
                        'pfn:f5.dst']
-        job._impl.inputdata = LHCbDataset(dummy_files)._impl
+        job.inputdata = LHCbDataset(dummy_files)
         job.prepare()
-        subjobs = job.splitter._impl.split(job._impl)
+        subjobs = job.splitter.split(job)
         assert len(subjobs) == 3, 'incorrect number of split jobs'
         # for i in range(0,3):
         jobconfigs = [LHCbGaudiRunTimeHandler().prepare(
@@ -79,18 +71,18 @@ class TestSplitters(GangaGPITestCase):
 
         # Check also that data in the optsfiles was picked up.
         job = Job(application=DaVinci())
-        #job.application._impl.extra = GaudiExtras()
+        #job.application.extra = GaudiExtras()
         job.splitter = GPI.SplitByFiles(filesPerJob=2)
         dummy_files = ['pfn:f1.dst', 'pfn:f2.dst', 'pfn:f3.dst', 'pfn:f4.dst',
                        'pfn:f5.dst']
-        l = LHCbDataset(dummy_files)._impl
+        l = LHCbDataset(dummy_files)
         tdir = mkdtemp()
         f = open(os.path.join(tdir, 'data.py'), 'w')
         f.write(l.optionsString())
         f.close()
         job.application.optsfile = [f.name]
         job.prepare()
-        subjobs = job.splitter._impl.split(job._impl)
+        subjobs = job.splitter.split(job)
         assert len(
             subjobs) == 3, 'incorrect number of split jobs, for data in optsfile'
         # for i in range(0,3):
@@ -124,8 +116,8 @@ class TestSplitters(GangaGPITestCase):
         splitter.optsArray = ['dummy1.opt', 'dummy2.opt', 'dummy3.opt']
         job = Job(application=DaVinci())
         job.prepare()
-        #job.application._impl.extra = GaudiExtras()
-        subjobs = splitter._impl.split(job._impl)
+        #job.application.extra = GaudiExtras()
+        subjobs = splitter.split(job)
         assert len(subjobs) == 3, 'incorrect number of subjobs'
 # def dataFilter(file):
 # return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0
@@ -147,10 +139,10 @@ class TestSplitters(GangaGPITestCase):
         f.write('')
         f.close()
         job.application.optsfile = 'this-is-not-a-file.opts'  # hack for Gauss
-        job.application._impl.master_configure()
+        job.application.master_configure()
         job.prepare()
         gsplit = GPI.GaussSplitter(eventsPerJob=1, numberOfJobs=3)
-        subjobs = gsplit._impl.split(job._impl)
+        subjobs = gsplit.split(job)
         assert len(subjobs) == 3, 'incorrect # of jobs'
 # def dataFilter(file):
 # return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0

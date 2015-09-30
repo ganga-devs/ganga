@@ -134,10 +134,17 @@ class SplitByFiles(GaudiInputDataSplitter):
 
         indata = inputdata
 
-        self.depth = indata.depth if indata is not None else 0
-        self.persistency = indata.persistency
+        if indata is not None:
 
-        self.XMLCatalogueSlice = indata.XMLCatalogueSlice
+            self.depth = indata.depth
+            self.persistency = indata.persistency
+            self.XMLCatalogueSlice = indata.XMLCatalogueSlice
+
+        else:
+
+            self.depth = 0
+            self.persistency = None
+            self.XMLCatalogueSlice = None
 
         if stripProxy(job.backend).__module__.find('Dirac') > 0:
 

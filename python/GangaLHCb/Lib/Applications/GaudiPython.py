@@ -103,7 +103,7 @@ class GaudiPython(GaudiBase):
     _schema.version.minor += 0
 
     def _get_default_version(self, gaudi_app):
-        return guess_version(gaudi_app)
+        return guess_version(self, gaudi_app)
 
     def _attribute_filter__set__(self, n, v):
         if n == 'project':
@@ -115,7 +115,7 @@ class GaudiPython(GaudiBase):
             self.project = 'DaVinci'  # default
         if (not self.appname):
             self.appname = self.project
-        self._init(False)
+        self._init()
 
     def _getshell(self):
         import EnvironFunctions
