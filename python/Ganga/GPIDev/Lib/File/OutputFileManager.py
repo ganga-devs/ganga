@@ -6,6 +6,8 @@ import copy
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Lib.File import FileUtils
 
+from Ganga.GPIDev.Base.Proxy import stripProxy
+
 """
 Checks if the output files of a given job(we are interested in the backend) 
 should be postprocessed on the WN, depending on job.backend_output_postprocess dictionary
@@ -13,9 +15,9 @@ should be postprocessed on the WN, depending on job.backend_output_postprocess d
 
 
 def outputFilePostProcessingOnWN(job, outputFileClassName):
-    backendClassName = job.backend.__class__.__name__
+    backendClassName = stripProxy(job.backend).__class__.__name__
 
-    backend_output_postprocess = job.getBackendOutputPostprocessDict()
+    backend_output_postprocess = stripProxy(job).getBackendOutputPostprocessDict()
     if backendClassName in backend_output_postprocess:
         if outputFileClassName in backend_output_postprocess[backendClassName]:
             if backend_output_postprocess[backendClassName][outputFileClassName] == 'WN':
@@ -31,9 +33,9 @@ should be postprocessed on the client, depending on job.backend_output_postproce
 
 
 def outputFilePostProcessingOnClient(job, outputFileClassName):
-    backendClassName = job.backend.__class__.__name__
+    backendClassName = stripProxy(job.backend).__class__.__name__
 
-    backend_output_postprocess = job.getBackendOutputPostprocessDict()
+    backend_output_postprocess = stripProxy(job).getBackendOutputPostprocessDict()
     if backendClassName in backend_output_postprocess:
         if outputFileClassName in backend_output_postprocess[backendClassName]:
             if backend_output_postprocess[backendClassName][outputFileClassName] == 'client':
@@ -57,7 +59,7 @@ def getOutputSandboxPatterns(job):
 
         for outputFile in job.outputfiles:
 
-            outputFileClassName = outputFile.__class__.__name__
+            outputFileClassName = stripProxy(outputFile).__class__.__name__
 
             if outputFilePostProcessingOnClient(job, outputFileClassName) or outputFileClassName == 'LocalFile':
                 if outputFile.namePattern not in outputPatterns:
@@ -86,7 +88,7 @@ def getInputFilesPatterns(job):
 
     for inputFile in inputfiles_list:
 
-        inputFileClassName = inputFile.__class__.__name__
+        inputFileClassName = stripProxy(inputFile).__class__.__name__
 
         if inputFileClassName == 'LocalFile':
             for currentFile in glob.glob(os.path.join(inputFile.localDir, inputFile.namePattern)):
@@ -118,7 +120,7 @@ def getOutputSandboxPatternsForInteractive(job):
 
     for outputFile in job.outputfiles:
 
-        outputFileClassName = outputFile.__class__.__name__
+        outputFileClassName = stripProxy(outputFile).__class__.__name__
 
         if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
             if outputFile.compressed:
@@ -147,7 +149,7 @@ def getWNCodeForOutputSandbox(job, files, jobid):
 
         for outputFile in job.outputfiles:
 
-            outputFileClassName = outputFile.__class__.__name__
+            outputFileClassName = stripProxy(outputFile).__class__.__name__
 
             if outputFileClassName == 'LocalFile' or (outputFileClassName != 'LocalFile' and outputFilePostProcessingOnClient(job, outputFileClassName)):
                 patternsToSandbox.append(outputFile.namePattern)
@@ -206,12 +208,12 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     # The LocalFiles in inputfiles have already been dealt with
     if job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
         for inputFile in job.inputdata.files:
-            inputfileClassName = inputFile.__class__.__name__
+            inputfileClassName = stripProxy(inputFile).__class__.__name__
 
             if inputfileClassName == "LocalFile":
 
                 # special case for LocalFile
-                if job.backend.__class__.__name__ in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
+                if stripProxy(job.backend).__class__.__name__ in ['Localhost', 'Batch', 'LSF', 'Condor', 'PBS']:
                     # create symlink
                     shortScript += """
 # create symbolic links for LocalFiles
@@ -231,7 +233,7 @@ for f in ###FILELIST###:
 
     for inputFile in inputfiles_list:
 
-        inputfileClassName = inputFile.__class__.__name__
+        inputfileClassName = stripProxy(inputFile).__class__.__name__
 
         if outputFilePostProcessingOnWN(job, inputfileClassName):
             inputFile.processWildcardMatches()
@@ -258,8 +260,8 @@ def getWNCodeForOutputPostprocessing(job, indent):
     else:
         for outputFile in job.outputfiles:
 
-            outputfileClassName = outputFile.__class__.__name__
-            backendClassName = job.backend.__class__.__name__
+            outputfileClassName = stripProxy(outputFile).__class__.__name__
+            backendClassName = stripProxy(job.backend).__class__.__name__
 
             if outputFile.compressed:
                 if outputfileClassName == 'LocalFile' and backendClassName not in ['Localhost', 'LSF', 'Interactive']:
