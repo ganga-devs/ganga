@@ -90,21 +90,47 @@ def getValidDiracFiles(job, names=None):
                     yield df
 
 last_modified_time = None
+last_modified_valid = False
 
 # This will move/change when new credential system in place
 ############################
 
 
-def _dirac_check_proxy():
+def _dirac_check_proxy( renew = True ):
+    global last_modified_valid
     if not proxy.isValid():
-        proxy.create()
-        if not proxy.isValid():
-            raise GangaException(
-                'Can not execute DIRAC API code w/o a valid grid proxy.')
+        if renew is True:
+            proxy.create()
+            if not proxy.isValid():
+                last_modified_valid = False
+                raise GangaException('Can not execute DIRAC API code w/o a valid grid proxy.')
+            else:
+                last_modified_valid = True
+        else:
+            last_modified_valid = False
+    else:
+        last_modified_valid = True
 ############################
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
 
+def _proxyValid():
+    _checkProxy( renew = False )
+    return last_modified_valid
+
+def _checkProxy( delay=60, renew = True ):
+    ## Function to check for a valid proxy once every 60( or n) seconds
+    global last_modified_time
+    if last_modified_time is None:
+        # This will move/change when new credential system in place
+        ############################
+        _dirac_check_proxy( renew )
+        ############################
+        last_modified_time = time.time()
+
+    if abs(last_modified_time - time.time()) > int(delay):
+        _dirac_check_proxy( renew )
+        last_modified_time = time.time()
 
 def execute(command,
             timeout=getConfig('DIRAC')['Timeout'],
@@ -125,17 +151,7 @@ def execute(command,
     if python_setup == '':
         python_setup = getDiracCommandIncludes()
 
-    global last_modified_time
-    if last_modified_time is None:
-        # This will move/change when new credential system in place
-        ############################
-        _dirac_check_proxy()
-        ############################
-        last_modified_time = time.time()
-
-    if abs(last_modified_time - time.time()) > 60:
-        _dirac_check_proxy()
-        last_modified_time = time.time()
+    _checkProxy()
 
     #logger.debug("Executing command:\n'%s'" % str(command))
     #logger.debug("python_setup:\n'%s'" % str(python_setup))

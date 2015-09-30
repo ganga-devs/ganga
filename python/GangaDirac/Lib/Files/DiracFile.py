@@ -90,10 +90,8 @@ class DiracFile(IGangaFile):
 
         if len(namePattern) >= 4 and str(namePattern).upper()[0:4] == "LFN:" and lfn == '':
             self._setLFNnamePattern(_lfn=namePattern[4:], _namePattern='')
-        elif namePattern != '' and lfn != '':
-                self._setLFNnamePattern(_lfn=lfn, _namePattern = namePattern)
-                self.lfn = lfn
-                self.namePattern = namePattern
+
+        self._setLFNnamePattern(_lfn=lfn, _namePattern = namePattern)
 
         if localDir is not None:
             self.localDir = expandfilename(localDir)
@@ -167,11 +165,15 @@ class DiracFile(IGangaFile):
         if value != "" or not value is None:
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
-                self._setLFNnamePattern(_lfn=value, _namePattern='')
-                return self.lfn
+                if self.namePattern == '':
+                    import os.path
+                    self.namePattern = os.path.basename(value)
+                self.remoteDir = os.path.dirname(value)
+                return value
+
             elif name == 'namePattern':
-                self._setLFNnamePattern(_lfn='', _namePattern=value)
-                return self.namePattern
+                self.localDir = os.path.dirname(value)
+                return value
 
             elif name == 'localDir':
                 return expandfilename(value)
@@ -185,9 +187,8 @@ class DiracFile(IGangaFile):
     def _setLFNnamePattern(self, _lfn="", _namePattern=""):
 
         if _lfn != "" and _lfn is not None:
-            if len(_lfn) > 3:
-                if _lfn[0:4] == "LFN:":
-                    _lfn = _lfn[4:]
+            if len(_lfn) > 3 and _lfn[0:4] == "LFN:":
+                _lfn = _lfn[4:]
 
         import os.path
 
