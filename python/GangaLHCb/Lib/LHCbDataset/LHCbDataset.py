@@ -15,6 +15,7 @@ from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Lib.File import IGangaFile
+## Can't do due to circular problems
 #from Ganga.GPI import DiracFile
 logger = Ganga.Utility.logging.getLogger()
 
@@ -60,13 +61,24 @@ class LHCbDataset(GangaDataset):
 
     def __init__(self, files=[], persistency=None, depth=0):
         new_files = GangaList()
-        for this_file in files:
-            if type(this_file) == type(''):
-                new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
-            elif isType(this_file, IGangaFile):
-                new_files.append(this_file, False)
-            else:
-                new_files.append(this_file)
+        if isType(files, LHCbDataset):
+            for this_file in files:
+                new_files.append(copy.deepcopy(this_file))
+        elif isType(files, IGangaFile):
+            new_files.append(copy.deepcopy(this_file))
+        elif type(files) == type([]):
+            for this_file in files:
+                if type(this_file) == type(''):
+                    new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+                elif isType(this_file, IGangaFile):
+                    new_files.append(this_file, False)
+                else:
+                    new_files.append(strToDataFile(this_file))
+        elif type(files) == type(''):
+            new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)
+        else:
+            from Ganga.Core.exceptions import GangaException
+            raise GangaException("Unknown object passed to LHCbDataset constructor!")
         new_files._setParent(self)
         super(LHCbDataset, self).__init__()
         # Feel free to turn this on again for debugging but it's potentially quite expensive
@@ -198,18 +210,14 @@ class LHCbDataset(GangaDataset):
     def extend(self, files, unique=False):
         '''Extend the dataset. If unique, then only add files which are not
         already in the dataset.'''
-        #logger.debug( "extending Dataset" )
-        #logger.debug( "files: %s" % str(files) )
         from Ganga.GPIDev.Base import ReadOnlyObjectError
-
-        #logger.debug(" extending by %s" % files )
 
         if self._parent is not None and self._parent._readonly():
             raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, self._name))
 
         _external_files = []
 
-        if type(files) == type(''):
+        if type(files) == type('') or isType(files, IGangaFile):
             _external_files = [files]
         elif type(files) == type([]):
             _external_files = files
@@ -219,9 +227,6 @@ class LHCbDataset(GangaDataset):
             if not hasattr(files, "__getitem__") or not hasattr(files, '__iter__'):
                 _external_files = [files]
 
-        names = self.getFileNames()
-        #logger.debug( "names: %s" % str(names) )
-        # _external_files.extend( [f for f in files if type(f) != type('')] ) #
         # just in case they extend w/ self
         _to_remove = []
         for this_file in _external_files:
@@ -229,6 +234,9 @@ class LHCbDataset(GangaDataset):
                 if len(this_file.subfiles) > 0:
                     _external_files = makeGangaListByRef(this_file.subfiles)
                     _to_remove.append(this_file)
+            if type(this_file) == type(''):
+                _external_files.append(string_datafile_shortcut_lhcb(this_file, None))
+                _to_remove.append(this_file)
 
         for _this_file in _to_remove:
             _external_files.pop(_external_files.index(_this_file))
@@ -237,7 +245,11 @@ class LHCbDataset(GangaDataset):
             _file = getDataFile(this_f)
             if _file is None:
                 _file = this_f
-            if unique and _file.namePattern in names:
+            myName = _file.namePattern
+            from Ganga.GPI import DiracFile
+            if isType(_file, DiracFile):
+                myName = _file.lfn
+            if unique and myName in self.getFileNames():
                 continue
             self.files.append(_file)
 
@@ -278,6 +290,7 @@ class LHCbDataset(GangaDataset):
     def getFileNames(self):
         'Returns a list of the names of all files stored in the dataset.'
         names = []
+        from Ganga.GPI import DiracFile
         for i in self.files:
             if isType(i, DiracFile):
                 names.append(i.lfn)
@@ -293,8 +306,8 @@ class LHCbDataset(GangaDataset):
     def getFullFileNames(self):
         'Returns all file names w/ PFN or LFN prepended.'
         names = []
+        from Ganga.GPI import DiracFile
         for f in self.files:
-            from Ganga.GPI import DiracFile
             if isType(f, DiracFile):
                 names.append('LFN:%s' % f.lfn)
             else:
@@ -353,25 +366,23 @@ class LHCbDataset(GangaDataset):
         dtype_str_patterns = getConfig('LHCb')['datatype_string_patterns']
         for f in self.files:
             dtype_str = dtype_str_default
-            for str in dtype_str_patterns:
+            for this_str in dtype_str_patterns:
                 matched = False
-                for pat in dtype_str_patterns[str]:
+                for pat in dtype_str_patterns[this_str]:
                     if fnmatch.fnmatch(f.namePattern, pat):
-                        dtype_str = str
+                        dtype_str = this_str
                         matched = True
                         break
                 if matched:
                     break
             sdatasetsnew += '\n        '
             sdatasetsold += '\n        '
-            if isDiracFile(GPIProxyObjectFactory(f)):
+            if isDiracFile(f):
                 sdatasetsnew += """ \"LFN:%s\",""" % f.lfn
-                sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (
-                    f.lfn, dtype_str)
+                sdatasetsold += """ \"DATAFILE='LFN:%s' %s\",""" % (f.lfn, dtype_str)
             else:
                 sdatasetsnew += """ \"PFN:%s\",""" % f.namePattern
-                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (
-                    f.namePattern, dtype_str)
+                sdatasetsold += """ \"DATAFILE='PFN:%s' %s\",""" % (f.namePattern, dtype_str)
         if sdatasetsold.endswith(","):
             if self.persistency == 'ROOT':
                 sdatasetsnew = sdatasetsnew[:-1] + """\n], clear=True)"""

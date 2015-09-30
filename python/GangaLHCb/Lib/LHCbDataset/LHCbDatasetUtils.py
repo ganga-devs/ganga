@@ -28,20 +28,16 @@ def isPFN(file):
 
 
 def strToDataFile(name, allowNone=True):
-    if len(name) >= 4 and name[0:4].upper() == 'LFN:':
+    if len(name) >= 4 and name[:4].upper() == 'LFN:':
         return DiracFile(lfn=name[4:])
-    elif len(name) >= 4 and name[0:4].upper() == 'PFN:':
+    elif len(name) >= 4 and name[:4].upper() == 'PFN:':
         logger.warning("PFN is slightly ambiguous, constructing LocalFile")
-        return LocalFile(name)
+        return LocalFile(name[4:])
     else:
-        if not allowNone:
-            #return None
-            msg = 'Can only convert strings that begin w/ PFN: or '\
-                  'LFN: to data files.'\
-                  ' Name is: %s' % name
-            raise GangaException(msg)
-        return None
-
+        if allowNone:
+            return None
+        else:
+            raise GangaException( "Cannot construct file object: %s" % str(name) )
 
 def getDataFile(file):
     if isType(file, DiracFile):
