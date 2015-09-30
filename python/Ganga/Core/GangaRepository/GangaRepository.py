@@ -13,11 +13,11 @@
 # be set to "incomplete"
 
 import Ganga.Utility.logging
-logger = Ganga.Utility.logging.getLogger()
 
 from Ganga.Utility.Plugin import allPlugins
-from Ganga.Core.InternalServices.Coordinator import disableInternalServices
 from Ganga.Core import GangaException
+
+logger = Ganga.Utility.logging.getLogger()
 
 # Error raised on schema version error
 
@@ -52,15 +52,19 @@ class RepositoryError(GangaException):
     """ This error is raised if there is a fatal error in the repository."""
 
     def __init__(self, repo=None, what=''):
+        GangaException.__init__(self, what)
         self.what = what
         self.repository = repo
         logger.error("A severe error occurred in the Repository '%s': %s" % (repo.registry.name, what))
         logger.error('If you believe the problem has been solved, type "reactivate()" to re-enable ')
         try:
+            from Ganga.Core.InternalServices.Coordinator import disableInternalServices
             disableInternalServices()
+            logger.error("Shutting Down Repository_runtime")
+            from Ganga.Runtime import Repository_runtime
+            Repository_runtime.shutdown()
         except:
             logger.error("Unable to disable Internal services, they may have already been disabled!")
-        GangaException.__init__(self, what)
 
 
 class GangaRepository(object):

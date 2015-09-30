@@ -109,7 +109,7 @@ class Interactive(IBackend):
             env = expand_vars(os.environ)
         job = self.getJobObject()
         self.actualCE = util.hostname()
-        logger.info('Starting job %d', job.id)
+        logger.info('Starting job %d', job.getFQID('.'))
 
         try:
             job.updateStatus("submitted")
