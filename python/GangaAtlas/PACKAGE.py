@@ -22,7 +22,7 @@ _external_packages = {
                      'noarch':True ,
                      'RUCIO_APPID' : 'ganga',
                      },
-    'rucio-clients' : { 'version' : '0.3.0',
+    'rucio-clients' : { 'version' : '1.0.1',
                      'PATH' : ['bin/'],
                      'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-x86_64-2.6', 'externals/kerberos/lib.slc6-i686-2.6', 'lib/python2.6/site-packages' ],
                      #'PYTHONPATH' : [ 'externals/kerberos/lib.slc6-i686-2.6', 'externals/kerberos/lib.slc6-x86_64-2.6', 'lib/python2.6/site-packages' ],

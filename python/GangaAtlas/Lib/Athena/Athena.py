@@ -1077,9 +1077,8 @@ class Athena(IPrepareApp):
         if not self.atlas_exetype in ['EXE']: 
             rc, runConfig = AthenaUtils.extractRunConfig(jobO, supStream, self.atlas_use_AIDA, shipInput, trf)
             #self.atlas_run_config = runConfig
-            # For some reason, the above line sometimes doesn't work and sets self.atlas_run_config to False.
-            # Even a deepcopy didn't work. I'm not sure if it's an issue with what AthenaUtils is returning or some
-            # schema issue but the below worked and so I'm leaving it like that (MWS)
+            # The above line sometimes doesn't work and sets self.atlas_run_config to False because runConfig isn't just a dictionary
+            # Therefore copy it by hand
             for k in runConfig:
                 self.atlas_run_config[k] = runConfig[k]
             #self.atlas_run_config = {'input': {}, 'other': {}, 'output': {'outAANT': [('AANTupleStream', 'AANT', 'AnalysisSkeleton.aan.root')], 'alloutputs': ['AnalysisSkeleton.aan.root']}}
