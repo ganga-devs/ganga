@@ -171,18 +171,19 @@ class Node(object):
     # if schema of self and srcobj are not compatible raises a ValueError
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
     def copyFrom(self, srcobj, _ignore_atts=[]):
+        _srcobj = stripProxy(srcobj)
         # Check if this object is derived from the source object, then the copy
         # will not throw away information
-        if not isType(self, srcobj.__class__) and not isType(srcobj, self.__class__):
-            raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (srcobj.__class__, self.__class__))
+        if not isType(self, _srcobj.__class__) and not isType(_srcobj, self.__class__):
+            raise GangaValueError("copyFrom: Cannot copy from %s to %s!" % (_srcobj.__class__, self.__class__))
 
         if not hasattr(self, '_schema'):
             return
 
-        if self._schema is None and srcobj._schema is None:
+        if self._schema is None and _srcobj._schema is None:
             return
 
-        if srcobj._schema is None:
+        if _srcobj._schema is None:
             self._schema = None
             return
 
@@ -190,16 +191,16 @@ class Node(object):
             if name in _ignore_atts:
                 continue
             #logger.debug("Copying: %s : %s" % (str(name), str(item)))
-            if name is 'application' and hasattr(srcobj.application, 'is_prepared'):
-                if srcobj.application.is_prepared is not None and not srcobj.application.is_prepared is True:
-                    srcobj.application.incrementShareCounter(srcobj.application.is_prepared.name)
+            if name is 'application' and hasattr(_srcobj.application, 'is_prepared'):
+                if _srcobj.application.is_prepared is not None and not _srcobj.application.is_prepared is True:
+                    _srcobj.application.incrementShareCounter(_srcobj.application.is_prepared.name)
             if not self._schema.hasAttribute(name):
-                #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(srcobj._name,self._name))
+                #raise ValueError('copyFrom: incompatible schema: source=%s destination=%s'%(_srcobj._name,self._name))
                 setattr(self, name, self._schema.getDefaultValue(name))
             elif not item['copyable']:
                 setattr(self, name, self._schema.getDefaultValue(name))
             else:
-                c = deepcopy(getattr(srcobj, name))
+                c = deepcopy(getattr(_srcobj, name))
                 setattr(self, name, c)
 
     def printTree(self, f=None, sel=''):
