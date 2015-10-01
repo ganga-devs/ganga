@@ -8,6 +8,7 @@ from GangaLHCb.Lib.RTHandlers.LHCbGaudiRunTimeHandler import LHCbGaudiRunTimeHan
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from GangaLHCb.Lib.Splitters.OptionsFileSplitter import OptionsFileSplitter
 from GangaLHCb.Lib.Splitters.GaussSplitter import GaussSplitter
+from Ganga.GPIDev.Base.Proxy import stripProxy
 
 
 class TestSplitters(GangaGPITestCase):
@@ -117,7 +118,7 @@ class TestSplitters(GangaGPITestCase):
         job = Job(application=DaVinci())
         job.prepare()
         #job.application.extra = GaudiExtras()
-        subjobs = splitter.split(job)
+        subjobs = stripProxy(splitter).split(job)
         assert len(subjobs) == 3, 'incorrect number of subjobs'
 # def dataFilter(file):
 # return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0
@@ -139,10 +140,10 @@ class TestSplitters(GangaGPITestCase):
         f.write('')
         f.close()
         job.application.optsfile = 'this-is-not-a-file.opts'  # hack for Gauss
-        job.application.master_configure()
+        stripProxy(job.application).master_configure()
         job.prepare()
         gsplit = GPI.GaussSplitter(eventsPerJob=1, numberOfJobs=3)
-        subjobs = gsplit.split(job)
+        subjobs = stripProxy(gsplit).split(job)
         assert len(subjobs) == 3, 'incorrect # of jobs'
 # def dataFilter(file):
 # return file.name.find('/tmp/')>=0 and file.name.find('_data.py')>=0

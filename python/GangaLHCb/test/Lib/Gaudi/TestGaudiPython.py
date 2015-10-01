@@ -1,3 +1,4 @@
+from __future__ import print_function
 import os
 from GangaTest.Framework.tests import GangaGPITestCase
 #from GangaLHCb.Lib.Gaudi.Gaudi import GaudiExtras
@@ -34,7 +35,9 @@ class TestGaudiPython(GangaGPITestCase):
         assert self.gp.project, 'project not set automatically'
         assert self.gp.version, 'version not set automatically'
         assert self.gp.platform, 'platform not set automatically'
-        assert not self.gp.user_release_area
+        #print("%s" % str(self.gp.user_release_area))
+        #assert not self.gp.user_release_area
+        assert os.path.basename(self.gp.user_release_area) == 'cmtuser'
 
     def test_GaudiPython_prepare(self):
         g = self.job.application
