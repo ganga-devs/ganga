@@ -571,11 +571,21 @@ class DiracBase(IBackend):
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException("Error understanding OutputDataInfo: %s" % str(file_info_dict))
 
-                for file_name in file_info_dict.keys():
+                for file_name in file_info_dict.get('Value'):
+                    file_name = os.path.basename(file_name)
                     info = file_info_dict.get(file_name)
                     logger.debug("file_name: %s,\tinfo: %s" % (str(file_name), str(info)))
 
                     valid_wildcards = [wc for wc in wildcards if fnmatch.fnmatch(file_name, wc)]
+                    if len(valid_wildcards) == 0: valid_wildcards.append('')
+
+                    if not hasattr(info, 'get'):
+                        logger.error("Error getting OutputDataInfo for: %s" % str(job.getFQID('.')))
+                        logger.error("Please check the Dirac Job still exists or attempt a job.backend.reset() to try again!")
+                        logger.error("Err: %s" % str(info))
+                        logger.error("file_info_dict: %s" % str(file_info_dict))
+                        from Ganga.Core.exceptions import GangaException
+                        raise GangaException("Error getting OutputDataInfo")
 
                     for wc in valid_wildcards:
                         logger.debug("wildcard: %s" % str(wc))
@@ -591,8 +601,7 @@ class DiracBase(IBackend):
 
             # check outputsandbox downloaded correctly
             if not result_ok(getSandboxResult):
-                logger.warning(
-                    'Problem retrieving outputsandbox: %s' % str(getSandboxResult))
+                logger.warning('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
                 DiracBase._getStateTime(job, 'failed')
                 if job.status in ['removed', 'killed']:
                     retyrn

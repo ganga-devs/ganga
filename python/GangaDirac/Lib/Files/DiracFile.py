@@ -3,6 +3,7 @@ import os
 import datetime
 import hashlib
 import re
+import os.path
 from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
@@ -166,7 +167,6 @@ class DiracFile(IGangaFile):
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
                 if self.namePattern == '':
-                    import os.path
                     self.namePattern = os.path.basename(value)
                 self.remoteDir = os.path.dirname(value)
                 return value
@@ -189,8 +189,6 @@ class DiracFile(IGangaFile):
         if _lfn != "" and _lfn is not None:
             if len(_lfn) > 3 and _lfn[0:4] == "LFN:":
                 _lfn = _lfn[4:]
-
-        import os.path
 
         if _lfn != "" and _namePattern != "":
             self.lfn = _lfn
