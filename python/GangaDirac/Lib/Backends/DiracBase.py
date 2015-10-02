@@ -571,7 +571,7 @@ class DiracBase(IBackend):
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException("Error understanding OutputDataInfo: %s" % str(file_info_dict))
 
-                for file_name in file_info_dict.get('Value'):
+                for file_name in file_info_dict.get('Value', []):
                     file_name = os.path.basename(file_name)
                     info = file_info_dict.get(file_name)
                     logger.debug("file_name: %s,\tinfo: %s" % (str(file_name), str(info)))
