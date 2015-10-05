@@ -11,7 +11,7 @@ fi
 VERSION=$1
 STAGING_DIR=$HOME/ganga_release_staging/
 INSTALL_DIR=/afs/cern.ch/sw/ganga/install/
-GIT_URL=git@github.com:ganga-devs/ganga-git-testing.git
+GIT_URL=git@github.com:ganga-devs/ganga.git
 
 echo "-------------"
 echo "Fetching repo"
