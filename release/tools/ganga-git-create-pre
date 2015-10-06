@@ -41,28 +41,3 @@ echo "--------------------"
 echo "Installing externals"
 echo "--------------------"
 $THIS_DIR/ganga-install-externals $VERSION-pre
-
-echo "-------------------------------"
-echo "Creating release notes template"
-echo "-------------------------------"
-cat << EOF > release/ReleaseNotes-$VERSION
-**************************************************************************************************************
-$VERSION (`date "+%Y/%m/%d"`)
-
-
---------------------------------------------------------------------------------------------------------------
-ganga/python/Ganga
---------------------------------------------------------------------------------------------------------------
-* ...
-
-**************************************************************************************************************
-EOF
-
-git add release/ReleaseNotes-$VERSION
-git commit -m"Adding release notes template"
-
-echo "----------------------"
-echo "Pushing release branch"
-echo "----------------------"
-git flow release publish $VERSION
-git push
