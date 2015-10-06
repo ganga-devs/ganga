@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-
+from __future__ import print_function
 from sys import argv, stdout
 from os import pathsep, listdir, environ, fdopen, symlink
 from os.path import exists, realpath, join, expanduser, isdir, islink, dirname
@@ -8,237 +8,249 @@ from tempfile import mkstemp
 import re
 from subprocess import call
 import shutil
-from os import makedirs,mkdir
+from os import makedirs, mkdir
 
-
-def _versiondecode(s,p = re.compile(r'^.*v(\d+)r(\d+)p*(\d*)')):
+def _versiondecode(s, p=re.compile(r'^.*v(\d+)r(\d+)p*(\d*)')):
     """Translate an LHCb version vXrYpZ into a tuple (X,Y,Z)"""
     m = p.match(s)
     if m:
-        if m.group(3)=='':
-            return (int(m.group(1)),int(m.group(2)),0)
+        if m.group(3) == '':
+            return (int(m.group(1)), int(m.group(2)), 0)
         else:
-            return (int(m.group(1)),int(m.group(2)),int(m.group(3)))
+            return (int(m.group(1)), int(m.group(2)), int(m.group(3)))
     return None
 
 
 class InstallLHCbError(Exception):
+
     """Exception class for InstallLHCb"""
     pass
 
+
 class InstallLHCb:
+
     """Take a Ganga release and put it into the format of an LHCb release"""
-    def __init__(self,options):
+
+    def __init__(self, options):
         self.options = options
+        self.versionLHCb = None
+        self.versionGanga = None
+        self.github_setupP_repo = "git://github.com/ganga-devs/lhcbsetupproject.git"
+        self.github_ganga_repo = "git://github.com/ganga-devs/ganga.git"
+        self.destination = None
 
-
-    def _locations(self):
-        """Identify exact locations for source and destanation"""
+    def _versions(self):
+        """Identify Ganga and LHCb versions tags for this release
+This defines the following:
+    self.versionLHCb    version of Ganga to be shown to LHCb in the format v6aarbb
+                        at present we do NOT support varbpc!
+    self.versionGanga   The ganga tag corresponding to the release in question
+"""
 
         ver = self.options.version.lower()
-        source = self.options.source
         if ver != 'head':
-            pTag     = re.compile(r'.+/(\S+)$')
+            pTag = re.compile(r'.+/(\S+)$')
             mTag = pTag.match(ver)
             vLHCb = _versiondecode(ver)
-            versiontuple = (vLHCb[0]/100,vLHCb[0]-(vLHCb[0]/100)*100,vLHCb[1])
+            versiontuple = (
+                vLHCb[0] / 100, vLHCb[0] - (vLHCb[0] / 100) * 100, vLHCb[1])
             pRelease = re.compile(r'Ganga-(\d+)-(\d+)-(\d+)$')
             mRelease = pRelease.match(ver)
 
-        if ver == 'head':
+        if ver == 'head' or ver == 'master':
             self.versionLHCb = 'HEAD'
-            self.versionGanga = 'head'
-            self.sourcelocation = join(source,"trunk","ganga")
+            self.versionGanga = 'master'
         elif mTag:
-            if len(self.options.name)>0:
+            if len(self.options.name) > 0:
                 self.versionLHCb = self.options.name
             else:
                 self.versionLHCb = mTag.group(1)
-            self.versionGanga=ver
-            self.sourcelocation = join(source,ver)
+            self.versionGanga = ver
         elif versiontuple:
             self.versionLHCb = ver
             ganga_ver = "Ganga-%d-%d-%d" % versiontuple
             self.versionGanga = "Ganga-%d-%d-%d" % versiontuple
             patch_str = None
             if ver.find('p') > 0:
-                p = int(ver.split('p')[1])
-                if p > 0:
-                    # see if path exists in SVN
-                    patch_str = 'hotfix%d' % p
-                    cmd = 'svn ls svn+ssh://svn.cern.ch/reps/ganga/tags/'\
-                          '%s-%s' % (ganga_ver,patch_str)
-                    fh, fname = mkstemp()
-                    retcode = call(cmd,shell=True,stdout=fh)
-                    if retcode == 0: # it exists
-                        self.versionGanga = self.versionGanga + '-' + patch_str
-            
-            if self.options.prerelease:
-                dir = "%d.%d.%d-pre"% versiontuple
-                if patch_str:
-                    dir = "%d.%d.%d-%s-pre" % (versiontuple[0],versiontuple[1],
-                                               versiontuple[2],patch_str)
-                self.sourcelocation = join(self.options.area,"install",dir)
-            else:
-                self.sourcelocation = join(source,"tags", self.versionGanga)
+                raise InstallLHCbError( "This script does not Currently support patch version numbers for LHCb!" )
         else:
-            raise InstallLHCbError(
-                "Could not identify SVN location for input version %s" % ver)
-        
-        print "SVN checkout from         : %s" % self.sourcelocation
-        print "LHCb release will be named: %s" % self.versionLHCb
+            raise InstallLHCbError("Could not identify LHCb and Ganga versions for input version %s" % ver)
+
+        print("LHCb release will be named: %s" % self.versionLHCb)
 
     def _checkInstallDir(self):
-        topdir = join(expanduser(self.options.destination),"GANGA")
+        """This sets the destination of the installed ganga directory. i.e. sets self.destination"""
+        topdir = join(expanduser(self.options.destination), "GANGA")
         if not (isdir(topdir) or islink(topdir)):
             try:
                 makedirs(topdir)
-            except:
-                raise InstallLHCbError(
-                    "There was a problem creating the directory %s" % topdir)
+            except Exception, err:
+                print("Error: %s" % str(err))
+                raise InstallLHCbError("There was a problem creating the directory %s" % topdir)
 
-        self.destination = join(topdir,"GANGA_"+self.versionLHCb)
+        self.destination = join(topdir, "GANGA_" + self.versionLHCb)
         if isdir(self.destination) or islink(self.destination):
             # we want to only allow the NOT_READY security file
             dirlist = os.listdir(self.destination)
-            if dirlist.count('NOT_READY') > 0: dirlist.remove('NOT_READY')
-            if len(dirlist)>0:
+            if dirlist.count('NOT_READY') > 0:
+                dirlist.remove('NOT_READY')
+            if len(dirlist) > 0:
                 raise InstallLHCbError(
-                    "Failed to install into %s. " % self.destination + \
+                    "Failed to install into %s. " % self.destination +
                     "Directory is not empty. Either delete whole directory first or empty it.")
-            
         else:
             try:
                 mkdir(self.destination)
             except OSError:
                 raise InstallLHCbError(
-                    "Failed to create directory %s. " % self.destination + \
-                        "If it is already present you need to delete it first.")
-        print "Release will be placed in : %s" % self.destination
+                    "Failed to create directory %s. " % self.destination +
+                    "If it is already present you need to delete it first.")
 
-    def _getProject(self):
+        print("Release will be placed in : %s" % self.destination)
+
+    def _getSetupProject(self):
         """Check out the CMT structure for the Ganga CMT Project"""
 
+        command = "git ls-remote -t " + self.github_setupP_repo + ' | awk -F \'tags/\' \'{print $2}\''
 
-        # Find the location in SVN
-        taglocation = None
-        tagdir = self.options.source + '/tags/private/LHCbSetupProject'
-        if self.options.version == 'head':
-            tagdir = self.options.source + '/trunk/external/LHCbSetupProject'
-            taglocation = tagdir
         fh, fname = mkstemp()
-        command = "svn list " + tagdir
-        retcode = call(command,shell=True,stdout=fh)
+        retcode = call(command, shell=True, stdout=fh)
         f = open(fname)
-        taglist=sorted(f.readlines(),key=_versiondecode)
+        taglist = sorted(f.readlines(), key=_versiondecode)
         taglist.reverse()
+        print("git: %s" % str(taglist))
+
         gangaver = _versiondecode(self.versionLHCb)
+        setup_ver = None
+        taglocation = None
         for d in taglist:
-            vsort=_versiondecode(d)
+            vsort = _versiondecode(d)
+            setup_ver = d.rstrip()
             if vsort and vsort <= gangaver:
-                taglocation = join(tagdir,d.rstrip())
+                taglocation = d.rstrip()
                 break
-         
-        if not taglocation:
+
+        if taglocation is None:
             raise InstallLHCbError(
-                "Failed to find correct tag for LHCbSetupProject. " + \
-                    "Looked in %s and found nothing" % tagdir)
+                "Failed to find correct tag for LHCbSetupProject. " +
+                "Check tags in %s" % self.github_setupP_repo )
 
-        command = "svn export --quiet --force " + taglocation + \
-            "/GANGA/GANGA_v " + self.destination
+        tmp_checkout = str(os.path.abspath('_mytmpDir'))
+        if os.path.isdir( tmp_checkout ):
+            command = 'rm -fr ' + tmp_checkout + ' && '
+        else:
+            command = ''
+        command += 'git clone ' + self.github_setupP_repo + ' ' + tmp_checkout
+        command += ' && cd ' + tmp_checkout + ' && git checkout ' + setup_ver
+        command += ' && mv ' + os.path.join(tmp_checkout, 'GANGA/GANGA_v/*') + ' ' + self.destination
+        command += ' && rm -fr ' + tmp_checkout
 
-        print "Checking out project from %s"  % taglocation
-        retcode = call(command,shell=True)
+        print("%s" % str(command))
+
+        retcode = call(command, shell=True)
+
         if retcode:
             raise InstallLHCbError(
-                "Problem checking out the Ganga CMT project using the " + \
-                    "command\n %s" % command)
+                "Problem checking out the Ganga CMT project using the " +
+                "command\n %s" % command)
 
-        sysdir = join(self.destination,"GangaSys","cmt")
+        sysdir = join(self.destination, "GangaSys", "cmt")
         if not isdir(sysdir):
+            if os.path.isdir( tmp_checkout ):
+                command = 'rm -fr ' + tmp_checkout
+                retcode = call(command, shell=True)
             raise InstallLHCbError(
                 "Can't find the directory %s. Check your options" % sysdir)
 
-        f=open(join(sysdir,"version.cmt"), 'w')
-        f.write(self.versionLHCb+"\n")
+        f = open(join(sysdir, "version.cmt"), 'w')
+        f.write(self.versionLHCb + "\n")
         f.close()
-        
 
-        
+        if os.path.isdir( tmp_checkout ):
+            command = 'rm -fr ' + tmp_checkout
+            retcode = call(command, shell=True)
+
     def _getGanga(self):
         """Check out Ganga itself from the repository"""
-        mkdir(join(self.destination,"install"))
-        gangadir = join(self.destination,"install","ganga")
-        print "Checking out Ganga"
-        if self.options.prerelease:
-            command = "mkdir %s && cp -r %s %s" % \
-                (gangadir, join(self.sourcelocation,"*") , 
-                 gangadir)
-        else:
-            command = "svn " + self.svncheckout + " --quiet " + self.sourcelocation + \
-                " " + gangadir
-        retcode = call(command,shell=True)
+
+        mkdir(join(self.destination, "install"))
+        gangadir = join(self.destination, "install", "ganga")
+        print("Checking out Ganga")
+
+        command = 'git clone ' + self.github_ganga_repo + ' ' + gangadir
+        command += ' && cd ' + gangadir
+        command += ' && git checkout ' + self.versionGanga
+        command += ' && rm -fr $PWD/.git'
+
+        print("%s" % str(command))
+
+        retcode = call(command, shell=True)
         if retcode:
             raise InstallLHCbError(
-                "Problem checking out Ganga from the repository using the " + \
-                    "command\n %s" % command)
-                
-        checkdir = join(gangadir,"python")
+                "Problem checking out Ganga from the repository using the " +
+                "command\n %s" % command)
+
+        checkdir = join(gangadir, "python")
         if not isdir(checkdir):
             raise InstallLHCbError(
                 "Can't find the directory %s. Check your options" % checkdir)
-        
-        if not self.options.developer:
-            shutil.rmtree(join(gangadir,"doc"))
 
-    def _merge(self,core, lhcb, versionBloats):
+        if not self.options.developer:
+            shutil.rmtree(join(gangadir, "doc"))
+
+    def _merge(self, core, lhcb, versionBloats):
         """Merge the Core externals into the lhcb externals keeping the highest version"""
         for package in lhcb:
-            lhcb_name=package[0]
-            versionString=package[1]
+            lhcb_name = package[0]
+            versionString = package[1]
             if lhcb_name in versionBloats:
                 for bloat in versionBloats[lhcb_name]:
-                    versionString=versionString.replace(bloat[0],bloat[1])
+                    versionString = versionString.replace(bloat[0], bloat[1])
 
-            lhcb_version=[int(v) for v in versionString.split('.')]
+            lhcb_version = [int(v) for v in versionString.split('.')]
 
             if lhcb_name in core:
-                versionString=core[lhcb_name]['version']
+                versionString = core[lhcb_name]['version']
                 if lhcb_name in versionBloats:
                     for bloat in versionBloats[lhcb_name]:
-                        versionString=versionString.replace(bloat[0],bloat[1])
+                        versionString = versionString.replace(
+                            bloat[0], bloat[1])
 
-                core_version=[int(v) for v in versionString.split('.')]
+                core_version = [int(v) for v in versionString.split('.')]
 
-                if core_version>lhcb_version:
-                    package[1]=core[lhcb_name]['version']
-                    
+                if core_version > lhcb_version:
+                    package[1] = core[lhcb_name]['version']
+
     def _getTopLevelExternals(self):
         """Process the top level Ganga Core PACKAGE.py file and get list of  externals"""
-        ganga_python_dir = join(self.destination,"install","ganga","python")
-        ganga_core_dir = join(ganga_python_dir,"Ganga")
+        ganga_python_dir = join(self.destination, "install", "ganga", "python")
+        ganga_core_dir = join(ganga_python_dir, "Ganga")
 
-        f=open(join(ganga_core_dir,"PACKAGE.py"),'r')
+        f = open(join(ganga_core_dir, "PACKAGE.py"), 'r')
 
-        lines=f.readlines()
+        lines = f.readlines()
         f.close()
-        lines.reverse() #reverse search to get red of all defs and _externalPackages references but the first
+        # reverse search to get red of all defs and _externalPackages
+        # references but the first
+        lines.reverse()
         for i in range(len(lines)):
-            if lines[i].find('def ')>=0: a=i+1
-            elif lines[i].find('_externalPackages')>=0: b=i+1
+            if lines[i].find('def ') >= 0:
+                a = i + 1
+            elif lines[i].find('_externalPackages') >= 0:
+                b = i + 1
 
-        lines=lines[a:b]
+        lines = lines[a:b]
         lines.reverse()
         fh, fname = mkstemp()
-        f=open(fname,'w')
+        f = open(fname, 'w')
         for line in lines:
             f.write(line)
         f.close()
 
-        loc={}
-        execfile(fname,{},loc)
-        os.system('rm -f '+fname)
-        coreExternalPackages=loc['_externalPackages']
+        loc = {}
+        execfile(fname, {}, loc)
+        os.system('rm -f ' + fname)
+        coreExternalPackages = loc['_externalPackages']
 
         return loc['_externalPackages']
 
@@ -246,145 +258,152 @@ class InstallLHCb:
         """Copy the required externals into the CMT project"""
 
         # Read list of external names and versions
-        fname = join(self.destination,'GangaPolicy','scripts',
-                     'ganga-externals.py')
+        fname = join(self.destination, 'GangaPolicy', 'scripts', 'ganga-externals.py')
         loc = {}
-        execfile(fname,{},loc)
+        execfile(fname, {}, loc)
         externals_noarch = loc['externals_noarch']
         externals_arch = loc['externals_arch']
         archs = loc['archs']
         version_check_bloats = loc['version_check_bloats']
 
-
-        coreExternals=self._getTopLevelExternals()
+        coreExternals = self._getTopLevelExternals()
         self._merge(coreExternals, externals_noarch, version_check_bloats)
         self._merge(coreExternals, externals_arch, version_check_bloats)
 
         # Copy software into Project Area
-        s = join(self.options.area,"external")
-        d = join(self.destination,"external")
+        s = join(self.options.area, "external")
+        d = join(self.destination, "external")
         mkdir(d)
         if self.options.developer:
             unixcommand = 'ln -s '
         else:
             unixcommand = 'cp -r '
         for package in externals_noarch:
-            print "Copying ",package
-            makedirs(join(d,package[0],package[1]))
-            command = unixcommand+join(s,package[0],package[1],'noarch')+" "+ \
-                join(d,package[0],package[1],'noarch')
+            print("Copying %s" % package)
+            makedirs(join(d, package[0], package[1]))
+            command = unixcommand + join(s, package[0], package[1], 'noarch') + " " + \
+                join(d, package[0], package[1], 'noarch')
             rc = call(command, shell=True)
 
         for package in externals_arch:
-            p = join(d,package[0],package[1])
+            p = join(d, package[0], package[1])
             makedirs(p)
             for a in archs:
-                print "Copying ",package,a
-                command = unixcommand + join(s,package[0],package[1],a) + " " + p
+                print("Copying %s %s" % (str(package), str(a)))
+                command = unixcommand + join(s, package[0], package[1], a) + " " + p
                 rc = call(command, shell=True)
-    
+
         # Add correct version numbers to requirement file of GangaPolicy
         # To comply with CMT, any dashes has to be stripped.
-        policyDir = join(self.destination,'GangaPolicy','cmt')
-        freq = open(join(policyDir,'requirements'),'w')
+        policyDir = join(self.destination, 'GangaPolicy', 'cmt')
+        freq = open(join(policyDir, 'requirements'), 'w')
         for package in externals_noarch:
-            freq.write('set %s %s\n' % (package[0].replace('-',''),package[1]))
+            freq.write('set %s %s\n' % (package[0].replace('-', ''), package[1]))
         for package in externals_arch:
-            freq.write('set %s %s\n' % (package[0].replace('-',''),package[1]))
-        ftemplate = open(join(policyDir,'requirements_template'),'r')
+            freq.write('set %s %s\n' % (package[0].replace('-', ''), package[1]))
+        ftemplate = open(join(policyDir, 'requirements_template'), 'r')
         for line in ftemplate.readlines():
             freq.write(line)
         freq.close()
         ftemplate.close()
 
     def prepare(self):
-        self._locations()
-
-        if self.options.developer:
-            self.svncheckout = 'checkout'
-        else:
-            self.svncheckout = 'export'
-
+        ## Check the versions correspoding to this release
+        self._versions()
+        ## Check the directory that we're going to install into
         self._checkInstallDir()
-        
+
     def checkout(self):
-        self._getProject()
+        ## Get SetupProject data
+        self._getSetupProject()
+        ## Get Ganga source
         self._getGanga()
+        ## Get external deps
         self._getExternals()
 
     def cleanup(self):
         pass
 
     def install(self):
+        ## Prepare the disk information
         self.prepare()
+
+        ## Get the ganga source from github
         self.checkout()
+
+        ## Cleanup the working directories
         self.cleanup()
 
 if __name__ == '__main__':
 
-    import os,sys
-    
+    import os
+    import sys
+
     usage = """usage: %prog [options] version
 
 The version should be given in the form of an LHCb version name like "v504r0". If
-"head" is used instead, the trunk will be checked out. If a relative path like 
-"branches/MyDevelopment" is used, it will be used as the relative path inside 
-the SVN repository."""
+"head" is used instead, the trunk will be checked out.
+This vercion of the code will always pull ganga from:
+     git://github.com/ganga-devs/ganga.git
+"""
+
+# If a relative path like
+#"branches/MyDevelopment" is used, it will be used as the relative path inside
+# the SVN repository."""
     parser = OptionParser(usage=usage)
 
-
-    parser.add_option("-s", "--source", dest="source",
-                      default = 'svn+ssh://svn.cern.ch/reps/ganga',
-                      help="URL for where to pick up Ganga code from" + \
-                          "[default: %default]", 
-                      metavar="URL")
+##   TODO Add the ability to pull from a different git repo, for nown not a priority!
+#    parser.add_option("-s", "--source", dest="source",
+#                      default = 'svn+ssh://svn.cern.ch/reps/ganga',
+#                      help="URL for where to pick up Ganga code from" + \
+#                          "[default: %default]",
+#                      metavar="URL")
 
     parser.add_option("-p", "--pre-release",  action="store_true",
                       dest="prerelease", default=False,
-                      help="Treat as a pre-release " + \
-                          "[default: %default]")
+                      help="Treat as a pre-release " +
+                      "[default: %default]")
 
     parser.add_option("-d", "--destination", dest="destination",
-                      default = '~/cmtuser',
-                      help="Save LHCb formatted release in DIR " + \
-                          "[default: %default]", metavar="DIR")
+                      default='~/cmtuser',
+                      help="Save LHCb formatted release in DIR " +
+                      "[default: %default]", metavar="DIR")
 
     parser.add_option("-S", "--software-area", dest="area",
-                      default = '/afs/cern.ch/sw/ganga',
-                      help="Location of Ganga installation area as used " + \
-                          "for external packages and pre-releases. " + \
-                          "[default: %default]",
+                      default='/afs/cern.ch/sw/ganga',
+                      help="Location of Ganga installation area as used " +
+                      "for external packages and pre-releases. " +
+                      "[default: %default]",
                       metavar="DIR")
 
     parser.add_option("-x", "--developer", action="store_true",
                       dest="developer", default=False,
-                      help="Create as developer by including SVN files and " + \
-                          "only creating soft-links in external area. " + \
-                          "Subsequently this can't be made into an LHCb " + \
-                          "release. [default: %default]")
+                      help="Create as developer by including SVN files and " +
+                      "only creating soft-links in external area. " +
+                      "Subsequently this can't be made into an LHCb " +
+                      "release. [default: %default]")
 
     parser.add_option("-n", "--name", dest="name",
-                      default = '',
-                      help="NAME of the checked out LHCb release. If " + \
-                          "option not given, name will be determined " + \
-                          "from version name. Only has an effect when" + \
-                          "a branch is checked out.",
+                      default='',
+                      help="NAME of the checked out LHCb release. If " +
+                      "option not given, name will be determined " +
+                      "from version name. Only has an effect when" +
+                      "a branch is checked out.",
                       metavar="NAME")
 
     options, args = parser.parse_args()
 
     if len(args) != 1:
-        print "%s takes exactly one default value.\n" % parser.get_prog_name()
+        print("%s takes exactly one default value.\n" % parser.get_prog_name())
         parser.print_help()
         sys.exit(0)
 
-    options.version=args[0]
+    options.version = args[0]
 
     installer = InstallLHCb(options)
     try:
         installer.install()
     except InstallLHCbError, detail:
-        print "Error in installation:\n%s\n" % detail
-        print "Run with option --help to see syntax."
-
+        print("Error in installation:\n%s\n" % detail)
+        print("Run with option --help to see syntax.")
 
