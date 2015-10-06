@@ -1,0 +1,51 @@
+#!/bin/bash
+set -euo pipefail
+IFS=$'\n\t'
+
+if [ -z "$1" ]
+then
+    echo "No version number specified"
+    exit
+fi
+
+VERSION=$1
+STAGING_DIR=$HOME/ganga_release_staging/
+INSTALL_DIR=/afs/cern.ch/sw/ganga/install/
+GIT_URL=git@github.com:ganga-devs/ganga.git
+
+echo "-------------"
+echo "Fetching repo"
+echo "-------------"
+mkdir -p $STAGING_DIR
+cd $STAGING_DIR
+git clone $GIT_URL $VERSION
+cd $VERSION
+git branch master origin/master #Track the master branch too
+git flow init -d
+git config gitflow.prefix.versiontag v
+git flow release start $VERSION
+
+echo "-------------------------------"
+echo "Creating release notes template"
+echo "-------------------------------"
+cat << EOF > release/ReleaseNotes-$VERSION
+**************************************************************************************************************
+$VERSION (`date "+%Y/%m/%d"`)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* ...
+
+**************************************************************************************************************
+EOF
+
+git add release/ReleaseNotes-$VERSION
+git commit -m"Adding release notes template"
+
+echo "----------------------"
+echo "Pushing release branch"
+echo "----------------------"
+git flow release publish $VERSION
+git push

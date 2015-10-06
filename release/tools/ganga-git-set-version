@@ -15,8 +15,7 @@ INSTALL_DIR=/afs/cern.ch/sw/ganga/install/
 echo "-------------"
 echo "Updating repo"
 echo "-------------"
-cd $STAGING_DIR
-cd $VERSION-pre
+cd $STAGING_DIR/$VERSION
 git pull
 
 echo "-----------------------"

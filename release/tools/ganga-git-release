@@ -246,6 +246,12 @@ def send_mail(key, receiver=''):
     except smtplib.SMTPException:
         print "Can not send %s notification email" % key
 
+def startrelease_command():
+    """START: start the release process"""
+
+    toolcmd('ganga-git-start-release %(version)s' % CONFIG)
+
+    #print 'the prerelease is installed in', CONFIG['prereldir']
 
 def prerelease_command():
     """PRE: create the PRE-RELEASE in the prereldir"""
@@ -520,7 +526,7 @@ def _setlib():
 
 _setlib()
 
-commands = [show_config, prerelease_command, pretest_command, test_report_command, release_command, generate_manuals, change_release_manager, quit_command]
+commands = [show_config, startrelease_command, prerelease_command, pretest_command, test_report_command, release_command, generate_manuals, change_release_manager, quit_command]
 
 show_config()
 
