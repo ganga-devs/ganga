@@ -285,7 +285,7 @@ def prerelease_command():
             print "There is not enough disk space for creation of the prerelease, please remove some of the oldest releases in %s" % CONFIG['installdir']
             return
 
-    print 'Making pre-release tarballs (forcing recreation) for slc4_ia32_gcc34 (limited externaldependencies)'
+    print 'Making pre-release tarballs (forcing recreation).'
 
     toolcmd('ganga-git-create-pre %(version)s' % CONFIG)
 

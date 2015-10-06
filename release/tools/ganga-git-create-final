@@ -36,3 +36,9 @@ echo "------------------------"
 echo "Finishing release branch"
 echo "------------------------"
 git flow release finish -F -p -m"Tagging Ganga version $VERSION" $VERSION
+
+echo "------------------------"
+echo "Remove staging directory"
+echo "------------------------"
+cd $STAGING_DIR
+rm -rf ./$VERSION
