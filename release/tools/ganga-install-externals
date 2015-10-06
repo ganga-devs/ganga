@@ -24,7 +24,7 @@ CONFIG = {}
 CONFIG['prefix'] = args.prefix
 CONFIG['tarball_dir'] = '%(prefix)s/tarball' % CONFIG    # all ganga tarballs are stored in this directory
 CONFIG['external_dir'] = '%(prefix)s/external' % CONFIG  # all external packages are unpacked here
-CONFIG['plugin_packages'] = ['GangaLHCb', 'GangaPlotter', 'GangaTest', 'GangaAtlas', 'GangaPanda']
+CONFIG['plugin_packages'] = ['GangaLHCb', 'GangaAtlas', 'GangaPanda']
 CONFIG['VERSION'] = args.version
 CONFIG['platform'] = args.platform
 
