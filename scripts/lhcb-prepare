@@ -35,8 +35,8 @@ class InstallLHCb:
         self.options = options
         self.versionLHCb = None
         self.versionGanga = None
-        self.github_setupP_repo = "git://github.com/ganga-devs/lhcbsetupproject.git"
-        self.github_ganga_repo = "git://github.com/ganga-devs/ganga.git"
+        self.github_setupP_repo = "https://github.com/ganga-devs/lhcbsetupproject.git"
+        self.github_ganga_repo = "https://github.com/ganga-devs/ganga.git"
         self.destination = None
 
     def _versions(self):
@@ -49,28 +49,25 @@ This defines the following:
 
         ver = self.options.version.lower()
         if ver != 'head':
-            pTag = re.compile(r'.+/(\S+)$')
-            mTag = pTag.match(ver)
-            vLHCb = _versiondecode(ver)
-            versiontuple = (
-                vLHCb[0] / 100, vLHCb[0] - (vLHCb[0] / 100) * 100, vLHCb[1])
-            pRelease = re.compile(r'Ganga-(\d+)-(\d+)-(\d+)$')
-            mRelease = pRelease.match(ver)
+            try:
+                vLHCb = _versiondecode(ver)
+                versiontuple = (vLHCb[0] / 100, vLHCb[0] - (vLHCb[0] / 100) * 100, vLHCb[1])
+                pRelease = re.compile(r'Ganga-(\d+)-(\d+)-(\d+)$')
+                mRelease = pRelease.match(ver)
+            except Exception, err:
+                print("Error in understanding the version number!")
+                print("%s" % str(err))
+                raise InstallLHCbError("Could not identify LHCb and Ganga versions for input version %s" % ver)
+
 
         if ver == 'head' or ver == 'master':
             self.versionLHCb = 'HEAD'
             self.versionGanga = 'master'
-        elif mTag:
-            if len(self.options.name) > 0:
-                self.versionLHCb = self.options.name
-            else:
-                self.versionLHCb = mTag.group(1)
-            self.versionGanga = ver
         elif versiontuple:
             self.versionLHCb = ver
-            ganga_ver = "Ganga-%d-%d-%d" % versiontuple
-            self.versionGanga = "Ganga-%d-%d-%d" % versiontuple
-            patch_str = None
+            self.versionGanga = "%d.%d.%d" % versiontuple
+            if self.options.prerelease is True:
+                self.versionGanga = 'release/' + self.versionGanga
             if ver.find('p') > 0:
                 raise InstallLHCbError( "This script does not Currently support patch version numbers for LHCb!" )
         else:
@@ -186,6 +183,9 @@ This defines the following:
 
         retcode = call(command, shell=True)
         if retcode:
+            if os.path.isdir( self.destination ):
+                print("Cleaning up destination folder due to error!")
+                os.system("rm -fr %s" % str(os.path.abspath(self.destination)))
             raise InstallLHCbError(
                 "Problem checking out Ganga from the repository using the " +
                 "command\n %s" % command)
@@ -342,7 +342,7 @@ if __name__ == '__main__':
     usage = """usage: %prog [options] version
 
 The version should be given in the form of an LHCb version name like "v504r0". If
-"head" is used instead, the trunk will be checked out.
+"head" or "master" is used instead, the trunk will be checked out.
 This vercion of the code will always pull ganga from:
      git://github.com/ganga-devs/ganga.git
 """
