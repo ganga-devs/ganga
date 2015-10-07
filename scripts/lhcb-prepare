@@ -115,7 +115,6 @@ This defines the following:
         f = open(fname)
         taglist = sorted(f.readlines(), key=_versiondecode)
         taglist.reverse()
-        print("git: %s" % str(taglist))
 
         gangaver = _versiondecode(self.versionLHCb)
         setup_ver = None
@@ -137,12 +136,11 @@ This defines the following:
             command = 'rm -fr ' + tmp_checkout + ' && '
         else:
             command = ''
-        command += 'git clone ' + self.github_setupP_repo + ' ' + tmp_checkout
-        command += ' && cd ' + tmp_checkout + ' && git checkout ' + setup_ver
+        command += 'git clone --quiet ' + self.github_setupP_repo + ' ' + tmp_checkout
+        command += ' && cd ' + tmp_checkout + ' && git checkout --quiet ' + setup_ver
         command += ' && mv ' + os.path.join(tmp_checkout, 'GANGA/GANGA_v/*') + ' ' + self.destination
         command += ' && rm -fr ' + tmp_checkout
 
-        print("%s" % str(command))
 
         retcode = call(command, shell=True)
 
@@ -174,12 +172,11 @@ This defines the following:
         gangadir = join(self.destination, "install", "ganga")
         print("Checking out Ganga")
 
-        command = 'git clone ' + self.github_ganga_repo + ' ' + gangadir
+        command = 'git clone --quiet ' + self.github_ganga_repo + ' ' + gangadir
         command += ' && cd ' + gangadir
-        command += ' && git checkout ' + self.versionGanga
+        command += ' && git checkout --quiet ' + self.versionGanga
         command += ' && rm -fr $PWD/.git'
 
-        print("%s" % str(command))
 
         retcode = call(command, shell=True)
         if retcode:
