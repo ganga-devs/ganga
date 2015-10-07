@@ -291,6 +291,8 @@ def prerelease_command():
 
     print 'the prerelease is installed in', CONFIG['prereldir']
 
+    toolcmd('ganga-release-html %(version)s %(prereldir)s'%CONFIG)
+
     versionfile = os.path.join(CONFIG['webdir_top'], 'download', 'VERSIONS.txt')
     print 'Updating file with available releases'
     acmd("touch %s && date +'%s - %%d %%b %%Y %%k:%%m:%%S' >> %s" % (versionfile, CONFIG['version-pre'], versionfile))
