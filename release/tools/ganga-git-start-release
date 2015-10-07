@@ -22,7 +22,6 @@ git clone $GIT_URL $VERSION
 cd $VERSION
 git branch master origin/master #Track the master branch too
 git flow init -d
-git config gitflow.prefix.versiontag v
 git flow release start $VERSION
 
 echo "-------------------------------"
