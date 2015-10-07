@@ -289,8 +289,6 @@ def prerelease_command():
 
     toolcmd('ganga-git-create-pre %(version)s' % CONFIG)
 
-    toolcmd('ganga-release-html %(version)s %(prereldir)' % CONFIG)
-
     print 'the prerelease is installed in', CONFIG['prereldir']
 
     toolcmd('ganga-release-html %(version)s %(prereldir)s'%CONFIG)
