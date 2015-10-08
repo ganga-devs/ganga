@@ -35,6 +35,10 @@ $INSTALL_DIR/$VERSION/release/tools/ganga-install-externals $VERSION
 echo "------------------------"
 echo "Finishing release branch"
 echo "------------------------"
+git checkout master
+git pull
+git checkout develop
+git pull
 git flow release finish -F -p -m"Tagging Ganga version $VERSION" $VERSION
 
 echo "------------------------"
