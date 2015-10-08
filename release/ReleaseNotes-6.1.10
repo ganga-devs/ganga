@@ -5,7 +5,6 @@
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
 --------------------------------------------------------------------------------------------------------------
-<<<<<<< HEAD
 * First release from Git
 * Refactored code to do with constructing job scripts
 * Added quota check on startup of ganga
@@ -44,7 +43,5 @@ ganga/python/GangaLHCb
 ganga/python/GangaPanda
 --------------------------------------------------------------------------------------------------------------
 * Fixed bug when specifying nFilesPerJob and not giving an explicit split
-=======
-* ...
 
 **************************************************************************************************************
