@@ -703,7 +703,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             if os.path.exists(this_dir) and os.path.isdir(this_dir):
                 dirlist = sorted(os.listdir(this_dir), key=_versionsort)
                 dirlist.reverse()
-                gangaver = _versionsort(_gangaVersion.lstrip('Ganga-'))
+                gangaver = _versionsort(_gangaVersion.lstrip('Ganga-').replace('.', '-')) #Config system expects x-y-z version encoding
                 for d in dirlist:
                     vsort = _versionsort(d)
                     if vsort and ((vsort <= gangaver) or (gangaver is 'SVN')):

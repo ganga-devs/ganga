@@ -15,8 +15,7 @@ INSTALL_DIR=/afs/cern.ch/sw/ganga/install/
 echo "-------------"
 echo "Updating repo"
 echo "-------------"
-cd $STAGING_DIR
-cd $VERSION-pre
+cd $STAGING_DIR/$VERSION
 git pull
 
 echo "------------------"
@@ -25,8 +24,8 @@ echo "------------------"
 git archive --prefix=$VERSION/ --format=tar HEAD | gzip >Ganga-$VERSION.tar.gz
 cp Ganga-$VERSION.tar.gz $INSTALL_DIR/tarball/
 tar xf $INSTALL_DIR/tarball/Ganga-$VERSION.tar.gz --directory $INSTALL_DIR
-echo "Copied tarball to $INSTALL_DIR/tarball/Ganga-$VERSION-pre.tar.gz"
-echo "Installed pre to $INSTALL_DIR"
+echo "Copied tarball to $INSTALL_DIR/tarball/Ganga-$VERSION.tar.gz"
+echo "Installed release to $INSTALL_DIR"
 
 echo "--------------------"
 echo "Installing externals"
@@ -36,4 +35,14 @@ $INSTALL_DIR/$VERSION/release/tools/ganga-install-externals $VERSION
 echo "------------------------"
 echo "Finishing release branch"
 echo "------------------------"
+git checkout master
+git pull
+git checkout develop
+git pull
 git flow release finish -F -p -m"Tagging Ganga version $VERSION" $VERSION
+
+echo "------------------------"
+echo "Remove staging directory"
+echo "------------------------"
+cd $STAGING_DIR
+rm -rf ./$VERSION
