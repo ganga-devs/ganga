@@ -28,7 +28,7 @@ import time
 import re
 
 # store Ganga version based on CVS sticky tag for this file
-_gangaVersion = "$Name: Ganga-SVN $"
+_gangaVersion = '$Name: 6.1.11 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -499,12 +499,10 @@ under certain conditions; type license() for details.
                     this_logger.error('file %s does not seem to be a Ganga config file', self.options.config_file)
                     this_logger.error('try -g option to create valid ~/.gangarc')
                 else:
-                    cv = r.group('version').split('-')
-                    if cv[1] == '4':
-                        this_logger.error('file %s is old an Ganga 4 configuration file (%s)', self.options.config_file, r.group('version'))
-                        this_logger.error('try -g option to create valid ~/.gangarc')
-                    else:
-                        if cv[1] != '5' and cv[1] != '6':
+                    version = r.group('version')
+                    if version.startswith('Ganga-'): #The version string used to start with 'Ganga-'
+                        cv = r.group('version').split('-')
+                        if cv[1] != '6':
                             this_logger.error('file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
                             this_logger.error('try -g option to create valid ~/.gangarc')
         except IOError as x:

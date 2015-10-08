@@ -1,0 +1,47 @@
+**************************************************************************************************************
+6.1.11 (2015/10/08)
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/Ganga
+--------------------------------------------------------------------------------------------------------------
+* First release from Git
+* Refactored code to do with constructing job scripts
+* Added quota check on startup of ganga
+* Fixed some minor bugs in Interactive backend
+* Changes such that GangaLists are written to disk atomically
+* Fixes for Interactive Backend
+* Fixes for Root Application
+* Added confirm_exit configurable
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaAtlas
+--------------------------------------------------------------------------------------------------------------
+* Fix for missing import
+* Fixed very strange issue of the runconfig sometimes not being set properly
+* Bumped the rucio version to 1.0.1
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaDirac
+--------------------------------------------------------------------------------------------------------------
+* Fixed some bugs in DiracFile, reformatted a lot of code in the class
+* Added defaultSE on a per-DiracFile basis to allow for more granular control of data.
+*   This is the defaultSE for accessing and uploading LFNs to Dirac
+* Adding fix for LFN with 0 valid replicas in job splitting
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaLHCb
+--------------------------------------------------------------------------------------------------------------
+* Minor bugfixes/optimisations
+* Better handling of some exceptions in preparing jobs
+
+
+--------------------------------------------------------------------------------------------------------------
+ganga/python/GangaPanda
+--------------------------------------------------------------------------------------------------------------
+* Fixed bug when specifying nFilesPerJob and not giving an explicit split
+
+**************************************************************************************************************
