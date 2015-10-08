@@ -116,6 +116,9 @@ This defines the following:
         taglist = sorted(f.readlines(), key=_versiondecode)
         taglist.reverse()
 
+        if self.options.debug:
+            print("tags found in git: %s" % str(taglist))
+
         gangaver = _versiondecode(self.versionLHCb)
         setup_ver = None
         taglocation = None
@@ -125,6 +128,9 @@ This defines the following:
             if vsort and vsort <= gangaver:
                 taglocation = d.rstrip()
                 break
+
+        if self.options.debug:
+            print("version chosen: %s" % str(gangaver))
 
         if taglocation is None:
             raise InstallLHCbError(
@@ -136,8 +142,13 @@ This defines the following:
             command = 'rm -fr ' + tmp_checkout + ' && '
         else:
             command = ''
-        command += 'git clone --quiet ' + self.github_setupP_repo + ' ' + tmp_checkout
-        command += ' && cd ' + tmp_checkout + ' && git checkout --quiet ' + setup_ver
+
+        if not self.options.debug:
+            opt = '--quiet'
+        else:
+            opt = ''
+        command += 'git clone ' + opt + ' ' + self.github_setupP_repo + ' ' + tmp_checkout
+        command += ' && cd ' + tmp_checkout + ' && git checkout ' + opt + ' ' + setup_ver
         command += ' && mv ' + os.path.join(tmp_checkout, 'GANGA/GANGA_v/*') + ' ' + self.destination
         command += ' && rm -fr ' + tmp_checkout
 
@@ -172,9 +183,13 @@ This defines the following:
         gangadir = join(self.destination, "install", "ganga")
         print("Checking out Ganga")
 
-        command = 'git clone --quiet ' + self.github_ganga_repo + ' ' + gangadir
+        if not self.options.debug:
+            opt = '--quiet'
+        else:
+            opt = ''
+        command = 'git clone ' + opt + ' ' + self.github_ganga_repo + ' ' + gangadir
         command += ' && cd ' + gangadir
-        command += ' && git checkout --quiet ' + self.versionGanga
+        command += ' && git checkout ' + opt + ' ' + self.versionGanga
         command += ' && rm -fr $PWD/.git'
 
 
@@ -249,6 +264,9 @@ This defines the following:
         os.system('rm -f ' + fname)
         coreExternalPackages = loc['_externalPackages']
 
+        if self.options.debug:
+            print("coreExternalPackages: %s" % str(loc['_externalPackages']))
+
         return loc['_externalPackages']
 
     def _getExternals(self):
@@ -312,10 +330,16 @@ This defines the following:
 
     def checkout(self):
         ## Get SetupProject data
+        if self.options.debug:
+            print("Getting SetupProject code")
         self._getSetupProject()
         ## Get Ganga source
+        if self.options.debug:
+            print("Getting Ganga code")
         self._getGanga()
         ## Get external deps
+        if self.options.debug:
+            print("Getting External projects")
         self._getExternals()
 
     def cleanup(self):
@@ -323,12 +347,18 @@ This defines the following:
 
     def install(self):
         ## Prepare the disk information
+        if self.options.debug:
+            print("Preparing some script internals")
         self.prepare()
 
         ## Get the ganga source from github
+        if self.options.debug:
+            print("Checking out code")
         self.checkout()
 
         ## Cleanup the working directories
+        if self.options.debug:
+            print("Cleanup")
         self.cleanup()
 
 if __name__ == '__main__':
@@ -360,6 +390,10 @@ This vercion of the code will always pull ganga from:
                       dest="prerelease", default=False,
                       help="Treat as a pre-release " +
                       "[default: %default]")
+
+    parser.add_option('-g', '--debug', action='store_true',
+                        dest='debug', default=False,
+                        help='add debug output [default: %default]')
 
     parser.add_option("-d", "--destination", dest="destination",
                       default='~/cmtuser',

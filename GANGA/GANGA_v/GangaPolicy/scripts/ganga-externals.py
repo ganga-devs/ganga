@@ -6,7 +6,6 @@ externals_noarch = [['httplib2', '0.8'],
                     ['python-gflags', '2.0'],
                     ['google-api-python-client', '1.1'],
                     ['paramiko', '1.7.3'],
-                    ['PYTF','1.6'],
                     ['stomputil','2.3'],
                     ['ipython', '0.6.13_ganga_patch1']]
 
