@@ -28,7 +28,7 @@ import time
 import re
 
 # store Ganga version based on CVS sticky tag for this file
-_gangaVersion = "$Name: Ganga-SVN $"
+_gangaVersion = '$Name: 6.1.11 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
