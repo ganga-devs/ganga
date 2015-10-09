@@ -57,13 +57,6 @@ class Executable(IPrepareApp):
     _category = 'applications'
     _name = 'Executable'
     _exportmethods = ['prepare', 'unprepare']
-    _GUIPrefs = [{'attribute': 'exe', 'widget': 'File'},
-                 {'attribute': 'args', 'widget': 'String_List'},
-                 {'attribute': 'env', 'widget': 'DictOfString'}]
-
-    _GUIAdvancedPrefs = [{'attribute': 'exe', 'widget': 'File'},
-                         {'attribute': 'args', 'widget': 'String_List'},
-                         {'attribute': 'env', 'widget': 'DictOfString'}]
 
     def __init__(self):
         super(Executable, self).__init__()

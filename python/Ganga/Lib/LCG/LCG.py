@@ -129,11 +129,6 @@ class LCG(IBackend):
     _exportmethods = ['check_proxy', 'loginfo', 'inspect',
                       'match', 'get_wms_list', 'get_ce_list', 'get_se_list']
 
-    _GUIPrefs = [{'attribute': 'CE', 'widget': 'String'},
-                 {'attribute': 'jobtype', 'widget': 'String_Choice',
-                     'choices': ['Normal', 'MPICH']},
-                 {'attribute': 'middleware', 'widget': 'String_Choice', 'choices': ['EDG', 'GLITE']}]
-
     _final_ganga_states = ['completing', 'completed', 'failed']
 
     def __init__(self):

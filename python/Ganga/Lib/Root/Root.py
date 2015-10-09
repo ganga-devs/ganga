@@ -238,15 +238,6 @@ class Root(IPrepareApp):
     _category = 'applications'
     _name = 'Root'
     _exportmethods = ['prepare', 'unprepare']
-    _GUIPrefs = [{'attribute': 'script', 'widget': 'FileOrString'},
-                 {'attribute': 'args', 'widget': 'String_List'},
-                 {'attribute': 'version', 'widget': 'String'},
-                 {'attribute': 'usepython', 'widget': 'Bool'}]
-
-    _GUIAdvancedPrefs = [{'attribute': 'script', 'widget': 'FileOrString'},
-                         {'attribute': 'args', 'widget': 'String_List'},
-                         {'attribute': 'usepython', 'widget': 'Bool'},
-                         {'attribute': 'version', 'widget': 'String'}]
 
     def __init__(self):
         super(Root, self).__init__()

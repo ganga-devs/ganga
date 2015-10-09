@@ -45,12 +45,6 @@ class Localhost(IBackend):
                                      })
     _category = 'backends'
     _name = 'Local'
-    _GUIPrefs = [{'attribute': 'nice', 'widget': 'String'},
-                 {'attribute': 'id', 'widget': 'Int'},
-                 {'attribute': 'status', 'widget': 'String'},
-                 {'attribute': 'exitcode', 'widget': 'String'}]
-    _GUIAdvancedPrefs = [{'attribute': 'nice', 'widget': 'String'},
-                         {'attribute': 'exitcode', 'widget': 'String'}]
 
     def __init__(self):
         super(Localhost, self).__init__()
