@@ -41,9 +41,8 @@ def taskify(baseclass, name):
         "__init__": __task__init__,
     }
 
-    for var in ["_GUIPrefs", "_GUIAdvancedPrefs", "_exportmethods"]:
-        if var in baseclass.__dict__:
-            classdict[var] = baseclass.__dict__[var]
+    if '_exportmethods' in baseclass.__dict__:
+        classdict['_exportmethods'] = baseclass.__dict__['_exportmethods']
     cls = classobj(name, (taskclass, baseclass), classdict)
 
     global handler_map

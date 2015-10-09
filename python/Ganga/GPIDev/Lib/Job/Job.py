@@ -208,13 +208,6 @@ class Job(GangaObject):
 
     default_registry = 'jobs'
 
-    # preferences for the GUI...
-    _GUIPrefs = [{'attribute': 'id'},
-                 {'attribute': 'status'},
-                 {'attribute': 'inputsandbox', 'displayLevel': 1},
-                 {'attribute': 'inputdata'},
-                 {'attribute': 'outputsandbox'}]
-
     _storedRTHandler = None
     _storedJobSubConfig = None
     _storedAppSubConfig = None

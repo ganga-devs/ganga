@@ -28,16 +28,6 @@ class LCGRequirements(GangaObject):
     _category = 'LCGRequirements'
     _name = 'LCGRequirements'
 
-    _GUIPrefs = [{'attribute': 'software',       'widget': 'String_List'},
-                 {'attribute': 'nodenumber',     'widget': 'Int'},
-                 {'attribute': 'memory',         'widget': 'Int'},
-                 {'attribute': 'cputime',        'widget': 'Int'},
-                 {'attribute': 'walltime',       'widget': 'Int'},
-                 {'attribute': 'ipconnectivity', 'widget': 'Bool'},
-                 {'attribute': 'allowedCEs',     'widget': 'String'},
-                 {'attribute': 'excludedCEs',    'widget': 'String'},
-                 {'attribute': 'other',          'widget': 'String_List'}]
-
     def __init__(self):
 
         super(LCGRequirements, self).__init__()
