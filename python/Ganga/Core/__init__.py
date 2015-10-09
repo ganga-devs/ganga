@@ -146,10 +146,8 @@ def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
     else:
         return False
 
-global at_exit_should_wait_cb
 at_exit_should_wait_cb = None
 
-global current_shutdown_policy
 current_shutdown_policy = None
 
 def change_atexitPolicy(interactive_session=True, new_policy=None):

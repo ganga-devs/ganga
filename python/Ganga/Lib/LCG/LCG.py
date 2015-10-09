@@ -40,7 +40,6 @@ if simulator_enabled:
 else:
     from .Grid import Grid
 
-global lcg_output_downloader
 lcg_output_downloader = None
 
 
