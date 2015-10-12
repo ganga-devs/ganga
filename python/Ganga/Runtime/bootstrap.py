@@ -37,6 +37,17 @@ if r:
 else:
     _gangaVersion = "SVN_TRUNK"
 
+
+def new_version_format_to_old(version):
+    """
+    Convert from 'x.y.z'-style format to 'Ganga-x-y-z'
+
+    Example:
+        >>> new_version_format_to_old('Ganga-6-1-11')
+        '6.1.11'
+    """
+    return 'Ganga-'+version.replace('.', '')
+
 # store a path to Ganga libraries
 import Ganga
 _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
@@ -238,19 +249,17 @@ under certain conditions; type license() for details.
 #           file_opens(self.args[0],'reading script')
 
     def new_version(self, update=True):
-        # matches Patricks release notes format, could just use _gangaVersion
-        version = _gangaVersion.lstrip('Ganga-').replace('-', '.')
         versions_filename = os.path.join(
             Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
         if not os.path.exists(versions_filename):
             if update:
                 with open(versions_filename, 'w') as versions_file:
-                    versions_file.write(version + '\n')
+                    versions_file.write(_gangaVersion + '\n')
             return True
 
         with open(versions_filename, 'r+') as versions_file:
-            if versions_file.read().find(version) < 0:
-                versions_file.write(version + '\n')
+            if versions_file.read().find(_gangaVersion) < 0:
+                versions_file.write(_gangaVersion + '\n')
                 return True
 
         return False
@@ -300,7 +309,7 @@ under certain conditions; type license() for details.
         with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r') as config_head_file:
             new_config += config_head_file.read()
         new_config += config_file_as_text()
-        new_config = new_config.replace('Ganga-SVN', 'Ganga-'+_gangaVersion.replace('.', '-'))  #Add in Ganga-x-y-z format so that it is backward compatible.
+        new_config = new_config.replace('Ganga-SVN', new_version_format_to_old(_gangaVersion))  #Add in Ganga-x-y-z format so that it is backward compatible.
         with open(config_file, 'w') as new_config_file:
             new_config_file.write(new_config)
 
@@ -312,13 +321,12 @@ under certain conditions; type license() for details.
         if getConfig('Configuration')['ReleaseNotes'] == True:
             packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(
                 lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
-            version = _gangaVersion.lstrip("Ganga-").replace('-', '.')
             pathname = os.path.join(os.path.dirname(
-                __file__), '..', '..', '..', 'release', 'ReleaseNotes-%s' % version)
+                __file__), '..', '..', '..', 'release', 'ReleaseNotes-%s' % _gangaVersion)
 
             if not os.path.exists(pathname):
                 logger.warning(
-                    "couldn't find release notes for version %s" % version)
+                    "couldn't find release notes for version %s" % _gangaVersion)
                 return
 
             bounding_line = '**************************************************************************************************************\n'
@@ -332,9 +340,9 @@ under certain conditions; type license() for details.
                     logger.debug('Reason: %s' % str(err))
                     raise
 
-            if notes[0].find(version) < 0:
+            if notes[0].find(_gangaVersion) < 0:
                 logger.error("Release notes version doesn't match the stated version on line 1")
-                logger.error("'%s' does not match '%s'" % (version, notes[0]))
+                logger.error("'%s' does not match '%s'" % (_gangaVersion, notes[0]))
                 return
 
             log_divider = '-' * 50
@@ -343,7 +351,7 @@ under certain conditions; type license() for details.
             if note_gen:
                 logger.info(log_divider)
                 logger.info(log_divider)
-                logger.info("Release notes for version 'Ganga-%s':" % version)
+                logger.info("Release notes for version 'Ganga-%s':" % _gangaVersion)
                 logger.info(log_divider)
                 logger.info('')
                 logger.info(log_divider)
@@ -499,7 +507,7 @@ under certain conditions; type license() for details.
                     this_logger.error('file %s does not seem to be a Ganga config file', self.options.config_file)
                     this_logger.error('try -g option to create valid ~/.gangarc')
                 else:
-                    cv = r.group('version').split('-')
+                    cv = r.group('version').split('-')  #Version number is in Ganga-x-y-z format
                     if cv[1] != '6':
                         this_logger.error('file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
                         this_logger.error('try -g option to create valid ~/.gangarc')
@@ -699,7 +707,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             if os.path.exists(this_dir) and os.path.isdir(this_dir):
                 dirlist = sorted(os.listdir(this_dir), key=_versionsort)
                 dirlist.reverse()
-                gangaver = _versionsort(_gangaVersion.lstrip('Ganga-').replace('.', '-')) #Config system expects x-y-z version encoding
+                gangaver = _versionsort(new_version_format_to_old(_gangaVersion).lstrip('Ganga-')) #Site config system expects x-y-z version encoding
                 for d in dirlist:
                     vsort = _versionsort(d)
                     if vsort and ((vsort <= gangaver) or (gangaver is 'SVN')):
