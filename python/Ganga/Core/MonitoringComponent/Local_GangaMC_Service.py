@@ -173,7 +173,6 @@ def stop_and_free_thread_pool(fail_cb=None, max_retries=5):
 
 # purge Qin
 
-
 def _purge_actions_queue():
     """
     Purge Qin: consume the current queued actions 
@@ -387,8 +386,11 @@ class JobRegistry_Monitor(GangaThread):
 
         self._runningNow = False
 
-    def isEnabled( self ):
-        return self.enabled or self.__isInProgress()
+    def isEnabled( self, useRunning = True ):
+        if useRunning:
+            return self.enabled or self.__isInProgress()
+        else:
+            return self.enabled
 
     def run(self):
         """
@@ -654,6 +656,7 @@ class JobRegistry_Monitor(GangaThread):
         Parameters:
          fail_cb : if not None, this callback is called if a retry attempt is needed
         """
+
         if not self.alive:
             log.warning("Monitoring loop has already been stopped")
             return False
@@ -685,9 +688,9 @@ class JobRegistry_Monitor(GangaThread):
 
         # ---->
         # wait for all worker threads to finish
-        # self.__awaitTermination()
+        #self.__awaitTermination()
         # join the worker threads
-        # stop_and_free_thread_pool(fail_cb,max_retries)
+        #stop_and_free_thread_pool(fail_cb,max_retries)
         ###log.info( 'Monitoring component stopped successfully!' )
 
         #while self._runningNow is True:
@@ -877,9 +880,10 @@ class JobRegistry_Monitor(GangaThread):
                         try:
                             backendObj.master_updateMonitoringInformation(this_job_list)
                         except Exception, err:
+                            log.debug("Err: %s" % str(err))
                             ## We want to catch ALL of the exceptions
                             ## This would allow us to continue in the case of errors due to bad job/backend combinations
-                            if thown_exception is not None:
+                            if thrown_exception is not None:
                                 thrown_exception = err
 
                     if thrown_exception is not None:
@@ -1041,8 +1045,7 @@ class JobRegistry_Monitor(GangaThread):
         if self.errors[bn] == 0:
             log_error()
             if not config['repeat_messages']:
-                log.info(
-                    'Further error messages from %s handler in the monitoring loop will be skipped.' % bn)
+                log.info('Further error messages from %s handler in the monitoring loop will be skipped.' % bn)
         else:
             if config['repeat_messages']:
                 log_error()
@@ -1071,8 +1074,12 @@ def getStackTrace():
                         status = status + "      " + function_name + " @ " + filename + " # " + str(line) + "\n"
 
             status = status + "\n"
-        log.debug("Queue", Qin.queue)
+        ## CANNOT CONVERT TO A STRING!!!
+        #log.info("Queue", str(Qin.queue))
+        log.debug("%s" % str(status))
         return status
+    except Exception, err:
+        print("Err: %s" % str(err))
     finally:
         pass
 
