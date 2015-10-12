@@ -189,6 +189,15 @@ class TaskRegistry(Registry):
         self._main_thread = GangaThread(name="GangaTasks", target=self._thread_main)
         self._main_thread.start()
 
+    def shutdown(self):
+
+        super(TaskRegistry, self).shutdown()
+        #self._main_thread.stop()
+
+    def stop(self):
+
+        self._main_thread.stop()
+
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 
 

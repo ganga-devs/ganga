@@ -67,14 +67,17 @@ def _ganga_run_exitfuncs():
         logger.debug("This should only happen if Ganga filed to initialize correctly")
 
     ## Stop the Mon loop from iterating further!
-    from Ganga.Core import monitoring_component
-    if monitoring_component is not None:
-        monitoring_component.disableMonitoring()
+    #from Ganga.Core import monitoring_component
+    #if monitoring_component is not None:
+    #    monitoring_component.disableMonitoring()
 
     ## This will stop the Registries flat but we may still have threads processing data!
-    #from Ganga.Core.InternalServices import Coordinator
-    #if Coordinator.servicesEnabled:
-    #    Coordinator.disableInternalServices( shutdown = True )
+    from Ganga.Core.InternalServices import Coordinator
+    if Coordinator.servicesEnabled:
+        Coordinator.disableInternalServices( shutdown = True )
+
+    from Ganga.GPIDev.Lib.Tasks import stopTasks
+    stopTasks()
 
     # Set the disk timeout to 3 sec, sacrifice stability for quick-er exit
     #from Ganga.Utility.Config import setConfigOption
@@ -117,6 +120,8 @@ def _ganga_run_exitfuncs():
     atexit._exithandlers = map(add_priority, atexit._exithandlers)
     atexit._exithandlers.sort(priority_cmp)
 
+    logger.info("Stopping running tasks before shutting down Repositories")
+
     import inspect
     while atexit._exithandlers:
 
@@ -133,7 +138,7 @@ def _ganga_run_exitfuncs():
             s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__, str(x))
             logger.warning(s)
 
-    logger.debug("Shutting Down Repository_runtime")
+    logger.info("Shutting Down Ganga Repositories")
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
 

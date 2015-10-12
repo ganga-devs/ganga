@@ -368,8 +368,7 @@ class JobRegistry_Monitor(GangaThread):
         # Add credential checking to monitoring loop
         for _credObj in Credentials._allCredentials.itervalues():
             log.debug("Setting callback hook for %s" % _credObj._name)
-            self.setCallbackHook(self.makeCredCheckJobInsertor(
-                _credObj), {}, True, timeout=config['creds_poll_rate'])
+            self.setCallbackHook(self.makeCredCheckJobInsertor(_credObj), {}, True, timeout=config['creds_poll_rate'])
 
         # Add low disk-space checking to monitoring loop
         log.debug("Setting callback hook for disk space checking")
@@ -509,13 +508,11 @@ class JobRegistry_Monitor(GangaThread):
         """
 
         if not isinstance(steps, int) or steps < 1:
-            log.warning(
-                "The number of monitor steps should be a positive integer")
+            log.warning("The number of monitor steps should be a positive integer")
             return False
 
         if not self.alive:
-            log.error(
-                "Cannot run the monitoring loop. It has already been stopped")
+            log.error("Cannot run the monitoring loop. It has already been stopped")
             return False
 
         # we don not allow the user's request the monitoring loop while the
@@ -552,8 +549,7 @@ class JobRegistry_Monitor(GangaThread):
                 # situation if it is not
                 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
                 if not isinstance(m_jobs, RegistrySlice):
-                    log.warning(
-                        'runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
+                    log.warning('runMonitoring: jobs argument must be a registry slice such as a result of jobs.select() or jobs[i1:i2]')
                     return False
 
                 self.registry = m_jobs
@@ -612,13 +608,14 @@ class JobRegistry_Monitor(GangaThread):
         """
 
         if not self.alive:
-            log.error(
-                "Cannot disable monitoring loop. It has already been stopped")
+            log.error("Cannot disable monitoring loop. It has already been stopped")
             return False
+
+        was_enabled = self.enabled
 
         try:
             if self.enabled:
-                log.info("Disabling Monitoring Service")
+                log.debug("Disabling Monitoring Service")
 
                 # THIS NEEDS TO BE HERE FOR A CLEAN DISABLE OF THE MONITORING L
                 self.enabled = False
@@ -639,8 +636,15 @@ class JobRegistry_Monitor(GangaThread):
             # wake up the monitoring loop
             self.__mainLoopCond.notifyAll()
 
-        while self._runningNow is True:
-            time.sleep(0.5)
+        if was_enabled is True and self._runningNow:
+            log.info("Some tasks are still running on Monitoring Loop")
+            log.info("Please wait for them to finish to avoid data corruption")
+
+        #while self._runningNow is True:
+        #    time.sleep(0.5)
+
+        #if was_enabled:
+        #    log.info("Monitoring Loop has stopped")
 
         return True
 
@@ -686,8 +690,8 @@ class JobRegistry_Monitor(GangaThread):
         # stop_and_free_thread_pool(fail_cb,max_retries)
         ###log.info( 'Monitoring component stopped successfully!' )
 
-        while self._runningNow is True:
-            time.sleep(0.5)
+        #while self._runningNow is True:
+        #    time.sleep(0.5)
 
         return True
 
@@ -836,10 +840,50 @@ class JobRegistry_Monitor(GangaThread):
                             if hasattr(j.backend, 'setup'):
                                 j.backend.setup()
 
-                    if self.enabled is not True or self.alive is not True:
+                    if self.enabled is False or self.alive is False:
                         return
 
-                    backendObj.master_updateMonitoringInformation(jobList_fromset)
+                    blocks_of_size = 10
+                    list_of_bunches = []
+                    temp_list = []
+
+                    for this_job in jobList_fromset:
+
+                        temp_list.append(this_job)
+
+                        count = 0
+                        for found_job in temp_list:
+                            sj_len = len(found_job.subjobs)
+                            if sj_len > 0:
+                                count += sj_len
+                            else:
+                                count += 1
+
+                        if count > blocks_of_size:
+                            list_of_bunches.append(temp_list)
+                            temp_list = []
+
+                    if len(temp_list) != 0:
+                        list_of_bunches.append(temp_list)
+                    temp_list = []
+
+                    thrown_exception = None
+
+                    for this_job_list in list_of_bunches:
+
+                        if self.enabled is False or self.alive is False:
+                            break
+
+                        try:
+                            backendObj.master_updateMonitoringInformation(this_job_list)
+                        except Exception, err:
+                            ## We want to catch ALL of the exceptions
+                            ## This would allow us to continue in the case of errors due to bad job/backend combinations
+                            if thown_exception is not None:
+                                thrown_exception = err
+
+                    if thrown_exception is not None:
+                        raise thrown_exception
 
                     # resubmit if required
                     for j in jobList_fromset:
@@ -859,15 +903,12 @@ class JobRegistry_Monitor(GangaThread):
                             if skip:
                                 continue
 
-                            num_com = len(
-                                [s for s in j.subjobs if s.status in ['completed']])
-                            num_fail = len(
-                                [s for s in j.subjobs if s.status in ['failed']])
+                            num_com = len([s for s in j.subjobs if s.status in ['completed']])
+                            num_fail = len([s for s in j.subjobs if s.status in ['failed']])
 
                             #log.critical('Checking failed subjobs for job %d... %d %s',j.id,num_com,num_fail)
 
-                            try_resubmit = num_fail > 0 and (
-                                float(num_fail) / float(num_com + num_fail)) < config['MaxFracForResubmit']
+                            try_resubmit = num_fail > 0 and (float(num_fail) / float(num_com + num_fail)) < config['MaxFracForResubmit']
 
                         if try_resubmit:
                             if j.backend.check_auto_resubmit():
@@ -1027,8 +1068,7 @@ def getStackTrace():
                 if frame:
                     status = status + "    stack:\n"
                     for frame, filename, line, function_name, context, index in inspect.getouterframes(frame):
-                        status = status + "      " + function_name + \
-                            " @ " + filename + " # " + str(line) + "\n"
+                        status = status + "      " + function_name + " @ " + filename + " # " + str(line) + "\n"
 
             status = status + "\n"
         log.debug("Queue", Qin.queue)

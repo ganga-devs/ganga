@@ -21,7 +21,7 @@ class WorkerThreadPool(object):
     Client class through which Ganga objects interact with the local DIRAC server.
     """
     __slots__ = ['__queue', '__worker_threads',
-                 '_saved_num_worker', '_saved_thread_prefix', '_locked']
+                 '_saved_num_worker', '_saved_thread_prefix', '_locked', '_shutdown']
 
     def __init__(self,
                  num_worker_threads=getConfig('Queues')['NumWorkerThreads'],
@@ -35,6 +35,7 @@ class WorkerThreadPool(object):
         self.__init_worker_threads(self._saved_num_worker, self._saved_thread_prefix)
 
         self._locked = False
+        self._shutdown = False
 
     def __init_worker_threads(self, num_worker_threads, worker_thread_prefix):
         if len(self.__worker_threads) > 0:
@@ -158,7 +159,8 @@ class WorkerThreadPool(object):
             logger.error('Only a python callable object may be added to the queue using the add_function() method')
             return
         if self._locked is True:
-            logger.warning("Cannot Add Process as Queue is Locked!")
+            if not self._shutdown:
+                logger.warning("Cannot Add Process as Queue is Locked!")
             return
         self.__queue.put(QueueElement(priority=priority,
                                       command_input=FunctionInput(
@@ -179,7 +181,8 @@ class WorkerThreadPool(object):
             logger.error("Input command must be of type 'string'")
             return
         if self._locked is True:
-            logger.warning("Cannot Add Process as Queue is Locked!")
+            if self._shutdown:
+                logger.warning("Cannot Add Process as Queue is Locked!")
             return
         self.__queue.put(QueueElement(priority=priority,
                                       command_input=CommandInput(
@@ -218,7 +221,8 @@ class WorkerThreadPool(object):
         """
         return [(w.gangaName, w._command, w._timeout) for w in self.__worker_threads]
 
-    def _stop_worker_threads(self):
+    def _stop_worker_threads(self, shutdown=False):
+        self._shutdown = shutdown
         for w in self.__worker_threads:
             w.stop()
             # FIXME NEED TO CALL AN OPTIONAL CLEANUP FUCNTION HERE IF THREAD IS STOPPED
