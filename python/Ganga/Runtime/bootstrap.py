@@ -43,10 +43,10 @@ def new_version_format_to_old(version):
     Convert from 'x.y.z'-style format to 'Ganga-x-y-z'
 
     Example:
-        >>> new_version_format_to_old('Ganga-6-1-11')
-        '6.1.11'
+        >>> new_version_format_to_old('6.1.11')
+        'Ganga-6-1-11'
     """
-    return 'Ganga-'+version.replace('.', '')
+    return 'Ganga-'+version.replace('.', '-')
 
 # store a path to Ganga libraries
 import Ganga
