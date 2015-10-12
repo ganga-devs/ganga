@@ -79,11 +79,9 @@ class SplitByFiles(GaudiInputDataSplitter):
                 if isType(i, DiracFile):
                     datatmp.append(i)
                 else:
-                    logger.error(
-                        "Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
+                    logger.error("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
                     from Ganga.Core.exceptions import GangaException
-                    raise GangaException(
-                        "Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
+                    raise GangaException("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
         elif type(dataset) == type([]) or isType(dataset, GangaList()):
             for file in dataset:
                 if type(file) == type(''):
@@ -93,11 +91,9 @@ class SplitByFiles(GaudiInputDataSplitter):
                     datatmp.append(file)
                 else:
                     logger.error("Unexpected type: %s" % str(type(file)))
-                    logger.error(
-                        "Wanted object to inherit from type: %s: %s" % (str(type(IGangaFile()))))
+                    logger.error("Wanted object to inherit from type: %s: %s" % (str(type(IGangaFile()))))
                     from Ganga.Core.exceptions import GangaException
-                    x = GangaException(
-                        "Unknown(unexpected) file object: %s" % file)
+                    x = GangaException("Unknown(unexpected) file object: %s" % file)
                     raise x
         elif type(dataset) == type(''):
             datatmp.append(DiracFile(lfn=dataset))
@@ -111,13 +107,12 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
-        j.copyFrom(
-            stripProxy(job), ['inputdata', 'inputsandbox', 'inputfiles'])
+        j.copyFrom(stripProxy(job))#, ['inputdata', 'inputsandbox', 'inputfiles'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
         logger.debug("Unsetting Merger")
         j.merger = None
-        # j.inputsandbox = [] ## master added automatically
+        #j.inputsandbox = [] ## master added automatically
         #j.inputfiles = []
         logger.debug("Setting InputData")
         j.inputdata = LHCbDataset(files=datatmp[:],
