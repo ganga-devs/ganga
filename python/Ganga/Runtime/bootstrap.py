@@ -300,7 +300,7 @@ under certain conditions; type license() for details.
         with open(os.path.join(os.path.dirname(Ganga.Runtime.__file__), 'HEAD_CONFIG.INI'), 'r') as config_head_file:
             new_config += config_head_file.read()
         new_config += config_file_as_text()
-        new_config = new_config.replace('Ganga-SVN', _gangaVersion)
+        new_config = new_config.replace('Ganga-SVN', 'Ganga-'+_gangaVersion.replace('.', '-'))  #Add in Ganga-x-y-z format so that it is backward compatible.
         with open(config_file, 'w') as new_config_file:
             new_config_file.write(new_config)
 
@@ -499,12 +499,10 @@ under certain conditions; type license() for details.
                     this_logger.error('file %s does not seem to be a Ganga config file', self.options.config_file)
                     this_logger.error('try -g option to create valid ~/.gangarc')
                 else:
-                    version = r.group('version')
-                    if version.startswith('Ganga-'): #The version string used to start with 'Ganga-'
-                        cv = r.group('version').split('-')
-                        if cv[1] != '6':
-                            this_logger.error('file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
-                            this_logger.error('try -g option to create valid ~/.gangarc')
+                    cv = r.group('version').split('-')
+                    if cv[1] != '6':
+                        this_logger.error('file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
+                        this_logger.error('try -g option to create valid ~/.gangarc')
         except IOError as x:
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
