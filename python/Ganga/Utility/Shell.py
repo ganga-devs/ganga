@@ -147,7 +147,7 @@ class Shell(object):
         "Execute an OS command and captures the stderr and stdout which are returned in a file"
 
         if not soutfile:
-            soutfile = tempfile.NamedTemporaryFile(mode='w+t', suffix='.out').name
+            soutfile = tempfile.NamedTemporaryFile(mode='w+t', suffix='.out', delete=False).name
 
         logger.debug('Running shell command: %s' % cmd)
         try:
