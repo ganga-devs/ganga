@@ -416,10 +416,8 @@ class IBackend(GangaObject):
 
         for j in jobs:
             if len(j.subjobs):
-                monitorable_subjobs = [
-                    s for s in j.subjobs if s.status in ['submitted', 'running']]
-                logger.debug('Monitoring subjobs: %s', repr(
-                    [jj._repr() for jj in monitorable_subjobs]))
+                monitorable_subjobs = [s for s in j.subjobs if s.status in ['submitted', 'running']]
+                logger.debug('Monitoring subjobs: %s', repr([jj._repr() for jj in monitorable_subjobs]))
                 j.backend.updateMonitoringInformation(monitorable_subjobs)
                 j.updateMasterJobStatus()
             else:

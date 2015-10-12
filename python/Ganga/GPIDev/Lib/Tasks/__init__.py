@@ -5,7 +5,14 @@ from __future__ import absolute_import
 
 from Ganga.Core.GangaRepository import addRegistry
 from .TaskRegistry import TaskRegistry
-addRegistry(TaskRegistry("tasks", "Tasks Registry"))
+
+myTaskRegistry = TaskRegistry("tasks", "Tasks Registry")
+
+addRegistry(myTaskRegistry)
+
+def stopTasks():
+    global myTaskRegistry
+    myTaskRegistry.stop()
 
 # Tasks
 from .Task import Task
@@ -26,3 +33,5 @@ from .CoreUnit import CoreUnit
 from .common import logger
 
 from .TaskApplication import ExecutableTask, ArgSplitterTask
+
+
