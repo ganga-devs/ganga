@@ -396,13 +396,17 @@ class GangaRepositoryLocal(GangaRepository):
                     if len(self.lock([id])) != 0:
                         self.index_write(id)
                         self.unlock([id])
-                except KeyError, err:
-                    logger.debug("update KeyError: %s" % str(err))
+                except Exception, err:
+                    logger.debug("update Error: %s" % str(err))
                     # deleted job
                     if id in self.objects:
                         self._internal_del__(id)
                         changed_ids.append(id)
-                except InaccessibleObjectError as x:
+                except Exception as x:
+                    ## WE DO NOT CARE what type of error occured here and it can be
+                    ## due to corruption so could be one of MANY exception types
+                    ## If the job is not accessible this should NOT cause the loading of ganga to fail!
+                    ## we can't reasonably write all possible exceptions here!
                     logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
                     summary.append((id, x.orig))
 
