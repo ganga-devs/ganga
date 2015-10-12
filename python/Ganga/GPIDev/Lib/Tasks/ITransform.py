@@ -27,7 +27,6 @@ class ITransform(GangaObject):
         'unit_merger': ComponentItem('mergers', defvalue=None, load_default=0, optional=1, doc='Merger to be copied and run on each unit separately.'),
         'copy_output': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='The dataset to copy all units output to, e.g. Grid dataset -> Local Dataset'),
         'unit_copy_output': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, doc='The dataset to copy each individual unit output to, e.g. Grid dataset -> Local Dataset'),
-        'unit_merger': ComponentItem('mergers', defvalue=None, load_default=0, optional=1, doc='Merger to be run copied and run on each unit separately.'),
         'run_limit': SimpleItem(defvalue=8, doc='Number of times a partition is tried to be processed.', protected=1, typelist=["int"]),
         'minor_run_limit': SimpleItem(defvalue=3, doc='Number of times a unit can be resubmitted', protected=1, typelist=["int"]),
         'major_run_limit': SimpleItem(defvalue=3, doc='Number of times a junit can be rebrokered', protected=1, typelist=["int"]),
