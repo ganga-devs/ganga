@@ -409,27 +409,56 @@ class IBackend(GangaObject):
         updateMonitoringInformation().
         """
 
-        simple_jobs = []
+        ## Have to import here so it's actually defined
+        from Ganga.Core import monitoring_component
+
+        ## Only process 10 files from the backend at once
+        blocks_of_size = 10
+        ## Separate different backends implicitly
+        simple_jobs = {}
 
         # FIXME Add some check for (sub)jobs which are in a transient state but
         # are not locked by an active session of ganga
 
         for j in jobs:
-            if len(j.subjobs):
+            ## All subjobs should have same backend
+            if len(j.subjobs) > 0:
                 monitorable_subjobs = [s for s in j.subjobs if s.status in ['submitted', 'running']]
                 logger.debug('Monitoring subjobs: %s', repr([jj._repr() for jj in monitorable_subjobs]))
-                j.backend.updateMonitoringInformation(monitorable_subjobs)
-                j.updateMasterJobStatus()
+
+                monitorable_blocks = []
+                temp_block = []
+                for sj in monitorable_subjobs:
+                    temp_block.append(sj)
+                    if len(temp_block) == blocks_of_size:
+                        monitorable_blocks.append(temp_block)
+                        temp_block = []
+
+                if len(temp_block) > 0:
+                    monitorable_blocks.append(temp_block)
+                    temp_block = []
+
+                for this_block in monitorable_blocks:
+
+                    if monitoring_component and not monitoring_component.isEnabled(False):
+                        break
+
+                    j.backend.updateMonitoringInformation(this_block)
+                    j.updateMasterJobStatus()
             else:
-                simple_jobs.append(j)
+                backend_name = j.backend.__class__.__name__
+                if backend_name not in simple_jobs.keys():
+                    simple_jobs[backend_name] = []
+                simple_jobs[backend_name].append(j)
 
-        if simple_jobs:
-            logger.debug(
-                'Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs]))
-            simple_jobs[0].backend.updateMonitoringInformation(simple_jobs)
+        if len(simple_jobs.keys()) > 0:
+            for this_backend in simple_jobs.keys():
+                logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
 
-    master_updateMonitoringInformation = staticmethod(
-        master_updateMonitoringInformation)
+                simple_jobs[this_backend][0].backend.updateMonitoringInformation(simple_jobs[this_backend])
+
+
+    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def updateMonitoringInformation(jobs):
         """ Update monitoring information for individual jobs: jobs is
