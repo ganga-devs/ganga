@@ -407,9 +407,18 @@ class LHCbDataset(GangaDataset):
             else:
                 return snew + sdatasetsnew + sold + sdatasetsold
 
+    def _checkOtherFiles(self, other ):
+        if isType(other, GangaList) or isType(other, []):
+            other_files = LHCbDataset(other).getFullFileNames()
+        elif isType(other, LHCbDataset):
+            other_files = other.getFullFileNames()
+        else:
+            raise GangaException("Unknown type for difference")
+        return other_files
+
     def difference(self, other):
         '''Returns a new data set w/ files in this that are not in other.'''
-        other_files = other.getFullFileNames()
+        other_files = self._checkOtherFiles(other)
         files = set(self.getFullFileNames()).difference(other_files)
         data = LHCbDataset()
         data.__construct__([list(files)])
@@ -418,16 +427,18 @@ class LHCbDataset(GangaDataset):
 
     def isSubset(self, other):
         '''Is every file in this data set in other?'''
-        return set(self.getFileNames()).issubset(other.getFileNames())
+        other_files = self._checkOtherFiles(other)
+        return set(self.getFileNames()).issubset(other_files)
 
     def isSuperset(self, other):
         '''Is every file in other in this data set?'''
-        return set(self.getFileNames()).issuperset(other.getFileNames())
+        other_files = self._checkOtherFiles(other)
+        return set(self.getFileNames()).issuperset(other_files)
 
     def symmetricDifference(self, other):
         '''Returns a new data set w/ files in either this or other but not
         both.'''
-        other_files = other.getFullFileNames()
+        other_files = other.checkOtherFiles(other)
         files = set(self.getFullFileNames()).symmetric_difference(other_files)
         data = LHCbDataset()
         data.__construct__([list(files)])
@@ -436,7 +447,7 @@ class LHCbDataset(GangaDataset):
 
     def intersection(self, other):
         '''Returns a new data set w/ files common to this and other.'''
-        other_files = other.getFullFileNames()
+        other_files = other._checkOtherFiles(other)
         files = set(self.getFullFileNames()).intersection(other_files)
         data = LHCbDataset()
         data.__construct__([list(files)])
@@ -445,7 +456,8 @@ class LHCbDataset(GangaDataset):
 
     def union(self, other):
         '''Returns a new data set w/ files from this and other.'''
-        files = set(self.getFullFileNames()).union(other.getFullFileNames())
+        other_files = self._checkOtherFiles(other)
+        files = set(self.getFullFileNames()).union(other_files)
         data = LHCbDataset()
         data.__construct__([list(files)])
         data.depth = self.depth
@@ -453,8 +465,7 @@ class LHCbDataset(GangaDataset):
 
     def bkMetadata(self):
         'Returns the bookkeeping metadata for all LFNs. '
-        logger.info(
-            "Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
+        logger.info("Using BKQuery(bkpath).getDatasetMetadata() with bkpath=the bookkeeping path, will yeild more metadata such as 'TCK' info...")
         cmd = 'bkMetaData(%s)' % self.getLFNs()
         b = get_result(cmd, 'Error removing replica', 'Replica rm error.')
         return b
