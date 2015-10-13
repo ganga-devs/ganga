@@ -5,6 +5,7 @@
 ##########################################################################
 
 from Ganga.GPIDev.Base import GangaObject
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import Schema, Version
 
 import Ganga.Utility.logging
@@ -426,6 +427,11 @@ class IBackend(GangaObject):
                 monitorable_subjobs = [s for s in j.subjobs if s.status in ['submitted', 'running']]
                 logger.debug('Monitoring subjobs: %s', repr([jj._repr() for jj in monitorable_subjobs]))
 
+                if len(monitorable_subjobs) <= 0:
+                    continue
+
+                stripProxy(j)._getWriteAccess()
+
                 monitorable_blocks = []
                 temp_block = []
                 for sj in monitorable_subjobs:
@@ -442,9 +448,14 @@ class IBackend(GangaObject):
 
                     if monitoring_component and not monitoring_component.isEnabled(False):
                         break
+                    try:
+                        j.backend.updateMonitoringInformation(this_block)
+                    except Exception, err:
+                        logger.debug("Monitoring Error: %s" % str(err))
 
-                    j.backend.updateMonitoringInformation(this_block)
                     j.updateMasterJobStatus()
+
+                stripProxy(j)._setDirty()
             else:
                 backend_name = j.backend.__class__.__name__
                 if backend_name not in simple_jobs.keys():
@@ -455,8 +466,12 @@ class IBackend(GangaObject):
             for this_backend in simple_jobs.keys():
                 logger.debug('Monitoring jobs: %s', repr([jj._repr() for jj in simple_jobs[this_backend]]))
 
+                for this_job in simple_jobs[this_backend]:
+                    stripProxy(this_job)._getWriteAccess()
                 simple_jobs[this_backend][0].backend.updateMonitoringInformation(simple_jobs[this_backend])
 
+                for this_job in simple_jobs[this_backend]:
+                    stripProxy(this_job)._setDirty()
 
     master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
