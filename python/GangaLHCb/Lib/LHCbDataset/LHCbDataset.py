@@ -66,7 +66,7 @@ class LHCbDataset(GangaDataset):
                 new_files.append(copy.deepcopy(this_file))
         elif isType(files, IGangaFile):
             new_files.append(copy.deepcopy(this_file))
-        elif type(files) == type([]):
+        elif type(files) == type([]) or type( stripProxy( files ) ) == type(GangaList()):
             for this_file in files:
                 if type(this_file) == type(''):
                     new_files.append(string_datafile_shortcut_lhcb(this_file, None), False)

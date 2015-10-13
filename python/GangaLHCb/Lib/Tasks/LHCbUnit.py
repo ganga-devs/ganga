@@ -7,7 +7,7 @@ from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
 from Ganga.GPIDev.Base.Proxy import addProxy
 import Ganga.GPI as GPI
-
+from Ganga.GPIDev.Lib.Tasks.common import logger
 
 class LHCbUnit(IUnit):
     _schema = Schema(Version(1, 0), dict(IUnit._schema.datadict.items() + {
