@@ -227,7 +227,8 @@ class Shell(object):
         rc, outfile, m = self.cmd(cmd, None, allowed_exit, capture_stderr,
                                   timeout, mention_outputfile_on_errors=False, python=python)
 
-        with open(outfile) as out_file:
+        from contextlib import closing
+        with closing(open(outfile)) as out_file:
             output = out_file.read()
         os.unlink(outfile)
 
