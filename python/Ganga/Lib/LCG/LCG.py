@@ -120,7 +120,6 @@ class LCG(IBackend):
         'perusable': SimpleItem(defvalue=False, protected=0, copyable=1, checkset='__checkset_perusable__', doc='Enable the job perusal feature of GLITE'),
         'actualCE': SimpleItem(defvalue='', protected=1, copyable=0, doc='Computing Element where the job actually runs.'),
         'monInfo': SimpleItem(defvalue={}, protected=1, copyable=0, hidden=1, doc='Hidden information of the monitoring service.'),
-        'octopus': SimpleItem(defvalue=None, typelist=['type(None)', 'Ganga.Lib.MonitoringServices.Octopus.Octopus'], protected=1, copyable=0, transient=1, hidden=1, doc='Hidden transient object for Octopus connection.'),
         'flag': SimpleItem(defvalue=0, protected=1, copyable=0, hidden=1, doc='Hidden flag for internal control.')
     })
 
