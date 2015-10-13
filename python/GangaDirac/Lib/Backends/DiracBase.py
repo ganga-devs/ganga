@@ -227,7 +227,7 @@ class DiracBase(IBackend):
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
                     log_user_exception(
-                        logger, debug=isinstance(x, GangaException))
+                        logger, debug=isType(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
@@ -271,7 +271,9 @@ class DiracBase(IBackend):
                 if len(parametric_datasets) != len(j.master.subjobs):
                     raise BackendError('Dirac', 'number of parametric datasets defined in API script doesn\'t match number of master.subjobs')
             if j.inputdata and len(j.inputdata) > 0:
-                _input_files = [f for f in j.inputdata if not isinstance(f, DiracFile)]
+                _input_files = [f for f in j.inputdata if not isType(f, DiracFile)]
+            else:
+                _input_files = []
             if set(parametric_datasets[j.id]).symmetric_difference(set([f.namePattern for f in _input_files])):
                 raise BackendError(
                     'Dirac', 'Mismatch between dirac-script and job attributes.')
@@ -395,8 +397,8 @@ class DiracBase(IBackend):
 
         def download(dirac_file, job, is_subjob=False):
             dirac_file.localDir = job.getOutputWorkspace().getPath()
-            if dir is not None:
-                output_dir = dir
+            if this_dir is not None:
+                output_dir = this_dir
                 if is_subjob:
                     output_dir = os.path.join(dir, job.fqid)
                     if not os.path.isdir(output_dir):
