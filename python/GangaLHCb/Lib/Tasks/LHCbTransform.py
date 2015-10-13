@@ -11,6 +11,7 @@ from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
 from GangaLHCb.Lib.Files.LogicalFile import LogicalFile
 import Ganga.GPI as GPI
+from Ganga.GPIDev.Lib.Tasks.common import logger
 
 
 class LHCbTransform(ITransform):
@@ -116,8 +117,7 @@ class LHCbTransform(ITransform):
                     assigned_data.files += unit.inputdata.files
 
                 # any new files
-                new_data = LHCbDataset(
-                    files=self.inputdata[id].difference(assigned_data).files)
+                new_data = LHCbDataset( files = self.inputdata[id].difference(assigned_data).files )
 
                 if len(new_data.files) == 0:
                     continue
