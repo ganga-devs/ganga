@@ -139,7 +139,7 @@ class SubJobXMLList(GangaObject):
         import os.path
         subjob_data = os.path.join(self._jobDirectory, str(index), self._dataFileName)
         if self._load_backup:
-            subjob_data.append('~')
+            subjob_data = subjob_data + '~'
         return subjob_data
 
     def __len__(self):
