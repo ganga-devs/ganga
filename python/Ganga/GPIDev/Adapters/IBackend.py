@@ -424,8 +424,9 @@ class IBackend(GangaObject):
         for j in jobs:
             ## All subjobs should have same backend
             if len(j.subjobs) > 0:
-                monitorable_subjobs = [s for s in j.subjobs if s.status in ['submitted', 'running']]
-                logger.debug('Monitoring subjobs: %s', repr([jj._repr() for jj in monitorable_subjobs]))
+                monitorable_subjobs = [sj for sj in j.subjobs if sj.status in ['submitted', 'running']]
+
+                logger.debug('Monitoring subjobs: %s', repr([sj._repr() for sj in monitorable_subjobs]))
 
                 if len(monitorable_subjobs) <= 0:
                     continue
@@ -434,13 +435,14 @@ class IBackend(GangaObject):
 
                 monitorable_blocks = []
                 temp_block = []
-                for sj in monitorable_subjobs:
-                    temp_block.append(sj)
+
+                for this_sj in monitorable_subjobs:
+                    temp_block.append(this_sj)
                     if len(temp_block) == blocks_of_size:
                         monitorable_blocks.append(temp_block)
                         temp_block = []
 
-                if len(temp_block) > 0:
+                if len(temp_block) != 0:
                     monitorable_blocks.append(temp_block)
                     temp_block = []
 
@@ -448,6 +450,7 @@ class IBackend(GangaObject):
 
                     if monitoring_component and not monitoring_component.isEnabled(False):
                         break
+
                     try:
                         j.backend.updateMonitoringInformation(this_block)
                     except Exception, err:

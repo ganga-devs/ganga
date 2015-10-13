@@ -1407,8 +1407,7 @@ sys.exit(0)
             fname = os.path.join(job.outputdir, '_peek.dat')
 
             sh = grids[self.middleware.upper()].shell
-            re, output, m = sh.cmd(
-                "glite-wms-job-perusal --get --all -f stdout %s" % self.id, fname)
+            re, output, m = sh.cmd("glite-wms-job-perusal --get --all -f stdout %s" % self.id, fname)
             job.viewFile(fname, cmd)
 
         return None

@@ -862,7 +862,7 @@ class JobRegistry_Monitor(GangaThread):
                             else:
                                 count += 1
 
-                        if count > blocks_of_size:
+                        if count >= blocks_of_size:
                             list_of_bunches.append(temp_list)
                             temp_list = []
 
