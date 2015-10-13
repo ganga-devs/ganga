@@ -1,5 +1,3 @@
-from __future__ import print_function
-
 import os
 import sys
 import time
@@ -119,8 +117,7 @@ def getFile(lfns, destDir=''): output(diraclhcb.getFile(lfns, destDir=destDir))
 def replicateFile(lfn, destSE, srcSE, locCache=''):
     res = diraclhcb.replicateFile(lfn, destSE, srcSE, locCache)
     output(res)
-    print(res)
-
+    #print(res)
 
 def removeReplica(lfn, sE):
     output(diraclhcb.removeReplica(lfn, sE))
