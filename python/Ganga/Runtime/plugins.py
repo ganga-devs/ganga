@@ -41,8 +41,6 @@ logger.debug("Loading Remote")
 import Ganga.Lib.Remote
 logger.debug("Loading MSGMS")
 import Ganga.Lib.MonitoringServices.MSGMS
-logger.debug("Loading DashboardMS")
-import Ganga.Lib.MonitoringServices.Dashboard.DashboardMS
 
 logger.debug("Loading Tasks")
 import Ganga.GPIDev.Lib.Tasks
