@@ -5,6 +5,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
 from Ganga.Core.exceptions import GangaException
+import errno
 logger = getLogger()
 
 class SubJobXMLList(GangaObject):
@@ -187,9 +188,9 @@ class SubJobXMLList(GangaObject):
                 sj_file = open(subjob_data, "r")
             except IOError, x:
                 if x.errno == errno.ENOENT:
-                    raise IOError("Subobject %i.%i not found: %s" % (id,i,x))
+                    raise IOError("Subobject %s not found: %s" % (str(fqid),x))
                 else:
-                    raise RepositoryError(self,"IOError on loading subobject %i.%i: %s" % (id,i,x))
+                    raise RepositoryError(self,"IOError on loading subobject %s: %s" % (str(fqid),x))
             self._cachedJobs[index] = self._from_file(sj_file)[0]
 
         logger.debug('Setting Parent: "%s"' % str(self._definedParent))
