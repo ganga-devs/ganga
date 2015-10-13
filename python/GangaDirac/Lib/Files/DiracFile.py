@@ -290,8 +290,7 @@ class DiracFile(IGangaFile):
                 logger.debug("name == dirac_file.namePattern")
                 if lfn == '###FAILED###':
                     dirac_file.failureReason = tokens[2]
-                    logger.error(
-                        "Failed to upload file '%s' to Dirac: %s" % (name, dirac_file.failureReason))
+                    logger.error("Failed to upload file '%s' to Dirac: %s" % (name, dirac_file.failureReason))
                     return True
                 dirac_file.lfn = lfn
                 dirac_file.locations = locations
@@ -305,6 +304,8 @@ class DiracFile(IGangaFile):
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
 
+        postprocesslocations = None
+
         try:
             postprocesslocations = open(postprocessLocationsPath, 'r')
             self.subfiles = []
@@ -316,7 +317,7 @@ class DiracFile(IGangaFile):
         except Exception, err:
             logger.warning("unexpected Error: %s" % str(err))
         finally:
-            if postprocesslocations:
+            if postprocesslocations is not None:
                 postprocesslocations.close()
 
     def _auto_remove(self):
