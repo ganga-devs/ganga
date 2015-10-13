@@ -5,6 +5,7 @@
 import os
 import re
 import fnmatch
+import time
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Adapters.IBackend import IBackend
 from Ganga.Core import BackendError, GangaException
@@ -539,6 +540,30 @@ class DiracBase(IBackend):
 
     def job_finalisation(job, updated_dirac_status):
 
+        count = 1
+        limit = 5
+        sleep_length = 2.5
+
+        while count != limit:
+
+            try:
+                self._internal_job_finalisation(job, updated_dirac_status)
+                count += 1
+            except Exception, err:
+
+                logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
+                logger.warning("Attemting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
+                if count == limit:
+                    logger.error("Unable to finalise job after %s retries due to error:\n%s" % (job.getFQID('.'), str(err)))
+                    raise err
+
+            time.sleep(sleep_length)
+
+    job_finalisation = staticmethod(job_finalisation)
+
+
+    def _internal_job_finalisation(job, updated_dirac_status):
+
         logger = getLogger()
 
         if updated_dirac_status == 'completed':
@@ -643,9 +668,9 @@ class DiracBase(IBackend):
                 execute("getOutputSandbox(%d,'%s')" %
                         (job.backend.id, job.getOutputWorkspace().getPath()))
         else:
-            logger.error(
-                "Unexpected dirac status '%s' encountered" % updated_dirac_status)
-    job_finalisation = staticmethod(job_finalisation)
+            logger.error("Unexpected dirac status '%s' encountered" % updated_dirac_status)
+
+    _internal_job_finalisation = staticmethod(_internal_job_finalisation)
 
     def updateMonitoringInformation(_jobs):
         """Check the status of jobs and retrieve output sandboxes"""

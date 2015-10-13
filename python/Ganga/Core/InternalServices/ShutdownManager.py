@@ -56,6 +56,8 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
+    logger = getLogger()
+
     # Set the disk timeout to 1 sec, sacrifice stability for quick-er exit
     from Ganga.Utility.Config import setConfigOption
     setConfigOption('Configuration', 'DiskIOTimeout', 1)
