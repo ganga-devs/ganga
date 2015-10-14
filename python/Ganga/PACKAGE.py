@@ -41,13 +41,9 @@ _defaultExternalHome = None
 # value specified in the dictionary may be either string or a list of strings (they will be separated by colons ':').
 #
 _externalPackages = {
-    'ipython': {#'version': '3.2.1',
-                'version' : '0.6.13_ganga_patch1',
+    'ipython': {'version': '3.2.1',
                 'noarch': True,
                 'PYTHONPATH': 'lib/python'},
-    #'ApMon': {'version': '2.2.11',
-    #          'noarch': True,
-    #          'syspath': 'python'},
     'paramiko': {'version': '1.7.3',
                  'noarch': True,
                  'syspath': 'lib/python2.3/site-packages'},
