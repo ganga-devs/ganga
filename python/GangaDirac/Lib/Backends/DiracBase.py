@@ -538,29 +538,6 @@ class DiracBase(IBackend):
         # FIXME should I add something here to cleanup on sandboxes pulled from
         # malformed job output?
 
-    def job_finalisation(job, updated_dirac_status):
-
-        count = 1
-        limit = 5
-        sleep_length = 2.5
-
-        while count != limit:
-
-            try:
-                count += 1
-                self._internal_job_finalisation(job, updated_dirac_status)
-            except Exception, err:
-            
-                logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
-                logger.warning("Attemting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
-                if count == limit:
-                    logger.error("Unable to finalise job after %s retries due to error:\n%s" % (job.getFQID('.'), str(err)))
-                    raise err
-
-            time.sleep(sleep_length)
-
-    job_finalisation = staticmethod(job_finalisation)
-
 
     def _internal_job_finalisation(job, updated_dirac_status):
 
@@ -573,6 +550,7 @@ class DiracBase(IBackend):
                 return
             if (job.master and job.master.status in ['removed', 'killed']):
                 return  # user changed it under us
+
             job.updateStatus('completing')
             if job.master:
                 job.master.updateMasterJobStatus()
@@ -671,6 +649,32 @@ class DiracBase(IBackend):
             logger.error("Unexpected dirac status '%s' encountered" % updated_dirac_status)
 
     _internal_job_finalisation = staticmethod(_internal_job_finalisation)
+
+
+    def job_finalisation(job, updated_dirac_status):
+
+        count = 1
+        limit = 5
+        sleep_length = 2.5
+
+        while count != limit:
+
+            try:
+                count += 1
+                DiracBase._internal_job_finalisation(job, updated_dirac_status)
+                break
+            except Exception as err:
+
+                logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
+                logger.warning("Attemting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
+                if count == limit:
+                    logger.error("Unable to finalise job after %s retries due to error:\n%s" % (job.getFQID('.'), str(err)))
+                    raise err
+
+            time.sleep(sleep_length)
+
+    job_finalisation = staticmethod(job_finalisation)
+
 
     def updateMonitoringInformation(_jobs):
         """Check the status of jobs and retrieve output sandboxes"""
