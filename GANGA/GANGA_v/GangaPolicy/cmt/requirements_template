@@ -33,26 +33,9 @@ apply_pattern pyext name=matplotlib
 apply_pattern pyext name=pycrypto
 
 #########################################################################
-# PYTHONPATH pyqt
-
-apply_pattern pyext name=pyqt
-apply_pattern libext name=pyqt
-
-#########################################################################
-# PYTHONPATH figleaf
-
-path_prepend PYTHONPATH "$(ext_root)/figleaf/$(figleaf)/noarch"
-
-#########################################################################
 # PYTHONPATH ApMon
 
 path_prepend PYTHONPATH "$(ext_root)/ApMon/$(ApMon)/noarch/python"
-
-#########################################################################
-# PYTHONPATH PYTF
-
-set PYTF_TOP_DIR "$(ext_root)/PYTF/$(PYTF)/noarch"
-path_prepend PYTHONPATH "$(PYTF_TOP_DIR)"
 
 #########################################################################
 # PYTHONPATH stomputil
