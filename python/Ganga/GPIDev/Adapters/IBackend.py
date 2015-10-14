@@ -442,7 +442,7 @@ class IBackend(GangaObject):
                         monitorable_blocks.append(temp_block)
                         temp_block = []
 
-                if len(temp_block) != 0:
+                if temp_block:
                     monitorable_blocks.append(temp_block)
                     temp_block = []
 

@@ -126,7 +126,7 @@ class ThreadPoolQueueMonitor(object):
                 print "User queue contains unfinished tasks:"
                 print str([self._display_element(i) for i in _user_queue])
                 keyin = raw_input("Do you want to Purge the user queue ([y]/n): ")
-                if keyin == 'y' or keyin == '':
+                if keyin in ['y', '']:
                     _actually_purge = True
                 elif keyin == 'n':
                     _actually_purge = False
@@ -158,12 +158,12 @@ class ThreadPoolQueueMonitor(object):
                 print "Monitoring queue contains unfinished tasks:"
                 print str([self._display_element(i) for i in _monitor_queue])
                 keyin = raw_input("Do you want to Purge the monitoring queue ([y]/n): ")
-                if keyin == 'y' or keyin == '':
+                if keyin in ['y', '']:
                     _actually_purge = True
                 elif keyin == 'n':
                     _actually_purge = False
                 else:
-                    print "y/n please"
+                    print "(y/n) please"
                     keyin = None
         if _actually_purge:
             self._monitoring_threadpool.clear_queue()
