@@ -433,6 +433,11 @@ class IBackend(GangaObject):
 
                 stripProxy(j)._getWriteAccess()
 
+                if len(monitorable_subjobs) <= 0:
+                    continue
+
+                stripProxy(j)._getWriteAccess()
+
                 monitorable_blocks = []
                 temp_block = []
 
@@ -450,12 +455,15 @@ class IBackend(GangaObject):
 
                     if monitoring_component and not monitoring_component.isEnabled(False):
                         break
-
                     try:
                         j.backend.updateMonitoringInformation(this_block)
                     except Exception, err:
                         logger.debug("Monitoring Error: %s" % str(err))
 
+                    try:
+                        j.backend.updateMonitoringInformation(this_block)
+                    except Exception as err:
+                        logger.debug("Monitoring Error: %s" % str(err))
                     j.updateMasterJobStatus()
 
                 stripProxy(j)._setDirty()
