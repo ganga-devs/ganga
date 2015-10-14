@@ -204,19 +204,10 @@ class BoxRegistrySlice(RegistrySlice):
 
     def __getitem__(self, id):
         if isinstance(id, str):
-            matches = []
             for o in self.objects:
                 if o._getRegistry()._getName(o) == id:
                     return o
-                    matches.append(o)
-            if len(matches) == 1:
-                return matches[0]
-            elif len(matches) > 1:
-                raise RegistryKeyError(
-                    "Multiple objects with name '%s' found in the box - use IDs!" % id)
-            else:
-                raise RegistryKeyError(
-                    "No object with name '%s' found in the box!" % id)
+            raise RegistryKeyError("No object with name '%s' found in the box!" % id)
         else:
             return super(BoxRegistrySlice, self).__getitem__(id)
 
