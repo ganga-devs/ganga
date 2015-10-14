@@ -547,10 +547,10 @@ class DiracBase(IBackend):
         while count != limit:
 
             try:
-                self._internal_job_finalisation(job, updated_dirac_status)
                 count += 1
+                self._internal_job_finalisation(job, updated_dirac_status)
             except Exception, err:
-
+            
                 logger.warning("An error occured finalising job: %s" % job.getFQID('.'))
                 logger.warning("Attemting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
                 if count == limit:
