@@ -262,6 +262,7 @@ class Interactive(IBackend):
 
         return job.getInputWorkspace().writefile(FileBuffer("__jobscript__", commandString), executable=1)
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
 
         for j in jobs:
@@ -293,6 +294,4 @@ class Interactive(IBackend):
                     j.updateStatus(j.backend.status)
 
         return None
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 

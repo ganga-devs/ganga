@@ -1,4 +1,3 @@
-import pytf.lib
 import os
 from GangaUnitTest import GangaUnitTest
 

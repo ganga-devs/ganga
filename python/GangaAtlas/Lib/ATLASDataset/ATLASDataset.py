@@ -265,6 +265,7 @@ class ATLASDataset(Dataset):
 
         return job.inputdata.filenames()
 
+    @staticmethod
     def get_filenames(app):
         """Retrieve the file names starting from an application object"""
       
@@ -282,8 +283,6 @@ class ATLASDataset(Dataset):
             return []
 
         return job.inputdata.filenames()
-         
-    get_filenames=staticmethod(get_filenames)
 
 
 class ATLASTier3Dataset(Dataset):
@@ -372,6 +371,7 @@ class ATLASLocalDataset(Dataset):
         """Get filenames"""
         return self.names
 
+    @staticmethod
     def get_filenames(app):
         """Retrieve the file names starting from an application object"""
       
@@ -389,8 +389,6 @@ class ATLASLocalDataset(Dataset):
             return []
 
         return job.inputdata.names
-         
-    get_filenames=staticmethod(get_filenames)
 
 
 class ATLASOutputDataset(Dataset):

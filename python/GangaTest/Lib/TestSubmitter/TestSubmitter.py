@@ -74,6 +74,7 @@ class TestSubmitter(IBackend):
     def remaining(self):
         return self.time-(time.time()-self.start_time)        
     
+    @staticmethod
     def updateMonitoringInformation(jobs):
         logger.info('monitoring jobs=%s',jobs)
         for j in jobs:
@@ -88,6 +89,4 @@ class TestSubmitter(IBackend):
             else:
                 j.updateStatus('running')
                 logger.info('job %d seconds remaining %d',j.id,j.backend.remaining())
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 

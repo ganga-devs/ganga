@@ -64,11 +64,11 @@ class MSGMS(IMonitoringService):
         """Construct the GangaMon monitoring service."""
         IMonitoringService.__init__(self, job_info, config_info)
 
+    @staticmethod
     def getConfig():
         """Return MSGMS Config object."""
         from Ganga.Utility import Config
         return Config.getConfig('MSGMS')
-    getConfig = staticmethod(getConfig)
 
     def getSandboxModules(self):
         """Return list of MSGMS module dependencies."""

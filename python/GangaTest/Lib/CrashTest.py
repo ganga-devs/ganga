@@ -80,11 +80,10 @@ class CrashTestBackend(IBackend):
         self.error.trigger()
         return True
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
         for j in jobs:
             j.backend.error.trigger()
-    
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
 
 class CrashRuntimeHandler(IRuntimeHandler):

@@ -351,6 +351,7 @@ class Jedi(IBackend):
 
         return True
 
+    @staticmethod
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
         from pandatools import Client
@@ -492,8 +493,6 @@ class Jedi(IBackend):
                                     pjob.status = None
                             else:
                                 logger.warning('Unexpected job status %s',status.jobStatus)
-
-    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def master_resubmit(self,jobs):
         '''Resubmit failed Jedi job'''

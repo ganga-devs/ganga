@@ -246,6 +246,7 @@ class Node(object):
         Node.__fillelement(document, document.documentElement, self)
         return document
 
+    @staticmethod
     def __fillelement(document, element, node):
         if node.value:
             element.appendChild(document.createTextNode(node.value))
@@ -254,8 +255,8 @@ class Node(object):
                 subelement = document.createElement(subnode.name)
                 element.appendChild(subelement)
                 Node.__fillelement(document, subelement, subnode)
-    __fillelement = staticmethod(__fillelement)
 
+    @staticmethod
     def fromdom(dom):
         """Return a Node from the given XML DOM.
         
@@ -281,12 +282,12 @@ class Node(object):
             return node           
         else:
             raise TypeError
-    fromdom = staticmethod(fromdom)
     
     def toxml(self):
         """Return a flat XML string representation of the node."""
         return self.todom().toxml()
         
+    @staticmethod
     def fromxml(xml):
         """Return a Node from the given XML string.
         
@@ -299,7 +300,6 @@ class Node(object):
         """
         dom = parseString(xml)
         return Node.fromdom(dom)
-    fromxml = staticmethod(fromxml)
     
     def toprettyxml(self):
         """Return a pretty XML string representation of the node."""

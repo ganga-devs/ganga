@@ -112,6 +112,7 @@ class IMonitoringService(object):
 
         return None
 
+    @staticmethod
     def getConfig():
         """Return the config object for this class.
 
@@ -121,15 +122,14 @@ class IMonitoringService(object):
         variable config_info. See __init__().
 
         For example, in your IMonitoringService implementation you could add::
+            @staticmethod
             def getConfig():
                 from Ganga.Utility import Config
                 return Config.getConfig("MyMS")
-            getConfig = staticmethod(getConfig)
 
         N.B. this is a static method.
         """
         return None
-    getConfig = staticmethod(getConfig)
 
     def getWrapperScriptConstructorText(self):
         """ Return a line of python source code which creates the instance of the monitoring service object to be used in the job wrapper script. This method should not be overriden.

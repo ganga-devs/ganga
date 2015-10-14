@@ -303,9 +303,8 @@ class GridSimulator(object):
 
         return self._cancel(jobid)
 
+    @staticmethod
     def expandjdl(items):
         '''Expand jdl items'''
 
         return repr(items)
-
-    expandjdl = staticmethod(expandjdl)

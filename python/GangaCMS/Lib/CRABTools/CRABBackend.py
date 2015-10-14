@@ -311,6 +311,7 @@ class CRABBackend(IBackend):
             except:
                 logger.warning('Error while retrieving submit time for job %d.' % job.id)
 
+    @staticmethod
     def master_updateMonitoringInformation(jobs):
         """Updates the statuses of the list of jobs provided by issuing crab -status."""
         logger.debug('Updating the monitoring information of ' + str(len(jobs)) + ' jobs')
@@ -339,6 +340,4 @@ class CRABBackend(IBackend):
                 j.updateMasterJobStatus()
             else:
                 logger.info('No results.xml for %s' % (j.id))
-
-    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 

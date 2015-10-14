@@ -1096,6 +1096,7 @@ class Grid(object):
         else:
             return (True, 0)
 
+    @staticmethod
     def expandxrsl(items):
         '''Expand xrsl items'''
 
@@ -1133,6 +1134,7 @@ class Grid(object):
 
         return xrsl
 
+    @staticmethod
     def expandjdl(items):
         '''Expand jdl items'''
 
@@ -1219,9 +1221,6 @@ class Grid(object):
             return ""
         else:
             return output
-
-    expandjdl = staticmethod(expandjdl)
-    expandxrsl = staticmethod(expandxrsl)
 
     def __arc_get_config_file_arg__(self):
         '''Helper function to return the config file argument'''
