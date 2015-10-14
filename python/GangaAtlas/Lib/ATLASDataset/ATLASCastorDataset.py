@@ -147,6 +147,7 @@ class ATLASCastorDataset(Dataset):
         else:
             return [ 'rfio:%s/%s/%s' % (self.location,self.dataset,name) for name in self.names ]
 
+    @staticmethod
     def get_filenames(app):
         '''Retrieve the file names starting from an application object'''
       
@@ -164,8 +165,6 @@ class ATLASCastorDataset(Dataset):
 	    return []
 
         return job.inputdata.filenames()
-	 
-    get_filenames=staticmethod(get_filenames)
 
     def get_dataset_filenames(self):
         '''Retrieve the file names'''

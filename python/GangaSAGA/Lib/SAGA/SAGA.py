@@ -461,6 +461,7 @@ class SAGA(IBackend):
     ## Method gets triggered by a ganga monitoring thread periodically 
     ## in order to update job information, like state, etc...
     ##
+    @staticmethod
     def updateMonitoringInformation(jobs):
         
         for j in jobs:
@@ -511,8 +512,7 @@ class SAGA(IBackend):
     
     ##########################################################################
     ## Make the monitoring function available to the update thread
-    ##         
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
+    ##
 
 
 

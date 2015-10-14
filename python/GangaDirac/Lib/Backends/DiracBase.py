@@ -482,6 +482,7 @@ class DiracBase(IBackend):
         else:
             logger.error(result.get('Message', ''))
 
+    @staticmethod
     def _getStateTime(job, status):
         """Returns the timestamps for 'running' or 'completed' by extracting
         their equivalent timestamps from the loggingInfo."""
@@ -516,7 +517,6 @@ class DiracBase(IBackend):
         else:
             logger.debug(
                 "Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
-    _getStateTime = staticmethod(_getStateTime)
 
     def timedetails(self):
         """Prints contents of the loggingInfo from the Dirac API."""
@@ -538,7 +538,7 @@ class DiracBase(IBackend):
         # FIXME should I add something here to cleanup on sandboxes pulled from
         # malformed job output?
 
-
+    @staticmethod
     def _internal_job_finalisation(job, updated_dirac_status):
 
         logger = getLogger()
@@ -648,9 +648,7 @@ class DiracBase(IBackend):
         else:
             logger.error("Unexpected dirac status '%s' encountered" % updated_dirac_status)
 
-    _internal_job_finalisation = staticmethod(_internal_job_finalisation)
-
-
+    @staticmethod
     def job_finalisation(job, updated_dirac_status):
 
         count = 1
@@ -673,9 +671,7 @@ class DiracBase(IBackend):
 
             time.sleep(sleep_length)
 
-    job_finalisation = staticmethod(job_finalisation)
-
-
+    @staticmethod
     def updateMonitoringInformation(_jobs):
         """Check the status of jobs and retrieve output sandboxes"""
         # Only those jobs in 'submitted','running' are passed in here for checking
@@ -807,8 +803,6 @@ class DiracBase(IBackend):
                 job.updateStatus(updated_dirac_status)
                 if job.master:
                     job.master.updateMasterJobStatus()
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 

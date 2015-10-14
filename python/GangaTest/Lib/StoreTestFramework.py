@@ -62,10 +62,9 @@ class StoreTestBackend(IBackend):
     def kill(self):
         return True
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
         pass
-    
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
 
 class JobConfigObject:

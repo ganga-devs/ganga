@@ -440,6 +440,7 @@ class Batch(IBackend):
 
         return job.getInputWorkspace().writefile(FileBuffer('__jobscript__', text), executable=1)
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
 
         import re
@@ -532,8 +533,6 @@ class Batch(IBackend):
                         logger.warning(
                             'Job %s has disappeared from the batch system.', str(j.getFQID('.')))
                         j.updateStatus('failed')
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
 #_________________________________________________________________________
 

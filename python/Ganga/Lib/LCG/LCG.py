@@ -1637,6 +1637,7 @@ sys.exit(0)
         logger.debug('subjob JDL: %s' % jdlText)
         return inpw.writefile(FileBuffer('__jdlfile__', jdlText))
 
+    @staticmethod
     def updateGangaJobStatus(job, status):
         '''map backend job status to Ganga job status'''
 
@@ -1664,8 +1665,7 @@ sys.exit(0)
         else:
             logger.warning('Unexpected job status "%s"', status)
 
-    updateGangaJobStatus = staticmethod(updateGangaJobStatus)
-
+    @staticmethod
     def master_updateMonitoringInformation(jobs):
         '''Main Monitoring loop'''
 
@@ -1712,9 +1712,7 @@ sys.exit(0)
 
         profiler.check('==> master_updateMonitoringInformation() elapsed time')
 
-    master_updateMonitoringInformation = staticmethod(
-        master_updateMonitoringInformation)
-
+    @staticmethod
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
 
@@ -1781,9 +1779,8 @@ sys.exit(0)
             logger.debug('%d new downloading tasks; %d alive downloading agents' % (
                 cnt_new_download_task, downloader.countAliveAgent()))
 
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
-
 #    def master_bulk_updateMonitoringInformation(jobs,updateMasterStatus=True):
+    @staticmethod
     def master_bulk_updateMonitoringInformation(jobs):
         '''Monitoring loop for glite bulk jobs'''
 
@@ -1946,9 +1943,6 @@ sys.exit(0)
         #    for mj in mjob_status_updatelist:
         #        logger.debug('updating overall master job status: %s' % mj.getFQID('.'))
         #        mj.updateMasterJobStatus()
-
-    master_bulk_updateMonitoringInformation = staticmethod(
-        master_bulk_updateMonitoringInformation)
 
     def check_proxy(self):
         '''Update the proxy'''

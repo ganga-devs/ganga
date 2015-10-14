@@ -400,6 +400,7 @@ class IBackend(GangaObject):
         """
         pass
 
+    @staticmethod
     def master_updateMonitoringInformation(jobs):
         """ Update monitoring information for  jobs: jobs is a list of
         jobs  in   this  backend  which   require  monitoring  (either
@@ -475,8 +476,7 @@ class IBackend(GangaObject):
                 for this_job in simple_jobs[this_backend]:
                     stripProxy(this_job)._setDirty()
 
-    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
-
+    @staticmethod
     def updateMonitoringInformation(jobs):
         """ Update monitoring information for individual jobs: jobs is
         a  list which  may contain  subjobs as  well as  the non-split
@@ -486,5 +486,3 @@ class IBackend(GangaObject):
         """
 
         raise NotImplementedError
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
