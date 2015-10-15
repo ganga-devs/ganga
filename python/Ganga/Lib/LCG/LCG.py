@@ -181,7 +181,13 @@ class LCG(IBackend):
         self.sandboxcache.middleware = self.middleware.upper()
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
-        if self.sandboxcache._name == 'LCGSandboxCache':
+        try:
+            from Ganga.GPI import DQ2SandboxCache
+        except ImportError:
+            DQ2SandboxCache = None
+
+        from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
+        if isType(self.sandboxcache, LCGSandboxCache):
             if not self.sandboxcache.lfc_host:
                 self.sandboxcache.lfc_host = grids[
                     self.middleware.upper()].__get_lfc_host__()
@@ -203,13 +209,12 @@ class LCG(IBackend):
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
-        elif self.sandboxcache._name == 'DQ2SandboxCache':
+        elif DQ2SandboxCache is not None and isType(self.sandboxcache, DQ2SandboxCache):
 
             # generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name, unused = dq2outputdatasetname(
-                    "%s.input" % get_uuid(), 0, False, '')
+                self.sandboxcache.dataset_name, unused = dq2outputdatasetname("%s.input" % get_uuid(), 0, False, '')
 
             # subjobs inherits the dataset name from the master job
             for sj in job.subjobs:
@@ -258,7 +263,8 @@ class LCG(IBackend):
         # for LCGSandboxCache, take the one specified in the sansboxcache object.
         # the value is exactly the same as the one from the local grid shell env. if
         # it is not specified exclusively.
-        if self.sandboxcache._name == 'LCGSandboxCache':
+        from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
+        if isType(self.sandboxcache, LCGSandboxCache):
             lfc_host = self.sandboxcache.lfc_host
 
         # or in general, query it from the Grid object
