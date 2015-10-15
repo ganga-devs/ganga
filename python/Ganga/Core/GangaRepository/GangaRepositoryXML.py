@@ -212,8 +212,7 @@ class GangaRepositoryLocal(GangaRepository):
             if new_idx_cache != obj._index_cache or not os.path.exists(ifn):
                 obj._index_cache = new_idx_cache
                 with open(ifn, "w") as this_file:
-                    pickle_to_file(
-                        (obj._category, obj._name, obj._index_cache), this_file)
+                    pickle_to_file((obj._category, obj._name, obj._index_cache), this_file)
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, err.__class__.__name__, str(err)))
 
@@ -424,8 +423,7 @@ class GangaRepositoryLocal(GangaRepository):
             for id, x in summary:
                 if id in self.known_bad_ids:
                     continue
-                cnt[x.__class__.__name__] = cnt.get(
-                    x.__class__.__name__, []) + [str(id)]
+                cnt[x.__class__.__name__] = cnt.get(x.__class__.__name__, []) + [str(id)]
                 examples[x.__class__.__name__] = str(x)
                 self.known_bad_ids.append(id)
                 # add object to incomplete_objects
@@ -490,7 +488,8 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 fn = self.get_fn(id)
                 obj = self.objects[id]
-                if obj._name != "EmptyGangaObject":
+                from Ganga.Core.GangaRepository.VStreamer import EmptyGangaObject
+                if not isType(obj, EmptyGangaObject):
                     split_cache = None
 
                     has_children = (not self.sub_split is None) and (
