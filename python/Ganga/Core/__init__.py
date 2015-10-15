@@ -127,7 +127,6 @@ def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
     from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
     # if there are critical threads then wait or shutdown depending on
     # configuration
-    return True
     if critical_thread_ids:
         if t_total < config['forced_shutdown_timeout']:
             return True
