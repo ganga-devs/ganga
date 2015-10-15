@@ -9,7 +9,7 @@ from GangaLHCb.Lib.Tasks.LHCbUnit import LHCbUnit
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from GangaLHCb.Lib.LHCbDataset import LHCbDataset
-from GangaLHCb.Lib.Files.LogicalFile import LogicalFile
+from GangaDirac.Lib.Files.DiracFile import DiracFile
 import Ganga.GPI as GPI
 from Ganga.GPIDev.Lib.Tasks.common import logger
 
@@ -82,7 +82,7 @@ class LHCbTransform(ITransform):
 
                     for sj in jlist:
                         for f in sj.outputfiles:
-                            if f._impl._name == "DiracFile" and f.lfn:
+                            if isType(f, DiracFile) == "DiracFile" and f.lfn:
                                 f.remove()
                 except:
                     logger.error("Problem deleting data for job '%d'" % jid)
@@ -104,7 +104,7 @@ class LHCbTransform(ITransform):
             import copy
             for id, inds in enumerate(self.inputdata):
 
-                if inds._name != "LHCbDataset":
+                if not isType(inds, LHCbDataset):
                     continue
 
                 # go over the units and see what files have been assigned
@@ -151,9 +151,9 @@ class LHCbTransform(ITransform):
 
             if len(self.units) == 0:
                 # check for appropriate splitter
-                if not self.splitter or self.splitter._name != "GaussSplitter":
-                    logger.warning(
-                        "No GaussSplitter specified - first event info ignored")
+                from GPI import GaussSplitter
+                if not self.splitter or isType(self.splitter, GaussSplitter):
+                    logger.warning("No GaussSplitter specified - first event info ignored")
 
                 # create units for MC generation
                 for i in range(0, self.mc_num_units):
@@ -175,7 +175,8 @@ class LHCbTransform(ITransform):
                 return None
 
             for inds in self.inputdata:
-                if inds._name == "TaskChainInput" and inds.input_trf_id == parent._getParent().getID():
+                from GPI import TaskChainInput
+                if isType(inds, TaskChainInput) and inds.input_trf_id == parent._getParent().getID():
                     incl_pat_list += inds.include_file_mask
                     excl_pat_list += inds.exclude_file_mask
 
@@ -194,7 +195,7 @@ class LHCbTransform(ITransform):
                 for f in sj.outputfiles:
 
                     # match any dirac files that are allowed in the file mask
-                    if f._impl._name == "DiracFile":
+                    if isType(f, DiracFile):
                         if len(incl_pat_list) > 0:
                             for pat in incl_pat_list:
                                 if re.search(pat, f.lfn):
@@ -210,7 +211,7 @@ class LHCbTransform(ITransform):
         # just do one unit that uses all data
         unit = LHCbUnit()
         unit.name = "Unit %d" % len(self.units)
-        unit.inputdata = LHCbDataset(files=[LogicalFile(f) for f in flist])
+        unit.inputdata = LHCbDataset(files=[DiracFile(lfn=f) for f in flist])
 
         return unit
 
