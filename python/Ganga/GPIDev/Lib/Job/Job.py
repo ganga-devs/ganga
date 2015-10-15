@@ -1482,7 +1482,9 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
-        assert(self.subjobs == [])
+        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
+        from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
+        assert(self.subjobs == [] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
 
         # no longer needed with prepared state
         # if self.master is not None:
