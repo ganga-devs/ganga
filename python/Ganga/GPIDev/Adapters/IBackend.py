@@ -455,7 +455,7 @@ class IBackend(GangaObject):
                     try:
                         j.backend.updateMonitoringInformation(this_block)
                     except Exception as err:
-                        logger.debug("Monitoring Error: %s" % str(err))
+                        logger.error("Monitoring Error: %s" % str(err))
                     j.updateMasterJobStatus()
 
                 stripProxy(j)._setDirty()
