@@ -691,12 +691,14 @@ class Job(GangaObject):
 
                     elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
                         logger.info("Setting Location of %s: %s" % (str(stripProxy(outputfile).__class__.__name__), str(outputfile.namePattern)))
-                        outputfile.setLocation()
-                    else:
-                        try:
+                        if stripProxy(self).master is not None:
                             outputfile.setLocation()
-                        except Exception, err:
-                            logger.debug("Error: %s" % str(err))
+                    else:
+                        if stripProxy(self).master is not None:
+                            try:
+                                outputfile.setLocation()
+                            except Exception, err:
+                                logger.debug("Error: %s" % str(err))
 
             if outputfileClass == 'LocalFile':
                 outputfile.processOutputWildcardMatches()
@@ -980,8 +982,8 @@ class Job(GangaObject):
 
     def __getstate__(self):
         this_dict = super(Job, self).__getstate__()
-        if hasattr(this_dict, '_registry'):
-            this_dict['_registry'] = None
+        #if hasattr(this_dict, '_registry'):
+        this_dict['_registry'] = None
         return this_dict
 #        # FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism
 #        # in base class
