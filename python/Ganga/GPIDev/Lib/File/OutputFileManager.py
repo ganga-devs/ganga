@@ -83,7 +83,7 @@ def getInputFilesPatterns(job):
 
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = copy.deepcopy(job.inputfiles)
-    if not job.subjobs and job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
+    if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
     for inputFile in inputfiles_list:
@@ -198,7 +198,8 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     Generate the code to be run on the WN to download input files
     """
 
-    if len(job.inputfiles) == 0 and (not job.inputdata or job.inputdata._name != "GangaDataset" or not job.inputdata.treat_as_inputfiles):
+    from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
+    if len(job.inputfiles) == 0 and (not job.inputdata or not isType(job.inputdata, GangaDataset) or not job.inputdata.treat_as_inputfiles):
         return ""
 
     insertScript = """\n
@@ -206,7 +207,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 
     # first, go over any LocalFiles in GangaDatasets to be transferred
     # The LocalFiles in inputfiles have already been dealt with
-    if job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
+    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         for inputFile in job.inputdata.files:
             inputfileClassName = stripProxy(inputFile).__class__.__name__
 
@@ -228,7 +229,7 @@ for f in ###FILELIST###:
 
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = job.inputfiles
-    if job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles:
+    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
     for inputFile in inputfiles_list:

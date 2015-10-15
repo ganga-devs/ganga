@@ -111,8 +111,7 @@ class Batch(IBackend):
                 'Problem submitting batch job. Maybe your chosen batch system is not available or you have configured it wrongly')
             with open(soutfile) as sout_file:
                 logger.error(sout_file.read())
-                raiseable = BackendError(klass._name, 'It seems that %s commands are not installed properly:%s' % (
-                    klass._name, sout_file.readline()))
+                raiseable = BackendError(klass._name, 'It seems that %s commands are not installed properly:%s' % (klass._name, sout_file.readline()))
         return rc, soutfile
 
     command = classmethod(command)
@@ -162,7 +161,8 @@ class Batch(IBackend):
         if jobnameopt and job.name != '':
             # PBS doesn't like names with spaces
             tmp_name = job.name
-            if self._name == "PBS":
+            from Ganga.GPI import PBS
+            if isType(self, PBS):
                 tmp_name = tmp_name.replace(" ", "_")
             queue_option = queue_option + " " + \
                 jobnameopt + " " + "'%s'" % (tmp_name)
