@@ -79,9 +79,8 @@ class ISplitter(GangaObject):
 
         cnt = 0
         for s in subjobs:
-            if s.backend._name != job.backend._name:
-                raise SplittingError('masterjob backend %s is not the same as the subjob (probable subjob id=%d) backend %s' % (
-                    job.backend._name, cnt, s.backend._name))
+            if not isType(s.backend, job.backend):
+                raise SplittingError('masterjob backend %s is not the same as the subjob (probable subjob id=%d) backend %s' % (job.backend._name, cnt, s.backend._name))
             cnt += 1
 
         return subjobs

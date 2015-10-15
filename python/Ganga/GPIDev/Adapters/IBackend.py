@@ -254,7 +254,7 @@ class IBackend(GangaObject):
 
         tmpDir = None
         files = []
-        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles):
+        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
@@ -302,8 +302,7 @@ class IBackend(GangaObject):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info(
-                    "resubmitting job %s to %s backend", fqid, sj.backend._name)
+                logger.info("resubmitting job %s to %s backend", fqid, sj.backend._name)
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')

@@ -1941,7 +1941,7 @@ class Job(GangaObject):
             backend = stripProxy(backend)
 
         # do not allow to change the backend type
-        if backend and self.backend._name != backend._name:
+        if backend and not isType(self.backend, backend):
             msg = "cannot resubmit job %s: change of the backend type is not allowed" % fqid
             logger.error(msg)
             raise JobError(msg)
