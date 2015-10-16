@@ -104,7 +104,7 @@ class Interactive(IBackend):
     def resubmit(self):
         return self._submit(self.getJobObject().getInputWorkspace().getPath("__jobscript__"))
 
-    def _submit(self, scriptpath, env):
+    def _submit(self, scriptpath, env=None):
         if env is None:
             env = expand_vars(os.environ)
         job = self.getJobObject()
