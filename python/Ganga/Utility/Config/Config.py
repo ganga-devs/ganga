@@ -594,7 +594,7 @@ class PackageConfig(object):
     def revertToSession(self, name):
         if name in self.options:
             if hasattr(self.options[name], 'user_value'):
-                self.options[name].user_value
+                del self.options[name].user_value
             else:
                 pass
         else:
