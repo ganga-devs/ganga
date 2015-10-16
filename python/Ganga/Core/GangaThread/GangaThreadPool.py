@@ -1,4 +1,5 @@
 from Ganga.Utility.logging import getLogger
+from Ganga.Core.GangaThread.MTRunner import DuplicateDataItemError
 import time
 
 logger = getLogger('GangaThread')
@@ -41,7 +42,6 @@ class GangaThreadPool(object):
             self.__threads.append(t)
         except DuplicateDataItemError as e:
             self.logger.debug(str(e))
-            pass
 
     def delServiceThread(self, t):
         logger.debug(
@@ -50,7 +50,6 @@ class GangaThreadPool(object):
             self.__threads.remove(t)
         except ValueError as e:
             logger.debug(str(e))
-            pass
 
     def shutdown(self, should_wait_cb=None):
         """Shutdown the Ganga session.

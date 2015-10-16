@@ -278,7 +278,6 @@ class GangaRepositoryLocal(GangaRepository):
                             logger.warning("Deleted index file without data file: %s" % self.get_idxfn(id))
                         except OSError as err:
                             logger.debug("get_index_listing delete Exception: %s" % str(err))
-                            pass
         return objs
 
     def _read_master_cache(self):
@@ -335,7 +334,6 @@ class GangaRepositoryLocal(GangaRepository):
                 except Exception as err:
                     logger.debug("Failed to update index: %s on startup/shutdown" % str(k))
                     logger.debug("Reason: %s" % str(err))
-                    pass
             cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
             for k, v in iterables:
@@ -365,11 +363,9 @@ class GangaRepositoryLocal(GangaRepository):
                     os.remove(os.path.join(self.root, 'master.idx'))
                 except OSError as x:
                     Ganga.Utility.logging.log_user_exception(debug=True)
-                    pass
         except Exception as err:
             logger.debug("write_error2: %s" % str(err))
             Ganga.Utility.logging.log_unknown_exception()
-            pass
 
         return
 
@@ -508,7 +504,6 @@ class GangaRepositoryLocal(GangaRepository):
                         objs[i]._data[self.sub_split][j]._dirty = True
                 except AttributeError as err:
                     logger.debug("RepoXML add Exception: %s" % str(err))
-                    pass  # this is not a list of Ganga objects
         return ids
 
     def _safe_flush_xml(self, id):
@@ -745,7 +740,6 @@ class GangaRepositoryLocal(GangaRepository):
                     if isType(err2, XMLFileError):
                         logger.error("XML File failed to load for Job id: %s" % str(id))
                         logger.error("Actual Error was:\n%s" % str(err2))
-                    pass
                 # add object to incomplete_objects
                 if not id in self.incomplete_objects:
                     self.incomplete_objects.append(id)
@@ -765,7 +759,6 @@ class GangaRepositoryLocal(GangaRepository):
                 rmrf(os.path.dirname(fn) + ".index")
             except OSError as err:
                 logger.debug("Delete Error: %s" % str(err))
-                pass
             self._internal_del__(id)
             rmrf(os.path.dirname(fn))
 

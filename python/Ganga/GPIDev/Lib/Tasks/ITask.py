@@ -62,7 +62,6 @@ class ITask(GangaObject):
 
     def initialize(self):
         self.transforms = []
-        pass
 
     def startup(self):
         """Startup function on Ganga startup"""

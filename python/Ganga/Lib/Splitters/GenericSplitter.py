@@ -60,7 +60,6 @@ class GenericSplitter(ISplitter):
         'multi_attrs': SimpleItem(defvalue={}, doc='Dictionary to specify multiple attributes to split over'),
     })
 
-
     def split(self, job):
 
         subjobs = []

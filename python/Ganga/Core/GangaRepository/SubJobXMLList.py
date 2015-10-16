@@ -111,7 +111,6 @@ class SubJobXMLList(GangaObject):
             index_file_obj.close()
         except Exception, err:
             logger.debug( "cache write error: %s" % str(err) )
-            pass
 
     #def _attribute_filter__get__(self, name ):
 

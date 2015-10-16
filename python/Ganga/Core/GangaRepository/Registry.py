@@ -124,7 +124,6 @@ class IncompleteObject(object):
                     errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
                 except Exception as err:
                     logger.debug("Remove Lock error: %s" % str(err))
-                    pass
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
             for d in self.registry.changed_ids.itervalues():
@@ -449,7 +448,6 @@ class Registry(object):
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(id)
                         except Exception as err:
                             logger.debug( "Locking Exception: %s" % str(err) )
-                            pass
                         raise RegistryLockError(errstr)
                 finally:  # try to load even if lock fails
                     try:
@@ -555,7 +553,6 @@ class Registry(object):
                         self._flush()
                     except Exception, err:
                         logger.debug("shutdown _flush Exception: %s" % str(err))
-                        pass
                     self.metadata.shutdown()
             except Exception as err:
                 logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, str(err))

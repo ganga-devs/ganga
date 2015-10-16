@@ -119,7 +119,6 @@ class Interactive(IBackend):
             self.status = "completed"
         except KeyboardInterrupt:
             self.status = "killed"
-            pass
 
         return True
 

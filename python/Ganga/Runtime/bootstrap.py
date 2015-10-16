@@ -472,7 +472,6 @@ under certain conditions; type license() for details.
         if self.options.rexec and 'GANGA_INTERNAL_PROCREEXEC' not in os.environ and not self.options.generate_config and 'GANGA_NEVER_REEXEC' not in os.environ:
             if self.options.force_loglevel != 'DEBUG':
                 self.options.force_loglevel = 'CRITICAL'
-            pass
         else:  # say hello
             if logLevel:
                 self.options.force_loglevel = logLevel
@@ -508,7 +507,6 @@ under certain conditions; type license() for details.
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
             logger.debug("Config File Exception: %s" % str(x))
-            pass
 
         self.check_IPythonDir()
 
@@ -821,7 +819,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 r = RuntimePackage(path)
         except KeyError, err:
             logger.debug("init KeyError: %s" % str(err))
-            pass
 
         # initialize the environment only if the current ganga process has not
         # been rexeced

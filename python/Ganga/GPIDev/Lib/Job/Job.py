@@ -77,8 +77,6 @@ class FakeError(GangaException):
     def __init__(self):
         super(FakeError, self).__init__()
 
-    pass
-
 
 class JobInfo(GangaObject):
 
