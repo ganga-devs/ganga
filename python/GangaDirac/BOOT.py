@@ -65,7 +65,7 @@ def diracAPI_interactive(connection_attempts=5):
             if i == (connection_attempts - 1):
                 excpt = traceback.format_exc()
         finally:
-            ++i
+            i += 1
     return excpt
 exportToGPI('diracAPI_interactive', diracAPI_interactive, 'Functions')
 
