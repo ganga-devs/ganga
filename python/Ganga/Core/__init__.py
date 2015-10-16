@@ -124,27 +124,9 @@ Do you want to force the exit (y/[n])? """ % (t_total, len(critical_thread_ids),
 
 
 def should_wait_batch_cb(t_total, critical_thread_ids, non_critical_thread_ids):
-    from Ganga.Core.MonitoringComponent.Local_GangaMC_Service import config
     # if there are critical threads then wait or shutdown depending on
     # configuration
     return True
-    if critical_thread_ids:
-        if t_total < config['forced_shutdown_timeout']:
-            return True
-        else:
-            logger.warning('Shutdown was forced after waiting for %d seconds for background activities to finish\
-(monitoring, output download, etc). This may result in some jobs being corrupted.', t_total)
-            return False
-    # if there are non-critical threads then wait or shutdown depending on
-    # configuration
-    elif non_critical_thread_ids:
-        if t_total < config['forced_shutdown_first_prompt_time']:
-            return True
-        else:
-            return False
-    # if there are no threads then shutdown
-    else:
-        return False
 
 at_exit_should_wait_cb = None
 
