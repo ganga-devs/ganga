@@ -72,7 +72,7 @@ class LHCbGaudiDiracRunTimeHandler(GaudiDiracRunTimeHandler):
             if not job.inputdata:
                 if os.path.exists(share_path):
                     f = open(share_path, 'r+b')
-                    ob.inputdata = pickle.load(f)
+                    job.inputdata = pickle.load(f)
                     f.close()
 
         #######################################################################
