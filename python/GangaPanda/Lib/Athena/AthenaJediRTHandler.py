@@ -813,7 +813,7 @@ class AthenaJediRTHandler(IRuntimeHandler):
         if job.backend.requirements.enableMerge:
             jobParameters = '-r {0} '.format(self.rundirectory)
             if 'exec' in job.backend.requirements.configMerge and job.backend.requirements.configMerge['exec'] != '':
-                jobParameters += '-j "{0}" '.format(options.mergeScript)
+                jobParameters += '-j "{0}" '.format(job.backend.requirements.configMerge['exec'])
             if not job.backend.nobuild:
                 jobParameters += '-l ${LIB} '
             else:
