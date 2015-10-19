@@ -12,6 +12,7 @@ import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
+from Ganga.GPIDev.Base.Proxy import isType
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
