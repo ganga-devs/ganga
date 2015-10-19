@@ -1,8 +1,10 @@
 import os
 #from multiprocessing     import cpu_count
 from Ganga.Utility.Config import makeConfig, getConfig
+from Ganga.Utility.logging import getLogger
 configDirac = makeConfig('DIRAC', 'Parameters for DIRAC')
 config = getConfig('Configuration')
+logger = getLogger()
 
 # Set default values for the Dirac section.
 # configDirac.addOption('ShowDIRACstdout', False,
@@ -79,6 +81,10 @@ def getEnvironment(config={}):
 
 
 def loadPlugins(config={}):
+    logger.debug("Loading Backends")
     import Lib.Backends
+    logger.debug("Loading RTHandlers")
     import Lib.RTHandlers
+    logger.debug("Loading Files")
     import Lib.Files
+
