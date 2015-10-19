@@ -92,6 +92,7 @@ __version__ = "1.16"
 import os
 import time
 
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Credentials.ICredential import ICommandSet, ICredential, registerCommandSet
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Runtime import Repository_runtime
