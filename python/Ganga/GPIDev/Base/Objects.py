@@ -455,7 +455,7 @@ class ObjectMetaclass(type):
         if name == 'GangaObject':
             return
 
-        logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
+        #logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
 
         # all Ganga classes must have (even empty) schema
         if not hasattr(cls, '_schema') or cls._schema is None:
