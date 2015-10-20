@@ -919,7 +919,7 @@ class JobRegistry_Monitor(GangaThread):
 
                 bunch_size = 0
                 for bunch in all_job_bunches:
-                    bunches_size += len(bunch)
+                    bunch_size += len(bunch)
                 assert(bunch_size == len(jobList_fromset))
 
                 all_exceptions = []
