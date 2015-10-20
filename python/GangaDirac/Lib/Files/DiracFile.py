@@ -621,7 +621,7 @@ class DiracFile(IGangaFile):
             raise Exception(
                 "No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
-    def put(self, force=False, uploadSE="", replicate=False):
+    def put(self, force=False, uploadSE="", replicate=False, lfn=''):
         """
         Try to upload file sequentially to storage elements defined in configDirac['allDiracSE'].
         File will be uploaded to the first SE that the upload command succeeds for.
@@ -642,17 +642,31 @@ class DiracFile(IGangaFile):
         upload failed.
         """
 
-        if self.lfn != "" and force == False:
-            logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (
-                self.namePattern, self.lfn))
+        if self.lfn != "" and force == False and lfn == '':
+            logger.warning("Warning you're about to 'put' this DiracFile: %s on the grid as it already has an lfn: %s" % (self.namePattern, self.lfn))
             decision = raw_input('y / [n]:')
             while not (decision in ['y', 'n'] or decision == ''):
                 decision = raw_input('y / [n]:')
 
-            if decision == 'y' or decision == '':
+            if decision == 'y':
                 pass
             else:
                 return
+
+        if (lfn != '' and self.lfn != '') and force == False:
+            logger.warning("Warning you're attempting to put this DiracFile: %s" % self.namePattern)
+            logger.warning("It currently has an LFN associated with it: %s" % self.lfn)
+            logger.warning("Do you want to continue and attempt to upload to: %s" % lfn)
+            while not (decision in ['y', 'n'] or decision == ''):
+                decision = raw_input('y / [n]:')
+
+            if decision == 'y':
+                pass
+            else:
+                return
+
+        if lfn != '':
+            self.lfn = lfn
 
         # looks like will only need this for the interactive uploading of jobs.
         # Also if any backend need dirac upload on client then when downloaded
@@ -671,13 +685,11 @@ class DiracFile(IGangaFile):
                 sourceDir = self.getJobObject().outputdir
 
         if not os.path.isdir(sourceDir):
-            raise GangaException(
-                'localDir attribute is not a valid dir, don\'t know from which dir to take the file')
+            raise GangaException('localDir attribute is not a valid dir, don\'t know from which dir to take the file')
 
         if regex.search(self.namePattern) is not None:
             if self.lfn != "":
-                logger.warning(
-                    "Cannot specify a single lfn for a wildcard namePattern")
+                logger.warning("Cannot specify a single lfn for a wildcard namePattern")
                 logger.warning("LFN will be generated automatically")
                 self.lfn = ""
 
@@ -686,14 +698,11 @@ class DiracFile(IGangaFile):
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.remoteDir = 'GangaFiles_%s' % this_date
-            #import uuid
-            #self.remoteDir = str(uuid.uuid4())
+            self.remoteDir = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
         else:
-            lfn_base = os.path.join(
-                configDirac['DiracLFNBase'], self.remoteDir)
+            lfn_base = self.remoteDir
 
         if uploadSE != "":
             storage_elements = all_SE_list(uploadSE)
@@ -844,12 +853,11 @@ for f in glob.glob('###NAME_PATTERN###'):
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.remoteDir = 'GangaFiles_%s' % this_date
+            self.remoteDir = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
         if self.remoteDir[:4] == 'LFN:':
-            lfn_base = self.remoteDir
+            lfn_base = self.remoteDir[4:]
         else:
-            lfn_base = os.path.join(configDirac['DiracLFNBase'], self.remoteDir)
-
+            lfn_base = self.remoteDir
 
 
         for this_file in outputFiles:
