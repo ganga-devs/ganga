@@ -5,7 +5,7 @@
 ##########################################################################
 
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import TypeMismatchError, isType
+from Ganga.GPIDev.Base.Proxy import TypeMismatchError, isType, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.Utility.util import containsGangaObjects, isNestedList
 
@@ -78,7 +78,7 @@ class ISplitter(GangaObject):
 
         cnt = 0
         for s in subjobs:
-            if not isType(s.backend, job.backend):
+            if not isType(s.backend, type(stripProxy(job.backend))):
                 raise SplittingError('masterjob backend %s is not the same as the subjob (probable subjob id=%d) backend %s' % (job.backend._name, cnt, s.backend._name))
             cnt += 1
 
