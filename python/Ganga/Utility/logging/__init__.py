@@ -349,8 +349,9 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
     if name.split('.')[0] != 'Ganga' and name != 'Ganga':
         name = 'Ganga.' + name
 
-    if private_logger:
-        private_logger.debug('getLogger: effective_name=%s original_name=%s', name, requested_name)
+    ## Reduce verbosity on startup
+    #if private_logger:
+    #    private_logger.debug('getLogger: effective_name=%s original_name=%s', name, requested_name)
 
     if name in _allLoggers:
         return _allLoggers[name]
@@ -365,9 +366,10 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
             thisConfig = config[name]
             _set_log_level(logger, thisConfig)
 
-        if private_logger:
-            private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()))
-            private_logger.debug('applied %s format string to %s', config['_format'], name)
+        ## Reduce verbosity on startup
+        #if private_logger:
+        #    private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()))
+        #    private_logger.debug('applied %s format string to %s', config['_format'], name)
 
         # print '------------>',logger
         #logger.critical('initialization of logger for module %s',name)

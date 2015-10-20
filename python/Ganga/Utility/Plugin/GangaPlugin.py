@@ -42,18 +42,18 @@ class PluginManager(object):
         try:
             if name is not None:
                 if category in self.first:
-                    logger.debug("Returning based upon Category and Name")
-                    logger.debug("name: %s cat: %s" %
-                                 (str(name), str(category)))
+                    ## This is expected to work and is quite verbose when debugging turned on
+                    #logger.debug("Returning based upon Category and Name")
+                    #logger.debug("name: %s cat: %s" % (str(name), str(category)))
                     if name in self.all_dict[category]:
                         self._prev_found[key] = self.all_dict[category][name]
                         return self.all_dict[category][name]
 
             if (name is None) and category is not None:
                 if (category in self.first):
-                    logger.debug("Returning based upon Category ONLY")
-                    logger.debug("name: %s cat: %s" %
-                                 (str(name), str(category)))
+                    ## This is expected to work and is quite verbose when debugging turned on
+                    #logger.debug("Returning based upon Category ONLY")
+                    #logger.debug("name: %s cat: %s" % (str(name), str(category)))
                     self._prev_found[key] = self.first[category]
                     return self.first[category]
 
@@ -62,14 +62,12 @@ class PluginManager(object):
                     for this_name in self.all_dict[category_i]:
                         if name == this_name:
                             message1 = "Category of %s, has likely changed between ganga versions!" % name
-                            message2 = "Category Requested: %s,   Category in which plugin was found: %s" % (
-                                category, category_i)
+                            message2 = "Category Requested: %s,   Category in which plugin was found: %s" % (category, category_i)
                             message3 = "Attempting to use new category %s to load a stored object, this may fail!" % category_i
                             logger.debug(message1)
                             logger.debug(message2)
                             logger.debug(message3)
-                            self._prev_found[key] = self.all_dict[
-                                category_i][name]
+                            self._prev_found[key] = self.all_dict[category_i][name]
                             return self.all_dict[category_i][name]
 
         except KeyError:
@@ -119,3 +117,4 @@ class PluginManager(object):
             return {}
 
 allPlugins = PluginManager()
+
