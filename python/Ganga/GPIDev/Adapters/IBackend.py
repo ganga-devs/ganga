@@ -448,7 +448,7 @@ class IBackend(GangaObject):
 
                 for this_block in monitorable_blocks:
 
-                    if monitoring_component and not monitoring_component.isEnabled(False):
+                    if monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
                         break
 
                     try:
