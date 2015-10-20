@@ -1,15 +1,12 @@
 import sys
-
 import Ganga.Utility.logging
-
 from Ganga.Core import GangaException
 from Ganga.Core.GangaRepository.Registry import RegistryKeyError, RegistryIndexError, RegistryAccessError
 import fnmatch
 import collections
-#from Ganga.Utility.external.ordereddict import oDict
 from Ganga.Utility.external.OrderedDict import OrderedDict as oDict
-
 import Ganga.Utility.Config
+from Ganga.GPIDev.Base.Proxy import isType
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -107,15 +104,32 @@ class RegistrySlice(object):
 
     def select(self, minid=None, maxid=None, **attrs):
         import repr
-        r = repr.Repr()
-        attrs_str = "".join([',%s=%s' % (a, r.repr(attrs[a])) for a in attrs])
-        slice = self.__class__("%s.select(minid=%s,maxid=%s%s)" % (
-            self.name, r.repr(minid), r.repr(maxid), attrs_str))
+        from Ganga.GPIDev.Lib.Job.Job import Job
+
+        if isType(minid, Job):
+            if minid.master:
+                minid = minid.master.id
+            else:
+                minid = minid.id
+            if maxid is None:
+                maxid = minid
+
+        if isType(maxid, Job):
+            if maxid.master:
+                maxid = maxid.master.id
+            else:
+                maxid = maxid.id
+
+
+        this_repr = repr.Repr()
+        attrs_str = "".join([',%s=%s' % (a, this_repr.repr(attrs[a])) for a in attrs])
+        logger.debug("Constructing slice: %s" % str("%s.select(minid='%s', maxid='%s%s')" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str)))
+        this_slice = self.__class__("%s.select(minid='%s', maxid='%s%s')" % (self.name, this_repr.repr(minid), this_repr.repr(maxid), attrs_str))
 
         def append(id, obj):
-            slice.objects[id] = obj
+            this_slice.objects[id] = obj
         self.do_select(append, minid, maxid, **attrs)
-        return slice
+        return this_slice
 
     def do_select(self, callback, minid=None, maxid=None, **attrs):
         """Get the slice of jobs. 'minid' and 'maxid' specify optional (inclusive) slice range.
@@ -145,7 +159,9 @@ class RegistrySlice(object):
             select = select_by_range
 
         for id, obj in self.objects.iteritems():
+            logger.debug("id, obj: %s, %s" % (str(id), str(obj)))
             if select(int(id)):
+                logger.debug("Selected: %s" % str(id))
                 selected = True
                 for a in attrs:
                     if self.name == 'box':
