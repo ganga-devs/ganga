@@ -144,6 +144,7 @@ def _ganga_run_exitfuncs():
             s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__, str(x))
             logger.warning(s)
 
+    logger = getLogger()
     logger.info("Shutting Down Ganga Repositories")
     from Ganga.Runtime import Repository_runtime
     Repository_runtime.shutdown()
@@ -183,5 +184,3 @@ def install():
 #
 # Revision 1.1.2.2  2007/07/27 13:03:17  amuraru
 #*** empty log message ***
-#
-#
