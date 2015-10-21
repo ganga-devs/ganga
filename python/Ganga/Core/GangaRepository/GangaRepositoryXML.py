@@ -150,7 +150,7 @@ class GangaRepositoryLocal(GangaRepository):
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError"""
-        logger.debug("Shutting Down GangaRepositoryLocal")
+        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         self._write_master_cache()
         self.sessionlock.shutdown()
 
