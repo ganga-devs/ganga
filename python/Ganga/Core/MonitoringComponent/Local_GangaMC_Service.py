@@ -265,12 +265,6 @@ class UpdateDict(object):
             log.debug("**: backend=%s, isLocked=%s, isOwner=%s, joblist=%s, queue=%s" %
                       (backend, lock._RLock__count, lock._is_owned(), [x.id for x in jobList], Qin.qsize()))
             return True
-        else:
-            log.debug(
-                "Could not acquire lock for %s backend. addEntry() skipped." % backend)
-            log.debug("**: backend=%s, isLocked=%s, isOwner=%s, joblist=%s, queue=%s" %
-                      (backend, lock._RLock__count, lock._is_owned(), [x.id for x in jobList], Qin.qsize()))
-            return False
 
     def clearEntry(self, backend):
         if backend in self.table:
@@ -579,7 +573,7 @@ class JobRegistry_Monitor(GangaThread):
 
         log.debug("runMonitoring")
 
-        if not isType(steps, int) and steps > 0:
+        if not isType(steps, int) and steps < 0:
             log.warning("The number of monitor steps should be a positive (non-zero) integer")
             return False
 
@@ -645,7 +639,6 @@ class JobRegistry_Monitor(GangaThread):
         # wait to execute the steps
         self.__monStepsTerminatedEvent.wait()
         self.__monStepsTerminatedEvent.clear()
-        
 
         log.debug("Test for timeout")
         # wait the steps to be executed or timeout to occur
@@ -982,6 +975,7 @@ class JobRegistry_Monitor(GangaThread):
 
         log.debug("Finishing _checkBackend")
         return
+
 
     def makeUpdateJobStatusFunction(self, makeActiveBackendsFunc=None):
         log.debug("makeUpdateJobStatusFunction")
