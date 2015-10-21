@@ -1,3 +1,4 @@
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from Ganga.GPIDev.Lib.Tasks.IUnit import IUnit
 from Ganga.GPIDev.Lib.Job.Job import JobError
@@ -42,7 +43,7 @@ class LHCbUnit(IUnit):
             j.splitter = trf.splitter.clone()
 
             # change the first event for GaussSplitter
-            from GPI import GaussSplitter
+            from Ganga.GPI import GaussSplitter
             if isType(trf.splitter, GaussSplitter):
                 events_per_unit = j.splitter.eventsPerJob * \
                     j.splitter.numberOfJobs

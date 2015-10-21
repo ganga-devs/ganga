@@ -175,7 +175,7 @@ class LHCbTransform(ITransform):
                 return None
 
             for inds in self.inputdata:
-                from GPI import TaskChainInput
+                from Ganga.GPI import TaskChainInput
                 if isType(inds, TaskChainInput) and inds.input_trf_id == parent._getParent().getID():
                     incl_pat_list += inds.include_file_mask
                     excl_pat_list += inds.exclude_file_mask
