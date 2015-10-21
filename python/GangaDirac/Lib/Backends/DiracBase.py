@@ -244,19 +244,16 @@ class DiracBase(IBackend):
         """Resubmit a DIRAC job"""
         j = self.getJobObject()
         parametric = False
-        script_path = os.path.join(
-            j.getInputWorkspace().getPath(), 'dirac-script.py')
+        script_path = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         # Check old script
         if j.master is None and not os.path.exists(script_path):
-            raise BackendError(
-                'Dirac', 'No "dirac-script.py" found in j.inputdir')
+            raise BackendError('Dirac', 'No "dirac-script.py" found in j.inputdir')
 
         if j.master is not None and not os.path.exists(script_path):
             script_path = os.path.join(
                 j.master.getInputWorkspace().getPath(), 'dirac-script.py')
             if not os.path.exists(script_path):
-                raise BackendError(
-                    'Dirac', 'No "dirac-script.py" found in j.inputdir or j.master.inputdir')
+                raise BackendError('Dirac', 'No "dirac-script.py" found in j.inputdir or j.master.inputdir')
             parametric = True
 
         # Read old script
@@ -297,10 +294,10 @@ class DiracBase(IBackend):
         new_script += script[script.find('# user settings -->'):]
 
         # Save new script
-        new_script_filename = os.path.join(
-            j.getInputWorkspace().getPath(), 'dirac-script.py')
+        new_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         f = open(new_script_filename, 'w')
         f.write(new_script)
+        f.flush()
         f.close()
         return self._common_submit(new_script_filename)
 
@@ -667,6 +664,7 @@ class DiracBase(IBackend):
                 logger.warning("Attemting again (%s of %s) after %s-sec delay" % (str(count), str(limit), str(sleep_length)))
                 if count == limit:
                     logger.error("Unable to finalise job after %s retries due to error:\n%s" % (job.getFQID('.'), str(err)))
+                    job.force_status('failed')
                     raise err
 
             time.sleep(sleep_length)
