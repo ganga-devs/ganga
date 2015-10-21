@@ -965,7 +965,12 @@ class JobRegistry_Monitor(GangaThread):
             # FIXME THIS RETURNS A REGISTRYSLICE OBJECT NOT A REGISTRY, IS THIS CORRECT? SHOULD WE FLUSH
             # COMMENTING OUT AS IT SIMPLY WILL NOT RUN/RESOLVE!
             # this concerns me - rcurrie
-            self.registry._flush(jobList_fromset)  # Optimisation required!
+            #self.registry._flush(jobList_fromset)  # Optimisation required!
+
+            for this_job in jobList_fromset:
+                stripped_job = stripProxy(this_job)
+                stripped_job._getRegistry()._flush([stripped_job])
+
         except Exception as err:
             log.debug("Monitoring Loop Error: %s" % str(err))
         finally:
