@@ -611,6 +611,7 @@ some packages such as GangaTest may be taken from the release area.""",
         config.addOption('ServerUserScriptWaitTime', 300, "Time in seconds between executions of the user script")
 
         config.addOption('confirm_exit', 1, 'Ask the user on exit if we should exit, (this is passed along to IPython)')
+        config.addOption('force_start', False, 'Ignore disk checking on startup')
 
         # detect default user (equal to unix user name)
         import getpass

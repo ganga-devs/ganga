@@ -8,6 +8,7 @@ import os.path
 from Ganga.Utility.files import expandfilename
 from Ganga.Core.GangaRepository import getRegistries
 from Ganga.Core.GangaRepository import getRegistry
+from Ganga.Core.exceptions import GangaException
 
 config = Ganga.Utility.Config.getConfig('Configuration')
 logger = getLogger()
@@ -37,6 +38,8 @@ def getLocalWorkspace():
 
 started_registries = []
 
+partition_warning = 95
+partition_critical = 99
 
 def checkDiskQuota():
 
@@ -74,10 +77,20 @@ def checkDiskQuota():
             output = df.communicate()[0]
 
         try:
+            global partition_warning
+            global partition_critical
             quota_percent = output.split('%')[0]
-            if int(quota_percent) >= 95:
+            if int(quota_percent) >= partition_warning:
                 logger.warning("WARNING: You're running low on disk space, Ganga may stall on launch or fail to download job output")
                 logger.warning("WARNING: Please free some disk space on: %s" % str(data_partition))
+            if int(quota_percent) >= partition_critical and config['force_start'] is False:
+                logger.error("You are crtitically low on disk space!")
+                logger.error("To prevent repository corruption and data loss we won't start Ganga.")
+                logger.error("Either set your config variable 'force_start' in .gangarc to enable starting and ignore this check.")
+                logger.error("Or, make sure you have more than %s percent free disk space on: %s" %(str(100-partition_critical), str(data_partition)))
+                raise GangaException("Not Enough Disk Space!!!")
+        except GangaException as err:
+            raise err
         except Exception as err:
             logger.debug("Error checking disk partition: %s" % str(err))
 
@@ -88,7 +101,9 @@ def bootstrap():
 
     try:
         checkDiskQuota()
-    except Exception, err:
+    except GangaException as err:
+        raise err
+    except Exception as err:
         logger.error("Disk quota check failed due to: %s" % str(err))
 
     # ALEX added this as need to ensure that prep registry is started up BEFORE job or template
