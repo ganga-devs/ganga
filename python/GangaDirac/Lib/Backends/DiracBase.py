@@ -16,7 +16,7 @@ from Ganga.Utility.ColourText import getColour
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Credentials import getCredential
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
@@ -215,7 +215,7 @@ class DiracBase(IBackend):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info("resubmitting job %s to %s backend", fqid, sj.backend._name)
+                logger.info("resubmitting job %s to %s backend", fqid, getName(sj.backend))
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')

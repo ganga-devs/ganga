@@ -17,6 +17,7 @@ from Ganga.Utility.execute import execute
 from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Base.Proxy import getName
 import copy
 logger = Ganga.Utility.logging.getLogger()
 
@@ -260,9 +261,9 @@ class GaudiBase(IPrepareApp):
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
             raise Exception(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
+                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
 
-        logger.info('Preparing %s application.' % (self._name))
+        logger.info('Preparing %s application.' % (getName(self)))
         self.is_prepared = ShareDir()
 
     def master_configure(self):
