@@ -37,7 +37,8 @@ class GangaException(Exception):
         """
          String representation of this class
         """
-        _str = "%s: " % self.__class__.__name__
+        from Ganga.GPIDev.Base.Proxy import getName
+        _str = "%s: " % getName(self)
         if hasattr(self, 'args') and self.args:
             _str += " %s" % str(self.args)
         if hasattr(self, 'kwds') and self.kwds:

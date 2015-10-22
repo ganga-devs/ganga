@@ -6,7 +6,7 @@ from Ganga.Core.GangaRepository import InaccessibleObjectError
 import time
 import threading
 
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -235,10 +235,10 @@ class Registry(object):
                 assert obj == self._objects[obj._registry_id]
                 return obj._registry_id
             else:
-                raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj.__class__.__name__)
+                raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % getName(obj))
         except AttributeError, err:
             logger.debug("%s" % str(err))
-            raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % obj.__class__.__name__)
+            raise ObjectNotInRegistryError("Object %s does not seem to be in any registry!" % getName(obj))
         except AssertionError, err:
             logger.warning("%s" % str(err))
             from Ganga.GPIDev.Lib.JobTree import JobTree
@@ -246,10 +246,10 @@ class Registry(object):
                 return obj._registry_id
             import traceback
             traceback.print_stack()
-            raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % obj.__class__.__name__)
+            raise ObjectNotInRegistryError("Object %s is a duplicated version of the one in this registry!" % getName(obj))
         except KeyError, err:
             logger.debug("%s", str(err))
-            raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % obj.__class__.__name__)
+            raise ObjectNotInRegistryError("Object %s does not seem to be in this registry!" % getName(obj))
 
     def clean(self, force=False):
         """Deletes all elements of the registry, if no other sessions are present.

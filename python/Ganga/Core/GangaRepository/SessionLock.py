@@ -22,6 +22,7 @@ except ImportError:
 import Ganga.Utility.logging
 
 from Ganga.Utility.Config.Config import getConfig, ConfigError
+from Ganga.GPIDev.Base.Proxy import getName
 
 try:
     from Ganga.Core.GangaThread import GangaThread
@@ -157,14 +158,14 @@ class SessionLockRefresher(GangaThread):
                 self.clearDeadLocks(now)
 
         except Exception as x:
-            logger.warning( "Internal exception in session lock thread: %s %s" % (x.__class__.__name__, str(x)))
+            logger.warning( "Internal exception in session lock thread: %s %s" % (getName(x), str(x)))
 
     def updateNow(self):
         try:
             for index in range(len(self.fns)):
                 now = self.updateLocks(index)
         except Exception as x:
-            logger.warning("Internal exception in Updating session lock thread: %s %s" % ( x.__class__.__name__, str(x)))
+            logger.warning("Internal exception in Updating session lock thread: %s %s" % ( getName(x), str(x)))
 
     def updateLocks(self, index):
 
@@ -558,7 +559,7 @@ class SessionLockManager(object):
                     # 00)) # read up to 1 MB (that is more than enough...)
                     return pickle.loads(os.read(fd, 1048576))
                 except Exception as x:
-                    logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, x.__class__.__name__, str(x)))
+                    logger.warning("corrupt or inaccessible session file '%s' - ignoring it (Exception %s %s)." % (fn, getName(x), str(x)))
             finally:
                 if not self.afs:  # additional locking for NFS
                     fcntl.lockf(fd, fcntl.LOCK_UN)
@@ -811,7 +812,7 @@ class SessionLockManager(object):
                         fcntl.lockf(fd, fcntl.LOCK_UN)  # ONLY NFS
                         os.close(fd)
                 except Exception as x:
-                    logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, x.__class__.__name__, str(x)))
+                    logger.warning("CHECKER: session file %s corrupted: %s %s" % (session, getName(x), str(x)))
                     continue
                 if not len(names & prevnames) == 0:
                     logger.error(
