@@ -4,7 +4,7 @@ import datetime
 import hashlib
 import re
 import os.path
-from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, GPIProxyObjectFactory, isType, getName
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
 from Ganga.GPIDev.Lib.File.IGangaFile import IGangaFile
@@ -869,7 +869,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
-        if stripProxy(self)._parent and stripProxy(self)._parent.backend._name != 'Dirac':
+        if stripProxy(self)._parent and getName(stripProxy(self)._parent.backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)

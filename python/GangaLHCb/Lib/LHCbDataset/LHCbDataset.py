@@ -10,7 +10,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from OutputData import OutputData
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory, getName
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -213,7 +213,7 @@ class LHCbDataset(GangaDataset):
         from Ganga.GPIDev.Base import ReadOnlyObjectError
 
         if self._parent is not None and self._parent._readonly():
-            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, self._name))
+            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
 
         _external_files = []
 
