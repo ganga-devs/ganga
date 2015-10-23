@@ -289,8 +289,12 @@ class DiracBase(IBackend):
                 _key = key[3:]
             else:
                 _key = key
-            new_script += '%s.set%s("%s")\n' % (job_ident,
-                                                str(_key), str(value))
+            if type(value) == type(''):
+                template = '%s.set%s("%s")\n'
+            else:
+                template = '%s.set%s(%s)\n'
+            new_script += template % (job_ident, str(_key), str(value))
+            print("Template: %s" % str(template% (job_ident, str(_key), str(value))))
         new_script += script[script.find('# user settings -->'):]
 
         # Save new script
