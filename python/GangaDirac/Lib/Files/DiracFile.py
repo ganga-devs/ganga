@@ -115,20 +115,27 @@ class DiracFile(IGangaFile):
             self.subfiles = copy.deepcopy(args[0].subfiles)
             return
 
+        # LFN ONLY
         if len(args) == 1 and type(args[0]) == type(''):
             if str(str(args[0]).upper()[0:4]) == str("LFN:"):
                 self._setLFNnamePattern(_lfn=args[0][4:], _namePattern="")
             else:
                 self._setLFNnamePattern(_lfn="", _namePattern=args[0])
+
+        # NAMEPATTERN AND LFN
         elif len(args) == 2 and type(args[0]) == type('') and type(args[1]) == type(''):
             self.namePattern = args[0]
             self._setLFNnamePattern(_lfn='', _namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
+
+        # NAMEPATTERN AND LFN AND LOCALDIR
         elif len(args) == 3 and type(args[0]) == type('') and type(args[1]) == type('') and type(args[2]) == type(''):
             self.namePattern = args[0]
             self.lfn = args[2]
             self._setLFNnamePattern(_lfn=self.lfn, _namePattern=self.namePattern)
             self.localDir = expandfilename(args[1])
+
+        # NAMEPATTERN AND LFN AND LOCALDIR AND REMOTEDIR
         elif len(args) == 4 and type(args[0]) == type('') and type(args[1]) == type('')\
                 and type(args[2]) == type('') and type(args[3]) == type(''):
             self.namePattern = args[0]
@@ -136,8 +143,11 @@ class DiracFile(IGangaFile):
             self._setLFNnamePattern(_lfn=lfn, _namePattern=namePattern)
             self.localDir = expandfilename(args[1])
             self.remoteDir = args[3]
+
+        # OTHER
         else:
             super(DiracFile, self).__construct__(args)
+
         return
 
     def __deepcopy__(self, memo):
@@ -173,7 +183,7 @@ class DiracFile(IGangaFile):
 
             elif name == 'namePattern':
                 self.localDir = os.path.dirname(value)
-                return value
+                return os.path.basename(value)
 
             elif name == 'localDir':
                 return expandfilename(value)
@@ -246,60 +256,61 @@ class DiracFile(IGangaFile):
             self.setLocation()
         return self.subfiles
 
+    def dirac_line_processor(self, line, dirac_file, localPath):
+        """
+            Function to interperate the post processor lines.
+            This returns False when everything went OK and True on an ERROR
+        """
+        logger.debug("Calling dirac_line_processor")
+        tokens = line.strip().split(':::')
+        logger.debug("dirac_line_processor: %s" % tokens)
+        pattern = tokens[1].split('->')[0].split('&&')[0]
+        name = tokens[1].split('->')[0].split('&&')[1]
+        lfn = tokens[1].split('->')[1]
+        guid = tokens[3]
+        try:
+            locations = eval(tokens[2])
+        except:
+            locations = tokens[2]
+
+        if pattern == name:
+            logger.debug("pattern == name")
+            logger.error("Failed to parse outputfile data for file '%s'" % name)
+            return True
+
+        #   This is the case that multiple files were requested
+        if pattern == dirac_file.namePattern:
+            logger.debug("pattern == dirac_file.namePattern")
+            d = DiracFile(namePattern=name, lfn=lfn)
+            d.compressed = dirac_file.compressed
+            d.guid = guid
+            d.locations = locations
+            d.localDir = localPath
+            dirac_file.subfiles.append(d)
+            #dirac_line_processor(line, d)
+            return False
+
+        #   This is the case that an individual file was requested
+        elif name == dirac_file.namePattern:
+            logger.debug("name == dirac_file.namePattern")
+            if lfn == '###FAILED###':
+                dirac_file.failureReason = tokens[2]
+                logger.error("Failed to upload file '%s' to Dirac: %s" % (name, dirac_file.failureReason))
+                return True
+            dirac_file.lfn = lfn
+            dirac_file.locations = locations
+            dirac_file.guid = guid
+            dirac_file.localDir = localPath
+            return False
+
+        else:
+            return False
+
     def setLocation(self):
         """
         """
 
-        def dirac_line_processor(line, dirac_file, localPath):
-            """
-                Function to interperate the post processor lines.
-                This returns False when everything went OK and True on an ERROR
-            """
-            logger.debug("Calling dirac_line_processor")
-            tokens = line.strip().split(':::')
-            logger.debug("dirac_line_processor: %s" % tokens)
-            pattern = tokens[1].split('->')[0].split('&&')[0]
-            name = tokens[1].split('->')[0].split('&&')[1]
-            lfn = tokens[1].split('->')[1]
-            guid = tokens[3]
-            try:
-                locations = eval(tokens[2])
-            except:
-                locations = tokens[2]
-
-            if pattern == name:
-                logger.debug("pattern == name")
-                logger.error(
-                    "Failed to parse outputfile data for file '%s'" % name)
-                return True
-
-            #   This is the case that multiple files were requested
-            if pattern == dirac_file.namePattern:
-                logger.debug("pattern == dirac_file.namePattern")
-                d = DiracFile(namePattern=name, lfn=lfn)
-                d.compressed = dirac_file.compressed
-                d.guid = guid
-                d.locations = locations
-                d.localDir = localPath
-                dirac_file.subfiles.append(d)
-                #dirac_line_processor(line, d)
-                return False
-
-            #   This is the case that an individual file was requested
-            elif name == dirac_file.namePattern:
-                logger.debug("name == dirac_file.namePattern")
-                if lfn == '###FAILED###':
-                    dirac_file.failureReason = tokens[2]
-                    logger.error("Failed to upload file '%s' to Dirac: %s" % (name, dirac_file.failureReason))
-                    return True
-                dirac_file.lfn = lfn
-                dirac_file.locations = locations
-                dirac_file.guid = guid
-                dirac_file.localDir = localPath
-                return False
-
-            else:
-                return False
+        logger.debug("DiracFile: setLocation")
 
         job = self.getJobObject()
         postprocessLocationsPath = os.path.join(job.outputdir, getConfig('Output')['PostProcessLocationsFileName'])
@@ -311,7 +322,7 @@ class DiracFile(IGangaFile):
             self.subfiles = []
             for line in postprocesslocations.readlines():
                 if line.startswith('DiracFile'):
-                    if dirac_line_processor(line, self, postprocessLocationsPath) and regex.search(self.namePattern) is None:
+                    if self.dirac_line_processor(line, self, postprocessLocationsPath) and regex.search(self.namePattern) is None:
                         logger.error("Error processing line:\n%\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
 
         except Exception, err:
@@ -438,7 +449,11 @@ class DiracFile(IGangaFile):
 
                 self._storedReplicas = execute('getReplicas("%s")' % self.lfn)
                 if self._storedReplicas.get('OK', False) is True:
-                    self._storedReplicas = self._storedReplicas['Value']['Successful']
+                    try:
+                        self._storedReplicas = self._storedReplicas['Value']['Successful']
+                    except Exception as err:
+                        logger.error("Unknown Error: %s" % str(err))
+                        raise err
                 else:
                     logger.error("Couldn't find replicas for: %s" % str(self.lfn))
                     raise GangaError("Couldn't find replicas for: %s" % str(self.lfn))
@@ -621,7 +636,7 @@ class DiracFile(IGangaFile):
             raise Exception(
                 "No wildcards in inputfiles for DiracFile just yet. Dirac are exposing this in API soon.")
 
-    def put(self, force=False, uploadSE="", replicate=False, lfn=''):
+    def put(self, lfn='', force=False, uploadSE="", replicate=False):
         """
         Try to upload file sequentially to storage elements defined in configDirac['allDiracSE'].
         File will be uploaded to the first SE that the upload command succeeds for.
@@ -657,7 +672,8 @@ class DiracFile(IGangaFile):
             logger.warning("Warning you're attempting to put this DiracFile: %s" % self.namePattern)
             logger.warning("It currently has an LFN associated with it: %s" % self.lfn)
             logger.warning("Do you want to continue and attempt to upload to: %s" % lfn)
-            while not (decision in ['y', 'n'] or decision == ''):
+            decision = raw_input('y / [n]:')
+            while not (decision in ['y', 'n', '']):
                 decision = raw_input('y / [n]:')
 
             if decision == 'y':
@@ -698,7 +714,7 @@ class DiracFile(IGangaFile):
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.remoteDir = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            lfn_base = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
         else:
@@ -749,12 +765,14 @@ class DiracFile(IGangaFile):
                 guid = stdout['Value']['Successful'][lfn].get('GUID', '')
                 if regex.search(self.namePattern) is not None:
                     d.lfn = lfn
+                    d.remoteDir = os.path.dirname(lfn)
                     d.locations = stdout['Value']['Successful'][lfn].get('allDiracSE', '')
                     d.guid = guid
                     outputFiles.append(GPIProxyObjectFactory(d))
                     continue
                 else:
                     self.lfn = lfn
+                    self.remoteDir = os.path.dirname(lfn)
                     self.locations = stdout['Value']['Successful'][lfn].get('allDiracSE', '')
                     self.guid = guid
                 # return ## WHY?
@@ -776,9 +794,9 @@ class DiracFile(IGangaFile):
                     self.replicate(se)
             else:
                 storage_elements.pop(0)
-                for file in outputFiles:
+                for this_file in outputFiles:
                     for se in storage_elements:
-                        file.replicate(se)
+                        this_file.replicate(se)
 
         if len(outputFiles) > 0:
             return GPIProxyObjectFactory(outputFiles)
@@ -889,15 +907,16 @@ for f in glob.glob('###NAME_PATTERN###'):
 
     def hasMatchedFiles(self):
 
-        if self.lfn != "":
+        if self.lfn != "" and self.namePattern != "":
             if self.namePattern == os.path.basename(self.lfn):
                 return True
             else:
                 logger.error("LFN doesn't match namePattern for file: %s" % str(self.namePattern))
                 return False
-        elif len(self.subfiles) > 0:
+        elif len(self.subfiles) > 0 and regex.search(self.namePattern) is not None:
             return True
         else:
+            logger.error("Failed to Match file:\n%s" % str(self))
             return False
 
 # add DiracFile objects to the configuration scope (i.e. it will be

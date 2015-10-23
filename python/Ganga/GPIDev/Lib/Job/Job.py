@@ -573,8 +573,7 @@ class Job(GangaObject):
         # traceback.print_stack()
 
         fqid = self.getFQID('.')
-        logger.debug(
-            'attempt to change job %s status from "%s" to "%s"', fqid, self.status, newstatus)
+        logger.debug('attempt to change job %s status from "%s" to "%s"', fqid, self.status, newstatus)
 
         try:
             state = self.status_graph[self.status][newstatus]
@@ -583,8 +582,7 @@ class Job(GangaObject):
             if newstatus == self.status:
                 state = Job.State(newstatus)
             else:
-                raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (
-                    fqid, self.status, newstatus))
+                raise JobStatusError('forbidden status transition of job %s from "%s" to "%s"' % (fqid, self.status, newstatus))
 
         self._getWriteAccess()
 
@@ -593,7 +591,7 @@ class Job(GangaObject):
             if state.hook:
                 try:
                     getattr(self, state.hook)()
-                except PostprocessStatusUpdate, x:
+                except PostprocessStatusUpdate as x:
                     newstatus = x.status
 
             if transition_update:
@@ -616,7 +614,7 @@ class Job(GangaObject):
             self.status = newstatus
             self._commit()
 
-        except Exception, x:
+        except Exception as x:
             self.status = saved_status
             log_user_exception()
             raise JobStatusError(x)
@@ -656,7 +654,8 @@ class Job(GangaObject):
                         backend_output_postprocess[configEntry] = {}
 
                     backend_output_postprocess[configEntry][key] = getConfig('Output')[key]['backendPostprocess'][configEntry]
-            except ConfigError:
+            except ConfigError as err:
+                logger.debug("ConfigError: %s" % str(err))
                 pass
 
         return backend_output_postprocess
@@ -681,24 +680,24 @@ class Job(GangaObject):
             if backendClass in backend_output_postprocess:
                 if outputfileClass in backend_output_postprocess[backendClass]:
                     if backend_output_postprocess[backendClass][outputfileClass] == 'client':
-                        logger.info("Putting File %s: %s" % (str(getName(outputfile)), str(outputfile.namePattern)))
+                        logger.info("Job %s Putting File %s: %s" % (self.getFQID('.'), str(getName(outputfile)), str(outputfile.namePattern)))
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
                             try:
                                 os.unlink(f)
-                            except IOError:
+                            except IOError as err:
                                 logger.error('failed to remove temporary/intermediary file: %s' % f)
+                                logger.debug("Err: %s" % str(err))
 
                     elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
-                        logger.info("Setting Location of %s: %s" % (str(getName(outputfile)), str(outputfile.namePattern)))
-                        if stripProxy(self).master is not None:
+                        logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), str(getName(outputfile)), str(outputfile.namePattern)))
+                        if not self.subjobs:
                             outputfile.setLocation()
                     else:
-                        if stripProxy(self).master is not None:
-                            try:
-                                outputfile.setLocation()
-                            except Exception, err:
-                                logger.debug("Error: %s" % str(err))
+                        try:
+                            outputfile.setLocation()
+                        except Exception as err:
+                            logger.debug("Error: %s" % str(err))
 
             if outputfileClass == 'LocalFile':
                 outputfile.processOutputWildcardMatches()
@@ -726,18 +725,18 @@ class Job(GangaObject):
         if getConfig('Output')['FailJobIfNoOutputMatched'] and not self.subjobs:
             for outputfile in self.outputfiles:
                 if not outputfile.hasMatchedFiles():
-                    logger.info("OutputFile failed to match file type %s: %s" % (str(getName(outputfile)), str(outputfile.namePattern)))
+                    logger.warning("Job: %s OutputFile failed to match file type %s: %s" % (self.getFQID('.'), str(getName(outputfile)), str(outputfile.namePattern)))
                     postprocessFailure = True
 
         # check for failure reasons
         for outputfile in self.outputfiles:
             if (hasattr(outputfile, 'failureReason') and outputfile.failureReason != ''):
-                logger.info("OutputFile failed for file: %s" % str(outputfile.namePattern))
+                logger.warning("Job %s OutputFile failed for file: %s" % (self.getFQID('.'), str(outputfile.namePattern)))
                 postprocessFailure = True
             else:
                 for subfile in outputfile.subfiles:
                     if (hasattr(subfile, 'failureReason') and subfile.failureReason != ''):
-                        logger.info("OutputFile failed due to reason: %s" % str(outputfile.namePattern))
+                        logger.warning("Job%s OutputFile failed due to reason: %s" % (self.getFQID('.'), str(outputfile.namePattern)))
                         postprocessFailure = True
 
         return postprocessFailure
