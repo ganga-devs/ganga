@@ -33,11 +33,6 @@ apply_pattern pyext name=matplotlib
 apply_pattern pyext name=pycrypto
 
 #########################################################################
-# PYTHONPATH ApMon
-
-path_prepend PYTHONPATH "$(ext_root)/ApMon/$(ApMon)/noarch/python"
-
-#########################################################################
 # PYTHONPATH stomputil
 
 path_prepend PYTHONPATH "$(ext_root)/stomputil/$(stomputil)/noarch/python"
