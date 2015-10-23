@@ -147,7 +147,7 @@ This defines the following:
         else:
             opt = ''
 
-        if self.iotions.testing:
+        if self.options.testing:
             setup_ver = 'testing'
 
         command += 'git clone ' + opt + ' ' + self.github_setupP_repo + ' ' + tmp_checkout
@@ -193,7 +193,7 @@ This defines the following:
         command = 'git clone ' + opt + ' ' + self.github_ganga_repo + ' ' + gangadir
         command += ' && cd ' + gangadir
         command += ' && git checkout ' + opt + ' ' + self.versionGanga
-        if not self.options.keep_git
+        if not self.options.keep_git:
             command += ' && rm -fr $PWD/.git'
 
 
