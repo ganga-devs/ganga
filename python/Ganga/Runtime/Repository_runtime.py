@@ -71,7 +71,6 @@ def checkDiskQuota():
             quota = subprocess.Popen(['fs', 'quota', '%s' % data_partition], stdout=subprocess.PIPE)
             output = quota.communicate()[0]
             logger.debug("fs quota %s:\t%s" % (str(data_partition), str(output)))
-
         else:
             df = subprocess.Popen(["df", '-Pk', data_partition], stdout=subprocess.PIPE)
             output = df.communicate()[0]
@@ -154,8 +153,7 @@ def shutdown():
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(registry.name)
     except:
-        logger.error(
-                "Failed to Shutdown prep Repository!!! please check for stale lock files")
+        logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
         pass
 
@@ -168,8 +166,7 @@ def shutdown():
             started_registries.remove(thisName)
             registry.shutdown()  # flush and release locks
         except Exception as x:
-            logger.error(
-                    "Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
+            logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
             logger.error("%s" % str(x))
             logger.error("Trying to Shutdown cleanly regardless")
             pass
@@ -177,3 +174,4 @@ def shutdown():
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
+
