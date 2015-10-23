@@ -469,7 +469,7 @@ class JobRegistry_Monitor(GangaThread):
                 log.debug("Monitoring loop __mainLoopCond")
                 log.debug('Monitoring loop lock acquired. Running loop')
                 # we are blocked here while the loop is disabled
-                while not self.enabled:
+                while not self.enabled and self.steps <= 0:
                     log.debug("Not enabled")
                     self.__cleanUp()
                     if not self.alive:  # stopped?
