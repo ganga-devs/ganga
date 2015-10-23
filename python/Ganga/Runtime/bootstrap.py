@@ -618,8 +618,7 @@ some packages such as GangaTest may be taken from the release area.""",
         try:
             config.options['user'].default_value = getpass.getuser()
         except Exception as x:
-            raise Ganga.Utility.Config.ConfigError(
-                'Cannot get default user name' + str(x))
+            raise Ganga.Utility.Config.ConfigError('Cannot get default user name' + str(x))
 
         config.addOption('DiskIOTimeout', 45, 'Time in seconds before a ganga session (lock file) is treated as a zombie and removed')
 
