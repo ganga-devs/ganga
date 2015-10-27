@@ -547,7 +547,7 @@ class JobRegistry_Monitor(GangaThread):
                     cbHookFunc(**cbHookEntry.argDict)
                 except Exception as err:
                     log.debug("Caught Unknown Callback Exception")
-                    log.debug("%s" % str(err))
+                    log.debug("Callback %s" % str(err))
                     pass
                 cbHookEntry._lastRun = time.time()
 
@@ -694,7 +694,7 @@ class JobRegistry_Monitor(GangaThread):
             log.error("ERROR STOPPING MONITORING THREAD, feel free to force exit")
             # This except is left in incase we decide to add things here which
             # can fail!
-            log.error("%s" % str(err))
+            log.error("Err %s" % str(err))
 
         with self.__mainLoopCond:
             log.debug('Monitoring loop lock acquired. Disabling mon loop')
@@ -867,13 +867,13 @@ class JobRegistry_Monitor(GangaThread):
                         log.debug("active_backends.setdefault: %s" % str(bn))
                         active_backends.setdefault(bn, [])
                         active_backends[bn].append(j)
-            except RegistryKeyError, err:
+            except RegistryKeyError as err:
                 log.debug("RegistryKeyError: The job was most likely removed")
-                log.debug("%s" % str(err))
+                log.debug("RegError %s" % str(err))
                 pass  # the job was removed
-            except RegistryLockError, err:
+            except RegistryLockError as err:
                 log.debug("RegistryLockError: The job was most likely removed")
-                log.debug("%s" % str(err))
+                log.debug("Reg LockError%s" % str(err))
                 pass  # the job was removed
         log.debug("Returning active_backends: %s" % str(active_backends))
         return active_backends
@@ -1127,7 +1127,7 @@ def getStackTrace():
             status = status + "\n"
         ## CANNOT CONVERT TO A STRING!!!
         #log.info("Queue", str(Qin.queue))
-        log.debug("%s" % str(status))
+        log.debug("Trace: %s" % str(status))
         return status
     except Exception, err:
         print("Err: %s" % str(err))
