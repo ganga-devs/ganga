@@ -73,6 +73,9 @@ class LocalFile(IGangaFile):
 
     def __construct__(self, args):
 
+        self.tmp_pwd = None
+        self.output_location = None
+
         from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
         if len(args) == 1 and isinstance(args[0], str):
             self.namePattern = args[0]
@@ -81,6 +84,12 @@ class LocalFile(IGangaFile):
             self.localDir = args[1]
         elif len(args) == 1 and isinstance(args[0], SandboxFile):
             super(LocalFile, self).__construct__(args)
+
+        if localDir != '':
+            self.localDir = localDir
+        else:
+            this_pwd = os.path.abspath('.')
+            self.tmp_pwd = this_pwd
 
     def __repr__(self):
         """Get the representation of the file."""
