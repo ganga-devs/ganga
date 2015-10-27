@@ -1604,10 +1604,10 @@ class Job(GangaObject):
 
             return 1
 
-        except Exception, x:
-            if isType(x, GangaException):
+        except Exception as err:
+            if isType(err, GangaException):
                 log_user_exception(logger, debug=True)
-                logger.error(str(x))
+                logger.error(str(err))
             else:
                 log_user_exception(logger, debug=False)
 
@@ -1615,9 +1615,9 @@ class Job(GangaObject):
                 self.updateStatus('failed')
             else:
                 # revert to the new status
-                logger.error('%s ... reverting job %s to the new status', str(x), self.getFQID('.'))
+                logger.error('%s ... reverting job %s to the new status', str(err), self.getFQID('.'))
                 self.updateStatus('new')
-                raise JobError(x)
+                raise JobError("Error: %s" % str(err))
 
     def rollbackToNewState(self):
         ''' 
@@ -1939,7 +1939,7 @@ class Job(GangaObject):
             backend = stripProxy(backend)
 
         # do not allow to change the backend type
-        if backend and not isType(self.backend, backend):
+        if backend and not isType(self.backend, type(backend)):
             msg = "cannot resubmit job %s: change of the backend type is not allowed" % fqid
             logger.error(msg)
             raise JobError(msg)
