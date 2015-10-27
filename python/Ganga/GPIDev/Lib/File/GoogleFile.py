@@ -138,7 +138,7 @@ class GoogleFile(IGangaFile):
         self._check_Ganga_folder()
 
     def __construct__(self, args):
-        if (len(args) != 1) or (not is(eargs[0], str)):
+        if (len(args) != 1) or (not isType(args[0], str)):
             super(GoogleFile, self).__construct__(args)
         else:
             self.namePattern = args[0]
