@@ -49,8 +49,6 @@ class MassStorageFile(IGangaFile):
         """ namePattern is the pattern of the output file that has to be written into mass storage
         """
         super(MassStorageFile, self).__init__()
-        #self.namePattern = namePattern
-        #self.localDir = localDir
         self._setNamePath(_namePattern=namePattern, _localDir=localDir)
         self.locations = []
 
@@ -58,12 +56,11 @@ class MassStorageFile(IGangaFile):
 
     def __construct__(self, args):
         if len(args) == 1 and isinstance(args[0], str):
-            #self.namePattern = args[0]
             self._setNamePath(args[0], '')
         elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            #self.namePattern = args[0]
-            #self.localDir = args[1]
             self._setNamePath(args[0], args[1])
+        self.locations = []
+        self.shell = Shell.Shell()
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
@@ -71,7 +68,6 @@ class MassStorageFile(IGangaFile):
             self.namePattern = os.path.basename(_namePattern)
             self.localDir = os.path.dirname(_namePattern)
         elif _namePattern != '' and _localDir != '':
-            import os.path
             self.namePattern = _namePattern
             self.localDir = _localDir
 

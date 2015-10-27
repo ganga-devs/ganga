@@ -4,7 +4,7 @@ from fnmatch import fnmatch
 from .IGangaFile import IGangaFile
 import logging
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType, GPIProxyObjectFactory
 from Ganga.Utility.Config import getConfig
 import re
 import copy
@@ -138,10 +138,11 @@ class GoogleFile(IGangaFile):
         self._check_Ganga_folder()
 
     def __construct__(self, args):
-        if (len(args) != 1) or (not isinstance(args[0], str)):
+        if (len(args) != 1) or (not is(eargs[0], str)):
             super(GoogleFile, self).__construct__(args)
         else:
             self.namePattern = args[0]
+        self.cred_path = os.path.join(getConfig('Configuration')['gangadir'], 'googlecreddata.pkl')
 
     def _attribute_filter__set__(self, n, v):
         if n == 'localDir':
