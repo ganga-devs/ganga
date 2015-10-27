@@ -27,8 +27,8 @@ import sys
 import time
 import re
 
-# store Ganga version based on CVS sticky tag for this file
-_gangaVersion = '$Name: 6.1.11 $'
+# store Ganga version based on new git tag for this file
+_gangaVersion = '$Name: 6.1.12 $'
 
 # [N] in the pattern is important because it prevents CVS from expanding the pattern itself!
 r = re.compile(r'\$[N]ame: (?P<version>\S+) \$').match(_gangaVersion)
@@ -104,15 +104,6 @@ if DEBUGFILES or MONITOR_FILES:
         for f in openfiles.keys():
             if f not in safeFiles:
                 openfiles[f].close()
-
-#import atexit, traceback
-# def register(f):
-#   print '*'*10
-#   print 'register',f
-#   traceback.print_stack()
-#   _register(f)
-#_register = atexit.register
-#atexit.register = register
 
 
 class GangaProgram(object):
@@ -508,6 +499,8 @@ under certain conditions; type license() for details.
                     this_logger.error('try -g option to create valid ~/.gangarc')
                 else:
                     cv = r.group('version').split('-')  #Version number is in Ganga-x-y-z format
+                    if len(cv) == 1:
+                        cv = new_version_format_to_old(cv[0]).split('-')
                     if cv[1] != '6':
                         this_logger.error('file %s was created by a development release (%s)', self.options.config_file, r.group('version'))
                         this_logger.error('try -g option to create valid ~/.gangarc')
@@ -717,7 +710,6 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         if os.path.exists(self.options.config_file):
             config_files.append(self.options.config_file)
         Ganga.Utility.Config.configure(config_files, system_vars)
-        # print config["RUNTIME_PATH"]
 
         # set the system variables to the [System] module
         # syscfg.setDefaultOptions(system_vars,reset=1)
@@ -925,7 +917,7 @@ default_backends = LCG
                 category, tag = opt.split('_')
             except ValueError, err:
                 logger.warning("do not understand option %s in [Plugins]", opt)
-                logger.debug('Reason: %s' % str(err))
+                logger.debug('Reason: want %s' % str(err))
             else:
                 if tag == 'default':
                     try:
@@ -938,8 +930,7 @@ default_backends = LCG
         # set alias for default Batch plugin (it will not appear in the
         # configuration)
 
-        batch_default_name = Ganga.Utility.Config.getConfig(
-            'Configuration').getEffectiveOption('Batch')
+        batch_default_name = Ganga.Utility.Config.getConfig('Configuration').getEffectiveOption('Batch')
         try:
             batch_default = allPlugins.find('backends', batch_default_name)
         except Exception as x:
@@ -1000,8 +991,8 @@ default_backends = LCG
                 else:
                     logger = Ganga.Utility.logging.getLogger()
                     logger.error("Object %s DOES NOT have the _name parameter set" % (str(obj)))
-                    import traceback
-                    traceback.print_stack()
+                    #import traceback
+                    #traceback.print_stack()
                     return ""
             else:
                 if hasattr(obj, '_name'):
@@ -1009,8 +1000,8 @@ default_backends = LCG
                 else:
                     logger = Ganga.Utility.logging.getLogger()
                     logger.error("Object %s DOES NOT have the %s or _name parameter set" % (str(obj), str(proxyRef)))
-                    import traceback
-                    traceback.print_stack()
+                    #import traceback
+                    #traceback.print_stack()
                     return ""
 
         def categoryname(obj):
@@ -1022,8 +1013,8 @@ default_backends = LCG
                 else:
                     logger = Ganga.Utility.logging.getLogger()
                     logger.error("Object %s DOES NOT have the _category parameter set" % (str(obj)))
-                    import traceback
-                    traceback.print_stack()
+                    #import traceback
+                    #traceback.print_stack()
                     return ""
             else:
                 if hasattr(obj, '_category'):
@@ -1031,8 +1022,8 @@ default_backends = LCG
                 else:
                     logger = Ganga.Utility.logging.getLogger()
                     logger.error("Object %s DOES NOT have the %s or _category parameter set" % (str(obj), str(proxyRef)))
-                    import traceback
-                    traceback.print_stack()
+                    #import traceback
+                    #traceback.print_stack()
                     return ""
 
         def plugins(category=None):
@@ -1415,13 +1406,13 @@ default_backends = LCG
         def ganga_handler(self, etype, value, tb, tb_offset=None):
             from Ganga.Utility.logging import getLogger
             logger = getLogger(modulename=True)
-            logger.error("%s" % str(value))
+            logger.error("value2: %s" % str(value))
 
             from Ganga.Core.exceptions import GangaException
             if not issubclass(etype, GangaException):
                 logger.error("Unknown/Unexpected ERROR!!")
                 logger.error("If you're able to reproduce this please report this to the Ganga developers!")
-                logger.error("%s" % value)
+                logger.error("value: %s" % value)
                 self.showtraceback((etype, value, tb), tb_offset=tb_offset)
             return None
 
@@ -1560,7 +1551,6 @@ __IP.rc.confirm_exit = %s
             logger.error("FATAL ERROR! IPYTHON SHELL CRASHED")
             logger.error("this has likely been caused by shutting down with a local ill-defined variable in your namespace")
             sys.exit(-1)
-
 
         return
 
