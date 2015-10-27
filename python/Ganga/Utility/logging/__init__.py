@@ -97,7 +97,7 @@ config.addOption('_interactive_cache', True,
 config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
 
-class ColourFormatter(logging.Formatter):
+class ColourFormatter(logging.Formatter, object):
 
     def __init__(self, *args, **kwds):
         logging.Formatter.__init__(self, *args, **kwds)
