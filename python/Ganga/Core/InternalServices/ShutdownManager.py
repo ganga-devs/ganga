@@ -40,9 +40,6 @@ Extend the behaviour of the default *atexit* module to support:
 
 import atexit
 
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
-
 
 def _ganga_run_exitfuncs():
     """run any registered exit functions
@@ -56,6 +53,7 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
+    from Ganga.Utility.logging import getLogger
     logger = getLogger()
 
     # Set the disk timeout to 1 sec, sacrifice stability for quick-er exit
@@ -65,8 +63,9 @@ def _ganga_run_exitfuncs():
     try:
         from Ganga.GPI import queues
         queues.lock()
-    except Exception, err:
+    except Exception as err:
         logger.debug("This should only happen if Ganga filed to initialize correctly")
+        logger.debug("Err: %s" % str(err))
 
     ## Stop the Mon loop from iterating further!
     from Ganga.Core import monitoring_component
@@ -96,8 +95,9 @@ def _ganga_run_exitfuncs():
     try:
         from Ganga.GPI import queues
         queues._purge_all()
-    except Exception, err:
+    except Exception as err:
         logger.debug("This should only happen if Ganga filed to initialize correctly")
+        logger.debug("Err2: %s" % str(err))
 
     def priority_cmp(f1, f2):
         """
@@ -136,21 +136,23 @@ def _ganga_run_exitfuncs():
             if hasattr(func, 'im_class'):
                 for cls in inspect.getmro(func.__self__.__class__):
                     if func.__name__ in cls.__dict__:
-                        logger = getLogger()
                         logger.debug(cls.__name__ + " : " + func.__name__)
             else:
-                logger = getLogger()
                 logger.debug("noclass : " + func.__name__)
             func(*targs, **kargs)
-        except Exception as x:
-            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__, str(x))
-            logger.warning(s)
-            #logger.warning("%s" % os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(func)))) )
+        except Exception as err:
+            s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__, str(err))
+            logger.debug(s)
+            try:
+                import os
+                logger.debug("%s" % os.path.join(os.path.dirname(os.path.abspath(inspect.getfile(func)))) )
+                logger.debug("\n%s" % inspect.getsource(func))
+            except Exception as err2:
+                logger.debug("Error getting source code and failure reason: %s" % str(err2))
 
-    logger = getLogger()
-    logger.info("Shutting Down Ganga Repositories")
-    from Ganga.Runtime import Repository_runtime
-    Repository_runtime.shutdown()
+    #print("Shutting Down Ganga Repositories")
+    #from Ganga.Runtime import Repository_runtime
+    #Repository_runtime.shutdown()
 
     import Ganga.Utility.logging
     if Ganga.Utility.logging.requires_shutdown is True:
