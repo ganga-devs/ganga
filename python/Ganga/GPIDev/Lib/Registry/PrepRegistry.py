@@ -26,6 +26,8 @@ class PrepRegistry(Registry):
 
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
         self.shareref = self.metadata[self.metadata.ids()[-1]]
         self._lock.acquire()
         #self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
@@ -34,13 +36,11 @@ class PrepRegistry(Registry):
                 if not self.metadata is None:
                     self.metadata.shutdown()
             except Exception as x:
-                logger.error(
-                    "Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
+                logger.error("Exception on shutting down metadata repository '%s' registry: %s", self.name, x)
             try:
                 self._flush()
             except Exception as x:
-                logger.error(
-                    "Exception on flushing '%s' registry: %s", self.name, x)
+                logger.error("Exception on flushing '%s' registry: %s", self.name, x)
             self._started = False
             for obj in self._objects.values():
                 # locks are not guaranteed to survive repository shutdown
