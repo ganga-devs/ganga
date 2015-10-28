@@ -74,6 +74,9 @@ class GangaThreadPool(object):
         from Ganga.GPI import queues
         queues._stop_all_threads(shutdown=True)
 
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger('GangaThread')
+
         logger.debug('shutting down GangaThreadPool with timeout %d sec' % self.SHUTDOWN_TIMEOUT)
 
         # run shutdown thread in background

@@ -142,6 +142,8 @@ def updateLocksNow():
 
 
 def shutdown():
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
     logger.debug('registry shutdown')
     # shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     # method to perform actions on the box and/or job registries.
