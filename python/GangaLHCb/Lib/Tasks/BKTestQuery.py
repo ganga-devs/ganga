@@ -1,4 +1,5 @@
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
+from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery, BKQueryDict
 from Ganga.GPIDev.Schema import Schema, Version, ComponentItem, SimpleItem
 
@@ -37,11 +38,9 @@ class BKTestQuery(BKQuery):
 
     def getDataset(self):
         if self.fulldataset is None:
-            self.fulldataset = LHCbDataset(
-                super(BKTestQuery, self).getDataset().files)
+            self.fulldataset = LHCbDataset(super(BKTestQuery, self).getDataset().files)
         if self.dataset is None:
-            self.dataset = LHCbDataset(
-                self.fulldataset.files[:self.filesToRelease])
+            self.dataset = LHCbDataset(self.fulldataset.files[:self.filesToRelease])
             self.fulldatasetptr = self.filesToRelease
         else:
             self.dataset.files += self.fulldataset.files[
