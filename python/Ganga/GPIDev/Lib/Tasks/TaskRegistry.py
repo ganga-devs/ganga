@@ -95,7 +95,7 @@ class TaskRegistry(Registry):
             if (not monitoring_component is None and monitoring_component.enabled) or config['ForceTaskMonitoring']:
                 break
             time.sleep(0.1)
-            if self._main_thread.should_stop():
+            if self._main_thread is None or self._main_thread.should_stop():
                 return
 
         # setup the tasks - THIS IS INCOMPATIBLE WITH CONCURRENCY
@@ -202,6 +202,7 @@ class TaskRegistry(Registry):
     def stop(self):
         if self._main_thread is not None:
             self._main_thread.stop()
+            self._main_thread = None
 
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 
