@@ -17,7 +17,8 @@ j.outputfiles = ['*.root']
 
 j.outputfiles[0].compressed = True
 
-assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
+from Ganga.GPIDev.Base.Proxy import getName
+assert(getName(j.outputfiles[0]) == 'MassStorageFile')
 
 j.submit()
 

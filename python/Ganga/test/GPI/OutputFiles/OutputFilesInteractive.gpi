@@ -15,13 +15,14 @@ j.application.script = File('fillrandom2.py')
 
 j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
 
-print( "%s" % j.outputfiles[0].__class__.__name__)
-print( "%s" % j.outputfiles[1].__class__.__name__)
-print( "%s" % j.outputfiles[2].__class__.__name__)
+from Ganga.GPIDev.Base.Proxy import getName
+print( "%s" % getName(j.outputfiles[0]))
+print( "%s" % getName(j.outputfiles[1]))
+print( "%s" % getName(j.outputfiles[2]))
 
-assert(j.outputfiles[0].__class__.__name__ == 'MassStorageFile')
-assert(j.outputfiles[1].__class__.__name__ == 'LCGSEFile')
-assert(j.outputfiles[2].__class__.__name__ == 'LocalFile')
+assert(getName(j.outputfiles[0]) == 'MassStorageFile')
+assert(getName(j.outputfiles[1]) == 'LCGSEFile')
+assert(getName(j.outputfiles[2]) == 'LocalFile')
 
 j.submit()
 
