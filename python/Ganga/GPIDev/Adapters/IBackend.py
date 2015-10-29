@@ -413,6 +413,8 @@ class IBackend(GangaObject):
         ## Have to import here so it's actually defined
         from Ganga.Core import monitoring_component
 
+        logger.debug("Running Monitoring for Jobs: %s" % str([j.getFQID('.') for j in jobs]))
+
         ## Only process 10 files from the backend at once
         blocks_of_size = 10
         ## Separate different backends implicitly
@@ -474,6 +476,8 @@ class IBackend(GangaObject):
 
                 for this_job in simple_jobs[this_backend]:
                     stripProxy(this_job)._setDirty()
+
+        logger.debug"Finished Monitoring request")
 
     @staticmethod
     def updateMonitoringInformation(jobs):
