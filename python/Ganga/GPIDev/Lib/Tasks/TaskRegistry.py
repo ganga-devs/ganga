@@ -202,7 +202,6 @@ class TaskRegistry(Registry):
     def stop(self):
         if self._main_thread is not None:
             self._main_thread.stop()
-            self._main_thread = None
 
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 
