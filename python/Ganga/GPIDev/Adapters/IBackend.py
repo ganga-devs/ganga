@@ -477,7 +477,7 @@ class IBackend(GangaObject):
                 for this_job in simple_jobs[this_backend]:
                     stripProxy(this_job)._setDirty()
 
-        logger.debug"Finished Monitoring request")
+        logger.debug("Finished Monitoring request")
 
     @staticmethod
     def updateMonitoringInformation(jobs):
