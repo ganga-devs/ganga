@@ -136,8 +136,10 @@ def _ganga_run_exitfuncs():
             if hasattr(func, 'im_class'):
                 for cls in inspect.getmro(func.__self__.__class__):
                     if func.__name__ in cls.__dict__:
+                        logger = getLogger()
                         logger.debug(cls.__name__ + " : " + func.__name__)
             else:
+                logger = getLogger()
                 logger.debug("noclass : " + func.__name__)
             func(*targs, **kargs)
         except Exception as err:
