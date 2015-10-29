@@ -15,7 +15,7 @@ j.outputfiles = ['fillrandom.root', 'fillrandom1.root', 'fillrandom2.root']
 from Ganga.GPIDev.Base.Proxy import getName
 assert(getName(j.outputfiles[0]) == 'MassStorageFile')
 assert(getName(j.outputfiles[1]) == 'LCGSEFile')
-assert(getName(j.outputfiles[2]) == 'SandboxFile')
+assert(getName(j.outputfiles[2]) == 'LocalFile')
 
 j.submit()
 

@@ -3,8 +3,15 @@ import os
 
 dictConfig = config.Output.MassStorageFile
 dictConfig['uploadOptions']['path'] = dictConfig['uploadOptions']['path'].replace('$user', '%s/%s' % (os.environ['USER'][0], os.environ['USER']))
-
 config.Output.MassStorageFile = dictConfig
+
+dictConfigM = config.Output.MassStorageFile
+dictConfigM['fileExtensions'].append('fillrandom.root')
+config.Output.MassStorageFile = dictConfigM
+
+dictConfigL = config.Output.LCGSEFile
+dictConfigL['fileExtensions'].append('fillrandom1.root')
+config.Output.LCGSEFile = dictConfigL
 
 j = Job(application=Root(),backend=LSF())
 
@@ -18,7 +25,7 @@ j.outputfiles[2].compressed = True
 from Ganga.GPIDev.Base.Proxy import getName
 assert(getName(j.outputfiles[0]) == 'MassStorageFile')
 assert(getName(j.outputfiles[1]) == 'LCGSEFile')
-assert(getName(j.outputfiles[2]) == 'SandboxFile')
+assert(getName(j.outputfiles[2]) == 'LocalFile')
 
 j.submit()
 
