@@ -27,7 +27,7 @@ print('j = ', jscript)
 tmpdir = tempfile.mktemp()
 os.mkdir(tmpdir)
 
-output_data = jscript.backend.getOutputData(dir=tmpdir)
+output_data = jscript.backend.getOutputData(outputDir=tmpdir)
 
 assert len(output_data) == 1, 'Only one file should have been downloaded - %s' % output_data
 

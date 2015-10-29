@@ -522,8 +522,8 @@ class MassStorageFile(IGangaFile):
                     keyin = None
                     while keyin == None:
                         keyin = raw_input(
-                            "Do you want to remove the local File: %s ? [y/n] " % str(_localFile))
-                        if keyin == 'y':
+                            "Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
+                        if keyin in ['y', '']:
                             _actual_delete = True
                         elif keyin == 'n':
                             _actual_delete = False
@@ -532,7 +532,19 @@ class MassStorageFile(IGangaFile):
                             keyin = None
 
                 if _actual_delete:
-                    os.unlink(_localFile)
+                    import time
+                    remove_filename = _localFile + '__to_be_deleted_' + str(time.time())
+
+                    try:
+                        os.rename(_localFile, remove_filename)
+                    except Exception as err:
+                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        remove_filename = _localFile
+
+                    try:
+                        os.unlink(remove_filename)
+                    except Exception as err:
+                        logger.error("Error in removing file: %s" % str(remove_filename))
 
         return
 

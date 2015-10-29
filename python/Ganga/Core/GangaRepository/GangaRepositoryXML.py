@@ -9,6 +9,7 @@ import os
 import os.path
 import time
 import errno
+import shutil
 
 from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
 
@@ -76,9 +77,9 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         raise IOError("Could not write file %s.new (%s)" % (fn, e))
     # Try to make backup copy...
     try:
-        os.unlink(fn + "~")
+        rmrf(fn + "~")
     except OSError as e:
-        logger.debug("Error on removing file %s~ (%s) " % (fn, e))
+        logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
     try:
         os.rename(fn, fn + "~")
     except OSError as e:
@@ -91,17 +92,33 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
 def rmrf(name):
     if os.path.isdir(name):
-        for sfn in os.listdir(name):
-            rmrf(os.path.join(name, sfn))
+
         try:
-            os.removedirs(name)
-        except OSError, err:
+            remove_name = os.path.dirname(name) + '__to_be_deleted_' + str(time.time())
+            shutil.move(name, remove_name)
+            logger.debug("Move completed")
+        except Exception as err:
+            logger.debug("rmrf Err: %s" % str(err))
+            remove_name = name
+
+        for sfn in os.listdir(remove_name):
+            rmrf(os.path.join(remove_name, sfn))
+        try:
+            os.removedirs(remove_name)
+        except OSError as err:
             logger.debug("%s" % str(err))
             pass
     else:
         try:
-            os.unlink(name)
-        except OSError, err:
+            remove_name = name + '__to_be_deleted_' + str(time.time())
+            shutil.move(name, remove_name)
+        except Exception as err:
+            logger.debug("rmrf Move err: %s" % str(err))
+            remove_name = name
+
+        try:
+            os.unlink(remove_name)
+        except OSError as err:
             logger.debug("%s" % str(err))
             pass
 
@@ -150,6 +167,8 @@ class GangaRepositoryLocal(GangaRepository):
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError"""
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
         logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         self._write_master_cache()
         self.sessionlock.shutdown()
@@ -241,9 +260,8 @@ class GangaRepositoryLocal(GangaRepository):
                         objs[id] = True
                     else:
                         try:
-                            os.unlink(self.get_idxfn(id))
-                            logger.warning(
-                                "Deleted index file without data file: %s" % self.get_idxfn(id))
+                            rmrf(self.get_idxfn(id))
+                            logger.warning("Deleted index file without data file: %s" % self.get_idxfn(id))
                         except OSError, err:
                             logger.debug("get_index_listing delete Exception: %s" % str(err))
                             pass
@@ -587,7 +605,7 @@ class GangaRepositoryLocal(GangaRepository):
                     try:
                         # remove internal representation
                         self._internal_del__(id)
-                        os.unlink(os.path.dirname(fn) + ".index")
+                        rmrf(os.path.dirname(fn) + ".index")
                     except OSError, err:
                         logger.debug("load unlink Error: %s" % str(err))
                         pass
@@ -695,10 +713,7 @@ class GangaRepositoryLocal(GangaRepository):
                     self.incomplete_objects.append(id)
                 # remove index so we do not continue working with wrong
                 # information
-                try:
-                    os.unlink(os.path.dirname(fn) + ".index")
-                except OSError:
-                    pass
+                rmrf(os.path.dirname(fn) + ".index")
                 raise InaccessibleObjectError(self, id, err)
             finally:
                 fobj.close()
@@ -709,7 +724,7 @@ class GangaRepositoryLocal(GangaRepository):
             # KeyError
             fn = self.get_fn(id)
             try:
-                os.unlink(os.path.dirname(fn) + ".index")
+                rmrf(os.path.dirname(fn) + ".index")
             except OSError, err:
                 logger.debug("Delete Error: %s" % str(err))
                 pass

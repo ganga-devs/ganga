@@ -111,7 +111,11 @@ class ColourFormatter(logging.Formatter, object):
         self.markup = ColourText.ANSIMarkup()
 
     def format(self, record):
-        s = super(ColourFormatter, self).format(record)
+        try:
+            s = super(ColourFormatter, self).format(record)
+        except TypeError:
+            print("%s" % str(record))
+            return None
         if record.levelno in self.colours.keys():
             code = self.colours[record.levelno]
             return self.markup(s, code)
