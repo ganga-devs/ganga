@@ -344,11 +344,18 @@ class Descriptor(object):
         item = obj._schema[getName(self)]
 
         if v is None:
-            assert(item['optional'])
+            if 'category' in item._meta:
+                assertion = item['optional'] and (item['category'] != 'internal')
+            else:
+                assertion = item['optional']
+            assert(assertion)
             return None
+        elif isinstance(v, str):
+            return str(v)
         else:
             bare_v = stripProxy(v)
-            assert(isType(v, Node))
+            if not isType(v, Node):
+                raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
             if isType(v, GangaList):
                 categories = v.getCategory()
@@ -357,7 +364,7 @@ class Descriptor(object):
                     # we pass on empty lists, as the catagory is yet to be defined
                     raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (getName(self), v, item['category']))
             else:
-                if bare_v._category != item['category']:
+                if bare_v._category != item['category'] and item['category'] != 'internal':
                     raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (getName(self), v, item['category']))
             v = bare_v.clone()
             v._setParent(obj)
@@ -419,7 +426,13 @@ class Descriptor(object):
                         val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             if isType(item, Schema.ComponentItem):
-                val = cloneVal(val)
+                listObj = []
+                if isinstance(val, list):
+                    for elem in val:
+                        listObj.append(cloneVal(elem))
+                    val = listObj
+                else:
+                    val = cloneVal(val)
 
         if hasattr(val, '_setParent'):
             val._setParent(obj)
