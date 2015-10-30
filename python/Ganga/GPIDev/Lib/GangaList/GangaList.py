@@ -79,7 +79,6 @@ class GangaListIter(object):
     def __iter__(self):
         return self
 
-
 class GangaList(GangaObject):
 
     _category = 'internal'
@@ -92,19 +91,48 @@ class GangaList(GangaObject):
     _enable_plugin = 1
     _name = 'GangaList'
     _schema = Schema(Version(1, 0), {
-        '_list': SimpleItem(defvalue=[], doc='The raw list', hidden=1),
-        '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
-    })
+                                     '_list': ComponentItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
+                                     '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
+                                    })
     _enable_config = 1
+    _data={}
 
     def __init__(self):
         super(GangaList, self).__init__()
 
+    def __construct__(self, args):
+
+        if len(args) == 1:
+            if hasattr(args[0], '__len__'):
+                for element_i in args[0]:
+                    self._list.append( strip_proxy(element_i))
+            elif _list is None:
+                self._list = None
+            else:
+                raise GangaError("Construct: Attempting to assign a non list item: %$s to a GangaList._list!" % str(value))
+        else:
+            super(GangaList, self).__construct__(args)
+        return
+
     # convenience methods
     def is_list(self, obj):
-        result = (obj != None) and (
-            isType(obj, GangaList) or isinstance(obj, list))
+        result = (obj != None) and (isType(obj, GangaList) or isinstance(obj, list))
         return result
+
+    ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
+    def _attribute_filter__set__(self, name, value):
+        if name == "_list":
+            if is_list(value):
+                new_list = []
+                for element_i in value:
+                    new_list.append(strip_proxy(element_i))
+                return new_list
+            elif _list is None:
+                return None
+            else:
+                raise GangaError("Attempting to assign a non list item: %$s to a GangaList._list!" % str(value))
+        else:
+            return super(GangaList, self)._attribute_filter__set__(name, value)
 
     def _on_attribute__set__(self, obj_type, attrib_name):
         new_list = []
@@ -139,7 +167,7 @@ class GangaList(GangaObject):
 
         raw_obj = stripProxy(obj)
         # apply a filter if possible
-        if filter:
+        if filter is True:
             parent = self._getParent()
             item = self.findSchemaParentSchemaEntry(parent)
             if item and item.isA(ComponentItem):  # only filter ComponentItems
@@ -204,8 +232,7 @@ class GangaList(GangaObject):
     def __add__(self, obj_list):
         # Savanah 32342
         if not self.is_list(obj_list):
-            raise TypeError(
-                'Type %s can not be concatinated to a GangaList' % type(obj_list))
+            raise TypeError('Type %s can not be concatinated to a GangaList' % type(obj_list))
 
         return makeGangaList(self._list.__add__(self.strip_proxy_list(obj_list, True)))
 
@@ -238,6 +265,7 @@ class GangaList(GangaObject):
     def __deepcopy__(self, memo):
         """Bypass any checking when making the copy"""
         return makeGangaList(_list=copy.deepcopy(self._list, memo))
+        #super(GangaList, self).__deepcopy__(memo)
 
     def __eq__(self, obj_list):
         if obj_list is self:  # identity check
