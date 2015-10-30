@@ -88,14 +88,14 @@ class Shell(object):
 
         """
 
-        if setup:
+        if setup is not None:
 
             env = dict(os.environ)
             env = expand_vars(env)
 
             logger.debug("Initializing Shell")
-            logger.debug("%s" % setup)
-            logger.debug("%s" % " ".join(setup_args))
+            logger.debug("command:\n%s" % setup)
+            logger.debug("args:\n%s" % " ".join(setup_args))
 
             this_cwd = os.path.abspath(os.getcwd())
             if not os.path.exists(this_cwd):
