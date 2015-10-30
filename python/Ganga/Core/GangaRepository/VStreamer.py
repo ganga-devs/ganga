@@ -1,5 +1,11 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from Ganga.Utility.logging import getLogger
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+import xml.sax.saxutils
+
+logger = getLogger()
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -41,9 +47,6 @@ def from_file(f):
 
 ##########################################################################
 # utilities
-
-import xml.sax.saxutils
-#import escape, unescape
 
 
 def escape(s):
@@ -134,7 +137,7 @@ class VStreamer(object):
 
     def print_value(self, x):
         # FIXME: also quote % characters (to allow % operator later)
-        print('<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
+        print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
 
     def showAttribute(self, node, name):
         return not node._schema.getItem(name)['transient'] and (self.level > 1 or name != self.selection)
@@ -149,11 +152,15 @@ class VStreamer(object):
                 print(file=self.out)
                 print(self.indent(), '<sequence>', file=self.out)
                 for v in value:
-                    self.level += 1
-                    print(self.indent(), end=' ', file=self.out)
-                    self.print_value(v)
-                    print(file=self.out)
-                    self.level -= 1
+                    #self.level += 1
+                    #print(self.indent(), end=' ', file=self.out)
+                    self.acceptOptional(v)
+                    #if hasattr(stripProxy(v), 'accept'):
+                    #    stripProxy(v).accept(self)
+                    #else:
+                    #    self.print_value(v)
+                    #print(file=self.out)
+                    #self.level -= 1
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
                 print(self.indent(), '</attribute>', file=self.out)
@@ -161,6 +168,7 @@ class VStreamer(object):
                 self.level += 1
                 self.print_value(value)
                 self.level -= 1
+                print(self.indent(), end=' ', file=self.out)
                 print('</attribute>', file=self.out)
             self.level -= 1
 
@@ -174,8 +182,10 @@ class VStreamer(object):
         else:
             if type(s) == type(''):
                 print(self.indent(), '<value>%s</value>' % s, file=self.out)
-            else:
+            elif hasattr(stripProxy(s), 'accept'):
                 stripProxy(s).accept(self)
+            else:
+                self.print_value(stripProxy(s))
         self.level -= 1
 
     def componentAttribute(self, node, name, subnode, sequence):
