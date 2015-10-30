@@ -9,7 +9,6 @@ dictConfigL = config.Output.LCGSEFile
 dictConfigL['fileExtensions'].append('fillrandom2.root')
 config.Output.LCGSEFile = dictConfigL
 
-
 j = Job(application=Root(),backend=LSF())
 
 j.application.script = File('fillrandom2.py')
