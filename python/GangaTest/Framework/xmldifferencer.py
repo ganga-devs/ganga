@@ -260,7 +260,7 @@ def start(cmd_args=None):
     #Get Newreportdir and oldreportdir
     topdir = os.sep.join(config['GANGA_PYTHONPATH'].split(os.sep)[:-2])
     for this_dir in os.listdir(topdir):
-        if ( this+dir == newversion ):
+        if ( this_dir == newversion ):
             newreportdir = os.path.join(topdir,this_dir,'reports','latest')
         if ( this_dir == oldversion ):
             oldreportdir = os.path.join(topdir,this_dir,'reports','latest')

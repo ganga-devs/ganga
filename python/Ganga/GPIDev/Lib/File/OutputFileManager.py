@@ -200,7 +200,8 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     """
 
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if len(job.inputfiles) == 0 and (not job.inputdata or not isType(job.inputdata, GangaDataset) or not job.inputdata.treat_as_inputfiles):
+    if len(job.inputfiles) == 0 and (not job.inputdata or not isType(job.inputdata, GangaDataset) or\
+            (not hasattr(job.inputdata, 'treat_as_inputfiles') or not job.inputdata.treat_as_inputfiles)):
         return ""
 
     insertScript = """\n
