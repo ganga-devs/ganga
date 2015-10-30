@@ -175,7 +175,7 @@ class DiracFile(IGangaFile):
 
     def _attribute_filter__set__(self, name, value):
 
-        if value != "" or not value is None:
+        if value != "" and value is not None:
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
                 if self.namePattern == '':
