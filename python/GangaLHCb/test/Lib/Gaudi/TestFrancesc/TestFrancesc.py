@@ -74,14 +74,14 @@ class TestFrancesc(GangaGPITestCase):
             # Test make
             logger.info('make...')
             app.make()
-            dir = os.path.join(cmtuserpath, '%s_%s' % (appname, app.version),
+            tempDir = os.path.join(cmtuserpath, '%s_%s' % (appname, app.version),
                                'Phys/%s' % appname, app._impl.platform)
-            assert os.path.exists(dir), '%s must exist' % dir
-            f = os.path.join(dir, '%ssetup.make' % appname)
+            assert os.path.exists(tempDir), '%s must exist' % tempDir
+            f = os.path.join(tempDir, '%ssetup.make' % appname)
             read_file(f)
             # Test CMT command
             logger.info('cmt...')
-            shutil.rmtree(dir)
+            shutil.rmtree(tempDir)
             app.cmt('br make')
             read_file(f)
             logger.info('done w/ this app.')

@@ -43,9 +43,9 @@ class TestGaudiPython(GangaGPITestCase):
     def testScripts(self):
         gp = GaudiPython()
         #gp.version = configDaVinci['version']
-        dir = tempfile.mkdtemp()
-        name1 = join(dir, 'script1.py')
-        name2 = join(dir, 'script2.py')
+        tempDir = tempfile.mkdtemp()
+        name1 = join(tempDir, 'script1.py')
+        name2 = join(tempDir, 'script2.py')
         write_file(name1, 'print "ABC"\nexecfile("script2.py")\n')
         write_file(name2, 'print "DEF"\n')
         gp.script = [name1, name2]
@@ -59,20 +59,20 @@ class TestGaudiPython(GangaGPITestCase):
         assert file_contains(fname, 'DEF'),\
             'Inclusion of second script not working'
 
-        shutil.rmtree(dir)
+        shutil.rmtree(tempDir)
 
     def testAutomaticList(self):
         gp = GaudiPython()
         #gp.version = configDaVinci['version']
-        dir = tempfile.mkdtemp()
-        name1 = join(dir, 'script1.py')
+        tempDir = tempfile.mkdtemp()
+        name1 = join(tempDir, 'script1.py')
 
         # Test that string assigned is converted into a list
         gp.script = name1
         assert gp.script[0].name == name1,\
             'String assigned should be converted into list.'
 
-        shutil.rmtree(dir)
+        shutil.rmtree(tempDir)
 
 # we dont do this anymore
 #    def testInvalidPlatform(self):

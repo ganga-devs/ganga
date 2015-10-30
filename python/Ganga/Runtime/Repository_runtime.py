@@ -129,7 +129,7 @@ def bootstrap():
 
     import atexit
     atexit.register(shutdown)
-    logger.debug(started_registries)
+    logger.debug("Registries: %s" % str(started_registries))
     return retval
 
 
@@ -142,7 +142,11 @@ def updateLocksNow():
 
 
 def shutdown():
-    logger.debug('registry shutdown')
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+    logger.info('Registry Shutdown')
+    #import traceback
+    #traceback.print_stack()
     # shutting down the prep registry (i.e. shareref table) first is necessary to allow the closedown()
     # method to perform actions on the box and/or job registries.
     logger.debug(started_registries)

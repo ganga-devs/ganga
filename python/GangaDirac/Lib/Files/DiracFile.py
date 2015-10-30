@@ -101,6 +101,8 @@ class DiracFile(IGangaFile):
 
     def __construct__(self, args):
 
+        self.locations = []
+
         if len(args) == 1 and isType(args[0], DiracFile):
             self.lfn = args[0].lfn
             self.namePattern = args[0].namePattern

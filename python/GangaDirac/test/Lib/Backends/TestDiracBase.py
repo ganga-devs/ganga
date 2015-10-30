@@ -339,7 +339,7 @@ output(result)
         self.db._parent = j._impl
         self.db.id = 1234
 
-        dir = j._impl.getOutputWorkspace().getPath()
+        tempDir = j._impl.getOutputWorkspace().getPath()
 #        class server:
 #            def execute(this, dirac_cmd):
 #                self.assertEqual(dirac_cmd,
@@ -347,14 +347,13 @@ output(result)
 #                                 'command not right')
 #                return {'OK':True}
 #        setattr(DiracBase,'dirac_ganga_server',server())
-        self.toCheck = {'command': "getOutputSandbox(1234,'%s')" % dir}
+        self.toCheck = {'command': "getOutputSandbox(1234,'%s')" % tempDir}
         self.returnObject = {'OK': True}
         self.assertTrue(self.db.getOutputSandbox(), 'didn\'t run')
 
-        dir = 'test_dir'
-        self.toCheck = {'command': "getOutputSandbox(1234,'%s')" % dir}
-        self.assertTrue(
-            self.db.getOutputSandbox(dir), 'didn\'t run with modified dir')
+        testDir = 'test_dir'
+        self.toCheck = {'command': "getOutputSandbox(1234,'%s')" % testDir}
+        self.assertTrue(self.db.getOutputSandbox(testDir), 'didn\'t run with modified dir')
 
 #        class errorserver:
 #            def execute(this, dirac_cmd):
@@ -363,8 +362,7 @@ output(result)
 
         self.toCheck = {}
         self.returnObject = {}
-        self.assertFalse(
-            self.db.getOutputSandbox(dir)), 'didn\'t fail gracefully'
+        self.assertFalse(self.db.getOutputSandbox(testDir)), 'didn\'t fail gracefully'
 
     def test_removeOutputData(self):
         j = Job(backend=self.db)

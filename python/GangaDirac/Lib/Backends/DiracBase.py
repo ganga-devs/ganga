@@ -294,7 +294,6 @@ class DiracBase(IBackend):
             else:
                 template = '%s.set%s(%s)\n'
             new_script += template % (job_ident, str(_key), str(value))
-            print("Template: %s" % str(template% (job_ident, str(_key), str(value))))
         new_script += script[script.find('# user settings -->'):]
 
         # Save new script
@@ -353,12 +352,11 @@ class DiracBase(IBackend):
         else:
             logger.error("No peeking available for Dirac job '%i'.", self.id)
 
-    def getOutputSandbox(self, dir=None):
+    def getOutputSandbox(self, outputDir=None):
         j = self.getJobObject()
-        if dir is None:
-            dir = j.getOutputWorkspace().getPath()
-        dirac_cmd = "getOutputSandbox(%d,'%s')" \
-                    % (self.id, dir)
+        if outputDir is None:
+            outputDir = j.getOutputWorkspace().getPath()
+        dirac_cmd = "getOutputSandbox(%d,'%s')"  % (self.id, outputDir)
         result = execute(dirac_cmd)
         if not result_ok(result):
             msg = 'Problem retrieving output: %s' % str(result)
@@ -380,7 +378,7 @@ class DiracBase(IBackend):
         else:
             outputfiles_foreach(j, DiracFile, lambda x: x.remove())
 
-    def getOutputData(self, dir=None, names=None, force=False):
+    def getOutputData(self, outputDir=None, names=None, force=False):
         """Retrieve data stored on SE to dir (default=job output workspace).
         If names=None, then all outputdata is downloaded otherwise names should
         be a list of files to download. If force=True then data will be redownloaded
@@ -393,16 +391,15 @@ class DiracBase(IBackend):
         will avoid overwriting files with the same name from each subjob.
         """
         j = self.getJobObject()
-        if dir is not None and not os.path.isdir(dir):
-            raise GangaException(
-                "Designated outupt path '%s' must exist and be a directory" % dir)
+        if outputDir is not None and not os.path.isdir(outputDir):
+            raise GangaException("Designated outupt path '%s' must exist and be a directory" % outputDir)
 
         def download(dirac_file, job, is_subjob=False):
             dirac_file.localDir = job.getOutputWorkspace().getPath()
-            if this_dir is not None:
-                output_dir = this_dir
+            if outputDir is not None:
+                output_dir = outputDir
                 if is_subjob:
-                    output_dir = os.path.join(dir, job.fqid)
+                    output_dir = os.path.join(outputDir, job.fqid)
                     if not os.path.isdir(output_dir):
                         os.mkdir(output_dir)
                 dirac_file.localDir = output_dir

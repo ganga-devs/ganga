@@ -259,11 +259,11 @@ def start(cmd_args=None):
     
     #Get Newreportdir and oldreportdir
     topdir = os.sep.join(config['GANGA_PYTHONPATH'].split(os.sep)[:-2])
-    for dir in os.listdir(topdir):
-        if ( dir == newversion ):
-            newreportdir = os.path.join(topdir,dir,'reports','latest')
-        if ( dir == oldversion ):
-            oldreportdir = os.path.join(topdir,dir,'reports','latest')
+    for this_dir in os.listdir(topdir):
+        if ( this+dir == newversion ):
+            newreportdir = os.path.join(topdir,this_dir,'reports','latest')
+        if ( this_dir == oldversion ):
+            oldreportdir = os.path.join(topdir,this_dir,'reports','latest')
     try:
        logger.info("newreportdir = "+newreportdir)
     except:

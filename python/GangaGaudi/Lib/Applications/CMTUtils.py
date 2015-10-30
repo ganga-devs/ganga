@@ -40,19 +40,19 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
         appname.upper(), appname.upper() + '_' + version, 'cmt')
 
     for projectdir in projectdirs:
-        dir = fullpath(os.path.join(projectdir, appveruser))
-        logger.debug('Looking for projectdir %s' % dir)
-        if os.path.exists(dir):
+        projectDir = fullpath(os.path.join(projectdir, appveruser))
+        logger.debug('Looking for projectdir %s' % projectDir)
+        if os.path.exists(projectDir):
             break
-        dir = fullpath(os.path.join(projectdir, appverrelease))
-        logger.debug('Looking for projectdir %s' % dir)
-        if os.path.exists(dir):
+        projectDir = fullpath(os.path.join(projectdir, appverrelease))
+        logger.debug('Looking for projectdir %s' % projectDir)
+        if os.path.exists(projectDir):
             break
-    logger.debug('Using the CMT directory %s for identifying projects' % dir)
-    # rc, showProj, m = shell.cmd1('cd ' + dir +';cmt show projects',
+    logger.debug('Using the CMT directory %s for identifying projects' % projectDir)
+    # rc, showProj, m = shell.cmd1('cd ' + projectDir +';cmt show projects',
     # capture_stderr=True)
     from GangaGaudi.Lib.Applications.GaudiUtils import shellEnv_cmd
-    rc, showProj, m = shellEnv_cmd('cmt show projects', env, dir)
+    rc, showProj, m = shellEnv_cmd('cmt show projects', env, projectDir)
 
     logger.debug(showProj)
 
@@ -106,8 +106,7 @@ def get_user_dlls(appname, version, user_release_area, platform, env):
                     lib_names.append(f)
                     libs.append(fpath)
                 else:
-                    logger.warning(
-                        "File %s in %s does not exist. Skipping...", str(f), str(libpath))
+                    logger.warning("File %s in %s does not exist. Skipping...", str(f), str(libpath))
 
     for pypath in py_project_areas:
         if os.path.exists(pypath):

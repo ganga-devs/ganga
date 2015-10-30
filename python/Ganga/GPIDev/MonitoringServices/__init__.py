@@ -8,6 +8,9 @@ from Ganga.Lib.MonitoringServices.Composite import CompositeMonitoringService
 
 from Ganga.Utility.Config import makeConfig
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
+
 c = makeConfig('MonitoringServices', """External monitoring systems are used
 to follow the submission and execution of jobs. Each entry in this section
 defines a monitoring plugin used for a particular combination of application
@@ -36,36 +39,37 @@ def getMonitoringClass(mclassname):
     Return the class object based on the class name string provided as input
     If the class object is already available in cache the saved value is returned
     """
-    try:
+    if mclassname in _mon_classes:
         return _mon_classes[mclassname]
-    except KeyError:
+    else:
         try:
+            logger.debug("getMonClass: %s" % str(mclassname))
             classpath = mclassname.split('.')
             classname = classpath.pop()
             modname = '.'.join(classpath)
-            monitoring_module = __import__(
-                modname, globals(), locals(), [classname])
+            logger.debug("modname: %s" % modname)
+            monitoring_module = __import__(modname, globals(), locals(), [classname])
+            logger.debug("monitoring_module: %s" % str(monitoring_module))
             monitoring_class = vars(monitoring_module)[classname]
 
             try:
                 if not issubclass(monitoring_class, IMonitoringService):
-                    raise MonitoringServiceError(
-                        '%s is not IMonitoringService subclass while loading %s' % (classname, mclassname))
-            except TypeError:
-                raise MonitoringServiceError('%s (%s) is not IMonitoringService subclass while loading %s' % (
-                    classname, str(type(monitoring_class)), mclassname))
+                    raise MonitoringServiceError('%s is not IMonitoringService subclass while loading %s' % (classname, mclassname))
+            except TypeError as err:
+                logger.debug("TypeError1: %s" % str(err))
+                raise MonitoringServiceError('%s (%s) is not IMonitoringService subclass while loading %s' % (classname, str(type(monitoring_class)), mclassname))
 
             # store the modname as class variable
             monitoring_class._mod_name = modname
 
             _mon_classes[mclassname] = monitoring_class
             return monitoring_class
-        except ImportError as x:
-            raise MonitoringServiceError(
-                '%s while loading %s' % (str(x), mclassname))
-        except KeyError as x:
-            raise MonitoringServiceError(
-                'class %s not found while loading %s' % (classname, mclassname))
+        except ImportError as err:
+            logger.debug("ImportError: %s" % str(err))
+            raise MonitoringServiceError('%s while loading %s' % (str(err), mclassname))
+        except KeyError as err:
+            logging.debug("KeyError %s" % str(err))
+            raise MonitoringServiceError('class %s not found while loading %s' % (classname, mclassname))
 
 
 def findMonitoringClassesName(job):
@@ -123,10 +127,18 @@ def getMonitoringObject(job):
      list of IMonitoringServices inside and delegating the interface methods to each of them
     """
     # read from configuration
-    names = [name.strip()
-             for name in findMonitoringClassesName(job).split(',') if name.strip()]
+    names = [name.strip() for name in findMonitoringClassesName(job).split(',') if name.strip()]
     # get classes, jobs and configs
-    monClasses = [getMonitoringClass(name) for name in names]
+    monClasses = []
+    for  name in names:
+        try:
+            this_class = getMonitoringClass(name)
+        except MonitoringServiceError as err:
+            logger.debug("Error with: %s" % str(err))
+            this_class = None
+        if thisclass is not None:
+            monClasses.append(this_class)
     jobs = [job] * len(monClasses)
     configs = [monClass.getConfig() for monClass in monClasses]
     return CompositeMonitoringService(monClasses, jobs, configs)
+

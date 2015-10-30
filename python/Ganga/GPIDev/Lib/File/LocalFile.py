@@ -73,6 +73,11 @@ class LocalFile(IGangaFile):
 
     def __construct__(self, args):
 
+        self.tmp_pwd = None
+        self.output_location = None
+
+        self.localDir = ''
+
         from Ganga.GPIDev.Lib.File.SandboxFile import SandboxFile
         if len(args) == 1 and isinstance(args[0], str):
             self.namePattern = args[0]
@@ -81,6 +86,10 @@ class LocalFile(IGangaFile):
             self.localDir = args[1]
         elif len(args) == 1 and isinstance(args[0], SandboxFile):
             super(LocalFile, self).__construct__(args)
+
+        if self.localDir == '' and self.namePattern != '':
+            this_pwd = os.path.abspath('.')
+            self.tmp_pwd = this_pwd
 
     def __repr__(self):
         """Get the representation of the file."""
@@ -189,12 +198,12 @@ class LocalFile(IGangaFile):
 
     def remove(self):
 
-        for file in self.getFilenameList():
+        for this_file in self.getFilenameList():
             _actual_delete = False
             keyin = None
             while keyin == None:
-                keyin = raw_input("Do you want to remove the LocalFile: %s ? [y/n] " % str(file))
-                if keyin == 'y':
+                keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % str(this_file))
+                if keyin in ['y', '']:
                     _actual_delete = True
                 elif keyin == 'n':
                     _actual_delete = False
@@ -202,12 +211,24 @@ class LocalFile(IGangaFile):
                     logger.warning("y/n please!")
                     keyin = None
             if _actual_delete:
-                if not os.path.exists(file):
+                if not os.path.exists(this_file):
                     logger.warning(
-                        "File %s did not exist, can't delete" % file)
+                        "File %s did not exist, can't delete" % this_file)
                 else:
-                    logger.info("Deleting: %s" % file)
-                    os.unlink(file)
+                    logger.info("Deleting: %s" % this_file)
+
+                    import time
+                    remove_filename = this_file + '__to_be_deleted_' + str(time.time())
+                    try:
+                        os.rename(this_file, remove_filename)
+                    except Exception as err:
+                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        remove_filename = this_file
+
+                    try:
+                        os.unlink(remove_filename)
+                    except Exception as err:
+                        logger.error("Error in removing file: %s" % str(remove_filename))
 
         return
 

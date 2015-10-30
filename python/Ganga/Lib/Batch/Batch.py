@@ -198,6 +198,10 @@ class Batch(IBackend):
             except IndexError:
                 logger.info('could not match the output and extract the Batch queue name')
 
+        # clean up the tmp file
+        if os.path.exists(soutfile):
+            os.remove(soutfile)
+
         return rc == 0
 
     def resubmit(self):

@@ -49,8 +49,6 @@ class MassStorageFile(IGangaFile):
         """ namePattern is the pattern of the output file that has to be written into mass storage
         """
         super(MassStorageFile, self).__init__()
-        #self.namePattern = namePattern
-        #self.localDir = localDir
         self._setNamePath(_namePattern=namePattern, _localDir=localDir)
         self.locations = []
 
@@ -58,12 +56,11 @@ class MassStorageFile(IGangaFile):
 
     def __construct__(self, args):
         if len(args) == 1 and isinstance(args[0], str):
-            #self.namePattern = args[0]
             self._setNamePath(args[0], '')
         elif len(args) == 2 and isinstance(args[0], str) and isinstance(args[1], str):
-            #self.namePattern = args[0]
-            #self.localDir = args[1]
             self._setNamePath(args[0], args[1])
+        self.locations = []
+        self.shell = Shell.Shell()
 
     def _setNamePath(self, _namePattern='', _localDir=''):
         if _namePattern != '' and _localDir == '':
@@ -71,7 +68,6 @@ class MassStorageFile(IGangaFile):
             self.namePattern = os.path.basename(_namePattern)
             self.localDir = os.path.dirname(_namePattern)
         elif _namePattern != '' and _localDir != '':
-            import os.path
             self.namePattern = _namePattern
             self.localDir = _localDir
 
@@ -526,8 +522,8 @@ class MassStorageFile(IGangaFile):
                     keyin = None
                     while keyin == None:
                         keyin = raw_input(
-                            "Do you want to remove the local File: %s ? [y/n] " % str(_localFile))
-                        if keyin == 'y':
+                            "Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
+                        if keyin in ['y', '']:
                             _actual_delete = True
                         elif keyin == 'n':
                             _actual_delete = False
@@ -536,7 +532,19 @@ class MassStorageFile(IGangaFile):
                             keyin = None
 
                 if _actual_delete:
-                    os.unlink(_localFile)
+                    import time
+                    remove_filename = _localFile + '__to_be_deleted_' + str(time.time())
+
+                    try:
+                        os.rename(_localFile, remove_filename)
+                    except Exception as err:
+                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        remove_filename = _localFile
+
+                    try:
+                        os.unlink(remove_filename)
+                    except Exception as err:
+                        logger.error("Error in removing file: %s" % str(remove_filename))
 
         return
 

@@ -175,34 +175,37 @@ class LHCbDataset(GangaDataset):
                 return True
         return False
 
-    def replicate(self, destSE='', srcSE='', locCache=''):
+    def replicate(self, destSE=''):
         '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
         ds.replicate().'''
+
         if not destSE:
             from Ganga.GPI import DiracFile
             DiracFile().replicate('')
             return
         if not self.hasLFNs():
             raise GangaException('Cannot replicate dataset w/ no LFNs.')
+
         retry_files = []
+
         for f in self.files:
             if not isDiracFile(GPIProxyObjectFactory(f)):
                 continue
             try:
-                result = f.replicate(destSE, srcSE, locCache)
-            except:
-                msg = 'Replication error for file %s (will retry in a bit).'\
-                      % f.lfn
+                result = f.replicate( destSE=destSE )
+            except Exception as err:
+                msg = 'Replication error for file %s (will retry in a bit).' % f.lfn
                 logger.warning(msg)
+                logger.warning("Error: %s" % str(err))
                 retry_files.append(f)
+
         for f in retry_files:
             try:
-                result = f.replicate(destSE, srcSE, locCache)
-            except:
-                msg = '2nd replication attempt failed for file %s.' \
-                      ' (will not retry)' % f.lfn
+                result = f.replicate( destSE=destSE )
+            except Exception as err:
+                msg = '2nd replication attempt failed for file %s. (will not retry)' % f.lfn
                 logger.warning(msg)
-                logger.warning(str(result))
+                logger.warning(str(err))
 
     def append(self, input_file):
         self.extend([input_file])
