@@ -150,14 +150,16 @@ class ITask(GangaObject):
                         try:
                             j = GPI.jobs(jid)
                             j.remove()
-                        except:
+                        except Exception as err:
+                            logger.debug("Remove Err: %s" % str(err))
                             pass
 
                     for jid in unit.prev_job_ids:
                         try:
                             j = GPI.jobs(jid)
                             j.remove()
-                        except:
+                        except Exception as err2:
+                            logger.debug("Remove Err2: %s" % str(err2))
                             pass
 
         self._getRegistry()._remove(self)

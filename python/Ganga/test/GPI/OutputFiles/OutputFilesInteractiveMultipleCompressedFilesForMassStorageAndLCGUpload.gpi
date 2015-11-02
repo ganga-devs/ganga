@@ -17,7 +17,8 @@ j.outputfiles = ['*.root1']
 
 j.outputfiles[0].compressed = True
 
-assert(j.outputfiles[0].__class__.__name__ == 'LCGSEFile')
+from Ganga.GPIDev.Base.Proxy import getName
+assert(getName(j.outputfiles[0]) == 'LCGSEFile')
 
 j.submit()
 

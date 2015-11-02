@@ -169,7 +169,8 @@ class IPrepareApp(IApplication):
         try:
             import hashlib
             digest = hashlib.new('md5')
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             import md5
             digest = md5.new()
 

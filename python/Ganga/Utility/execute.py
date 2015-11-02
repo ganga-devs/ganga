@@ -68,7 +68,8 @@ def __reader(readfd, writefd, output_ns, output_var):
     with os.fdopen(readfd, 'rb') as read_file:
         try:
             output_ns.update({output_var: pickle.load(read_file)})
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             pass  # EOFError triggered if command killed with timeout
 
 # /\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
@@ -191,13 +192,15 @@ def execute(command,
 
     try:
         stdout = pickle.loads(stdout)
-    except:
+    except Exception as err:
+        logger.debug("Err: %s" % str(err))
         local_ns = {}
         if isinstance(eval_includes, str):
             exec(eval_includes, {}, local_ns)
         try:
             stdout = eval(stdout, {}, local_ns)
-        except:
+        except Exception as err2:
+            logger.debug("Err2: %s" % str(err2))
             pass
 
     return_code = p.returncode

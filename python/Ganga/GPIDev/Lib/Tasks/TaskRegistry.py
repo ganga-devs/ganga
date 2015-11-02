@@ -87,7 +87,7 @@ class TaskRegistry(Registry):
         from Ganga.Core.GangaRepository import getRegistry
         while not getRegistry("jobs")._started:
             time.sleep(0.1)
-            if self._main_thread.should_stop():
+            if self._main_thread is None or self._main_thread.should_stop():
                 return
 
         while True:
@@ -114,7 +114,7 @@ class TaskRegistry(Registry):
         logger.debug("Entering main loop")
 
         # Main loop
-        while not self._main_thread.should_stop():
+        while self._main_thread is not None and not self._main_thread.should_stop():
 
             # For each task try to run it
             if config['ForceTaskMonitoring'] or monitoring_component.enabled:
@@ -197,7 +197,6 @@ class TaskRegistry(Registry):
     def shutdown(self):
 
         super(TaskRegistry, self).shutdown()
-        #self._main_thread.stop()
 
     def stop(self):
         if self._main_thread is not None:

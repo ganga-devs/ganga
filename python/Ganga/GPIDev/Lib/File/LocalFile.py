@@ -226,9 +226,12 @@ class LocalFile(IGangaFile):
                         remove_filename = this_file
 
                     try:
-                        os.unlink(remove_filename)
-                    except Exception as err:
-                        logger.error("Error in removing file: %s" % str(remove_filename))
+                        os.remove(remove_filename)
+                    except OSError as err:
+                        if err.errno != errno.ENOENT:
+                            logger.error("Error in removing file: %s" % str(remove_filename))
+                            raise
+                        pass
 
         return
 
