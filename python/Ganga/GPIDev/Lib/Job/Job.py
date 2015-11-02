@@ -621,6 +621,7 @@ class Job(GangaObject):
 
         if self.status != saved_status:
             logger.info('job %s status changed to "%s"', fqid, self.status)
+            stripProxy(self)._getRegistry()._flush()
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
@@ -684,10 +685,13 @@ class Job(GangaObject):
                         outputfile.put()
                         for f in glob.glob(os.path.join(self.outputdir, outputfile.namePattern)):
                             try:
-                                os.unlink(f)
-                            except IOError as err:
-                                logger.error('failed to remove temporary/intermediary file: %s' % f)
-                                logger.debug("Err: %s" % str(err))
+                                os.remove(f)
+                            except OSError as err:
+                                if e.errno != errno.ENOENT:
+                                    logger.error('failed to remove temporary/intermediary file: %s' % f)
+                                    logger.debug("Err: %s" % str(err))
+                                    raise err
+                                pass
 
                     elif backend_output_postprocess[backendClass][outputfileClass] == 'WN':
                         logger.info("Job %s Setting Location of %s: %s" % (self.getFQID('.'), str(getName(outputfile)), str(outputfile.namePattern)))
