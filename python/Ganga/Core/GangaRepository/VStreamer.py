@@ -136,11 +136,7 @@ class VStreamer(object):
         return
 
     def print_value(self, x):
-        if isType(x, str):
-            ## Special case where Value should be wrapped to protect against whitespace!
-            print('\n', self.indent(), '<value>"%s"</value>' % escape(repr(stripProxy(x))), file=self.out)
-        else:
-            print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
+        print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
 
     def showAttribute(self, node, name):
         return not node._schema.getItem(name)['transient'] and (self.level > 1 or name != self.selection)
@@ -176,7 +172,7 @@ class VStreamer(object):
             print(self.indent(), '<value>None</value>', file=self.out)
         else:
             if isType(s, str):
-                print(self.indent(), '<value>"%s"</value>' % s, file=self.out)
+                print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
             elif hasattr(stripProxy(s), 'accept'):
                 stripProxy(s).accept(self)
             elif isType(s, list) or isType(s, GangaList):
