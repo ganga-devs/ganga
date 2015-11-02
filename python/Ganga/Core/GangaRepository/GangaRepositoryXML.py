@@ -97,7 +97,7 @@ def rmrf(name):
             os.rename(name, remove_name)
             logger.debug("Move completed")
         except OSError as err:
-            if e.errno != errno.ENOENT:
+            if err.errno != errno.ENOENT:
                 logger.debug("rmrf Err: %s" % str(err))
                 remove_name = name
                 raise err
@@ -108,7 +108,7 @@ def rmrf(name):
         try:
             os.removedirs(remove_name)
         except OSError as err:
-            if e.errno != errno.ENOENT:
+            if err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
                 raise err
             return
@@ -117,7 +117,7 @@ def rmrf(name):
             remove_name = name + '__to_be_deleted_' + str(time.time())
             os.rename(name, remove_name)
         except OSError as err:
-            if e.errno != errno.ENOENT:
+            if err.errno != errno.ENOENT:
                 logger.debug("rmrf Move err: %s" % str(err))
                 remove_name = name
                 raise err
@@ -422,12 +422,12 @@ class GangaRepositoryLocal(GangaRepository):
                     if len(self.lock([id])) != 0:
                         self.index_write(id)
                         self.unlock([id])
-                except Exception, err:
-                    logger.debug("update Error: %s" % str(err))
-                    # deleted job
-                    if id in self.objects:
-                        self._internal_del__(id)
-                        changed_ids.append(id)
+                #except KeyError as err:
+                #    logger.debug("update Error: %s" % str(err))
+                #    # deleted job
+                #    if id in self.objects:
+                #        self._internal_del__(id)
+                #        changed_ids.append(id)
                 except Exception as x:
                     ## WE DO NOT CARE what type of error occured here and it can be
                     ## due to corruption so could be one of MANY exception types
