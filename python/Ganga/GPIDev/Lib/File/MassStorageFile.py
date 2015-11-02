@@ -544,7 +544,7 @@ class MassStorageFile(IGangaFile):
                     try:
                         os.remove(remove_filename)
                     except OSError as err:
-                        if e.errno != errno.ENOENT:
+                        if err.errno != errno.ENOENT:
                             logger.error("Error in removing file: %s" % str(remove_filename))
                             raise
                         pass

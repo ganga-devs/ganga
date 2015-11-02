@@ -126,7 +126,7 @@ def rmrf(name):
         try:
             os.remove(remove_name)
         except OSError as err:
-            if e.errno != errno.ENOENT:
+            if err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
                 raise err
             return

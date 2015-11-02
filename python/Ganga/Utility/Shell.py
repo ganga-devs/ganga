@@ -230,7 +230,13 @@ class Shell(object):
         from contextlib import closing
         with closing(open(outfile)) as out_file:
             output = out_file.read()
-        os.unlink(outfile)
+        try:
+            os.remove(outfile)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("Err removing shell output: %s" % str(err))
+                raise err
+            pass
 
         return rc, output, m
 
