@@ -9,7 +9,6 @@ import os
 import os.path
 import time
 import errno
-import shutil
 
 from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
 
@@ -95,32 +94,42 @@ def rmrf(name):
 
         try:
             remove_name = os.path.dirname(name) + '__to_be_deleted_' + str(time.time())
-            shutil.move(name, remove_name)
+            os.rename(name, remove_name)
             logger.debug("Move completed")
-        except Exception as err:
-            logger.debug("rmrf Err: %s" % str(err))
-            remove_name = name
+        except OSError as err:
+            if e.errno != errno.ENOENT:
+                logger.debug("rmrf Err: %s" % str(err))
+                remove_name = name
+                raise err
+            return
 
         for sfn in os.listdir(remove_name):
             rmrf(os.path.join(remove_name, sfn))
         try:
             os.removedirs(remove_name)
         except OSError as err:
-            logger.debug("%s" % str(err))
-            pass
+            if e.errno != errno.ENOENT:
+                logger.debug("%s" % str(err))
+                raise err
+            return
     else:
         try:
             remove_name = name + '__to_be_deleted_' + str(time.time())
-            shutil.move(name, remove_name)
-        except Exception as err:
-            logger.debug("rmrf Move err: %s" % str(err))
-            remove_name = name
+            os.rename(name, remove_name)
+        except OSError as err:
+            if e.errno != errno.ENOENT:
+                logger.debug("rmrf Move err: %s" % str(err))
+                remove_name = name
+                raise err
+            return
 
         try:
-            os.unlink(remove_name)
+            os.remove(remove_name)
         except OSError as err:
-            logger.debug("%s" % str(err))
-            pass
+            if e.errno != errno.ENOENT:
+                logger.debug("%s" % str(err))
+                raise err
+            return
 
 
 class GangaRepositoryLocal(GangaRepository):
