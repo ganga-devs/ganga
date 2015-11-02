@@ -68,12 +68,12 @@ class IBackend(GangaObject):
             #from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('failed')
 
-            from Ganga.Core.exceptions import GangaException
-            if isinstance(err, GangaException):
-                logger.error(str(err))
-                log_user_exception(logger, debug=True)
-            else:
-                log_user_exception(logger, debug=False)
+            #from Ganga.Core.exceptions import GangaException
+            #if isinstance(err, GangaException):
+            #    logger.error(str(err))
+            #    #log_user_exception(logger, debug=True)
+            #else:
+            #    #log_user_exception(logger, debug=False)
         finally:
             pass
 
@@ -254,7 +254,8 @@ class IBackend(GangaObject):
 
         tmpDir = None
         files = []
-        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
+        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
+                isType(job.inputdata, GangaDataset) and hasattr(job.inptdata, 'treat_as_inputfiles') and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
