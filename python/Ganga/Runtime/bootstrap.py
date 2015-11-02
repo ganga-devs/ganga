@@ -1331,11 +1331,7 @@ default_backends = LCG
 
             from IPython import __version__ as ipver
 
-            if ipver == "0.6.13":
-
-                self.launch_OldIPython(local_ns, args)
-
-            elif ipver in ["3.1.0", "3.2.0", "3.2.1", '4.0.0']:
+            if ipver in ["3.1.0", "3.2.0", "3.2.1", '4.0.0']:
 
                 self.launch_NewIPython(local_ns, args)
 
@@ -1452,107 +1448,6 @@ default_backends = LCG
                  credentialsWarningPrompt += '\n'
 
         return credentialsWarningPrompt
-
-    def launch_OldIPython(self, local_ns, args):
-
-        def override_credits():
-            credits._Printer__data += '\n\nGanga: The Ganga Developers (http://cern.ch/ganga)\n'
-            copyright._Printer__data += '\n\nCopyright (c) 2000-2008 The Ganga Developers (http://cern.ch/ganga)\n'
-
-        # customized display hook -- take advantage of coloured text etc. if
-        # possible.
-        def _display(obj):
-            from Ganga.GPIDev.Base.Proxy import stripProxy
-            if isinstance(obj, type):
-                sys.stdout.write(str(obj)+'\n')
-                return
-            # if hasattr(obj,'_display'):
-            #   print
-            #   print obj._display(1)
-            #   return
-            elif hasattr(stripProxy(obj), '_display'):
-                sys.stdout.write(str(stripProxy(obj)._display(1))+'\n')
-                return
-            else:
-                sys.stdout.write(str(obj)+'\n')
-                return
-
-        try:
-            from IPython.Shell import IPShellEmbed
-        except ImportError, err:
-            logger.error("Error Loading IPython")
-            raise
-
-        # override ipothonrc configuration
-        ipopts = {'prompt_in1': '${ganga_prompt()}In [\#]:',
-                  # disable automatic tab completion for attributes
-                  # starting with _ or __
-                  'readline_omit__names': 2
-                  }
-
-        ipshell = IPShellEmbed(argv=args, rc_override=ipopts)
-        ipshell.IP.user_ns['ganga_prompt'] = self.ganga_prompt
-
-        # setting displayhook like this is definitely undocumented sort of
-        # a hack
-        ipshell.IP.outputcache.display = _display
-
-        # Initializing the user_ns in a way that runlines will not cause it
-        # to be regenerated
-        for i in local_ns.keys():
-            ipshell.IP.user_ns[i] = local_ns[i]
-
-        # attach magic functions
-        py_version = float(sys.version.split()[0].rsplit('.', 1)[0])
-        if py_version >= 2.6:
-            import readline
-            from Ganga.Runtime.GangaCompleter import GangaCompleter
-            from IPython.iplib import MagicCompleter
-            t = GangaCompleter(readline.get_completer(), local_ns)
-            setattr(MagicCompleter, 'complete', t.complete)
-            # readline.set_completer(t.complete)
-            readline.parse_and_bind('tab: complete')
-            #readline.parse_and_bind('set input-meta on')
-            #readline.parse_and_bind('set output-meta on')
-            #readline.parse_and_bind('set convert-meta off')
-            readline.set_completion_display_matches_hook(t.displayer)
-
-        from Ganga.Utility.Config.Config import getConfig
-        config = getConfig('Configuration')
-
-        system_exit_script = """\
-def exit( value=None ):
-  import IPython
-  if __IP.rc.confirm_exit:
-    if IPython.genutils.ask_yes_no('Do you really want to exit ([y]/n)?','y'):
-      __IP.exit_now = True
-  else:
-    __IP.exit_now = True
-
-__IP.rc.confirm_exit = %s
-""" % config['confirm_exit']
-
-        ipshell.IP.runlines(system_exit_script)
-
-        # set a custom exception handler wich disables printing of errors' traceback for
-        # all exceptions inheriting from GangaException
-        def ganga_exc_handler(self, etype, value, tb):
-            # print str(etype).split('.')[-1],':', # FIXME: sys.stderr ?
-            logger.error(value)  # FIXME: sys.stderr ?
-
-        from Ganga.Core import GangaException
-        ipshell.IP.set_custom_exc((GangaException,), ganga_exc_handler)
-
-        override_credits()
-        # global_ns: FIX required by ipython 0.8.4+
-        try:
-            ipshell(local_ns=local_ns, global_ns=local_ns)
-        except Exception, err:
-            logger.error("FATAL ERROR! IPYTHON SHELL CRASHED")
-            logger.error("this has likely been caused by shutting down with a local ill-defined variable in your namespace")
-            sys.exit(-1)
-
-        return
 
     def log(self, x):
 
