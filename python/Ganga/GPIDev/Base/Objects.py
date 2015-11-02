@@ -353,20 +353,35 @@ class Descriptor(object):
         elif isinstance(v, str):
             return str(v)
         else:
-            bare_v = stripProxy(v)
+            if not isType(v, Node):
+                if isType(v, list):
+                    try:
+                        from Ganga.GPI import GangaList
+                        new_v = GangaList()
+                    except ImportError:
+                        new_v = []
+                    for elem in v:
+                        new_v.append(elem)
+                    v = new_v
             if not isType(v, Node):
                 raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
+
+            bare_v = stripProxy(v)
             from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
             if isType(v, GangaList):
                 categories = v.getCategory()
                 len_cat = len(categories)
-                if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])):
+                if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])) and item['category'] != 'internal':
                     # we pass on empty lists, as the catagory is yet to be defined
                     raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (getName(self), v, item['category']))
             else:
                 if bare_v._category != item['category'] and item['category'] != 'internal':
                     raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (getName(self), v, item['category']))
-            v = bare_v.clone()
+            if hasattr(bare_v, 'clone'):
+                v = bare_v.clone()
+            else:
+                import copy
+                v = copy.deepcopy(bare_v)
             v._setParent(obj)
             return v
 
