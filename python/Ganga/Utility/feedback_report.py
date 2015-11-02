@@ -221,7 +221,8 @@ def report(job=None):
                 finally:
                     fileToRead.close()
             # except IOError, OSError:
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
         def writeErrorLog(errorMessage):
@@ -230,9 +231,13 @@ def report(job=None):
                 try:
                     fileToWrite.write(errorMessage)
                     fileToWrite.write("\n")
+                except Exception as err:
+                    logger.debug("Err: %s" % str(err))
+                    raise
                 finally:
                     fileToWrite.close()
-            except:
+            except Exception as err2:
+                logger.debug("Err: %s" % str(err2))
                 pass
 
         def writeStringToFile(fileName, stringToWrite):
@@ -243,10 +248,14 @@ def report(job=None):
                 fileToWrite = open(fileName, 'w')
                 try:
                     fileToWrite.write(stringToWrite)
+                except Exception as err:
+                    logger.debug("Err: %s" % str(err))
+                    raise err
                 finally:
                     fileToWrite.close()
             # except IOError:
-            except:
+            except Exception as err:
+                logger.debug("Err2: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
         def renameDataFiles(directory):
@@ -290,7 +299,8 @@ def report(job=None):
 
             os.mkdir(fullLogDirName)
         # except OSError:
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import os.environ in a file
@@ -306,7 +316,8 @@ def report(job=None):
             finally:
                 inputFile.close()
         # except IOError
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import user config in a file
@@ -333,7 +344,8 @@ def report(job=None):
             finally:
                 inputFile.close()
         # except IOError does not catch the exception ???
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # write gangarc - default configuration
@@ -349,7 +361,8 @@ def report(job=None):
                 outputFile.close()
 
         # except IOError does not catch the exception ???
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import ipython history in a file
@@ -365,7 +378,8 @@ def report(job=None):
             finally:
                 ipythonFile.close()
         # except IOError does not catch the exception ???
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import gangalog in a file
@@ -380,7 +394,8 @@ def report(job=None):
             finally:
                 gangaLogFile.close()
         # except IOError:
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import the result of jobs command in the report
@@ -397,7 +412,8 @@ def report(job=None):
                 outputFile.close()
 
         # except IOError does not catch the exception ???
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # import the result of tasks command in the report
@@ -414,7 +430,8 @@ def report(job=None):
                 outputFile.close()
 
         # except IOError does not catch the exception ???
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             writeErrorLog(str(sys.exc_info()[1]))
 
         # save it here because we will change fullLogDirName, but we want this
@@ -451,7 +468,8 @@ def report(job=None):
                 finally:
                     inputFile.close()
             # except IOError, OSError:
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
             # extract file objects
@@ -460,7 +478,8 @@ def report(job=None):
                 os.mkdir(fileObjectsPath)
                 extractFileObjects(fullJobSummaryFileName, fileObjectsPath)
             # except OSError:
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
             # copy dir of the job ->input/output and subjobs
@@ -469,7 +488,8 @@ def report(job=None):
                 workspaceDir = os.path.join(fullLogDirName, 'workspace')
                 shutil.copytree(parentDir, workspaceDir)
             # except IOError, OSError
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
             # copy shared area of the job
@@ -490,7 +510,8 @@ def report(job=None):
                                 fullLogDirName, 'sharedarea')
                             shutil.copytree(shareddir, sharedAreaDir)
             # except IOError, OSError
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
             # copy repository job file
@@ -540,7 +561,8 @@ def report(job=None):
                     shutil.copyfile(indexFileSourcePath, indexFileTargetPath)
 
             # except OSError, IOError:
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
         # import task relevant info
@@ -565,10 +587,14 @@ def report(job=None):
                 inputFile = open(fullTaskPrintFileName, 'w')
                 try:
                     full_print(task, inputFile)
+                except Exception as err:
+                    logger.debug("Err: %s" % str(err))
+                    raise err
                 finally:
                     inputFile.close()
             # except IOError, OSError:
-            except:
+            except Exception as err:
+                logger.debug("Err2: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
             # copy shared area of the task
@@ -589,7 +615,8 @@ def report(job=None):
                                     fullLogDirName, 'sharedarea')
                                 shutil.copytree(shareddir, sharedAreaDir)
             # except IOError, OSError
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
             # copy repository task file
@@ -624,7 +651,8 @@ def report(job=None):
                 shutil.copyfile(indexFileSourcePath, indexFileTargetPath)
 
             # except OSError, IOError:
-            except:
+            except Exception as err:
+                logger.debug("Err %s" % str(err))
                 writeErrorLog(str(sys.exc_info()[1]))
 
         resultArchive = '%s.tar.gz' % folderToArchive
@@ -638,10 +666,13 @@ def report(job=None):
                 if(os.path.exists(errorLogPath)):
                     resultFile.add(
                         errorLogPath, arcname=os.path.basename(errorLogPath))
-
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
+                raise
             finally:
                 resultFile.close()
-        except:
+        except Exception as err:
+            logger.debug("Err2: %s" % str(err))
             raise  # pass
 
         # remove temp dir
@@ -703,7 +734,8 @@ def report(job=None):
         else:
             run_upload(server=uploadFileServer, path=resultArchive)
 
-    except:
+    except Exception as err:
+        logger.debug("Err: %s" % str(err))
         removeTempFiles(tempDir)
         raise  # pass
         # raise

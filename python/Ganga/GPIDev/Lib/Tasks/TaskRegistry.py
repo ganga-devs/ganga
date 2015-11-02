@@ -4,6 +4,8 @@ from .common import overview_colours, status_colours, config, logger, markup, fg
 import time
 import traceback
 import sys
+import Ganga.GPIDev.Lib.Registry.RegistrySlice
+from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
 
 str_done = markup("done", overview_colours["completed"])
 str_run = markup("run", overview_colours["running"])
@@ -12,7 +14,6 @@ str_hold = markup("hold", overview_colours["hold"])
 str_bad = markup("bad", overview_colours["bad"])
 
 # display default values for task list
-import Ganga.GPIDev.Lib.Registry.RegistrySlice
 Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns',
                                                          ("id", "Type", "Name", "State",
                                                           "Comment", "Jobs", str_done),
@@ -41,31 +42,35 @@ Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption('tasks_columns_show_emp
 Ganga.GPIDev.Lib.Registry.RegistrySlice.config.addOption(
     'tasks_show_help', True, 'change this to False if you do not want to see the help screen if you first type "tasks" in a session')
 
-from Ganga.Core.GangaRepository.Registry import Registry, RegistryError, RegistryKeyError, RegistryAccessError
-
 # add monitoring loop option
-config.addOption(
-    'TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
-config.addOption('ForceTaskMonitoring', False,
-                 "Monitor tasks even if the monitoring loop isn't enabled")
+config.addOption('TaskLoopFrequency', 60., "Frequency of Task Monitoring loop in seconds")
+config.addOption('ForceTaskMonitoring', False, "Monitor tasks even if the monitoring loop isn't enabled")
 
 
 class TaskRegistry(Registry):
 
+    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30):
+
+        super(TaskRegistry, self).__init__( name, doc, dirty_flush_counter=10, update_index_time=30 )
+
+        self._main_thread = None
+
     def getProxy(self):
-        slice = TaskRegistrySlice(self.name)
-        slice.objects = self
-        return TaskRegistrySliceProxy(slice)
+        this_slice = TaskRegistrySlice(self.name)
+        this_slice.objects = self
+        return TaskRegistrySliceProxy(this_slice)
 
     def getIndexCache(self, obj):
+        if obj._data is None:
+            raise Exception("Currently don't support Index Caching")
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
             if cv in obj._data:
                 c[cv] = obj._data[cv]
-        slice = TaskRegistrySlice("tmp")
-        for dpv in slice._display_columns:
-            c["display:" + dpv] = slice._get_display_value(obj, dpv)
+        this_slice = TaskRegistrySlice("tmp")
+        for dpv in this_slice._display_columns:
+            c["display:" + dpv] = this_slice._get_display_value(obj, dpv)
         return c
 
     def _thread_main(self):
@@ -82,7 +87,7 @@ class TaskRegistry(Registry):
         from Ganga.Core.GangaRepository import getRegistry
         while not getRegistry("jobs")._started:
             time.sleep(0.1)
-            if self._main_thread.should_stop():
+            if self._main_thread is None or self._main_thread.should_stop():
                 return
 
         while True:
@@ -90,7 +95,7 @@ class TaskRegistry(Registry):
             if (not monitoring_component is None and monitoring_component.enabled) or config['ForceTaskMonitoring']:
                 break
             time.sleep(0.1)
-            if self._main_thread.should_stop():
+            if self._main_thread is None or self._main_thread.should_stop():
                 return
 
         # setup the tasks - THIS IS INCOMPATIBLE WITH CONCURRENCY
@@ -109,7 +114,7 @@ class TaskRegistry(Registry):
         logger.debug("Entering main loop")
 
         # Main loop
-        while not self._main_thread.should_stop():
+        while self._main_thread is not None and not self._main_thread.should_stop():
 
             # For each task try to run it
             if config['ForceTaskMonitoring'] or monitoring_component.enabled:
@@ -192,11 +197,10 @@ class TaskRegistry(Registry):
     def shutdown(self):
 
         super(TaskRegistry, self).shutdown()
-        #self._main_thread.stop()
 
     def stop(self):
-
-        self._main_thread.stop()
+        if self._main_thread is not None:
+            self._main_thread.stop()
 
 from Ganga.GPIDev.Lib.Registry.RegistrySlice import RegistrySlice
 

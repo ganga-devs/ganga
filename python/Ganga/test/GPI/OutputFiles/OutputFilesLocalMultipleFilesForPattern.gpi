@@ -12,7 +12,8 @@ j.application.script = File('fillrandom2.py')
 
 j.outputfiles = ['*.root']
 
-assert(j.outputfiles[0].__class__.__name__ == 'LCGSEFile')
+from Ganga.GPIDev.Base.Proxy import getName
+assert(getName(j.outputfiles[0]) == 'LCGSEFile')
 
 j.submit()
 

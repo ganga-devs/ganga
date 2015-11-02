@@ -279,6 +279,7 @@ class Localhost(IBackend):
                 logger.warning(
                     'problem removing the workdir %s: %s', str(self.id), str(x))
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
 
         def get_exit_code(f):
@@ -368,6 +369,4 @@ class Localhost(IBackend):
                 # j.outputdata.fill()
 
                 j.backend.remove_workdir()
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 

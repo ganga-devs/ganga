@@ -1186,7 +1186,7 @@ class Panda(IBackend):
         logger.info('Resubmission successful')
         return True
 
-
+    @staticmethod
     def master_updateMonitoringInformation(jobs):
         '''Monitor jobs'''       
         #from pandatools import Client
@@ -1590,8 +1590,6 @@ class Panda(IBackend):
 #                    job.updateStatus('running')
 #                except JobStatusError:
 #                    pass
-
-    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
 
     def list_sites(self):
         #from pandatools import Client

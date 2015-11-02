@@ -29,6 +29,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 from Ganga.Utility.logic import implies
+from Ganga.GPIDev.Base.Proxy import isType
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -181,7 +182,13 @@ class LCG(IBackend):
         self.sandboxcache.middleware = self.middleware.upper()
         self.sandboxcache.timeout = config['SandboxTransferTimeout']
 
-        if self.sandboxcache._name == 'LCGSandboxCache':
+        try:
+            from Ganga.GPI import DQ2SandboxCache
+        except ImportError:
+            DQ2SandboxCache = None
+
+        from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
+        if isType(self.sandboxcache, LCGSandboxCache):
             if not self.sandboxcache.lfc_host:
                 self.sandboxcache.lfc_host = grids[
                     self.middleware.upper()].__get_lfc_host__()
@@ -203,13 +210,12 @@ class LCG(IBackend):
             if (self.sandboxcache.se_type in ['srmv2']) and (not self.sandboxcache.srm_token):
                 self.sandboxcache.srm_token = config['DefaultSRMToken']
 
-        elif self.sandboxcache._name == 'DQ2SandboxCache':
+        elif DQ2SandboxCache is not None and isType(self.sandboxcache, DQ2SandboxCache):
 
             # generate a new dataset name if not given
             if not self.sandboxcache.dataset_name:
                 from GangaAtlas.Lib.ATLASDataset.DQ2Dataset import dq2outputdatasetname
-                self.sandboxcache.dataset_name, unused = dq2outputdatasetname(
-                    "%s.input" % get_uuid(), 0, False, '')
+                self.sandboxcache.dataset_name, unused = dq2outputdatasetname("%s.input" % get_uuid(), 0, False, '')
 
             # subjobs inherits the dataset name from the master job
             for sj in job.subjobs:
@@ -258,7 +264,8 @@ class LCG(IBackend):
         # for LCGSandboxCache, take the one specified in the sansboxcache object.
         # the value is exactly the same as the one from the local grid shell env. if
         # it is not specified exclusively.
-        if self.sandboxcache._name == 'LCGSandboxCache':
+        from Ganga.Lib.LCG.LCGSandboxCache import LCGSandboxCache
+        if isType(self.sandboxcache, LCGSandboxCache):
             lfc_host = self.sandboxcache.lfc_host
 
         # or in general, query it from the Grid object
@@ -1637,6 +1644,7 @@ sys.exit(0)
         logger.debug('subjob JDL: %s' % jdlText)
         return inpw.writefile(FileBuffer('__jdlfile__', jdlText))
 
+    @staticmethod
     def updateGangaJobStatus(job, status):
         '''map backend job status to Ganga job status'''
 
@@ -1664,8 +1672,7 @@ sys.exit(0)
         else:
             logger.warning('Unexpected job status "%s"', status)
 
-    updateGangaJobStatus = staticmethod(updateGangaJobStatus)
-
+    @staticmethod
     def master_updateMonitoringInformation(jobs):
         '''Main Monitoring loop'''
 
@@ -1712,9 +1719,7 @@ sys.exit(0)
 
         profiler.check('==> master_updateMonitoringInformation() elapsed time')
 
-    master_updateMonitoringInformation = staticmethod(
-        master_updateMonitoringInformation)
-
+    @staticmethod
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
 
@@ -1781,9 +1786,8 @@ sys.exit(0)
             logger.debug('%d new downloading tasks; %d alive downloading agents' % (
                 cnt_new_download_task, downloader.countAliveAgent()))
 
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
-
 #    def master_bulk_updateMonitoringInformation(jobs,updateMasterStatus=True):
+    @staticmethod
     def master_bulk_updateMonitoringInformation(jobs):
         '''Monitoring loop for glite bulk jobs'''
 
@@ -1946,9 +1950,6 @@ sys.exit(0)
         #    for mj in mjob_status_updatelist:
         #        logger.debug('updating overall master job status: %s' % mj.getFQID('.'))
         #        mj.updateMasterJobStatus()
-
-    master_bulk_updateMonitoringInformation = staticmethod(
-        master_bulk_updateMonitoringInformation)
 
     def check_proxy(self):
         '''Update the proxy'''

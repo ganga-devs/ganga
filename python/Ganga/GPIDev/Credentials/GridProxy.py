@@ -96,6 +96,7 @@ import os
 import re
 import time
 
+from Ganga.GPIDev.Base.Proxy import isType
 from Ganga.GPIDev.Credentials.ICredential import ICommandSet, ICredential, registerCommandSet
 from Ganga.GPIDev.Schema import SimpleItem
 from Ganga.Utility.logging import getLogger
@@ -210,7 +211,7 @@ class GridProxy (ICredential):
 
         Return value: None
         """
-        if ("ICommandSet" == self.command._name):
+        if isType(self.command, ICommandSet):
             if self.voms:
                 self.command = self.vomsCommand
             else:
@@ -340,7 +341,8 @@ class GridProxy (ICredential):
                         break
                 except IndexError:
                     pass
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             pass
 
         id = "".join(cn.split())

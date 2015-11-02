@@ -118,7 +118,7 @@ import Ganga.Utility.logging
 
 def getLogger():
     global logger
-    if not logger is None:
+    if logger is not None:
         return logger
 
     # for the configuration of the logging package itself (in the initial
@@ -126,7 +126,8 @@ def getLogger():
     try:
         logger = Ganga.Utility.logging.getLogger()
         return logger
-    except AttributeError:
+    except AttributeError as err:
+        print("AttributeError: %s" % str(err))
         # in such a case we return a mock proxy object which ignore all calls
         # such as logger.info()...
         class X(object):
@@ -164,10 +165,8 @@ def _migrate_name(name):
                 'config name %s is not a valid python identifier' % name)
         else:
             logger = getLogger()
-            logger.warning(
-                'obsolete config name found: replaced "%s" -> "%s"' % (name, name2))
-            logger.warning(
-                'config names must be python identifiers, please correct your usage in the future ')
+            logger.warning('obsolete config name found: replaced "%s" -> "%s"' % (name, name2))
+            logger.warning('config names must be python identifiers, please correct your usage in the future ')
             translated_names[name] = name2
     else:
         translated_names[name] = name
@@ -406,8 +405,7 @@ class ConfigOption(object):
         # objects
         try:
             import Ganga.GPIDev.TypeCheck
-            type_matched = Ganga.GPIDev.TypeCheck._valueTypeAllowed(
-                new_value, cast_type, logger)
+            type_matched = Ganga.GPIDev.TypeCheck._valueTypeAllowed(new_value, cast_type, logger)
         except TypeError:  # cast_type is not a list
             type_matched = check_type(new_value, cast_type)
 
@@ -515,7 +513,7 @@ class PackageConfig(object):
         else:
             msg = "Error getting ConfigFileValue Option: %s" % str(self.name)
             if 'logger' in locals().keys() and logger is not None:
-                logger.debug("%s"%msg)
+                logger.debug("dbg: %s"%msg)
             else:
                 ##uncomment for debugging
                 ##print("%s" % msg)
@@ -530,7 +528,7 @@ class PackageConfig(object):
             except Exception, err:
                 msg = "Error Setting Session Value: %s" % str(err)
                 if 'logger' in locals().keys() and logger is not None:
-                    logger.debug("%s"%msg)
+                    logger.debug("dbg: %s"%msg)
                 else:
                     ##uncomment for debugging
                     ##print("%s" % msg)
@@ -594,7 +592,7 @@ class PackageConfig(object):
     def revertToSession(self, name):
         if name in self.options:
             if hasattr(self.options[name], 'user_value'):
-                self.options[name].user_value
+                del self.options[name].user_value
             else:
                 pass
         else:
@@ -998,8 +996,7 @@ def sanityCheck():
 
         if not cfg.is_open:
             if opts:
-                logger.error(
-                    "unknown options [%s]%s", name, ','.join(opts.keys()))
+                logger.error("unknown options [%s]%s", name, ','.join(opts.keys()))
         else:
             # add all options for open sections
             for o, v in zip(opts.keys(), opts.values()):

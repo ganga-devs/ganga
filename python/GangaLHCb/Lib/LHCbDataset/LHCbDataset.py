@@ -10,7 +10,7 @@ from Ganga.Utility.Config import getConfig, ConfigError
 import Ganga.Utility.logging
 from LHCbDatasetUtils import isLFN, isPFN, isDiracFile, strToDataFile, getDataFile
 from OutputData import OutputData
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, GPIProxyObjectFactory, getName
 from Ganga.GPIDev.Lib.Job.Job import Job, JobTemplate
 from GangaDirac.Lib.Backends.DiracUtils import get_result
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -175,34 +175,37 @@ class LHCbDataset(GangaDataset):
                 return True
         return False
 
-    def replicate(self, destSE='', srcSE='', locCache=''):
+    def replicate(self, destSE=''):
         '''Replicate all LFNs to destSE.  For a list of valid SE\'s, type
         ds.replicate().'''
+
         if not destSE:
             from Ganga.GPI import DiracFile
             DiracFile().replicate('')
             return
         if not self.hasLFNs():
             raise GangaException('Cannot replicate dataset w/ no LFNs.')
+
         retry_files = []
+
         for f in self.files:
             if not isDiracFile(GPIProxyObjectFactory(f)):
                 continue
             try:
-                result = f.replicate(destSE, srcSE, locCache)
-            except:
-                msg = 'Replication error for file %s (will retry in a bit).'\
-                      % f.lfn
+                result = f.replicate( destSE=destSE )
+            except Exception as err:
+                msg = 'Replication error for file %s (will retry in a bit).' % f.lfn
                 logger.warning(msg)
+                logger.warning("Error: %s" % str(err))
                 retry_files.append(f)
+
         for f in retry_files:
             try:
-                result = f.replicate(destSE, srcSE, locCache)
-            except:
-                msg = '2nd replication attempt failed for file %s.' \
-                      ' (will not retry)' % f.lfn
+                result = f.replicate( destSE=destSE )
+            except Exception as err:
+                msg = '2nd replication attempt failed for file %s. (will not retry)' % f.lfn
                 logger.warning(msg)
-                logger.warning(str(result))
+                logger.warning(str(err))
 
     def append(self, input_file):
         self.extend([input_file])
@@ -213,7 +216,7 @@ class LHCbDataset(GangaDataset):
         from Ganga.GPIDev.Base import ReadOnlyObjectError
 
         if self._parent is not None and self._parent._readonly():
-            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, self._name))
+            raise ReadOnlyObjectError('object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, getName(self)))
 
         _external_files = []
 

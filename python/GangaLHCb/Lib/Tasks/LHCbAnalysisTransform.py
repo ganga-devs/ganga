@@ -125,8 +125,7 @@ class LHCbAnalysisTransform(Transform):
     #/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\
     def overview(self):
         """ Get an ascii art overview over task status. Can be overridden """
-        o = markup("Transform %s: %s '%s'\n" % (
-            self.transform_id, self.__class__.__name__, self.name), status_colours[self.status])
+        o = markup("Transform %s: %s '%s'\n" % (self.transform_id, self.__class__.__name__, self.name), status_colours[self.status])
         o += "------------------------------------------------------------\n"
         partitions = self._partition_status.keys()
         partitions.sort()

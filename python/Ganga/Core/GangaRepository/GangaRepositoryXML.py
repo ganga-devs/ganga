@@ -24,7 +24,7 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 from Ganga.GPIDev.Base.Objects import Node
 from Ganga.Core.GangaRepository import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import isType, stripProxy
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -38,9 +38,9 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         if not obj.application.calc_hash(verify=True):
             try:
                 logger.warning("%s" % str(obj.application))
-                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (obj.application._name, obj._name, obj._registry_id))
+                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (getName(obj.application), getName(obj), obj._registry_id))
             except AttributeError, err:
-                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (obj.application._name, obj._name))
+                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (getName(obj.application), getName(obj)))
                 logger.warning("%s" % str(err))
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
@@ -50,9 +50,9 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         if not obj.analysis.application.calc_hash(verify=True):
             try:
                 logger.warning("%s" % str(obj.analysis))
-                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (obj.analysis.application._name, obj._name, obj._registry_id))
+                logger.warning('Protected attribute(s) of %s application (associated with %s #%s) changed!' % (getName(obj.analysis.application), getName(obj), obj._registry_id))
             except AttributeError, err:
-                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (obj.analysis.application._name, obj._name))
+                logger.warning('Protected attribute(s) of %s application (associated with %s) changed!!!!' % (getName(obj.analysis.application), getName(obj)))
                 logger.warning("%s" % str(err))
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
@@ -76,9 +76,9 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         raise IOError("Could not write file %s.new (%s)" % (fn, e))
     # Try to make backup copy...
     try:
-        os.unlink(fn + "~")
+        rmrf(fn + "~")
     except OSError as e:
-        logger.debug("Error on removing file %s~ (%s) " % (fn, e))
+        logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
     try:
         os.rename(fn, fn + "~")
     except OSError as e:
@@ -91,19 +91,45 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
 def rmrf(name):
     if os.path.isdir(name):
-        for sfn in os.listdir(name):
-            rmrf(os.path.join(name, sfn))
+
         try:
-            os.removedirs(name)
-        except OSError, err:
-            logger.debug("%s" % str(err))
-            pass
+            remove_name = os.path.dirname(name) + '__to_be_deleted_' + str(time.time())
+            os.rename(name, remove_name)
+            logger.debug("Move completed")
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("rmrf Err: %s" % str(err))
+                remove_name = name
+                raise err
+            return
+
+        for sfn in os.listdir(remove_name):
+            rmrf(os.path.join(remove_name, sfn))
+        try:
+            os.removedirs(remove_name)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("%s" % str(err))
+                raise err
+            return
     else:
         try:
-            os.unlink(name)
-        except OSError, err:
-            logger.debug("%s" % str(err))
-            pass
+            remove_name = name + '__to_be_deleted_' + str(time.time())
+            os.rename(name, remove_name)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("rmrf Move err: %s" % str(err))
+                remove_name = name
+                raise err
+            return
+
+        try:
+            os.remove(remove_name)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("%s" % str(err))
+                raise err
+            return
 
 
 class GangaRepositoryLocal(GangaRepository):
@@ -150,7 +176,9 @@ class GangaRepositoryLocal(GangaRepository):
     def shutdown(self):
         """Shutdown the repository. Flushing is done by the Registry
         Raise RepositoryError"""
-        logger.debug("Shutting Down GangaRepositoryLocal")
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger()
+        logger.debug("Shutting Down GangaRepositoryLocal: %s" % self.registry.name)
         self._write_master_cache()
         self.sessionlock.shutdown()
 
@@ -182,7 +210,7 @@ class GangaRepositoryLocal(GangaRepository):
                     cat, cls, cache = pickle_from_file(fobj)[0]
             except Exception as x:
                 logger.debug("index_load Exception: %s" % str(x))
-                raise IOError("Error on unpickling: %s %s" %(x.__class__.__name__, x))
+                raise IOError("Error on unpickling: %s %s" %(getName(x), x))
             if id in self.objects:
                 obj = self.objects[id]
                 if obj._data:
@@ -212,18 +240,16 @@ class GangaRepositoryLocal(GangaRepository):
             if new_idx_cache != obj._index_cache or not os.path.exists(ifn):
                 obj._index_cache = new_idx_cache
                 with open(ifn, "w") as this_file:
-                    pickle_to_file(
-                        (obj._category, obj._name, obj._index_cache), this_file)
+                    pickle_to_file((obj._category, getName(obj), obj._index_cache), this_file)
         except IOError as err:
-            logger.error("Index saving to '%s' failed: %s %s" % (ifn, err.__class__.__name__, str(err)))
+            logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
 
     def get_index_listing(self):
         """Get dictionary of possible objects in the Repository: True means index is present,
             False if not present
         Raise RepositoryError"""
         try:
-            obj_chunks = [
-                d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
+            obj_chunks = [d for d in os.listdir(self.root) if d.endswith("xxx") and d[:-3].isdigit()]
         except OSError, err:
             logger.debug("get_index_listing Exception: %s" % str(err))
             raise RepositoryError(self, "Could not list repository '%s'!" % (self.root))
@@ -243,9 +269,8 @@ class GangaRepositoryLocal(GangaRepository):
                         objs[id] = True
                     else:
                         try:
-                            os.unlink(self.get_idxfn(id))
-                            logger.warning(
-                                "Deleted index file without data file: %s" % self.get_idxfn(id))
+                            rmrf(self.get_idxfn(id))
+                            logger.warning("Deleted index file without data file: %s" % self.get_idxfn(id))
                         except OSError, err:
                             logger.debug("get_index_listing delete Exception: %s" % str(err))
                             pass
@@ -295,15 +320,16 @@ class GangaRepositoryLocal(GangaRepository):
                     # Check and write index first
                     obj = self.objects[k]
                     new_index = None
-                    if obj:
+                    if obj is not None:
                         new_index = self.registry.getIndexCache(obj)
-                    if new_index and new_index != obj._index_cache:
-                        if len(self.lock([k])) != 0:
-                            self.index_write(k)
-                            self.unlock([k])
+                    if new_index is not None and new_index != obj._index_cache:
+                        arr_k = [k]
+                        if len(self.lock(arr_k)) != 0:
+                            self.index_write(arr_k)
+                            self.unlock(arr_k)
                 except Exception as err:
-                    logger.debug("Failed to update index: %s on shutdown" % str(k))
-                    logger.debug("%s" % str(err))
+                    logger.debug("Failed to update index: %s on startup/shutdown" % str(k))
+                    logger.debug("Reason: %s" % str(err))
                     pass
             cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
@@ -396,18 +422,18 @@ class GangaRepositoryLocal(GangaRepository):
                     if len(self.lock([id])) != 0:
                         self.index_write(id)
                         self.unlock([id])
-                except Exception, err:
-                    logger.debug("update Error: %s" % str(err))
-                    # deleted job
-                    if id in self.objects:
-                        self._internal_del__(id)
-                        changed_ids.append(id)
+                #except KeyError as err:
+                #    logger.debug("update Error: %s" % str(err))
+                #    # deleted job
+                #    if id in self.objects:
+                #        self._internal_del__(id)
+                #        changed_ids.append(id)
                 except Exception as x:
                     ## WE DO NOT CARE what type of error occured here and it can be
                     ## due to corruption so could be one of MANY exception types
                     ## If the job is not accessible this should NOT cause the loading of ganga to fail!
                     ## we can't reasonably write all possible exceptions here!
-                    logger.debug("Failed to load id %i: %s %s" % (id, x.orig.__class__.__name__, x.orig))
+                    logger.debug("Failed to load id %i: %s %s" % (id, getName(x.orig), x.orig))
                     summary.append((id, x.orig))
 
         # Check deleted files:
@@ -424,9 +450,8 @@ class GangaRepositoryLocal(GangaRepository):
             for id, x in summary:
                 if id in self.known_bad_ids:
                     continue
-                cnt[x.__class__.__name__] = cnt.get(
-                    x.__class__.__name__, []) + [str(id)]
-                examples[x.__class__.__name__] = str(x)
+                cnt[getName(x)] = cnt.get(getName(x), []) + [str(id)]
+                examples[getName(x)] = str(x)
                 self.known_bad_ids.append(id)
                 # add object to incomplete_objects
                 if not id in self.incomplete_objects:
@@ -490,7 +515,8 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 fn = self.get_fn(id)
                 obj = self.objects[id]
-                if obj._name != "EmptyGangaObject":
+                from Ganga.Core.GangaRepository.VStreamer import EmptyGangaObject
+                if not isType(obj, EmptyGangaObject):
                     split_cache = None
 
                     has_children = (not self.sub_split is None) and (
@@ -588,7 +614,7 @@ class GangaRepositoryLocal(GangaRepository):
                     try:
                         # remove internal representation
                         self._internal_del__(id)
-                        os.unlink(os.path.dirname(fn) + ".index")
+                        rmrf(os.path.dirname(fn) + ".index")
                     except OSError, err:
                         logger.debug("load unlink Error: %s" % str(err))
                         pass
@@ -679,10 +705,10 @@ class GangaRepositoryLocal(GangaRepository):
                 raise
             except Exception as err:
                 if load_backup:
-                    logger.debug("Could not load backup object #%i: %s %s", id, err.__class__.__name__, str(err))
+                    logger.debug("Could not load backup object #%i: %s %s", id, getName(err), str(err))
                     raise InaccessibleObjectError(self, id, err)
 
-                logger.debug("Could not load object #%i: %s %s", id, err.__class__.__name__, str(err))
+                logger.debug("Could not load object #%i: %s %s", id, getName(err), str(err))
                 # try loading backup
                 try:
                     self.load([id], load_backup=True)
@@ -696,10 +722,7 @@ class GangaRepositoryLocal(GangaRepository):
                     self.incomplete_objects.append(id)
                 # remove index so we do not continue working with wrong
                 # information
-                try:
-                    os.unlink(os.path.dirname(fn) + ".index")
-                except OSError:
-                    pass
+                rmrf(os.path.dirname(fn) + ".index")
                 raise InaccessibleObjectError(self, id, err)
             finally:
                 fobj.close()
@@ -710,7 +733,7 @@ class GangaRepositoryLocal(GangaRepository):
             # KeyError
             fn = self.get_fn(id)
             try:
-                os.unlink(os.path.dirname(fn) + ".index")
+                rmrf(os.path.dirname(fn) + ".index")
             except OSError, err:
                 logger.debug("Delete Error: %s" % str(err))
                 pass

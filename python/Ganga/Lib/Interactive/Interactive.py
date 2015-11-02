@@ -104,12 +104,12 @@ class Interactive(IBackend):
     def resubmit(self):
         return self._submit(self.getJobObject().getInputWorkspace().getPath("__jobscript__"))
 
-    def _submit(self, scriptpath, env):
+    def _submit(self, scriptpath, env=None):
         if env is None:
             env = expand_vars(os.environ)
         job = self.getJobObject()
         self.actualCE = util.hostname()
-        logger.info('Starting job %d', job.getFQID('.'))
+        logger.info('Starting job %s', job.getFQID('.'))
 
         try:
             job.updateStatus("submitted")
@@ -262,6 +262,7 @@ class Interactive(IBackend):
 
         return job.getInputWorkspace().writefile(FileBuffer("__jobscript__", commandString), executable=1)
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
 
         for j in jobs:
@@ -277,7 +278,8 @@ class Interactive(IBackend):
             if j.backend.id:
                 try:
                     os.kill(j.backend.id, 0)
-                except:
+                except Exception as err:
+                    logger.debug("Err: %s" % str(err))
                     j.backend.status = "completed"
 
             if j.backend.status in ["completed", "failed", "killed"]:
@@ -293,6 +295,4 @@ class Interactive(IBackend):
                     j.updateStatus(j.backend.status)
 
         return None
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 

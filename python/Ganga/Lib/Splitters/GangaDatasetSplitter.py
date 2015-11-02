@@ -21,7 +21,7 @@ class GangaDatasetSplitter(ISplitter):
     def split(self, job):
         subjobs = []
 
-        if not job.inputdata or job.inputdata._name != "GangaDataset":
+        if not job.inputdata or not isType(job.inputdata, GangaDataset):
             raise ApplicationConfigurationError(
                 None, "No GangaDataset given for GangaDatasetSplitter")
 

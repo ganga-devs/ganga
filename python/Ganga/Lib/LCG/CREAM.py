@@ -1188,6 +1188,7 @@ sys.exit(0)
 
         return ick
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
         '''Monitoring loop for normal jobs'''
 
@@ -1270,8 +1271,6 @@ sys.exit(0)
             # purging the jobs the output has been fetched locally
             if jidListForPurge:
                 grids['GLITE'].cream_purgeMultiple(jidListForPurge)
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)
 
     def updateGangaJobStatus(self):
         '''map backend job status to Ganga job status'''

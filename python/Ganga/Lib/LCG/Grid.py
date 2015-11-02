@@ -414,10 +414,6 @@ class Grid(object):
     def native_master_cancel(self, jobids):
         '''Native bulk cancellation supported by GLITE middleware.'''
 
-        idsfile = tempfile.mktemp('.jids')
-        with open(idsfile, 'w') as ids_file:
-            ids_file.write('\n'.join(jobids) + '\n')
-
         if self.middleware == 'EDG':
             logger.warning(
                 'EDG middleware doesn\'t support bulk cancellation.')
@@ -437,12 +433,20 @@ class Grid(object):
         if not self.__set_submit_option__():
             return False
 
+        idsfile = tempfile.mktemp('.jids')
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
+
         cmd = '%s --noint -i %s' % (cmd, idsfile)
 
         logger.debug('job cancel command: %s' % cmd)
 
         rc, output, m = self.shell.cmd1('%s%s' % (
             self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
 
         if rc != 0:
             logger.warning('Job cancellation failed.')
@@ -591,10 +595,6 @@ class Grid(object):
     def get_loginfo(self, jobids, directory, verbosity=1):
         '''Fetch the logging info of the given job and save the output in the job's outputdir'''
 
-        idsfile = tempfile.mktemp('.jids')
-        with open(idsfile, 'w') as ids_file:
-            ids_file.write('\n'.join(jobids) + '\n')
-
         if self.middleware == 'EDG':
             cmd = 'edg-job-get-logging-info -v %d' % verbosity
             exec_bin = False
@@ -613,6 +613,10 @@ class Grid(object):
             return False
 
         log_output = directory + '/__jobloginfo__.log'
+
+        idsfile = tempfile.mktemp('.jids')
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
 
         cmd = '%s --noint -o %s -i %s' % (cmd, log_output, idsfile)
 
@@ -701,10 +705,6 @@ class Grid(object):
         if not jobids:
             return True
 
-        idsfile = tempfile.mktemp('.jids')
-        with open(idsfile, 'w') as ids_file:
-            ids_file.write('\n'.join(jobids) + '\n')
-
         # do the cancellation using a proper LCG command
         if self.middleware == 'EDG':
             cmd = 'edg-job-cancel'
@@ -720,6 +720,10 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
+        idsfile = tempfile.mktemp('.jids')
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
+
         # compose the cancel command
         cmd = '%s --noint -i %s' % (cmd, idsfile)
 
@@ -727,6 +731,10 @@ class Grid(object):
 
         rc, output, m = self.shell.cmd1('%s%s' % (
             self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile
@@ -990,6 +998,10 @@ class Grid(object):
         if rc == 0 and output:
             jobInfoDict = self.__cream_parse_job_status__(output)
 
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
+
         return jobInfoDict
 
     def cream_purgeMultiple(self, jobids):
@@ -1013,6 +1025,10 @@ class Grid(object):
             self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
+
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
 
         if rc == 0:
             return True
@@ -1040,6 +1056,10 @@ class Grid(object):
             self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
 
         logger.debug(output)
+
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
 
         if rc == 0:
             return True
@@ -1096,6 +1116,7 @@ class Grid(object):
         else:
             return (True, 0)
 
+    @staticmethod
     def expandxrsl(items):
         '''Expand xrsl items'''
 
@@ -1133,6 +1154,7 @@ class Grid(object):
 
         return xrsl
 
+    @staticmethod
     def expandjdl(items):
         '''Expand jdl items'''
 
@@ -1219,9 +1241,6 @@ class Grid(object):
             return ""
         else:
             return output
-
-    expandjdl = staticmethod(expandjdl)
-    expandxrsl = staticmethod(expandxrsl)
 
     def __arc_get_config_file_arg__(self):
         '''Helper function to return the config file argument'''
@@ -1315,6 +1334,10 @@ class Grid(object):
 
         if rc == 0 and output:
             jobInfoDict = self.__arc_parse_job_status__(output)
+
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
 
         return jobInfoDict
 
@@ -1445,6 +1468,10 @@ class Grid(object):
 
         logger.debug(output)
 
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
+
         if rc == 0:
             return True
         else:
@@ -1488,10 +1515,6 @@ class Grid(object):
         if not jobids:
             return True
 
-        idsfile = tempfile.mktemp('.jids')
-        with open(idsfile, 'w') as ids_file:
-            ids_file.write('\n'.join(jobids) + '\n')
-
         cmd = 'arckill'
         exec_bin = True
 
@@ -1502,6 +1525,10 @@ class Grid(object):
             logger.warning('GRID proxy lifetime shorter than 1 hour')
             return False
 
+        idsfile = tempfile.mktemp('.jids')
+        with open(idsfile, 'w') as ids_file:
+            ids_file.write('\n'.join(jobids) + '\n')
+
         # compose the cancel command
         cmd = '%s %s -i %s -j %s' % (
             cmd, self.__arc_get_config_file_arg__(), idsfile, self.config["ArcJobListFile"])
@@ -1510,6 +1537,10 @@ class Grid(object):
 
         rc, output, m = self.shell.cmd1('%s%s' % (
             self.__get_cmd_prefix_hack__(binary=exec_bin), cmd), allowed_exit=[0, 255])
+
+        # clean up tempfile
+        if os.path.exists(idsfile):
+            os.remove(idsfile)
 
         if rc == 0:
             # job cancelling succeeded, try to remove the glite command logfile

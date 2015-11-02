@@ -12,6 +12,7 @@ import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
+from Ganga.GPIDev.Base.Proxy import isType
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -251,9 +252,10 @@ OutputFile objects to be copied to all jobs"),
 
             unit_status_list.append(unit.status)
 
+        from Ganga.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
         # check for any TaskChainInput completions
         for ds in self.inputdata:
-            if ds._name == "TaskChainInput" and ds.input_trf_id != -1:
+            if isType(ds, TaskChainInput) and ds.input_trf_id != -1:
                 if task.transforms[ds.input_trf_id].status != "completed":
                     return 0
 
@@ -270,9 +272,10 @@ OutputFile objects to be copied to all jobs"),
     def createUnits(self):
         """Create new units if required given the inputdata"""
 
+        from Ganga.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
         # check for chaining
         for ds in self.inputdata:
-            if ds._name == "TaskChainInput" and ds.input_trf_id != -1:
+            if isType(ds, TaskChainInput) and ds.input_trf_id != -1:
 
                 # check for single unit
                 if ds.single_unit:
@@ -359,13 +362,14 @@ OutputFile objects to be copied to all jobs"),
     def validate(self):
         """Override this to validate that the transform is OK"""
 
+        from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
         # make sure a path has been selected for any local downloads
-        if self.unit_copy_output != None and self.unit_copy_output._name == "TaskLocalCopy":
+        if self.unit_copy_output != None and isType(self.unit_copy_output, TaskLocalCopy):
             if self.unit_copy_output.local_location == '':
                 logger.error("No path selected for Local Output Copy")
                 return False
 
-        if self.copy_output != None and self.copy_output._name == "TaskLocalCopy":
+        if self.copy_output != None and isType(self.copy_output, TaskLocalCopy):
             if self.copy_output.local_location == '':
                 logger.error("No path selected for Local Output Copy")
                 return False
@@ -377,8 +381,7 @@ OutputFile objects to be copied to all jobs"),
     def addUnitToTRF(self, unit, prev_unit=None):
         """Add a unit to this Transform given the input and output data"""
         if not unit:
-            raise ApplicationConfigurationError(None, "addUnitTOTRF failed for Transform %d (%s): No unit specified" %
-                                                (self.getID(), self.name))
+            raise ApplicationConfigurationError(None, "addUnitTOTRF failed for Transform %d (%s): No unit specified" % (self.getID(), self.name))
 
         addInfoString( self, "Adding Unit to TRF...")
         unit.updateStatus("hold")
@@ -407,8 +410,7 @@ OutputFile objects to be copied to all jobs"),
         return sum([u.n_status(status) for u in self.units])
 
     def info(self):
-        logger.info(markup(
-            "%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
+        logger.info(markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
         logger.info("* backend: %s" % self.backend.__class__.__name__)
         logger.info("Application:")
         self.application.printTree()
@@ -420,9 +422,9 @@ OutputFile objects to be copied to all jobs"),
     def createUnitCopyOutputDS(self, unit_id):
         """Create a the Copy Output dataset to use with this unit. Overload to handle more than the basics"""
 
-        if self.unit_copy_output._name != "TaskLocalCopy":
-            logger.warning(
-                "Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % self.unit_copy_output._name)
+        from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
+        if isType(self.unit_copy_output, TaskLocalCopy):
+            logger.warning("Default implementation of createUnitCopyOutputDS can't handle datasets of type '%s'" % self.unit_copy_output._name)
             return
 
         # create copies of the Copy Output DS and add Unit name to path
@@ -539,9 +541,10 @@ OutputFile objects to be copied to all jobs"),
         """return the include/exclude masks from the TaskChainInput"""
         incl_pat_list = []
         excl_pat_list = []
+        from Ganga.GPIDev.Lib.Tasks.TaskChainInput import TaskChainInput
         for parent in parent_units:
             for inds in self.inputdata:
-                if inds._name == "TaskChainInput" and inds.input_trf_id == parent._getParent().getID():
+                if isType(inds, TaskChainInput) and inds.input_trf_id == parent._getParent().getID():
                     incl_pat_list += inds.include_file_mask
                     excl_pat_list += inds.exclude_file_mask
 
@@ -567,5 +570,6 @@ OutputFile objects to be copied to all jobs"),
                     logger.warning("Removing job '%d'..." % jid)
                     job = GPI.jobs(jid)
                     job.remove()
-                except:
+                except Exception as err:
+                    logger.debug("removeUnused: %s" % str(err))
                     logger.error("Problem removing job '%d'" % jid)

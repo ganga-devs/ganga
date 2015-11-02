@@ -59,7 +59,7 @@ from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
 # config_scope is namespace used for evaluating simple objects (e.g. File)
 from Ganga.Utility.Config import config_scope
 
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 
 # An experimental, fast way to print a tree of Ganga Objects to file
 # Unused at the moment
@@ -76,8 +76,7 @@ def fastXML(obj, indent='', ignore_subs=''):
         return sl
     elif hasattr(obj, '_data'):
         v = obj._schema.version
-        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (
-            obj._name, v.major, v.minor, obj._category)]
+        sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
         for k, o in obj._data.iteritems():
             if k != ignore_subs:
                 try:

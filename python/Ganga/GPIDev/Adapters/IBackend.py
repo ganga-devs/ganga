@@ -68,12 +68,12 @@ class IBackend(GangaObject):
             #from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('failed')
 
-            from Ganga.Core.exceptions import GangaException
-            if isinstance(err, GangaException):
-                logger.error(str(err))
-                log_user_exception(logger, debug=True)
-            else:
-                log_user_exception(logger, debug=False)
+            #from Ganga.Core.exceptions import GangaException
+            #if isinstance(err, GangaException):
+            #    logger.error(str(err))
+            #    #log_user_exception(logger, debug=True)
+            #else:
+            #    #log_user_exception(logger, debug=False)
         finally:
             pass
 
@@ -254,7 +254,8 @@ class IBackend(GangaObject):
 
         tmpDir = None
         files = []
-        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and job.inputdata._name == "GangaDataset" and job.inputdata.treat_as_inputfiles):
+        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
+                isType(job.inputdata, GangaDataset) and hasattr(job.inptdata, 'treat_as_inputfiles') and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
@@ -302,8 +303,7 @@ class IBackend(GangaObject):
         try:
             for sj in rjobs:
                 fqid = sj.getFQID('.')
-                logger.info(
-                    "resubmitting job %s to %s backend", fqid, sj.backend._name)
+                logger.info("resubmitting job %s to %s backend", fqid, sj.backend._name)
                 try:
                     b = sj.backend
                     sj.updateStatus('submitting')
@@ -400,6 +400,7 @@ class IBackend(GangaObject):
         """
         pass
 
+    @staticmethod
     def master_updateMonitoringInformation(jobs):
         """ Update monitoring information for  jobs: jobs is a list of
         jobs  in   this  backend  which   require  monitoring  (either
@@ -412,6 +413,8 @@ class IBackend(GangaObject):
 
         ## Have to import here so it's actually defined
         from Ganga.Core import monitoring_component
+
+        logger.debug("Running Monitoring for Jobs: %s" % str([j.getFQID('.') for j in jobs]))
 
         ## Only process 10 files from the backend at once
         blocks_of_size = 10
@@ -448,13 +451,13 @@ class IBackend(GangaObject):
 
                 for this_block in monitorable_blocks:
 
-                    if monitoring_component and not monitoring_component.isEnabled(False):
+                    if monitoring_component and not monitoring_component.isEnabled(False) or not monitoring_component:
                         break
 
                     try:
                         j.backend.updateMonitoringInformation(this_block)
                     except Exception as err:
-                        logger.debug("Monitoring Error: %s" % str(err))
+                        logger.error("Monitoring Error: %s" % str(err))
                     j.updateMasterJobStatus()
 
                 stripProxy(j)._setDirty()
@@ -475,8 +478,9 @@ class IBackend(GangaObject):
                 for this_job in simple_jobs[this_backend]:
                     stripProxy(this_job)._setDirty()
 
-    master_updateMonitoringInformation = staticmethod(master_updateMonitoringInformation)
+        logger.debug("Finished Monitoring request")
 
+    @staticmethod
     def updateMonitoringInformation(jobs):
         """ Update monitoring information for individual jobs: jobs is
         a  list which  may contain  subjobs as  well as  the non-split
@@ -486,5 +490,3 @@ class IBackend(GangaObject):
         """
 
         raise NotImplementedError
-
-    updateMonitoringInformation = staticmethod(updateMonitoringInformation)

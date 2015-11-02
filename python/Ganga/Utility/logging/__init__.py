@@ -97,7 +97,7 @@ config.addOption('_interactive_cache', True,
 config.addOption('_customFormat', "", "custom formatting string for Ganga logging\n e.g. '%(name)-35s: %(levelname)-8s %(message)s'")
 
 
-class ColourFormatter(logging.Formatter):
+class ColourFormatter(logging.Formatter, object):
 
     def __init__(self, *args, **kwds):
         logging.Formatter.__init__(self, *args, **kwds)
@@ -111,11 +111,15 @@ class ColourFormatter(logging.Formatter):
         self.markup = ColourText.ANSIMarkup()
 
     def format(self, record):
-        s = logging.Formatter.format(self, record)
         try:
+            s = super(ColourFormatter, self).format(record)
+        except TypeError:
+            print("%s" % str(record))
+            return None
+        if record.levelno in self.colours.keys():
             code = self.colours[record.levelno]
             return self.markup(s, code)
-        except KeyError:
+        else:
             return s
 
     def setColour(self, yes):
@@ -124,12 +128,12 @@ class ColourFormatter(logging.Formatter):
         else:
             self.markup = ColourText.NoMarkup()
 
-
 def _set_formatter(handler):
     if config['_customFormat'] != "":
-        formatter = ColourFormatter(config['_customFormat'])
-    else:
-        formatter = ColourFormatter(_formats[config['_format']])
+        for k in _formats.keys():
+            _formats[k] = config['_customFormat']
+
+    formatter = ColourFormatter(_formats[config['_format']])
     formatter.setColour(config['_colour'])
     handler.setFormatter(formatter)
 
@@ -170,15 +174,18 @@ def _make_file_handler(logfile, logfile_size):
 
 # reflect all user changes immediately
 def post_config_handler(opt, value):
-    format, colour = config['_format'], config['_colour']
+
+    if '_customFormat' in config:
+        for k in _formats.keys():
+            _formats[k] = config['_customFormat']
+
+    _format, colour = config['_format'], config['_colour']
 
     if opt == '_format':
-        try:
-            if config['_customFormat'] != "":
-                format = config['_customFormat']
-            else:
-                format = _formats[value]
-        except KeyError:
+        badConfig = False
+        if value in _formats:
+            _format = _formats[value]
+        else:
             private_logger.error('illegal name of format string (%s), possible values: %s' % (str(value), _formats.keys()))
             return
 
@@ -186,7 +193,7 @@ def post_config_handler(opt, value):
         colour = value
 
     if opt in ['_format', '_colour', '_customFormat']:
-        fmt = ColourFormatter(format)
+        fmt = ColourFormatter(_format)
         fmt.setColour(colour)
         direct_screen_handler.setFormatter(fmt)
         return
@@ -203,7 +210,7 @@ def post_config_handler(opt, value):
         return
 
     # set the logger level
-    private_logger.debug('setting loglevel: %s %s', opt, value)
+    private_logger.info('setting loglevel: %s %s', opt, value)
     _set_log_level(getLogger(opt), value)
 
 config.attachUserHandler(None, post_config_handler)
@@ -218,7 +225,8 @@ def _set_log_level(logger, value):
 
     # convert a string "DEBUG" into enum object logging.DEBUG
     def _string2level(name):
-        return getattr(logging, name)
+        if hasattr(logging, name):
+            return getattr(logging, name)
 
     try:
         logger.setLevel(_string2level(value))
@@ -228,8 +236,8 @@ def _set_log_level(logger, value):
         #    #logging.logThreads = 0
         #    #logging.logThreads = 0
         return value
-    except AttributeError as x:
-        logger.error('%s', str(x))
+    except AttributeError as err:
+        logger.error('Attribute Error: %s', str(err))
         logger.warning('possible configuration error: invalid level value (%s), using default level', value)
         return None
 
@@ -247,9 +255,9 @@ def _guess_module_logger_name(modulename, frame=None):
 
     # accessing __file__ from globals() is much more reliable than
     # f_code.co_filename (name = os.path.normcase(frame.f_code.co_filename))
-    try:
+    if '__file__' in frame.f_globals.keys():
         name = os.path.realpath(os.path.abspath(frame.f_globals['__file__']))
-    except KeyError:
+    else:
         # no file associated with the frame (e.g. interactive prompt, exec
         # statement)
         name = '_program_'
@@ -349,8 +357,9 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
     if name.split('.')[0] != 'Ganga' and name != 'Ganga':
         name = 'Ganga.' + name
 
-    if private_logger:
-        private_logger.debug('getLogger: effective_name=%s original_name=%s', name, requested_name)
+    ## Reduce verbosity on startup
+    #if private_logger:
+    #    private_logger.debug('getLogger: effective_name=%s original_name=%s', name, requested_name)
 
     if name in _allLoggers:
         return _allLoggers[name]
@@ -365,9 +374,10 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
             thisConfig = config[name]
             _set_log_level(logger, thisConfig)
 
-        if private_logger:
-            private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()))
-            private_logger.debug('applied %s format string to %s', config['_format'], name)
+        ## Reduce verbosity on startup
+        #if private_logger:
+        #    private_logger.debug('created logger %s in %s mode', name, logging.getLevelName(logger.getEffectiveLevel()))
+        #    private_logger.debug('applied %s format string to %s', config['_format'], name)
 
         # print '------------>',logger
         #logger.critical('initialization of logger for module %s',name)
@@ -385,7 +395,12 @@ def _getLogger(name=None, modulename=None, _roothandler=0, handler=None, frame=N
 def bootstrap(internal=False, handler=None):
 
     global private_logger, main_logger
+
+    if internal == True and private_logger is not None:
+        return
+
     private_logger = getLogger('Ganga.Utility.logging')
+    _set_log_level(private_logger, 'CRITICAL')
     #main_logger = _getLogger('Ganga',_roothandler=1,handler=handler)
 
     private_logger.debug('bootstrap')
@@ -437,10 +452,6 @@ def bootstrap(internal=False, handler=None):
         error_logger.setLevel(logging.ERROR)
         _set_formatter(error_logger)
         main_logger.addHandler(error_logger)
-
-    # if internal:
-    #    import atexit
-    #    atexit.register(shutdown)
 
     global requires_shutdown
     requires_shutdown = True

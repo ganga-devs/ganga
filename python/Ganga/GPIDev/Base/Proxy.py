@@ -63,6 +63,18 @@ def isType(_obj, type_or_seq):
     else:
         return isinstance(obj, bare_type_or_seq)
 
+def getName(obj):
+    if hasattr(obj, '_name'):
+        return obj._name
+    elif hasattr(obj, '__name__'):
+        return obj.__name__
+    else:
+        s_obj = stripProxy(obj)
+        if isclass(s_obj) or hasattr(s_obj, '__class__'):
+            return s_obj.__class__.__name__
+        else:
+            return str(obj)
+
 def stripProxy(obj):
     """Removes the proxy if there is one"""
     if hasattr(obj, proxyRef):
