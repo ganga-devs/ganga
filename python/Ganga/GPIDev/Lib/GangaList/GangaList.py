@@ -192,9 +192,10 @@ class GangaList(GangaObject):
     def checkNestedLists(self, value):
         """The rule is that if there are nested lists then they 
         must not contain GangaObjects, as this corrupts the repository"""
-        if isNestedList(value) and containsGangaObjects(value):
-            raise TypeMismatchError(
-                'Assigning nested lists which contain Ganga GPI Objects is not supported.')
+        #if isNestedList(value) and containsGangaObjects(value):
+        #    raise TypeMismatchError(
+        #        'Assigning nested lists which contain Ganga GPI Objects is not supported.')
+        return
 
     # list methods
     # All list methods should be overridden in a way that makes

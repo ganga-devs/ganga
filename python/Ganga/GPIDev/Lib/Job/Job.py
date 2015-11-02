@@ -794,15 +794,13 @@ class Job(GangaObject):
                     str(self.getFQID('.')))
         try:
             self.application.postprocess()
-        except Exception, x:
-            logger.error("Job %s Application postprocess failed" %
-                         str(self.getFQID('.')))
+        except Exception as x:
+            logger.error("Job %s Application postprocess failed" % str(self.getFQID('.')))
             logger.error("\n%s" % str(x))
         try:
             self.postprocessoutput(self.outputfiles, self.outputdir)
-        except Exception, x:
-            logger.error("Job %s postprocessoutput failed" %
-                         str(self.getFQID('.')))
+        except Exception as x:
+            logger.error("Job %s postprocessoutput failed" % str(self.getFQID('.')))
             logger.error("\n%s" % str(x))
 
         logger.debug("Job %s Finished" % str(self.getFQID('.')))
@@ -898,7 +896,8 @@ class Job(GangaObject):
         for f in files:
             try:
                 logger.debug(str("\t") + str(f.name))
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 logger.debug(str("\t") + str(f))
         #logger.debug( "\n" )
 
@@ -1083,7 +1082,8 @@ class Job(GangaObject):
                     suffix = os.path.splitext(path)[1].lstrip(".")
                     try:
                         command = config[suffix]
-                    except ConfigError:
+                    except ConfigError as err:
+                        logger.debug("Config Err: %s" % str(err))
                         command = config["fallback_command"]
 
             mode = os.P_WAIT
@@ -1097,7 +1097,8 @@ class Job(GangaObject):
                 exeCommand = " ".join([tmpList[0], path])
                 argList = [termCommand, exeopt, exeCommand]
                 mode = os.P_NOWAIT
-            except IndexError:
+            except IndexError as err:
+                logger.debug("Index Err: %s" % str(err))
                 tmpList = command.split("&")
                 if (len(tmpList) > 1):
                     mode = os.P_NOWAIT
@@ -1169,7 +1170,8 @@ class Job(GangaObject):
         if self.master is None:
             try:
                 appmasterconfig = self._storedAppMasterConfig
-            except AttributeError:
+            except AttributeError as Err:
+                logger.debug("AttribErr: %s" % str(err))
                 pass
 
             if appmasterconfig is None:
@@ -1193,7 +1195,8 @@ class Job(GangaObject):
             #   I am the master Job
             try:
                 appsubconfig = self._storedAppSubConfig
-            except:
+            except Exception as err:
+                logger.debug("AppSub Err: %s" % str(err))
                 pass
 
             if appsubconfig is None or len(appsubconfig) == 0:
@@ -1207,7 +1210,8 @@ class Job(GangaObject):
             #   I am a sub-job, lets just generate our own config
             try:
                 appsubconfig = self._storedAppSubConfig
-            except AttributeError:
+            except AttributeError as err:
+                logger.debug("Attr Err: %s" % str(err))
                 pass
 
             if appsubconfig is None or len(appsubconfig) == 0:
@@ -1228,7 +1232,8 @@ class Job(GangaObject):
             #   I have saved the config previously as a transient
             try:
                 jobmasterconfig = self._storedJobMasterConfig
-            except AttributeError:
+            except AttributeError as err:
+                logger.debug("Attr Err mConf: %s" % str(err))
                 pass
 
             if jobmasterconfig is None:
@@ -1253,7 +1258,8 @@ class Job(GangaObject):
             #   I am the master Job
             try:
                 jobsubconfig = self._storedJobSubConfig
-            except AttributeError:
+            except AttributeError as err:
+                logger.debug("Attr Err sConf: %s" % str(err))
                 pass
 
             if jobsubconfig is None:
@@ -1308,7 +1314,8 @@ class Job(GangaObject):
             #   I am the master Job
             try:
                 rtHandler = self._storedRTHandler
-            except AttributeError:
+            except AttributeError as err:
+                logger.debug("AtErr RTH: %s" % str(err))
                 pass
 
             if rtHandler is None:
@@ -1317,7 +1324,7 @@ class Job(GangaObject):
                 try:
                     logger.debug("Job %s Calling allHandlers.get" % str(self.getFQID('.')))
                     rtHandler = allHandlers.get(getName(self.application), getName(self.backend))()
-                except KeyError, x:
+                except KeyError as x:
                     msg = 'runtime handler not found for application=%s and backend=%s' % (getName(self.application), getName(self.backend))
                     logger.error(msg)
                     raise JobError(msg)
@@ -1508,7 +1515,7 @@ class Job(GangaObject):
                 # NOTE: this commit is redundant if updateStatus() is used on
                 # the line above
                 self._commit()
-            except Exception, x:
+            except Exception as x:
                 msg = 'cannot commit the job %s, submission aborted' % str(self.getFQID('.'))
                 logger.error(msg)
                 self.status = 'new'
@@ -1578,9 +1585,8 @@ class Job(GangaObject):
                 if not r:
                     raise JobManagerError('error during submit')
 
-            except IncompleteJobSubmissionError, x:
-                logger.warning(
-                    'Not all subjobs have been sucessfully submitted: %s', x)
+            except IncompleteJobSubmissionError as x:
+                logger.warning('Not all subjobs have been sucessfully submitted: %s', x)
 
             # This appears to be done by the backend now in a way that handles sub-jobs,
             # in the case of a master job however we need to still perform this
@@ -1746,8 +1752,7 @@ class Job(GangaObject):
                 try:
                     f()
                 except OSError, err:
-                    logger.warning(
-                        'cannot remove file workspace associated with the job %d : %s', self.id, str(err))
+                    logger.warning('cannot remove file workspace associated with the job %d : %s', self.id, str(err))
 
             wsp_input = self.getInputWorkspace(create=False)
             wsp_input.jobid = self.id
@@ -1774,7 +1779,8 @@ class Job(GangaObject):
         try:
             self._setDirty()
             self._releaseWriteAccess()
-        except:
+        except Exception as err:
+            logger.debug("Remove Err: %s" % str(err))
             pass
 
     def fail(self, force=False):

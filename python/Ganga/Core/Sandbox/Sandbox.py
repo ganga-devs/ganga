@@ -89,12 +89,12 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 contents = f.getContents()   # is it FileBuffer?
                 # print "Getting FileBuffer Contents"
 
-            except AttributeError:         # File
+            except AttributeError as err:         # File
                 # print "Getting File %s" % f.name
                 # tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
                 try:
                     fileobj = open(f.name)
-                except:
+                except Exception as err:
                     raise SandboxError("File %s does not exist." % f.name)
                 tinfo = tf.gettarinfo(
                     f.name, os.path.join(f.subdir, os.path.basename(f.name)))

@@ -156,7 +156,8 @@ def shutdown():
             registry.shutdown()
             # in case this is called repeatedly, only call shutdown once
             started_registries.remove(registry.name)
-    except:
+    except Exception as err:
+        logger.debug("Err: %s" % str(err))
         logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
         pass

@@ -113,16 +113,19 @@ class Shell(object):
             # print eval(str(output)[0])
             try:
                 env2 = expand_vars(eval(eval(str(output))[0]))
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 env2 = None
                 logger.error("Cannot construct environ:\n%s" % str(output)[0])
                 try:
                     logger.error("eval: %s" % str(eval(str(output)[0])))
-                except:
+                except Exception as err2:
+                    logger.debug("Err2: %s" % str(err2))
                     pass
                 try:
                     logger.error("eval(eval): %s" % eval(eval(str(output))[0]))
-                except:
+                except Exception as err3:
+                    logger.debug("Err3: %s" % str(err3))
                     pass
 
             if env2:

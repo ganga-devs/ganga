@@ -232,7 +232,8 @@ class Batch(IBackend):
 
         try:
             jobnameopt = "-" + self.config['jobnameopt']
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             jobnameopt = False
 
         if self.extraopts:
