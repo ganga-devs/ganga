@@ -255,7 +255,7 @@ class IBackend(GangaObject):
         tmpDir = None
         files = []
         if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
-                isType(job.inputdata, GangaDataset) and hasattr(job.inptdata, 'treat_as_inputfiles') and job.inputdata.treat_as_inputfiles):
+                isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
