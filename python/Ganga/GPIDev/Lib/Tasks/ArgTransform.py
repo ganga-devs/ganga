@@ -6,20 +6,11 @@ from .TaskApplication import ArgSplitterTask
 
 class ArgTransform(Transform):
     _schema = Schema(Version(1, 0), dict(Transform._schema.datadict.items() + {
-        'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, checkset='_checksetNestedLists', doc='A list of lists of arguments to pass to script'),
+        'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, doc='A list of lists of arguments to pass to script'),
     }.items()))
     _category = 'transforms'
     _name = 'ArgTransform'
     _exportmethods = Transform._exportmethods
-
-    # Copied from ISplitter
-    def _checksetNestedLists(self, value):
-        """The rule is that if there are nested lists then they 
-        must not contain GangaObjects, as this corrupts the repository"""
-        #if isNestedList(value) and containsGangaObjects(value):
-        #    raise TypeMismatchError(
-        #        'Assigning nested lists which contain Ganga GPI Objects is not supported.')
-        return
 
     def check(self):
         nargs = len(self.args)
