@@ -193,13 +193,22 @@ class SubJobXMLList(GangaObject):
                     raise RepositoryError(self,"IOError on loading subobject %s: %s" % (fqid, x))
             self._cachedJobs[index] = self._from_file(sj_file)[0]
 
-        logger.debug('Setting Parent: "%s"' % str(self._definedParent))
+        if self._definedParent is not None:
+            parent_name = "Job: %s" % self._definedParent.getFQID('.')
+        else:
+            parent_name = "None"
+        logger.debug('Setting Parent: %s' % parent_name)
         if self._definedParent:
             self._cachedJobs[index]._setParent( self._definedParent )
         return self._cachedJobs[index]
 
     def _setParent(self, parentObj):
-        logger.debug('Setting Parent: %s' % str(parentObj))
+        
+        if parentObj is not None:
+            parent_name = "Job: %s" % parentObj.getFQID('.')
+        else:
+            parent_name = "None"
+        logger.debug('Setting Parent: %s' % parent_name)
 
         super(SubJobXMLList, self)._setParent( parentObj )
         if not hasattr(self, '_cachedJobs'):
