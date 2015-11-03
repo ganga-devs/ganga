@@ -211,7 +211,7 @@ class GridProxy (ICredential):
 
         Return value: None
         """
-        if not isType(self.command, ICommandSet):
+        if "ICommandSet" == self.command._name:
             if self.voms:
                 self.command = self.vomsCommand
             else:
