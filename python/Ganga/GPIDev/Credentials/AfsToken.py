@@ -146,7 +146,7 @@ class AfsToken (ICredential):
 
     def __init__(self, middleware=""):
         super(AfsToken, self).__init__()
-        if not isType(self.command, ICommandSet):
+        if "ICommandSet" == self.command._name:
             self.command = AfsCommand()
         if not self.username:
             if "USERNAME" in os.environ:
