@@ -769,6 +769,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
     @staticmethod
     def initEnvironment(opt_rexec):
 
+        logger.debug("Installing Shutdown Manager")
         from Ganga.Core.InternalServices import ShutdownManager
         ShutdownManager.install()
 
@@ -776,6 +777,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
         from Ganga.Core import GangaException
 
+        logger.debug("Import plugins")
         try:
             # load Ganga system plugins...
             from Ganga.Runtime import plugins
@@ -792,23 +794,23 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             config = getConfig('Configuration')
 
             # runtime warnings issued by the interpreter may be suppresed
-            config.addOption('IgnoreRuntimeWarnings', False,
-                             "runtime warnings issued by the interpreter may be suppresed")
-            if config['IgnoreRuntimeWarnings']:
-                import warnings
-                warnings.filterwarnings(action="ignore", category=RuntimeWarning)
+            config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
+            #if config['IgnoreRuntimeWarnings']:
+            #    import warnings
+            #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
 
             def transform(x):
                 return os.path.normpath(Ganga.Utility.files.expandfilename(x))
 
-            paths = map(
-                transform, filter(lambda x: x, config['RUNTIME_PATH'].split(':')))
+            paths = map(transform, filter(lambda x: x, config['RUNTIME_PATH'].split(':')))
 
             for path in paths:
                 r = RuntimePackage(path)
         except KeyError, err:
             logger.debug("init KeyError: %s" % str(err))
             pass
+
+        logger.debug("Internal_ProxReexec")
 
         # initialize the environment only if the current ganga process has not
         # been rexeced
@@ -836,13 +838,13 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 os.execv(prog, sys.argv)
 
         else:
-            logger.debug(
-                'skipped the environment initialization -- the processed has been re-execed and setup was done already')
+            logger.debug('skipped the environment initialization -- the processed has been re-execed and setup was done already')
 
         # bugfix 40110
         if 'GANGA_INTERNAL_PROCREEXEC' in os.environ:
             del os.environ['GANGA_INTERNAL_PROCREEXEC']
 
+        logger.debug("Starting Queues")
         # start queues
         from Ganga.Runtime.GPIexport import exportToGPI
         from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
