@@ -48,6 +48,7 @@ class LHCbDataset(GangaDataset):
     docstr = 'Specify the dataset persistency technology'
     schema['persistency'] = SimpleItem(
         defvalue=None, typelist=['str', 'type(None)'], doc=docstr)
+    schema['treat_as_inputfiles'] = SimpleItem(defvalue=False, doc="Treat the inputdata as inputfiles, i.e. copy the inputdata to the WN")
 
     _schema = Schema(Version(3, 0), schema)
     _category = 'datasets'
