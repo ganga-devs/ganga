@@ -217,14 +217,6 @@ class GangaList(GangaObject):
             # done! This can lead to data loss!
             self._setDirty()
 
-    def checkNestedLists(self, value):
-        """The rule is that if there are nested lists then they 
-        must not contain GangaObjects, as this corrupts the repository"""
-        #if isNestedList(value) and containsGangaObjects(value):
-        #    raise TypeMismatchError(
-        #        'Assigning nested lists which contain Ganga GPI Objects is not supported.')
-        return
-
     # list methods
     # All list methods should be overridden in a way that makes
     # sure that no proxy objects end up in the list, and no
@@ -239,7 +231,6 @@ class GangaList(GangaObject):
 
     def _export___add__(self, obj_list):
         self.checkReadOnly()
-        self.checkNestedLists(obj_list)
         return addProxy(self.__add__(obj_list))
 
     def __contains__(self, obj):
@@ -307,7 +298,6 @@ class GangaList(GangaObject):
 
     def _export___iadd__(self, obj_list):
         self.checkReadOnly()
-        self.checkNestedLists(obj_list)
         return addProxy(self.__iadd__(obj_list))
 
     def __imul__(self, number):
@@ -376,7 +366,6 @@ class GangaList(GangaObject):
 
     def _export___setitem__(self, index, obj):
         self.checkReadOnly()
-        self.checkNestedLists(obj)
         self.__setitem__(index, obj)
 
     def __setslice__(self, start, end, obj_list):
@@ -385,7 +374,6 @@ class GangaList(GangaObject):
 
     def _export___setslice__(self, start, end, obj_list):
         self.checkReadOnly()
-        self.checkNestedLists(obj_list)
         self.__setslice__(start, end, obj_list)
 
     def __repr__(self):
@@ -399,7 +387,6 @@ class GangaList(GangaObject):
 
     def _export_append(self, obj):
         self.checkReadOnly()
-        self.checkNestedLists(obj)
         self.append(obj)
 
     def count(self, obj):
@@ -411,7 +398,6 @@ class GangaList(GangaObject):
 
     def _export_extend(self, ittr):
         self.checkReadOnly()
-        self.checkNestedLists(ittr)
         self.extend(ittr)
 
     def index(self, obj):
@@ -422,7 +408,6 @@ class GangaList(GangaObject):
 
     def _export_insert(self, index, obj):
         self.checkReadOnly()
-        self.checkNestedLists(obj)
         self.insert(index, obj)
 
     def pop(self, index=-1):
