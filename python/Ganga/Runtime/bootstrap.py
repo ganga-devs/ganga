@@ -1341,6 +1341,9 @@ default_backends = LCG
 
     @staticmethod
     def check_IPythonDir():
+        """
+        Check that the .ipython folder exists as expected as defined by IPYTHONDIR
+        """
 
         not_exist = False
 
@@ -1375,7 +1378,9 @@ default_backends = LCG
 
     @staticmethod
     def _ganga_error_handler(exception_obj, etype, value, tb, tb_offset=None):
-
+        """
+        Error handler for IPython 3.x+ to identify expected Ganga exceptions or unexpected uncaught exceptions from somewhere
+        """
         ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
         from Ganga.Utility.logging import getLogger
         logger = getLogger(modulename=True)
@@ -1391,6 +1396,9 @@ default_backends = LCG
 
     @staticmethod
     def launch_IPython(local_ns, args, error_handler, ganga_prompt):
+        """
+        Launch an embedded IPython session within the Ganga.GPI namespace
+        """
 
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
 
