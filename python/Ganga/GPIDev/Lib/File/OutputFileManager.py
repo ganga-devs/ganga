@@ -209,7 +209,7 @@ def getWNCodeForDownloadingInputFiles(job, indent):
 
     # first, go over any LocalFiles in GangaDatasets to be transferred
     # The LocalFiles in inputfiles have already been dealt with
-    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+    if job.inputdata and isType(job.inputdata, GangaDataset) and hasattr(job.inputdata, 'treat_as_inputfiles') and job.inputdata.treat_as_inputfiles:
         for inputFile in job.inputdata.files:
             inputfileClassName = getName(inputFile)
 
@@ -231,7 +231,7 @@ for f in ###FILELIST###:
 
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = job.inputfiles
-    if job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
+    if job.inputdata and isType(job.inputdata, GangaDataset) and hasattr(job.inputdata, 'treat_as_inputfiles') and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
     for inputFile in inputfiles_list:
