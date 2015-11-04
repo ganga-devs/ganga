@@ -68,12 +68,12 @@ class IBackend(GangaObject):
             #from Ganga.Utility.logging import log_user_exception
             sj.updateStatus('failed')
 
-            from Ganga.Core.exceptions import GangaException
-            if isinstance(err, GangaException):
-                logger.error(str(err))
-                log_user_exception(logger, debug=True)
-            else:
-                log_user_exception(logger, debug=False)
+            #from Ganga.Core.exceptions import GangaException
+            #if isinstance(err, GangaException):
+            #    logger.error(str(err))
+            #    #log_user_exception(logger, debug=True)
+            #else:
+            #    #log_user_exception(logger, debug=False)
         finally:
             pass
 
@@ -254,7 +254,8 @@ class IBackend(GangaObject):
 
         tmpDir = None
         files = []
-        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
+        if len(job.inputfiles) > 0 or (len(job.subjobs) == 0 and job.inputdata and\
+                isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles):
             (fileNames, tmpDir) = getInputFilesPatterns(job)
             files = itertools.imap(lambda f: File(f), fileNames)
         else:
@@ -413,6 +414,8 @@ class IBackend(GangaObject):
         ## Have to import here so it's actually defined
         from Ganga.Core import monitoring_component
 
+        logger.debug("Running Monitoring for Jobs: %s" % str([j.getFQID('.') for j in jobs]))
+
         ## Only process 10 files from the backend at once
         blocks_of_size = 10
         ## Separate different backends implicitly
@@ -474,6 +477,8 @@ class IBackend(GangaObject):
 
                 for this_job in simple_jobs[this_backend]:
                     stripProxy(this_job)._setDirty()
+
+        logger.debug("Finished Monitoring request")
 
     @staticmethod
     def updateMonitoringInformation(jobs):

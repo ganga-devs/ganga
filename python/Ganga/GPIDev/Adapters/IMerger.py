@@ -146,7 +146,8 @@ class IMerger(IPostProcessor):
                     try:
                         relMatchedFile = os.path.relpath(
                             matchedFile, j.outputdir)
-                    except:
+                    except Exception as err:
+                        logger.debug("Err: %s" % str(err))
                         Ganga.Utility.logging.log_unknown_exception()
                         relMatchedFile = relpath(matchedFile, j.outputdir)
                     if relMatchedFile in files:

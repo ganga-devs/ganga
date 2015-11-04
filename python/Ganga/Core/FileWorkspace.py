@@ -149,6 +149,19 @@ class FileWorkspace(object):
             import shutil
             logger.debug('removing %s', self.getPath())
             if os.path.exists(self.getPath()):
+
+                try:
+                    import time
+                    remove_path = os.path.dirname(self.getPath()) + '__to_be_deleted_' + str(time.time())
+                    logger.debug("Moving Path: %s to: %s ahead of delete operation" % (self.getPath(), remove_path))
+                    os.rename(self.getPath(), remove_path)
+                    logger.debug("Move completed")
+                except OSError as err:
+                    logger.debug("Move Error!")
+                    logger.debug("Error moving file for deletion, not using new path")
+                    logger.debug("Error: %s" % str(err))
+                    remove_path = self.getPath()
+
                 self.__removeTrials = 0
 
                 def retryRemove(function, path, excinfo):
@@ -158,29 +171,28 @@ class FileWorkspace(object):
                     """
                     self.__removeTrials += 1
                     if self.__removeTrials <= 5:
-                        logger.debug('Cannot delete %s (retry count=%s) ... Will wait a bit and try again'
-                                     % (self.getPath(), self.__removeTrials))
+                        logger.debug('Cannot delete %s (retry count=%s) ... Will wait a bit and try again' % (self.getPath(), self.__removeTrials))
                         time.sleep(0.5)
-                        shutil.rmtree(
-                            self.getPath(), ignore_errors=False, onerror=retryRemove)
+                        shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                     else:
                         exctype, value = excinfo[:2]
-                        logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)'
-                                       % (self.getPath(), self.__removeTrials, exctype, value))
+                        logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)' %
+                                                                                        (self.getPath(), self.__removeTrials, exctype, value))
 
-                shutil.rmtree(
-                    self.getPath(), ignore_errors=False, onerror=retryRemove)
-                logger.debug('removed %s', self.getPath())
+                shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
+                logger.debug('removed %s', remove_path)
                 if preserve_top and not os.path.exists(self.getPath()):
-                    logger.debug(
-                        'preserving the topdir: mkdir %s' % self.getPath())
+                    logger.debug('preserving the topdir: mkdir %s' % self.getPath())
                     os.mkdir(self.getPath())
             else:
                 logger.debug('%s : DOES NOT EXIST', self.getPath())
+
         # FIXME: error strategy
         except OSError as x:
+            logger.debug("OSError: %s" % str(x))
             raise
         except Exception as x:
+            logger.debug("Exception: %s" % str(x))
             raise
 
 

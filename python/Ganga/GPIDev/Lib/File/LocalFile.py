@@ -198,12 +198,12 @@ class LocalFile(IGangaFile):
 
     def remove(self):
 
-        for file in self.getFilenameList():
+        for this_file in self.getFilenameList():
             _actual_delete = False
             keyin = None
             while keyin == None:
-                keyin = raw_input("Do you want to remove the LocalFile: %s ? [y/n] " % str(file))
-                if keyin == 'y':
+                keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % str(this_file))
+                if keyin in ['y', '']:
                     _actual_delete = True
                 elif keyin == 'n':
                     _actual_delete = False
@@ -211,12 +211,27 @@ class LocalFile(IGangaFile):
                     logger.warning("y/n please!")
                     keyin = None
             if _actual_delete:
-                if not os.path.exists(file):
+                if not os.path.exists(this_file):
                     logger.warning(
-                        "File %s did not exist, can't delete" % file)
+                        "File %s did not exist, can't delete" % this_file)
                 else:
-                    logger.info("Deleting: %s" % file)
-                    os.unlink(file)
+                    logger.info("Deleting: %s" % this_file)
+
+                    import time
+                    remove_filename = this_file + '__to_be_deleted_' + str(time.time())
+                    try:
+                        os.rename(this_file, remove_filename)
+                    except Exception as err:
+                        logger.warning("Error in first stage of removing file: %s" % this_file)
+                        remove_filename = this_file
+
+                    try:
+                        os.remove(remove_filename)
+                    except OSError as err:
+                        if err.errno != errno.ENOENT:
+                            logger.error("Error in removing file: %s" % str(remove_filename))
+                            raise
+                        pass
 
         return
 

@@ -375,6 +375,10 @@ class Registry(object):
         for obj in objs:
             self._write_access(obj)
 
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        if not (isinstance(objs, list) or isType(objs, GangaList)):
+            objs = [objs]
+
         self._lock.acquire()
         try:
             for obj in objs:

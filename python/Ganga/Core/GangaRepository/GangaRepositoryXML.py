@@ -76,9 +76,9 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         raise IOError("Could not write file %s.new (%s)" % (fn, e))
     # Try to make backup copy...
     try:
-        os.unlink(fn + "~")
+        rmrf(fn + "~")
     except OSError as e:
-        logger.debug("Error on removing file %s~ (%s) " % (fn, e))
+        logger.debug("Error on removing old backup file %s~ (%s) " % (fn, e))
     try:
         os.rename(fn, fn + "~")
     except OSError as e:
@@ -91,19 +91,45 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
 
 def rmrf(name):
     if os.path.isdir(name):
-        for sfn in os.listdir(name):
-            rmrf(os.path.join(name, sfn))
+
         try:
-            os.removedirs(name)
-        except OSError, err:
-            logger.debug("%s" % str(err))
-            pass
+            remove_name = os.path.dirname(name) + '__to_be_deleted_' + str(time.time())
+            os.rename(name, remove_name)
+            logger.debug("Move completed")
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("rmrf Err: %s" % str(err))
+                remove_name = name
+                raise err
+            return
+
+        for sfn in os.listdir(remove_name):
+            rmrf(os.path.join(remove_name, sfn))
+        try:
+            os.removedirs(remove_name)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("%s" % str(err))
+                raise err
+            return
     else:
         try:
-            os.unlink(name)
-        except OSError, err:
-            logger.debug("%s" % str(err))
-            pass
+            remove_name = name + '__to_be_deleted_' + str(time.time())
+            os.rename(name, remove_name)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("rmrf Move err: %s" % str(err))
+                remove_name = name
+                raise err
+            return
+
+        try:
+            os.remove(remove_name)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("%s" % str(err))
+                raise err
+            return
 
 
 class GangaRepositoryLocal(GangaRepository):
@@ -243,9 +269,8 @@ class GangaRepositoryLocal(GangaRepository):
                         objs[id] = True
                     else:
                         try:
-                            os.unlink(self.get_idxfn(id))
-                            logger.warning(
-                                "Deleted index file without data file: %s" % self.get_idxfn(id))
+                            rmrf(self.get_idxfn(id))
+                            logger.warning("Deleted index file without data file: %s" % self.get_idxfn(id))
                         except OSError, err:
                             logger.debug("get_index_listing delete Exception: %s" % str(err))
                             pass
@@ -397,12 +422,12 @@ class GangaRepositoryLocal(GangaRepository):
                     if len(self.lock([id])) != 0:
                         self.index_write(id)
                         self.unlock([id])
-                except Exception, err:
-                    logger.debug("update Error: %s" % str(err))
-                    # deleted job
-                    if id in self.objects:
-                        self._internal_del__(id)
-                        changed_ids.append(id)
+                #except KeyError as err:
+                #    logger.debug("update Error: %s" % str(err))
+                #    # deleted job
+                #    if id in self.objects:
+                #        self._internal_del__(id)
+                #        changed_ids.append(id)
                 except Exception as x:
                     ## WE DO NOT CARE what type of error occured here and it can be
                     ## due to corruption so could be one of MANY exception types
@@ -589,7 +614,7 @@ class GangaRepositoryLocal(GangaRepository):
                     try:
                         # remove internal representation
                         self._internal_del__(id)
-                        os.unlink(os.path.dirname(fn) + ".index")
+                        rmrf(os.path.dirname(fn) + ".index")
                     except OSError, err:
                         logger.debug("load unlink Error: %s" % str(err))
                         pass
@@ -697,10 +722,7 @@ class GangaRepositoryLocal(GangaRepository):
                     self.incomplete_objects.append(id)
                 # remove index so we do not continue working with wrong
                 # information
-                try:
-                    os.unlink(os.path.dirname(fn) + ".index")
-                except OSError:
-                    pass
+                rmrf(os.path.dirname(fn) + ".index")
                 raise InaccessibleObjectError(self, id, err)
             finally:
                 fobj.close()
@@ -711,7 +733,7 @@ class GangaRepositoryLocal(GangaRepository):
             # KeyError
             fn = self.get_fn(id)
             try:
-                os.unlink(os.path.dirname(fn) + ".index")
+                rmrf(os.path.dirname(fn) + ".index")
             except OSError, err:
                 logger.debug("Delete Error: %s" % str(err))
                 pass

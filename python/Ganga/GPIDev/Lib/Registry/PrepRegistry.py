@@ -46,6 +46,8 @@ class PrepRegistry(Registry):
                 # locks are not guaranteed to survive repository shutdown
                 obj._registry_locked = False
             self.repository.shutdown()
+        except Exception as err:
+            logger.debug("Shutdown Error: %s" % str(err))
         finally:
             self._lock.release()
 
@@ -85,6 +87,8 @@ class ShareRef(GangaObject):
             super(ShareRef, self).__setstate__(dict)
             self._setRegistry(None)
             self._setDirty()
+        except Exception as err:
+            logger.debug("setstate Error: %s" % str(err))
         finally:
             self._releaseWriteAccess()
 
@@ -141,7 +145,8 @@ class ShareRef(GangaObject):
                     self.name[basedir] -= 1
         # if we try to decrease a shareref that doesn't exist, we just set the
         # corresponding shareref to 0
-        except KeyError:
+        except KeyError as err:
+            logger.debug("KeyError: %s" % str(err))
             self.name[basedir] = 0
 
         self._setDirty()
@@ -172,7 +177,8 @@ class ShareRef(GangaObject):
                                 stripProxy(item.keys()[0])._registry_id, item.values()[0])
                     run_unp = item.keys()[0]
                     master_index += 1
-            except AttributeError:
+            except AttributeError as err:
+                logger.debug("Err: %s" % str(err))
                 try:
                     item.keys()[0].application.is_prepared.name
                     if item.keys()[0].application.is_prepared.name == sharedir:
@@ -180,7 +186,8 @@ class ShareRef(GangaObject):
                                     stripProxy(item.keys()[0])._registry_id, item.values()[0])
                         run_unp = item.keys()[0].application
                         master_index += 1
-                except AttributeError:
+                except AttributeError as err2:
+                    logger.debug("Err2: %s" % str(err2))
                     try:
                         item.keys()[0].analysis.application.is_prepared.name
                         if item.keys()[0].analysis.application.is_prepared.name == sharedir:
@@ -188,7 +195,8 @@ class ShareRef(GangaObject):
                                         stripProxy(item.keys()[0])._registry_id, item.values()[0])
                             run_unp = item.keys()[0].analysis.application
                             master_index += 1
-                    except AttributeError:
+                    except AttributeError as err3:
+                        logger.debug("Err3: %s" % str(err3))
                         pass
 
             if run_unp is not None and unprepare is True:
@@ -199,8 +207,7 @@ class ShareRef(GangaObject):
                 run_unp = None
 
         if unprepare is not True:
-            logger.info(
-                '%s item(s) found referencing ShareDir %s', master_index, sharedir)
+            logger.info('%s item(s) found referencing ShareDir %s', master_index, sharedir)
 
     def rebuild(self, unprepare=True, rmdir=False):
         """Rebuild the shareref table. 
@@ -223,40 +230,34 @@ class ShareRef(GangaObject):
         self.name = {}
         lookup_input = []
 
-        def helper(object, unp=True, numsubjobs=0):
-            shareddir = os.path.join(getSharedPath(), os.path.basename(object))
+        def helper(this_object, unp=True, numsubjobs=0):
+            shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
             logger.debug('Adding %s to the shareref table.' % shareddir)
-            if os.path.basename(object) in self.name:
-                self.name[os.path.basename(object)] += 1
+            if os.path.basename(this_object) in self.name:
+                self.name[os.path.basename(this_object)] += 1
             else:
-                self.name[os.path.basename(object)] = 1
+                self.name[os.path.basename(this_object)] = 1
             if numsubjobs > 0:
-                self.name[os.path.basename(object)] += numsubjobs
-            if not os.path.isdir(shareddir) and os.path.basename(object) not in lookup_input:
-                logger.info(
-                    'Shared directory %s not found on disk.' % shareddir)
+                self.name[os.path.basename(this_object)] += numsubjobs
+            if not os.path.isdir(shareddir) and os.path.basename(this_object) not in lookup_input:
+                logger.info('Shared directory %s not found on disk.' % shareddir)
                 if unp == True:
-                    lookup_input.append(os.path.basename(object))
+                    lookup_input.append(os.path.basename(this_object))
 
-        def to_relative(object):
-            logger.info(
-                'Absolute ShareDir().name attribute found in Job #%s', object.id)
-            logger.info(
-                'Converting to relative path and moving associated directory if it exists.')
+        def to_relative(this_object):
+            logger.info('Absolute ShareDir().name attribute found in Job #%s', this_object.id)
+            logger.info('Converting to relative path and moving associated directory if it exists.')
             try:
-                shutil.move(object.is_prepared.name,
-                            os.path.join(getSharedPath(), os.path.basename(object.is_prepared.name)))
-            except:
+                shutil.move(this_object.is_prepared.name, os.path.join(getSharedPath(), os.path.basename(this_object.is_prepared.name)))
+            except OSError as err:
                 Ganga.Utility.logging.log_unknown_exception()
-                logger.warn('Unable to move directory %s to %s', object.is_prepared.name,
-                            os.path.join(getSharedPath(), os.path.basename(object.is_prepared.name)))
+                logger.warn('Unable to move directory %s to %s', this_object.is_prepared.name, os.path.join(getSharedPath(), os.path.basename(this_object.is_prepared.name)))
             try:
-                stripProxy(object).is_prepared.name = os.path.basename(
-                    object.is_prepared.name)
-            except:
+                stripProxy(this_object).is_prepared.name = os.path.basename(this_object.is_prepared.name)
+            except Exception as err:
+                logger.debug("rebuild Error: %s" % str(err))
                 Ganga.Utility.logging.log_unknown_exception()
-                logger.warn(
-                    "Unable to convert object's is_prepared.name attribute to a relative path")
+                logger.warn("Unable to convert object's is_prepared.name attribute to a relative path")
 
         objectlist = []
         for thing in jobs.select():
@@ -270,14 +271,16 @@ class ShareRef(GangaObject):
             shortname = None
             try:
                 shortname = item.keys()[0].is_prepared.name
-            except AttributeError:
+            except AttributeError as err:
+                logger.debug("Err: %s" % str(err))
                 try:
                     shortname = item.keys()[0].application.is_prepared.name
-                except AttributeError:
+                except AttributeError as err2:
+                    loggr.debug("Err2: %s" % str(err2))
                     try:
-                        shortname = item.keys()[
-                            0].analysis.application.is_prepared.name
-                    except AttributeError:
+                        shortname = item.keys()[0].analysis.application.is_prepared.name
+                    except AttributeError as err3:
+                        logger.debug("Err3: %s" % str(err3))
                         pass
             try:
                 if shortname is not None and shortname is not True:
@@ -285,11 +288,13 @@ class ShareRef(GangaObject):
                         to_relative(item.keys()[0].is_prepared)
                     try:
                         numsubjobs = len(item.keys()[0].subjobs.ids())
-                    except:
+                    except Exception as err:
+                        logger.debug("Path Error: %s" % str(err))
                         Ganga.Utility.logging.log_unknown_exception()
                         numsubjobs = 0
                     helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
-            except:
+            except Exception as err:
+                logger.debug("-Error: %s" % str(err))
                 Ganga.Utility.logging.log_unknown_exception()
                 pass
 
@@ -531,3 +536,4 @@ ShareRef.__str__ = ShareRef._display
 ShareRef._proxyClass._display = _proxy_display()
 ShareRef._proxyClass.__str__ = _proxy_display()
 #ShareRef._proxyClass.copy = _copy()
+

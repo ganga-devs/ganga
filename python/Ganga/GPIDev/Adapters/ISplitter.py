@@ -25,9 +25,10 @@ class ISplitter(GangaObject):
     def _checksetNestedLists(self, value):
         """The rule is that if there are nested lists then they 
         must not contain GangaObjects, as this corrupts the repository"""
-        if isNestedList(value) and containsGangaObjects(value):
-            raise TypeMismatchError(
-                'Assigning nested lists which contain Ganga GPI Objects is not supported.')
+        #if isNestedList(value) and containsGangaObjects(value):
+        #    raise TypeMismatchError(
+        #        'Assigning nested lists which contain Ganga GPI Objects is not supported.')
+        return
 
     def createSubjob(self, job):
         """ Create a new subjob by copying the master job and setting all fields correctly.

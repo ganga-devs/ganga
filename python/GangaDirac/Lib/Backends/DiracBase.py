@@ -294,7 +294,6 @@ class DiracBase(IBackend):
             else:
                 template = '%s.set%s(%s)\n'
             new_script += template % (job_ident, str(_key), str(value))
-            print("Template: %s" % str(template% (job_ident, str(_key), str(value))))
         new_script += script[script.find('# user settings -->'):]
 
         # Save new script
@@ -569,7 +568,7 @@ class DiracBase(IBackend):
             # Set DiracFile metadata
             wildcards = [f.namePattern for f in job.outputfiles.get(DiracFile) if regex.search(f.namePattern) is not None]
 
-            with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']), 'wb') as postprocesslocationsfile:
+            with open(os.path.join(job.getOutputWorkspace().getPath(), getConfig('Output')['PostProcessLocationsFileName']), 'ab') as postprocesslocationsfile:
                 if not hasattr(file_info_dict, 'keys'):
                     logger.error("Error understanding OutputDataInfo: %s" % str(file_info_dict))
                     from Ganga.Core.exceptions import GangaException

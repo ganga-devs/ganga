@@ -83,8 +83,7 @@ def getInputFilesPatterns(job):
     # if GangaDataset is used, check if they want the inputfiles transferred
     inputfiles_list = copy.deepcopy(job.inputfiles)
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and\
-            hasattr(job.inputdata, 'treat_as_inputfiles') and job.inputdata.treat_as_inputfiles:
+    if not job.subjobs and job.inputdata and isType(job.inputdata, GangaDataset) and job.inputdata.treat_as_inputfiles:
         inputfiles_list += job.inputdata.files
 
     for inputFile in inputfiles_list:
@@ -200,8 +199,9 @@ def getWNCodeForDownloadingInputFiles(job, indent):
     """
 
     from Ganga.GPIDev.Lib.Dataset.GangaDataset import GangaDataset
-    if len(job.inputfiles) == 0 and (not job.inputdata or not isType(job.inputdata, GangaDataset) or\
-            (not hasattr(job.inputdata, 'treat_as_inputfiles') or not job.inputdata.treat_as_inputfiles)):
+    if job.inputfiles is None or len(job.inputfiles) == 0 and\
+            (not job.inputdata or ((not isType(job.inputdata, GangaDataset)) or\
+                not job.inputdata.treat_as_inputfiles )):
         return ""
 
     insertScript = """\n

@@ -116,7 +116,8 @@ class Executable(IPrepareApp):
             # [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
             self.post_prepare()
 
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             self.unprepare()
             raise
 
