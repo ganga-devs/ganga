@@ -109,14 +109,14 @@ class GangaList(GangaObject):
             elif _list is None:
                 self._list = None
             else:
-                raise GangaError("Construct: Attempting to assign a non list item: %$s to a GangaList._list!" % str(value))
+                raise GangaError("Construct: Attempting to assign a non list item: %s to a GangaList._list!" % str(value))
         else:
             super(GangaList, self).__construct__(args)
         return
 
     # convenience methods
     def is_list(self, obj):
-        result = (obj != None) and (isType(obj, GangaList) or isinstance(obj, list))
+        result = (obj is not None) and (isType(obj, GangaList) or isinstance(obj, list))
         return result
 
     ## Attempt to prevent raw assignment of _list causing Proxied objects to get inside the GangaList
