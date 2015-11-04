@@ -109,12 +109,12 @@ class FileWorkspace(object):
 
         try:
             name, contents = fileobj
-        except TypeError:
+        except TypeError as err:
+            logger.debug("TypeError: %s" % str(err))
             pass
         else:
             fileobj = FileBuffer(name, contents)
-            logger.warning(
-                'file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
+            logger.warning('file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows

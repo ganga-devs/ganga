@@ -19,7 +19,6 @@ configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
-global stored_list_of_sites
 stored_list_of_sites = []
 
 
@@ -382,7 +381,8 @@ class DiracFile(IGangaFile):
         try:
             reps = self.getReplicas()
             ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
-        except:
+        except Exception as err:
+            logger.debug("Exception: %s" % str(err))
             pass
 
         return ret

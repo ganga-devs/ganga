@@ -85,7 +85,8 @@ def fastXML(obj, indent='', ignore_subs=''):
                         sl.append('<attribute name="%s">' % k)
                         sl.extend(fastXML(o, indent + '  ', ignore_subs))
                         sl.append('</attribute>\n')
-                except KeyError:
+                except KeyError as err:
+                    logger.debug("KeyError: %s" % str(err))
                     pass
         sl.append(indent)
         sl.append('</class>')
