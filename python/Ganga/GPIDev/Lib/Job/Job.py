@@ -192,7 +192,7 @@ class Job(GangaObject):
                                      'splitter': ComponentItem('splitters', defvalue=None, load_default=0, optional=1, doc='optional splitter'),
                                      'subjobs': ComponentItem('jobs', defvalue=[], sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
                                      'master': ComponentItem('jobs', getter="_getParent", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, doc='master job', visitable=0),
-                                     'postprocessors': ComponentItem('postprocessor', defvalue=GangaList(), doc='list of postprocessors to run after job has finished'),
+                                     'postprocessors': ComponentItem('postprocessor', defvalue=MultiPostProcessor(), doc='list of postprocessors to run after job has finished'),
                                      'merger': ComponentItem('mergers', defvalue=None, hidden=1, copyable=0, load_default=0, optional=1, doc='optional output merger'),
                                      'do_auto_resubmit': SimpleItem(defvalue=False, doc='Automatically resubmit failed subjobs'),
                                      'metadata': ComponentItem('metadata', defvalue=MetadataDict(), doc='the metadata', protected=1, copyable=0),
@@ -770,7 +770,7 @@ class Job(GangaObject):
             return
 
         if not new_stat:
-            logger.critical('undefined state for job %d, status=%s', j.id, str(stats))
+            logger.critical('undefined state for job %s, status=%s', str(j.id), str(stats))
         j.updateStatus(new_stat)
 
     def getMonitoringService(self):
@@ -1138,7 +1138,7 @@ class Job(GangaObject):
             return
 
         if (self.application.is_prepared is not None) and (force is False):
-            msg = "The application associated with job %d has already been prepared. To force the operation, call prepare(force=True)" % (self.id)
+            msg = "The application associated with job %s has already been prepared. To force the operation, call prepare(force=True)" % str(self.id)
             raise JobError(msg)
         if (self.application.is_prepared is None):
             add_to_inputsandbox = self.application.prepare()
@@ -1663,12 +1663,12 @@ class Job(GangaObject):
         template = self.status == 'template'
 
         if template:
-            logger.info('removing template %d', self.id)
+            logger.info('removing template %s', str(self.id))
         else:
-            logger.info('removing job %d', self.id)
+            logger.info('removing job %s', str(self.id))
 
         if self.status == 'removed':
-            msg = 'job %d already removed' % self.id
+            msg = 'job %s already removed' % str(self.id)
             logger.error(msg)
             raise JobError(msg)
 
@@ -1706,7 +1706,7 @@ class Job(GangaObject):
                 log_user_exception(logger, debug=True)
             except Exception, x:
                 log_user_exception(logger)
-                logger.warning('unhandled exception in j.kill(), job id=%d', self.id)
+                logger.warning('unhandled exception in j.kill(), job id=%s', str(self.id))
 
         # incomplete or unknown jobs may not have valid application or backend
         # objects
@@ -1739,7 +1739,7 @@ class Job(GangaObject):
                     try:
                         f()
                     except OSError, err:
-                        logger.warning('cannot remove file workspace associated with the sub-job %d : %s', self.getFQID('.'), str(err))
+                        logger.warning('cannot remove file workspace associated with the sub-job %s : %s', self.getFQID('.'), str(err))
 
                 wsp_input = self.getInputWorkspace(create=False)
                 doit_sj(wsp_input.remove)
@@ -1752,7 +1752,7 @@ class Job(GangaObject):
                 try:
                     f()
                 except OSError, err:
-                    logger.warning('cannot remove file workspace associated with the job %d : %s', self.id, str(err))
+                    logger.warning('cannot remove file workspace associated with the job %s : %s', str(self.id), str(err))
 
             wsp_input = self.getInputWorkspace(create=False)
             wsp_input.jobid = self.id
@@ -2113,7 +2113,7 @@ class Job(GangaObject):
 # return tuple(index)
 
     def _subjobs_proxy(self):
-        subjobs = JobRegistrySlice('jobs(%d).subjobs' % self.id)
+        subjobs = JobRegistrySlice('jobs(%s).subjobs' % str(self.id))
         for j in self.subjobs:
             subjobs.objects[j.id] = j
         # print 'return slice',subjobs

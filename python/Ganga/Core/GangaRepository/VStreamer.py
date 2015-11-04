@@ -1,5 +1,11 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from Ganga.Utility.logging import getLogger
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+import xml.sax.saxutils
+
+logger = getLogger()
+
 ##########################################################################
 # Ganga Project. http://cern.ch/ganga
 #
@@ -41,9 +47,6 @@ def from_file(f):
 
 ##########################################################################
 # utilities
-
-import xml.sax.saxutils
-#import escape, unescape
 
 
 def escape(s):
@@ -134,8 +137,7 @@ class VStreamer(object):
         return
 
     def print_value(self, x):
-        # FIXME: also quote % characters (to allow % operator later)
-        print('<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
+        print('\n', self.indent(), '<value>%s</value>' % escape(repr(stripProxy(x))), file=self.out)
 
     def showAttribute(self, node, name):
         return not node._schema.getItem(name)['transient'] and (self.level > 1 or name != self.selection)
@@ -150,11 +152,7 @@ class VStreamer(object):
                 print(file=self.out)
                 print(self.indent(), '<sequence>', file=self.out)
                 for v in value:
-                    self.level += 1
-                    print(self.indent(), end=' ', file=self.out)
-                    self.print_value(v)
-                    print(file=self.out)
-                    self.level -= 1
+                    self.acceptOptional(v)
                 print(self.indent(), '</sequence>', file=self.out)
                 self.level -= 1
                 print(self.indent(), '</attribute>', file=self.out)
@@ -162,6 +160,7 @@ class VStreamer(object):
                 self.level += 1
                 self.print_value(value)
                 self.level -= 1
+                print(self.indent(), end=' ', file=self.out)
                 print('</attribute>', file=self.out)
             self.level -= 1
 
@@ -173,10 +172,17 @@ class VStreamer(object):
         if s is None:
             print(self.indent(), '<value>None</value>', file=self.out)
         else:
-            if type(s) == type(''):
-                print(self.indent(), '<value>%s</value>' % s, file=self.out)
-            else:
+            if isType(s, str):
+                print(self.indent(), '<value>%s</value>' % escape(repr(s)), file=self.out)
+            elif hasattr(stripProxy(s), 'accept'):
                 stripProxy(s).accept(self)
+            elif isType(s, list) or isType(s, GangaList):
+                print(self.indent(), '<sequence>', file=self.out)
+                for sub_s in s:
+                    self.acceptOptional(sub_s)
+                print(self.indent(), '</sequence>', file=self.out)
+            else:
+                self.print_value(stripProxy(s))
         self.level -= 1
 
     def componentAttribute(self, node, name, subnode, sequence):
@@ -244,7 +250,7 @@ class Loader(object):
 
         # 3 handler functions
         def start_element(name, attrs):
-            # logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
+            #logger.debug('Start element: name=%s attrs=%s', name, attrs) #FIXME: for 2.4 use CurrentColumnNumber and CurrentLineNumber
             # if higher level element had error, ignore the corresponding part
             # of the XML tree as we go down
             if self.ignore_count:
@@ -272,8 +278,7 @@ class Loader(object):
                     # element (</class>) is reached
                     self.ignore_count = 1
                 else:
-                    version = Version(*[int(v)
-                                        for v in attrs['version'].split('.')])
+                    version = Version(*[int(v) for v in attrs['version'].split('.')])
                     if not cls._schema.version.isCompatible(version):
                         attrs['currversion'] = '%s.%s' % (
                             cls._schema.version.major, cls._schema.version.minor)
@@ -302,7 +307,7 @@ class Loader(object):
                 self.sequence_start.append(len(self.stack))
 
         def end_element(name):
-            ###logger.debug('End element: name=%s', name)
+            #logger.debug('End element: name=%s', name)
 
             # if higher level element had error, ignore the corresponding part
             # of the XML tree as we go up
@@ -324,9 +329,9 @@ class Loader(object):
             if name == 'value':
                 # unescape the special characters
                 s = unescape(self.value_construct)
-                ###logger.debug('string value: %s',s)
+                #logger.debug('string value: %s',s)
                 val = eval(s, config_scope)
-                ###logger.debug('evaled value: %s type=%s',repr(val),type(val))
+                #logger.debug('evaled value: %s type=%s',repr(val),type(val))
                 self.stack.append(val)
                 self.value_construct = None
 
@@ -381,3 +386,4 @@ class Loader(object):
             if not attr in obj._data:
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
+
