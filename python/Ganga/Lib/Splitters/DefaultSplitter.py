@@ -27,12 +27,6 @@ class DefaultSplitter(ISplitter):
     ## The nature of the problem of writing an empty schema should probably be understood more correctly but is difficult to track down -rcurrie
     _schema = Schema(Version(1, 0), {'dummy_value': SimpleItem(defvalue=1, hidden=1, visitable=0, doc='the number of files per subjob', typelist=["int"])})
 
-    def _checkset_values(self, value):
-        self._checksetNestedLists(value)
-        # TODO: here we may implement advanced validation of type against the
-        # type of selected attribute
-        pass
-
     def split(self, job):
 
         subjobs = []

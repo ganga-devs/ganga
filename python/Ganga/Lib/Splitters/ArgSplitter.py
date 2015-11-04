@@ -45,7 +45,7 @@ class ArgSplitter(ISplitter):
 """
     _name = "ArgSplitter"
     _schema = Schema(Version(1, 0), {
-        'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, checkset='_checksetNestedLists', doc='A list of lists of arguments to pass to script')
+        'args': SimpleItem(defvalue=[], typelist=['list', 'Ganga.GPIDev.Lib.GangaList.GangaList.GangaList'], sequence=1, doc='A list of lists of arguments to pass to script')
     })
 
     def split(self, job):

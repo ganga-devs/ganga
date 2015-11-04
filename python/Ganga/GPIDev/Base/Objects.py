@@ -361,7 +361,7 @@ class Descriptor(object):
                     except ImportError:
                         new_v = []
                     for elem in v:
-                        new_v.append(elem)
+                        new_v.append(self.__cloneVal(elem, obj))
                     v = new_v
             if not isType(v, Node):
                 raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
@@ -407,7 +407,13 @@ class Descriptor(object):
         item = stripProxy(obj._schema[getName(self)])
 
         def cloneVal(v):
-            return self.__cloneVal(v, obj)
+            if isType(v, list()):
+                new_v = GangaList()
+                for elem in v:
+                    new_v.append(self.__cloneVal(elem, obj))
+                return new_v
+            else:
+                return self.__cloneVal(v, obj)
 
         obj_reg = obj._getRegistry()
         full_reg = obj_reg is not None and hasattr(obj_reg, 'dirty_flush_counter')
