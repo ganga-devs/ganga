@@ -1,6 +1,6 @@
 from __future__ import absolute_import
 from .Transform import Transform
-from Ganga.Utility.util import containsGangaObjects, isNestedList
+from Ganga.Utility.util import containsGangaObjects
 from .TaskApplication import ArgSplitterTask
 
 
