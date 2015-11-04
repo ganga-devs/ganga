@@ -445,7 +445,8 @@ class DiracBase(IBackend):
             import datetime
             try:
                 result = eval(result)
-            except:
+            except Exception as err:
+                logger.debug("Exception, err: %s" % str(err))
                 pass
         if not result_ok(result):
             logger.warning('Could not obtain services: %s' % str(result))
