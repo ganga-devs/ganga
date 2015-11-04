@@ -75,7 +75,7 @@ class Node(object):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         # FIXME: this is different than for deepcopy... is this really correct?
-        d = self.__dict__.copy()
+        d = self.__dict__.copy(memo)
         obj.__dict__ = d
         return obj
 
@@ -344,7 +344,7 @@ class Descriptor(object):
         item = obj._schema[getName(self)]
 
         if v is None:
-            if 'category' in item._meta:
+            if item.hasProperty('category'):
                 assertion = item['optional'] and (item['category'] != 'internal')
             else:
                 assertion = item['optional']
@@ -352,17 +352,18 @@ class Descriptor(object):
             return None
         elif isinstance(v, str):
             return str(v)
+        elif isinstance(v, int):
+            return int(v)
         else:
-            if not isType(v, Node):
-                if isType(v, list):
-                    try:
-                        from Ganga.GPI import GangaList
-                        new_v = GangaList()
-                    except ImportError:
-                        new_v = []
-                    for elem in v:
-                        new_v.append(self.__cloneVal(elem, obj))
-                    v = new_v
+            if not isType(v, Node) and isType(v, list):
+                try:
+                    from Ganga.GPI import GangaList
+                    new_v = GangaList()
+                except ImportError:
+                    new_v = []
+                for elem in v:
+                    new_v.append(self.__cloneVal(elem, obj))
+                v = new_v
             if not isType(v, Node):
                 raise GangaException("Error: found Object: %s of type: %s expected an object inheriting from Node!" % (str(v), str(type(v))))
 
@@ -447,11 +448,11 @@ class Descriptor(object):
                         val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             if isType(item, Schema.ComponentItem):
-                listObj = []
+                newListObj = []
                 if isinstance(val, list):
                     for elem in val:
-                        listObj.append(cloneVal(elem))
-                    val = listObj
+                        newListObj.append(cloneVal(elem))
+                    val = newListObj
                 else:
                     val = cloneVal(val)
 
