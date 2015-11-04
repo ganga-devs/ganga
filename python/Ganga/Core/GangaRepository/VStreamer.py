@@ -1,7 +1,21 @@
 from __future__ import print_function
 from __future__ import absolute_import
 from Ganga.Utility.logging import getLogger
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
+
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
+
+# config_scope is namespace used for evaluating simple objects (e.g. File)
+from Ganga.Utility.Config import config_scope
+
+from Ganga.Utility.Plugin import PluginManagerError, allPlugins
+from Ganga.GPIDev.Schema import Version
+
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema import Schema, Version
+
+from .GangaRepository import SchemaVersionError
+
 import xml.sax.saxutils
 
 logger = getLogger()
@@ -56,13 +70,6 @@ def escape(s):
 
 def unescape(s):
     return xml.sax.saxutils.unescape(s)
-
-from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaListByRef
-
-# config_scope is namespace used for evaluating simple objects (e.g. File)
-from Ganga.Utility.Config import config_scope
-
-from Ganga.GPIDev.Base.Proxy import stripProxy, getName
 
 # An experimental, fast way to print a tree of Ganga Objects to file
 # Unused at the moment
@@ -205,15 +212,6 @@ class VStreamer(object):
 ##########################################################################
 # XML Parser.
 
-from Ganga.Utility.Plugin import PluginManagerError, allPlugins
-from Ganga.GPIDev.Schema import Version
-
-from Ganga.Utility.logging import getLogger
-logger = getLogger()
-
-from Ganga.GPIDev.Base.Objects import GangaObject
-from Ganga.GPIDev.Schema import Schema, Version
-
 # Empty Ganga Object
 
 
@@ -225,7 +223,6 @@ class EmptyGangaObject(GangaObject):
     _category = "internal"
     _hidden = 1
 
-from .GangaRepository import SchemaVersionError
 
 
 class Loader(object):
