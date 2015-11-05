@@ -1,5 +1,6 @@
 from __future__ import print_function
 from __future__ import absolute_import
+from Ganga.Core.exceptions import GangaException
 from Ganga.Utility.logging import getLogger
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
@@ -30,11 +31,29 @@ logger = getLogger()
 # 'ignore_subs'
 
 
+class XMLFileError(GangaException):
+
+    def __init__(self, excpt, message):
+        GangaException.__init__(self, excpt, message)
+        self.message = message
+        self.excpt = excpt
+
+    def __str__(self):
+        if self.excpt:
+            err = '(%s:%s)' % (str(type(self.excpt)), str(self.excpt))
+        else:
+            err = ''
+        return "XMLFileError: %s %s" % (self.message, err)
+
 def to_file(j, f=None, ignore_subs=''):
-    vstreamer = VStreamer(out=f, selection=ignore_subs)
-    vstreamer.begin_root()
-    stripProxy(j).accept(vstreamer)
-    vstreamer.end_root()
+    try:
+        vstreamer = VStreamer(out=f, selection=ignore_subs)
+        vstreamer.begin_root()
+        stripProxy(j).accept(vstreamer)
+        vstreamer.end_root()
+    except Exception as err:
+        logger.error("XML to-file error for file:\n%s" % (str(err)))
+        raise XMLFileError(err)
 
 # Faster, but experimental version of to_file without accept()
 # def to_file(j,f=None,ignore_subs=''):
@@ -54,10 +73,14 @@ def to_file(j, f=None, ignore_subs=''):
 
 
 def from_file(f):
-    # logger.debug('----------------------------')
-    ###logger.debug('Parsing file: %s',f.name)
-    obj, errors = Loader().parse(f.read())
-    return obj, errors
+    try:
+        # logger.debug('----------------------------')
+        ###logger.debug('Parsing file: %s',f.name)
+        obj, errors = Loader().parse(f.read())
+        return obj, errors
+    except Exception as err:
+        logger.error("XML from-file error for file:\n%s" % str(err))
+        raise XMLFileError(err)
 
 ##########################################################################
 # utilities
