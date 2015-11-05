@@ -104,6 +104,8 @@ class GangaThreadPool(object):
                     if not should_wait_cb(total_time, critical_thread_ids, non_critical_thread_ids):
                         logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time() - t_start))
                         break
+                else:
+                    pass
             else:
                 logger.debug('GangaThreadPool shutdown properly')
 

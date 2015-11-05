@@ -596,7 +596,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         return node_count
 
-    def _actually_load_xml(self, fobj, fn, id):
+    def _actually_load_xml(self, fobj, fn, id, load_backup):
 
         must_load = (not id in self.objects) or (self.objects[id]._data is None)
         tmpobj = None
@@ -717,7 +717,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise err
 
             try:
-                self._actually_load_xml(fobj, fn, id)
+                self._actually_load_xml(fobj, fn, id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % str(err))
                 raise err
