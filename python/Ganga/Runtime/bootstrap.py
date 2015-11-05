@@ -623,7 +623,7 @@ See IPython manual for more details:
 http://ipython.scipy.org/doc/manual''')
 
 
-        ipconfig.addOption('args', "['-colors','LightBG', '-autocall','0']", 'Options to be passed to ipython for initialization')
+        ipconfig.addOption('args', "['-colors','LightBG', '-autocall','0', '-pprint']", 'Options to be passed to ipython for initialization')
 
         # import configuration from spyware
         from Ganga.Runtime import spyware
