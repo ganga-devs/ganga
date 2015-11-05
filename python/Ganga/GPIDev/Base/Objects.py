@@ -659,12 +659,12 @@ class GangaObject(Node):
     # schema
     def __deepcopy__(self, memo=None):
         self._getReadAccess()
-        #c = super(GangaObject, self).__deepcopy__(memo)
-        c = super(GangaObject, self).__deepcopy__(None)
+        c = super(GangaObject, self).__deepcopy__(memo)
         if self._schema is not None:
             for name, item in self._schema.allItems():
                 if not item['copyable']:
                     setattr(c, name, self._schema.getDefaultValue(name))
+
                 if item.isA(Schema.SharedItem):
 
                     shared_dir = getattr(c, name)

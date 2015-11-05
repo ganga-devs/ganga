@@ -152,7 +152,7 @@ class FileWorkspace(object):
 
                 try:
                     import time
-                    remove_path = os.path.dirname(self.getPath()) + '__to_be_deleted_' + str(time.time())
+                    remove_path = os.path.dirname(self.getPath()) + "_" + str(time.time()) + '__to_be_deleted_'
                     logger.debug("Moving Path: %s to: %s ahead of delete operation" % (self.getPath(), remove_path))
                     os.rename(self.getPath(), remove_path)
                     logger.debug("Move completed")

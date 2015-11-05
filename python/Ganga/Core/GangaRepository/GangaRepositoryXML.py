@@ -94,11 +94,19 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         raise IOError("Error on moving file %s.new (%s) " % (fn, e))
 
 
-def rmrf(name):
+def rmrf(name, count=0):
+
+    if count != 0:
+        logger.debug("Trying again to remove: %s" % str(name))
+        if count == 3:
+            logger.error("Tried 3 times to remove file/folder: %s" % str(name))
+            from Ganga.Core.exceptions import GangaException
+            raise GangaException("Failed to remove file/folder: %s" % str(name))
+
     if os.path.isdir(name):
 
         try:
-            remove_name = os.path.dirname(name) + '__to_be_deleted_' + str(time.time())
+            remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
             os.rename(name, remove_name)
             logger.debug("Move completed")
         except OSError as err:
@@ -109,23 +117,33 @@ def rmrf(name):
             return
 
         for sfn in os.listdir(remove_name):
-            rmrf(os.path.join(remove_name, sfn))
+            try:
+                rmrf(os.path.join(remove_name, sfn), count)
+            except OSError as err:
+                if err.errno == errno.EBUSY:
+                    logger.debug("rmrf Remove err: %s" % str(err))
+                    ## Sleep 2 sec and try again
+                    time.sleep(2.)
+                    rmrf(os.path.join(remove_name, sfn), count+1)
         try:
             os.removedirs(remove_name)
         except OSError as err:
-            if err.errno != errno.ENOENT:
+            if err.errno == errno.ENOTEMPTY:
+                rmrf(remove_name, count+1)
+            elif err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
                 raise err
             return
     else:
         try:
-            remove_name = name + '__to_be_deleted_' + str(time.time())
+            remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
             os.rename(name, remove_name)
         except OSError as err:
-            if err.errno != errno.ENOENT:
-                logger.debug("rmrf Move err: %s" % str(err))
-                remove_name = name
+            if err.errno not in [errno.ENOENT, errno.EBUSY]:
                 raise err
+            logger.debug("rmrf Move err: %s" % str(err))
+            if err.errno == errno.EBUSY:
+                rmrf(name, count+1)
             return
 
         try:
