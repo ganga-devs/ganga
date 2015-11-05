@@ -1,5 +1,4 @@
 from Ganga.Utility.logging import getLogger
-from Ganga.Core.GangaThread.MTRunner import DuplicateDataItemError
 import time
 
 logger = getLogger('GangaThread')
@@ -36,8 +35,9 @@ class GangaThreadPool(object):
         self.__threads = []
 
     def addServiceThread(self, t):
-        logger.debug(
-            'service thread "%s" added to the GangaThreadPool', t.getName())
+        logger.debug('service thread "%s" added to the GangaThreadPool', t.getName())
+        ##   HERE TO AVOID AN IMPORT ERROR!
+        from Ganga.Core.GangaThread.MTRunner import DuplicateDataItemError
         try:
             self.__threads.append(t)
         except DuplicateDataItemError as e:
