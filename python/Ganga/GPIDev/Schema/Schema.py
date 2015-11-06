@@ -357,6 +357,9 @@ class Item(object):
     def __getitem__(self, key):
         return self._meta[key]
 
+    def hasProperty(self, key):
+        return key in self._meta
+
     def __len__(self):
         return len(self._meta)
 

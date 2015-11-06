@@ -19,7 +19,6 @@ configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
-global stored_list_of_sites
 stored_list_of_sites = []
 
 
@@ -175,7 +174,7 @@ class DiracFile(IGangaFile):
 
     def _attribute_filter__set__(self, name, value):
 
-        if value != "" or not value is None:
+        if value != "" and value is not None:
             #   Do some checking of the filenames in a subprocess
             if name == 'lfn':
                 if self.namePattern == '':
@@ -324,8 +323,8 @@ class DiracFile(IGangaFile):
             self.subfiles = []
             for line in postprocesslocations.readlines():
                 if line.startswith('DiracFile'):
-                    if self.dirac_line_processor(line, self, postprocessLocationsPath) and regex.search(self.namePattern) is None:
-                        logger.error("Error processing line:\n%\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
+                    if self.dirac_line_processor(line, self, os.path.dirname(postprocessLocationsPath)) and regex.search(self.namePattern) is None:
+                        logger.error("Error processing line:\n%s\nAND: namePattern: %s is NOT matched" % (str(line), str(self.namePattern)))
 
         except Exception, err:
             logger.warning("unexpected Error: %s" % str(err))
@@ -382,7 +381,8 @@ class DiracFile(IGangaFile):
         try:
             reps = self.getReplicas()
             ret['Value']['Successful'][self.lfn].update({'replicas': self.locations})
-        except:
+        except Exception as err:
+            logger.debug("Exception: %s" % str(err))
             pass
 
         return ret
@@ -711,12 +711,16 @@ class DiracFile(IGangaFile):
                 logger.warning("LFN will be generated automatically")
                 self.lfn = ""
 
+
         import glob
-        if self.remoteDir == '':
+        if self.remoteDir == '' and self.lfn == '':
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            lfn_base = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+        if self.remoteDir == '' and self.lfn != '':
+            self.remoteDir = configDirac['DiracLFNBase']
+
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
         else:
@@ -869,11 +873,15 @@ for f in glob.glob('###NAME_PATTERN###'):
         WNscript_location = os.path.join( script_path, 'WNInjectTemplate.py' )
         script = FileUtils.loadScript(WNscript_location, '###INDENT###')
 
-        if self.remoteDir == '':
+        if self.remoteDir == '' and self.lfn == '':
             import datetime
             t = datetime.datetime.now()
             this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.remoteDir = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+
+        if self.remoteDir == '' and self.lfn != '':
+            self.remoteDir = configDirac['DiracLFNBase']
+
         if self.remoteDir[:4] == 'LFN:':
             lfn_base = self.remoteDir[4:]
         else:

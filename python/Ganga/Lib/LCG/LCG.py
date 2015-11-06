@@ -29,6 +29,7 @@ from Ganga.Lib.LCG.ElapsedTimeProfiler import ElapsedTimeProfiler
 from Ganga.Lib.LCG.LCGOutputDownloader import LCGOutputDownloader
 from Ganga.Lib.LCG.Utility import get_uuid, get_md5sum
 from Ganga.Utility.logic import implies
+from Ganga.GPIDev.Base.Proxy import isType
 
 try:
     simulator_enabled = os.environ['GANGA_GRID_SIMULATOR']
@@ -149,7 +150,6 @@ class LCG(IBackend):
             logger.debug('load %s as LCGRequirements' % reqName)
         except:
             logger.debug('load default LCGRequirements')
-            pass
 
         # dynamic sandbox cache object loading
         try:
@@ -161,7 +161,6 @@ class LCG(IBackend):
             logger.debug('load %s as SandboxCache' % scName)
         except:
             logger.debug('load default LCGSandboxCAche')
-            pass
 
     def __checkset_middleware__(self, value):
         if value and not value.upper() in ['GLITE', 'EDG']:

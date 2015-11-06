@@ -45,8 +45,9 @@ try:
    Ganga.Runtime._prog = Ganga.Runtime.GangaProgram()
    Ganga.Runtime._prog.parseOptions()
    Ganga.Runtime._prog.configure()
-   Ganga.Runtime._prog.initEnvironment()
-   Ganga.Runtime._prog.bootstrap()
+   Ganga.Runtime._prog.initEnvironment(Ganga.Runtime._prog.options.rexec)
+   Ganga.Runtime._prog.bootstrap(Ganga.Runtime._prog.interactive)
+   Ganga.Runtime._prog.new_user_wizard()
    # Import GPI and run Ganga
    from Ganga.GPI import *
    Ganga.Runtime._prog.run()

@@ -57,7 +57,7 @@ class ThreadPoolQueueMonitor(object):
         else:
             return item.command_input[0]
 
-    def _display(self, i):
+    def _display(self):
         '''Return the current status of the thread pools and queues.'''
         output = ''
         output += '{0:^67} | {1:^50}\n'.format('Ganga user threads:', 'Ganga monitoring threads:')
@@ -85,13 +85,11 @@ class ThreadPoolQueueMonitor(object):
         output += '\n'
         output += "Ganga user queue:\n"
         output += "----------------\n"
-        output += str([self._display_element(i)
-                       for i in self._user_threadpool.get_queue()])
+        output += str([self._display_element(elem) for elem in self._user_threadpool.get_queue()])
         output += '\n'
         output += "Ganga monitoring queue:\n"
         output += "----------------------\n"
-        output += str([self._display_element(i)
-                       for i in self._monitoring_threadpool.get_queue()])
+        output += str([self._display_element(elem) for elem in self._monitoring_threadpool.get_queue()])
         return output
 
     def _repr_pretty_(self, p, cycle):

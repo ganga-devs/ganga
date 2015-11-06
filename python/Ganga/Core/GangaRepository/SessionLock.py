@@ -444,7 +444,6 @@ class SessionLockManager(object):
                     lock_file_hand.close()
             except Exception as err:
                 logger.debug("Global Lock Setup Error: %s" % str(err))
-                pass
         else:
             try:
                 self.lockfn = os.path.join(self.sdir, "global_lock")

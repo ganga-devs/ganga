@@ -125,7 +125,8 @@ class MonitoringWorkerThread(GangaThread):
                 break
             try:
                 result = action.function(*action.args, **action.kwargs)
-            except:
+            except Exception as err:
+                logger.debug("_execUpdateAction: %s" % str(err))
                 action.callback_Failure()
             else:
                 if result in action.success:
@@ -553,7 +554,6 @@ class JobRegistry_Monitor(GangaThread):
                 except Exception as err:
                     log.debug("Caught Unknown Callback Exception")
                     log.debug("Callback %s" % str(err))
-                    pass
                 cbHookEntry._lastRun = time.time()
 
         log.debug("\n\nRunning runClientCallbacks")
@@ -879,11 +879,9 @@ class JobRegistry_Monitor(GangaThread):
             except RegistryKeyError as err:
                 log.debug("RegistryKeyError: The job was most likely removed")
                 log.debug("RegError %s" % str(err))
-                pass  # the job was removed
             except RegistryLockError as err:
                 log.debug("RegistryLockError: The job was most likely removed")
                 log.debug("Reg LockError%s" % str(err))
-                pass  # the job was removed
 
         summary = '{'
         for backend, these_jobs in active_backends.iteritems():
@@ -1061,7 +1059,8 @@ class JobRegistry_Monitor(GangaThread):
             self.disableCallbackHook(credCheckJobInsertor)
             try:
                 Qin.put(_action)
-            except:
+            except Exception as err:
+                logger.debug("makeCred Err: %s" % str(err))
                 cb_Failure("Put _action failure: %s" % str(_action), "unknown", True )
         return credCheckJobInsertor
 
@@ -1095,7 +1094,8 @@ class JobRegistry_Monitor(GangaThread):
         self.disableCallbackHook(self.diskSpaceCheckJobInsertor)
         try:
             Qin.put(_action)
-        except:
+        except Exception as err:
+            logger.debug("diskSp Err: %s" % str(err))
             cb_Failure()
 
     def updateJobs(self):

@@ -87,7 +87,7 @@ class TaskRegistry(Registry):
         from Ganga.Core.GangaRepository import getRegistry
         while not getRegistry("jobs")._started:
             time.sleep(0.1)
-            if self._main_thread.should_stop():
+            if self._main_thread is None or self._main_thread.should_stop():
                 return
 
         while True:
@@ -114,7 +114,7 @@ class TaskRegistry(Registry):
         logger.debug("Entering main loop")
 
         # Main loop
-        while not self._main_thread.should_stop():
+        while self._main_thread is not None and not self._main_thread.should_stop():
 
             # For each task try to run it
             if config['ForceTaskMonitoring'] or monitoring_component.enabled:
@@ -197,7 +197,6 @@ class TaskRegistry(Registry):
     def shutdown(self):
 
         super(TaskRegistry, self).shutdown()
-        #self._main_thread.stop()
 
     def stop(self):
         if self._main_thread is not None:
@@ -351,23 +350,22 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         """
         return _wrap(self._impl.__getitem__(_unwrap(x)))
 
-# Information methods
+    # Information methods
     def table(self):
         """Prints a more detailed table of tasks and their transforms"""
-        return self.__str__(False)
+        #from IPython.lib.pretty import pprint
+        #from IPython.display import display
+        print("%s" % self.__str__(False))
+        return
 
     def __str__(self, short=True):
         """Prints an overview over the currently running tasks"""
         if Ganga.GPIDev.Lib.Registry.RegistrySlice.config["tasks_show_help"]:
             self.help(short=True)
-            Ganga.GPIDev.Lib.Registry.RegistrySlice.config.setUserValue(
-                "tasks_show_help", False)
-            print(
-                "To show this help message again, type 'tasks.help()'.")
+            Ganga.GPIDev.Lib.Registry.RegistrySlice.config.setUserValue("tasks_show_help", False)
+            print("To show this help message again, type 'tasks.help()'.")
             print('')
-            print(
-                " The following is the output of " + markup("tasks.table()", fgcol("blue")))
-            short = False
+            print(" The following is the output of " + markup("tasks.table()", fgcol("blue")))
 
         lenfstring = 0
         flist = []
@@ -379,44 +377,44 @@ class TaskRegistrySliceProxy(RegistrySliceProxy):
         fstring = "|".join(flist)
         fstring += '\n'
         lenfstring += 27
-        ds = "\n" + fstring % ("#", "Type", "Name", "State", "Comment", "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s/ %4s" % (
-            "Jobs", markup("done", overview_colours["completed"]), " " + markup("run", overview_colours["running"]), " " + markup("subd", overview_colours["submitted"]), " " + markup("attd", overview_colours["attempted"]), markup("fail", overview_colours["failed"]), markup("hold", overview_colours["hold"]), " " + markup("bad", overview_colours["bad"])), "Float")
+        ds = fstring % ("#", "Type", "Name", "State", "Comment", "%4s: %4s/ %4s/ %4s/ %4s/ %4s/ %4s/ %4s" % ("Jobs", markup("done", overview_colours["completed"]), " " + markup("run", overview_colours["running"]), " " + markup("subd", overview_colours["submitted"]), " " + markup("attd", overview_colours["attempted"]), markup("fail", overview_colours["failed"]), markup("hold", overview_colours["hold"]), " " + markup("bad", overview_colours["bad"])), "Float")
         ds += "-" * lenfstring + "\n"
         for p in self._impl.objects.values():
 
             if hasattr(p, "_tasktype") and p._tasktype == "ITask":
-                stat = "%4i: %4i/ %4i/  %4i/    --/ %4i/ %4i/ %4i" % (
-                    p.n_all(), p.n_status("completed"), p.n_status("running"), p.n_status("submitted"), p.n_status("failed"), p.n_status("hold"), p.n_status("bad"))
-                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config[
-                             'tasks_columns_width']['Name']], p.status, p.comment, stat, p.float), status_colours[p.status])
+                stat = "%4i: %4i/ %4i/  %4i/    --/ %4i/ %4i/ %4i" % (p.n_all(), p.n_status("completed"), p.n_status("running"), p.n_status("submitted"), p.n_status("failed"), p.n_status("hold"), p.n_status("bad"))
+                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], p.status, p.comment, stat, p.float), status_colours[p.status])
             else:
-                stat = "%4i: %4i/ %4i/    --/  %4i/ %4i/ %4i/ %4i" % (
-                    p.n_all(), p.n_status("completed"), p.n_status("running"), p.n_status("attempted"), p.n_status("failed"), p.n_status("hold"), p.n_status("bad"))
-                ds += markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config[
-                             'tasks_columns_width']['Name']], p.status, p.comment, stat, p.float), status_colours[p.status])
+                stat = "%4i: %4i/ %4i/    --/  %4i/ %4i/ %4i/ %4i" % (p.n_all(), p.n_status("completed"), p.n_status("running"), p.n_status("attempted"), p.n_status("failed"), p.n_status("hold"), p.n_status("bad"))
+                ds +=  markup(fstring % (p.id, p.__class__.__name__, p.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], p.status, p.comment, stat, p.float), status_colours[p.status])
 
-            if short:
+            if short is True:
                 continue
+
             for ti in range(0, len(p.transforms)):
                 t = p.transforms[ti]
 
                 if hasattr(p, "_tasktype") and p._tasktype == "ITask":
-                    stat = "%4i: %4i/ %4i/ %4i/     --/ %4i/ %4i/ %4s" % (
-                        t.n_all(), t.n_status("completed"), t.n_status("running"), t.n_status("submitted"), t.n_status("failed"), t.n_status("hold"), t.n_status("bad"))
-
-                    ds += markup(fstring % ("%i.%i" % (p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config[
-                                 'tasks_columns_width']['Name']], t.status, "", stat, ""), status_colours[t.status])
+                    stat = "%4i: %4i/ %4i/ %4i/     --/ %4i/ %4i/ %4s" % (t.n_all(), t.n_status("completed"), t.n_status("running"), t.n_status("submitted"), t.n_status("failed"), t.n_status("hold"), t.n_status("bad"))
+                    ds += "\n" + markup(fstring % ("%i.%i" % (p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, "", stat, ""), status_colours[t.status])
                 else:
-                    stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (
-                        t.n_all(), t.n_status("completed"), t.n_status("running"), t.n_status("attempted"), t.n_status("failed"), t.n_status("hold"), t.n_status("bad"))
-                    ds += markup(fstring % ("%i.%i" % (p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config[
-                                 'tasks_columns_width']['Name']], t.status, "", stat, ""), status_colours[t.status])
+                    stat = "%4i: %4i/ %4i/     --/ %4i/ %4i/ %4i/ %4s" % (t.n_all(), t.n_status("completed"), t.n_status("running"), t.n_status("attempted"), t.n_status("failed"), t.n_status("hold"), t.n_status("bad"))
+                    ds += "zn" + markup(fstring % ("%i.%i" % (p.id, ti), t.__class__.__name__, t.name[0:Ganga.GPIDev.Lib.Registry.RegistrySlice.config['tasks_columns_width']['Name']], t.status, "", stat, ""), status_colours[t.status])
 
-            ds += "-" * lenfstring + "\n"
+            ds += "-" * lenfstring
 
         return ds + "\n"
 
-    _display = __str__
+    #_display = __str__
+    def _display(self):
+        return self.__str__(True)
+
+    def _repr_pretty_(self, p, cycle):
+        if cycle:
+            p.text('tasks...')
+            return
+        p.text(self.__str__(True))
+
 
     def help(self, short=False):
         """Print a short introduction and 'cheat sheet' for the Ganga Tasks package"""

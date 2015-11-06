@@ -211,7 +211,7 @@ class GridProxy (ICredential):
 
         Return value: None
         """
-        if isType(self.command, ICommandSet):
+        if "ICommandSet" == self.command._name:
             if self.voms:
                 self.command = self.vomsCommand
             else:
@@ -341,7 +341,8 @@ class GridProxy (ICredential):
                         break
                 except IndexError:
                     pass
-        except:
+        except Exception as err:
+            logger.debug("Err: %s" % str(err))
             pass
 
         id = "".join(cn.split())

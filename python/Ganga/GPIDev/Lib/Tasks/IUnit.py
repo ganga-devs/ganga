@@ -189,7 +189,8 @@ class IUnit(GangaObject):
                     addInfoString( self, "Attempting job submission..." )
                     j.submit()
 
-            except:
+            except Exception as err:
+                logger.debug("update Err: %s" % str(err))
                 addInfoString( self, "Failed Job Submission")
                 addInfoString( self, "Reason: %s" % (formatTraceback()))
                 logger.error("Couldn't submit the job. Deactivating unit.")
@@ -214,7 +215,8 @@ class IUnit(GangaObject):
             # not
             try:
                 job = GPI.jobs(jid)
-            except:
+            except Exception as err:
+                logger.debug("Update2 Err: %s" % str(err))
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
                                (jid, task.id, trf.getID(), self.getID()))
                 continue
@@ -282,9 +284,9 @@ class IUnit(GangaObject):
                     try:
                         addInfoString( self, "Attempting major resubmit...")
                         self.majorResubmit(job)
-                    except:
-                        logger.error(
-                            "Couldn't resubmit the job. Deactivating unit.")
+                    except Exception as err:
+                        logger.debug("Update Err3: %s" % str(err))
+                        logger.error("Couldn't resubmit the job. Deactivating unit.")
                         addInfoString( self, "Failed Job resubmission")
                         addInfoString( self, "Reason: %s" % (formatTraceback()))
                         self.active = False
@@ -297,9 +299,9 @@ class IUnit(GangaObject):
                     try:
                         addInfoString( self, "Attempting minor resubmit...")
                         self.minorResubmit(job)
-                    except:
-                        logger.error(
-                            "Couldn't resubmit the job. Deactivating unit.")
+                    except Exception as err:
+                        logger.debug("Update Err4: %s" % str(err))
+                        logger.error("Couldn't resubmit the job. Deactivating unit.")
                         addInfoString( self, "Failed Job resubmission")
                         addInfoString( self, "Reason: %s" % (formatTraceback()))
                         self.active = False
@@ -335,7 +337,8 @@ class IUnit(GangaObject):
 
             try:
                 job = GPI.jobs(jid)
-            except:
+            except Exception as err:
+                logger.debug("n_active Err: %s" % str(err))
                 task = self._getParent()._getParent()
                 trf = self._getParent()
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
@@ -371,7 +374,8 @@ class IUnit(GangaObject):
 
             try:
                 job = GPI.jobs(jid)
-            except:
+            except Exception as err:
+                logger.debug("n_status Err: %s" % str(err))
                 task = self._getParent()._getParent()
                 trf = self._getParent()
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %
@@ -408,7 +412,8 @@ class IUnit(GangaObject):
 
             try:
                 job = GPI.jobs(jid)
-            except:
+            except Exception as err:
+                logger.debug("n_all Err: %s" % str(err))
                 task = self._getParent()._getParent()
                 trf = self._getParent()
                 logger.warning("Cannot find job with id %d. Maybe reset this unit with: tasks(%d).transforms[%d].resetUnit(%d)" %

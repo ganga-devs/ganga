@@ -119,7 +119,6 @@ class Interactive(IBackend):
             self.status = "completed"
         except KeyboardInterrupt:
             self.status = "killed"
-            pass
 
         return True
 
@@ -278,7 +277,8 @@ class Interactive(IBackend):
             if j.backend.id:
                 try:
                     os.kill(j.backend.id, 0)
-                except:
+                except Exception as err:
+                    logger.debug("Err: %s" % str(err))
                     j.backend.status = "completed"
 
             if j.backend.status in ["completed", "failed", "killed"]:

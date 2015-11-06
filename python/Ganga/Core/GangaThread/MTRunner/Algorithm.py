@@ -19,7 +19,6 @@ class Algorithm(object):
 
     def __init__(self):
         self.results = {}
-        pass
 
     def __appendResult__(self, item, result):
         self.results[item] = result

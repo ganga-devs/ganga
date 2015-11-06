@@ -88,14 +88,14 @@ class Shell(object):
 
         """
 
-        if setup:
+        if setup is not None:
 
             env = dict(os.environ)
             env = expand_vars(env)
 
             logger.debug("Initializing Shell")
-            logger.debug("%s" % setup)
-            logger.debug("%s" % " ".join(setup_args))
+            logger.debug("command:\n%s" % setup)
+            logger.debug("args:\n%s" % " ".join(setup_args))
 
             this_cwd = os.path.abspath(os.getcwd())
             if not os.path.exists(this_cwd):
@@ -113,16 +113,19 @@ class Shell(object):
             # print eval(str(output)[0])
             try:
                 env2 = expand_vars(eval(eval(str(output))[0]))
-            except:
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
                 env2 = None
                 logger.error("Cannot construct environ:\n%s" % str(output)[0])
                 try:
                     logger.error("eval: %s" % str(eval(str(output)[0])))
-                except:
+                except Exception as err2:
+                    logger.debug("Err2: %s" % str(err2))
                     pass
                 try:
                     logger.error("eval(eval): %s" % eval(eval(str(output))[0]))
-                except:
+                except Exception as err3:
+                    logger.debug("Err3: %s" % str(err3))
                     pass
 
             if env2:
@@ -230,7 +233,13 @@ class Shell(object):
         from contextlib import closing
         with closing(open(outfile)) as out_file:
             output = out_file.read()
-        os.unlink(outfile)
+        try:
+            os.remove(outfile)
+        except OSError as err:
+            if err.errno != errno.ENOENT:
+                logger.debug("Err removing shell output: %s" % str(err))
+                raise err
+            pass
 
         return rc, output, m
 

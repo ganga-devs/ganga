@@ -28,6 +28,12 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
      False: timeout occured or a break state has been reached
     If break_states is specified, the call terminates when job enters in one of these state, returning False
     '''
+
+    from Ganga.GPIDev.Base.Proxy import stripProxy
+    j = stripProxy(j)
+    if j.master is not None:
+        j = j.master
+
     if timeout is None:
         timeout = config['timeout']
         
@@ -38,7 +44,7 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
     current_status = None
     while j.status != state and timeout > 0:
         if not monitoring_component.isEnabled():
-            monitoring_component.runMonitoring( jobs[j.id] )
+            monitoring_component.runMonitoring( jobs.select(j.id,j.id) )
         else:
             monitoring_component.alive = True
             monitoring_component.enabled = True
@@ -46,7 +52,7 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
             monitoring_component.__updateTimeStamp = 0
             monitoring_component.__sleepCounter = -0.5
         if verbose and j.status != current_status:
-            logger.info(j.id, j.status)
+            logger.info("Job %s: status = %s" % (str(j.id), str(j.status)))
         if current_status is None:
             current_status = j.status
         if type(break_states) == type([]) and j.status in break_states:

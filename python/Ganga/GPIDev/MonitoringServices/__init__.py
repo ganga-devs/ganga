@@ -31,8 +31,6 @@ class MonitoringServiceError(GangaException):
     def __init__(self):
         super(MonitoringServiceError, self).__init__()
 
-    pass
-
 
 def getMonitoringClass(mclassname):
     """

@@ -577,5 +577,6 @@ OutputFile objects to be copied to all jobs"),
                     logger.warning("Removing job '%d'..." % jid)
                     job = GPI.jobs(jid)
                     job.remove()
-                except:
+                except Exception as err:
+                    logger.debug("removeUnused: %s" % str(err))
                     logger.error("Problem removing job '%d'" % jid)

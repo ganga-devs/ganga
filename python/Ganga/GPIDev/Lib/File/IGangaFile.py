@@ -86,7 +86,6 @@ class IGangaFile(GangaObject):
         Remove called when job is removed as long as config option allows
         """
         self.remove()
-        pass
 
     def _readonly(self):
         return False

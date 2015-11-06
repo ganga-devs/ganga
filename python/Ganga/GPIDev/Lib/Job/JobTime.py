@@ -196,7 +196,6 @@ class JobTime(GangaObject):
             # change this to a more appropriate debug.
             logger.debug(
                 "IndexError: ID: %d, Status: '%s', length of list: %d", j.id, status, len(list))
-            pass
 
     # Justin 10.9.09: I think 'ljust' might be just as good if not better than
     # 'rjust' here:

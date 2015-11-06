@@ -60,8 +60,8 @@ class ExeDiracRTHandler(IRuntimeHandler):
                                        contents=script_generator(exe_script_template(),
                                                                  #remove_unreplaced = False,
                                                                  # ,
-                                                                 COMMAND=commandline
-                                                                 #OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
+                                                                 COMMAND=commandline,
+                                                                 OUTPUTFILESINJECTEDCODE = getWNCodeForOutputPostprocessing(job, '    ')
                                                                  ),
                                        executable=True))
 

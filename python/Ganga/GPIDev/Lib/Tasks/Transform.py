@@ -90,7 +90,6 @@ class Transform(GangaObject):
                                 app, app._getParent().status)
                     except AttributeError as e:
                         logger.error("%s", e)
-        pass
 
     def getPartitionApps(self):
         if self._partition_apps is None:

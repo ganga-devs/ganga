@@ -218,7 +218,7 @@ class LocalFile(IGangaFile):
                     logger.info("Deleting: %s" % this_file)
 
                     import time
-                    remove_filename = this_file + '__to_be_deleted_' + str(time.time())
+                    remove_filename = this_file + "_" + str(time.time()) + '__to_be_deleted_'
                     try:
                         os.rename(this_file, remove_filename)
                     except Exception as err:
@@ -226,9 +226,12 @@ class LocalFile(IGangaFile):
                         remove_filename = this_file
 
                     try:
-                        os.unlink(remove_filename)
-                    except Exception as err:
-                        logger.error("Error in removing file: %s" % str(remove_filename))
+                        os.remove(remove_filename)
+                    except OSError as err:
+                        if err.errno != errno.ENOENT:
+                            logger.error("Error in removing file: %s" % str(remove_filename))
+                            raise
+                        pass
 
         return
 

@@ -109,12 +109,12 @@ class FileWorkspace(object):
 
         try:
             name, contents = fileobj
-        except TypeError:
+        except TypeError as err:
+            logger.debug("TypeError: %s" % str(err))
             pass
         else:
             fileobj = FileBuffer(name, contents)
-            logger.warning(
-                'file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
+            logger.warning('file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows
@@ -152,11 +152,11 @@ class FileWorkspace(object):
 
                 try:
                     import time
-                    remove_path = os.path.dirname(self.getPath()) + '__to_be_deleted_' + str(time.time())
+                    remove_path = os.path.dirname(self.getPath()) + "_" + str(time.time()) + '__to_be_deleted_'
                     logger.debug("Moving Path: %s to: %s ahead of delete operation" % (self.getPath(), remove_path))
-                    shutil.move(self.getPath(), remove_path)
+                    os.rename(self.getPath(), remove_path)
                     logger.debug("Move completed")
-                except Exception as err:
+                except OSError as err:
                     logger.debug("Move Error!")
                     logger.debug("Error moving file for deletion, not using new path")
                     logger.debug("Error: %s" % str(err))
@@ -176,7 +176,8 @@ class FileWorkspace(object):
                         shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                     else:
                         exctype, value = excinfo[:2]
-                        logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)' % (self.getPath(), self.__removeTrials, exctype, value))
+                        logger.warning('Cannot delete %s after %s retries due to:  %s:%s (there might some AFS/NSF lock files left over)' %
+                                                                                        (self.getPath(), self.__removeTrials, exctype, value))
 
                 shutil.rmtree(remove_path, ignore_errors=False, onerror=retryRemove)
                 logger.debug('removed %s', remove_path)

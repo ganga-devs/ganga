@@ -533,19 +533,21 @@ class MassStorageFile(IGangaFile):
 
                 if _actual_delete:
                     import time
-                    remove_filename = _localFile + '__to_be_deleted_' + str(time.time())
+                    remove_filename = _localFile + "_" + str(time.time()) + '__to_be_deleted_'
 
                     try:
                         os.rename(_localFile, remove_filename)
-                    except Exception as err:
+                    except OSError as err:
                         logger.warning("Error in first stage of removing file: %s" % this_file)
                         remove_filename = _localFile
 
                     try:
-                        os.unlink(remove_filename)
-                    except Exception as err:
-                        logger.error("Error in removing file: %s" % str(remove_filename))
-
+                        os.remove(remove_filename)
+                    except OSError as err:
+                        if err.errno != errno.ENOENT:
+                            logger.error("Error in removing file: %s" % str(remove_filename))
+                            raise
+                        pass
         return
 
     def accessURL(self):

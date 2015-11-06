@@ -1,6 +1,6 @@
 **************************************************************************************************************
 
-6.1.12 (2015/10/30)
+6.1.13 (2015/11/04)
 
 --------------------------------------------------------------------------------------------------------------
 ganga/python/Ganga
@@ -10,6 +10,7 @@ ganga/python/Ganga
 * Fixes relating to proxied objects within Core.
 * Fixing minor inconsistencies between Interactive and Batch mode.
 * Code cleanup now means that monitoring loop should break much quicker on shutdown.
+* Ganga will no longer startup with <1% disk space free to avoid data and repository corruption.
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -19,6 +20,7 @@ ganga/python/GangaDirac
 * Ganga will make 5 attempts to complete a task from the 'completing' state to a 'completed' state before
   marking the job as 'failed' due to some form of exception in completing the job.
 * Fixes for GangaDirac commands which failed due to modernisation of the code.
+* DiracFile objects now have correct localDir of the job output workspace set after the job finishes.
 
 
 --------------------------------------------------------------------------------------------------------------
@@ -26,6 +28,7 @@ ganga/python/GangaLHCb
 --------------------------------------------------------------------------------------------------------------
 * Some bugfixes for LHCbDataset.
   It's now possible to extend LHCbDataset with an LHCbDataset and replicate has been re-written.
+* Fixes to LHCbTasks.
 
 
 **************************************************************************************************************
