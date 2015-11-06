@@ -37,6 +37,7 @@ class IUnit(GangaObject):
         'inputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of file objects that will act as input files for a job"),
         'outputfiles': GangaFileItem(defvalue=[], typelist=['str', 'Ganga.GPIDev.Lib.File.IGangaFile.IGangaFile'], sequence=1, doc="list of OutputFile objects to be copied to all jobs"),
         'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Unit', typelist=["int"]),
     })
 
     _category = 'units'
@@ -62,11 +63,16 @@ class IUnit(GangaObject):
 
     def getID(self):
         """Get the ID of this unit within the transform"""
-        trf = self._getParent()
-        if not trf:
-            raise ApplicationConfigurationError(
-                None, "This unit has not been associated with a transform and so there is no ID available")
-        return trf.units.index(self)
+
+        # if the id isn't already set, use the index from the parent Task
+        if self.id < 0:
+           trf = self._getParent()
+           if not trf:
+              raise ApplicationConfigurationError(
+                 None, "This unit has not been associated with a transform and so there is no ID available")
+           self.id = trf.units.index(self)
+           
+        return self.id
 
     def updateStatus(self, status):
         """Update status hook"""

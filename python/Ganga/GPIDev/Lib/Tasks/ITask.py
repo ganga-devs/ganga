@@ -243,6 +243,7 @@ class ITask(GangaObject):
         # this means that t.insertTransform(0,t2.transforms[0]) will cause
         # Great Breakage
         self.transforms.insert(id, tf)
+        stripProxy(tf).id = id
 
     def appendTransform(self, tf):
         """Append transform"""

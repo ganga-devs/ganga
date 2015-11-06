@@ -45,6 +45,7 @@ OutputFile objects to be copied to all jobs"),
         'submit_with_threads': SimpleItem(defvalue=False, doc='Use Ganga Threads for submission'),
         'max_active_threads': SimpleItem(defvalue=10, doc='Maximum number of Ganga Threads to use. Note that the number of simultaneous threads is controlled by the queue system (default is 5)'),
         'info' : SimpleItem(defvalue=[],typelist=['str'],protected=1,sequence=1,doc="Info showing status transitions and unit info"),
+        'id': SimpleItem(defvalue=-1, protected=1, doc='ID of the Transform', typelist=["int"]),
         #'force_single_unit' : SimpleItem(defvalue=False, doc='Force all input data into one Unit'),
     })
 
@@ -173,11 +174,16 @@ OutputFile objects to be copied to all jobs"),
 
     def getID(self):
         """Return the index of this trf in the parent task"""
-        task = self._getParent()
-        if not task:
-            raise ApplicationConfigurationError(
-                None, "This transform has not been associated with a task and so there is no ID available")
-        return task.transforms.index(self)
+
+        # if the id isn't already set, use the index from the parent Task
+        if self.id < 0:
+            task = self._getParent()
+            if not task:
+                raise ApplicationConfigurationError(
+                    None, "This transform has not been associated with a task and so there is no ID available")
+            self.id = task.transforms.index(self)
+        
+        return self.id
 
     def run(self, check=True):
         """Sets this transform to running status"""
@@ -391,6 +397,7 @@ OutputFile objects to be copied to all jobs"),
             self.units[prev_unit.getID()] = unit
         else:
             self.units.append(unit)
+            stripProxy(unit).id = len(self.units) - 1
 
 # Information methods
     def fqn(self):
