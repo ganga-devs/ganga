@@ -20,7 +20,8 @@ from Ganga.Core.GangaRepository import RegistryKeyError, getRegistry
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
+from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap,  JobRegistrySliceProxy
+from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
@@ -1490,8 +1491,6 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
-        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
-        from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
         assert(self.subjobs == [] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
 
         # no longer needed with prepared state
@@ -2112,9 +2111,12 @@ class Job(GangaObject):
 
     def _subjobs_proxy(self):
         subjobs = JobRegistrySlice('jobs(%s).subjobs' % str(self.id))
-        for j in self.subjobs:
-            subjobs.objects[j.id] = j
-        # print 'return slice',subjobs
+        if isType(self.subjobs, SubJobXMLList):
+            subjobs.objects = self.subjobs
+        else:
+            for sj in self.subjobs:
+                subjobs.objects[sj.id] = sj
+        #print('return slice: %s' % str(subjobs))
         return _wrap(subjobs)
 
     def _subjobs_summary_print(self, value, verbosity_level):
