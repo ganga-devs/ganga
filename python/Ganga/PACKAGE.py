@@ -41,13 +41,9 @@ _defaultExternalHome = None
 # value specified in the dictionary may be either string or a list of strings (they will be separated by colons ':').
 #
 _externalPackages = {
-    'ipython': {#'version': '3.2.1',
-                'version' : '0.6.13_ganga_patch1',
+    'ipython': {'version': '3.2.1',
                 'noarch': True,
                 'PYTHONPATH': 'lib/python'},
-    #'ApMon': {'version': '2.2.11',
-    #          'noarch': True,
-    #          'syspath': 'python'},
     'paramiko': {'version': '1.7.3',
                  'noarch': True,
                  'syspath': 'lib/python2.3/site-packages'},
@@ -147,13 +143,11 @@ def standardSetup(setup=setup):
         for name in setup.packages:
             if name == 'pycrypto' and sys.hexversion > 0x2050000:
                 # hack the pycrypto path for 2.5
-                setup.packages['pycrypto']['syspath'] = setup.packages[
-                    'pycrypto']['syspath'].replace('2.3', '2.5')
+                setup.packages['pycrypto']['syspath'] = setup.packages['pycrypto']['syspath'].replace('2.3', '2.5')
 
             if name == 'paramiko' and sys.hexversion > 0x2050000:
                 # hack the paramiko path for 2.5
-                setup.packages['paramiko']['syspath'] = setup.packages[
-                    'paramiko']['syspath'].replace('2.3', '2.5')
+                setup.packages['paramiko']['syspath'] = setup.packages['paramiko']['syspath'].replace('2.3', '2.5')
 
             setup.setSysPath(name)
             setup.prependPath(name, 'PYTHONPATH')
@@ -163,3 +157,4 @@ def standardSetup(setup=setup):
             # setup.prependPath(name,'LD_LIBRARY_PATH')
     else:
         sys.exit()
+
