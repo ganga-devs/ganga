@@ -160,7 +160,6 @@ def shutdown():
         logger.debug("Err: %s" % str(err))
         logger.error("Failed to Shutdown prep Repository!!! please check for stale lock files")
         logger.error("Trying to shutdown cleanly regardless")
-        pass
 
     for registry in getRegistries():
         thisName = registry.name
@@ -174,7 +173,6 @@ def shutdown():
             logger.error("Failed to Shutdown Repository: %s !!! please check for stale lock files" % thisName)
             logger.error("%s" % str(x))
             logger.error("Trying to Shutdown cleanly regardless")
-            pass
 
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()

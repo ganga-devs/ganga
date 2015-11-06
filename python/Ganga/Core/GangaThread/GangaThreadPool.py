@@ -35,13 +35,13 @@ class GangaThreadPool(object):
         self.__threads = []
 
     def addServiceThread(self, t):
-        logger.debug(
-            'service thread "%s" added to the GangaThreadPool', t.getName())
+        logger.debug('service thread "%s" added to the GangaThreadPool', t.getName())
+        ##   HERE TO AVOID AN IMPORT ERROR!
+        from Ganga.Core.GangaThread.MTRunner import DuplicateDataItemError
         try:
             self.__threads.append(t)
         except DuplicateDataItemError as e:
             self.logger.debug(str(e))
-            pass
 
     def delServiceThread(self, t):
         logger.debug('service thread "%s" deleted from the GangaThreadPool', t.getName())
@@ -50,7 +50,6 @@ class GangaThreadPool(object):
                 self.__threads.remove(t)
         except ValueError as e:
             logger.debug(str(e))
-            pass
 
     def shutdown(self, should_wait_cb=None):
         """Shutdown the Ganga session.
@@ -122,6 +121,8 @@ class GangaThreadPool(object):
                     if not should_wait_cb(total_time, critical_thread_ids, non_critical_thread_ids):
                         logger.debug('GangaThreadPool shutdown anyway after %d sec.' % (time.time() - t_start))
                         break
+                else:
+                    pass
             else:
                 logger.debug('GangaThreadPool shutdown properly')
 

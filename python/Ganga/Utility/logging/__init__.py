@@ -175,7 +175,7 @@ def _make_file_handler(logfile, logfile_size):
 # reflect all user changes immediately
 def post_config_handler(opt, value):
 
-    if '_customFormat' in config:
+    if '_customFormat' in config and config['_customFormat'] != "":
         for k in _formats.keys():
             _formats[k] = config['_customFormat']
 

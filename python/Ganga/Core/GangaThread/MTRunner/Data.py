@@ -13,6 +13,8 @@ class DuplicateDataItemError(Exception):
         self.message = message
 
 
+defaultList = []
+
 class Data(object):
 
     """
@@ -21,7 +23,9 @@ class Data(object):
 
     _attributes = ('collection', 'queue')
 
-    def __init__(self, collection=[]):
+    def __init__(self, collection=defaultList):
+        if collection == defaultList:
+            collection = []
 
         self.collection = collection
         self.queue = Queue(maxsize=-1)

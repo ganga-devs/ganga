@@ -554,7 +554,6 @@ class JobRegistry_Monitor(GangaThread):
                 except Exception as err:
                     log.debug("Caught Unknown Callback Exception")
                     log.debug("Callback %s" % str(err))
-                    pass
                 cbHookEntry._lastRun = time.time()
 
         log.debug("\n\nRunning runClientCallbacks")
@@ -880,11 +879,9 @@ class JobRegistry_Monitor(GangaThread):
             except RegistryKeyError as err:
                 log.debug("RegistryKeyError: The job was most likely removed")
                 log.debug("RegError %s" % str(err))
-                pass  # the job was removed
             except RegistryLockError as err:
                 log.debug("RegistryLockError: The job was most likely removed")
                 log.debug("Reg LockError%s" % str(err))
-                pass  # the job was removed
 
         summary = '{'
         for backend, these_jobs in active_backends.iteritems():

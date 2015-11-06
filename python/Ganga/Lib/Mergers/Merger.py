@@ -35,19 +35,14 @@ def getMergerObject(file_ext):
             result = allPlugins.find('postprocessor', associate_merger)()
     except ConfigError, err:
         logger.debug("ConfError %s" % str(err))
-        pass
     except KeyError, err:
         logger.debug("KeyError %s" % str(err))
-        pass
     except PluginManagerError, err:
         logger.debug("PluginError %s" % str(err))
-        pass
     except SyntaxError, err:
         logger.debug("SyntaxError %s" % str(err))
-        pass
     except TypeError, err:  # TypeError as we may not be able to call ()
         logger.debug("TypeError %s" % str(err))
-        pass  # just return None
     return result
 
 

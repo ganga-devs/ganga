@@ -49,7 +49,7 @@ class SubJobXMLList(GangaObject):
     def __deepcopy__(self, memo=None):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
-        dict = self.__dict__.copy()
+        dict = self.__dict__.__deepcopy__(memo)
         obj.__dict__ = dict
         return obj
 
@@ -111,7 +111,6 @@ class SubJobXMLList(GangaObject):
             index_file_obj.close()
         except Exception, err:
             logger.debug( "cache write error: %s" % str(err) )
-            pass
 
     #def _attribute_filter__get__(self, name ):
 

@@ -94,11 +94,19 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
         raise IOError("Error on moving file %s.new (%s) " % (fn, e))
 
 
-def rmrf(name):
+def rmrf(name, count=0):
+
+    if count != 0:
+        logger.debug("Trying again to remove: %s" % str(name))
+        if count == 3:
+            logger.error("Tried 3 times to remove file/folder: %s" % str(name))
+            from Ganga.Core.exceptions import GangaException
+            raise GangaException("Failed to remove file/folder: %s" % str(name))
+
     if os.path.isdir(name):
 
         try:
-            remove_name = os.path.dirname(name) + '__to_be_deleted_' + str(time.time())
+            remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
             os.rename(name, remove_name)
             logger.debug("Move completed")
         except OSError as err:
@@ -109,23 +117,33 @@ def rmrf(name):
             return
 
         for sfn in os.listdir(remove_name):
-            rmrf(os.path.join(remove_name, sfn))
+            try:
+                rmrf(os.path.join(remove_name, sfn), count)
+            except OSError as err:
+                if err.errno == errno.EBUSY:
+                    logger.debug("rmrf Remove err: %s" % str(err))
+                    ## Sleep 2 sec and try again
+                    time.sleep(2.)
+                    rmrf(os.path.join(remove_name, sfn), count+1)
         try:
             os.removedirs(remove_name)
         except OSError as err:
-            if err.errno != errno.ENOENT:
+            if err.errno == errno.ENOTEMPTY:
+                rmrf(remove_name, count+1)
+            elif err.errno != errno.ENOENT:
                 logger.debug("%s" % str(err))
                 raise err
             return
     else:
         try:
-            remove_name = name + '__to_be_deleted_' + str(time.time())
+            remove_name = name + "_" + str(time.time()) + '__to_be_deleted_'
             os.rename(name, remove_name)
         except OSError as err:
-            if err.errno != errno.ENOENT:
-                logger.debug("rmrf Move err: %s" % str(err))
-                remove_name = name
+            if err.errno not in [errno.ENOENT, errno.EBUSY]:
                 raise err
+            logger.debug("rmrf Move err: %s" % str(err))
+            if err.errno == errno.EBUSY:
+                rmrf(name, count+1)
             return
 
         try:
@@ -278,7 +296,6 @@ class GangaRepositoryLocal(GangaRepository):
                             logger.warning("Deleted index file without data file: %s" % self.get_idxfn(id))
                         except OSError as err:
                             logger.debug("get_index_listing delete Exception: %s" % str(err))
-                            pass
         return objs
 
     def _read_master_cache(self):
@@ -335,7 +352,6 @@ class GangaRepositoryLocal(GangaRepository):
                 except Exception as err:
                     logger.debug("Failed to update index: %s on startup/shutdown" % str(k))
                     logger.debug("Reason: %s" % str(err))
-                    pass
             cached_list = []
             iterables = self._cache_load_timestamp.iteritems()
             for k, v in iterables:
@@ -365,11 +381,9 @@ class GangaRepositoryLocal(GangaRepository):
                     os.remove(os.path.join(self.root, 'master.idx'))
                 except OSError as x:
                     Ganga.Utility.logging.log_user_exception(debug=True)
-                    pass
         except Exception as err:
             logger.debug("write_error2: %s" % str(err))
             Ganga.Utility.logging.log_unknown_exception()
-            pass
 
         return
 
@@ -508,7 +522,6 @@ class GangaRepositoryLocal(GangaRepository):
                         objs[i]._data[self.sub_split][j]._dirty = True
                 except AttributeError as err:
                     logger.debug("RepoXML add Exception: %s" % str(err))
-                    pass  # this is not a list of Ganga objects
         return ids
 
     def _safe_flush_xml(self, id):
@@ -596,7 +609,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         return node_count
 
-    def _actually_load_xml(self, fobj, fn, id):
+    def _actually_load_xml(self, fobj, fn, id, load_backup):
 
         must_load = (not id in self.objects) or (self.objects[id]._data is None)
         tmpobj = None
@@ -717,7 +730,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise err
 
             try:
-                self._actually_load_xml(fobj, fn, id)
+                self._actually_load_xml(fobj, fn, id, load_backup)
             except RepositoryError as err:
                 logger.debug("Repo Exception: %s" % str(err))
                 raise err
@@ -745,7 +758,6 @@ class GangaRepositoryLocal(GangaRepository):
                     if isType(err2, XMLFileError):
                         logger.error("XML File failed to load for Job id: %s" % str(id))
                         logger.error("Actual Error was:\n%s" % str(err2))
-                    pass
                 # add object to incomplete_objects
                 if not id in self.incomplete_objects:
                     self.incomplete_objects.append(id)
@@ -765,7 +777,6 @@ class GangaRepositoryLocal(GangaRepository):
                 rmrf(os.path.dirname(fn) + ".index")
             except OSError as err:
                 logger.debug("Delete Error: %s" % str(err))
-                pass
             self._internal_del__(id)
             rmrf(os.path.dirname(fn))
 

@@ -72,7 +72,6 @@ class PluginManager(object):
 
         except KeyError:
             logger.debug("KeyError from Config system!")
-            pass
         except:
             logger.error("Some Other unexpected ERROR!")
             raise

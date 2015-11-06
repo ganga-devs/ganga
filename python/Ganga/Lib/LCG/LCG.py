@@ -150,7 +150,6 @@ class LCG(IBackend):
             logger.debug('load %s as LCGRequirements' % reqName)
         except:
             logger.debug('load default LCGRequirements')
-            pass
 
         # dynamic sandbox cache object loading
         try:
@@ -162,7 +161,6 @@ class LCG(IBackend):
             logger.debug('load %s as SandboxCache' % scName)
         except:
             logger.debug('load default LCGSandboxCAche')
-            pass
 
     def __checkset_middleware__(self, value):
         if value and not value.upper() in ['GLITE', 'EDG']:

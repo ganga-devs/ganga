@@ -10,6 +10,8 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
+defaultList = []
+
 class RegistryError(GangaException):
 
     def __init__(self, what=''):
@@ -124,7 +126,6 @@ class IncompleteObject(object):
                     errstr += " Object is locked by session '%s' " % self.registry.repository.get_lock_session(self.id)
                 except Exception as err:
                     logger.debug("Remove Lock error: %s" % str(err))
-                    pass
                 raise RegistryLockError(errstr)
             self.registry.repository.delete([self.id])
             for d in self.registry.changed_ids.itervalues():
@@ -363,11 +364,15 @@ class Registry(object):
         finally:
             self._lock.release()
 
-    def _flush(self, objs=[]):
+    def _flush(self, objs=defaultList):
         """Flush a set of objects to the persistency layer immediately
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError"""
+
+        if objs == defaultList:
+            obj = []
+
         logger.debug("Reg: %s _flush(%s)" % (self.name, objs))
         if not self._started:
             raise RegistryAccessError(
@@ -449,7 +454,6 @@ class Registry(object):
                             errstr += " Object is locked by session '%s' " % self.repository.get_lock_session(id)
                         except Exception as err:
                             logger.debug( "Locking Exception: %s" % str(err) )
-                            pass
                         raise RegistryLockError(errstr)
                 finally:  # try to load even if lock fails
                     try:
@@ -555,7 +559,6 @@ class Registry(object):
                         self._flush()
                     except Exception, err:
                         logger.debug("shutdown _flush Exception: %s" % str(err))
-                        pass
                     self.metadata.shutdown()
             except Exception as err:
                 logger.debug("Exception on shutting down metadata repository '%s' registry: %s", self.name, str(err))

@@ -533,7 +533,7 @@ class MassStorageFile(IGangaFile):
 
                 if _actual_delete:
                     import time
-                    remove_filename = _localFile + '__to_be_deleted_' + str(time.time())
+                    remove_filename = _localFile + "_" + str(time.time()) + '__to_be_deleted_'
 
                     try:
                         os.rename(_localFile, remove_filename)
