@@ -239,7 +239,8 @@ under certain conditions; type license() for details.
 # Can't check here if the file is readable, because the path isn't known
 #           file_opens(self.args[0],'reading script')
 
-    def new_version(self, update=True):
+    @staticmethod
+    def new_version(update=True):
         versions_filename = os.path.join(
             Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
         if not os.path.exists(versions_filename):
@@ -255,7 +256,8 @@ under certain conditions; type license() for details.
 
         return False
 
-    def generate_config_file(self, config_file):
+    @staticmethod
+    def generate_config_file(config_file):
         from Ganga.GPIDev.Lib.Config.Config import config_file_as_text
 
         # Old backup routine
@@ -304,7 +306,8 @@ under certain conditions; type license() for details.
         with open(config_file, 'w') as new_config_file:
             new_config_file.write(new_config)
 
-    def print_release_notes(self):
+    @staticmethod
+    def print_release_notes():
         from Ganga.Utility.logging import getLogger
         from Ganga.Utility.Config.Config import getConfig
         import itertools
@@ -422,7 +425,8 @@ under certain conditions; type license() for details.
                 except ConfigError as x:
                     self.exit('command line option error when resetting after config generation: %s' % str(x))
 
-    def parse_cmdline_config_options(self, cmdline_options):
+    @staticmethod
+    def parse_cmdline_config_options(cmdline_options):
         """ Parse a list of command line config options and return a list of triplets (section,option,value).
         In case of parsing errors, raise ConfigError exception.
         """
@@ -507,15 +511,6 @@ under certain conditions; type license() for details.
             # ignore all I/O errors (e.g. file does not exist), this is just an
             # advisory check
             logger.debug("Config File Exception: %s" % str(x))
-
-        self.check_IPythonDir()
-
-        #this_logger = Ganga.Utility.logging.getLogger( "Configure" )
-        #cf = file(self.options.config_file)
-        #first_line = cf.readline()
-        #import re
-        # r = re.compile(r'# Ganga configuration file \(\$[N]ame: (?P<version>\S+) \$\)').match(first_line)
-        #this_logger.info( str( r.group('version').split('-') ) )
 
         if self.options.config_path is None:
             try:
@@ -624,18 +619,9 @@ some packages such as GangaTest may be taken from the release area.""",
         ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython', '''IPython shell configuration
 See IPython manual for more details:
 http://ipython.scipy.org/doc/manual''')
-        try:
-            from IPython import __version__ as ipver
-        except ImportError:
-            ipver = "0.6.13"
-        # in older ipython version the option is -noautocall (this is the
-        # version shipped with Ganga in 06/2009)
-        if ipver == "0.6.13":
-            noautocall = "'-noautocall'"
-        else:
-            noautocall = "'-autocall','0'"
 
-        ipconfig.addOption('args', "['-colors','LightBG', %s]" % noautocall, 'FIXME')
+
+        ipconfig.addOption('args', "['-colors','LightBG', '-autocall','0', '-pprint']", 'Options to be passed to ipython for initialization')
 
         # import configuration from spyware
         from Ganga.Runtime import spyware
@@ -778,8 +764,10 @@ If ANSI text colours are enabled, then individual colours may be specified like 
     # if option rexec=1 then initEnvironment restarts the current ganga process (needed for LD_LIBRARY_PATH on linux)
     # set rexec=0 if you prepare your environment outside of Ganga and you do
     # not want to rexec process
-    def initEnvironment(self):
+    @staticmethod
+    def initEnvironment(opt_rexec):
 
+        logger.debug("Installing Shutdown Manager")
         from Ganga.Core.InternalServices import ShutdownManager
         ShutdownManager.install()
 
@@ -787,6 +775,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         from Ganga.Utility.Runtime import RuntimePackage, allRuntimes
         from Ganga.Core import GangaException
 
+        logger.debug("Import plugins")
         try:
             # load Ganga system plugins...
             from Ganga.Runtime import plugins
@@ -803,22 +792,22 @@ If ANSI text colours are enabled, then individual colours may be specified like 
             config = getConfig('Configuration')
 
             # runtime warnings issued by the interpreter may be suppresed
-            config.addOption('IgnoreRuntimeWarnings', False,
-                             "runtime warnings issued by the interpreter may be suppresed")
-            if config['IgnoreRuntimeWarnings']:
-                import warnings
-                warnings.filterwarnings(action="ignore", category=RuntimeWarning)
+            config.addOption('IgnoreRuntimeWarnings', False, "runtime warnings issued by the interpreter may be suppresed")
+            #if config['IgnoreRuntimeWarnings']:
+            #    import warnings
+            #    warnings.filterwarnings(action="ignore", category=RuntimeWarning)
 
             def transform(x):
                 return os.path.normpath(Ganga.Utility.files.expandfilename(x))
 
-            paths = map(
-                transform, filter(lambda x: x, config['RUNTIME_PATH'].split(':')))
+            paths = map(transform, filter(lambda x: x, config['RUNTIME_PATH'].split(':')))
 
             for path in paths:
                 r = RuntimePackage(path)
         except KeyError, err:
             logger.debug("init KeyError: %s" % str(err))
+
+        logger.debug("Internal_ProxReexec")
 
         # initialize the environment only if the current ganga process has not
         # been rexeced
@@ -837,7 +826,7 @@ If ANSI text colours are enabled, then individual colours may be specified like 
 
             # in some cases the reexecution of the process is needed for LD_LIBRARY_PATH to take effect
             # re-exec the process if it is allowed in the options
-            if self.options.rexec:
+            if opt_rexec:
                 logger.debug('re-executing the process for LD_LIBRARY_PATH changes to take effect')
                 os.environ['GANGA_INTERNAL_PROCREEXEC'] = '1'
                 prog = os.path.normpath(sys.argv[0])
@@ -846,20 +835,21 @@ If ANSI text colours are enabled, then individual colours may be specified like 
                 os.execv(prog, sys.argv)
 
         else:
-            logger.debug(
-                'skipped the environment initialization -- the processed has been re-execed and setup was done already')
+            logger.debug('skipped the environment initialization -- the processed has been re-execed and setup was done already')
 
         # bugfix 40110
         if 'GANGA_INTERNAL_PROCREEXEC' in os.environ:
             del os.environ['GANGA_INTERNAL_PROCREEXEC']
 
+        logger.debug("Starting Queues")
         # start queues
         from Ganga.Runtime.GPIexport import exportToGPI
         from Ganga.Core.GangaThread.WorkerThreads.ThreadPoolQueueMonitor import ThreadPoolQueueMonitor
         exportToGPI('queues', ThreadPoolQueueMonitor(), 'Objects')
 
     # bootstrap all system and user-defined runtime modules
-    def bootstrap(self):
+    @staticmethod
+    def bootstrap(interactive):
         import Ganga.Utility.Config
         config = Ganga.Utility.Config.getConfig('Configuration')
 
@@ -1135,7 +1125,7 @@ default_backends = LCG
         logger.debug("Bootstrap Core Modules")
         # bootstrap core modules
         from Ganga.GPIDev.Base.Proxy import proxyRef
-        Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), self.interactive)
+        Ganga.Core.bootstrap(getattr(Ganga.GPI.jobs, proxyRef), interactive)
 
         import Ganga.GPIDev.Lib.Config
         exportToGPI('config', Ganga.GPIDev.Lib.Config.config,
@@ -1151,10 +1141,6 @@ default_backends = LCG
         # this point
         Ganga.GPIDev.Lib.Config.bootstrap()
 
-        # Depending on where this is put more or less of the config will have been loaded. if put after
-        # the bootstrap then the defaults_* config options will also be loaded.
-        self.new_user_wizard()
-
         logger.debug("Post-Bootstrap hooks")
         ###########
         # run post bootstrap hooks
@@ -1165,7 +1151,8 @@ default_backends = LCG
                 logger.error("problems with post bootstrap hook for %s" % r.name)
                 logger.error("Reason: %s" % str(err))
 
-    def startTestRunner(self):
+    @staticmethod
+    def startTestRunner(my_args):
         """
         run the testing framework
         """
@@ -1186,22 +1173,20 @@ default_backends = LCG
             if tfconfig['EnableTestRunner']:
                 logger.info("Starting Ganga Test Runner")
 
-                if not self.args:
-                    logger.warning(
-                        "Please specify the tests to run ( i.e. ganga --test Ganga/test )")
+                if not my_args:
+                    logger.warning("Please specify the tests to run ( i.e. ganga --test Ganga/test )")
                     return -1
 
-                rc = runner.start(test_selection=" ".join(self.args))
+                rc = runner.start(test_selection=" ".join(my_args))
             else:
-                logger.info(
-                    "Test Runner is disabled (set EnableTestRunner=True to enable it)")
+                logger.info("Test Runner is disabled (set EnableTestRunner=True to enable it)")
 
             if rc > 0 and tfconfig['EnableHTMLReporter']:
                 logger.info("Generating tests HTML reports")
                 rc = htmlizer.main(tfconfig)
             elif rc > 0 and tfconfig['EnableXMLDifferencer']:
                 logger.info("Generating difference HTML reports")
-                rc = xmldifferencer.main(self.args)
+                rc = xmldifferencer.main(my_args)
             return rc
         except ImportError as e:
             logger.error("You need GangaTest external package in order to invoke Ganga test-runner.")
@@ -1276,7 +1261,7 @@ default_backends = LCG
         if self.options.TEST:
             sys.argv = self.args
             try:
-                rc = self.startTestRunner()
+                rc = self.startTestRunner(self.args)
             except (KeyboardInterrupt, SystemExit):
                 logger.warning('Test Runner interrupted!')
                 import Ganga.Core.InternalServices.Coordinator
@@ -1314,10 +1299,17 @@ default_backends = LCG
         shell = config['TextShell']
 
         if shell == 'IPython':
+
+            try:
+                import IPython
+            except ImportError as err:
+                logger.error("Cannot load IPython class!!!")
+                logger.error("Please check your environment and re-load Ganga from a working shell!")
+                logger.error("Exiting Ganga now, goodbye!")
+                return
+
             import Ganga.Utility.Config
             ipconfig = Ganga.Utility.Config.getConfig('TextShell_IPython')
-#            ipconfig = Ganga.Utility.Config.makeConfig('TextShell_IPython','IPython shell configuration')
-#            ipconfig.addOption('args',"['-colors','LightBG', '-noautocall']",'FIXME')
             args = eval(ipconfig['args'])
 
             # buffering of log messages from all threads called "GANGA_Update_Thread"
@@ -1326,16 +1318,11 @@ default_backends = LCG
             import Ganga.Utility.logging
             Ganga.Utility.logging.enableCaching()
 
-            from IPython import __version__ as ipver
+            ipver = IPython.__version__
 
-            if ipver == "0.6.13":
-
-                self.launch_OldIPython(local_ns, args)
-
-            elif ipver in ["3.1.0", "3.2.0", "3.2.1", '4.0.0']:
-
-                self.launch_NewIPython(local_ns, args)
-
+            if ipver in ["3.1.0", "3.2.0", "3.2.1", '4.0.0']:
+                self.check_IPythonDir()
+                self.launch_IPython(local_ns, args, self._ganga_error_handler, self.ganga_prompt)
             else:
                 print("Unknown IPython version: %s" % str(ipver))
                 return
@@ -1349,7 +1336,11 @@ default_backends = LCG
 
         return
 
-    def check_IPythonDir(self):
+    @staticmethod
+    def check_IPythonDir():
+        """
+        Check that the .ipython folder exists as expected as defined by IPYTHONDIR
+        """
 
         not_exist = False
 
@@ -1382,7 +1373,29 @@ default_backends = LCG
 
         return None
 
-    def launch_NewIPython(self, local_ns, args):
+    @staticmethod
+    def _ganga_error_handler(exception_obj, etype, value, tb, tb_offset=None):
+        """
+        Error handler for IPython 3.x+ to identify expected Ganga exceptions or unexpected uncaught exceptions from somewhere
+        """
+        ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
+        from Ganga.Utility.logging import getLogger
+        logger = getLogger(modulename=True)
+        logger.error("Error: %s" % str(value))
+
+        from Ganga.Core.exceptions import GangaException
+        if not issubclass(etype, GangaException):
+            logger.error("Unknown/Unexpected ERROR!!")
+            #logger.error("If you're able to reproduce this please report this to the Ganga developers!")
+            #logger.error("value: %s" % value)
+            exception_obj.showtraceback((etype, value, tb), tb_offset=tb_offset)
+        return None
+
+    @staticmethod
+    def launch_IPython(local_ns, args, error_handler, ganga_prompt):
+        """
+        Launch an embedded IPython session within the Ganga.GPI namespace
+        """
 
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
 
@@ -1399,32 +1412,17 @@ default_backends = LCG
         from IPython.terminal.embed import InteractiveShellEmbed
         ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
 
-        ## see https://ipython.org/ipython-doc/dev/api/generated/IPython.core.interactiveshell.html#IPython.core.interactiveshell.InteractiveShell.set_custom_exc
-        def ganga_handler(self, etype, value, tb, tb_offset=None):
-            from Ganga.Utility.logging import getLogger
-            logger = getLogger(modulename=True)
-            logger.error("value2: %s" % str(value))
-
-            from Ganga.Core.exceptions import GangaException
-            if not issubclass(etype, GangaException):
-                logger.error("Unknown/Unexpected ERROR!!")
-                logger.error("If you're able to reproduce this please report this to the Ganga developers!")
-                logger.error("value: %s" % value)
-                self.showtraceback((etype, value, tb), tb_offset=tb_offset)
-            return None
-
-        ipshell.set_custom_exc((Exception,), ganga_handler)
+        ipshell.set_custom_exc((Exception,), error_handler)
 
         # buffering of log messages from all threads called "GANGA_Update_Thread"
         # the logs are displayed at the next IPython prompt
         import Ganga.Utility.logging
         Ganga.Utility.logging.enableCaching()
 
-        ipshell.set_hook("pre_prompt_hook", self.ganga_prompt)
+        ipshell.set_hook("pre_prompt_hook", ganga_prompt)
 
         from Ganga.Runtime.IPythonMagic import magic_ganga
         ipshell.define_magic('ganga', magic_ganga)
-
 
         from Ganga.Utility.Config.Config import getConfig
         config = getConfig('Configuration')
@@ -1434,7 +1432,8 @@ default_backends = LCG
         # Launch embedded shell
         ipshell(local_ns=local_ns, global_ns=local_ns)
 
-    def ganga_prompt(self, dummy=None):
+    @staticmethod
+    def ganga_prompt(dummy=None):
         if Ganga.Utility.logging.cached_screen_handler:
             Ganga.Utility.logging.cached_screen_handler.flush()
 
@@ -1450,118 +1449,17 @@ default_backends = LCG
 
         return credentialsWarningPrompt
 
-    def launch_OldIPython(self, local_ns, args):
-
-        def override_credits():
-            credits._Printer__data += '\n\nGanga: The Ganga Developers (http://cern.ch/ganga)\n'
-            copyright._Printer__data += '\n\nCopyright (c) 2000-2008 The Ganga Developers (http://cern.ch/ganga)\n'
-
-        # customized display hook -- take advantage of coloured text etc. if
-        # possible.
-        def _display(obj):
-            from Ganga.GPIDev.Base.Proxy import stripProxy
-            if isinstance(obj, type):
-                sys.stdout.write(str(obj)+'\n')
-                return
-            # if hasattr(obj,'_display'):
-            #   print
-            #   print obj._display(1)
-            #   return
-            elif hasattr(stripProxy(obj), '_display'):
-                sys.stdout.write(str(stripProxy(obj)._display(1))+'\n')
-                return
-            else:
-                sys.stdout.write(str(obj)+'\n')
-                return
-
-        try:
-            from IPython.Shell import IPShellEmbed
-        except ImportError, err:
-            logger.error("Error Loading IPython")
-            raise
-
-        # override ipothonrc configuration
-        ipopts = {'prompt_in1': '${ganga_prompt()}In [\#]:',
-                  # disable automatic tab completion for attributes
-                  # starting with _ or __
-                  'readline_omit__names': 2
-                  }
-
-        ipshell = IPShellEmbed(argv=args, rc_override=ipopts)
-        ipshell.IP.user_ns['ganga_prompt'] = self.ganga_prompt
-
-        # setting displayhook like this is definitely undocumented sort of
-        # a hack
-        ipshell.IP.outputcache.display = _display
-
-        # Initializing the user_ns in a way that runlines will not cause it
-        # to be regenerated
-        for i in local_ns.keys():
-            ipshell.IP.user_ns[i] = local_ns[i]
-
-        # attach magic functions
-        py_version = float(sys.version.split()[0].rsplit('.', 1)[0])
-        if py_version >= 2.6:
-            import readline
-            from Ganga.Runtime.GangaCompleter import GangaCompleter
-            from IPython.iplib import MagicCompleter
-            t = GangaCompleter(readline.get_completer(), local_ns)
-            setattr(MagicCompleter, 'complete', t.complete)
-            # readline.set_completer(t.complete)
-            readline.parse_and_bind('tab: complete')
-            #readline.parse_and_bind('set input-meta on')
-            #readline.parse_and_bind('set output-meta on')
-            #readline.parse_and_bind('set convert-meta off')
-            readline.set_completion_display_matches_hook(t.displayer)
-
-        from Ganga.Utility.Config.Config import getConfig
-        config = getConfig('Configuration')
-
-        system_exit_script = """\
-def exit( value=None ):
-  import IPython
-  if __IP.rc.confirm_exit:
-    if IPython.genutils.ask_yes_no('Do you really want to exit ([y]/n)?','y'):
-      __IP.exit_now = True
-  else:
-    __IP.exit_now = True
-
-__IP.rc.confirm_exit = %s
-""" % config['confirm_exit']
-
-        ipshell.IP.runlines(system_exit_script)
-
-        # set a custom exception handler wich disables printing of errors' traceback for
-        # all exceptions inheriting from GangaException
-        def ganga_exc_handler(self, etype, value, tb):
-            # print str(etype).split('.')[-1],':', # FIXME: sys.stderr ?
-            logger.error(value)  # FIXME: sys.stderr ?
-
-        from Ganga.Core import GangaException
-        ipshell.IP.set_custom_exc((GangaException,), ganga_exc_handler)
-
-        override_credits()
-        # global_ns: FIX required by ipython 0.8.4+
-        try:
-            ipshell(local_ns=local_ns, global_ns=local_ns)
-        except Exception, err:
-            logger.error("FATAL ERROR! IPYTHON SHELL CRASHED")
-            logger.error("this has likely been caused by shutting down with a local ill-defined variable in your namespace")
-            sys.exit(-1)
-
-        return
-
-    def log(self, x):
-
-        # FIXME: for some reason self.logger.critical does not print any
-        # messages here
-        if self.options.force_loglevel == 'DEBUG':
-            import traceback
-            traceback.print_exc(file=sys.stderr)
-        else:
-            sys.stderr.write(str(x)+'\n')
-            sys.stderr.write('(consider --debug option for more information)\n')
-
+#    def log(self, x):
+#
+#        # FIXME: for some reason self.logger.critical does not print any
+#        # messages here
+#        if self.options.force_loglevel == 'DEBUG':
+#            import traceback
+#            traceback.print_exc(file=sys.stderr)
+#        else:
+#            sys.stderr.write(str(x)+'\n')
+#            sys.stderr.write('(consider --debug option for more information)\n')
+#
 #
 #
 # $Log: not supported by cvs2svn $
