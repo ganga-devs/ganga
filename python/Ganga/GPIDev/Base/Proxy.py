@@ -439,13 +439,30 @@ def GPIProxyClassFactory(name, pluginclass):
         if cycle:
             p.text('proxy object...')
             return
-        p.text(self._display(True))
+
+        global proxyRef
+
+        if hasattr(self, proxyRef):
+            raw_self = getattr(self, proxyRef)
+            if hasattr(raw_self, '_repr_pretty_'):
+                raw_self._repr_pretty_(p, cycle)
+            elif hasattr(raw_self, '_display'):
+                p.text(raw_self._display())
+            else:
+                p.text(self.__str__())
+        else:
+            p.text(self.__str__())
     helptext(_repr_pretty_, """Return a nice string to be printed in the IPython termial""")
 
     def _repr(self):
         global proxyRef
-        if hasattr(getattr(self, proxyRef), '_repr'):
-            return getattr(self, proxyRef)._repr()
+        has_proxy = hasattr(self, proxyRef)
+        if has_proxy:
+            raw_proxy = getattr(self, proxyRef)
+        else:
+            raw_proxy = None
+        if has_proxy and hasattr(raw_proxy, '_repr'):
+            return raw_proxy._repr()
         else:
             return '<' + repr(getattr(self, proxyRef)) + ' PROXY at ' + hex(abs(id(self))) + '>'
     helptext(_repr, "Return an short representation of %(classname)s object.")
@@ -585,6 +602,7 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
          '__init__': _init,
          '__str__': _str,
          '__repr__': _repr,
+         '_repr_pretty_': _repr_pretty_,
          '__eq__': _eq,
          '__ne__': _ne,
          'copy': _copy,
@@ -594,8 +612,6 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
          '__getattribute__': _getattribute
          }
 
-    if hasattr(pluginclass, '_repr_pretty_'):
-        d['_repr_pretty_'] = _repr_pretty_
 
     # TODO: this makes GangaList inherit from the list
     # this is not tested and specifically the TestGangaList/testAllListMethodsExported should be verified
