@@ -8,6 +8,23 @@ from Ganga.Core.exceptions import GangaException
 import errno
 logger = getLogger()
 
+##FIXME There has to be a better way of doing this?
+class SJXLIterator(object):
+
+    def __init__(self, theseSubJobs):
+
+        self._mySubJobs = theseSubJobs
+        self._myCount = 0
+
+    ## NB becomes __next__ in Python 3.x don't know if Python 2.7 has a wrapper here
+    def next(self):
+        if _myCount < len(self._mySubJobs):
+            self._myCount += 1
+            return self._mySubJobs[self._myCount-1]
+        else:
+            raise StopIteration
+
+
 class SubJobXMLList(GangaObject):
     """
         jobDirectory: Directory of parent job containing subjobs
@@ -127,13 +144,7 @@ class SubJobXMLList(GangaObject):
     #        self.__getattribute__(self, name )
 
     def __iter__(self):
-        if self._storedList == []:
-            i=0
-            for i in range( len(self) ):
-                self._storedList.append( self.__getitem__( i ) )
-                i+=1
-        for subjob in self._storedList:
-            yield subjob
+        return SJXLIterator(self)
 
     def __get_dataFile(self, index):
         import os.path
@@ -160,37 +171,48 @@ class SubJobXMLList(GangaObject):
 
         return subjob_count
 
+    def _loadSubJobFromDisk(self, subjob_data):
+        # For debugging where this was called from to try and push it to as high a level as possible at runtime
+        #import traceback
+        #traceback.print_stack()
+        #import sys
+        #sys.exit(-1)
+        try:
+            job_obj = self.getJobObject()
+        except Exception, err:
+            logger.debug( "Error: %s" % str(err) )
+            job_obj = None
+        if job_obj is not None:
+            fqid = job_obj.getFQID('.')
+            logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
+        else:
+            logger.debug( "Loading subjob at: %s" % subjob_data )
+        sj_file = open(subjob_data, "r")
+        return sj_file
+
     def __getitem__(self, index):
 
         logger.debug("Requesting: %s" % str(index))
 
+        subjob_data = None
         if not index in self._cachedJobs.keys():
             if len(self) < index:
                 raise GangaException("Subjob: %s does NOT exist" % str(index))
             subjob_data = self.__get_dataFile(str(index))
             try:
-                # For debugging where this was called from to try and push it to as high a level as possible at runtime
-                #import traceback
-                #traceback.print_stack()
-                #import sys
-                #sys.exit(-1)
-                try:
-                    job_obj = self.getJobObject()
-                except Exception, err:
-                    logger.debug( "Error: %s" % str(err) )
-                    job_obj = None
-                if job_obj:
-                    fqid = job_obj.getFQID('.')
-                    logger.debug( "Loading subjob at: %s for job %s" % (subjob_data, fqid) )
-                else:
-                    logger.debug( "Loading subjob at: %s" % subjob_data )
-                sj_file = open(subjob_data, "r")
-            except IOError, x:
+                sj_file = self._loadSubJobFromDisk(subjob_data)
+            except IOError as x:
                 if x.errno == errno.ENOENT:
                     raise IOError("Subobject %s not found: %s" % (fqid, x))
                 else:
                     raise RepositoryError(self,"IOError on loading subobject %s: %s" % (fqid, x))
-            self._cachedJobs[index] = self._from_file(sj_file)[0]
+
+            try:
+                self._cachedJobs[index] = self._from_file(sj_file)[0]
+            except Exception as err:
+                logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
+                logger.debug("Err:\n%s" % str(err))
+                raise err
 
         logger.debug('Setting Parent: "%s"' % str(self._definedParent))
         if self._definedParent:
