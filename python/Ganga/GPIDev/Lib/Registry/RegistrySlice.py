@@ -380,8 +380,7 @@ class RegistrySlice(object):
         if cnt > 0:
             ds += "--------------\n"
             ds += format % self._display_columns
-            ds += "-" * len(format %
-                            tuple([""] * len(self._display_columns))) + "\n"
+            ds += "-" * len(format % tuple([""] * len(self._display_columns))) + "\n"
 
         for obj in self.objects.values():
             colour = self._getColour(obj)

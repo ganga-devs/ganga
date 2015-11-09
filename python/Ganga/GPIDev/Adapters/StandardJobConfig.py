@@ -24,7 +24,7 @@ class StandardJobConfig(object):
 
     """
 
-    def __init__(self, exe='', inputbox=[], args=[], outputbox=[], env=None):
+    def __init__(self, exe=None, inputbox=None, args=None, outputbox=None, env=None):
         """
         exe - executable string to be run on the worker node or a File object to be shipped as executable script to the worker node
         args - list of strings which are passed as arguments to the executable string or File objects which are automatically added to the sandbox
@@ -36,6 +36,14 @@ class StandardJobConfig(object):
           - this constructor should be called at the end of the derived constructor.
           - you may freely add new attributes as long as you they do not start with _
         """
+        if exe is None:
+            exe = ''
+        if inputbox is None:
+            inputbox = []
+        if args is None:
+            args = []
+        if outputbox is None:
+            outputbox = []
         self.exe = exe
         self.inputbox = inputbox[:]
         self.args = args

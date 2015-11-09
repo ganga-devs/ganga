@@ -10,8 +10,6 @@ from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
-defaultList = []
-
 class RegistryError(GangaException):
 
     def __init__(self, what=''):
@@ -364,14 +362,14 @@ class Registry(object):
         finally:
             self._lock.release()
 
-    def _flush(self, objs=defaultList):
+    def _flush(self, objs=None):
         """Flush a set of objects to the persistency layer immediately
         Raise RepositoryError
         Raise RegistryAccessError
         Raise RegistryLockError"""
 
-        if objs == defaultList:
-            obj = []
+        if objs is None:
+            objs = []
 
         logger.debug("Reg: %s _flush(%s)" % (self.name, objs))
         if not self._started:

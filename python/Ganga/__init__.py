@@ -1,4 +1,4 @@
 
-def getEnvironment(config = {}):
+def getEnvironment(config = None):
     return {}
 

@@ -1187,7 +1187,10 @@ class Job(GangaObject):
 
         return appmasterconfig
 
-    def _getAppSubConfig(self, subjobs=[]):
+    def _getAppSubConfig(self, subjobs=None):
+
+        if subjobs is None:
+            subjobs = []
 
         appsubconfig = []
         if self.master is None:

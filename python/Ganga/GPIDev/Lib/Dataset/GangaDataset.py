@@ -24,7 +24,9 @@ class GangaDataset(Dataset):
     _name = "GangaDataset"
     _exportmethods = []
 
-    def __init__(self, files=[]):
+    def __init__(self, files=None):
+        if files is None:
+            files = []
         super(GangaDataset, self).__init__()
         self.files = files
 

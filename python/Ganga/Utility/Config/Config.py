@@ -564,7 +564,13 @@ class PackageConfig(object):
         logger.debug('sucessfully set session option [%s]%s = %s', self.name, name, value)
 
         for h in self._session_handlers:
-            h[1](name, value)
+            try:
+                h[1](name, value)
+            except Exception as err:
+                logger.error("Error in Setting Session Value!")
+                logger.error("Name: %s Value: '%s'" % (str(name), str(value)))
+                logger.error("Err:\n%s" % str(err))
+                pass
 
     def setUserValue(self, name, value):
         """ Modify option  at runtime. This  method corresponds to  the user
