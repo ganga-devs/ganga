@@ -6,30 +6,30 @@
 # $Id: ganga,v 1.1 2008-07-17 16:40:05 moscicki Exp $
 ################################################################################
 
-"""Executable for starting Ganga
+""" Executable for starting Ganga
 
-   If a Python script is given as argument then it is executed
-   within the Ganga environment. 
+    If a Python script is given as argument then it is executed
+    within the Ganga environment. 
 
-   If no argument is given then the Python interpreter is invoked
-   within the Ganga environment"""
+    If no argument is given then the Python interpreter is invoked
+    within the Ganga environment"""
 
 # %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 # Perform setup needed for using Ganga Public Interface (GPI)
 # This is a Copy/Paste logic which must stay in THIS file
 
 def standardSetup():
-   """Function to perform standard setup for Ganga.
-   """   
-   import sys, os.path
+    """Function to perform standard setup for Ganga.
+    """   
+    import sys, os.path
 
-   # insert the path to Ganga itself
-   exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
-   gangaDir = os.path.join(os.path.dirname(exeDir), 'python' )
-   sys.path.insert(0, gangaDir)
+    # insert the path to Ganga itself
+    exeDir = os.path.abspath(os.path.normpath(os.path.dirname(sys.argv[0])))
+    gangaDir = os.path.join(os.path.dirname(exeDir), 'python' )
+    sys.path.insert(0, gangaDir)
 
-   import Ganga.PACKAGE
-   Ganga.PACKAGE.standardSetup()
+    import Ganga.PACKAGE
+    Ganga.PACKAGE.standardSetup()
 
 standardSetup()
 del standardSetup
@@ -38,20 +38,31 @@ del standardSetup
 from Ganga.Core import GangaException
 import sys
 
+def log(level, err):
+    # FIXME: for some reason self.logger.critical does not print any
+    # messages here
+    if level == 'DEBUG':
+        sys.stderr.write(str(err)+'\n')
+        import traceback
+        traceback.print_exc(file=sys.stderr)
+    else:
+        sys.stderr.write(str(err)+'\n')
+        sys.stderr.write('(consider --debug option for more information)\n')
+
 try:
-   # Process options given at command line and in configuration file(s)
-   # Perform environment setup and bootstrap
-   import Ganga.Runtime
-   Ganga.Runtime._prog = Ganga.Runtime.GangaProgram()
-   Ganga.Runtime._prog.parseOptions()
-   Ganga.Runtime._prog.configure()
-   Ganga.Runtime._prog.initEnvironment(Ganga.Runtime._prog.options.rexec)
-   Ganga.Runtime._prog.bootstrap(Ganga.Runtime._prog.interactive)
-   Ganga.Runtime._prog.new_user_wizard()
-   # Import GPI and run Ganga
-   from Ganga.GPI import *
-   Ganga.Runtime._prog.run()
-except GangaException,x:
-   Ganga.Runtime._prog.log(x)
-   sys.exit(-1)
+    # Process options given at command line and in configuration file(s)
+    # Perform environment setup and bootstrap
+    import Ganga.Runtime
+    Ganga.Runtime._prog = Ganga.Runtime.GangaProgram()
+    Ganga.Runtime._prog.parseOptions()
+    Ganga.Runtime._prog.configure()
+    Ganga.Runtime._prog.initEnvironment(Ganga.Runtime._prog.options.rexec)
+    Ganga.Runtime._prog.bootstrap(Ganga.Runtime._prog.interactive)
+    Ganga.Runtime._prog.new_user_wizard()
+    # Import GPI and run Ganga
+    from Ganga.GPI import *
+    Ganga.Runtime._prog.run()
+except GangaException as err:
+    log(Ganga.Runtime._prog.options.force_loglevel, err)
+    sys.exit(-1)
 
