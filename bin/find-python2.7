@@ -1,0 +1,17 @@
+#!/usr/bin/env bash
+
+#Find a valid version of Python and run with it
+#First try the binary named 'python2.7'
+#Then check if 'python' is version 2.7
+#Finally try 'python27' from Software Collections
+if command -v python2.7 >/dev/null 2>&1; then
+    PYTHON="python2.7"
+elif python -c "import sys; exit(0) if sys.version_info[0:2]==(2,7) else exit(1)"; then
+    PYTHON="python"
+elif scl --list | grep -q python27; then
+    PYTHON="scl enable python27 -- python"
+else
+    exit 1
+fi
+
+echo $PYTHON
