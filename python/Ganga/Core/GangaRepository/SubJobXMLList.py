@@ -32,7 +32,7 @@ class SubJobXMLList(GangaObject):
     """
 
     _category = 'internal'
-    _exportmethods = ['__getitem__', '__len__', '__iter__', 'getAllCachedData']
+    _exportmethods = ['__getitem__', '__len__', '__iter__', 'getAllCachedData', 'values']
     _hidden = True
     _name = 'SubJobXMLList'
 
@@ -170,6 +170,9 @@ class SubJobXMLList(GangaObject):
             i += 1
 
         return subjob_count
+
+    def values(self):
+        return [self[i] for i in range(0, len(self))]
 
     def _loadSubJobFromDisk(self, subjob_data):
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
