@@ -60,7 +60,9 @@ class LHCbDataset(GangaDataset):
                       'symmetricDifference', 'union', 'bkMetadata',
                       'isEmpty', 'hasPFNs', 'getPFNs']  # ,'pop']
 
-    def __init__(self, files=[], persistency=None, depth=0):
+    def __init__(self, files=None, persistency=None, depth=0):
+        if files is None:
+            files = []
         new_files = GangaList()
         if isType(files, LHCbDataset):
             for this_file in files:

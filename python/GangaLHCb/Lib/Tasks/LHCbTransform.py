@@ -26,8 +26,7 @@ class LHCbTransform(ITransform):
 
     _category = 'transforms'
     _name = 'LHCbTransform'
-    _exportmethods = ITransform._exportmethods + \
-        ['updateQuery', 'addQuery', 'removeUnusedData', 'cleanTransform']
+    _exportmethods = ITransform._exportmethods + ['updateQuery', 'addQuery', 'removeUnusedData', 'cleanTransform']
 
     def __init__(self):
         super(LHCbTransform, self).__init__()
@@ -161,8 +160,7 @@ class LHCbTransform(ITransform):
                     unit.name = "Unit %d" % len(self.units)
                     self.addUnitToTRF(unit)
         else:
-            logger.error(
-                "Please specify either inputdata or MC info for unit generation")
+            logger.error("Please specify either inputdata or MC info for unit generation")
 
     def createChainUnit(self, parent_units, use_copy_output=True):
         """Create an output unit given this output data"""

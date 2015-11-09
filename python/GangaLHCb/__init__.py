@@ -111,7 +111,7 @@ configDirac.setSessionValue('DiracEnvFile', os.environ['GANGADIRACENVIRONMENT'])
 _store_root_version()
 
 
-def getEnvironment(config={}):
+def getEnvironment(config=None):
     import sys
     import os.path
     import PACKAGE
@@ -120,7 +120,7 @@ def getEnvironment(config={}):
     return {}
 
 
-def loadPlugins(config={}):
+def loadPlugins(config=None):
     logger.debug("Importing Backends")
     import Lib.Backends
     logger.debug("Importing Applications")
@@ -139,6 +139,8 @@ def loadPlugins(config={}):
     import Lib.Files
     logger.debug("Importing Checkers")
     import Lib.Checkers
+    logger.debug("Importing LHCbTasks")
+    import Lib.Tasks
     logger.debug("Finished Importing")
 
 from Ganga.GPIDev.Lib.File.Configure import outputconfig

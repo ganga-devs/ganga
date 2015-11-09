@@ -71,7 +71,7 @@ configDirac.addOption('OfflineSplitterLimit', 50,
                       'Number of iterations of selecting random Sites that are performed before the spliter reduces the OfflineSplitter fraction by raising it by 1 power and reduces OfflineSplitterMaxCommonSites by 1. Smaller number makes the splitter accept many smaller subsets higher means keeping more subsets but takes much more CPU to match files accordingly.')
 
 
-def getEnvironment(config={}):
+def getEnvironment(config=None):
     import sys
     import os.path
     import PACKAGE
@@ -80,7 +80,7 @@ def getEnvironment(config={}):
     return
 
 
-def loadPlugins(config={}):
+def loadPlugins(config=None):
     logger.debug("Loading Backends")
     import Lib.Backends
     logger.debug("Loading RTHandlers")

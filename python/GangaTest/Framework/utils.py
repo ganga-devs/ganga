@@ -68,7 +68,9 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
 def sleep_until_completed(j, timeout=None, sleep_period=1, verbose=False):
     return sleep_until_state(j, timeout, 'completed', ['new','killed','failed','unknown','removed'], verbose=verbose, sleep_period=sleep_period)
 
-def is_job_state(j, states=['completed'], break_states=None):
+def is_job_state(j, states=None, break_states=None):
+    if states is None:
+        states = ['completed']
     #Allow the completed state to be a list of status.
     if j.status in states:
         return True
