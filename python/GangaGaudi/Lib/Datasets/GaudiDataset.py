@@ -33,7 +33,9 @@ class GaudiDataset(Dataset):
                       'extend', 'insert', 'remove', 'pop', 'index', 'count', 'sort',
                       'reverse']
 
-    def __init__(self, files=[]):
+    def __init__(self, files=None):
+        if files is None:
+            files = []
         super(GaudiDataset, self).__init__()
         self.files = files
 

@@ -17,7 +17,9 @@ complete_bracket_matcher = re.compile('(\([^()]*?\))')
 # def bracket_sanitiser(text):
 
 
-def bracket_sanitiser(text, replacement_list=[]):
+def bracket_sanitiser(text, replacement_list=None):
+    if replacement_list is None:
+        replacement_list = []
     #    print "checking:", text
     match_list = complete_bracket_matcher.findall(text)
     if match_list:

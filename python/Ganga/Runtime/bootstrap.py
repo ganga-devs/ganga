@@ -1449,18 +1449,8 @@ default_backends = LCG
 
         return credentialsWarningPrompt
 
-#    def log(self, x):
-#
-#        # FIXME: for some reason self.logger.critical does not print any
-#        # messages here
-#        if self.options.force_loglevel == 'DEBUG':
-#            import traceback
-#            traceback.print_exc(file=sys.stderr)
-#        else:
-#            sys.stderr.write(str(x)+'\n')
-#            sys.stderr.write('(consider --debug option for more information)\n')
-#
-#
+
+
 #
 # $Log: not supported by cvs2svn $
 # Revision 1.11.4.1  2009/07/08 11:18:21  ebke

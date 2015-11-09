@@ -14,6 +14,7 @@ import pickle
 from Ganga.GPIDev.Lib.File import IGangaFile
 from Ganga.GPIDev.Base.Filters import allComponentFilters
 from Ganga.Utility.Config import getConfig
+from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
 
 logger = Ganga.Utility.logging.getLogger()
 

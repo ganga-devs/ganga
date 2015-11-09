@@ -47,7 +47,12 @@ def safeTransformFile(input_file):
 
     return None
 
-def doesFileExist( input_file='some.file', input_list = [] ):
+def doesFileExist( input_file=None, input_list = None ):
+
+    if input_file is None:
+        input_file = 'some.file'
+    if input_list is None:
+        input_list = []
 
     test_fileName = ''
     if type(input_file) == type(''):

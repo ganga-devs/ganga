@@ -104,7 +104,9 @@ class Batch(IBackend):
     def __init__(self):
         super(Batch, self).__init__()
 
-    def command(klass, cmd, soutfile=None, allowed_exit=[0]):
+    def command(klass, cmd, soutfile=None, allowed_exit=None):
+        if allowed_exit is None:
+            allowed_exit = [0]
         rc, soutfile, ef = shell_cmd(cmd, soutfile, allowed_exit)
         if not ef:
             logger.error(

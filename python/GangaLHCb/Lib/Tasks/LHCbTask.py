@@ -17,8 +17,7 @@ class LHCbTask(ITask):
 
     _category = 'tasks'
     _name = 'LHCbTask'
-    _exportmethods = ITask._exportmethods + \
-        ['addQuery', 'updateQuery', 'removeUnusedData', 'cleanTask']
+    _exportmethods = ITask._exportmethods + ['addQuery', 'updateQuery', 'removeUnusedData', 'cleanTask']
 
     _tasktype = "ITask"
 

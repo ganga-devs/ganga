@@ -59,7 +59,10 @@ def sharedir_handler(app, root_dir_names, output):
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
-def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=['']):
+def master_sandbox_prepare(app, appmasterconfig, sharedir_roots=None):
+
+    if sharedir_roots is None:
+        sharedir_roots = ['']
 
     logger.debug("RTUTils master_sandbox_prepare")
 

@@ -106,7 +106,7 @@ class TaskRegistry(Registry):
                 self[tid].startup()
             except RegistryError:
                 continue
-            except Exception, err:
+            except Exception as err:
                 logger.error("Unknown/Unexpected Error in starting up tasks main loop")
                 logger.error("Exiting: err=%s" % str(err))
                 return

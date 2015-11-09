@@ -102,8 +102,13 @@ def outputfiles_iterator(job, file_type, selection_pred=None,
             if combined_pred(f):
                 yield f
 
-def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs={},
+
+def outputfiles_foreach(job, file_type, func, fargs=(), fkwargs=None,
                         selection_pred=None, include_subfiles=True):
+    if fkwargs is None:
+        fkwargs = {}
+    if fargs is None:
+        fargs =  ()
     output = []
     for f in outputfiles_iterator(job, file_type, selection_pred, include_subfiles):
         output.append(func(f, *fargs, **fkwargs))

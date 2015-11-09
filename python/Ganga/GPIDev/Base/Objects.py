@@ -171,7 +171,9 @@ class Node(object):
     # copy all the properties recursively from the srcobj
     # if schema of self and srcobj are not compatible raises a ValueError
     # ON FAILURE LEAVES SELF IN INCONSISTENT STATE
-    def copyFrom(self, srcobj, _ignore_atts=[]):
+    def copyFrom(self, srcobj, _ignore_atts=None):
+        if _ignore_atts is None:
+            _ignore_atts = []
         _srcobj = stripProxy(srcobj)
         # Check if this object is derived from the source object, then the copy
         # will not throw away information

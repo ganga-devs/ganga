@@ -10,7 +10,7 @@ configGaudi.addOption('make_cmd', 'make', dscrpt)
 dscrpt = 'Levels below InstallArea/[<platform>]/python to decend when looking for .py files to include'
 configGaudi.addOption('pyFileCollectionDepth', 2, dscrpt)
 
-def getEnvironment(config={}):
+def getEnvironment(config=None):
     import sys
     import os.path
     import PACKAGE
@@ -19,7 +19,7 @@ def getEnvironment(config={}):
     return
 
 
-def loadPlugins(config={}):
+def loadPlugins(config=None):
     #import Lib.Backends
     #import Lib.Checkers
     pass
