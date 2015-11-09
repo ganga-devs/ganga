@@ -151,7 +151,17 @@ class IUnit(GangaObject):
 
     def minorResubmit(self, job):
         """perform just a minor resubmit"""
-        job.resubmit()
+        try:
+            trf = self._getParent()
+        except Exception as err:
+            logger.debug("GetParent exception!\n%s" % str(err))
+            trf = None
+        if trf is not None and trf.submit_with_threads:
+            addInfoString( self, "Attempting job re-submission with queues..." )
+            GPI.queues.add(job.resubmit)
+        else:
+            addInfoString( self, "Attempting job re-submission..." )
+            job.resubmit()
 
     def update(self):
         """Update the unit and (re)submit jobs as required"""

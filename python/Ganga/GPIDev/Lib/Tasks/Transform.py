@@ -214,8 +214,8 @@ class Transform(GangaObject):
                             addjob(sj)
                     else:
                         addjob(j)
-            except Exception as x:
-                # print x
+            except Exception as err:
+                logger.debug("getPartitionJobs Exception:\n%s" % str(err))
                 pass
         return JobRegistrySliceProxy(jobslice)
 
