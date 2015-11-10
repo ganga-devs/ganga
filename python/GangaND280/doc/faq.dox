@@ -1,0 +1,51 @@
+/*!
+\page faqGanga Frequently Asked Questions
+
+\section callGanga How can I call the ganga executable ?
+The standard Ganga installation typically puts all the code in <i>~/Ganga</i>.
+For the ganga version 6.0.27, the ganga executable will be located here:
+\code
+~/Ganga/install/6.0.27/bin/ganga
+\endcode
+The best way to make this shorter is by using an alias. For example for an sh type of shell:
+\code
+alias Ganga="~/Ganga/install/6.0.27/bin/ganga"
+\endcode
+
+\section useSandbox I can't find my output files. Where does Ganga put the output files created by my job ?
+
+A job is executed in a temporary directory (by default located in /tmp) and if you don't tell Ganga
+to preserve some output files, they will be deleted with the rest of this temporary directory
+at the end of the job. In that case the files are definitely lost.
+All you need to do is to define <i>outputfiles</i> objects of type <i>SandboxFile</i>.
+For example for the job <i>j</i>, to save all ROOT output files, use:
+\code
+j.outputfiles=[SandboxFile("*.root")]
+\endcode
+The files will be put in your the job directory structure.
+For the job number 3, the standard location for the output files would be in that case:
+\code
+~/gangadir/workspace/YOURUSERNAME/LocalXML/3/output
+\endcode
+
+\section useMassStorage How can I move automatically the output file to a specific local directory ?
+
+The <i>outputfiles</i> class <i>MassStorageFile</i> was designed to copy automatically the output of jobs
+onto storage facilities such as Castor at CERN. However it can be used to move output files
+of a job into a specific directory locally.
+You must first edit your <i>.gangarc</i> to define the <i>MassStorageFile</i> main output directory
+and the shell commands it needs:
+\code
+MassStorageFile = {'fileExtensions': ['*.root'], 'uploadOptions': {'path': '/home/me/T2K/Data', 'cp_cmd': 'cp', 'ls_cmd': 'ls', 'mkdir_cmd': 'mkdir'}, 'backendPostprocess': {'LSF': 'WN', 'LCG': 'client', 'Interactive': 'WN', 'Localhost': 'client', 'CREAM': 'client'}}
+\endcode
+Then your job <i>j</i> must have <i>MassStorageFiles</i> as <i>outputfiles</i>:
+\code
+j.outputfiles=[MassStorageFile(namePattern='oa*_reco_*.root',outputfilenameformat='the/path/wanted/reco/{fname}'),MassStorageFile(namePattern='oa*_anal_*.root',outputfilenameformat='the/path/wanted/anal/{fname}')]
+\endcode
+In that case, reco and anal files will be moved to different directories.
+For example for a reco file created by the subjob number 4, the final output directory would be:
+\code
+/home/me/T2K/Data/the/path/wanted/4/reco/oa_nt_beam_90200000-0015_wzsaj52cvyqe_reco_000_prod6amagnet201011airb.root
+\endcode
+
+*/

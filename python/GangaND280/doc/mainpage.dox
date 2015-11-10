@@ -1,0 +1,55 @@
+/*! \mainpage nd280Ganga: Using Ganga for ND280 processing
+  
+  The nd280Ganga package (or GangaND280 in Ganga standard naming convention)
+  was designed to run ND280 tools and software inside CERN's easy-to-use frontend
+  for job definition and management called <a href="http://ganga.web.cern.ch/ganga/">Ganga</a>.
+  It allows the user to quickly process files and run an analysis on various platforms
+  such as the localhost computer or a PBS queueing system with very a very simple macro.
+  This documentation will try to provide you with the basic information needed to run GangaND280
+  but it may be useful to start with <a href="http://ganga.web.cern.ch/ganga/user/html/GangaIntroduction6/GangaIntroduction.html">Ganga's tutorial</a>
+  first to understand Ganga itself before diving into the specifics of running ND280 jobs in Ganga.
+
+  You can use these \ref installGanga "Ganga installation instructions" to install Ganga
+  on your system easily. Also have a look at the \ref faqGanga.
+
+  There are two ways of processing data using Ganga: submitting Ganga <i>jobs</i> directly, or using Ganga's <i>tasks</i>
+  to manage the job submission process and to generate much more complicated processing schemes.
+  Please go to \ref jobsAndTasks to learn how to use <i>tasks</i>.
+  
+  GangaND280 contains multiple <b>inputdata</b> classes to facilitate the creation of the list
+  of input files for a job:
+  - \ref modules.ND280Dataset.ND280Dataset.ND280LocalDataset "ND280LocalDataset": to analyze files located in a local directory.
+  - \ref modules.ND280Dataset.ND280Dataset.ND280DCacheDataset "ND280DCacheDataset": to analyze files located in a DCache server.
+such as T2KSRM at TRIUMF.
+
+  GangaND280 also contains multiple <b>application</b> classes to run ND280 applications:
+  - \ref modules.ND280Executable.ND280Executable.ND280Executable "ND280Executable": to run any ND280 executable accessible in the $PATH environment variable.
+  - \ref modules.ND280Control.runND280.runND280 "ND280Control": to execute %runND280 from the nd280Control package.
+  - \ref modules.ND280Control.runND280CtrlSmpl.runND280CtrlSmpl "ND280ControlSample": to create control samples using %runND280ControlSample from the nd280Control package.
+  - \ref modules.Highland.Highland.Highland "Highland": to run any highland executable accessible in the $PATH environment variable.
+  - \ref modules.ND280Skimmer.ND280Skimmer.ND280RecoSkimmer "ND280Skimmer": to skim from reco files a set of events listed in a CSV file.
+  - \ref modules.ND280Control.runND280RDP.runND280RDP "ND280RDP": as ND280Control but takes ND280 Config file options as input rather than a Config file itself
+
+  A set of <b>splitter</b> classes designed to split ND280 applications into subjobs are
+available in the ND280Splitter module:
+  - \ref modules.ND280Splitter.ND280Splitter.ND280SplitNbJobs "ND280SplitNbJobs": to a split an ND280 job into a given number of subjobs.
+  - \ref modules.ND280Splitter.ND280Splitter.ND280SplitNbInputFiles "ND280SplitNbInputFiles": to split a job into a number of subjobs such that each
+    have the same given number of input files or less.
+  - \ref modules.ND280Splitter.ND280Splitter.ND280SplitOneInputFile "ND280SplitOneInputFile": to split a job into a number of subjobs such that each
+    subjob has one input file.
+  - \ref modules.ND280Splitter.ND280Splitter.ND280SplitCSVByNbEvt "ND280SplitCSVByNbEvt": to split a job into a number of subjobs such that each
+    subjob has a CSV file with N events.
+
+  A <b>Postprocessor</b> class \ref  modules.ND280Checkers.ND280Checker.ND280RDP_Checker "ND280RDP_Checker" was designed with the Real Data Processing (RDP) procedure in mind. It is supposed to run after runND280 finishes and:
+  - check a .log file in a comprehensive way,
+  - post results to processing DB,
+  - move output files to their predefined destinations
+  
+  Example macros are given in the <b>examples directory</b> to show you how to use the GangaND280 modules:
+  - %ND280Executable.py: Example for the %ND280Executable applications, PBS backend, %ND280LocalDataset, and ND280 splitters.
+  - %runND280.py: Example to run run280 using an %ND280LocalDataset.
+  - %runND280ControlSample.py: Example showing how to create the data spill control samples for all the runs.
+It also gives and example of ND280DCacheDataset, MassStorageFile, and the splitter for CSV input files.
+  - %runND280RDP.py: Example to run nd280 with an automatically created Config file.
+*/
+
