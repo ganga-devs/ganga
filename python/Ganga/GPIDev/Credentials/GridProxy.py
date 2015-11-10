@@ -380,7 +380,7 @@ class GridProxy (ICredential):
         if not output:
             output = ""
 
-        return output
+        print("%s" % output)
 
     def renew(self, validity="", maxTry=0, minValidity="", check=True):
         self.chooseCommandSet()
