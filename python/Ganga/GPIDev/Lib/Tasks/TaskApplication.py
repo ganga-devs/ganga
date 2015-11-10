@@ -79,12 +79,12 @@ class TaskApplication(object):
                         sj.application.transition_update(new_status)
 
                 if transform:
-                    transform._impl.setMasterJobStatus(
+                    stripProxy(transform).setMasterJobStatus(
                         self._getParent(), new_status)
 
             else:
                 if transform:
-                    transform._impl.setAppStatus(self, new_status)
+                    stripProxy(transform).setAppStatus(self, new_status)
 
         except Exception as x:
             import traceback

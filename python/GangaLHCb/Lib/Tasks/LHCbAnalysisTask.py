@@ -107,12 +107,12 @@ class LHCbAnalysisTask(Task):
         the transform once successfully appended."""
         r = super(LHCbAnalysisTask, self).appendTransform(transform)
         if hasattr(transform, 'task_id'):
-            transform._impl.task_id = self.id
+            stripProxy(transform).task_id = self.id
         else:
             raise GangaException(None, 'Couldnt set the task id')
         if hasattr(transform, 'transform_id'):
             try:
-                transform._impl.transform_id = self.transforms.index(transform)
+                stripProxy(transform).transform_id = self.transforms.index(transform)
             except:
                 raise GangaException(
                     None, 'transform not added to task properly')

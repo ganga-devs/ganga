@@ -3,7 +3,7 @@ from Ganga.GPIDev.Lib.Tasks.common import status_colours, overview_colours, mark
 from Ganga.GPIDev.Lib.Job.Job import Job
 from Ganga.GPIDev.Lib.Tasks.Transform import Transform
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem, ComponentItem
-from Ganga.GPIDev.Base.Proxy import isType
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy
 from GangaLHCb.Lib.LHCbDataset.BKQuery import BKQuery
 from LHCbTaskDummySplitter import LHCbTaskDummySplitter
 from Ganga.Core import GangaException, GangaAttributeError
@@ -278,15 +278,15 @@ class LHCbAnalysisTransform(Transform):
     def createNewJob(self, partition):
         """ Returns a new job initialized with the transforms application, backend and name """
         j = GPI.Job()
-        j._impl.backend = self.backend.clone()
-        j._impl.application = self.application.clone()
-        j._impl.application.tasks_id = "%i:%i" % (
+        stripProxy(j).backend = self.backend.clone()
+        stripProxy(j).application = self.application.clone()
+        stripProxy(j).application.tasks_id = "%i:%i" % (
             self.task_id, self.transform_id)
-        j._impl.application.id = self.getNewAppID(partition)
+        stripProxy(j).application.id = self.getNewAppID(partition)
         if self.splitter is not None:
-            j._impl.splitter = LHCbTaskDummySplitter(self.splitter)
+            stripProxy(j).splitter = LHCbTaskDummySplitter(self.splitter)
         # if self.merger is not None:
-            # j._impl.merger = self.merger
+            # stripProxy(j).merger = self.merger
         j.inputdata = self.toProcess_dataset
         j.outputdata = self.outputdata
         j.inputsandbox = self.inputsandbox
@@ -362,7 +362,7 @@ class LHCbAnalysisTransform(Transform):
                                 # Catches the fact that master job submit
                                 # counter doesnt increment when subjobs
                                 # resubmitted.
-                                mj._impl.info.submit_counter += 1
+                                stripProxy(mj).info.submit_counter += 1
                             self._partition_status[partition] = "attempted"
                 else:
                     self._partition_status[partition] = "completed"
@@ -401,7 +401,7 @@ class LHCbAnalysisTransform(Transform):
                         logger.info(
                             'running job %s from %s has an obsolete datafile(s), it will be killed and re-submitted' % (pj.fqid, pj.name))
                         # pj.kill()
-                    del pj._impl.inputdata.files[
+                    del stripProxy(pj).inputdata.files[
                         pj.inputdata.getFileNames().index(ddf)]
                     jobs += [pj]
         return jobs

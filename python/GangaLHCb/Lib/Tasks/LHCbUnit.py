@@ -23,12 +23,12 @@ class LHCbUnit(IUnit):
         """Create any jobs required for this unit"""
         import copy
         j = GPI.Job()
-        j._impl.backend = self._getParent().backend.clone()
-        j._impl.application = self._getParent().application.clone()
+        stripProxy(j).backend = self._getParent().backend.clone()
+        stripProxy(j).application = self._getParent().application.clone()
         if self.inputdata:
             j.inputdata = self.inputdata.clone()
 
-        j._impl.inputfiles = copy.deepcopy(self._getParent().inputfiles)
+        stripProxy(j).inputfiles = copy.deepcopy(self._getParent().inputfiles)
 
         trf = self._getParent()
         task = trf._getParent()

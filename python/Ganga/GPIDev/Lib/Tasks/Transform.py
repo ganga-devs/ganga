@@ -74,19 +74,19 @@ class Transform(GangaObject):
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
         for j in GPI.jobs:
-            if "tasks_id" in j.application._impl._data:
+            if "tasks_id" in stripProxy(j.application)._data:
                 # print "tasks_id of jobid ", j.fqid,
-                # j.application._impl._data["tasks_id"], id
-                if j.application._impl._data["tasks_id"].endswith(id):
+                # stripProxy(j.application)._data["tasks_id"], id
+                if stripProxy(j.application)._data["tasks_id"].endswith(id):
                     try:
                         if j.subjobs:
                             for sj in j.subjobs:
-                                app = sj.application._impl
-                                app.getTransform()._impl.setAppStatus(
+                                app = stripProxy(sj.application)
+                                stripProxy(app.getTransform()).setAppStatus(
                                     app, app._getParent().status)
                         else:
-                            app = j.application._impl
-                            app.getTransform()._impl.setAppStatus(
+                            app = stripProxy(j.application)
+                            stripProxy(app.getTransform()).setAppStatus(
                                 app, app._getParent().status)
                     except AttributeError as e:
                         logger.error("%s", e)
@@ -118,17 +118,17 @@ class Transform(GangaObject):
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
         for j in GPI.jobs:
-            if "tasks_id" in j.application._impl._data:
-                if j.application._impl._data["tasks_id"] == id:
+            if "tasks_id" in stripProxy(j.application)._data:
+                if stripProxy(j.application)._data["tasks_id"] == id:
                     try:
                         if j.subjobs:
                             for sj in j.subjobs:
-                                app = sj.application._impl
-                                app.getTransform()._impl.setAppStatus(
+                                app = stripProxy(sj.application)
+                                stripProxy(app.getTransform()).setAppStatus(
                                     app, app._getParent().status)
                         else:
-                            app = j.application._impl
-                            app.getTransform()._impl.setAppStatus(
+                            app = stripProxy(j.application)
+                            stripProxy(app.getTransform()).setAppStatus(
                                 app, app._getParent().status)
                     except AttributeError as e:
                         logger.error("%s", e)
@@ -250,7 +250,7 @@ class Transform(GangaObject):
             return 0
         numjobs = 0
         for j in self.getJobsForPartitions(next):
-            j.application._impl.transition_update("submitting")
+            stripProxy(j.application).transition_update("submitting")
             try:
                 j.submit()
             except JobError:
@@ -423,10 +423,10 @@ class Transform(GangaObject):
         )  # this works because createNewJob is only called by a task
         id = task.transforms.index(self)
         j = GPI.Job()
-        j._impl.backend = self.backend.clone()
-        j._impl.application = self.application.clone()
-        j._impl.application.tasks_id = "%i:%i" % (task.id, id)
-        j._impl.application.id = self.getNewAppID(partition)
+        stripProxy(j).backend = self.backend.clone()
+        stripProxy(j).application = self.application.clone()
+        stripProxy(j).application.tasks_id = "%i:%i" % (task.id, id)
+        stripProxy(j).application.id = self.getNewAppID(partition)
         j.inputdata = self.inputdata
         j.outputdata = self.outputdata
         j.inputsandbox = self.inputsandbox

@@ -311,7 +311,7 @@ class ITask(GangaObject):
 
     def table(self):
         from Ganga.GPI import tasks
-        print(tasks[self.id:self.id + 1].table())
+        tasks[self.id:self.id].table()
 
     def overview(self, status=''):
         """ Show an overview of the Task """

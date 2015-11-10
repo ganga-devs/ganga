@@ -160,6 +160,8 @@ class LHCbTransform(ITransform):
                     unit.name = "Unit %d" % len(self.units)
                     self.addUnitToTRF(unit)
         else:
+            import traceback
+            traceback.print_stack()
             logger.error("Please specify either inputdata or MC info for unit generation")
 
     def createChainUnit(self, parent_units, use_copy_output=True):
