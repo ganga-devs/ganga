@@ -80,10 +80,6 @@ errorfile=open('stderr','w')
 sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
-###MONITORING_SERVICE###
-monitor = createMonitoringObject()
-monitor.start()
-
 import subprocess
 
 import time #datetime #disabled for python2.2 compatiblity
@@ -111,15 +107,13 @@ try:
             break
         outfile.flush()
         errorfile.flush()
-        monitor.progress()
         time.sleep(0.3)
 finally:
-    monitor.progress()
+    pass
 
     sys.stdout=sys.__stdout__
     sys.stderr=sys.__stderr__
 
-monitor.stop(result)
 
 outfile.flush()
 errorfile.flush()

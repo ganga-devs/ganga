@@ -165,8 +165,7 @@ class SAGA(IBackend):
             import Ganga.Core.Sandbox as Sandbox
             
             compressed_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
-              + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
-              + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
+              + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()))
 
             try:
                 for f in compressed_input_sandbox:
@@ -360,7 +359,6 @@ class SAGA(IBackend):
         import Ganga.Core.Sandbox as Sandbox
         import Ganga.Utility as Utility
         ws.setInlineModules(inspect.getsource(Sandbox.WNSandbox))
-        ws.setMonitoringService(job.getMonitoringService().getWrapperScriptConstructorText())
         
         ws.setExecutable(jobconfig.getExeString())
         ws.setArguments(jobconfig.getArgStrings())

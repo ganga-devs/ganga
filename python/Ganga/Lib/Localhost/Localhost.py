@@ -175,11 +175,7 @@ class Localhost(IBackend):
         # print str(job.backend_output_postprocess)
         mon = job.getMonitoringService()
         import Ganga.Core.Sandbox as Sandbox
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
-                                                            +
-                                                            Sandbox.getGangaModulesAsSandboxFiles(
-                                                                Sandbox.getDefaultModules())
-                                                            + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()))
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         if self.nice:
@@ -222,8 +218,6 @@ class Localhost(IBackend):
         script = script.replace('###ENVIRONMENT###', repr(environment))
         script = script.replace('###WORKDIR###', repr(workdir))
         script = script.replace('###INPUT_DIR###', repr(job.getStringInputDir()))
-
-        script = script.replace('###MONITORING_SERVICE###', job.getMonitoringService().getWrapperScriptConstructorText())
 
         self.workdir = workdir
 

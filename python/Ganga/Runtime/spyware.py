@@ -40,7 +40,7 @@ def ganga_started(session_type, **extended_attributes):
     #    queues.add( _setupMonitor, (config['UsageMonitoringURL'], msg, usage_message) )
 
     if config['UsageMonitoringMSG']:
-        from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil
+        from Ganga.GPIDev.MonitoringServices import MSGUtil
         msg_config = getConfig('MSGMS')
         p = MSGUtil.createPublisher(
             msg_config['server'],
@@ -49,8 +49,7 @@ def ganga_started(session_type, **extended_attributes):
             msg_config['password'])
         # start publisher thread and enqueue usage message for sending
         p.start()
-        p.send(msg_config['usage_message_destination'], repr(
-            usage_message), {'persistent': 'true'})
+        p.send(msg_config['usage_message_destination'], repr(usage_message), {'persistent': 'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()
 
@@ -58,15 +57,14 @@ def ganga_started(session_type, **extended_attributes):
 def ganga_job_submitted(application_name, backend_name, plain_job, master_job, sub_jobs):
     host = getConfig('System')['GANGA_HOSTNAME']
     user = getConfig('Configuration')['user']
-    runtime_packages = ':'.join(
-        map(os.path.basename, filter(lambda x: x, config['RUNTIME_PATH'].split(':'))))
+    runtime_packages = ':'.join(map(os.path.basename, filter(lambda x: x, config['RUNTIME_PATH'].split(':'))))
     start = long(time.time() * 1000)
 
     job_submitted_message = {'application': application_name, 'backend': backend_name, 'user': user, 'host': host, 'start':
                              start, 'plain_job': plain_job, 'master_job': master_job, 'sub_jobs': sub_jobs, 'runtime_packages': runtime_packages}
 
     if config['UsageMonitoringMSG']:
-        from Ganga.Lib.MonitoringServices.MSGMS import MSGUtil
+        from Ganga.GPIDev.MonitoringServices import MSGUtil
         msg_config = getConfig('MSGMS')
         p = MSGUtil.createPublisher(
             msg_config['server'],
@@ -81,3 +79,4 @@ def ganga_job_submitted(application_name, backend_name, plain_job, master_job, s
         # p.send('/queue/test.ganga.jobsubmission',repr(job_submitted_message),{'persistent':'true'})
         # ask publisher thread to stop. it will send queued message anyway.
         p.stop()
+
