@@ -1,13 +1,20 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 
 # Helper script to return the environment changes required to setup Ganga external packages
 
-# TODO: read config to decide which modules to query
-mod_list = ['Ganga']
+from __future__ import print_function
+
+import sys
+import os
+import os.path
+
+python_path = os.path.join(sys.argv[1], 'python')
+
+sys.path.insert(0, python_path)
 
 # Loop over modules
 syspath_list = []
-for mod in mod_list:
+for mod in ['Ganga', 'GangaAtlas']:#os.listdir(python_path):
 
     # import parent package
     mod_imp = __import__(mod + ".PACKAGE")
@@ -25,8 +32,8 @@ for mod in mod_list:
         try:
             test_imp = __import__(name)
         except:
-            syspath_list.append( path )
+            syspath_list.append(path)
 
 
 # print out the required env line
-print ":".join( syspath_list )
+print(":".join(syspath_list))
