@@ -361,6 +361,7 @@ class GangaRepositoryLocal(GangaRepository):
                     time = os.stat(fn).st_ctime
                 except OSError as err:
                     logger.debug("_write_master_cache: %s" % str(err))
+                    logger.debug("_cache_load_timestamp: %s" % str(_cache_load_timestamp))
                     import errno
                     if err.errno == errno.ENOENT:  # If file is not found
                         time = 0
