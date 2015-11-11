@@ -497,55 +497,41 @@ class Job(GangaObject):
 
     status_graph = {'new': Transitions(State('submitting', 'j.submit()', hook='monitorSubmitting_hook'),
                                        State('removed', 'j.remove()')),
-                    'submitting': Transitions(State('new', 'submission failed', hook='rollbackToNewState'),
-                                              State(
-                        'submitted', hook='monitorSubmitted_hook'),
-        State(
-                        'unknown', 'forced remove OR remote jobmgr error'),
-        State('failed', 'manually forced or keep_on_failed=True', hook='monitorFailed_hook')),
+        'submitting': Transitions(State('new', 'submission failed', hook='rollbackToNewState'),
+                                  State('submitted', hook='monitorSubmitted_hook'),
+                                  State('unknown', 'forced remove OR remote jobmgr error'),
+                                  State('failed', 'manually forced or keep_on_failed=True', hook='monitorFailed_hook')),
         'submitted': Transitions(State('running'),
-                                 State(
-            'killed', 'j.kill()', hook='monitorKilled_hook'),
-        State('unknown', 'forced remove'),
-        State(
-            'failed', 'j.fail(force=1)', hook='monitorFailed_hook'),
-        State('completing'),
-        State(
-            'completed', hook='postprocess_hook'),
-        State('submitting', 'j.resubmit(force=1)')),
+                                 State('killed', 'j.kill()', hook='monitorKilled_hook'),
+                                 State('unknown', 'forced remove'),
+                                 State('failed', 'j.fail(force=1)', hook='monitorFailed_hook'),
+                                 State('completing'),
+                                 State('completed', hook='postprocess_hook'),
+                                 State('submitting', 'j.resubmit(force=1)')),
         'running': Transitions(State('completing'),
-                               State(
-            'completed', 'job output already in outputdir', hook='postprocess_hook'),
-        State(
-            'failed', 'backend reported failure OR j.fail(force=1)', hook='monitorFailed_hook'),
-        State(
-            'killed', 'j.kill()', hook='monitorKilled_hook'),
-        State('unknown', 'forced remove'),
-        State(
-            'submitting', 'j.resubmit(force=1)'),
-        State('submitted', 'j.resubmit(force=1)')),
+                               State('completed', 'job output already in outputdir', hook='postprocess_hook'),
+                               State('failed', 'backend reported failure OR j.fail(force=1)', hook='monitorFailed_hook'),
+                               State('killed', 'j.kill()', hook='monitorKilled_hook'),
+                               State('unknown', 'forced remove'),
+                               State('submitting', 'j.resubmit(force=1)'),
+                               State('submitted', 'j.resubmit(force=1)')),
         'completing': Transitions(State('completed', hook='postprocess_hook'),
-                                  State(
-            'failed', 'postprocessing error OR j.fail(force=1)', hook='postprocess_hook_failed'),
-        State(
-            'unknown', 'forced remove'),
-        State(
-            'submitting', 'j.resubmit(force=1)'),
-        State('submitted', 'j.resubmit(force=1)')),
+                                  State('failed', 'postprocessing error OR j.fail(force=1)', hook='postprocess_hook_failed'),
+                                  State('unknown', 'forced remove'),
+                                  State('submitting', 'j.resubmit(force=1)'),
+                                  State('submitted', 'j.resubmit(force=1)')),
         'killed': Transitions(State('removed', 'j.remove()'),
                               State('failed', 'j.fail()'),
                               State('submitting', 'j.resubmit()'),
                               State('submitted', 'j.resubmit()')),
         'failed': Transitions(State('removed', 'j.remove()'),
                               State('submitting', 'j.resubmit()'),
-                              State(
-            'completed', hook='postprocess_hook'),
-        State('submitted', 'j.resubmit()')),
+                              State('completed', hook='postprocess_hook'),
+                              State('submitted', 'j.resubmit()')),
         'completed': Transitions(State('removed', 'j.remove()'),
                                  State('failed', 'j.fail()'),
-                                 State(
-            'submitting', 'j.resubmit()'),
-        State('submitted', 'j.resubmit()')),
+                                 State('submitting', 'j.resubmit()'),
+                                 State('submitted', 'j.resubmit()')),
         'incomplete': Transitions(State('removed', 'j.remove()')),
         'unknown': Transitions(State('removed', 'forced remove')),
         'template': Transitions(State('removed'))
