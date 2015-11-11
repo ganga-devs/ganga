@@ -469,8 +469,7 @@ class Transform(GangaObject):
             id = str(task.transforms.index(self))
         else:
             id = "?"
-        o = markup("#%s: %s '%s'\n" % (
-            id, self.__class__.__name__, self.name), status_colours[self.status])
+        o = markup("#%s: %s '%s'\n" % (id, getName(self), self.name), status_colours[self.status])
         i = 0
         partitions = sorted(self._partition_status.keys())
         for c in partitions:
@@ -486,9 +485,8 @@ class Transform(GangaObject):
         logger.info(o)
 
     def info(self):
-        logger.info(markup(
-            "%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
-        logger.info("* backend: %s" % self.backend.__class__.__name__)
+        logger.info(markup("%s '%s'" % (getName(self), self.name), status_colours[self.status]))
+        logger.info("* backend: %s" % getName(self.backend))
         logger.info("Application:")
         self.application.printTree()
 
