@@ -17,6 +17,5 @@ export PYTHONPATH=$NEW_PYTHONPATH${PYTHONPATH:+:}${PYTHONPATH}
 if PYTHON=`$DIR/find-python2.7`; then
     $PYTHON $DIR/ganga.py $@
 else
-    echo 'Cannot find Python 2.7'
-    exit 1
+    python $DIR/ganga.py $@
 fi
