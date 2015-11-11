@@ -6,7 +6,6 @@ from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, JobRegistryS
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from GangaLHCb.Lib.Splitters.SplitByFiles import SplitByFiles
-from Ganga.GPIDev.Base.Proxy import addProxy
 import Ganga.GPI as GPI
 from Ganga.GPIDev.Lib.Tasks.common import logger
 

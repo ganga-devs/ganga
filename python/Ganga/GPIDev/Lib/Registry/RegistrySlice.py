@@ -397,7 +397,8 @@ class RegistrySlice(object):
                             vals.append(
                                 str(obj._index_cache["display:" + item])[0:width])
                         continue
-                    except KeyError:
+                    except KeyError as err:
+                        logger.debug("KeyError: %s" % str(err))
                         pass
                 if item == "fqid":
                     vals.append(self._get_display_value(obj, item))

@@ -13,15 +13,11 @@ from Ganga.Utility.logic import implies
 
 import Ganga.Utility.Config
 
-from Ganga.Core.exceptions import GangaAttributeError
+from Ganga.Core.exceptions import GangaAttributeError, TypeMismatchError, SchemaError
 
 from Ganga.Utility.Plugin import allPlugins
 
 import types
-
-#from . import Schema
-
-from Ganga.Core import GangaAttributeError, TypeMismatchError, SchemaError
 
 from Ganga.GPIDev.TypeCheck import _valueTypeAllowed
 

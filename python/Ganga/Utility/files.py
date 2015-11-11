@@ -10,7 +10,7 @@ Helper functions for operations on files.
 
 import os.path
 import stat
-
+import Ganga
 
 def expandfilename(filename):
     "expand a path or filename in a standard way so that it may contain ~ and ${VAR} strings"
@@ -121,8 +121,6 @@ def remove_prefix(fn, path_list):
 
     return fn
 
-import os.path
-import Ganga
 _gangaPythonPath = os.path.dirname(os.path.dirname(Ganga.__file__))
 
 if __name__ == "__main__":

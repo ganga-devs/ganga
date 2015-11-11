@@ -25,7 +25,6 @@ except:
     e = Exception()
     raise e
 
-global global_env
 global_env = None
 
 

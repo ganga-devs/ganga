@@ -8,7 +8,6 @@ from Ganga.GPIDev.Lib.File import LocalFile
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files.DiracFile import DiracFile
 from GangaLHCb.Lib.Files import LogicalFile, PhysicalFile
-from Ganga.GPIDev.Lib.File import LocalFile
 
 logger = Ganga.Utility.logging.getLogger()
 

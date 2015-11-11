@@ -2,7 +2,6 @@ from Ganga.GPIDev.Adapters.ISplitter import SplittingError
 from GangaDirac.Lib.Backends.DiracUtils import result_ok
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.Config import getConfig
 from copy import deepcopy
 import random
 
@@ -223,13 +222,14 @@ def sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
                 #raise SplittingError( "Error getting LFN Replica information:\n%s" % str(values) )
                 for this_lfn in results.get('Failed').keys():
                     bad_lfns.append(this_lfn)
-        except SplittingError, split_Err:
+        except SplittingError as split_Err:
             raise split_Err
-        except Exception, err:
+        except Exception as err:
             try:
                 error = output
                 logger.error("%s" % str(output))
-            except:
+            except Exception as err:
+                logger.debug("Error: %s" % str(err))
                 pass
             logger.error("Unknown error ion Dirac LFN Failed output")
             raise

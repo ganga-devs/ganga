@@ -1,10 +1,9 @@
 from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.GPIDev.Base.Filters import allComponentFilters
-from Ganga.GPIDev.Base.Proxy import addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError
+from Ganga.GPIDev.Base.Proxy import addProxy, isType, getProxyAttr, stripProxy, TypeMismatchError, ReadOnlyObjectError
 from Ganga.GPIDev.Base.VPrinter import full_print, summary_print
 from Ganga.GPIDev.Schema.Schema import ComponentItem, Schema, SimpleItem, Version
 from Ganga.Utility.util import containsGangaObjects
-from Ganga.GPIDev.Base.Proxy import ReadOnlyObjectError, isType
 import copy
 import sys
 

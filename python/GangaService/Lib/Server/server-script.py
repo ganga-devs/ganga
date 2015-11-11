@@ -5,7 +5,6 @@ import traceback
 import StringIO
 import time
 from socket import *
-import traceback
 import threading
 from Ganga.Utility.logging import getLogger
 

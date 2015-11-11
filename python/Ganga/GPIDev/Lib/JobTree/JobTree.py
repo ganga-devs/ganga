@@ -452,12 +452,14 @@ class JobTree(GangaObject):
                             self._getWriteAccess()
                             self.__remove_dir(path=path, dir=i)
                             self._setDirty()
-                        except ObjectNotInRegistryError:
+                        except ObjectNotInRegistryError as err:
+                            logger.debug("Object: %s Not in Reg: %s" % (str(id), str(err)))
                             pass
                         finally:
                             try:
                                 self._releaseWriteAccess()
-                            except ObjectNotInRegistryError:
+                            except ObjectNotInRegistryError as err:
+                                logger.debug("Object: %s Not in Reg: %s" % (str(id), str(err)))
                                 pass
 
     def printtree(self, path=None):

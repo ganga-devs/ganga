@@ -375,7 +375,8 @@ class DiracFile(IGangaFile):
             try:
                 if self.guid != ret['Value']['Successful'][self.lfn]['GUID']:
                     self.guid = ret['Value']['Successful'][self.lfn]['GUID']
-            except:
+            except Exception as err:
+                logger.debug("Exception: %s" % str(err))
                 pass
 
         try:

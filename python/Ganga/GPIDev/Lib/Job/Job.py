@@ -1722,7 +1722,8 @@ class Job(GangaObject):
                 self.application.transition_update("removed")
                 for sj in self.subjobs:
                     sj.application.transition_update("removed")
-            except AttributeError:
+            except AttributeError as err:
+                logger.debug("AttributeError: %s" % str(err))
                 # Some applications do not have transition_update
                 pass
 
