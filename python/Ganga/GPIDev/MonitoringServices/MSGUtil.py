@@ -22,11 +22,7 @@ except:
     pass
 
 
-# Ganga-specific createPublisher
-from stomputil.publisher import IDLE_TIMEOUT, EXIT_TIMEOUT
-
-
-def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=IDLE_TIMEOUT, exit_timeout=EXIT_TIMEOUT):
+def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=None, exit_timeout=None):
     """Create a new publisher thread which extends GangaThread where available
     (i.e. on the client) or Thread otherwise (i.e. on the worker node).
 
@@ -50,6 +46,14 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
 
     See also stomputil.publisher
     """
+
+    from Ganga.Utility.stomputil.publisher import IDLE_TIMEOUT, EXIT_TIMEOUT
+
+    if idle_timeout is None:
+        idle_timeout = IDLE_TIMEOUT
+    if exit_timeout is None:
+        exit_timeout = EXIT_TIMEOUT
+
     # use GangaThread class on client or Thread class otherwise
     try:
         from Ganga.Core.GangaThread import GangaThread as Thread
@@ -64,8 +68,8 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
     except ImportError:
         logger = None
     # create and start _publisher
-    import stomputil
-    publisher = stomputil.createPublisher(Thread, server, port, user, password, logger, idle_timeout)
+    import Ganga.Utility.stomputil
+    publisher = Ganga.Utility.stomputil.createPublisher(Thread, server, port, user, password, logger, idle_timeout)
     if managed_thread:
         # set GangaThread as non-critical
         publisher.setCritical(False)
