@@ -833,8 +833,7 @@ class SessionLockManager(object):
 
         self.global_lock_acquire()
         try:
-            sessions = [
-                s for s in os.listdir(self.sdir) if s.endswith(self.name + ".locks")]
+            sessions = [s for s in os.listdir(self.sdir) if s.endswith(self.name + ".locks")]
             for session in sessions:
                 try:
                     sf = os.path.join(self.sdir, session)

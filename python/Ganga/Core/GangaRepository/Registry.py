@@ -414,7 +414,7 @@ class Registry(object):
                 id = self.find(obj)
                 try:
                     self.repository.load([id])
-                except KeyError, err:
+                except KeyError as err:
                     logger.debug("_read_access KeyError %s" % str(err))
                     raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id, self.name))
                 except InaccessibleObjectError as err:
