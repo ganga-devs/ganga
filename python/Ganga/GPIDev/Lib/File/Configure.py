@@ -53,7 +53,7 @@ uploadOptions:config values needed for the actual %s upload'
 
     # LCGSEFILE
 
-    LCGSEBakPost = {'LSF': 'client', 'LCG': 'WN', 'CREAM': 'WN',
+    LCGSEBakPost = {'LSF': 'client', 'PBS': 'client', 'LCG': 'WN', 'CREAM': 'WN',
                     'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
     LCGSEUpOpt = {'LFC_HOST': 'lfc-dteam.cern.ch', 'dest_SRM': 'srm-public.cern.ch'}
     LCGSEFileExt = docstr_Ext % ('LCG SE', 'LCG')
@@ -67,7 +67,7 @@ uploadOptions:config values needed for the actual %s upload'
     # DiracFile
 
     # Should this be in Core or elsewhere?
-    diracBackPost = {'Dirac': 'WN', 'LSF': 'WN', 'LCG': 'WN',
+    diracBackPost = {'Dirac': 'WN', 'LSF': 'WN', 'PBS': 'WN', 'LCG': 'WN',
                      'CREAM': 'WN', 'ARC': 'WN', 'Localhost': 'WN', 'Interactive': 'WN'}
     diracFileExts = docstr_Ext % ('DIRAC', 'DIRAC')
 
@@ -80,7 +80,7 @@ uploadOptions:config values needed for the actual %s upload'
 
     # GoogleFile
 
-    GoogleFileBackPost = {'Dirac': 'client', 'LSF': 'client', 'LCG': 'client',
+    GoogleFileBackPost = {'Dirac': 'client', 'LSF': 'client', 'PBS': 'client', 'LCG': 'client',
                           'CREAM': 'client', 'ARC': 'client', 'Localhost': 'client', 'Interactive': 'client'}
     GoogleFileExts = docstr_Ext % ('GoogleDrive', 'Google')
 
@@ -140,7 +140,7 @@ uploadOptions:config values needed for the actual %s upload'
 
     massStorageFileExt = docstr_Ext % ('Mass Storage', 'EOS')
 
-    massStorageBackendPost = {'LSF': 'WN', 'LCG': 'client', 'CREAM': 'client',
+    massStorageBackendPost = {'LSF': 'WN', 'PBS': 'WN', 'LCG': 'client', 'CREAM': 'client',
                               'ARC': 'client', 'Localhost': 'WN', 'Interactive': 'client', 'Dirac': 'client'}
 
     outputconfig.addOption('MassStorageFile',

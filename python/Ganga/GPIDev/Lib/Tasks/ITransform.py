@@ -6,13 +6,12 @@ from .common import logger, markup, overview_colours, status_colours
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.GPIDev.Lib.Job import MetadataDict
 from Ganga.Utility.Config import getConfig
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 from .IUnit import IUnit
 import Ganga.GPI as GPI
 import time
 import os
 from Ganga.GPIDev.Lib.Tasks.ITask import addInfoString
-from Ganga.GPIDev.Base.Proxy import isType
 
 class ITransform(GangaObject):
     _schema = Schema(Version(1, 0), {
@@ -53,7 +52,7 @@ OutputFile objects to be copied to all jobs"),
     _name = 'ITransform'
     _exportmethods = ['addInputData', 'resetUnit', 'setRunLimit', 'getJobs', 'setMinorRunLimit',
                       'setMajorRunLimit', 'getID', 'overview', 'resetUnitsByStatus', 'removeUnusedJobs',
-                      'showInfo', 'showUnitInfo', 'pause' ]
+                      'showInfo', 'showUnitInfo', 'pause', 'n_all', 'n_status' ]
     _hidden = 0
 
     def showInfo(self):
@@ -417,8 +416,8 @@ OutputFile objects to be copied to all jobs"),
         return sum([u.n_status(status) for u in self.units])
 
     def info(self):
-        logger.info(markup("%s '%s'" % (self.__class__.__name__, self.name), status_colours[self.status]))
-        logger.info("* backend: %s" % self.backend.__class__.__name__)
+        logger.info(markup("%s '%s'" % (getName(self), self.name), status_colours[self.status]))
+        logger.info("* backend: %s" % getName(self.backend))
         logger.info("Application:")
         self.application.printTree()
 
@@ -459,11 +458,11 @@ OutputFile objects to be copied to all jobs"),
             uniqueValues = []
 
             for val in value:
-                key = '%s%s' % (val.__class__.__name__, val.namePattern)
+                key = '%s%s' % (getName(val), val.namePattern)
                 if key not in uniqueValuesDict:
                     uniqueValuesDict.append(key)
                     uniqueValues.append(val)
-                elif val.__class__.__name__ == 'LCGSEFile':
+                elif getName(val) == 'LCGSEFile':
                     uniqueValues.append(val)
 
             super(ITransform, self).__setattr__(attr, uniqueValues)

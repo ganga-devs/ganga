@@ -83,8 +83,10 @@ class GaudiDataset(Dataset):
 
     def count(x): return self.files.count(x)
 
+    @staticmethod
     def sort(): return self.files.sort()
 
+    @staticmethod
     def reverse(): return self.files.reverse()
 
 

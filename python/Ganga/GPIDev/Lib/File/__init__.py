@@ -52,7 +52,8 @@ def decodeExtensionKeys():
 
             outputfilesConfig[key] = outputFilePatterns
 
-        except ConfigError:
+        except ConfigError as err:
+            logger.debug("ConfigureError: %s" % str(err))
             pass
 
     return outputfilesConfig

@@ -91,7 +91,7 @@ class TaskApplication(object):
             import sys
             logger.error(
                 "Exception in call to transform[%s].setAppStatus(%i, %s)", self.tasks_id, self.id, new_status)
-            logger.error(x.__class__.__name__ + " : " + x)
+            logger.error( getName(x) + " : " + x)
             tb = sys.exc_info()[2]
             if tb:
                 traceback.print_tb(tb)

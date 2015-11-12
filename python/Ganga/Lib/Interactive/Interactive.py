@@ -83,7 +83,8 @@ class Interactive(IBackend):
                     match = regexp.search(statString)
                     if match:
                         value = int(match.group("value"))
-            except IOError:
+            except IOError as err:
+                logger.debug("IOError: %s" % str(err))
                 pass
         return value
 

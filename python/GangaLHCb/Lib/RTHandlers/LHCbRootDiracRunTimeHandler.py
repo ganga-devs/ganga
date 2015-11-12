@@ -12,7 +12,6 @@ from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 from Ganga.Core.exceptions import ApplicationConfigurationError
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
-from Ganga.Utility.util import unique
 from Ganga.GPIDev.Base.Proxy import isType
 from GangaDirac.Lib.Files import DiracFile
 logger = getLogger()

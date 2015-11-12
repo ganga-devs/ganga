@@ -460,7 +460,8 @@ class DiracBase(IBackend):
                 import datetime
                 try:
                     result = eval(result)
-                except:
+                except Exception as err:
+                    logger.debug("Exception: %s" % str(err))
                     pass
             msg = 'OK.'
             if not result_ok(result):
@@ -765,7 +766,8 @@ class DiracBase(IBackend):
             updated_dirac_status = state[3]
             try:
                 job.backend.extraInfo = state[4]
-            except:
+            except Exception as err:
+                logger.debug("Exception: %s" % str(err))
                 pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 

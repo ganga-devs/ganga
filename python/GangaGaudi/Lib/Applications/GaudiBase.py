@@ -14,7 +14,6 @@ from Ganga.GPIDev.Lib.File import File
 from Ganga.Core import ApplicationConfigurationError
 import Ganga.Utility.Config
 from Ganga.Utility.execute import execute
-from Ganga.Utility.files import expandfilename
 from Ganga.GPIDev.Lib.File import ShareDir
 from Ganga.Utility.Config import getConfig
 from Ganga.GPIDev.Base.Proxy import getName
@@ -113,7 +112,8 @@ class GaudiBase(IPrepareApp):
             shell = None
             try:
                 job = self.getJobObject()
-            except:
+            except Exception as err:
+                logger.debug("Error: %s" % str(err))
                 pass
             else:
                 env_file_name = job.getDebugWorkspace().getPath() + \

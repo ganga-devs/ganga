@@ -1337,7 +1337,11 @@ default_backends = LCG
 
             ipver = IPython.__version__
 
-            if ipver in ["3.1.0", "3.2.0", "3.2.1", '4.0.0']:
+            ipver_major = int(ipver[0])
+            ipver_minor = int(ipver[2])
+
+            #if ipver in ["1.2.1", "3.1.0", "3.2.0", "3.2.1", '4.0.0']:
+            if ipver_major > 1 or (ipver_major == 1 and ipver_minor >= 2):
                 self.check_IPythonDir()
                 self.launch_IPython(local_ns, args, self._ganga_error_handler, self.ganga_prompt)
             else:
@@ -1414,6 +1418,8 @@ default_backends = LCG
         Launch an embedded IPython session within the Ganga.GPI namespace
         """
 
+        import IPython
+
         # Based on examples/Embedding/embed_class_long.py from the IPython source tree
 
         # First we set up the prompt
@@ -1427,7 +1433,14 @@ default_backends = LCG
 
         # Import the embed function
         from IPython.terminal.embed import InteractiveShellEmbed
-        ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
+
+        ## Check which version of IPython we're running
+        ipver = IPython.__version__
+        ipver_major = int(ipver[0])
+        if ipver_major > 1:
+            ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
+        else:
+            ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
 
         ipshell.set_custom_exc((Exception,), error_handler)
 

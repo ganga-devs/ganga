@@ -10,7 +10,6 @@ import warnings
 import tempfile
 import shutil
 from Ganga.Utility.Shell import Shell
-import Ganga.Utility.logging
 from AppsBaseUtils import available_packs
 
 logger = Ganga.Utility.logging.getLogger()

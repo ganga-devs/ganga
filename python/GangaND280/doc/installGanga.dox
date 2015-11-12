@@ -1,0 +1,54 @@
+/*!
+\page installGanga How to install Ganga on your system.
+
+\section manualInstall Manual installation of Ganga on your system
+
+First you need to find the latest version of Ganga available.
+You can visit this page.
+You can also just execute this command which works most of the time:
+\code
+links -dump "http://ganga.web.cern.ch/ganga/release" | grep GANGA | cut -d 'N' -f 2 | cut -d ' ' -f 2
+\endcode
+
+Then download the installer and run it with the latest ganga version replacing RELEASENUMBER:
+\code
+wget http://ganga.web.cern.ch/ganga/download/ganga-install
+python ganga-install RELEASENUMBER
+\endcode
+
+Now it is time to start ganga for the first time in order to set it up.
+Again replace RELEASENUMBER with your release version.
+\code
+~/Ganga/install/RELEASENUMBER/bin/ganga
+\endcode
+At this stage if you have your grid certificate installed on this system, ganga may ask for your password to set it up.
+Ganga will also ask if you want to create the .gangarc configuration. Say yes !
+
+Now ganga should be ready to run non-ND280 applications on the localhost.
+
+\section SetupGangaND280 Setting up nd280Ganga and .gangarc
+
+If you haven't yet, get the nd280Ganga package like any other nd280 package through CMT/CVS:
+\code
+cmt co nd280Ganga
+\endcode
+
+Now it's time to edit your .gangarc starting with RUNTIME_PATH.
+This tells Ganga where to find external modules like nd280Ganga so it should point to the modules directory in nd280Ganga:
+\code
+RUNTIME_PATH = /home/me/workspace/nd280Ganga/v0r0/modules
+\endcode
+
+All the other changes to .gangarc from this point on are optional but highly recommended.
+By default Ganga's workspace will be located in ~/gangadir. This may not be optiomal in particular if you have limited disk space for your home directory because this is where the output files will go when you use the SandboxFile outputfiles.
+So I recommend to place \a gangadir on a data disk instead.
+\b Be \b careful because everytime you change the \a gangadir variable in .gangarc, all the previous jobs will disappear from Ganga.
+
+If you have access to a PBS queueing system, you will need to edit \a queue_name and \a submit_res_pattern in the \a PBS section to match your system.
+
+In order to be able to use the ROOT merger, you need to edit the \a path variable in the \a ROOT section to point to a local ROOT installation like this:
+\code
+path = /home/me/workspace/tools/v1r49/ROOT/v5r34p09n01/Linux-x86_64
+\endcode
+
+*/

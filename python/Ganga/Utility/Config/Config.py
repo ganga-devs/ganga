@@ -964,7 +964,8 @@ def setConfigOption(section="", item="", value=""):
             config = getConfig(section)
             if item in config.getEffectiveOptions():
                 config.setSessionValue(item, value)
-        except:
+        except Exception as err:
+            logger.debug("Error setting Option: %s = %s  :: %s" % (str(item), str(value), str(err)))
             pass
 
     return None

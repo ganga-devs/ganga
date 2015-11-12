@@ -16,8 +16,6 @@ import subprocess
 import datetime
 import time
 
-import re
-
 import Ganga.Utility.logging
 
 import Ganga.Utility.Config

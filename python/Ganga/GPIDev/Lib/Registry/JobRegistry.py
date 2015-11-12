@@ -97,7 +97,8 @@ class JobRegistry(Registry):
         super(JobRegistry, self)._remove(obj, auto_removed)
         try:
             self.jobtree.cleanlinks()
-        except:
+        except Exception as err:
+            logger.debug("Exception in _remove: %s" % str(err))
             pass
 
 class JobRegistrySlice(RegistrySlice):
