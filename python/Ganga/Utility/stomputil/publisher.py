@@ -1,7 +1,6 @@
 """Wrapper around the publish features of stomp.py."""
 
 import logging
-import stomp
 import time
 from Queue import Queue
 
@@ -11,8 +10,33 @@ IDLE_TIMEOUT = 30 # Maximum seconds to idle before closing connection.
 EXIT_TIMEOUT = 5 # Maximum seconds to clear queued messages on exit.
 PUBLISHER_TIMESTAMP_HEADER = '_publisher_timestamp' # The publisher timestamp header name
 
+try:
+    import stomp
+    stomp_listener = stomp.ConnectionListener
+    stomp_major_version = int(stomp.__version__[0])
 
-class LoggerListener(stomp.ConnectionListener):
+
+except (Exception, ImportError) as err:
+
+    if not isinstance(err, ImportError):
+        print("Error Importing Stomp utility!")
+        print("err: %s" % str(err))
+
+    class stomp(object):
+        def __init__():
+            ## DUMMY CLASS
+            pass
+
+        @staticmethod
+        def Connection( _server_and_port, user, password):
+            ## DO NOTHING
+            pass
+
+    stomp_listener = object
+    stomp_major_version = 2
+
+
+class LoggerListener(stomp_listener):
     """Connection listener which logs STOMP events."""
 
     def __init__(self, logger):
@@ -92,6 +116,9 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             self._cx = None
             # connection parameters
             self._cx_params = ([(server, port)], user, password)
+            self._cx_hostname_ports = [(server, port)]
+            self._cx_username = user
+            self._cx_password = password
             # logger
             self._logger = logger
             # indicates how long (seconds) the connection can idle
@@ -135,8 +162,19 @@ def createPublisher(T, server, port, user='', password='', logger=None,
 
         def _send(self, (message, headers, keyword_headers)):
             """Send given message to MSG server."""
+            if self._cx is None:
+                self._log(logging.DEBUG, 'NOT Sending message:\n%s' % str(message))
+                return
             self._log(logging.DEBUG, 'Sending message. body=%r headers=%r keyword_headers=%r.', message, headers, keyword_headers)
-            self._cx.send(message, headers, **keyword_headers)
+            global stomp_major_version
+            if stomp_major_version > 2:
+                import copy
+                keyword_headers2 = copy.deepcopy(keyword_headers)
+                my_destination = keyword_headers['destination']
+                del keyword_headers2['destination']
+                self._cx.send(my_destination, message, None, headers, **keyword_headers2)
+            else:
+                self._cx.send(message, headers, **keyword_headers)
             self._log(logging.DEBUG, 'Sent message.')
 
         def _connect(self):
@@ -145,12 +183,19 @@ def createPublisher(T, server, port, user='', password='', logger=None,
             if cx is None or not cx.is_connected():
                 self._log(logging.DEBUG, 'Connecting.')
                 # create connection
-                cx = stomp.Connection(*self._cx_params)
+                global stomp_major_version
+                if stomp_major_version > 2:
+                    cx = stomp.Connection(self._cx_hostname_ports)
+                else:
+                    cx = stomp.Connection(*self._cx_params)
                 # add logger listener to connection
                 if self._logger is not None:
                     cx.set_listener('logger', LoggerListener(self._logger))
                 cx.start()
-                cx.connect()
+                if stomp_major_version > 2:
+                    cx.connect(username=self._cx_username, passcode=self._cx_password)
+                else:
+                    cx.connect()
                 self._cx = cx
                 self._log(logging.DEBUG, 'Connected.')
 
