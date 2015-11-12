@@ -238,7 +238,7 @@ class GangaRepositoryLocal(GangaRepository):
             if id in self.objects:
                 obj = self.objects[id]
                 if obj._data:
-                    setattr(obj, "_registry_refresh", True)
+                    setattr(stripProxy(obj), "_registry_refresh", True)
             else:
                 obj = self._make_empty_object_(id, cat, cls)
             obj._index_cache = cache
