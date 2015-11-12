@@ -406,7 +406,9 @@ class Registry(object):
         if not obj._data or hasattr(obj, "_registry_refresh"):
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
-            delattr(obj, "_registry_refresh")
+
+            if hasattr(obj, "_registry_refresh"):
+                delattr(obj, "_registry_refresh")
             assert not hasattr(obj, "_registry_refresh")
 
             self._lock.acquire()
@@ -456,8 +458,9 @@ class Registry(object):
                         raise RegistryLockError(errstr)
                 finally:  # try to load even if lock fails
                     try:
-                        delattr(obj, "_registry_refresh")
                         self.repository.load([id])
+                        if hasattr(obj, "_registry_refresh"):
+                            delattr(obj, "_registry_refresh")
                     except KeyError, err:
                         logger.debug("_write_access KeyError %s" % str(err))
                         raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id, self.name))
