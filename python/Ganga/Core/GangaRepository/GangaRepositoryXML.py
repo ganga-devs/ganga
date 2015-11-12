@@ -167,6 +167,7 @@ class GangaRepositoryLocal(GangaRepository):
         self.lockroot = os.path.join(self.registry.location, "6.0")
         self.saved_paths = {}
         self.saved_idxpaths = {}
+        self._cache_load_timestamp = {}
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -237,7 +238,7 @@ class GangaRepositoryLocal(GangaRepository):
             if id in self.objects:
                 obj = self.objects[id]
                 if obj._data:
-                    obj.__dict__["_registry_refresh"] = True
+                    setattr(obj, "_registry_refresh", True)
             else:
                 obj = self._make_empty_object_(id, cat, cls)
             obj._index_cache = cache
@@ -361,17 +362,18 @@ class GangaRepositoryLocal(GangaRepository):
                     time = os.stat(fn).st_ctime
                 except OSError as err:
                     logger.debug("_write_master_cache: %s" % str(err))
-                    logger.debug("_cache_load_timestamp: %s" % str(_cache_load_timestamp))
+                    logger.debug("_cache_load_timestamp: %s" % str(self._cache_load_timestamp))
                     import errno
                     if err.errno == errno.ENOENT:  # If file is not found
-                        time = 0
+                        time = -1
                     else:
                         raise
-                cached_list.append(time)
-                cached_list.append(self._cached_cat[k])
-                cached_list.append(self._cached_cls[k])
-                cached_list.append(self._cached_obj[k])
-                this_master_cache.append(cached_list)
+                if time > 0:
+                    cached_list.append(time)
+                    cached_list.append(self._cached_cat[k])
+                    cached_list.append(self._cached_cls[k])
+                    cached_list.append(self._cached_obj[k])
+                    this_master_cache.append(cached_list)
 
             try:
                 with open(_master_idx, 'w') as of:
@@ -453,7 +455,7 @@ class GangaRepositoryLocal(GangaRepository):
                     ## due to corruption so could be one of MANY exception types
                     ## If the job is not accessible this should NOT cause the loading of ganga to fail!
                     ## we can't reasonably write all possible exceptions here!
-                    logger.debug("Failed to load id %i: %s" % (id, str(x)))
+                    logger.debug("update_index: Failed to load id %i: %s" % (id, str(x)))
                     summary.append((id, str(x)))
 
         # Check deleted files:
@@ -475,21 +477,14 @@ class GangaRepositoryLocal(GangaRepository):
                 # add object to incomplete_objects
                 if not id in self.incomplete_objects:
                     self.incomplete_objects.append(id)
-            global printed_explanation
+
             for exc, ids in cnt.items():
-                if examples[exc].find('comments') > 0:
-                    printed_explanation = True
-                    from Ganga.Utility.repairJobRepository import repairJobRepository
-                    for jobid in ids:
-                        repairJobRepository(int(jobid))
-                else:
-                    logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (
-                        self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
+                logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
+
+            global printed_explanation
             if not printed_explanation:
-                logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (
-                    self.registry.name, self.registry.name))
-                logger.error(
-                    "WARNING!!! This will result in corrupt jobs being completely deleted!!!")
+                logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
+                logger.error("WARNING!!! This will result in corrupt jobs being completely deleted!!!")
                 printed_explanation = True
         logger.debug("updated index done")
 
@@ -503,8 +498,7 @@ class GangaRepositoryLocal(GangaRepository):
         Raise RepositoryError"""
         if not force_ids is None:  # assume the ids are already locked by Registry
             if not len(objs) == len(force_ids):
-                raise RepositoryError(
-                    self, "Internal Error: add with different number of objects and force_ids!")
+                raise RepositoryError(self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
         else:
             ids = self.sessionlock.make_new_ids(len(objs))
@@ -726,7 +720,7 @@ class GangaRepositoryLocal(GangaRepository):
             try:
                 fobj = self._open_xml_file(fn)
             except Exception as err:
-                logger.debug("Failed to load XML file: %s" % str(fn))
+                logger.debug("XML load: Failed to load XML file: %s" % str(fn))
                 logger.debug("Error was:\n%s" % str(err))
                 raise err
 

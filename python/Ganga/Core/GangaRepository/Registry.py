@@ -315,9 +315,8 @@ class Registry(object):
         Raise RegistryLockError
         Raise ObjectNotInRegistryError"""
         if not self._started:
-            raise RegistryAccessError(
-                "Cannot remove objects from a disconnected repository!")
-        if not auto_removed and "remove" in obj.__dict__:
+            raise RegistryAccessError("Cannot remove objects from a disconnected repository!")
+        if not auto_removed and hasattr(obj, "remove"):
             obj.remove()
         else:
             id = self.find(obj)
@@ -327,8 +326,7 @@ class Registry(object):
                 logger.debug("Registry KeyError: %s" % str(err))
                 logger.warning("double delete: Object #%i is not present in registry '%s'!" % (id, self.name))
                 return
-            logger.debug(
-                'deleting the object %d from the registry %s', id, self.name)
+            logger.debug('deleting the object %d from the registry %s', id, self.name)
             self._lock.acquire()
             try:
                 if obj in self.dirty_objs:
@@ -398,24 +396,25 @@ class Registry(object):
         finally:
             self._lock.release()
 
-    def _read_access(self, obj, sub_obj=None):
+    def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
         sub-obj is the object the read access is actually desired (ignored at the moment)
         Raise RegistryAccessError
         Raise RegistryKeyError"""
         #logger.debug("Reg %s _read_access(%s)" % (self.name, str(obj)))
-        if not obj._data or "_registry_refresh" in obj.__dict__:
+        obj = stripProxy(_obj)
+        if not obj._data or hasattr(obj, "_registry_refresh"):
             if not self._started:
-                raise RegistryAccessError(
-                    "The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
-            obj.__dict__.pop("_registry_refresh", None)
-            assert not "_registry_refresh" in obj.__dict__
+                raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
+            delattr(obj, "_registry_refresh")
+            assert not hasattr(obj, "_registry_refresh")
+
             self._lock.acquire()
             try:
                 id = self.find(obj)
                 try:
                     self.repository.load([id])
-                except KeyError, err:
+                except KeyError as err:
                     logger.debug("_read_access KeyError %s" % str(err))
                     raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (id, self.name))
                 except InaccessibleObjectError as err:
@@ -433,6 +432,8 @@ class Registry(object):
         Raise ObjectNotInRegistryError (via self.find())"""
 
         obj = stripProxy(_obj)
+
+        logger.debug("Obj: %s" % str(obj))
 
         #logger.debug("Reg: %s _write_access(%s)" % (self.name, str(obj)))
 
@@ -455,7 +456,7 @@ class Registry(object):
                         raise RegistryLockError(errstr)
                 finally:  # try to load even if lock fails
                     try:
-                        obj.__dict__.pop("_registry_refresh", None)
+                        delattr(obj, "_registry_refresh")
                         self.repository.load([id])
                     except KeyError, err:
                         logger.debug("_write_access KeyError %s" % str(err))
@@ -465,7 +466,7 @@ class Registry(object):
                     for d in self.changed_ids.itervalues():
                         d.add(id)
                 obj._registry_locked = True
-                
+
         return True
 
     def _release_lock(self, obj):

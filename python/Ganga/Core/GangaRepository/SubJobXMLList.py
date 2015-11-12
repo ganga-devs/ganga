@@ -129,27 +129,13 @@ class SubJobXMLList(GangaObject):
         except Exception, err:
             logger.debug( "cache write error: %s" % str(err) )
 
-    #def _attribute_filter__get__(self, name ):
-
-    #    if name == "_list":
-    #        if len(self._cachedJobs.keys()) != len(self):
-    #            if self._storedList != []:
-    #                self._storedList = []
-    #            i=0
-    #            for i in range( len(self) ):
-    #                self._storedList.append( self.__getitem__(i) )
-    #                i+=1
-    #        return self._storedList
-    #    else:
-    #        self.__getattribute__(self, name )
-
     def __iter__(self):
         return SJXLIterator(self)
 
-    def __get_dataFile(self, index):
+    def __get_dataFile(self, index, force_backup=False):
         import os.path
         subjob_data = os.path.join(self._jobDirectory, str(index), self._dataFileName)
-        if self._load_backup:
+        if self._load_backup is True or force_backup is True:
             subjob_data = subjob_data + '~'
         return subjob_data
 
@@ -213,9 +199,15 @@ class SubJobXMLList(GangaObject):
             try:
                 self._cachedJobs[index] = self._from_file(sj_file)[0]
             except Exception as err:
-                logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
-                logger.debug("Err:\n%s" % str(err))
-                raise err
+
+                try:
+                    subjob_data = self.__get_dataFile(str(index), True)
+                    sj_file = self._loadSubJobFromDisk(subjob_data)
+                    self._cachedJobs[index] = self._from_file(sj_file)[0]
+                except Exception as err:
+                    logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
+                    logger.debug("Err:\n%s" % str(err))
+                    raise err
 
         if self._definedParent is not None:
             parent_name = "Job: %s" % self._definedParent.getFQID('.')
