@@ -160,7 +160,7 @@ class Task(GangaObject):
            Warns if applications are not affected because they lack the parameter"""
         for name, parm in args.iteritems():
             for tf in [t for t in self.transforms if t.application]:
-                if name in tf.application._data:
+                if name in tf.application.getNodeData():
                     addProxy(tf.application).__setattr__(name, parm)
                 else:
                     logger.warning("Transform %i was not affected!", tf.name)

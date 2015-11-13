@@ -53,6 +53,7 @@ def to_file(j, f=None, ignore_subs=''):
     except Exception as err:
         logger.error("XML to-file error for file:\n%s" % (str(err)))
         raise XMLFileError(err)
+        #raise err
 
 # Faster, but experimental version of to_file without accept()
 # def to_file(j,f=None,ignore_subs=''):
@@ -109,7 +110,7 @@ def fastXML(obj, indent='', ignore_subs=''):
     elif hasattr(obj, '_data'):
         v = obj._schema.version
         sl = ['\n', indent, '<class name="%s" version="%i.%i" category="%s">\n' % (getName(obj), v.major, v.minor, obj._category)]
-        for k, o in obj._data.iteritems():
+        for k, o in obj.getNodeData().iteritems():
             if k != ignore_subs:
                 try:
                     if not obj._schema[k]._meta["transient"]:
@@ -310,7 +311,7 @@ class Loader(object):
                     else:
                         # make a new ganga object
                         obj = super(cls, cls).__new__(cls)
-                        obj._data = {}
+                        obj.setNodeData({})
                 self.stack.append(obj)
 
             # push the attribute name on the stack
@@ -341,7 +342,7 @@ class Loader(object):
                 aname = self.stack.pop()
                 obj = self.stack[-1]
                 # update the object's attribute
-                obj._data[aname] = value
+                obj.setNodeAttribute(aname, value)
 
             # when </value> is seen the value_construct buffer (CDATA) should
             # be a python expression (e.g. quoted string)
@@ -369,12 +370,11 @@ class Loader(object):
             if name == 'class':
                 obj = self.stack[-1]
                 for attr, item in obj._schema.allItems():
-                    if not attr in obj._data:
+                    if not attr in obj.getNodeData():
                         if item._meta["sequence"] == 1:
-                            obj._data[attr] = makeGangaListByRef(
-                                obj._schema.getDefaultValue(attr))
+                            obj.setNodeAttribute(attr, makeGangaListByRef(obj._schema.getDefaultValue(attr)))
                         else:
-                            obj._data[attr] = obj._schema.getDefaultValue(attr)
+                            obj.setNodeAttribute(attr, obj._schema.getDefaultValue(attr))
 
                 obj.__setstate__(obj.__dict__)  # this sets the parent
 
@@ -402,7 +402,7 @@ class Loader(object):
         obj = self.stack[-1]
         # Raise Exception if object is incomplete
         for attr, item in obj._schema.allItems():
-            if not attr in obj._data:
+            if not attr in obj.getNodeData():
                 raise AssertionError("incomplete XML file")
         return obj, self.errors
 

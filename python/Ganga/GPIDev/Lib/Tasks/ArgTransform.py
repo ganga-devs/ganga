@@ -15,7 +15,7 @@ class ArgTransform(Transform):
     def check(self):
         nargs = len(self.args)
         self.setPartitionsStatus(range(1, nargs + 1), "ready")
-        if "_partition_status" in self._data:
+        if "_partition_status" in self.getNodeData():
             self.setPartitionsLimit(nargs + 1)
 
     def getJobsForPartitions(self, partitions):

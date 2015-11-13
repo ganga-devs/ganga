@@ -388,7 +388,7 @@ class RegistrySlice(object):
             vals = []
             for item in self._display_columns:
                 width = self._display_columns_width.get(item, default_width)
-                if obj._data is None and hasattr(obj, "_index_cache") and not obj._index_cache is None:
+                if obj.getNodeData() is None and hasattr(obj, "_index_cache") and not obj._index_cache is None:
                     try:
                         if item == "fqid":
                             vals.append(

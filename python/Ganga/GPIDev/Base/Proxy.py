@@ -24,6 +24,14 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 # some proxy related convieniance methods
 
+_gangaListClass = None
+
+def getGangaList():
+    global _gangaListClass
+    if _gangaListClass is None:
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        _gangaListClass = GangaList
+    return _gangaListClass
 
 def isProxy(obj):
     """Checks if an object is a proxy"""
@@ -45,14 +53,12 @@ def isType(_obj, type_or_seq):
     bare_type_or_seq = stripProxy(type_or_seq)
 
     ## Here to avoid circular GangaObject dependencies
-    from Ganga.GPIDev.Lib.GangaList import GangaList
     ## is type_or_seq iterable?
-    if isinstance(type_or_seq, (tuple, list)) or\
-            (isinstance(bare_type_or_seq, GangaList.GangaList) and (bare_type_or_seq != GangaList.GangaList)):
+    if isinstance(type_or_seq, (tuple, list, getGangaList())):
         clean_list = []
         for type_obj in type_or_seq:
             str_type = type('')
-            if (not isclass(type_obj)) and (type(type_obj) != type(str_type) and type_obj != str_type):
+            if type_obj != str_type and type(type_obj) != type(str_type) and (not isclass(type_obj)):
                 clean_list.append(type(stripProxy(type_obj)))
             elif isclass(type_obj):
                 clean_list.append(type_obj)
@@ -191,8 +197,8 @@ class ProxyDataDescriptor(object):
         else:
             disguiser = disguiseAttribute
 
-        from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
         if item['sequence'] and isType(val, list):
+            from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
             val = makeGangaList(val, disguiser)
 
         return disguiser(val)
@@ -295,11 +301,11 @@ class ProxyDataDescriptor(object):
         else:
             stripper = stripAttribute
 
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaList
         if item['sequence']:
             # we need to explicitly check for the list type, because simple
             # values (such as strings) may be iterable
-            if isType(val, [GangaList, list, type([])]):
+            from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
+            if isType(val, [getGangaList(), list, type([])]):
                 # create GangaList
                 val = makeGangaList(val, stripper)
             else:

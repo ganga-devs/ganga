@@ -403,7 +403,7 @@ class Registry(object):
         Raise RegistryKeyError"""
         #logger.debug("Reg %s _read_access(%s)" % (self.name, str(obj)))
         obj = stripProxy(_obj)
-        if not obj._data or hasattr(obj, "_registry_refresh"):
+        if not obj.getNodeData() or hasattr(obj, "_registry_refresh"):
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
 

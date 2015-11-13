@@ -47,6 +47,8 @@ line='START: '+ time.strftime('%a %b %d %H:%M:%S %Y',time.gmtime(time.time())) +
 statusfile.writelines(line)
 statusfile.flush()
 
+if not os.path.exists(workdir):
+    os.makedirs(workdir)
 os.chdir(workdir)
 
 ##-- WARNING: get the input files including the python modules BEFORE sys.path.insert()
