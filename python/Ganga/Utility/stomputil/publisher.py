@@ -23,12 +23,12 @@ except (Exception, ImportError) as err:
         print("err: %s" % str(err))
 
     class stomp(object):
-        def __init__():
+        def __init__(self):
             ## DUMMY CLASS
             pass
 
         @staticmethod
-        def Connection( _server_and_port, user, password):
+        def Connection(self, _server_and_port, user, password):
             ## DO NOTHING
             pass
 
