@@ -162,7 +162,7 @@ class DiracFile(IGangaFile):
         c.remoteDir = self.remoteDir
         c.namePattern = self.namePattern
         c.compressed = self.compressed
-        c.locations = self.locations
+        c.locations = copy.deepcopy(self.locations)
         c.guid = self.guid
         c._storedReplicas = self._storedReplicas
         c._remoteURLs = self._remoteURLs
