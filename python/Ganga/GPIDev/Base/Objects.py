@@ -72,21 +72,23 @@ class Node(object):
         self.__dict__ = dict
 
     def __copy__(self, memo=None):
+        self = stripProxy(self)
         cls = type(self)
-        obj = super(cls, cls).__new__(cls)
+        obj = super(cls, self).__new__(cls)
         # FIXME: this is different than for deepcopy... is this really correct?
-        d = self.__dict__.copy(memo)
+        d = self.__dict__.copy()
         obj.__dict__ = d
         return obj
 
     def __deepcopy__(self, memo=None):
-        cls = type(stripProxy(self))
-        obj = super(cls, cls).__new__(cls)
+        self = stripProxy(self)
+        cls = type(self)
+        obj = super(cls, self).__new__(cls)
         d = stripProxy(self).__getstate__()
         for n in d:
             #print "%s::%s" % (str(self.__class__.__name__), str(n))
             if n not in self._ref_list:
-                d[n] = deepcopy(d[n], memo)  # FIXED
+                d[n] = deepcopy(stripProxy(d[n]), memo)  # FIXED
             else:
                 d[n] = None
         obj.__setstate__(d)
@@ -660,6 +662,7 @@ class GangaObject(Node):
     # on the deepcopy reset all non-copyable properties as defined in the
     # schema
     def __deepcopy__(self, memo=None):
+        self = stripProxy(self)
         self._getReadAccess()
         c = super(GangaObject, self).__deepcopy__(memo)
         if self._schema is not None:
