@@ -86,7 +86,7 @@ class GangaRepositorySQLite(GangaRepository):
             cls = objs[i]._name
             cat = objs[i]._category
             objs[i]._index_cache = self.registry.getIndexCache(objs[i])
-            data = pickle.dumps(objs[i]._data).replace("'", "''")
+            data = pickle.dumps(objs[i].getNodeData()).replace("'", "''")
             idx = pickle.dumps(objs[i]._index_cache).replace("'", "''")
             if force_ids is None:
                 self.cur.execute("INSERT INTO objects (id,classname,category,idx,data) VALUES (NULL,'%s','%s','%s','%s')" % (
@@ -104,7 +104,7 @@ class GangaRepositorySQLite(GangaRepository):
             obj = self.objects[id]
             if obj._name != "EmptyGangaObject":
                 obj._index_cache = self.registry.getIndexCache(obj)
-                data = pickle.dumps(obj._data).replace("'", "''")
+                data = pickle.dumps(obj.getNodeData()).replace("'", "''")
                 idx = pickle.dumps(obj._index_cache).replace("'", "''")
                 self.cur.execute(
                     "UPDATE objects SET idx='%s',data='%s' WHERE id=%s" % (idx, data, id))
@@ -123,8 +123,8 @@ class GangaRepositorySQLite(GangaRepository):
                 obj = self._make_empty_object_(id, e[2], e[1])
             else:
                 obj = self.objects[id]
-            if obj._data is None:
-                obj._data = pickle.loads(e[3])
+            if obj.getNodeData() is None:
+                obj.setNodeData( pickle.loads(e[3]) )
                 obj.__setstate__(obj.__dict__)
             ids.remove(id)
         if len(ids) > 0:

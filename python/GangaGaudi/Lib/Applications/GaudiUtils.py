@@ -13,8 +13,6 @@ import CMTUtils
 import cmakeUtils
 import subprocess
 import time
-import tempfile
-import time
 import collections
 
 logger = Ganga.Utility.logging.getLogger()

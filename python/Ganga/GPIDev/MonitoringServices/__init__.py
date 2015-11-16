@@ -4,7 +4,7 @@ _mon_classes = {}
 
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Adapters.IMonitoringService import IMonitoringService
-from Ganga.Lib.MonitoringServices.Composite import CompositeMonitoringService
+from Ganga.GPIDev.MonitoringServices.Composite import CompositeMonitoringService
 
 from Ganga.Utility.Config import makeConfig
 

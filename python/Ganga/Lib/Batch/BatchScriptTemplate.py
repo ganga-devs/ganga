@@ -87,10 +87,6 @@ flush_file(sys.stderr)
 sys.stdout=open('./__syslog__','w')
 sys.stderr=sys.stdout
 
-###MONITORING_SERVICE###
-monitor = createMonitoringObject()
-monitor.start()
-
 result = 255
 
 
@@ -102,22 +98,18 @@ try:
         result = child.poll()
         if result is not None:
             break
-        monitor.progress()
         heartbeatfile.write('.')
         flush_file(heartbeatfile)
         time.sleep(###HEARTBEATFREQUENCE###)
 except Exception as x:
     print('ERROR: %s'%str(x))
 
-monitor.progress()
 flush_file(sys.stdout)
 flush_file(sys.stderr)
 sys.stdout=sys.__stdout__
 sys.stderr=sys.__stderr__
 print("--- GANGA APPLICATION OUTPUT END ---", file=sys.stdout)
 
-
-monitor.stop(result)
 
 try:
     filefilter

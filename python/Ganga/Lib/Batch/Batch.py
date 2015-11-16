@@ -385,11 +385,7 @@ class Batch(IBackend):
         job = self.getJobObject()
         mon = job.getMonitoringService()
         import Ganga.Core.Sandbox as Sandbox
-        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles()
-                                                            +
-                                                            Sandbox.getGangaModulesAsSandboxFiles(
-                                                                Sandbox.getDefaultModules())
-                                                            + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules()))
+        subjob_input_sandbox = job.createPackedInputSandbox(jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules()))
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()
@@ -436,8 +432,6 @@ class Batch(IBackend):
         '###QUEUENAME###' : self.config['queue_name'],
         '###HEARTBEATFREQUENCE###' : self.config['heartbeat_frequency'],
         '###INPUT_DIR###' : repr(job.getStringInputDir()),
-
-        '###MONITORING_SERVICE###' : job.getMonitoringService().getWrapperScriptConstructorText(),
 
         '###GANGADIR###' : repr(getConfig('System')['GANGA_PYTHONPATH'])
         }

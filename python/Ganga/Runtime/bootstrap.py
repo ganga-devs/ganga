@@ -643,6 +643,23 @@ If ANSI text colours are enabled, then individual colours may be specified like 
         queuesconfig.addOption('Timeout', None, 'default timeout for queue generated processes')
         queuesconfig.addOption('NumWorkerThreads', 3, 'default number of worker threads in the queues system')
 
+
+        # [MSGMS] section create configuration
+        monConfig = makeConfig('MSGMS', 'Settings for the MSGMS monitoring plugin. Cannot be changed ruding the interactive Ganga session.')
+        monConfig.addOption('server', 'dashb-mb.cern.ch', 'The server to connect to')
+        monConfig.addOption('port', 61113, 'The port to connect to')
+        monConfig.addOption('username', 'ganga', '')
+        monConfig.addOption('password', 'analysis', '')
+        monConfig.addOption('message_destination', '/queue/ganga.status', '')
+        monConfig.addOption('usage_message_destination', "/queue/ganga.usage", '')
+        monConfig.addOption('job_submission_message_destination', "/queue/ganga.jobsubmission", '')
+
+        # prevent modification during the interactive ganga session
+        def deny_modification(name, x):
+            raise Config.ConfigError('Cannot modify [MSGMS] settings (attempted %s=%s)' % (name, x))
+        monConfig.attachUserHandler(deny_modification, None)
+
+
         # all relative names in the path are resolved wrt the _gangaPythonPath
         # the list order is reversed so that A:B maintains the typical path precedence: A overrides B
         # because the user config file is put at the end it always may override

@@ -29,8 +29,6 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
-printed_explanation = False
-
 
 def safe_save(fn, _obj, to_file, ignore_subs=''):
     """Writes a file safely, raises IOError on error"""
@@ -168,6 +166,7 @@ class GangaRepositoryLocal(GangaRepository):
         self.saved_paths = {}
         self.saved_idxpaths = {}
         self._cache_load_timestamp = {}
+        self.printed_explanation = False
 
     def startup(self):
         """ Starts a repository and reads in a directory structure.
@@ -237,7 +236,7 @@ class GangaRepositoryLocal(GangaRepository):
                 raise IOError("Error on unpickling: %s %s" %(getName(x), x))
             if id in self.objects:
                 obj = self.objects[id]
-                if obj._data:
+                if obj.getNodeData():
                     setattr(stripProxy(obj), "_registry_refresh", True)
             else:
                 obj = self._make_empty_object_(id, cat, cls)
@@ -481,11 +480,10 @@ class GangaRepositoryLocal(GangaRepository):
             for exc, ids in cnt.items():
                 logger.error("Registry '%s': Failed to load %i jobs (IDs: %s) due to '%s' (first error: %s)" % (self.registry.name, len(ids), ",".join(ids), exc, examples[exc]))
 
-            global printed_explanation
-            if not printed_explanation:
-                logger.error("If you want to delete the incomplete objects, you can type 'for i in %s.incomplete_ids(): %s(i).remove()' (press 'Enter' twice)" % (self.registry.name, self.registry.name))
+            if self.printed_explanation is False:
+                logger.error("If you want to delete the incomplete objects, you can type:\n\n'for i in %s.incomplete_ids(): %s(i).remove()'\n (then press 'Enter' twice)" % (self.registry.name, self.registry.name))
                 logger.error("WARNING!!! This will result in corrupt jobs being completely deleted!!!")
-                printed_explanation = True
+                self.printed_explanation = True
         logger.debug("updated index done")
 
         if len(changed_ids) != 0:
@@ -511,10 +509,10 @@ class GangaRepositoryLocal(GangaRepository):
                     raise RepositoryError( self, "OSError on mkdir: %s" % (str(e)))
             self._internal_setitem__(ids[i], objs[i])
             # Set subjobs dirty - they will not be flushed if they are not.
-            if self.sub_split and self.sub_split in objs[i]._data:
+            if self.sub_split and self.sub_split in objs[i].getNodeData():
                 try:
-                    for j in range(len(objs[i]._data[self.sub_split])):
-                        objs[i]._data[self.sub_split][j]._dirty = True
+                    for j in range(len(objs[i].getNodeAttribute(self.sub_split))):
+                        objs[i].getNodeAttribute(self.sub_split)[j]._dirty = True
                 except AttributeError as err:
                     logger.debug("RepoXML add Exception: %s" % str(err))
         return ids
@@ -527,17 +525,17 @@ class GangaRepositoryLocal(GangaRepository):
         if not isType(obj, EmptyGangaObject):
             split_cache = None
 
-            has_children = (not self.sub_split is None) and (self.sub_split in obj._data) and len(obj._data[self.sub_split]) > 0
+            has_children = (not self.sub_split is None) and (self.sub_split in obj.getNodeData()) and len(obj.getNodeAttribute(self.sub_split)) > 0
 
             if has_children:
             
-                if hasattr(obj._data[self.sub_split], 'flush'):
+                if hasattr(obj.getNodeAttribute(self.sub_split), 'flush'):
                     # I've been read from disk in the new SubJobXMLList format I know how to flush
-                    obj._data[self.sub_split].flush()
+                    obj.getNodeAttribute(self.sub_split).flush()
                 else:
                     # I have been constructed in this session, I don't know how to flush!
-                    if hasattr(obj._data[self.sub_split][0], "_dirty"):
-                        split_cache = obj._data[self.sub_split]
+                    if hasattr(obj.getNodeAttribute(self.sub_split)[0], "_dirty"):
+                        split_cache = obj.getNodeAttribute(self.sub_split)
                         for i in range(len(split_cache)):
                             if not split_cache[i]._dirty:
                                 continue
@@ -559,7 +557,7 @@ class GangaRepositoryLocal(GangaRepository):
                 safe_save(fn, obj, self.to_file, self.sub_split)
                 # clean files not in subjobs anymore... (bug 64041)
                 for idn in os.listdir(os.path.dirname(fn)):
-                    split_cache = obj._data[self.sub_split]
+                    split_cache = obj.getNodeAttribute(self.sub_split)
                     if idn.isdigit() and int(idn) >= len(split_cache):
                         rmrf(os.path.join(os.path.dirname(fn), idn))
             else:
@@ -587,7 +585,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def is_loaded(self, id):
 
-        return (id in self.objects) and (self.objects[id]._data is not None)
+        return (id in self.objects) and (self.objects[id].getNodeData() is not None)
 
     def count_nodes(self, id):
 
@@ -606,23 +604,23 @@ class GangaRepositoryLocal(GangaRepository):
 
     def _actually_load_xml(self, fobj, fn, id, load_backup):
 
-        must_load = (not id in self.objects) or (self.objects[id]._data is None)
+        must_load = (not id in self.objects) or (self.objects[id].getNodeData() is None)
         tmpobj = None
         if must_load or (self._load_timestamp.get(id, 0) != os.fstat(fobj.fileno()).st_ctime):
             tmpobj, errs = self.from_file(fobj)
 
-            has_children = (self.sub_split is not None) and (self.sub_split in tmpobj._data) and len(tmpobj._data[self.sub_split]) == 0
+            has_children = (self.sub_split is not None) and (self.sub_split in tmpobj.getNodeData()) and len(tmpobj.getNodeAttribute(self.sub_split)) == 0
 
             if has_children:
                 logger.debug("Initializing SubJobXMLList")
-                tmpobj._data[self.sub_split] = SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup)
+                tmpobj.setNodeAttribute(self.sub_split, SubJobXMLList.SubJobXMLList(os.path.dirname(fn), self.registry, self.dataFileName, load_backup))
                 logger.debug("Constructed SubJobXMLList")
 
             if id in self.objects:
                 obj = self.objects[id]
-                obj._data = tmpobj._data
+                obj.setNodeData(tmpobj.getNodeData())
                 # Fix parent for objects in _data (necessary!)
-                for node_key, node_obj in obj._data.items():
+                for node_key, node_obj in obj.getNodeData().items():
                     if isType(node_obj, Node):
                         node_obj._setParent(obj)
                     if (isType(node_obj, list) or isType(node_obj, GangaList)):
@@ -662,8 +660,8 @@ class GangaRepositoryLocal(GangaRepository):
             else:
                 self._internal_setitem__(id, tmpobj)
 
-            if self.sub_split in self.objects[id]._data.keys():
-                self.objects[id]._data[self.sub_split]._setParent(self.objects[id])
+            if self.sub_split in self.objects[id].getNodeData().keys():
+                self.objects[id].getNodeAttribute(self.sub_split)._setParent(self.objects[id])
 
             self._load_timestamp[id] = os.fstat(fobj.fileno()).st_ctime
         else:

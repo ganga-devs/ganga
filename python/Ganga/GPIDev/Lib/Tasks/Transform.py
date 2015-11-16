@@ -74,10 +74,10 @@ class Transform(GangaObject):
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
         for j in GPI.jobs:
-            if "tasks_id" in stripProxy(j.application)._data:
+            if "tasks_id" in stripProxy(j.application).getNodeData():
                 # print "tasks_id of jobid ", j.fqid,
-                # stripProxy(j.application)._data["tasks_id"], id
-                if stripProxy(j.application)._data["tasks_id"].endswith(id):
+                # stripProxy(j.application).getNodeAttribute("tasks_id"), id
+                if stripProxy(j.application).getNodeAttribute("tasks_id").endswith(id):
                     try:
                         if j.subjobs:
                             for sj in j.subjobs:
@@ -118,8 +118,8 @@ class Transform(GangaObject):
         id = "%i:%i" % (
             self._getParent().id, self._getParent().transforms.index(self))
         for j in GPI.jobs:
-            if "tasks_id" in stripProxy(j.application)._data:
-                if stripProxy(j.application)._data["tasks_id"] == id:
+            if "tasks_id" in stripProxy(j.application).getNodeData():
+                if stripProxy(j.application).getNodeAttribute("tasks_id") == id:
                     try:
                         if j.subjobs:
                             for sj in j.subjobs:
@@ -266,7 +266,7 @@ class Transform(GangaObject):
         """warns the user if the application is not compatible """
         if app == None:
             return None
-        if not "tasks_id" in stripProxy(app)._data:
+        if not "tasks_id" in stripProxy(app).getNodeData():
             return taskApp(app)
         return app
 

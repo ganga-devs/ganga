@@ -20,7 +20,7 @@ from copy import deepcopy
 
 import Ganga.GPIDev.Schema as Schema
 
-from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor, GangaAttributeError, TypeMismatchError, isType, stripProxy, GPIProxyObjectFactory, getName
+from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 from Ganga.Core.exceptions import GangaValueError, GangaException
 
 from Ganga.GPIDev.Base.VPrinter import VPrinter, VSummaryPrinter
@@ -99,14 +99,9 @@ class Node(object):
 
     def _getParent(self):
         return self._parent
-        # if "_data" in self.__dict__ and not self._data is None:
-        #    return self._data['parent']
-        # return None
 
     def _setParent(self, parent):
         self._parent = parent
-        # if not self._data is None:
-        #    self._data['parent'] = parent
 
     # get the root of the object tree
     # if parent does not exist then the root is the 'self' object
@@ -126,6 +121,15 @@ class Node(object):
             obj = obj._getParent()
         return root
 
+    def _getdata(self, name):
+        if hasattr(self, name):
+            return getattr(self, name)
+        else:
+            if name in self._data:
+                return self._data[name]
+            else:
+                return None
+
     # accept a visitor pattern
     def accept(self, visitor):
 
@@ -138,31 +142,17 @@ class Node(object):
 
         visitor.nodeBegin(self)
 
-        def getdata(name):
-            if hasattr(self, name):
-                return getattr(self, name)
-            else:
-                if name in self._data:
-                    return self._data[name]
-                else:
-                    return None
-            #try:
-            #    return getattr(self, name)
-            #except AttributeError, err:
-            #    logger.debug("accept visitor error: %s" % str(err))
-            #    return self._data[name]
-
         for (name, item) in self._schema.simpleItems():
             if item['visitable']:
-                visitor.simpleAttribute(self, name, getdata(name), item['sequence'])
+                visitor.simpleAttribute(self, name, self._getdata(name), item['sequence'])
 
         for (name, item) in self._schema.sharedItems():
             if item['visitable']:
-                visitor.sharedAttribute(self, name, getdata(name), item['sequence'])
+                visitor.sharedAttribute(self, name, self._getdata(name), item['sequence'])
 
         for (name, item) in self._schema.componentItems():
             if item['visitable']:
-                visitor.componentAttribute(self, name, getdata(name), item['sequence'])
+                visitor.componentAttribute(self, name, self._getdata(name), item['sequence'])
 
         visitor.nodeEnd(self)
 
@@ -260,7 +250,23 @@ class Node(object):
         return 1
 
     def __ne__(self, node):
-        return not self == node
+        return not self.__eq__(node)
+
+    def getNodeData(self):
+        return self._data
+
+    def setNodeData(self, new_data):
+        self._data = new_data
+
+    def getNodeAttribute(self, attrib_name):
+        return self._data[attrib_name]
+
+    def setNodeAttribute(self, attrib_name, attrib_value):
+        self._data[attrib_name] = attrib_value
+
+    def removeNodeAttribute(self, attrib_name):
+        if attrib_name in self._data:
+            del self._data[attrib_name]
 
 ##########################################################################
 
@@ -317,26 +323,26 @@ class Descriptor(object):
                     lookup_result = None
                     pass
 
-                if hasattr(obj, '_data'):
-                    if (obj._data is None) and (obj._index_cache is not None) and (lookup_result is not None):
+                if hasattr(obj, 'getNodeData'):
+                    if (obj.getNodeData() is None) and (obj._index_cache is not None) and (lookup_result is not None):
                         result = lookup_result
                     else:
                         obj._getReadAccess()
-                        if getName(self) in obj._data:
-                            result = obj._data[getName(self)]
+                        if getName(self) in obj.getNodeData():
+                            result = obj.getNodeAttribute(getName(self))
                         else:
                             from Ganga.GPIDev.Base.Proxy import isProxy
-                            if isProxy(obj._data):
-                                if getName(self) in stripProxy(sel._data):
-                                    result = stripProxy(obj._data)[getName(self)]
+                            if isProxy(obj.getNodeData()):
+                                if getName(self) in stripProxy(self.getData()):
+                                    result = stripProxy(obj.getData())[getName(self)]
                                 else:
                                     logger.debug("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
                                     GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                    result = obj._data[getName(self)]
+                                    result = obj.getDataAttribute(getName(self))
                             else:
                                 logger.debug("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
                                 GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                result = obj._data[getName(self)]
+                                result = obj.getDataAttribute(getName(self))
                 else:
                     err = GangaException("Error finding parameter %s in object %s" % (str(getName(self), getName(obj))))
                     raise err
@@ -378,9 +384,11 @@ class Descriptor(object):
                 len_cat = len(categories)
                 if (len_cat > 1) or ((len_cat == 1) and (categories[0] != item['category'])) and item['category'] != 'internal':
                     # we pass on empty lists, as the catagory is yet to be defined
+                    from Ganga.GPIDev.Base.Proxy import GangaAttributeError
                     raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (getName(self), v, item['category']))
             else:
                 if bare_v._category != item['category'] and item['category'] != 'internal':
+                    from Ganga.GPIDev.Base.Proxy import GangaAttributeError
                     raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (getName(self), v, item['category']))
             if hasattr(bare_v, 'clone'):
                 v = bare_v.clone()
@@ -441,15 +449,16 @@ class Descriptor(object):
                     obj_len = obj_len*2
             val_len = val_len * obj_len
 
+
         if item['sequence']:
             _preparable = True if item['preparable'] else False
             if len(val) == 0:
                 val = GangaList()
             else:
                 if isType(item, Schema.ComponentItem):
-                        val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
+                    val = makeGangaList(val, cloneVal, parent=obj, preparable=_preparable)
                 else:
-                        val = makeGangaList(val, parent=obj, preparable=_preparable)
+                    val = makeGangaList(val, parent=obj, preparable=_preparable)
         else:
             if isType(item, Schema.ComponentItem):
                 newListObj = []
@@ -467,13 +476,12 @@ class Descriptor(object):
         if full_reg:
             obj_reg.dirty_flush_counter = old_count
 
-        obj._data[getName(self)] = val
+        obj.setNodeAttribute(getName(self), val)
 
         obj._setDirty()
 
     def __delete__(self, obj):
-        # self._check_getter()
-        del obj._data[getName(self)]
+        obj.removeNodeAttribute(getName(self))
 
 
 def export(method):
@@ -488,6 +496,9 @@ class ObjectMetaclass(type):
     _descriptor = Descriptor
 
     def __init__(cls, name, bases, this_dict):
+
+        from Ganga.GPIDev.Base.Proxy import GPIProxyClassFactory, ProxyDataDescriptor, ProxyMethodDescriptor
+
         super(ObjectMetaclass, cls).__init__(name, bases, this_dict)
 
         # ignore the 'abstract' base class
@@ -638,6 +649,7 @@ class GangaObject(Node):
         elif len(args) == 1:
             self.copyFrom(args[0])
         else:
+            from Ganga.GPIDev.Base.Proxy import TypeMismatchError
             raise TypeMismatchError("Constructor expected one or zero non-keyword arguments, got %i" % len(args))
 
     def __getstate__(self):
@@ -673,6 +685,7 @@ class GangaObject(Node):
                     if hasattr(shared_dir, 'name'):
 
                         from Ganga.Core.GangaRepository import getRegistry
+                        from Ganga.GPIDev.Base.Proxy import GPIProxyObjectFactory
                         shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
 
                         logger.debug("Increasing shareref")

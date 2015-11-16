@@ -144,8 +144,8 @@ def taskApp(app):
     else:
         logger.error("The application '%s' cannot be used with the tasks package yet!" % a._name)
         raise AttributeError()
-    for k in a._data:
-        b._data[k] = a._data[k]
+    for k in a.getNodeData():
+        b.setNodeAttribute(k, a.getNodeAttribute(k))
 
     # We need to recalculate the application's preparable hash here, since the text string representation
     # of the application has changed (e.g. Executable -> ExecutableTask).

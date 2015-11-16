@@ -1,57 +1,23 @@
 """Utilities for using MSG within Ganga.
-
-N.B. Take care to minimise dependencies on external packages since this module
-will very likely be copied to the sandbox on the worker node.
 """
 
-
 # default stomp.py logging to CRITICAL
-try:
-    import logging
-    import Ganga.Utility.Config as Config
-    config = Config.getConfig('Logging')
-    # test if stomp.py logging is already set
-    if 'stomp.py' in config:
-        pass  # config['stomp.py']
-    else:
-        # set stomp.py logger to CRITICAL
-        logging.getLogger('stomp.py').setLevel(logging.CRITICAL)
-        # add stomp.py option to Logging configuration
-        config.addOption(
-            'stomp.py', 'CRITICAL', 'logger for stomp.py external package')
-except:
-    # if we are on the worker node, this will fail. so continue quietly
-    pass
+
+import logging
+import Ganga.Utility.Config as Config
+
+config = Config.getConfig('Logging')
+# test if stomp.py logging is already set
+if 'stomp.py' in config:
+    pass  # config['stomp.py']
+else:
+    # set stomp.py logger to CRITICAL
+    logging.getLogger('stomp.py').setLevel(logging.CRITICAL)
+    # add stomp.py option to Logging configuration
+    config.addOption('stomp.py', 'CRITICAL', 'logger for stomp.py external package')
 
 
-# Sandbox modules required for MSG
-def getSandboxModules():
-    """Return the list of sandbox modules required for MSG monitoring services."""
-    import stomp
-    import stomputil
-    import Ganga.Lib.MonitoringServices.MSGMS
-    return [
-        Ganga,
-        Ganga.Lib,
-        Ganga.Lib.MonitoringServices,
-        Ganga.Lib.MonitoringServices.MSGMS,
-        Ganga.Lib.MonitoringServices.MSGMS.MSGUtil,
-        stomp,
-        stomp.cli,
-        stomp.exception,
-        stomp.listener,
-        stomp.stomp,
-        stomp.utils,
-        stomputil,
-        stomputil.publisher,
-    ]
-
-
-# Ganga-specific createPublisher
-from stomputil.publisher import IDLE_TIMEOUT, EXIT_TIMEOUT
-
-
-def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=IDLE_TIMEOUT, exit_timeout=EXIT_TIMEOUT):
+def createPublisher(server, port, user='ganga', password='analysis', idle_timeout=None, exit_timeout=None):
     """Create a new publisher thread which extends GangaThread where available
     (i.e. on the client) or Thread otherwise (i.e. on the worker node).
 
@@ -75,6 +41,14 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
 
     See also stomputil.publisher
     """
+
+    from Ganga.Utility.stomputil.publisher import IDLE_TIMEOUT, EXIT_TIMEOUT
+
+    if idle_timeout is None:
+        idle_timeout = IDLE_TIMEOUT
+    if exit_timeout is None:
+        exit_timeout = EXIT_TIMEOUT
+
     # use GangaThread class on client or Thread class otherwise
     try:
         from Ganga.Core.GangaThread import GangaThread as Thread
@@ -89,9 +63,8 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
     except ImportError:
         logger = None
     # create and start _publisher
-    import stomputil
-    publisher = stomputil.createPublisher(
-        Thread, server, port, user, password, logger, idle_timeout)
+    import Ganga.Utility.stomputil
+    publisher = Ganga.Utility.stomputil.createPublisher(Thread, server, port, user, password, logger, idle_timeout)
     if managed_thread:
         # set GangaThread as non-critical
         publisher.setCritical(False)
@@ -99,3 +72,4 @@ def createPublisher(server, port, user='ganga', password='analysis', idle_timeou
         # add exit handler if not GangaThread
         publisher.addExitHandler(exit_timeout)
     return publisher
+

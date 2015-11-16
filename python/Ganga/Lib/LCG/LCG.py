@@ -1109,10 +1109,9 @@ def execSyscmdSubprocess(cmd, wdir=os.getcwd()):
             else:
                 outfile.flush()
                 errorfile.flush()
-                monitor.progress()
                 time.sleep(0.3)
     finally:
-        monitor.progress()
+        pass
 
     outfile.flush()
     errorfile.flush()
@@ -1172,9 +1171,7 @@ def execSyscmdEnhanced(cmd, wdir=os.getcwd()):
         err_thread.start()
         while not out_thread.finished and not err_thread.finished:
             stopcb(True)
-            monitor.progress()
             time.sleep(0.3)
-        monitor.progress()
 
         sys.stdout.flush()
         sys.stderr.flush()
@@ -1294,10 +1291,6 @@ try:
     for lib_path in sys.path:
         printInfo(' ** sys.path: %s' % lib_path)
 
-    ###MONITORING_SERVICE###
-    monitor = createMonitoringObject()
-    monitor.start()
-
 #   execute application
 
     ## convern appenvs into environment setup script to be 'sourced' before executing the user executable
@@ -1361,7 +1354,6 @@ try:
 #        printInfo(line)
 
     printInfo('Pack outputsandbox passed.')
-    monitor.stop(exitcode)
     
     # Clean up after us - All log files and packed outputsandbox should be in "wdir"
     if scratchdir:
@@ -1476,12 +1468,9 @@ sys.exit(0)
         except:
             pass
 
-        script = script.replace(
-            '###MONITORING_SERVICE###', mon.getWrapperScriptConstructorText())
 
 #       prepare input/output sandboxes
-        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(
-            Sandbox.getDefaultModules()) + Sandbox.getGangaModulesAsSandboxFiles(mon.getSandboxModules())
+        packed_files = jobconfig.getSandboxFiles() + Sandbox.getGangaModulesAsSandboxFiles(Sandbox.getDefaultModules())
         sandbox_files = job.createPackedInputSandbox(packed_files)
 
         # sandbox of child jobs should include master's sandbox
