@@ -61,19 +61,20 @@ class ShareRef(GangaObject):
     reference counter is incremented by 1. Shared Directories with a reference counter of 0 will
     be removed (i.e. the directory deleted) the next time Ganga exits.
     """
-    _schema = Schema(
-        Version(1, 2), {'name': SimpleItem({}, protected=1, copyable=1, hidden=1)})
+    _schema = Schema(Version(1, 2), {'name': SimpleItem({}, protected=1, copyable=1, hidden=1)})
 
     _category = 'sharerefs'
     _name = 'ShareRef'
-    _exportmethods = [
-        'increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup']
+    _exportmethods = ['increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup']
 
     default_registry = 'prep'
 
     def __init__(self):
         super(ShareRef, self).__init__()
         self._setRegistry(None)
+
+    def __construct__(self):
+        super(ShareRef, self).__construct__()
 
     def __getstate__(self):
         dict = super(ShareRef, self).__getstate__()

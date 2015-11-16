@@ -258,9 +258,11 @@ class GangaList(GangaObject):
         #logger.info("memo: %s" % str(memo))
         #logger.info("self.len: %s" % str(len(self._list)))
         if self._list != []:
-            return makeGangaList(_list=copy.deepcopy(self._list, memo))
+            return makeGangaList(_list=copy.deepcopy(self._list, memo), preparable=self._is_preparable)
         else:
-            return GangaList()
+            new_list = GangaList()
+            new_list._is_preparable = self._is_preparable
+            return new_list
         #super(GangaList, self).__deepcopy__(memo)
 
     def __eq__(self, obj_list):
@@ -384,7 +386,7 @@ class GangaList(GangaObject):
     def __repr__(self):
         #logger.info("__repr__")
         #return self.toString()
-        return str("GangaList at: %s" % str(hex(abs(id(self)))))
+        return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
 
     def __str__(self):
         #logger.info("__str__")
