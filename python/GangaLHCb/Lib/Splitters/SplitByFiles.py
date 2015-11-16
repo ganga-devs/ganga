@@ -107,7 +107,7 @@ class SplitByFiles(GaudiInputDataSplitter):
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
-        j.copyFrom(stripProxy(job))#, ['inputdata', 'inputsandbox', 'inputfiles'])
+        j.copyFrom(stripProxy(job), ['inputdata', 'inputsandbox', 'inputfiles'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
         logger.debug("Unsetting Merger")
