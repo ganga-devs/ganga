@@ -327,7 +327,7 @@ class Descriptor(object):
                         else:
                             from Ganga.GPIDev.Base.Proxy import isProxy
                             if isProxy(obj._data):
-                                if getName(self) in stripProxy(self._data):
+                                if getName(self) in stripProxy(sel._data):
                                     result = stripProxy(obj._data)[getName(self)]
                                 else:
                                     logger.debug("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
@@ -599,8 +599,6 @@ class GangaObject(Node):
     # which makes sure that _hidden must be *explicitly* declared, not
     # inherited
 
-    _lock_count = {}
-
     # additional properties that may be set in derived classes which were declared as _hidden:
     #   _enable_plugin = 1 -> allow registration of _hidden classes in the allPlugins dictionary
     # _enable_config = 1 -> allow generation of [default_X] configuration
@@ -627,14 +625,12 @@ class GangaObject(Node):
                 #logger.debug("getName(self) : attr  =  %s : %s" % (str(getName(self)), str(attr)))
                 setattr(self, attr, defVal)
 
-        self._lock_count = {}
         # Overwrite default values with any config values specified
         # self.setPropertiesFromConfig()
 
     # construct an object of this type from the arguments. Defaults to copy
     # constructor.
     def __construct__(self, args):
-        self._lock_count = {}
         # act as a copy constructor applying the object conversion at the same
         # time (if applicable)
         if len(args) == 0:
