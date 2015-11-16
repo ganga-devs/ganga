@@ -197,7 +197,7 @@ class GangaRepository(object):
             cls = allPlugins.find(category, classname)
             self._found_classes[(category, classname)] = cls
         cls = self._found_classes[(category, classname)]
-        obj = super(cls, self).__new__(cls)
+        obj = super(cls, cls).__new__(cls)
         obj._proxyObject = None
         obj.setNodeData(None)
 
