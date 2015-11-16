@@ -255,7 +255,12 @@ class GangaList(GangaObject):
 
     def __deepcopy__(self, memo):
         """Bypass any checking when making the copy"""
-        return makeGangaList(_list=copy.deepcopy(self._list, memo))
+        #logger.info("memo: %s" % str(memo))
+        #logger.info("self.len: %s" % str(len(self._list)))
+        if self._list != []:
+            return makeGangaList(_list=copy.deepcopy(self._list, memo))
+        else:
+            return GangaList()
         #super(GangaList, self).__deepcopy__(memo)
 
     def __eq__(self, obj_list):
@@ -285,6 +290,7 @@ class GangaList(GangaObject):
         return self._list.__gt__(self.strip_proxy_list(obj_list))
 
     def __hash__(self):
+        logger.info("hash")
         result = 0
         for element in self:
             result ^= hash(element)
@@ -376,10 +382,13 @@ class GangaList(GangaObject):
         self.__setslice__(start, end, obj_list)
 
     def __repr__(self):
-        return self.toString()
+        #logger.info("__repr__")
+        #return self.toString()
+        return str("GangaList at: %s" % str(hex(abs(id(self)))))
 
     def __str__(self):
-        return self.__repr__()
+        #logger.info("__str__")
+        return self.toString()
 
     def append(self, obj, my_filter=True):
         self._list.append(self.strip_proxy(obj, my_filter))
