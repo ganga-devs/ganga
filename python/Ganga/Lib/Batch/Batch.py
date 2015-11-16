@@ -393,6 +393,7 @@ class Batch(IBackend):
 
         appscriptpath = [jobconfig.getExeString()] + jobconfig.getArgStrings()
         sharedoutputpath = job.getOutputWorkspace().getPath()
+        ## FIXME Check this isn't a GangaList
         outputpatterns = jobconfig.outputbox
         environment = jobconfig.env if not jobconfig.env is None else {}
 
