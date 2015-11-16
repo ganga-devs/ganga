@@ -199,7 +199,7 @@ class GangaRepository(object):
         cls = self._found_classes[(category, classname)]
         obj = super(cls, cls).__new__(cls)
         obj._proxyObject = None
-        obj._data = None
+        obj.setNodeData(None)
 
         self._internal_setitem__(id, obj)
         return obj
@@ -213,7 +213,7 @@ class GangaRepository(object):
         self.objects[id] = obj
         obj.__dict__["_registry_id"] = id
         obj.__dict__["_registry_locked"] = False
-        if obj._data and "id" in obj._data.keys():  # MAGIC id
+        if obj.getNodeData() and "id" in obj.getNodeData().keys():  # MAGIC id
             obj.id = id
         obj._setRegistry(self.registry)
 
