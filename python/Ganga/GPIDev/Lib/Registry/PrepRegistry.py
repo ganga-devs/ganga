@@ -30,7 +30,7 @@ class PrepRegistry(Registry):
         logger = getLogger()
         self.shareref = self.metadata[self.metadata.ids()[-1]]
         self._lock.acquire()
-        #self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
+        self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
         try:
             try:
                 if not self.metadata is None:
@@ -230,6 +230,8 @@ class ShareRef(GangaObject):
         self.name = {}
         lookup_input = []
 
+        from Ganga.GPIDev.Lib.File import getSharedPath
+
         def helper(this_object, unp=True, numsubjobs=0):
             shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
             logger.debug('Adding %s to the shareref table.' % shareddir)
@@ -304,6 +306,8 @@ class ShareRef(GangaObject):
             logger.info('Unpreparing objects referencing ShareDir %s' % item)
             self.lookup(sharedir=item, unprepare=True)
 
+        from Ganga.GPIDev.Lib.File import getSharedPath
+
         # check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0
         # so the user is made aware of them at shutdown
         for dir in os.listdir(getSharedDir()):
@@ -321,6 +325,8 @@ class ShareRef(GangaObject):
 
     def closedown(self):
         """Cleans up the Shared Directory registry upon shutdown of the registry, ie. when exiting a Ganga session."""
+
+        from Ganga.GPIDev.Lib.File import getSharedPath
 
         def yes_no(question, default='none'):
             """Check whether the user wants to delete sharedirs which are no longer referenced by any Ganga object"""
@@ -397,14 +403,14 @@ class ShareRef(GangaObject):
 
             # if the sharedir in the table doesn't exist on the filesytem, and the reference counter is > 0,
             # we need to unprepare any associated jobs
-            logger.debug("Examining: %s" % full_shareddir_path)
-            logger.debug("shareddir: %s" % str(shareddir))
-            logger.debug("cleanup_list: %s" % str(cleanup_list))
-            if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
-                logger.info(
-                    '%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' % shareddir)
-                self.lookup(sharedir=shareddir, unprepare=True)
-                cleanup_list.append(shareddir)
+            #logger.debug("Examining: %s" % full_shareddir_path)
+            #logger.debug("shareddir: %s" % str(shareddir))
+            #logger.debug("cleanup_list: %s" % str(cleanup_list))
+            #if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
+            #    logger.info(
+            #        '%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' % shareddir)
+            #    self.lookup(sharedir=shareddir, unprepare=True)
+            #    cleanup_list.append(shareddir)
 
         self._getWriteAccess()
         for element in cleanup_list:

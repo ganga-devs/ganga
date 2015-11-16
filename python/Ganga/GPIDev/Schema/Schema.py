@@ -363,10 +363,13 @@ class Item(object):
     # all calls are equivalent:
     # item.isA('SimpleItem')
     # item.isA(SimpleItem)
-    def isA(self, what):
+    def isA(self, _what):
+
+        from Ganga.GPIDev.Base.Proxy import stripProxy
+
+        what = stripProxy(_what)
 
         this_type = type(what)
-        from Ganga.GPIDev.Base.Proxy import stripProxy
 
         try:
             # for backwards compatibility with Ganga3 CLIP: if a string --
