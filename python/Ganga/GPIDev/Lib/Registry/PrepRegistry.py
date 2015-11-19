@@ -1,15 +1,27 @@
 import os
 import shutil
 import time
+import copy
+import threading
 from Ganga.Core.GangaRepository.Registry import Registry
 from Ganga.GPIDev.Base import GangaObject
 from Ganga.GPIDev.Schema import Schema, SimpleItem, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy
 import Ganga.Utility.Config
+from Ganga.GPIDev.Lib.File import getSharedPath
 logger = Ganga.Utility.logging.getLogger()
 
 
 class PrepRegistry(Registry):
+
+    def __init__(self, name, doc, dirty_flush_counter=10, update_index_time=30, dirty_max_timeout=60, dirty_min_timeout=30):
+
+        super(PrepRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
+
+        self.releaseThread = threading.Thread(target=self.trackandRelease, args=())
+        self.releaseThread.daemon = True
+        self.releaseThread.start()
+
 
     def startup(self):
         self._needs_metadata = True
@@ -27,10 +39,15 @@ class PrepRegistry(Registry):
     def shutdown(self):
         """Flush and disconnect the repository. Called from Repository_runtime.py """
         from Ganga.Utility.logging import getLogger
+        self.shouldRun = True
+        ## Aparently this shuts down the metadata repo before we want to shut it down...
+        #super(PrepRegistry, self).shutdown()
         logger = getLogger()
         self.shareref = self.metadata[self.metadata.ids()[-1]]
         self._lock.acquire()
-        self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
+        ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
+        ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
+        ##self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
         try:
             try:
                 if not self.metadata is None:
@@ -50,7 +67,6 @@ class PrepRegistry(Registry):
             logger.debug("Shutdown Error: %s" % str(err))
         finally:
             self._lock.release()
-
 
 class ShareRef(GangaObject):
 
@@ -77,10 +93,10 @@ class ShareRef(GangaObject):
         super(ShareRef, self).__construct__()
 
     def __getstate__(self):
-        dict = super(ShareRef, self).__getstate__()
-        dict['_registry'] = None
-        dict['_counter'] = 0
-        return dict
+        this_dict = super(ShareRef, self).__getstate__()
+        this_dict['_registry'] = None
+        this_dict['_counter'] = 0
+        return this_dict
 
     def __setstate__(self, dict):
         self._getWriteAccess()
@@ -91,7 +107,8 @@ class ShareRef(GangaObject):
         except Exception as err:
             logger.debug("setstate Error: %s" % str(err))
         finally:
-            self._releaseWriteAccess()
+            #self._releaseWriteAccess()
+            self._setDirty()
 
     def increase(self, shareddir, force=False):
         """Increase the reference counter for a given shared directory by 1. If the directory
@@ -108,15 +125,13 @@ class ShareRef(GangaObject):
         basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir) and force is False:
             if basedir not in self.name:
-                logger.debug(
-                    '%s is not stored in the shareref metadata object...adding.' % basedir)
+                logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.name[basedir] = 1
             else:
                 self.name[basedir] += 1
         elif not os.path.isdir(shareddir) and force is True and basedir is not '':
             if basedir not in self.name:
-                logger.debug(
-                    '%s is not stored in the shareref metadata object...adding.' % basedir)
+                logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.name[basedir] = 0
             else:
                 self.name[basedir] += 1
@@ -124,7 +139,7 @@ class ShareRef(GangaObject):
             logger.error('Directory %s does not exist' % shareddir)
 
         self._setDirty()
-        self._releaseWriteAccess()
+        #self._releaseWriteAccess()
 
     def decrease(self, shareddir, remove=0):
         """Reduce the reference counter for a given shared directory by 1. If the current value
@@ -151,7 +166,7 @@ class ShareRef(GangaObject):
             self.name[basedir] = 0
 
         self._setDirty()
-        self._releaseWriteAccess()
+        #self._releaseWriteAccess()
 
     def lookup(self, sharedir, unprepare=False):
         """
@@ -174,17 +189,16 @@ class ShareRef(GangaObject):
             try:
                 item.keys()[0].is_prepared.name
                 if item.keys()[0].is_prepared.name == sharedir:
-                    logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,
-                                stripProxy(item.keys()[0])._registry_id, item.values()[0])
+                    logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(item.keys()[0])._registry_id, item.values()[0]))
                     run_unp = item.keys()[0]
                     master_index += 1
+
             except AttributeError as err:
                 logger.debug("Err: %s" % str(err))
                 try:
                     item.keys()[0].application.is_prepared.name
                     if item.keys()[0].application.is_prepared.name == sharedir:
-                        logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,
-                                    stripProxy(item.keys()[0])._registry_id, item.values()[0])
+                        logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(item.keys()[0])._registry_id, item.values()[0]))
                         run_unp = item.keys()[0].application
                         master_index += 1
                 except AttributeError as err2:
@@ -192,8 +206,7 @@ class ShareRef(GangaObject):
                     try:
                         item.keys()[0].analysis.application.is_prepared.name
                         if item.keys()[0].analysis.application.is_prepared.name == sharedir:
-                            logger.info('ShareDir %s is referenced by item #%s in %s repository', sharedir,
-                                        stripProxy(item.keys()[0])._registry_id, item.values()[0])
+                            logger.info('ShareDir %s is referenced by item #%s in %s repository' % (sharedir, stripProxy(item.keys()[0])._registry_id, item.values()[0]))
                             run_unp = item.keys()[0].analysis.application
                             master_index += 1
                     except AttributeError as err3:
@@ -201,14 +214,46 @@ class ShareRef(GangaObject):
                         pass
 
             if run_unp is not None and unprepare is True:
-                logger.info('Unpreparing %s repository object #%s associated with ShareDir %s',
-                            item.values()[0],  stripProxy(item.keys()[0])._registry_id, sharedir)
+                logger.info('Unpreparing %s repository object #%s associated with ShareDir %s' % (item.values()[0],  stripProxy(item.keys()[0])._registry_id, sharedir))
 #                stripProxy(item.keys()[0]).unprepare()
                 run_unp.unprepare()
                 run_unp = None
 
         if unprepare is not True:
             logger.info('%s item(s) found referencing ShareDir %s', master_index, sharedir)
+
+    @staticmethod
+    def to_relative(this_object):
+        from Ganga.GPIDev.Lib.File import getSharedPath
+        logger.info('Absolute ShareDir().name attribute found in Job #%s', this_object.id)
+        logger.info('Converting to relative path and moving associated directory if it exists.')
+        try:
+            shutil.move(this_object.is_prepared.name, os.path.join(getSharedPath(), os.path.basename(this_object.is_prepared.name)))
+        except OSError as err:
+            Ganga.Utility.logging.log_unknown_exception()
+            logger.warn('Unable to move directory %s to %s', this_object.is_prepared.name, os.path.join(getSharedPath(), os.path.basename(this_object.is_prepared.name)))
+
+        try:
+            stripProxy(this_object).is_prepared.name = os.path.basename(this_object.is_prepared.name)
+        except Exception as err:
+            logger.debug("rebuild Error: %s" % str(err))
+            Ganga.Utility.logging.log_unknown_exception()
+            logger.warn("Unable to convert object's is_prepared.name attribute to a relative path")
+
+    def helper(self, this_object, unp=True, numsubjobs=0):
+        from Ganga.GPIDev.Lib.File import getSharedPath
+        shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
+        logger.debug('Adding %s to the shareref table.' % shareddir)
+        if os.path.basename(this_object) in self.name:
+            self.name[os.path.basename(this_object)] += 1
+        else:
+            self.name[os.path.basename(this_object)] = 1
+        if numsubjobs > 0:
+            self.name[os.path.basename(this_object)] += numsubjobs
+        if not os.path.isdir(shareddir) and os.path.basename(this_object) not in lookup_input:
+           logger.info('Shared directory %s not found on disk.' % shareddir)
+           if unp == True:
+               lookup_input.append(os.path.basename(this_object))
 
     def rebuild(self, unprepare=True, rmdir=False):
         """Rebuild the shareref table. 
@@ -233,34 +278,6 @@ class ShareRef(GangaObject):
 
         from Ganga.GPIDev.Lib.File import getSharedPath
 
-        def helper(this_object, unp=True, numsubjobs=0):
-            shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
-            logger.debug('Adding %s to the shareref table.' % shareddir)
-            if os.path.basename(this_object) in self.name:
-                self.name[os.path.basename(this_object)] += 1
-            else:
-                self.name[os.path.basename(this_object)] = 1
-            if numsubjobs > 0:
-                self.name[os.path.basename(this_object)] += numsubjobs
-            if not os.path.isdir(shareddir) and os.path.basename(this_object) not in lookup_input:
-                logger.info('Shared directory %s not found on disk.' % shareddir)
-                if unp == True:
-                    lookup_input.append(os.path.basename(this_object))
-
-        def to_relative(this_object):
-            logger.info('Absolute ShareDir().name attribute found in Job #%s', this_object.id)
-            logger.info('Converting to relative path and moving associated directory if it exists.')
-            try:
-                shutil.move(this_object.is_prepared.name, os.path.join(getSharedPath(), os.path.basename(this_object.is_prepared.name)))
-            except OSError as err:
-                Ganga.Utility.logging.log_unknown_exception()
-                logger.warn('Unable to move directory %s to %s', this_object.is_prepared.name, os.path.join(getSharedPath(), os.path.basename(this_object.is_prepared.name)))
-            try:
-                stripProxy(this_object).is_prepared.name = os.path.basename(this_object.is_prepared.name)
-            except Exception as err:
-                logger.debug("rebuild Error: %s" % str(err))
-                Ganga.Utility.logging.log_unknown_exception()
-                logger.warn("Unable to convert object's is_prepared.name attribute to a relative path")
 
         objectlist = []
         for thing in jobs.select():
@@ -288,14 +305,14 @@ class ShareRef(GangaObject):
             try:
                 if shortname is not None and shortname is not True:
                     if os.path.basename(shortname) != shortname:
-                        to_relative(item.keys()[0].is_prepared)
+                        self.to_relative(item.keys()[0].is_prepared)
                     try:
                         numsubjobs = len(item.keys()[0].subjobs.ids())
                     except Exception as err:
                         logger.debug("Path Error: %s" % str(err))
                         Ganga.Utility.logging.log_unknown_exception()
                         numsubjobs = 0
-                    helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
+                    self.helper(shortname, unp=unprepare, numsubjobs=numsubjobs)
             except Exception as err:
                 logger.debug("-Error: %s" % str(err))
                 Ganga.Utility.logging.log_unknown_exception()
@@ -306,8 +323,6 @@ class ShareRef(GangaObject):
         for item in lookup_input:
             logger.info('Unpreparing objects referencing ShareDir %s' % item)
             self.lookup(sharedir=item, unprepare=True)
-
-        from Ganga.GPIDev.Lib.File import getSharedPath
 
         # check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0
         # so the user is made aware of them at shutdown
@@ -324,35 +339,35 @@ class ShareRef(GangaObject):
         self._setDirty()
         self._releaseWriteAccess()
 
+
+    @staticmethod
+    def yes_no(question, default='none'):
+        """Check whether the user wants to delete sharedirs which are no longer referenced by any Ganga object"""
+        valid = {"yes": "yes", "y": "yes", "no": "no",
+                     "n": "no", "none": "none", "all": "all"}
+        if default == 'none':
+            prompt = '(Yes/No/All/[NONE])'
+        elif default == 'yes':
+            prompt = '([YES]/No/All/None)'
+        elif default == 'no':
+            prompt = '(Yes/[NO]/All/None)'
+        else:
+            raise ValueError("Invalid default answer: '%s'" % default)
+        while True:
+            logger.info('%s no longer being referenced by any objects. Delete directory?' % shareddir)
+            logger.info(question + prompt)
+            answer = raw_input().lower()
+            if answer == '':
+                return default
+            elif answer in valid.keys():
+                return valid[answer]
+            else:
+                logger.warn("Please respond with 'Yes/y', 'No/n', 'All' or 'None'")
+
     def closedown(self):
         """Cleans up the Shared Directory registry upon shutdown of the registry, ie. when exiting a Ganga session."""
 
         from Ganga.GPIDev.Lib.File import getSharedPath
-
-        def yes_no(question, default='none'):
-            """Check whether the user wants to delete sharedirs which are no longer referenced by any Ganga object"""
-            valid = {"yes": "yes", "y": "yes", "no": "no",
-                     "n": "no", "none": "none", "all": "all"}
-            if default == 'none':
-                prompt = '(Yes/No/All/[NONE])'
-            elif default == 'yes':
-                prompt = '([YES]/No/All/None)'
-            elif default == 'no':
-                prompt = '(Yes/[NO]/All/None)'
-            else:
-                raise ValueError("Invalid default answer: '%s'" % default)
-            while True:
-                logger.info(
-                    '%s no longer being referenced by any objects. Delete directory?' % shareddir)
-                logger.info(question + prompt)
-                answer = raw_input().lower()
-                if answer == '':
-                    return default
-                elif answer in valid.keys():
-                    return valid[answer]
-                else:
-                    logger.warn(
-                        "Please respond with 'Yes/y', 'No/n', 'All' or 'None'")
 
         delete_share_config = Ganga.Utility.Config.getConfig('Configuration')['deleteUnusedShareDir']
         if delete_share_config == 'ask':
@@ -368,56 +383,54 @@ class ShareRef(GangaObject):
 
         # list of keys to be removed from the shareref table
         cleanup_list = []
-        for shareddir in self.name.keys():
+        all_dirs = copy.deepcopy(self.name.keys())
+        for shareddir in all_dirs:
             full_shareddir_path = os.path.join(getSharedPath(), shareddir)
             # for each sharedir in the shareref table that also exists in the
             # filesystem
             if self.name[shareddir] == 0 and os.path.isdir(full_shareddir_path):
                 if ask_delete == 'Ask':
-                    ask_delete = yes_no('', default=default)
+                    ask_delete = self.yes_no('', default=default)
                 if ask_delete == 'yes':
                     shutil.rmtree(full_shareddir_path)
                     if shareddir not in cleanup_list:
                         cleanup_list.append(shareddir)
                     ask_delete = 'Ask'
                     default = 'yes'
-                    logger.debug(
-                        'Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
 
                 if ask_delete == 'no':
                     ask_delete = 'Ask'
                     default = 'no'
-                    logger.debug(
-                        'Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
 
                 if ask_delete == 'all':
                     shutil.rmtree(full_shareddir_path)
                     if shareddir not in cleanup_list:
                         cleanup_list.append(shareddir)
-                    logger.debug(
-                        'Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Deleting Sharedir %s because it is not referenced by a persisted Ganga object', shareddir)
 
                 if ask_delete == 'none':
                     default = 'none'
-                    logger.debug(
-                        'Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
+                    logger.debug('Keeping ShareDir %s even though it is not referenced by a persisted Ganga object', shareddir)
 
+            ## DISABLED BY RCURRIE
             # if the sharedir in the table doesn't exist on the filesytem, and the reference counter is > 0,
             # we need to unprepare any associated jobs
             #logger.debug("Examining: %s" % full_shareddir_path)
             #logger.debug("shareddir: %s" % str(shareddir))
             #logger.debug("cleanup_list: %s" % str(cleanup_list))
-            #if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
-            #    logger.info(
-            #        '%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' % shareddir)
+            if not os.path.isdir(full_shareddir_path) and shareddir not in cleanup_list:
+            #    logger.info('%s not found on disk. Removing entry from shareref table and unpreparing any associated Ganga objects.' % shareddir)
             #    self.lookup(sharedir=shareddir, unprepare=True)
-            #    cleanup_list.append(shareddir)
+                cleanup_list.append(shareddir)
+            ## DISABLED BY RCURRIE
 
         self._getWriteAccess()
         for element in cleanup_list:
             del self.name[element]
         self._setDirty()
-        self._releaseWriteAccess()
+        #self._releaseWriteAccess()
 
     def ls(self, shareddir, print_files=True):
         """
@@ -454,7 +467,8 @@ class ShareRef(GangaObject):
                                       "--------------------", "---------------\n")
             zero_ref = False
             unsorted = []
-            for element in self.name:
+            all_elements = copy.deepcopy(self.name)
+            for element in all_elements:
                 full_shareddir_path = os.path.join(getSharedPath(), os.path.basename(element))
                 if os.path.isdir(full_shareddir_path):
                     unsorted.append(shareref_data(os.path.basename(element), int(
