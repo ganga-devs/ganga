@@ -5,6 +5,7 @@ import os
 import tempfile
 import gzip
 import shutil
+from Ganga.GPIDev.Base.Proxy import stripProxy
 from Ganga.GPIDev.Schema import SimpleItem, Schema, Version
 from Ganga.GPIDev.Adapters.IPrepareApp import IPrepareApp
 import Ganga.Utility.logging
@@ -51,7 +52,8 @@ class GaudiBase(IPrepareApp):
                                        strict_sequence=0,
                                        visitable=1,
                                        copyable=1,
-                                       typelist=['type(None)', 'str'],
+                                       typelist=['type(None)', 'str', ShareDir],
+                                       hidden=1,
                                        protected=1,
                                        doc=docstr)
     docstr = 'The env'
@@ -260,10 +262,9 @@ class GaudiBase(IPrepareApp):
 
     def _register(self, force):
         if (self.is_prepared is not None) and (force is not True):
-            raise Exception(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
+            raise Exception('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (getName(self)))
 
-        logger.info('Preparing %s application.' % (getName(self)))
+        logger.info('Job %s: Preparing %s application.' % (stripProxy(self).getJobObject().getFQID('.'), getName(self)))
         self.is_prepared = ShareDir()
 
     def master_configure(self):

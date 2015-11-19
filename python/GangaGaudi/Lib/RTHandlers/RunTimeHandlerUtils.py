@@ -3,27 +3,25 @@ import os
 import shutil
 from Ganga.Core.exceptions import GangaException
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-from Ganga.GPIDev.Lib.File import File
+from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.logging import getLogger
 from Ganga.Utility.files import expandfilename
 from Ganga.Utility.util import unique
 from Ganga.GPIDev.Lib.File.OutputFileManager import getOutputSandboxPatterns
 from Ganga.GPIDev.Lib.File.OutputFileManager import getInputFilesPatterns
+from Ganga.GPIDev.Base.Proxy import isType
 logger = getLogger()
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
 
 def get_share_path(app=None):
-    if app is None or app == '':
-        return os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-                            'shared',
-                            getConfig('Configuration')['user'])
-    return os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-                        'shared',
-                        getConfig('Configuration')['user'],
-                        app.is_prepared.name)
+    if app is None or not isType(app, ShareDir):
+        return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
+    #elif isType(app, ShareDir):
+    else:
+        return os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'], app.is_prepared.name)
 
 #\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\/\#
 
