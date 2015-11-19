@@ -212,7 +212,7 @@ class Localhost(IBackend):
         script = script.replace('###INPUT_SANDBOX###', repr(subjob_input_sandbox + master_input_sandbox))
         script = script.replace('###SHAREDOUTPUTPATH###', repr(sharedoutputpath))
         script = script.replace('###APPSCRIPTPATH###', repr(appscriptpath))
-        script = script.replace('###OUTPUTPATTERNS###', repr(outputpatterns))
+        script = script.replace('###OUTPUTPATTERNS###', str(outputpatterns))
         script = script.replace('###JOBID###', jobidRepr)
         script = script.replace('###ENVIRONMENT###', repr(environment))
         script = script.replace('###WORKDIR###', repr(workdir))
@@ -223,8 +223,7 @@ class Localhost(IBackend):
         script = script.replace('###GANGADIR###', repr(getConfig('System')['GANGA_PYTHONPATH']))
 
         wrkspace = job.getInputWorkspace()
-        scriptPath = wrkspace.writefile(
-            FileBuffer('__jobscript__', script), executable=1)
+        scriptPath = wrkspace.writefile(FileBuffer('__jobscript__', script), executable=1)
 
         return scriptPath
 
@@ -334,10 +333,8 @@ class Localhost(IBackend):
                     # FIXME: for some strange reason the logger DOES NOT LOG (checked in python 2.3 and 2.5)
                     # print 'logger problem', logger.name
                     # print 'logger',logger.getEffectiveLevel()
-                    logger.critical(
-                        'wrapper script for job %s exit with code %d', str(j.id), ws[1])
-                    logger.critical(
-                        'report this as a bug at https://its.cern.ch/jira/browse/GANGA')
+                    logger.critical('wrapper script for job %s exit with code %d', str(j.id), ws[1])
+                    logger.critical('report this as a bug at https://github.com/ganga-devs/ganga/issues/')
                     j.updateStatus('failed')
             except OSError as x:
                 if x.errno != errno.ECHILD:
