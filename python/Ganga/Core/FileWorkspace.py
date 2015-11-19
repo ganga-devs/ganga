@@ -17,6 +17,7 @@ import os
 import time
 
 from Ganga.Utility.files import expandfilename, chmod_executable
+from Ganga.GPIDev.Base.Proxy import isType
 
 logger = Ganga.Utility.logging.getLogger(modulename=1)
 
@@ -51,8 +52,7 @@ class FileWorkspace(object):
 
         # LEGACY:
         if splittree:
-            logger.warning(
-                'FileWorkspace splittree option is obsolete and has no-effect')
+            logger.warning('FileWorkspace splittree option is obsolete and has no-effect')
 
     def create(self, jobid=None):
         """ create a workspace, an optional jobid parameter specifies the job directory
@@ -107,29 +107,30 @@ class FileWorkspace(object):
 
         from Ganga.GPIDev.Lib.File import FileBuffer
 
-        try:
-            name, contents = fileobj
-        except TypeError as err:
-            logger.debug("TypeError: %s" % str(err))
-            pass
-        else:
-            fileobj = FileBuffer(name, contents)
-            logger.warning('file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
+        if not isType(fileobj, FileBuffer):
+
+            try:
+                name, contents = fileobj
+            except TypeError as err:
+                import traceback
+                traceback.print_stack()
+                logger.debug("TypeError: %s" % str(err))
+                pass
+            else:
+                fileobj = FileBuffer(name, contents)
+                logger.warning('file "%s": usage of tuples is deprecated, use FileBuffer instead', name)
 
         # output file name
         # Added a subdir to files, (see Ganga/GPIDev/Lib/File/File.py) This allows
         # to copy files into the a subdirectory of the workspace
 
         # FIXME: make a helper method for os.makedirs
-        try:
-            os.makedirs(self.getPath() + fileobj.subdir)
+        path_to_build = os.path.join(self.getPath(), fileobj.subdir)
+        if not os.path.isdir(path_to_build):
+            os.makedirs(path_to_build)
             logger.debug('created %s', self.getPath())
-        except OSError as x:
-            import errno
-            if x.errno == errno.EEXIST:
-                logger.debug('EEXIT: %s', self.getPath())
-            else:
-                raise
+        else:
+            logger.debug('already exists: %s', self.getPath())
 
         outname = expandfilename(self.getPath(fileobj.getPathInSandbox()))
 
