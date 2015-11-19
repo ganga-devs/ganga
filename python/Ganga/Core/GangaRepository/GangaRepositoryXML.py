@@ -43,7 +43,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
                 logger.warning("%s" % str(err))
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
-            logger.warning('https://its.cern.ch/jira/browse/GANGA')
+            logger.warning('https://github.com/ganga-devs/ganga/issues/')
     elif hasattr(obj, 'analysis') and hasattr(obj.analysis, 'application') and \
             hasattr(obj.analysis.application, 'hash') and obj.analysis.application.hash is not None:
         if not obj.analysis.application.calc_hash(verify=True):
@@ -55,7 +55,7 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
                 logger.warning("%s" % str(err))
             logger.warning('If you knowingly circumvented the protection, ignore this message (and, optionally,')
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
-            logger.warning('https://its.cern.ch/jira/browse/GANGA')
+            logger.warning('https://github.com/ganga-devs/ganga/issues/')
 
     if not os.path.exists(fn):
         # file does not exist, so make it fast!
@@ -574,7 +574,7 @@ class GangaRepositoryLocal(GangaRepository):
     def flush(self, ids):
         logger.debug("Flushing: %s" % ids)
         #import traceback
-        # traceback.print_stack()
+        #traceback.print_stack()
         for id in ids:
             try:
 
