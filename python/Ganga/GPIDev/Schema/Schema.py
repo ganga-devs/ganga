@@ -448,6 +448,11 @@ class Item(object):
             txt = " list," + txt
         return txt
 
+    @staticmethod
+    def __check(isAllowedType, name, validTypes, input_val):
+        if not isAllowedType:
+            raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s\nfound: %s' % (name, validTypes, str(input_val)))
+
     def _check_type(self, val, name, enableGangaList=True):
 
         if enableGangaList:
@@ -458,7 +463,7 @@ class Item(object):
         item = self
 
         # type checking does not make too much sense for Component Items because component items are
-        # always checked at the object (_impl) level for category compatibility
+        # always checked at the object (_impl) level for category compatibility.
 
         if item.isA(ComponentItem):
             return
@@ -469,10 +474,6 @@ class Item(object):
         # checking completely
         if validTypes is None:
             return
-
-        def check(isAllowedType):
-            if not isAllowedType:
-                raise TypeMismatchError('Attribute "%s" expects a value of the following types: %s' % (name, validTypes))
 
         if item._meta['sequence']:
             if not isinstance(item._meta['defvalue'], (list, GangaList)):
@@ -499,7 +500,7 @@ class Item(object):
                         raise TypeMismatchError('Attribute "%s" expects a dictionary.' % name)
                     return
                 else:  # a 'simple' (i.e. non-dictionary) non-sequence value
-                    check(valueTypeAllowed(val, validTypes))
+                    self.__check(valueTypeAllowed(val, validTypes), name, validTypes, val)
                     return
 
         # typelist is not defined, use the type of the default value
@@ -509,7 +510,7 @@ class Item(object):
             if item._meta['sequence']:
                 logger.warning('type-checking is incomplete: type information not provided for a sequence %s, contact plugin developer', name)
             else:
-                check(isinstance(val, type(item._meta['defvalue'])))
+                self.__check(isinstance(val, type(item._meta['defvalue'])), name, type(item._meta['defvalue']), val)
 
 
 class ComponentItem(Item):
@@ -532,8 +533,7 @@ class ComponentItem(Item):
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
 
-valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(
-    val, valTypeList, logger)
+valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, logger)
 
 defaultValue='_NOT_A_VALUE_'
 
