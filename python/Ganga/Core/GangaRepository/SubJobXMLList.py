@@ -63,12 +63,18 @@ class SubJobXMLList(GangaObject):
         self._subjobIndexData = {}
         self.load_subJobIndex()
 
+    def __construct__(self, args):
+        super(SubJobXMLList, self).__construct__(args)
+
     def __deepcopy__(self, memo=None):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
         dict = self.__dict__.__deepcopy__(memo)
         obj.__dict__ = dict
         return obj
+
+    def _reset_cachedJobs(self, obj):
+        self._cachedJobs = obj
 
     def load_subJobIndex(self):
 
@@ -182,6 +188,10 @@ class SubJobXMLList(GangaObject):
     def __getitem__(self, index):
 
         logger.debug("Requesting: %s" % str(index))
+
+        #if index == 0:
+        #    import traceback
+        #    traceback.print_stack()
 
         subjob_data = None
         if not index in self._cachedJobs.keys():
