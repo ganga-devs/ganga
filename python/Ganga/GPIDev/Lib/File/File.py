@@ -84,7 +84,7 @@ class File(GangaObject):
     def getPathInSandbox(self):
         """return a relative location of a file in a sandbox: subdir/name"""
         from Ganga.Utility.files import real_basename
-        return self.subdir + os.sep + real_basename(self.name)
+        return os.path.join(self.subdir, real_basename(self.name))
 
     def exists(self):
         """check if the file exists (as specified by 'name')"""
