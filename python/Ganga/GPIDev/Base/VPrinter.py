@@ -5,10 +5,11 @@ from __future__ import absolute_import
 #
 # $Id: VPrinter.py,v 1.1 2008-07-17 16:40:52 moscicki Exp $
 ##########################################################################
-from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod
+from Ganga.GPIDev.Base.Proxy import isProxy, isType, runProxyMethod, stripProxy
 
+from inspect import isclass
 
-def quoteValue(value, selection):
+def quoteValue(value, selection, indent=''):
     """A quoting function. Used to get consistent formatting"""
     # print "Quoting",repr(value),selection
     if isType(value, type('')):
@@ -28,13 +29,13 @@ def quoteValue(value, selection):
                 # print 'Quote result',"'''" + value + "'''"
                 return "'''" + value + "'''"
         # print 'Quote result',"'"+value+"'"
-        return "'" + value + "'"
+        return indent + "'" + value + "'"
     # print 'Quote result',value
     return value
 
 
 def indent(level):
-    return ' ' * int((level - 1) * 3)
+    return ' ' * int((level) * 2)
 
 
 # A visitor to print the object tree.
@@ -72,26 +73,27 @@ class VPrinter(object):
         self.nocomma = 0
 
     def nodeBegin(self, node):
-        self.level += 1
         if node._schema is not None:
-            print(node._schema.name, '(', file=self.out)
+            print(self.indent(), node._schema.name, '(', file=self.out)
         else:
             print('(', file=self.out)
+        self.level+=1
         self.nocomma = 1
         self.empty_body = 1
 
     def nodeEnd(self, node):
 
+        self.level-=1
+
         if self.empty_body:
-            print(self.indent(), ' )', end=' ', file=self.out, sep='')
+            print(self.indent(), ' )', end='', file=self.out, sep='')
             self.nocomma = 0
         else:
             if self.nocomma:
-                print(')', end=' ', file=self.out)
+                print(')', end='', file=self.out)
             else:
-                print('\n', self.indent(), ' )', end=' ', file=self.out, sep='')
+                print('\n', self.indent(), ' )', end='', file=self.out, sep='')
 
-        self.level -= 1
         if self.level == 0:
             print('\n', file=self.out)
 
@@ -106,7 +108,7 @@ class VPrinter(object):
         elif self.selection == 'preparable':
             # the following relies on the assumption that we only ever call printPrepTree on
             # a preparable application.
-            if node._schema.getItem(name)['preparable'] or self.level == 2:
+            if node._schema.getItem(name)['preparable']:
                 if not node._schema.getItem(name)['hidden']:
                     visible = True
         else:
@@ -126,33 +128,41 @@ class VPrinter(object):
             #    print 'into',repr(value)
             # else:
             #    print 'no transformation'
-            print(self.indent(), name, '=', self.quote(value), end=' ', file=self.out)
+            if isclass(value):
+                print(self.indent(), name, '=', repr(value), end = '', file=self.out)
+            else:
+                print(self.indent(), name, '=', self.quote(value), end='', file=self.out)
 
     def sharedAttribute(self, node, name, value, sequence):
         self.simpleAttribute(node, name, value, sequence)
 
     def acceptOptional(self, s):
         if s is None:
-            print(None, end=' ', file=self.out)
+            print(None, end='', file=self.out)
         else:
-            runProxyMethod(s, 'accept', self)
+            stripProxy(s).accept(self)
 
     def componentAttribute(self, node, name, subnode, sequence):
         if self.showAttribute(node, name):
             self.empty_body = 0
             self.comma()
-            print(self.indent(), name, '=', end=' ', file=self.out)
+            print(self.indent(), name, '=', end='', file=self.out)
+            #self.level+=1
             if sequence:
-                print('[', end=' ', file=self.out)
+                print('[', end='', file=self.out)
+                self.level+=1
                 for s in subnode:
+                    print(self.indent(), file=self.out)
                     self.acceptOptional(s)
-                    print(',', end=' ', file=self.out)
-                print(']', end=' ', file=self.out)
+                    print(',', end='', file=self.out)
+                self.level-=1
+                print(']', end='', file=self.out)
             else:
                 self.acceptOptional(subnode)
+            #self.level-=1
 
     def quote(self, x):
-        return quoteValue(x, self.selection)
+        return quoteValue(x, self.selection, '   ')
 
 
 class VSummaryPrinter(VPrinter):
@@ -225,8 +235,7 @@ class VSummaryPrinter(VPrinter):
             return
 
         # just go back to default behaviour
-        super(VSummaryPrinter, self).sharedAttribute(
-            node, name, value, sequence)
+        super(VSummaryPrinter, self).sharedAttribute(node, name, value, sequence)
 
     def componentAttribute(self, node, name, subnode, sequence):
         if not self.showAttribute(node, name):
@@ -242,8 +251,7 @@ class VSummaryPrinter(VPrinter):
             return
 
         # just go back to default behaviour
-        super(VSummaryPrinter, self).componentAttribute(
-            node, name, subnode, sequence)
+        super(VSummaryPrinter, self).componentAttribute(node, name, subnode, sequence)
 
 
 def full_print(obj, out=None):
@@ -254,7 +262,6 @@ def full_print(obj, out=None):
 
     from Ganga.GPIDev.Lib.GangaList import GangaList
 
-    from Ganga.GPIDev.Base.Proxy import stripProxy
     obj = stripProxy(obj)
 
     if isType(obj, GangaList.GangaList):
@@ -299,8 +306,8 @@ def summary_print(obj, out=None):
     if out == None:
         out = sys.stdout
 
-    from Ganga.GPIDev.Lib.GangaList import GangaList
-    if isType(obj, GangaList.GangaList):
+    from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+    if isType(obj, GangaList):
         obj_len = len(obj)
         if obj_len == 0:
             print('[]', end=' ', file=out)
