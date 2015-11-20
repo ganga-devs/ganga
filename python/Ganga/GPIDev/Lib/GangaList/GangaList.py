@@ -193,9 +193,12 @@ class GangaList(GangaObject):
 
         result = []
         for o in self._list:
-            category = o._category
-            if not category in result:
-                result.append(category)
+            if hasattr(stripProxy(o), 'category'):
+                category = o._category
+                if not category in result:
+                    result.append(category)
+            else:
+                result.append(type(o))
         return result
 
     def _readonly(self):
@@ -386,6 +389,8 @@ class GangaList(GangaObject):
     def __repr__(self):
         #logger.info("__repr__")
         #return self.toString()
+        #import traceback
+        #traceback.print_stack()
         return str("<GangaList at: %s>" % str(hex(abs(id(self)))))
 
     def __str__(self):
