@@ -52,7 +52,7 @@ def to_file(j, f=None, ignore_subs=''):
         vstreamer.end_root()
     except Exception as err:
         logger.error("XML to-file error for file:\n%s" % (str(err)))
-        raise XMLFileError(err)
+        raise XMLFileError(err, "to-file error")
         #raise err
 
 # Faster, but experimental version of to_file without accept()
@@ -80,7 +80,7 @@ def from_file(f):
         return obj, errors
     except Exception as err:
         logger.error("XML from-file error for file:\n%s" % str(err))
-        raise XMLFileError(err)
+        raise XMLFileError(err, "from-file error")
 
 ##########################################################################
 # utilities
