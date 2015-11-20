@@ -189,7 +189,7 @@ class Job(GangaObject):
                                      'inputdata': ComponentItem('datasets', defvalue=None, typelist=['Ganga.GPIDev.Lib.Dataset.Dataset'], load_default=0, optional=1, doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'outputdata': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, copyable=_outputfieldCopyable(), doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'splitter': ComponentItem('splitters', defvalue=None, load_default=0, optional=1, doc='optional splitter'),
-                                     'subjobs': ComponentItem('jobs', defvalue=[], sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
+                                     'subjobs': ComponentItem('jobs', defvalue=[], typelist=[list, 'Ganga.GPIDev.GangaList.GangaList.GangaList'], sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
                                      'master': ComponentItem('jobs', getter="_getParent", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, doc='master job', visitable=0),
                                      'postprocessors': ComponentItem('postprocessor', defvalue=MultiPostProcessor(), doc='list of postprocessors to run after job has finished'),
                                      'merger': ComponentItem('mergers', defvalue=None, hidden=1, copyable=0, load_default=0, optional=1, doc='optional output merger'),
@@ -227,6 +227,10 @@ class Job(GangaObject):
         self.status = "new"
         logger.debug("Intercepting __construct__")
 
+        self._Job_constructed = False
+        super(Job, self).__construct__(args)
+        self._Job_constructed = True
+
         # Not correctly calling Copy Constructor as in
         # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
         #super(Job, self).__construct__( args )
@@ -237,7 +241,6 @@ class Job(GangaObject):
 
             if isType(args[0], Job):
 
-                super(Job, self).__construct__(args)
                 self._unsetSubmitTransients()
 
                 original_job = args[0]
@@ -264,9 +267,9 @@ class Job(GangaObject):
                 # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
                 #super(Job, self).__construct__( args )
                 raise ValueError("Object %s is NOT of type Job" % str(args[0]))
-        else:
-            # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
-            super(Job, self).__construct__(args)
+        #else:
+        #    # Fix for Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
+        #    super(Job, self).__construct__(args)
 
     def _readonly(self):
         return self.status != 'new'
@@ -606,7 +609,7 @@ class Job(GangaObject):
 
         if self.status != saved_status:
             logger.info('job %s status changed to "%s"', fqid, self.status)
-            stripProxy(self)._getRegistry()._flush()
+            #stripProxy(self)._getRegistry()._flush(stripProxy(self)._getRoot())
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
@@ -819,8 +822,6 @@ class Job(GangaObject):
             logger.debug("Calling unprepare() from Job.py")
             self.application.unprepare()
 
-        self.info.uuid = str(uuid.uuid4())
-
         # increment the shareref counter if the job we're copying is prepared.
         # ALEX added try/if for loading of named job templates
         # temporary fix but looks like prep registry hasn't been loaded at the time
@@ -842,6 +843,7 @@ class Job(GangaObject):
         logger.debug("Intercepting the _auto__init__ function")
 
         super(Job, self)._auto__init__()
+        self.info.uuid = str(uuid.uuid4())
 
     def _init_workspace(self):
         logger.debug("Job %s Calling _init_workspace", str(self.getFQID('.')))
@@ -1161,8 +1163,7 @@ class Job(GangaObject):
 
             if appmasterconfig is None:
                 # I am going to generate the appmasterconfig now
-                logger.debug(
-                    "Job %s Calling application.master_configure" % str(self.getFQID('.')))
+                logger.debug("Job %s Calling application.master_configure" % str(self.getFQID('.')))
                 #import traceback
                 # traceback.print_stack()
                 appmasterconfig = self.application.master_configure()[1]
@@ -1239,6 +1240,13 @@ class Job(GangaObject):
 
         return jobmasterconfig
 
+    @staticmethod
+    def _prepare_sj( rtHandler, i, app, sub_c, app_master_c, job_master_c, finished):
+        if app.is_prepared in [None, False]:
+            app.prepare()
+        finished[i] = rtHandler.prepare(app, sub_c, app_master_c, job_master_c)
+        return
+
     def _getJobSubConfig(self, subjobs):
 
         jobsubconfig = None
@@ -1261,19 +1269,15 @@ class Job(GangaObject):
                 jobsubconfig = []
 
                 if self.parallel_submit is False:
-                    jobsubconfig = [rtHandler.prepare(j.application, s, appmasterconfig, jobmasterconfig) for (j, s) in zip(subjobs, appsubconfig)]
+                    jobsubconfig = [rtHandler.prepare(sub_job.application, sub_conf, appmasterconfig, jobmasterconfig) for (sub_job, sub_conf) in zip(subjobs, appsubconfig)]
                 else:
 
                     finished = {}
 
-                    def _prepare_sj( i, app, sub_c, app_master_c, job_master_c):
-                        finished[i] = rtHandler.prepare(app, sub_c, app_master_c, job_master_c)
-                        return
-
                     from Ganga.GPI import queues
                     index=0
-                    for j, s in zip(subjobs, appsubconfig):
-                        queues._monitoring_threadpool.add_function( _prepare_sj, (index, j.application, s, appmasterconfig, jobmasterconfig) )
+                    for sub_j, sub_conf in zip(subjobs, appsubconfig):
+                        queues._monitoring_threadpool.add_function(self._prepare_sj, (rtHandler, index, sub_j.application, sub_conf, appmasterconfig, jobmasterconfig, finished))
                         index += 1
 
                     while len(finished) != len(subjobs):
@@ -1398,6 +1402,9 @@ class Job(GangaObject):
 
             subjobs = self.splitter.validatedSplit(self)
             if subjobs:
+                from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+                if not isType(self.subjobs, (list, GangaList)):
+                    self.subjobs = []
                 # print "*"*80
                 # subjobs[0].printTree(sys.stdout)
 
@@ -1406,14 +1413,14 @@ class Job(GangaObject):
                 # bug fix for #53939 -> first set id of the subjob and then append to self.subjobs
                 #self.subjobs = subjobs
                 # for j in self.subjobs:
-                for j in subjobs:
-                    j.info.uuid = str(uuid.uuid4())
-                    j.status = 'new'
+                for sj in subjobs:
+                    sj.info.uuid = str(uuid.uuid4())
+                    sj.status = 'new'
                     #j.splitter = None
-                    j.time.timenow('new')
-                    j.id = i
+                    sj.time.timenow('new')
+                    sj.id = i
                     i += 1
-                    self.subjobs.append(j)
+                    self.subjobs.append(sj)
 
                 cfg = Ganga.Utility.Config.getConfig('Configuration')
                 for j in self.subjobs:
@@ -2064,11 +2071,15 @@ class Job(GangaObject):
 
         if objects is None:
             objects = [self]
+
+        for obj in objects:
+            stripProxy(obj)._setDirty()
+
         # EBKE changes
-        objects = [self._getRoot()]
-        reg = self._getRegistry()
-        if reg is not None:
-            reg._flush(objects)
+        #objects = [self._getRoot()]
+        #reg = self._getRegistry()
+        #if reg is not None:
+        #    reg._flush(objects)
 
 
 #    def _attribute_filter__set__(self,n,v):
