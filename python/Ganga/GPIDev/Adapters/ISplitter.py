@@ -22,17 +22,22 @@ class ISplitter(GangaObject):
     _category = 'splitters'
     _hidden = 1
 
-    def createSubjob(self, job):
+    def createSubjob(self, job, additional_skip_args=None):
         """ Create a new subjob by copying the master job and setting all fields correctly.
         """
         from Ganga.GPIDev.Lib.Job import Job
+        if additional_skip_args is None:
+            additional_skip_args = []
 
         j = Job()
-        j.copyFrom(job)
+        skipping_args = ['splitter', 'inputsandbox', 'inputfiles', 'inputdata', 'subjobs']
+        for arg in additional_skip_args:
+            skipping_args.append(arg)
+        j.copyFrom(job, skipping_args)
         j.splitter = None
-        # FIXME:
         j.inputsandbox = []
         j.inputfiles = []
+        j.inputdata = []
         return j
 
     def split(self, job):

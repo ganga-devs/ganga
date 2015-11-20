@@ -4,6 +4,7 @@
 # $Id: ArgSplitter.py,v 1.1 2008-07-17 16:40:59 moscicki Exp $
 ###############################################################################
 
+import copy
 from Ganga.GPIDev.Adapters.ISplitter import ISplitter
 from Ganga.GPIDev.Base.Proxy import addProxy, stripProxy
 from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
@@ -53,11 +54,14 @@ class ArgSplitter(ISplitter):
         subjobs = []
 
         for arg in self.args:
-            j = addProxy(self.createSubjob(job))
+            j = addProxy(self.createSubjob(job,['application']))
             # Add new arguments to subjob
-            j.application.args = arg
+            app = copy.deepcopy(job.application)
+            app.args = arg
+            j.application = app
             logger.debug('Arguments for split job is: ' + str(arg))
             subjobs.append(stripProxy(j))
+
         return subjobs
 
 

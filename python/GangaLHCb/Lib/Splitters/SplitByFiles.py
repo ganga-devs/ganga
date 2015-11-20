@@ -4,7 +4,7 @@ from Ganga.GPIDev.Schema import Schema, Version, SimpleItem
 from GangaLHCb.Lib.LHCbDataset.LHCbDataset import LHCbDataset
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.files import expandfilename
-from Ganga.GPIDev.Base.Proxy import stripProxy, isType
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 import Ganga.Utility.logging
 from Ganga.GPIDev.Lib.Job import Job
 import os
@@ -83,17 +83,16 @@ class SplitByFiles(GaudiInputDataSplitter):
                     from Ganga.Core.exceptions import GangaException
                     raise GangaException("Unkown file-type %s, cannot perform split with file %s" % (type(i), str(i)))
         elif type(dataset) == type([]) or isType(dataset, GangaList()):
-            for file in dataset:
-                if type(file) == type(''):
-                    datatmp.append(
-                        allComponentFilters['gangafiles'](file, None))
-                elif isType(file, IGangaFile):
-                    datatmp.append(file)
+            for this_file in dataset:
+                if type(this_file) == type(''):
+                    datatmp.append(allComponentFilters['gangafiles'](this_file, None))
+                elif isType(this_file, IGangaFile):
+                    datatmp.append(this_file)
                 else:
-                    logger.error("Unexpected type: %s" % str(type(file)))
+                    logger.error("Unexpected type: %s" % str(type(this_file)))
                     logger.error("Wanted object to inherit from type: %s: %s" % (str(type(IGangaFile()))))
                     from Ganga.Core.exceptions import GangaException
-                    x = GangaException("Unknown(unexpected) file object: %s" % file)
+                    x = GangaException("Unknown(unexpected) file object: %s" % this_file)
                     raise x
         elif type(dataset) == type(''):
             datatmp.append(DiracFile(lfn=dataset))
@@ -101,17 +100,16 @@ class SplitByFiles(GaudiInputDataSplitter):
             logger.error("Unkown dataset type, cannot perform split here")
             from Ganga.Core.exceptions import GangaException
             logger.error("Dataset found: " + str(dataset))
-            raise GangaException(
-                "Unkown dataset type, cannot perform split here")
+            raise GangaException("Unkown dataset type, cannot perform split here")
 
         logger.debug("Creating new Job in Splitter")
         j = Job()
         logger.debug("Copying From Job")
-        j.copyFrom(stripProxy(job), ['inputdata', 'inputsandbox', 'inputfiles'])
+        j.copyFrom(stripProxy(job), ['splitter', 'subjobs', 'inputdata', 'inputsandbox', 'inputfiles'])
         logger.debug("Unsetting Splitter")
         j.splitter = None
-        logger.debug("Unsetting Merger")
-        j.merger = None
+        #logger.debug("Unsetting Merger")
+        #j.merger = None
         #j.inputsandbox = [] ## master added automatically
         #j.inputfiles = []
         logger.debug("Setting InputData")
