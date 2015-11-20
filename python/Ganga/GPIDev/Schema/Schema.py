@@ -524,11 +524,9 @@ class ComponentItem(Item):
         kwds['load_default'] = load_default
         #kwds['getter'] = getter
         self._update(kwds, forced=ComponentItem._forced)
-        assert(
-            implies(self['defvalue'] is None and not self['load_default'], self['optional']))
+        assert(implies(self['defvalue'] is None and not self['load_default'], self['optional']))
 
-        assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self[
-               'protected'] and not self['sequence'] and not self['copyable']))
+        assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
 
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
@@ -540,9 +538,9 @@ defaultValue='_NOT_A_VALUE_'
 class SimpleItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
+        super(SimpleItem, self).__init__()
         if typelist == defaultValue:
             typelist = []
-        Item.__init__(self)
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
         self._update(kwds)
@@ -554,9 +552,9 @@ class SimpleItem(Item):
 class SharedItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
+        super(SharedItem, self).__init__()
         if typelist == defaultValue:
             typelist = []
-        Item.__init__(self)
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
         self._update(kwds)
@@ -589,7 +587,7 @@ class SharedItem(Item):
 class FileItem(ComponentItem):
 
     def __init__(self, **kwds):
-        ComponentItem.__init__(self, 'files')
+        super(FileItem, self).__init__('files')
         self._update(kwds)
 
     def _describe(self):
@@ -599,7 +597,7 @@ class FileItem(ComponentItem):
 class GangaFileItem(ComponentItem):
 
     def __init__(self, **kwds):
-        ComponentItem.__init__(self, 'gangafiles')
+        super(GangaFileItem, self).__init__('gangafiles')
         self._update(kwds)
 
     def _describe(self):
