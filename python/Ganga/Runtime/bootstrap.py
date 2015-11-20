@@ -1437,7 +1437,7 @@ default_backends = LCG
         ## Check which version of IPython we're running
         ipver = IPython.__version__
         ipver_major = int(ipver[0])
-        if ipver_major > 1:
+        if ipver_major > 2:
             ipshell = InteractiveShellEmbed(argv=args, config=cfg, banner1=banner, exit_msg=exit_msg)
         else:
             ipshell = InteractiveShellEmbed(config=cfg, banner1=banner, exit_msg=exit_msg)
