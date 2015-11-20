@@ -9,6 +9,7 @@ import os
 import os.path
 import time
 import errno
+import copy
 
 from Ganga.Core.GangaRepository.SessionLock import SessionLockManager
 
@@ -256,11 +257,13 @@ class GangaRepositoryLocal(GangaRepository):
                 raise IOError("Error on unpickling: %s %s" %(getName(x), x))
             if this_id in self.objects:
                 obj = self.objects[this_id]
-                if obj.getNodeData():
-                    setattr(stripProxy(obj), "_registry_refresh", True)
+                setattr(obj, "_registry_refresh", True)
             else:
                 obj = self._make_empty_object_(this_id, cat, cls)
-            obj._index_cache = cache
+            this_data = obj.getNodeData()
+            for k, v in cache.iteritems():
+                this_data[k] = v
+            obj.setNodeData(copy.deepcopy(this_data))
             self._cache_load_timestamp[this_id] = os.stat(fn).st_ctime
             self._cached_cat[this_id] = cat
             self._cached_cls[this_id] = cls
@@ -268,7 +271,8 @@ class GangaRepositoryLocal(GangaRepository):
             return True
         elif this_id not in self.objects:
             self.objects[this_id] = self._make_empty_object_(this_id, self._cached_cat[this_id], self._cached_cls[this_id])
-            self.objects[this_id]._index_cache = self._cached_obj[this_id]
+            self.objects[this_id].setNodeData( self._cached_obj[this_id] )
+            setattr(self.objects[this_id], '_registry_refresh', True)
             return True
         return False
 
@@ -302,8 +306,7 @@ class GangaRepositoryLocal(GangaRepository):
             except OSError as err:
                 logger.debug("get_index_listing Exception: %s")
                 raise RepositoryError(self, "Could not list repository '%s'!" % (os.path.join(self.root, c)))
-            objs.update(dict([(int(l), False)
-                              for l in listing if l.isdigit()]))
+            objs.update(dict([(int(l), False) for l in listing if l.isdigit()]))
             for l in listing:
                 if l.endswith(".index") and l[:-6].isdigit():
                     this_id = int(l[:-6])
@@ -413,7 +416,7 @@ class GangaRepositoryLocal(GangaRepository):
     def updateLocksNow(self):
         self.sessionlock.updateNow()
 
-    def update_index(self, id=None, verbose=False, firstRun=False):
+    def update_index(self, this_id=None, verbose=False, firstRun=False):
         """ Update the list of available objects
         Raise RepositoryError"""
         # First locate and load the index files
@@ -530,11 +533,14 @@ class GangaRepositoryLocal(GangaRepository):
                 if e.errno != errno.EEXIST:
                     raise RepositoryError( self, "OSError on mkdir: %s" % (str(e)))
             self._internal_setitem__(ids[i], objs[i])
+
             # Set subjobs dirty - they will not be flushed if they are not.
             if self.sub_split and self.sub_split in objs[i].getNodeData():
                 try:
-                    for j in range(len(objs[i].getNodeAttribute(self.sub_split))):
-                        objs[i].getNodeAttribute(self.sub_split)[j]._dirty = True
+                    sj_len = len(objs[i].getNodeAttribute(self.sub_split))
+                    if sj_len > 0:
+                        for j in range(sj_len):
+                            objs[i].getNodeAttribute(self.sub_split)[j]._dirty = True
                 except AttributeError as err:
                     logger.debug("RepoXML add Exception: %s" % str(err))
         return ids
@@ -730,7 +736,7 @@ class GangaRepositoryLocal(GangaRepository):
 
         # print "load: %s " % str(ids)
         #import traceback
-        # traceback.print_stack()
+        #traceback.print_stack()
 
         logger.debug("Loading Repo object(s): %s" % str(ids))
 
