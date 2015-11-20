@@ -264,7 +264,7 @@ class Transform(GangaObject):
 
     def checkTaskApplication(self, app):
         """warns the user if the application is not compatible """
-        if app == None:
+        if app is None:
             return None
         if not "tasks_id" in stripProxy(app).getNodeData():
             return taskApp(app)

@@ -201,7 +201,7 @@ class LocalFile(IGangaFile):
         for this_file in self.getFilenameList():
             _actual_delete = False
             keyin = None
-            while keyin == None:
+            while keyin is None:
                 keyin = raw_input("Do you want to remove the LocalFile: %s ? ([y]/n) " % str(this_file))
                 if keyin in ['y', '']:
                     _actual_delete = True

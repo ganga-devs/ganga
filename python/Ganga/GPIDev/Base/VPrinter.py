@@ -184,7 +184,7 @@ class VSummaryPrinter(VPrinter):
 
         # check whether a print_summary function has been defined
         print_summary = node._schema.getItem(name)['summary_print']
-        if print_summary != None:
+        if print_summary is not None:
             fp = getattr(node, print_summary)
             str_val = fp(value, self.verbosity_level)
             self.empty_body = 0

@@ -313,7 +313,7 @@ class Batch(IBackend):
             m = re.compile(self.config['kill_res_pattern'], re.M).search(sout)
             logger.warning('while killing job %s: %s', self.getJobObject().getFQID('.'), sout)
 
-            return not m == None
+            return m is not None
 
     def getStateTime(self, status):
         """Obtains the timestamps for the 'running', 'completed', and 'failed' states.
@@ -524,7 +524,7 @@ class Batch(IBackend):
                         j.backend.actualCE = actualCE
 
             if j.status == 'running':
-                if exitcode != None:
+                if exitcode is not None:
                     # Job has finished
                     j.backend.exitcode = exitcode
                     if exitcode == 0:

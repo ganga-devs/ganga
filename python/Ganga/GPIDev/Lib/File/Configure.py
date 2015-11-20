@@ -3,7 +3,7 @@ from Ganga.Utility.Config import getConfig
 
 outputconfig = None
 
-if outputconfig == None:
+if outputconfig is None:
     from Ganga.Utility.Config import makeConfig
     outputconfig = makeConfig(
         "Output", "configuration section for postprocessing the output")

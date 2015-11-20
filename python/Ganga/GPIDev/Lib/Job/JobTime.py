@@ -124,7 +124,7 @@ class JobTime(GangaObject):
             if status in b_list:
                 for childstatus in b_list:
                     be_statetime = j.backend.getStateTime(childstatus)
-                    if be_statetime != None:
+                    if be_statetime is not None:
                         if childstatus in backend_final:
                             self.timestamps["backend_final"] = be_statetime
                             logger.debug(
@@ -278,7 +278,7 @@ class JobTime(GangaObject):
                 # NOTE: The interactive loop below was more an exercise for learning how 'keyin' is used than a useful addition.
                 # ask whether user really wants to print timedetails for all
                 # their jobs:
-                while keyin == None:
+                while keyin is None:
                     keyin = raw_input(
                         "Are you sure you want details for ALL %d subjobs(y/n)?" % len(j.subjobs))
                     # if yes carry on at for loop
@@ -301,7 +301,7 @@ class JobTime(GangaObject):
                 return detdict
 
             # no arguement specified
-            elif subjob == None:
+            elif subjob is None:
                 logger.debug(
                     "j.time.details(): no subjobs specified for this master job.")
                 return None
@@ -439,7 +439,7 @@ class JobTime(GangaObject):
         if status not in self.timestamps:
             logger.debug("Timestamp '%s' not available.", status)
             return None
-        if format != None:
+        if format is not None:
             return self.timestamps[status].strftime(format)
         return self.timestamps[status]
 

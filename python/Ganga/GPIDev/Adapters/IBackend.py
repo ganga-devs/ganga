@@ -264,7 +264,7 @@ class IBackend(GangaObject):
             files = job.inputsandbox
 
         result = create_sandbox(files, master=True)
-        if tmpDir != None:
+        if tmpDir is not None:
             import shutil
             # remove temp dir
             if os.path.exists(tmpDir):

@@ -354,10 +354,10 @@ class SmartMerger(IMerger):
 
     def merge(self, jobs, outputdir=None, ignorefailed=None, overwrite=None):
 
-        if ignorefailed == None:
+        if ignorefailed is None:
             ignorefailed = self.ignorefailed
 
-        if overwrite == None:
+        if overwrite is None:
             overwrite = self.overwrite
 
         # make a guess of what to merge if nothing is specified
@@ -397,7 +397,7 @@ class SmartMerger(IMerger):
         merge_results = []
         for ext in type_map.keys():
             merge_object = getMergerObject(ext)  # returns an instance
-            if merge_object == None:
+            if merge_object is None:
                 logger.error('Extension %s not recognized and so the merge will fail. '
                              'Check the [Mergers] section of your .gangarc file.', ext)
                 return self.failure

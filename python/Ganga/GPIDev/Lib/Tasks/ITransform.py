@@ -369,12 +369,12 @@ OutputFile objects to be copied to all jobs"),
 
         from Ganga.GPIDev.Lib.Tasks.TaskLocalCopy import TaskLocalCopy
         # make sure a path has been selected for any local downloads
-        if self.unit_copy_output != None and isType(self.unit_copy_output, TaskLocalCopy):
+        if self.unit_copy_output is not None and isType(self.unit_copy_output, TaskLocalCopy):
             if self.unit_copy_output.local_location == '':
                 logger.error("No path selected for Local Output Copy")
                 return False
 
-        if self.copy_output != None and isType(self.copy_output, TaskLocalCopy):
+        if self.copy_output is not None and isType(self.copy_output, TaskLocalCopy):
             if self.copy_output.local_location == '':
                 logger.error("No path selected for Local Output Copy")
                 return False
@@ -511,7 +511,7 @@ OutputFile objects to be copied to all jobs"),
 
         elif attr == 'outputdata':
 
-            if value != None:
+            if value is not None:
 
                 if getConfig('Output')['ForbidLegacyOutput']:
                     logger.error(

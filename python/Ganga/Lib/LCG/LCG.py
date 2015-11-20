@@ -2289,7 +2289,7 @@ def __updateGridObjects__(opt, val):
 
     # when user changes the 'DefaultLFC', change the env. variable, LFC_HOST,
     # of the cached grid shells
-    if opt == 'DefaultLFC' and val != None:
+    if opt == 'DefaultLFC' and val is not None:
         for mt in grids.keys():
             try:
                 grids[mt].shell.env['LFC_HOST'] = val

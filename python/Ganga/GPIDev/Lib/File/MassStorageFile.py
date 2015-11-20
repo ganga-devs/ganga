@@ -195,7 +195,7 @@ class MassStorageFile(IGangaFile):
         sourceDir = ''
 
         # if used as a stand alone object
-        if self._parent == None:
+        if self._parent is None:
             if self.localDir == '':
                 import os
                 _CWD = os.getcwd()
@@ -266,7 +266,7 @@ class MassStorageFile(IGangaFile):
                 jobid = jobfqid.split('.')[0]
                 subjobid = jobfqid.split('.')[1]
 
-            if self.outputfilenameformat == None:
+            if self.outputfilenameformat is None:
                 filenameStructure = '{fname}'
                 # create jid/sjid directories
                 folderStructure = jobid
@@ -483,7 +483,7 @@ class MassStorageFile(IGangaFile):
 
                 keyin = None
 
-                while keyin == None:
+                while keyin is None:
                     keyin = raw_input("Do you want to delete file %s at Location: %s ? [y/n] " % (str(self.namePattern), str(i)))
                     if keyin == 'y':
                         _delete_this = True
@@ -520,7 +520,7 @@ class MassStorageFile(IGangaFile):
                 else:
 
                     keyin = None
-                    while keyin == None:
+                    while keyin is None:
                         keyin = raw_input(
                             "Do you want to remove the local File: %s ? ([y]/n) " % str(_localFile))
                         if keyin in ['y', '']:

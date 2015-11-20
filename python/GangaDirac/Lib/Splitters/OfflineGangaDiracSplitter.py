@@ -238,7 +238,7 @@ def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
         #logger.info( "%s of %s" % (str(i), str(int(math.ceil( float(len(allLFNs))*limit_divide_one )))) )
         output = allLFNData.get(i)
 
-        if output == None:
+        if output is None:
             logger.error("Error getting Replica information from Dirac: [%s,%s]" % ( str(i * LFN_parallel_limit), str((i + 1) * LFN_parallel_limit)))
             logger.error("%s" % str(allLFNData))
             raise Exception('Error from DIRAC')

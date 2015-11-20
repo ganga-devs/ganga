@@ -85,7 +85,7 @@ class JobTree(GangaObject):
             self._releaseWriteAccess()
 
     def __get_path(self, path=None):
-        if path == None:
+        if path is None:
             return self.cwd()[:]
         else:
             pp = []

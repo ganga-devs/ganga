@@ -98,7 +98,7 @@ except ImportError:
                 raise Exception, "Only dict serialization is implemented"
             o = []
             for (k,v) in obj.items():
-                if v == None:
+                if v is None:
                     o.append( '"%s": null' % (k, ) )
                 elif v.__class__ == str:
                     o.append( '"%s": "%s"' % (k, v) )

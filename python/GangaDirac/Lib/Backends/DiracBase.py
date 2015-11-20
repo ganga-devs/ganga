@@ -421,7 +421,7 @@ class DiracBase(IBackend):
         else:
             suceeded.extend([download(f, j, False) for f in outputfiles_iterator(j, DiracFile) if f.lfn != '' and (names is None or f.namePattern in names)])
 
-        return filter(lambda x: x != None, suceeded)
+        return filter(lambda x: x is not None, suceeded)
 
     def getOutputDataLFNs(self):
         """Retrieve the list of LFNs assigned to outputdata"""
