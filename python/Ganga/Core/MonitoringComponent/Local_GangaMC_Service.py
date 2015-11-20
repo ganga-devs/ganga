@@ -49,6 +49,7 @@ config.addOption('DiskSpaceChecker', "", "disk space checking callback. This fun
 
 config.addOption('max_shutdown_retries', 5, 'OBSOLETE: this option has no effect anymore')
 
+config.addOption('numParallelJobs', 5, 'Number of Jobs to update the status for in parallel')
 
 THREAD_POOL_SIZE = config['update_thread_pool_size']
 Qin = Queue.Queue()
@@ -367,7 +368,7 @@ def resubmit_if_required(jobList_fromset):
     return
 
 
-def get_jobs_in_bunches(jobList_fromset, blocks_of_size=10, stripProxies=True):
+def get_jobs_in_bunches(jobList_fromset, blocks_of_size=5, stripProxies=True):
     """
     Return a list of lists of subjobs where each list contains
     a total number of jobs close to 'blocks_of_size' as possible
@@ -931,7 +932,8 @@ class JobRegistry_Monitor(GangaThread):
                     log.debug("NOT enabled, leaving")
                     return
 
-                all_job_bunches = get_jobs_in_bunches(jobList_fromset)
+                block_size = config['numParallelJobs']
+                all_job_bunches = get_jobs_in_bunches(jobList_fromset, blocks_of_size = block_size )
 
                 bunch_size = 0
                 for bunch in all_job_bunches:
