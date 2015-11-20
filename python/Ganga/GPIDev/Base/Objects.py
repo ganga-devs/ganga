@@ -351,7 +351,7 @@ class Descriptor(object):
                         result = lookup_result
                     else:
                         ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
-                        #obj._getReadAccess()
+                        obj._getReadAccess()
                         if getName(self) in stripProxy(obj).getNodeData():
                             result = stripProxy(obj).getNodeAttribute(getName(self))
                         else:
