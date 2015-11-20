@@ -35,6 +35,9 @@ class IPostProcessor(GangaObject):
     def __init__(self):
         super(IPostProcessor, self).__init__()
 
+    def __construct__(self, value):
+        super(IPostProcessor, self).__construct__(value)
+
     def execute(self, job, **options):
         """
         To be overidden by inherited class
@@ -52,7 +55,7 @@ class MultiPostProcessor(IPostProcessor):
 
     _category = 'postprocessor'
     #_exportmethods = ['__add__', '__get__', '__str__', '__getitem__', 'append', 'remove']
-    _exportmethods = ['__add__', '__get__', '__getitem__', 'append', 'remove']
+    _exportmethods = ['__add__', '__get__', '__getitem__', '__len__', 'append', 'remove']
     _name = 'MultiPostProcessor'
     _schema = Schema(Version(1, 0), {
         'process_objects': ComponentItem('postprocessor', defvalue=[], hidden=1, doc='A list of Processors to run', sequence=1)
@@ -62,16 +65,20 @@ class MultiPostProcessor(IPostProcessor):
         super(MultiPostProcessor, self).__init__()
 
     def __construct__(self, value):
-        if isinstance(value, list) or isinstance(value, GangaList):
-            for process in value:
-                self.addProcess(process)
-        elif isType(value, MultiPostProcessor):
-            for process in stripProxy(value).process_objects:
-                self.addProcess(process)
+        if len(value) == 1 or len(value) > 1 and isType(value, (GangaList,list)):
+            if isinstance(value, list) or isType(value, GangaList):
+                for process in value:
+                    self.addProcess(process)
+            elif isType(value, MultiPostProcessor):
+                for process in stripProxy(value).process_objects:
+                    self.addProcess(process)
+            else:
+                self.addProcess(value)
+
+            if hasattr(self.process_objects, 'order'):
+                self.process_objects = sorted(self.process_objects, key=lambda process: process.order)
         else:
-            self.addProcess(value)
-        self.process_objects = sorted(
-            self.process_objects, key=lambda process: process.order)
+            super(MultiPostProcessor, self).__construct__(value)
 
     def __str__(self):
         return str(GPIProxyObjectFactory(self.process_objects))
