@@ -417,7 +417,13 @@ class IBackend(GangaObject):
         logger.debug("Running Monitoring for Jobs: %s" % str([j.getFQID('.') for j in jobs]))
 
         ## Only process 10 files from the backend at once
-        blocks_of_size = 10
+        #blocks_of_size = 10
+        try:
+            from Ganga.Utilities.Config import getConfig
+            blocks_of_size = getConfig('PollThread')['numParallelJobs']
+        except Exception as err:
+            logger.debug("Problem with PollThread Config, defaulting to block size of 5 in master_updateMon...")
+            blocks_of_size = 5
         ## Separate different backends implicitly
         simple_jobs = {}
 
@@ -460,6 +466,7 @@ class IBackend(GangaObject):
                         logger.error("Monitoring Error: %s" % str(err))
                     j.updateMasterJobStatus()
 
+                ## NB ONLY THE MASTER JOB IS KNOWN TO THE JOB REPO!!!
                 stripProxy(j)._setDirty()
             else:
                 backend_name = j.backend.__class__.__name__
