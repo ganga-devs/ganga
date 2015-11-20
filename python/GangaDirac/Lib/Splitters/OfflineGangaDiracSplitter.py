@@ -275,7 +275,7 @@ def _sortLFNreplicas(bad_lfns, allLFNs, LFNdict, ignoremissing, allLFNData):
         if upper_limit > len(allLFNs):
             upper_limit = len(allLFNs)
 
-        logger.info("Updating LFN Physical Locations: [%s:%s] of %s" % (str(i * LFN_parallel_limit), str(upper_limit), str(len(allLFNs))))
+        logger.debug("Updating LFN Physical Locations: [%s:%s] of %s" % (str(i * LFN_parallel_limit), str(upper_limit), str(len(allLFNs))))
 
         for this_lfn in values.keys():
             logger.debug("LFN: %s" % str(this_lfn))
