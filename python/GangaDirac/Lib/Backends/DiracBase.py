@@ -101,8 +101,7 @@ class DiracBase(IBackend):
         parametric_datasets = get_parametric_datasets(f.read().split('\n'))
         f.close()
         if len(parametric_datasets) != len(dirac_ids):
-            raise BackendError(
-                'Dirac', 'Missmatch between number of datasets defines in dirac API script and those returned by DIRAC')
+            raise BackendError('Dirac', 'Missmatch between number of datasets defines in dirac API script and those returned by DIRAC')
 
         from Ganga.GPIDev.Lib.Job.Job import Job
         master_job = self.getJobObject()
@@ -498,25 +497,19 @@ class DiracBase(IBackend):
                 for childstatus in b_list:
                     if job.backend.id:
                         logger.debug("Accessing getStateTime() in diracAPI")
-                        dirac_cmd = "getStateTime(%d,\'%s\')" % (
-                            job.backend.id, childstatus)
+                        dirac_cmd = "getStateTime(%d,\'%s\')" % (job.backend.id, childstatus)
                         be_statetime = execute(dirac_cmd)
                         if childstatus in backend_final:
                             job.time.timestamps["backend_final"] = be_statetime
-                            logger.debug(
-                                "Wrote 'backend_final' to timestamps.")
+                            logger.debug("Wrote 'backend_final' to timestamps.")
                         else:
-                            job.time.timestamps[
-                                "backend_" + childstatus] = be_statetime
-                            logger.debug(
-                                "Wrote 'backend_%s' to timestamps.", childstatus)
+                            job.time.timestamps["backend_" + childstatus] = be_statetime
+                            logger.debug("Wrote 'backend_%s' to timestamps.", childstatus)
                     if childstatus == status:
                         break
-            logger.debug(
-                "_getStateTime(job with id: %d, '%s') called.", job.id, job.status)
+            logger.debug("_getStateTime(job with id: %d, '%s') called.", job.id, job.status)
         else:
-            logger.debug(
-                "Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
+            logger.debug("Status changed from '%s' to '%s'. No new timestamp was written", job.status, status)
 
     def timedetails(self):
         """Prints contents of the loggingInfo from the Dirac API."""
@@ -609,13 +602,13 @@ class DiracBase(IBackend):
                 logger.warning('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
                 DiracBase._getStateTime(job, 'failed')
                 if job.status in ['removed', 'killed']:
-                    retyrn
+                    return
                 if (job.master and job.master.status in ['removed', 'killed']):
                     return  # user changed it under us
                 job.updateStatus('failed')
                 if job.master:
                     job.master.updateMasterJobStatus()
-                return
+                raise BackendError('Problem retrieving outputsandbox: %s' % str(getSandboxResult))
 
             # finally update job to completed
             DiracBase._getStateTime(job, 'completed')
@@ -627,8 +620,7 @@ class DiracBase(IBackend):
             if job.master:
                 job.master.updateMasterJobStatus()
             now = time.time()
-            logger.debug(
-                'Job ' + job.fqid + ' Time for complete update : ' + str(now - start))
+            logger.debug('Job ' + job.fqid + ' Time for complete update : ' + str(now - start))
 
         elif updated_dirac_status == 'failed':
             # firstly update status to failed
@@ -659,6 +651,8 @@ class DiracBase(IBackend):
 
             try:
                 count += 1
+                if job.status != "running":
+                    job.updateStatus('running')
                 DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
             except Exception as err:
@@ -767,7 +761,7 @@ class DiracBase(IBackend):
             try:
                 job.backend.extraInfo = state[4]
             except Exception as err:
-                logger.debug("Exception: %s" % str(err))
+                logger.debug("gxception: %s" % str(err))
                 pass
             logger.debug('Job status vector  : ' + job.fqid + ' : ' + repr(state))
 
