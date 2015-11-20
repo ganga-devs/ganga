@@ -463,19 +463,20 @@ class Job(GangaObject):
                 id = self.id
             except KeyError:
                 id = None
-        # try:
         if hasattr(self, '_Job_constructed') and self._Job_constructed is True:
             if hasattr(self, 'status'):
                 oldstat = self.status
-            # except:
             else:
                 oldstat = None
         else:
             oldstat = value
             #raise JobError( "Job Not constructed: %s, %s " % (str(self), str(value) ) )
 
-        logger.debug(
-            'job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
+        logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
+
+        ## This code appears to mimic the fact that we have a protected status within the Schema.
+        ## This looks like it's supposed to prevent direct manipulation of the job.status property but this is done through stack manipulation, probably not the best way to achieve this.
+        ## We may want to drop this code in future I'm leaving this in for historical purposes. rcurrie
         #import inspect
         #frame = inspect.stack()[2]
         # if not frame[0].f_code.co_name == 'updateStatus' and

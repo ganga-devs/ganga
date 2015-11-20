@@ -337,7 +337,8 @@ class DiracFile(IGangaFile):
         Remove called when job is removed as long as config option allows
         """
         if self.lfn != '':
-            queues.add(self.remove)
+            #queues.add(self.remove)
+            self.remove()
 
     def remove(self):
         """
