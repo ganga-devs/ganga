@@ -58,13 +58,13 @@ class JobRegistry(Registry):
         super(JobRegistry, self).__init__(name, doc, dirty_flush_counter, update_index_time, dirty_max_timeout, dirty_min_timeout)
 
     def getProxy(self):
-        slice = JobRegistrySlice(self.name)
-        slice.objects = self
-        return JobRegistrySliceProxy(slice)
+        this_slice = JobRegistrySlice(self.name)
+        this_slice.objects = self
+        return JobRegistrySliceProxy(this_slice)
 
     def getIndexCache(self, obj):
-        if not obj.getNodeData():
-            return None
+        #if not obj.getNodeData():
+        #    return None
         cached_values = ['status', 'id', 'name']
         c = {}
         for cv in cached_values:
@@ -114,15 +114,11 @@ class JobRegistrySlice(RegistrySlice):
         bg = Background()
         try:
             status_colours = config['jobs_status_colours']
-            self.status_colours = dict(
-                [(k, eval(v)) for k, v in status_colours.iteritems()])
+            self.status_colours = dict([(k, eval(v)) for k, v in status_colours.iteritems()])
         except Exception as x:
-            logger.warning(
-                'configuration problem with colour specification: "%s"', str(x))
-            status_colours = config.options[
-                'jobs_status_colours'].default_value
-            self.status_colours = dict(
-                [(k, eval(v)) for k, v in status_colours.iteritems()])
+            logger.warning('configuration problem with colour specification: "%s"', str(x))
+            status_colours = config.options['jobs_status_colours'].default_value
+            self.status_colours = dict([(k, eval(v)) for k, v in status_colours.iteritems()])
         self.fx = fx
         self._proxyClass = JobRegistrySliceProxy
 
@@ -132,51 +128,47 @@ class JobRegistrySlice(RegistrySlice):
     def __call__(self, id):
         """ Retrieve a job by id.
         """
-        t = type(id)
+        this_id = id
+        t = type(this_id)
         if t is int:
             try:
-                return self.objects[id]
+                return self.objects[this_id]
             except KeyError:
                 if self.name == 'templates':
-                    raise RegistryKeyError('Template %d not found' % id)
+                    raise RegistryKeyError('Template %d not found' % this_id)
                 else:
-                    raise RegistryKeyError('Job %d not found' % id)
+                    raise RegistryKeyError('Job %d not found' % this_id)
         elif t is tuple:
-            ids = id
+            ids = this_id
         elif t is str:
-            if id.isdigit():
+            if this_id.isdigit():
                 try:
-                    return self.objects[int(id)]
+                    return self.objects[int(this_id)]
                 except KeyError:
                     if self.name == 'templates':
-                        raise RegistryKeyError('Template %d not found' % id)
+                        raise RegistryKeyError('Template %d not found' % this_id)
                     else:
-                        raise RegistryKeyError('Job %d not found' % id)
-            elif id.count('.') == 1 and id.split('.')[0].isdigit() and id.split('.')[1].isdigit():
-                ids = id.split(".")
+                        raise RegistryKeyError('Job %d not found' % this_id)
+            elif this_id.count('.') == 1 and id.split('.')[0].isdigit() and this_id.split('.')[1].isdigit():
+                ids = this_id.split(".")
             else:
                 import fnmatch
-                jlist = [
-                    j for j in self.objects if fnmatch.fnmatch(j.name, id)]
+                jlist = [j for j in self.objects if fnmatch.fnmatch(j.name, this_id)]
                 if len(jlist) == 1:
                     return jlist[0]
                 return jobSlice(jlist)
         else:
-            raise RegistryAccessError(
-                'Expected a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 
         if not len(ids) in [1, 2]:
-            raise RegistryAccessError(
-                'Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
+            raise RegistryAccessError('Too many ids in the access tuple, 2-tuple (job,subjob) only supported')
 
         try:
-            ids = [int(id) for id in ids]
+            ids = [int(this_id) for this_id in ids]
         except TypeError:
-            raise RegistryAccessError(
-                'Expeted a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError('Expeted a job id: int, (int,int), or "int.int"')
         except ValueError:
-            raise RegistryAccessError(
-                'Expected a job id: int, (int,int), or "int.int"')
+            raise RegistryAccessError('Expected a job id: int, (int,int), or "int.int"')
 
         try:
             j = self.objects[ids[0]]
@@ -190,8 +182,7 @@ class JobRegistrySlice(RegistrySlice):
             try:
                 return j.subjobs[ids[1]]
             except IndexError:
-                raise RegistryKeyError(
-                    'Subjob %s not found' % ('.'.join([str(id) for id in ids])))
+                raise RegistryKeyError('Subjob %s not found' % ('.'.join([str(_id) for _id in ids])))
         else:
             return j
 
@@ -294,9 +285,9 @@ class JobRegistrySliceProxy(RegistrySliceProxy):
 def jobSlice(joblist):
     """create a 'JobSlice' from a list of jobs
     example: jobSlice([j for j in jobs if j.name.startswith("T1:")])"""
-    slice = JobRegistrySlice("manual slice")
-    slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
-    return _wrap(slice)
+    this_slice = JobRegistrySlice("manual slice")
+    this_slice.objects = oDict([(j.fqid, _unwrap(j)) for j in joblist])
+    return _wrap(this_slice)
 
 # , "Create a job slice from a job list")
 exportToGPI("jobSlice", jobSlice, "Functions")
