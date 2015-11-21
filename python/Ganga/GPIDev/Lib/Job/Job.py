@@ -20,7 +20,6 @@ from Ganga.Core.GangaRepository import RegistryKeyError, getRegistry
 
 from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
-from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap,  JobRegistrySliceProxy
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
 from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy
@@ -189,7 +188,7 @@ class Job(GangaObject):
                                      'inputdata': ComponentItem('datasets', defvalue=None, typelist=['Ganga.GPIDev.Lib.Dataset.Dataset'], load_default=0, optional=1, doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'outputdata': ComponentItem('datasets', defvalue=None, load_default=0, optional=1, copyable=_outputfieldCopyable(), doc='dataset definition (typically this is specific either to an application, a site or the virtual organization'),
                                      'splitter': ComponentItem('splitters', defvalue=None, load_default=0, optional=1, doc='optional splitter'),
-                                     'subjobs': ComponentItem('jobs', defvalue=[], typelist=[list, 'Ganga.GPIDev.GangaList.GangaList.GangaList'], sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
+                                     'subjobs': ComponentItem('jobs', defvalue=[], typelist=[list, GangaList], sequence=1, protected=1, load_default=0, copyable=0, comparable=0, optional=1, proxy_get="_subjobs_proxy", doc='list of subjobs (if splitting)', summary_print='_subjobs_summary_print'),
                                      'master': ComponentItem('jobs', getter="_getParent", transient=1, protected=1, load_default=0, defvalue=None, optional=1, copyable=0, comparable=0, doc='master job', visitable=0),
                                      'postprocessors': ComponentItem('postprocessor', defvalue=MultiPostProcessor(), doc='list of postprocessors to run after job has finished'),
                                      'merger': ComponentItem('mergers', defvalue=None, hidden=1, copyable=0, load_default=0, optional=1, doc='optional output merger'),
@@ -282,8 +281,8 @@ class Job(GangaObject):
         # explicitly stop these objects going anywhere near the __deepcopy__
 
         cls = type(stripProxy(self))
-        c = super(cls, cls).__new__(cls)
-        super(Job, c).__init__()
+        c = super(Job, self).__new__()
+        c.__init__()
 
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
@@ -971,11 +970,11 @@ class Job(GangaObject):
     def getDebugWorkspace(self, create=True):
         return self.getWorkspace('DebugWorkspace', create=create)
 
-    def __getstate__(self):
-        this_dict = super(Job, self).__getstate__()
+    #def __getstate__(self):
+        #this_dict = super(Job, self).__getstate__()
         #if hasattr(this_dict, '_registry'):
-        this_dict['_registry'] = None
-        return this_dict
+        #this_dict['_registry'] = None
+        #return this_dict
 #        # FIXME: dict['_data']['id'] = 0 # -> replaced by 'copyable' mechanism
 #        # in base class
 
@@ -1488,6 +1487,7 @@ class Job(GangaObject):
             logger.error(msg)
             raise JobError(msg)
 
+        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySliceProxy
         assert(self.subjobs == [] or ((isType(self.subjobs, JobRegistrySliceProxy) or isType(self.subjobs, SubJobXMLList)) and len(self.subjobs) == 0) )
 
         # no longer needed with prepared state
@@ -2112,6 +2112,7 @@ class Job(GangaObject):
 # return tuple(index)
 
     def _subjobs_proxy(self):
+        from Ganga.GPIDev.Lib.Registry.JobRegistry import JobRegistrySlice, _wrap
         subjobs = JobRegistrySlice('jobs(%s).subjobs' % str(self.id))
         if isType(self.subjobs, SubJobXMLList):
             subjobs.objects = self.subjobs
