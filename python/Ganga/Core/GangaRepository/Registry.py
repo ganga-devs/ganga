@@ -7,6 +7,8 @@ import time
 import threading
 
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+from Ganga.GPIDev.Base.Objects import GangaObject
+from Ganga.GPIDev.Schema import Schema, Version
 from Ganga.GPIDev.Base.Proxy import stripProxy, isType, getName
 
 logger = Ganga.Utility.logging.getLogger()
@@ -96,13 +98,23 @@ def makeRepository(registry):
         raise RegistryError("Repository %s: Unknown repository type %s" % (registry.name, registry.type))
 
 
-class IncompleteObject(object):
+class IncompleteObject(GangaObject):
 
     """ This class represents an object that could not be loaded on startup"""
 
+    _schema = Schema(Version(0, 0), {})
+    _name = "IncompleteObject"
+    _category = "internal"
+    _hidden = 1
+
+
     def __init__(self, registry, this_id):
+        super(IncompleteObject, self).__init__()
         self.registry = registry
         self.id = this_id
+
+    def __construct__(self):
+        super(IncompleteObject, self).__construct__()
 
     def reload(self):
         self.registry._lock.acquire()
@@ -359,8 +371,7 @@ class Registry(object):
         if force == True it removes them regardless of other sessions.
         Returns True on success, False on failure."""
         if not self._started:
-            raise RegistryAccessError(
-                "Cannot clean a disconnected repository!")
+            raise RegistryAccessError("Cannot clean a disconnected repository!")
         self._lock.acquire()
         try:
             if not force:
@@ -518,8 +529,8 @@ class Registry(object):
                     logger.error(" Object not in Repository: %s" % str(err))
             logger.debug("repository.flush(%s)" % ids)
             self.repository.flush(ids)
-            self.repository._release_lock(ids)
-            #self.dirty_objs = {}
+            self.repository.unlock(ids)
+            self.dirty_objs = {}
         except Exception as err:
             logger.debug("_flush Error: %s" % str(err))
         finally:
@@ -530,9 +541,10 @@ class Registry(object):
         sub-obj is the object the read access is actually desired (ignored at the moment)
         Raise RegistryAccessError
         Raise RegistryKeyError"""
-        #logger.debug("Reg %s _read_access(%s)" % (self.name, str(obj)))
+        logger.debug("Reg %s _read_access(%s)" % (self.name, str(_obj)))
         obj = stripProxy(_obj)
-        if not obj.getNodeData() or hasattr(obj, "_registry_refresh"):
+        if (obj.getNodeData()) or hasattr(obj, "_registry_refresh"):
+            logger.debug("Triggering Load: %s" % str(self.find(_obj)))
             if not self._started:
                 raise RegistryAccessError("The object #%i in registry '%s' is not fully loaded and the registry is disconnected! Type 'reactivate()' if you want to reconnect." % (self.find(obj), self.name))
 
@@ -613,7 +625,7 @@ class Registry(object):
         logger.debug("Reg: %s _release_lock(%s)" % (self.name, str(id(obj))))
         self._lock.acquire()
         try:
-            if obj._registry_locked:
+            if hasattr(obj, '_registry_locked') and obj._registry_locked:
                 oid = self.find(obj)
                 if obj in self.dirty_objs:
                     self.repository.flush([oid])
