@@ -140,11 +140,11 @@ class RegistrySlice(object):
         import fnmatch
         import re
 
-        def select_by_list(id):
-            return id in ids
+        def select_by_list(this_id):
+            return this_id in ids
 
-        def select_by_range(id):
-            return minid <= id <= maxid
+        def select_by_range(this_id):
+            return minid <= this_id <= maxid
 
         ids = None
 
@@ -158,10 +158,10 @@ class RegistrySlice(object):
                 maxid = sys.maxsize
             select = select_by_range
 
-        for id, obj in self.objects.iteritems():
-            logger.debug("id, obj: %s, %s" % (str(id), str(obj)))
-            if select(int(id)):
-                logger.debug("Selected: %s" % str(id))
+        for this_id, obj in self.objects.iteritems():
+            logger.debug("id, obj: %s, %s" % (str(this_id), str(obj)))
+            if select(int(this_id)):
+                logger.debug("Selected: %s" % str(this_id))
                 selected = True
                 for a in attrs:
                     if self.name == 'box':
@@ -189,7 +189,7 @@ class RegistrySlice(object):
                     else:
 
                         if a == 'ids':
-                            if int(id) not in attrs['ids']:
+                            if int(this_id) not in attrs['ids']:
                                 selected = False
                                 break
                         else:
@@ -228,7 +228,7 @@ class RegistrySlice(object):
                                             selected = False
                                             break
                 if selected:
-                    callback(id, obj)
+                    callback(this_id, obj)
 
     def copy(self, keep_going):
         slice = self.__class__("copy of %s" % self.name)
@@ -251,31 +251,26 @@ class RegistrySlice(object):
     def __contains__(self, j):
         return j.id in self.objects
 
-    def __call__(self, id):
+    def __call__(self, this_id):
         """ Retrieve an object by id.
         """
-        if isinstance(id, str):
-            if id.isdigit():
-                id = int(id)
+        if isinstance(this_id, str):
+            if this_id.isdigit():
+                this_id = int(this_id)
             else:
-                matches = [o for o in self.objects if fnmatch.fnmatch(
-                    o._getRegistry()._getName(o), id)]
+                matches = [o for o in self.objects if fnmatch.fnmatch(o._getRegistry()._getName(o), this_id)]
                 if len(matches) > 1:
-                    logger.error(
-                        'Multiple Matches: Wildcards are allowed for ease of matching, however')
-                    logger.error(
-                        '                  to keep a uniform response only one item may be matched.')
-                    logger.error(
-                        '                  If you wanted a slice, please use the select method')
-                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (
-                        id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
+                    logger.error('Multiple Matches: Wildcards are allowed for ease of matching, however')
+                    logger.error('                  to keep a uniform response only one item may be matched.')
+                    logger.error('                  If you wanted a slice, please use the select method')
+                    raise RegistryKeyError("Multiple matches for id='%s':%s" % (this_id, str(map(lambda x: x._getRegistry()._getName(x), matches))))
                 if len(matches) < 1:
                     return
                 return matches[0]
         try:
-            return self.objects[id]
+            return self.objects[this_id]
         except KeyError:
-            raise RegistryKeyError('Object id=%d not found' % id)
+            raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
         "Iterator for the objects. "
