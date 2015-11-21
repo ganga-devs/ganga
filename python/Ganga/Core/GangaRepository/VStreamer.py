@@ -246,6 +246,8 @@ class EmptyGangaObject(GangaObject):
     _category = "internal"
     _hidden = 1
 
+    def __init__(self):
+        super(EmptyGangaObject, self).__init__()
 
 
 class Loader(object):
