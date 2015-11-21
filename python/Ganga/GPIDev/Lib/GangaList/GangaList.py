@@ -101,6 +101,8 @@ class GangaList(GangaObject):
 
     def __construct__(self, args):
 
+        super(GangaList, self).__construct__()
+
         if len(args) == 1:
             if hasattr(args[0], '__len__'):
                 for element_i in args[0]:
