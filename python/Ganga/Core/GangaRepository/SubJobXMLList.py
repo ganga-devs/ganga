@@ -69,8 +69,8 @@ class SubJobXMLList(GangaObject):
     def __deepcopy__(self, memo=None):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
-        dict = self.__dict__.__deepcopy__(memo)
-        obj.__dict__ = dict
+        this_dict = copy.deepcopy(self.__dict__, memo)
+        obj.__dict__ = this_dict
         return obj
 
     def _reset_cachedJobs(self, obj):
