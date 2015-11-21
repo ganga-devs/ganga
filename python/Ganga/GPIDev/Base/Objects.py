@@ -88,14 +88,14 @@ class Node(object):
         self = stripProxy(self)
         cls = type(self)
         obj = super(cls, self).__new__(cls)
-        d = stripProxy(self).__getstate__()
-        for n in d:
+        this_dict = stripProxy(self).__getstate__()
+        for elem in this_dict:
             #print "%s::%s" % (str(self.__class__.__name__), str(n))
-            if n not in self._ref_list:
-                d[n] = deepcopy(stripProxy(d[n]), memo)  # FIXED
+            if elem not in self._ref_list:
+                this_dict[elem] = deepcopy(stripProxy(this_dict[elem]), memo)  # FIXED
             else:
-                d[n] = None
-        obj.__setstate__(d)
+                this_dict[elem] = None
+        obj.__setstate__(this_dict)
         obj._parent = self._parent
         obj._index_cache = None
         obj._registry = stripProxy(self)._registry
@@ -326,6 +326,8 @@ class Descriptor(object):
             raise AttributeError('cannot modify or delete "%s" property (declared as "getter")' % getName(self))
 
     def __get__(self, obj, cls):
+        #logger.info("obj:" % type(obj))
+        #logger.info("cls: %s" % type(cls))
         if obj is None:
             return cls._schema[getName(self)]
         else:
@@ -351,10 +353,11 @@ class Descriptor(object):
                         result = lookup_result
                     else:
                         ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
-                        obj._getReadAccess()
+                        #obj._getReadAccess()
                         if getName(self) in stripProxy(obj).getNodeData():
                             result = stripProxy(obj).getNodeAttribute(getName(self))
                         else:
+                            obj._getReadAccess()
                             from Ganga.GPIDev.Base.Proxy import isProxy
                             if isProxy(obj.getNodeData()):
                                 if getName(self) in stripProxy(self.getData()):
@@ -635,6 +638,7 @@ class ObjectMetaclass(type):
                 this_schema.createDefaultConfig()
 
 
+
 class GangaObject(Node):
     __metaclass__ = ObjectMetaclass
     _schema = None  # obligatory, specified in the derived classes
@@ -706,14 +710,14 @@ class GangaObject(Node):
     def __getstate__(self):
         # IMPORTANT: keep this in sync with the __init__
         self._getReadAccess()
-        dict = super(GangaObject, self).__getstate__()
-        dict['_proxyObject'] = None
-        dict['_dirty'] = False
-        return dict
+        this_dict = super(GangaObject, self).__getstate__()
+        this_dict['_proxyObject'] = None
+        this_dict['_dirty'] = False
+        return this_dict
 
-    def __setstate__(self, dict):
+    def __setstate__(self, this_dict):
         self._getWriteAccess()
-        super(GangaObject, self).__setstate__(dict)
+        super(GangaObject, self).__setstate__(this_dict)
         self._setParent(None)
         self._proxyObject = None
         self._dirty = False
@@ -744,7 +748,7 @@ class GangaObject(Node):
         return c
 
     def accept(self, visitor):
-        self._getReadAccess()
+        #self._getReadAccess()
         super(GangaObject, self).accept(visitor)
 
     def _getIOTimeOut(self):
