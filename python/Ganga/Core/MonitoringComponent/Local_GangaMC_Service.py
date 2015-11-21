@@ -872,7 +872,8 @@ class JobRegistry_Monitor(GangaThread):
                 #log.debug("Job #%s status: %s" % (str(i), str(j.status)))
                 if j.status in ['submitted', 'running'] or (j.master and (j.status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
-                        stripProxy(j)._getReadAccess()
+                        ## This causes a Loading of the subjobs from disk!!!
+                        #stripProxy(j)._getReadAccess()
                         bn = getName(j.backend)
                         #log.debug("active_backends.setdefault: %s" % str(bn))
                         active_backends.setdefault(bn, [])
