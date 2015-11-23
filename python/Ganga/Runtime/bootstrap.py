@@ -139,6 +139,12 @@ under certain conditions; type license() for details.
 
         self.default_config_file = os.path.expanduser('~/.gangarc')
 
+        if sys.hexversion < 0x020700F0:
+            version = '{0}.{1}'.format(sys.version_info[0], sys.version_info[1])
+            logger.warning('Ganga will soon be depending on Python 2.7. '
+                           'You have Python {version} installed. '
+                           'See https://github.com/ganga-devs/ganga/wiki/Python-2.7'.format(version=version))
+
     def exit(self, *msg):
         logger.info(self.hello_string)
         for m in msg:
