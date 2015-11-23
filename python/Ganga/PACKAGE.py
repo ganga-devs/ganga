@@ -41,7 +41,7 @@ _defaultExternalHome = None
 # value specified in the dictionary may be either string or a list of strings (they will be separated by colons ':').
 #
 _externalPackages = {
-    'ipython': {'version': '3.2.1',
+    'ipython': {'version': '1.2.1',
                 'noarch': True,
                 'PYTHONPATH': 'lib/python'},
     'paramiko': {'version': '1.7.3',
