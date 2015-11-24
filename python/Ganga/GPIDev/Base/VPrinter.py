@@ -140,7 +140,10 @@ class VPrinter(object):
         if s is None:
             print(None, end='', file=self.out)
         else:
-            stripProxy(s).accept(self)
+            if isType(stripProxy(s), list):
+                print(s, end='', file=self.out)
+            else:
+                stripProxy(s).accept(self)
 
     def componentAttribute(self, node, name, subnode, sequence):
         if self.showAttribute(node, name):
