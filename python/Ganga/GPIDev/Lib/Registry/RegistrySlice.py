@@ -19,18 +19,17 @@ class RegistrySlice(object):
     def __init__(self, name, display_prefix):
         self.objects = oDict()
         self.name = name
-        self._display_columns = config[display_prefix + '_columns']
-        self._display_columns_show_empty = config[
-            display_prefix + "_columns_show_empty"]
-        self._display_columns_width = config[display_prefix + "_columns_width"]
+        self._display_prefix = display_prefix
+        self._display_columns = config[self._display_prefix + '_columns']
+        self._display_columns_show_empty = config[self._display_prefix + "_columns_show_empty"]
+        self._display_columns_width = config[self._display_prefix + "_columns_width"]
         self._display_columns_functions = {}
         try:
-            cfs = config[display_prefix + '_columns_functions']
-            for c in cfs:
-                self._display_columns_functions[c] = eval(cfs[c])
+            col_funcs = config[self._display_prefix + '_columns_functions']
+            for this_col_func in col_funcs:
+                self._display_columns_functions[this_col_func] = eval(col_funcs[this_col_func])
         except Exception as x:
-            logger.error("Error on evaluating display column functions from config file: %s: %s" % (
-                x.__class__.__name__, x))
+            logger.error("Error on evaluating display column functions from config file: %s: %s" % (x.__class__.__name__, x))
 
         from Ganga.Utility.ColourText import Effects
         self._colour_normal = Effects().normal
@@ -195,10 +194,10 @@ class RegistrySlice(object):
                         else:
                             try:
                                 item = obj._schema.getItem(a)
-                            except KeyError:
+                            except KeyError as err:
                                 from Ganga.GPIDev.Base import GangaAttributeError
-                                raise GangaAttributeError(
-                                    'undefined select attribute: %s' % str(a))
+                                logger.debug("KeyError getting item: '%s' from schema" % str(a))
+                                raise GangaAttributeError('undefined select attribute: %s' % str(a))
                             else:
                                 attrvalue = attrs[a]
 
@@ -269,7 +268,9 @@ class RegistrySlice(object):
                 return matches[0]
         try:
             return self.objects[this_id]
-        except KeyError:
+        except KeyError as err:
+            logger.debug('Object id=%d not found' % this_id)
+            logger.deubg("%s" % str(err))
             raise RegistryKeyError('Object id=%d not found' % this_id)
 
     def __iter__(self):
@@ -331,22 +332,32 @@ class RegistrySlice(object):
             slice.objects[id] = obj
         return slice
 
+    @staticmethod
+    def _getatr(obj, members):
+        val = getattr(obj, members[0])
+        if len(members) > 1:
+            return str(RegistrySlice._getatr(val, members[1:]))
+        else:
+            return str(val)
+
     def _get_display_value(self, obj, item):
-        def getatr(obj, members):
-            val = getattr(obj, members[0])
-            if len(members) > 1:
-                return str(getatr(val, members[1:]))
-            else:
-                return str(val)
         try:
             try:
-                f = self._display_columns_functions[item]
-                val = f(obj)
-            except KeyError:
-                val = getatr(obj, item.split('.'))
+                if item in self._display_columns_functions:
+                    display_func = self._display_columns_functions[item]
+                    val = display_func(obj)
+                else:
+                    val = self._getatr(obj, item.split('.'))
+            except KeyError as err:
+                logger.debug("_get_display_value KeyError: %s" % str(err))
+                logger.debug("item: \"%s\"" % str(item))
+                #logger.debug("func: %s" % str(config[self._display_prefix + '_columns_functions']))
+                #val = self._getatr(obj, item.split('.'))
+                val = ""
             if not val and not item in self._display_columns_show_empty:
                 val = ""
-        except AttributeError:
+        except AttributeError as err:
+            logger.debug("AttibErr: %s" % str(err))
             val = ""
         return str(val)
 
@@ -363,19 +374,19 @@ class RegistrySlice(object):
         cnt = len(self)
         ds = "Registry Slice: %s (%d objects)\n" % (self.name, cnt)
 
-        format = "#"
+        this_format = "#"
         flist = []
         for d in self._display_columns:
             width = self._display_columns_width.get(d, default_width)
             flist.append("%" + str(width) + "s ")
-            #format += "%"+str(width)+"s  "
-        format = "|".join(flist)
-        format += "\n"
+            #this_format += "%"+str(width)+"s  "
+        this_format = "|".join(flist)
+        this_format += "\n"
 
         if cnt > 0:
             ds += "--------------\n"
-            ds += format % self._display_columns
-            ds += "-" * len(format % tuple([""] * len(self._display_columns))) + "\n"
+            ds += this_format % self._display_columns
+            ds += "-" * len(this_format % tuple([""] * len(self._display_columns))) + "\n"
 
         for obj in self.objects.values():
             colour = self._getColour(obj)
@@ -383,26 +394,25 @@ class RegistrySlice(object):
             vals = []
             for item in self._display_columns:
                 width = self._display_columns_width.get(item, default_width)
-                if obj.getNodeData() is None and hasattr(obj, "_index_cache") and not obj._index_cache is None:
+                if obj.getNodeData():
                     try:
                         if item == "fqid":
-                            vals.append(
-                                str(obj._index_cache["display:" + item]))
+                            vals.append(str(obj.getNodeData()["display:" + item]))
                         else:
-                            vals.append(
-                                str(obj._index_cache["display:" + item])[0:width])
+                            vals.append(str(obj.getNodeData()["display:" + item])[0:width])
                         continue
                     except KeyError as err:
-                        logger.debug("KeyError: %s" % str(err))
+                        logger.debug("_display KeyError: %s" % str(err))
                         pass
                 if item == "fqid":
                     vals.append(self._get_display_value(obj, item))
                 else:
                     vals.append(self._get_display_value(obj, item)[0:width])
-            ds += markup(format % tuple(vals), colour)
+            ds += markup(this_format % tuple(vals), colour)
         return ds
 
     __str__ = _display
 
     def _id(self):
         return id(self)
+
