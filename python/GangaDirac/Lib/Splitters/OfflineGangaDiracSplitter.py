@@ -405,7 +405,7 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
             req_sitez = allChosenSets[iterating_LFN]
             _this_subset = []
 
-            logger.debug("find common LFN for: " + str(allChosenSets[iterating_LFN]))
+            #logger.debug("find common LFN for: " + str(allChosenSets[iterating_LFN]))
 
             # Construct subset
             # Starting with i, populate subset with LFNs which have an
@@ -420,15 +420,16 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
 
             limit = int(math.floor(float(filesPerJob) * good_fraction))
 
-            logger.debug("Size limit: %s" % str(limit))
+            #logger.debug("Size limit: %s" % str(limit))
 
             # If subset is too small throw it away
             if len(_this_subset) < limit:
-                logger.debug("%s < %s" % (str(len(_this_subset)), str(limit)))
+                #logger.debug("%s < %s" % (str(len(_this_subset)), str(limit)))
                 allChosenSets[iterating_LFN] = generate_site_selection(
                     site_dict[iterating_LFN], wanted_common_site, uniqueSE, site_to_SE_mapping, SE_to_site_mapping)
                 continue
             else:
+                logger.debug("found common LFN for: " + str(allChosenSets[iterating_LFN]))
                 logger.debug("%s > %s" % (str(len(_this_subset)), str(limit)))
                 # else Dataset was large enough to be considered useful
                 logger.debug("Generating Dataset of size: %s" % str(len(_this_subset)))
@@ -449,7 +450,10 @@ def OfflineGangaDiracSplitter(_inputs, filesPerJob, maxFiles, ignoremissing):
         # If on final run, will exit loop after this so lets try and cleanup
         if iterations >= iterative_limit:
 
-            if wanted_common_site > 1:
+            if good_fraction < 0.5:
+                good_fraction = good_fraction * 0.75
+                iterations = 0
+            elif wanted_common_site > 1:
                 logger.debug("Reducing Common Site Size")
                 wanted_common_site = wanted_common_site - 1
                 iterations = 0
