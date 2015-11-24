@@ -69,7 +69,7 @@ class GangaRepositorySQLite(GangaRepository):
                 obj = self.objects[id]
             else:
                 obj = self._make_empty_object_(id, e[2], e[1])
-            obj._index_cache = pickle.loads(e[3])
+            obj.setNodeIndexCache(pickle.loads(e[3]))
         logger.debug("updated index done")
 
     def add(self, objs, force_ids=None):
@@ -85,9 +85,9 @@ class GangaRepositorySQLite(GangaRepository):
         for i in range(0, len(objs)):
             cls = objs[i]._name
             cat = objs[i]._category
-            objs[i]._index_cache = self.registry.getIndexCache(objs[i])
+            objs[i].setNodeIndexCache(self.registry.getIndexCache(objs[i]))
             data = pickle.dumps(objs[i].getNodeData()).replace("'", "''")
-            idx = pickle.dumps(objs[i]._index_cache).replace("'", "''")
+            idx = pickle.dumps(objs[i].getNodeIndexCache()).replace("'", "''")
             if force_ids is None:
                 self.cur.execute("INSERT INTO objects (id,classname,category,idx,data) VALUES (NULL,'%s','%s','%s','%s')" % (
                     cls, cat, idx, data))
@@ -103,9 +103,9 @@ class GangaRepositorySQLite(GangaRepository):
         for id in ids:
             obj = self.objects[id]
             if obj._name != "EmptyGangaObject":
-                obj._index_cache = self.registry.getIndexCache(obj)
+                obj.setNodeIndexCache(self.registry.getIndexCache(obj))
                 data = pickle.dumps(obj.getNodeData()).replace("'", "''")
-                idx = pickle.dumps(obj._index_cache).replace("'", "''")
+                idx = pickle.dumps(obj.getNodeIndexCache()).replace("'", "''")
                 self.cur.execute(
                     "UPDATE objects SET idx='%s',data='%s' WHERE id=%s" % (idx, data, id))
                 # print "flushing id ", id, " backend ", obj.backend._name
