@@ -264,6 +264,7 @@ class GangaRepositoryLocal(GangaRepository):
             for k, v in cache.iteritems():
                 this_data[k] = v
             obj.setNodeData(copy.deepcopy(this_data))
+            obj.setNodeIndexCache(cache)
             self._cache_load_timestamp[this_id] = os.stat(fn).st_ctime
             self._cached_cat[this_id] = cat
             self._cached_cls[this_id] = cls
@@ -283,10 +284,10 @@ class GangaRepositoryLocal(GangaRepository):
         try:
             ifn = self.get_idxfn(this_id)
             new_idx_cache = self.registry.getIndexCache(obj)
-            if new_idx_cache != obj._index_cache or not os.path.exists(ifn):
-                obj._index_cache = new_idx_cache
+            if new_idx_cache != obj.getNodeIndexCache() or not os.path.exists(ifn):
+                obj.setNodeIndexCache(new_idx_cache)
                 with open(ifn, "w") as this_file:
-                    pickle_to_file((obj._category, getName(obj), obj._index_cache), this_file)
+                    pickle_to_file((obj._category, getName(obj), obj.getNodeIndexCache()), this_file)
         except IOError as err:
             logger.error("Index saving to '%s' failed: %s %s" % (ifn, getName(err), str(err)))
 
@@ -368,7 +369,7 @@ class GangaRepositoryLocal(GangaRepository):
                     new_index = None
                     if obj is not None:
                         new_index = self.registry.getIndexCache(obj)
-                    if new_index is not None and new_index != obj._index_cache:
+                    if new_index is not None and new_index != obj.getNodeIndexCache():
                         arr_k = [k]
                         if len(self.lock(arr_k)) != 0:
                             self.index_write(arr_k)
@@ -512,7 +513,8 @@ class GangaRepositoryLocal(GangaRepository):
         logger.debug("updated index done")
 
         if len(changed_ids) != 0:
-            self._write_master_cache(shutdown=True)
+            isShutdown = not firstRun
+            self._write_master_cache(shutdown=isShutdown)
 
         return changed_ids
 
@@ -600,6 +602,7 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit():
                         rmrf(os.path.join(os.path.dirname(fn), idn))
             self.index_write(this_id)
+            obj.setNodeIndexCache(None)
             obj._setFlushed()
         else:
             raise RepositoryError(self, "Cannot flush an Empty object for ID: %s" % str(this_id))
@@ -653,44 +656,46 @@ class GangaRepositoryLocal(GangaRepository):
                 obj = self.objects[this_id]
                 obj.setNodeData(tmpobj.getNodeData())
                 # Fix parent for objects in _data (necessary!)
-                for node_key, node_obj in obj.getNodeData().items():
+                for node_obj in obj.getNodeData().items():
                     if isType(node_obj, Node):
                         node_obj._setParent(obj)
-                    if (isType(node_obj, list) or isType(node_obj, GangaList)):
+                    if isType(node_obj, (list, GangaList, tuple)):
                         # set the parent of the list or dictionary (or other iterable) items
                         for elem in node_obj:
                             if isType(elem, Node):
                                 elem._setParent(obj)
 
                 # Check if index cache; if loaded; was valid:
-                if obj._index_cache is not None:
+                if obj.getNodeIndexCache() is not None:
                     new_idx_cache = self.registry.getIndexCache(obj)
-                    if new_idx_cache != obj._index_cache:
+                    if new_idx_cache != obj.getNodeIndexCache():
                         # index is wrong! Try to get read access - then we can fix this
                         if len(self.lock([this_id])) != 0:
                             self.index_write(this_id)
                             # self.unlock([this_id])
 
-                            old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj._index_cache.iteritems())
+                            old_idx_subset = all((k in new_idx_cache and new_idx_cache[k] == v) for k, v in obj.getNodeIndexCache().iteritems())
                             if not old_idx_subset:
                                 # Old index cache isn't subset of new index cache
-                                new_idx_subset = all((k in obj._index_cache and obj._index_cache[k] == v) for k, v in new_idx_cache.iteritems())
+                                new_idx_subset = all((k in obj.getNodeIndexCache() and obj.getNodeIndexCache()[k] == v) for k, v in new_idx_cache.iteritems())
                             else:
                                 # Old index cache is subset of new index cache so no need to check
                                 new_idx_subset = True
 
                             if not old_idx_subset and not new_idx_subset:
                                 logger.warning("Incorrect index cache of '%s' object #%s was corrected!" % (self.registry.name, this_id))
-                                logger.debug("old cache: %s\t\tnew cache: %s" % (str(obj._index_cache), str(new_idx_cache)))
+                                logger.debug("old cache: %s\t\tnew cache: %s" % (str(obj.getNodeIndexCache()), str(new_idx_cache)))
                                 self.unlock([this_id])
                         else:
                             pass
                             # if we cannot lock this, the inconsistency is
                             # most likely the result of another ganga
                             # process modifying the repo
-                        obj._index_cache = None
+                            obj.setNodeIndexCache(None)
+                obj.setNodeIndexCache(None)
 
             else:
+                tmpobj.setNodeIndexCache(None)
                 self._internal_setitem__(this_id, tmpobj)
 
             if self.sub_split in self.objects[this_id].getNodeData().keys():
@@ -699,6 +704,8 @@ class GangaRepositoryLocal(GangaRepository):
             self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
         else:
             logger.debug("Didn't Load Job ID: %s" % str(this_id))
+
+        logger.debug("Finished Loading XML")
 
     def _open_xml_file(self, fn, this_id):
 
@@ -734,7 +741,7 @@ class GangaRepositoryLocal(GangaRepository):
 
     def load(self, ids, load_backup=False):
 
-        # print "load: %s " % str(ids)
+        # print("load: %s " % str(ids))
         #import traceback
         #traceback.print_stack()
 
@@ -793,6 +800,8 @@ class GangaRepositoryLocal(GangaRepository):
                 raise InaccessibleObjectError(self, this_id, err)
             finally:
                 fobj.close()
+
+        logger.debug("Finished 'load'-ing of: %s" % str(ids))
 
     def delete(self, ids):
         for this_id in ids:
