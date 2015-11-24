@@ -528,8 +528,8 @@ class Registry(object):
         Raise RegistryAccessError
         Raise RegistryLockError"""
 
-        import traceback
-        traceback.print_stack()
+        #import traceback
+        #traceback.print_stack()
 
         if objs is not None and not isType(objs, (list, GangaList)):
             objs = [objs]
