@@ -19,12 +19,10 @@ configDirac = getConfig('DIRAC')
 logger = getLogger()
 regex = re.compile('[*?\[\]]')
 
-stored_list_of_sites = []
-
 
 def all_SE_list(first_SE = ''):
 
-    global stored_list_of_sites
+    stored_list_of_sites = []
     if stored_list_of_sites != []:
         return stored_list_of_sites
 
@@ -716,10 +714,19 @@ class DiracFile(IGangaFile):
 
         import glob
         if self.remoteDir == '' and self.lfn == '':
-            import datetime
-            t = datetime.datetime.now()
-            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            try:
+                myJob = self.getJobObject()
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
+                myJob = None
+
+            if myJob is not None:
+                self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_Job_%s' % str(myJob.getFQID('.')), self.namePattern)
+            else:
+                import datetime
+                t = datetime.datetime.now()
+                this_date = t.strftime("%H.%M.%S_%A_%d_%B_%Y")
+                self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date, self.namePattern)
         if self.remoteDir == '' and self.lfn != '':
             self.remoteDir = configDirac['DiracLFNBase']
 
@@ -876,10 +883,19 @@ for f in glob.glob('###NAME_PATTERN###'):
         script = FileUtils.loadScript(WNscript_location, '###INDENT###')
 
         if self.remoteDir == '' and self.lfn == '':
-            import datetime
-            t = datetime.datetime.now()
-            this_date = t.strftime("%H.%M_%A_%d_%B_%Y")
-            self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date)
+            try:
+                myJob = self.getJobObject()
+            except Exception as err:
+                logger.debug("Err: %s" % str(err))
+                myJob = None
+
+            if myJob is not None:
+                self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_Job_%s' % str(myJob.getFQID('.')), self.namePattern)
+            else:
+                import datetime
+                t = datetime.datetime.now()
+                this_date = t.strftime("%H.%M.%S_%A_%d_%B_%Y")
+                self.lfn = os.path.join(configDirac['DiracLFNBase'], 'GangaFiles_%s' % this_date, self.namePattern)
 
         if self.remoteDir == '' and self.lfn != '':
             self.remoteDir = configDirac['DiracLFNBase']
