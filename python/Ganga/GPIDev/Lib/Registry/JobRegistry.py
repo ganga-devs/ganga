@@ -66,24 +66,25 @@ class JobRegistry(Registry):
         #if not obj.getNodeData():
         #    return None
         cached_values = ['status', 'id', 'name']
-        c = {}
+        cache = {}
         for cv in cached_values:
             if cv in obj.getNodeData():
-                c[cv] = obj.getNodeAttribute(cv)
-        slice = JobRegistrySlice("tmp")
-        for dpv in slice._display_columns:
-            c["display:" + dpv] = slice._get_display_value(obj, dpv)
+                cache[cv] = obj.getNodeAttribute(cv)
+        this_slice = JobRegistrySlice("jobs")
+        for dpv in this_slice._display_columns:
+            cache["display:" + dpv] = this_slice._get_display_value(obj, dpv)
+        del this_slice
 
         # store subjob status
         if hasattr(obj, "subjobs"):
-            c["subjobs:status"] = []
-            #if hasattr(obj.subjobs, "getAllCachedData"):
-            #    for sj in obj.subjobs.getAllCachedData():
-            #        c["subjobs:status"].append(sj['status'])
-            #else:
-            for sj in obj.subjobs:
-                c["subjobs:status"].append(sj.status)
-        return c
+            cache["subjobs:status"] = []
+            if hasattr(obj.subjobs, "getAllCachedData"):
+                for sj in obj.subjobs.getAllCachedData():
+                    cache["subjobs:status"].append(sj['status'])
+            else:
+                for sj in obj.subjobs:
+                    cache["subjobs:status"].append(sj.status)
+        return cache
 
     def startup(self):
         self._needs_metadata = True
