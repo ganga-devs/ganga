@@ -42,18 +42,19 @@ class PreparedStateError(GangaException):
 
 class Node(object):
     _parent = None
-    _index_cache = None
     _ref_list = ['_parent', '_registry', '_index_cache']
 
     def __init__(self, parent):
         self._data = {}
         self._setParent(parent)
+        self._index_cache = None
         super(Node, self).__init__()
 
     def __construct__(self, args):
         #Node.__init__(self, None)
         self._data = {}
         self._setParent(None)
+        self._index_cache = None
 
     def __getstate__(self):
         d = self.__dict__.copy()
@@ -62,8 +63,8 @@ class Node(object):
             d[r] = None
         return d
 
-    def __setstate__(self, dict):
-        for n, v in dict['_data'].items():
+    def __setstate__(self, this_dict):
+        for n, v in this_dict['_data'].items():
             if isType(v, Node):
                 v._setParent(self)
             if hasattr(v, "__iter__") and not hasattr(v, "iteritems"):
@@ -73,7 +74,7 @@ class Node(object):
                     if isType(i, Node):
                         i._setParent(self)
 
-        self.__dict__ = dict
+        self.__dict__ = this_dict
 
     def __copy__(self, memo=None):
         self = stripProxy(self)
@@ -96,9 +97,9 @@ class Node(object):
             else:
                 this_dict[elem] = None
         obj.__setstate__(this_dict)
-        obj._parent = self._parent
-        obj._index_cache = None
-        obj._registry = stripProxy(self)._registry
+        setattr(obj, '_parent', self._parent)
+        setattr(obj, '_index_cache', None)
+        setattr(obj, '_registry', self._registry)
         return obj
 
     def _getParent(self):
@@ -291,6 +292,17 @@ class Node(object):
         if attrib_name in self._data:
             del self._data[attrib_name]
 
+    def setNodeIndexCache(self, new_index_cache):
+        setattr(self, '_index_cache', new_index_cache)
+
+    def getNodeIndexCache(self):
+        if hasattr(self, '_index_cache'):
+            return self._index_cache
+        else:
+            #logger.debug("Assigning dummy '_index_cache'!")
+            self.setNodeIndexCache({})
+            return self._index_cache
+
 ##########################################################################
 
 
@@ -332,46 +344,64 @@ class Descriptor(object):
             return cls._schema[getName(self)]
         else:
             result = None
-            g = self._bind_method(obj, self._getter_name)
-            if g:
-                result = g()
+            getter = self._bind_method(obj, self._getter_name)
+            if getter:
+                result = getter()
             else:
                 # LAZYLOADING
                 lookup_result = None
 
+                lookup_exception = None
+
                 try:
-                    if obj._index_cache:
-                        if getName(self) in obj._index_cache.keys():
-                            lookup_result = obj._index_cache[getName(self)]
+                    if hasattr(stripProxy(obj), 'getNodeIndexCache'):
+                        if stripProxy(obj).getNodeIndexCache() is not None:
+                            obj_index = stripProxy(obj).getNodeIndexCache()
+                            if getName(self) in obj_index.keys():
+                                lookup_result = obj_index[getName(self)]
                 except Exception as err:
+                    #import traceback
+                    #traceback.print_stack()
                     logger.debug("Lazy Loading Exception: %s" % str(err))
                     lookup_result = None
-                    pass
+                    lookup_exception = err
+                    #raise err
 
-                if hasattr(obj, 'getNodeData'):
-                    if (obj.getNodeData() is None) and (obj._index_cache is not None) and (lookup_result is not None):
+
+                if hasattr(stripProxy(obj), 'getNodeData') and hasattr(stripProxy(obj), 'getNodeIndexCache'):
+                    _obj = stripProxy(obj)
+                    #_obj._getReadAccess()
+                    if (_obj.getNodeData() is None) and (_obj.getNodeIndexCache() is not None) and (lookup_exception is not None):
                         result = lookup_result
                     else:
-                        ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
-                        #obj._getReadAccess()
-                        if getName(self) in stripProxy(obj).getNodeData():
-                            result = stripProxy(obj).getNodeAttribute(getName(self))
+                        if getName(self) in _obj.getNodeData().keys():
+                            result = _obj.getNodeAttribute(getName(self))
                         else:
-                            obj._getReadAccess()
                             from Ganga.GPIDev.Base.Proxy import isProxy
-                            if isProxy(obj.getNodeData()):
+                            if isProxy(_obj.getNodeData()):
                                 if getName(self) in stripProxy(self.getData()):
-                                    result = stripProxy(obj.getData())[getName(self)]
+                                    result = stripProxy(_obj.getData())[getName(self)]
                                 else:
+                                    ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
+                                    _obj._getReadAccess()
+                                    #import traceback
+                                    #traceback.print_stack()
                                     logger.debug("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                    GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                    result = stripProxy(obj).getNodeAttribute(getName(self))
+                                    #GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                    result = _obj.getNodeAttribute(getName(self))
                             else:
+                                ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
+                                _obj._getReadAccess()
+                                #import traceback
+                                #traceback.print_stack()
                                 logger.debug("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                result = stripProxy(obj).getNodeAttribute(getName(self))
+                                #GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                result = _obj.getNodeAttribute(getName(self))
                 else:
-                    err = GangaException("Error finding parameter %s in object %s" % (str(getName(self), getName(obj))))
+                    if lookup_exception is not None:
+                        err = lookup_exception
+                    else:
+                        err = GangaException("Error finding parameter %s in object %s" % (str(getName(self), getName(obj))))
                     raise err
 
             return result
@@ -548,8 +578,8 @@ class ObjectMetaclass(type):
 
         # ignore the 'abstract' base class
         # FIXME: this mechanism should be based on explicit getName(cls) or alike
-        if name == 'GangaObject':
-            return
+        #if name == 'GangaObject':
+        #    return
 
         #logger.debug("Metaclass.__init__: class %s name %s bases %s", cls, name, bases)
 
@@ -748,7 +778,7 @@ class GangaObject(Node):
         return c
 
     def accept(self, visitor):
-        #self._getReadAccess()
+        self._getReadAccess()
         super(GangaObject, self).accept(visitor)
 
     def _getIOTimeOut(self):
