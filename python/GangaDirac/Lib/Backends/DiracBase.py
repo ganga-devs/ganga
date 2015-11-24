@@ -651,8 +651,11 @@ class DiracBase(IBackend):
 
             try:
                 count += 1
-                if job.status != "running":
+                if job.status != "running" and (not job.status in ['completed', 'killed', 'removed']):
+                    job.updateStatus('submitted')
                     job.updateStatus('running')
+                if job.status in ['completed', 'killed', 'removed']:
+                    break
                 DiracBase._internal_job_finalisation(job, updated_dirac_status)
                 break
             except Exception as err:
