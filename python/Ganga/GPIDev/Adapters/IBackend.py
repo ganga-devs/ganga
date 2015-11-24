@@ -4,8 +4,9 @@
 # $Id: IBackend.py,v 1.2 2008-10-02 10:31:05 moscicki Exp $
 ##########################################################################
 
+from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 from Ganga.GPIDev.Base import GangaObject
-from Ganga.GPIDev.Base.Proxy import stripProxy
+from Ganga.GPIDev.Base.Proxy import stripProxy, isType
 from Ganga.GPIDev.Schema import Schema, Version
 
 import Ganga.Utility.logging
@@ -74,6 +75,7 @@ class IBackend(GangaObject):
             #    #log_user_exception(logger, debug=True)
             #else:
             #    #log_user_exception(logger, debug=False)
+            logger.error("Parallel Job Submission Failed: %s" % str(err))
         finally:
             pass
 
@@ -433,14 +435,33 @@ class IBackend(GangaObject):
         for j in jobs:
             ## All subjobs should have same backend
             if len(j.subjobs) > 0:
-                monitorable_subjobs = [sj for sj in j.subjobs if sj.status in ['submitted', 'running']]
+                #logger.info("Looking for sj")
+                monitorable_subjobs = []
 
-                logger.debug('Monitoring subjobs: %s', repr([sj._repr() for sj in monitorable_subjobs]))
+                if isType(j.subjobs, SubJobXMLList):
+                    cache = j.subjobs.getAllCachedData()
+                    for sj_id in range(0,len(j.subjobs)):
+                        if cache[sj_id]['status'] in ['submitted', 'running']:
+                            if j.subjobs.isLoaded(sj_id):
+                                ## SJ may have changed from cache in memory
+                                this_sj = j.subjobs(sj_id)
+                                if this_sj.status in ['submitted', 'running']:
+                                    monitorable_subjobs.append(this_sj)
+                            else:
+                                monitorable_subjobs.append(j.subjobs(sj_id))
+                else:
+                    for sj in j.subjobs:
+                        if sj.status in ['submitted', 'running']:
+                            monitorable_subjobs.append( sj )
+
+                #logger.info('Monitoring subjobs: %s', str([sj._repr() for sj in monitorable_subjobs]))
 
                 if not monitorable_subjobs:
                     continue
 
                 stripProxy(j)._getWriteAccess()
+
+                #logger.info("Dividing")
 
                 monitorable_blocks = []
                 temp_block = []
