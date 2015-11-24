@@ -53,6 +53,10 @@ def _ganga_run_exitfuncs():
     the registered handlers are executed
     """
 
+    #print("Shutting Down Ganga Repositories")
+    from Ganga.Runtime import Repository_runtime
+    Repository_runtime.flush_all()
+
     from Ganga.Utility.logging import getLogger
     logger = getLogger()
 
@@ -137,9 +141,15 @@ def _ganga_run_exitfuncs():
                 for cls in inspect.getmro(func.__self__.__class__):
                     if func.__name__ in cls.__dict__:
                         logger.debug(cls.__name__ + " : " + func.__name__)
+                func(*targs, **kargs)
             else:
                 logger.debug("noclass : " + func.__name__)
-            func(*targs, **kargs)
+                #print("%s" % str(func))
+                #print("%s" % str(inspect.getsourcefile(func)))
+                #func(*targs, **kargs)
+                ## This attempts to check for and remove externally defined shutdown functions which may interfere with the next steps!
+                if str(inspect.getsourcefile(func)).find('Ganga') != -1:
+                    func(*targs, **kargs)
         except Exception as err:
             s = 'Cannot run one of the exit handlers: %s ... Cause: %s' % (func.__name__, str(err))
             logger.debug(s)
@@ -150,13 +160,9 @@ def _ganga_run_exitfuncs():
             except Exception as err2:
                 logger.debug("Error getting source code and failure reason: %s" % str(err2))
 
-    #print("Shutting Down Ganga Repositories")
-    #from Ganga.Runtime import Repository_runtime
-    #Repository_runtime.shutdown()
-
-    import Ganga.Utility.logging
-    if Ganga.Utility.logging.requires_shutdown is True:
-        Ganga.Utility.logging.shutdown()
+    logger.info("Shutting Down Ganga Repositories")
+    from Ganga.Runtime import Repository_runtime
+    Repository_runtime.shutdown()
 
     from Ganga.Core.InternalServices import Coordinator
     Coordinator.servicesEnabled = False
@@ -164,6 +170,10 @@ def _ganga_run_exitfuncs():
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
+
+    import Ganga.Utility.logging
+    if Ganga.Utility.logging.requires_shutdown is True:
+        Ganga.Utility.logging.final_shutdown()
 
     from Ganga.Runtime import bootstrap
     if bootstrap.DEBUGFILES or bootstrap.MONITOR_FILES:
