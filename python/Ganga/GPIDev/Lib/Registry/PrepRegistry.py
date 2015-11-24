@@ -47,7 +47,11 @@ class PrepRegistry(Registry):
         self._lock.acquire()
         ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
         ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
-        ##self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
+        try:
+            self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
+        except Exception as err:
+            logger.error("Shutdown Error in ShareRef")
+            logger.error("Err: %s" % str(err))
         try:
             try:
                 if not self.metadata is None:
@@ -91,6 +95,7 @@ class ShareRef(GangaObject):
 
     def __construct__(self):
         super(ShareRef, self).__construct__()
+        self._setRegistry(None)
 
     def __getstate__(self):
         this_dict = super(ShareRef, self).__getstate__()
@@ -383,7 +388,12 @@ class ShareRef(GangaObject):
 
         # list of keys to be removed from the shareref table
         cleanup_list = []
-        all_dirs = copy.deepcopy(self.name.keys())
+
+        try:
+            ## FIXME. this triggers maximum recusion depth bug on shutdown in some situations! rcurrie
+            all_dirs = self.name.keys()
+        except:
+            all_dirs = {}
         for shareddir in all_dirs:
             full_shareddir_path = os.path.join(getSharedPath(), shareddir)
             # for each sharedir in the shareref table that also exists in the
