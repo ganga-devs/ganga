@@ -584,7 +584,7 @@ class Registry(object):
         if self.find(stripProxy(_obj)) in self._inprogressDict.keys():
             return
 
-        logger.debug("Reg %s _read_access(%s)" % (self.name, str(_obj)))
+        #logger.debug("Reg %s _read_access(%s)" % (self.name, str(_obj)))
         obj = stripProxy(_obj)
         if (obj.getNodeData()) or hasattr(obj, "_registry_refresh"):
             logger.debug("Triggering Load: %s %s" %(str(self.name),  str(self.find(_obj))))
