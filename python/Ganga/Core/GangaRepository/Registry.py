@@ -292,6 +292,10 @@ class Registry(object):
         ## This gives us the ability to automatically turn off the automatic flushing externally if required
         decision = decision and self._autoFlush
 
+        ## Can't autosave if a flush is in progress. Wait until next time.
+        if len(self._inprogressDict.keys()) != 0:
+            decision = False
+
         if decision is True:
             self._flushLastTime = timeNow
             self.dirty_hits = 0
@@ -474,9 +478,6 @@ class Registry(object):
         del self._inprogressDict[obj_id]
 
     def _backgroundFlush(self, objs=None):
-
-        if len(self._inprogressDict.keys()) != 0:
-            return
 
         if objs is None:
             objs = self.dirty_objs.keys()
