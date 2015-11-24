@@ -127,9 +127,9 @@ def bootstrap():
         started_registries.append(registry.name)
         retval.append((registry.name, registry.getProxy(), registry.doc))
 
-    import atexit
-    atexit.register(shutdown)
-    logger.debug("Registries: %s" % str(started_registries))
+    #import atexit
+    #atexit.register(shutdown)
+    #logger.debug("Registries: %s" % str(started_registries))
     return retval
 
 
@@ -177,4 +177,18 @@ def shutdown():
     from Ganga.Core.GangaRepository.SessionLock import removeGlobalSessionFiles, removeGlobalSessionFileHandlers
     removeGlobalSessionFileHandlers()
     removeGlobalSessionFiles()
+
+def flush_all():
+    from Ganga.Utility.logging import getLogger
+    logger = getLogger()
+    logger.debug("Flushing All repositories")
+
+    for registry in getRegistries():
+        thisName = registry.name
+        try:
+            logger.debug("Flushing: %s" % thisName)
+            registry._flush()
+        except Exception as err:
+            logger.debug("Failed to flush: %s" % str(thisName))
+            logger.debug("Err: %s" % str(err))
 
