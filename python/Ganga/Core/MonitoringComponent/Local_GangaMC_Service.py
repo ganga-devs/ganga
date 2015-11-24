@@ -868,13 +868,25 @@ class JobRegistry_Monitor(GangaThread):
         log.debug("Running over fixed_ids: %s" % str(fixed_ids))
         for i in fixed_ids:
             try:
-                j = self.registry(i)
+                j = stripProxy(self.registry(i))
                 #log.debug("Job #%s status: %s" % (str(i), str(j.status)))
                 if j.status in ['submitted', 'running'] or (j.master and (j.status in ['submitting'])):
                     if self.enabled is True and self.alive is True:
                         ## This causes a Loading of the subjobs from disk!!!
                         #stripProxy(j)._getReadAccess()
-                        bn = getName(j.backend)
+                        if j.getNodeData():
+                            #log.info("data: %s" % str(j.getNodeData()))
+                            #log.info("node %s" % str(j.getNodeIndexCache()))
+                            #log.info("__dict: %s" % str(j.__class__.__dict__['backend']))
+                            #bn = j.__class__.__dict__['backend'].__name__
+                            #log.info("bn: %s" % str(bn))
+                            lazy_load_backend_str = 'display:backend'
+                            if lazy_load_backend_str in j.getNodeData():
+                                bn = j.getNodeData()[lazy_load_backend_str]
+                            else:
+                                bn = getName(j.backend)
+                        else:
+                            bn = getName(j.backend)
                         #log.debug("active_backends.setdefault: %s" % str(bn))
                         active_backends.setdefault(bn, [])
                         active_backends[bn].append(j)
@@ -959,6 +971,7 @@ class JobRegistry_Monitor(GangaThread):
                         log.debug("Updating Jobs: %s" % job_ids)
                         stripProxy(backendObj).master_updateMonitoringInformation(this_job_list)
                     except Exception as err:
+                        #raise err
                         log.debug("Err: %s" % str(err))
                         ## We want to catch ALL of the exceptions
                         ## This would allow us to continue in the case of errors due to bad job/backend combinations
