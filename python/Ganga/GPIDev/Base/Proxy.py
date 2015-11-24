@@ -85,7 +85,7 @@ def getName(obj):
 def stripProxy(obj):
     """Removes the proxy if there is one"""
     global proxyRef
-    if hasattr(obj, proxyRef):
+    if proxyRef in dir(obj):  # Use 'in dir()' rather than hasattr() to avoid recursion problems
         return getattr(obj, proxyRef)
     else:
         return obj
