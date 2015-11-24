@@ -273,6 +273,9 @@ class Job(GangaObject):
     def _readonly(self):
         return self.status != 'new'
 
+    def __new__(cls):
+        return super(Job, cls).__new__(cls)
+
     # on the deepcopy reattach the outputfiles to call their
     # _on_attribute__set__
     def __deepcopy__(self, memo=None):
@@ -281,7 +284,7 @@ class Job(GangaObject):
         # explicitly stop these objects going anywhere near the __deepcopy__
 
         cls = type(stripProxy(self))
-        c = super(Job, self).__new__()
+        c = Job.__new__(cls)
         c.__init__()
 
         c.time.newjob()
@@ -449,6 +452,9 @@ class Job(GangaObject):
         if name == 'subjobs':
             return self._subjobs_proxy()
 
+        if name == "fqid":
+            return self.getFQID('.')
+
         return object.__getattribute__(self, name)
 
     # status may only be set directly using updateStatus() method
@@ -607,9 +613,9 @@ class Job(GangaObject):
             log_user_exception()
             raise JobStatusError(x)
 
-        if self.status != saved_status:
+        if self.status != saved_status and self.master is None:
             logger.info('job %s status changed to "%s"', fqid, self.status)
-            #stripProxy(self)._getRegistry()._flush(stripProxy(self)._getRoot())
+            stripProxy(self)._getRegistry()._dirty(stripProxy(self)._getRoot())
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
@@ -740,10 +746,20 @@ class Job(GangaObject):
         """
 
         j = self
-        stats = [s.status for s in j.subjobs]
+        stats = []
+        
+        if isType(j.subjobs, SubJobXMLList):
+            for sj_id in range(len(j.subjobs)):
+                if j.subjobs.isLoaded(sj_id):
+                    stats.append(j.subjobs(sj_id).status)
+                else:
+                    stats.append(j.subjobs.getAllCachedData()['status'] )
+        else:
+            for sj in j.subjobs:
+                stats.append(sj.status)
 
         # ignore non-split jobs
-        if not stats:
+        if not stats and j.master is not None:
             logger.warning('ignoring master job status updated for job %s (NOT MASTER)', self.getFQID('.'))
             return
 
@@ -1676,12 +1692,12 @@ class Job(GangaObject):
             logger.info(msg)
             raise JobError(msg)
 
-        try:
-            self._getWriteAccess()
-        except RegistryKeyError:
-            if self._registry:
-                self._registry._remove(self, auto_removed=1)
-            return
+        #try:
+        #    self._getWriteAccess()
+        #except RegistryKeyError:
+        #    if self._registry:
+        #        self._registry._remove(self, auto_removed=1)
+        #    return
 
         if getConfig('Output')['AutoRemoveFilesWithJob']:
             def removeFiles(this_file):
@@ -1708,6 +1724,7 @@ class Job(GangaObject):
             # tell the backend that the job was removed
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
+
             if hasattr(self.backend, 'remove'):
                 self.backend.remove()
 
