@@ -459,7 +459,7 @@ def bootstrap(internal=False, handler=None):
     private_logger.debug('end of bootstrap')
 
 
-def shutdown():
+def final_shutdown():
     private_logger.debug('shutting down logsystem')
     logging.shutdown()
 
