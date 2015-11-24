@@ -19,6 +19,7 @@ from Ganga.Utility.files import expandfilename, fullpath
 from Ganga.Utility.Config import getConfig
 from Ganga.Utility.Shell import Shell
 from AppsBaseUtils import guess_version
+from Ganga.GPIDev.Base.Proxy import isType
 #
 from Ganga.GPIDev.Adapters.StandardJobConfig import StandardJobConfig
 
@@ -73,7 +74,7 @@ class Bender(GaudiBase):
                                                          doc=docstr)
     docstr = 'The name of the module to import. A copy will be made ' \
              'at submission time'
-    _schema.datadict['module'] = FileItem(preparable=1, doc=docstr)
+    _schema.datadict['module'] = FileItem(preparable=1, defvalue=File(), doc=docstr)
     docstr = 'The name of the Gaudi application (Bender)'
     _schema.datadict['project'] = SimpleItem(preparable=1, defvalue='Bender', hidden=1, protected=1,
                                              typelist=['str'], doc=docstr)
@@ -170,12 +171,13 @@ FileCatalog().Catalogs=[]\n""" % modulename
     def _check_inputs(self):
         """Checks the validity of user's entries for GaudiPython schema"""
         # Always check for None OR empty
+        #logger.info("self.module: %s" % str(self.module))
+        if isType(self.module, str):
+            self.module = File(self.module)
         if self.module.name == None:
-            raise ApplicationConfigurationError(
-                None, "Application Module not requested")
+            raise ApplicationConfigurationError(None, "Application Module not requested")
         elif self.module.name == "":
-            raise ApplicationConfigurationError(
-                None, "Application Module not requested")
+            raise ApplicationConfigurationError(None, "Application Module not requested")
         else:
             # Always check we've been given a FILE!
             self.module.name = fullpath(self.module.name)
