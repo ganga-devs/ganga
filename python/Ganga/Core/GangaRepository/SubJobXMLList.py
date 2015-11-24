@@ -6,6 +6,7 @@ from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
 from Ganga.Core.exceptions import GangaException
 import errno
+import copy
 logger = getLogger()
 
 ##FIXME There has to be a better way of doing this?
@@ -19,8 +20,9 @@ class SJXLIterator(object):
     ## NB becomes __next__ in Python 3.x don't know if Python 2.7 has a wrapper here
     def next(self):
         if self._myCount < len(self._mySubJobs):
+            returnable = self._mySubJobs[self._myCount]
             self._myCount += 1
-            return self._mySubJobs[self._myCount-1]
+            return returnable
         else:
             raise StopIteration
 
@@ -36,7 +38,6 @@ class SubJobXMLList(GangaObject):
     _hidden = True
     _name = 'SubJobXMLList'
 
-    #_schema = GangaList.GangaList._schema.inherit_copy()
     _schema = Schema(Version(1, 0), {}) 
 
     def __init__(self, jobDirectory='', registry=None, dataFileName='data', load_backup=False ):
@@ -53,7 +54,6 @@ class SubJobXMLList(GangaObject):
         self._load_backup = load_backup
 
         self._definedParent = None
-        self._storedList = []
 
         self._subjob_master_index_name = "subjobs.idx"
 
@@ -65,16 +65,43 @@ class SubJobXMLList(GangaObject):
 
     def __construct__(self, args):
         super(SubJobXMLList, self).__construct__(args)
+        self._definedParent = None
+
+        self._subjobIndexData = {}
+        self._subjob_master_index_name = "subjobs.idx"
+        self._jobDirectory = None
+        self._registry = None
+        self._to_file = None
+        self._from_file = None
+        self._dataFileName = None
+        self._load_backup = None
 
     def __deepcopy__(self, memo=None):
         cls = type(self)
         obj = super(cls, cls).__new__(cls)
-        this_dict = copy.deepcopy(self.__dict__, memo)
-        obj.__dict__ = this_dict
+        #this_dict = copy.deepcopy(self.__dict__, memo)
+        new_dict = {}
+        for dict_key, dict_value in self.__class__.__dict__.iteritems():
+
+            ## Copy objects where it's sane to
+            if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry']:
+                new_dict[dict_key] = copy.deepcopy(dict_value)
+
+            ## Assign by reference objects where it's sane to
+            elif dict_key in ['_to_file', '_from_file', '_registry']:
+                new_dict[dict_key] = dict_value
+
+        ## Manually define unsafe/uncopyable objects
+        new_dict['_definedParent'] = None
+        new_dict['_cachedJobs'] = {}
+        obj.__dict__ = new_dict
         return obj
 
     def _reset_cachedJobs(self, obj):
         self._cachedJobs = obj
+
+    def isLoaded(self, subjob_id):
+        return subjob_id in self._cachedJobs.keys()
 
     def load_subJobIndex(self):
 
@@ -185,13 +212,16 @@ class SubJobXMLList(GangaObject):
         sj_file = open(subjob_data, "r")
         return sj_file
 
+    def __call__(self, index):
+        return self.__getitem__(index)
+
     def __getitem__(self, index):
 
         logger.debug("Requesting: %s" % str(index))
 
         #if index == 0:
-        #    import traceback
-        #    traceback.print_stack()
+        #import traceback
+        #traceback.print_stack()
 
         subjob_data = None
         if not index in self._cachedJobs.keys():
@@ -212,7 +242,7 @@ class SubJobXMLList(GangaObject):
 
                 try:
                     subjob_data = self.__get_dataFile(str(index), True)
-                    sj_file = self._loadSubJobFromDisk(subjob_data)
+                    elf._cachedJobs[index] = self._from_file(sj_file)[0]
                     self._cachedJobs[index] = self._from_file(sj_file)[0]
                 except Exception as err:
                     logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
@@ -223,8 +253,8 @@ class SubJobXMLList(GangaObject):
             parent_name = "Job: %s" % self._definedParent.getFQID('.')
         else:
             parent_name = "None"
-        logger.debug('Setting Parent: %s' % parent_name)
-        if self._definedParent:
+        logger.debug('Setting Parent [%s]: %s' % (str(index), (parent_name)))
+        if self._definedParent is not None:
             self._cachedJobs[index]._setParent( self._definedParent )
         return self._cachedJobs[index]
 
@@ -237,11 +267,13 @@ class SubJobXMLList(GangaObject):
         logger.debug('Setting Parent: %s' % parent_name)
 
         super(SubJobXMLList, self)._setParent( parentObj )
+
+        self._definedParent = parentObj
+
         if not hasattr(self, '_cachedJobs'):
             return
         for k in self._cachedJobs.keys():
             self._cachedJobs[k]._setParent( parentObj )
-        self._definedParent = parentObj
 
     def getCachedData(self, index):
 
