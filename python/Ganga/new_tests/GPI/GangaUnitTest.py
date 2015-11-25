@@ -55,7 +55,6 @@ def startGanga():
     import sys
     this_argv = []
     this_argv.append('-o[Configuration]RUNTIME_PATH=GangaTest')
-    this_argv.append('-o[Configuration]UsageMonitoringURL=""')
     this_argv.append('-o[Configuration]user=testframework')
     this_argv.append('-o[Configuration]gangadir=$HOME/gangadir_testing')
     this_argv.append('-o[Configuration]repositorytype=LocalXML')
