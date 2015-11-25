@@ -310,8 +310,8 @@ class Registry(object):
             self._lock.acquire()
             try:
                 changed_ids = self.repository.update_index()
-                for d in self.changed_ids.itervalues():
-                    d.update(changed_ids)
+                for this_d in self.changed_ids.itervalues():
+                    this_d.update(changed_ids)
             finally:
                 self._lock.release()
             self._update_index_timer = time.time()
@@ -325,8 +325,8 @@ class Registry(object):
             self._lock.acquire()
             try:
                 changed_ids = self.repository.update_index()
-                for d in self.changed_ids.itervalues():
-                    d.update(changed_ids)
+                for this_d in self.changed_ids.itervalues():
+                    this_d.update(changed_ids)
             finally:
                 self._lock.release()
             self._update_index_timer = time.time()
@@ -422,14 +422,13 @@ class Registry(object):
             self._inprogressDict[self.find(stripProxy(obj))] = "_add"
 
             self.repository.flush(ids)
-            for d in self.changed_ids.itervalues():
-                d.update(ids)
+            for this_d in self.changed_ids.itervalues():
+                this_d.update(ids)
             return ids[0]
         finally:
             self._lock.release()
-
-        self._inprogressDict[self.find(stripProxy(obj))] = False
-        del self._inprogressDict[self.find(stripProxy(obj))]
+            self._inprogressDict[self.find(stripProxy(obj))] = False
+            del self._inprogressDict[self.find(stripProxy(obj))]
 
     def _remove(self, obj, auto_removed=0):
         """ Private method removing the obj from the registry. This method always called.
@@ -444,7 +443,8 @@ class Registry(object):
         Raise ObjectNotInRegistryError"""
 
         while self.find(stripProxy(obj)) in self._inprogressDict.keys():
-            logger.info("_remove sleep")
+            logger.debug("%s _remove sleep %s" % (str(self.name), str(self.find(stripProxy(obj)))))
+            logger.debug("currently in state: %s" % (str(self._inprogressDict[self.find(stripProxy(obj))])))
             time.sleep(0.1)
 
         obj_id = self.find(stripProxy(obj))
@@ -469,13 +469,13 @@ class Registry(object):
                     del self.dirty_objs[obj]
                 self.repository.delete([this_id])
                 del obj
-                for d in self.changed_ids.itervalues():
-                    d.add(this_id)
+                for this_d in self.changed_ids.itervalues():
+                    this_d.add(this_id)
             finally:
                 self._lock.release()
         
-        self._inprogressDict[obj_id] = False
-        del self._inprogressDict[obj_id]
+                self._inprogressDict[obj_id] = False
+                del self._inprogressDict[obj_id]
 
     def _backgroundFlush(self, objs=None):
 
@@ -514,8 +514,8 @@ class Registry(object):
             # HACK for GangaList: there _dirty is called _before_ the object is
             # modified
             self.dirty_objs[obj] = 1
-            for d in self.changed_ids.itervalues():
-                d.add(self.find(obj))
+            for this_d in self.changed_ids.itervalues():
+                this_d.add(self.find(obj))
         except Exception as err:
             logger.debug("Flush Exception: %s" % str(err))
             pass
@@ -538,8 +538,8 @@ class Registry(object):
 
         for obj in objs:
             while self.find(stripProxy(obj)) in self._inprogressDict.keys():
-                logger.info("%s _flush sleep %s" % (str(self.name), str(self.find(obj))))
-                logger.info("In state: %s" % str(self._inprogressDict[self.find(stripProxy(obj))]))
+                logger.debug("%s _flush sleep %s" % (str(self.name), str(self.find(obj))))
+                logger.debug("In state: %s" % str(self._inprogressDict[self.find(stripProxy(obj))]))
                 time.sleep(0.1)
             self._inprogressDict[self.find(stripProxy(obj))] = "_flush"
 
@@ -571,9 +571,9 @@ class Registry(object):
         finally:
             self._lock.release()
 
-        for obj in objs:
-            self._inprogressDict[self.find(stripProxy(obj))] = False
-            del self._inprogressDict[self.find(stripProxy(obj))]
+            for obj in objs:
+                self._inprogressDict[self.find(stripProxy(obj))] = False
+                del self._inprogressDict[self.find(stripProxy(obj))]
 
     def _read_access(self, _obj, sub_obj=None):
         """Obtain read access on a given object.
@@ -607,8 +607,8 @@ class Registry(object):
                     raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                 except InaccessibleObjectError as err:
                     raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
-                for d in self.changed_ids.itervalues():
-                    d.add(this_id)
+                for this_d in self.changed_ids.itervalues():
+                    this_d.add(this_id)
             finally:
                 self._lock.release()
 
@@ -623,8 +623,8 @@ class Registry(object):
 
         if self.find(obj) in self._inprogressDict.keys():
             this_id = self.find(obj)
-            for d in self.changed_ids.itervalues():
-                d.add(this_id)
+            for this_d in self.changed_ids.itervalues():
+                this_d.add(this_id)
             return
 
         #logger.debug("Obj: %s" % str(stripProxy(obj)))
@@ -658,8 +658,8 @@ class Registry(object):
                         raise RegistryKeyError("The object #%i in registry '%s' was deleted!" % (this_id, self.name))
                     except InaccessibleObjectError as err:
                         raise RegistryKeyError("The object #%i in registry '%s' could not be accessed - %s!" % (this_id, self.name, str(err)))
-                    for d in self.changed_ids.itervalues():
-                        d.add(this_id)
+                    for this_d in self.changed_ids.itervalues():
+                        this_d.add(this_id)
                 obj._registry_locked = True
 
         return True
@@ -699,8 +699,8 @@ class Registry(object):
         try:
             if self._started and time.time() > self._update_index_timer + self.update_index_time:
                 changed_ids = self.repository.update_index()
-                for d in self.changed_ids.itervalues():
-                    d.update(changed_ids)
+                for this_d in self.changed_ids.itervalues():
+                    this_d.update(changed_ids)
                 self._update_index_timer = time.time()
             res = self.changed_ids.get(name, set(self.ids()))
             self.changed_ids[name] = set()
