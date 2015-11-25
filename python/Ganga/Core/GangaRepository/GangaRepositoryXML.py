@@ -558,7 +558,9 @@ class GangaRepositoryLocal(GangaRepository):
             has_children = (not self.sub_split is None) and (self.sub_split in obj.getNodeData()) and len(obj.getNodeAttribute(self.sub_split)) > 0
 
             if has_children:
-            
+
+                logger.debug("has_children")
+
                 if hasattr(obj.getNodeAttribute(self.sub_split), 'flush'):
                     # I've been read from disk in the new SubJobXMLList format I know how to flush
                     obj.getNodeAttribute(self.sub_split).flush()
@@ -596,6 +598,9 @@ class GangaRepositoryLocal(GangaRepository):
                     if idn.isdigit() and int(idn) >= len(split_cache):
                         rmrf(os.path.join(os.path.dirname(fn), idn))
             else:
+
+                logger.debug("not has_children")
+
                 safe_save(fn, obj, self.to_file, "")
                 # clean files leftover from sub_split
                 for idn in os.listdir(os.path.dirname(fn)):
@@ -613,7 +618,7 @@ class GangaRepositoryLocal(GangaRepository):
         #traceback.print_stack()
         for this_id in ids:
             try:
-
+                logger.debug("safe_flush")
                 self._safe_flush_xml(this_id)
 
             except (OSError, IOError, XMLFileError) as x:
