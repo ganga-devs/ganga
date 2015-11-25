@@ -998,9 +998,9 @@ class JobRegistry_Monitor(GangaThread):
             # this concerns me - rcurrie
             #self.registry._flush(jobList_fromset)  # Optimisation required!
 
-            for this_job in jobList_fromset:
-                stripped_job = stripProxy(this_job)
-                stripped_job._getRegistry()._flush([stripped_job])
+            #for this_job in jobList_fromset:
+            #    stripped_job = stripProxy(this_job)
+            #    stripped_job._getRegistry()._flush([stripped_job])
 
         except Exception as err:
             log.debug("Monitoring Loop Error: %s" % str(err))
