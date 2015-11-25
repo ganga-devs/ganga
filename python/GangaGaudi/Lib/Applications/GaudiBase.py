@@ -53,7 +53,7 @@ class GaudiBase(IPrepareApp):
                                        visitable=1,
                                        copyable=1,
                                        typelist=['type(None)', 'str', ShareDir],
-                                       hidden=1,
+                                       hidden=0,
                                        protected=1,
                                        doc=docstr)
     docstr = 'The env'
