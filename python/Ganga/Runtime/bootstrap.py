@@ -1200,6 +1200,8 @@ default_backends = LCG
                     logger.warning("Please specify the tests to run ( i.e. ganga --test Ganga/test )")
                     return -1
 
+                logger.info("myargs = %s" % str(" ".join(my_args)))
+
                 rc = runner.start(test_selection=" ".join(my_args))
             else:
                 logger.info("Test Runner is disabled (set EnableTestRunner=True to enable it)")
