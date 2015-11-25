@@ -17,7 +17,7 @@ def _valueTypeAllowed(val, valTypeList, logger=None):
         except ImportError:
             isType = isinstance
 
-        if not isType(_t, str) and (isclass(_t) or isType(_t, GangaObject)):
+        if not isType(_t, str) and isclass(_t):
             _type = _t
             _val = val
         else:
