@@ -827,17 +827,20 @@ def %(method_name)s(self):
         runPyFile = os.path.join(self.releaseTopDir,"python","GangaTest","Framework","driver.py")
         for name in dir(module):
 
-            clazz = getattr(module, name)
-            sclazz = str(clazz)
-            if isinstance(clazz, (type, types.ClassType)) and  sclazz.split('.')[-1].find(test_filename)>=0:
-                clazz_dict = dir(clazz)
-                for attrname in clazz_dict:
-                    try:
-                        descr = os.path.join(test_dir[test_dir.index(self.testsTopDir)+len(self.testsTopDir)+1:],test_filename,attrname)+" [PY]"
-                    except ValueError:
-                        descr = os.path.join(test_dir,test_filename,attrname)+" [PY]"
-                    if test is not None and attrname==test:
-                        testCmd = "cd %s ; env OUTPUT_PATH=%s "\
+            try:
+                clazz = getattr(module, name)
+                sclazz = str(clazz)
+            #print("name: %s" % str(name))
+            #print("sclazz: %s" % str(sclazz))
+                if isinstance(clazz, (type, types.ClassType)) and  sclazz.split('.')[-1].find(test_filename)>=0:
+                    clazz_dict = dir(clazz)
+                    for attrname in clazz_dict:
+                        try:
+                            descr = os.path.join(test_dir[test_dir.index(self.testsTopDir)+len(self.testsTopDir)+1:],test_filename,attrname)+" [PY]"
+                        except ValueError:
+                            descr = os.path.join(test_dir,test_filename,attrname)+" [PY]"
+                        if test is not None and attrname==test:
+                            testCmd = "cd %s ; env OUTPUT_PATH=%s "\
                                 "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s %s %s --test-type=py --coverage-report=%s %s" % (
                             os.path.join(self.testsTopDir,test_dir),
                             fullpath(output_path%attrname),                            
@@ -847,7 +850,7 @@ def %(method_name)s(self):
                             getCoveragePath(coverage_path,attrname),
                             attrname)
 
-                        testcase = self.__generateTestCaseFromCmd(
+                            testcase = self.__generateTestCaseFromCmd(
                             [testCmd],
                             attrname,
                             testAlias="%s.%s (PY)"%(test_name,attrname),
@@ -855,10 +858,10 @@ def %(method_name)s(self):
                             output_path=output_path%attrname,
                             timeout=timeout
                             )
-                        if testcase is not None: return [testcase]
-                    elif attrname.startswith("test") and test is None:
-                        #syspath = [p for p in sys.path if p.find("/usr/lib")==-1]                        
-                        testCmd = "cd %s ;env OUTPUT_PATH=%s "\
+                            if testcase is not None: return [testcase]
+                        elif attrname.startswith("test") and test is None:
+                            #syspath = [p for p in sys.path if p.find("/usr/lib")==-1]                        
+                            testCmd = "cd %s ;env OUTPUT_PATH=%s "\
                                 "%s/bin/ganga -o[Configuration]RUNTIME_PATH=GangaTest --config= --config-path=%s %s %s --test-type=py --coverage-report=%s %s setUp tearDown"%(
                             os.path.join(self.testsTopDir,test_dir),
                             fullpath(output_path%attrname),
@@ -868,7 +871,7 @@ def %(method_name)s(self):
                             test_path,
                             getCoveragePath(coverage_path,attrname),
                             attrname)                        
-                        testcase = self.__generateTestCaseFromCmd(
+                            testcase = self.__generateTestCaseFromCmd(
                             [testCmd],
                             attrname,
                             testAlias="%s.%s (PY)"%(test_name,attrname),
@@ -876,7 +879,10 @@ def %(method_name)s(self):
                             output_path=output_path%attrname,
                             timeout=timeout
                             )
-                        if testcase is not None: tests.append(testcase)
+                            if testcase is not None: tests.append(testcase)
+            except:
+                pass
+
                 break
         return tests
 
