@@ -3,8 +3,10 @@ from Ganga.Utility.Config import setConfigOption
 setConfigOption( 'Preparable', 'unprepare_on_copy', 'True' )
 
 j = Job( application=Executable(exe='/bin/echo',args=['hello']) )
+#j.prepare()
 j.submit()
 
+print("Test: %s" % str(j.application))
 assert( j.application.is_prepared != None )
 
 j2 = j.copy()
@@ -18,6 +20,7 @@ assert( j3.application.is_prepared == None )
 setConfigOption( 'Preparable', 'unprepare_on_copy', 'False' )
 
 k = Job( application=Executable(exe='/bin/echo',args=['hello']) )
+#k.prepare()
 k.submit()
 
 assert( k.application.is_prepared != None )

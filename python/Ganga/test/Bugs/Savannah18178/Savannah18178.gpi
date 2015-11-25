@@ -9,6 +9,7 @@ j.submit()
 fn = j.outputdir+'/proc_stat'
 cnt = 10
 
+proc_num = None
 while cnt>0:
     time.sleep(5)
     if os.path.exists(fn):
@@ -25,6 +26,8 @@ sleep_until_state(j,10,'killed')
 
 # try to find out if the internal process is still running
 try:
+    if proc_num is None:
+        proc_num = -1
     os.kill(proc_num,0)
     assert(0) # process not killed
 except OSError as x:

@@ -5,13 +5,13 @@ j = Job()
 j.backend = TestSubmitter()
 
 j.submit()
-assert sleep_until_completed(j,10),"Job is not completed"
+assert sleep_until_completed(j,20),"Job is not completed"
 
 j.resubmit()
-assert sleep_until_state(j,10,'completed'),"Job is not completed after fail during resubmit"
+assert sleep_until_state(j,20,'completed'),"Job is not completed after fail during resubmit"
 
 j._impl.updateStatus('failed')
-assert sleep_until_state(j,10,'failed'), "Job is not failed"
+assert sleep_until_state(j,20,'failed'), "Job is not failed"
 
 j.resubmit()
-assert sleep_until_state(j,10,'completed'), "Job is not completed after resubmit"
+assert sleep_until_state(j,20,'completed'), "Job is not completed after resubmit"
