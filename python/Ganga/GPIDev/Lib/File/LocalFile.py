@@ -185,7 +185,7 @@ class LocalFile(IGangaFile):
                 return False
 
         # check if single file exists (no locations field to try)
-        job = self._getParent()
+        job = self.getJobObject()
         if job:
             fname = self.namePattern
             if self.compressed:
