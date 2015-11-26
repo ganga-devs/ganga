@@ -510,7 +510,7 @@ class Registry(object):
             self.dirty_objs[obj] = 1
             self.dirty_hits += 1
             if self.checkShouldFlush():
-                self._backgroundFlush(objs)
+                self._backgroundFlush(obj)
             # HACK for GangaList: there _dirty is called _before_ the object is
             # modified
             self.dirty_objs[obj] = 1

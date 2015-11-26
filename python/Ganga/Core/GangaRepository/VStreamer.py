@@ -44,9 +44,9 @@ class XMLFileError(GangaException):
             err = ''
         return "XMLFileError: %s %s" % (self.message, err)
 
-def to_file(j, f=None, ignore_subs=''):
+def to_file(j, fobj=None, ignore_subs=''):
     try:
-        vstreamer = VStreamer(out=f, selection=ignore_subs)
+        vstreamer = VStreamer(out=fobj, selection=ignore_subs)
         vstreamer.begin_root()
         stripProxy(j).accept(vstreamer)
         vstreamer.end_root()

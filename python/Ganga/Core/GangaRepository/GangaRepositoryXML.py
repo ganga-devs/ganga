@@ -30,6 +30,7 @@ from Ganga.GPIDev.Base.Proxy import isType, stripProxy, getName
 
 logger = Ganga.Utility.logging.getLogger()
 
+save_all_history = False
 
 def check_app_hash(obj):
     """Writes a file safely, raises IOError on error"""
@@ -69,6 +70,13 @@ def check_app_hash(obj):
             logger.warning('re-prepare() the application). Otherwise, please file a bug report at:')
             logger.warning('https://github.com/ganga-devs/ganga/issues/')
 
+def get_backupFile(input_filename):
+    count=0
+    while os.path.exists(str(input_filename)+"_"+str(count)):
+        count += 1
+
+    return str(input_filename)+"_"+str(count)
+
 def safe_save(fn, _obj, to_file, ignore_subs=''):
 
     obj = stripProxy(_obj)
@@ -83,6 +91,11 @@ def safe_save(fn, _obj, to_file, ignore_subs=''):
                 os.makedirs(dirname)
             with open(fn, "w") as this_file:
                 to_file(obj, this_file, ignore_subs)
+            global write_all_history
+            if save_all_history is True:
+                backup_file = get_backupFile(fn)
+                with open(backup_file, "w") as this_file:
+                    to_file(obj, this_file, ignore_subs)
             return
         except IOError as err:
             raise IOError("Could not write file '%s' (%s)" % (fn, err))
