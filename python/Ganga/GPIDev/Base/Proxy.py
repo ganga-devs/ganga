@@ -218,11 +218,17 @@ class ProxyDataDescriptor(object):
         # just warn
         # print '**** checking',v,v.__class__,
         # isinstance(val,GPIProxyObject)
+        if isinstance(v, list):
+            from Ganga.GPI import GangaList
+            v_new = GangaList()
+            for elem in v:
+                v_new.append(elem)
+            v = v_new
         global proxyRef
         if isinstance(v, GPIProxyObject) or hasattr(v, proxyRef):
             v = getattr(v, proxyRef)
             logger.debug('%s property: assigned a component object (%s used)' % (self._name, proxyRef))
-        return getattr(obj, roxyRef)._attribute_filter__set__(self._name, getattr(v, proxyRef))
+        return getattr(obj, proxyRef)._attribute_filter__set__(self._name, v)
 
     def __set__(self, obj, val):
         # self is the attribute we're about to change

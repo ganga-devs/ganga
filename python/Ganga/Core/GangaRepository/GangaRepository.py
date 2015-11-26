@@ -16,7 +16,7 @@ import Ganga.Utility.logging
 
 from Ganga.Utility.Plugin import allPlugins
 from Ganga.Core import GangaException
-from Ganga.GPIDev.Base.Proxy import stripProxy, getName
+from Ganga.GPIDev.Base.Proxy import getName
 
 logger = Ganga.Utility.logging.getLogger()
 
@@ -200,7 +200,7 @@ class GangaRepository(object):
         obj = super(cls, cls).__new__(cls)
         obj.__init__()
         obj._proxyObject = None
-        obj.setNodeData({})
+        obj.setNodeData(None)
 
         self._internal_setitem__(this_id, obj)
         return obj
@@ -209,13 +209,12 @@ class GangaRepository(object):
         """ Internal function for repository classes to add items to the repository.
         Should not raise any Exceptions
         """
-        obj = stripProxy(obj)
         if this_id in self.incomplete_objects:
             self.incomplete_objects.remove(this_id)
         self.objects[this_id] = obj
         obj.__dict__["_registry_id"] = this_id
         obj.__dict__["_registry_locked"] = False
-        if "id" in obj.getNodeData().keys():  # MAGIC id
+        if obj.getNodeData() and "id" in obj.getNodeData().keys():  # MAGIC id
             obj.id = this_id
         obj._setRegistry(self.registry)
 
