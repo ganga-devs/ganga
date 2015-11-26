@@ -203,8 +203,8 @@ class Node(object):
                 continue
 
             #logger.debug("Copying: %s : %s" % (str(name), str(item)))
-            if name == 'application' and hasattr(stripProxy(_srcobj.application), 'is_prepared'):
-                _app = stripProxy(_srcobj.application)
+            if name == 'application' and hasattr(_srcobj.application, 'is_prepared'):
+                _app = _srcobj.application
                 if _app.is_prepared is not None and not _app.is_prepared is True:
                     _app.incrementShareCounter(_app.is_prepared.name)
 
@@ -484,7 +484,7 @@ class Descriptor(object):
                 if val_prevState is True and hasattr(val_reg, 'turnOffAutoFlushing'):
                     val_reg.turnOffAutoFlushing()
 
-        stripProxy(self).__atomic_set__(_obj, _val)
+        self.__atomic_set__(_obj, _val)
 
         if val_reg is not None:
             if val_prevState is True and hasattr(val_reg, 'turnOnAutoFlushing'):
@@ -500,6 +500,8 @@ class Descriptor(object):
 
 
     def __atomic_set__(self, _obj, _val):
+
+        logger.debug("__atomic_set__")
 
         obj = stripProxy(_obj)
         val = stripProxy(_val)
@@ -521,7 +523,7 @@ class Descriptor(object):
         item = stripProxy(obj._schema[getName(self)])
 
         def cloneVal(v):
-            if isType(v, list()):
+            if isType(v, (list, GangaList)):
                 new_v = GangaList()
                 for elem in v:
                     new_v.append(self.__cloneVal(elem, obj))

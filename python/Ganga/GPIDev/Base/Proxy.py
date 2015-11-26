@@ -186,15 +186,15 @@ class ProxyDataDescriptor(object):
         # at class level return a helper object (for textual description)
         if obj is None:
             # return Schema.make_helper(getattr(getattr(cls, proxyRef),self._name))
-            return getattr( stripProxy(cls), self._name)
+            return getattr( getattr(cls, proxyRef), self._name)
 
-        val = getattr( stripProxy(obj), self._name)
+        val = getattr( getattr(obj, proxyRef), self._name)
 
         # wrap proxy
-        item = stripProxy(obj)._schema[self._name]
+        item = getattr(obj, proxyRef)._schema[self._name]
 
         if item['proxy_get']:
-            return getattr(stripProxy(obj), item['proxy_get'])()
+            return getattr(getattr(obj, proxyRef), item['proxy_get'])()
 
         if isType(item, Schema.ComponentItem):
             disguiser = self.disguiseComponentObject
@@ -220,9 +220,9 @@ class ProxyDataDescriptor(object):
         # isinstance(val,GPIProxyObject)
         global proxyRef
         if isinstance(v, GPIProxyObject) or hasattr(v, proxyRef):
-            v = stripProxy(v)
+            v = getattr(v, proxyRef)
             logger.debug('%s property: assigned a component object (%s used)' % (self._name, proxyRef))
-        return stripProxy(obj)._attribute_filter__set__(self._name, stripProxy(v))
+        return getattr(obj, roxyRef)._attribute_filter__set__(self._name, getattr(v, proxyRef))
 
     def __set__(self, obj, val):
         # self is the attribute we're about to change
@@ -230,17 +230,19 @@ class ProxyDataDescriptor(object):
         # val is the value we're setting the attribute to.
         # item is the schema entry of the attribute we're about to change
 
-        item = stripProxy(obj)._schema[self._name]
+        logger.debug("__set__")
+        global proxyRef
+        item = getattr(obj, proxyRef)._schema[self._name]
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified' % (self._name,))
-        if stripProxy(obj)._readonly():
-            if not (self._name == 'comment' and stripProxy(obj)._name == 'Job'):
+        if getattr(obj, proxyRef)._readonly():
+            if not (self._name == 'comment' and getattr(obj, proxyRef)._name == 'Job'):
                 raise ReadOnlyObjectError('object %s is read-only and attribute "%s" cannot be modified now' % (repr(obj), self._name))
 
         # mechanism for locking of preparable attributes
         if item['preparable']:
-            if stripProxy(obj).is_prepared is not None:
-                if stripProxy(obj).is_prepared is not True:
+            if obj.is_prepared is not None:
+                if obj.is_prepared is not True:
                     raise ProtectedAttributeError('AttributeError: "%s" attribute belongs to a prepared application and so cannot be modified. unprepare() the application or copy the job/application (using j.copy(unprepare=True)) and modify that new instance.' % (self._name,))
 
         # if we set is_prepared to None in the GPI, that should effectively
@@ -265,18 +267,18 @@ class ProxyDataDescriptor(object):
 
         # catch assignment of 'something'  to a preparable application
         if self._name == 'application':
-            if hasattr(stripProxy(obj.application), 'is_prepared'):
+            if hasattr(obj.application, 'is_prepared'):
 
                 #a=Job(); a.prepare(); a.application=Executable()
-                if stripProxy(obj.application).is_prepared not in [None, True] and\
-                    hasattr(stripProxy(val), 'is_prepared') and stripProxy(val).is_prepared is None:
+                if obj.application.is_prepared not in [None, True] and\
+                    hasattr(val, 'is_prepared') and val.is_prepared is None:
                     logger.debug('Overwriting a prepared application with one that is unprepared')
                     obj.application.unprepare()
 
                 #a=Job(); b=Executable(); b.prepare(); a.application=b
-                elif stripProxy(obj.application).is_prepared is not True:
+                elif obj.application.is_prepared is not True:
                     if hasattr(val, 'is_prepared'):
-                        if stripProxy(val).is_prepared not in [None, True]:
+                        if val.is_prepared not in [None, True]:
                             from Ganga.Core.GangaRepository import getRegistry
                             shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
                             logger.debug('Overwriting application with a prepared one')
@@ -286,14 +288,14 @@ class ProxyDataDescriptor(object):
 
                 # check that the shared directory actually exists before
                 # assigning the (prepared) application to a job
-                if hasattr(stripProxy(val), 'is_prepared'):
-                    if stripProxy(val).is_prepared not in [None, True]:
-                        if hasattr(stripProxy(val).is_prepared, 'name'):
+                if hasattr(val, 'is_prepared'):
+                    if val.is_prepared not in [None, True]:
+                        if hasattr(val.is_prepared, 'name'):
                             from Ganga.Utility.files import expandfilename
                             Config_conf = getConfig('Configuration')
                             shared_path = os.path.join(expandfilename(Config_conf['gangadir']), 'shared', Config_conf['user'])
-                            if not os.path.isdir(os.path.join(shared_path, stripProxy(val).is_prepared.name)):
-                                logger.error('ShareDir directory not found: %s' % stripProxy(val).is_prepared.name)
+                            if not os.path.isdir(os.path.join(shared_path, val.is_prepared.name)):
+                                logger.error('ShareDir directory not found: %s' % val.is_prepared.name)
 
         # unwrap proxy
         if item.isA(Schema.ComponentItem):
@@ -566,7 +568,8 @@ def GPIProxyClassFactory(name, pluginclass):
 
     def _setattr(self, x, v):
         'something'
-        proxyRef
+        logger.debug("_setattr")
+        global proxyRef
         # need to know about the types that require metadata attribute checking
         # this allows derived types to get same behaviour for free.
         if x == proxyRef:
@@ -603,6 +606,9 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 #        return object.__getattribute__(self,name)
 
     def _getattribute(self, name):
+
+        logger.debug("_getattribute")
+
         global proxyRef
         if name.startswith('__') or name in d.keys():
             return object.__getattribute__(self, name)
