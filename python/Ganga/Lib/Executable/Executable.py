@@ -52,7 +52,7 @@ class Executable(IPrepareApp):
         'args': SimpleItem(defvalue=["Hello World"], typelist=['str', 'Ganga.GPIDev.Lib.File.File.File', 'int'], sequence=1, strict_sequence=0, doc="List of arguments for the executable. Arguments may be strings, numerics or File objects."),
         'env': SimpleItem(defvalue={}, typelist=['str'], doc='Dictionary of environment variables that will be replaced in the running environment.'),
         'is_prepared': SimpleItem(defvalue=None, strict_sequence=0, visitable=1, copyable=1, hidden=0, typelist=['type(None)', 'bool', ShareDir], protected=1, comparable=1, doc='Location of shared resources. Presence of this attribute implies the application has been prepared.'),
-        'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=1, doc='MD5 hash of the string representation of applications preparable attributes')
+        'hash': SimpleItem(defvalue=None, typelist=['type(None)', 'str'], hidden=0, doc='MD5 hash of the string representation of applications preparable attributes')
     })
     _category = 'applications'
     _name = 'Executable'
@@ -60,6 +60,9 @@ class Executable(IPrepareApp):
 
     def __init__(self):
         super(Executable, self).__init__()
+
+    def __construct__(self, args):
+        super(Executable, self).__construct__(args)
 
     def unprepare(self, force=False):
         """
@@ -95,8 +98,7 @@ class Executable(IPrepareApp):
         """
 
         if (self.is_prepared is not None) and (force is not True):
-            raise ApplicationPrepareError(
-                '%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
+            raise ApplicationPrepareError('%s application has already been prepared. Use prepare(force=True) to prepare again.' % (self._name))
 
         # lets use the same criteria as the configure() method for checking file existence & sanity
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
