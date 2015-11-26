@@ -22,7 +22,7 @@ from Ganga.GPIDev.Adapters.IApplication import PostprocessStatusUpdate
 
 from Ganga.Core.GangaRepository.SubJobXMLList import SubJobXMLList
 
-from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy
+from Ganga.GPIDev.Base.Proxy import isType, getName, GPIProxyObjectFactory, addProxy, stripProxy, runProxyMethod
 from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList, makeGangaListByRef
 
 from Ganga.Lib.Splitters import DefaultSplitter
@@ -283,7 +283,7 @@ class Job(GangaObject):
         # Due to problems on Hammercloud due to uncopyable object lets
         # explicitly stop these objects going anywhere near the __deepcopy__
 
-        cls = type(stripProxy(self))
+        cls = type(self)
         c = Job.__new__(cls)
         c.__init__()
 
@@ -1144,12 +1144,12 @@ class Job(GangaObject):
             msg = "The application associated with job %s has already been prepared. To force the operation, call prepare(force=True)" % str(self.id)
             raise JobError(msg)
         if (self.application.is_prepared is None):
-            add_to_inputsandbox = self.application.prepare()
+            add_to_inputsandbox = runProxyMethod(self.application, 'prepare', ())
             if isType(add_to_inputsandbox, list):
                 self.inputsandbox.extend(add_to_inputsandbox)
         elif (self.application.is_prepared is not None) and (force is True):
             self.application.unprepare(force=True)
-            self.application.prepare(force=True)
+            runProxyMethod(self.application, 'prepare', (True,))
 
     def unprepare(self, force=False):
         '''Revert the application associated with a job to the unprepared state
@@ -1354,28 +1354,23 @@ class Job(GangaObject):
             return False
 
         if hasattr(self.application, 'is_prepared'):
+            logger.debug("Calling Job.prepare()")
             if (self.application.is_prepared is None) or (prepare is True):
-                logger.debug("Job %s Calling self.prepare(force=%s)" %
-                             (str(self.getFQID('.')), str(prepare)))
+                logger.debug("Job %s Calling self.prepare(force=%s)" % (str(self.getFQID('.')), str(prepare)))
                 self.prepare(force=True)
             elif self.application.is_prepared is True:
-                msg = "Job %s's application has is_prepared=True. This prevents any automatic (internal) call to the application's prepare() method." % str(
-                    self.getFQID('.'))
+                msg = "Job %s's application has is_prepared=True. This prevents any automatic (internal) call to the application's prepare() method." % str(self.getFQID('.'))
                 logger.info(msg)
             else:
-                msg = "Job %s's application has already been prepared." % str(
-                    self.getFQID('.'))
+                msg = "Job %s's application has already been prepared." % str(self.getFQID('.'))
                 logger.info(msg)
 
             if self.application.is_prepared is not True and self.application.is_prepared is not None:
                 shared_path = Ganga.GPIDev.Lib.File.getSharedPath()
-                delay_result = delay_check(
-                    os.path.join(shared_path, self.application.is_prepared.name))
+                delay_result = delay_check(os.path.join(shared_path, self.application.is_prepared.name))
                 if delay_result is not True:
-                    logger.warning(
-                        "prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared)
-                    logger.warning(
-                        "tested: %s" % os.path.join(shared_path, self.application.is_prepared.name))
+                    logger.warning("prepared directory is :%s \t,\t but expected something else" % self.application.is_prepared)
+                    logger.warning("tested: %s" % os.path.join(shared_path, self.application.is_prepared.name))
                     from Ganga.GPIDev.Lib.File import ShareDir
                     logger.warning("shared_path: %s" % shared_path)
                     logger.warning("result: %s" % str(delay_result))
@@ -1384,6 +1379,8 @@ class Job(GangaObject):
                     raise JobError(msg)
         else:
             logger.debug("Not calling prepare")
+
+        print("Job Application Prepare: %s" % str(self.application))
 
         return
 
@@ -1535,6 +1532,9 @@ class Job(GangaObject):
 
             # Calls the self.prepare method ALWAY
             logger.debug("Preparing Application")
+            #if hasattr(self.application, 'is_prepared'):
+            #    logger.debug("Calling self.prepare()")
+            #    self.prepare()
             self._selfAppPrepare(prepare)
 
             # Splitting
@@ -1958,7 +1958,7 @@ class Job(GangaObject):
             raise JobError(msg)
 
         if backend is not None:
-            backend = stripProxy(backend)
+            backend = backend
 
         # do not allow to change the backend type
         if backend and not isType(self.backend, type(backend)):
@@ -1969,7 +1969,7 @@ class Job(GangaObject):
         # if the backend argument is identical (no attributes changed) then it is equivalent to None
         # the good side effect is that in this case we don't require any backend resubmit method to support
         # the extra backend argument
-        if backend == self.backend:
+        if stripProxy(backend) == stripProxy(self.backend):
             backend = None
 
         # check if the backend supports extra 'backend' argument for
