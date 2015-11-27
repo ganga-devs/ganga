@@ -123,6 +123,9 @@ class Schema(object):
     def getItem(self, name):
         return self.__getitem__(name)
 
+    def hasItem(self, name):
+        return name in self.datadict
+
     def _filter(self, klass):
         if self.datadict is None:
             return []
@@ -344,10 +347,16 @@ class Schema(object):
 
 class Item(object):
     # default values of common metaproperties
-    _metaproperties = {'transient': 0, 'protected': 0, 'hidden': 0, 'comparable': 1, 'sequence': 0, 'defvalue': None, 'copyable': 1, 'doc': '', 'visitable': 1, 'checkset': None,
-                       'filter': None, 'strict_sequence': 1, 'summary_print': None, 'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0}
+    _metaproperties = {'transient': 0, 'protected': 0, 'hidden': 0, 'comparable': 1, 'sequence': 0, 'defvalue': None, 'copyable': 1,
+                        'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
+                        'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
+                        'optional': 0, 'category': 'internal'} ##rcurrie Adding optional and category as it appears to be missing!
 
     def __init__(self):
+        super(Item, self).__init__()
+        self._meta = Item._metaproperties.copy()
+
+    def __construct(self, args):
         self._meta = Item._metaproperties.copy()
 
     def __getitem__(self, key):
@@ -355,6 +364,9 @@ class Item(object):
 
     def hasProperty(self, key):
         return key in self._meta
+
+    def getProperties(self):
+        return self._meta
 
     def __len__(self):
         return len(self._meta)
@@ -518,7 +530,7 @@ class ComponentItem(Item):
     _forced = {}
 
     def __init__(self, category, optional=0, load_default=1, **kwds):
-        Item.__init__(self)
+        super(ComponentItem, self).__init__()
         kwds['category'] = category
         kwds['optional'] = optional
         kwds['load_default'] = load_default
@@ -529,6 +541,7 @@ class ComponentItem(Item):
         assert(implies(self['getter'], self['transient'] and self['defvalue'] is None and self['protected'] and not self['sequence'] and not self['copyable']))
 
     def __construct__(self, args):
+        super(ComponentItem, self).__construct__(args)
         kwds = {}
         kwds['category'] = args[0]
         self._update(kwds, forced=ComponentItem._forced)
