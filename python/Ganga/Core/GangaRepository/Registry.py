@@ -214,6 +214,8 @@ class Registry(object):
 
         while self.shouldReleaseRun is True:
 
+            ## Needed import for shutdown
+            import time
             timeNow = time.time()
 
             modTime = self._dirtyModTime
@@ -408,7 +410,9 @@ class Registry(object):
 
         if not self._started:
             raise RegistryAccessError("Cannot add objects to a disconnected repository!")
+
         self._lock.acquire()
+        this_id = None
         try:
             if force_index is None:
                 ids = self.repository.add([obj])
@@ -419,7 +423,8 @@ class Registry(object):
                 ids = self.repository.add([obj], [force_index])
             obj._registry_locked = True
 
-            self._inprogressDict[self.find(stripProxy(obj))] = "_add"
+            this_id = self.find(stripProxy(obj))
+            self._inprogressDict[this_id] = "_add"
 
             self.repository.flush(ids)
             for this_d in self.changed_ids.itervalues():
@@ -427,8 +432,9 @@ class Registry(object):
             return ids[0]
         finally:
             self._lock.release()
-            self._inprogressDict[self.find(stripProxy(obj))] = False
-            del self._inprogressDict[self.find(stripProxy(obj))]
+            if this_id is not None:
+                self._inprogressDict[this_id] = False
+                del self._inprogressDict[this_id]
 
     def _remove(self, obj, auto_removed=0):
         """ Private method removing the obj from the registry. This method always called.

@@ -537,12 +537,14 @@ class GangaRepositoryLocal(GangaRepository):
     def add(self, objs, force_ids=None):
         """ Add the given objects to the repository, forcing the IDs if told to.
         Raise RepositoryError"""
+
         if not force_ids is None:  # assume the ids are already locked by Registry
             if not len(objs) == len(force_ids):
                 raise RepositoryError(self, "Internal Error: add with different number of objects and force_ids!")
             ids = force_ids
         else:
             ids = self.sessionlock.make_new_ids(len(objs))
+
         for i in range(0, len(objs)):
             fn = self.get_fn(ids[i])
             try:
