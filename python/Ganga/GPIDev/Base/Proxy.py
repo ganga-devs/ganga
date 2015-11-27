@@ -16,7 +16,11 @@ import os
 
 from inspect import isclass
 
+import copy
+
 proxyRef = '_impl'
+proxyClass = '_proxyClass'
+proxyObject = '_proxyObject'
 
 prepconfig = getConfig('Preparable')
 
@@ -24,14 +28,18 @@ logger = Ganga.Utility.logging.getLogger(modulename=1)
 
 # some proxy related convieniance methods
 
-_gangaListClass = None
+_knownLists = None
 
-def getGangaList():
-    global _gangaListClass
-    if _gangaListClass is None:
-        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
-        _gangaListClass = GangaList
-    return _gangaListClass
+def getKnownLists():
+    global _knownLists
+    if _knownLists is None:
+        try:
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        except ImportError:
+            _knownLists = None
+            return (tuple, list)
+        _knownLists = (tuple, list, GangaList)
+    return _knownLists
 
 def isProxy(obj):
     """Checks if an object is a proxy"""
@@ -54,7 +62,7 @@ def isType(_obj, type_or_seq):
 
     ## Here to avoid circular GangaObject dependencies
     ## is type_or_seq iterable?
-    if isinstance(type_or_seq, (tuple, list, getGangaList())):
+    if isinstance(type_or_seq, getKnownLists()):
         clean_list = []
         for type_obj in type_or_seq:
             str_type = type('')
@@ -87,8 +95,6 @@ def stripProxy(obj):
     global proxyRef
     if proxyRef in dir(obj):  # Use 'in dir()' rather than hasattr() to avoid recursion problems
         return getattr(obj, proxyRef)
-    #elif hasattr(obj, '_proxyClass'):
-    #    return getattr(obj, '_proxyClass')
     else:
         return obj
 
@@ -96,8 +102,11 @@ def stripProxy(obj):
 def addProxy(obj):
     """Adds a proxy to a GangaObject"""
     from Ganga.GPIDev.Base.Objects import GangaObject
-    if isType(obj, GangaObject):
-        return GPIProxyObjectFactory(obj)
+    if isType(obj, GangaObject) and not isProxy(obj):
+        _obj = stripProxy(obj)
+        if not hasattr(_obj, proxyObject):
+            setattr(_obj, proxyObject, None)
+        return GPIProxyObjectFactory(_obj)
     return obj
 
 
@@ -191,7 +200,7 @@ class ProxyDataDescriptor(object):
         val = getattr( getattr(obj, proxyRef), self._name)
 
         # wrap proxy
-        item = getattr(obj, proxyRef)._schema[self._name]
+        item = getattr(obj, proxyClass)._schema[self._name]
 
         if item['proxy_get']:
             return getattr(getattr(obj, proxyRef), item['proxy_get'])()
@@ -210,7 +219,7 @@ class ProxyDataDescriptor(object):
 
     def _check_type(self, obj, val):
         global proxyRef
-        item = getattr(obj, proxyRef)._schema[self._name]
+        item = getattr(obj, proxyClass)._schema[self._name]
         return item._check_type(val, self._name)
 
     # apply attribute conversion
@@ -238,7 +247,7 @@ class ProxyDataDescriptor(object):
 
         logger.debug("__set__")
         global proxyRef
-        item = getattr(obj, proxyRef)._schema[self._name]
+        item = getattr(obj, proxyClass)._schema[self._name]
         if item['protected']:
             raise ProtectedAttributeError('"%s" attribute is protected and cannot be modified' % (self._name,))
         if getattr(obj, proxyRef)._readonly():
@@ -306,7 +315,7 @@ class ProxyDataDescriptor(object):
         # unwrap proxy
         if item.isA(Schema.ComponentItem):
             from .Filters import allComponentFilters
-            item = getattr(obj, proxyRef)._schema.getItem(self._name)
+            item = getattr(obj, proxyClass)._schema.getItem(self._name)
             cfilter = allComponentFilters[item['category']]
             stripper = lambda v: stripComponentObject(v, cfilter, item)
         else:
@@ -317,7 +326,7 @@ class ProxyDataDescriptor(object):
             # we need to explicitly check for the list type, because simple
             # values (such as strings) may be iterable
             from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
-            if isType(val, [getGangaList(), list, type([])]):
+            if isType(val, knownGangaLists()):
                 # create GangaList
                 if stripper is not None:
                     val = makeGangaList(val, stripper)
@@ -326,7 +335,7 @@ class ProxyDataDescriptor(object):
             else:
                 # val is not iterable
                 if item['strict_sequence']:
-                    raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyRef)._schema.name, self._name))
+                    raise GangaAttributeError('cannot assign a simple value %s to a strict sequence attribute %s.%s (a list is expected instead)' % (repr(val), getattr(obj, proxyClass)._schema.name, self._name))
                 if stripper is not None:
                     val = makeGangaList(stripper(val))
                 else:
@@ -363,27 +372,25 @@ class ProxyMethodDescriptor(object):
 
 
 def GPIProxyObjectFactory(_obj):
+    global proxyRef
+    global proxyObject
+    global proxyClass
 
-    if not hasattr(_obj, '_proxyObject'):
-        if hasattr(stripProxy(_obj), '_proxyObject'):
-            obj = stripProxy(_obj)
-        else:
-            raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(_obj)))
-    else:
-        obj = _obj
+    obj = stripProxy(_obj)
+    if not hasattr(_obj, proxyObject):
+        raise GangaAttributeError("Object {0} does not have attribute _proxyObject".format(type(_obj)))
 
-    if obj._proxyObject is None:
-        global proxyRef
-        cls = obj._proxyClass
+    if getattr(obj, proxyObject) is None:
+        cls = getattr(obj, proxyClass)
         proxy = super(cls, cls).__new__(cls)
         # FIXME: NEW STYLE CLASS CAN DO __DICT__??
-        proxy.__dict__[proxyRef] = obj
-        obj._proxyObject = proxy
+        setattr(proxy, proxyRef, obj)
+        setattr(obj, proxyObject, proxy)
         #logger.debug('generated the proxy ' + repr(proxy))
     else:
         #logger.debug('reusing the proxy ' + repr(obj._proxyObject))
         pass
-    return obj._proxyObject  # FIXED
+    return getattr(obj, proxyObject)  # FIXED
 
 # this class serves only as a 'tag' for all generated GPI proxy classes
 # so we can test with isinstance rather then relying on more generic but
@@ -413,22 +420,50 @@ def GPIProxyClassFactory(name, pluginclass):
         # if len(args) > 1:
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
+        instance = pluginclass()
+        for this_attrib in [proxyRef, proxyClass]:
+            if hasattr(instance, this_attrib):
+                try:
+                    delattr(instance, this_attrib)
+                except AttributeError:
+                    pass
+
         # at the object level _impl is a ganga plugin object
-        self.__dict__[proxyRef] = pluginclass()
+        instance.__dict__[proxyObject] = self
+        assert(id(getattr(instance, proxyObject)) == id(self))
+        setattr(self, proxyRef, instance)
+        self.__dict__[proxyObject] = self
+        assert(id(getattr(self, proxyObject)) == id(self))
+        setattr(getattr(self, proxyRef), proxyObject, self)
+        getattr(self, proxyRef)._auto__init__()
 
         clean_args = [stripProxy(arg) for arg in args]
 
         getattr(self, proxyRef).__construct__(tuple(clean_args))
 
+        clean_args = [stripProxy(arg) for arg in args]
+
+        for key, val in getattr(self, proxyClass)._schema.allItems():
+            if not val['protected'] and not val['hidden'] and isType(val, Schema.ComponentItem):
+                val = getattr(self, key)
+                if hasattr(stripProxy(val), 'setParent'):
+                    stripProxy(val)._setParent(getattr(self, proxyRef))
+                p_val = addProxy(val)
+                setattr(getattr(self, proxyRef), key, p_val)
+
         # initialize all properties from keywords of the constructor
         for k in kwds:
-            if getattr(self, proxyRef)._schema.hasAttribute(k):
-                setattr(self, k, kwds[k])
+            if getattr(self, proxyClass)._schema.hasAttribute(k):
+                this_val = kwds[k]
+                if isclass(this_val):
+                    setattr(stripProxy(this_val), proxyObject, None)
+                if hasattr(stripProxy(this_val), '_setParent'):
+                    stripProxy(this_val)._setParent(getattr(self, proxyRef))
+                setattr(getattr(self, proxyRef), k, addProxy(this_val))
             else:
                 logger.warning('keyword argument in the %s constructur ignored: %s=%s (not defined in the schema)', name, k, kwds[k])
 
-        getattr(self, proxyRef)._proxyObject = self
-        getattr(self, proxyRef)._auto__init__()
+
 
     from Ganga.Utility.strings import ItemizedTextParagraph
 
@@ -578,22 +613,25 @@ def GPIProxyClassFactory(name, pluginclass):
         global proxyRef
         # need to know about the types that require metadata attribute checking
         # this allows derived types to get same behaviour for free.
-        if x == proxyRef:
+        if x == proxyRef and not isinstance(v, getattr(self, proxyRef)):
             raise AttributeError("Internal implementation object '%s' cannot be reassigned" % proxyRef )
 
-        if not getattr(self, proxyRef)._schema.hasAttribute(x):
+        if not getattr(self, proxyClass)._schema.hasAttribute(x):
 
-            if hasattr(getattr(self, proxyRef), 'metadata') and x in getattr(self, proxyRef).metadata.data.keys():
-                raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)
+            from Ganga.GPIDev.Lib.Job.MetadataDict import MetadataDict
+            if hasattr(getattr(self, proxyClass), 'metadata') and isType(getattr(self, proxyClass).metadata, MetadataDict):
+                if x in getattr(self, proxyClass).metadata.data.keys():
+                    raise GangaAttributeError("Metadata item '%s' cannot be modified" % x)
 
-            raise GangaAttributeError("'%s' has no attribute '%s'" % (getattr(self, proxyRef)._name, x))
-
+            if x not in [proxyRef, proxyObject]:
+                raise GangaAttributeError("'%s' has no attribute '%s'" % (getattr(self, proxyClass)._name, x))
         object.__setattr__(self, x, v)
+
+
     helptext(_setattr, """Set a property of %(classname)s with consistency and safety checks.
 Setting a [protected] or a unexisting property raises AttributeError.""")
 
 #    def _getattr(self, name):
-#        print "HERE", type(self), name, type(name)
 #        if name == '_impl': return self._impl
 #        if '_attribute_filter__get__' in dir(self._impl):
 #            return self._impl._attribute_filter__get__(name)
@@ -613,18 +651,18 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
 
     def _getattribute(self, name):
 
-        logger.debug("_getattribute")
+        #logger.debug("_getattribute: %s" % str(name))
 
         global proxyRef
         if name.startswith('__') or name in d.keys():
             return object.__getattribute__(self, name)
 
-        pluginclass = object.__getattribute__(self, proxyRef)
-        if '_attribute_filter__get__' in dir(pluginclass) and \
-            pluginclass.__class__.__name__ != 'ObjectMetaclass' and \
-                name in dict(pluginclass._schema.allItems()).keys() and \
-            not dict(pluginclass._schema.allItems())[name]['hidden']:
-            return addProxy(pluginclass._attribute_filter__get__(name))
+        proxyInstance = object.__getattribute__(self, proxyRef)
+        if '_attribute_filter__get__' in dir(proxyInstance) and \
+                proxyInstance.__class__.__name__ != 'ObjectMetaclass' and \
+                proxyInstance._schema.hasItem(name) and \
+                not proxyInstance._schema.getItem(name)['hidden']:
+            return addProxy(proxyInstance._attribute_filter__get__(name))
         else:
             return object.__getattribute__(self, name)
 
@@ -640,7 +678,9 @@ Setting a [protected] or a unexisting property raises AttributeError.""")
          '__doc__': publicdoc,
          '__setattr__': _setattr,
          #          '__getattr__': _getattr,
-         '__getattribute__': _getattribute
+         '__getattribute__': _getattribute,
+         proxyClass: pluginclass,
+         proxyObject: None
          }
 
 
