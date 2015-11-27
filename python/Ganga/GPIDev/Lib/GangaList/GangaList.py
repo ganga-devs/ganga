@@ -89,8 +89,7 @@ class GangaList(GangaObject):
     _hidden = 1
     _enable_plugin = 1
     _name = 'GangaList'
-    _schema = Schema(Version(1, 0), {
-                                     '_list': ComponentItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
+    _schema = Schema(Version(1, 0), {'_list': ComponentItem(defvalue=[], doc='The raw list', hidden=1, category='internal'),
                                      '_is_preparable': SimpleItem(defvalue=False, doc='defines if prepare lock is checked', hidden=1),
                                     })
     _enable_config = 1

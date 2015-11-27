@@ -228,6 +228,7 @@ class Job(GangaObject):
 
         self._Job_constructed = False
         super(Job, self).__construct__(args)
+
         self._Job_constructed = True
 
         # Not correctly calling Copy Constructor as in
@@ -615,7 +616,8 @@ class Job(GangaObject):
 
         if self.status != saved_status and self.master is None:
             logger.info('job %s status changed to "%s"', fqid, self.status)
-            stripProxy(self)._getRegistry()._dirty(stripProxy(self)._getRoot())
+            if stripProxy(self)._getRegistry() is not None:
+                stripProxy(self)._getRegistry()._dirty(stripProxy(self)._getRoot())
         if update_master and self.master is not None:
             self.master.updateMasterJobStatus()
 
@@ -1144,12 +1146,13 @@ class Job(GangaObject):
             msg = "The application associated with job %s has already been prepared. To force the operation, call prepare(force=True)" % str(self.id)
             raise JobError(msg)
         if (self.application.is_prepared is None):
-            add_to_inputsandbox = runProxyMethod(self.application, 'prepare', ())
+            add_to_inputsandbox = addProxy(self.application).prepare()
             if isType(add_to_inputsandbox, list):
                 self.inputsandbox.extend(add_to_inputsandbox)
         elif (self.application.is_prepared is not None) and (force is True):
             self.application.unprepare(force=True)
-            runProxyMethod(self.application, 'prepare', (True,))
+            addProxy(self.application).prepare(force=True)
+
 
     def unprepare(self, force=False):
         '''Revert the application associated with a job to the unprepared state
@@ -1379,8 +1382,6 @@ class Job(GangaObject):
                     raise JobError(msg)
         else:
             logger.debug("Not calling prepare")
-
-        print("Job Application Prepare: %s" % str(self.application))
 
         return
 
