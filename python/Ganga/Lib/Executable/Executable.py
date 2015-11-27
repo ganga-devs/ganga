@@ -14,11 +14,11 @@ from Ganga.GPIDev.Lib.File import File, ShareDir
 from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
-logger = getLogger()
 
 import os
 from Ganga.Utility.files import expandfilename
 
+logger = getLogger()
 
 class Executable(IPrepareApp):
 
@@ -64,6 +64,9 @@ class Executable(IPrepareApp):
     def __construct__(self, args):
         super(Executable, self).__construct__(args)
 
+    def __deepcopy__(self, memo):
+        return super(Executable, self).__deepcopy__(memo)
+
     def unprepare(self, force=False):
         """
         Revert an Executable() application back to it's unprepared state.
@@ -105,7 +108,7 @@ class Executable(IPrepareApp):
         # file is unspecified, has a space or is a relative path
         self.configure(self)
         logger.info('Preparing %s application.' % (self._name))
-        self.is_prepared = ShareDir()
+        setattr(self, 'is_prepared', ShareDir())
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
         try:
