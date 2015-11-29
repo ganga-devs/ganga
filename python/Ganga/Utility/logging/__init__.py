@@ -137,7 +137,6 @@ def _set_formatter(handler):
     formatter.setColour(config['_colour'])
     handler.setFormatter(formatter)
 
-
 def _make_file_handler(logfile, logfile_size):
     import os.path
     logfile = os.path.expanduser(logfile)
@@ -180,6 +179,8 @@ def post_config_handler(opt, value):
             _formats[k] = config['_customFormat']
 
     _format, colour = config['_format'], config['_colour']
+
+    print("")# rcurrie - This strangely seems to trick the logging into working when the _customFormat is used on first start
 
     if opt == '_format':
         badConfig = False
