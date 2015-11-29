@@ -734,7 +734,7 @@ class Registry(object):
                     self.metadata = Registry(self.name + ".metadata", "Metadata repository for %s" % self.name, dirty_flush_counter=self.dirty_flush_counter, update_index_time=self.update_index_time)
                     self.metadata.type = self.type
                     self.metadata.location = self.location
-                    self.metadata._parent = self
+                    #self.metadata._setParent(self) ## rcurrie Registry has NO '_parent' Object so don't understand this
                 logger.debug("metadata startup")
                 self.metadata.startup()
                 t3 = time.time()
