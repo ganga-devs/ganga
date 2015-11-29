@@ -33,7 +33,8 @@ def indentScript(script, indenting):
 
 def __populate():
     if len(transformDictionary) == 0:
-        transformDictionary[type(File())] = LocalFile
+        file_obj = File()
+        transformDictionary[type(file_obj)] = LocalFile
         # transformDictionary[ ] =
 __populate()
 

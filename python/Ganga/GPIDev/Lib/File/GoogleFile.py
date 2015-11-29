@@ -227,7 +227,7 @@ class GoogleFile(IGangaFile):
                     dir_path = self.localDir
                     if self.localDir == ('' or None):
                         dir_path = os.getcwd()
-                    if self._parent is not None:
+                    if self._getParent() is not None:
                         dir_path = self.getJobObject(
                         ).getOutputWorkspace().getPath()
                     completeName = os.path.join(dir_path, self.namePattern)
@@ -272,7 +272,7 @@ class GoogleFile(IGangaFile):
         if self.localDir == '':
             dir_path = os.getcwd()
 
-        if self._parent is not None:
+        if self._getParent() is not None:
             dir_path = self.getJobObject().getOutputWorkspace().getPath()
 
         # Wildcard procedure

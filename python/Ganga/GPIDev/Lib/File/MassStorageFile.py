@@ -152,7 +152,7 @@ class MassStorageFile(IGangaFile):
         to_location = self.localDir
 
         if not os.path.isdir(self.localDir):
-            if self._parent is not None:
+            if self._getParent() is not None:
                 to_location = self.getJobObject().outputdir
             else:
                 logger.error(
@@ -195,7 +195,7 @@ class MassStorageFile(IGangaFile):
         sourceDir = ''
 
         # if used as a stand alone object
-        if self._parent is None:
+        if self._getParent() is None:
             if self.localDir == '':
                 import os
                 _CWD = os.getcwd()
@@ -256,7 +256,7 @@ class MassStorageFile(IGangaFile):
         # the file name part of self.outputfilenameformat
         filenameStructure = ''
 
-        if self._parent != None:
+        if self._getParent() != None:
             jobfqid = self.getJobObject().fqid
 
             jobid = jobfqid
@@ -323,7 +323,7 @@ class MassStorageFile(IGangaFile):
 
                     # Alex removed this as more general approach in job.py after put() is called
                     # remove file from output dir if this object is attached to a job
-                    # if self._parent != None:
+                    # if self._getParent() != None:
                     #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
                 self.subfiles.append(GPIProxyObjectFactory(d))
@@ -341,7 +341,7 @@ class MassStorageFile(IGangaFile):
 
                 # Alex removed this as more general approach in job.py after put() is called
                 # remove file from output dir if this object is attached to a job
-                # if self._parent != None:
+                # if self._getParent() != None:
                 #    os.system('rm %s' % os.path.join(sourceDir, currentFile))
 
     def validate(self):
@@ -355,7 +355,7 @@ class MassStorageFile(IGangaFile):
             isJob = False
             isSplitJob = False
 
-            if self._parent != None:
+            if self._getParent() != None:
 
                 isJob = True
 
@@ -395,9 +395,9 @@ class MassStorageFile(IGangaFile):
     def handleUploadFailure(self, error):
 
         self.failureReason = error
-        if self._parent != None:
+        if self._getParent() != None:
             logger.error("Job %s failed. One of the job.outputfiles couldn't be uploaded because of %s" % (
-                str(self._parent.fqid), self.failureReason))
+                str(self._getParent().fqid), self.failureReason))
         else:
             logger.error("The file can't be uploaded because of %s" % (self.failureReason))
 
