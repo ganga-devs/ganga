@@ -203,10 +203,10 @@ class GangaList(GangaObject):
         return result
 
     def _readonly(self):
-        if self._is_preparable and hasattr(self, '_parent'):
-            if self._parent._category == 'applications' and hasattr(self._parent, 'is_prepared'):
+        if self._is_preparable and hasattr(self, '_getParent'):
+            if self._getParent()._category == 'applications' and hasattr(self._getParent(), 'is_prepared'):
                 from Ganga.GPIDev.Lib.File.File import ShareDir
-                return (isType(self._parent.is_prepared, ShareDir) or super(GangaList, self)._readonly())
+                return (isType(self._getParent().is_prepared, ShareDir) or super(GangaList, self)._readonly())
         return super(GangaList, self)._readonly()
 
     def checkReadOnly(self):
