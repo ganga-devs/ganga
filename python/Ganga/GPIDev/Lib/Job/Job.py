@@ -290,12 +290,20 @@ class Job(GangaObject):
 
         c.time.newjob()
         c.backend = copy.deepcopy(self.backend)
+        c.backend._setParent(c)
         c.application = copy.deepcopy(self.application)
+        c.application._setParent(c)
         c.inputdata = copy.deepcopy(self.inputdata)
+        if isType(c.inputdata, GangaObject):
+            c.inputdata._setParent(c)
         c.name = self.name
         c.comment = self.comment
         c.postprocessors = copy.deepcopy(self.postprocessors)
+        if isType(c.postprocessors, GangaObject):
+            c.postprocessors._setParent(c)
         c.splitter = copy.deepcopy(self.splitter)
+        if isType(c.splitter, GangaObject):
+            c.splitter._setParent(c)
         c.parallel_submit = self.parallel_submit
 
         # Continue as before
@@ -846,7 +854,7 @@ class Job(GangaObject):
         # Dont think it should matter as templates tend not to be prepared
         # try:
         # if hasattr(getRegistry("prep"), 'getShareRef'):
-        shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
+        #shareref = GPIProxyObjectFactory(getRegistry("prep").getShareRef())
         # except: pass
 
         # register the job (it will also commit it)
@@ -1248,10 +1256,8 @@ class Job(GangaObject):
                 #   I am going to generate the config now
                 appmasterconfig = self._getMasterAppConfig()
                 rtHandler = self._getRuntimeHandler()
-                logger.debug(
-                    "Job %s Calling rtHandler.master_prepare" % str(self.getFQID('.')))
-                jobmasterconfig = rtHandler.master_prepare(
-                    self.application, appmasterconfig)
+                logger.debug("Job %s Calling rtHandler.master_prepare" % str(self.getFQID('.')))
+                jobmasterconfig = rtHandler.master_prepare(self.application, appmasterconfig)
                 self._storedJobMasterConfig = jobmasterconfig
         else:
             #   I am a sub-job, lets ask the master job what to do
@@ -1449,6 +1455,7 @@ class Job(GangaObject):
         else:
             rjobs = [self]
 
+
         return rjobs
 
     def submit(self, keep_going=None, keep_on_fail=None, prepare=False):
@@ -1512,6 +1519,7 @@ class Job(GangaObject):
 
         rtHandler = self._getRuntimeHandler()
 
+
         try:
 
             logger.info("submitting job %s", str(self.getFQID('.')))
@@ -1529,6 +1537,7 @@ class Job(GangaObject):
                 self.status = 'new'
                 raise JobError(msg)
 
+
             self.getDebugWorkspace(create=False).remove(preserve_top=True)
 
             # Calls the self.prepare method ALWAY
@@ -1542,6 +1551,7 @@ class Job(GangaObject):
             logger.debug("Checking Job: %s for splitting" % self.getFQID('.'))
             # split into subjobs
             rjobs = self._doSplitting()
+
 
             #
             logger.debug("Now have %s subjobs" % str(len(self.subjobs)))
@@ -1581,23 +1591,19 @@ class Job(GangaObject):
             self.monitorPrepare_hook(jobsubconfig)
 
             # submit the job
-            try:
-                # master_submit has been written as the interface which ganga
-                # should call, not submit directly
+            # master_submit has been written as the interface which ganga
+            # should call, not submit directly
 
-                if supports_keep_going:
-                    if 'parallel_submit' in inspect.getargspec(self.backend.master_submit)[0]:
-                        r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit)
-                    else:
-                        r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going)
+            if supports_keep_going:
+                if 'parallel_submit' in inspect.getargspec(self.backend.master_submit)[0]:
+                    r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going, self.parallel_submit)
                 else:
-                    r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
+                    r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig, keep_going)
+            else:
+                r = self.backend.master_submit( rjobs, jobsubconfig, jobmasterconfig)
 
-                if not r:
-                    raise JobManagerError('error during submit')
-
-            except IncompleteJobSubmissionError as x:
-                logger.warning('Not all subjobs have been sucessfully submitted: %s', x)
+            if not r:
+                raise JobManagerError('error during submit')
 
             # This appears to be done by the backend now in a way that handles sub-jobs,
             # in the case of a master job however we need to still perform this
@@ -1625,6 +1631,9 @@ class Job(GangaObject):
 
             return 1
 
+        except IncompleteJobSubmissionError as x:
+            logger.warning('Not all subjobs have been sucessfully submitted: %s', x)
+
         except Exception as err:
             if isType(err, GangaException):
                 log_user_exception(logger, debug=True)
@@ -1639,6 +1648,36 @@ class Job(GangaObject):
                 logger.error('%s ... reverting job %s to the new status', str(err), self.getFQID('.'))
                 self.updateStatus('new')
                 raise JobError("Error: %s" % str(err))
+
+        # This appears to be done by the backend now in a way that handles sub-jobs,
+        # in the case of a master job however we need to still perform this
+        if len(rjobs) != 1:
+            self.info.increment()
+        if self.master is not None:
+            self.updateStatus('submitted')
+
+        # make sure that the status change goes to the repository, NOTE:
+        # this commit is redundant if updateStatus() is used on the line
+        # above
+        self._commit()
+
+        # send job submission message
+        from Ganga.Runtime.spyware import ganga_job_submitted
+
+        if len(self.subjobs) == 0:
+            ganga_job_submitted(getName(self.application), getName(self.backend), "1", "0", "0")
+        else:
+            submitted_count = 0
+            for sj in self.subjobs:
+                if sj.status == 'submitted':
+                    submitted_count += 1
+
+            ganga_job_submitted(getName(self.application), getName(self.backend), "0", "1", str(submitted_count))
+
+
+        return 1
+
+
 
     def rollbackToNewState(self):
         ''' 
@@ -1960,6 +1999,7 @@ class Job(GangaObject):
 
         if backend is not None:
             backend = backend
+            backend._setParent(self)
 
         # do not allow to change the backend type
         if backend and not isType(self.backend, type(backend)):
@@ -2235,8 +2275,7 @@ class Job(GangaObject):
                 configPanda = Ganga.Utility.Config.getConfig('Panda')
 
             if configPanda and not configPanda['AllowDirectSubmission']:
-                logger.error(
-                    "Direct Panda submission now deprecated - Please switch to Jedi() backend and remove any splitter.")
+                logger.error("Direct Panda submission now deprecated - Please switch to Jedi() backend and remove any splitter.")
                 from GangaPanda.Lib.Jedi import Jedi
                 from copy import deepcopy
 
@@ -2249,17 +2288,20 @@ class Job(GangaObject):
                 for attr in ['long', 'cloud', 'anyCloud', 'memory', 'cputime', 'corCheck', 'notSkipMissing', 'excluded_sites',
                              'excluded_clouds', 'express', 'enableJEM', 'configJEM', 'enableMerge', 'configMerge', 'usecommainputtxt',
                              'rootver', 'overwriteQueuedata', 'overwriteQueuedataConfig']:
-                    setattr(new_value.requirements, attr, deepcopy(
-                        getattr(value.requirements, attr)))
+                    setattr(new_value.requirements, attr, deepcopy(getattr(value.requirements, attr)))
 
                 super(Job, self).__setattr__('backend', new_value)
             else:
+                stripProxy(value)._setParent(self)
                 super(Job, self).__setattr__('backend', value)
         #elif attr == 'postprocessors':
         #    super(Job, self).__setattr__('postprocessors', GangaList())
         else:
             #logger.debug("attr: %s" % str(attr))
             super(Job, self).__setattr__(attr, value)
+
+        if hasattr(getattr(self, attr), '_getParent'):
+            logger.debug("attr: %s parent: %s" % (attr, str(getattr(self, attr)._getParent())))
 
 
 class JobTemplate(Job):
