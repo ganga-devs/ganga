@@ -87,10 +87,12 @@ class ShareRef(GangaObject):
     _name = 'ShareRef'
     _exportmethods = ['increase', 'decrease', 'ls', 'printtree', 'rebuild', 'lookup']
 
+    #_parent = None
     default_registry = 'prep'
 
     def __init__(self):
         super(ShareRef, self).__init__()
+        self.name = {}
         self._setRegistry(None)
 
     def __construct__(self):
@@ -103,10 +105,10 @@ class ShareRef(GangaObject):
         this_dict['_counter'] = 0
         return this_dict
 
-    def __setstate__(self, dict):
-        self._getWriteAccess()
+    def __setstate__(self, this_dict):
+        #self._getWriteAccess()
         try:
-            super(ShareRef, self).__setstate__(dict)
+            super(ShareRef, self).__setstate__(this_dict)
             self._setRegistry(None)
             self._setDirty()
         except Exception as err:
@@ -129,7 +131,7 @@ class ShareRef(GangaObject):
         shareddir = os.path.join(getSharedPath(), os.path.basename(shareddir))
         basedir = os.path.basename(shareddir)
         if os.path.isdir(shareddir) and force is False:
-            if basedir not in self.name:
+            if basedir not in self.name.keys():
                 logger.debug('%s is not stored in the shareref metadata object...adding.' % basedir)
                 self.name[basedir] = 1
             else:
@@ -249,7 +251,7 @@ class ShareRef(GangaObject):
         from Ganga.GPIDev.Lib.File import getSharedPath
         shareddir = os.path.join(getSharedPath(), os.path.basename(this_object))
         logger.debug('Adding %s to the shareref table.' % shareddir)
-        if os.path.basename(this_object) in self.name:
+        if os.path.basename(this_object) in self.name.keys():
             self.name[os.path.basename(this_object)] += 1
         else:
             self.name[os.path.basename(this_object)] = 1
@@ -331,15 +333,13 @@ class ShareRef(GangaObject):
 
         # check to see that all sharedirs have an entry in the shareref. Otherwise, set their ref counter to 0
         # so the user is made aware of them at shutdown
-        for dir in os.listdir(getSharedDir()):
-            if dir not in self.name and rmdir is False:
-                logger.debug(
-                    "%s isn't referenced by a GangaObject in the Job or Box repository." % dir)
-                self.name[dir] = 0
-            elif dir not in self.name and rmdir is True:
-                logger.debug(
-                    "%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % dir)
-                shutil.rmtree(os.path.join(getSharedPath(), dir))
+        for this_dir in os.listdir(getSharedDir()):
+            if this_dir not in self.name.keys() and rmdir is False:
+                logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository." % this_dir)
+                self.name[this_dir] = 0
+            elif this_dir not in self.name.keys() and rmdir is True:
+                logger.debug("%s isn't referenced by a GangaObject in the Job or Box repository. Removing directory." % this_dir)
+                shutil.rmtree(os.path.join(getSharedPath(), this_dir))
 
         self._setDirty()
         self._releaseWriteAccess()
@@ -391,7 +391,7 @@ class ShareRef(GangaObject):
 
         try:
             ## FIXME. this triggers maximum recusion depth bug on shutdown in some situations! rcurrie
-            all_dirs = self.name.keys()
+            all_dirs = getattr(self, name).keys()
         except:
             all_dirs = {}
         for shareddir in all_dirs:
