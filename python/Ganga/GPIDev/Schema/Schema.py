@@ -350,7 +350,8 @@ class Item(object):
     _metaproperties = {'transient': 0, 'protected': 0, 'hidden': 0, 'comparable': 1, 'sequence': 0, 'defvalue': None, 'copyable': 1,
                         'doc': '', 'visitable': 1, 'checkset': None, 'filter': None, 'strict_sequence': 1, 'summary_print': None,
                         'summary_sequence_maxlen': 5, 'proxy_get': None, 'getter': None, 'changable_at_resubmit': 0, 'preparable': 0,
-                        'optional': 0, 'category': 'internal'} ##rcurrie Adding optional and category as it appears to be missing!
+                        'optional': 0, 'category': 'internal', 'typelist': None, 'load_default': 1}
+                        ##rcurrie Adding optional, category, typelist, load_default as they appear to be missing!
 
     def __init__(self):
         super(Item, self).__init__()
@@ -361,6 +362,19 @@ class Item(object):
 
     def __getitem__(self, key):
         return self._meta[key]
+
+    def __deepcopy__(self, memo):
+        cls = type(self)
+        obj = super(cls, cls).__new__(cls)
+        new_dict = {}
+        for key, val in self._metaproperties.iteritems():
+            if key not in ['defvalue']:
+                new_dict[key] = copy.deepcopy(val)
+            else:
+                new_dict[key] = val
+        setattr(obj, '_metaproperties', new_dict)
+        setattr(obj, '_meta', self._metaproperties.copy())
+        return obj
 
     def hasProperty(self, key):
         return key in self._meta
@@ -548,6 +562,9 @@ class ComponentItem(Item):
 
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
+
+    def __deepcopy__(self, memo):
+        return super(ComponentItem, self).__deepcopy__(memo)
 
 valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, logger)
 
