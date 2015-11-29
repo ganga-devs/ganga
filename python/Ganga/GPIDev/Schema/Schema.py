@@ -154,7 +154,10 @@ class Schema(object):
 
     # make a schema copy for a derived class, does not copy the pluginclass
     def inherit_copy(self):
-        return Schema(copy.deepcopy(self.version), copy.deepcopy(self.datadict))
+        new_dict = {}
+        for key, val in self.datadict.iteritems():
+            new_dict[key] = copy.deepcopy(val)
+        return Schema(version=copy.deepcopy(self.version), datadict = new_dict)
 
     def createDefaultConfig(self):
         # create a configuration unit for default values of object properties
@@ -363,19 +366,6 @@ class Item(object):
     def __getitem__(self, key):
         return self._meta[key]
 
-    def __deepcopy__(self, memo):
-        cls = type(self)
-        obj = super(cls, cls).__new__(cls)
-        new_dict = {}
-        for key, val in self._metaproperties.iteritems():
-            if key not in ['defvalue']:
-                new_dict[key] = copy.deepcopy(val)
-            else:
-                new_dict[key] = val
-        setattr(obj, '_metaproperties', new_dict)
-        setattr(obj, '_meta', self._metaproperties.copy())
-        return obj
-
     def hasProperty(self, key):
         return key in self._meta
 
@@ -563,8 +553,6 @@ class ComponentItem(Item):
     def _describe(self):
         return "'" + self['category'] + "' object," + Item._describe(self)
 
-    def __deepcopy__(self, memo):
-        return super(ComponentItem, self).__deepcopy__(memo)
 
 valueTypeAllowed = lambda val, valTypeList: _valueTypeAllowed(val, valTypeList, logger)
 
@@ -574,7 +562,7 @@ class SimpleItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SimpleItem, self).__init__()
-        if typelist == defaultValue:
+        if typelist == defaultValue or None:
             typelist = []
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
@@ -583,12 +571,11 @@ class SimpleItem(Item):
     def _describe(self):
         return 'simple property,' + Item._describe(self)
 
-
 class SharedItem(Item):
 
     def __init__(self, defvalue, typelist=defaultValue, **kwds):
         super(SharedItem, self).__init__()
-        if typelist == defaultValue:
+        if typelist == defaultValue or None:
             typelist = []
         kwds['defvalue'] = defvalue
         kwds['typelist'] = typelist
