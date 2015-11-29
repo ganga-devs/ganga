@@ -366,19 +366,6 @@ class Item(object):
     def __getitem__(self, key):
         return self._meta[key]
 
-    def __deepcopy__(self, memo):
-        cls = type(self)
-        obj = super(cls, cls).__new__(cls)
-        new_dict = {}
-        for key, val in self._metaproperties.iteritems():
-            if key not in ['defvalue']:
-                new_dict[key] = copy.deepcopy(val)
-            else:
-                new_dict[key] = val
-        setattr(obj, '_metaproperties', new_dict)
-        setattr(obj, '_meta', self._metaproperties.copy())
-        return obj
-
     def hasProperty(self, key):
         return key in self._meta
 
