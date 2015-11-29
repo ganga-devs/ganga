@@ -326,7 +326,7 @@ class ProxyDataDescriptor(object):
             # we need to explicitly check for the list type, because simple
             # values (such as strings) may be iterable
             from Ganga.GPIDev.Lib.GangaList.GangaList import makeGangaList
-            if isType(val, knownGangaLists()):
+            if isType(val, getKnownLists()):
                 # create GangaList
                 if stripper is not None:
                     val = makeGangaList(val, stripper)
@@ -421,6 +421,7 @@ def GPIProxyClassFactory(name, pluginclass):
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
         instance = pluginclass()
+        instance.__init__()
         for this_attrib in [proxyRef, proxyClass]:
             if hasattr(instance, this_attrib):
                 try:
@@ -625,7 +626,12 @@ def GPIProxyClassFactory(name, pluginclass):
 
             if x not in [proxyRef, proxyObject]:
                 raise GangaAttributeError("'%s' has no attribute '%s'" % (getattr(self, proxyClass)._name, x))
+
         object.__setattr__(self, x, v)
+
+        #new_obj = getattr(self, x)
+        #if hasattr(new_obj, '_setParent'):
+        #    new_obj._setParent(self)
 
 
     helptext(_setattr, """Set a property of %(classname)s with consistency and safety checks.
