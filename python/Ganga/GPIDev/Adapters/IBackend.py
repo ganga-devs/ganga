@@ -118,7 +118,7 @@ class IBackend(GangaObject):
         from Ganga.Core import IncompleteJobSubmissionError, GangaException
         from Ganga.Utility.logging import log_user_exception
 
-        job = self.getJobObject()
+
         logger.debug("SubJobConfigs: %s" % len(subjobconfigs))
         logger.debug("rjobs: %s" % len(rjobs))
         assert(implies(rjobs, len(subjobconfigs) == len(rjobs)))
@@ -188,7 +188,7 @@ class IBackend(GangaObject):
                         return 0
             except Exception as x:
                 #sj.updateStatus('new')
-                if isinstance(x, GangaException):
+                if isType(x, GangaException):
                     logger.error(str(x))
                     log_user_exception(logger, debug=True)
                 else:
@@ -237,13 +237,10 @@ class IBackend(GangaObject):
             create_sandbox = job.createPackedInputSandbox
 
         if masterjobconfig:
-            if hasattr(job.application, 'is_prepared') and isinstance(job.application.is_prepared, ShareDir):
-                sharedir_pred = lambda f: f.name.find(
-                    job.application.is_prepared.name) > -1
-                sharedir_files = itertools.ifilter(
-                    sharedir_pred, masterjobconfig.getSandboxFiles())
-                nonsharedir_files = itertools.ifilterfalse(
-                    sharedir_pred, masterjobconfig.getSandboxFiles())
+            if hasattr(job.application, 'is_prepared') and isType(job.application.is_prepared, ShareDir):
+                sharedir_pred = lambda f: f.name.find(job.application.is_prepared.name) > -1
+                sharedir_files = itertools.ifilter(sharedir_pred, masterjobconfig.getSandboxFiles())
+                nonsharedir_files = itertools.ifilterfalse(sharedir_pred, masterjobconfig.getSandboxFiles())
             # ATLAS use bool to bypass the prepare mechanism and some ATLAS
             # apps have no is_prepared
             else:
@@ -321,7 +318,7 @@ class IBackend(GangaObject):
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
                     log_user_exception(
-                        logger, debug=isinstance(x, GangaException))
+                        logger, debug=isType(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
