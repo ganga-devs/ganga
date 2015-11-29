@@ -67,9 +67,9 @@ class GangaDataset(Dataset):
         from Ganga.GPIDev.Base import ReadOnlyObjectError
         if not hasattr(files, "__getitem__"):
             raise GangaException('Argument "files" must be a iterable.')
-        if self._parent is not None and self._parent._readonly():
+        if self._getParent() is not None and self._getParent()._readonly():
             raise ReadOnlyObjectError(
-                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._parent.id, self._name))
+                'object Job#%s  is read-only and attribute "%s/inputdata" cannot be modified now' % (self._getParent().id, self._name))
         names = self.getFileNames()
         files = [f for f in files]  # just in case they extend w/ self
         for f in files:
