@@ -146,7 +146,8 @@ class AfsToken (ICredential):
 
     def __init__(self, middleware=""):
         super(AfsToken, self).__init__()
-        if "ICommandSet" == self.command._name:
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        if "ICommandSet" == self.command._name or isType(self.command, GangaList):
             self.command = AfsCommand()
         if not self.username:
             if "USERNAME" in os.environ:

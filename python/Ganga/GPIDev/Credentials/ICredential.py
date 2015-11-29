@@ -148,11 +148,11 @@ class ICredential(GangaObject):
     """
 
     _schema = Schema(Version(1, 0), {
-        "maxTry": SimpleItem(defvalue=1,
+        "maxTry": SimpleItem(defvalue=1, typelist=[int],
                              doc="Number of password attempts allowed when creating credential"),
-        "minValidity": SimpleItem(defvalue="00:15",
+        "minValidity": SimpleItem(defvalue="00:15", typelist=[str],
                                   doc="Default minimum validity"),
-        "validityAtCreation": SimpleItem(defvalue="24:00",
+        "validityAtCreation": SimpleItem(defvalue="24:00", typelist=[str],
                                          doc="Default credential validity at creation"),
         "command": ComponentItem(category="credential_commands",
                                  defvalue="ICommandSet",
@@ -390,7 +390,7 @@ class ICredential(GangaObject):
 
         valid = True
 
-        if not validity:
+        if not validity or validity is None:
             validity = self.minValidity
         validityInSeconds = self.timeInSeconds(validity)
         timeleft = self.timeleft(force_check=force_check)

@@ -117,8 +117,7 @@ class GridCommand(ICommandSet):
     _schema['init']._meta['defvalue'] = "grid-proxy-init"
     _schema['info']._meta['defvalue'] = "grid-proxy-info"
     _schema['destroy']._meta['defvalue'] = "grid-proxy-destroy"
-    _schema['init_parameters']._meta['defvalue'] = {
-        "pipe": "-pwstdin", "valid": "-valid"}
+    _schema['init_parameters']._meta['defvalue'] = {"pipe": "-pwstdin", "valid": "-valid"}
     _schema['destroy_parameters']._meta['defvalue'] = {}
     _schema['info_parameters']._meta['defvalue'] = {}
 
@@ -146,8 +145,7 @@ class VomsCommand(ICommandSet):
     _schema['init']._meta['defvalue'] = "voms-proxy-init"
     _schema['info']._meta['defvalue'] = "voms-proxy-info"
     _schema['destroy']._meta['defvalue'] = "voms-proxy-destroy"
-    _schema['init_parameters']._meta['defvalue'] = {"pipe": "-pwstdin", "valid": "-valid",
-                                                    "voms": "-voms"}
+    _schema['init_parameters']._meta['defvalue'] = {"pipe": "-pwstdin", "valid": "-valid", "voms": "-voms"}
     _schema['destroy_parameters']._meta['defvalue'] = {}
     _schema['info_parameters']._meta['defvalue'] = {"vo": "-vo"}
 
@@ -169,21 +167,17 @@ for commandSet in [GridCommand, VomsCommand]:
 _infoCache = {}
 
 
-class GridProxy (ICredential):
+class GridProxy(ICredential):
 
     """
     Class for working with Grid proxy
     """
 
     _schema = ICredential._schema.inherit_copy()
-    _schema.datadict["voms"] = SimpleItem(
-        defvalue="", doc="Virtual organisation managment system information")
-    _schema.datadict["init_opts"] = SimpleItem(
-        defvalue="", doc="String of options to be passed to command for proxy creation")
-    _schema.datadict["info_refresh_time"] = SimpleItem(defvalue="00:15",
-                                                       doc="Refresh time of proxy info cache")
-    _schema.datadict["maxTry"] = SimpleItem(
-        defvalue=5, doc="Number of password attempts allowed when creating credential")
+    _schema.datadict["voms"] = SimpleItem(defvalue="", doc="Virtual organisation managment system information")
+    _schema.datadict["init_opts"] = SimpleItem(defvalue="", doc="String of options to be passed to command for proxy creation")
+    _schema.datadict["info_refresh_time"] = SimpleItem(defvalue="00:15", doc="Refresh time of proxy info cache")
+    _schema.datadict["maxTry"] = SimpleItem(defvalue=5, doc="Number of password attempts allowed when creating credential")
     _name = "GridProxy"
     _hidden = 1
     _enable_config = 1
@@ -211,7 +205,8 @@ class GridProxy (ICredential):
 
         Return value: None
         """
-        if "ICommandSet" == self.command._name:
+        from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
+        if "ICommandSet" == self.command._name or isType(self.command, GangaList):
             if self.voms:
                 self.command = self.vomsCommand
             else:
@@ -372,15 +367,14 @@ class GridProxy (ICredential):
             self.chooseCommandSet()
             infoCommand = " ".join([self.command.info, opt])
             logger.debug("Executing info Command: %s" % infoCommand)
-            status, output, message = self.shell.cmd1\
-                (cmd=infoCommand, allowed_exit=allowed_exit_range)
+            status, output, message = self.shell.cmd1(cmd=infoCommand, allowed_exit=allowed_exit_range)
 
             self.addToProxyCache(status, output, opt)
 
         if not output:
             output = ""
 
-        print("%s" % output)
+        return str("%s" % output)
 
     def renew(self, validity="", maxTry=0, minValidity="", check=True):
         self.chooseCommandSet()
