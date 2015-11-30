@@ -180,10 +180,12 @@ def post_config_handler(opt, value):
 
     _format, colour = config['_format'], config['_colour']
 
-    print("")# rcurrie - This strangely seems to trick the logging into working when the _customFormat is used on first start
+    #print("")# rcurrie - This strangely seems to trick the logging into working when the _customFormat is used on first start
 
-    if opt == '_format':
+    if opt in ['_format', '_customFormat']:
         badConfig = False
+        if opt == "_customFormat":
+            value = config['_format']
         if value in _formats:
             _format = _formats[value]
         else:
