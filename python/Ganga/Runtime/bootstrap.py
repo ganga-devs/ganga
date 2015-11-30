@@ -247,8 +247,7 @@ under certain conditions; type license() for details.
 
     @staticmethod
     def new_version(update=True):
-        versions_filename = os.path.join(
-            Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
+        versions_filename = os.path.join(Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
         if not os.path.exists(versions_filename):
             if update:
                 with open(versions_filename, 'w') as versions_file:
@@ -261,6 +260,61 @@ under certain conditions; type license() for details.
                 return True
 
         return False
+
+    @staticmethod
+    def rollHistoryForward():
+        versions_filename = os.path.join(Ganga.Utility.Config.getConfig('Configuration')['gangadir'], '.used_versions')
+        hasLoaded_newer = False
+        with open(versions_filename, 'r') as versions_file:
+            this_version = versions_file.read()
+            split_version_info = this_version.split('.')
+            if len(split_version_info) == 3:
+                major = int(split_version_info[0])
+                minor = int(split_version_info[1])
+                debug = int(split_version_info[2])
+                if major > 6:
+                    hasLoaded_newer = True
+                if major == 6 and minor > 1:
+                    hasLoaded_newer = True
+                if major == 6 and minor == 1 and debug > 13:
+                    hasLoaded_newer = True
+        
+        old_dir = os.path.expanduser('~/.ipython-ganga')
+        if 'IPYTHONDIR' in os.environ.keys():
+            old_dir = os.path.abspath(os.path.expanduser(os.environ['IPYTHONDIR']))
+
+        single_pass_file = os.path.join(old_dir, '.have_migrated')
+        logger.debug("testing: %s" % single_pass_file)
+
+        if hasLoaded_newer and not os.path.exists(single_pass_file):
+
+            logger.info("This is your first time Running Ganga >=6.1.14")
+            logger.info("Now attempting to migrate your IPython history file")
+
+            try:
+                from IPython.core.interactiveshell import InteractiveShell
+                from IPython.core.history import HistoryManager
+                from IPython.utils.path import locate_profile, get_ipython_dir
+            except ImportError as err:
+                logger.error("Unable to import required IPython files, can't roll forward history")
+                logger.error("If you want to roll forward your old history files you'll need to do this by hand")
+                logger.error("Please try running: https://gist.github.com/minrk/6003365")
+
+            old_text_history = os.path.join(old_dir, 'history')
+            new_sqlite_history = os.path.join(old_dir, "profile_default/history.sqlite")
+
+            IPython_history = HistoryManager(hist_file=new_sqlite_history, shell = InteractiveShell.instance())
+
+            with open(old_text_history) as hist_file:
+                for linenum, line in enumerate(hist_file):
+                    IPython_history.store_inputs(linenum, line)
+
+            ## Set a file to indicate that we've already made this transition
+            passed_file = open(single_pass_file, "w")
+            passed_file.close()
+
+            logger.info("IPython history migrated successfully.")
+
 
     @staticmethod
     def generate_config_file(config_file):
@@ -281,10 +335,8 @@ under certain conditions; type license() for details.
                     logger.info('Copied current config file to %s' % bn)
                     break
             else:
-                config_directory = os.path.dirname(
-                    os.path.abspath(config_file))
-                config_backupdir = os.path.join(
-                    config_directory, '.gangarc_backups')
+                config_directory = os.path.dirname(os.path.abspath(config_file))
+                config_backupdir = os.path.join(config_directory, '.gangarc_backups')
                 if not os.path.exists(config_backupdir):
                     os.makedirs(config_backupdir)
 
@@ -319,22 +371,18 @@ under certain conditions; type license() for details.
         import itertools
         logger = getLogger('ReleaseNotes')
         if getConfig('Configuration')['ReleaseNotes'] == True:
-            packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(
-                lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
-            pathname = os.path.join(os.path.dirname(
-                __file__), '..', '..', '..', 'release', 'ReleaseNotes-%s' % _gangaVersion)
+            packages = itertools.imap(lambda x: 'ganga/python/' + x, itertools.ifilter(lambda x: x != '', ['Ganga'] + getConfig('Configuration')['RUNTIME_PATH'].split(':')))
+            pathname = os.path.join(os.path.dirname(__file__), '..', '..', '..', 'release', 'ReleaseNotes-%s' % _gangaVersion)
 
             if not os.path.exists(pathname):
-                logger.warning(
-                    "couldn't find release notes for version %s" % _gangaVersion)
+                logger.warning("couldn't find release notes for version %s" % _gangaVersion)
                 return
 
             bounding_line = '**************************************************************************************************************\n'
             dividing_line = '--------------------------------------------------------------------------------------------------------------\n'
             with open(pathname, 'r') as f:
                 try:
-                    notes = [l.strip() for l in f.read().replace(
-                        bounding_line, '').split(dividing_line)]
+                    notes = [l.strip() for l in f.read().replace(bounding_line, '').split(dividing_line)]
                 except Exception, err:
                     logger.error('Error while attempting to read release notes')
                     logger.debug('Reason: %s' % str(err))
@@ -346,8 +394,7 @@ under certain conditions; type license() for details.
                 return
 
             log_divider = '-' * 50
-            note_gen = [(p, notes[notes.index(p) + 1].splitlines())
-                        for p in packages if p in notes]
+            note_gen = [(p, notes[notes.index(p) + 1].splitlines()) for p in packages if p in notes]
             if note_gen:
                 logger.info(log_divider)
                 logger.info(log_divider)
@@ -420,6 +467,8 @@ under certain conditions; type license() for details.
                 logger.info('re-reading in old config for updating...')
                 load_user_config(specified_config, {})
                 self.generate_config_file(specified_config)
+
+                self.rollHistoryForward()
 
                 # config file generation overwrites user values so we need to reapply the cmd line options to these user settings
                 # e.g. set -o[Configuration]gangadir=/home/mws/mygangadir and the user value gets reset to the .gangarc value
