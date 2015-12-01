@@ -605,8 +605,6 @@ class Job(GangaObject):
                         self.updateStatus('failed')
                         return
 
-            logger.info("\n\nPARENT:  %s\n\n" % str(stripProxy(self.backend)._getParent()))
-            logger.info("\nSELF: %s\n\n" % str(self))
             stripProxy(self.backend)._setParent(self)
 
             if self.status != newstatus:
