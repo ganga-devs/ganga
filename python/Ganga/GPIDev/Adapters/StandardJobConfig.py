@@ -109,8 +109,7 @@ class StandardJobConfig(object):
 
             fn = f.getPathInSandbox()
             if fn in self.__sandbox_check:
-                logger.warning(
-                    'File %s already in the sandbox (source=%s). Overriding from source=%s', fn, self.__sandbox_check[fn], f.name)
+                logger.warning('File %s already in the sandbox (source=%s). Overriding from source=%s', fn, self.__sandbox_check[fn], f.name)
             self.__sandbox_check[fn] = f.name
             return fn
 
