@@ -279,7 +279,6 @@ class GangaRepositoryLocal(GangaRepository):
             this_data = obj.getNodeData()
             for k, v in cache.iteritems():
                 this_data[k] = v
-            obj.setNodeData(copy.deepcopy(this_data))
             obj.setNodeIndexCache(cache)
             self._cache_load_timestamp[this_id] = os.stat(fn).st_ctime
             self._cached_cat[this_id] = cat
@@ -677,21 +676,30 @@ class GangaRepositoryLocal(GangaRepository):
 
             if this_id in self.objects:
                 obj = self.objects[this_id]
-                obj.setNodeData(tmpobj.getNodeData())
+                #logger.info("\n\nobj: %s\n\n" % str(type(obj)))
+                obj = copy.deepcopy(stripProxy(tmpobj))
+                #obj.__dict__ = tmpobj.__dict__
+                #for attr_name, attr_val in tmpobj.getNodeData().iteritems():
+                #    obj.setAttribute(attr_name, copy.deepcopy(attr_val))
+                #obj.setNodeData(tmpobj.getNodeData())
                 # Fix parent for objects in _data (necessary!)
-                for node_obj in obj.getNodeData().items():
-                    if isType(node_obj, Node):
-                        node_obj._setParent(obj)
-                    if isType(node_obj, (list, GangaList, tuple)):
+
+                for node_key, node_val in obj.getNodeData().iteritems():
+                    if isType(getattr(stripProxy(obj), node_key), Node):
+                        getattr(stripProxy(obj), node_key)._setParent(obj)
+                    if isType(getattr(stripProxy(obj), node_key), (list, GangaList, tuple)):
                         # set the parent of the list or dictionary (or other iterable) items
-                        for elem in node_obj:
+                        for elem in getattr(obj, node_key):
                             if isType(elem, Node):
                                 elem._setParent(obj)
+
 
                 # Check if index cache; if loaded; was valid:
                 if obj.getNodeIndexCache() is not None:
                     new_idx_cache = self.registry.getIndexCache(obj)
                     if new_idx_cache != obj.getNodeIndexCache():
+                        logger.debug("NEW: %s" % str(new_idx_cache))
+                        logger.debug("OLD: %s" % str(obj.getNodeIndexCache()))
                         # index is wrong! Try to get read access - then we can fix this
                         if len(self.lock([this_id])) != 0:
                             self.index_write(this_id)
@@ -727,6 +735,14 @@ class GangaRepositoryLocal(GangaRepository):
             self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
         else:
             logger.debug("Didn't Load Job ID: %s" % str(this_id))
+
+        for attr_name, attr_val in self.objects[this_id].getNodeData().iteritems():
+            if isType(getattr(self.objects[this_id], attr_name), Node):
+                getattr(self.objects[this_id], attr_name)._setParent(self.objects[this_id])
+            if isType(getattr(self.objects[this_id], attr_name), (list, tuple, GangaList)):
+                for elem in getattr(self.objects[this_id], attr_name):
+                    if isType(elem, Node):
+                        elem._setParent(self.objects[this_id])
 
         logger.debug("Finished Loading XML")
 
