@@ -283,11 +283,8 @@ This defines the following:
         externals_noarch = loc['externals_noarch']
         externals_arch = loc['externals_arch']
         archs = loc['archs']
-        version_check_bloats = loc['version_check_bloats']
 
         coreExternals = self._getTopLevelExternals()
-        self._merge(coreExternals, externals_noarch, version_check_bloats)
-        self._merge(coreExternals, externals_arch, version_check_bloats)
 
         # Copy software into Project Area
         s = join(self.options.area, "external")
