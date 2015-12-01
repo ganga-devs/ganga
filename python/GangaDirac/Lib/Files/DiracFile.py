@@ -581,7 +581,7 @@ class DiracFile(IGangaFile):
 
             if self.localDir is None:
                 #to_location = os.getcwd()
-                if self._parent is not None and os.path.isdir(self.getJobObject().outputdir):
+                if self._getParent() is not None and os.path.isdir(self.getJobObject().outputdir):
                     to_location = self.getJobObject().outputdir
                 else:
                     to_location = os.getcwd()
@@ -699,7 +699,7 @@ class DiracFile(IGangaFile):
         if self.localDir is None:
             sourceDir = os.getcwd()
             # attached to a job, use the joboutputdir
-            if self._parent != None and os.path.isdir(self.getJobObject().outputdir):
+            if self._getParent() != None and os.path.isdir(self.getJobObject().outputdir):
                 sourceDir = self.getJobObject().outputdir
 
         if not os.path.isdir(sourceDir):
@@ -774,7 +774,7 @@ class DiracFile(IGangaFile):
                 continue
             if stdout.get('OK', False) and lfn in stdout.get('Value', {'Successful': {}})['Successful']:
                 # when doing the two step upload delete the temp file
-                if self.compressed or self._parent != None:
+                if self.compressed or self._getParent() != None:
                     os.remove(name)
                 # need another eval as datetime needs to be included.
                 guid = stdout['Value']['Successful'][lfn].get('GUID', '')
@@ -915,7 +915,7 @@ for f in glob.glob('###NAME_PATTERN###'):
                 script += '###INDENT###processes.append(uploadFile("%s", "%s", %s))\n' % (this_file.namePattern, lfn_base, str(isCompressed))
 
 
-        if stripProxy(self)._parent and getName(stripProxy(self)._parent.backend) != 'Dirac':
+        if stripProxy(self)._getParent() and getName(stripProxy(self).getJobObject().backend) != 'Dirac':
             script_env = self._getDiracEnvStr()
         else:
             script_env = str(None)
