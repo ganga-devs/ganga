@@ -170,6 +170,10 @@ class Registry(object):
         self.changed_ids = {}
         self._autoFlush = True
 
+        self.repository = None
+        self._objects = None
+        self._incomplete_objects = None
+
         ## Record the last dirty and flush times to determine whether an idividual flush command should flush
         ## Logc to use these is implemented in checkShouldFlush()
         self._dirtyModTime = None
@@ -191,7 +195,8 @@ class Registry(object):
         """ Returns the Ganga Object with the given id.
             Raise RegistryKeyError"""
         try:
-            return self._objects[this_id]
+            from Ganga.GPIDev.Base.Proxy import addProxy
+            return addProxy(self._objects[this_id])
         except KeyError, err:
             logger.debug("Repo KeyError: %s" % str(err))
             if this_id in self._incomplete_objects:
