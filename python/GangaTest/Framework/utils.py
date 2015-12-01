@@ -63,6 +63,10 @@ def sleep_until_state(j, timeout=None, state='completed', break_states=None, sle
         logger.debug("Status: %s" % j.status)
     logger.info("Job finished with status: %s" % j.status )
     logger.info("Timeout: %s" % str(timeout))
+    try:
+        j._getRegistry().updateLocksNow()
+    except:
+        pass
     return j.status == state
 
 def sleep_until_completed(j, timeout=None, sleep_period=1, verbose=False):
