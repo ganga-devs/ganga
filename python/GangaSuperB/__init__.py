@@ -3,7 +3,8 @@ from Ganga.Runtime.GPIexport import exportToGPI
 from Ganga.Utility.Config import *
 
 from Ganga.Utility.Config.Config import _after_bootstrap
-logger = Ganga.Utility.logging.getLogger()
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 if not _after_bootstrap:
     config = makeConfig('SuperB', 'Configuration parameters for SuperB ganga plugin')

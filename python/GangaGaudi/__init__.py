@@ -3,7 +3,8 @@ import Ganga.Utility.logging
 import Ganga.Utility.Config
 
 from Ganga.Utility.Config.Config import _after_bootstrap
-logger = Ganga.Utility.logging.getLogger()
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 if not _after_bootstrap:
 
