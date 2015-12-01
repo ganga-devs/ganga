@@ -215,21 +215,19 @@ class Job(GangaObject):
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
     def __init__(self):
-        self._Job_constructed = False
+        setattr(self, '_parent', None)
+        setattr(self, 'id', '')
         super(Job, self).__init__()
         self.time.newjob()  # <-----------NEW: timestamp method
         logger.debug("__init__")
-        self._Job_constructed = True
 
     def __construct__(self, args):
 
         self.status = "new"
         logger.debug("Intercepting __construct__")
 
-        self._Job_constructed = False
         super(Job, self).__construct__(args)
 
-        self._Job_constructed = True
 
         # Not correctly calling Copy Constructor as in
         # Ganga/test/GPI/TestJobProperties:test008_CopyConstructor
@@ -477,14 +475,11 @@ class Job(GangaObject):
                 id = self.id
             except KeyError:
                 id = None
-        if hasattr(self, '_Job_constructed') and self._Job_constructed is True:
-            if hasattr(self, 'status'):
-                oldstat = self.status
-            else:
-                oldstat = None
+
+        if hasattr(self, 'status'):
+            oldstat = self.status
         else:
-            oldstat = value
-            #raise JobError( "Job Not constructed: %s, %s " % (str(self), str(value) ) )
+           oldstat = None
 
         logger.debug('job %s "%s" setting raw status to "%s"', str(id), str(oldstat), value)
 
@@ -571,6 +566,9 @@ class Job(GangaObject):
         Such default transitions do not have hooks.
         """
 
+        logger.info("updatStatus: Job: %s from %s to %s" % (self.getFQID('.'), self.status, newstatus))
+
+
         # For debugging to trace Failures and such
         #import traceback
         # traceback.print_stack()
@@ -606,6 +604,10 @@ class Job(GangaObject):
                         logger.info("Job %s outputfile Failure" % str(self.getFQID('.')))
                         self.updateStatus('failed')
                         return
+
+            logger.info("\n\nPARENT:  %s\n\n" % str(stripProxy(self.backend)._getParent()))
+            logger.info("\nSELF: %s\n\n" % str(self))
+            stripProxy(self.backend)._setParent(self)
 
             if self.status != newstatus:
                 self.time.timenow(str(newstatus))
@@ -972,11 +974,11 @@ class Job(GangaObject):
         If optional sep is specified FQID string is returned, ids are separated by sep.
         For example: getFQID('.') will return 'masterjob_id.subjob_id....'
         """
-        if hasattr(self, 'id'):
+        if hasattr(stripProxy(self), 'id'):
             fqid = [self.id]
         else:
             return None
-        cur = self._getParent()  # FIXME: or use master attribute?
+        cur = stripProxy(self)._getParent()  # FIXME: or use master attribute?
         while cur:
             fqid.append(cur.id)
             cur = cur._getParent()
@@ -2299,8 +2301,8 @@ class Job(GangaObject):
             #logger.debug("attr: %s" % str(attr))
             super(Job, self).__setattr__(attr, value)
 
-        if hasattr(getattr(self, attr), '_getParent'):
-            logger.debug("attr: %s parent: %s" % (attr, str(getattr(self, attr)._getParent())))
+        #if hasattr(getattr(self, attr), '_getParent'):
+        #    logger.debug("attr: %s parent: %s" % (attr, str(getattr(self, attr)._getParent())))
 
 
 class JobTemplate(Job):
