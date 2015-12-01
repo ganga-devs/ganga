@@ -59,6 +59,19 @@ except ConfigError, err:
 
 session_lock_refresher = None
 
+def getGlobalLockRef(session_name, sdir, gfn, _on_afs):
+    global session_lock_refresher
+    if session_lock_refresher is None:
+        try:
+            os.close(SessionLockManager.delay_init_open(gfn))
+            registerGlobalSessionFile(gfn)
+        except OSError as err:
+            logger.debug("Startup Lock Refresher Exception: %s" % str(err))
+            raise RepositoryError(None, "Error on session file '%s' creation: %s" % (gfn, err))
+        session_lock_refresher = SessionLockRefresher(session_name, sdir, gfn, None, _on_afs)
+        session_lock_refresher.start()
+    return session_lock_refresher
+
 sessionFiles = []
 sessionFileHandlers = []
 
@@ -317,7 +330,8 @@ class SessionLockManager(object):
         self.realpath = realpath
         #logger.debug( "Initializing SessionLockManager: " + self.fn )
 
-    def delay_init_open(self, filename):
+    @staticmethod
+    def delay_init_open(filename):
         value = None
         i = 0
         while value is None:
@@ -370,16 +384,8 @@ class SessionLockManager(object):
             except OSError as err:
                 logger.debug("Startup Session Exception: %s" % str(err))
                 raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.fn, err))
-            global session_lock_refresher
-            if session_lock_refresher is None:
-                try:
-                    os.close(self.delay_init_open(self.gfn))
-                    registerGlobalSessionFile(self.gfn)
-                except OSError as err:
-                    logger.debug("Startup Lock Refresher Exception: %s" % str(err))
-                    raise RepositoryError(self.repo, "Error on session file '%s' creation: %s" % (self.gfn, err))
-                session_lock_refresher = SessionLockRefresher(self.session_name, self.sdir, self.gfn, None, self.afs)
-                session_lock_refresher.start()
+
+            session_lock_refresher = getGlobalLockRef(self.session_name, self.sdir, self.gfn, self.afs)
 
             session_lock_refresher.addRepo(self.fn, self.repo)
             self.session_write()
@@ -412,12 +418,13 @@ class SessionLockManager(object):
         except OSError as x:
             logger.debug("Session file '%s' or '%s' was deleted already or removal failed: %s" % (self.fn, self.gfn, str(x)))
 
-    def delayopen_global(self):
+    @staticmethod
+    def delayopen_global(lockfn):
         value = None
         i = 0
         while value is None:
             try:
-                value = os.open(self.lockfn, os.O_RDWR)
+                value = os.open(lockfn, os.O_RDWR)
             except OSError as x:
                  # print "fail"
                 value = None
@@ -451,7 +458,7 @@ class SessionLockManager(object):
                     lock = open(self.lockfn, "w")
                     # create file (does not interfere with existing sessions)
                     lock.close()
-                self.lockfd = self.delayopen_global()
+                self.lockfd = self.delayopen_global(self.lockfn)
                 registerGlobalSessionFile(self.lockfn)
                 registerGlobalSessionFileHandler(self.lockfd)
             except IOError as x:
@@ -459,12 +466,13 @@ class SessionLockManager(object):
             except OSError as x:
                 raise RepositoryError(self.repo, "Could not open lock file '%s': %s" % (self.lockfn, x))
 
-    def delay_lock_mod(self, lock_mod):
+    @staticmethod
+    def delay_lock_mod(lockfd, lock_mod):
         i = 0
         num_tries = 35
         while i <= num_tries:
             try:
-                fcntl.lockf(self.lockfd, lock_mod)
+                fcntl.lockf(lockfd, lock_mod)
             except IOError as x:
                 time.sleep(0.1)
                 i += 1
@@ -508,7 +516,7 @@ class SessionLockManager(object):
                     time.sleep(0.01)
 
             else:
-                self.delay_lock_mod(fcntl.LOCK_EX)
+                self.delay_lock_mod(self.lockfd, fcntl.LOCK_EX)
 
             #logger.debug("global capture")
         except IOError as x:
@@ -520,7 +528,7 @@ class SessionLockManager(object):
                 lock_path = str(self.lockfn) + '.afs'
                 os.system("fs setacl %s %s rlidwka" % (lock_path, getpass.getuser()))
             else:
-                self.delay_lock_mod(fcntl.LOCK_UN)
+                self.delay_lock_mod(self.lockfd, fcntl.LOCK_UN)
 
             #logger.debug("global release")
         except IOError as x:
