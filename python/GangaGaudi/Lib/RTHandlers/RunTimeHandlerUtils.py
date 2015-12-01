@@ -122,12 +122,16 @@ def sandbox_prepare(app, appsubconfig, appmasterconfig, jobmasterconfig):
     if appsubconfig:
         inputsandbox += appsubconfig.getSandboxFiles()
 
+    logger.info("inputS: %s" % str(inputsandbox))
+
     # Strangly NEITHER the master outputsandbox OR job.outputsandbox
     # are added automatically.
     if jobmasterconfig:
         outputsandbox += jobmasterconfig.getOutputSandboxFiles()
     if appsubconfig:
         outputsandbox += appsubconfig.getOutputSandboxFiles()
+
+    logger.info("outputS: %s" % str(outputsandbox))
 
     return unique(inputsandbox), unique(outputsandbox)
 

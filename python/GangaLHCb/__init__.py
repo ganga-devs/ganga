@@ -9,35 +9,39 @@ import tempfile
 import Ganga.Utility.logging
 import Ganga.Utility.Config
 from optparse import OptionParser, OptionValueError
-configLHCb = Ganga.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
-configDirac = Ganga.Utility.Config.getConfig('DIRAC')
+
+from Ganga.Utility.Config.Config import _after_bootstrap
 logger = Ganga.Utility.logging.getLogger()
 
-# Set default values for the LHCb config section.
-dscrpt = 'The name of the local site to be used for resolving LFNs into PFNs.'
-configLHCb.addOption('LocalSite', '', dscrpt)
+if not _after_bootstrap:
+    configLHCb = Ganga.Utility.Config.makeConfig('LHCb', 'Parameters for LHCb')
+    configDirac = Ganga.Utility.Config.getConfig('DIRAC')
 
-dscrpt = 'Files from these services will go to the output sandbox (unless \
-overridden by the user in a specific job via the Job.outputdata field). Files \
-from all other known handlers will go to output data (unless overridden by \
-the user in a specific job via the Job.outputsandbox field).'
-configLHCb.addOption('outputsandbox_types',
+    # Set default values for the LHCb config section.
+    dscrpt = 'The name of the local site to be used for resolving LFNs into PFNs.'
+    configLHCb.addOption('LocalSite', '', dscrpt)
+
+    dscrpt = 'Files from these services will go to the output sandbox (unless \
+    overridden by the user in a specific job via the Job.outputdata field). Files \
+    from all other known handlers will go to output data (unless overridden by \
+    the user in a specific job via the Job.outputsandbox field).'
+    configLHCb.addOption('outputsandbox_types',
                      ['CounterSummarySvc', 'NTupleSvc',
                       'HistogramPersistencySvc', 'MicroDSTStream',
                       'EvtTupleSvc'], dscrpt)
-dscrpt = 'The string that is added after the filename in the options to tell' \
-         ' Gaudi how to read the data. This is the default value used if the '\
-         'file name does not match any of the patterns in '\
-         'datatype_string_patterns.'
-configLHCb.addOption('datatype_string_default',
+    dscrpt = 'The string that is added after the filename in the options to tell' \
+             ' Gaudi how to read the data. This is the default value used if the '\
+             'file name does not match any of the patterns in '\
+             'datatype_string_patterns.'
+    configLHCb.addOption('datatype_string_default',
                      """TYP='POOL_ROOTTREE' OPT='READ'""", dscrpt)
-dscrpt = 'If a file matches one of these patterns, then the string here '\
+    dscrpt = 'If a file matches one of these patterns, then the string here '\
          'overrides the datatype_string_default value.'
-defval = {"SVC='LHCb::MDFSelector'": ['*.raw', '*.RAW', '*.mdf', '*.MDF']}
-configLHCb.addOption('datatype_string_patterns', defval, dscrpt)
-configLHCb.addOption('UserAddedApplications', "", "List of user added LHCb applications split by ':'")
+    defval = {"SVC='LHCb::MDFSelector'": ['*.raw', '*.RAW', '*.mdf', '*.MDF']}
+    configLHCb.addOption('datatype_string_patterns', defval, dscrpt)
+    configLHCb.addOption('UserAddedApplications', "", "List of user added LHCb applications split by ':'")
 
-configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
+    configLHCb.addOption('SplitByFilesBackend', 'OfflineGangaDiracSplitter',
                      'Possible SplitByFiles backend algorithms to use to split jobs into subjobs,\
                       options are: GangaDiracSplitter, OfflineGangaDiracSplitter, splitInputDataBySize and splitInputData')
 
@@ -86,7 +90,7 @@ def _store_dirac_environment():
         os.makedirs(fdir)
     fname = os.path.join(fdir, diracversion)
     if not os.path.exists(fname) or not os.path.getsize(fname):
-        file = open(fname, 'w+')
+        s_file = open(fname, 'w+')
         cmd = '/usr/bin/env bash -c \"source %s LHCBDIRAC %s ROOT>& /dev/null && '\
             'printenv > %s\"' % (setup_script, diracversion, fname)
         rc = subprocess.Popen([cmd], shell=True).wait()
@@ -94,21 +98,22 @@ def _store_dirac_environment():
             msg = '--dirac: Failed to setup Dirac version %s as obtained from project dependency.' % value
             raise OptionValueError(msg)
         count = 0
-        for line in file.readlines():
+        for line in this_file.readlines():
             if line.find('DIRAC') >= 0:
                 count += 1
             varval = line.strip().split('=')
             env[varval[0]] = ''.join(varval[1:])
-        file.close()
+        this_file.close()
         if count == 0:
             msg = 'Tried to setup Dirac version %s. For some reason this did not setup the DIRAC environment.' % value
             raise OptionValueError(msg)
     os.environ['GANGADIRACENVIRONMENT'] = fname
 
-_store_dirac_environment()
-configDirac.setSessionValue('DiracEnvFile', os.environ['GANGADIRACENVIRONMENT'])
+if not _after_bootstrap:
+    _store_dirac_environment()
+    configDirac.setSessionValue('DiracEnvFile', os.environ['GANGADIRACENVIRONMENT'])
 
-_store_root_version()
+    _store_root_version()
 
 
 def getEnvironment(config=None):
