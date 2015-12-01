@@ -48,7 +48,7 @@ class PrepRegistry(Registry):
         ## THIS IS DISABLED AS IT REQUIRES ACCESS TO REPO OBJECTS THROUGH GETREADACCES...
         ## THIS NEEDS TO BE FIXED OR IMPLEMENTED AS A SHUTDOWN SERVICE!!!
         try:
-            self.shareref.closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
+            stripProxy(self.shareref).closedown()  ## Commenting out a potentially EXTREMELY heavy operation from shutdown after ganga dev meeting - rcurrie
         except Exception as err:
             logger.error("Shutdown Error in ShareRef")
             logger.error("Err: %s" % str(err))
