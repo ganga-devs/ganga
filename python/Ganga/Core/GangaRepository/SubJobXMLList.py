@@ -199,7 +199,7 @@ class SubJobXMLList(GangaObject):
         return subjob_count
 
     def values(self):
-        raw_self = stripProy(self)
+        raw_self = stripProxy(self)
         return [raw_self[i] for i in range(0, len(raw_self))]
 
     def _loadSubJobFromDisk(self, subjob_data):
