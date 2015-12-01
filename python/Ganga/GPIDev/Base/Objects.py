@@ -129,10 +129,10 @@ class Node(object):
         return self._parent
 
     def _setParent(self, parent):
-        #logger.info("Setting: %s" %  parent)
-        if parent is None:
-            import traceback
-            traceback.print_stack()
+        #if parent is None:
+        #    import traceback
+        #    traceback.print_stack()
+        #    logger.error("Setting NONE Parent!!!")
         self._parent = parent
 
     # get the root of the object tree
@@ -188,10 +188,30 @@ class Node(object):
 
         visitor.nodeEnd(self)
 
+    def __copy__(self):
+        copied_obj = self.clone()
+
     # clone self and return a properly initialized object
     def clone(self):
         new_obj = deepcopy(self)
         new_obj.__setstate__(self.__getstate__())
+
+        ## Fix some objects losing parent knowledge
+        src_dict = new_obj.__dict__
+        for key, val in src_dict.iteritems():
+            this_attr = getattr(new_obj, key)
+            if isType(this_attr, GangaObject):
+                #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
+                stripProxy(this_attr)._setParent(stripProxy(new_obj))
+
+        ## Fix some objects losing parent knowledge
+        src_dict = self.__dict__
+        for key, val in src_dict.iteritems():
+            this_attr = getattr(self, key)
+            if isType(this_attr, GangaObject):
+                #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
+                stripProxy(this_attr)._setParent(stripProxy(self))
+
         return new_obj
 
     # copy all the properties recursively from the srcobj
@@ -229,8 +249,7 @@ class Node(object):
         src_dict = srcobj.__dict__
         for key, val in src_dict.iteritems():
             this_attr = getattr(srcobj, key)
-            from Ganga.GPIDev.Lib.Job.Job import Job
-            if isType(this_attr, GangaObject) and not isType(this_attr, Job):
+            if isType(this_attr, GangaObject):
                 #logger.debug("k: %s  Parent: %s" % (str(key), (stripProxy(srcobj))))
                 stripProxy(this_attr)._setParent(stripProxy(srcobj))
 
@@ -439,16 +458,16 @@ class Descriptor(object):
                                     _obj._getReadAccess()
                                     #import traceback
                                     #traceback.print_stack()
-                                    logger.debug("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                    #GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                    logger.debug("1) Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                    GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
                                     result = _obj.getNodeAttribute(getName(self))
                             else:
                                 ##THIS TRIGGERS THE LOADING OF THE JOB FROM DISK!!!
                                 _obj._getReadAccess()
                                 #import traceback
                                 #traceback.print_stack()
-                                logger.debug("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
-                                #GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                logger.debug("2) Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
+                                GangaException("Error, cannot find %s parameter in %s" % (getName(self), getName(obj)))
                                 result = _obj.getNodeAttribute(getName(self))
                 else:
                     if lookup_exception is not None:
@@ -517,12 +536,12 @@ class Descriptor(object):
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
                 raise GangaAttributeError('%s: attempt to assign a list containing incompatible objects %s to the property in category "%s"' % (getName(self), v, item['category']))
         else:
-            if v._category != item['category'] and item['category'] != 'internal':
+            if stripProxy(v)._category != item['category'] and item['category'] != 'internal':
                 from Ganga.GPIDev.Base.Proxy import GangaAttributeError
                 raise GangaAttributeError('%s: attempt to assign an incompatible object %s to the property in category "%s"' % (getName(self), v, item['category']))
 
  
-        v_copy = v.clone()
+        v_copy = stripProxy(v).clone()
 
         #logger.info("Cloned Object Parent: %s" % v_copy._getParent())
         #logger.info("Original: %s" % v_copy._getParent())
@@ -622,6 +641,7 @@ class Descriptor(object):
         item = stripProxy(obj._schema[getName(self)])
 
         def cloneVal(v):
+            from Ganga.GPIDev.Lib.GangaList.GangaList import GangaList
             if isType(v, (list, tuple, GangaList)):
                 new_v = GangaList()
                 for elem in v:
@@ -866,6 +886,7 @@ class GangaObject(Node):
     # on the deepcopy reset all non-copyable properties as defined in the
     # schema
     def __deepcopy__(self, memo=None):
+        true_parent = self._getParent()
         self = stripProxy(self)
         self._getReadAccess()
         self_copy = super(GangaObject, self).__deepcopy__(memo)
@@ -893,6 +914,9 @@ class GangaObject(Node):
 
                         logger.debug("Increasing shareref")
                         shareref.increase(shared_dir.name)
+        if true_parent is not None:
+            self._setParent(true_parent)
+            self_copy._setParent(true_parent)
         return self_copy
 
     def accept(self, visitor):
