@@ -5,6 +5,7 @@ from Ganga.GPIDev.Base.Objects import GangaObject
 from Ganga.Utility.logging import getLogger
 from Ganga.Core.GangaRepository.VStreamer import from_file, to_file
 from Ganga.Core.exceptions import GangaException
+from Ganga.GPIDev.Base.Proxy import stripProxy
 import errno
 import copy
 logger = getLogger()
@@ -81,7 +82,7 @@ class SubJobXMLList(GangaObject):
         obj = super(cls, cls).__new__(cls)
         #this_dict = copy.deepcopy(self.__dict__, memo)
         new_dict = {}
-        for dict_key, dict_value in self.__class__.__dict__.iteritems():
+        for dict_key, dict_value in self.__dict__.iteritems():
 
             ## Copy objects where it's sane to
             if dict_key not in ['_cachedJobs', '_definedParent', '_to_file', '_from_file', '_registry']:
@@ -98,64 +99,68 @@ class SubJobXMLList(GangaObject):
         return obj
 
     def _reset_cachedJobs(self, obj):
-        self._cachedJobs = obj
+        stripProxy(self)._cachedJobs = obj
 
     def isLoaded(self, subjob_id):
-        return subjob_id in self._cachedJobs.keys()
+        return subjob_id in stripProxy(self)._cachedJobs.keys()
 
     def load_subJobIndex(self):
 
+        raw_self = stripProxy(self)
+
         import os.path
-        index_file = os.path.join(self._jobDirectory, self._subjob_master_index_name )
+        index_file = os.path.join(raw_self._jobDirectory, raw_self._subjob_master_index_name )
         if os.path.isfile( index_file ):
             index_file_obj = None
             try:
                 from Ganga.Core.GangaRepository.PickleStreamer import from_file
                 try:
                     index_file_obj = open( index_file, "r" )
-                    self._subjobIndexData = from_file( index_file_obj )[0]
+                    raw_self._subjobIndexData = from_file( index_file_obj )[0]
                 except IOError, err:
-                    self._subjobIndexData = None
+                    raw_self._subjobIndexData = None
 
-                if self._subjobIndexData is None:
-                    self._subjobIndexData = {}
+                if raw_self._subjobIndexData is None:
+                    raw_self._subjobIndexData = {}
                 else:
-                    for subjob in self._subjobIndexData.keys():
-                        index_data = self._subjobIndexData.get(subjob)
+                    for subjob in raw_self._subjobIndexData.keys():
+                        index_data = raw_self._subjobIndexData.get(subjob)
                         if index_data is not None and 'modified' in index_data:
                             mod_time = index_data['modified']
-                            disk_location = self.__get_dataFile(str(subjob))
+                            disk_location = raw_self.__get_dataFile(str(subjob))
                             import os
                             disk_time = os.stat(disk_location).st_ctime
                             if mod_time != disk_time:
-                                self._subjobIndexData = {}
+                                raw_self._subjobIndexData = {}
                                 break
                         else:
-                            self._subjobIndexData = {}
+                            raw_self._subjobIndexData = {}
             except Exception, err:
                 logger.error( "Subjob Index file open, error: %s" % str(err) )
-                self._subjobIndexData = {}
+                raw_self._subjobIndexData = {}
             finally:
                 if index_file_obj is not None:
                     index_file_obj.close()
-                if self._subjobIndexData is None:
-                    self._subjobIndexData = {}
+                if raw_self._subjobIndexData is None:
+                    raw_self._subjobIndexData = {}
         return
 
     def write_subJobIndex(self):
 
+        raw_self = stripProxy(self)
+
         all_caches = {}
-        for i in range(len(self)):
-            this_cache = self._registry.getIndexCache( self.__getitem__(i) )
+        for i in range(len(raw_self)):
+            this_cache = raw_self._registry.getIndexCache( raw_self.__getitem__(i) )
             all_caches[i] = this_cache
-            disk_location = self.__get_dataFile(i)
+            disk_location = raw_self.__get_dataFile(i)
             import os
             all_caches[i]['modified'] = os.stat(disk_location).st_ctime
 
         import os.path
         try:
             from Ganga.Core.GangaRepository.PickleStreamer import to_file
-            index_file = os.path.join(self._jobDirectory, self._subjob_master_index_name )
+            index_file = os.path.join(raw_self._jobDirectory, raw_self._subjob_master_index_name )
             index_file_obj = open( index_file, "w" )
             to_file( all_caches, index_file_obj )
             index_file_obj.close()
@@ -163,26 +168,29 @@ class SubJobXMLList(GangaObject):
             logger.debug( "cache write error: %s" % str(err) )
 
     def __iter__(self):
-        return SJXLIterator(self)
+        raw_self = stripProxy(self)
+        return SJXLIterator(raw_self)
 
     def __get_dataFile(self, index, force_backup=False):
         import os.path
-        subjob_data = os.path.join(self._jobDirectory, str(index), self._dataFileName)
-        if self._load_backup is True or force_backup is True:
+        raw_self = stripProxy(self)
+        subjob_data = os.path.join(raw_self._jobDirectory, str(index), raw_self._dataFileName)
+        if raw_self._load_backup is True or force_backup is True:
             subjob_data = subjob_data + '~'
         return subjob_data
 
     def __len__(self):
+        raw_self = stripProxy(self)
         subjob_count = 0
         from os import listdir, path
-        if not path.isdir( self._jobDirectory ):
+        if not path.isdir( raw_self._jobDirectory ):
             return 0
 
-        jobDirectoryList = listdir( self._jobDirectory )
+        jobDirectoryList = listdir( raw_self._jobDirectory )
 
         i=0
         while str(i) in jobDirectoryList:
-            subjob_data = self.__get_dataFile(str(i))
+            subjob_data = raw_self.__get_dataFile(str(i))
             import os.path
             if os.path.isfile( subjob_data ):
                 subjob_count = subjob_count + 1
@@ -191,7 +199,8 @@ class SubJobXMLList(GangaObject):
         return subjob_count
 
     def values(self):
-        return [self[i] for i in range(0, len(self))]
+        raw_self = stripProy(self)
+        return [raw_self[i] for i in range(0, len(raw_self))]
 
     def _loadSubJobFromDisk(self, subjob_data):
         # For debugging where this was called from to try and push it to as high a level as possible at runtime
@@ -200,7 +209,7 @@ class SubJobXMLList(GangaObject):
         #import sys
         #sys.exit(-1)
         try:
-            job_obj = self.getJobObject()
+            job_obj = stripProxy(self).getJobObject()
         except Exception, err:
             logger.debug( "Error: %s" % str(err) )
             job_obj = None
@@ -213,10 +222,11 @@ class SubJobXMLList(GangaObject):
         return sj_file
 
     def __call__(self, index):
-        return self.__getitem__(index)
+        return stripProxy(self).__getitem__(index)
 
     def __getitem__(self, index):
 
+        raw_self = stripProxy(self)
         logger.debug("Requesting: %s" % str(index))
 
         #if index == 0:
@@ -224,56 +234,57 @@ class SubJobXMLList(GangaObject):
         #traceback.print_stack()
 
         subjob_data = None
-        if not index in self._cachedJobs.keys():
-            if len(self) < index:
+        if not index in raw_self._cachedJobs.keys():
+            if len(raw_self) < index:
                 raise GangaException("Subjob: %s does NOT exist" % str(index))
-            subjob_data = self.__get_dataFile(str(index))
+            subjob_data = raw_self.__get_dataFile(str(index))
             try:
-                sj_file = self._loadSubJobFromDisk(subjob_data)
+                sj_file = raw_self._loadSubJobFromDisk(subjob_data)
             except IOError as x:
                 if x.errno == errno.ENOENT:
                     raise IOError("Subobject %s not found: %s" % (fqid, x))
                 else:
-                    raise RepositoryError(self,"IOError on loading subobject %s: %s" % (fqid, x))
+                    raise RepositoryError(raw_self,"IOError on loading subobject %s: %s" % (fqid, x))
 
             try:
-                self._cachedJobs[index] = self._from_file(sj_file)[0]
+                raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]
             except Exception as err:
 
                 try:
-                    subjob_data = self.__get_dataFile(str(index), True)
-                    elf._cachedJobs[index] = self._from_file(sj_file)[0]
-                    self._cachedJobs[index] = self._from_file(sj_file)[0]
+                    subjob_data = raw_self.__get_dataFile(str(index), True)
+                    raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]
+                    raw_self._cachedJobs[index] = raw_self._from_file(sj_file)[0]
                 except Exception as err:
                     logger.debug("Failed to Load XML for job: %s using: %s" % (str(index), str(subjob_data)))
                     logger.debug("Err:\n%s" % str(err))
                     raise err
 
-        if self._definedParent is not None:
-            parent_name = "Job: %s" % self._definedParent.getFQID('.')
+        if raw_self._definedParent is not None:
+            parent_name = "Job: %s" % raw_self._definedParent.getFQID('.')
         else:
             parent_name = "None"
         logger.debug('Setting Parent [%s]: %s' % (str(index), (parent_name)))
-        if self._definedParent is not None:
-            self._cachedJobs[index]._setParent( self._definedParent )
-        return self._cachedJobs[index]
+        if raw_self._definedParent is not None:
+            raw_self._cachedJobs[index]._setParent( raw_self._definedParent )
+        return raw_self._cachedJobs[index]
 
     def _setParent(self, parentObj):
         
+        raw_self = stripProxy(self)
         if parentObj is not None:
             parent_name = "Job: %s" % parentObj.getFQID('.')
         else:
             parent_name = "None"
         logger.debug('Setting Parent: %s' % parent_name)
 
-        super(SubJobXMLList, self)._setParent( parentObj )
+        super(SubJobXMLList, raw_self)._setParent( parentObj )
 
-        self._definedParent = parentObj
+        raw_self._definedParent = parentObj
 
-        if not hasattr(self, '_cachedJobs'):
+        if not hasattr(raw_self, '_cachedJobs'):
             return
-        for k in self._cachedJobs.keys():
-            self._cachedJobs[k]._setParent( parentObj )
+        for k in raw_self._cachedJobs.keys():
+            raw_self._cachedJobs[k]._setParent( parentObj )
 
     def getCachedData(self, index):
 
@@ -281,27 +292,29 @@ class SubJobXMLList(GangaObject):
 
     def getAllCachedData(self):
 
+        raw_self = stripProxy(self)
         cached_data = []
-        logger.debug( "Cache: %s" % str(self._subjobIndexData.keys()) )
-        if len(self._subjobIndexData.keys()) == len(self):
-            for i in range(len(self)):
-                cached_data.append( self._subjobIndexData[i] )
+        logger.debug( "Cache: %s" % str(raw_self._subjobIndexData.keys()) )
+        if len(raw_self._subjobIndexData.keys()) == len(raw_self):
+            for i in range(len(raw_self)):
+                cached_data.append( raw_self._subjobIndexData[i] )
         else:
-            for i in range(len(self)):
-                cached_data.append( self._registry.getIndexCache( self.__getitem__(i) ) )
+            for i in range(len(raw_self)):
+                cached_data.append( raw_self._registry.getIndexCache( raw_self.__getitem__(i) ) )
 
         return cached_data
 
     def flush(self):
         from Ganga.Core.GangaRepository.GangaRepositoryXML import safe_save
 
-        for index in range(len(self)):
-            if index in self._cachedJobs.keys():
-                subjob_data = self.__get_dataFile(str(index))
-                subjob_obj = self._cachedJobs[index]
+        raw_self = stripProxy(self)
+        for index in range(len(raw_self)):
+            if index in raw_self._cachedJobs.keys():
+                subjob_data = raw_self.__get_dataFile(str(index))
+                subjob_obj = raw_self._cachedJobs[index]
 
-                safe_save( subjob_data, subjob_obj, self._to_file )
+                safe_save( subjob_data, subjob_obj, raw_self._to_file )
 
-        self.write_subJobIndex()
+        raw_self.write_subJobIndex()
         return
 
