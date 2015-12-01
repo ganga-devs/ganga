@@ -230,7 +230,7 @@ class RegistrySlice(object):
                     callback(this_id, obj)
 
     def copy(self, keep_going):
-        slice = self.__class__("copy of %s" % self.name)
+        this_slice = self.__class__("copy of %s" % self.name)
         for id, obj in self.objects.iteritems():
             #obj = _unwrap(obj)
             copy = obj.clone()
@@ -244,8 +244,8 @@ class RegistrySlice(object):
                 else:
                     reg._add(copy)
                     new_id = copy._getRegistryID()
-            slice.objects[new_id] = copy
-        return slice
+            this_slice.objects[new_id] = copy
+        return this_slice
 
     def __contains__(self, j):
         return j.id in self.objects
