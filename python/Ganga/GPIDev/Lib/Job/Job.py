@@ -907,10 +907,9 @@ class Job(GangaObject):
         logger.debug("Creating Packed InputSandbox %s" % name)
         logger.debug("With:")
         for f in files:
-            try:
+            if hasattr(stripProxy(f), 'name'):
                 logger.debug(str("\t") + str(f.name))
-            except Exception as err:
-                logger.debug("Err: %s" % str(err))
+            else:
                 logger.debug(str("\t") + str(f))
         #logger.debug( "\n" )
 
