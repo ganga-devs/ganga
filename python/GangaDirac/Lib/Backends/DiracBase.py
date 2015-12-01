@@ -192,8 +192,7 @@ class DiracBase(IBackend):
 
         dirac_script = subjobconfig.getExeString().replace('##INPUT_SANDBOX##', str(input_sandbox))
 
-        dirac_script_filename = os.path.join(
-            j.getInputWorkspace().getPath(), 'dirac-script.py')
+        dirac_script_filename = os.path.join(j.getInputWorkspace().getPath(), 'dirac-script.py')
         f = open(dirac_script_filename, 'w')
         f.write(dirac_script)
         f.close()
@@ -226,8 +225,7 @@ class DiracBase(IBackend):
                     else:
                         return handleError(IncompleteJobSubmissionError(fqid, 'resubmission failed'))
                 except Exception as x:
-                    log_user_exception(
-                        logger, debug=isType(x, GangaException))
+                    log_user_exception(logger, debug=isType(x, GangaException))
                     return handleError(IncompleteJobSubmissionError(fqid, str(x)))
         finally:
             master = self.getJobObject().master
