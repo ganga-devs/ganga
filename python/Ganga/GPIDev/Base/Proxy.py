@@ -93,10 +93,19 @@ def getName(obj):
 def stripProxy(obj):
     """Removes the proxy if there is one"""
     global proxyRef
-    if proxyRef in dir(obj):  # Use 'in dir()' rather than hasattr() to avoid recursion problems
-        return getattr(obj, proxyRef)
-    else:
-        return obj
+    try:
+        if hasattr(obj, proxyRef):
+            return getattr(obj, proxyRef)
+        else:
+            return obj
+    except Exception as err:
+        ## This is a MASSIVE performance hog in normal use rcurrie
+        ## Decided that the few excpetions which may be thrown at initialization is not worth the performance hit elsewhere
+        logger.debug("Exception err: %s" % str(err))
+        if proxyRef in dir(obj):  # Use 'in dir()' rather than hasattr() to avoid recursion problems
+            return getattr(obj, proxyRef)
+        else:
+            return obj
 
 
 def addProxy(obj):
@@ -421,7 +430,7 @@ def GPIProxyClassFactory(name, pluginclass):
         #    logger.warning('extra arguments in the %s constructor ignored: %s',name,args[1:])
 
         instance = pluginclass()
-        instance.__init__()
+        #instance.__init__()
         for this_attrib in [proxyRef, proxyClass]:
             if hasattr(instance, this_attrib):
                 try:
