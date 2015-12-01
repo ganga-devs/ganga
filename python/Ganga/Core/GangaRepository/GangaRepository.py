@@ -198,6 +198,8 @@ class GangaRepository(object):
             self._found_classes[(category, classname)] = cls
         cls = self._found_classes[(category, classname)]
         obj = super(cls, cls).__new__(cls)
+        setattr(obj, '_parent', None)
+        setattr(obj, 'id', '')
         obj.__init__()
         obj._proxyObject = None
         obj.setNodeData({})
