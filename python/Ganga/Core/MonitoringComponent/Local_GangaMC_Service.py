@@ -1,6 +1,7 @@
 import Queue
 import threading
 import time
+import copy
 
 from Ganga.Core.GangaThread import GangaThread
 from Ganga.Core.GangaRepository import RegistryKeyError, RegistryLockError
@@ -1029,7 +1030,7 @@ class JobRegistry_Monitor(GangaThread):
         for jList in activeBackends.values():
 
             #log.debug("backend: %s" % str(jList))
-            backendObj = jList[0].backend
+            backendObj = copy.deepcopy(jList[0].backend)
             b_name = getName(backendObj)
             if b_name in config:
                 pRate = config[b_name]
