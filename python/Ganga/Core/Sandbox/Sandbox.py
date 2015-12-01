@@ -64,6 +64,8 @@ def createPackedInputSandbox(sandbox_files, inws, name):
     import tarfile
     import stat
 
+    logger.debug("Creating packed Sandbox with %s many sandbox files." % str(len(sandbox_files)))
+
 #
 # Curent release with os module
 #
@@ -83,23 +85,16 @@ def createPackedInputSandbox(sandbox_files, inws, name):
         tf = tarfile.open(name=tgzfile, fileobj=this_tarfile, mode="w:gz")
         tf.dereference = True  # --not needed in Windows
 
+        from Ganga.GPIDev.Lib.File.FileBuffer import FileBuffer
+        from Ganga.GPIDev.Lib.File.File import File
+        from Ganga.GPIDev.Base.Proxy import isType
+
         for f in sandbox_files:
             fileobj = None
-            try:
+            if isType(f, FileBuffer):
                 contents = f.getContents()   # is it FileBuffer?
                 # print "Getting FileBuffer Contents"
 
-            except AttributeError as err:         # File
-                # print "Getting File %s" % f.name
-                # tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
-                try:
-                    fileobj = open(f.name)
-                except Exception as err:
-                    raise SandboxError("File %s does not exist." % f.name)
-                tinfo = tf.gettarinfo(
-                    f.name, os.path.join(f.subdir, os.path.basename(f.name)))
-
-            else:                          # FileBuffer
                 from StringIO import StringIO
                 fileobj = StringIO(contents)
 
@@ -114,6 +109,18 @@ def createPackedInputSandbox(sandbox_files, inws, name):
                 import time
                 tinfo.mtime = time.time()
                 tinfo.size = fileobj.len
+
+            else:
+                #   except AttributeError as err:         # File
+                # print "Getting File %s" % f.name
+                # tf.add(f.name,os.path.join(f.subdir,os.path.basename(f.name)))
+                logger.debug("Opening file for sandbox: %s" % str(f.name))
+                try:
+                    fileobj = open(f.name)
+                except Exception as err:
+                    raise SandboxError("File %s does not exist." % f.name)
+
+                tinfo = tf.gettarinfo(f.name, os.path.join(f.subdir, os.path.basename(f.name)))
 
             if f.isExecutable():
                 tinfo.mode = tinfo.mode | stat.S_IXUSR
