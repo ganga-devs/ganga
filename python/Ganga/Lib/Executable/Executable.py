@@ -15,7 +15,10 @@ from Ganga.Core import ApplicationConfigurationError, ApplicationPrepareError
 
 from Ganga.Utility.logging import getLogger
 
+from Ganga.GPIDev.Base.Proxy import getName, isType
+
 import os
+import shutil
 from Ganga.Utility.files import expandfilename
 
 logger = getLogger()
@@ -107,7 +110,7 @@ class Executable(IPrepareApp):
         # this will bail us out of prepare if there's somthing odd with the job config - like the executable
         # file is unspecified, has a space or is a relative path
         self.configure(self)
-        logger.info('Preparing %s application.' % (self._name))
+        logger.info('Preparing %s application.' % getName(self))
         setattr(self, 'is_prepared', ShareDir())
         logger.info('Created shared directory: %s' % (self.is_prepared.name))
 
@@ -121,10 +124,21 @@ class Executable(IPrepareApp):
             # [os.path.join(self.is_prepared.name,os.path.basename(send_to_sharedir))]
             self.post_prepare()
 
+            input_dir =self.getJobObject().getInputWorkspace(create=True).getPath()
+            if isType(self.exe, File):
+                source = self.exe.name
+            elif isType(self.exe, str):
+                source = self.exe
+            
+            if not os.path.exists(source):
+                logger.debug("Error copying exe: %s to input workspace" % str(source))
+            else:
+                shutil.copy2(source, input_dir)
+
         except Exception as err:
             logger.debug("Err: %s" % str(err))
             self.unprepare()
-            raise
+            raise err
 
         return 1
 
@@ -139,24 +153,19 @@ class Executable(IPrepareApp):
             if isinstance(x, str):
                 if exe:
                     if not x:
-                        raise ApplicationConfigurationError(
-                            None, 'exe not specified')
+                        raise ApplicationConfigurationError(None, 'exe not specified')
 
                     if len(x.split()) > 1:
-                        raise ApplicationConfigurationError(
-                            None, 'exe "%s" contains white spaces' % x)
+                        raise ApplicationConfigurationError(None, 'exe "%s" contains white spaces' % x)
 
                     dirn, filen = os.path.split(x)
                     if not filen:
-                        raise ApplicationConfigurationError(
-                            None, 'exe "%s" is a directory' % x)
+                        raise ApplicationConfigurationError(None, 'exe "%s" is a directory' % x)
                     if dirn and not os.path.isabs(dirn) and self.is_prepared is None:
-                        raise ApplicationConfigurationError(
-                            None, 'exe "%s" is a relative path' % x)
+                        raise ApplicationConfigurationError(None, 'exe "%s" is a relative path' % x)
                     if not os.path.basename(x) == x:
                         if not os.path.isfile(x):
-                            raise ApplicationConfigurationError(
-                                None, '%s: file not found' % x)
+                            raise ApplicationConfigurationError(None, '%s: file not found' % x)
 
             else:
                 try:
@@ -164,11 +173,9 @@ class Executable(IPrepareApp):
                     if isinstance(x, int):
                         return
                     if not x.exists():
-                        raise ApplicationConfigurationError(
-                            None, '%s: file not found' % x.name)
-                except AttributeError:
-                    raise ApplicationConfigurationError(
-                        None, '%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
+                        raise ApplicationConfigurationError(None, '%s: file not found' % x.name)
+                except AttributeError as err:
+                    raise ApplicationConfigurationError(err, '%s (%s): unsupported type, must be a string or File' % (str(x), str(type(x))))
 
         validate_argument(self.exe, exe=1)
 
@@ -211,22 +218,19 @@ class RTHandler(IRuntimeHandler):
 
         prepared_exe = app.exe
         if app.is_prepared is not None:
-            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']),
-                                       'shared', getConfig('Configuration')['user'])
+            shared_path = os.path.join(expandfilename(getConfig('Configuration')['gangadir']), 'shared', getConfig('Configuration')['user'])
             if isinstance(app.exe, str):
                 # we have a file. is it an absolute path?
                 if os.path.abspath(app.exe) == app.exe:
-                    logger.info("Submitting a prepared application; taking any input files from %s" % (
-                        app.is_prepared.name))
+                    logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
                     prepared_exe = File(os.path.join(os.path.join(
                         shared_path, app.is_prepared.name), os.path.basename(File(app.exe).name)))
                 # else assume it's a system binary, so we don't need to
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif isinstance(app.exe, File):
-                logger.info("Submitting a prepared application; taking any input files from %s" % (
-                    app.is_prepared.name))
+            elif iTsType(app.exe, File):
+                logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
 
@@ -255,7 +259,7 @@ class LCGRTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif isinstance(app.exe, File):
+            elif isType(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(
@@ -284,7 +288,7 @@ class gLiteRTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif isinstance(app.exe, File):
+            elif isType(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (
                     app.is_prepared.name))
                 prepared_exe = File(os.path.join(os.path.join(
