@@ -198,7 +198,8 @@ class FileWorkspace(object):
 
 
 def gettop():
-    c = Ganga.Utility.Config.getConfig('Configuration')
+    from Ganga.Utility.Config import getConfig
+    c = getConfig('Configuration')
     return os.path.join(c['gangadir'], 'workspace', c['user'], c['repositorytype'])
 
 
@@ -208,7 +209,8 @@ class InputWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(self, gettop(), subpath='input', splittree=False)
+        workspace_top = gettop()
+        super(InputWorkspace, self).__init__(workspace_top, subpath='input', splittree=False)
 
 
 class OutputWorkspace(FileWorkspace):
@@ -217,7 +219,8 @@ class OutputWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(self, gettop(), subpath='output', splittree=False)
+        workspace_top = gettop()
+        super(OutputWorkspace, self).__init__(workspace_top, subpath='output', splittree=False)
 
 
 class DebugWorkspace(FileWorkspace):
@@ -226,7 +229,8 @@ class DebugWorkspace(FileWorkspace):
     """
 
     def __init__(self):
-        FileWorkspace.__init__(self, gettop(), subpath='debug', splittree=False)
+        workspace_top = gettop()
+        super(DebugWorkspace, self).__init__(workspace_top, subpath='debug', splittree=False)
 
 
 #
