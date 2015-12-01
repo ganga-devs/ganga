@@ -15,6 +15,8 @@ import os
 import string
 import random
 
+from Ganga.Utility.logging import getLogger
+logger = getLogger()
 
 def rand_str():
     import datetime
@@ -43,6 +45,7 @@ echo "%s" > b.root
         self.root, self.filename = os.path.split(tmpf.name)
         tmpf.close()
         self.filepath = os.path.join(self.root, self.filename)
+        logger.info("FilePath: %s" % str(self.filepath))
         import Ganga.Core.InternalServices.Coordinator
         Ganga.Core.InternalServices.Coordinator.enableMonitoringService()
 
@@ -62,8 +65,8 @@ echo "%s" > b.root
         os.remove(myTempFile)
 
     def test_local_job_put_single_file(self):
-        j = Job(application=Executable(
-            exe=File(self.filepath), args=[]), outputfiles=[DiracFile('a.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]), outputfiles=[DiracFile('a.root')])
+        logger.info("App EXE: %s" % str(j.application.exe.name))
         j.submit()
         sleep_until_completed(j)
 
@@ -88,8 +91,7 @@ echo "%s" > b.root
             df.remove()
 
     def test_local_job_put_wildcard_files(self):
-        j = Job(application=Executable(
-            exe=File(self.filepath), args=[]), outputfiles=[DiracFile('*.root')])
+        j = Job(application=Executable(exe=File(self.filepath), args=[]), outputfiles=[DiracFile('*.root')])
         j.submit()
         sleep_until_completed(j)
 
