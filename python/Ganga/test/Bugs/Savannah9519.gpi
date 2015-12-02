@@ -33,11 +33,11 @@ if config.Configuration.Batch == 'LSF':
     d={} # use a dict for easier access of the id
     child=popen2.Popen3('bjobs -a')    
     child.tochild.close()
-    out=child.fromchild
+    child_output=child.fromchild
     result=-1
     while result==-1:
-      for line in out:
-        items=line.split()
+      for this_line in child_output:
+        items=this_line.split()
         d[items[0]]=items[3]
       result=child.poll()
 
