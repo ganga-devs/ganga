@@ -279,6 +279,7 @@ class GangaRepositoryLocal(GangaRepository):
             this_data = obj.getNodeData()
             for k, v in cache.iteritems():
                 this_data[k] = v
+            obj.setNodeData(this_data)
             obj.setNodeIndexCache(cache)
             self._cache_load_timestamp[this_id] = os.stat(fn).st_ctime
             self._cached_cat[this_id] = cat
@@ -677,7 +678,7 @@ class GangaRepositoryLocal(GangaRepository):
             if this_id in self.objects:
                 obj = self.objects[this_id]
                 #logger.info("\n\nobj: %s\n\n" % str(type(obj)))
-                obj = copy.deepcopy(stripProxy(tmpobj))
+                obj.setNodeData(copy.deepcopy(tmpobj.getNodeData()))
                 #obj.__dict__ = tmpobj.__dict__
                 #for attr_name, attr_val in tmpobj.getNodeData().iteritems():
                 #    obj.setAttribute(attr_name, copy.deepcopy(attr_val))
@@ -686,12 +687,8 @@ class GangaRepositoryLocal(GangaRepository):
 
                 for node_key, node_val in obj.getNodeData().iteritems():
                     if isType(getattr(stripProxy(obj), node_key), Node):
-                        getattr(stripProxy(obj), node_key)._setParent(obj)
-                    if isType(getattr(stripProxy(obj), node_key), (list, GangaList, tuple)):
-                        # set the parent of the list or dictionary (or other iterable) items
-                        for elem in getattr(obj, node_key):
-                            if isType(elem, Node):
-                                elem._setParent(obj)
+                        if node_key not in Node._ref_list:
+                            getattr(stripProxy(obj), node_key)._setParent(obj)
 
 
                 # Check if index cache; if loaded; was valid:
@@ -729,7 +726,7 @@ class GangaRepositoryLocal(GangaRepository):
                 tmpobj.setNodeIndexCache(None)
                 self._internal_setitem__(this_id, tmpobj)
 
-            if self.sub_split in self.objects[this_id].getNodeData().keys():
+            if hasattr(self.objects[this_id], self.sub_split):
                 self.objects[this_id].getNodeAttribute(self.sub_split)._setParent(self.objects[this_id])
 
             self._load_timestamp[this_id] = os.fstat(fobj.fileno()).st_ctime
@@ -738,11 +735,8 @@ class GangaRepositoryLocal(GangaRepository):
 
         for attr_name, attr_val in self.objects[this_id].getNodeData().iteritems():
             if isType(getattr(self.objects[this_id], attr_name), Node):
-                getattr(self.objects[this_id], attr_name)._setParent(self.objects[this_id])
-            if isType(getattr(self.objects[this_id], attr_name), (list, tuple, GangaList)):
-                for elem in getattr(self.objects[this_id], attr_name):
-                    if isType(elem, Node):
-                        elem._setParent(self.objects[this_id])
+                if attr_name not in Node._ref_list:
+                    getattr(self.objects[this_id], attr_name)._setParent(self.objects[this_id])
 
         logger.debug("Finished Loading XML")
 
