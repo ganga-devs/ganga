@@ -229,7 +229,7 @@ class RTHandler(IRuntimeHandler):
                 # transport anything to the sharedir
                 else:
                     prepared_exe = app.exe
-            elif iTsType(app.exe, File):
+            elif isType(app.exe, File):
                 logger.info("Submitting a prepared application; taking any input files from %s" % (app.is_prepared.name))
                 prepared_exe = File(os.path.join(
                     os.path.join(shared_path, app.is_prepared.name), os.path.basename(app.exe.name)))
