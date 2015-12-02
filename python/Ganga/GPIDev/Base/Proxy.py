@@ -10,6 +10,7 @@ from Ganga.Utility.Config import getConfig
 
 import Ganga.GPIDev.Schema as Schema
 
+
 from Ganga.Core import GangaAttributeError, ProtectedAttributeError, ReadOnlyObjectError, TypeMismatchError
 
 import os
@@ -453,10 +454,12 @@ def GPIProxyClassFactory(name, pluginclass):
 
         clean_args = [stripProxy(arg) for arg in args]
 
+
+        from Ganga.GPIDev.Base.Objects import Node
         for key, val in getattr(self, proxyClass)._schema.allItems():
             if not val['protected'] and not val['hidden'] and isType(val, Schema.ComponentItem):
                 val = getattr(self, key)
-                if hasattr(stripProxy(val), 'setParent'):
+                if isType(val, Node):
                     stripProxy(val)._setParent(getattr(self, proxyRef))
                 p_val = addProxy(val)
                 setattr(getattr(self, proxyRef), key, p_val)
@@ -465,9 +468,8 @@ def GPIProxyClassFactory(name, pluginclass):
         for k in kwds:
             if getattr(self, proxyClass)._schema.hasAttribute(k):
                 this_val = kwds[k]
-                if isclass(this_val):
+                if isType(this_val, Node):
                     setattr(stripProxy(this_val), proxyObject, None)
-                if hasattr(stripProxy(this_val), '_setParent'):
                     stripProxy(this_val)._setParent(getattr(self, proxyRef))
                 setattr(getattr(self, proxyRef), k, addProxy(this_val))
             else:
