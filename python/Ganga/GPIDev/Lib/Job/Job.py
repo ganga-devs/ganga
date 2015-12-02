@@ -2324,13 +2324,36 @@ class Job(GangaObject):
 
                 super(Job, self).__setattr__('backend', new_value)
             else:
-                stripProxy(value)._setParent(self)
-                super(Job, self).__setattr__('backend', value)
+                if type(value) == str:
+                    try:
+                        import __main__
+                        new_value = eval(value, __main__.__dict__)
+                    except Exception as err:
+                        logger.debug("Cannot Evaluate: %s" % str(value))
+                        new_value = value
+                else:
+                    new_value = value
+                from Ganga.GPIDev.Base.Objects import Node
+                if isType(new_value, Node):
+                    stripProxy(new_value)._setParent(self)
+                super(Job, self).__setattr__('backend', new_value)
         #elif attr == 'postprocessors':
         #    super(Job, self).__setattr__('postprocessors', GangaList())
         else:
             #logger.debug("attr: %s" % str(attr))
-            super(Job, self).__setattr__(attr, value)
+            if type(value) == str:
+                try:
+                    import __main__
+                    new_value = eval(value. __main__.__dict__)
+                except Exception as err:
+                    logger.debug("Cannot Evaluate: %s" % str(value))
+                    new_value = value
+            else:
+                new_value = value
+            #from Ganga.GPIDev.Base.Objects import Node
+            #if isType(new_value, Node):
+            #    stripProxy(new_value)._setParent(self)
+            super(Job, self).__setattr__(attr, new_value)
 
         #if hasattr(getattr(self, attr), '_getParent'):
         #    logger.debug("attr: %s parent: %s" % (attr, str(getattr(self, attr)._getParent())))
