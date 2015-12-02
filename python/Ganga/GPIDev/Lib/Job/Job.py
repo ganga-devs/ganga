@@ -1856,10 +1856,10 @@ class Job(GangaObject):
                         self.application.decrementShareCounter(self.application.is_prepared.name)
                         for sj in self.subjobs:
                             self.application.decrementShareCounter(self.application.is_prepared.name)
-             except KeyError as err:
-                 logger.debug("KeyError, likely job hasn't been loaded.")
-                 logger.debug("In that case try and skip")
-                 pass
+            except KeyError as err:
+                logger.debug("KeyError, likely job hasn't been loaded.")
+                logger.debug("In that case try and skip")
+                pass
 
         try:
             self._setDirty()
