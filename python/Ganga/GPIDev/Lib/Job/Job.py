@@ -972,8 +972,9 @@ class Job(GangaObject):
         If optional sep is specified FQID string is returned, ids are separated by sep.
         For example: getFQID('.') will return 'masterjob_id.subjob_id....'
         """
-        if hasattr(stripProxy(self), 'id'):
-            fqid = [self.id]
+        ## This prevents exceptions during initialization
+        if 'id' in stripProxy(self).__dict__.keys():
+            fqid = [stripProxy(self).__dict__['id']]
         else:
             return None
         cur = stripProxy(self)._getParent()  # FIXME: or use master attribute?
@@ -1764,18 +1765,36 @@ class Job(GangaObject):
             # this is used by Remote backend to remove the jobs remotely
             # bug #44256: Job in state "incomplete" is impossible to remove
 
-            if hasattr(self.backend, 'remove'):
-                self.backend.remove()
+            if stripProxy(self).getNodeIndexCache() is not None and 'display:backend' in stripProxy(self).getNodeIndexCache().keys():
+                name = stripProxy(self).getNodeIndexCache()['display:backend']
+                import __main__
+                new_backend = eval(str(name)+'()', __main__.__dict__)
+                if hasattr(new_backend, 'remove'):
+                    self.backend.remove()
+                del new_backend
+            else:
+                if hasattr(stripProxy(self.backend), 'remove'):
+                    stripProxy(self.backend).remove()
 
-            # tell the application that the job was removed
-            try:
-                self.application.transition_update("removed")
-                for sj in self.subjobs:
-                    sj.application.transition_update("removed")
-            except AttributeError as err:
-                logger.debug("AttributeError: %s" % str(err))
-                # Some applications do not have transition_update
-                pass
+            if stripProxy(self).getNodeIndexCache() is not None and 'display:application' in stripProxy(self).getNodeIndexCache().keys():
+                name = stripProxy(self).getNodeIndexCache()['display:application']
+                import __main__
+                new_app = eval(str(name)+'()', __main__.__dict__)
+                if hasattr(new_app, 'transition_update'):
+                    self.application.transition_update("removed")
+                    for sj in self.subjobs:
+                        sj.application.transition_update("removed")
+                del new_app
+            else:
+                # tell the application that the job was removed
+                try:
+                    self.application.transition_update("removed")
+                    for sj in self.subjobs:
+                        sj.application.transition_update("removed")
+                except AttributeError as err:
+                    logger.debug("AttributeError: %s" % str(err))
+                    # Some applications do not have transition_update
+                    pass
 
         if self._registry:
             self._registry._remove(self, auto_removed=1)
@@ -1998,7 +2017,6 @@ class Job(GangaObject):
 
         if backend is not None:
             backend = backend
-            backend._setParent(self)
 
         # do not allow to change the backend type
         if backend and not isType(self.backend, type(backend)):
