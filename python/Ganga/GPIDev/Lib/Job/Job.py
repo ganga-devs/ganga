@@ -1847,13 +1847,19 @@ class Job(GangaObject):
             wsp.jobid = self.id
             doit(wsp.remove)
 
-            # If the job is associated with a shared directory resource (e.g. has a prepared() application)
-            # decrement the reference counter.
-            if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
-                if self.application.is_prepared is not True:
-                    self.application.decrementShareCounter(self.application.is_prepared.name)
-                    for sj in self.subjobs:
+            try:
+
+                # If the job is associated with a shared directory resource (e.g. has a prepared() application)
+                # decrement the reference counter.
+                if hasattr(self.application, 'is_prepared') and self.application.__getattribute__('is_prepared'):
+                    if self.application.is_prepared is not True:
                         self.application.decrementShareCounter(self.application.is_prepared.name)
+                        for sj in self.subjobs:
+                            self.application.decrementShareCounter(self.application.is_prepared.name)
+             except KeyError as err:
+                 logger.debug("KeyError, likely job hasn't been loaded.")
+                 logger.debug("In that case try and skip")
+                 pass
 
         try:
             self._setDirty()
