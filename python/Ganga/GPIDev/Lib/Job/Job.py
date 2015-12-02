@@ -215,8 +215,11 @@ class Job(GangaObject):
     # TODO: usage of **kwds may be envisaged at this level to optimize the
     # overriding of values, this must be reviewed
     def __init__(self):
+        ## These NEED to be defined before The Schema is initialized due to the getter methods for some object cauing a LOT of code to be run!
         setattr(self, '_parent', None)
         setattr(self, 'id', '')
+        setattr(self, 'status', 'new')
+        ## Finished initializing 'special' objects which are used in getter methods and alike
         super(Job, self).__init__()
         self.time.newjob()  # <-----------NEW: timestamp method
         logger.debug("__init__")
@@ -954,7 +957,8 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            return self.getInputWorkspace(create=self.status != 'removed').getPath()
+            ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
+            return self.getInputWorkspace(create=self.__dict__['status'] != 'removed').getPath()
         else:
             return self.getInputWorkspace(create=False).getPath()
 
@@ -963,7 +967,8 @@ class Job(GangaObject):
         # 'removed').getPath()
         cfg = Ganga.Utility.Config.getConfig('Configuration')
         if cfg['autoGenerateJobWorkspace']:
-            return self.getOutputWorkspace(create=self.status != 'removed').getPath()
+            ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
+            return self.getOutputWorkspace(create=self.__dict__['status'] != 'removed').getPath()
         else:
             return self.getOutputWorkspace(create=False).getPath()
 
@@ -972,6 +977,7 @@ class Job(GangaObject):
         If optional sep is specified FQID string is returned, ids are separated by sep.
         For example: getFQID('.') will return 'masterjob_id.subjob_id....'
         """
+        ## This needs to use the __dict__ to AVOID causing loading of a Job during initialization!
         ## This prevents exceptions during initialization
         if 'id' in stripProxy(self).__dict__.keys():
             fqid = [stripProxy(self).__dict__['id']]
